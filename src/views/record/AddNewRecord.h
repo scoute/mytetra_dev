@@ -17,7 +17,13 @@ class AddNewRecord : public QDialog
 Q_OBJECT
 
 public:
- AddNewRecord( QWidget * parent = 0, Qt::WFlags f = 0 );
+
+ #if QT_VERSION < 0x050000
+  AddNewRecord( QWidget * parent = 0, Qt::WFlags f = 0 );
+ #else
+  AddNewRecord( QWidget * parent = 0, Qt::WindowFlags f = 0 );
+ #endif
+
  ~AddNewRecord();
 
  QString getField(QString name);

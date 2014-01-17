@@ -7,6 +7,7 @@
 #include <QList>
 
 
+// Определяется структура данных одной записей
 struct CLIPB_ONE_RECORD_STRUCT
 {
  QMap<QString, QString> fields;
@@ -14,13 +15,11 @@ struct CLIPB_ONE_RECORD_STRUCT
 };
 
  
-// Определяется структура данных
+// Определяется структура данных набора записей
 // которая будет передаваться через буфер обмена
 struct CLIPB_RECORDS_STRUCT
 {
- // QList< QMap<QString, QString> > table;
  QList< CLIPB_ONE_RECORD_STRUCT > table;
-
 };
 Q_DECLARE_METATYPE(CLIPB_RECORDS_STRUCT);
 
@@ -34,6 +33,7 @@ public:
  ~ClipboardRecords(void);
 
  void init(void);
+ void clear(void);
  void addRecord(QMap<QString, QString> fields, QMap<QString, QByteArray > files);
  void print(void) const;
  int getRecordsNum(void) const;
@@ -42,13 +42,12 @@ public:
  
  // Этот метод QMimeData надо переопределить, так как он виртуальный
  QStringList formats() const;
- 
+
 protected:
  // Этот метод QMimeData надо переопределить, так как он виртуальный
  QVariant retrieveData(const QString &format,QVariant::Type preferredType) const; 
  
 private:
-
  CLIPB_RECORDS_STRUCT records; // Данные, которые передаются через буфер обмена
  QStringList clipbRecordsFormat; // Строка с идентификатором формата
 

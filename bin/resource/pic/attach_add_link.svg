@@ -14,7 +14,7 @@
    id="svg2385"
    sodipodi:version="0.32"
    inkscape:version="0.48.4 r9939"
-   sodipodi:docname="attach_add_link_01.svg"
+   sodipodi:docname="attach_add_link.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    version="1.1">
   <defs
@@ -34,9 +34,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="27.086836"
-     inkscape:cx="9.23366"
-     inkscape:cy="13.750913"
+     inkscape:zoom="16"
+     inkscape:cx="14.79543"
+     inkscape:cy="0.79702103"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:grid-bbox="true"
@@ -67,7 +67,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -84,33 +84,24 @@
        y="0"
        ry="0" />
     <g
-       id="g3147"
-       transform="matrix(0.63827308,-0.63827308,0.63827308,0.63827308,5.929006,5.2839459)">
-      <rect
-         ry="2"
-         y="1.75"
-         x="-10.25"
-         height="4"
-         width="7.5"
-         id="rect3088"
-         style="color:#000000;fill:none;stroke:#000000;stroke-width:1.66176546;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
-      <rect
-         ry="2"
-         y="1.75"
-         x="1.75"
-         height="4"
-         width="7.5"
-         id="rect3088-4"
-         style="color:#000000;fill:none;stroke:#000000;stroke-width:1.66176546;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
-      <rect
-         ry="0.75"
-         y="3"
-         x="-5"
-         height="1.5"
-         width="9"
-         id="rect3121"
-         style="color:#000000;fill:#000000;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+       id="g3168"
+       transform="matrix(0.9542399,0,0,0.9652306,3.3415202,-0.72845903)">
+      <path
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="cccccc"
+         id="rect2385"
+         d="m 2,1 8,0 3,3 0,11 L 2,15 2,1 z"
+         style="fill:#87aade;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.5209856;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path2388"
+         d="m 10,1.25 0,2.7320263 2.75,0"
+         style="fill:#a9bed4;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.5209856;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
     </g>
+    <path
+       style="fill:#a9bed4;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.50000000000000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="M 5.5625 4.25 L 7.75 6.4375 L 2.4375 11.75 L 0.25 9.5625 L 0.25 15.75 L 6.4375 15.75 L 4.25 13.5625 L 9.5625 8.25 L 11.75 10.4375 L 11.75 4.25 L 5.5625 4.25 z "
+       id="path2385-7-4" />
     <path
        inkscape:connector-curvature="0"
        id="path3201"

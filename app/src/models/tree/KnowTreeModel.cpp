@@ -307,6 +307,76 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
 }
 
 
+
+// Выгрузка ветки и ее подветок в директорию Share
+// todo: Подумать, и сделать выгрузку через режим StreamWriter. Похоже, что пока что мешает расшифровка выгружаемых данных
+bool KnowTreeModel::exportBranchToShare(TreeItem *startItem, QString exportDir)
+{
+  // Полный путь до создаваемого файла с деревом
+  QString mytetraXmlFile=exportDir+"/timestamp_and_hash"+"/mytetra.xml";
+
+
+  // -----------------------------
+  // Подготовка корневого элемента
+  // -----------------------------
+
+  // Создается временный корневой Item, содержащий startItem (такова особенность методов KnowTreeModel)
+  QMap<QString, QString> rootData;
+  rootData["id"]="0";
+  rootData["name"]="";
+  TreeItem *tempRootItem = new TreeItem(rootData);
+
+  // Стартовый подузел размещается во временном корневом элементе
+  tempRootItem->addChildrenItem(startItem);
+
+
+  // -------------------------------------
+  // Подготовка выгружаемого DOM-документа
+  // -------------------------------------
+
+  // Коструирование DOM документа для записи в файл
+  QDomDocument doc=createStandartDocument();
+
+  // Создание корневого элемента
+  QDomElement rootElement=createStandartRootElement(doc);
+
+  // Получение полного DOM дерева хранимых данных
+  QDomElement elmDomTree=exportFullModelDataToDom(tempRootItem);
+
+  // Добавление полного дерева DOM хранимых данных к корневому элементу
+  rootElement.appendChild(elmDomTree);
+
+  // Добавление корневого элемента в DOM документ
+  doc.appendChild(rootElement);
+
+  // Выгрузка всех связанных данных с расшифровкой (если это необходимо)
+  // и одновременная расшифровка всех атрибутов (если это необходимо)
+  exportRelatedDataAndDecryptIfNeed(doc, exportDir+"/timestamp_and_hash");
+
+
+  // Запись DOM данных в файл
+  QFile wfile(mytetraXmlFile);
+  if (!wfile.open(QIODevice::WriteOnly | QIODevice::Text))
+  {
+    showMessageBox(tr("The exporting file %1 is not writable.").arg(mytetraXmlFile));
+    return false;
+  }
+  QTextStream out(&wfile);
+  out.setCodec("UTF-8");
+  out << doc.toString();
+
+
+  // Удаление временного корневого элемента
+  tempRootItem->setDetached(true); // Временный корневой элемент помечается как оторванный, чтобы не удалялись подчиненные элементы, используемые в основной программе
+  delete tempRootItem; // Удаляется корневой элемент
+
+  return true;
+}
+
+
+
+
+
 void KnowTreeModel::exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString exportDir)
 {
   QDomElement contentRootNode=doc.documentElement().firstChildElement("content").firstChildElement("node");

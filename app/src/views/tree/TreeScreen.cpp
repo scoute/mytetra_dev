@@ -1270,6 +1270,62 @@ void TreeScreen::exportBranchToDirectory(QString exportDir)
 }
 
 
+
+void TreeScreen::exportBranchToShare(QString exportDir)
+{
+  // Проверка, является ли выбранная директория пустой. Выгрузка возможна только в полностью пустую директорию
+  if( !DiskHelper::isDirectoryEmpty(exportDir) )
+  {
+    showMessageBox(tr("The export directory %1 is not empty. Please, select an empty directory.").arg(exportDir));
+    return;
+  }
+
+  // Текущая выбранная ветка будет экспортироваться
+  if( !getCurrentItemIndex().isValid() )
+  {
+    showMessageBox(tr("No export tree item selected. Please select a item."));
+    return;
+  }
+
+  TreeItem *startItem=knowTreeModel->getItem( getCurrentItemIndex() );
+
+
+  // ---------------------------------------------
+  // Запрос пароля, если есть зашифрованные данные
+  // ---------------------------------------------
+
+  // Выясняется, есть ли в выбранной ветке или подветках есть шифрование
+  bool isCryptPresent=false;
+  if( knowTreeModel->isItemContainsCryptBranches(startItem) )
+    isCryptPresent=true;
+
+  // Если есть шифрование в выгружаемых данных, надо запросить пароль даже если он уже был введен в текущей сессии
+  // Это необходимо для того, чтобы не было возможности выгрузить скопом все зашифрованные данные, если
+  // пользователь отошел от компьютера
+  if( isCryptPresent )
+  {
+    showMessageBox(tr("Exported tree item contains encrypted data.\nPlease click OK and enter the password.\nAll data will be exported unencrypted."));
+
+    // Запрашивается пароль
+    Password password;
+    if(password.enterExistsPassword()==false) // Если пароль введен неверно, выгрузка работать не должна
+      return;
+  }
+
+
+  // Экспорт данных
+  bool result=knowTreeModel->exportBranchToShare(startItem, exportDir);
+
+  if(result)
+    showMessageBox(tr("Done exporting into <b>%1</b>.").arg(exportDir));
+  else
+    showMessageBox(tr("Errors occurred while exporting."));
+}
+
+
+
+
+
 void TreeScreen::importBranchFromDirectory(QString importDir)
 {
   // Импорт будет идти в текущую выбранную ветку

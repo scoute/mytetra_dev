@@ -39,6 +39,8 @@ public:
 
  void exportBranchToDirectory(QString exportDir);
  void importBranchFromDirectory(QString importDir);
+
+ void exportBranchToShare(QString exportDir);
  
  // Установка курсора на указанный элемент
  void setCursorToIndex(QModelIndex index);

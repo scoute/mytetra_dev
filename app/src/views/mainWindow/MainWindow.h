@@ -120,6 +120,7 @@ private slots:
 
  void fileDatabasesManagement(void);
  void fileExportBranch(void);
+ void fileExportBranchShare(void);
  void fileImportBranch(void);
 
  void filePrint(void);
@@ -177,6 +178,7 @@ private:
 
  QAction *actionFileMenuDatabasesManagement;
  QAction *actionFileMenuExportTreeItem;
+ QAction *actionFileMenuExportShareTreeItem;
  QAction *actionFileMenuImportTreeItem;
  QAction *actionFileMenuPrint;
  QAction *actionFileMenuPrintPreview;

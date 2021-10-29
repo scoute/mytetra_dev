@@ -92,6 +92,9 @@ public:
     // Выгрузка ветки и всех подветок в директорию в виде отдельной базы MyTetra (экспорт)
     bool exportBranchToDirectory(TreeItem *startItem, QString exportDir);
 
+    // Выгрузка ветки и всех подветок в директорию Share в виде отдельной базы MyTetra (экспорт Share)
+    bool exportBranchToShare(TreeItem *startItem, QString exportDir);
+
     // Загрузка отдельной базы MyTetra в виде подветки (импорт)
     QString importBranchFromDirectory(TreeItem *startItem, QString importDir);
 

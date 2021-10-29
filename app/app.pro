@@ -14,7 +14,7 @@ WINDOWS_CONSOLE_ENABLE=1
 
 # Profiling enable
 # 0 - disable, 1 - enable
-PROFILING_ENABLE=0
+PROFILING_ENABLE=1
 
 
 ##################

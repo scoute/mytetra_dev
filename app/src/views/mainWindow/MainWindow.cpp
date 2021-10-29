@@ -136,6 +136,7 @@ void MainWindow::setupSignals(void)
     // Сигналы пунктов меню
     connect(actionFileMenuDatabasesManagement, &QAction::triggered, this, &MainWindow::fileDatabasesManagement);
     connect(actionFileMenuExportTreeItem, &QAction::triggered, this, &MainWindow::fileExportBranch);
+    connect(actionFileMenuExportShareTreeItem, &QAction::triggered, this, &MainWindow::fileExportBranchShare);
     connect(actionFileMenuImportTreeItem, &QAction::triggered, this, &MainWindow::fileImportBranch);
     connect(actionFileMenuPrint, &QAction::triggered, this, &MainWindow::filePrint);
     connect(actionFileMenuPrintPreview, &QAction::triggered, this, &MainWindow::filePrintPreview);
@@ -548,6 +549,9 @@ void MainWindow::initFileMenu(void)
     actionFileMenuExportTreeItem = new QAction(tr("Export tree item"), this);
     menu->addAction(actionFileMenuExportTreeItem);
 
+    actionFileMenuExportShareTreeItem = new QAction(tr("Export tree item to Share"), this);
+    menu->addAction(actionFileMenuExportShareTreeItem);
+
     actionFileMenuImportTreeItem = new QAction(tr("Import tree item"), this);
     menu->addAction(actionFileMenuImportTreeItem);
 
@@ -794,6 +798,24 @@ void MainWindow::fileExportBranch(void)
         if( !directorySelectDialog.directory().absolutePath().isEmpty() ) // Если была выбрана директория (а не нажат Cancel)
             treeScreen->exportBranchToDirectory( directorySelectDialog.directory().absolutePath() );
 }
+
+
+// Раздел меню File, экспорт текущей ветки и всех ее подветок в папку Share
+void MainWindow::fileExportBranchShare(void)
+{
+    // Создается окно выбора директории назначения
+    QFileDialog directorySelectDialog(this);
+    directorySelectDialog.setFileMode(QFileDialog::Directory);
+    directorySelectDialog.setWindowTitle(tr("Select an empty directory to export data"));
+    directorySelectDialog.setDirectory("/");
+
+    if( directorySelectDialog.exec() )
+        if( !directorySelectDialog.directory().absolutePath().isEmpty() ) // Если была выбрана директория (а не нажат Cancel)
+            treeScreen->exportBranchToShare( directorySelectDialog.directory().absolutePath() );
+}
+
+
+
 
 
 void MainWindow::fileImportBranch(void)

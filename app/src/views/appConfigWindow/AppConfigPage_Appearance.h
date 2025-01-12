@@ -4,12 +4,16 @@
 #include <QWidget>
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QLabel>
 
 #include "ConfigPage.h"
+#include "libraries/MtComboBox.h"
 
 
 class AppConfigPage_Appearance : public ConfigPage
 {
+    Q_OBJECT
+
 public:
     AppConfigPage_Appearance(QWidget *parent = nullptr);
     virtual ~AppConfigPage_Appearance();
@@ -24,6 +28,10 @@ public:
 
     // Объединяющая рамка
     QGroupBox *behaviorBox;
+    QGroupBox *interfaceBox;
+
+    QLabel *themeLabel;
+    MtComboBox *theme;
 
     QCheckBox *runInMinimizedWindow; // Разрешен ли запуск в свернутом окне
     QCheckBox *dockableWindowsBehavior; // Поведение открепляемых окон

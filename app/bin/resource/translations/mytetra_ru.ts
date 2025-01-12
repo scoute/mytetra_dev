@@ -274,7 +274,42 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="38"/>
         <source>Misc</source>
-        <translation>Разное</translation>
+<context>
+    <name>AppConfigPage_Appearance</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="35"/>
+        <source>Interface theme</source>
+        <translation>Тема</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="39"/>
+        <source>Light</source>
+        <translation>Светлая</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="40"/>
+        <source>Dark</source>
+        <translation>Темная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="45"/>
+        <source>Run MyTetra in a minimized window</source>
+        <translation>Запускать MyTetra в свернутом окне</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="51"/>
+        <source>Hide detached windows if close main window</source>
+        <translation>Сворачивать открепляемые окна при закрытии главного окна</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="66"/>
+        <source>Interface</source>
+        <translation>Интерфейс</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="81"/>
+        <source>Windows behavior</source>
+        <translation>Поведение</translation>
     </message>
 </context>
 <context>

@@ -21,6 +21,7 @@
 #include "libraries/WindowSwitcher.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
+#include "libraries/helpers/DiskHelper.h"
 
 #ifdef Q_OS_WIN32
 #include "windows.h"
@@ -268,11 +269,23 @@ void GlobalParameters::createFirstProgramFiles(QString dirName)
 }
 
 
-void GlobalParameters::createStyleSheetFile(QString dirName)
+void GlobalParameters::createStyleSheetFile(QString dirName, QString themeName)
 {
   QString targetOs=getTargetOs();
-  QFile::copy(":/resource/standartconfig/"+targetOs+"/stylesheet.css", dirName+"/stylesheet.css");
-  QFile::setPermissions(dirName+"/stylesheet.css", QFile::ReadUser | QFile::WriteUser);
+  if (targetOs == "any" && !themeName.isNull() && !themeName.isEmpty())
+  {
+    QString fromDir=":/resource/standartconfig/any/styles/"+themeName;
+    QString toDir=dirName+"/style";
+    DiskHelper::removeDirectory(toDir);
+    DiskHelper::copyDirectoryRecursively(fromDir, toDir, QFile::ReadUser | QFile::WriteUser);
+  }
+  else
+  {
+    QDir styleDir(dirName);
+    styleDir.mkdir("style");
+    QFile::copy(":/resource/standartconfig/"+targetOs+"/stylesheet.css", dirName+"/style/stylesheet.css");
+    QFile::setPermissions(dirName+"/style/stylesheet.css", QFile::ReadUser | QFile::WriteUser);
+  }
 }
 
 

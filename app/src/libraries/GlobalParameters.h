@@ -64,7 +64,7 @@ public:
 
     // Файл стилей может создаваться и после развертывания начальных файлов MyTetra
     // Так как в более старых версиях MyTetra его еще не было
-    void createStyleSheetFile(QString dirName);
+    void createStyleSheetFile(QString dirName, QString themeName=NULL);
 
 public:
     // Указание на обрабатываемую панель инструментов редактора текста

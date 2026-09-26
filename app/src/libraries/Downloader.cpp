@@ -19,6 +19,10 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 Downloader::Downloader()
@@ -433,7 +437,30 @@ QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
 
 void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
-  Q_UNUSED( errors );
+  // Ошибки самоподписанных сертификатов игнорируются только если пользователь
+  // явно разрешил это в настройках (нужно для сайтов с самоподписанными
+  // сертификатами). Игнорируются точечно: только самоподписанность, а не
+  // все SSL-ошибки скопом. Остальные ошибки (истекший срок, чужое имя и т.д.)
+  // в любом случае прерывают загрузку
+  if(mytetraConfig.getIgnoreSelfSignedSslErrors())
+  {
+    QList<QSslError> selfSignedErrors;
+    foreach(const QSslError &error, errors)
+    {
+      if(error.error()==QSslError::SelfSignedCertificate ||
+         error.error()==QSslError::SelfSignedCertificateInChain)
+        selfSignedErrors << error;
+    }
+
+    // Игнорируем только если ВСЕ ошибки относятся к самоподписанности
+    if(!selfSignedErrors.isEmpty() && selfSignedErrors.count()==errors.count())
+    {
+      qDebug() << "Ignore self-signed SSL certificate errors for " << reply->url().toString();
+
+      reply->ignoreSslErrors(selfSignedErrors);
+      return;
+    }
+  }
 
   // SSL-ошибки игнорировать нельзя: невалидный сертификат может означать
   // подмену сервера. Загрузка прерывается, ошибка фиксируется, а остальные

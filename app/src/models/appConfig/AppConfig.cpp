@@ -997,6 +997,20 @@ void AppConfig::setEnableCreateEmptyRecord(bool state)
 }
 
 
+// Разрешено ли игнорировать ошибки самоподписанных SSL-сертификатов
+// при скачивании файлов и картинок
+bool AppConfig::getIgnoreSelfSignedSslErrors(void)
+{
+    return m_conf->value("ignoreSelfSignedSslErrors").toBool();
+}
+
+
+void AppConfig::setIgnoreSelfSignedSslErrors(bool state)
+{
+    m_conf->setValue("ignoreSelfSignedSslErrors", state);
+}
+
+
 QString AppConfig::getDockableWindowsState(void)
 {
     return this->get_parameter("dockableWindowsState");
@@ -1243,6 +1257,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_40;
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
+    parameterFunctions << &AppConfig::get_parameter_table_43;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2106,6 +2121,26 @@ QStringList AppConfig::get_parameter_table_42(bool withEndSignature)
     // Размер обозначается специальными строками, начинающимися на "META_ICON_"
     // Если размер пустой, используется системный размер иконок
     table << "interfaceIconSize" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 42
+    table << get_parameter_table_42(false);
+
+    // Игнорирование ошибок самоподписанных SSL-сертификатов при скачивании.
+    // По умолчанию запрещено, включается только явно в настройках
+    table << "ignoreSelfSignedSslErrors" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

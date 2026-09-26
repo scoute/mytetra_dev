@@ -52,6 +52,13 @@ void AppConfigPage_Misc::setupUi(void)
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   enableCreateEmptyRecord->setChecked(mytetraConfig.getEnableCreateEmptyRecord());
 
+  // Разрешение/запрещение игнорировать ошибки самоподписанных SSL-сертификатов
+  // при скачивании файлов и картинок. Нужно для сайтов с самоподписанными
+  // сертификатами, но снижает защищенность, поэтому по умолчанию выключено
+  ignoreSelfSignedSslErrors=new QCheckBox(this);
+  ignoreSelfSignedSslErrors->setText(tr("Ignore self-signed SSL certificate errors when downloading (less secure)"));
+  ignoreSelfSignedSslErrors->setChecked(mytetraConfig.getIgnoreSelfSignedSslErrors());
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -83,6 +90,7 @@ void AppConfigPage_Misc::assembly(void)
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
+  centralLayout->addWidget(ignoreSelfSignedSslErrors);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
@@ -127,6 +135,10 @@ int AppConfigPage_Misc::applyChanges(void)
   // Сохраняется настройка возможности создания записи, не содержащей текст
   if(mytetraConfig.getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
     mytetraConfig.setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
+
+  // Сохраняется настройка игнорирования ошибок самоподписанных SSL-сертификатов
+  if(mytetraConfig.getIgnoreSelfSignedSslErrors()!=ignoreSelfSignedSslErrors->isChecked())
+    mytetraConfig.setIgnoreSelfSignedSslErrors(ignoreSelfSignedSslErrors->isChecked());
 
   return result;
 }

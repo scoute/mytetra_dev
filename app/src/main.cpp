@@ -101,6 +101,22 @@ void printHelp()
 }
 
 
+// Отправка команды управления работающему экземпляру MyTetra и выход из процесса.
+// Результат отправки обязательно проверяется, так как sendMessage() возвращает
+// false, если работающий экземпляр не принял сообщение. Без проверки программа
+// выходила бы с кодом 0 даже при недоставленной команде, и скрипты считали бы,
+// что запись открыта или база перезагружена
+void sendControlCommandAndExit(QtSingleApplication &app, const QString &command)
+{
+    if(app.sendMessage(command))
+        exit(0);
+
+    QString message="Can not send command \""+command+"\" to the running MyTetra.\n";
+    printf("%s", message.toLocal8Bit().data());
+    exit(5);
+}
+
+
 void parseConsoleOption(QtSingleApplication &app)
 {
     // Если запрашивается помощь по опциям
@@ -146,46 +162,38 @@ void parseConsoleOption(QtSingleApplication &app)
     {
         if (app.arguments().contains("--show"))
         {
-            app.sendMessage("show");
-            exit(0);
+            sendControlCommandAndExit(app, "show");
         }
         else if (app.arguments().contains("--hide"))
         {
-            app.sendMessage("hide");
-            exit(0);
+            sendControlCommandAndExit(app, "hide");
         }
         else if (app.arguments().contains("--quit"))
         {
-            app.sendMessage("quit");
-            exit(0);
+            sendControlCommandAndExit(app, "quit");
         }
         else if (app.arguments().contains("--reload"))
         {
-            app.sendMessage("reload");
-            exit(0);
+            sendControlCommandAndExit(app, "reload");
         }
         else if (app.arguments().contains("--openNote"))
         {
             int openNoteIndex=app.arguments().indexOf("--openNote");
-            app.sendMessage("openNote "+app.arguments().at(openNoteIndex+1));
-            exit(0);
+            sendControlCommandAndExit(app, "openNote "+app.arguments().at(openNoteIndex+1));
         }
         else if (app.arguments().contains("--addNoteDialog"))
         {
-            app.sendMessage("addNoteDialog");
-            exit(0);
+            sendControlCommandAndExit(app, "addNoteDialog");
         }
         else if (app.arguments().contains("--openBranch")) // Устаревшая опция
         {
             int openBranchIndex=app.arguments().indexOf("--openBranch");
-            app.sendMessage("openTreeItem "+app.arguments().at(openBranchIndex+1)); // Аналог сигнала openTreeItem
-            exit(0);
+            sendControlCommandAndExit(app, "openTreeItem "+app.arguments().at(openBranchIndex+1)); // Аналог сигнала openTreeItem
         }
         else if (app.arguments().contains("--openTreeItem"))
         {
             int openTreeItemIndex=app.arguments().indexOf("--openTreeItem");
-            app.sendMessage("openTreeItem "+app.arguments().at(openTreeItemIndex+1));
-            exit(0);
+            sendControlCommandAndExit(app, "openTreeItem "+app.arguments().at(openTreeItemIndex+1));
         }
         else
         {

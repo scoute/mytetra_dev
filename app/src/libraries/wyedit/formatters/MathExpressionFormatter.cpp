@@ -217,12 +217,17 @@ void MathExpressionFormatter::createGifFromMathExpression(QString iMathExpressio
     // при передаче математического варажения в командной строке
     // Если removeTeXFileToTrash = true, то временный Tex файл удаляеься в корзину myTetra
     // Если removeTeXFileToTrash = false, то временный Tex файл кничтожается
-    QString mathExpressionFileName=QDir::tempPath()+"/"+getUniqueId()+".txt";
-    QFile mathExpressionFile(mathExpressionFileName);
-    if(!mathExpressionFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        criticalError("Can not create temporary file for TeX source: "+mathExpressionFileName);
+    //
+    // Файл создается через QTemporaryFile: уникальное имя генерируется
+    // с O_EXCL, файл доступен только владельцу. Раньше имя собиралось из
+    // предсказуемых time()+rand(), и чужой процесс мог подсунуть симлинк в /tmp
+    QTemporaryFile mathExpressionFile(QDir::tempPath()+"/mytetra_tex_XXXXXX.txt");
+    mathExpressionFile.setAutoRemove(false);
+    if(!mathExpressionFile.open()) {
+        criticalError("Can not create temporary file for TeX source in "+QDir::tempPath());
         return;
     }
+    QString mathExpressionFileName=mathExpressionFile.fileName();
     mathExpressionFile.write(iMathExpression.toUtf8());
     mathExpressionFile.close();
 
@@ -263,7 +268,18 @@ void MathExpressionFormatter::createGifFromMathExpression(QString iMathExpressio
 
 void MathExpressionFormatter::insertMathExpressionToTextArea(QString iMathExpressionText)
 {
-    QString tempFileName=QDir::tempPath()+"/"+getUniqueId()+".gif";
+    // Временный файл картинки тоже создается через QTemporaryFile по тем же
+    // причинам. Пустой файл-заглушка остается на месте, mimetex усекает его
+    // при записи, поэтому окно для подмены симлинком между созданием и
+    // открытием отсутствует
+    QTemporaryFile tempGifFile(QDir::tempPath()+"/mytetra_formula_XXXXXX.gif");
+    tempGifFile.setAutoRemove(false);
+    if(!tempGifFile.open()) {
+        criticalError("Can not create temporary file for math expression picture in "+QDir::tempPath());
+        return;
+    }
+    QString tempFileName=tempGifFile.fileName();
+    tempGifFile.close();
 
     qDebug() << "Formula code: " << iMathExpressionText;
     qDebug() << "Formula temporary file name: " << tempFileName;

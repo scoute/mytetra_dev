@@ -422,10 +422,13 @@ Program id
 header files and macros
 -------------------------------------------------------------------------- */
 
-// #define	_GNU_SOURCE			/* for strcasestr() in string.h */
-// char	*strcasestr();			/* non-standard extension */
-// #define _GNU_SOURCE char *strcasestr(const char *haystack, const char *needle);
-const char *strcasestr(const char *s1, const char *s2);
+// Собственная реализация поиска подстроки без учета регистра.
+// Она нужна для переносимости на системы, где strcasestr() из string.h
+// отсутствует (например, старые версии Windows и некоторые libc).
+// Свое имя используется вместо strcasestr() намеренно: в glibc
+// strcasestr() уже объявлена в string.h с другим прототипом, из-за чего
+// было невозможно собрать mimeTeX современными компиляторами.
+const char *mimetex_strcasestr(const char *s1, const char *s2);
 
 /* --- standard headers --- */
 #include <stdio.h>
@@ -7430,7 +7433,7 @@ while ( 1 ) {				/* until we find \directive */
   if ( !isempty(pfirst) )		/* still have string from caller */
     pfirst =				/* ptr to 1st char of directive */
      (iscase>0? strstr(pfirst,directive): /* case-sensistive match */
-      strcasestr(pfirst,directive));	/* case-insensistive match */
+      mimetex_strcasestr(pfirst,directive));	/* case-insensistive match */
   if ( isempty(pfirst) ) {		/* \directive not found in string */
     pfirst = NULL;			/* signal \directive not found */
     goto end_of_job; }			/* quit, signalling error to caller*/
@@ -18307,7 +18310,7 @@ int mystrncmpi(const char* s1, const char* s2,int n)
     return 0;
 }
 
-const char *strcasestr(const char *s1, const char *s2)
+const char *mimetex_strcasestr(const char *s1, const char *s2)
 {
  // if either pointer is null
  if (s1 == 0 || s2 == 0)

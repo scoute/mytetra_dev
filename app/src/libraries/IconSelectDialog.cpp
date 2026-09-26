@@ -264,22 +264,27 @@ void IconSelectDialog::setPath(QString iPath)
 
 void IconSelectDialog::setDefaultSection(QString sectionName)
 {
-  if(m_path.length()>0)
-  {
-    criticalError("Can't set icon default section. Set default section before set path.");
-    return;
-  }
-
-  for (int i = 0; m_sectionComboBox.count(); ++i)
-  {
-    if(m_sectionComboBox.itemText(i) == sectionName) {
-
-      m_defaultSectionIndex = i;
-
-      break;
-
+    if(m_path.length()>0)
+    {
+        criticalError("Can't set icon default section. Set default section before set path.");
+        return;
     }
-  }
+
+    // Перебор разделов в списке.
+    // Сравнение идет по индексам, а не по значению count(), так как count()
+    // всегда возвращает ненулевое число и в таком виде цикл никогда не
+    // заканчивается, что приводит к выходу за границы списка разделов,
+    // если нужный раздел не найден
+    for (int i = 0; i < m_sectionComboBox.count(); ++i)
+    {
+        if(m_sectionComboBox.itemText(i) == sectionName) {
+
+            m_defaultSectionIndex = i;
+
+            break;
+
+        }
+    }
 }
 
 
@@ -302,61 +307,80 @@ void IconSelectDialog::updateIcons()
 // Слот при изменении строки раздела в sectionComboBox
 void IconSelectDialog::onSectionCurrentIndexChanged(int idx)
 {
-  // Если еще не разрешено обновлять список иконок
-  if(!m_enableIconUpdate)
-    return;
+    // Если еще не разрешено обновлять список иконок
+    if(!m_enableIconUpdate)
+        return;
 
-  m_currentSectionIndex=idx;
+    // Индекс раздела может оказаться неверным, например при пустом списке
+    // разделов, тогда работать дальше не с чем
+    if(idx<0 || idx>=m_sectionComboBox.count())
+        return;
 
-  // Очищается экранный список иконок
-  m_iconList.clear(); // todo: Здесь сегфолт... Разобраться.
+    m_currentSectionIndex=idx;
 
-  QString iconDirName=m_path+"/"+m_sectionComboBox.itemText(idx);
+    // Очищается экранный список иконок
+    // Обратите внимание: очистка списка вызывает сигнал itemSelectionChanged,
+    // поэтому слот onIconItemSelectionChanged() вызывается сразу же, когда
+    // список еще пуст и выбранного элемента в нем нет
+    m_iconList.clear();
 
-  QDir dir(iconDirName);
-  dir.setFilter(QDir::Files | QDir::Readable);
-  dir.setNameFilters( (QStringList() << "*.svg" << "*.png") );
-  QFileInfoList iconFileList=dir.entryInfoList();
+    QString iconDirName=m_path+"/"+m_sectionComboBox.itemText(idx);
+
+    QDir dir(iconDirName);
+    dir.setFilter(QDir::Files | QDir::Readable);
+    dir.setNameFilters( (QStringList() << "*.svg" << "*.png") );
+    QFileInfoList iconFileList=dir.entryInfoList();
 
 
-  // Если в выбранной секции нет никаких иконок
-  if(iconFileList.count()==0)
-  {
-    showMessageBox(tr("The section \"%1\" has not any icons").arg(m_sectionComboBox.itemText(idx)));
-    this->close();
-    return;
-  }
+    // Если в выбранной секции нет никаких иконок
+    if(iconFileList.count()==0)
+    {
+        showMessageBox(tr("The section \"%1\" has not any icons").arg(m_sectionComboBox.itemText(idx)));
+        this->close();
+        return;
+    }
 
-  // Отрисовывается линейка наполняемости, так как считывание иконок может быть долгим
-  m_progressBar.setMinimum(0);
-  m_progressBar.setMaximum(iconFileList.size());
-  m_progressBar.show();
+    // Отрисовывается линейка наполняемости, так как считывание иконок может быть долгим
+    m_progressBar.setMinimum(0);
+    m_progressBar.setMaximum(iconFileList.size());
+    m_progressBar.show();
 
-  // Заполняется экранный список иконок
-  for(int i=0; i<iconFileList.size(); ++i)
-  {
-    m_progressBar.setValue(i);
+    // Заполняется экранный список иконок
+    for(int i=0; i<iconFileList.size(); ++i)
+    {
+        m_progressBar.setValue(i);
 
-    QFileInfo iconInfo=iconFileList.at(i);
+        QFileInfo iconInfo=iconFileList.at(i);
 
-    // qDebug() << "Find icon: " << iconInfo.fileName();
+        // qDebug() << "Find icon: " << iconInfo.fileName();
 
-    // Создается элемент списка, который вставляется в iconList (поэтому он уничтожится при уничтожении саписка)
-    QListWidgetItem *item=new QListWidgetItem( iconInfo.fileName(), &m_iconList);
-    item->setIcon(QIcon(iconInfo.filePath()));
-  }
+        // Создается элемент списка, который вставляется в iconList (поэтому он уничтожится при уничтожении саписка)
+        QListWidgetItem *item=new QListWidgetItem( iconInfo.fileName(), &m_iconList);
+        item->setIcon(QIcon(iconInfo.filePath()));
+    }
 
-  m_progressBar.hide();
+    m_progressBar.hide();
 }
 
 
 // Когда выбрана иконка
 void IconSelectDialog::onIconItemSelectionChanged()
 {
-  // QString shortSelectFileName=iconList.selectedItems().at(0)->text(); // Неясно, но похоже что после этой конструкции идет сегфолт в методе clean()
-  QString shortSelectFileName=m_iconList.currentItem()->text();
+    // Выбранного элемента может не быть, например, когда список иконок был только
+    // что очищен или когда снято выделение со всех элементов.
+    // В таком случае currentItem() возвращает nullptr и обращение к нему
+    // приводит к падению программы, поэтому этот случай надо пропустить
+    QListWidgetItem *currentItem=m_iconList.currentItem();
 
-  m_currentFileName=m_path+"/"+this->getCurrentSection()+"/"+shortSelectFileName;
+    if(currentItem==nullptr)
+    {
+        m_currentFileName.clear();
+        return;
+    }
+
+    QString shortSelectFileName=currentItem->text();
+
+    m_currentFileName=m_path+"/"+this->getCurrentSection()+"/"+shortSelectFileName;
 }
 
 

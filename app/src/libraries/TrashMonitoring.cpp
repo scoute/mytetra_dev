@@ -154,12 +154,14 @@ void TrashMonitoring::removeOldesFile(void)
   {
     // Расчетный размер директории уменьшается на размер файла
     m_dirSize=m_dirSize-m_filesList.last().fileSize;
-    
+
+    // Имя файла удаляется из контролирующего списка. Раньше удалялся полный
+    // путь, которого в списке коротких имен нет, поэтому запись оставалась
+    // висеть и мешала повторному учету файла с тем же именем
+    m_availableFilesName.remove(m_filesList.last().fileName);
+
     // Файл удаляется из списка
     m_filesList.removeLast();
-
-    // Имя файла удаляется из контролирующего списка
-    m_availableFilesName.remove(fileName);
   }
   else
   {

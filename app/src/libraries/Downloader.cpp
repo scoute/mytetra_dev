@@ -29,8 +29,11 @@ Downloader::Downloader()
   memoryFiles.clear();
   diskFilesNames.clear();
   isSuccessFlag=false;
+  downloadHasErrors=false;
   errorLog="";
   currentReferenceNum=-1;
+  lastRedirectUrl.clear();
+  redirectCount=0;
 
   colsName << tr("Url") << tr("%");
   downloadReferenceCol=0;
@@ -276,6 +279,11 @@ void Downloader::startNextDownload()
   currentReferenceNum++;
   QString currentReference=referencesList.at( currentReferenceNum );
 
+  // Состояние редиректов сбрасывается для каждой новой ссылки,
+  // иначе редирект одной ссылки влиял бы на обработку следующей
+  lastRedirectUrl.clear();
+  redirectCount=0;
+
   // Запуск загрузки
   qDebug() << "Start download" << currentReference;
   QNetworkRequest request(currentReference);
@@ -294,24 +302,41 @@ void Downloader::onFileDownloadFinished(QNetworkReply *reply)
   // Если при получении ответа не было ошибок сети
   if(reply->error() == QNetworkReply::NoError)
   {
-    // Определение, есть ли перенаправление (редирект) в ответе сервера
+    // Определение, есть ли перенаправление (редирект) в ответе сервера.
+    // Относительный адрес редиректа разрешается относительно запрошенного URL
     QVariant possibleRedirectUrl=reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    QUrl urlRedirectedTo=checkedRedirectUrl( possibleRedirectUrl.toUrl() );
 
     // Если есть перенаправление
-    if(!urlRedirectedTo.isEmpty())
+    if(!possibleRedirectUrl.toUrl().isEmpty())
     {
-      qDebug() << "Redirected to " << urlRedirectedTo.toString();
+      QUrl urlRedirectedTo=checkedRedirectUrl( reply->url().resolved( possibleRedirectUrl.toUrl() ) );
 
-      QNetworkRequest request(urlRedirectedTo);
-      networkReply=webManager.get(request); // В конце загрузки будет вызван слот onFileDownloadFinished()
-      reconnectSignalsNetworkReply(networkReply);
+      if(!urlRedirectedTo.isEmpty() && redirectCount<maxRedirectCount)
+      {
+        redirectCount++;
 
-      enableNextDownload=false;
+        qDebug() << "Redirected to " << urlRedirectedTo.toString();
+
+        QNetworkRequest request(urlRedirectedTo);
+        networkReply=webManager.get(request); // В конце загрузки будет вызван слот onFileDownloadFinished()
+        reconnectSignalsNetworkReply(networkReply);
+
+        enableNextDownload=false;
+      }
+      else
+      {
+        // Недопустимый редирект: повтор адреса, не-HTTP схема или слишком
+        // длинная цепочка. Тело такого ответа файлом не считается, ссылка
+        // пропускается с ошибкой, иначе вредоносный сервер мог бы зациклить
+        // загрузку или подсунуть локальный файл
+        addErrorLog("Bad redirect, download skipped: "+referencesList.at(currentReferenceNum));
+        downloadHasErrors=true;
+        isSuccessFlag=false;
+      }
     }
     else
     {
-      // Иначе перенаправления нет, и значит в ответе содержится принятый файл
+      // Перенаправления нет, и значит в ответе содержится принятый файл
 
       // Загруженные данные сохраняются в память
       if(downloadMode==memory)
@@ -336,8 +361,9 @@ void Downloader::onFileDownloadFinished(QNetworkReply *reply)
   else
   {
     qDebug() << reply->errorString();
-    addErrorLog("reply->errorString()");
+    addErrorLog(reply->errorString());
     isSuccessFlag=false; // Если с одним файлом была проблема, флаг успешной загрузки снимается для всех
+    downloadHasErrors=true;
   }
 
 
@@ -360,7 +386,10 @@ void Downloader::onFileDownloadFinished(QNetworkReply *reply)
 
       qDebug() << "All download successfull";
 
-      isSuccessFlag=true;
+      // Флаг успеха выставляется только если ни одна загрузка не завершилась
+      // ошибкой. Раньше он безусловно ставился в true и затирал ранее
+      // зафиксированные ошибки, и неуспешная закачка выглядела успешной
+      isSuccessFlag=!downloadHasErrors;
 
       emit accept(); // Программно закрывается окно диалога, как будто нажали Ok
     }
@@ -382,18 +411,21 @@ void Downloader::onDownloadProgress(qint64 read, qint64 total)
 }
 
 
-// Метод, отбрасывающий повторяющиеся ссылки при редиректе
-QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl) const
+// Метод, отбрасывающий повторяющиеся и недопустимые ссылки при редиректе.
+// Разрешаются только http и https: другие схемы (в частности file) никогда
+// не подставляются в запрос, иначе сервер мог бы подсунуть локальный файл
+QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
 {
-  static QUrl oldRedirectUrl;
   QUrl redirectUrl;
 
   if(!possibleRedirectUrl.isEmpty() &&
-     possibleRedirectUrl != oldRedirectUrl) {
-    redirectUrl = possibleRedirectUrl;
+     possibleRedirectUrl != lastRedirectUrl &&
+     (possibleRedirectUrl.scheme()=="http" || possibleRedirectUrl.scheme()=="https"))
+  {
+    redirectUrl=possibleRedirectUrl;
   }
 
-  oldRedirectUrl=redirectUrl;
+  lastRedirectUrl=redirectUrl;
 
   return redirectUrl;
 }
@@ -403,7 +435,12 @@ void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &error
 {
   Q_UNUSED( errors );
 
-  reply->ignoreSslErrors();
+  // SSL-ошибки игнорировать нельзя: невалидный сертификат может означать
+  // подмену сервера. Загрузка прерывается, ошибка фиксируется, а остальные
+  // ссылки обрабатываются обычным порядком через ветку ошибки ответа
+  downloadHasErrors=true;
+
+  reply->abort();
 }
 
 

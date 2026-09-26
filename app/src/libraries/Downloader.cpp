@@ -14,6 +14,7 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QApplication>
+#include <QSslSocket>
 
 #include "Downloader.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -23,6 +24,26 @@
 
 
 extern AppConfig mytetraConfig;
+
+
+// Проверка, способен ли TLS-бэкенд вообще проверять сертификаты.
+// Qt старше 5.15.8, собранный под OpenSSL 1.1, не умеет работать с OpenSSL 3
+// в рантайме: не резолвятся символы вроде SSL_get_peer_certificate, из-за чего
+// КАЖДОЕ https-соединение завершается ошибкой "The peer did not present any
+// certificate", даже с валидным сертификатом. Получить сертификат для проверки
+// в такой среде нельзя в принципе
+static bool isTlsVerificationBroken(void)
+{
+  // Строки вида "OpenSSL 1.1.1g 21 Apr 2020", мажорная версия - второе слово до точки
+  QString buildVersion=QSslSocket::sslLibraryBuildVersionString().section(' ', 1, 1).section('.', 0, 0);
+  QString runtimeVersion=QSslSocket::sslLibraryVersionString().section(' ', 1, 1).section('.', 0, 0);
+
+  // Комбинация "собран под 1.1, работает под 3.x" означает неработоспособную проверку
+  if(buildVersion=="1" && runtimeVersion.toInt()>=3)
+    return true;
+
+  return false;
+}
 
 
 Downloader::Downloader()
@@ -437,6 +458,26 @@ QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
 
 void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
+  // Если TLS-бэкенд в принципе не способен проверять сертификаты, прерывание
+  // ничего не защищает (сертификат получить нельзя вообще), а лишь ломает
+  // скачивание. Действуем как раньше, но явно пишем об этом в лог
+  if(isTlsVerificationBroken())
+  {
+    static bool verificationWarningShown=false;
+    if(!verificationWarningShown)
+    {
+      verificationWarningShown=true;
+      qWarning() << "TLS backend cannot verify certificates: built for"
+                 << QSslSocket::sslLibraryBuildVersionString()
+                 << "but runtime is"
+                 << QSslSocket::sslLibraryVersionString()
+                 << ". Downloads proceed without SSL verification.";
+    }
+
+    reply->ignoreSslErrors();
+    return;
+  }
+
   // Ошибки самоподписанных сертификатов игнорируются только если пользователь
   // явно разрешил это в настройках (нужно для сайтов с самоподписанными
   // сертификатами). Игнорируются точечно: только самоподписанность, а не

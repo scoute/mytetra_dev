@@ -57,7 +57,6 @@ private:
  QLineEdit *lineEdit;
  QCheckBox *mathCase;
  QCheckBox *wholeWords;
- QCheckBox *searchBackward;
  QPushButton *findButton;
  QPushButton *prevButton; // Перейти к предыдущему совпадению
  QPushButton *nextButton; // Перейти к следующему совпадению

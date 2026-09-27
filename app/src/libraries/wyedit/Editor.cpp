@@ -1449,8 +1449,9 @@ void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlag
     return;
   }
 
-  // Переход в направлении, заданном чекбоксом "Search backward"
-  goToFindMatch(!(flags & QTextDocument::FindBackward));
+  // Переход к следующему совпадению от курсора. Кнопка Find всегда
+  // идет вперед, для движения назад есть стрелка в диалоге
+  goToFindMatch(true);
 }
 
 

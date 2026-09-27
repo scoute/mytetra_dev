@@ -31,14 +31,12 @@ void EditorFindDialog::setup_ui(void)
 
   mathCase=new QCheckBox(tr("&Case sensitive"));
   wholeWords=new QCheckBox(tr("&Whole words only"));
-  searchBackward=new QCheckBox(tr("Search &backward"));
 
   findButton=new QPushButton(tr("&Find"));
   findButton->setDefault(true);
   findButton->setEnabled(false);
 
-  // Кнопки перехода между совпадениями. Отдельно от Find, чтобы явно
-  // задавать направление независимо от чекбокса "Search backward"
+  // Кнопки перехода между совпадениями задают направление явно стрелками
   prevButton=new QPushButton(QString::fromUtf8("\u25C0"));
   prevButton->setToolTip(tr("Previous match"));
   prevButton->setEnabled(false);
@@ -76,9 +74,6 @@ void EditorFindDialog::setup_signals(void)
   connect(wholeWords, &QCheckBox::toggled,
            this,      &EditorFindDialog::emit_highlight);
 
-  connect(searchBackward, &QCheckBox::toggled,
-           this,          &EditorFindDialog::emit_highlight);
-
   connect(findButton, &QPushButton::clicked,
           this,       &EditorFindDialog::find_clicked);
 
@@ -107,7 +102,6 @@ void EditorFindDialog::assembly(void)
   centralLayout->addLayout(findLineLayout);
   centralLayout->addWidget(mathCase);
   centralLayout->addWidget(wholeWords);
-  centralLayout->addWidget(searchBackward);
   
   this->setLayout(centralLayout);
 
@@ -145,13 +139,14 @@ void EditorFindDialog::inbase_clicked(void)
 }
 
 
-// Флаги поиска, собранные из состояния чекбоксов
+// Флаги поиска, собранные из состояния чекбоксов.
+// Направление задают стрелки перехода, поэтому флага назад здесь нет:
+// кнопка Find всегда идет вперед
 QTextDocument::FindFlags EditorFindDialog::collectFlags(void) const
 {
   QTextDocument::FindFlags flags=0;
-  if(mathCase->isChecked())      flags|=QTextDocument::FindCaseSensitively;
-  if(wholeWords->isChecked())    flags|=QTextDocument::FindWholeWords;
-  if(searchBackward->isChecked())flags|=QTextDocument::FindBackward;
+  if(mathCase->isChecked())   flags|=QTextDocument::FindCaseSensitively;
+  if(wholeWords->isChecked()) flags|=QTextDocument::FindWholeWords;
 
   return flags;
 }
@@ -191,7 +186,6 @@ void EditorFindDialog::setSearchFlags(QTextDocument::FindFlags flags)
   // через toggled. Это безвредно: итоговый пересчет даст setSearchText
   mathCase->setChecked(flags & QTextDocument::FindCaseSensitively);
   wholeWords->setChecked(flags & QTextDocument::FindWholeWords);
-  searchBackward->setChecked(flags & QTextDocument::FindBackward);
 }
 
 

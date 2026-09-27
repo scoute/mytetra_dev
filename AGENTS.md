@@ -105,9 +105,13 @@ feature-веток вливаются в `experimental`. Upstream — `xintrea/m
 - **Qt 5.15.2 + OpenSSL 3 в рантайме = проверка сертов мертва.** Qt собран под
   OpenSSL 1.1.1, символы вроде `SSL_get_peer_certificate` не резолвятся, и
   КАЖДОЕ https-соединение дает `QSslError::NoPeerCertificate` ("The peer did
-  not present any certificate"), даже с валидным сертом. `Downloader::onSslErrors`
-  учитывает это явно (см. `isTlsVerificationBroken`): abort там ничего не
-  защищает, а лишь ломает скачивание.
+  not present any certificate"), даже с валидным сертом. Валидный,
+  самоподписанный и подмененный серты неразличимы. Поэтому
+  `Downloader::onSslErrors` в такой среде отдает решение галочке
+  `ignoreSelfSignedSslErrors` (см. `isTlsVerificationBroken`): выключена -
+  блокировать все https, включена - качать с предупреждением в лог.
+  На здоровом бэкенде действует строгая политика с точечным игнором
+  только самоподписанности.
 - **Границы в `QList`/`QVector`**: `at()` не бросает исключение, а срабатывает
   assert и завершает процесс с кодом 134. Индекс нужно проверять до обращения.
   На этом уже падали `RecordTableData` и `MainWindow::messageHandler`.

@@ -8,6 +8,7 @@
 #include <QGestureEvent>
 
 #include "KnowTreeView.h"
+#include "KnowTreeDelegate.h"
 #include "TreeScreen.h"
 #include "libraries/ClipboardRecords.h"
 #include "libraries/GlobalParameters.h"
@@ -31,6 +32,10 @@ KnowTreeView::KnowTreeView(QWidget *parent) : QTreeView(parent)
     // Разрешение принимать Drop-события
     setAcceptDrops(true);
     setDropIndicatorShown(true);
+
+    // Делегат подсвечивает вырезанную ветку желтой подложкой.
+    // Видом владеет, удалится автоматически
+    setItemDelegate(new KnowTreeDelegate(this));
 
     // Разрешение принимать жест QTapAndHoldGesture
     grabGesture(Qt::TapAndHoldGesture);

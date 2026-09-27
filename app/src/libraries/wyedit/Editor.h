@@ -13,7 +13,7 @@
 #include <QSlider>
 #include <QStringList>
 
-#include "EditorFindDialog.h"
+#include "EditorFindBar.h"
 #include "formatters/Formatter.h"
 #include "formatters/PlacementFormatter.h"
 #include "formatters/TypefaceFormatter.h"
@@ -112,7 +112,7 @@ public:
  void saveTextarea();
 
  // Запуск поиска из внешнего кода (из глобального поиска): запрос кладется
- // в диалог, подсвечивается, переход к первому совпадению, диалог показывается
+ // в полоску, подсвечивается, переход к первому совпадению, полоска показывается
  void startFind(const QString &text, QTextDocument::FindFlags flags);
  bool saveTextareaText();
  bool saveTextareaImages(int mode);
@@ -173,7 +173,7 @@ signals:
 
  void wyeditFindInBaseClicked();
 
- // Уход в глобальный поиск с текстом запроса из диалога поиска в заметке
+ // Уход в глобальный поиск с текстом запроса из полоски поиска в заметке
  void wyeditFindInBaseWithText(const QString &text);
 
  void updateIndentsliderToActualFormat();
@@ -212,7 +212,7 @@ private slots:
   void onFindPrevious(void);
   void onFindNext(void);
   void onFindHighlight(const QString &text, QTextDocument::FindFlags flags);
-  void onFindDialogHidden(void);
+  void onFindBarHidden(void);
   void onFindDocumentChanged(void);
   void onFindInBaseDialog(const QString &text);
 
@@ -281,7 +281,7 @@ private slots:
 
  int viewMode; // Режим отображения редактора - WYEDIT_DESKTOP_MODE или WYEDIT_MOBILE_MODE
 
-  EditorFindDialog *findDialog; // Виджет поиска
+  EditorFindBar *findBar; // Полоска поиска
 
   // Состояние поиска в тексте текущей записи. Список совпадений
   // пересчитывается при смене запроса, опций и правке текста

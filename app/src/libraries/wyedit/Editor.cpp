@@ -143,12 +143,11 @@ void Editor::init(int mode)
   editorConfig=new EditorConfig(initDataConfigFileName, this);
   editorConfig->setObjectName("editorconfig");
 
-  // Создается виджет поиска, обязательно нужно указать parent чтобы
-  // могли применяться флаги окна.
-  // Виджет будет постоянно включен параллельно с работой редактора.
-  // Только будет либо виден, либо невиден.
-  findDialog=new EditorFindDialog(this);
-  findDialog->hide();
+  // Создается полоска поиска, обязательно нужно указать parent чтобы
+  // она встроилась в layout редактора. Полоска постоянно живет параллельно
+  // с работой редактора. Только будет либо видна, либо невидна
+  findBar=new EditorFindBar(this);
+  findBar->setVisible(false);
 
   // Создаётся контекстное меню
   editorContextMenu=new EditorContextMenu(this);
@@ -442,28 +441,28 @@ void Editor::setupSignals(void)
           typefaceFormatter, &TypefaceFormatter::onUpperCase,
           Qt::DirectConnection);
 
-  // Вызов диалога поиска в тексте
-  connect(findDialog, &EditorFindDialog::find_text,
+  // Вызов полоски поиска в тексте
+  connect(findBar, &EditorFindBar::find_text,
           this,       &Editor::onFindtextSignalDetect,
           Qt::DirectConnection);
 
-  connect(findDialog, &EditorFindDialog::find_previous,
+  connect(findBar, &EditorFindBar::find_previous,
           this,       &Editor::onFindPrevious,
           Qt::DirectConnection);
 
-  connect(findDialog, &EditorFindDialog::find_next,
+  connect(findBar, &EditorFindBar::find_next,
           this,       &Editor::onFindNext,
           Qt::DirectConnection);
 
-  connect(findDialog, &EditorFindDialog::highlight_text,
+  connect(findBar, &EditorFindBar::highlight_text,
           this,       &Editor::onFindHighlight,
           Qt::DirectConnection);
 
-  connect(findDialog, &EditorFindDialog::find_dialog_hidden,
-          this,       &Editor::onFindDialogHidden,
+  connect(findBar, &EditorFindBar::find_bar_hidden,
+          this,       &Editor::onFindBarHidden,
           Qt::DirectConnection);
 
-  connect(findDialog, &EditorFindDialog::find_in_base,
+  connect(findBar, &EditorFindBar::find_in_base,
           this,       &Editor::onFindInBaseDialog,
           Qt::DirectConnection);
 
@@ -673,6 +672,10 @@ void Editor::assembly(void)
   }
   else
     indentSliderAssistant->setVisible(false);
+
+  // Добавляется полоска поиска прямо над областью редактирования:
+  // она живет между списком заметок и их содержимым
+  buttonsAndEditLayout->insertWidget(buttonsAndEditLayout->indexOf(textArea), findBar);
 
   // Добавляется область редактирования
   buttonsAndEditLayout->addWidget(textArea);
@@ -1234,6 +1237,16 @@ void Editor::onCursorPositionChanged(void)
 // Событие отлавливает нажатия клавиш
 void Editor::keyPressEvent(QKeyEvent *event)
 {
+  // Esc при видимой полоске поиска прячет ее (с фокусом в тексте сюда
+  // доходят только необработанные клавиши, Esc текст не обрабатывает).
+  // Esc в поле ввода полоски обрабатывает сама полоска через фильтр событий
+  if(event->key()==Qt::Key_Escape && findBar->isVisible())
+  {
+    findBar->hideBar();
+    event->accept();
+    return;
+  }
+
   if(editorToolBarAssistant->isKeyForToolLineUpdate(event))
     editorToolBarAssistant->updateToActualFormat();
 
@@ -1394,31 +1407,37 @@ void Editor::onShowhtmlClicked(void)
 
 void Editor::onFindtextClicked(void)
 {
-  findDialog->show();
-  findDialog->activateWindow();
+  // Повторный Ctrl+F при видимой полоске ищет дальше,
+  // а не открывает еще один поиск
+  if(findBar->isVisible())
+  {
+    onFindNext();
+    return;
+  }
 
-  // Если в диалоге остался текст прошлого поиска, подсветка восстанавливается
-  if(!findDialog->searchText().isEmpty())
-    onFindHighlight(findDialog->searchText(), findDialog->searchFlags());
+  findBar->showBar();
+
+  // Если в полоске остался текст прошлого поиска, подсветка восстанавливается
+  if(!findBar->searchText().isEmpty())
+    onFindHighlight(findBar->searchText(), findBar->searchFlags());
 }
 
 
 // Запуск поиска из внешнего кода (из глобального поиска).
 // Установка текста сама обновляет подсветку через textChanged,
-// дальше переход к первому совпадению и показ диалога со счетчиком
+// дальше переход к первому совпадению и показ полоски со счетчиком
 void Editor::startFind(const QString &text, QTextDocument::FindFlags flags)
 {
-  findDialog->setSearchFlags(flags);
-  findDialog->setSearchText(text);
+  findBar->setSearchFlags(flags);
+  findBar->setSearchText(text);
 
   onFindNext();
 
-  findDialog->show();
-  findDialog->activateWindow();
+  findBar->showBar();
 }
 
 
-// Кнопка "Find in base" в диалоге поиска: запрос уходит в глобальный поиск.
+// Кнопка "Find in base" в полоске поиска: запрос уходит в глобальный поиск.
 // Сигнал подхватывает главное окно и открывает FindScreen с этим текстом
 void Editor::onFindInBaseDialog(const QString &text)
 {
@@ -1438,10 +1457,10 @@ void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlag
 
   highlightFindMatches();
 
-  // Совпадений нет: прежнее поведение - диалог прячется, выводится сообщение
+  // Совпадений нет: прежнее поведение - полоска прячется, выводится сообщение
   if(findMatches.isEmpty())
   {
-    findDialog->hide();
+    findBar->hideBar();
     QMessageBox::information(this,
                              tr("Search result"),
                              tr("String '<b>")+text+tr("</b>' not found"),
@@ -1450,12 +1469,12 @@ void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlag
   }
 
   // Переход к следующему совпадению от курсора. Кнопка Find всегда
-  // идет вперед, для движения назад есть стрелка в диалоге
+  // идет вперед, для движения назад есть стрелка в полоске
   goToFindMatch(true);
 }
 
 
-// Переход к соседним совпадениям стрелками диалога. Без совпадений
+// Переход к соседним совпадениям стрелками полоски. Без совпадений
 // молча ничего не делает: счетчик уже показывает отсутствие результата
 void Editor::onFindPrevious(void)
 {
@@ -1480,9 +1499,9 @@ void Editor::onFindHighlight(const QString &text, QTextDocument::FindFlags flags
 }
 
 
-// Диалог скрыт: подсветка снимается, запрос забывается, чтобы правка
+// Полоска спрятана: подсветка снимается, запрос забывается, чтобы правка
 // текста не пересчитывала совпадения невидимого поиска
-void Editor::onFindDialogHidden(void)
+void Editor::onFindBarHidden(void)
 {
   clearFindMatches();
 }
@@ -1592,27 +1611,27 @@ void Editor::clearFindMatches(void)
 
   textArea->setExtraSelections(QList<QTextEdit::ExtraSelection>());
 
-  findDialog->setMatchCounter("");
+  findBar->setMatchCounter("");
 }
 
 
-// Обновить счетчик вида "2 of 5" в диалоге поиска
+// Обновить счетчик вида "2 of 5" в полоске поиска
 void Editor::updateFindCounter(void)
 {
   if(findQuery.isEmpty())
   {
-    findDialog->setMatchCounter("");
+    findBar->setMatchCounter("");
     return;
   }
 
   if(findMatches.isEmpty())
   {
-    findDialog->setMatchCounter(tr("No matches"));
+    findBar->setMatchCounter(tr("No matches"));
     return;
   }
 
   // Индекс -1 означает что курсор еще не стоит ни на одном совпадении
-  findDialog->setMatchCounter(tr("%1 of %2").arg(findCurrentIndex+1).arg(findMatches.size()));
+  findBar->setMatchCounter(tr("%1 of %2").arg(findCurrentIndex+1).arg(findMatches.size()));
 }
 
 

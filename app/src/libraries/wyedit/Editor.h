@@ -219,6 +219,8 @@ private slots:
   void onFindBarHidden(void);
   void onFindDocumentChanged(void);
   void onFindInBaseDialog(const QString &text);
+  void onReplaceOne(const QString &text, const QString &replacement, QTextDocument::FindFlags flags);
+  void onReplaceAll(const QString &text, const QString &replacement, QTextDocument::FindFlags flags);
 
   // Отложенный пересчет подсветки через таймер нулевой задержки
   void rehighlightFindMatches(void);

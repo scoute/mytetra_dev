@@ -16,8 +16,9 @@ EditorFindBar::EditorFindBar(QWidget *parent) : QWidget(parent)
   setup_signals();
   assembly();
 
-  // Поле ввода само сообщает о спецклавишах через фильтр событий
+  // Поля ввода сами сообщают о спецклавишах через фильтр событий
   lineEdit->installEventFilter(this);
+  replaceEdit->installEventFilter(this);
 }
 
 
@@ -30,6 +31,19 @@ void EditorFindBar::setup_ui(void)
 
   mathCase=new QCheckBox(tr("&Case sensitive"));
   wholeWords=new QCheckBox(tr("&Whole words only"));
+
+  // Поле замены живет в той же строке полоски: отдельное окно не нужно.
+  // Пустое поле означает удаление совпадения
+  replaceEdit=new QLineEdit();
+  replaceEdit->setMinimumWidth(120);
+  replaceEdit->setClearButtonEnabled(true);
+  replaceEdit->setPlaceholderText(tr("Replace with"));
+
+  replaceButton=new QPushButton(tr("&Replace"));
+  replaceButton->setEnabled(false);
+
+  replaceAllButton=new QPushButton(tr("Replace &all"));
+  replaceAllButton->setEnabled(false);
 
   findButton=new QPushButton(tr("&Find"));
   findButton->setDefault(true);
@@ -83,6 +97,12 @@ void EditorFindBar::setup_signals(void)
   connect(nextButton, &QPushButton::clicked,
           this,       &EditorFindBar::next_clicked);
 
+  connect(replaceButton, &QPushButton::clicked,
+          this,          &EditorFindBar::replace_clicked);
+
+  connect(replaceAllButton, &QPushButton::clicked,
+          this,             &EditorFindBar::replace_all_clicked);
+
   connect(inbaseButton, &QPushButton::clicked,
           this,         &EditorFindBar::inbase_clicked);
 
@@ -104,6 +124,9 @@ void EditorFindBar::assembly(void)
   centralLayout->addWidget(matchCounter);
   centralLayout->addWidget(mathCase);
   centralLayout->addWidget(wholeWords);
+  centralLayout->addWidget(replaceEdit);
+  centralLayout->addWidget(replaceButton);
+  centralLayout->addWidget(replaceAllButton);
   centralLayout->addWidget(inbaseButton);
   centralLayout->addWidget(closeButton);
 
@@ -129,6 +152,20 @@ void EditorFindBar::prev_clicked(void)
 void EditorFindBar::next_clicked(void)
 {
   emit find_next();
+}
+
+
+// Замена текущего совпадения или всех совпадений.
+// Редактор сам разберется что делать если совпадений нет
+void EditorFindBar::replace_clicked(void)
+{
+  emit replace_one(lineEdit->text(), replaceEdit->text(), collectFlags());
+}
+
+
+void EditorFindBar::replace_all_clicked(void)
+{
+  emit replace_all(lineEdit->text(), replaceEdit->text(), collectFlags());
 }
 
 
@@ -219,8 +256,9 @@ void EditorFindBar::hideBar(void)
 }
 
 
-// Кнопки поиска, перехода и ухода в базу активны только тогда,
-// когда есть текст для поиска
+// Кнопки поиска, перехода, замены и ухода в базу активны только тогда,
+// когда есть текст для поиска. Текст замены при этом может быть пустым:
+// пустая замена означает удаление совпадения
 void EditorFindBar::enable_find_button(const QString &text)
 {
   bool enable=!text.isEmpty();
@@ -228,24 +266,34 @@ void EditorFindBar::enable_find_button(const QString &text)
   findButton->setEnabled(enable);
   prevButton->setEnabled(enable);
   nextButton->setEnabled(enable);
+  replaceButton->setEnabled(enable);
+  replaceAllButton->setEnabled(enable);
   inbaseButton->setEnabled(enable);
 }
 
 
 bool EditorFindBar::eventFilter(QObject *watched, QEvent *event)
 {
-  if(watched==lineEdit && event->type()==QEvent::KeyPress)
+  if(event->type()==QEvent::KeyPress &&
+     (watched==lineEdit || watched==replaceEdit))
   {
     QKeyEvent *keyEvent=static_cast<QKeyEvent *>(event);
 
-    // Enter ищет дальше, Shift+Enter ищет назад: повторный Ctrl+F
-    // тоже сводится к переходу, см. Editor::onFindtextClicked
+    // Enter в поле поиска ищет дальше, в поле замены заменяет текущее
     if(keyEvent->key()==Qt::Key_Return || keyEvent->key()==Qt::Key_Enter)
     {
-      if(keyEvent->modifiers() & Qt::ShiftModifier)
+      if(watched==replaceEdit)
+      {
+        emit replace_one(lineEdit->text(), replaceEdit->text(), collectFlags());
+      }
+      else if(keyEvent->modifiers() & Qt::ShiftModifier)
+      {
         emit find_previous();
+      }
       else
+      {
         emit find_next();
+      }
 
       return true;
     }

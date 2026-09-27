@@ -467,6 +467,14 @@ void Editor::setupSignals(void)
           this,       &Editor::onFindInBaseDialog,
           Qt::DirectConnection);
 
+  connect(findBar, &EditorFindBar::replace_one,
+          this,       &Editor::onReplaceOne,
+          Qt::DirectConnection);
+
+  connect(findBar, &EditorFindBar::replace_all,
+          this,       &Editor::onReplaceAll,
+          Qt::DirectConnection);
+
   // Правка текста делает список совпадений устаревшим, подсветка обновляется
   connect(textArea->document(), &QTextDocument::contentsChanged,
           this,                &Editor::onFindDocumentChanged,
@@ -1450,6 +1458,135 @@ EditorFindBar *Editor::findBarWidget(void)
 void Editor::onFindInBaseDialog(const QString &text)
 {
   emit wyeditFindInBaseWithText(text);
+}
+
+
+// Замена текущего совпадения в заметке. Если курсор уже стоит
+// на подсвеченном совпадении, оно заменяется и курсор встает
+// на следующее. Иначе курсор просто встает на следующее совпадение
+// без замены: классическое поведение кнопки Replace
+void Editor::onReplaceOne(const QString &text, const QString &replacement, QTextDocument::FindFlags flags)
+{
+  if(text.isEmpty())
+    return;
+
+  // Позиция курсора запоминается ДО пересчета: пересчет сбрасывает
+  // индекс текущего совпадения, а решение о замене зависит от того,
+  // стоял ли курсор ровно на подсвеченном совпадении
+  QTextCursor areaBefore=textArea->textCursor();
+  int savedStart=areaBefore.selectionStart();
+  int savedEnd=areaBefore.selectionEnd();
+  bool hadSelection=areaBefore.hasSelection();
+
+  findQuery=text;
+  findFlags=flags;
+
+  highlightFindMatches();
+
+  if(findMatches.isEmpty())
+    return;
+
+  // Поиск совпадения под запомненной позицией курсора
+  int target=-1;
+  if(hadSelection)
+  {
+    for(int i=0; i<findMatches.size(); ++i)
+    {
+      QTextCursor match=findMatches.at(i);
+
+      if(match.selectionStart()==savedStart &&
+         match.selectionEnd()==savedEnd)
+      {
+        target=i;
+        break;
+      }
+    }
+  }
+
+  // Курсор не на совпадении: встать на следующее, ничего не меняя
+  if(target<0)
+  {
+    goToFindMatch(true);
+    return;
+  }
+
+  // Замена текущего совпадения. Правка идет через документ,
+  // поэтому отмена работает штатным Ctrl+Z, а подсветка пересчитается
+  // отложенным событием от contentsChanged плюс прямым вызовом ниже
+  QTextCursor replaceCursor=findMatches.at(target);
+  textArea->setTextCursor(replaceCursor);
+
+  QTextCursor editCursor=textArea->textCursor();
+  editCursor.insertText(replacement);
+  textArea->setTextCursor(editCursor);
+
+  int afterEdit=editCursor.position();
+
+  // Документ после правки цел (слот вызван кнопкой, а не из
+  // contentsChanged), прямой пересчет безопасен
+  highlightFindMatches();
+
+  if(findMatches.isEmpty())
+    return;
+
+  // Встать на ближайшее совпадение после места замены.
+  // Индекс подгоняется так, чтобы штатный переход дал именно его
+  int next=0;
+  while(next<findMatches.size() &&
+        findMatches.at(next).selectionStart()<afterEdit)
+  {
+    next++;
+  }
+
+  if(next>=findMatches.size())
+    next=0; // Дальше совпадений нет, зациклиться на первое
+
+  findCurrentIndex=(next-1+findMatches.size())%findMatches.size();
+
+  goToFindMatch(true);
+}
+
+
+// Замена всех совпадений в заметке одним блоком правки:
+// вся замена отменяется одним Ctrl+Z
+void Editor::onReplaceAll(const QString &text, const QString &replacement, QTextDocument::FindFlags flags)
+{
+  if(text.isEmpty())
+    return;
+
+  findQuery=text;
+  findFlags=flags;
+
+  QTextDocument *doc=textArea->document();
+
+  // Сбор совпадений всегда идет вперед от начала документа,
+  // направление здесь не учитывается как и в подсветке
+  QTextDocument::FindFlags useFlags=flags & ~QTextDocument::FindBackward;
+
+  int replaceCount=0;
+
+  QTextCursor cursor(doc);
+  cursor.beginEditBlock();
+  while(true)
+  {
+    cursor=doc->find(text, cursor, useFlags);
+
+    if(cursor.isNull())
+      break;
+
+    cursor.insertText(replacement);
+    replaceCount++;
+
+    // После вставки курсор стоит после вставленного текста без выделения,
+    // следующий поиск идет строго вперед: зацикливания нет даже если
+    // замена содержит искомый текст
+  }
+  cursor.endEditBlock();
+
+  highlightFindMatches();
+
+  if(replaceCount>0)
+    findBar->setMatchCounter(tr("Replaced %1").arg(replaceCount));
 }
 
 

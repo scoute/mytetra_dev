@@ -1437,6 +1437,13 @@ void Editor::startFind(const QString &text, QTextDocument::FindFlags flags)
 }
 
 
+// Виджет полоски поиска для встраивания в сетку MetaEditor
+EditorFindBar *Editor::findBarWidget(void)
+{
+  return findBar;
+}
+
+
 // Кнопка "Find in base" в полоске поиска: запрос уходит в глобальный поиск.
 // Сигнал подхватывает главное окно и открывает FindScreen с этим текстом
 void Editor::onFindInBaseDialog(const QString &text)

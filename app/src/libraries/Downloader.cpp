@@ -458,23 +458,39 @@ QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
 
 void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
-  // Если TLS-бэкенд в принципе не способен проверять сертификаты, прерывание
-  // ничего не защищает (сертификат получить нельзя вообще), а лишь ломает
-  // скачивание. Действуем как раньше, но явно пишем об этом в лог
+  // Особый случай битого TLS-бэкенда (см. isTlsVerificationBroken): в такой
+  // среде Qt не различает валидный серт, самоподписанный и подмену - на все
+  // одна ошибка NoPeerCertificate. Поэтому здесь галочка настроек работает
+  // как главный рубильник: выключена - строго блокировать, включена - качать
+  // с явным предупреждением в лог
   if(isTlsVerificationBroken())
   {
-    static bool verificationWarningShown=false;
-    if(!verificationWarningShown)
+    if(mytetraConfig.getIgnoreSelfSignedSslErrors())
     {
-      verificationWarningShown=true;
-      qWarning() << "TLS backend cannot verify certificates: built for"
-                 << QSslSocket::sslLibraryBuildVersionString()
-                 << "but runtime is"
-                 << QSslSocket::sslLibraryVersionString()
-                 << ". Downloads proceed without SSL verification.";
+      static bool verificationWarningShown=false;
+      if(!verificationWarningShown)
+      {
+        verificationWarningShown=true;
+        qWarning() << "TLS backend cannot verify certificates: built for"
+                   << QSslSocket::sslLibraryBuildVersionString()
+                   << "but runtime is"
+                   << QSslSocket::sslLibraryVersionString()
+                   << ". Downloads proceed without SSL verification.";
+      }
+
+      reply->ignoreSslErrors();
+      return;
     }
 
-    reply->ignoreSslErrors();
+    // Проверка невозможна, а обход пользователем не разрешен: загрузка
+    // блокируется. Пояснение пишется в лог, иначе в диалоге будет только
+    // cryptic "Operation canceled" без понятной причины
+    addErrorLog("Download blocked: server certificate cannot be verified "
+                "in this environment, and unverified downloads are disabled "
+                "in settings.");
+    downloadHasErrors=true;
+
+    reply->abort();
     return;
   }
 

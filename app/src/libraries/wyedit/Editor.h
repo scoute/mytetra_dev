@@ -220,6 +220,9 @@ private slots:
   void onFindDocumentChanged(void);
   void onFindInBaseDialog(const QString &text);
 
+  // Отложенный пересчет подсветки через таймер нулевой задержки
+  void rehighlightFindMatches(void);
+
  // Открытие контекстного меню
  void onCustomContextMenuRequested(const QPoint &pos);
 
@@ -293,6 +296,10 @@ private slots:
   QTextDocument::FindFlags findFlags;
   QList<QTextCursor> findMatches;
   int findCurrentIndex=-1; // Индекс текущего совпадения, -1 если курсор не на совпадении
+
+  // Флаг что пересчет подсветки уже стоит в очереди событий.
+  // Нужен чтобы серия правок давала один пересчет, а не по одному на клавишу
+  bool findRehighlightPending=false;
 
  bool expandEditAreaFlag; // Распахнуто ли на максимум окно редактора
 

@@ -18,6 +18,7 @@
 #include <QColor>
 #include <QtGlobal>
 #include <QApplication>
+#include <QTimer>
 
 #include "Editor.h"
 #include "EditorConfig.h"
@@ -1514,9 +1515,33 @@ void Editor::onFindBarHidden(void)
 }
 
 
-// Текст записи изменен: если идет поиск, совпадения пересчитываются
+// Текст записи изменен: если идет поиск, совпадения пересчитываются.
+// Пересчет именно отложенный через очередь событий, а не прямой: сигнал
+// contentsChanged приходит и посреди загрузки текста (setHtml разбирает
+// документ по частям), а поиск и подсветка по недособранному документу
+// портят его внутреннее состояние и роняют программу при открытии
+// следующей записи. Отложенный вызов срабатывает когда документ уже цел.
+// Заодно серия правок дает один пересчет вместо пересчета на клавишу
 void Editor::onFindDocumentChanged(void)
 {
+  if(findQuery.isEmpty())
+    return;
+
+  if(findRehighlightPending)
+    return;
+
+  findRehighlightPending=true;
+
+  QTimer::singleShot(0, this, &Editor::rehighlightFindMatches);
+}
+
+
+// Отложенный пересчет подсветки после правки или загрузки текста
+void Editor::rehighlightFindMatches(void)
+{
+  findRehighlightPending=false;
+
+  // Пока событие ждало очереди, поиск могли закрыть
   if(findQuery.isEmpty())
     return;
 

@@ -29,6 +29,11 @@ public:
   // в запись сразу запускать поиск по заметке с тем же запросом
   void setLastSearch(const QString &query, QTextDocument::FindFlags flags);
 
+  // Агрегация счетчиков строк веток: каждая ветка показывает суммарные
+  // совпадения по всему своему поддереву (свое имя + прямые записи +
+  // итоги дочерних веток). Вызывается один раз после конца поиска
+  void aggregateBranchCounts(void);
+
 private slots:
 
   // void selectCell(int row, int column);

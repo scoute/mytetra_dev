@@ -488,6 +488,10 @@ void FindScreen::findStart(void)
     //Вызывается рекурсивный поиск в дереве
     this->findRecurse( startItem );
 
+    // Строки веток показывают суммарные совпадения по своему поддереву,
+    // а не только по имени. Считается после конца поиска снизу вверх
+    findTable->aggregateBranchCounts();
+
     // После вставки всех данных подгоняется ширина колонок
     findTable->updateColumnsWidth();
 

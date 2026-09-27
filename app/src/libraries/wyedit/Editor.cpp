@@ -463,6 +463,10 @@ void Editor::setupSignals(void)
           this,       &Editor::onFindDialogHidden,
           Qt::DirectConnection);
 
+  connect(findDialog, &EditorFindDialog::find_in_base,
+          this,       &Editor::onFindInBaseDialog,
+          Qt::DirectConnection);
+
   // Правка текста делает список совпадений устаревшим, подсветка обновляется
   connect(textArea->document(), &QTextDocument::contentsChanged,
           this,                &Editor::onFindDocumentChanged,
@@ -1399,7 +1403,31 @@ void Editor::onFindtextClicked(void)
 }
 
 
+// Запуск поиска из внешнего кода (из глобального поиска).
+// Установка текста сама обновляет подсветку через textChanged,
+// дальше переход к первому совпадению и показ диалога со счетчиком
+void Editor::startFind(const QString &text, QTextDocument::FindFlags flags)
+{
+  findDialog->setSearchFlags(flags);
+  findDialog->setSearchText(text);
+
+  onFindNext();
+
+  findDialog->show();
+  findDialog->activateWindow();
+}
+
+
+// Кнопка "Find in base" в диалоге поиска: запрос уходит в глобальный поиск.
+// Сигнал подхватывает главное окно и открывает FindScreen с этим текстом
+void Editor::onFindInBaseDialog(const QString &text)
+{
+  emit wyeditFindInBaseWithText(text);
+}
+
+
 // Слот, принимающий данные от окна поиска текста.
+// Подсвечивает все совпадения и переходит к следующему от курсора.
 // Подсвечивает все совпадения и переходит к следующему от курсора
 void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags)
 {

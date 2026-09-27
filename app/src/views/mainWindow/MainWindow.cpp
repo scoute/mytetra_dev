@@ -162,6 +162,11 @@ void MainWindow::setupSignals(void)
         connect(editorScreen, &MetaEditor::wyeditFindInBaseClicked, this, &MainWindow::toolsFindInBase);
     }
 
+    // Кнопка "Find in base" в диалоге поиска по заметке: открывает
+    // глобальный поиск с текстом запроса. Для обоих интерфейсов,
+    // т.к. диалог поиска одинаковый
+    connect(editorScreen, &MetaEditor::wyeditFindInBaseWithText, this, &MainWindow::toolsFindInBaseWithText);
+
     // Вызов окна просмотра лога
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
@@ -906,6 +911,19 @@ void MainWindow::toolsFindInBase(void)
         findScreenRel->widgetShow();
     else
         findScreenRel->widgetHide();
+}
+
+
+// Открытие глобального поиска с запросом из поиска по заметке.
+// Если виджет был скрыт - показывается, запрос выполняется сразу
+void MainWindow::toolsFindInBaseWithText(const QString &text)
+{
+    FindScreen *findScreenRel=find_object<FindScreen>("findScreenDisp");
+
+    if( !(findScreenRel->isVisible()) )
+        findScreenRel->widgetShow();
+
+    findScreenRel->setFindText(text);
 }
 
 

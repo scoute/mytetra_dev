@@ -51,6 +51,12 @@ void EditorFindDialog::setup_ui(void)
   matchCounter=new QLabel();
   matchCounter->setMinimumWidth(60);
 
+  // Кнопка ухода в глобальный поиск с текущим запросом.
+  // Мост между поиском в заметке и поиском по базе
+  inbaseButton=new QPushButton(tr("Find in base"));
+  inbaseButton->setToolTip(tr("Search this text in the whole base"));
+  inbaseButton->setEnabled(false);
+
   this->setWindowTitle(tr("Find in the text"));
 }
 
@@ -81,6 +87,9 @@ void EditorFindDialog::setup_signals(void)
 
   connect(nextButton, &QPushButton::clicked,
           this,       &EditorFindDialog::next_clicked);
+
+  connect(inbaseButton, &QPushButton::clicked,
+          this,         &EditorFindDialog::inbase_clicked);
 }
 
 
@@ -92,6 +101,7 @@ void EditorFindDialog::assembly(void)
   findLineLayout->addWidget(prevButton);
   findLineLayout->addWidget(nextButton);
   findLineLayout->addWidget(matchCounter);
+  findLineLayout->addWidget(inbaseButton);
 
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(findLineLayout);
@@ -123,6 +133,15 @@ void EditorFindDialog::prev_clicked(void)
 void EditorFindDialog::next_clicked(void)
 {
   emit find_next();
+}
+
+
+// Уход в глобальный поиск: запрос передается наружу как есть.
+// Флаги не передаются: в глобальном поиске свои режимы (целые слова
+// или подстрока), а регистр там всегда нечувствительный
+void EditorFindDialog::inbase_clicked(void)
+{
+  emit find_in_base(lineEdit->text());
 }
 
 
@@ -158,13 +177,32 @@ QTextDocument::FindFlags EditorFindDialog::searchFlags(void) const
 }
 
 
+// Установить текст и флаги извне. Изменение текста само обновляет
+// подсветку через textChanged, двигать курсор не надо
+void EditorFindDialog::setSearchText(const QString &text)
+{
+  lineEdit->setText(text);
+}
+
+
+void EditorFindDialog::setSearchFlags(QTextDocument::FindFlags flags)
+{
+  // Переключение чекбоксов само дает промежуточные пересчеты подсветки
+  // через toggled. Это безвредно: итоговый пересчет даст setSearchText
+  mathCase->setChecked(flags & QTextDocument::FindCaseSensitively);
+  wholeWords->setChecked(flags & QTextDocument::FindWholeWords);
+  searchBackward->setChecked(flags & QTextDocument::FindBackward);
+}
+
+
 void EditorFindDialog::setMatchCounter(const QString &text)
 {
   matchCounter->setText(text);
 }
 
 
-// Кнопки поиска и перехода активны только тогда, когда есть текст для поиска
+// Кнопки поиска, перехода и ухода в базу активны только тогда,
+// когда есть текст для поиска
 void EditorFindDialog::enable_find_button(const QString &text)
 {
   bool enable=!text.isEmpty();
@@ -172,6 +210,7 @@ void EditorFindDialog::enable_find_button(const QString &text)
   findButton->setEnabled(enable);
   prevButton->setEnabled(enable);
   nextButton->setEnabled(enable);
+  inbaseButton->setEnabled(enable);
 }
 
 

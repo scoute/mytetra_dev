@@ -24,6 +24,10 @@ public:
  QString searchText(void) const;
  QTextDocument::FindFlags searchFlags(void) const;
 
+ // Установить текст и флаги извне (для моста из глобального поиска)
+ void setSearchText(const QString &text);
+ void setSearchFlags(QTextDocument::FindFlags flags);
+
  // Показать счетчик вида "2 of 5". Пустая строка гасит надпись
  void setMatchCounter(const QString &text);
  
@@ -38,10 +42,14 @@ signals:
  // Диалог скрыт: подсветку надо снять
  void find_dialog_hidden(void);
 
+ // Кнопка поиска по базе: запрос уходит наружу вместе с текстом
+ void find_in_base(const QString &text);
+
 private slots:
  void find_clicked(void);
  void prev_clicked(void);
  void next_clicked(void);
+ void inbase_clicked(void);
  void enable_find_button(const QString &text);
  void emit_highlight(void);
  
@@ -53,6 +61,7 @@ private:
  QPushButton *findButton;
  QPushButton *prevButton; // Перейти к предыдущему совпадению
  QPushButton *nextButton; // Перейти к следующему совпадению
+ QPushButton *inbaseButton; // Искать этот запрос по всей базе
  QLabel *matchCounter; // Счетчик вида "2 of 5"
 
  // Флаги поиска, собранные из состояния чекбоксов

@@ -397,6 +397,15 @@ void FindScreen::findClicked(void)
         return;
     }
 
+    // Запрос запоминается в таблице результатов для моста в поиск
+    // по заметке: клик по строке откроет запись с тем же запросом.
+    // Регистр в глобальном поиске всегда нечувствительный, из режимов
+    // переносится только "целые слова"
+    QTextDocument::FindFlags searchFlags=0;
+    if(howExtract->currentIndex()==0)
+        searchFlags|=QTextDocument::FindWholeWords;
+    findTable->setLastSearch(findText->text(), searchFlags);
+
     findStart();
 }
 

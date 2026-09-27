@@ -85,6 +85,10 @@ public slots:
 
     void toolsFindInBase(void);
 
+    // Открытие глобального поиска с готовым запросом из поиска по заметке.
+    // Запрос сразу выполняется через FindScreen::setFindText
+    void toolsFindInBaseWithText(const QString &text);
+
     void setupShortcuts(void);
 
 private slots:

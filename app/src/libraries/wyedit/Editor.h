@@ -110,6 +110,10 @@ public:
  QString getFileName(void);
 
  void saveTextarea();
+
+ // Запуск поиска из внешнего кода (из глобального поиска): запрос кладется
+ // в диалог, подсвечивается, переход к первому совпадению, диалог показывается
+ void startFind(const QString &text, QTextDocument::FindFlags flags);
  bool saveTextareaText();
  bool saveTextareaImages(int mode);
  bool loadTextarea();
@@ -169,6 +173,9 @@ signals:
 
  void wyeditFindInBaseClicked();
 
+ // Уход в глобальный поиск с текстом запроса из диалога поиска в заметке
+ void wyeditFindInBaseWithText(const QString &text);
+
  void updateIndentsliderToActualFormat();
  void updateIndentSliderGeometry();
 
@@ -207,6 +214,7 @@ private slots:
   void onFindHighlight(const QString &text, QTextDocument::FindFlags flags);
   void onFindDialogHidden(void);
   void onFindDocumentChanged(void);
+  void onFindInBaseDialog(const QString &text);
 
  // Открытие контекстного меню
  void onCustomContextMenuRequested(const QPoint &pos);

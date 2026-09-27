@@ -212,6 +212,13 @@ void FindTableWidget::setOverdrawMessage(const QString iOverdrawMessage)
 }
 
 
+void FindTableWidget::setLastSearch(const QString &query, QTextDocument::FindFlags flags)
+{
+    lastSearchQuery=query;
+    lastSearchFlags=flags;
+}
+
+
 // void FindTableWidget::selectCell(int row, int column)
 void FindTableWidget::selectCell(const QModelIndex & index)
 {
@@ -221,6 +228,7 @@ void FindTableWidget::selectCell(const QModelIndex & index)
     // Выясняется путь к ветке и номер в таблице конечных записей
     QStringList path=item->data(USER_ROLE_PATH).toStringList();
     QString recordId=item->data(USER_ROLE_RECORD_ID).toString();
+    bool isRecord=item->data(USER_ROLE_IS_RECORD).toBool();
 
     qDebug() << "Get path to record:" << path;
 
@@ -229,5 +237,16 @@ void FindTableWidget::selectCell(const QModelIndex & index)
     edView->switchToEditorLayout();
 
     find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, recordId);
+
+    // Мост в поиск по заметке: открытая запись сразу подсвечивается
+    // тем же запросом с переходом к первому совпадению. Для строк веток
+    // подсветка не запускается: там открыта другая запись
+    if(isRecord && !lastSearchQuery.isEmpty())
+    {
+        // Дать редактору дочитать текст открывшейся записи
+        QCoreApplication::processEvents();
+
+        edView->startFind(lastSearchQuery, lastSearchFlags);
+    }
 }
 

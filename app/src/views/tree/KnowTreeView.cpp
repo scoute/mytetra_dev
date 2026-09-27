@@ -2,14 +2,18 @@
 #include <QDebug>
 #include <QMimeData>
 #include <QMessageBox>
+#include <QDrag>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QMouseEvent>
+#include <QApplication>
 #include <QTapAndHoldGesture>
 #include <QGestureEvent>
 
 #include "KnowTreeView.h"
 #include "KnowTreeDelegate.h"
 #include "TreeScreen.h"
+#include "views/mainWindow/MainWindow.h"
 #include "libraries/ClipboardRecords.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
@@ -42,6 +46,8 @@ KnowTreeView::KnowTreeView(QWidget *parent) : QTreeView(parent)
 
     // Настройка области виджета для кинетической прокрутки
     GestureHelper::setKineticScrollArea( qobject_cast<QAbstractItemView*>(this) );
+
+    isDragHappeningNow=false;
 }
 
 
@@ -140,21 +146,27 @@ bool KnowTreeView::isDragableData(X *event)
     {
         return false;
     }
-    if( ! (mimeData->hasFormat(FixedParameters::appTextId+"/records")) )
+
+    // Перенос записей из таблицы записей
+    if(mimeData->hasFormat(FixedParameters::appTextId+"/records"))
     {
+        QObject *sourceObject=qobject_cast<QObject *>( event->source() );
+
+        if(sourceObject!=nullptr && sourceObject->objectName()=="recordTableView")
+        {
+            return true;
+        }
+
         return false;
     }
 
-    QObject *sourceObject=qobject_cast<QObject *>( event->source() );
+    // Перенос ветки внутри этого же дерева
+    if(mimeData->hasFormat(FixedParameters::appTextId+"/branchmove"))
+    {
+        return event->source()==this;
+    }
 
-    if( sourceObject->objectName()=="recordTableView" )
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 
@@ -163,6 +175,19 @@ void KnowTreeView::dropEvent(QDropEvent *event)
     qDebug() << "dropEvent() - Start";
 
     emit dropEventHandleCatch();
+
+    // Перетаскивание ветки обрабатывается отдельно от переноса записей:
+    // в объекте переноса лежит только идентификатор ветки
+    if(event->mimeData()!=nullptr &&
+       event->mimeData()->hasFormat(FixedParameters::appTextId+"/branchmove") &&
+       event->source()==this)
+    {
+        qDebug() << "Try move branch by drag and drop";
+
+        dropBranch(event);
+
+        return;
+    }
 
     if( isDragableData(event) )
     {
@@ -287,5 +312,198 @@ void KnowTreeView::dropEvent(QDropEvent *event)
         // который подсвечивался при Drag And Drop
         parentPointer->knowTreeModel->setData(QModelIndex(), QVariant(false), Qt::UserRole);
     }
+}
+
+
+// Реакция на нажатие кнопок мышки
+// Индекс запоминается по координатам, так как событие приходит
+// до выделения ветки под курсором
+void KnowTreeView::mousePressEvent(QMouseEvent *event)
+{
+    if(event->buttons()==Qt::LeftButton)
+    {
+        startDragPos=event->pos();
+
+        if(indexAt(event->pos()).isValid())
+        {
+            startDragIndex=indexAt(event->pos());
+        }
+        else
+        {
+            startDragIndex=QModelIndex();
+        }
+    }
+
+    // При клике перетаскивание еще не начинается,
+    // и флаг от предыдущего перетаскивания надо очистить
+    isDragHappeningNow=false;
+
+    QTreeView::mousePressEvent(event);
+}
+
+
+// Реакция на движение мышкой
+void KnowTreeView::mouseMoveEvent(QMouseEvent *event)
+{
+    // Если при движении нажата левая кнопка мышки
+    // и выбрана ровно одна ветка
+    if((event->buttons() & Qt::LeftButton) &&
+       selectionModel()->selectedIndexes().size()==1 &&
+       startDragIndex.isValid())
+    {
+        // Выясняется расстояние от места начала нажатия
+        int distance=(event->pos() - startDragPos).manhattanLength();
+
+        if(distance >= QApplication::startDragDistance())
+        {
+            customStartDrag(); // Начинается перетаскивание
+        }
+    }
+
+    // При зажатых кнопках нельзя пробрасывать вызов родительского метода,
+    // чтобы Qt не менял выделение в процессе перетаскивания
+    if((event->buttons() & Qt::LeftButton) || (event->buttons() & Qt::RightButton))
+    {
+        return;
+    }
+
+    QTreeView::mouseMoveEvent(event);
+}
+
+
+// Реакция на отпускание кнопки мышки
+void KnowTreeView::mouseReleaseEvent(QMouseEvent *event)
+{
+    QTreeView::mouseReleaseEvent(event);
+
+    isDragHappeningNow=false;
+
+    // Индекс перетаскиваемой ветки очищается в любом случае
+    startDragIndex=QModelIndex();
+}
+
+
+// Начало переноса ветки
+void KnowTreeView::customStartDrag(void)
+{
+    if(!startDragIndex.isValid())
+    {
+        return;
+    }
+
+    // Модель дерева выставлена виду в TreeScreen, отдельный поход
+    // к родителю не нужен
+    KnowTreeModel *treeModel=qobject_cast<KnowTreeModel *>( model() );
+    if(treeModel==nullptr)
+    {
+        return;
+    }
+
+    TreeItem *dragItem=treeModel->getItem(startDragIndex);
+    if(dragItem==nullptr)
+    {
+        return;
+    }
+
+    isDragHappeningNow=true; // Выставляется флаг что началось перетаскивание
+
+    qDebug() << "Start branch drag:" << dragItem->getField("name");
+
+    // В объект переноса кладется только идентификатор ветки.
+    // Перемещение выполняет принимающая сторона через moveBranch,
+    // поэтому копировать поддерево не нужно
+    QDrag *drag=new QDrag(this);
+    QMimeData *mimeData=new QMimeData();
+    mimeData->setData(FixedParameters::appTextId+"/branchmove",
+                      dragItem->getField("id").toUtf8());
+    drag->setMimeData(mimeData);
+
+    // Запуск операции перетаскивания объекта
+    unsigned int result=drag->exec(Qt::MoveAction);
+
+    // Если перетаскивание завершено вне дерева (или отменено),
+    // в модели данных обнуляется оформление элемента,
+    // который подсвечивался при Drag And Drop
+    if(result==0)
+    {
+        // todo: Совершенно непонятно, где удалять объект drag.
+        // Если удалять в этом месте, имеем сегфолт
+        // delete drag;
+
+        treeModel->setData(QModelIndex(), QVariant(false), Qt::UserRole);
+    }
+
+    isDragHappeningNow=false;
+    startDragIndex=QModelIndex();
+}
+
+
+// Завершение перетаскивания ветки: ветка становится подветкой цели.
+// Проверки совпадения и зацикливания внутри moveBranch
+void KnowTreeView::dropBranch(QDropEvent *event)
+{
+    KnowTreeModel *treeModel=qobject_cast<KnowTreeModel *>( model() );
+    if(treeModel==nullptr)
+    {
+        return;
+    }
+
+    // Идентификатор перетаскиваемой ветки из объекта переноса
+    QString dragId=QString::fromUtf8(event->mimeData()->data(FixedParameters::appTextId+"/branchmove"));
+
+    // Выясняется ветка, над которой был сделан Drop
+    QModelIndex index=indexAt(event->pos());
+
+    // Если отпускание мышки произошло не на ветке дерева,
+    // а на свободном пустом месте, ничего не делается
+    if(!index.isValid())
+    {
+        return;
+    }
+
+    // Выясняется ветка, над которой совершен Drop
+    TreeItem *treeItemDrop=treeModel->getItem(index);
+    if(treeItemDrop==nullptr)
+    {
+        return;
+    }
+
+    QString dropId=treeItemDrop->getField("id");
+
+    // Перенос ветки на саму себя бессмысленен
+    if(dragId==dropId)
+    {
+        return;
+    }
+
+    // Перемещение с сохранением идентификатора.
+    // Отказ (цель внутри переносимой ветки) молча игнорируется:
+    // дерево просто остается как было
+    bool moveok=treeModel->moveBranch(dragId, dropId, true);
+    if(!moveok)
+    {
+        return;
+    }
+
+    // Установка курсора на перемещенную ветку.
+    // В тестах главного окна нет, тогда только двигается модель
+    MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+    TreeItem *movedItem=treeModel->getItemById(dragId);
+    if(mainWindow!=nullptr && movedItem!=nullptr)
+    {
+        QStringList movedPath=movedItem->getPath();
+        mainWindow->setTreePosition(movedPath);
+    }
+
+    // Сохранение дерева веток
+    TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+    if(treeScreen!=nullptr)
+    {
+        treeScreen->saveKnowTree();
+    }
+
+    // В модели данных дерева обнуляется элемент,
+    // который подсвечивался при Drag And Drop
+    treeModel->setData(QModelIndex(), QVariant(false), Qt::UserRole);
 }
 

@@ -3,9 +3,12 @@
 
 #include <QObject>
 #include <QTreeView>
+#include <QPoint>
+#include <QModelIndex>
 
 
 class QWidget;
+class QMouseEvent;
 class QDragEnterEvent;
 class QDropEvent;
 class QTapAndHoldGesture;
@@ -37,6 +40,24 @@ protected:
     void dropEvent(QDropEvent *event);
 
     template <class X> bool isDragableData(X *event);
+
+    // Реакция на кнопки мышки для начала перетаскивания ветки
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+
+    // Начало перетаскивания ветки
+    void customStartDrag(void);
+
+    // Завершение перетаскивания ветки: ветка становится подветкой цели
+    void dropBranch(QDropEvent *event);
+
+    // Точка нажатия и ветка-кандидат для начала перетаскивания
+    QPoint startDragPos;
+    QModelIndex startDragIndex;
+
+    // Флаг активного перетаскивания ветки
+    bool isDragHappeningNow;
 
 };
 

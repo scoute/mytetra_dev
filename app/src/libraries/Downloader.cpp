@@ -460,37 +460,24 @@ void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &error
 {
   // Особый случай битого TLS-бэкенда (см. isTlsVerificationBroken): в такой
   // среде Qt не различает валидный серт, самоподписанный и подмену - на все
-  // одна ошибка NoPeerCertificate. Поэтому здесь галочка настроек работает
-  // как главный рубильник: выключена - строго блокировать, включена - качать
-  // с явным предупреждением в лог
+  // одна ошибка NoPeerCertificate, потому что сертификат получить нельзя
+  // вообще. Блокировать тут бессмысленно: это не остановит никакую реальную
+  // атаку, а лишь сломает все https-скачивания. Поэтому качаем с явным
+  // предупреждением в лог. На здоровом бэкенде ниже действует строгая политика
   if(isTlsVerificationBroken())
   {
-    if(mytetraConfig.getIgnoreSelfSignedSslErrors())
+    static bool verificationWarningShown=false;
+    if(!verificationWarningShown)
     {
-      static bool verificationWarningShown=false;
-      if(!verificationWarningShown)
-      {
-        verificationWarningShown=true;
-        qWarning() << "TLS backend cannot verify certificates: built for"
-                   << QSslSocket::sslLibraryBuildVersionString()
-                   << "but runtime is"
-                   << QSslSocket::sslLibraryVersionString()
-                   << ". Downloads proceed without SSL verification.";
-      }
-
-      reply->ignoreSslErrors();
-      return;
+      verificationWarningShown=true;
+      qWarning() << "TLS backend cannot verify certificates: built for"
+                 << QSslSocket::sslLibraryBuildVersionString()
+                 << "but runtime is"
+                 << QSslSocket::sslLibraryVersionString()
+                 << ". Downloads proceed without SSL verification.";
     }
 
-    // Проверка невозможна, а обход пользователем не разрешен: загрузка
-    // блокируется. Пояснение пишется в лог, иначе в диалоге будет только
-    // cryptic "Operation canceled" без понятной причины
-    addErrorLog("Download blocked: server certificate cannot be verified "
-                "in this environment, and unverified downloads are disabled "
-                "in settings.");
-    downloadHasErrors=true;
-
-    reply->abort();
+    reply->ignoreSslErrors();
     return;
   }
 

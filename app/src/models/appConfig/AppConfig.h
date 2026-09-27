@@ -262,6 +262,11 @@ public:
     bool getEnableCreateEmptyRecord(void);
     void setEnableCreateEmptyRecord(bool state);
 
+    // Разрешено ли игнорировать ошибки самоподписанных SSL-сертификатов
+    // при скачивании файлов и картинок (менее безопасно, по умолчанию запрещено)
+    bool getIgnoreSelfSignedSslErrors(void);
+    void setIgnoreSelfSignedSslErrors(bool state);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);
@@ -335,6 +340,7 @@ private:
     QStringList get_parameter_table_40(bool withEndSignature=true);
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
+    QStringList get_parameter_table_43(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

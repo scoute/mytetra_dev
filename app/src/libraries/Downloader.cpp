@@ -14,11 +14,36 @@
 #include <QUrl>
 #include <QFileInfo>
 #include <QApplication>
+#include <QSslSocket>
 
 #include "Downloader.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
+
+
+// Проверка, способен ли TLS-бэкенд вообще проверять сертификаты.
+// Qt старше 5.15.8, собранный под OpenSSL 1.1, не умеет работать с OpenSSL 3
+// в рантайме: не резолвятся символы вроде SSL_get_peer_certificate, из-за чего
+// КАЖДОЕ https-соединение завершается ошибкой "The peer did not present any
+// certificate", даже с валидным сертификатом. Получить сертификат для проверки
+// в такой среде нельзя в принципе
+static bool isTlsVerificationBroken(void)
+{
+  // Строки вида "OpenSSL 1.1.1g 21 Apr 2020", мажорная версия - второе слово до точки
+  QString buildVersion=QSslSocket::sslLibraryBuildVersionString().section(' ', 1, 1).section('.', 0, 0);
+  QString runtimeVersion=QSslSocket::sslLibraryVersionString().section(' ', 1, 1).section('.', 0, 0);
+
+  // Комбинация "собран под 1.1, работает под 3.x" означает неработоспособную проверку
+  if(buildVersion=="1" && runtimeVersion.toInt()>=3)
+    return true;
+
+  return false;
+}
 
 
 Downloader::Downloader()
@@ -433,9 +458,60 @@ QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
 
 void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
-  Q_UNUSED( errors );
+  // Особый случай битого TLS-бэкенда (см. isTlsVerificationBroken): в такой
+  // среде Qt не различает валидный серт, самоподписанный и подмену - на все
+  // одна ошибка NoPeerCertificate, потому что сертификат получить нельзя
+  // вообще. Блокировать тут бессмысленно: это не остановит никакую реальную
+  // атаку, а лишь сломает все https-скачивания. Поэтому качаем с явным
+  // предупреждением в лог. На здоровом бэкенде ниже действует строгая политика
+  if(isTlsVerificationBroken())
+  {
+    static bool verificationWarningShown=false;
+    if(!verificationWarningShown)
+    {
+      verificationWarningShown=true;
+      qWarning() << "TLS backend cannot verify certificates: built for"
+                 << QSslSocket::sslLibraryBuildVersionString()
+                 << "but runtime is"
+                 << QSslSocket::sslLibraryVersionString()
+                 << ". Downloads proceed without SSL verification.";
+    }
 
-  reply->ignoreSslErrors();
+    reply->ignoreSslErrors();
+    return;
+  }
+
+  // Ошибки самоподписанных сертификатов игнорируются только если пользователь
+  // явно разрешил это в настройках (нужно для сайтов с самоподписанными
+  // сертификатами). Игнорируются точечно: только самоподписанность, а не
+  // все SSL-ошибки скопом. Остальные ошибки (истекший срок, чужое имя и т.д.)
+  // в любом случае прерывают загрузку
+  if(mytetraConfig.getIgnoreSelfSignedSslErrors())
+  {
+    QList<QSslError> selfSignedErrors;
+    foreach(const QSslError &error, errors)
+    {
+      if(error.error()==QSslError::SelfSignedCertificate ||
+         error.error()==QSslError::SelfSignedCertificateInChain)
+        selfSignedErrors << error;
+    }
+
+    // Игнорируем только если ВСЕ ошибки относятся к самоподписанности
+    if(!selfSignedErrors.isEmpty() && selfSignedErrors.count()==errors.count())
+    {
+      qDebug() << "Ignore self-signed SSL certificate errors for " << reply->url().toString();
+
+      reply->ignoreSslErrors(selfSignedErrors);
+      return;
+    }
+  }
+
+  // SSL-ошибки игнорировать нельзя: невалидный сертификат может означать
+  // подмену сервера. Загрузка прерывается, ошибка фиксируется, а остальные
+  // ссылки обрабатываются обычным порядком через ветку ошибки ответа
+  downloadHasErrors=true;
+
+  reply->abort();
 }
 
 

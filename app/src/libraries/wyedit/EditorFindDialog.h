@@ -9,6 +9,7 @@
 class QCheckBox;
 class QLineEdit;
 class QPushButton;
+class QLabel;
 
 
 class EditorFindDialog : public QDialog
@@ -17,13 +18,32 @@ class EditorFindDialog : public QDialog
 
 public:
  EditorFindDialog(QWidget *parent=nullptr);
+
+ // Текущий текст поиска и флаги, собранные из чекбоксов.
+ // Нужны редактору чтобы обновить подсветку при показе диалога
+ QString searchText(void) const;
+ QTextDocument::FindFlags searchFlags(void) const;
+
+ // Показать счетчик вида "2 of 5". Пустая строка гасит надпись
+ void setMatchCounter(const QString &text);
  
 signals:
  void find_text(const QString &text, QTextDocument::FindFlags flags);
+ void find_previous(void);
+ void find_next(void);
+
+ // Изменился текст или опции: подсветку надо обновить, курсор не двигать
+ void highlight_text(const QString &text, QTextDocument::FindFlags flags);
+
+ // Диалог скрыт: подсветку надо снять
+ void find_dialog_hidden(void);
 
 private slots:
  void find_clicked(void);
+ void prev_clicked(void);
+ void next_clicked(void);
  void enable_find_button(const QString &text);
+ void emit_highlight(void);
  
 private:
  QLineEdit *lineEdit;
@@ -31,6 +51,12 @@ private:
  QCheckBox *wholeWords;
  QCheckBox *searchBackward;
  QPushButton *findButton;
+ QPushButton *prevButton; // Перейти к предыдущему совпадению
+ QPushButton *nextButton; // Перейти к следующему совпадению
+ QLabel *matchCounter; // Счетчик вида "2 of 5"
+
+ // Флаги поиска, собранные из состояния чекбоксов
+ QTextDocument::FindFlags collectFlags(void) const;
  
  void setup_ui(void);
  void setup_signals(void);

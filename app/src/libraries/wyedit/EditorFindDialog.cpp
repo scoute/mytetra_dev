@@ -1,6 +1,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <QLabel>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QtGlobal>
@@ -36,6 +37,20 @@ void EditorFindDialog::setup_ui(void)
   findButton->setDefault(true);
   findButton->setEnabled(false);
 
+  // Кнопки перехода между совпадениями. Отдельно от Find, чтобы явно
+  // задавать направление независимо от чекбокса "Search backward"
+  prevButton=new QPushButton(QString::fromUtf8("\u25C0"));
+  prevButton->setToolTip(tr("Previous match"));
+  prevButton->setEnabled(false);
+
+  nextButton=new QPushButton(QString::fromUtf8("\u25B6"));
+  nextButton->setToolTip(tr("Next match"));
+  nextButton->setEnabled(false);
+
+  // Счетчик вида "2 of 5". Пустой пока нет активного поиска
+  matchCounter=new QLabel();
+  matchCounter->setMinimumWidth(60);
+
   this->setWindowTitle(tr("Find in the text"));
 }
 
@@ -45,8 +60,27 @@ void EditorFindDialog::setup_signals(void)
   connect(lineEdit, &QLineEdit::textChanged,
           this,     &EditorFindDialog::enable_find_button);
 
+  // Живая подсветка: текст или опции изменились - подсветить, курсор не двигать
+  connect(lineEdit, &QLineEdit::textChanged,
+          this,     &EditorFindDialog::emit_highlight);
+
+  connect(mathCase, &QCheckBox::toggled,
+          this,     &EditorFindDialog::emit_highlight);
+
+  connect(wholeWords, &QCheckBox::toggled,
+           this,      &EditorFindDialog::emit_highlight);
+
+  connect(searchBackward, &QCheckBox::toggled,
+           this,          &EditorFindDialog::emit_highlight);
+
   connect(findButton, &QPushButton::clicked,
           this,       &EditorFindDialog::find_clicked);
+
+  connect(prevButton, &QPushButton::clicked,
+          this,       &EditorFindDialog::prev_clicked);
+
+  connect(nextButton, &QPushButton::clicked,
+          this,       &EditorFindDialog::next_clicked);
 }
 
 
@@ -55,6 +89,9 @@ void EditorFindDialog::assembly(void)
   QHBoxLayout *findLineLayout=new QHBoxLayout();
   findLineLayout->addWidget(lineEdit);
   findLineLayout->addWidget(findButton);
+  findLineLayout->addWidget(prevButton);
+  findLineLayout->addWidget(nextButton);
+  findLineLayout->addWidget(matchCounter);
 
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(findLineLayout);
@@ -68,24 +105,73 @@ void EditorFindDialog::assembly(void)
 }
 
 
-// Действия при нажатии кнопки Find
+// Действия при нажатии кнопки Find: подсветить все и перейти к следующему
 void EditorFindDialog::find_clicked(void)
 {
-  QString text=lineEdit->text();
+  emit find_text(lineEdit->text(), collectFlags());
+}
 
+
+// Переход к соседним совпадениям. Редактор сам разберется
+// что делать если совпадений нет или запрос пуст
+void EditorFindDialog::prev_clicked(void)
+{
+  emit find_previous();
+}
+
+
+void EditorFindDialog::next_clicked(void)
+{
+  emit find_next();
+}
+
+
+// Флаги поиска, собранные из состояния чекбоксов
+QTextDocument::FindFlags EditorFindDialog::collectFlags(void) const
+{
   QTextDocument::FindFlags flags=0;
   if(mathCase->isChecked())      flags|=QTextDocument::FindCaseSensitively;
   if(wholeWords->isChecked())    flags|=QTextDocument::FindWholeWords;
   if(searchBackward->isChecked())flags|=QTextDocument::FindBackward;
 
-  emit find_text(text, flags);
+  return flags;
 }
 
 
-// Кнопка поиска активна только тогда, когда есть текст для поиска
+// Текст или опции изменились: попросить подсветить, курсор не двигать
+void EditorFindDialog::emit_highlight(void)
+{
+  emit highlight_text(lineEdit->text(), collectFlags());
+}
+
+
+// Текущий текст поиска и флаги для обновления подсветки при показе диалога
+QString EditorFindDialog::searchText(void) const
+{
+  return lineEdit->text();
+}
+
+
+QTextDocument::FindFlags EditorFindDialog::searchFlags(void) const
+{
+  return collectFlags();
+}
+
+
+void EditorFindDialog::setMatchCounter(const QString &text)
+{
+  matchCounter->setText(text);
+}
+
+
+// Кнопки поиска и перехода активны только тогда, когда есть текст для поиска
 void EditorFindDialog::enable_find_button(const QString &text)
 {
-  findButton->setEnabled(!text.isEmpty());
+  bool enable=!text.isEmpty();
+
+  findButton->setEnabled(enable);
+  prevButton->setEnabled(enable);
+  nextButton->setEnabled(enable);
 }
 
 
@@ -107,6 +193,9 @@ void EditorFindDialog::hideEvent(QHideEvent *event)
                QString::number(g.height());
     edConf->set_finddialog_geometry(gs);
   }
+
+  // Диалог скрыт: редактор должен снять подсветку совпадений
+  emit find_dialog_hidden();
 
   QWidget::hideEvent(event);
 }

@@ -447,6 +447,27 @@ void Editor::setupSignals(void)
           this,       &Editor::onFindtextSignalDetect,
           Qt::DirectConnection);
 
+  connect(findDialog, &EditorFindDialog::find_previous,
+          this,       &Editor::onFindPrevious,
+          Qt::DirectConnection);
+
+  connect(findDialog, &EditorFindDialog::find_next,
+          this,       &Editor::onFindNext,
+          Qt::DirectConnection);
+
+  connect(findDialog, &EditorFindDialog::highlight_text,
+          this,       &Editor::onFindHighlight,
+          Qt::DirectConnection);
+
+  connect(findDialog, &EditorFindDialog::find_dialog_hidden,
+          this,       &Editor::onFindDialogHidden,
+          Qt::DirectConnection);
+
+  // Правка текста делает список совпадений устаревшим, подсветка обновляется
+  connect(textArea->document(), &QTextDocument::contentsChanged,
+          this,                &Editor::onFindDocumentChanged,
+          Qt::DirectConnection);
+
   connect(textArea,              &EditorTextArea::updateIndentlineGeometry,
           indentSliderAssistant, &EditorIndentSliderAssistant::onUpdateGeometry,
           Qt::DirectConnection);
@@ -1371,22 +1392,198 @@ void Editor::onFindtextClicked(void)
 {
   findDialog->show();
   findDialog->activateWindow();
+
+  // Если в диалоге остался текст прошлого поиска, подсветка восстанавливается
+  if(!findDialog->searchText().isEmpty())
+    onFindHighlight(findDialog->searchText(), findDialog->searchFlags());
 }
 
 
-// Слот, принимающий данные от окна поиска текста
+// Слот, принимающий данные от окна поиска текста.
+// Подсвечивает все совпадения и переходит к следующему от курсора
 void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags)
 {
   qDebug() << "Find text " << text << " with flags " << flags;
 
-  if(!textArea->find(text, flags))
+  findQuery=text;
+  findFlags=flags;
+
+  highlightFindMatches();
+
+  // Совпадений нет: прежнее поведение - диалог прячется, выводится сообщение
+  if(findMatches.isEmpty())
   {
     findDialog->hide();
     QMessageBox::information(this,
                              tr("Search result"),
                              tr("String '<b>")+text+tr("</b>' not found"),
                              QMessageBox::Close);
+    return;
   }
+
+  // Переход в направлении, заданном чекбоксом "Search backward"
+  goToFindMatch(!(flags & QTextDocument::FindBackward));
+}
+
+
+// Переход к соседним совпадениям стрелками диалога. Без совпадений
+// молча ничего не делает: счетчик уже показывает отсутствие результата
+void Editor::onFindPrevious(void)
+{
+  goToFindMatch(false);
+}
+
+
+void Editor::onFindNext(void)
+{
+  goToFindMatch(true);
+}
+
+
+// Живая подсветка при наборе текста или смене опций. Курсор не двигается,
+// позиция в списке совпадений сбрасывается
+void Editor::onFindHighlight(const QString &text, QTextDocument::FindFlags flags)
+{
+  findQuery=text;
+  findFlags=flags;
+
+  highlightFindMatches();
+}
+
+
+// Диалог скрыт: подсветка снимается, запрос забывается, чтобы правка
+// текста не пересчитывала совпадения невидимого поиска
+void Editor::onFindDialogHidden(void)
+{
+  clearFindMatches();
+}
+
+
+// Текст записи изменен: если идет поиск, совпадения пересчитываются
+void Editor::onFindDocumentChanged(void)
+{
+  if(findQuery.isEmpty())
+    return;
+
+  highlightFindMatches();
+}
+
+
+// Подсветить все совпадения текущего запроса. Все совпадения красятся
+// желтым, текущее (если курсор уже стоит на нем) - оранжевым
+void Editor::highlightFindMatches(void)
+{
+  findMatches.clear();
+  findCurrentIndex=-1;
+
+  if(!findQuery.isEmpty())
+  {
+    // Сбор всех совпадений всегда идет вперед от начала документа,
+    // направление поиска влияет только на переход, а не на подсветку
+    QTextDocument::FindFlags collectFlags=findFlags & ~QTextDocument::FindBackward;
+
+    QTextCursor cursor(textArea->document());
+    while(true)
+    {
+      cursor=textArea->document()->find(findQuery, cursor, collectFlags);
+
+      // Совпадения кончились
+      if(cursor.isNull())
+        break;
+
+      findMatches << cursor;
+
+      // Выделение схлопывается чтобы следующий поиск шел строго вперед.
+      // Иначе возможен повтор того же совпадения и бесконечный цикл
+      cursor.clearSelection();
+    }
+  }
+
+  paintFindMatches();
+  updateFindCounter();
+}
+
+
+// Раскрасить запомненные совпадения. Отдельный метод, чтобы переход
+// между совпадениями не пересчитывал весь документ
+void Editor::paintFindMatches(void)
+{
+  QList<QTextEdit::ExtraSelection> selections;
+
+  QTextCharFormat allMatchesFormat;
+  allMatchesFormat.setBackground(QColor(255, 255, 0, 100));
+
+  QTextCharFormat currentMatchFormat;
+  currentMatchFormat.setBackground(QColor(255, 150, 50, 140));
+
+  for(int i=0; i<findMatches.size(); ++i)
+  {
+    QTextEdit::ExtraSelection selection;
+
+    selection.cursor=findMatches.at(i);
+
+    if(i==findCurrentIndex)
+      selection.format=currentMatchFormat;
+    else
+      selection.format=allMatchesFormat;
+
+    selections << selection;
+  }
+
+  textArea->setExtraSelections(selections);
+}
+
+
+// Перейти к соседнему совпадению с зацикливанием в обе стороны
+void Editor::goToFindMatch(bool forward)
+{
+  if(findQuery.isEmpty() || findMatches.isEmpty())
+    return;
+
+  if(forward)
+    findCurrentIndex=(findCurrentIndex+1)%findMatches.size();
+  else
+    findCurrentIndex=(findCurrentIndex-1+findMatches.size())%findMatches.size();
+
+  textArea->setTextCursor(findMatches.at(findCurrentIndex));
+  textArea->ensureCursorVisible();
+
+  paintFindMatches();
+  updateFindCounter();
+}
+
+
+// Снять подсветку и забыть запрос
+void Editor::clearFindMatches(void)
+{
+  findQuery.clear();
+  findFlags=QTextDocument::FindFlags();
+  findMatches.clear();
+  findCurrentIndex=-1;
+
+  textArea->setExtraSelections(QList<QTextEdit::ExtraSelection>());
+
+  findDialog->setMatchCounter("");
+}
+
+
+// Обновить счетчик вида "2 of 5" в диалоге поиска
+void Editor::updateFindCounter(void)
+{
+  if(findQuery.isEmpty())
+  {
+    findDialog->setMatchCounter("");
+    return;
+  }
+
+  if(findMatches.isEmpty())
+  {
+    findDialog->setMatchCounter(tr("No matches"));
+    return;
+  }
+
+  // Индекс -1 означает что курсор еще не стоит ни на одном совпадении
+  findDialog->setMatchCounter(tr("%1 of %2").arg(findCurrentIndex+1).arg(findMatches.size()));
 }
 
 

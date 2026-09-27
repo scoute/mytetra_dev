@@ -201,16 +201,36 @@ private slots:
  void onPasteAsPlainText(void);
  void onSelectAll(void);
 
- void onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags);
+  void onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags);
+  void onFindPrevious(void);
+  void onFindNext(void);
+  void onFindHighlight(const QString &text, QTextDocument::FindFlags flags);
+  void onFindDialogHidden(void);
+  void onFindDocumentChanged(void);
 
  // Открытие контекстного меню
  void onCustomContextMenuRequested(const QPoint &pos);
 
  // void onModificationChanged(bool flag);
 
-private:
+ private:
 
- void setupSignals(void);
+  // Подсветить все совпадения текущего запроса. Курсор не двигается
+  void highlightFindMatches(void);
+
+  // Раскрасить запомненные совпадения без пересчета документа
+  void paintFindMatches(void);
+
+  // Перейти к соседнему совпадению с зацикливанием. Курсор двигается
+  void goToFindMatch(bool forward);
+
+  // Снять подсветку и забыть запрос
+  void clearFindMatches(void);
+
+  // Обновить счетчик вида "2 of 5" в диалоге поиска
+  void updateFindCounter(void);
+
+  void setupSignals(void);
  void setupToolsSignals(void);
  void setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QStringList disableToolList);
  void setupIndentSliderAssistant(void);
@@ -253,7 +273,14 @@ private:
 
  int viewMode; // Режим отображения редактора - WYEDIT_DESKTOP_MODE или WYEDIT_MOBILE_MODE
 
- EditorFindDialog *findDialog; // Виджет поиска
+  EditorFindDialog *findDialog; // Виджет поиска
+
+  // Состояние поиска в тексте текущей записи. Список совпадений
+  // пересчитывается при смене запроса, опций и правке текста
+  QString findQuery;
+  QTextDocument::FindFlags findFlags;
+  QList<QTextCursor> findMatches;
+  int findCurrentIndex=-1; // Индекс текущего совпадения, -1 если курсор не на совпадении
 
  bool expandEditAreaFlag; // Распахнуто ли на максимум окно редактора
 

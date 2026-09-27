@@ -24,6 +24,7 @@
 
 #define USER_ROLE_PATH      Qt::UserRole
 #define USER_ROLE_RECORD_ID Qt::UserRole+1
+#define USER_ROLE_IS_RECORD Qt::UserRole+2
 
 extern AppConfig mytetraConfig;
 
@@ -119,12 +120,12 @@ void FindTableWidget::clearAll(void)
     findTableModel->setRowCount(0);
     findTableModel->setColumnCount(0);
 
-    // В модели таблицы устанавливаются две колонки Path и Title
-    findTableModel->setColumnCount(2);
+    // В модели таблицы устанавливаются три колонки: совпадения, заголовок, детали
+    findTableModel->setColumnCount(3);
 
     // В модели устанавливаются заголовки колонок
     QStringList list;
-    list << tr("Title") << tr("Details");
+    list << tr("Matches") << tr("Title") << tr("Details");
     findTableModel->setHorizontalHeaderLabels(list);
 
     findTableView->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
@@ -132,7 +133,7 @@ void FindTableWidget::clearAll(void)
 }
 
 
-void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId)
+void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, int matchCount, bool isRecord)
 {
     int i=findTableModel->rowCount();
 
@@ -143,15 +144,23 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
     // if(height!=0)
     //  findTableView->setRowHeight(i, height);
 
+    // Количество совпадений в записи или ветке. Первый столбец, до названия
+    QStandardItem *item_matches=new QStandardItem();
+    item_matches->setText(QString::number(matchCount));
+    item_matches->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
     // Заголовок (название) записи
     QStandardItem *item_title=new QStandardItem();
     item_title->setText(title);
 
-    // В ячейке заголовка также хранится информация о пути к ветке
-    // и номере записи в таблице конечных записей
+    // В ячейке заголовка также хранится информация о пути к ветке,
+    // номере записи в таблице конечных записей и признак что это запись
+    // (а не строка ветки). Признак нужен чтобы открывать поиск по заметке
+    // только для настоящих записей
     qDebug() << "Path to record" << path;
     item_title->setData(QVariant(path), USER_ROLE_PATH);
     item_title->setData(QVariant(recordId), USER_ROLE_RECORD_ID);
+    item_title->setData(QVariant(isRecord), USER_ROLE_IS_RECORD);
 
     // Информация о записи
     QStandardItem *item_info=new QStandardItem();
@@ -162,8 +171,9 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
     else
         item_info->setText(branchName);
 
-    findTableModel->setItem(i, 0, item_title);
-    findTableModel->setItem(i, 1, item_info);
+    findTableModel->setItem(i, 0, item_matches);
+    findTableModel->setItem(i, 1, item_title);
+    findTableModel->setItem(i, 2, item_info);
 
     qDebug() << "In findtablewidget add_row() row count " << findTableModel->rowCount();
 }
@@ -206,7 +216,7 @@ void FindTableWidget::setOverdrawMessage(const QString iOverdrawMessage)
 void FindTableWidget::selectCell(const QModelIndex & index)
 {
     QStandardItem *clickItem=findTableModel->itemFromIndex(index);
-    QStandardItem *item=findTableModel->item(clickItem->row(), 0); // Данные находятся в самом левом столбце с индексом 0
+    QStandardItem *item=findTableModel->item(clickItem->row(), 1); // Данные находятся в столбце заголовка с индексом 1
 
     // Выясняется путь к ветке и номер в таблице конечных записей
     QStringList path=item->data(USER_ROLE_PATH).toStringList();

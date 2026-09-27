@@ -120,6 +120,10 @@ private:
     void findRecurse(const TreeItem* curritem);
     bool findInTextProcess(const QString& text);
 
+    // Подсчет количества совпадений в тексте по тем же правилам что и поиск
+    // (целые слова или подстрока). Нужен для столбца совпадений
+    int countMatchesInText(const QString& text);
+
     void switchToolsExpand(bool flag);
 
     QStringList textDelimiterDecompose(QString text);

@@ -523,12 +523,15 @@ void FindScreen::findRecurse(const TreeItem* curritem)
         {
             // QString path = curritem->getPathAsNameWithDelimeter(" ");
             // qDebug() << "Find branch succesfull " << path;
-            // В таблицу результатов добавляется запись о найденой ветке
+            // В таблицу результатов добавляется запись о найденой ветке.
+            // Это строка ветки, а не записи
             findTable->addRow(itemName,
                               tr("[Tree item]"),
                               "",
                               curritem->getPath(),
-                              curritem->getField("id"));
+                              curritem->getField("id"),
+                              countMatchesInText(itemName),
+                              false);
         }
     }
 
@@ -562,6 +565,10 @@ void FindScreen::findRecurse(const TreeItem* curritem)
             iteration_search_result["tags"]  =false;
             iteration_search_result["text"]  =false;
 
+            // Суммарное количество совпадений во всех отмеченных полях.
+            // Показывается первым столбцом таблицы результатов
+            int rowMatchCount=0;
+
             // Текст в котором будет проводиться поиск
             QString inspectText;
 
@@ -582,7 +589,6 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     {
                         // Поиск в обычном поле
                         inspectText=searchRecordTable->getField(key,i);
-                        iteration_search_result[key]=findInTextProcess(inspectText);
                     }
                     else
                     {
@@ -590,8 +596,15 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                         inspectText=searchRecordTable->getText(i);
                         QTextDocument textdoc;
                         textdoc.setHtml(inspectText);
-                        iteration_search_result[key]=findInTextProcess(textdoc.toPlainText());
+                        inspectText=textdoc.toPlainText();
                     }
+
+                    int fieldMatchCount=countMatchesInText(inspectText);
+                    rowMatchCount+=fieldMatchCount;
+
+                    // Признак совпадения определяется прежней проверкой чтобы
+                    // не менять логику режимов "любое слово" / "все слова"
+                    iteration_search_result[key]=findInTextProcess(inspectText);
                 }
             } // Закрылся цикл поиска в полях
 
@@ -612,11 +625,15 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                 // Теги
                 // Путь к ветке
                 // ID записи в таблице конечных записей
+                // Количество совпадений
+                // Признак что это запись (а не строка ветки)
                 findTable->addRow(searchRecordTable->getField("name", i),
                                   curritem->getField("name"),
                                   searchRecordTable->getField("tags", i),
                                   curritem->getPath(),
-                                  searchRecordTable->getField("id", i));
+                                  searchRecordTable->getField("id", i),
+                                  rowMatchCount,
+                                  true);
             }
 
         } // Закрылся цикл перебора записей в таблице конечных записей
@@ -669,13 +686,40 @@ bool FindScreen::findInTextProcess(const QString& text)
     if(wordRegard->currentIndex()==0) return false;
     else
     {
-        // Иначе требовалось найти все слова в запросе
-        if( findWordCount==searchWordList.size() )
-            return true;
-        else
-            return false;
+    // Иначе требовалось найти все слова в запросе
+    if( findWordCount==searchWordList.size() )
+        return true;
+    else
+        return false;
+
     }
 
+}
+
+
+// Подсчет количества совпадений по тем же правилам что и findInTextProcess:
+// целые слова или подстрока, без учета регистра. Суммируется по всем словам
+int FindScreen::countMatchesInText(const QString& text)
+{
+    int total=0;
+
+    for(int i=0; i<searchWordList.size(); ++i)
+    {
+        // Если надо найти совпадение целого слова
+        if(howExtract->currentIndex()==0)
+        {
+            // Текст разбивается на слова тем же способом что при поиске
+            // и считается количество равных искомому
+            total+=textDelimiterDecompose(text).filter(searchWordList.at(i), Qt::CaseInsensitive).size();
+        }
+        else
+        {
+            // Подстрока: количество непересекающихся вхождений
+            total+=text.count(searchWordList.at(i), Qt::CaseInsensitive);
+        }
+    }
+
+    return total;
 }
 
 

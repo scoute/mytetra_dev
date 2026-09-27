@@ -19,7 +19,7 @@ public:
   virtual ~FindTableWidget(void);
 
   void clearAll(void);
-  void addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId);
+  void addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, int matchCount, bool isRecord);
   int  getRowCount();
   void updateColumnsWidth(void);
   void setOverdrawMessage(const QString iOverdrawMessage); // Установка надписи, которая появляется поверх виджета

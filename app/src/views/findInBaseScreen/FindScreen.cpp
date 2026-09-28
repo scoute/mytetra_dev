@@ -615,12 +615,13 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     int fieldMatchCount=0;
                     bool fieldFound=false;
 
-                    if(key=="tags")
+                    // Поле тегов уважает переключатель "целые слова / подстрока"
+                    // как и остальные поля. В режиме целых слов теги атомарны:
+                    // слово запроса должно совпасть с ЦЕЛЫМ тегом, иначе
+                    // запрос "net" находил бы тег "internet". В режиме
+                    // подстроки теги ищутся по-старому, подстрокой
+                    if(key=="tags" && howExtract->currentIndex()==0)
                     {
-                        // Теги ищутся как атомарные метки, а не подстрокой:
-                        // иначе запрос "net" находил бы тег "internet".
-                        // Режим "любое/все слова" берется из wordRegard
-                        // как и для остальных полей
                         QStringList recordTags=splitRecordTags(inspectText);
                         bool matchAll=(wordRegard->currentIndex()==1);
 

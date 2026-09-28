@@ -10,7 +10,6 @@ class QGridLayout;
 class QScrollArea;
 class QSplitter;
 class QLabel;
-class QEvent;
 
 class AttachTableScreen;
 
@@ -54,18 +53,9 @@ private:
  void metaAssembly(void);
  void setupSignals(void);
 
-  void setMininizeGridRow(QWidget *widget);
-  void setNormalGridRow(QWidget *widget);
-  int getGridRowNumber(QWidget *widget);
-
-  // Высота строки меток ровно в одну метку. Пин считается по sizeHint,
-  // а не по мгновенной высоте: в момент вызова layout может быть еще
-  // не посчитан. Пересчитывается при смене стиля (смена темы)
-  void updateTagsRowHeight(void);
-
-protected:
-
-  void changeEvent(QEvent *event) override;
+ void setMininizeGridRow(QWidget *widget);
+ void setNormalGridRow(QWidget *widget);
+ int getGridRowNumber(QWidget *widget);
 
  QLabel *treePath; // Надпись Path (только для мобильного интерфейса)
 

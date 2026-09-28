@@ -30,7 +30,7 @@ void EditorFindBar::setup_ui(void)
   lineEdit->setPlaceholderText(tr("Find in note"));
 
   mathCase=new QCheckBox(tr("&Case sensitive"));
-  wholeWords=new QCheckBox(tr("&Whole words only"));
+  wholeWords=new QCheckBox(tr("&Whole words"));
 
   // Поле замены живет в той же строке полоски: отдельное окно не нужно.
   // Пустое поле означает удаление совпадения
@@ -49,14 +49,25 @@ void EditorFindBar::setup_ui(void)
   findButton->setDefault(true);
   findButton->setEnabled(false);
 
-  // Кнопки перехода между совпадениями задают направление явно стрелками
+  // Текстовые кнопки не растягиваются: все свободное место строки
+  // забирают поля ввода через stretch в assembly. Иначе стиль
+  // (особенно Windows) раздувает кнопки, а поля жмутся к минимуму
+  findButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+  replaceButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+  replaceAllButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+
+  // Кнопки перехода между совпадениями задают направление явно стрелками.
+  // Кнопки-стрелки и крестик квадратные: ширина равна высоте, иначе стиль
+  // (особенно Windows) растягивает их до ширины текстовых кнопок
   prevButton=new QPushButton(QString::fromUtf8("\u25C0"));
   prevButton->setToolTip(tr("Previous match (Shift+Enter)"));
   prevButton->setEnabled(false);
+  prevButton->setFixedWidth(prevButton->sizeHint().height());
 
   nextButton=new QPushButton(QString::fromUtf8("\u25B6"));
   nextButton->setToolTip(tr("Next match (Enter)"));
   nextButton->setEnabled(false);
+  nextButton->setFixedWidth(nextButton->sizeHint().height());
 
   // Счетчик вида "2 of 5". Пустой пока нет активного поиска
   matchCounter=new QLabel();
@@ -67,9 +78,11 @@ void EditorFindBar::setup_ui(void)
   inbaseButton=new QPushButton(tr("Find in base"));
   inbaseButton->setToolTip(tr("Search this text in the whole base"));
   inbaseButton->setEnabled(false);
+  inbaseButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
 
   closeButton=new QPushButton(QString::fromUtf8("\u2715"));
   closeButton->setToolTip(tr("Close find bar (Esc)"));
+  closeButton->setFixedWidth(closeButton->sizeHint().height());
 }
 
 
@@ -114,17 +127,18 @@ void EditorFindBar::setup_signals(void)
 void EditorFindBar::assembly(void)
 {
   // Все в один ряд: полоска живет между списком заметок и их содержимым
-  // и не должна отъедать вертикальное место
+  // и не должна отъедать вертикальное место. Поля ввода с растяжением
+  // забирают все свободное место, кнопки остаются компактными
   QHBoxLayout *centralLayout=new QHBoxLayout();
   centralLayout->setContentsMargins(2, 0, 2, 0);
-  centralLayout->addWidget(lineEdit);
+  centralLayout->addWidget(lineEdit, 1);
   centralLayout->addWidget(findButton);
   centralLayout->addWidget(prevButton);
   centralLayout->addWidget(nextButton);
   centralLayout->addWidget(matchCounter);
   centralLayout->addWidget(mathCase);
   centralLayout->addWidget(wholeWords);
-  centralLayout->addWidget(replaceEdit);
+  centralLayout->addWidget(replaceEdit, 1);
   centralLayout->addWidget(replaceButton);
   centralLayout->addWidget(replaceAllButton);
   centralLayout->addWidget(inbaseButton);

@@ -129,14 +129,18 @@ void MetaEditor::setupUI(void)
  recordTagsContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
  recordTagsContainer->setLayout(recordTagsLayout);
 
- // Создается QScrollArea и в нее добавляется виджет с QHBoxLayout
- recordTagsScrollArea=new QScrollArea();
- recordTagsScrollArea->setContentsMargins( 0, 0, 0, 0 ); // Убирается отступ от границ содержимого
- recordTagsScrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
- recordTagsScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается горизонтальная полоса прокрутки
- recordTagsScrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается вертикальная полоса прокрутки
- recordTagsScrollArea->setFrameShape(QFrame::NoFrame); // Убирается тонкая линия вокруг QScrollArea
- recordTagsScrollArea->setWidget(recordTagsContainer);
+  // Создается QScrollArea и в нее добавляется виджет с QHBoxLayout
+  recordTagsScrollArea=new QScrollArea();
+  recordTagsScrollArea->setContentsMargins( 0, 0, 0, 0 ); // Убирается отступ от границ содержимого
+  recordTagsScrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+  recordTagsScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается горизонтальная полоса прокрутки
+  recordTagsScrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается вертикальная полоса прокрутки
+  recordTagsScrollArea->setFrameShape(QFrame::NoFrame); // Убирается тонкая линия вокруг QScrollArea
+  // Высота подстраивается под содержимое автоматически: пинить
+  // setMaximumHeight к мгновенной высоте контейнера нельзя, в момент
+  // вызова layout может быть еще не посчитан и строка сплющится навсегда
+  recordTagsScrollArea->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+  recordTagsScrollArea->setWidget(recordTagsContainer);
 
  m_attachTableScreen=new AttachTableScreen(this);
 }
@@ -409,9 +413,6 @@ void MetaEditor::setTags(QString tags)
  {
   recordTagsLabels.at(i)->setVisible(visible);
  }
-
- recordTagsContainer->adjustSize();
- recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height());
 }
 
 

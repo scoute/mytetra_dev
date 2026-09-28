@@ -10,9 +10,9 @@ class QLineEdit;
 class QPushButton;
 class QGridLayout;
 class QToolButton;
-class QCompleter;
 class QStringListModel;
 class QShowEvent;
+class QCompleter;
 
 class InfoFieldEnter : public QWidget
 {
@@ -88,10 +88,13 @@ private:
     void setupTagsCompleter(void);
     void refreshTagsCompleter(void);
 
-    // Подсказка автодополнения и ее словарь. Комплитер живет все время,
-    // на поле тегов вешается только когда есть что подсказывать
+    // Подсказка автодополнения и ее словарь. Комплитер привязан к полю
+    // через setWidget, а не setCompleter: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после запятой не появляется. Флаг включает
+    // ручной привод когда словарь непуст
     QCompleter *tagsCompleter;
     QStringListModel *tagsCompleterModel;
+    bool tagsCompleterEnabled;
 
 protected:
 

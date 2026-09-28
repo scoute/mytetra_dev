@@ -117,6 +117,13 @@ void InfoFieldEnter::setupTagsCompleter(void)
     tagsCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     tagsCompleter->setMaxVisibleItems(10);
 
+    // Только привязка к виджету для позиционирования выпадашки.
+    // setCompleter не используется: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после запятой не появляется.
+    // Привод полностью ручной из onTagsEdited
+    tagsCompleter->setWidget(recordTags);
+    tagsCompleterEnabled=false;
+
     connect(recordTags, &QLineEdit::textEdited,
             this,        &InfoFieldEnter::onTagsEdited);
 
@@ -151,12 +158,11 @@ void InfoFieldEnter::refreshTagsCompleter(void)
 
     tagsCompleterModel->setStringList(tags);
 
-    // Подсказывать нечего: комплитер снимается с поля
-    // чтобы не мешать обычному вводу
+    // Подсказывать нечего: ручной привод выключается
+    tagsCompleterEnabled=!tags.isEmpty();
+
     if(tags.isEmpty())
-        recordTags->setCompleter(nullptr);
-    else
-        recordTags->setCompleter(tagsCompleter);
+        tagsCompleter->popup()->hide();
 }
 
 
@@ -230,7 +236,7 @@ QString InfoFieldEnter::trimTagTail(const QString &text)
 // прячется а не висит пустой
 void InfoFieldEnter::onTagsEdited(const QString &text)
 {
-    if(recordTags->completer()!=tagsCompleter)
+    if(!tagsCompleterEnabled)
         return;
 
     QString token=lastTagToken(text);

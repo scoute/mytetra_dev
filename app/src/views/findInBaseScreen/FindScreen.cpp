@@ -1043,6 +1043,13 @@ void FindScreen::setupFieldCompleter(void)
     fieldCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     fieldCompleter->setMaxVisibleItems(10);
 
+    // Только привязка к виджету для позиционирования выпадашки.
+    // setCompleter не используется: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после пробела не появляется.
+    // Привод полностью ручной из onFindTextEdited
+    fieldCompleter->setWidget(findText);
+    fieldCompleterEnabled=false;
+
     connect(findText, &QLineEdit::textEdited,
             this,     &FindScreen::onFindTextEdited);
 
@@ -1095,12 +1102,11 @@ void FindScreen::refreshFieldCompleter(void)
 
     fieldCompleterModel->setStringList(words);
 
-    // Подсказывать нечего: комплитер снимается со строки
-    // чтобы не мешать обычному вводу
+    // Подсказывать нечего: ручной привод выключается
+    fieldCompleterEnabled=!words.isEmpty();
+
     if(words.isEmpty())
-        findText->setCompleter(nullptr);
-    else
-        findText->setCompleter(fieldCompleter);
+        fieldCompleter->popup()->hide();
 }
 
 
@@ -1216,7 +1222,7 @@ QString FindScreen::applyCompletion(const QString &text, const QString &completi
 // с двух букв, при отсутствии совпадений прячется а не висит пустой
 void FindScreen::onFindTextEdited(const QString &text)
 {
-    if(findText->completer()!=fieldCompleter)
+    if(!fieldCompleterEnabled)
         return;
 
     QString token=lastToken(text);

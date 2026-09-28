@@ -15,9 +15,9 @@ class QGridLayout;
 class QLabel;
 class QCheckBox;
 class QProgressDialog;
-class QCompleter;
 class QStringListModel;
 class QShowEvent;
+class QCompleter;
 
 class KnowTreeModel;
 class TreeItem;
@@ -141,10 +141,13 @@ private:
 
     QProgressDialog *progress;
 
-    // Подсказка автодополнения и ее словарь. Комплитер живет все время,
-    // на строку поиска вешается только когда есть что подсказывать
+    // Подсказка автодополнения и ее словарь. Комплитер привязан к строке
+    // через setWidget, а не setCompleter: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после пробела не появляется. Флаг включает
+    // ручной привод когда словарь непуст
     QCompleter *fieldCompleter;
     QStringListModel *fieldCompleterModel;
+    bool fieldCompleterEnabled;
 
     void setupFindTextAndButton(void);
     void assemblyFindTextAndButton(void);

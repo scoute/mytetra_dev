@@ -10,6 +10,9 @@ class QLineEdit;
 class QPushButton;
 class QGridLayout;
 class QToolButton;
+class QCompleter;
+class QStringListModel;
+class QShowEvent;
 
 class InfoFieldEnter : public QWidget
 {
@@ -28,9 +31,26 @@ public:
     void setReadOnly(bool state);
     bool isReadOnly();
 
+    // Последний недопечатанный тег: хвост после крайней запятой
+    // или точки с запятой. Разделитель в конце значит тег допечатан
+    static QString lastTagToken(const QString &text);
+
+    // Подставить выбранное дополнение вместо последнего тега.
+    // В конец добавляется запятая с пробелом для следующего тега
+    static QString applyTagCompletion(const QString &text, const QString &completion);
+
+    // Срезать висячий хвост разделителей в конце строки
+    static QString trimTagTail(const QString &text);
+
 public slots:
 
     void expandInfoClick(void);
+
+private slots:
+
+    void onTagsEdited(const QString &text);
+    void onTagCompletion(const QString &completion);
+    void onTagsReturn(void);
 
 private:
 
@@ -61,6 +81,21 @@ private:
     void assembly(void);
 
     void expandInfoOnDisplay(QString expand);
+
+    // Подсказка тегов из базы. Словарь собирается при каждом показе:
+    // теги могли измениться. Выпадашка с двух букв, не больше десяти
+    // строк, без совпадений прячется
+    void setupTagsCompleter(void);
+    void refreshTagsCompleter(void);
+
+    // Подсказка автодополнения и ее словарь. Комплитер живет все время,
+    // на поле тегов вешается только когда есть что подсказывать
+    QCompleter *tagsCompleter;
+    QStringListModel *tagsCompleterModel;
+
+protected:
+
+    void showEvent(QShowEvent *event) override;
 
 };
 

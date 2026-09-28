@@ -1231,4 +1231,9 @@ void FindScreen::onFindTextEdited(const QString &text)
 void FindScreen::onFieldCompletion(const QString &completion)
 {
     findText->setText(applyCompletion(findText->text(), completion));
+
+    // Выбор подсказки сразу запускает поиск: одним кликом меньше.
+    // Многословный запрос строится так же: каждая следующая подсказка
+    // перезапускает поиск с удлиненным запросом
+    findClicked();
 }

@@ -136,10 +136,6 @@ void MetaEditor::setupUI(void)
   recordTagsScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается горизонтальная полоса прокрутки
   recordTagsScrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается вертикальная полоса прокрутки
   recordTagsScrollArea->setFrameShape(QFrame::NoFrame); // Убирается тонкая линия вокруг QScrollArea
-  // Высота подстраивается под содержимое автоматически: пинить
-  // setMaximumHeight к мгновенной высоте контейнера нельзя, в момент
-  // вызова layout может быть еще не посчитан и строка сплющится навсегда
-  recordTagsScrollArea->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
   recordTagsScrollArea->setWidget(recordTagsContainer);
 
  m_attachTableScreen=new AttachTableScreen(this);
@@ -413,6 +409,39 @@ void MetaEditor::setTags(QString tags)
  {
   recordTagsLabels.at(i)->setVisible(visible);
  }
+
+ updateTagsRowHeight();
+}
+
+
+// Высота строки меток ровно в одну метку: берется максимум из хинтов
+// подписи и самих меток. Мгновенная высота контейнера не используется:
+// в момент вызова layout может быть еще не посчитан, и тогда строка
+// сплющивалась навсегда
+void MetaEditor::updateTagsRowHeight(void)
+{
+ int tagsHeight=labelTags->sizeHint().height();
+
+ for(int i = 0; i < recordTagsLabels.size(); ++i)
+ {
+  int labelHeight=recordTagsLabels.at(i)->sizeHint().height();
+
+  if(labelHeight>tagsHeight)
+   tagsHeight=labelHeight;
+ }
+
+ recordTagsScrollArea->setMaximumHeight(tagsHeight);
+}
+
+
+// Смена стиля (в частности, переключение темы) меняет хинты виджетов:
+// высота строки меток пересчитывается
+void MetaEditor::changeEvent(QEvent *event)
+{
+ Editor::changeEvent(event);
+
+ if(event->type()==QEvent::StyleChange)
+  updateTagsRowHeight();
 }
 
 

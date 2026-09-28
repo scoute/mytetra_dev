@@ -27,6 +27,7 @@ public:
 
 private slots:    
     void applyChanges(void);
+    void cancelChanges(void);
     void changePage(QListWidgetItem *current, QListWidgetItem *previous);
 
 private:

@@ -18,6 +18,7 @@ public:
     virtual ~AppConfigPage_Appearance();
 
     int applyChanges(void);
+    void cancelChanges(void) override;
 
   protected:
 
@@ -27,6 +28,9 @@ public:
 
     void setupThemeComboBox(void);
     void setupIconSizeComboBox(void);
+
+    // Применить тему из выпадашки. Вызывается живьем и из applyChanges
+    void applyThemeSelection(void);
 
     // Объединяющая рамка
     QGroupBox *behaviorBox;
@@ -40,6 +44,15 @@ public:
 
     QCheckBox *runInMinimizedWindow; // Разрешен ли запуск в свернутом окне
     QCheckBox *dockableWindowsBehavior; // Поведение открепляемых окон
+
+    // Тема, бывшая активной при открытии диалога. Нужна для отката
+    // живого предпросмотра если диалог закроют через Cancel
+    QString initialTheme;
+
+  private slots:
+
+    // Тема применяется сразу при выборе в выпадашке: предпросмотр живьем
+    void onThemeChanged(int index);
 };
 
 #endif // APPCONFIGPAGE_APPEARANCE_H

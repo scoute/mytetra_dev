@@ -52,6 +52,9 @@ void AppConfigPage_Appearance::setupUi()
     dockableWindowsBehavior=new QCheckBox(this);
     dockableWindowsBehavior->setText(tr("Hide detached windows if close main window"));
     dockableWindowsBehavior->setChecked( mytetraConfig.getDockableWindowsBehavior()=="together" );
+
+    // Запоминается тема на момент открытия диалога для отката предпросмотра
+    initialTheme=mytetraConfig.getInterfaceTheme();
 }
 
 
@@ -145,7 +148,10 @@ void AppConfigPage_Appearance::setupIconSizeComboBox()
 
 void AppConfigPage_Appearance::setupSignals()
 {
-
+    // Выбор в выпадашке сразу применяется: предпросмотр темы живьем.
+    // Откат при Cancel делает cancelChanges
+    connect(themeNameComboBox, qOverload<int>(&MtComboBox::currentIndexChanged),
+            this,              &AppConfigPage_Appearance::onThemeChanged);
 }
 
 
@@ -194,6 +200,59 @@ void AppConfigPage_Appearance::assembly()
 }
 
 
+// Применить тему, выбранную в выпадашке. Вызывается и живьем
+// из onThemeChanged, и финально из applyChanges
+void AppConfigPage_Appearance::applyThemeSelection(void)
+{
+    int index=themeNameComboBox->currentIndex();
+
+    if(index<0 || index>=fixedParameters.themesAvailableList.size())
+        return;
+
+    if(themeNameComboBox->currentText()=="Unknown")
+        return;
+
+    QString selectedTheme=fixedParameters.themesAvailableList.at(index);
+
+    if(mytetraConfig.getInterfaceTheme()==selectedTheme)
+        return;
+
+    mytetraConfig.setInterfaceTheme(selectedTheme);
+
+    CssHelper::loadCurrentTheme();
+}
+
+
+void AppConfigPage_Appearance::onThemeChanged(int index)
+{
+    Q_UNUSED(index);
+
+    applyThemeSelection();
+}
+
+
+void AppConfigPage_Appearance::cancelChanges(void)
+{
+    // Возвращается тема, бывшая при открытии диалога
+    if(mytetraConfig.getInterfaceTheme()==initialTheme)
+        return;
+
+    mytetraConfig.setInterfaceTheme(initialTheme);
+
+    CssHelper::loadCurrentTheme();
+
+    // Выпадашка возвращается на исходную без повторного применения
+    int initialIndex=fixedParameters.themesAvailableList.indexOf(initialTheme);
+
+    if(initialIndex>=0)
+    {
+        themeNameComboBox->blockSignals(true);
+        themeNameComboBox->setCurrentIndex(initialIndex);
+        themeNameComboBox->blockSignals(false);
+    }
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -203,18 +262,8 @@ int AppConfigPage_Appearance::applyChanges()
 
     int result=0;
 
-    // Если была изменена тема
-    if ( mytetraConfig.getInterfaceTheme() !=
-         fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] )
-    {
-        if ( themeNameComboBox->currentText()!="Unknown")
-        {
-            mytetraConfig.setInterfaceTheme(
-                fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] );
-
-            CssHelper::loadCurrentTheme();
-        }
-    }
+    // Тема уже применена живьем при выборе, здесь только фиксация
+    applyThemeSelection();
 
 
     // Если был изменен размер иконок

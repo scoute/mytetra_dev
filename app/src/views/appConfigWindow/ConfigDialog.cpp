@@ -53,7 +53,8 @@ void ConfigDialog::setupSignals(void)
 {
     connect(confirmButtons, &QDialogButtonBox::accepted, this, &ConfigDialog::applyChanges);
 
-    connect(confirmButtons, &QDialogButtonBox::rejected, this, &ConfigDialog::reject);
+    // Отмена откатывает живые предпросмотры страниц и только потом закрывает
+    connect(confirmButtons, &QDialogButtonBox::rejected, this, &ConfigDialog::cancelChanges);
 
     connect(contentsWidget, &QListWidget::currentItemChanged,
             this,           &ConfigDialog::changePage);
@@ -166,5 +167,24 @@ void ConfigDialog::applyChanges(void)
 
     // Диалог настройки закрывается
     close();
+}
+
+
+// Отмена: страницы откатывают живые предпросмотры, диалог закрывается.
+// Без отката примерка темы из выпадашки оставалась бы примененной
+// несмотря на Cancel
+void ConfigDialog::cancelChanges(void)
+{
+    // Перебираются виджеты настройки
+    for(int i=0;i<pagesWidget->count();i++)
+    {
+        // Выясняется указатель на виджет
+        ConfigPage *currentConfigPage=qobject_cast<ConfigPage *>(pagesWidget->widget(i));
+
+        // Вызывается метод cancel_changes() для текущего перебираемого виджета
+        currentConfigPage->cancelChanges();
+    }
+
+    reject();
 }
 

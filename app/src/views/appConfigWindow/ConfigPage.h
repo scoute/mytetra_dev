@@ -13,6 +13,10 @@ public:
     virtual ~ConfigPage();
 
     virtual int applyChanges(void);
+
+    // Откат несогласованных изменений при нажатии Cancel. Нужен страницам
+    // которые применяют что-то живьем до закрытия диалога (предпросмотр)
+    virtual void cancelChanges(void);
 };
 
 

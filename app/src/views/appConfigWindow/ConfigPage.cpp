@@ -21,3 +21,9 @@ int ConfigPage::applyChanges(void)
     return 0;
 }
 
+
+void ConfigPage::cancelChanges(void)
+{
+    return;
+}
+

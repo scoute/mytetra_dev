@@ -1610,10 +1610,12 @@ void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlag
 
   highlightFindMatches();
 
-  // Совпадений нет: прежнее поведение - полоска прячется, выводится сообщение
+  // Совпадений нет: полоска остается чтобы поправить запрос,
+  // счетчик показывает отсутствие результата
   if(findMatches.isEmpty())
   {
-    findBar->hideBar();
+    updateFindCounter();
+
     QMessageBox::information(this,
                              tr("Search result"),
                              tr("String '<b>")+text+tr("</b>' not found"),

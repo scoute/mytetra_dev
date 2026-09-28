@@ -17,6 +17,7 @@ class QCheckBox;
 class QProgressDialog;
 class QCompleter;
 class QStringListModel;
+class QShowEvent;
 
 class KnowTreeModel;
 class TreeItem;
@@ -195,6 +196,13 @@ private:
     int cancelFlag;
 
     bool isUnsearchCryptBranchPresent; // Флаг, определяющий, были ли непросмотренные ветки при поиске (зашированные ветки, но пароль небыл введен)
+
+protected:
+
+    // Словарь подсказок пересобирается при каждом показе: при старте
+    // виджет не проходит через widgetShow, а просто восстанавливается
+    // видимым, и без этого подсказки молчат пока не тронешь галочки
+    void showEvent(QShowEvent *event) override;
 };
 
 #endif	/* _FINDSCREEN_H_ */

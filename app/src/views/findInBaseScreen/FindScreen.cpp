@@ -15,6 +15,7 @@
 
 #include <QCompleter>
 #include <QStringListModel>
+#include <QShowEvent>
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
 #include "FindTableWidget.h"
@@ -891,8 +892,18 @@ void FindScreen::widgetShow(void)
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
 
-    // Словарь подсказок пересобирается при каждом показе:
-    // теги и названия могли измениться с прошлого раза
+    // Словарь подсказок здесь не пересобирается: это делает showEvent,
+    // который вызывается и из show(), и при восстановлении видимости
+    // на старте без участия widgetShow
+}
+
+
+void FindScreen::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+
+    // Словарь подсказок свежий при каждом показе: теги и названия
+    // могли измениться пока виджет был скрыт
     refreshFieldCompleter();
 }
 

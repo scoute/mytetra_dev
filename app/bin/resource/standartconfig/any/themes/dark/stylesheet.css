@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="4" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="5" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -2128,7 +2128,7 @@ QSplitter::handle {
   background-color: #455364;
   border: 0px solid #19232D;
   spacing: 0px;
-  padding: 1px;
+  padding: 0px;
   margin: 0px;
 }
 
@@ -2137,12 +2137,12 @@ QSplitter::handle:hover {
 }
 
 QSplitter::handle:horizontal {
-  width: 5px;
+  width: 4px;
   image: url("themes/dark/pic/line_vertical.png");
 }
 
 QSplitter::handle:vertical {
-  height: 5px;
+  height: 4px;
   image: url("themes/dark/pic/line_horizontal.png");
 }
 

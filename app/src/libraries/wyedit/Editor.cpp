@@ -1567,14 +1567,22 @@ void Editor::onReplaceAll(const QString &text, const QString &replacement, QText
 
   QTextCursor cursor(doc);
   cursor.beginEditBlock();
+
+  // Поиск идет отдельным курсором: курсор блока должен остаться
+  // валидным до конца чтобы endEditBlock закрыл блок. Блок нельзя
+  // открывать на курсоре который затем перезаписывается результатом
+  // find: закрытие на null-курсоре ничего не делает, блок остается
+  // открытым навсегда и все последующие правки слипаются в одну отмену
+  QTextCursor finder(cursor);
+
   while(true)
   {
-    cursor=doc->find(text, cursor, useFlags);
+    finder=doc->find(text, finder, useFlags);
 
-    if(cursor.isNull())
+    if(finder.isNull())
       break;
 
-    cursor.insertText(replacement);
+    finder.insertText(replacement);
     replaceCount++;
 
     // После вставки курсор стоит после вставленного текста без выделения,

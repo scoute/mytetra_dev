@@ -612,12 +612,33 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                         inspectText=textdoc.toPlainText();
                     }
 
-                    int fieldMatchCount=countMatchesInText(inspectText);
+                    int fieldMatchCount=0;
+                    bool fieldFound=false;
+
+                    if(key=="tags")
+                    {
+                        // Теги ищутся как атомарные метки, а не подстрокой:
+                        // иначе запрос "net" находил бы тег "internet".
+                        // Режим "любое/все слова" берется из wordRegard
+                        // как и для остальных полей
+                        QStringList recordTags=splitRecordTags(inspectText);
+                        bool matchAll=(wordRegard->currentIndex()==1);
+
+                        fieldFound=matchTags(searchWordList, recordTags,
+                                             matchAll, fieldMatchCount);
+                    }
+                    else
+                    {
+                        fieldMatchCount=countMatchesInText(inspectText);
+
+                        // Признак совпадения определяется прежней проверкой чтобы
+                        // не менять логику режимов "любое слово" / "все слова"
+                        fieldFound=findInTextProcess(inspectText);
+                    }
+
                     rowMatchCount+=fieldMatchCount;
 
-                    // Признак совпадения определяется прежней проверкой чтобы
-                    // не менять логику режимов "любое слово" / "все слова"
-                    iteration_search_result[key]=findInTextProcess(inspectText);
+                    iteration_search_result[key]=fieldFound;
                 }
             } // Закрылся цикл поиска в полях
 
@@ -733,6 +754,60 @@ int FindScreen::countMatchesInText(const QString& text)
     }
 
     return total;
+}
+
+
+// Разбить поле тегов записи на отдельные теги: разделители запятая
+// и точка с запятой, пробелы по краям отбрасываются
+QStringList FindScreen::splitRecordTags(const QString &tagsField)
+{
+    QStringList tags=tagsField.split(QRegExp("[,;]+"), Qt::SkipEmptyParts);
+
+    for(int i=0; i<tags.size(); ++i)
+        tags[i]=tags[i].trimmed();
+
+    tags.removeAll(QString(""));
+
+    return tags;
+}
+
+
+// Совпадение слов запроса с тегами записи. Теги атомарны: каждое слово
+// запроса должно совпасть с ЦЕЛЫМ тегом без учета регистра, подстрока
+// внутри тега совпадением не считается
+bool FindScreen::matchTags(const QStringList &queryWords, const QStringList &recordTags, bool matchAll, int &matchCount)
+{
+    matchCount=0;
+
+    if(queryWords.isEmpty())
+        return false;
+
+    // Сколько слов запроса нашли хотя бы один целый тег
+    int foundWords=0;
+
+    for(int i=0; i<queryWords.size(); ++i)
+    {
+        bool wordFound=false;
+
+        for(int t=0; t<recordTags.size(); ++t)
+        {
+            if(recordTags.at(t).compare(queryWords.at(i), Qt::CaseInsensitive)==0)
+            {
+                matchCount++;
+                wordFound=true;
+            }
+        }
+
+        if(wordFound)
+            foundWords++;
+    }
+
+    // Подсчет идет по всем словам чтобы столбец совпадений не врал,
+    // а отбор определяется режимом: любое слово или все слова
+    if(matchAll)
+        return foundWords==queryWords.size();
+
+    return foundWords>0;
 }
 
 

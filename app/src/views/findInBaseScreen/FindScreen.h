@@ -39,6 +39,19 @@ public slots:
     void findClicked(void);
     void setFindText(QString text);
 
+public:
+
+    // Разбить поле тегов записи на отдельные теги: разделители запятая
+    // и точка с запятой, пробелы по краям отбрасываются
+    static QStringList splitRecordTags(const QString &tagsField);
+
+    // Совпадение слов запроса с тегами записи. Теги атомарны: каждое слово
+    // запроса должно совпасть с ЦЕЛЫМ тегом без учета регистра, подстрока
+    // внутри тега совпадением не считается. В matchCount возвращается число
+    // совпавших пар слово-тег для столбца совпадений. matchAll=false значит
+    // режим "любое слово", matchAll=true значит режим "все слова"
+    static bool matchTags(const QStringList &queryWords, const QStringList &recordTags, bool matchAll, int &matchCount);
+
 
 private slots:
 

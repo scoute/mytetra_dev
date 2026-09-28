@@ -390,8 +390,13 @@ void FindScreen::findClicked(void)
         return;
     }
 
-    // Выясняется список слов, которые нужно искать
-    searchWordList=textDelimiterDecompose(findText->text());
+    // Выясняется список слов, которые нужно искать.
+    // В режиме целых слов запрос режется по разделителям, в режиме
+    // подстроки только по пробелам: иначе "333-1" ищется как "333" и "1"
+    if(howExtract->currentIndex()==0)
+        searchWordList=textDelimiterDecompose(findText->text());
+    else
+        searchWordList=splitQuerySubstring(findText->text());
 
     if(searchWordList.size()==0)
     {
@@ -761,6 +766,42 @@ int FindScreen::countMatchesInText(const QString& text)
     }
 
     return total;
+}
+
+
+// Разбивка запроса в режиме подстроки: режется только по пробелам,
+// дефисы и прочие знаки остаются внутри слов ("333-1" ищется целиком).
+// Двойные кавычки как в textDelimiterDecompose: фраза в кавычках одно слово
+QStringList FindScreen::splitQuerySubstring(const QString &query)
+{
+    QStringList list;
+    QString buf;
+    bool quoted=false;
+
+    for(int i=0; i<query.length(); i++)
+    {
+        if(query.at(i)=='"')
+        {
+            quoted=!quoted;
+            continue;
+        }
+
+        if(!quoted && query.at(i).isSpace())
+        {
+            if(!buf.isEmpty())
+            {
+                list.append(buf);
+                buf.clear();
+            }
+        }
+        else
+            buf.append(query.at(i));
+    }
+
+    if(!buf.isEmpty())
+        list.append(buf);
+
+    return list;
 }
 
 
@@ -1174,66 +1215,23 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
 }
 
 
-// Последний недопечатанный токен запроса: хвост после крайнего пробела.
-// Пробел в конце или пустая строка значит токен допечатан или его нет
-QString FindScreen::lastToken(const QString &text)
-{
-    int end=text.length();
-
-    while(end>0 && text.at(end-1).isSpace())
-        end--;
-
-    if(end==0 || end<text.length())
-        return QString("");
-
-    int start=end;
-
-    while(start>0 && !text.at(start-1).isSpace())
-        start--;
-
-    return text.mid(start, end-start);
-}
-
-
-// Подставить выбранное дополнение вместо последнего токена.
-// Пробел в конце значит токен допечатан: дополнение дописывается.
-// В конец добавляется пробел чтобы сразу набирать следующее слово
-QString FindScreen::applyCompletion(const QString &text, const QString &completion)
-{
-    if(!text.isEmpty() && text.at(text.length()-1).isSpace())
-        return text+completion+" ";
-
-    int end=text.length();
-
-    while(end>0 && text.at(end-1).isSpace())
-        end--;
-
-    int start=end;
-
-    while(start>0 && !text.at(start-1).isSpace())
-        start--;
-
-    return text.left(start)+completion+" ";
-}
-
-
-// Дополняется только последнее недопечатанное слово: запрос может
-// содержать несколько слов через пробел. Выпадашка появляется начиная
-// с двух букв, при отсутствии совпадений прячется а не висит пустой
+// Дополняется весь ввод целиком: фишка подсказки найти полное совпадение
+// с именем заметки. Выпадашка появляется начиная с двух букв,
+// при отсутствии совпадений прячется а не висит пустой
 void FindScreen::onFindTextEdited(const QString &text)
 {
     if(!fieldCompleterEnabled)
         return;
 
-    QString token=lastToken(text);
+    QString prefix=text.trimmed();
 
-    if(token.length()<2)
+    if(prefix.length()<2)
     {
         fieldCompleter->popup()->hide();
         return;
     }
 
-    fieldCompleter->setCompletionPrefix(token);
+    fieldCompleter->setCompletionPrefix(prefix);
 
     if(fieldCompleter->completionCount()==0)
     {
@@ -1247,10 +1245,9 @@ void FindScreen::onFindTextEdited(const QString &text)
 
 void FindScreen::onFieldCompletion(const QString &completion)
 {
-    findText->setText(applyCompletion(findText->text(), completion));
+    // Выбранное дополнение заменяет весь ввод: это полное имя,
+    // дальше сразу запускается поиск
+    findText->setText(completion);
 
-    // Выбор подсказки сразу запускает поиск: одним кликом меньше.
-    // Многословный запрос строится так же: каждая следующая подсказка
-    // перезапускает поиск с удлиненным запросом
     findClicked();
 }

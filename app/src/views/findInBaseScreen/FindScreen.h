@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QMap>
+#include <QSet>
+#include <QStringList>
 
 class QLineEdit;
 class QPushButton;
@@ -13,6 +15,8 @@ class QGridLayout;
 class QLabel;
 class QCheckBox;
 class QProgressDialog;
+class QCompleter;
+class QStringListModel;
 
 class KnowTreeModel;
 class TreeItem;
@@ -31,6 +35,28 @@ class FindScreen : public QWidget
 public:
     FindScreen(QWidget *parent=nullptr);
     virtual ~FindScreen(void);
+
+    // Последний недопечатанный токен запроса: хвост после крайнего
+    // пробела. Пробел в конце значит токен допечатан, возвращается пусто
+    static QString lastToken(const QString &text);
+
+    // Подставить выбранное дополнение вместо последнего токена.
+    // В конец добавляется пробел чтобы сразу набирать следующий тег
+    static QString applyCompletion(const QString &text, const QString &completion);
+
+    // Рекурсивный сбор значений полей ветки и всех подветок в словари.
+    // Ключи словарей совпадают с именами полей поиска. Зашифрованные
+    // ветки без пароля пропускаются как и в самом поиске
+    static void collectBranchValues(const TreeItem *curritem,
+                                    QMap<QString, QStringList> &dictionaries,
+                                    QSet<QString> &seen);
+
+    // Добавить слово в словарь поля. Пустые значения и повторы
+    // без учета регистра отбрасываются
+    static void addDictionaryWord(QMap<QString, QStringList> &dictionaries,
+                                  QSet<QString> &seen,
+                                  const QString &field,
+                                  const QString &word);
 
 public slots:
 
@@ -68,6 +94,10 @@ private slots:
     void changedFindInTags(int state);
     void changedFindInText(int state);
     void changedFindInNameItem(int state);
+
+    void onFindTextEdited(const QString &text);
+    void onFieldCompletion(const QString &completion);
+    void refreshFieldCompleter(void);
 
 signals:
 
@@ -110,6 +140,11 @@ private:
 
     QProgressDialog *progress;
 
+    // Подсказка автодополнения и ее словарь. Комплитер живет все время,
+    // на строку поиска вешается только когда есть что подсказывать
+    QCompleter *fieldCompleter;
+    QStringListModel *fieldCompleterModel;
+
     void setupFindTextAndButton(void);
     void assemblyFindTextAndButton(void);
 
@@ -128,6 +163,13 @@ private:
     void setupSignals(void);
 
     void changedFindInField(QString fieldname, int state);
+
+    // Автодополнение запроса словами из отмеченных полей (теги, названия
+    // и прочие, кроме полнотекстового поля Text). Словарь собирается
+    // одним проходом по дереву, подсказка показывает объединение
+    // словарей всех отмеченных галочек. Выпадашка появляется начиная
+    // с двух букв и показывает не больше десяти вариантов
+    void setupFieldCompleter(void);
 
     void findStart(void);
     void findRecurse(const TreeItem* curritem);

@@ -10,8 +10,11 @@
 #include <QCheckBox>
 #include <QMessageBox>
 #include <QTextDocument>
+
 #include <QApplication>
 
+#include <QCompleter>
+#include <QStringListModel>
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
 #include "FindTableWidget.h"
@@ -47,6 +50,8 @@ FindScreen::FindScreen(QWidget *parent) : QWidget(parent)
     assembly();
 
     setupSignals();
+
+    setupFieldCompleter();
 }
 
 
@@ -872,6 +877,9 @@ void FindScreen::changedFindInField(QString fieldname, int state)
     else i=false;
 
     mytetraConfig.set_findscreen_find_in_field(fieldname,i);
+
+    // Набор полей для подсказок зависит от галочек
+    refreshFieldCompleter();
 }
 
 
@@ -882,6 +890,10 @@ void FindScreen::widgetShow(void)
 
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
+
+    // Словарь подсказок пересобирается при каждом показе:
+    // теги и названия могли измениться с прошлого раза
+    refreshFieldCompleter();
 }
 
 
@@ -1002,4 +1014,221 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
     qDebug() << "Find split list:" << list;
 
     return list;
+}
+
+
+// Создание подсказки автодополнения для строки запроса.
+// Словарь подставится позже в refreshFieldCompleter
+void FindScreen::setupFieldCompleter(void)
+{
+    // Словарь подсказок: регистр не важен, модель отсортирована
+    // для быстрого поиска. Выпадашка показывает не больше десяти строк
+    fieldCompleterModel=new QStringListModel(this);
+
+    fieldCompleter=new QCompleter(this);
+    fieldCompleter->setModel(fieldCompleterModel);
+    fieldCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    fieldCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    fieldCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
+    fieldCompleter->setMaxVisibleItems(10);
+
+    connect(findText, &QLineEdit::textEdited,
+            this,     &FindScreen::onFindTextEdited);
+
+    connect(fieldCompleter, qOverload<const QString &>(&QCompleter::activated),
+            this,          &FindScreen::onFieldCompletion);
+}
+
+
+// Пересборка словаря подсказок по всем значениям полей,
+// отмеченных галочками. Полнотекстовое поле Text не участвует:
+// дополнять среди всего текста заметок бессмысленно
+void FindScreen::refreshFieldCompleter(void)
+{
+    // Словарь собирается по всему дереву: значения из других веток
+    // в подсказке безвредны, зато словарь всегда полный и свежий
+    QMap<QString, QStringList> dictionaries;
+    QSet<QString> seen;
+
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+    if(treeView!=nullptr)
+    {
+        KnowTreeModel *searchModel=static_cast<KnowTreeModel*>(treeView->model());
+
+        const TreeItem *rootItem=searchModel->getRootItem();
+
+        if(rootItem!=nullptr)
+            collectBranchValues(rootItem, dictionaries, seen);
+    }
+
+    // Подсказка показывает объединение словарей отмеченных полей
+    QStringList words;
+
+    if(findInName->isChecked())
+        words+=dictionaries.value("name");
+
+    if(findInAuthor->isChecked())
+        words+=dictionaries.value("author");
+
+    if(findInUrl->isChecked())
+        words+=dictionaries.value("url");
+
+    if(findInTags->isChecked())
+        words+=dictionaries.value("tags");
+
+    if(findInNameItem->isChecked())
+        words+=dictionaries.value("nameItem");
+
+    words.sort(Qt::CaseInsensitive);
+
+    fieldCompleterModel->setStringList(words);
+
+    // Подсказывать нечего: комплитер снимается со строки
+    // чтобы не мешать обычному вводу
+    if(words.isEmpty())
+        findText->setCompleter(nullptr);
+    else
+        findText->setCompleter(fieldCompleter);
+}
+
+
+// Рекурсивный сбор значений полей ветки и всех подветок в словари.
+// Ключи словарей совпадают с именами полей поиска
+void FindScreen::collectBranchValues(const TreeItem *curritem,
+                                     QMap<QString, QStringList> &dictionaries,
+                                     QSet<QString> &seen)
+{
+    if(curritem==nullptr)
+        return;
+
+    // Зашифрованная ветка без введенного пароля недоступна
+    // так же как для самого поиска
+    if(curritem->getField("crypt")=="1" &&
+       globalParameters.getCryptKey().length()==0)
+        return;
+
+    // Имя самой ветки
+    addDictionaryWord(dictionaries, seen, "nameItem", curritem->getField("name"));
+
+    // Значения полей всех записей ветки
+    if(curritem->recordtableGetRowCount() > 0)
+    {
+        const RecordTableData *recordTable=curritem->recordtableGetTableData();
+
+        for(int i=0; i<static_cast<int>(recordTable->size()); i++)
+        {
+            addDictionaryWord(dictionaries, seen, "name", recordTable->getField("name", i));
+            addDictionaryWord(dictionaries, seen, "author", recordTable->getField("author", i));
+            addDictionaryWord(dictionaries, seen, "url", recordTable->getField("url", i));
+
+            QStringList recordTags=splitRecordTags(recordTable->getField("tags", i));
+
+            for(int t=0; t<recordTags.size(); t++)
+                addDictionaryWord(dictionaries, seen, "tags", recordTags.at(t));
+        }
+    }
+
+    // Рекурсивный обход подчиненных веток
+    for(int i=0; i<curritem->childCount(); i++)
+        collectBranchValues(curritem->child(i), dictionaries, seen);
+}
+
+
+// Добавить слово в словарь поля. Пустые значения отбрасываются,
+// повторы без учета регистра тоже: пишется первое встречное написание
+void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
+                                   QSet<QString> &seen,
+                                   const QString &field,
+                                   const QString &word)
+{
+    QString trimmed=word.trimmed();
+
+    if(trimmed.isEmpty())
+        return;
+
+    QString lowered=trimmed.toLower();
+
+    if(seen.contains(lowered))
+        return;
+
+    seen.insert(lowered);
+    dictionaries[field].append(trimmed);
+}
+
+
+// Последний недопечатанный токен запроса: хвост после крайнего пробела.
+// Пробел в конце или пустая строка значит токен допечатан или его нет
+QString FindScreen::lastToken(const QString &text)
+{
+    int end=text.length();
+
+    while(end>0 && text.at(end-1).isSpace())
+        end--;
+
+    if(end==0 || end<text.length())
+        return QString("");
+
+    int start=end;
+
+    while(start>0 && !text.at(start-1).isSpace())
+        start--;
+
+    return text.mid(start, end-start);
+}
+
+
+// Подставить выбранное дополнение вместо последнего токена.
+// Пробел в конце значит токен допечатан: дополнение дописывается.
+// В конец добавляется пробел чтобы сразу набирать следующее слово
+QString FindScreen::applyCompletion(const QString &text, const QString &completion)
+{
+    if(!text.isEmpty() && text.at(text.length()-1).isSpace())
+        return text+completion+" ";
+
+    int end=text.length();
+
+    while(end>0 && text.at(end-1).isSpace())
+        end--;
+
+    int start=end;
+
+    while(start>0 && !text.at(start-1).isSpace())
+        start--;
+
+    return text.left(start)+completion+" ";
+}
+
+
+// Дополняется только последнее недопечатанное слово: запрос может
+// содержать несколько слов через пробел. Выпадашка появляется начиная
+// с двух букв, при отсутствии совпадений прячется а не висит пустой
+void FindScreen::onFindTextEdited(const QString &text)
+{
+    if(findText->completer()!=fieldCompleter)
+        return;
+
+    QString token=lastToken(text);
+
+    if(token.length()<2)
+    {
+        fieldCompleter->popup()->hide();
+        return;
+    }
+
+    fieldCompleter->setCompletionPrefix(token);
+
+    if(fieldCompleter->completionCount()==0)
+    {
+        fieldCompleter->popup()->hide();
+        return;
+    }
+
+    fieldCompleter->complete();
+}
+
+
+void FindScreen::onFieldCompletion(const QString &completion)
+{
+    findText->setText(applyCompletion(findText->text(), completion));
 }

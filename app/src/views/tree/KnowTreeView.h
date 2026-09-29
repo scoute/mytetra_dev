@@ -14,6 +14,9 @@ class QDropEvent;
 class QTapAndHoldGesture;
 class QEvent;
 class QGestureEvent;
+class QPixmap;
+class QIcon;
+class QFont;
 
 class KnowTreeView : public QTreeView
 {
@@ -22,6 +25,12 @@ class KnowTreeView : public QTreeView
 public:
     explicit KnowTreeView(QWidget *parent = nullptr);
     virtual ~KnowTreeView();
+
+    // Картинка перетаскивания: иконка и имя ветки едут за курсором.
+    // Плюсик не ставится осознанно: операция перемещение, а не копия
+    static QPixmap makeBranchDragPixmap(const QIcon &icon,
+                                        const QString &branchName,
+                                        const QFont &font);
 
 signals:
     void tapAndHoldGestureFinished(const QPoint &);

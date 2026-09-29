@@ -9,6 +9,10 @@
 #include <QApplication>
 #include <QTapAndHoldGesture>
 #include <QGestureEvent>
+#include <QPainter>
+#include <QPixmap>
+#include <QIcon>
+#include <QFontMetrics>
 
 #include "KnowTreeView.h"
 #include "KnowTreeDelegate.h"
@@ -383,6 +387,62 @@ void KnowTreeView::mouseReleaseEvent(QMouseEvent *event)
 }
 
 
+// Картинка перетаскивания: иконка и имя ветки едут за курсором.
+// Цвета из палитры подсветки: читается в любой теме
+QPixmap KnowTreeView::makeBranchDragPixmap(const QIcon &icon,
+                                           const QString &branchName,
+                                           const QFont &font)
+{
+    QFontMetrics metrics(font);
+    QString text=metrics.elidedText(branchName, Qt::ElideRight, 240);
+
+    if(text.isEmpty())
+        text=QString("...");
+
+    int iconSize=icon.isNull() ? 0 : 16;
+    int spacing=icon.isNull() ? 0 : 4;
+    int padding=6;
+
+    int textWidth=metrics.horizontalAdvance(text);
+    int textHeight=metrics.height();
+
+    int pixmapWidth=padding*2+iconSize+spacing+textWidth;
+    int pixmapHeight=padding*2+qMax(iconSize, textHeight);
+
+    QPalette palette=QApplication::palette();
+    QColor background=palette.color(QPalette::Highlight);
+    background.setAlpha(225);
+
+    QPixmap pixmap(pixmapWidth, pixmapHeight);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setFont(font);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    painter.setBrush(background);
+    painter.setPen(palette.color(QPalette::Highlight).darker(130));
+    painter.drawRoundedRect(0, 0, pixmapWidth-1, pixmapHeight-1, 4, 4);
+
+    int x=padding;
+
+    if(!icon.isNull())
+    {
+        QPixmap iconPixmap=icon.pixmap(16, 16);
+        painter.drawPixmap(x, padding+(pixmapHeight-padding*2-iconPixmap.height())/2,
+                           iconPixmap);
+        x+=iconSize+spacing;
+    }
+
+    painter.setPen(palette.color(QPalette::HighlightedText));
+    painter.drawText(x, padding,
+                     textWidth, pixmapHeight-padding*2,
+                     Qt::AlignLeft | Qt::AlignVCenter, text);
+
+    return pixmap;
+}
+
+
 // Начало переноса ветки
 void KnowTreeView::customStartDrag(void)
 {
@@ -417,6 +477,15 @@ void KnowTreeView::customStartDrag(void)
     mimeData->setData(FixedParameters::appTextId+"/branchmove",
                       dragItem->getField("id").toUtf8());
     drag->setMimeData(mimeData);
+
+    // Картинка перетаскивания: иконка и имя ветки едут за курсором
+    QVariant decoration=treeModel->data(startDragIndex, Qt::DecorationRole);
+    QIcon branchIcon=decoration.canConvert<QIcon>() ? decoration.value<QIcon>() : QIcon();
+
+    drag->setPixmap(makeBranchDragPixmap(branchIcon,
+                                         dragItem->getField("name"),
+                                         font()));
+    drag->setHotSpot(QPoint(12, 12));
 
     // Запуск операции перетаскивания объекта
     unsigned int result=drag->exec(Qt::MoveAction);

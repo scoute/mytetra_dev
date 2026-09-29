@@ -2,6 +2,7 @@
 #define	_FINDTABLEWIDGET_H_
 
 #include <QWidget>
+#include <QTextDocument>
 
 
 class QModelIndex;
@@ -19,10 +20,19 @@ public:
   virtual ~FindTableWidget(void);
 
   void clearAll(void);
-  void addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId);
+  void addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, int matchCount, bool isRecord);
   int  getRowCount();
   void updateColumnsWidth(void);
-  void setOverdrawMessage(const QString iOverdrawMessage); // Установка надписи, которая появляется поверх виджета
+    void setOverdrawMessage(const QString iOverdrawMessage); // Установка надписи, которая появляется поверх виджета
+
+    // Запрос последнего поиска и его флаги. Нужны чтобы при переходе
+    // в запись сразу запускать поиск по заметке с тем же запросом
+    void setLastSearch(const QString &query, QTextDocument::FindFlags flags);
+
+    // Агрегация счетчиков строк веток: каждая ветка показывает суммарные
+    // совпадения по всему своему поддереву (свое имя + прямые записи +
+    // итоги дочерних веток). Вызывается один раз после конца поиска
+    void aggregateBranchCounts(void);
 
 private slots:
 
@@ -34,6 +44,10 @@ private:
   QTableView *findTableView;
   QStandardItemModel *findTableModel;
   QString overdrawMessage;
+
+  // Запрос и флаги последнего поиска для моста в поиск по заметке
+  QString lastSearchQuery;
+  QTextDocument::FindFlags lastSearchFlags;
 
   void setupUI(void);
   void setupModels(void);

@@ -111,6 +111,10 @@ public:
 
  void saveTextarea();
 
+ // Запуск поиска из внешнего кода (из глобального поиска): запрос кладется
+ // в полоску, подсвечивается, переход к первому совпадению, полоска показывается
+ void startFind(const QString &text, QTextDocument::FindFlags flags);
+
  // Виджет полоски поиска. Нужен MetaEditor чтобы встроить полоску
  // в свою сетку (иначе полоска останется сиротой в заменяемом layout)
  EditorFindBar *findBarWidget(void);

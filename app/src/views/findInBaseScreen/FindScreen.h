@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QMap>
+#include <QSet>
+#include <QStringList>
 
 class QLineEdit;
 class QPushButton;
@@ -13,6 +15,9 @@ class QGridLayout;
 class QLabel;
 class QCheckBox;
 class QProgressDialog;
+class QStringListModel;
+class QShowEvent;
+class QCompleter;
 
 class KnowTreeModel;
 class TreeItem;
@@ -32,12 +37,44 @@ public:
     FindScreen(QWidget *parent=nullptr);
     virtual ~FindScreen(void);
 
+    // Разбивка запроса в режиме подстроки: режется только по пробелам,
+    // дефисы и прочие знаки остаются внутри слов ("333-1" ищется целиком).
+    // Двойные кавычки как в textDelimiterDecompose: фраза в кавычках одно слово
+    static QStringList splitQuerySubstring(const QString &query);
+
+    // Рекурсивный сбор значений полей ветки и всех подветок в словари.
+    // Ключи словарей совпадают с именами полей поиска. Зашифрованные
+    // ветки без пароля пропускаются как и в самом поиске
+    static void collectBranchValues(const TreeItem *curritem,
+                                    QMap<QString, QStringList> &dictionaries,
+                                    QSet<QString> &seen);
+
+    // Добавить слово в словарь поля. Пустые значения и повторы
+    // без учета регистра отбрасываются
+    static void addDictionaryWord(QMap<QString, QStringList> &dictionaries,
+                                  QSet<QString> &seen,
+                                  const QString &field,
+                                  const QString &word);
+
 public slots:
 
     void widgetShow(void);
     void widgetHide(void);
     void findClicked(void);
     void setFindText(QString text);
+
+public:
+
+    // Разбить поле тегов записи на отдельные теги: разделители запятая
+    // и точка с запятой, пробелы по краям отбрасываются
+    static QStringList splitRecordTags(const QString &tagsField);
+
+    // Совпадение слов запроса с тегами записи. Теги атомарны: каждое слово
+    // запроса должно совпасть с ЦЕЛЫМ тегом без учета регистра, подстрока
+    // внутри тега совпадением не считается. В matchCount возвращается число
+    // совпавших пар слово-тег для столбца совпадений. matchAll=false значит
+    // режим "любое слово", matchAll=true значит режим "все слова"
+    static bool matchTags(const QStringList &queryWords, const QStringList &recordTags, bool matchAll, int &matchCount);
 
 
 private slots:
@@ -55,6 +92,10 @@ private slots:
     void changedFindInTags(int state);
     void changedFindInText(int state);
     void changedFindInNameItem(int state);
+
+    void onFindTextEdited(const QString &text);
+    void onFieldCompletion(const QString &completion);
+    void refreshFieldCompleter(void);
 
 signals:
 
@@ -97,6 +138,14 @@ private:
 
     QProgressDialog *progress;
 
+    // Подсказка автодополнения и ее словарь. Комплитер привязан к строке
+    // через setWidget, а не setCompleter: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после пробела не появляется. Флаг включает
+    // ручной привод когда словарь непуст
+    QCompleter *fieldCompleter;
+    QStringListModel *fieldCompleterModel;
+    bool fieldCompleterEnabled;
+
     void setupFindTextAndButton(void);
     void assemblyFindTextAndButton(void);
 
@@ -116,9 +165,20 @@ private:
 
     void changedFindInField(QString fieldname, int state);
 
+    // Автодополнение запроса словами из отмеченных полей (теги, названия
+    // и прочие, кроме полнотекстового поля Text). Словарь собирается
+    // одним проходом по дереву, подсказка показывает объединение
+    // словарей всех отмеченных галочек. Выпадашка появляется начиная
+    // с двух букв и показывает не больше десяти вариантов
+    void setupFieldCompleter(void);
+
     void findStart(void);
     void findRecurse(const TreeItem* curritem);
     bool findInTextProcess(const QString& text);
+
+    // Подсчет количества совпадений в тексте по тем же правилам что и поиск
+    // (целые слова или подстрока). Нужен для столбца совпадений
+    int countMatchesInText(const QString& text);
 
     void switchToolsExpand(bool flag);
 
@@ -136,6 +196,13 @@ private:
     int cancelFlag;
 
     bool isUnsearchCryptBranchPresent; // Флаг, определяющий, были ли непросмотренные ветки при поиске (зашированные ветки, но пароль небыл введен)
+
+protected:
+
+    // Словарь подсказок пересобирается при каждом показе: при старте
+    // виджет не проходит через widgetShow, а просто восстанавливается
+    // видимым, и без этого подсказки молчат пока не тронешь галочки
+    void showEvent(QShowEvent *event) override;
 };
 
 #endif	/* _FINDSCREEN_H_ */

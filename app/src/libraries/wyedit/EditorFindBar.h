@@ -27,6 +27,11 @@ public:
   QString searchText(void) const;
   QTextDocument::FindFlags searchFlags(void) const;
 
+  // Установить текст и флаги извне для моста из глобального поиска.
+  // Изменение текста само обновляет подсветку через textChanged
+  void setSearchText(const QString &text);
+  void setSearchFlags(QTextDocument::FindFlags flags);
+
   // Показать счетчик вида "2 of 5". Пустая строка гасит надпись
   void setMatchCounter(const QString &text);
 

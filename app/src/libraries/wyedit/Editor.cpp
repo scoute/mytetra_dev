@@ -1439,6 +1439,21 @@ EditorFindBar *Editor::findBarWidget(void)
 }
 
 
+// Запуск поиска из внешнего кода (из глобального поиска).
+// Установка текста сама обновляет подсветку через textChanged,
+// дальше переход к первому совпадению и показ полоски со счетчиком.
+// Нужен мосту из глобального поиска в заметку
+void Editor::startFind(const QString &text, QTextDocument::FindFlags flags)
+{
+  findBar->setSearchFlags(flags);
+  findBar->setSearchText(text);
+
+  onFindNext();
+
+  findBar->showBar();
+}
+
+
 // Кнопка "Find in base" в полоске поиска: запрос уходит в глобальный поиск.
 // Сигнал подхватывает главное окно и открывает FindScreen с этим текстом
 void Editor::onFindInBaseDialog(const QString &text)

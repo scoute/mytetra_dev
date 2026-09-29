@@ -10,8 +10,12 @@
 #include <QCheckBox>
 #include <QMessageBox>
 #include <QTextDocument>
+
 #include <QApplication>
 
+#include <QCompleter>
+#include <QStringListModel>
+#include <QShowEvent>
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
 #include "FindTableWidget.h"
@@ -47,6 +51,8 @@ FindScreen::FindScreen(QWidget *parent) : QWidget(parent)
     assembly();
 
     setupSignals();
+
+    setupFieldCompleter();
 }
 
 
@@ -384,8 +390,13 @@ void FindScreen::findClicked(void)
         return;
     }
 
-    // Выясняется список слов, которые нужно искать
-    searchWordList=textDelimiterDecompose(findText->text());
+    // Выясняется список слов, которые нужно искать.
+    // В режиме целых слов запрос режется по разделителям, в режиме
+    // подстроки только по пробелам: иначе "333-1" ищется как "333" и "1"
+    if(howExtract->currentIndex()==0)
+        searchWordList=textDelimiterDecompose(findText->text());
+    else
+        searchWordList=splitQuerySubstring(findText->text());
 
     if(searchWordList.size()==0)
     {
@@ -396,6 +407,15 @@ void FindScreen::findClicked(void)
         messageBox.exec();
         return;
     }
+
+    // Запрос запоминается в таблице результатов для моста в поиск
+    // по заметке: клик по строке откроет запись с тем же запросом.
+    // Регистр в глобальном поиске всегда нечувствительный, из режимов
+    // переносится только "целые слова"
+    QTextDocument::FindFlags searchFlags=0;
+    if(howExtract->currentIndex()==0)
+        searchFlags|=QTextDocument::FindWholeWords;
+    findTable->setLastSearch(findText->text(), searchFlags);
 
     findStart();
 }
@@ -479,6 +499,10 @@ void FindScreen::findStart(void)
     //Вызывается рекурсивный поиск в дереве
     this->findRecurse( startItem );
 
+    // Строки веток показывают суммарные совпадения по своему поддереву,
+    // а не только по имени. Считается после конца поиска снизу вверх
+    findTable->aggregateBranchCounts();
+
     // После вставки всех данных подгоняется ширина колонок
     findTable->updateColumnsWidth();
 
@@ -523,12 +547,15 @@ void FindScreen::findRecurse(const TreeItem* curritem)
         {
             // QString path = curritem->getPathAsNameWithDelimeter(" ");
             // qDebug() << "Find branch succesfull " << path;
-            // В таблицу результатов добавляется запись о найденой ветке
+            // В таблицу результатов добавляется запись о найденой ветке.
+            // Это строка ветки, а не записи
             findTable->addRow(itemName,
                               tr("[Tree item]"),
                               "",
                               curritem->getPath(),
-                              curritem->getField("id"));
+                              curritem->getField("id"),
+                              countMatchesInText(itemName),
+                              false);
         }
     }
 
@@ -562,6 +589,10 @@ void FindScreen::findRecurse(const TreeItem* curritem)
             iteration_search_result["tags"]  =false;
             iteration_search_result["text"]  =false;
 
+            // Суммарное количество совпадений во всех отмеченных полях.
+            // Показывается первым столбцом таблицы результатов
+            int rowMatchCount=0;
+
             // Текст в котором будет проводиться поиск
             QString inspectText;
 
@@ -582,7 +613,6 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     {
                         // Поиск в обычном поле
                         inspectText=searchRecordTable->getField(key,i);
-                        iteration_search_result[key]=findInTextProcess(inspectText);
                     }
                     else
                     {
@@ -590,8 +620,37 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                         inspectText=searchRecordTable->getText(i);
                         QTextDocument textdoc;
                         textdoc.setHtml(inspectText);
-                        iteration_search_result[key]=findInTextProcess(textdoc.toPlainText());
+                        inspectText=textdoc.toPlainText();
                     }
+
+                    int fieldMatchCount=0;
+                    bool fieldFound=false;
+
+                    // Поле тегов уважает переключатель "целые слова / подстрока"
+                    // как и остальные поля. В режиме целых слов теги атомарны:
+                    // слово запроса должно совпасть с ЦЕЛЫМ тегом, иначе
+                    // запрос "net" находил бы тег "internet". В режиме
+                    // подстроки теги ищутся по-старому, подстрокой
+                    if(key=="tags" && howExtract->currentIndex()==0)
+                    {
+                        QStringList recordTags=splitRecordTags(inspectText);
+                        bool matchAll=(wordRegard->currentIndex()==1);
+
+                        fieldFound=matchTags(searchWordList, recordTags,
+                                             matchAll, fieldMatchCount);
+                    }
+                    else
+                    {
+                        fieldMatchCount=countMatchesInText(inspectText);
+
+                        // Признак совпадения определяется прежней проверкой чтобы
+                        // не менять логику режимов "любое слово" / "все слова"
+                        fieldFound=findInTextProcess(inspectText);
+                    }
+
+                    rowMatchCount+=fieldMatchCount;
+
+                    iteration_search_result[key]=fieldFound;
                 }
             } // Закрылся цикл поиска в полях
 
@@ -612,11 +671,15 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                 // Теги
                 // Путь к ветке
                 // ID записи в таблице конечных записей
+                // Количество совпадений
+                // Признак что это запись (а не строка ветки)
                 findTable->addRow(searchRecordTable->getField("name", i),
                                   curritem->getField("name"),
                                   searchRecordTable->getField("tags", i),
                                   curritem->getPath(),
-                                  searchRecordTable->getField("id", i));
+                                  searchRecordTable->getField("id", i),
+                                  rowMatchCount,
+                                  true);
             }
 
         } // Закрылся цикл перебора записей в таблице конечных записей
@@ -669,13 +732,130 @@ bool FindScreen::findInTextProcess(const QString& text)
     if(wordRegard->currentIndex()==0) return false;
     else
     {
-        // Иначе требовалось найти все слова в запросе
-        if( findWordCount==searchWordList.size() )
-            return true;
-        else
-            return false;
+    // Иначе требовалось найти все слова в запросе
+    if( findWordCount==searchWordList.size() )
+        return true;
+    else
+        return false;
+
     }
 
+}
+
+
+// Подсчет количества совпадений по тем же правилам что и findInTextProcess:
+// целые слова или подстрока, без учета регистра. Суммируется по всем словам
+int FindScreen::countMatchesInText(const QString& text)
+{
+    int total=0;
+
+    for(int i=0; i<searchWordList.size(); ++i)
+    {
+        // Если надо найти совпадение целого слова
+        if(howExtract->currentIndex()==0)
+        {
+            // Текст разбивается на слова тем же способом что при поиске
+            // и считается количество равных искомому
+            total+=textDelimiterDecompose(text).filter(searchWordList.at(i), Qt::CaseInsensitive).size();
+        }
+        else
+        {
+            // Подстрока: количество непересекающихся вхождений
+            total+=text.count(searchWordList.at(i), Qt::CaseInsensitive);
+        }
+    }
+
+    return total;
+}
+
+
+// Разбивка запроса в режиме подстроки: режется только по пробелам,
+// дефисы и прочие знаки остаются внутри слов ("333-1" ищется целиком).
+// Двойные кавычки как в textDelimiterDecompose: фраза в кавычках одно слово
+QStringList FindScreen::splitQuerySubstring(const QString &query)
+{
+    QStringList list;
+    QString buf;
+    bool quoted=false;
+
+    for(int i=0; i<query.length(); i++)
+    {
+        if(query.at(i)=='"')
+        {
+            quoted=!quoted;
+            continue;
+        }
+
+        if(!quoted && query.at(i).isSpace())
+        {
+            if(!buf.isEmpty())
+            {
+                list.append(buf);
+                buf.clear();
+            }
+        }
+        else
+            buf.append(query.at(i));
+    }
+
+    if(!buf.isEmpty())
+        list.append(buf);
+
+    return list;
+}
+
+
+// Разбить поле тегов записи на отдельные теги: разделители запятая
+// и точка с запятой, пробелы по краям отбрасываются
+QStringList FindScreen::splitRecordTags(const QString &tagsField)
+{
+    QStringList tags=tagsField.split(QRegExp("[,;]+"), Qt::SkipEmptyParts);
+
+    for(int i=0; i<tags.size(); ++i)
+        tags[i]=tags[i].trimmed();
+
+    tags.removeAll(QString(""));
+
+    return tags;
+}
+
+
+// Совпадение слов запроса с тегами записи. Теги атомарны: каждое слово
+// запроса должно совпасть с ЦЕЛЫМ тегом без учета регистра, подстрока
+// внутри тега совпадением не считается
+bool FindScreen::matchTags(const QStringList &queryWords, const QStringList &recordTags, bool matchAll, int &matchCount)
+{
+    matchCount=0;
+
+    if(queryWords.isEmpty())
+        return false;
+
+    // Сколько слов запроса нашли хотя бы один целый тег
+    int foundWords=0;
+
+    for(int i=0; i<queryWords.size(); ++i)
+    {
+        bool wordFound=false;
+
+        for(int t=0; t<recordTags.size(); ++t)
+        {
+            if(recordTags.at(t).compare(queryWords.at(i), Qt::CaseInsensitive)==0)
+            {
+                matchCount++;
+                wordFound=true;
+            }
+        }
+
+        if(wordFound)
+            foundWords++;
+    }
+
+    // Подсчет идет по всем словам чтобы столбец совпадений не врал,
+    // а отбор определяется режимом: любое слово или все слова
+    if(matchAll)
+        return foundWords==queryWords.size();
+
+    return foundWords>0;
 }
 
 
@@ -739,6 +919,9 @@ void FindScreen::changedFindInField(QString fieldname, int state)
     else i=false;
 
     mytetraConfig.set_findscreen_find_in_field(fieldname,i);
+
+    // Набор полей для подсказок зависит от галочек
+    refreshFieldCompleter();
 }
 
 
@@ -749,6 +932,20 @@ void FindScreen::widgetShow(void)
 
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
+
+    // Словарь подсказок здесь не пересобирается: это делает showEvent,
+    // который вызывается и из show(), и при восстановлении видимости
+    // на старте без участия widgetShow
+}
+
+
+void FindScreen::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+
+    // Словарь подсказок свежий при каждом показе: теги и названия
+    // могли измениться пока виджет был скрыт
+    refreshFieldCompleter();
 }
 
 
@@ -869,4 +1066,192 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
     qDebug() << "Find split list:" << list;
 
     return list;
+}
+
+
+// Создание подсказки автодополнения для строки запроса.
+// Словарь подставится позже в refreshFieldCompleter
+void FindScreen::setupFieldCompleter(void)
+{
+    // Словарь подсказок: регистр не важен, модель отсортирована
+    // для быстрого поиска. Выпадашка показывает не больше десяти строк
+    fieldCompleterModel=new QStringListModel(this);
+
+    fieldCompleter=new QCompleter(this);
+    fieldCompleter->setModel(fieldCompleterModel);
+    fieldCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    fieldCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    fieldCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
+    fieldCompleter->setMaxVisibleItems(10);
+
+    // Совпадение подстрокой а не с начала слова: rnet находит internet.
+    // Словарь уже собран, фильтрация по нему копеечная
+    fieldCompleter->setFilterMode(Qt::MatchContains);
+
+    // Только привязка к виджету для позиционирования выпадашки.
+    // setCompleter не используется: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после пробела не появляется.
+    // Привод полностью ручной из onFindTextEdited
+    fieldCompleter->setWidget(findText);
+    fieldCompleterEnabled=false;
+
+    connect(findText, &QLineEdit::textEdited,
+            this,     &FindScreen::onFindTextEdited);
+
+    connect(fieldCompleter, qOverload<const QString &>(&QCompleter::activated),
+            this,          &FindScreen::onFieldCompletion);
+}
+
+
+// Пересборка словаря подсказок по всем значениям полей,
+// отмеченных галочками. Полнотекстовое поле Text не участвует:
+// дополнять среди всего текста заметок бессмысленно
+void FindScreen::refreshFieldCompleter(void)
+{
+    // Словарь собирается по всему дереву: значения из других веток
+    // в подсказке безвредны, зато словарь всегда полный и свежий
+    QMap<QString, QStringList> dictionaries;
+    QSet<QString> seen;
+
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+    if(treeView!=nullptr)
+    {
+        KnowTreeModel *searchModel=static_cast<KnowTreeModel*>(treeView->model());
+
+        const TreeItem *rootItem=searchModel->getRootItem();
+
+        if(rootItem!=nullptr)
+            collectBranchValues(rootItem, dictionaries, seen);
+    }
+
+    // Подсказка показывает объединение словарей отмеченных полей
+    QStringList words;
+
+    if(findInName->isChecked())
+        words+=dictionaries.value("name");
+
+    if(findInAuthor->isChecked())
+        words+=dictionaries.value("author");
+
+    if(findInUrl->isChecked())
+        words+=dictionaries.value("url");
+
+    if(findInTags->isChecked())
+        words+=dictionaries.value("tags");
+
+    if(findInNameItem->isChecked())
+        words+=dictionaries.value("nameItem");
+
+    words.sort(Qt::CaseInsensitive);
+
+    fieldCompleterModel->setStringList(words);
+
+    // Подсказывать нечего: ручной привод выключается
+    fieldCompleterEnabled=!words.isEmpty();
+
+    if(words.isEmpty())
+        fieldCompleter->popup()->hide();
+}
+
+
+// Рекурсивный сбор значений полей ветки и всех подветок в словари.
+// Ключи словарей совпадают с именами полей поиска
+void FindScreen::collectBranchValues(const TreeItem *curritem,
+                                     QMap<QString, QStringList> &dictionaries,
+                                     QSet<QString> &seen)
+{
+    if(curritem==nullptr)
+        return;
+
+    // Зашифрованная ветка без введенного пароля недоступна
+    // так же как для самого поиска
+    if(curritem->getField("crypt")=="1" &&
+       globalParameters.getCryptKey().length()==0)
+        return;
+
+    // Имя самой ветки
+    addDictionaryWord(dictionaries, seen, "nameItem", curritem->getField("name"));
+
+    // Значения полей всех записей ветки
+    if(curritem->recordtableGetRowCount() > 0)
+    {
+        const RecordTableData *recordTable=curritem->recordtableGetTableData();
+
+        for(int i=0; i<static_cast<int>(recordTable->size()); i++)
+        {
+            addDictionaryWord(dictionaries, seen, "name", recordTable->getField("name", i));
+            addDictionaryWord(dictionaries, seen, "author", recordTable->getField("author", i));
+            addDictionaryWord(dictionaries, seen, "url", recordTable->getField("url", i));
+
+            QStringList recordTags=splitRecordTags(recordTable->getField("tags", i));
+
+            for(int t=0; t<recordTags.size(); t++)
+                addDictionaryWord(dictionaries, seen, "tags", recordTags.at(t));
+        }
+    }
+
+    // Рекурсивный обход подчиненных веток
+    for(int i=0; i<curritem->childCount(); i++)
+        collectBranchValues(curritem->child(i), dictionaries, seen);
+}
+
+
+// Добавить слово в словарь поля. Пустые значения отбрасываются,
+// повторы без учета регистра тоже: пишется первое встречное написание
+void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
+                                   QSet<QString> &seen,
+                                   const QString &field,
+                                   const QString &word)
+{
+    QString trimmed=word.trimmed();
+
+    if(trimmed.isEmpty())
+        return;
+
+    QString lowered=trimmed.toLower();
+
+    if(seen.contains(lowered))
+        return;
+
+    seen.insert(lowered);
+    dictionaries[field].append(trimmed);
+}
+
+
+// Дополняется весь ввод целиком: фишка подсказки найти полное совпадение
+// с именем заметки. Выпадашка появляется начиная с двух букв,
+// при отсутствии совпадений прячется а не висит пустой
+void FindScreen::onFindTextEdited(const QString &text)
+{
+    if(!fieldCompleterEnabled)
+        return;
+
+    QString prefix=text.trimmed();
+
+    if(prefix.length()<2)
+    {
+        fieldCompleter->popup()->hide();
+        return;
+    }
+
+    fieldCompleter->setCompletionPrefix(prefix);
+
+    if(fieldCompleter->completionCount()==0)
+    {
+        fieldCompleter->popup()->hide();
+        return;
+    }
+
+    fieldCompleter->complete();
+}
+
+
+void FindScreen::onFieldCompletion(const QString &completion)
+{
+    // Выбранное дополнение заменяет весь ввод: это полное имя,
+    // дальше сразу запускается поиск
+    findText->setText(completion);
+
+    findClicked();
 }

@@ -14,6 +14,8 @@
 #include <QStyledItemDelegate>
 #include <QApplication>
 
+#include <algorithm>
+
 #include "FindTableWidget.h"
 #include "views/mainWindow/MainWindow.h"
 #include "views/record/MetaEditor.h"
@@ -24,6 +26,7 @@
 
 #define USER_ROLE_PATH      Qt::UserRole
 #define USER_ROLE_RECORD_ID Qt::UserRole+1
+#define USER_ROLE_IS_RECORD Qt::UserRole+2
 
 extern AppConfig mytetraConfig;
 
@@ -119,12 +122,12 @@ void FindTableWidget::clearAll(void)
     findTableModel->setRowCount(0);
     findTableModel->setColumnCount(0);
 
-    // В модели таблицы устанавливаются две колонки Path и Title
-    findTableModel->setColumnCount(2);
+    // В модели таблицы устанавливаются три колонки: совпадения, заголовок, детали
+    findTableModel->setColumnCount(3);
 
     // В модели устанавливаются заголовки колонок
     QStringList list;
-    list << tr("Title") << tr("Details");
+    list << tr("Matches") << tr("Title") << tr("Details");
     findTableModel->setHorizontalHeaderLabels(list);
 
     findTableView->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
@@ -132,7 +135,7 @@ void FindTableWidget::clearAll(void)
 }
 
 
-void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId)
+void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, int matchCount, bool isRecord)
 {
     int i=findTableModel->rowCount();
 
@@ -143,15 +146,23 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
     // if(height!=0)
     //  findTableView->setRowHeight(i, height);
 
+    // Количество совпадений в записи или ветке. Первый столбец, до названия
+    QStandardItem *item_matches=new QStandardItem();
+    item_matches->setText(QString::number(matchCount));
+    item_matches->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
     // Заголовок (название) записи
     QStandardItem *item_title=new QStandardItem();
     item_title->setText(title);
 
-    // В ячейке заголовка также хранится информация о пути к ветке
-    // и номере записи в таблице конечных записей
+    // В ячейке заголовка также хранится информация о пути к ветке,
+    // номере записи в таблице конечных записей и признак что это запись
+    // (а не строка ветки). Признак нужен чтобы открывать поиск по заметке
+    // только для настоящих записей
     qDebug() << "Path to record" << path;
     item_title->setData(QVariant(path), USER_ROLE_PATH);
     item_title->setData(QVariant(recordId), USER_ROLE_RECORD_ID);
+    item_title->setData(QVariant(isRecord), USER_ROLE_IS_RECORD);
 
     // Информация о записи
     QStandardItem *item_info=new QStandardItem();
@@ -162,8 +173,9 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
     else
         item_info->setText(branchName);
 
-    findTableModel->setItem(i, 0, item_title);
-    findTableModel->setItem(i, 1, item_info);
+    findTableModel->setItem(i, 0, item_matches);
+    findTableModel->setItem(i, 1, item_title);
+    findTableModel->setItem(i, 2, item_info);
 
     qDebug() << "In findtablewidget add_row() row count " << findTableModel->rowCount();
 }
@@ -202,15 +214,94 @@ void FindTableWidget::setOverdrawMessage(const QString iOverdrawMessage)
 }
 
 
+void FindTableWidget::setLastSearch(const QString &query, QTextDocument::FindFlags flags)
+{
+    lastSearchQuery=query;
+    lastSearchFlags=flags;
+}
+
+
+// Агрегация счетчиков строк веток снизу вверх: каждая ветка показывает
+// суммарные совпадения по всему своему поддереву. Строки записей уже
+// содержат свои итоги, строки дочерних веток к этому моменту тоже
+// посчитаны (обход от самых глубоких). Прямые потомки ветки это строки
+// записей с тем же путем и строки веток с путем на один элемент длиннее
+void FindTableWidget::aggregateBranchCounts(void)
+{
+    int rows=findTableModel->rowCount();
+
+    // Индексы строк веток, сортировка по глубине пути по убыванию
+    QList<int> branchRows;
+    for(int i=0; i<rows; ++i)
+    {
+        QStandardItem *titleItem=findTableModel->item(i, 1);
+
+        if(titleItem==nullptr)
+            continue;
+
+        if(!titleItem->data(USER_ROLE_IS_RECORD).toBool())
+            branchRows << i;
+    }
+
+    std::sort(branchRows.begin(), branchRows.end(),
+              [this](int first, int second)
+              {
+                return findTableModel->item(first, 1)->data(USER_ROLE_PATH).toStringList().size() >
+                       findTableModel->item(second, 1)->data(USER_ROLE_PATH).toStringList().size();
+              });
+
+    // Подсчет итогов от глубоких веток к корневым
+    foreach(int branchRow, branchRows)
+    {
+        QStandardItem *branchTitle=findTableModel->item(branchRow, 1);
+        QStringList branchPath=branchTitle->data(USER_ROLE_PATH).toStringList();
+
+        QStandardItem *branchCount=findTableModel->item(branchRow, 0);
+        int total=branchCount->text().toInt();
+
+        for(int i=0; i<rows; ++i)
+        {
+            if(i==branchRow)
+                continue;
+
+            QStandardItem *titleItem=findTableModel->item(i, 1);
+
+            if(titleItem==nullptr)
+                continue;
+
+            QStringList rowPath=titleItem->data(USER_ROLE_PATH).toStringList();
+
+            // Прямая запись ветки: путь совпадает с путем ветки
+            if(titleItem->data(USER_ROLE_IS_RECORD).toBool())
+            {
+                if(rowPath==branchPath)
+                    total+=findTableModel->item(i, 0)->text().toInt();
+
+                continue;
+            }
+
+            // Дочерняя ветка: путь длиннее ровно на один элемент
+            // с префиксом пути родителя. Ее итог уже посчитан
+            if(rowPath.size()==branchPath.size()+1 &&
+               rowPath.mid(0, branchPath.size())==branchPath)
+                total+=findTableModel->item(i, 0)->text().toInt();
+        }
+
+        branchCount->setText(QString::number(total));
+    }
+}
+
+
 // void FindTableWidget::selectCell(int row, int column)
 void FindTableWidget::selectCell(const QModelIndex & index)
 {
     QStandardItem *clickItem=findTableModel->itemFromIndex(index);
-    QStandardItem *item=findTableModel->item(clickItem->row(), 0); // Данные находятся в самом левом столбце с индексом 0
+    QStandardItem *item=findTableModel->item(clickItem->row(), 1); // Данные находятся в столбце заголовка с индексом 1
 
     // Выясняется путь к ветке и номер в таблице конечных записей
     QStringList path=item->data(USER_ROLE_PATH).toStringList();
     QString recordId=item->data(USER_ROLE_RECORD_ID).toString();
+    bool isRecord=item->data(USER_ROLE_IS_RECORD).toBool();
 
     qDebug() << "Get path to record:" << path;
 
@@ -219,5 +310,16 @@ void FindTableWidget::selectCell(const QModelIndex & index)
     edView->switchToEditorLayout();
 
     find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, recordId);
+
+    // Мост в поиск по заметке: открытая запись сразу подсвечивается
+    // тем же запросом с переходом к первому совпадению. Для строк веток
+    // подсветка не запускается: там открыта другая запись
+    if(isRecord && !lastSearchQuery.isEmpty())
+    {
+        // Дать редактору дочитать текст открывшейся записи
+        QCoreApplication::processEvents();
+
+        edView->startFind(lastSearchQuery, lastSearchFlags);
+    }
 }
 

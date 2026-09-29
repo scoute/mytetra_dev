@@ -230,6 +230,21 @@ QTextDocument::FindFlags EditorFindBar::searchFlags(void) const
 }
 
 
+// Установить текст и флаги извне для моста из глобального поиска.
+// Изменение текста само обновляет подсветку через textChanged
+void EditorFindBar::setSearchText(const QString &text)
+{
+  lineEdit->setText(text);
+}
+
+
+void EditorFindBar::setSearchFlags(QTextDocument::FindFlags flags)
+{
+  mathCase->setChecked(flags & QTextDocument::FindCaseSensitively);
+  wholeWords->setChecked(flags & QTextDocument::FindWholeWords);
+}
+
+
 void EditorFindBar::setMatchCounter(const QString &text)
 {
   matchCounter->setText(text);

@@ -265,6 +265,10 @@ void MainWindow::assembly(void)
 
     addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
 
+    // Кнопка-бирка справа от поиска по базе во второй линии записей.
+    // Тот же переключатель что в меню Tools: состояние синхронно само
+    recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
+
     setCentralWidget(findSplitter);
 }
 

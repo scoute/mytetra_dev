@@ -30,6 +30,25 @@ public:
                                  QMap<QString, int> &counts,
                                  QMap<QString, QString> &display);
 
+    // Собрать записи с тегом: пары ветка и строка таблицы.
+    // Сравнение без учета регистра. Зашифрованные ветки пропускаются
+    static void collectTagTargets(TreeItem *curritem,
+                                  const QString &tagLower,
+                                  QList< QPair<TreeItem *, int> > &targets);
+
+    // Заменить тег в списке целиком без учета регистра.
+    // Возвращает новый список, в changed было ли изменение
+    static QStringList replaceTagInList(const QStringList &tags,
+                                        const QString &oldLower,
+                                        const QString &newSpelling,
+                                        bool &changed);
+
+    // Убрать тег из списка целиком без учета регистра.
+    // Возвращает новый список, в changed было ли изменение
+    static QStringList removeTagFromList(const QStringList &tags,
+                                         const QString &oldLower,
+                                         bool &changed);
+
 protected:
 
     // Словарь пересобирается при каждом показе: теги могли измениться
@@ -39,9 +58,23 @@ private slots:
 
     void onFilterChanged(const QString &text);
     void onTagClicked(int row, int column);
+    void onTagsContextMenu(const QPoint &pos);
+    void onRenameTag(void);
+    void onDeleteTag(void);
     void refreshTags(void);
 
 private:
+
+    // Собрать записи с тегом через дерево. Пустой список значит тег уже исчез
+    void collectTagTargetsFromTree(const QString &tagLower,
+                                   QList< QPair<TreeItem *, int> > &targets);
+
+    // Есть ли в базе тег кроме переименовываемого. Нужно для блокировки слияния
+    bool tagExistsInBase(const QString &tagLower, const QString &excludeLower);
+
+    // Сохранить базу, обновить панель и строку меток открытой заметки.
+    // Пустое newSpelling значит удаление
+    void saveBaseAndRefresh(const QString &oldLower, const QString &newSpelling);
 
     void setupUi(void);
     void assembly(void);

@@ -328,7 +328,7 @@ void MetaEditor::setTags(QString tags)
  recordTagsText=tags;
 
 
- // Строка с метками разделяется на отдельные меки
+// Строка с метками разделяется на отдельные меки
  recordTagsTextList = recordTagsText.split(QRegExp("[,;]+"), QString::SkipEmptyParts);
 
  // В каждой метке убираются лишние пробелы по краям
@@ -414,6 +414,13 @@ void MetaEditor::setTags(QString tags)
  // со стилевыми отступами может требовать чуть больше расчетной высоты
  recordTagsContainer->adjustSize();
  recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height()+1);
+}
+
+
+// Список меток открытой записи для обновления извне
+QStringList MetaEditor::getTagsList(void) const
+{
+ return recordTagsTextList;
 }
 
 

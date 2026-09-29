@@ -200,6 +200,14 @@ void RecordTableScreen::setupUI(void)
 }
 
 
+// Добавить кнопку во вторую линию инструментов (для внешних действий
+// вроде переключателя панели тегов)
+void RecordTableScreen::addExtraToolAction(QAction *action)
+{
+ insertActionAsButton(extraToolsLine, action);
+}
+
+
 void RecordTableScreen::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->metaObject()->className();

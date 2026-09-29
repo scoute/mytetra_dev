@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QSplitter>
 #include <QStatusBar>
+#include <QDockWidget>
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -23,6 +24,7 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
+#include "views/tagsPanel/TagsPanel.h"
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/GlobalParameters.h"
 #include "views/consoleEmulator/CommandRunner.h"
@@ -125,6 +127,16 @@ void MainWindow::setupUI(void)
     // Вспомогательный объект с виджетом синхронизации базы знаний
     syncroCommandRun=new CommandRunner( this );
     globalParameters.setSyncroCommandRunner( syncroCommandRun );
+
+    // Панель списка тегов в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools и горячей клавишей
+    tagsPanel=new TagsPanel(this);
+    tagsPanel->setObjectName("tagsPanel");
+
+    tagsPanelDock=new QDockWidget(tr("Tags"), this);
+    tagsPanelDock->setObjectName("tagsPanelDock");
+    tagsPanelDock->setWidget(tagsPanel);
+    tagsPanelDock->hide();
 
     // todo: Для проверки, почему то в этом месте поиск объекта по имени не работает, разобраться.
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
@@ -250,6 +262,8 @@ void MainWindow::assembly(void)
     findSplitter->setCollapsible(0,false); // Верхняя часть не должна смыкаться
     findSplitter->setCollapsible(1,false); // Часть для поиска не должна смыкаться
     findSplitter->setObjectName("findsplitter");
+
+    addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
 
     setCentralWidget(findSplitter);
 }
@@ -640,6 +654,14 @@ void MainWindow::initToolsMenu(void)
 
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
+
+    // Переключатель панели тегов: видимость дока и галочка синхронны сами.
+    // Текст берет из таблицы шорткатов через initAction как у соседей
+    QAction *tagsPanelToggle=tagsPanelDock->toggleViewAction();
+    tagsPanelToggle->setIcon(QIcon(":/resource/pic/tag.svg"));
+    menu->addAction(tagsPanelToggle);
+
+    shortcutManager.initAction("misc-tagsPanel", tagsPanelToggle);
 
     menu->addSeparator();
 

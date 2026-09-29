@@ -1,0 +1,55 @@
+#ifndef _TAGSPANEL_H_
+#define _TAGSPANEL_H_
+
+#include <QWidget>
+#include <QMap>
+
+// Панель списка тегов базы со счетчиками использования.
+// Переключается из меню Tools и горячей клавишей, место не занимает.
+// Клик по тегу запускает глобальный поиск как клик по тегу в заметке
+
+class QLineEdit;
+class QTableWidget;
+class QTableWidgetItem;
+class QShowEvent;
+class TreeItem;
+
+class TagsPanel : public QWidget
+{
+    Q_OBJECT
+
+public:
+
+    TagsPanel(QWidget *parent=nullptr);
+    virtual ~TagsPanel(void);
+
+    // Собрать словарь тег->количество по ветке и подветкам.
+    // Регистр сводится: пишется первое встречное написание, счет суммируется.
+    // Зашифрованные ветки без пароля пропускаются как в поиске
+    static void collectTagCounts(const TreeItem *curritem,
+                                 QMap<QString, int> &counts,
+                                 QMap<QString, QString> &display);
+
+protected:
+
+    // Словарь пересобирается при каждом показе: теги могли измениться
+    void showEvent(QShowEvent *event) override;
+
+private slots:
+
+    void onFilterChanged(const QString &text);
+    void onTagClicked(int row, int column);
+    void refreshTags(void);
+
+private:
+
+    void setupUi(void);
+    void assembly(void);
+    void setupSignals(void);
+
+    // Строка фильтра и таблица тег-количество
+    QLineEdit *filterEdit;
+    QTableWidget *tagsTable;
+};
+
+#endif /* _TAGSPANEL_H_ */

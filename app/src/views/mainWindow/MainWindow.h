@@ -17,11 +17,13 @@ class QMenu;
 class QCloseEvent;
 class QSplitter;
 class QStatusBar;
+class QDockWidget;
 
 class TreeScreen;
 class MetaEditor;
 class RecordTableScreen;
 class FindScreen;
+class TagsPanel;
 class WindowSwitcher;
 class CommandRunner;
 
@@ -197,6 +199,11 @@ private:
     QSplitter *vSplitter;
     QSplitter *hSplitter;
     QSplitter *findSplitter;
+
+    // Панель списка тегов. Переключается из меню Tools и горячей клавишей,
+    // в закрытом виде место не занимает
+    QDockWidget *tagsPanelDock=nullptr;
+    TagsPanel *tagsPanel=nullptr;
 
     CommandRunner *syncroCommandRun=nullptr;
 

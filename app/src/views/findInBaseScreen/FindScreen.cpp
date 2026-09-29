@@ -1084,6 +1084,10 @@ void FindScreen::setupFieldCompleter(void)
     fieldCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     fieldCompleter->setMaxVisibleItems(10);
 
+    // Совпадение подстрокой а не с начала слова: rnet находит internet.
+    // Словарь уже собран, фильтрация по нему копеечная
+    fieldCompleter->setFilterMode(Qt::MatchContains);
+
     // Только привязка к виджету для позиционирования выпадашки.
     // setCompleter не используется: иначе QLineEdit ищет совпадение
     // всей строки и подсказка после пробела не появляется.

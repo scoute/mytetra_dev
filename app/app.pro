@@ -305,6 +305,7 @@ HEADERS+=\
     src/libraries/MtComboBox.h \
     src/libraries/MtTableWidget.h \
     src/views/tree/KnowTreeView.h \
+    src/views/tree/KnowTreeDelegate.h \
     src/libraries/MtStyledItemDelegate.h
 
 SOURCES = src/main.cpp \
@@ -478,6 +479,7 @@ SOURCES+=\
     src/libraries/MtComboBox.cpp \
     src/libraries/MtTableWidget.cpp \
     src/views/tree/KnowTreeView.cpp \
+    src/views/tree/KnowTreeDelegate.cpp \
     src/libraries/MtStyledItemDelegate.cpp
 
 wince* {

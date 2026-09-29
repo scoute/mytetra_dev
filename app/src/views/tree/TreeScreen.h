@@ -70,6 +70,7 @@ private slots:
  void moveUpBranch(void);
  void moveDownBranch(void);
  void cutBranch(void);
+ void cancelCutBranch(void);
  bool copyBranch(void);
  void pasteBranch(void);
  void pasteSubbranch(void);
@@ -101,6 +102,9 @@ private:
  void addBranchToClipboard(ClipboardBranch *branch_clipboard_data, QStringList path, bool is_root);
 
  void pasteBranchSmart(bool is_branch);
+
+ // Вставка вырезанной ветки перемещением с сохранением идентификатора
+ void pasteCutBranch(bool is_branch);
 
  void treeEmptyControl(void);
  void treeCryptControl(void);

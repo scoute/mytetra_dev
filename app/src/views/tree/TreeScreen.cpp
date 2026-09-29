@@ -149,6 +149,15 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::pasteSubbranch);
  actionList["pasteSubbranch"]=ac;
 
+ // Отмена вырезания по Esc: серая ветка становится обычной, данные не трогаются.
+ // Шорткат задан напрямую, а не через таблицу шорткатов: отмена по Esc это
+ // общепринятое поведение, не требующее настройки
+ ac = new QAction(this);
+ ac->setShortcut(QKeySequence(Qt::Key_Escape));
+ ac->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+ connect(ac, &QAction::triggered, this, &TreeScreen::cancelCutBranch);
+ actionList["cancelCutBranch"]=ac;
+
  // Шифрование ветки (пока нет иконки)
  ac = new QAction(this);
  connect(ac, &QAction::triggered, this, &TreeScreen::encryptBranch);
@@ -325,7 +334,8 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
      (cryptFlag=="1" && globalParameters.getCryptKey().length()>0))
    {
 
-    // Если во внутреннем буфере обмена есть ветки,
+    // Если во внутреннем буфере обмена есть ветки
+    // или есть вырезанная ветка, ожидающая вставки-перемещения,
     // соответсвующие пункты становятся активными
     bool isBranch=false;
     const QMimeData *mimeData = internalClipboard->mimeData();
@@ -334,6 +344,9 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
      {
         isBranch=true;
      }
+
+     if(!isBranch)
+      isBranch=!knowTreeModel->cutBranchId().isEmpty();
 
      if( isBranch )
      {
@@ -872,6 +885,12 @@ void TreeScreen::delBranch(QString mode)
   }
 
 
+ // Если была вырезана ветка, а ее больше нет - состояние вырезания сбрасывается
+ if(!knowTreeModel->cutBranchId().isEmpty() &&
+    knowTreeModel->getItemById(knowTreeModel->cutBranchId())==nullptr)
+  knowTreeModel->clearCutBranchId();
+
+
  // Разблокируется главное окно
  find_object<MainWindow>("mainwindow")->setEnabled(true);
  find_object<MainWindow>("mainwindow")->blockSignals(false);
@@ -887,14 +906,34 @@ void TreeScreen::cutBranch(void)
  
  copy_result=copyBranch();
 
+ // Ветка сразу не удаляется: она помечается как вырезанная (становится
+ // серой), а перемещение произойдет в момент вставки. Если вставка
+ // не состоится (выход из программы, Esc), данные останутся на месте,
+ // так как удаление происходит только как часть перемещения
  if(copy_result)
-  delBranch("cut");
+  {
+   TreeItem *item=knowTreeModel->getItem(getCurrentItemIndex());
+
+   if(item!=nullptr)
+    knowTreeModel->setCutBranchId(item->getField("id"));
+  }
+}
+
+
+// Отмена вырезания: серая ветка становится обычной, данные не трогаются
+void TreeScreen::cancelCutBranch(void)
+{
+ knowTreeModel->clearCutBranchId();
 }
 
 
 bool TreeScreen::copyBranch(void)
 {
     qDebug() << "In copy_branch()";
+
+    // Новое копирование отменяет pending вырезание: серая ветка остается
+    // на месте и становится обычной
+    knowTreeModel->clearCutBranchId();
 
     // Сохраняется текст в окне редактирования
     find_object<MainWindow>("mainwindow")->saveTextarea();
@@ -1038,6 +1077,14 @@ void TreeScreen::pasteSubbranch(void)
 
 void TreeScreen::pasteBranchSmart(bool is_branch)
 {
+ // Если есть вырезанная ветка - это перемещение, а не копирование.
+ // Данные из буфера обмена при этом не используются
+ if(!knowTreeModel->cutBranchId().isEmpty())
+  {
+   pasteCutBranch(is_branch);
+   return;
+  }
+
  // Проверяется, содержит ли внутренний буфер обмена данные нужного формата
  const QMimeData *mimeData = internalClipboard->mimeData();
 
@@ -1094,6 +1141,81 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
 
  // Разблокируется главное окно
  find_object<MainWindow>("mainwindow")->setEnabled(true);
+}
+
+
+// Вставка вырезанной ветки перемещением с сохранением идентификатора.
+// В отличие от вставки копии здесь не генерируются новые ID и не копируются
+// файлы записей: перемещается сам элемент дерева
+void TreeScreen::pasteCutBranch(bool is_branch)
+{
+ qDebug() << "In paste_cut_branch";
+
+ // Получение списка индексов QModelIndex выделенных элементов
+ QModelIndexList selectitems=knowTreeView->selectionModel()->selectedIndexes();
+
+ // Если выбрано более одной ветки или вообще ветка не выбрана
+ if(selectitems.size()!=1)
+  {
+   QMessageBox messageBox(this);
+   messageBox.setWindowTitle(tr("Unavailable action"));
+   messageBox.setText(tr("You've selected ")+QString::number(selectitems.size())+tr(" items.\nPlease select single item for enabling paste operation."));
+   messageBox.addButton(tr("OK"),QMessageBox::AcceptRole);
+   messageBox.exec();
+   return;
+  }
+
+ // Блокируется главное окно, чтобы при продолжительном выполнении
+ // не было возможности сделать другие действия
+ find_object<MainWindow>("mainwindow")->setDisabled(true);
+
+ QString cutId=knowTreeModel->cutBranchId();
+ TreeItem *target=knowTreeModel->getItem(getCurrentItemIndex());
+
+ bool moveok=false;
+ if(target!=nullptr)
+  moveok=knowTreeModel->moveBranch(cutId, target->getField("id"), !is_branch);
+
+ // Разблокируется главное окно
+ find_object<MainWindow>("mainwindow")->setEnabled(true);
+
+ if(!moveok)
+  {
+   // Вырезанная ветка могла быть удалена после вырезания. Тогда состояние
+   // сбрасывается. Если ветка на месте, а цель внутри нее - состояние
+   // сохраняется чтобы можно было выбрать другую цель
+   if(knowTreeModel->getItemById(cutId)==nullptr)
+    {
+     knowTreeModel->clearCutBranchId();
+
+     QMessageBox messageBox(this);
+     messageBox.setWindowTitle(tr("Unavailable action"));
+     messageBox.setText(tr("Cut item no longer exists."));
+     messageBox.addButton(tr("OK"),QMessageBox::AcceptRole);
+     messageBox.exec();
+    }
+   else
+    {
+     QMessageBox messageBox(this);
+     messageBox.setWindowTitle(tr("Unavailable action"));
+     messageBox.setText(tr("Cannot move item inside itself."));
+     messageBox.addButton(tr("OK"),QMessageBox::AcceptRole);
+     messageBox.exec();
+    }
+
+   return;
+  }
+
+ // Установка курсора на перемещенную ветку
+ TreeItem *moved_branch_item=knowTreeModel->getItemById(cutId);
+ QStringList moved_branch_path=moved_branch_item->getPath();
+ find_object<MainWindow>("mainwindow")->setTreePosition(moved_branch_path);
+
+ // Сохранение дерева веток
+ find_object<TreeScreen>("treeScreen")->saveKnowTree();
+
+ // Вырезание завершено, серая подсветка снимается
+ knowTreeModel->clearCutBranchId();
 }
 
 

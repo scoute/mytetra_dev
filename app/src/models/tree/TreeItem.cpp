@@ -345,8 +345,37 @@ bool TreeItem::addChildrenEmpty(void)
 // Добавление уже существующего Item-элемента
 bool TreeItem::addChildrenItem(TreeItem *item)
 {
-  childItems << item; // Добавление item в конец массива childItems
-  return true;
+ childItems << item; // Добавление item в конец массива childItems
+ return true;
+}
+
+
+// Перемещение подчиненного элемента к другому родителю с сохранением
+// идентификатора и всех данных. Файлы записей не трогаются, так как
+// идентификаторы не меняются. Используется для перемещения ветки
+// (вырезание+вставка, drag-n-drop). Поправку позиции при перемещении
+// внутри одного родителя делает вызывающая сторона
+bool TreeItem::moveChildTo(int position, TreeItem *newParent, int newPosition)
+{
+ if(position<0 || position>=childItems.size())
+   return false;
+
+ if(newParent==nullptr)
+   return false;
+
+ if(newPosition<0 || newPosition>newParent->childItems.size())
+   return false;
+
+ TreeItem *item=childItems.at(position);
+
+ // Элемент отцепляется от старого родителя без удаления
+ childItems.removeAt(position);
+
+ // Элемент прицепляется к новому родителю
+ item->parentItem=newParent;
+ newParent->childItems.insert(newPosition, item);
+
+ return true;
 }
 
 

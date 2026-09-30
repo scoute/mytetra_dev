@@ -1,7 +1,10 @@
 #ifndef _CLIPPER_H_
 #define _CLIPPER_H_
 
+#include <QMap>
+#include <QImage>
 #include <QString>
+#include <QUrl>
 
 class QMimeData;
 class KnowTreeModel;
@@ -32,8 +35,29 @@ public:
     static QString makeNoteName(const QString &plainText);
 
     // HTML для тела заметки: готовый HTML из буфера, иначе
-    // экранированный plain text с переносами строк
+    // экранированный plain text с переносами строк.
+    // Картинки при этом не обрабатываются, только текст
     static QString buildNoteHtml(const QMimeData *mime);
+
+    // Проверка, является ли имя картинки внутренним именем MyTetra
+    // вида imageNNNNNNNNNNxxxxxxxxxx.png
+    static bool isInnerImageName(const QString &name);
+
+    // Картинка из data: URL, пустая картинка если разобрать не удалось
+    static QImage imageFromDataUrl(const QString &url);
+
+    // Синхронное скачивание байтов по http(s), пустой массив при ошибке.
+    // Редиректы проходятся, таймаут на запрос ограничен
+    static QByteArray downloadBytes(const QUrl &url);
+
+    // Прогон HTML через документ: внешние картинки (http(s), data:, file)
+    // заменяются на внутренние имена, сами картинки складываются в images.
+    // Нескачанные и непонятные картинки остаются внешними ссылками.
+    // Возвращается HTML с внутренними именами
+    static QString processImages(const QString &html, QMap<QString, QImage> &images);
+
+    // Запись картинок как PNG файлов в директорию записи
+    static bool saveImageFiles(const QMap<QString, QImage> &images, const QString &recordDir);
 
     // Поиск ветки для вырезок по имени, создание ветки верхнего уровня
     // если она отсутствует. Возвращает идентификатор ветки.

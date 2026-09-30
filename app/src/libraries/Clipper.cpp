@@ -5,10 +5,21 @@
 #include <QMimeData>
 #include <QRegularExpression>
 #include <QDateTime>
+#include <QTextDocument>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QTextImageFormat>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QEventLoop>
+#include <QTimer>
+#include <QDir>
 
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
@@ -19,6 +30,15 @@
 #include "controllers/recordTable/RecordTableController.h"
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
+
+
+// Ограничения фонового скачивания картинок: обычная вставка спрашивает
+// подтверждение у пользователя, а клиппер работает из скрытого окна,
+// поэтому спрашиваь некого и действуют жесткие лимиты
+static const int maxClipImages=20;
+static const qint64 maxClipImageBytes=5*1024*1024;
+static const int clipDownloadTimeoutMs=15000;
 
 
 Clipper::Clipper(void)
@@ -98,6 +118,197 @@ QString Clipper::buildNoteHtml(const QMimeData *mime)
 }
 
 
+bool Clipper::isInnerImageName(const QString &name)
+{
+    static QRegularExpression innerPattern("^image\\d{10}[a-z0-9]+\\.png$");
+
+    return innerPattern.match(name).hasMatch();
+}
+
+
+QImage Clipper::imageFromDataUrl(const QString &url)
+{
+    // Формат data:[<mime>][;base64],<данные>
+    int commaPos=url.indexOf(",");
+    if(commaPos==-1)
+        return QImage();
+
+    QString meta=url.mid(5, commaPos-5);
+    QString data=url.mid(commaPos+1);
+
+    QByteArray bytes;
+    if(meta.contains(";base64"))
+        bytes=QByteArray::fromBase64(data.toLatin1());
+    else
+        bytes=QByteArray::fromPercentEncoding(data.toLatin1());
+
+    if(bytes.isEmpty() || bytes.size()>maxClipImageBytes)
+        return QImage();
+
+    QImage image;
+    if(!image.loadFromData(bytes))
+        return QImage();
+
+    return image;
+}
+
+
+QByteArray Clipper::downloadBytes(const QUrl &url)
+{
+    QNetworkAccessManager manager;
+
+    QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+
+    QNetworkReply *reply=manager.get(request);
+
+    // Ожидание ответа с таймаутом, иначе фоновая задача может висеть вечно
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    timer.start(clipDownloadTimeoutMs);
+    loop.exec();
+
+    QByteArray result;
+    if(timer.isActive() && reply->error()==QNetworkReply::NoError)
+    {
+        result=reply->readAll();
+        if(result.size()>maxClipImageBytes)
+        {
+            qWarning() << "Clipper: image" << url.toString() << "exceeds size limit, skipped";
+            result.clear();
+        }
+    }
+    else
+        qWarning() << "Clipper: can not download image" << url.toString() << reply->errorString();
+
+    timer.stop();
+    reply->deleteLater();
+
+    return result;
+}
+
+
+QString Clipper::processImages(const QString &html, QMap<QString, QImage> &images)
+{
+    // Документ нужен для честного поиска картинок, как в ImageFormatter:
+    // руками по HTML теги искать нельзя, разметка бывает любая
+    QTextDocument textDocument;
+    QTextCursor textCursor(&textDocument);
+    textCursor.insertHtml(html);
+
+    QTextBlock textBlock=textDocument.begin();
+    while(textBlock.isValid())
+    {
+        bool resetBlock=false;
+
+        QTextBlock::iterator it;
+        for(it=textBlock.begin(); !(it.atEnd()); ++it)
+        {
+            QTextFragment fragment=it.fragment();
+            if(!fragment.isValid() || !fragment.charFormat().isImageFormat())
+                continue;
+
+            QString imageName=fragment.charFormat().toImageFormat().name();
+
+            // Внутреннее имя значит картинка уже наша, трогать нечего
+            if(isInnerImageName(imageName))
+                continue;
+
+            // Лимит на число картинок в одном клипе
+            if(images.size()>=maxClipImages)
+            {
+                qWarning() << "Clipper: too many images, rest left as external references";
+                break;
+            }
+
+            QImage image;
+
+            if(imageName.startsWith("data:"))
+            {
+                // Картинка прямо в HTML
+                image=imageFromDataUrl(imageName);
+            }
+            else
+            {
+                QUrl imageUrl(imageName);
+                QString scheme=imageUrl.scheme().toLower();
+
+                if(scheme=="http" || scheme=="https")
+                {
+                    // Внешняя картинка скачивается, как при обычной вставке,
+                    // только без вопроса (клиппер фоновый, спрашивать некого)
+                    QByteArray bytes=downloadBytes(imageUrl);
+                    if(!bytes.isEmpty())
+                        image.loadFromData(bytes);
+                }
+                else
+                {
+                    // Локальный файл подхватывается из ресурсов документа,
+                    // сам документ file: ссылки резолвит при вставке HTML
+                    QVariant resource=textDocument.resource(QTextDocument::ImageResource,
+                                                            QUrl(imageName));
+                    image=resource.value<QImage>();
+                }
+            }
+
+            if(image.isNull())
+            {
+                qWarning() << "Clipper: image left as external reference:" << imageName;
+                continue;
+            }
+
+            // Внутреннее имя и замена ссылки в документе
+            QString internalImageName=getUniqueImageName();
+            images[internalImageName]=image;
+
+            textDocument.addResource(QTextDocument::ImageResource,
+                                     QUrl(internalImageName),
+                                     QVariant(image));
+
+            unsigned int position=fragment.position();
+            textCursor.setPosition(position);
+            textCursor.deleteChar();
+            textCursor.insertImage(internalImageName);
+
+            // Документ изменился, перебор начинается сначала
+            resetBlock=true;
+            break;
+        }
+
+        if(resetBlock)
+            textBlock=textDocument.begin();
+        else
+            textBlock=textBlock.next();
+    }
+
+    return textDocument.toHtml();
+}
+
+
+bool Clipper::saveImageFiles(const QMap<QString, QImage> &images, const QString &recordDir)
+{
+    bool result=true;
+
+    QMapIterator<QString, QImage> i(images);
+    while(i.hasNext())
+    {
+        i.next();
+
+        QString fileName=recordDir+"/"+i.key();
+        if(!i.value().save(fileName, "PNG"))
+        {
+            qWarning() << "Clipper: can not save image" << fileName;
+            result=false;
+        }
+    }
+
+    return result;
+}
+
+
 QString Clipper::ensureClipboardBranch(KnowTreeModel *model)
 {
     // Рекурсивный поиск ветки с нужным именем по всему дереву,
@@ -140,8 +351,10 @@ bool Clipper::clipFromClipboard(const QString &urlHint)
 
     QString plainText=mime->text();
 
-    // Пустой буфер клипать не во что
-    if(plainText.trimmed().isEmpty() && !mime->hasHtml())
+    // Пустой буфер клипать не во что. Отдельно лежащая в буфере картинка
+    // (скриншот, копия картинки) это тоже содержимое для клипа
+    bool hasImageAlone=mime->hasImage() && !mime->hasHtml() && plainText.trimmed().isEmpty();
+    if(plainText.trimmed().isEmpty() && !mime->hasHtml() && !hasImageAlone)
     {
         qWarning() << "Clipper: clipboard is empty, nothing to clip";
         return false;
@@ -179,7 +392,35 @@ bool Clipper::clipFromClipboard(const QString &urlHint)
     // Сборка записи из содержимого буфера
     Record record;
     record.switchToFat();
-    record.setText( buildNoteHtml(mime) );
+
+    // Идентификатор и каталог задаются заранее, иначе сгенерированные
+    // внутри вставки значения останутся на копии объекта, и будет
+    // неизвестно, куда сохранять файлы картинок
+    record.setField("id",   getUniqueId());
+    record.setField("dir",  getUniqueId());
+    record.setField("file", "text.html");
+
+    // Картинки выносятся в файлы каталога записи под внутренними именами,
+    // как при обычной вставке из браузера через редактор
+    QMap<QString, QImage> images;
+    QString noteHtml;
+    if(hasImageAlone)
+    {
+        // В буфере только картинка без текста и HTML
+        QImage image=qvariant_cast<QImage>(mime->imageData());
+        if(!image.isNull())
+        {
+            QString internalImageName=getUniqueImageName();
+            images[internalImageName]=image;
+            noteHtml="<img src=\""+internalImageName+"\" />";
+        }
+    }
+    else if(mime->hasHtml())
+        noteHtml=processImages(mime->html(), images);
+    else
+        noteHtml=buildNoteHtml(mime);
+
+    record.setText(noteHtml);
     record.setField("name",   makeNoteName(plainText));
     record.setField("author", "");
 
@@ -204,6 +445,14 @@ bool Clipper::clipFromClipboard(const QString &urlHint)
     }
 
     treeScreen->saveKnowTree();
+
+    // Картинки сохраняются в каталог только что созданной записи.
+    // Каталог появляется в момент вставки, раньше писать некуда
+    if(!images.isEmpty())
+    {
+        QString recordDir=mytetraConfig.get_tetradir()+"/base/"+record.getField("dir");
+        saveImageFiles(images, recordDir);
+    }
 
     // Обновление вида таблицы (прямая вставка в данные сигналов не дает)
     // и счетчика записей на ветке

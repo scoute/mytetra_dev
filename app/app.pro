@@ -140,6 +140,7 @@ INSTALLS+=icon_48_file
 
 HEADERS = src/main.h \
     src/controllers/databasesManagement/DatabasesManagementController.h \
+    src/libraries/Clipper.h \
     src/libraries/InternalClipboard.h \
     src/libraries/OrderedMap.h \
     src/libraries/RandomInitter.h \
@@ -311,6 +312,7 @@ HEADERS+=\
 
 SOURCES = src/main.cpp \
     src/controllers/databasesManagement/DatabasesManagementController.cpp \
+    src/libraries/Clipper.cpp \
     src/libraries/InternalClipboard.cpp \
     src/libraries/OrderedMap.cpp \
     src/libraries/RandomInitter.cpp \

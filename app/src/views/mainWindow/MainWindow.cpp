@@ -30,6 +30,7 @@
 #include "views/consoleEmulator/CommandRunner.h"
 #include "libraries/WalkHistory.h"
 #include "libraries/ActionLogger.h"
+#include "libraries/Clipper.h"
 #include "libraries/WindowSwitcher.h"
 #include "views/actionLog/ActionLogScreen.h"
 #include "views/databasesManagement/DatabasesManagementScreen.h"
@@ -181,6 +182,9 @@ void MainWindow::setupSignals(void)
 
     // Вызов окна просмотра лога
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
+
+    // Клиппер: заметка из буфера обмена в ветку Clipboard
+    connect(actionToolsMenuClipFromClipboard, &QAction::triggered, this, &MainWindow::onClipFromClipboard);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -390,6 +394,13 @@ void MainWindow::messageHandler(QString message)
 
         // Установка курсора в дереве
         treeScreen->setCursorToId( commandArgument );
+    }
+
+    else if(command=="clipboard")
+    {
+        // Клиппер: заметка из буфера обмена в ветку Clipboard.
+        // Аргумент команды это ссылка на источник, может отсутствовать
+        Clipper::clipFromClipboard(commandArgument);
     }
 }
 
@@ -659,6 +670,9 @@ void MainWindow::initToolsMenu(void)
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
 
+    actionToolsMenuClipFromClipboard = new QAction(this);
+    menu->addAction(actionToolsMenuClipFromClipboard);
+
     // Переключатель панели тегов: видимость дока и галочка синхронны сами.
     // Текст берет из таблицы шорткатов через initAction как у соседей
     QAction *tagsPanelToggle=tagsPanelDock->toggleViewAction();
@@ -785,6 +799,7 @@ void MainWindow::setupShortcuts(void)
     shortcutManager.initAction("misc-quit", actionFileMenuQuit );
 
     shortcutManager.initAction("misc-findInBase", actionToolsMenuFindInBase );
+    shortcutManager.initAction("misc-clipFromClipboard", actionToolsMenuClipFromClipboard );
 
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
@@ -964,6 +979,14 @@ void MainWindow::onActionLogClicked()
 {
     ActionLogScreen actionLogScreen(this);
     actionLogScreen.exec();
+}
+
+
+// Клиппер из меню Tools: заметка из буфера обмена в ветку Clipboard.
+// Ссылка на источник ищется в самом тексте буфера
+void MainWindow::onClipFromClipboard(void)
+{
+    Clipper::clipFromClipboard();
 }
 
 

@@ -111,6 +111,9 @@ private slots:
     void toolsPreferences(void);
     void onActionLogClicked(void);
 
+    // Клиппер: создание заметки из буфера обмена в ветке Clipboard
+    void onClipFromClipboard(void);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -167,6 +170,7 @@ private:
 
     QAction *actionToolsMenuFindInBase;
     QAction *actionToolsMenuActionLog;
+    QAction *actionToolsMenuClipFromClipboard;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе

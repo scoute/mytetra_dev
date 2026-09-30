@@ -50,11 +50,19 @@ public:
     // Редиректы проходятся, таймаут на запрос ограничен
     static QByteArray downloadBytes(const QUrl &url);
 
+    // Лимиты картинок. По умолчанию встроенные значения, актуальные
+    // значения подтягиваются из конфига вызовом reloadLimits().
+    // Сеттеры нужны для тестов, в бою лимиты меняются в настройках
+    static void reloadLimits(void);
+    static void setMaxImages(int count);
+    static void setMaxImageSizeBytes(qint64 bytes);
+
     // Прогон HTML через документ: внешние картинки (http(s), data:, file)
     // заменяются на внутренние имена, сами картинки складываются в images.
     // Нескачанные и непонятные картинки остаются внешними ссылками.
+    // В skipped считается число пропущенных картинок.
     // Возвращается HTML с внутренними именами
-    static QString processImages(const QString &html, QMap<QString, QImage> &images);
+    static QString processImages(const QString &html, QMap<QString, QImage> &images, int *skipped=nullptr);
 
     // Запись картинок как PNG файлов в директорию записи
     static bool saveImageFiles(const QMap<QString, QImage> &images, const QString &recordDir);

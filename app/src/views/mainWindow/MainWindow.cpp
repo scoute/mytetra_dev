@@ -982,6 +982,21 @@ void MainWindow::onActionLogClicked()
 }
 
 
+// Показ всплывающего сообщения в системном трее.
+// Используется фоновыми задачами (клиппер), которым некого спросить,
+// но надо сообщить пользователю о результате
+void MainWindow::showTrayMessage(const QString &title, const QString &text)
+{
+    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
+        return;
+
+    if(trayIcon==nullptr || trayIcon->isVisible()==false)
+        return;
+
+    trayIcon->showMessage(title, text, QSystemTrayIcon::Warning);
+}
+
+
 // Клиппер из меню Tools: заметка из буфера обмена в ветку Clipboard.
 // Ссылка на источник ищется в самом тексте буфера
 void MainWindow::onClipFromClipboard(void)

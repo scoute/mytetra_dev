@@ -1,5 +1,8 @@
 #include <QWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QSpinBox>
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QPushButton>
@@ -54,6 +57,20 @@ void AppConfigPage_Misc::setupUi(void)
   ignoreSelfSignedSslErrors->setText(tr("Ignore self-signed SSL certificate errors when downloading (less secure)"));
   ignoreSelfSignedSslErrors->setChecked(mytetraConfig.getIgnoreSelfSignedSslErrors());
 
+  // Лимиты клиппера: сколько картинок забирать в одну заметку
+  // и максимальный размер одной картинки. Пропущенные сверх лимитов
+  // картинки остаются внешними ссылками, о чем клиппер сообщает сразу
+  clipperMaxImages=new QSpinBox(this);
+  clipperMaxImages->setMinimum(1);
+  clipperMaxImages->setMaximum(1000);
+  clipperMaxImages->setValue(mytetraConfig.get_clipperMaxImages());
+
+  clipperMaxImageSizeMb=new QSpinBox(this);
+  clipperMaxImageSizeMb->setMinimum(1);
+  clipperMaxImageSizeMb->setMaximum(100);
+  clipperMaxImageSizeMb->setValue(mytetraConfig.get_clipperMaxImageSizeMb());
+  clipperMaxImageSizeMb->setSuffix(tr(" MB"));
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -79,12 +96,36 @@ void AppConfigPage_Misc::assembly(void)
   dangerBox->setLayout(dangerLayout);
 
 
+  // Группировщик лимитов клиппера
+  QGroupBox *clipperBox=new QGroupBox(this);
+  clipperBox->setTitle(tr("Clipper"));
+
+  QLabel *clipperMaxImagesLabel=new QLabel(tr("Maximum images per note:"), this);
+  QLabel *clipperMaxImageSizeLabel=new QLabel(tr("Maximum size of one image:"), this);
+
+  QHBoxLayout *clipperImagesLayout=new QHBoxLayout;
+  clipperImagesLayout->addWidget(clipperMaxImagesLabel);
+  clipperImagesLayout->addWidget(clipperMaxImages);
+  clipperImagesLayout->addStretch();
+
+  QHBoxLayout *clipperSizeLayout=new QHBoxLayout;
+  clipperSizeLayout->addWidget(clipperMaxImageSizeLabel);
+  clipperSizeLayout->addWidget(clipperMaxImageSizeMb);
+  clipperSizeLayout->addStretch();
+
+  QVBoxLayout *clipperLayout=new QVBoxLayout;
+  clipperLayout->addLayout(clipperImagesLayout);
+  clipperLayout->addLayout(clipperSizeLayout);
+  clipperBox->setLayout(clipperLayout);
+
+
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
   centralLayout->addWidget(ignoreSelfSignedSslErrors);
+  centralLayout->addWidget(clipperBox);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
@@ -129,6 +170,13 @@ int AppConfigPage_Misc::applyChanges(void)
   // Сохраняется настройка игнорирования ошибок самоподписанных SSL-сертификатов
   if(mytetraConfig.getIgnoreSelfSignedSslErrors()!=ignoreSelfSignedSslErrors->isChecked())
     mytetraConfig.setIgnoreSelfSignedSslErrors(ignoreSelfSignedSslErrors->isChecked());
+
+  // Сохраняются лимиты клиппера
+  if(mytetraConfig.get_clipperMaxImages()!=clipperMaxImages->value())
+    mytetraConfig.set_clipperMaxImages(clipperMaxImages->value());
+
+  if(mytetraConfig.get_clipperMaxImageSizeMb()!=clipperMaxImageSizeMb->value())
+    mytetraConfig.set_clipperMaxImageSizeMb(clipperMaxImageSizeMb->value());
 
   return result;
 }

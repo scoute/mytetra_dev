@@ -1011,6 +1011,48 @@ void AppConfig::setIgnoreSelfSignedSslErrors(bool state)
 }
 
 
+// Максимальное число картинок, забираемых клиппером в одну заметку
+int AppConfig::get_clipperMaxImages(void)
+{
+    return this->get_parameter("clipperMaxImages").toInt();
+}
+
+
+bool AppConfig::set_clipperMaxImages(int count)
+{
+    if(count>0)
+    {
+        m_conf->setValue("clipperMaxImages", count);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// Максимальный размер одной картинки клиппера в мегабайтах
+int AppConfig::get_clipperMaxImageSizeMb(void)
+{
+    return this->get_parameter("clipperMaxImageSizeMb").toInt();
+}
+
+
+bool AppConfig::set_clipperMaxImageSizeMb(int mbSize)
+{
+    if(mbSize>0)
+    {
+        m_conf->setValue("clipperMaxImageSizeMb", mbSize);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 QString AppConfig::getDockableWindowsState(void)
 {
     return this->get_parameter("dockableWindowsState");
@@ -1258,6 +1300,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
+    parameterFunctions << &AppConfig::get_parameter_table_44;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2141,6 +2184,26 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
     // Игнорирование ошибок самоподписанных SSL-сертификатов при скачивании.
     // По умолчанию запрещено, включается только явно в настройках
     table << "ignoreSelfSignedSslErrors" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 43
+    table << get_parameter_table_43(false);
+
+    // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
+    table << "clipperMaxImages" << "int" << "20";
+    table << "clipperMaxImageSizeMb" << "int" << "5";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

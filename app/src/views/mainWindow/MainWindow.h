@@ -87,6 +87,10 @@ public slots:
 
     void toolsFindInBase(void);
 
+    // Показ всплывающего сообщения в системном трее.
+    // Молча ничего не делает, если трей недоступен или скрыт
+    void showTrayMessage(const QString &title, const QString &text);
+
     // Открытие глобального поиска с готовым запросом из поиска по заметке.
     // Запрос сразу выполняется через FindScreen::setFindText
     void toolsFindInBaseWithText(const QString &text);

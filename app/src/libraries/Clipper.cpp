@@ -35,10 +35,47 @@ extern AppConfig mytetraConfig;
 
 // Ограничения фонового скачивания картинок: обычная вставка спрашивает
 // подтверждение у пользователя, а клиппер работает из скрытого окна,
-// поэтому спрашиваь некого и действуют жесткие лимиты
-static const int maxClipImages=20;
-static const qint64 maxClipImageBytes=5*1024*1024;
+// поэтому спрашиваь некого и действуют лимиты из настроек
+static const int defaultClipMaxImages=20;
+static const qint64 defaultClipMaxImageSizeBytes=5*1024*1024;
 static const int clipDownloadTimeoutMs=15000;
+
+// Актуальные лимиты. По умолчанию встроенные значения, боевые
+// подтягиваются из конфига в начале каждого клипа
+static int clipMaxImages=defaultClipMaxImages;
+static qint64 clipMaxImageBytes=defaultClipMaxImageSizeBytes;
+
+
+void Clipper::reloadLimits(void)
+{
+    // Ручная правка conf.ini может дать мусор, отрицательные
+    // и нулевые значения отбрасываются в пользу встроенных
+    int maxImages=mytetraConfig.get_clipperMaxImages();
+    if(maxImages>0)
+        clipMaxImages=maxImages;
+    else
+        clipMaxImages=defaultClipMaxImages;
+
+    int maxSizeMb=mytetraConfig.get_clipperMaxImageSizeMb();
+    if(maxSizeMb>0)
+        clipMaxImageBytes=static_cast<qint64>(maxSizeMb)*1024*1024;
+    else
+        clipMaxImageBytes=defaultClipMaxImageSizeBytes;
+}
+
+
+void Clipper::setMaxImages(int count)
+{
+    if(count>0)
+        clipMaxImages=count;
+}
+
+
+void Clipper::setMaxImageSizeBytes(qint64 bytes)
+{
+    if(bytes>0)
+        clipMaxImageBytes=bytes;
+}
 
 
 Clipper::Clipper(void)
@@ -142,7 +179,7 @@ QImage Clipper::imageFromDataUrl(const QString &url)
     else
         bytes=QByteArray::fromPercentEncoding(data.toLatin1());
 
-    if(bytes.isEmpty() || bytes.size()>maxClipImageBytes)
+    if(bytes.isEmpty() || bytes.size()>clipMaxImageBytes)
         return QImage();
 
     QImage image;
@@ -175,7 +212,7 @@ QByteArray Clipper::downloadBytes(const QUrl &url)
     if(timer.isActive() && reply->error()==QNetworkReply::NoError)
     {
         result=reply->readAll();
-        if(result.size()>maxClipImageBytes)
+        if(result.size()>clipMaxImageBytes)
         {
             qWarning() << "Clipper: image" << url.toString() << "exceeds size limit, skipped";
             result.clear();
@@ -191,8 +228,11 @@ QByteArray Clipper::downloadBytes(const QUrl &url)
 }
 
 
-QString Clipper::processImages(const QString &html, QMap<QString, QImage> &images)
+QString Clipper::processImages(const QString &html, QMap<QString, QImage> &images, int *skipped)
 {
+    if(skipped!=nullptr)
+        *skipped=0;
+
     // Документ нужен для честного поиска картинок, как в ImageFormatter:
     // руками по HTML теги искать нельзя, разметка бывает любая
     QTextDocument textDocument;
@@ -218,9 +258,11 @@ QString Clipper::processImages(const QString &html, QMap<QString, QImage> &image
                 continue;
 
             // Лимит на число картинок в одном клипе
-            if(images.size()>=maxClipImages)
+            if(images.size()>=clipMaxImages)
             {
                 qWarning() << "Clipper: too many images, rest left as external references";
+                if(skipped!=nullptr)
+                    (*skipped)++;
                 break;
             }
 
@@ -257,6 +299,8 @@ QString Clipper::processImages(const QString &html, QMap<QString, QImage> &image
             if(image.isNull())
             {
                 qWarning() << "Clipper: image left as external reference:" << imageName;
+                if(skipped!=nullptr)
+                    (*skipped)++;
                 continue;
             }
 
@@ -345,6 +389,9 @@ QString Clipper::ensureClipboardBranch(KnowTreeModel *model)
 
 bool Clipper::clipFromClipboard(const QString &urlHint)
 {
+    // Актуальные лимиты картинок из настроек
+    reloadLimits();
+
     const QMimeData *mime=QApplication::clipboard()->mimeData();
     if(mime==nullptr)
         return false;
@@ -403,6 +450,7 @@ bool Clipper::clipFromClipboard(const QString &urlHint)
     // Картинки выносятся в файлы каталога записи под внутренними именами,
     // как при обычной вставке из браузера через редактор
     QMap<QString, QImage> images;
+    int skippedImages=0;
     QString noteHtml;
     if(hasImageAlone)
     {
@@ -416,7 +464,7 @@ bool Clipper::clipFromClipboard(const QString &urlHint)
         }
     }
     else if(mime->hasHtml())
-        noteHtml=processImages(mime->html(), images);
+        noteHtml=processImages(mime->html(), images, &skippedImages);
     else
         noteHtml=buildNoteHtml(mime);
 
@@ -458,6 +506,18 @@ bool Clipper::clipFromClipboard(const QString &urlHint)
     // и счетчика записей на ветке
     find_object<RecordTableController>("recordTableController")->setTableData(table);
     treeScreen->updateSelectedBranch();
+
+    // О пропущенных картинках пользователь узнает сразу, а не когда
+    // недосчитается их спустя полгода. Лимиты меняются в настройках
+    if(skippedImages>0)
+    {
+        qWarning() << "Clipper: skipped" << skippedImages << "image(s), see limits in Tools -> Preferences -> Misc";
+
+        MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+        if(mainWindow!=nullptr)
+            mainWindow->showTrayMessage(QCoreApplication::translate("Clipper", "Clipper"),
+                                        QCoreApplication::translate("Clipper", "Skipped %1 image(s). Change limits in Tools - Preferences - Misc.").arg(skippedImages));
+    }
 
     qDebug() << "Clipper: note clipped to branch" << branchId << "pos" << pos;
 

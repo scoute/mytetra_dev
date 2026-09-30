@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mytetra>
+ <format version="1" subversion="2"/>
+ <content>
+  <node id="branch-root-1" name="Test branch one" ctime="20240101_120000" crypt="0" icon="">
+   <recordtable>
+    <record id="note-1" name="First note" author="Tester" url="https://example.com" tags="alpha,beta" ctime="20240101_120001" dir="dir-note1" file="note1.html" crypt="0" block="0">
+     <files>
+      <file id="attach-1" fileName="doc.txt" link="" type="file" crypt="0"/>
+     </files>
+    </record>
+    <record id="note-2" name="Second note" author="" url="" tags="" ctime="20240101_120002" dir="dir-note2" file="note2.html" crypt="0" block="0"/>
+   </recordtable>
+   <node id="branch-child-1" name="Child branch" ctime="20240101_120003" crypt="0" icon="">
+    <recordtable>
+     <record id="note-3" name="Child note" author="Tester" url="" tags="beta" ctime="20240101_120004" dir="dir-note3" file="note3.html" crypt="0" block="0"/>
+    </recordtable>
+   </node>
+  </node>
+  <node id="branch-root-2" name="Empty branch" ctime="20240101_120005" crypt="0" icon=""/>
+ </content>
+</mytetra>

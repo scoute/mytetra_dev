@@ -341,7 +341,14 @@ bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent)
 int TreeModel::rowCount(const QModelIndex &itemIndex) const
 {
  TreeItem *item = getItem(itemIndex);
-  return static_cast<int>( item->childCount() );
+
+ // После clear() корневой элемент отсутствует, а представления
+ // запрашивают rowCount при перезагрузке модели. Без проверки
+ // обращение уходит в нулевой указатель и процесс падает
+ if(item==nullptr)
+  return 0;
+
+ return static_cast<int>( item->childCount() );
 }
 
 

@@ -14,9 +14,10 @@
 #include <QApplication>
 
 #include <QCompleter>
-#include <QStringListModel>
-#include <QRegularExpression>
+#include <QStandardItemModel>
 #include <QShowEvent>
+
+#include <algorithm>
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
 #include "FindTableWidget.h"
@@ -1075,8 +1076,11 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
 void FindScreen::setupFieldCompleter(void)
 {
     // Словарь подсказок: регистр не важен, модель отсортирована
-    // для быстрого поиска. Выпадашка показывает не больше десяти строк
-    fieldCompleterModel=new QStringListModel(this);
+    // для быстрого поиска. Выпадашка показывает не больше десяти строк.
+    // Модель с иконками типов, а не строки: смайлики-эмодзи зависят
+    // от шрифтов системы и превращаются в квадраты там, где нет
+    // шрифта с цветными эмодзи. Иконки из ресурсов рисуются везде
+    fieldCompleterModel=new QStandardItemModel(this);
 
     fieldCompleter=new QCompleter(this);
     fieldCompleter->setModel(fieldCompleterModel);
@@ -1127,38 +1131,57 @@ void FindScreen::refreshFieldCompleter(void)
     }
 
     // Подсказка показывает объединение словарей отмеченных полей.
-    // Каждое значение идет со смайликом типа: [🏷], [📝], [🔗...
-    QStringList words;
+    // Тип значения виден по иконке слева, текст значения чистый
+    // без префиксов: дополняется и ищется как есть
+    QMap<QString, QStringList> enabledFields;
 
     if(findInName->isChecked())
-        foreach(QString word, dictionaries.value("name"))
-            words << formatCompletion("name", word);
+        enabledFields["name"]=dictionaries.value("name");
 
     if(findInAuthor->isChecked())
-        foreach(QString word, dictionaries.value("author"))
-            words << formatCompletion("author", word);
+        enabledFields["author"]=dictionaries.value("author");
 
     if(findInUrl->isChecked())
-        foreach(QString word, dictionaries.value("url"))
-            words << formatCompletion("url", word);
+        enabledFields["url"]=dictionaries.value("url");
 
     if(findInTags->isChecked())
-        foreach(QString word, dictionaries.value("tags"))
-            words << formatCompletion("tags", word);
+        enabledFields["tags"]=dictionaries.value("tags");
 
     if(findInNameItem->isChecked())
-        foreach(QString word, dictionaries.value("nameItem"))
-            words << formatCompletion("nameItem", word);
+        enabledFields["nameItem"]=dictionaries.value("nameItem");
 
-    // Сортировка по строке целиком группирует подсказку по меткам типа
-    words.sort(Qt::CaseInsensitive);
+    fieldCompleterModel->clear();
 
-    fieldCompleterModel->setStringList(words);
+    // Пары иконка-значение для глобальной сортировки: completer
+    // с CaseInsensitivelySortedModel требует отсортированный источник
+    QList< QPair<QString, QString> > pairs;
+
+    QMapIterator<QString, QStringList> fieldIt(enabledFields);
+    while(fieldIt.hasNext())
+    {
+        fieldIt.next();
+
+        foreach(QString word, fieldIt.value())
+            pairs << qMakePair(fieldIt.key(), word);
+    }
+
+    std::sort(pairs.begin(), pairs.end(),
+              [](const QPair<QString, QString> &a, const QPair<QString, QString> &b)
+              {
+                  return a.second.compare(b.second, Qt::CaseInsensitive)<0;
+              });
+
+    foreach(auto pair, pairs)
+    {
+        QStandardItem *item=new QStandardItem(completionTypeIcon(pair.first), pair.second);
+        item->setEditable(false);
+        fieldCompleterModel->appendRow(item);
+    }
 
     // Подсказывать нечего: ручной привод выключается
-    fieldCompleterEnabled=!words.isEmpty();
+    fieldCompleterEnabled=(fieldCompleterModel->rowCount()>0);
 
-    if(words.isEmpty())
+    if(fieldCompleterModel->rowCount()==0)
         fieldCompleter->popup()->hide();
 }
 
@@ -1229,46 +1252,28 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
 }
 
 
-// Метка типа значения для выпадашки: смайлик вместо слова,
-// перевод не нужен, понятно на любом языке.
-// Тег - ярлык, заметка - блокнот, URL - звенья цепи,
-// ветка - папка, автор - человек
-QString FindScreen::completionTypeLabel(const QString &field)
+// Иконка типа значения для выпадашки. Рисуется из ресурсов,
+// от шрифтов системы не зависит (эмодзи там превращались в квадраты).
+// Тег - ярлык, заметка - блокнот, URL - звено цепи,
+// ветка - папка, автор - ссылочный документ
+QIcon FindScreen::completionTypeIcon(const QString &field)
 {
     if(field=="tags")
-        return QString::fromUtf8("\U0001F3F7"); // 🏷
+        return QIcon(":/resource/pic/tag.svg");
 
     if(field=="name")
-        return QString::fromUtf8("\U0001F4DD"); // 📝
+        return QIcon(":/resource/pic/note_edit.svg");
 
     if(field=="url")
-        return QString::fromUtf8("\U0001F517"); // 🔗
+        return QIcon(":/resource/pic/attach_is_link.svg");
 
     if(field=="nameItem")
-        return QString::fromUtf8("\U0001F4C1"); // 📁
+        return QIcon(":/resource/pic/branch_opened.svg");
 
     if(field=="author")
-        return QString::fromUtf8("\U0001F464"); // 👤
+        return QIcon(":/resource/pic/note_reference.svg");
 
-    return QString::fromUtf8("?"); // Неизвестное поле
-}
-
-
-// Строка выпадашки с меткой типа: "[🏷] internet"
-QString FindScreen::formatCompletion(const QString &field,
-                                     const QString &word)
-{
-    return "["+completionTypeLabel(field)+"] "+word;
-}
-
-
-// Снятие метки типа перед вставкой в поле ввода и поиском:
-// "[🏷] internet" превращается в "internet"
-QString FindScreen::stripCompletionLabel(const QString &completion)
-{
-    static QRegularExpression labelPattern("^\\[[^\\]]*\\] ");
-
-    return QString(completion).remove(labelPattern);
+    return QIcon();
 }
 
 
@@ -1302,9 +1307,10 @@ void FindScreen::onFindTextEdited(const QString &text)
 
 void FindScreen::onFieldCompletion(const QString &completion)
 {
-    // Выбранное дополнение заменяет весь ввод: метка типа снимается,
-    // остается полное значение, дальше сразу запускается поиск
-    findText->setText(stripCompletionLabel(completion));
+    // Выбранное дополнение заменяет весь ввод: в модели лежит
+    // чистое значение с иконкой типа, вставляется как есть,
+    // дальше сразу запускается поиск
+    findText->setText(completion);
 
     findClicked();
 }

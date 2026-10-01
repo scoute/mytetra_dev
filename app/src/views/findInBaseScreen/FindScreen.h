@@ -15,7 +15,7 @@ class QGridLayout;
 class QLabel;
 class QCheckBox;
 class QProgressDialog;
-class QStringListModel;
+class QStandardItemModel;
 class QShowEvent;
 class QCompleter;
 
@@ -58,16 +58,9 @@ public:
                                    const QString &field,
                                    const QString &word);
 
-    // Метка типа значения для выпадашки: смайлик вместо слова.
-    // Тег - ярлык, заметка - блокнот, URL - звенья, ветка - папка
-    static QString completionTypeLabel(const QString &field);
-
-    // Строка выпадашки с меткой типа: "[🏷] internet"
-    static QString formatCompletion(const QString &field,
-                                    const QString &word);
-
-    // Снятие метки типа перед вставкой в поле ввода и поиском
-    static QString stripCompletionLabel(const QString &completion);
+    // Иконка типа значения для выпадашки. Рисуется из ресурсов,
+    // от шрифтов системы не зависит (эмодзи там превращались в квадраты)
+    static QIcon completionTypeIcon(const QString &field);
 
 public slots:
 
@@ -156,7 +149,7 @@ private:
     // всей строки и подсказка после пробела не появляется. Флаг включает
     // ручной привод когда словарь непуст
     QCompleter *fieldCompleter;
-    QStringListModel *fieldCompleterModel;
+    QStandardItemModel *fieldCompleterModel;
     bool fieldCompleterEnabled;
 
     void setupFindTextAndButton(void);

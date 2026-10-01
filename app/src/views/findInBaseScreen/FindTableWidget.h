@@ -54,6 +54,16 @@ private:
   void setupSignals(void);
   void assembly(void);
 
+  // Есть ли запросу совпадения в тексте записи. Проверка тем же движком
+  // что подсветка полоски (QTextDocument::find с теми же флагами),
+  // поэтому результат один в один совпадает с будущим "Нет совпадений".
+  // Нужна чтобы не открывать мост-бар бессмысленно, когда совпало поле
+  // author/url/tags, а не текст
+  static bool noteTextContains(const QString &branchId,
+                               const QString &recordId,
+                               const QString &query,
+                               QTextDocument::FindFlags flags);
+
   void paintEvent(QPaintEvent *event);
 };
 

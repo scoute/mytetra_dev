@@ -15,7 +15,7 @@ class QGridLayout;
 class QLabel;
 class QCheckBox;
 class QProgressDialog;
-class QStringListModel;
+class QStandardItemModel;
 class QShowEvent;
 class QCompleter;
 
@@ -50,11 +50,17 @@ public:
                                     QSet<QString> &seen);
 
     // Добавить слово в словарь поля. Пустые значения и повторы
-    // без учета регистра отбрасываются
+    // без учета регистра отбрасываются. Дедуп в пределах поля:
+    // одно и то же слово из разных полей показывается с каждой
+    // своей меткой типа
     static void addDictionaryWord(QMap<QString, QStringList> &dictionaries,
-                                  QSet<QString> &seen,
-                                  const QString &field,
-                                  const QString &word);
+                                   QSet<QString> &seen,
+                                   const QString &field,
+                                   const QString &word);
+
+    // Иконка типа значения для выпадашки. Рисуется из ресурсов,
+    // от шрифтов системы не зависит (эмодзи там превращались в квадраты)
+    static QIcon completionTypeIcon(const QString &field);
 
 public slots:
 
@@ -143,7 +149,7 @@ private:
     // всей строки и подсказка после пробела не появляется. Флаг включает
     // ручной привод когда словарь непуст
     QCompleter *fieldCompleter;
-    QStringListModel *fieldCompleterModel;
+    QStandardItemModel *fieldCompleterModel;
     bool fieldCompleterEnabled;
 
     void setupFindTextAndButton(void);

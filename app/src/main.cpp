@@ -38,6 +38,7 @@
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/CssHelper.h"
+#include "sync/SyncServer.h"
 
 
 
@@ -437,6 +438,11 @@ int main(int argc, char ** argv)
 
     // Прием сообщений, испускаемых другим экземпляром MyTetra с помощью консольных команд "--control"
     app.connect(&app, &QtSingleApplication::messageReceived,  &win, &MainWindow::messageHandler);
+
+    // Сервер синхронизации для мобильного клиента. Стартует после
+    // главного окна, модель резолвится внутри. Управляется sync.ini
+    SyncServer syncServer;
+    syncServer.start();
 
     // Окно сплеш-скрина скрывается
     if (mytetraConfig.getShowSplashScreen())

@@ -1851,7 +1851,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="33"/>
         <source>&amp;Whole words</source>
-        <translation>Только слова целиком</translation>
+        <translation>Слова целиком</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="40"/>

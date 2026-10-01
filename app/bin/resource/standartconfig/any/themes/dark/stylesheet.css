@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="5" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="6" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -1182,6 +1182,24 @@ QToolButton::menu-arrow {
 
 QToolButton::menu-arrow:hover {
   image: url("themes/dark/pic/arrow_down_focus.png");
+}
+
+/* EditorFindBar ----------------------------------------------------------
+ *
+ * Кнопки полоски поиска в заметке: на темном фоне им нужна светлая
+ * обводка, иначе границы кнопок не читаются. Суммарный размер кнопок
+ * не меняется: 1px рамки скомпенсирован уменьшением отступов
+ * (в светлой теме у этих кнопок padding 3px без рамки).
+ * Квадратные кнопки-стрелки и крестик идут отдельным правилом:
+ * у них базовый отступ 2px, поэтому компенсация своя.
+ * --------------------------------------------------------------------------- */
+EditorFindBar QPushButton {
+  border: 1px solid #FFFFFF;
+  padding: 2px;
+}
+
+EditorFindBar QPushButton#findbarSquareButton {
+  padding: 1px;
 }
 
 /* QCommandLinkButton -----------------------------------------------------

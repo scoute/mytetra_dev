@@ -1253,25 +1253,23 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
 
 
 // Иконка типа значения для выпадашки. Рисуется из ресурсов,
-// от шрифтов системы не зависит (эмодзи там превращались в квадраты).
-// Тег - ярлык, заметка - блокнот, URL - звено цепи,
-// ветка - папка, автор - ссылочный документ
+// от шрифтов системы не зависит (эмодзи там превращались в квадраты)
 QIcon FindScreen::completionTypeIcon(const QString &field)
 {
     if(field=="tags")
         return QIcon(":/resource/pic/tag.svg");
 
     if(field=="name")
-        return QIcon(":/resource/pic/note_edit.svg");
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_document.svg");
 
     if(field=="url")
-        return QIcon(":/resource/pic/attach_is_link.svg");
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_link.svg");
 
     if(field=="nameItem")
-        return QIcon(":/resource/pic/branch_opened.svg");
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_opened_folder.svg");
 
     if(field=="author")
-        return QIcon(":/resource/pic/note_reference.svg");
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg");
 
     return QIcon();
 }

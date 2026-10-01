@@ -50,11 +50,24 @@ public:
                                     QSet<QString> &seen);
 
     // Добавить слово в словарь поля. Пустые значения и повторы
-    // без учета регистра отбрасываются
+    // без учета регистра отбрасываются. Дедуп в пределах поля:
+    // одно и то же слово из разных полей показывается с каждой
+    // своей меткой типа
     static void addDictionaryWord(QMap<QString, QStringList> &dictionaries,
-                                  QSet<QString> &seen,
-                                  const QString &field,
-                                  const QString &word);
+                                   QSet<QString> &seen,
+                                   const QString &field,
+                                   const QString &word);
+
+    // Метка типа значения для выпадашки: смайлик вместо слова.
+    // Тег - ярлык, заметка - блокнот, URL - звенья, ветка - папка
+    static QString completionTypeLabel(const QString &field);
+
+    // Строка выпадашки с меткой типа: "[🏷] internet"
+    static QString formatCompletion(const QString &field,
+                                    const QString &word);
+
+    // Снятие метки типа перед вставкой в поле ввода и поиском
+    static QString stripCompletionLabel(const QString &completion);
 
 public slots:
 

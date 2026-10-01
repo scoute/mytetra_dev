@@ -15,6 +15,7 @@
 
 #include <QCompleter>
 #include <QStringListModel>
+#include <QRegularExpression>
 #include <QShowEvent>
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
@@ -1125,24 +1126,31 @@ void FindScreen::refreshFieldCompleter(void)
             collectBranchValues(rootItem, dictionaries, seen);
     }
 
-    // Подсказка показывает объединение словарей отмеченных полей
+    // Подсказка показывает объединение словарей отмеченных полей.
+    // Каждое значение идет со смайликом типа: [🏷], [📝], [🔗...
     QStringList words;
 
     if(findInName->isChecked())
-        words+=dictionaries.value("name");
+        foreach(QString word, dictionaries.value("name"))
+            words << formatCompletion("name", word);
 
     if(findInAuthor->isChecked())
-        words+=dictionaries.value("author");
+        foreach(QString word, dictionaries.value("author"))
+            words << formatCompletion("author", word);
 
     if(findInUrl->isChecked())
-        words+=dictionaries.value("url");
+        foreach(QString word, dictionaries.value("url"))
+            words << formatCompletion("url", word);
 
     if(findInTags->isChecked())
-        words+=dictionaries.value("tags");
+        foreach(QString word, dictionaries.value("tags"))
+            words << formatCompletion("tags", word);
 
     if(findInNameItem->isChecked())
-        words+=dictionaries.value("nameItem");
+        foreach(QString word, dictionaries.value("nameItem"))
+            words << formatCompletion("nameItem", word);
 
+    // Сортировка по строке целиком группирует подсказку по меткам типа
     words.sort(Qt::CaseInsensitive);
 
     fieldCompleterModel->setStringList(words);
@@ -1198,7 +1206,9 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
 
 
 // Добавить слово в словарь поля. Пустые значения отбрасываются,
-// повторы без учета регистра тоже: пишется первое встречное написание
+// повторы без учета регистра тоже: пишется первое встречное
+// написание. Дедуп в пределах поля: одно и то же слово из разных
+// полей показывается с каждой своей меткой типа
 void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
                                    QSet<QString> &seen,
                                    const QString &field,
@@ -1209,13 +1219,56 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
     if(trimmed.isEmpty())
         return;
 
-    QString lowered=trimmed.toLower();
+    QString key=field+trimmed.toLower();
 
-    if(seen.contains(lowered))
+    if(seen.contains(key))
         return;
 
-    seen.insert(lowered);
+    seen.insert(key);
     dictionaries[field].append(trimmed);
+}
+
+
+// Метка типа значения для выпадашки: смайлик вместо слова,
+// перевод не нужен, понятно на любом языке.
+// Тег - ярлык, заметка - блокнот, URL - звенья цепи,
+// ветка - папка, автор - человек
+QString FindScreen::completionTypeLabel(const QString &field)
+{
+    if(field=="tags")
+        return QString::fromUtf8("\U0001F3F7"); // 🏷
+
+    if(field=="name")
+        return QString::fromUtf8("\U0001F4DD"); // 📝
+
+    if(field=="url")
+        return QString::fromUtf8("\U0001F517"); // 🔗
+
+    if(field=="nameItem")
+        return QString::fromUtf8("\U0001F4C1"); // 📁
+
+    if(field=="author")
+        return QString::fromUtf8("\U0001F464"); // 👤
+
+    return QString::fromUtf8("?"); // Неизвестное поле
+}
+
+
+// Строка выпадашки с меткой типа: "[🏷] internet"
+QString FindScreen::formatCompletion(const QString &field,
+                                     const QString &word)
+{
+    return "["+completionTypeLabel(field)+"] "+word;
+}
+
+
+// Снятие метки типа перед вставкой в поле ввода и поиском:
+// "[🏷] internet" превращается в "internet"
+QString FindScreen::stripCompletionLabel(const QString &completion)
+{
+    static QRegularExpression labelPattern("^\\[[^\\]]*\\] ");
+
+    return QString(completion).remove(labelPattern);
 }
 
 
@@ -1249,9 +1302,9 @@ void FindScreen::onFindTextEdited(const QString &text)
 
 void FindScreen::onFieldCompletion(const QString &completion)
 {
-    // Выбранное дополнение заменяет весь ввод: это полное имя,
-    // дальше сразу запускается поиск
-    findText->setText(completion);
+    // Выбранное дополнение заменяет весь ввод: метка типа снимается,
+    // остается полное значение, дальше сразу запускается поиск
+    findText->setText(stripCompletionLabel(completion));
 
     findClicked();
 }

@@ -129,8 +129,12 @@ void MetaEditor::setupUI(void)
  recordTagsContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
  recordTagsContainer->setLayout(recordTagsLayout);
 
- // Создается QScrollArea и в нее добавляется виджет с QHBoxLayout
- recordTagsScrollArea=new QScrollArea();
+  // Создается QScrollArea и в нее добавляется виджет с QHBoxLayout
+  recordTagsScrollArea=new QScrollArea();
+  // Имя для CSS темной темы: ей сбрасываются рамка и внутренние отступы
+  // (иначе они съедают высоту вьюпорта и текст меток утопает, см. правило
+  // QScrollArea#recordTagsScrollArea в dark/stylesheet.css)
+  recordTagsScrollArea->setObjectName("recordTagsScrollArea");
  recordTagsScrollArea->setContentsMargins( 0, 0, 0, 0 ); // Убирается отступ от границ содержимого
  recordTagsScrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
  recordTagsScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается горизонтальная полоса прокрутки

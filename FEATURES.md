@@ -49,6 +49,24 @@
   не ставится осознанно: операция перемещение, а не копия).
 - `feat/theme` — тонкие сплиттеры в dark, живое превью темы с откатом
   по Cancel, +1px строке меток.
+- `fix/findbar-compact` (влита в `experimental`) — ужатые кнопки
+  полоски поиска, без промежутка у счётчика, «Слова целиком».
+- `fix/findbar-dark-outline` (влита в `experimental`) — обводка 1px
+  кнопок полоски в тёмной теме в цвет текста, без изменения размеров.
+- `fix/tags-row-dark` (влита в `experimental`) — строке меток в тёмной
+  теме сброшены рамка и отступы скролл-зоны: они съедали 5px вьюпорта
+  и текст утопал.
+
+## Тесты и переводы
+
+- `feature/qttest-harness` (рабочая `experimental-sco-fix-and-features`,
+  в `experimental` не вливались) —
+  QtTest-каркас `tests/`: 12 сьютов, 126 проверок. Чистые модули без GUI,
+  harness с глобалами (`WalkHistory`, `AppConfig`), фикстура базы
+  (`KnowTreeModel`, `TreeScreen` в offscreen). Плюс фикс падения
+  `TreeModel::rowCount()` на очищенной модели.
+- `feature/translations-update` (влита в `experimental`) — русский
+  на 100%, французский синхронизирован, `.qm` пересобраны.
 
 ## В работе
 

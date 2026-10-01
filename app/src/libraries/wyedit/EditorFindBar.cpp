@@ -51,27 +51,41 @@ void EditorFindBar::setup_ui(void)
 
   // Текстовые кнопки не растягиваются: все свободное место строки
   // забирают поля ввода через stretch в assembly. Иначе стиль
-  // (особенно Windows) раздувает кнопки, а поля жмутся к минимуму
+  // (особенно Windows) раздувает кнопки, а поля жмутся к минимуму.
+  // Горизонтальные отступы ужаты до минимума: кнопке хватает ширины
+  // слова плюс пара пикселей. Сами отступы и рамки живут в CSS тем
+  // (селектор EditorFindBar QPushButton), а не в инлайн-стиле: тогда
+  // светлая тема рисует кнопки как раньше, а темная добавляет белую
+  // обводку 1px с компенсацией отступов, и размер кнопок не меняется.
+  // Замер под Fusion: "Найти" 80 -> 64 пикселя при тексте 53 пикселя,
+  // высота кнопок как у полей ввода.
   findButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
   replaceButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
   replaceAllButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
 
   // Кнопки перехода между совпадениями задают направление явно стрелками.
   // Кнопки-стрелки и крестик квадратные: ширина равна высоте, иначе стиль
-  // (особенно Windows) растягивает их до ширины текстовых кнопок
+  // (особенно Windows) растягивает их до ширины текстовых кнопок.
+  // ObjectName выделяет их в CSS: в темной теме у них свой отступ,
+  // скомпенсированный под белую обводку, чтобы квадрат не разъехался
   prevButton=new QPushButton(QString::fromUtf8("\u25C0"));
+  prevButton->setObjectName("findbarSquareButton");
   prevButton->setToolTip(tr("Previous match (Shift+Enter)"));
   prevButton->setEnabled(false);
   prevButton->setFixedWidth(prevButton->sizeHint().height());
 
   nextButton=new QPushButton(QString::fromUtf8("\u25B6"));
+  nextButton->setObjectName("findbarSquareButton");
   nextButton->setToolTip(tr("Next match (Enter)"));
   nextButton->setEnabled(false);
   nextButton->setFixedWidth(nextButton->sizeHint().height());
 
-  // Счетчик вида "2 of 5". Пустой пока нет активного поиска
+  // Счетчик вида "2 of 5". Пустой пока нет активного поиска.
+  // Ширина не резервируется: пустой счетчик не должен оставлять
+  // промежуток между стрелками и чекбоксами, текст раздвигает
+  // полоску по факту появления
   matchCounter=new QLabel();
-  matchCounter->setMinimumWidth(60);
+  matchCounter->setMinimumWidth(0);
 
   // Кнопка ухода в глобальный поиск с текущим запросом.
   // Мост между поиском в заметке и поиском по базе
@@ -81,6 +95,7 @@ void EditorFindBar::setup_ui(void)
   inbaseButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
 
   closeButton=new QPushButton(QString::fromUtf8("\u2715"));
+  closeButton->setObjectName("findbarSquareButton");
   closeButton->setToolTip(tr("Close find bar (Esc)"));
   closeButton->setFixedWidth(closeButton->sizeHint().height());
 }

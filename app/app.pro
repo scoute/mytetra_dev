@@ -141,6 +141,9 @@ INSTALLS+=icon_48_file
 HEADERS = src/main.h \
     src/controllers/databasesManagement/DatabasesManagementController.h \
     src/libraries/InternalClipboard.h \
+    src/sync/SyncCore.h \
+    src/sync/SyncServer.h \
+    src/sync/SyncStore.h \
     src/libraries/OrderedMap.h \
     src/libraries/RandomInitter.h \
     src/libraries/helpers/ActionHelper.h \
@@ -310,6 +313,9 @@ HEADERS+=\
 SOURCES = src/main.cpp \
     src/controllers/databasesManagement/DatabasesManagementController.cpp \
     src/libraries/InternalClipboard.cpp \
+    src/sync/SyncCore.cpp \
+    src/sync/SyncServer.cpp \
+    src/sync/SyncStore.cpp \
     src/libraries/OrderedMap.cpp \
     src/libraries/RandomInitter.cpp \
     src/libraries/helpers/ActionHelper.cpp \

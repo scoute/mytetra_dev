@@ -53,30 +53,29 @@ void EditorFindBar::setup_ui(void)
   // забирают поля ввода через stretch в assembly. Иначе стиль
   // (особенно Windows) раздувает кнопки, а поля жмутся к минимуму.
   // Горизонтальные отступы ужаты до минимума: кнопке хватает ширины
-  // слова плюс пара пикселей. Вертикальные отступы, наоборот, заданы явно:
-  // со stylesheet отрисовка кнопок уходит от нативного стиля и родные
-  // вертикальные отступы Fusion теряются, кнопки выглядят сплющенными.
-  // Только padding, без цветов и рамок,
-  // поэтому отрисовка остается за текущим стилем и темы работают.
+  // слова плюс пара пикселей. Сами отступы и рамки живут в CSS тем
+  // (селектор EditorFindBar QPushButton), а не в инлайн-стиле: тогда
+  // светлая тема рисует кнопки как раньше, а темная добавляет белую
+  // обводку 1px с компенсацией отступов, и размер кнопок не меняется.
   // Замер под Fusion: "Найти" 80 -> 64 пикселя при тексте 53 пикселя,
   // высота кнопок как у полей ввода.
   findButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
   replaceButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
   replaceAllButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
-  const char *compactButtonPadding="padding-left: 3px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px;";
-  findButton->setStyleSheet(compactButtonPadding);
-  replaceButton->setStyleSheet(compactButtonPadding);
-  replaceAllButton->setStyleSheet(compactButtonPadding);
 
   // Кнопки перехода между совпадениями задают направление явно стрелками.
   // Кнопки-стрелки и крестик квадратные: ширина равна высоте, иначе стиль
-  // (особенно Windows) растягивает их до ширины текстовых кнопок
+  // (особенно Windows) растягивает их до ширины текстовых кнопок.
+  // ObjectName выделяет их в CSS: в темной теме у них свой отступ,
+  // скомпенсированный под белую обводку, чтобы квадрат не разъехался
   prevButton=new QPushButton(QString::fromUtf8("\u25C0"));
+  prevButton->setObjectName("findbarSquareButton");
   prevButton->setToolTip(tr("Previous match (Shift+Enter)"));
   prevButton->setEnabled(false);
   prevButton->setFixedWidth(prevButton->sizeHint().height());
 
   nextButton=new QPushButton(QString::fromUtf8("\u25B6"));
+  nextButton->setObjectName("findbarSquareButton");
   nextButton->setToolTip(tr("Next match (Enter)"));
   nextButton->setEnabled(false);
   nextButton->setFixedWidth(nextButton->sizeHint().height());
@@ -94,9 +93,9 @@ void EditorFindBar::setup_ui(void)
   inbaseButton->setToolTip(tr("Search this text in the whole base"));
   inbaseButton->setEnabled(false);
   inbaseButton->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
-  inbaseButton->setStyleSheet(compactButtonPadding);
 
   closeButton=new QPushButton(QString::fromUtf8("\u2715"));
+  closeButton->setObjectName("findbarSquareButton");
   closeButton->setToolTip(tr("Close find bar (Esc)"));
   closeButton->setFixedWidth(closeButton->sizeHint().height());
 }

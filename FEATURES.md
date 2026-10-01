@@ -65,6 +65,7 @@
 - Синхронизация с MyTetroid (прототип сервера): `app/src/sync/`
   (`SyncCore` + `SyncServer` + `SyncStore`), спека `doc/sync-protocol.md`.
   HTTP+JSON в LAN, токен в `sync.ini`. Клиента пока нет.
+  Отдельная ветка для gee12: `feat/sync` (один коммит поверх `mr/*`).
 
 ## Отложено и отклонено
 

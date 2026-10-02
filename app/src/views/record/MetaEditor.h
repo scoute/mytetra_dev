@@ -10,6 +10,7 @@ class QGridLayout;
 class QScrollArea;
 class QSplitter;
 class QLabel;
+class QShowEvent;
 
 class AttachTableScreen;
 
@@ -50,6 +51,15 @@ public:
 
  void setFocusToBaseWidget();
 
+protected:
+ // Пересчет высоты строки меток при показе редактора: к этому моменту
+ // уже применены шрифты и отступы темы, поэтому высота актуальная
+ void showEvent(QShowEvent *event);
+
+ // Пересчет высоты строки меток при смене шрифта или стиля: размеры
+ // текста меняются, а поджатая высота осталась бы от прежних
+ void changeEvent(QEvent *event);
+
 private:
  void setupLabels(void);
  void setupUI(void);
@@ -59,6 +69,9 @@ private:
  void setMininizeGridRow(QWidget *widget);
  void setNormalGridRow(QWidget *widget);
  int getGridRowNumber(QWidget *widget);
+
+ // Пересчет высоты строки меток по текущим шрифтам и отступам стиля
+ void updateTagsRowHeight(void);
 
  QLabel *treePath; // Надпись Path (только для мобильного интерфейса)
 

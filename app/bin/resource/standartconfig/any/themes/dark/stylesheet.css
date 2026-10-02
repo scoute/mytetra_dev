@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="10" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="11" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -1211,6 +1211,26 @@ EditorFindBar QPushButton {
 
 EditorFindBar QPushButton#findbarSquareButton {
   padding: 1px;
+}
+
+/* Ровная строка полоски: базовые правила дают разнобой высот
+ * (чекбоксы 30px из-за padding 4px, поля ввода 29px, кнопки 27px),
+ * из-за чего текстовая мелочь выглядит крупнее и угловатее соседей.
+ * Здесь все сводится к высоте кнопок 27px; радиус прописан явно,
+ * чтобы скругление не терялось ни при каком стиле */
+EditorFindBar QCheckBox {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-radius: 4px;
+}
+
+EditorFindBar QLabel {
+  border-radius: 4px;
+}
+
+EditorFindBar QLineEdit {
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 
 /* QCommandLinkButton -----------------------------------------------------

@@ -12,7 +12,10 @@
 # версии приводил к незапуску с ручной чисткой, больше так не делаем.
 #
 # Использование:
-#   ./build_portable_linux.sh            сборка с настройками по умолчанию
+#   ./build_portable_linux.sh            без параметров: исходники откуда
+#                                        запущен скрипт, сборка из каталога
+#                                        Qt Creator, Qt SDK из его Makefile,
+#                                        результат рядом в MyTetra-portable
 #   ./build_portable_linux.sh --clean    предварительно очистить сборочный каталог
 #   ./build_portable_linux.sh --jobs 4   число потоков сборки
 #   ./build_portable_linux.sh --portable-dir /путь/к/папке   куда сложить сборку
@@ -38,16 +41,20 @@ set -euo pipefail
 QT_SDK="/media/user/data/Qt_installed/5.15.2/gcc_64"
 QT_SDK_FALLBACK="/media/user/m2data/Qt_deb11/5.15.2/gcc_64"
 
-# Исходники проекта с файлом mytetra.pro
-SOURCE_DIR="/home/user/_TMP/opencode/sco-mytetra-dev"
+# Исходники проекта с файлом mytetra.pro. По умолчанию корень репозитория,
+# посчитанный от места скрипта: работает из любой копии без параметров
+SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"
+SOURCE_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
 
 # Каталог сборки. Пусто значит автоопределение: ищется каталог сборки
 # Qt Creator (build/*/app/Makefile), берется самый свежий.
 # Явное значение перекрывает автоопределение
 BUILD_DIR=""
 
-# Папка готовой портабельной версии
-PORTABLE_DIR="/home/user/_TMP/opencode/MyTetra-portable"
+# Папка готовой портабельной версии. Пусто значит рядом с исходниками,
+# считается после разбора аргументов (важен порядок с --src)
+PORTABLE_DIR=""
+PORTABLE_DIR_EXPLICIT=0
 
 # Число потоков по умолчанию
 JOBS="$(nproc)"
@@ -85,6 +92,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --portable-dir)
             PORTABLE_DIR="$2"
+            PORTABLE_DIR_EXPLICIT=1
             shift 2
             ;;
         --system-libs)
@@ -138,6 +146,11 @@ done
 if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
     echo "ОШИБКА: в SOURCE_DIR нет mytetra.pro: ${SOURCE_DIR}" >&2
     exit 2
+fi
+
+# Папка результата по умолчанию рядом с исходниками
+if [[ "${PORTABLE_DIR_EXPLICIT}" -eq 0 ]]; then
+    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-portable"
 fi
 
 # Каталог сборки: если не задан явно, ищется каталог сборки Qt Creator

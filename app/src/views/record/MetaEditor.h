@@ -10,6 +10,7 @@ class QGridLayout;
 class QScrollArea;
 class QSplitter;
 class QLabel;
+class QEvent;
 
 class AttachTableScreen;
 
@@ -51,10 +52,17 @@ public:
  void setFocusToBaseWidget();
 
 private:
- void setupLabels(void);
- void setupUI(void);
- void metaAssembly(void);
- void setupSignals(void);
+  void setupLabels(void);
+  void setupUI(void);
+  void metaAssembly(void);
+  void setupSignals(void);
+
+  // Пересчет высоты строки меток под текущие метрики. Вызывается
+  // из setTags и при смене стиля или шрифта
+  void fixTagsRowHeight(void);
+
+  // Смена стиля или шрифта инвалидирует кэшированный замер высоты
+  void changeEvent(QEvent *event) override;
 
  void setMininizeGridRow(QWidget *widget);
  void setNormalGridRow(QWidget *widget);

@@ -406,18 +406,39 @@ void MetaEditor::setTags(QString tags)
     this->setMininizeGridRow(labelTags);
  }
 
- // Сокрытие или открытие элементов
- labelTags->setVisible(visible);
- recordTagsScrollArea->setVisible(visible);
- for(int i = 0; i < recordTagsLabels.size(); ++i)
- {
-  recordTagsLabels.at(i)->setVisible(visible);
- }
+  // Сокрытие или открытие элементов
+  labelTags->setVisible(visible);
+  recordTagsScrollArea->setVisible(visible);
+  for(int i = 0; i < recordTagsLabels.size(); ++i)
+  {
+   recordTagsLabels.at(i)->setVisible(visible);
+  }
 
- // Высота строки ровно в одну метку плюс пиксель запаса: рендеринг
- // со стилевыми отступами может требовать чуть больше расчетной высоты
- recordTagsContainer->adjustSize();
- recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height()+1);
+  fixTagsRowHeight();
+}
+
+
+// Высота строки ровно в одну метку плюс пиксель запаса: рендеринг
+// со стилевыми отступами может требовать чуть больше расчетной высоты.
+// Вызывается из setTags и при смене стиля или шрифта: замер высоты
+// кэшируется в maximumHeight, а метрики меток от темы зависят.
+// Без пересчета после переключения темы строка остается зажатой
+// старым замером и текст меток урезается до смены записи
+void MetaEditor::fixTagsRowHeight(void)
+{
+  recordTagsContainer->adjustSize();
+  recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height()+1);
+}
+
+
+// Смена стиля или шрифта меняет метрики меток, кэшированный замер
+// высоты строки обновляется
+void MetaEditor::changeEvent(QEvent *event)
+{
+  Editor::changeEvent(event);
+
+  if(event->type()==QEvent::StyleChange || event->type()==QEvent::FontChange)
+    fixTagsRowHeight();
 }
 
 

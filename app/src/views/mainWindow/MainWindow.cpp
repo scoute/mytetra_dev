@@ -12,6 +12,7 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QDockWidget>
+#include <QActionGroup>
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -37,9 +38,12 @@
 #include "libraries/RandomInitter.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
+#include "libraries/FixedParameters.h"
+#include "libraries/helpers/CssHelper.h"
 
 
 extern AppConfig mytetraConfig;
+extern FixedParameters fixedParameters;
 extern TrashMonitoring trashMonitoring;
 extern GlobalParameters globalParameters;
 extern WalkHistory walkHistory;
@@ -58,6 +62,7 @@ MainWindow::MainWindow() : QMainWindow()
     setupUI();
     initFileMenu();
     initToolsMenu();
+    initThemesMenu();
     initHelpMenu();
     initHiddenActions();
     setupSignals();
@@ -757,6 +762,71 @@ void MainWindow::initHelpMenu(void)
 
     actionHelpMenuTechnicalInfo = new QAction(tr("Technical info"), this);
     menu->addAction(actionHelpMenuTechnicalInfo);
+}
+
+
+// Создание меню Темы: переключение интерфейса в один клик вместо
+// похода в настройки. Пункты строятся из списка доступных тем,
+// поэтому новая тема подхватится сама
+void MainWindow::initThemesMenu(void)
+{
+    themesMenu=new QMenu(tr("&Themes"), this);
+    this->menuBar()->addMenu(themesMenu);
+
+    // Таблица переводов имен тем как в диалоге настроек
+    QMap<QString, QString> translateNames;
+    translateNames["default"]=tr("Default");
+    translateNames["dark"]=tr("Dark");
+
+    QActionGroup *themeGroup=new QActionGroup(themesMenu);
+    themeGroup->setExclusive(true);
+
+    for(auto name : fixedParameters.themesAvailableList)
+    {
+        QAction *themeAction=new QAction(translateNames.value(name, "Unknown"), themesMenu);
+        themeAction->setData(name);
+        themeAction->setCheckable(true);
+        themeGroup->addAction(themeAction);
+        themesMenu->addAction(themeAction);
+    }
+
+    syncThemeMenu();
+
+    connect(themeGroup, &QActionGroup::triggered,
+            this,        &MainWindow::onThemeMenuTriggered);
+
+    connect(themesMenu, &QMenu::aboutToShow,
+            this,        &MainWindow::syncThemeMenu);
+}
+
+
+// Пометка текущей темы. Вызывается при открытии меню, так как тему
+// можно сменить и из диалога настроек мимо этого меню
+void MainWindow::syncThemeMenu(void)
+{
+    if(themesMenu==nullptr)
+        return;
+
+    QString currentTheme=mytetraConfig.getInterfaceTheme();
+
+    for(QAction *themeAction : themesMenu->actions())
+        themeAction->setChecked(themeAction->data().toString()==currentTheme);
+}
+
+
+// Клик по пункту меню Темы: применить выбранную тему сразу
+void MainWindow::onThemeMenuTriggered(QAction *action)
+{
+    if(action==nullptr)
+        return;
+
+    QString themeName=action->data().toString();
+
+    if(themeName==mytetraConfig.getInterfaceTheme())
+        return;
+
+    if(mytetraConfig.setInterfaceTheme(themeName))
+        CssHelper::loadCurrentTheme();
 }
 
 

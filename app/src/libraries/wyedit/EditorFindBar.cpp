@@ -66,19 +66,20 @@ void EditorFindBar::setup_ui(void)
   // Кнопки перехода между совпадениями задают направление явно стрелками.
   // Кнопки-стрелки и крестик квадратные: ширина равна высоте, иначе стиль
   // (особенно Windows) растягивает их до ширины текстовых кнопок.
+  // Размер ставится не здесь, а в fixSquareButtons при показе: высота
+  // самой кнопки зависит от стиля и шрифта платформы (на windowsvista
+  // она в разы больше), а эталоном служит высота поля ввода.
   // ObjectName выделяет их в CSS: в темной теме у них свой отступ,
   // скомпенсированный под белую обводку, чтобы квадрат не разъехался
   prevButton=new QPushButton(QString::fromUtf8("\u25C0"));
   prevButton->setObjectName("findbarSquareButton");
   prevButton->setToolTip(tr("Previous match (Shift+Enter)"));
   prevButton->setEnabled(false);
-  prevButton->setFixedWidth(prevButton->sizeHint().height());
 
   nextButton=new QPushButton(QString::fromUtf8("\u25B6"));
   nextButton->setObjectName("findbarSquareButton");
   nextButton->setToolTip(tr("Next match (Enter)"));
   nextButton->setEnabled(false);
-  nextButton->setFixedWidth(nextButton->sizeHint().height());
 
   // Счетчик вида "2 of 5". Пустой пока нет активного поиска.
   // Ширина не резервируется: пустой счетчик не должен оставлять
@@ -97,7 +98,6 @@ void EditorFindBar::setup_ui(void)
   closeButton=new QPushButton(QString::fromUtf8("\u2715"));
   closeButton->setObjectName("findbarSquareButton");
   closeButton->setToolTip(tr("Close find bar (Esc)"));
-  closeButton->setFixedWidth(closeButton->sizeHint().height());
 }
 
 
@@ -270,9 +270,28 @@ void EditorFindBar::setMatchCounter(const QString &text)
 
 void EditorFindBar::showBar(void)
 {
+  fixSquareButtons();
+
   setVisible(true);
   lineEdit->setFocus();
   lineEdit->selectAll();
+}
+
+
+// Квадратные кнопки в размер поля ввода. Вызывается при каждом показе:
+// sizeHint поля посчитан под текущий стиль и шрифт, а собственная
+// высота кнопки на чужой платформе непредсказуема (на windowsvista
+// в разы больше). Текущий height() брать нельзя: до раскладки он мусор
+void EditorFindBar::fixSquareButtons(void)
+{
+  int side=lineEdit->sizeHint().height();
+
+  if(side<=0)
+    return;
+
+  prevButton->setFixedSize(side, side);
+  nextButton->setFixedSize(side, side);
+  closeButton->setFixedSize(side, side);
 }
 
 

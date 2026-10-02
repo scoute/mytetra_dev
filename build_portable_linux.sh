@@ -221,6 +221,14 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
     mkdir -p "${BUILD_DIR}"
     cd "${BUILD_DIR}"
 
+    # mimetex пишет объекты и бинарь в дерево исходников
+    # (thirdParty/mimetex/build) даже при сборке вне исходников.
+    # Там могут лежать артефакты другой платформы (PE после Wine):
+    # чужой линкер их не ест. Каталог в .gitignore, чистим
+    rm -rf "${SOURCE_DIR}/thirdParty/mimetex/build"
+    mkdir -p "${SOURCE_DIR}/thirdParty/mimetex/build/obj" \
+             "${SOURCE_DIR}/thirdParty/mimetex/build/bin"
+
     # qmake создает Makefile, make собирает. mimetex собирается как отдельный
     # проект и копируется рядом с mytetra, поэтому собирается весь mytetra.pro
     "${QMAKE}" "${SOURCE_DIR}/mytetra.pro"

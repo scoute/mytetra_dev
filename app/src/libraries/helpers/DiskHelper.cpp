@@ -17,11 +17,31 @@ DiskHelper::DiskHelper()
 }
 
 
-// Удаление директории с копированием содержимого в корзину
-void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
+// Удаление директории с копированием содержимого в корзину.
+// Если includeHiddenEntries задан, в корзину переносятся и скрытые элементы
+// (например ".git"), иначе они пропускаются (стандартный entryList()
+// скрытые файлы не возвращает) и пустой каталог не удаляется
+void DiskHelper::removeDirectoryToTrash(QString nameDirFrom, bool includeHiddenEntries)
 {
   QDir dirFrom(nameDirFrom);
-  QStringList fileList=dirFrom.entryList();
+
+  // Список элементов каталога. Обычный entryList() не включает скрытые файлы,
+  // поэтому при необходимости список строится через entryInfoList() с фильтром
+  // на скрытые и системные элементы
+  QStringList fileList;
+  if(includeHiddenEntries)
+  {
+    QFileInfoList infoList=dirFrom.entryInfoList(QDir::NoDotAndDotDot
+                                                 | QDir::AllEntries
+                                                 | QDir::Hidden
+                                                 | QDir::System);
+    for(int i=0; i<infoList.size(); i++)
+      fileList << infoList.at(i).fileName();
+  }
+  else
+  {
+    fileList=dirFrom.entryList();
+  }
 
   QString nameDirTo=mytetraConfig.get_trashdir();
 

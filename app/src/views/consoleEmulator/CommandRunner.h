@@ -21,7 +21,14 @@ public:
     void setCommand(QString cmd);
     void run(bool visible=true);
     int runSimple();
+    QString runSimpleAndGetOutput();
     bool isRun();
+
+    // Тихий синхронный запуск: вывод перехватывается и отбрасывается,
+    // консоль не создаётся, возвращается код выхода.
+    // Для служебных вызовов (git журнала обмена), чей вывод пользователю
+    // видеть не нужно и нельзя (иначе внутренности git сыплются в консоль)
+    int runSimpleQuiet();
 
     void setWindowTitle(QString title);
     void setMessageText(QString text);

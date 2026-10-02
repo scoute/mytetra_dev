@@ -193,6 +193,68 @@ int CommandRunner::runSimple()
 }
 
 
+// Тихий синхронный запуск без консоли: stdout/stderr перехватываются
+// и отбрасываются, возвращается код выхода
+int CommandRunner::runSimpleQuiet()
+{
+    if(m_shell.length()==0)
+        criticalError("ExecuteCommand::run() : Not detect available shell");
+
+    QStringList args = QProcess::splitCommand( this->getCommandForProcessExecute() );
+    QString program = args.takeFirst();
+
+    QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.start( program, args );
+
+    if( !process.waitForFinished(-1) )
+    {
+        qDebug() << "Process not finished";
+        return -1;
+    }
+
+    // Вывод отбрасывается: служебные команды не должны шуметь в консоль
+    process.readAll();
+
+    if(process.exitStatus()!=QProcess::NormalExit)
+        return -1;
+
+    return process.exitCode();
+}
+
+
+// Простой запуск консольной команды с ожиданием завершения и получением
+// выведенного текста (стандартные потоки объединены).
+// Консоль не создается, команда просто выполняется в процессе.
+// Возвращает выведенный текст или пустую строку при неудаче
+QString CommandRunner::runSimpleAndGetOutput()
+{
+    if(m_shell.length()==0)
+        criticalError("ExecuteCommand::run() : Not detect available shell");
+
+    // Команда разбивается на программу и аргументы
+    QStringList args = QProcess::splitCommand( this->getCommandForProcessExecute() );
+    QString program = args.takeFirst(); // Первый элемент — это исполняемый файл
+
+    QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.start( program, args );
+
+    if( !process.waitForFinished() )
+    {
+        qDebug() << "Process not finished";
+        return QString();
+    }
+
+    QByteArray output=process.readAll();
+
+    if(m_outputCodec)
+        return m_outputCodec->toUnicode(output);
+
+    return QString::fromLocal8Bit(output);
+}
+
+
 bool CommandRunner::isRun()
 {
     return m_isRun;

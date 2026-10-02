@@ -141,6 +141,7 @@ INSTALLS+=icon_48_file
 HEADERS = src/main.h \
     src/controllers/databasesManagement/DatabasesManagementController.h \
     src/libraries/Clipper.h \
+    src/libraries/GitWrapper.h \
     src/libraries/InternalClipboard.h \
     src/sync/SyncCore.h \
     src/sync/SyncServer.h \
@@ -316,6 +317,7 @@ HEADERS+=\
 SOURCES = src/main.cpp \
     src/controllers/databasesManagement/DatabasesManagementController.cpp \
     src/libraries/Clipper.cpp \
+    src/libraries/GitWrapper.cpp \
     src/libraries/InternalClipboard.cpp \
     src/sync/SyncCore.cpp \
     src/sync/SyncServer.cpp \

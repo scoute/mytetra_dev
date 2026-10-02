@@ -2491,6 +2491,21 @@ You need to update MyTetra.</source>
         <source>Mi&amp;nimize window</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="773"/>
+        <source>&amp;Themes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="778"/>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="779"/>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

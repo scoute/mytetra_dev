@@ -20,6 +20,9 @@
 #                                         вплоть до графики X11
 #   ./build_portable_linux.sh --qt /путь/к/Qt   корень Qt SDK
 #   ./build_portable_linux.sh --src /путь/к/исходникам
+#   ./build_portable_linux.sh --build-dir /путь/к/сборке
+#                                         (по умолчанию ищется каталог
+#                                         сборки Qt Creator в build/)
 #   ./build_portable_linux.sh --no-build  не собирать, только упаковать
 #                                         готовое из сборочного каталога
 #   ./build_portable_linux.sh --strip     вырезать отладочные символы
@@ -38,8 +41,10 @@ QT_SDK_FALLBACK="/media/user/m2data/Qt_deb11/5.15.2/gcc_64"
 # Исходники проекта с файлом mytetra.pro
 SOURCE_DIR="/home/user/_TMP/opencode/sco-mytetra-dev"
 
-# Каталог сборки вне исходников, чтобы не засорять репозиторий
-BUILD_DIR="/tmp/opencode/mt-portable-build"
+# Каталог сборки. Пусто значит автоопределение: ищется каталог сборки
+# Qt Creator (build/*/app/Makefile), берется самый свежий.
+# Явное значение перекрывает автоопределение
+BUILD_DIR=""
 
 # Папка готовой портабельной версии
 PORTABLE_DIR="/home/user/_TMP/opencode/MyTetra-portable"
@@ -95,6 +100,10 @@ while [[ $# -gt 0 ]]; do
             SOURCE_DIR="$2"
             shift 2
             ;;
+        --build-dir)
+            BUILD_DIR="$2"
+            shift 2
+            ;;
         --no-build)
             DO_BUILD=0
             shift
@@ -126,19 +135,48 @@ done
 # Проверки окружения
 # --------------------------------------------------------------------------
 
-# Qt SDK: берется первый существующий из вариантов
-if [[ ! -x "${QT_SDK}/bin/qmake" ]]; then
-    if [[ -n "${QT_SDK_FALLBACK}" && -x "${QT_SDK_FALLBACK}/bin/qmake" ]]; then
-        QT_SDK="${QT_SDK_FALLBACK}"
+if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
+    echo "ОШИБКА: в SOURCE_DIR нет mytetra.pro: ${SOURCE_DIR}" >&2
+    exit 2
+fi
+
+# Каталог сборки: если не задан явно, ищется каталог сборки Qt Creator
+# (build/*/app/Makefile), берется самый свежий. Тогда же собирается
+# в нем, исходники не засоряются
+if [[ -z "${BUILD_DIR}" ]]; then
+    BUILD_DIR="$(find "${SOURCE_DIR}/build" -maxdepth 3 -name Makefile -path "*/app/*" -printf "%T@ %h\n" 2>/dev/null | sort -rn | head -1 | awk '{print $2}' | xargs -r dirname 2>/dev/null || true)"
+    if [[ -n "${BUILD_DIR}" ]]; then
+        echo "Каталог сборки Qt Creator: ${BUILD_DIR}"
     else
-        echo "ОШИБКА: не найден qmake" >&2
-        echo "Проверьте QT_SDK в начале скрипта или опцию --qt." >&2
+        echo "ОШИБКА: каталог сборки не найден в ${SOURCE_DIR}/build" >&2
+        echo "Соберите проект в Qt Creator или задайте --build-dir." >&2
         exit 2
     fi
 fi
 
-if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
-    echo "ОШИБКА: в SOURCE_DIR нет mytetra.pro: ${SOURCE_DIR}" >&2
+# Qt SDK: сначала явные варианты, затем qmake из каталога сборки
+# (Qt Creator прописывает его в app/Makefile), затем qmake из PATH
+if [[ ! -x "${QT_SDK}/bin/qmake" ]]; then
+    if [[ -n "${QT_SDK_FALLBACK}" && -x "${QT_SDK_FALLBACK}/bin/qmake" ]]; then
+        QT_SDK="${QT_SDK_FALLBACK}"
+    fi
+fi
+
+if [[ ! -x "${QT_SDK}/bin/qmake" ]]; then
+    MAKEFILE_QMAKE="$(grep -m1 "^QMAKE" "${BUILD_DIR}/app/Makefile" 2>/dev/null | awk -F'= *' '{print $2}' || true)"
+    if [[ -n "${MAKEFILE_QMAKE}" && -x "${MAKEFILE_QMAKE}" ]]; then
+        QT_SDK="$(dirname "$(dirname "${MAKEFILE_QMAKE}")")"
+        echo "Qt SDK из каталога сборки: ${QT_SDK}"
+    fi
+fi
+
+if [[ ! -x "${QT_SDK}/bin/qmake" ]] && command -v qmake >/dev/null 2>&1; then
+    QT_SDK="$(qmake -query QT_INSTALL_PREFIX)"
+fi
+
+if [[ ! -x "${QT_SDK}/bin/qmake" ]]; then
+    echo "ОШИБКА: не найден qmake" >&2
+    echo "Проверьте QT_SDK в начале скрипта или опцию --qt." >&2
     exit 2
 fi
 

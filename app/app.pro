@@ -146,6 +146,8 @@ HEADERS = src/main.h \
     src/sync/SyncCore.h \
     src/sync/SyncServer.h \
     src/sync/SyncStore.h \
+    src/libraries/BranchDiffEngine.h \
+    src/libraries/TextDiff.h \
     src/libraries/OrderedMap.h \
     src/libraries/RandomInitter.h \
     src/libraries/helpers/ActionHelper.h \
@@ -322,6 +324,8 @@ SOURCES = src/main.cpp \
     src/sync/SyncCore.cpp \
     src/sync/SyncServer.cpp \
     src/sync/SyncStore.cpp \
+    src/libraries/BranchDiffEngine.cpp \
+    src/libraries/TextDiff.cpp \
     src/libraries/OrderedMap.cpp \
     src/libraries/RandomInitter.cpp \
     src/libraries/helpers/ActionHelper.cpp \

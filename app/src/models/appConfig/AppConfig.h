@@ -275,6 +275,20 @@ public:
     int get_clipperMaxImageSizeMb(void);
     bool set_clipperMaxImageSizeMb(int mbSize);
 
+    // Профиль команды SyncTetra: имя, почта, идентификатор и каталог обмена.
+    // Пустые значения означают ненастроенный профиль и каталог по умолчанию
+    QString get_teamname(void);
+    void set_teamname(QString name);
+
+    QString get_teamemail(void);
+    void set_teamemail(QString email);
+
+    QString get_teamid(void);
+    void set_teamid(QString id);
+
+    QString get_shareddir(void);
+    void set_shareddir(QString path);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);
@@ -350,6 +364,7 @@ private:
     QStringList get_parameter_table_42(bool withEndSignature=true);
     QStringList get_parameter_table_43(bool withEndSignature=true);
     QStringList get_parameter_table_44(bool withEndSignature=true);
+    QStringList get_parameter_table_45(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

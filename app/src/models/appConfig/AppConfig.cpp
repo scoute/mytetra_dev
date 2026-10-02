@@ -1053,6 +1053,58 @@ bool AppConfig::set_clipperMaxImageSizeMb(int mbSize)
 }
 
 
+// Имя пользователя в команде (SyncTetra). Пустое если профиль не настроен
+QString AppConfig::get_teamname(void)
+{
+    return this->get_parameter("teamname");
+}
+
+
+void AppConfig::set_teamname(QString name)
+{
+    m_conf->setValue("teamname", name);
+}
+
+
+// Электронная почта пользователя в команде (SyncTetra)
+QString AppConfig::get_teamemail(void)
+{
+    return this->get_parameter("teamemail");
+}
+
+
+void AppConfig::set_teamemail(QString email)
+{
+    m_conf->setValue("teamemail", email);
+}
+
+
+// Идентификатор пользователя в команде (SyncTetra)
+QString AppConfig::get_teamid(void)
+{
+    return this->get_parameter("teamid");
+}
+
+
+void AppConfig::set_teamid(QString id)
+{
+    m_conf->setValue("teamid", id);
+}
+
+
+// Каталог обмена SyncTetra. Пустое значение означает каталог по умолчанию
+QString AppConfig::get_shareddir(void)
+{
+    return this->get_parameter("shareddir");
+}
+
+
+void AppConfig::set_shareddir(QString path)
+{
+    m_conf->setValue("shareddir", path);
+}
+
+
 QString AppConfig::getDockableWindowsState(void)
 {
     return this->get_parameter("dockableWindowsState");
@@ -1301,6 +1353,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
     parameterFunctions << &AppConfig::get_parameter_table_44;
+    parameterFunctions << &AppConfig::get_parameter_table_45;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2204,6 +2257,30 @@ QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
     // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
     table << "clipperMaxImages" << "int" << "20";
     table << "clipperMaxImageSizeMb" << "int" << "5";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 44
+    table << get_parameter_table_44(false);
+
+    // Профиль команды SyncTetra: имя, почта, идентификатор, каталог обмена.
+    // Их clipper-ключи версии 44 сюда не входят: веб-клиппер заменен
+    // нашим клиппером с другими настройками
+    table << "teamname" << "QString" << "";
+    table << "teamemail" << "QString" << "";
+    table << "teamid" << "QString" << "";
+    table << "shareddir" << "QString" << "";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

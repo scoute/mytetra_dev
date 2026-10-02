@@ -176,6 +176,7 @@ HEADERS = src/main.h \
     src/models/appConfig/AppFiles.h \
     src/models/databasesManagement/DatabasesManagementModel.h \
     src/models/databasesManagement/KnownBasesConfig.h \
+    src/models/teamProfile/TeamProfile.h \
     src/views/appConfigWindow/AppConfigPage_Appearance.h \
     src/views/appConfigWindow/AppConfigPage_History.h \
     src/views/consoleEmulator/CommandRunner.h \
@@ -380,6 +381,7 @@ SOURCES = src/main.cpp \
     src/models/tree/TreeModel.cpp \
     src/models/tree/TreeItem.cpp \
     src/models/tree/KnowTreeModel.cpp \
+    src/models/teamProfile/TeamProfile.cpp \
     src/models/recordTable/RecordTableData.cpp \
     src/models/recordTable/RecordTableModel.cpp \
     src/models/recordTable/RecordTableProxyModel.cpp \

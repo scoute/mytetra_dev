@@ -178,6 +178,7 @@ HEADERS = src/main.h \
     src/models/appConfig/AppFiles.h \
     src/models/databasesManagement/DatabasesManagementModel.h \
     src/models/databasesManagement/KnownBasesConfig.h \
+    src/models/subscription/SubscriptionRegistry.h \
     src/models/teamProfile/TeamProfile.h \
     src/views/appConfigWindow/AppConfigPage_Appearance.h \
     src/views/appConfigWindow/AppConfigPage_History.h \
@@ -359,6 +360,7 @@ SOURCES = src/main.cpp \
     src/models/appConfig/AppFiles.cpp \
     src/models/databasesManagement/DatabasesManagementModel.cpp \
     src/models/databasesManagement/KnownBasesConfig.cpp \
+    src/models/subscription/SubscriptionRegistry.cpp \
     src/views/appConfigWindow/AppConfigPage_Appearance.cpp \
     src/views/appConfigWindow/AppConfigPage_History.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \

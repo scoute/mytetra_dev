@@ -39,6 +39,7 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/CssHelper.h"
 #include "models/teamProfile/TeamProfile.h"
+#include "models/subscription/SubscriptionRegistry.h"
 #include "libraries/SharedDirWatcher.h"
 #include "sync/SyncServer.h"
 
@@ -87,6 +88,9 @@ TeamProfile teamProfile;
 
 // Наблюдатель каталога обмена SyncTetra
 SharedDirWatcher sharedDirWatcher;
+
+// Реестр подписок SyncTetra
+SubscriptionRegistry subscriptionRegistry;
 
 // Указатель на внутренний буфер обмена
 InternalClipboard *internalClipboard;
@@ -346,6 +350,9 @@ int main(int argc, char ** argv)
     QObject::connect(&teamProfile, &TeamProfile::teamProfileChanged,
                      &sharedDirWatcher, &SharedDirWatcher::updateWatchedPath);
     sharedDirWatcher.start();
+
+    // Инициализация реестра подписок
+    subscriptionRegistry.init();
 
     // Создание объекта главного окна
     MainWindow win;

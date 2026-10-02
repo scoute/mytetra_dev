@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="10" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="13" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -338,7 +338,7 @@ https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qmenubar
 --------------------------------------------------------------------------- */
 QMenuBar {
   background-color: #455364;
-  padding: 2px;
+  padding: 1px;
   border: 1px solid #19232D;
   color: #DFE1E2;
   selection-background-color: #1A72BB;
@@ -348,20 +348,24 @@ QMenuBar:focus {
   border: 1px solid #346792;
 }
 
+/* Отступы строки меню ужаты на 1px вверх и вниз: базовые 2px у самой
+ * строки и 4px у пунктов давали меню заметно выше нативного, как в
+ * светлой теме. Значение у item, selected и pressed обязано совпадать,
+ * иначе при наведении строка дергается по высоте */
 QMenuBar::item {
   background: transparent;
-  padding: 4px;
+  padding: 3px;
 }
 
 QMenuBar::item:selected {
-  padding: 4px;
+  padding: 3px;
   background: transparent;
   border: 0px solid #455364;
   background-color: #1A72BB;
 }
 
 QMenuBar::item:pressed {
-  padding: 4px;
+  padding: 3px;
   border: 0px solid #455364;
   background-color: #1A72BB;
   color: #DFE1E2;
@@ -1211,6 +1215,33 @@ EditorFindBar QPushButton {
 
 EditorFindBar QPushButton#findbarSquareButton {
   padding: 1px;
+}
+
+/* Погашенная кнопка: обводка приглушена в цвет погашенного текста,
+ * иначе яркая рамка спорит с серой подписью и кнопка выглядит
+ * зажженной. Активная рамка остается в цвет текста (#DFE1E2) */
+EditorFindBar QPushButton:disabled {
+  border-color: #788D9C;
+}
+
+/* Ровная строка полоски: базовые правила дают разнобой высот
+ * (чекбоксы 30px из-за padding 4px, поля ввода 29px, кнопки 27px),
+ * из-за чего текстовая мелочь выглядит крупнее и угловатее соседей.
+ * Здесь все сводится к высоте кнопок 27px; радиус прописан явно,
+ * чтобы скругление не терялось ни при каком стиле */
+EditorFindBar QCheckBox {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-radius: 4px;
+}
+
+EditorFindBar QLabel {
+  border-radius: 4px;
+}
+
+EditorFindBar QLineEdit {
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 
 /* QCommandLinkButton -----------------------------------------------------

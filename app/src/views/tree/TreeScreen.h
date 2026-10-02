@@ -51,6 +51,10 @@ signals:
 
     void treeScreenFindInBaseClicked();
 
+    // Сохранены метаданные дерева: заголовки веток и поля заметок.
+    // Словари автодополнения пересобираются по этому сигналу
+    void treeMetadataSaved(void);
+
 public slots:
 
     void setupShortcuts(void);

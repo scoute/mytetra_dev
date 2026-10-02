@@ -31,10 +31,12 @@ using namespace std;
 // © Степанов С. М. и товарищи 2010 - 2026
 // ----------------------------------------------------------
 
-// Версия программы
+// Версия программы. MICROVERSION инкрементится в каждом коммите
+// с изменением кода или ресурсов, при смене SUBVERSION сбрасывается в 1.
+// Правило описано в README.md, раздел "Нумерация версий"
 #define APPLICATION_RELEASE_VERSION         1
-#define APPLICATION_RELEASE_SUBVERSION     44
-#define APPLICATION_RELEASE_MICROVERSION  232
+#define APPLICATION_RELEASE_SUBVERSION     45
+#define APPLICATION_RELEASE_MICROVERSION  5
 
 // Поддерживаемая версия формата базы (хранилища)
 #define CURRENT_FORMAT_VERSION    1

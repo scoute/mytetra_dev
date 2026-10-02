@@ -14,6 +14,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "views/tree/TreeScreen.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "views/tree/KnowTreeView.h"
@@ -136,12 +137,44 @@ void InfoFieldEnter::setupTagsCompleter(void)
 
     connect(tagsCompleter, qOverload<const QString &>(&QCompleter::activated),
             this,          &InfoFieldEnter::onTagCompletion);
+
+    // Словарь тегов пересобирается не только при показе виджета,
+    // но и при изменении метаданных дерева, пока виджет открыт
+    tagsCompleterRefreshTimer=new QTimer(this);
+    tagsCompleterRefreshTimer->setSingleShot(true);
+    tagsCompleterRefreshTimer->setInterval(300);
+
+    connect(tagsCompleterRefreshTimer, &QTimer::timeout,
+            this,                       &InfoFieldEnter::refreshTagsCompleter);
+
+    treeMetadataConnected=false;
+}
+
+
+// Метаданные дерева изменились: пересборка словаря откладывается,
+// чтобы пакетная операция не пересобирала его на каждый шаг
+void InfoFieldEnter::onTreeMetadataSaved(void)
+{
+    tagsCompleterRefreshTimer->start();
 }
 
 
 // Пересборка словаря подсказок по всем тегам базы
 void InfoFieldEnter::refreshTagsCompleter(void)
 {
+    // Подписка на изменения дерева делается один раз и только когда
+    // дерево уже собрано: иначе find_object() на отсутствующем объекте
+    // завершает программу
+    if(!treeMetadataConnected)
+    {
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        treeMetadataConnected=true;
+
+        connect(treeScreen, &TreeScreen::treeMetadataSaved,
+                this,       &InfoFieldEnter::onTreeMetadataSaved);
+    }
+
     QMap<QString, QStringList> dictionaries;
     QSet<QString> seen;
 

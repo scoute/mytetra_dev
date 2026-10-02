@@ -13,6 +13,7 @@ class QToolButton;
 class QStringListModel;
 class QShowEvent;
 class QCompleter;
+class QTimer;
 
 class InfoFieldEnter : public QWidget
 {
@@ -51,6 +52,9 @@ private slots:
     void onTagsEdited(const QString &text);
     void onTagCompletion(const QString &completion);
     void onTagsReturn(void);
+
+    // Метаданные дерева изменились: отложить пересборку словаря тегов
+    void onTreeMetadataSaved(void);
 
 private:
 
@@ -95,6 +99,12 @@ private:
     QCompleter *tagsCompleter;
     QStringListModel *tagsCompleterModel;
     bool tagsCompleterEnabled;
+
+    // Отложенная пересборка словаря тегов при изменении метаданных
+    // дерева. Пока виджет скрыт, пересборка не нужна: словарь и так
+    // обновится при показе
+    QTimer *tagsCompleterRefreshTimer;
+    bool treeMetadataConnected;
 
 protected:
 

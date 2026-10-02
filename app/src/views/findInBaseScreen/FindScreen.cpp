@@ -14,8 +14,10 @@
 #include <QApplication>
 
 #include <QCompleter>
-#include <QStringListModel>
+#include <QStandardItemModel>
 #include <QShowEvent>
+
+#include <algorithm>
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
 #include "FindTableWidget.h"
@@ -1074,8 +1076,11 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
 void FindScreen::setupFieldCompleter(void)
 {
     // Словарь подсказок: регистр не важен, модель отсортирована
-    // для быстрого поиска. Выпадашка показывает не больше десяти строк
-    fieldCompleterModel=new QStringListModel(this);
+    // для быстрого поиска. Выпадашка показывает не больше десяти строк.
+    // Модель с иконками типов, а не строки: смайлики-эмодзи зависят
+    // от шрифтов системы и превращаются в квадраты там, где нет
+    // шрифта с цветными эмодзи. Иконки из ресурсов рисуются везде
+    fieldCompleterModel=new QStandardItemModel(this);
 
     fieldCompleter=new QCompleter(this);
     fieldCompleter->setModel(fieldCompleterModel);
@@ -1125,32 +1130,58 @@ void FindScreen::refreshFieldCompleter(void)
             collectBranchValues(rootItem, dictionaries, seen);
     }
 
-    // Подсказка показывает объединение словарей отмеченных полей
-    QStringList words;
+    // Подсказка показывает объединение словарей отмеченных полей.
+    // Тип значения виден по иконке слева, текст значения чистый
+    // без префиксов: дополняется и ищется как есть
+    QMap<QString, QStringList> enabledFields;
 
     if(findInName->isChecked())
-        words+=dictionaries.value("name");
+        enabledFields["name"]=dictionaries.value("name");
 
     if(findInAuthor->isChecked())
-        words+=dictionaries.value("author");
+        enabledFields["author"]=dictionaries.value("author");
 
     if(findInUrl->isChecked())
-        words+=dictionaries.value("url");
+        enabledFields["url"]=dictionaries.value("url");
 
     if(findInTags->isChecked())
-        words+=dictionaries.value("tags");
+        enabledFields["tags"]=dictionaries.value("tags");
 
     if(findInNameItem->isChecked())
-        words+=dictionaries.value("nameItem");
+        enabledFields["nameItem"]=dictionaries.value("nameItem");
 
-    words.sort(Qt::CaseInsensitive);
+    fieldCompleterModel->clear();
 
-    fieldCompleterModel->setStringList(words);
+    // Пары иконка-значение для глобальной сортировки: completer
+    // с CaseInsensitivelySortedModel требует отсортированный источник
+    QList< QPair<QString, QString> > pairs;
+
+    QMapIterator<QString, QStringList> fieldIt(enabledFields);
+    while(fieldIt.hasNext())
+    {
+        fieldIt.next();
+
+        foreach(QString word, fieldIt.value())
+            pairs << qMakePair(fieldIt.key(), word);
+    }
+
+    std::sort(pairs.begin(), pairs.end(),
+              [](const QPair<QString, QString> &a, const QPair<QString, QString> &b)
+              {
+                  return a.second.compare(b.second, Qt::CaseInsensitive)<0;
+              });
+
+    foreach(auto pair, pairs)
+    {
+        QStandardItem *item=new QStandardItem(completionTypeIcon(pair.first), pair.second);
+        item->setEditable(false);
+        fieldCompleterModel->appendRow(item);
+    }
 
     // Подсказывать нечего: ручной привод выключается
-    fieldCompleterEnabled=!words.isEmpty();
+    fieldCompleterEnabled=(fieldCompleterModel->rowCount()>0);
 
-    if(words.isEmpty())
+    if(fieldCompleterModel->rowCount()==0)
         fieldCompleter->popup()->hide();
 }
 
@@ -1198,7 +1229,9 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
 
 
 // Добавить слово в словарь поля. Пустые значения отбрасываются,
-// повторы без учета регистра тоже: пишется первое встречное написание
+// повторы без учета регистра тоже: пишется первое встречное
+// написание. Дедуп в пределах поля: одно и то же слово из разных
+// полей показывается с каждой своей меткой типа
 void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
                                    QSet<QString> &seen,
                                    const QString &field,
@@ -1209,13 +1242,36 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
     if(trimmed.isEmpty())
         return;
 
-    QString lowered=trimmed.toLower();
+    QString key=field+trimmed.toLower();
 
-    if(seen.contains(lowered))
+    if(seen.contains(key))
         return;
 
-    seen.insert(lowered);
+    seen.insert(key);
     dictionaries[field].append(trimmed);
+}
+
+
+// Иконка типа значения для выпадашки. Рисуется из ресурсов,
+// от шрифтов системы не зависит (эмодзи там превращались в квадраты)
+QIcon FindScreen::completionTypeIcon(const QString &field)
+{
+    if(field=="tags")
+        return QIcon(":/resource/pic/tag.svg");
+
+    if(field=="name")
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_document.svg");
+
+    if(field=="url")
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_link.svg");
+
+    if(field=="nameItem")
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_opened_folder.svg");
+
+    if(field=="author")
+        return QIcon(":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg");
+
+    return QIcon();
 }
 
 
@@ -1249,7 +1305,8 @@ void FindScreen::onFindTextEdited(const QString &text)
 
 void FindScreen::onFieldCompletion(const QString &completion)
 {
-    // Выбранное дополнение заменяет весь ввод: это полное имя,
+    // Выбранное дополнение заменяет весь ввод: в модели лежит
+    // чистое значение с иконкой типа, вставляется как есть,
     // дальше сразу запускается поиск
     findText->setText(completion);
 

@@ -11,6 +11,7 @@
 #include <QTableView>
 #include <QStandardItemModel>
 #include <QStandardItem>
+#include <QTextCursor>
 #include <QStyledItemDelegate>
 #include <QApplication>
 
@@ -20,6 +21,10 @@
 #include "views/mainWindow/MainWindow.h"
 #include "views/record/MetaEditor.h"
 #include "models/appConfig/AppConfig.h"
+#include "models/tree/KnowTreeModel.h"
+#include "models/tree/TreeItem.h"
+#include "models/recordTable/RecordTableData.h"
+#include "views/tree/KnowTreeView.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/GestureHelper.h"
 #include "libraries/helpers/CssHelper.h"
@@ -313,13 +318,60 @@ void FindTableWidget::selectCell(const QModelIndex & index)
 
     // Мост в поиск по заметке: открытая запись сразу подсвечивается
     // тем же запросом с переходом к первому совпадению. Для строк веток
-    // подсветка не запускается: там открыта другая запись
+    // подсветка не запускается: там открыта другая запись.
+    // Полоска открывается только если запросу есть совпадения в тексте:
+    // иначе совпало поле author/url/tags, и мост показывал бы
+    // бессмысленное "Нет совпадений"
     if(isRecord && !lastSearchQuery.isEmpty())
     {
         // Дать редактору дочитать текст открывшейся записи
         QCoreApplication::processEvents();
 
-        edView->startFind(lastSearchQuery, lastSearchFlags);
+        QString branchId=path.isEmpty() ? QString() : path.last();
+
+        if(noteTextContains(branchId, recordId, lastSearchQuery, lastSearchFlags))
+            edView->startFind(lastSearchQuery, lastSearchFlags);
     }
+}
+
+
+// Есть ли запросу совпадения в тексте записи. Проверка тем же движком
+// что подсветка полоски (QTextDocument::find с теми же флагами)
+bool FindTableWidget::noteTextContains(const QString &branchId,
+                                       const QString &recordId,
+                                       const QString &query,
+                                       QTextDocument::FindFlags flags)
+{
+    if(branchId.isEmpty() || recordId.isEmpty() || query.isEmpty())
+        return false;
+
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+    if(treeView==nullptr)
+        return false;
+
+    KnowTreeModel *model=static_cast<KnowTreeModel *>(treeView->model());
+    if(model==nullptr)
+        return false;
+
+    TreeItem *branchItem=model->getItemById(branchId);
+    if(branchItem==nullptr)
+        return false;
+
+    RecordTableData *table=branchItem->recordtableGetTableData();
+    if(table==nullptr)
+        return false;
+
+    int pos=table->getPosById(recordId);
+    if(pos<0)
+        return false;
+
+    // Направление в проверке не участвует: достаточно знать сам факт
+    QTextDocument document;
+    document.setHtml(table->getText(pos));
+
+    QTextCursor cursor(&document);
+    cursor=document.find(query, cursor, flags & ~QTextDocument::FindBackward);
+
+    return !cursor.isNull();
 }
 

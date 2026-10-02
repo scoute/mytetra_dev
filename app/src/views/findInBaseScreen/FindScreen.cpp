@@ -1075,6 +1075,16 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
 // Словарь подставится позже в refreshFieldCompleter
 void FindScreen::setupFieldCompleter(void)
 {
+    // Словарь подсказок пересобирается не только при показе виджета,
+    // но и при изменении метаданных дерева, пока виджет открыт
+    completerRefreshTimer=new QTimer(this);
+    completerRefreshTimer->setSingleShot(true);
+    completerRefreshTimer->setInterval(300);
+
+    connect(completerRefreshTimer, &QTimer::timeout,
+            this,                   &FindScreen::refreshFieldCompleter);
+
+    treeMetadataConnected=false;
     // Словарь подсказок: регистр не важен, модель отсортирована
     // для быстрого поиска. Выпадашка показывает не больше десяти строк.
     // Модель с иконками типов, а не строки: смайлики-эмодзи зависят
@@ -1108,11 +1118,36 @@ void FindScreen::setupFieldCompleter(void)
 }
 
 
+// Метаданные дерева изменились: пересборка словаря откладывается,
+// чтобы пакетная операция не пересобирала его на каждый шаг
+void FindScreen::onTreeMetadataSaved(void)
+{
+    completerRefreshTimer->start();
+}
+
+
 // Пересборка словаря подсказок по всем значениям полей,
 // отмеченных галочками. Полнотекстовое поле Text не участвует:
 // дополнять среди всего текста заметок бессмысленно
 void FindScreen::refreshFieldCompleter(void)
 {
+    // Подписка на изменения дерева делается один раз и только когда
+    // дерево уже собрано: иначе find_object() на отсутствующем объекте
+    // завершает программу. Пока виджет скрыт, пересборку откладываем:
+    // словарь и так обновится при показе из showEvent
+    if(!treeMetadataConnected)
+    {
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        treeMetadataConnected=true;
+
+        connect(treeScreen, &TreeScreen::treeMetadataSaved,
+                this,       &FindScreen::onTreeMetadataSaved);
+    }
+
+    if(isVisible()==false)
+        return;
+
     // Словарь собирается по всему дереву: значения из других веток
     // в подсказке безвредны, зато словарь всегда полный и свежий
     QMap<QString, QStringList> dictionaries;

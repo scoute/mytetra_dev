@@ -18,6 +18,7 @@ class QProgressDialog;
 class QStandardItemModel;
 class QShowEvent;
 class QCompleter;
+class QTimer;
 
 class KnowTreeModel;
 class TreeItem;
@@ -103,6 +104,9 @@ private slots:
     void onFieldCompletion(const QString &completion);
     void refreshFieldCompleter(void);
 
+    // Метаданные дерева изменились: отложить пересборку словаря подсказок
+    void onTreeMetadataSaved(void);
+
 signals:
 
     // Сигнал вырабатывается, когда обнаружено что в слоте setFindText()
@@ -151,6 +155,12 @@ private:
     QCompleter *fieldCompleter;
     QStandardItemModel *fieldCompleterModel;
     bool fieldCompleterEnabled;
+
+    // Отложенная пересборка словаря подсказок при изменении метаданных
+    // дерева. Таймер сбрасывается на каждом сохранении, поэтому пакетная
+    // операция вроде вставки веток дает одну пересборку, а не десять
+    QTimer *completerRefreshTimer;
+    bool treeMetadataConnected;
 
     void setupFindTextAndButton(void);
     void assemblyFindTextAndButton(void);

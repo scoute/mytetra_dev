@@ -3,8 +3,6 @@
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QScrollArea>
-#include <QShowEvent>
-#include <QTimer>
 #include <QSplitter>
 #include <QtDebug>
 
@@ -416,52 +414,10 @@ void MetaEditor::setTags(QString tags)
   recordTagsLabels.at(i)->setVisible(visible);
  }
 
-// Высота строки ровно в одну метку плюс пиксель запаса: рендеринг
-  // со стилевыми отступами может требовать чуть больше расчетной высоты
-  updateTagsRowHeight();
-
-  // Повторный пересчет после первой раскладки: на старте программы
-  // размеры стиля еще не окончательные, и поджатая по ним высота
-  // оказывается меньше нужной, метки обрезаются снизу
-  QTimer::singleShot(0, this, &MetaEditor::updateTagsRowHeight);
-}
-
-
-// Пересчет высоты строки меток. Берется расчетная высота слоя, а не
-// фактическая высота контейнера: до первого показа фактическая высота
-// равна нулю, зона схлопывается в пиксель и текст меток срезается.
-// Именно так проявляется кривизна на пустой базе при первом запуске
-void MetaEditor::updateTagsRowHeight(void)
-{
-  int tagsHeight=recordTagsLayout->sizeHint().height();
-
-  // Пустой слой дает нулевую высоту: тогда ориентир берется с меток
-  if(tagsHeight<=0 && !recordTagsLabels.isEmpty())
-    tagsHeight=recordTagsLabels.first()->sizeHint().height();
-
-  recordTagsScrollArea->setMaximumHeight(tagsHeight+1);
-}
-
-
-// При показе редактора высота строки меток пересчитывается заново:
-// шрифты и отступы темы к этому моменту уже применены
-void MetaEditor::showEvent(QShowEvent *event)
-{
-  QWidget::showEvent(event);
-
-  updateTagsRowHeight();
-}
-
-
-// При смене шрифта или стиля размеры текста меняются, поэтому высота
-// строки меток пересчитывается заново
-void MetaEditor::changeEvent(QEvent *event)
-{
-  QWidget::changeEvent(event);
-
-  if(event->type()==QEvent::StyleChange ||
-     event->type()==QEvent::FontChange)
-    updateTagsRowHeight();
+ // Высота строки ровно в одну метку плюс пиксель запаса: рендеринг
+ // со стилевыми отступами может требовать чуть больше расчетной высоты
+ recordTagsContainer->adjustSize();
+ recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height()+1);
 }
 
 

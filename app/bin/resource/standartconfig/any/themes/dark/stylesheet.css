@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="11" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="12" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -1211,6 +1211,13 @@ EditorFindBar QPushButton {
 
 EditorFindBar QPushButton#findbarSquareButton {
   padding: 1px;
+}
+
+/* Погашенная кнопка: обводка приглушена в цвет погашенного текста,
+ * иначе яркая рамка спорит с серой подписью и кнопка выглядит
+ * зажженной. Активная рамка остается в цвет текста (#DFE1E2) */
+EditorFindBar QPushButton:disabled {
+  border-color: #788D9C;
 }
 
 /* Ровная строка полоски: базовые правила дают разнобой высот

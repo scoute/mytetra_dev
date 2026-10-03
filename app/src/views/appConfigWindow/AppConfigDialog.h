@@ -27,6 +27,7 @@ private:
     QListWidgetItem *pageAppearance;
     QListWidgetItem *pageCrypt;
     QListWidgetItem *pageSynchro;
+    QListWidgetItem *pageTeam;
     QListWidgetItem *pageRecordTable;
     QListWidgetItem *pageAttach;
     QListWidgetItem *pageKeyboard;

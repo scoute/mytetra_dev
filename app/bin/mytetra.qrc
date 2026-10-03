@@ -69,6 +69,7 @@
         <file>resource/pic/triangl_up.svg</file>
         <file>resource/pic/branch_opened.svg</file>
         <file>resource/pic/branch_closed.svg</file>
+        <file>resource/pic/branch_published.svg</file>
         <file>resource/pic/synchronization.svg</file>
         <file>resource/pic/waitclock_00.svg</file>
         <file>resource/pic/waitclock_01.svg</file>

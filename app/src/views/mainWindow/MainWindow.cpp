@@ -1589,6 +1589,13 @@ void MainWindow::saveTextarea(void)
 
     editorScreen->saveTextarea();
 
+    // Текст записей сохраняется без пересохранения дерева, поэтому
+    // публикации по нему обновляются отложенно (debounce): если владелец
+    // правил опубликованную ветку — shared актуализируется автоматически
+    TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+    if(treeScreen)
+        treeScreen->schedulePublicationsAutoUpdate();
+
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),
                     editorScreen->getScrollBarPosition());

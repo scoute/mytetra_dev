@@ -10,6 +10,7 @@
 #include "AppConfigPage_Crypt.h"
 #include "AppConfigPage_Misc.h"
 #include "AppConfigPage_Synchro.h"
+#include "AppConfigPage_Team.h"
 #include "AppConfigPage_RecordTable.h"
 #include "AppConfigPage_Attach.h"
 #include "AppConfigPage_Keyboard.h"
@@ -47,6 +48,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Crypt"));
     pageSynchro    =configDialog->addWidget(new AppConfigPage_Synchro( parent ),
                                             QObject::tr("Synchro"));
+    pageTeam       =configDialog->addWidget(new AppConfigPage_Team( parent ),
+                                            QObject::tr("Team"));
     pageRecordTable=configDialog->addWidget(new AppConfigPage_RecordTable( parent ),
                                             QObject::tr("Notes area"));
     pageAttach     =configDialog->addWidget(new AppConfigPage_Attach( parent ),
@@ -92,6 +95,7 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageAppearance") item=pageAppearance;
     if(name=="pageCrypt") item=pageCrypt;
     if(name=="pageSynchro") item=pageSynchro;
+    if(name=="pageTeam") item=pageTeam;
     if(name=="pageRecordTable") item=pageRecordTable;
     if(name=="pageAttach") item=pageAttach;
     if(name=="pageKeyboard") item=pageKeyboard;

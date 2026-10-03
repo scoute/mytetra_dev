@@ -187,6 +187,10 @@ HEADERS = src/main.h \
     src/views/databasesManagement/DatabasesManagementPathDelegate.h \
     src/views/databasesManagement/DatabasesManagementScreen.h \
     src/views/databasesManagement/DatabasesManagementTable.h \
+    src/views/subscriptions/BranchSliceDialog.h \
+    src/views/subscriptions/ChangeViewDialog.h \
+    src/views/subscriptions/SubscriptionPanel.h \
+    src/views/subscriptions/TextDiffDialog.h \
     src/views/installDialog/InstallDialog.h \
     src/views/recordTable/RecordTableScreen.h \
     src/views/recordTable/RecordTableView.h \
@@ -223,6 +227,7 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Misc.h \
     src/views/appConfigWindow/AppConfigPage_Crypt.h \
     src/views/appConfigWindow/AppConfigPage_Synchro.h \
+    src/views/appConfigWindow/AppConfigPage_Team.h \
     src/views/appConfigWindow/AppConfigPage_RecordTable.h \
     src/models/appConfig/AppConfigUpdater.h \
     src/libraries/TrashMonitoring.h \
@@ -319,6 +324,11 @@ HEADERS+=\
     src/libraries/MtTableWidget.h \
     src/views/tree/KnowTreeView.h \
     src/views/tree/KnowTreeDelegate.h \
+    src/views/tree/PublishedBadgeDelegate.h \
+    src/views/subscriptions/BranchSliceDialog.h \
+    src/views/subscriptions/ChangeViewDialog.h \
+    src/views/subscriptions/SubscriptionPanel.h \
+    src/views/subscriptions/TextDiffDialog.h \
     src/libraries/MtStyledItemDelegate.h
 
 SOURCES = src/main.cpp \
@@ -406,6 +416,7 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Misc.cpp \
     src/views/appConfigWindow/AppConfigPage_Crypt.cpp \
     src/views/appConfigWindow/AppConfigPage_Synchro.cpp \
+    src/views/appConfigWindow/AppConfigPage_Team.cpp \
     src/views/appConfigWindow/AppConfigPage_RecordTable.cpp \
     src/models/appConfig/AppConfigUpdater.cpp \
     src/libraries/TrashMonitoring.cpp \
@@ -506,6 +517,11 @@ SOURCES+=\
     src/libraries/MtTableWidget.cpp \
     src/views/tree/KnowTreeView.cpp \
     src/views/tree/KnowTreeDelegate.cpp \
+    src/views/tree/PublishedBadgeDelegate.cpp \
+    src/views/subscriptions/BranchSliceDialog.cpp \
+    src/views/subscriptions/ChangeViewDialog.cpp \
+    src/views/subscriptions/SubscriptionPanel.cpp \
+    src/views/subscriptions/TextDiffDialog.cpp \
     src/libraries/MtStyledItemDelegate.cpp
 
 wince* {

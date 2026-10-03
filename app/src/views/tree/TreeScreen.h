@@ -5,16 +5,20 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMap>
+#include <QSet>
 #include <QModelIndex>
 
 
 class QItemSelectionModel;
 class QVBoxLayout;
 class QToolBar;
+class QTimer;
 
 class KnowTreeModel;
 class KnowTreeView;
 class ClipboardBranch;
+class SubscriptionPanel;
+class PublishedBadgeDelegate;
 
 class TreeScreen : public QWidget
 {
@@ -43,11 +47,22 @@ public:
  void setCursorToIndex(QModelIndex index);
  void setCursorToId(QString nodeId);
  
- void updateBranchOnScreen(const QModelIndex &index);
+  void updateBranchOnScreen(const QModelIndex &index);
 
- void setFocusToBaseWidget(void);
+  void setFocusToBaseWidget(void);
 
-signals:
+  // Обновление состояния панели подписок и бейджей публикаций
+  void refreshPublicationState(void);
+
+  // Автоматическое обновление опубликованных веток в shared после сохранения
+  void autoUpdatePublishedBranches(void);
+
+  // Отложенное автообновление публикаций (debounce): правки текста записей
+  // сохраняются без пересохранения дерева, поэтому обновление публикаций
+  // по ним планируется таймером, а не выполняется немедленно
+  void schedulePublicationsAutoUpdate(void);
+
+ signals:
 
     void treeScreenFindInBaseClicked();
 
@@ -86,10 +101,25 @@ private slots:
  void onKnowtreeClicked(const QModelIndex &index);
  // void checkIfOneRootCryptItem(const QModelIndex &index);
 
- // Открытие контекстного меню
- void onCustomContextMenuRequested(const QPoint &pos);
+  // Открытие контекстного меню
+  void onCustomContextMenuRequested(const QPoint &pos);
 
-private:
+  // Изменение общего каталога (появились/исчезли публикации)
+  void onSharedDirChanged(void);
+
+  // Открытие среза публикации (только чтение)
+  void openSubscriptionSlice(const QString &branchId, const QString &publicationDir);
+
+  // Просмотр изменений публикации и выборочный импорт
+  void showSubscriptionChanges(const QString &branchId, const QString &publicationDir);
+
+  // Переход к исходной ветке в базе по собственной публикации
+  void focusLocalBranchInTree(const QString &branchId);
+
+  // Принудительное обновление собственной публикации из панели
+  void forceUpdateOwnPublication(const QString &branchId);
+
+ private:
 
  void setupUI(void);
  void setupModels(void);
@@ -113,8 +143,29 @@ private:
  void treeEmptyControl(void);
  void treeCryptControl(void);
 
- void encryptBranchItem(void);
- void decryptBranchItem(void);
+  void encryptBranchItem(void);
+  void decryptBranchItem(void);
+
+  // Публикация/обновление/отзыв публикации текущей ветки
+  void publishBranch(void);
+  void updatePublication(void);
+  void revokePublication(void);
+  void publishCurrentBranch(bool isUpdate);
+  void updatePublicationActionsState(void);
+
+  // Обновление набора ключей опубликованных веток и перерисовка бейджей
+  void updatePublishedBadges(void);
+
+  // Проверка доступности восстановления sync/ из журнала и предложение
+  // пользователю (один раз за сессию). Вызывается при обновлении состояния
+  void checkJournalRecovery(void);
+
+  // Предупреждение о разросшемся журнале обмена (один раз за сессию):
+  // порог снимков превышен — предложить архивирование истории
+  void checkJournalSize(void);
+
+  // Срабатывание отложенного автообновления публикаций
+  void onPublicationAutoUpdateTimeout(void);
 
  void updateLastKnowTreeData(QFileInfo fileInfo, bool isFileInfoReal);
 
@@ -125,9 +176,24 @@ private:
 
  QToolBar *toolsLine;
 
- KnowTreeView  *knowTreeView;
+  KnowTreeView  *knowTreeView;
 
- QVBoxLayout *treeScreenLayout;
+  SubscriptionPanel *subscriptionPanel=nullptr;
+  PublishedBadgeDelegate *publishedBadgeDelegate=nullptr;
+
+  // Ключи веток, опубликованных в общий каталог (для бейджей)
+  QSet<QString> publishedBranchKeys;
+
+  // Предложение восстановления sync/ из журнала уже показывалось
+  bool recoveryPromptShown=false;
+
+  // Предупреждение о размере журнала уже показывалось
+  bool journalSizePromptShown=false;
+
+  // Debounce отложенного автообновления публикаций после правок текста
+  QTimer *publicationAutoUpdateTimer=nullptr;
+
+  QVBoxLayout *treeScreenLayout;
 
  QDateTime lastKnowTreeModifyDateTime;
  qint64    lastKnowTreeSize;

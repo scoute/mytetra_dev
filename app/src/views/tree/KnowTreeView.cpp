@@ -15,7 +15,7 @@
 #include <QFontMetrics>
 
 #include "KnowTreeView.h"
-#include "KnowTreeDelegate.h"
+#include "PublishedBadgeDelegate.h"
 #include "TreeScreen.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/ClipboardRecords.h"
@@ -41,9 +41,10 @@ KnowTreeView::KnowTreeView(QWidget *parent) : QTreeView(parent)
     setAcceptDrops(true);
     setDropIndicatorShown(true);
 
-    // Делегат подсвечивает вырезанную ветку желтой подложкой.
-    // Видом владеет, удалится автоматически
-    setItemDelegate(new KnowTreeDelegate(this));
+    // Делегат подсвечивает вырезанную ветку желтой подложкой
+    // и рисует бейдж опубликованных веток. Видом владеет,
+    // удалится автоматически
+    setItemDelegate(new PublishedBadgeDelegate(this));
 
     // Разрешение принимать жест QTapAndHoldGesture
     grabGesture(Qt::TapAndHoldGesture);

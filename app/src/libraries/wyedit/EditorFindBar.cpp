@@ -29,8 +29,13 @@ void EditorFindBar::setup_ui(void)
   lineEdit->setClearButtonEnabled(true);
   lineEdit->setPlaceholderText(tr("Find in note"));
 
-  mathCase=new QCheckBox(tr("&Case sensitive"));
-  wholeWords=new QCheckBox(tr("&Whole words"));
+  // Опции компактными значками вместо длинных подписей: полоска
+  // не должна расталкивать соседние окна на маленьких ноутбуках.
+  // Полный текст живёт в подсказках. Мнемоник Alt+C/Alt+W больше нет
+  mathCase=new QCheckBox(tr("Aa"));
+  mathCase->setToolTip(tr("Match case"));
+  wholeWords=new QCheckBox(tr("\"ab\""));
+  wholeWords->setToolTip(tr("Whole words only"));
 
   // Поле замены живет в той же строке полоски: отдельное окно не нужно.
   // Пустое поле означает удаление совпадения
@@ -143,9 +148,13 @@ void EditorFindBar::assembly(void)
 {
   // Все в один ряд: полоска живет между списком заметок и их содержимым
   // и не должна отъедать вертикальное место. Поля ввода с растяжением
-  // забирают все свободное место, кнопки остаются компактными
+  // забирают все свободное место, кнопки остаются компактными.
+  // Промежутки между виджетами убраны полностью: пустое место между
+  // стрелками, счетчиком и галочками на узких экранах ни к чему,
+  // у кнопок и полей свои внутренние отступы
   QHBoxLayout *centralLayout=new QHBoxLayout();
   centralLayout->setContentsMargins(2, 0, 2, 0);
+  centralLayout->setSpacing(0);
   centralLayout->addWidget(lineEdit, 1);
   centralLayout->addWidget(findButton);
   centralLayout->addWidget(prevButton);

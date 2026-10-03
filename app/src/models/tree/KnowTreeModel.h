@@ -65,6 +65,11 @@ public:
     //! Возвращает false если ветка не найдена или цель внутри источника
     bool moveBranch(const QString &sourceId, const QString &targetId, bool asChild);
 
+    //! Перемещение ветки к новому родителю (смена родителя поддерева).
+    //! Ветка встает в конец детей нового родителя. Уже на месте считается
+    //! успехом без действий. Тонкая обертка над moveBranch.
+    bool moveBranchToParent(TreeItem *item, TreeItem *newParent);
+
 
     //! Получение индекса подчиненного элемента с указанным номером
     QModelIndex indexChildren(const QModelIndex &parent, int n) const;

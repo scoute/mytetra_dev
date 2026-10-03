@@ -289,6 +289,16 @@ public:
     QString get_shareddir(void);
     void set_shareddir(QString path);
 
+    // Веб-клиппер: включение, глобальный хоткей, запомненная ветка
+    bool get_clipperenable(void);
+    void set_clipperenable(bool flag);
+
+    QString get_clipperhotkey(void);
+    void set_clipperhotkey(QString sequence);
+
+    QString get_clipperbranchid(void);
+    void set_clipperbranchid(QString id);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);
@@ -365,6 +375,7 @@ private:
     QStringList get_parameter_table_43(bool withEndSignature=true);
     QStringList get_parameter_table_44(bool withEndSignature=true);
     QStringList get_parameter_table_45(bool withEndSignature=true);
+    QStringList get_parameter_table_46(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

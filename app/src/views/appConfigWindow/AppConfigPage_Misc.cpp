@@ -1,8 +1,10 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFormLayout>
 #include <QLabel>
 #include <QSpinBox>
+#include <QKeySequenceEdit>
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QPushButton>
@@ -11,6 +13,8 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/mainWindow/MainWindow.h"
 
 
 extern AppConfig mytetraConfig;
@@ -71,6 +75,24 @@ void AppConfigPage_Misc::setupUi(void)
   clipperMaxImageSizeMb->setValue(mytetraConfig.get_clipperMaxImageSizeMb());
   clipperMaxImageSizeMb->setSuffix(tr(" MB"));
 
+  // Веб-клиппер: вставка из буфера обмена в unsorted_notes по глобальному хоткею.
+  // Сам хоткей работает только под X11; кнопка проверки — везде
+  clipperEnable=new QCheckBox(this);
+  clipperEnable->setText(tr("Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11 only)"));
+  clipperEnable->setChecked(mytetraConfig.get_clipperenable());
+
+  clipperHotkeyEdit=new QKeySequenceEdit(this);
+  clipperHotkeyEdit->setToolTip(tr("Global hotkey, for example Ctrl+Alt+V. Latin keys only."));
+  clipperHotkeyEdit->setKeySequence(QKeySequence(mytetraConfig.get_clipperhotkey()));
+
+  clipperStatusLabel=new QLabel(this);
+  clipperStatusLabel->setWordWrap(true);
+
+  clipperTestButton=new QPushButton(this);
+  clipperTestButton->setText(tr("Clip now"));
+  clipperTestButton->setToolTip(tr("Paste clipboard to unsorted_notes right now (works everywhere, no hotkey needed)"));
+  clipperTestButton->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -81,6 +103,7 @@ void AppConfigPage_Misc::setupUi(void)
 void AppConfigPage_Misc::setupSignals(void)
 {
   connect(editMyTetraConfigFile, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedEditMyTetraConfigFile);
+  connect(clipperTestButton, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedClipperTest);
 }
 
 
@@ -96,27 +119,24 @@ void AppConfigPage_Misc::assembly(void)
   dangerBox->setLayout(dangerLayout);
 
 
-  // Группировщик лимитов клиппера
+  // Группировщик клиппера: включение, хоткей, статус, проверка,
+  // лимиты картинок
   QGroupBox *clipperBox=new QGroupBox(this);
-  clipperBox->setTitle(tr("Clipper"));
+  clipperBox->setTitle(tr("Web Clipper"));
 
   QLabel *clipperMaxImagesLabel=new QLabel(tr("Maximum images per note:"), this);
   QLabel *clipperMaxImageSizeLabel=new QLabel(tr("Maximum size of one image:"), this);
 
-  QHBoxLayout *clipperImagesLayout=new QHBoxLayout;
-  clipperImagesLayout->addWidget(clipperMaxImagesLabel);
-  clipperImagesLayout->addWidget(clipperMaxImages);
-  clipperImagesLayout->addStretch();
-
-  QHBoxLayout *clipperSizeLayout=new QHBoxLayout;
-  clipperSizeLayout->addWidget(clipperMaxImageSizeLabel);
-  clipperSizeLayout->addWidget(clipperMaxImageSizeMb);
-  clipperSizeLayout->addStretch();
-
-  QVBoxLayout *clipperLayout=new QVBoxLayout;
-  clipperLayout->addLayout(clipperImagesLayout);
-  clipperLayout->addLayout(clipperSizeLayout);
+  QFormLayout *clipperLayout=new QFormLayout;
+  clipperLayout->addRow(clipperEnable);
+  clipperLayout->addRow(tr("Hotkey:"), clipperHotkeyEdit);
+  clipperLayout->addRow(tr("Status:"), clipperStatusLabel);
+  clipperLayout->addRow(tr(""), clipperTestButton);
+  clipperLayout->addRow(clipperMaxImagesLabel, clipperMaxImages);
+  clipperLayout->addRow(clipperMaxImageSizeLabel, clipperMaxImageSizeMb);
   clipperBox->setLayout(clipperLayout);
+
+  updateClipperStatus();
 
 
   // Собирается основной слой
@@ -140,6 +160,29 @@ void AppConfigPage_Misc::onClickedEditMyTetraConfigFile(void)
   mytetraConfig.sync();
 
   ConfigEditorHelper::editConfigFile( globalParameters.getWorkDirectory()+"/conf.ini", 0.8 );
+}
+
+
+void AppConfigPage_Misc::updateClipperStatus(void)
+{
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+  if(mainWindow && mainWindow->getClipper())
+    clipperStatusLabel->setText(mainWindow->getClipper()->backendStatus());
+  else
+    clipperStatusLabel->setText(tr("Clipper status is unavailable."));
+}
+
+
+void AppConfigPage_Misc::onClickedClipperTest(void)
+{
+  // Применяем текущие значения полей, чтобы проверка шла по ним
+  applyChanges();
+
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+  if(mainWindow)
+    mainWindow->runClipperNow();
+
+  updateClipperStatus();
 }
 
 
@@ -177,6 +220,14 @@ int AppConfigPage_Misc::applyChanges(void)
 
   if(mytetraConfig.get_clipperMaxImageSizeMb()!=clipperMaxImageSizeMb->value())
     mytetraConfig.set_clipperMaxImageSizeMb(clipperMaxImageSizeMb->value());
+
+  // Веб-клиппер: включение и комбинация хоткея (перехват обновится
+  // при закрытии настроек через Clipper::rereadSettings)
+  if(mytetraConfig.get_clipperenable()!=clipperEnable->isChecked())
+    mytetraConfig.set_clipperenable(clipperEnable->isChecked());
+
+  if(mytetraConfig.get_clipperhotkey()!=clipperHotkeyEdit->keySequence().toString())
+    mytetraConfig.set_clipperhotkey(clipperHotkeyEdit->keySequence().toString());
 
   return result;
 }

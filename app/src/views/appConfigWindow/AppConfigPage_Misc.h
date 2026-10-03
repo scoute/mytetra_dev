@@ -9,6 +9,8 @@ class QGroupBox;
 class QPushButton;
 class QSpinBox;
 class QLabel;
+class QKeySequenceEdit;
+class MainWindow;
 
 class AppConfigPage_Misc : public ConfigPage
 {
@@ -20,8 +22,12 @@ public:
 
   int applyChanges(void);
 
-private slots:
-  void onClickedEditMyTetraConfigFile(void);
+ private slots:
+   void onClickedEditMyTetraConfigFile(void);
+   void onClickedClipperTest(void);
+
+ private:
+   void updateClipperStatus(void);
 
 protected:
 
@@ -38,6 +44,12 @@ protected:
    // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
    QSpinBox *clipperMaxImages;
    QSpinBox *clipperMaxImageSizeMb;
+
+   // Веб-клиппер: вставка из буфера в unsorted_notes по глобальному хоткею
+   QCheckBox *clipperEnable;
+   QKeySequenceEdit *clipperHotkeyEdit;
+   QLabel *clipperStatusLabel;
+   QPushButton *clipperTestButton;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

@@ -10,6 +10,8 @@
 #include <QFileInfo>
 #include <QSystemTrayIcon>
 
+#include "libraries/Clipper.h"
+
 
 class QAction;
 class QWidget;
@@ -95,6 +97,12 @@ public slots:
     // Запрос сразу выполняется через FindScreen::setFindText
     void toolsFindInBaseWithText(const QString &text);
 
+    // Веб-клиппер: вставка из буфера в unsorted_notes сейчас
+    void runClipperNow(void);
+
+    // Доступ к клипперу для настроек (статус хоткея)
+    Clipper *getClipper(void);
+
     void setupShortcuts(void);
 
 private slots:
@@ -114,9 +122,6 @@ private slots:
 
     void toolsPreferences(void);
     void onActionLogClicked(void);
-
-    // Клиппер: создание заметки из буфера обмена в ветке Clipboard
-    void onClipFromClipboard(void);
 
     // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
     void onThemeMenuTriggered(QAction *action);
@@ -215,6 +220,9 @@ private:
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;
+
+    // Веб-клиппер (глобальный хоткей -> unsorted_notes)
+    Clipper clipper;
 
     QSplitter *vSplitter;
     QSplitter *hSplitter;

@@ -81,6 +81,9 @@ MainWindow::MainWindow() : QMainWindow()
     trashMonitoring.init(mytetraConfig.get_trashdir());
     trashMonitoring.update();
 
+    // Старт веб-клиппера (перехват глобального хоткея по настройкам)
+    clipper.start();
+
     // Закрывать ли по-настоящему окно при обнаружении сигнала closeEvent
     enableRealClose=false;
 
@@ -189,7 +192,7 @@ void MainWindow::setupSignals(void)
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
     // Клиппер: заметка из буфера обмена в ветку Clipboard
-    connect(actionToolsMenuClipFromClipboard, &QAction::triggered, this, &MainWindow::onClipFromClipboard);
+    connect(actionToolsMenuClipFromClipboard, &QAction::triggered, this, &MainWindow::runClipperNow);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -403,9 +406,9 @@ void MainWindow::messageHandler(QString message)
 
     else if(command=="clipboard")
     {
-        // Клиппер: заметка из буфера обмена в ветку Clipboard.
+        // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
         // Аргумент команды это ссылка на источник, может отсутствовать
-        Clipper::clipFromClipboard(commandArgument);
+        clipper.clipNowWithUrl(commandArgument);
     }
 }
 
@@ -1042,6 +1045,9 @@ void MainWindow::toolsPreferences(void)
 {
     AppConfigDialog dialog("", this); // this нужен чтобы пробрасывать иконку приложения
     dialog.exec();
+
+    // Настройки могли поменять хоткей клиппера — перечитать
+    clipper.rereadSettings();
 }
 
 
@@ -1067,11 +1073,17 @@ void MainWindow::showTrayMessage(const QString &title, const QString &text)
 }
 
 
-// Клиппер из меню Tools: заметка из буфера обмена в ветку Clipboard.
+// Клиппер из меню Tools: вставка из буфера в unsorted_notes сейчас.
 // Ссылка на источник ищется в самом тексте буфера
-void MainWindow::onClipFromClipboard(void)
+void MainWindow::runClipperNow(void)
 {
-    Clipper::clipFromClipboard();
+    clipper.clipNow();
+}
+
+
+Clipper *MainWindow::getClipper(void)
+{
+    return &clipper;
 }
 
 

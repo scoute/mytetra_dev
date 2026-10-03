@@ -83,6 +83,10 @@ private:
     // Строка фильтра и таблица тег-количество
     QLineEdit *filterEdit;
     QTableWidget *tagsTable;
+
+    // Подписка на сохранение метаданных дерева делается один раз
+    // и лениво: в конструкторе treeScreen может еще не существовать
+    bool treeMetadataConnected;
 };
 
 #endif /* _TAGSPANEL_H_ */

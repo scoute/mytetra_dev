@@ -1,5 +1,6 @@
 #include <QLineEdit>
 #include <QTableWidget>
+#include <QAbstractScrollArea>
 #include <QHeaderView>
 #include <QVBoxLayout>
 #include <QShowEvent>
@@ -24,7 +25,8 @@
 extern GlobalParameters globalParameters;
 
 
-TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent)
+TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
+    treeMetadataConnected(false)
 {
     setupUi();
     assembly();
@@ -55,6 +57,10 @@ void TagsPanel::setupUi(void)
     tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tagsTable->verticalHeader()->setVisible(false);
+
+    // Таблица подстраивает свой размер под содержимое: док справа
+    // обнимает колонки и не занимает лишнюю ширину
+    tagsTable->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     int rowHeight=tagsTable->fontMetrics().height()+2;
     tagsTable->verticalHeader()->setMinimumSectionSize(rowHeight);
@@ -103,6 +109,23 @@ void TagsPanel::showEvent(QShowEvent *event)
 // Пересборка таблицы по всему дереву
 void TagsPanel::refreshTags(void)
 {
+    // Живое обновление: метаданные дерева сохраняются при любом
+    // изменении тегов записи, панель пересобирается следом.
+    // Подписка ленивая и однократная: в конструкторе treeScreen
+    // может еще не существовать, а showEvent уже поздно не бывает
+    if(!treeMetadataConnected)
+    {
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        if(treeScreen!=nullptr)
+        {
+            treeMetadataConnected=true;
+
+            connect(treeScreen, &TreeScreen::treeMetadataSaved,
+                    this,        &TagsPanel::refreshTags);
+        }
+    }
+
     QMap<QString, int> counts;
     QMap<QString, QString> display;
 

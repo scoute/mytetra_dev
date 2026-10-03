@@ -122,6 +122,17 @@ void AppConfig::sync(void)
 }
 
 
+// Синхронизация конфига с запретом записи при выходе из программы.
+// Нужно режиму --mcp: процесс правит только базу знаний, а конфиг
+// (включая временное переопределение tetradir) трогать не должен
+void AppConfig::syncAndDisableExitSync(void)
+{
+    if(m_isInit && m_conf)
+        m_conf->sync();
+    m_isInit=false;
+}
+
+
 // Получение имени файла конфига, с которым происходит работа
 QString AppConfig::getConfigFileName()
 {

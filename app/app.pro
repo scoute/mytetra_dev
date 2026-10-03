@@ -150,7 +150,9 @@ HEADERS = src/main.h \
     src/libraries/BranchPublisher.h \
     src/libraries/SharedDirWatcher.h \
     src/libraries/SubscriptionImportEngine.h \
+    src/libraries/TagSuggester.h \
     src/libraries/TextDiff.h \
+    src/mcp/McpServer.h \
     src/libraries/OrderedMap.h \
     src/libraries/RandomInitter.h \
     src/libraries/helpers/ActionHelper.h \
@@ -343,7 +345,9 @@ SOURCES = src/main.cpp \
     src/libraries/BranchPublisher.cpp \
     src/libraries/SharedDirWatcher.cpp \
     src/libraries/SubscriptionImportEngine.cpp \
+    src/libraries/TagSuggester.cpp \
     src/libraries/TextDiff.cpp \
+    src/mcp/McpServer.cpp \
     src/libraries/OrderedMap.cpp \
     src/libraries/RandomInitter.cpp \
     src/libraries/helpers/ActionHelper.cpp \

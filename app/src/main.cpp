@@ -41,6 +41,7 @@
 #include "models/teamProfile/TeamProfile.h"
 #include "models/subscription/SubscriptionRegistry.h"
 #include "libraries/SharedDirWatcher.h"
+#include "mcp/McpServer.h"
 #include "sync/SyncServer.h"
 
 
@@ -112,6 +113,10 @@ void printHelp()
     printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
     printf("./mytetra --control --clipboard [--url <url>] - Create note in Clipboard branch from clipboard content\n");
+    printf("For use MCP mode (Model Context Protocol over stdio for AI agents):\n");
+    printf("./mytetra --mcp-rw [--db-path <dir>] - Run as MCP server (JSON-RPC on stdin/stdout), read-write.\n");
+    printf("./mytetra --mcp-ro [--db-path <dir>] - Same, but read-only: search and reading only.\n");
+    printf("  Bare --mcp is an alias of --mcp-ro (safe default: a bad agent cannot damage the DB).\n");
     printf("\n");
 }
 
@@ -252,7 +257,22 @@ void parseConsoleOption(QtSingleApplication &app)
 
 int main(int argc, char ** argv)
 {
-    printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
+    // Режим MCP определяется до любого вывода: stdout в нём — только протокол.
+    // Безопасный дефолт: голый --mcp и --mcp-ro — read-only, запись только
+    // с явным --mcp-rw (плохой агент не испортит БД случайно)
+    bool mcpMode=false;
+    for(int i=1; i<argc; ++i)
+    {
+        const QString arg=QString::fromLocal8Bit(argv[i]);
+        if(arg=="--mcp" || arg=="--mcp-ro" || arg=="--mcp-rw")
+        {
+            mcpMode=true;
+            break;
+        }
+    }
+
+    if(!mcpMode)
+        printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
 
     // Разрешение масштабирования в высоком DPI, вызывается перед подгрузкой ресурсов с графикой
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -268,6 +288,22 @@ int main(int argc, char ** argv)
     // а кодек еще не установлен
     QString mainProgramFile=QString::fromLocal8Bit( argv[0] ); // Данные запоминаются в сыром виде и никак не интерпретируются до использования
     globalParameters.setMainProgramFile(mainProgramFile);
+
+    if(mcpMode)
+    {
+        // Без дисплея — offscreen до создания объекта приложения.
+        // Перехват отладочных сообщений НЕ ставится: вывод Qt по умолчанию
+        // идёт в stderr, stdout остаётся чистым протоколом
+        if(qEnvironmentVariableIsEmpty("DISPLAY")
+           && qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY")
+           && qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
+            qputenv("QT_QPA_PLATFORM", "offscreen");
+
+        // Создание объекта приложения
+        QtSingleApplication mcpApp(argc, argv);
+
+        return runMcpMode(mcpApp);
+    }
 
     // Перехват отладочных сообщений
     setDebugMessageHandler();

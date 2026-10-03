@@ -79,6 +79,14 @@ bool DataBaseConfig::is_init(void)
 }
 
 
+void DataBaseConfig::syncAndDisableExitSync(void)
+{
+ if(is_init_flag && conf)
+   conf->sync();
+ is_init_flag=false;
+}
+
+
 // Получение параметра по имени в виде строки с проверкой его существования
 QString DataBaseConfig::get_parameter(QString name)
 {

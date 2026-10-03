@@ -46,11 +46,14 @@ void TagsPanel::setupUi(void)
     filterEdit->setClearButtonEnabled(true);
 
     // Таблица тег и количество заметок с ним. Строки минимальные
-    // чтобы больше влезало
+    // чтобы больше влезало. Заголовок у колонки количества пустой:
+    // и так понятно что цифры это количество, зато экономия места.
+    // Обе колонки по содержимому, без растягивания на всю ширину
     tagsTable=new QTableWidget(this);
     tagsTable->setColumnCount(2);
-    tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << tr("Count"));
-    tagsTable->horizontalHeader()->setStretchLastSection(true);
+    tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << QString());
+    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tagsTable->verticalHeader()->setVisible(false);
 
     int rowHeight=tagsTable->fontMetrics().height()+2;
@@ -140,7 +143,7 @@ void TagsPanel::refreshTags(void)
         tagsTable->setItem(i, 1, countItem);
     }
 
-    tagsTable->resizeColumnToContents(0);
+    tagsTable->resizeColumnsToContents();
 
     onFilterChanged(filterEdit->text());
 }

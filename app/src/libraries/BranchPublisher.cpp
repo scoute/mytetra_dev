@@ -463,8 +463,22 @@ QList<PublicationMeta> BranchPublisher::listPublications(const QString &sharedDi
     // Область данных (новый макет)
     publications.append(BranchPublisher::listPublicationsInRoot(BranchPublisher::syncDir(sharedDir)));
 
-    // Устаревший макет (публикации прямо в shareddir)
-    publications.append(BranchPublisher::listPublicationsInRoot(sharedDir));
+    // Устаревший макет (публикации прямо в shareddir). Та же ветка могла
+    // остаться лежать в корне после перехода на новый макет: дубликаты
+    // по branchId отбрасываются, приоритет у версии из sync/
+    QSet<QString> seenBranchIds;
+    foreach(PublicationMeta meta, publications)
+        seenBranchIds.insert(meta.branchId);
+
+    QList<PublicationMeta> legacy=BranchPublisher::listPublicationsInRoot(sharedDir);
+    foreach(PublicationMeta meta, legacy)
+    {
+        if(seenBranchIds.contains(meta.branchId))
+            continue;
+
+        seenBranchIds.insert(meta.branchId);
+        publications.append(meta);
+    }
 
     return publications;
 }

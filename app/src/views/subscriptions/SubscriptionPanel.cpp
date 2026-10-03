@@ -299,6 +299,12 @@ void SubscriptionPanel::onCustomContextMenuRequested(const QPoint &pos)
             menu.addAction(tr("Force branch update / recovery..."), this,
                            [this, branchId]()
                            { emit forceUpdatePublicationRequested(branchId); });
+
+            // Отзыв собственной публикации (тот же поток, что пункт
+            // дерева Revoke publication: диалог, корзина, журнал, лог)
+            menu.addAction(tr("Revoke publication..."), this,
+                           [this, branchId]()
+                           { emit revokePublicationRequested(branchId); });
             menu.addSeparator();
 
             // Устаревшая подписка на собственный каталог: позволяем отписаться

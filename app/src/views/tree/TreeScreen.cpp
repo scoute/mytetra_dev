@@ -545,6 +545,10 @@ void TreeScreen::assembly(void)
  connect(subscriptionPanel, &SubscriptionPanel::forceUpdatePublicationRequested,
          this,              &TreeScreen::forceUpdateOwnPublication);
 
+ // Отзыв собственной публикации из панели «Мои публикации»
+ connect(subscriptionPanel, &SubscriptionPanel::revokePublicationRequested,
+         this,              &TreeScreen::revokeOwnPublication);
+
  treeScreenLayout->addWidget(mainSplitter,1);
 
  setLayout(treeScreenLayout);
@@ -2324,6 +2328,41 @@ void TreeScreen::forceUpdateOwnPublication(const QString &branchId)
   knowTreeView->scrollTo(index);
 
   publishCurrentBranch(true);
+}
+
+
+// Отзыв собственной публикации из панели «Мои публикации»:
+// позиционирование на исходную ветку + штатный revoke-поток
+// (диалог подтверждения, корзина, журнал, лог, обновление панели)
+void TreeScreen::revokeOwnPublication(const QString &branchId)
+{
+  if(branchId.isEmpty())
+    return;
+
+  TreeItem *targetItem=knowTreeModel->getItemById(branchId);
+  if(!targetItem)
+  {
+    QMessageBox::warning(this, tr("Revoke publication"),
+                         tr("Исходная ветка не найдена в базе."));
+    return;
+  }
+
+  const QModelIndex index=knowTreeModel->getIndexByItem(targetItem);
+
+  // Раскрываем всех предков, чтобы ветка стала видимой
+  QModelIndex parentIndex=index.parent();
+  while(parentIndex.isValid())
+  {
+    knowTreeView->expand(parentIndex);
+    parentIndex=parentIndex.parent();
+  }
+
+  knowTreeView->setCurrentIndex(index);
+  knowTreeView->selectionModel()->setCurrentIndex(
+      index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+  knowTreeView->scrollTo(index);
+
+  revokePublication();
 }
 
 

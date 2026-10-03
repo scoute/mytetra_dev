@@ -119,6 +119,10 @@ private slots:
   // Принудительное обновление собственной публикации из панели
   void forceUpdateOwnPublication(const QString &branchId);
 
+  // Отзыв собственной публикации из панели «Мои публикации»:
+  // позиционирование на исходную ветку + штатный revoke-поток
+  void revokeOwnPublication(const QString &branchId);
+
  private:
 
  void setupUI(void);

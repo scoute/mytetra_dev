@@ -1,5 +1,5 @@
-#ifndef SUBSCRIPTIONPANEL_H
-#define SUBSCRIPTIONPANEL_H
+#ifndef _SUBSCRIPTIONPANEL_H_
+#define _SUBSCRIPTIONPANEL_H_
 
 #include <QWidget>
 
@@ -60,6 +60,10 @@ signals:
     // «Мои публикации» (тот же поток, что пункт дерева Force branch update)
     void forceUpdatePublicationRequested(const QString &branchId);
 
+    // Отзыв собственной публикации из панели «Мои публикации»
+    // (тот же поток, что пункт дерева Revoke publication)
+    void revokePublicationRequested(const QString &branchId);
+
 private slots:
     void onCustomContextMenuRequested(const QPoint &pos);
     void onItemActivated(QTreeWidgetItem *item, int column);
@@ -90,4 +94,4 @@ private:
     QTreeWidget *subscriptionTree;
 };
 
-#endif // SUBSCRIPTIONPANEL_H
+#endif // _SUBSCRIPTIONPANEL_H_

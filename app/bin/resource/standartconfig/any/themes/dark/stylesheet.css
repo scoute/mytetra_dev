@@ -1217,6 +1217,16 @@ EditorFindBar QPushButton#findbarSquareButton {
   padding: 1px;
 }
 
+/* Виджеты полоски стоят вплотную друг к другу (spacing layout равен
+ * нулю), поэтому скругление углов запрещено: иначе в стыках видны
+ * темные уголки-щели, которых нет в светлой теме с прямоугольниками */
+EditorFindBar QPushButton,
+EditorFindBar QLineEdit,
+EditorFindBar QCheckBox,
+EditorFindBar QLabel {
+  border-radius: 0px;
+}
+
 /* Погашенная кнопка: обводка приглушена в цвет погашенного текста,
  * иначе яркая рамка спорит с серой подписью и кнопка выглядит
  * зажженной. Активная рамка остается в цвет текста (#DFE1E2) */

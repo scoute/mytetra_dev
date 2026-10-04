@@ -6,6 +6,7 @@
 class QWidget;
 class QGroupBox;
 class QCheckBox;
+class QToolButton;
 
 class AppConfigPage_History : public ConfigPage
 {
@@ -26,8 +27,16 @@ public:
     // Объединяющая рамка
     QGroupBox *historyBox;
 
+    // Знак вопроса у группы истории
+    QToolButton *historyHelpButton;
+
     QCheckBox *rememberAtHistoryNavigationCheckBox;
     QCheckBox *rememberAtOrdinarySelectionCheckBox;
+
+  private slots:
+
+    // Знак вопроса у группы истории: мгновенная подсказка
+    void onHistoryHelpButton(void);
 };
 
 #endif // APPCONFIGPAGE_HISTORY_H

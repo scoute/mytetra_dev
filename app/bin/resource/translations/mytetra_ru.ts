@@ -505,6 +505,18 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>History of visited notes</source>
         <translation>История просмотренных записей</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="45"/>
+        <source>What is the notes history</source>
+        <translation>Что за история записей</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="46"/>
+        <source>History of viewed notes: go back and forward with Ctrl+Alt+Left and Ctrl+Alt+Right.
+These options restore the text cursor position.</source>
+        <translation>История просмотренных записей: назад и вперед по Ctrl+Alt+Left и Ctrl+Alt+Right.
+Эти опции восстанавливают позицию курсора в тексте.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -803,6 +815,27 @@ MyTetra должна быть запущена.</translation>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="56"/>
         <source>Use &lt;b&gt;%a&lt;/b&gt; macro for get database directory path</source>
         <translation>Используйте макрос &lt;b&gt;%a&lt;/b&gt; для получения имени директории с данными</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="33"/>
+        <source>Shell command, %a is the database path</source>
+        <translation>Shell-команда, %a это путь к базе</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="39"/>
+        <source>How synchronization works</source>
+        <translation>Как работает синхронизация</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
+        <source>Shell command that syncs the database directory.
+%a expands to the database path.
+Example: rsync -a %a user@host:mytetra-backup/
+Runs at startup, on exit or periodically, see checkboxes below.</source>
+        <translation>Shell-команда синхронизации каталога базы.
+%a подставляет путь к базе.
+Пример: rsync -a %a user@host:mytetra-backup/
+Запускается при старте, выходе или периодически, см. галки ниже.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="61"/>

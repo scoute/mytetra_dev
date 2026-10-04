@@ -7,6 +7,9 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QSpinBox>
+#include <QToolButton>
+#include <QCommonStyle>
+#include <QWhatsThis>
 
 #include "AppConfigPage_Synchro.h"
 #include "models/appConfig/AppConfig.h"
@@ -35,6 +38,14 @@ void AppConfigPage_Synchro::setupUi(void)
     synchroCommand=new QLineEdit(this);
     synchroCommand->setText(mytetraConfig.get_synchrocommand());
     synchroCommand->setCursorPosition(0);
+    synchroCommand->setToolTip(tr("Shell command, %a is the database path"));
+
+    // Знак вопроса у команды синхронизации
+    commandHelpButton=new QToolButton(this);
+    QCommonStyle styleHelp;
+    commandHelpButton->setIcon(styleHelp.standardIcon(QStyle::SP_MessageBoxQuestion));
+    commandHelpButton->setToolTip(tr("How synchronization works"));
+    commandHelpButton->setWhatsThis(tr("Shell command that syncs the database directory.\n%a expands to the database path.\nExample: rsync -a %a user@host:mytetra-backup/\nRuns at startup, on exit or periodically, see checkboxes below."));
 
     synchroOnStartup=new QCheckBox(this);
     synchroOnStartup->setText(tr("Synchronize at MyTetra startup"));
@@ -132,7 +143,13 @@ void AppConfigPage_Synchro::assembly(void)
 {
     centralLayout=new QVBoxLayout();
 
-    centralLayout->addWidget( commandText );
+    // Знак вопроса рядом с названием команды
+    QHBoxLayout *commandTitleLayout=new QHBoxLayout();
+    commandTitleLayout->addWidget( commandText );
+    commandTitleLayout->addWidget( commandHelpButton );
+    commandTitleLayout->addStretch();
+
+    centralLayout->addLayout( commandTitleLayout );
     centralLayout->addWidget( synchroCommand );
     centralLayout->addWidget( commandAboutText );
     centralLayout->addWidget( synchroOnBox );
@@ -148,6 +165,17 @@ void AppConfigPage_Synchro::setupSignals(void)
 {
     connect( enablePeriodicCheckBase, &QCheckBox::toggled, this, &AppConfigPage_Synchro::onEnablePeriodicCheckBase);
     connect( synchroOnPeriodic,       &QCheckBox::toggled, this, &AppConfigPage_Synchro::onEnablePeriodicSyncro);
+    connect( commandHelpButton, &QToolButton::clicked, this, &AppConfigPage_Synchro::onCommandHelpButton);
+}
+
+
+// Клик по знаку вопроса мгновенно показывает подсказку
+// под кнопкой: ждать секунду наведения не нужно
+void AppConfigPage_Synchro::onCommandHelpButton(void)
+{
+  QPoint showPoint=commandHelpButton->mapToGlobal(QPoint(0, commandHelpButton->height()));
+
+  QWhatsThis::showText(showPoint, commandHelpButton->whatsThis(), commandHelpButton);
 }
 
 

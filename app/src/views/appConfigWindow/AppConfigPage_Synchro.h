@@ -11,6 +11,7 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QLabel;
 class QSpinBox;
+class QToolButton;
 
 class AppConfigPage_Synchro : public ConfigPage
 {
@@ -26,6 +27,9 @@ private slots:
   void onEnablePeriodicCheckBase(bool);
   void onEnablePeriodicSyncro(bool);
 
+  // Знак вопроса у команды синхронизации: мгновенная подсказка
+  void onCommandHelpButton(void);
+
 protected:
 
   void setupUi(void);
@@ -37,6 +41,9 @@ protected:
   QLineEdit   *synchroCommand;
   QLabel      *commandText;
   QLabel      *commandAboutText;
+
+  // Знак вопроса у команды синхронизации
+  QToolButton *commandHelpButton;
 
   QCheckBox   *synchroOnStartup;
   QCheckBox   *synchroOnExit;

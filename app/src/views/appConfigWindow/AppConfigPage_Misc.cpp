@@ -114,9 +114,10 @@ void AppConfigPage_Misc::assembly(void)
   dangerBox->setLayout(dangerLayout);
 
 
-  // Группировщик лимитов клиппера
+  // Группировщик лимитов клиппера. Штатный заголовок пустой:
+  // название рисуется своей строкой чтобы рядом встал знак вопроса
   clipperBox=new QGroupBox(this);
-  clipperBox->setTitle(tr("Clipper"));
+  clipperBox->setTitle(QString());
   clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into a Clipboard branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
   clipperBox->setToolTip(tr("Saves the OS clipboard into a note: mytetra --control --clipboard [--url]"));
 
@@ -134,15 +135,21 @@ void AppConfigPage_Misc::assembly(void)
   clipperSizeLayout->addStretch();
 
   QVBoxLayout *clipperLayout=new QVBoxLayout;
+
+  // Строка заголовка группы: название и знак вопроса рядом с ним
+  QLabel *clipperTitleLabel=new QLabel(tr("Clipper"), this);
+  QFont clipperTitleFont=clipperTitleLabel->font();
+  clipperTitleFont.setBold(true);
+  clipperTitleLabel->setFont(clipperTitleFont);
+
+  QHBoxLayout *clipperTitleLayout=new QHBoxLayout;
+  clipperTitleLayout->addWidget(clipperTitleLabel);
+  clipperTitleLayout->addWidget(clipperHelpButton);
+  clipperTitleLayout->addStretch();
+  clipperLayout->addLayout(clipperTitleLayout);
+
   clipperLayout->addLayout(clipperImagesLayout);
   clipperLayout->addLayout(clipperSizeLayout);
-
-  // Знак вопроса прижат вправо в своей строке внизу группы
-  QHBoxLayout *clipperHelpLayout=new QHBoxLayout;
-  clipperHelpLayout->addStretch();
-  clipperHelpLayout->addWidget(clipperHelpButton);
-  clipperLayout->addLayout(clipperHelpLayout);
-
   clipperBox->setLayout(clipperLayout);
 
 

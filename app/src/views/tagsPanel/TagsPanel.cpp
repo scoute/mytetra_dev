@@ -55,11 +55,12 @@ void TagsPanel::setupUi(void)
     // Таблица тег и количество заметок с ним. Строки минимальные
     // чтобы больше влезало. Заголовок у колонки количества пустой:
     // и так понятно что цифры это количество, зато экономия места.
-    // Обе колонки по содержимому, без растягивания на всю ширину
+    // Колонка тегов растягивается на всю ширину дока чтобы справа
+    // не оставалось пустого поля, колонка цифр всегда по содержимому
     tagsTable=new QTableWidget(this);
     tagsTable->setColumnCount(2);
     tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << QString());
-    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tagsTable->verticalHeader()->setVisible(false);
 

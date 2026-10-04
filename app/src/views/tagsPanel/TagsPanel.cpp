@@ -214,6 +214,11 @@ void TagsPanel::refreshTags(void)
     for(int i=0; i<ordered.size(); i++)
     {
         QTableWidgetItem *tagItem=new QTableWidgetItem(display.value(ordered.at(i)));
+
+        // Полное имя тега в подсказке: длинное имя режется капом колонки,
+        // а прокрутка крутит всю таблицу и целиком его не показывает
+        tagItem->setToolTip(display.value(ordered.at(i)));
+
         QTableWidgetItem *countItem=new QTableWidgetItem(QString::number(counts.value(ordered.at(i))));
 
         tagsTable->setItem(i, 0, tagItem);

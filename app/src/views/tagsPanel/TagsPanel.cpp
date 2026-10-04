@@ -150,6 +150,19 @@ void TagsPanel::refreshTags(void)
             dock->setWindowTitle(tr("Tags [%1]").arg(treeModel->getAllRecordCount()));
     }
 
+    // Запоминается выделенная метка: живые обновления пересобирают
+    // таблицу, а сбрасывать выбор пользователя нельзя
+    QString selectedTag;
+    int selectedRow=tagsTable->currentRow();
+
+    if(selectedRow>=0)
+    {
+        QTableWidgetItem *selectedItem=tagsTable->item(selectedRow, 0);
+
+        if(selectedItem!=nullptr)
+            selectedTag=selectedItem->text();
+    }
+
     // Теги по алфавиту без учета регистра
     QStringList ordered=display.keys();
     ordered.sort(Qt::CaseInsensitive);
@@ -168,7 +181,51 @@ void TagsPanel::refreshTags(void)
 
     tagsTable->resizeColumnsToContents();
 
+    restoreTagSelection(selectedRow, selectedTag);
+
     onFilterChanged(filterEdit->text());
+}
+
+
+// Восстановить выделение метки после пересборки таблицы.
+// Ищется та же строка, затем вся таблица: метка могла съехать
+// при сортировке. Выделение программное и поиск не запускает:
+// клик по тегу обрабатывается только через cellClicked
+void TagsPanel::restoreTagSelection(int selectedRow, const QString &selectedTag)
+{
+    if(selectedTag.isEmpty())
+        return;
+
+    int rowToSelect=-1;
+    int rowCount=tagsTable->rowCount();
+
+    if(selectedRow>=0 && selectedRow<rowCount)
+    {
+        QTableWidgetItem *candidate=tagsTable->item(selectedRow, 0);
+
+        if(candidate!=nullptr && candidate->text()==selectedTag)
+            rowToSelect=selectedRow;
+    }
+
+    if(rowToSelect<0)
+    {
+        for(int i=0; i<rowCount; i++)
+        {
+            QTableWidgetItem *candidate=tagsTable->item(i, 0);
+
+            if(candidate!=nullptr && candidate->text()==selectedTag)
+            {
+                rowToSelect=i;
+                break;
+            }
+        }
+    }
+
+    if(rowToSelect>=0)
+    {
+        tagsTable->selectRow(rowToSelect);
+        tagsTable->scrollToItem(tagsTable->item(rowToSelect, 0));
+    }
 }
 
 

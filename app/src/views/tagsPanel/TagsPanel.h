@@ -77,6 +77,9 @@ private:
     // Есть ли в базе тег кроме переименовываемого. Нужно для блокировки слияния
     bool tagExistsInBase(const QString &tagLower, const QString &excludeLower);
 
+    // Восстановить выделение метки после пересборки таблицы
+    void restoreTagSelection(int selectedRow, const QString &selectedTag);
+
     // Сохранить базу, обновить панель и строку меток открытой заметки.
     // Пустое newSpelling значит удаление
     void saveBaseAndRefresh(const QString &oldLower, const QString &newSpelling);

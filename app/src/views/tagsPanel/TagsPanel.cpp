@@ -2,6 +2,7 @@
 #include <QTableWidget>
 #include <QAbstractScrollArea>
 #include <QHeaderView>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 #include <QShowEvent>
 #include <QTableWidgetItem>
@@ -47,6 +48,10 @@ void TagsPanel::setupUi(void)
     filterEdit->setPlaceholderText(tr("Filter tags"));
     filterEdit->setClearButtonEnabled(true);
 
+    // Фильтр не участвует в расчете ширины дока: иначе его дефолтные
+    // 170+ пикселей растягивают панель шире таблицы
+    filterEdit->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+
     // Таблица тег и количество заметок с ним. Строки минимальные
     // чтобы больше влезало. Заголовок у колонки количества пустой:
     // и так понятно что цифры это количество, зато экономия места.
@@ -57,6 +62,11 @@ void TagsPanel::setupUi(void)
     tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tagsTable->verticalHeader()->setVisible(false);
+
+    // Дефолтный минимум секции под 40 пикселей необоснованно раздувает
+    // колонку цифр: минимумом ставится ширина одной цифры, дальше
+    // колонка растет по содержимому сама
+    tagsTable->horizontalHeader()->setMinimumSectionSize(tagsTable->fontMetrics().horizontalAdvance('0'));
 
     // Таблица подстраивает свой размер под содержимое: док справа
     // обнимает колонки и не занимает лишнюю ширину

@@ -36,7 +36,7 @@ using namespace std;
 // Правило описано в README.md, раздел "Нумерация версий"
 #define APPLICATION_RELEASE_VERSION         1
 #define APPLICATION_RELEASE_SUBVERSION     45
-#define APPLICATION_RELEASE_MICROVERSION  15
+#define APPLICATION_RELEASE_MICROVERSION  16
 
 // Поддерживаемая версия формата базы (хранилища)
 #define CURRENT_FORMAT_VERSION    1

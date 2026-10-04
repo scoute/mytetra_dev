@@ -434,6 +434,9 @@ void Editor::setupSignals(void)
   connect(editorContextMenu, &EditorContextMenu::contextMenuOpenImage,
           imageFormatter,    &ImageFormatter::onContextMenuOpenImage,
           Qt::DirectConnection);
+  connect(editorContextMenu, &EditorContextMenu::contextMenuOpenImageWith,
+          imageFormatter,    &ImageFormatter::onContextMenuOpenImageWith,
+          Qt::DirectConnection);
   connect(editorContextMenu, &EditorContextMenu::contextMenuEditImageProperties,
           imageFormatter,    &ImageFormatter::onContextMenuEditImageProperties,
           Qt::DirectConnection);

@@ -2987,6 +2987,16 @@ Try to search for entire database.</source>
         <source>Tags</source>
         <translation>Метки</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="68"/>
+        <source>Id</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="74"/>
+        <source>Directory name</source>
+        <translation>Имя каталога</translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>

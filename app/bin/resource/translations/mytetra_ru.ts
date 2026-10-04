@@ -729,6 +729,11 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Большие картинки останутся ссылками, а не файлами</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="81"/>
+        <source>How to use the clipper</source>
+        <translation>Как пользоваться клиппером</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="102"/>
         <source>Clipper saves the OS clipboard into a Clipboard branch note.
 Run: mytetra --control --clipboard [--url]

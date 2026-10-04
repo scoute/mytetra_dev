@@ -6,6 +6,9 @@
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QPushButton>
+#include <QToolButton>
+#include <QCommonStyle>
+#include <QWhatsThis>
 
 #include "AppConfigPage_Misc.h"
 #include "models/appConfig/AppConfig.h"
@@ -78,6 +81,13 @@ void AppConfigPage_Misc::setupUi(void)
   clipperMaxImageSizeMb->setWhatsThis(tr("Images larger than this stay as external links instead of files."));
   clipperMaxImageSizeMb->setToolTip(tr("Larger images stay as links, not files"));
 
+  // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
+  // показывает ту же подсказку без задержки наведения
+  clipperHelpButton=new QToolButton(this);
+  QCommonStyle styleHelp;
+  clipperHelpButton->setIcon(styleHelp.standardIcon(QStyle::SP_MessageBoxQuestion));
+  clipperHelpButton->setToolTip(tr("How to use the clipper"));
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -88,6 +98,7 @@ void AppConfigPage_Misc::setupUi(void)
 void AppConfigPage_Misc::setupSignals(void)
 {
   connect(editMyTetraConfigFile, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedEditMyTetraConfigFile);
+  connect(clipperHelpButton, &QToolButton::clicked, this, &AppConfigPage_Misc::onClipperHelpButton);
 }
 
 
@@ -104,7 +115,7 @@ void AppConfigPage_Misc::assembly(void)
 
 
   // Группировщик лимитов клиппера
-  QGroupBox *clipperBox=new QGroupBox(this);
+  clipperBox=new QGroupBox(this);
   clipperBox->setTitle(tr("Clipper"));
   clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into a Clipboard branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
   clipperBox->setToolTip(tr("Saves the OS clipboard into a note: mytetra --control --clipboard [--url]"));
@@ -125,6 +136,13 @@ void AppConfigPage_Misc::assembly(void)
   QVBoxLayout *clipperLayout=new QVBoxLayout;
   clipperLayout->addLayout(clipperImagesLayout);
   clipperLayout->addLayout(clipperSizeLayout);
+
+  // Знак вопроса прижат вправо в своей строке внизу группы
+  QHBoxLayout *clipperHelpLayout=new QHBoxLayout;
+  clipperHelpLayout->addStretch();
+  clipperHelpLayout->addWidget(clipperHelpButton);
+  clipperLayout->addLayout(clipperHelpLayout);
+
   clipperBox->setLayout(clipperLayout);
 
 
@@ -140,6 +158,16 @@ void AppConfigPage_Misc::assembly(void)
 
   // Основной слой устанавливается
   setLayout(centralLayout);
+}
+
+
+// Клик по знаку вопроса мгновенно показывает подсказку группы
+// под кнопкой: ждать секунду наведения не нужно
+void AppConfigPage_Misc::onClipperHelpButton(void)
+{
+  QPoint showPoint=clipperHelpButton->mapToGlobal(QPoint(0, clipperHelpButton->height()));
+
+  QWhatsThis::showText(showPoint, clipperBox->whatsThis(), clipperHelpButton);
 }
 
 

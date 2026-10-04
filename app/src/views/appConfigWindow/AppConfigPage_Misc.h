@@ -9,6 +9,7 @@ class QGroupBox;
 class QPushButton;
 class QSpinBox;
 class QLabel;
+class QToolButton;
 
 class AppConfigPage_Misc : public ConfigPage
 {
@@ -22,6 +23,10 @@ public:
 
 private slots:
   void onClickedEditMyTetraConfigFile(void);
+
+  // Знак вопроса у группы клиппера: взгляд цепляется, клик сразу
+  // показывает подсказку без секундной задержки тултипа
+  void onClipperHelpButton(void);
 
 protected:
 
@@ -38,6 +43,12 @@ protected:
    // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
    QSpinBox *clipperMaxImages;
    QSpinBox *clipperMaxImageSizeMb;
+
+   // Знак вопроса у группы клиппера
+   QToolButton *clipperHelpButton;
+
+   // Группа лимитов клиппера: текст подсказки нужен слоту кнопки-помощи
+   QGroupBox *clipperBox;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

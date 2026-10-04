@@ -48,6 +48,8 @@ build-*-Release/*
 # Скрипт сборки портабельной версии — часть проекта, его нужно хранить.
 # Исключение обязано идти после *.sh: в git выигрывает последнее правило
 !build_portable_linux.sh
+!build_portable_windows.sh
+!build_portable_hybrid.sh
 
 # Ignore php tech files
 /app/src/*.php

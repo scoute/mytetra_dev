@@ -34,6 +34,8 @@ signals:
   void paste(void);
   void pasteAsPlainText(void);
   void selectAll(void);
+  void contextMenuOpenImage(void);
+  void contextMenuOpenImageWith(void);
   void contextMenuEditImageProperties(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
@@ -57,6 +59,8 @@ private:
   QAction *actionUppercase; // ПРОПИСНЫЕ
 
   QAction *actionEditImageProperties;
+  QAction *actionOpenImage;
+  QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
 
@@ -73,6 +77,8 @@ protected slots:
   void onActionPaste(void);
   void onActionPasteAsPlainText(void);
   void onActionSelectAll(void);
+  void onActionContextMenuOpenImage(void);
+  void onActionContextMenuOpenImageWith(void);
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);

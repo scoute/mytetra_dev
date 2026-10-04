@@ -140,6 +140,7 @@ INSTALLS+=icon_48_file
 
 HEADERS = src/main.h \
     src/controllers/databasesManagement/DatabasesManagementController.h \
+    src/libraries/Clipper.h \
     src/libraries/InternalClipboard.h \
     src/libraries/OrderedMap.h \
     src/libraries/RandomInitter.h \
@@ -171,6 +172,7 @@ HEADERS = src/main.h \
     src/models/databasesManagement/KnownBasesConfig.h \
     src/views/appConfigWindow/AppConfigPage_Appearance.h \
     src/views/appConfigWindow/AppConfigPage_History.h \
+    src/views/appConfigWindow/AppConfigPage_Clipper.h \
     src/views/consoleEmulator/CommandRunner.h \
     src/views/databasesManagement/DatabasesManagementPathDelegate.h \
     src/views/databasesManagement/DatabasesManagementScreen.h \
@@ -221,6 +223,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorAbsTableCell.h \
     src/libraries/wyedit/EditorAbsTable.h \
     src/libraries/wyedit/EditorAddTableForm.h \
+    src/libraries/wyedit/EditorImageOpenDialog.h \
     src/libraries/wyedit/EditorImageProperties.h \
     src/libraries/wyedit/EditorMultiLineInputDialog.h \
     src/libraries/FixedParameters.h \
@@ -311,6 +314,7 @@ HEADERS+=\
 
 SOURCES = src/main.cpp \
     src/controllers/databasesManagement/DatabasesManagementController.cpp \
+    src/libraries/Clipper.cpp \
     src/libraries/InternalClipboard.cpp \
     src/libraries/OrderedMap.cpp \
     src/libraries/RandomInitter.cpp \
@@ -342,6 +346,7 @@ SOURCES = src/main.cpp \
     src/models/databasesManagement/KnownBasesConfig.cpp \
     src/views/appConfigWindow/AppConfigPage_Appearance.cpp \
     src/views/appConfigWindow/AppConfigPage_History.cpp \
+    src/views/appConfigWindow/AppConfigPage_Clipper.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \
     src/views/databasesManagement/DatabasesManagementPathDelegate.cpp \
     src/views/databasesManagement/DatabasesManagementScreen.cpp \
@@ -392,6 +397,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorAbsTableCell.cpp \
     src/libraries/wyedit/EditorAbsTable.cpp \
     src/libraries/wyedit/EditorAddTableForm.cpp \
+    src/libraries/wyedit/EditorImageOpenDialog.cpp \
     src/libraries/wyedit/EditorImageProperties.cpp \
     src/libraries/wyedit/EditorMultiLineInputDialog.cpp \
     src/libraries/FixedParameters.cpp \

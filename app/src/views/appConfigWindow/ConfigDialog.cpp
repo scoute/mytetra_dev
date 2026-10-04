@@ -11,6 +11,10 @@
 
 ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent)
 {
+    // Кнопка «?» в заголовке: режим контекстной подсказки WhatsThis.
+    // Пояснения задаются через setWhatsThis() на неочевидных виджетах
+    setWindowFlags(windowFlags() | Qt::WindowContextHelpButtonHint);
+
     setupUi();
     setupSignals();
     assembly();

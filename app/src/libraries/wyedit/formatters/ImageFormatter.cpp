@@ -1,6 +1,9 @@
 #include <QTextBlock>
 #include <QTextFragment>
 #include <QDebug>
+#include <QDesktopServices>
+#include <QFile>
+#include <QFileInfo>
 #include <QFileDialog>
 #include <QImage>
 #include <QImageReader>
@@ -8,6 +11,7 @@
 #include <QMessageBox>
 #include <QImage>
 #include <QUrl>
+#include <QProcess>
 
 #include "ImageFormatter.h"
 
@@ -15,11 +19,15 @@
 #include "../EditorConfig.h"
 #include "../EditorTextArea.h"
 #include "../EditorImageProperties.h"
+#include "../EditorImageOpenDialog.h"
 #include "../EditorCursorPositionDetector.h"
 
 #include "main.h"
 #include "libraries//Downloader.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/GlobalParameters.h"
+
+extern GlobalParameters globalParameters;
 
 
 ImageFormatter::ImageFormatter()
@@ -257,6 +265,152 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
     } // Закончился цикл перебора файлов картинок
   } // Завершилось условие что картинка не выбрана и нужно добавлять из файла
 
+}
+
+
+// Путь к файлу картинки под курсором. Пусто если курсор не на
+// картинке (подсказка в строке статуса) или файла нет на диске
+// (предупреждение). Вызывает только проверку, без открытия
+QString ImageFormatter::resolveImageFilePath(void)
+{
+  // Данные обрабатываемой картинки
+  QTextImageFormat imageFormat;
+
+  // Если выбрано изображение
+  if(editor->cursorPositionDetector->isImageSelect()) {
+    imageFormat=imageFormatOnSelect();
+  }
+  else if(editor->cursorPositionDetector->isCursorOnImage()) {
+    // Если изображение не выбрано, но курсор находится в позиции изображения
+    imageFormat=imageFormatOnCursor();
+  }
+  else {
+    globalParameters.getStatusBar()->showMessage(tr("Place the cursor on the image to open it"));
+    return QString();
+  }
+
+  // Выясняется путь к файлу. Рабочий каталог записи может быть
+  // относительным, для открытия во внешней программе путь делается
+  // абсолютным: относительный file-URL не открывается
+  QString fullFileName=QFileInfo(editor->getWorkDirectory()+"/"+imageFormat.name()).absoluteFilePath();
+
+  qDebug() << "Open image file: "+fullFileName;
+
+  if(!QFile::exists(fullFileName)) {
+    QMessageBox::warning(editor,
+                         tr("Open image"),
+                         tr("Image file not found:\n%1").arg(fullFileName));
+    return QString();
+  }
+
+  return fullFileName;
+}
+
+
+// Открыть картинку под курсором во внешней программе ОС.
+// Если программа файл не открыла, показывается предупреждение
+void ImageFormatter::openImage(void)
+{
+  QString fullFileName=resolveImageFilePath();
+
+  if(fullFileName.isEmpty())
+    return;
+
+  // Открытие файла средствами операционной системы
+  bool opened=QDesktopServices::openUrl(QUrl::fromLocalFile(fullFileName));
+
+  qDebug() << "Open image result: " << opened;
+
+  if(!opened) {
+    QMessageBox::warning(editor,
+                         tr("Open image"),
+                         tr("Can not open image file:\n%1").arg(fullFileName));
+  }
+}
+
+
+// Открыть картинку под курсором в программе, выбранной через диалог
+void ImageFormatter::openImageWith(void)
+{
+  QString fullFileName=resolveImageFilePath();
+
+  if(fullFileName.isEmpty())
+    return;
+
+  EditorImageOpenDialog dialog(fullFileName, editor);
+
+  if(dialog.exec()!=QDialog::Accepted)
+    return;
+
+  QString program=dialog.selectedProgram();
+
+  if(program.isEmpty())
+    return;
+
+  qDebug() << "Open image file with program: "+program+" "+fullFileName;
+
+  // Команда из .desktop или путь с обзора разбивается на бинарь
+  // и аргументы, файл дописывается последним аргументом
+  QStringList arguments=QProcess::splitCommand(program);
+  QString binary=arguments.takeFirst();
+  arguments.append(fullFileName);
+
+  bool started=QProcess::startDetached(binary, arguments);
+
+  qDebug() << "Open image with result: " << started;
+
+  if(!started) {
+    QMessageBox::warning(editor,
+                         tr("Open image with"),
+                         tr("Can not start program:\n%1").arg(program));
+  }
+}
+
+
+// Вызов открытия изображения из контекстного меню
+void ImageFormatter::onContextMenuOpenImage(void)
+{
+  // Для картинки с формулой свойства изображения редактироваться не должны
+  if(editor->cursorPositionDetector->isMathExpressionSelect() ||
+      editor->cursorPositionDetector->isCursorOnMathExpression()) {
+    return;
+  }
+
+  // Если выделена картинка
+  if(editor->cursorPositionDetector->isImageSelect() ||
+     editor->cursorPositionDetector->isCursorOnImage())
+  {
+    qDebug() << "Open image selected";
+
+    openImage();
+  }
+}
+
+
+// Вызов открытия изображения в выбранной программе из контекстного меню
+void ImageFormatter::onContextMenuOpenImageWith(void)
+{
+  // Для картинки с формулой свойства изображения редактироваться не должны
+  if(editor->cursorPositionDetector->isMathExpressionSelect() ||
+      editor->cursorPositionDetector->isCursorOnMathExpression()) {
+    return;
+  }
+
+  // Если выделена картинка
+  if(editor->cursorPositionDetector->isImageSelect() ||
+     editor->cursorPositionDetector->isCursorOnImage())
+  {
+    qDebug() << "Open image with selected";
+
+    openImageWith();
+  }
+}
+
+
+// Открытие картинки по одинарному Ctrl+клику
+void ImageFormatter::onClickOnImage(void)
+{
+  openImage();
 }
 
 

@@ -5,6 +5,9 @@
 #include <QScrollBar>
 #include <QUrl>
 #include <QEvent>
+
+#include <QAbstractTextDocumentLayout>
+#include <QFontMetrics>
 #include <QGestureEvent>
 #include <QTextDocumentFragment>
 #include <QMimeData>
@@ -118,9 +121,90 @@ void EditorTextArea::keyPressEvent(QKeyEvent *event)
 {
     // Если нажата клавиша Ctrl
     if( event->key() == Qt::Key_Control )
+    {
         switchReferenceClickMode(true);
 
-    QTextEdit::keyPressEvent(event);
+        QTextEdit::keyPressEvent(event);
+    }
+    // Комбинация Shift+Tab снимает один уровень отступа в начале строки:
+    // символ табуляции либо пробелы шириной в один размер табуляции
+    else if( event->key() == Qt::Key_Backtab )
+    {
+        unindentCurrentLine();
+    }
+    else
+    {
+        QTextEdit::keyPressEvent(event);
+    }
+}
+
+
+// Снять один уровень отступа в начале строки с курсором.
+// Курсор и выделение возвращаются на место со сдвигом на снятое
+void EditorTextArea::unindentCurrentLine(void)
+{
+    QTextCursor cursor=textCursor();
+
+    int pos=cursor.position();
+    int anchor=cursor.anchor();
+
+    cursor.clearSelection();
+    cursor.movePosition(QTextCursor::StartOfLine);
+    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+
+    // Строка начинается с табуляции: снимается один символ
+    if(cursor.selectedText().startsWith('\t'))
+    {
+        cursor.removeSelectedText();
+        cursor.setPosition(anchor-1);
+        cursor.setPosition(pos-1, QTextCursor::KeepAnchor);
+    }
+    else
+    {
+        // Иначе снимаются пробелы, но не больше ширины одного таба.
+        // Ширина таба берется из настроек виджета, как в Editor::setTabSize
+        #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+        qreal tabDistance=tabStopDistance();
+        #else
+        qreal tabDistance=tabStopWidth();
+        #endif
+
+        int spaceWidth=QFontMetrics(currentCharFormat().font()).averageCharWidth();
+        int tabSpaces=(spaceWidth>0) ? qMax(1, qRound(tabDistance/spaceWidth)) : 4;
+
+        cursor.clearSelection();
+        cursor.movePosition(QTextCursor::StartOfLine);
+
+        int removed=0;
+
+        while(removed<tabSpaces)
+        {
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+
+            if(cursor.selectedText().endsWith(' '))
+            {
+                removed++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if(removed>0)
+        {
+            cursor.removeSelectedText();
+            cursor.setPosition(anchor-removed);
+            cursor.setPosition(pos-removed, QTextCursor::KeepAnchor);
+        }
+        else
+        {
+            cursor.setPosition(anchor);
+            cursor.setPosition(pos, QTextCursor::KeepAnchor);
+        }
+    }
+
+    setTextCursor(cursor);
 }
 
 
@@ -166,6 +250,20 @@ void EditorTextArea::switchReferenceClickMode(bool flag)
 
             globalParameters.getStatusBar()->showMessage(href);
             qDebug() << "Cursor href in key event: " << href;
+        }
+        else
+        {
+            // Ссылки нет: проверяется картинка под курсором
+            QString imageName=imageAt(m_currentMousePosition);
+
+            if(!imageName.isEmpty())
+            {
+                qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
+                m_mouseCursorOverriden = true;
+
+                globalParameters.getStatusBar()->showMessage(imageName);
+                qDebug() << "Cursor image in key event: " << imageName;
+            }
         }
     }
     else
@@ -214,7 +312,27 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
         }
     }
     else
-        qApp->restoreOverrideCursor(); // Иначе клавиша Ctrl не нажата и курсор не может быть курсором ссылки
+    {
+        // Без Ctrl указатель-рука только над картинкой: подсказка
+        // что ее можно открыть, клик при этом обычный
+        QString imageName=imageAt(m_currentMousePosition);
+
+        if(!imageName.isEmpty())
+        {
+            if(!m_mouseCursorOverriden)
+            {
+                qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
+                m_mouseCursorOverriden = true;
+                globalParameters.getStatusBar()->showMessage(imageName);
+            }
+        }
+        else if(m_mouseCursorOverriden)
+        {
+            qApp->restoreOverrideCursor();
+            m_mouseCursorOverriden = false;
+            globalParameters.getStatusBar()->showMessage("");
+        }
+    }
 
     QTextEdit::mouseMoveEvent(event);
 }
@@ -227,7 +345,24 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
     {
         QString href = this->anchorAt(event->pos());
         if(!href.isEmpty())
+        {
             emit clickedOnReference(href);
+
+            // Cобытие игнорируется, чтобы текстовый курсор не переместился в место где сделан клик
+            event->ignore();
+            return;
+        }
+
+        // Ссылки нет: Ctrl+клик по картинке открывает ее во внешней
+        // программе. Курсор ставится на картинку чтобы openImage ее нашел,
+        // дальше клик обрабатывается как обычный
+        if(!imageAt(event->pos()).isEmpty())
+        {
+            QTextEdit::mousePressEvent(event);
+
+            emit clickOnImage();
+            return;
+        }
 
         // Cобытие игнорируется, чтобы текстовый курсор не переместился в место где сделан клик
         event->ignore();
@@ -667,5 +802,17 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
     qDebug() << "Insert filtered HTML text: " << htmlFilterDoc.toHtml();
 
     this->textCursor().insertHtml( htmlFilterDoc.toHtml() );
+}
+
+
+// Имя картинки под точкой документа. Координаты мыши переводятся
+// в координаты документа с учетом прокрутки
+QString EditorTextArea::imageAt(const QPoint &point)
+{
+    int scrollY=verticalScrollBar()->value();
+    int scrollX=horizontalScrollBar()->value();
+    QPoint documentPoint(point.x()+scrollX, point.y()+scrollY);
+
+    return document()->documentLayout()->imageAt(documentPoint);
 }
 

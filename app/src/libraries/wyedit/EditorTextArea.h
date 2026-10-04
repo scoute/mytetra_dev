@@ -52,6 +52,9 @@ signals:
 
     void doubleClickOnImage();
 
+    // Одинарный Ctrl+клик по картинке: открыть во внешней программе
+    void clickOnImage();
+
 public slots:
     void showIndentEdge(bool i);
     void setIndentEdgePos(int i);
@@ -83,6 +86,14 @@ private:
     void mouseDoubleClickEvent(QMouseEvent *event);
 
     void switchReferenceClickMode(bool flag);
+
+    // Снять один уровень отступа в начале строки с курсором.
+    // Вызывается по Shift+Tab из keyPressEvent
+    void unindentCurrentLine(void);
+
+    // Имя картинки под точкой: пусто если картинки нет.
+    // Нужно для ховер-подсказки и Ctrl+клика по изображению
+    QString imageAt(const QPoint &point);
 
 
     bool m_flagShowFormatting; //< Рисовать ли символы форматирования

@@ -1,5 +1,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QSpinBox>
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QPushButton>
@@ -41,11 +43,13 @@ void AppConfigPage_Misc::setupUi(void)
   enableActionLog=new QCheckBox(this);
   enableActionLog->setText(tr("Enable action logging (experimental)"));
   enableActionLog->setChecked(mytetraConfig.getEnableLogging());
+  enableActionLog->setWhatsThis(tr("Keeps a log of actions, useful for bug reports."));
 
   // Разрешение/запрещение создавать пустую запись (без текста)
   enableCreateEmptyRecord=new QCheckBox(this);
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   enableCreateEmptyRecord->setChecked(mytetraConfig.getEnableCreateEmptyRecord());
+  enableCreateEmptyRecord->setWhatsThis(tr("Allow saving notes without any text."));
 
   // Разрешение/запрещение игнорировать ошибки самоподписанных SSL-сертификатов
   // при скачивании файлов и картинок. Нужно для сайтов с самоподписанными
@@ -53,6 +57,7 @@ void AppConfigPage_Misc::setupUi(void)
   ignoreSelfSignedSslErrors=new QCheckBox(this);
   ignoreSelfSignedSslErrors->setText(tr("Ignore self-signed SSL certificate errors when downloading (less secure)"));
   ignoreSelfSignedSslErrors->setChecked(mytetraConfig.getIgnoreSelfSignedSslErrors());
+  ignoreSelfSignedSslErrors->setWhatsThis(tr("Needed for sites with self-signed certificates. Weakens protection against substituted certificates, that is why it is off by default."));
 
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);

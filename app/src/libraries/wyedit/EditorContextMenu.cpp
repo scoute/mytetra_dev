@@ -42,6 +42,8 @@ void EditorContextMenu::setupActions(void)
  actionSelectAll=new QAction(this);
 
  actionEditImageProperties=new QAction(this);
+ actionOpenImage=new QAction(this);
+ actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
 
@@ -65,6 +67,13 @@ void EditorContextMenu::setupShortcuts(void)
     // "Умное" действие Вставить изображение / Редактировать свойства изображения
     shortcutManager.initAction("editor-insertImageFromFile", actionEditImageProperties );
     actionEditImageProperties->setText(tr("Edit image properties")); // В контекстном меню это редактирование свойств изображения
+
+    // "Умное" действие открытия изображения во внешней программе
+    shortcutManager.initAction("editor-openImage", actionOpenImage );
+    actionOpenImage->setText(tr("Open image"));
+
+    // Открытие изображения в выбранной программе, без своего шортката
+    actionOpenImageWith->setText(tr("Open image with..."));
 
     // "Умное" действие Вставить / Редактировать формулу
     shortcutManager.initAction("editor-mathExpression", actionEditMathExpression );
@@ -146,6 +155,12 @@ void EditorContextMenu::setImageProperties(bool flag)
 {
     qDebug() << "In EditorContextMenu::setImageProperties() " << flag;
 
+    actionOpenImage->setVisible(flag);
+    actionOpenImage->setEnabled(flag);
+
+    actionOpenImageWith->setVisible(flag);
+    actionOpenImageWith->setEnabled(flag);
+
     actionEditImageProperties->setVisible(flag);
     actionEditImageProperties->setEnabled(flag);
 }
@@ -205,6 +220,8 @@ void EditorContextMenu::setupSignals(void)
     connect(actionSelectAll,       &QAction::triggered, this, &EditorContextMenu::onActionSelectAll);
 
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
+    connect(actionOpenImage,            &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImage);
+    connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
 
@@ -236,6 +253,8 @@ void EditorContextMenu::setupMenu(void)
     this->addSeparator();
 
     this->addAction(actionSelectAll);
+    this->addAction(actionOpenImage);
+    this->addAction(actionOpenImageWith);
     this->addAction(actionEditImageProperties);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
@@ -295,6 +314,22 @@ void EditorContextMenu::onActionSelectAll()
     update();
     if(actionSelectAll->isEnabled()) {
         emit selectAll();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuOpenImage()
+{
+    update();
+    if(actionOpenImage->isEnabled()) {
+        emit contextMenuOpenImage();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuOpenImageWith()
+{
+    update();
+    if(actionOpenImageWith->isEnabled()) {
+        emit contextMenuOpenImageWith();
     }
 }
 

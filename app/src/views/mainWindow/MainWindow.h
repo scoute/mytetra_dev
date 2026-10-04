@@ -87,6 +87,10 @@ public slots:
 
     void toolsFindInBase(void);
 
+    // Показ всплывающего сообщения в системном трее.
+    // Молча ничего не делает, если трей недоступен или скрыт
+    void showTrayMessage(const QString &title, const QString &text);
+
     // Открытие глобального поиска с готовым запросом из поиска по заметке.
     // Запрос сразу выполняется через FindScreen::setFindText
     void toolsFindInBaseWithText(const QString &text);
@@ -110,6 +114,9 @@ private slots:
 
     void toolsPreferences(void);
     void onActionLogClicked(void);
+
+    // Клиппер: создание заметки из буфера обмена в ветке Clipboard
+    void onClipFromClipboard(void);
 
     // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
     void onThemeMenuTriggered(QAction *action);
@@ -176,6 +183,7 @@ private:
 
     QAction *actionToolsMenuFindInBase;
     QAction *actionToolsMenuActionLog;
+    QAction *actionToolsMenuClipFromClipboard;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе

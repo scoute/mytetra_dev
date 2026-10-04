@@ -505,6 +505,18 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>History of visited notes</source>
         <translation>История просмотренных записей</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="45"/>
+        <source>What is the notes history</source>
+        <translation>Что за история записей</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="46"/>
+        <source>History of viewed notes: go back and forward with Ctrl+Alt+Left and Ctrl+Alt+Right.
+These options restore the text cursor position.</source>
+        <translation>История просмотренных записей: назад и вперед по Ctrl+Alt+Left и Ctrl+Alt+Right.
+Эти опции восстанавливают позицию курсора в тексте.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -693,6 +705,85 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Try remember cursor position at ordinary selection</source>
         <translation type="vanished">Пытаться вспомнить позицию курсора при обычном выборе записи</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="46"/>
+        <source>Keeps a log of actions, useful for bug reports.</source>
+        <translation>Ведет журнал действий, полезно для сообщений об ошибках.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="52"/>
+        <source>Allow saving notes without any text.</source>
+        <translation>Разрешить сохранять записи без текста.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="58"/>
+        <source>Needed for sites with self-signed certificates. Weakens protection against substituted certificates, that is why it is off by default.</source>
+        <translation>Нужно для сайтов с самоподписанными сертификатами. Ослабляет защиту от подмененных сертификатов, поэтому по умолчанию выключено.</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Clipper</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="32"/>
+        <source>How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once.</source>
+        <translation>Сколько картинок из буфера забирать в одну заметку. Лишние останутся внешними ссылками, клиппер сразу о них сообщит.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="33"/>
+        <source>Images per note, the rest stay as links</source>
+        <translation>Картинок в заметке, остальные останутся ссылками</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="40"/>
+        <source>Images larger than this stay as external links instead of files.</source>
+        <translation>Картинки больше этого останутся внешними ссылками, а не файлами.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="41"/>
+        <source>Larger images stay as links, not files</source>
+        <translation>Большие картинки останутся ссылками, а не файлами</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="42"/>
+        <source> MB</source>
+        <translation> МБ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="48"/>
+        <source>How to use the clipper</source>
+        <translation>Как пользоваться клиппером</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="55"/>
+        <source>Clipper saves the OS clipboard into a Clipboard branch note.
+Run: mytetra --control --clipboard [--url]
+Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
+MyTetra must be running.</source>
+        <translation>Клиппер сохраняет буфер обмена ОС в заметку ветки Clipboard.
+Запуск: mytetra --control --clipboard [--url]
+Повесьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
+MyTetra должна быть запущена.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="56"/>
+        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
+        <translation>Сохраняет буфер обмена ОС в заметку: mytetra --control --clipboard [--url]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="75"/>
+        <source>Maximum images per note:</source>
+        <translation>Максимум картинок в заметке:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="76"/>
+        <source>Maximum size of one image:</source>
+        <translation>Максимальный размер одной картинки:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="89"/>
+        <source>Clipper</source>
+        <translation>Клиппер</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -747,6 +838,27 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="56"/>
         <source>Use &lt;b&gt;%a&lt;/b&gt; macro for get database directory path</source>
         <translation>Используйте макрос &lt;b&gt;%a&lt;/b&gt; для получения имени директории с данными</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="33"/>
+        <source>Shell command, %a is the database path</source>
+        <translation>Shell-команда, %a это путь к базе</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="39"/>
+        <source>How synchronization works</source>
+        <translation>Как работает синхронизация</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
+        <source>Shell command that syncs the database directory.
+%a expands to the database path.
+Example: rsync -a %a user@host:mytetra-backup/
+Runs at startup, on exit or periodically, see checkboxes below.</source>
+        <translation>Shell-команда синхронизации каталога базы.
+%a подставляет путь к базе.
+Пример: rsync -a %a user@host:mytetra-backup/
+Запускается при старте, выходе или периодически, см. галки ниже.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="61"/>
@@ -1828,6 +1940,16 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="74"/>
+        <source>Open image with...</source>
+        <translation>Открыть изображение с помощью...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
         <translation>Редактировать формулу</translation>
     </message>
@@ -1963,6 +2085,44 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="114"/>
         <source>Image info</source>
         <translation>Информация об изображении</translation>
+    </message>
+</context>
+<context>
+    <name>EditorImageOpenDialog</name>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="40"/>
+        <source>Open image with</source>
+        <translation>Открыть изображение с помощью</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="53"/>
+        <source>%1 (default)</source>
+        <translation>%1 (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="86"/>
+        <source>Program to open %1:</source>
+        <translation>Программа для открытия %1:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="60"/>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="62"/>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="76"/>
+        <source>Select program</source>
+        <translation>Выбор программы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="81"/>
+        <source>%1 (custom)</source>
+        <translation>%1 (вручную)</translation>
     </message>
 </context>
 <context>
@@ -2940,6 +3100,42 @@ Try to search for entire database.</source>
         <translation>Вставка изображения</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="270"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="271"/>
+        <source>Image file not found:
+%1</source>
+        <translation>Файл изображения не найден:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="265"/>
+        <source>Place the cursor on the image to open it</source>
+        <translation>Поставьте курсор на изображение чтобы открыть его</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="290"/>
+        <source>Can not open image file:
+%1</source>
+        <translation>Не удалось открыть файл изображения:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="345"/>
+        <source>Open image with</source>
+        <translation>Открыть изображение с помощью</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="346"/>
+        <source>Can not start program:
+%1</source>
+        <translation>Не удалось запустить программу:
+%1</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="334"/>
         <source>Download %1 external image(s) from the Internet?</source>
         <translation>Скачать %1 внешних изображений из Интернета?</translation>
@@ -2986,6 +3182,16 @@ Try to search for entire database.</source>
         <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="61"/>
         <source>Tags</source>
         <translation>Метки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="68"/>
+        <source>Id</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="74"/>
+        <source>Directory name</source>
+        <translation>Имя каталога</translation>
     </message>
 </context>
 <context>
@@ -4930,6 +5136,16 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="148"/>
         <source>Insert image from file or edit selected image properties</source>
         <translation>Вставка картинки из файла / Редактирование свойств картинки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
+        <source>Open selected image in external viewer</source>
+        <translation>Открыть выделенное изображение во внешней программе</translation>
     </message>
     <message>
         <source>Insert image from file or edit image properties of selected image</source>

@@ -30,8 +30,8 @@ protected:
   QCheckBox *printDebugMessages;      // Выводить ли в консоль отладочные сообщения
   QCheckBox *enableActionLog;         // Разрешено ли логирование действий
   QCheckBox *enableCreateEmptyRecord; // Разрешено ли создание записи, не содержащей текст (а только заголовок)
-  QCheckBox *ignoreSelfSignedSslErrors; // Разрешено ли игнорировать ошибки самоподписанных SSL-сертификатов при скачивании
-  QPushButton *editMyTetraConfigFile;
+   QCheckBox *ignoreSelfSignedSslErrors; // Разрешено ли игнорировать ошибки самоподписанных SSL-сертификатов при скачивании
+   QPushButton *editMyTetraConfigFile;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

@@ -267,6 +267,14 @@ public:
     bool getIgnoreSelfSignedSslErrors(void);
     void setIgnoreSelfSignedSslErrors(bool state);
 
+    // Лимиты клиппера: сколько картинок забирать в одну заметку
+    // и максимальный размер одной картинки в мегабайтах
+    int get_clipperMaxImages(void);
+    bool set_clipperMaxImages(int count);
+
+    int get_clipperMaxImageSizeMb(void);
+    bool set_clipperMaxImageSizeMb(int mbSize);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);
@@ -341,6 +349,7 @@ private:
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
     QStringList get_parameter_table_43(bool withEndSignature=true);
+    QStringList get_parameter_table_44(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

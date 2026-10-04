@@ -146,6 +146,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-tableSplitCell",      Data{ QKeySequence(""), tr("Split cell"), tr("") });
     defaultKeyTable.insert("editor-tableProperties",     Data{ QKeySequence(""), tr("Table properties"), tr("") });
     defaultKeyTable.insert("editor-insertImageFromFile", Data{ QKeySequence("Ctrl+Shift+I"), tr("Insert/edit image"), tr("Insert image from file or edit selected image properties") });
+    defaultKeyTable.insert("editor-openImage",           Data{ QKeySequence("Ctrl+Shift+Y"), tr("Open image"), tr("Open selected image in external viewer") });
     defaultKeyTable.insert("editor-insertHorizontalLine",Data{ QKeySequence("Ctrl+H"), tr("Insert horizontal line"), tr("Insert a horizontal line into the empty paragraph from cursor") });
     defaultKeyTable.insert("editor-mathExpression",      Data{ QKeySequence("Ctrl+Shift+M"), tr("Insert/edit math expression"), tr("") });
     defaultKeyTable.insert("editor-expandEditArea",      Data{ QKeySequence("Ctrl+Shift+E"), tr("Expand edit area"), tr("") });
@@ -171,6 +172,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("misc-focusNoteTable", Data{ QKeySequence("F6"), tr("Set focus to notes table"), tr("") });
     defaultKeyTable.insert("misc-focusEditor", Data{ QKeySequence("F4"), tr("Set focus to editor"), tr("") });
     defaultKeyTable.insert("misc-findInBase",  Data{ QKeySequence("Ctrl+Shift+F"), tr("Find in base"), tr("") });
+    defaultKeyTable.insert("misc-clipFromClipboard", Data{ QKeySequence(), tr("Clip from clipboard"), tr("Create note in Clipboard branch from clipboard content") });
     defaultKeyTable.insert("misc-tagsPanel",   Data{ QKeySequence("F8"), tr("Show tags panel"), tr("") });
     defaultKeyTable.insert("misc-syncro",      Data{ QKeySequence("F9"), tr("Synchronization"), tr("Run synchronization") });
     defaultKeyTable.insert("misc-editConfirm", Data{ QKeySequence(Qt::CTRL + Qt::Key_Return), tr("Ok"), tr("") });

@@ -94,9 +94,12 @@ private:
  // Направление задают стрелки и Enter, кнопки Find всегда вперед
  QTextDocument::FindFlags collectFlags(void) const;
 
- void setup_ui(void);
- void setup_signals(void);
- void assembly(void);
+  void setup_ui(void);
+  void setup_signals(void);
+  void assembly(void);
+
+  // Квадратные кнопки в размер поля ввода, вызывается при показе
+  void fixSquareButtons(void);
 };
 
 #endif /* _EDITORFINDBAR_H_ */

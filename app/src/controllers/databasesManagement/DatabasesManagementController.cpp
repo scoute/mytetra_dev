@@ -24,6 +24,7 @@
 #include "libraries/IconSelectDialog.h"
 #include "controllers/recordTable/RecordTableController.h"
 #include "views/consoleEmulator/CommandRunner.h"
+#include "views/tagsPanel/TagsPanel.h"
 
 
 extern GlobalParameters globalParameters;
@@ -180,6 +181,13 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
 
     // Заполняется модель дерева
     knowTreeModel->initFromXML(dbPath+"/mytetra.xml");
+
+    // Панель меток пересобирается под новое хранилище: иначе
+    // показывает метки прошлой базы пока ее не спрячут и не покажут
+    TagsPanel *tagsPanel=find_object<TagsPanel>("tagsPanel");
+
+    if(tagsPanel!=nullptr)
+        tagsPanel->refreshTags();
 
     return true;
 }

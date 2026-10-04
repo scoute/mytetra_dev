@@ -49,6 +49,12 @@ public:
                                          const QString &oldLower,
                                          bool &changed);
 
+public slots:
+
+    // Пересборка таблицы по всему дереву. Публичный для обновления
+    // извне: смена хранилища, сохранение метаданных через сигнал
+    void refreshTags(void);
+
 protected:
 
     // Словарь пересобирается при каждом показе: теги могли измениться
@@ -61,7 +67,6 @@ private slots:
     void onTagsContextMenu(const QPoint &pos);
     void onRenameTag(void);
     void onDeleteTag(void);
-    void refreshTags(void);
 
 private:
 

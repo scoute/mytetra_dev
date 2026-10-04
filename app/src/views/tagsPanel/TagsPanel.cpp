@@ -41,6 +41,29 @@ TagsPanel::~TagsPanel(void)
 }
 
 
+TagsTable::TagsTable(QWidget *parent) : QTableWidget(parent),
+    maxContentWidth(QWIDGETSIZE_MAX)
+{
+
+}
+
+
+void TagsTable::setMaxContentWidth(int width)
+{
+    maxContentWidth=width;
+    updateGeometry();
+}
+
+
+QSize TagsTable::sizeHint(void) const
+{
+    QSize hint=QTableWidget::sizeHint();
+    hint.setWidth(qMin(hint.width(), maxContentWidth));
+
+    return hint;
+}
+
+
 void TagsPanel::setupUi(void)
 {
     // Строка отбора тегов по подстроке
@@ -55,14 +78,18 @@ void TagsPanel::setupUi(void)
     // Таблица тег и количество заметок с ним. Строки минимальные
     // чтобы больше влезало. Заголовок у колонки количества пустой:
     // и так понятно что цифры это количество, зато экономия места.
-    // Колонка тегов растягивается на всю ширину дока чтобы справа
-    // не оставалось пустого поля, колонка цифр всегда по содержимому
-    tagsTable=new QTableWidget(this);
+    // Колонка тегов по содержимому но с потолком: дальше лишнее
+    // уходит в горизонтальную прокрутку а не раздувает док.
+    // Колонка цифр всегда по содержимому
+    tagsTable=new TagsTable(this);
     tagsTable->setColumnCount(2);
     tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << QString());
-    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tagsTable->verticalHeader()->setVisible(false);
+
+    // Порог ширины тега: сорок цифр. Уже только для очень длинных имен
+    tagsTable->horizontalHeader()->setMaximumSectionSize(tagsTable->fontMetrics().horizontalAdvance('0')*40);
 
     // Дефолтный минимум секции под 40 пикселей необоснованно раздувает
     // колонку цифр: минимумом ставится ширина одной цифры, дальше
@@ -194,6 +221,15 @@ void TagsPanel::refreshTags(void)
     }
 
     tagsTable->resizeColumnsToContents();
+
+    // Потолок ширины дока: обрезанная капом колонка плюс цифры плюс рамка.
+    // Длинный тег дальше порога не раздувает док, смотрится через прокрутку
+    int cappedWidth=qMin(tagsTable->columnWidth(0),
+                         tagsTable->horizontalHeader()->maximumSectionSize())
+                    +tagsTable->columnWidth(1)
+                    +2*tagsTable->frameWidth();
+
+    tagsTable->setMaxContentWidth(cappedWidth);
 
     restoreTagSelection(selectedRow, selectedTag);
 

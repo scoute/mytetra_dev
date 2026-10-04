@@ -3,16 +3,38 @@
 
 #include <QWidget>
 #include <QMap>
+#include <QTableWidget>
 
 // Панель списка тегов базы со счетчиками использования.
 // Переключается из меню Tools и горячей клавишей, место не занимает.
 // Двойной клик по тегу запускает глобальный поиск как клик по тегу в заметке
 
 class QLineEdit;
-class QTableWidget;
 class QTableWidgetItem;
 class QShowEvent;
 class TreeItem;
+
+
+// Таблица тегов с ограниченным sizeHint по ширине: тег с очень длинным
+// именем не должен раздувать док и сужать основное окно. Лишнее уходит
+// в горизонтальную прокрутку, она штатная через AsNeeded
+class TagsTable : public QTableWidget
+{
+    Q_OBJECT
+
+public:
+
+    explicit TagsTable(QWidget *parent=nullptr);
+
+    // Потолок ширины sizeHint. Вызывать после пересборки содержимого
+    void setMaxContentWidth(int width);
+
+    virtual QSize sizeHint(void) const override;
+
+private:
+
+    int maxContentWidth;
+};
 
 class TagsPanel : public QWidget
 {
@@ -90,7 +112,7 @@ private:
 
     // Строка фильтра и таблица тег-количество
     QLineEdit *filterEdit;
-    QTableWidget *tagsTable;
+    TagsTable *tagsTable;
 
     // Подписка на сохранение метаданных дерева делается один раз
     // и лениво: в конструкторе treeScreen может еще не существовать

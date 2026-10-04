@@ -15,7 +15,7 @@
 #   ./build_portable_linux.sh            без параметров: исходники откуда
 #                                        запущен скрипт, сборка из каталога
 #                                        Qt Creator, Qt SDK из его Makefile,
-#                                        результат рядом в MyTetra-portable
+#                                        результат рядом в MyTetra-lin-portable
 #   ./build_portable_linux.sh --clean    предварительно очистить сборочный каталог
 #   ./build_portable_linux.sh --jobs 4   число потоков сборки
 #   ./build_portable_linux.sh --portable-dir /путь/к/папке   куда сложить сборку
@@ -150,7 +150,7 @@ fi
 
 # Папка результата по умолчанию рядом с исходниками
 if [[ "${PORTABLE_DIR_EXPLICIT}" -eq 0 ]]; then
-    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-portable"
+    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-lin-portable"
 fi
 
 # Каталог сборки: если не задан явно, ищется каталог сборки Qt Creator

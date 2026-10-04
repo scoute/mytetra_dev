@@ -14,7 +14,7 @@
 #   ./build_portable_windows.sh            без параметров: исходники откуда
 #                                          запущен скрипт, сборка из каталога
 #                                          Qt Creator (если есть), Qt из него,
-#                                          результат рядом в MyTetra-portable-win
+#                                          результат рядом в MyTetra-win-portable
 #   ./build_portable_windows.sh --clean    очистить сборочный каталог
 #   ./build_portable_windows.sh --jobs 2   потоки сборки (под Wine больше
 #                                          4 обычно только хуже)
@@ -107,7 +107,7 @@ if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
 fi
 
 if [[ "${PORTABLE_DIR_EXPLICIT}" -eq 0 ]]; then
-    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-portable-win"
+    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-win-portable"
 fi
 
 if ! command -v wine >/dev/null 2>&1; then

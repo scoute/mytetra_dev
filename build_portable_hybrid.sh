@@ -26,8 +26,8 @@ set -euo pipefail
 SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"
 SOURCE_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
 
-LINUX_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-portable"
-WIN_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-portable-win"
+LINUX_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-lin-portable"
+WIN_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-win-portable"
 OUT_DIR=""
 OUT_DIR_EXPLICIT=0
 DO_SMOKE=0
@@ -50,7 +50,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "${OUT_DIR_EXPLICIT}" -eq 0 ]]; then
-    OUT_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-portable-hybrid"
+    OUT_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-hybrid-portable"
 fi
 
 for need in "${LINUX_DIR}/mytetra" "${LINUX_DIR}/lib" "${WIN_DIR}/mytetra.exe"; do

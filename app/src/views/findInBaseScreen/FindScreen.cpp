@@ -1291,22 +1291,29 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
 // от шрифтов системы не зависит (эмодзи там превращались в квадраты)
 QIcon FindScreen::completionTypeIcon(const QString &field)
 {
+    QString iconPath;
+
     if(field=="tags")
-        return QIcon(":/resource/pic/tag.svg");
+        iconPath=":/resource/pic/tag.svg";
+    else if(field=="name")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_document.svg";
+    else if(field=="url")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_link.svg";
+    else if(field=="nameItem")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_opened_folder.svg";
+    else if(field=="author")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg";
+    else
+        return QIcon();
 
-    if(field=="name")
-        return QIcon(":/resource/icons/Flat/color_icons8_flat_document.svg");
+    QIcon icon(iconPath);
 
-    if(field=="url")
-        return QIcon(":/resource/icons/Flat/color_icons8_flat_link.svg");
+    // Ресурс не найден или не отрисовался: молчать нельзя, иначе
+    // в выпадашке пустые места без понятной причины
+    if(icon.isNull() || icon.pixmap(16, 16).isNull())
+        qWarning() << "FindScreen::completionTypeIcon: bad icon resource" << iconPath;
 
-    if(field=="nameItem")
-        return QIcon(":/resource/icons/Flat/color_icons8_flat_opened_folder.svg");
-
-    if(field=="author")
-        return QIcon(":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg");
-
-    return QIcon();
+    return icon;
 }
 
 

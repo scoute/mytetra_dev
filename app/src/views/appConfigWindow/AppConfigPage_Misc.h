@@ -7,9 +7,6 @@ class QWidget;
 class QCheckBox;
 class QGroupBox;
 class QPushButton;
-class QSpinBox;
-class QLabel;
-class QToolButton;
 
 class AppConfigPage_Misc : public ConfigPage
 {
@@ -24,10 +21,6 @@ public:
 private slots:
   void onClickedEditMyTetraConfigFile(void);
 
-  // Знак вопроса у группы клиппера: взгляд цепляется, клик сразу
-  // показывает подсказку без секундной задержки тултипа
-  void onClipperHelpButton(void);
-
 protected:
 
   void setupUi(void);
@@ -39,16 +32,6 @@ protected:
   QCheckBox *enableCreateEmptyRecord; // Разрешено ли создание записи, не содержащей текст (а только заголовок)
    QCheckBox *ignoreSelfSignedSslErrors; // Разрешено ли игнорировать ошибки самоподписанных SSL-сертификатов при скачивании
    QPushButton *editMyTetraConfigFile;
-
-   // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
-   QSpinBox *clipperMaxImages;
-   QSpinBox *clipperMaxImageSizeMb;
-
-   // Знак вопроса у группы клиппера
-   QToolButton *clipperHelpButton;
-
-   // Группа лимитов клиппера: текст подсказки нужен слоту кнопки-помощи
-   QGroupBox *clipperBox;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

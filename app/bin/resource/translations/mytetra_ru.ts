@@ -720,33 +720,41 @@ These options restore the text cursor position.</source>
         <source>Needed for sites with self-signed certificates. Weakens protection against substituted certificates, that is why it is off by default.</source>
         <translation>Нужно для сайтов с самоподписанными сертификатами. Ослабляет защиту от подмененных сертификатов, поэтому по умолчанию выключено.</translation>
     </message>
+</context>
+<context>
+    <name>AppConfigPage_Clipper</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="67"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="32"/>
         <source>How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once.</source>
         <translation>Сколько картинок из буфера забирать в одну заметку. Лишние останутся внешними ссылками, клиппер сразу о них сообщит.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="68"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="33"/>
         <source>Images per note, the rest stay as links</source>
         <translation>Картинок в заметке, остальные останутся ссылками</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="75"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="40"/>
         <source>Images larger than this stay as external links instead of files.</source>
         <translation>Картинки больше этого останутся внешними ссылками, а не файлами.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="76"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="41"/>
         <source>Larger images stay as links, not files</source>
         <translation>Большие картинки останутся ссылками, а не файлами</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="81"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="42"/>
+        <source> MB</source>
+        <translation> МБ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="48"/>
         <source>How to use the clipper</source>
         <translation>Как пользоваться клиппером</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="102"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="55"/>
         <source>Clipper saves the OS clipboard into a Clipboard branch note.
 Run: mytetra --control --clipboard [--url]
 Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
@@ -757,9 +765,24 @@ MyTetra must be running.</source>
 MyTetra должна быть запущена.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="105"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="56"/>
         <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
         <translation>Сохраняет буфер обмена ОС в заметку: mytetra --control --clipboard [--url]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="75"/>
+        <source>Maximum images per note:</source>
+        <translation>Максимум картинок в заметке:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="76"/>
+        <source>Maximum size of one image:</source>
+        <translation>Максимальный размер одной картинки:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="89"/>
+        <source>Clipper</source>
+        <translation>Клиппер</translation>
     </message>
 </context>
 <context>

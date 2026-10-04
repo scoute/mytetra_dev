@@ -90,6 +90,10 @@ private slots:
     void onRenameTag(void);
     void onDeleteTag(void);
 
+    // Пользователь подвигал границу колонки: ширина запоминается
+    // чтобы пересборка ее не сбрасывала
+    void onSectionResized(int logicalIndex, int oldSize, int newSize);
+
 private:
 
     // Собрать записи с тегом через дерево. Пустой список значит тег уже исчез
@@ -117,6 +121,13 @@ private:
     // Подписка на сохранение метаданных дерева делается один раз
     // и лениво: в конструкторе treeScreen может еще не существовать
     bool treeMetadataConnected;
+
+    // Ширина колонки тегов, заданная пользователем вручную.
+    // Отрицательная значит автоширина по содержимому с потолком
+    int tagColumnWidth;
+
+    // Свои программные ресайзы не запоминать как пользовательские
+    bool resizingProgrammatically;
 };
 
 #endif /* _TAGSPANEL_H_ */

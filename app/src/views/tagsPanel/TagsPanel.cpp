@@ -27,7 +27,9 @@ extern GlobalParameters globalParameters;
 
 
 TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
-    treeMetadataConnected(false)
+    treeMetadataConnected(false),
+    tagColumnWidth(-1),
+    resizingProgrammatically(false)
 {
     setupUi();
     assembly();
@@ -78,18 +80,17 @@ void TagsPanel::setupUi(void)
     // Таблица тег и количество заметок с ним. Строки минимальные
     // чтобы больше влезало. Заголовок у колонки количества пустой:
     // и так понятно что цифры это количество, зато экономия места.
-    // Колонка тегов по содержимому но с потолком: дальше лишнее
-    // уходит в горизонтальную прокрутку а не раздувает док.
-    // Колонка цифр всегда по содержимому
+    // Колонки двигаются вручную за границу заголовка: так можно
+    // растянуть колонку тегов и увидеть длинное имя целиком.
+    // Горизонтальной прокрутки нет, при широком содержимом
+    // растягивается сам док
     tagsTable=new TagsTable(this);
     tagsTable->setColumnCount(2);
     tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << QString());
-    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+    tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
     tagsTable->verticalHeader()->setVisible(false);
-
-    // Порог ширины тега: сорок цифр. Уже только для очень длинных имен
-    tagsTable->horizontalHeader()->setMaximumSectionSize(tagsTable->fontMetrics().horizontalAdvance('0')*40);
+    tagsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     // Дефолтный минимум секции под 40 пикселей необоснованно раздувает
     // колонку цифр: минимумом ставится ширина одной цифры, дальше
@@ -136,6 +137,9 @@ void TagsPanel::setupSignals(void)
 
     connect(tagsTable, &QTableWidget::customContextMenuRequested,
             this,      &TagsPanel::onTagsContextMenu);
+
+    connect(tagsTable->horizontalHeader(), &QHeaderView::sectionResized,
+            this,                           &TagsPanel::onSectionResized);
 }
 
 
@@ -225,16 +229,26 @@ void TagsPanel::refreshTags(void)
         tagsTable->setItem(i, 1, countItem);
     }
 
+    resizingProgrammatically=true;
+
     tagsTable->resizeColumnsToContents();
 
-    // Потолок ширины дока: обрезанная капом колонка плюс цифры плюс рамка.
-    // Длинный тег дальше порога не раздувает док, смотрится через прокрутку
-    int cappedWidth=qMin(tagsTable->columnWidth(0),
-                         tagsTable->horizontalHeader()->maximumSectionSize())
-                    +tagsTable->columnWidth(1)
-                    +2*tagsTable->frameWidth();
+    // Ручная ширина колонки тегов переживает пересборку.
+    // Автоширина ограничена потолком в сорок цифр чтобы длинное имя
+    // не раздувало док: дальше колонка и док растягиваются только вручную
+    int autoWidth=qMin(tagsTable->columnWidth(0),
+                       tagsTable->fontMetrics().horizontalAdvance('0')*40);
 
-    tagsTable->setMaxContentWidth(cappedWidth);
+    if(tagColumnWidth<0)
+        tagsTable->setColumnWidth(0, autoWidth);
+    else
+        tagsTable->setColumnWidth(0, tagColumnWidth);
+
+    tagsTable->setMaxContentWidth(tagsTable->columnWidth(0)
+                                  +tagsTable->columnWidth(1)
+                                  +2*tagsTable->frameWidth());
+
+    resizingProgrammatically=false;
 
     restoreTagSelection(selectedRow, selectedTag);
 
@@ -281,6 +295,26 @@ void TagsPanel::restoreTagSelection(int selectedRow, const QString &selectedTag)
         tagsTable->selectRow(rowToSelect);
         tagsTable->scrollToItem(tagsTable->item(rowToSelect, 0));
     }
+}
+
+
+// Пользователь подвигал границу колонки тегов: ширина запоминается
+// чтобы пересборка ее не сбрасывала, док подстраивается следом
+void TagsPanel::onSectionResized(int logicalIndex, int oldSize, int newSize)
+{
+    Q_UNUSED(oldSize);
+
+    if(resizingProgrammatically)
+        return;
+
+    if(logicalIndex!=0)
+        return;
+
+    tagColumnWidth=newSize;
+
+    tagsTable->setMaxContentWidth(tagsTable->columnWidth(0)
+                                  +tagsTable->columnWidth(1)
+                                  +2*tagsTable->frameWidth());
 }
 
 

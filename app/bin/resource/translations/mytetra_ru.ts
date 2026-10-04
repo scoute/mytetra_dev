@@ -1828,6 +1828,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
         <translation>Редактировать формулу</translation>
     </message>
@@ -2938,6 +2943,18 @@ Try to search for entire database.</source>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="216"/>
         <source>Insert image</source>
         <translation>Вставка изображения</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="270"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="271"/>
+        <source>Image file not found:
+%1</source>
+        <translation>Файл изображения не найден:
+%1</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="334"/>
@@ -4940,6 +4957,16 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="148"/>
         <source>Insert image from file or edit selected image properties</source>
         <translation>Вставка картинки из файла / Редактирование свойств картинки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
+        <source>Open selected image in external viewer</source>
+        <translation>Открыть выделенное изображение во внешней программе</translation>
     </message>
     <message>
         <source>Insert image from file or edit image properties of selected image</source>

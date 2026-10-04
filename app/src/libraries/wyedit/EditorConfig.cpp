@@ -1073,6 +1073,7 @@ QString EditorConfig::update_version_change_value(int versionFrom,
             names["indentplus"]="indentPlus";
             names["insert_horizontal_line"]="insertHorizontalLine";
             names["insert_image_from_file"]="insertImageFromFile";
+            names["open_image"]="openImage";
             names["math_expression"]="mathExpression";
             names["numericlist"]="numericList";
             names["showformatting"]="showFormatting";

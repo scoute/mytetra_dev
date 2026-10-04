@@ -693,6 +693,42 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Try remember cursor position at ordinary selection</source>
         <translation type="vanished">Пытаться вспомнить позицию курсора при обычном выборе записи</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="46"/>
+        <source>Keeps a log of actions, useful for bug reports.</source>
+        <translation>Ведет журнал действий, полезно для сообщений об ошибках.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="52"/>
+        <source>Allow saving notes without any text.</source>
+        <translation>Разрешить сохранять записи без текста.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="58"/>
+        <source>Needed for sites with self-signed certificates. Weakens protection against substituted certificates, that is why it is off by default.</source>
+        <translation>Нужно для сайтов с самоподписанными сертификатами. Ослабляет защиту от подмененных сертификатов, поэтому по умолчанию выключено.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="67"/>
+        <source>How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once.</source>
+        <translation>Сколько картинок из буфера забирать в одну заметку. Лишние останутся внешними ссылками, клиппер сразу о них сообщит.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="73"/>
+        <source>Images larger than this stay as external links instead of files.</source>
+        <translation>Картинки больше этого останутся внешними ссылками, а не файлами.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="102"/>
+        <source>Clipper saves the OS clipboard into a Clipboard branch note.
+Run: mytetra --control --clipboard [--url]
+Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
+MyTetra must be running.</source>
+        <translation>Клиппер сохраняет буфер обмена ОС в заметку ветки Clipboard.
+Запуск: mytetra --control --clipboard [--url]
+Повесьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
+MyTetra должна быть запущена.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

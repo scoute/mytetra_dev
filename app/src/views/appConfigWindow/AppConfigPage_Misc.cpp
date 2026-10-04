@@ -44,11 +44,13 @@ void AppConfigPage_Misc::setupUi(void)
   enableActionLog=new QCheckBox(this);
   enableActionLog->setText(tr("Enable action logging (experimental)"));
   enableActionLog->setChecked(mytetraConfig.getEnableLogging());
+  enableActionLog->setWhatsThis(tr("Keeps a log of actions, useful for bug reports."));
 
   // Разрешение/запрещение создавать пустую запись (без текста)
   enableCreateEmptyRecord=new QCheckBox(this);
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   enableCreateEmptyRecord->setChecked(mytetraConfig.getEnableCreateEmptyRecord());
+  enableCreateEmptyRecord->setWhatsThis(tr("Allow saving notes without any text."));
 
   // Разрешение/запрещение игнорировать ошибки самоподписанных SSL-сертификатов
   // при скачивании файлов и картинок. Нужно для сайтов с самоподписанными
@@ -56,6 +58,7 @@ void AppConfigPage_Misc::setupUi(void)
   ignoreSelfSignedSslErrors=new QCheckBox(this);
   ignoreSelfSignedSslErrors->setText(tr("Ignore self-signed SSL certificate errors when downloading (less secure)"));
   ignoreSelfSignedSslErrors->setChecked(mytetraConfig.getIgnoreSelfSignedSslErrors());
+  ignoreSelfSignedSslErrors->setWhatsThis(tr("Needed for sites with self-signed certificates. Weakens protection against substituted certificates, that is why it is off by default."));
 
   // Лимиты клиппера: сколько картинок забирать в одну заметку
   // и максимальный размер одной картинки. Пропущенные сверх лимитов
@@ -64,12 +67,14 @@ void AppConfigPage_Misc::setupUi(void)
   clipperMaxImages->setMinimum(1);
   clipperMaxImages->setMaximum(1000);
   clipperMaxImages->setValue(mytetraConfig.get_clipperMaxImages());
+  clipperMaxImages->setWhatsThis(tr("How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once."));
 
   clipperMaxImageSizeMb=new QSpinBox(this);
   clipperMaxImageSizeMb->setMinimum(1);
   clipperMaxImageSizeMb->setMaximum(100);
   clipperMaxImageSizeMb->setValue(mytetraConfig.get_clipperMaxImageSizeMb());
   clipperMaxImageSizeMb->setSuffix(tr(" MB"));
+  clipperMaxImageSizeMb->setWhatsThis(tr("Images larger than this stay as external links instead of files."));
 
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
@@ -99,6 +104,7 @@ void AppConfigPage_Misc::assembly(void)
   // Группировщик лимитов клиппера
   QGroupBox *clipperBox=new QGroupBox(this);
   clipperBox->setTitle(tr("Clipper"));
+  clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into a Clipboard branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
 
   QLabel *clipperMaxImagesLabel=new QLabel(tr("Maximum images per note:"), this);
   QLabel *clipperMaxImageSizeLabel=new QLabel(tr("Maximum size of one image:"), this);

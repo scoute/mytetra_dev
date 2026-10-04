@@ -68,6 +68,7 @@ void AppConfigPage_Misc::setupUi(void)
   clipperMaxImages->setMaximum(1000);
   clipperMaxImages->setValue(mytetraConfig.get_clipperMaxImages());
   clipperMaxImages->setWhatsThis(tr("How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once."));
+  clipperMaxImages->setToolTip(tr("Images per note, the rest stay as links"));
 
   clipperMaxImageSizeMb=new QSpinBox(this);
   clipperMaxImageSizeMb->setMinimum(1);
@@ -75,6 +76,7 @@ void AppConfigPage_Misc::setupUi(void)
   clipperMaxImageSizeMb->setValue(mytetraConfig.get_clipperMaxImageSizeMb());
   clipperMaxImageSizeMb->setSuffix(tr(" MB"));
   clipperMaxImageSizeMb->setWhatsThis(tr("Images larger than this stay as external links instead of files."));
+  clipperMaxImageSizeMb->setToolTip(tr("Larger images stay as links, not files"));
 
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
@@ -105,6 +107,7 @@ void AppConfigPage_Misc::assembly(void)
   QGroupBox *clipperBox=new QGroupBox(this);
   clipperBox->setTitle(tr("Clipper"));
   clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into a Clipboard branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
+  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: mytetra --control --clipboard [--url]"));
 
   QLabel *clipperMaxImagesLabel=new QLabel(tr("Maximum images per note:"), this);
   QLabel *clipperMaxImageSizeLabel=new QLabel(tr("Maximum size of one image:"), this);

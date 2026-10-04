@@ -714,9 +714,19 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Сколько картинок из буфера забирать в одну заметку. Лишние останутся внешними ссылками, клиппер сразу о них сообщит.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="73"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="68"/>
+        <source>Images per note, the rest stay as links</source>
+        <translation>Картинок в заметке, остальные останутся ссылками</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="75"/>
         <source>Images larger than this stay as external links instead of files.</source>
         <translation>Картинки больше этого останутся внешними ссылками, а не файлами.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="76"/>
+        <source>Larger images stay as links, not files</source>
+        <translation>Большие картинки останутся ссылками, а не файлами</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="102"/>
@@ -728,6 +738,11 @@ MyTetra must be running.</source>
 Запуск: mytetra --control --clipboard [--url]
 Повесьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
 MyTetra должна быть запущена.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="105"/>
+        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
+        <translation>Сохраняет буфер обмена ОС в заметку: mytetra --control --clipboard [--url]</translation>
     </message>
 </context>
 <context>

@@ -74,6 +74,21 @@ void FindTableWidget::setupUI(void)
     if(mytetraConfig.getInterfaceMode()=="mobile")
         findTableView->verticalHeader()->setDefaultSectionSize( CssHelper::getCalculateIconSizePx() );
 
+    // Минимальная высота панели: заголовок плюс одна строка результата.
+    // Иначе сплиттер схлопывает панель до нескольких пикселей
+    // и непонятно что результаты вообще есть
+    int headerHeight=findTableView->fontMetrics().height()+8;
+
+    if(!findTableView->horizontalHeader()->isHidden())
+        headerHeight=qMax(headerHeight, findTableView->horizontalHeader()->height());
+
+    int rowHeight=findTableView->verticalHeader()->defaultSectionSize();
+
+    if(rowHeight<=0)
+        rowHeight=findTableView->fontMetrics().height()+8;
+
+    findTableView->setMinimumHeight(headerHeight+rowHeight+2*findTableView->frameWidth());
+
     // Устанавливается режим что могут выделяться только строки
     // а не отдельный item таблицы
     findTableView->setSelectionBehavior(QAbstractItemView::SelectRows);

@@ -238,7 +238,10 @@ QString CryptService::decryptStringFromByteArray(QByteArray key, QByteArray data
  QByteArray result;
  convertVectorToByteArray(vectorDataOut, result);
 
- QString resultLine=QString::fromUtf8( result.data() );
+ // Расшифровка с явным размером и вычищением 0x00, иначе fromUtf8()
+ // обрежет текст по первому нулевому байту (баг #134)
+ QString resultLine=QString::fromUtf8( result.constData(), result.size() );
+ resultLine.remove(QChar('\0'));
 
  return resultLine;
 }

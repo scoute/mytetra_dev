@@ -300,6 +300,19 @@ bool CssHelper::applyTheme(const QString &themeName)
     // Удаляются CSS комментарии
     styleText=CssHelper::removeCssComments(styleText);
 
+    // Относительные адреса картинок темы переписываются в абсолютные QRC-адреса.
+    // У светлой темы картинок вообще нет (только CSS-файл), а у темной их сотня
+    // в подкаталоге pic/. Без подмены темная тема молча теряет все рисованные
+    // элементы, если распакованные на диск PNG удалены или не распаковались.
+    // После подмены обе темы универсально описываются одним CSS-файлом,
+    // а картинки всегда берутся из ресурсов программы
+    const QString qrcThemesPrefix=QStringLiteral(":/resource/standartconfig/")
+                                 +globalParameters.getTargetOs()
+                                 +QStringLiteral("/themes/");
+    styleText.replace(QStringLiteral("url(\"themes/"), QStringLiteral("url(\"")+qrcThemesPrefix);
+    styleText.replace(QStringLiteral("url('themes/"), QStringLiteral("url('")+qrcThemesPrefix);
+    styleText.replace(QStringLiteral("url(themes/"), QStringLiteral("url(")+qrcThemesPrefix);
+
     // Добавляется CSS-правило, влияющее на размер иконок
     if ( mytetraConfig.getInterfaceIconSize()!="" )
     {

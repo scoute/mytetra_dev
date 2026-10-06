@@ -87,10 +87,12 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
     tileCountLabel=new QLabel(QString::number(tileColumns(1)), this);
     galleryCountLabel=new QLabel(this);
 
-    // Вид: плитка или список. Список умеет сортировку по всем колонкам
+    // Вид: плитка или список. Размер по содержимому чтобы текст
+    // пунктов не резался: в растягивающемся слое комбобокс иначе ужмется
     viewCombo=new QComboBox(this);
     viewCombo->addItem(tr("Tiles"));
     viewCombo->addItem(tr("List"));
+    viewCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
     QHBoxLayout *topLayout=new QHBoxLayout();
     topLayout->addWidget(tileCountLabel);

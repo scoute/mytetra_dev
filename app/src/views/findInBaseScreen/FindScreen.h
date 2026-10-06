@@ -9,6 +9,7 @@
 class QStandardItemModel;
 class QCompleter;
 class QTimer;
+class QShowEvent;
 
 class QLineEdit;
 class QPushButton;
@@ -147,6 +148,12 @@ private:
     bool treeMetadataConnected=false;
 
     void setupFieldCompleter(void);
+
+protected:
+
+    // Словарь подсказок пересобирается при каждом показе любым путем:
+    // widgetShow(), прямой show() при восстановлении состояния на старте
+    void showEvent(QShowEvent *event) override;
 
     void setupFindTextAndButton(void);
     void assemblyFindTextAndButton(void);

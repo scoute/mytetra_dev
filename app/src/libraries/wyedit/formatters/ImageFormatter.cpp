@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QDesktopServices>
 #include <QFile>
+#include <QFileInfo>
 #include <QFileDialog>
 #include <QImage>
 #include <QImageReader>
@@ -287,8 +288,10 @@ void ImageFormatter::openImage(void)
     return;
   }
 
-  // Выясняется путь к файлу
-  QString fullFileName=editor->getWorkDirectory()+"/"+imageFormat.name();
+  // Выясняется путь к файлу. Рабочий каталог записи может быть
+  // относительным, для открытия во внешней программе путь делается
+  // абсолютным: относительный file-URL не открывается
+  QString fullFileName=QFileInfo(editor->getWorkDirectory()+"/"+imageFormat.name()).absoluteFilePath();
 
   qDebug() << "Open image file: "+fullFileName;
 

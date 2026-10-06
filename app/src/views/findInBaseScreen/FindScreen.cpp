@@ -17,6 +17,7 @@
 #include <QStandardItem>
 #include <QTimer>
 #include <QDebug>
+#include <QShowEvent>
 
 #include <algorithm>
 
@@ -777,6 +778,12 @@ void FindScreen::widgetShow(void)
 
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
+}
+
+
+void FindScreen::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
 
     // Словарь подсказок пересобирается при каждом показе:
     // теги и названия могли измениться с прошлого раза

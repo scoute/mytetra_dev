@@ -58,6 +58,13 @@ public:
     // Графические файлы каталога записи, кроме текста заметки
     static QStringList recordImageFiles(const QString &recordDir);
 
+    // Человекочитаемый размер файла
+    static QString formatFileSize(qint64 bytes);
+
+    // Тумба текстового файла: страница с первыми строками содержимого.
+    // Пустой pixmap если отрисовать нечего
+    static QPixmap renderTextPreview(const QString &filePath, int tile);
+
 private slots:
 
     void onTileColumnsChanged(int sliderPos);
@@ -113,9 +120,6 @@ private:
     // Заполнить список файлов: имя, размер, тип, дата. Сортировка
     // кликом по заголовку, числа и даты сортируются как числа
     void fillFilesList(void);
-
-    // Человекочитаемый размер файла
-    static QString formatFileSize(qint64 bytes);
 
     // Строка плитки, заголовок, слайдер и переключение вида
     QListWidget *imageGrid;

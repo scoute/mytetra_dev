@@ -1840,14 +1840,24 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Только отдельные слова</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="33"/>
-        <source>Search &amp;backward</source>
-        <translation>Искать назад</translation>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="37"/>
+        <source>&amp;Loop search</source>
+        <translation>Зациклить поиск</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="35"/>
         <source>&amp;Find</source>
         <translation>Найти</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="47"/>
+        <source>Find previous</source>
+        <translation>Найти предыдущее</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="52"/>
+        <source>Find next</source>
+        <translation>Найти следующее</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="39"/>

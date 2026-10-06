@@ -1357,13 +1357,23 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="33"/>
-        <source>Search &amp;backward</source>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="37"/>
+        <source>&amp;Loop search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="35"/>
         <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="47"/>
+        <source>Find previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="52"/>
+        <source>Find next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -1,6 +1,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <QStyle>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QtGlobal>
@@ -34,11 +35,24 @@ void EditorFindDialog::setup_ui(void)
 
   mathCase=new QCheckBox(tr("&Case sensitive"));
   wholeWords=new QCheckBox(tr("&Whole words only"));
-  searchBackward=new QCheckBox(tr("Search &backward"));
+  loopSearch=new QCheckBox(tr("&Loop search"));
+  loopSearch->setChecked(true);
 
   findButton=new QPushButton(tr("&Find"));
   findButton->setDefault(true);
   findButton->setEnabled(false);
+
+  // Маленькие стрелки вперед и назад: иконки из стиля вместо глифов,
+  // которых может не быть в шрифтах системы
+  prevButton=new QPushButton();
+  prevButton->setIcon(style()->standardIcon(QStyle::SP_ArrowBack));
+  prevButton->setToolTip(tr("Find previous"));
+  prevButton->setMaximumWidth(28);
+
+  nextButton=new QPushButton();
+  nextButton->setIcon(style()->standardIcon(QStyle::SP_ArrowForward));
+  nextButton->setToolTip(tr("Find next"));
+  nextButton->setMaximumWidth(28);
 
   replaceButton=new QPushButton(tr("&Replace"));
   replaceAllButton=new QPushButton(tr("Replace &all"));
@@ -55,6 +69,12 @@ void EditorFindDialog::setup_signals(void)
   connect(findButton, &QPushButton::clicked,
           this,       &EditorFindDialog::find_clicked);
 
+  connect(prevButton, &QPushButton::clicked,
+          this,       &EditorFindDialog::find_prev_clicked);
+
+  connect(nextButton, &QPushButton::clicked,
+          this,       &EditorFindDialog::find_next_clicked);
+
   connect(replaceButton, &QPushButton::clicked,
           this,         &EditorFindDialog::replace_clicked);
 
@@ -68,6 +88,8 @@ void EditorFindDialog::assembly(void)
   QHBoxLayout *findLineLayout=new QHBoxLayout();
   findLineLayout->addWidget(lineEdit);
   findLineLayout->addWidget(findButton);
+  findLineLayout->addWidget(prevButton);
+  findLineLayout->addWidget(nextButton);
 
   QHBoxLayout *replaceLineLayout=new QHBoxLayout();
   replaceLineLayout->addWidget(replaceEdit);
@@ -79,7 +101,7 @@ void EditorFindDialog::assembly(void)
   centralLayout->addLayout(replaceLineLayout);
   centralLayout->addWidget(mathCase);
   centralLayout->addWidget(wholeWords);
-  centralLayout->addWidget(searchBackward);
+  centralLayout->addWidget(loopSearch);
   
   this->setLayout(centralLayout);
 
@@ -87,10 +109,26 @@ void EditorFindDialog::assembly(void)
 }
 
 
-// Действия при нажатии кнопки Find
+// Действия при нажатии кнопки Find и стрелки вперед
 void EditorFindDialog::find_clicked(void)
 {
   emit find_text(lineEdit->text(), collectFlags());
+}
+
+
+void EditorFindDialog::find_next_clicked(void)
+{
+  emit find_text(lineEdit->text(), collectFlags());
+}
+
+
+// Действия при нажатии стрелки назад
+void EditorFindDialog::find_prev_clicked(void)
+{
+  QTextDocument::FindFlags flags=collectFlags();
+  flags|=QTextDocument::FindBackward;
+
+  emit find_prev_text(lineEdit->text(), flags);
 }
 
 
@@ -108,22 +146,35 @@ void EditorFindDialog::replace_all_clicked(void)
 }
 
 
-// Флаги поиска из состояния галочек
+// Флаги поиска из состояния галочек.
+// Направление задают кнопки (назад добавляет FindBackward сама)
 QTextDocument::FindFlags EditorFindDialog::collectFlags(void) const
 {
   QTextDocument::FindFlags flags=0;
-  if(mathCase->isChecked())      flags|=QTextDocument::FindCaseSensitively;
-  if(wholeWords->isChecked())    flags|=QTextDocument::FindWholeWords;
-  if(searchBackward->isChecked())flags|=QTextDocument::FindBackward;
+  if(mathCase->isChecked())  flags|=QTextDocument::FindCaseSensitively;
+  if(wholeWords->isChecked())flags|=QTextDocument::FindWholeWords;
 
   return flags;
 }
 
 
-// Кнопка поиска активна только тогда, когда есть текст для поиска
+// Зациклить ли поиск с другого конца документа
+bool EditorFindDialog::isLoopSearch(void) const
+{
+  return loopSearch->isChecked();
+}
+
+
+// Кнопки действий активны только тогда, когда есть текст для поиска
 void EditorFindDialog::enable_find_button(const QString &text)
 {
-  findButton->setEnabled(!text.isEmpty());
+  const bool hasText=!text.isEmpty();
+
+  findButton->setEnabled(hasText);
+  prevButton->setEnabled(hasText);
+  nextButton->setEnabled(hasText);
+  replaceButton->setEnabled(hasText);
+  replaceAllButton->setEnabled(hasText);
 }
 
 

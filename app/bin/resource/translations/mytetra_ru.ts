@@ -1600,6 +1600,21 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Select a single cell.</source>
         <translation type="vanished">Необходимо выбрать только одну ячейку.</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1722"/>
+        <source>No matches</source>
+        <translation>Нет совпадений</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1726"/>
+        <source>%1 of %2</source>
+        <translation>%1 из %2</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1883"/>
+        <source>Replaced %1</source>
+        <translation>Заменено %1</translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -1843,6 +1858,84 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
+    <name>EditorFindBar</name>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="31"/>
+        <source>Find in note</source>
+        <translation>Найти в записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="36"/>
+        <source>Aa</source>
+        <translation>Aa</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="37"/>
+        <source>Match case</source>
+        <translation>С учётом регистра</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="38"/>
+        <source>&quot;ab&quot;</source>
+        <translation>&quot;ab&quot;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="39"/>
+        <source>Whole words only</source>
+        <translation>Только слова целиком</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="46"/>
+        <source>Replace with</source>
+        <translation>Заменить на</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="48"/>
+        <source>&amp;Replace</source>
+        <translation>Заменить</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="51"/>
+        <source>Replace &amp;all</source>
+        <translation>Заменить все</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="54"/>
+        <source>&amp;Find</source>
+        <translation>Найти</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="87"/>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>Предыдущее совпадение (Shift+Enter)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="93"/>
+        <source>Next match (Enter)</source>
+        <translation>Следующее совпадение (Enter)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="105"/>
+        <source>Find in base</source>
+        <translation>Найти в базе</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="106"/>
+        <source>Search this text in the whole base</source>
+        <translation>Искать этот текст по всей базе</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="113"/>
+        <source>Close find bar (Esc)</source>
+        <translation>Закрыть панель поиска (Esc)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="119"/>
+        <source>Open as separate window</source>
+        <translation>Открыть отдельным окном</translation>
+    </message>
+</context>
+<context>
     <name>EditorFindDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="31"/>
@@ -1893,6 +1986,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="44"/>
         <source>Replace &amp;all</source>
         <translation>Заменить всё</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="63"/>
+        <source>Show as embedded bar</source>
+        <translation>Показать полоской в заметке</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="46"/>

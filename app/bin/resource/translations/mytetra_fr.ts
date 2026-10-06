@@ -1161,6 +1161,21 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source> occurrence(s)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1722"/>
+        <source>No matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1726"/>
+        <source>%1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1883"/>
+        <source>Replaced %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -1350,6 +1365,84 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
+    <name>EditorFindBar</name>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="31"/>
+        <source>Find in note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="36"/>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="37"/>
+        <source>Match case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="38"/>
+        <source>&quot;ab&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="39"/>
+        <source>Whole words only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="46"/>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="48"/>
+        <source>&amp;Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="51"/>
+        <source>Replace &amp;all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="54"/>
+        <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="87"/>
+        <source>Previous match (Shift+Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="93"/>
+        <source>Next match (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="105"/>
+        <source>Find in base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="106"/>
+        <source>Search this text in the whole base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="113"/>
+        <source>Close find bar (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="119"/>
+        <source>Open as separate window</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EditorFindDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="31"/>
@@ -1404,6 +1497,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="46"/>
         <source>Find and replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="63"/>
+        <source>Show as embedded bar</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

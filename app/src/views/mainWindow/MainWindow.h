@@ -87,6 +87,8 @@ public slots:
 
     void toolsFindInBase(void);
 
+    void toolsFindInBaseWithText(const QString &text);
+
     void toolsImagesGallery(void);
 
     void toolsFilesGallery(void);

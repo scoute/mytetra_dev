@@ -31,6 +31,8 @@
 #include "views/tree/TreeScreen.h"
 #include "libraries/MtComboBox.h"
 #include "views/tree/KnowTreeView.h"
+#include "models/recordTable/Record.h"
+#include "models/attachTable/AttachTableData.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/CssHelper.h"
 
@@ -217,6 +219,9 @@ void FindScreen::setupWhereFindLine(void)
 
     findInNameItem=new QCheckBox(tr("Name tree item"));
     findInNameItem->setChecked(mytetraConfig.get_findscreen_find_in_field("nameItem"));
+
+    findInAttach=new QCheckBox(tr("Attach files"));
+    findInAttach->setChecked(mytetraConfig.get_findscreen_find_in_field("attach"));
 }
 
 
@@ -236,6 +241,7 @@ void FindScreen::assemblyWhereFindLine(void)
     whereFindLine->addWidget(findInTags);
     whereFindLine->addWidget(findInText);
     whereFindLine->addWidget(findInNameItem);
+    whereFindLine->addWidget(findInAttach);
 
     whereFindLine->addStretch();
 
@@ -303,6 +309,9 @@ void FindScreen::setupSignals(void)
 
     connect(findInNameItem, &QCheckBox::stateChanged,
             this,           &FindScreen::changedFindInNameItem);
+
+    connect(findInAttach, &QCheckBox::stateChanged,
+            this,         &FindScreen::changedFindInAttach);
 }
 
 
@@ -393,6 +402,7 @@ void FindScreen::findClicked(void)
     searchArea["tags"]    =findInTags->isChecked();
     searchArea["text"]    =findInText->isChecked(); // Поиск в тексте записи
     searchArea["nameItem"]=findInNameItem->isChecked(); // Поиск по именам веток
+    searchArea["attach"]  =findInAttach->isChecked(); // Поиск по именам прикрепленных файлов
 
     // Проверяется, установлено ли хоть одно поле для поиска
     int findEnableFlag=0;
@@ -587,6 +597,7 @@ void FindScreen::findRecurse(const TreeItem* curritem)
             iteration_search_result["url"]   =false;
             iteration_search_result["tags"]  =false;
             iteration_search_result["text"]  =false;
+            iteration_search_result["attach"]=false;
 
             // Текст в котором будет проводиться поиск
             QString inspectText;
@@ -604,11 +615,31 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     if(key=="nameItem") // Здесь поиск по имени ветки не производится
                         continue;
 
-                    if(key!="text")
+                    if(key!="text" && key!="attach")
                     {
                         // Поиск в обычном поле
                         inspectText=searchRecordTable->getField(key,i);
                         iteration_search_result[key]=findInTextProcess(inspectText);
+                    }
+                    else if(key=="attach")
+                    {
+                        // Поиск по именам прикрепленных файлов записи.
+                        // Таблица берется указателем: копирование AttachTableData
+                        // по значению оставляет висячие ссылки.
+                        // Константность снимается: имена только читаются
+                        Record *record=const_cast<RecordTableData *>(searchRecordTable)->getRecord(i);
+
+                        if(record!=nullptr)
+                        {
+                            AttachTableData *attachTable=record->getAttachTablePointer();
+
+                            QStringList attachNames;
+
+                            for(int a=0; a<attachTable->size(); ++a)
+                                attachNames << attachTable->getFileName(a);
+
+                            iteration_search_result[key]=findInTextProcess(attachNames.join(" "));
+                        }
                     }
                     else
                     {
@@ -758,6 +789,12 @@ void FindScreen::changedFindInNameItem(int state)
 }
 
 
+void FindScreen::changedFindInAttach(int state)
+{
+    changedFindInField("attach",state);
+}
+
+
 void FindScreen::changedFindInField(QString fieldname, int state)
 {
     bool i;
@@ -845,6 +882,7 @@ void FindScreen::switchToolsExpand(bool flag)
     findInTags->setVisible(flag);
     findInText->setVisible(flag);
     findInNameItem->setVisible(flag);
+    findInAttach->setVisible(flag);
 }
 
 // Устаревшая функция, простое обнаружение токенов для поиска
@@ -1024,6 +1062,9 @@ void FindScreen::refreshFieldCompleter(void)
     if(findInNameItem->isChecked())
         enabledFields["nameItem"]=dictionaries.value("nameItem");
 
+    if(findInAttach->isChecked())
+        enabledFields["attach"]=dictionaries.value("attach");
+
     fieldCompleterModel->clear();
 
     // Пары иконка-значение для глобальной сортировки: completer
@@ -1093,6 +1134,16 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
 
             for(int t=0; t<recordTags.size(); t++)
                 addDictionaryWord(dictionaries, seen, "tags", recordTags.at(t));
+
+            Record *record=const_cast<RecordTableData *>(recordTable)->getRecord(i);
+
+            if(record!=nullptr)
+            {
+                AttachTableData *attachTable=record->getAttachTablePointer();
+
+                for(int a=0; a<attachTable->size(); ++a)
+                    addDictionaryWord(dictionaries, seen, "attach", attachTable->getFileName(a));
+            }
         }
     }
 
@@ -1142,6 +1193,8 @@ QIcon FindScreen::completionTypeIcon(const QString &field)
         iconPath=":/resource/icons/Flat/color_icons8_flat_opened_folder.svg";
     else if(field=="author")
         iconPath=":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg";
+    else if(field=="attach")
+        iconPath=":/resource/pic/attach_is_file.svg";
     else
         return QIcon();
 

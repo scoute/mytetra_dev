@@ -1908,6 +1908,11 @@ Enter your old password and new password.
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="221"/>
+        <source>Attach files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="385"/>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="456"/>
         <source>Cannot start find process</source>

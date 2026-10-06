@@ -86,6 +86,7 @@ private slots:
     void changedFindInTags(int state);
     void changedFindInText(int state);
     void changedFindInNameItem(int state);
+    void changedFindInAttach(int state);
 
     void onFindTextEdited(const QString &text);
     void onFieldCompletion(const QString &completion);
@@ -125,6 +126,7 @@ private:
     QCheckBox *findInTags;
     QCheckBox *findInText;
     QCheckBox *findInNameItem;
+    QCheckBox *findInAttach;
 
     QHBoxLayout *toolsLine;
     QGridLayout *toolsGrid;

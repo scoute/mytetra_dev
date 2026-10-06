@@ -35,6 +35,7 @@ signals:
   void pasteAsPlainText(void);
   void selectAll(void);
   void contextMenuOpenImage(void);
+  void contextMenuOpenImageWith(void);
   void contextMenuEditImageProperties(void);
   void contextMenuShowImageInFolder(void);
   void contextMenuEditMathExpression(void);
@@ -61,6 +62,7 @@ private:
   QAction *actionEditImageProperties;
   QAction *actionShowImageInFolder;
   QAction *actionOpenImage;
+  QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
 
@@ -78,6 +80,7 @@ protected slots:
   void onActionPasteAsPlainText(void);
   void onActionSelectAll(void);
   void onActionContextMenuOpenImage(void);
+  void onActionContextMenuOpenImageWith(void);
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuShowImageInFolder(void);
   void onActionContextMenuEditMathExpression(void);

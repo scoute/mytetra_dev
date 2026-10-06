@@ -1828,6 +1828,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Открыть изображение</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="79"/>
+        <source>Open image with...</source>
+        <translation>Открыть изображение с помощью...</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
         <translation>Редактировать формулу</translation>
@@ -1936,6 +1941,44 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="109"/>
         <source>Image info</source>
         <translation>Информация об изображении</translation>
+    </message>
+</context>
+<context>
+    <name>EditorImageOpenDialog</name>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="33"/>
+        <source>Open image with</source>
+        <translation>Открыть изображение с помощью</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="51"/>
+        <source>%1 (default)</source>
+        <translation>%1 (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="59"/>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="62"/>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="82"/>
+        <source>Program to open %1:</source>
+        <translation>Программа для открытия %1:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="106"/>
+        <source>Select program</source>
+        <translation>Выбор программы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="114"/>
+        <source>%1 (custom)</source>
+        <translation>%1 (вручную)</translation>
     </message>
 </context>
 <context>
@@ -2922,6 +2965,18 @@ Try to search for entire database.</source>
         <source>Image file not found:
 %1</source>
         <translation>Файл изображения не найден:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="364"/>
+        <source>Open image with</source>
+        <translation>Открыть изображение с помощью</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="365"/>
+        <source>Can not start program:
+%1</source>
+        <translation>Не удалось запустить программу:
 %1</translation>
     </message>
     <message>

@@ -2506,6 +2506,11 @@ You need to update MyTetra.</source>
         <source>Images &amp;gallery</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="665"/>
+        <source>Attached &amp;files</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>
@@ -4140,29 +4145,44 @@ All data imported will be encrypted.</source>
     </message>
 </context>
 <context>
-    <name>ImagesGallery</name>
+    <name>ContentGallery</name>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="29"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="45"/>
         <source>Images gallery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="37"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="47"/>
+        <source>Attached files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="57"/>
         <source>Tiles per row</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="166"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="209"/>
         <source>%1 images</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="325"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="211"/>
+        <source>%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="519"/>
+        <source>Can not open file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="541"/>
         <source>Can not open image: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="348"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="559"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>

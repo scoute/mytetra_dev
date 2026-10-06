@@ -3,6 +3,12 @@
 
 #include <QWidget>
 #include <QMap>
+#include <QSet>
+#include <QIcon>
+
+class QStandardItemModel;
+class QCompleter;
+class QTimer;
 
 class QLineEdit;
 class QPushButton;
@@ -43,6 +49,26 @@ public slots:
     // и точка с запятой, пробелы по краям отбрасываются
     static QStringList splitRecordTags(const QString &tagsField);
 
+    // Рекурсивный сбор значений полей ветки и всех подветок в словари.
+    // Ключи словарей совпадают с именами полей поиска. Зашифрованные
+    // ветки без пароля пропускаются как и в самом поиске
+    static void collectBranchValues(const TreeItem *curritem,
+                                    QMap<QString, QStringList> &dictionaries,
+                                    QSet<QString> &seen);
+
+    // Добавить слово в словарь поля. Пустые значения отбрасываются,
+    // повторы без учета регистра тоже: пишется первое встречное
+    // написание. Дедуп в пределах поля: одно и то же слово из разных
+    // полей показывается с каждой своей меткой типа
+    static void addDictionaryWord(QMap<QString, QStringList> &dictionaries,
+                                   QSet<QString> &seen,
+                                   const QString &field,
+                                   const QString &word);
+
+    // Иконка типа значения для выпадашки. Рисуется из ресурсов,
+    // от шрифтов системы не зависит
+    static QIcon completionTypeIcon(const QString &field);
+
 
 private slots:
 
@@ -59,6 +85,13 @@ private slots:
     void changedFindInTags(int state);
     void changedFindInText(int state);
     void changedFindInNameItem(int state);
+
+    void onFindTextEdited(const QString &text);
+    void onFieldCompletion(const QString &completion);
+    void refreshFieldCompleter(void);
+
+    // Метаданные дерева изменились: отложить пересборку словаря подсказок
+    void onTreeMetadataSaved(void);
 
 signals:
 
@@ -100,6 +133,20 @@ private:
     FindTableWidget *findTable;
 
     QProgressDialog *progress;
+
+    // Автодополнение строки запроса словами из отмеченных полей.
+    // Модель с иконками типов, привод ручной: QLineEdit ищет совпадение
+    // всей строки и подсказка после пробела не появилась бы
+    QStandardItemModel *fieldCompleterModel=nullptr;
+    QCompleter *fieldCompleter=nullptr;
+    bool fieldCompleterEnabled=false;
+
+    // Пересборка словаря подсказок откладывается таймером, чтобы пакетная
+    // операция не пересобирала его на каждый шаг
+    QTimer *completerRefreshTimer=nullptr;
+    bool treeMetadataConnected=false;
+
+    void setupFieldCompleter(void);
 
     void setupFindTextAndButton(void);
     void assemblyFindTextAndButton(void);

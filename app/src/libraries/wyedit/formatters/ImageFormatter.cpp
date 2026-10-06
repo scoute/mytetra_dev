@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QImage>
 #include <QUrl>
+#include <QDesktopServices>
 
 #include "ImageFormatter.h"
 
@@ -283,6 +284,30 @@ void ImageFormatter::onContextMenuEditImageProperties()
 void ImageFormatter::onDoubleClickOnImage(void)
 {
     onContextMenuEditImageProperties();
+}
+
+
+// Открыть в файловом менеджере каталог с файлом картинки под курсором.
+// Без shell: только QDesktopServices. Если каталог записи еще неизвестен,
+// показывается сообщение
+void ImageFormatter::onShowImageInFolder(void)
+{
+    // Если выделена картинка
+    if(editor->cursorPositionDetector->isImageSelect() ||
+       editor->cursorPositionDetector->isCursorOnImage())
+    {
+        QString directory=editor->getWorkDirectory();
+
+        if(directory.isEmpty())
+        {
+            QMessageBox::information(editor,
+                                     tr("Show in folder"),
+                                     tr("Note directory is unknown, there is nothing to open."));
+            return;
+        }
+
+        QDesktopServices::openUrl(QUrl::fromLocalFile(directory));
+    }
 }
 
 

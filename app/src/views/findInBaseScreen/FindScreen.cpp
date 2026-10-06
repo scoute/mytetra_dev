@@ -1098,6 +1098,12 @@ void FindScreen::refreshFieldCompleter(void)
 
     if(fieldCompleterModel->rowCount()==0)
         fieldCompleter->popup()->hide();
+
+    // Словарь обновился под уже набранный запрос (ветка или заметка
+    // созданы после ввода): переподсказать без перепечатывания, но только
+    // если фокус в поле ввода, иначе выпадашка всплывет над чужой работой
+    if(fieldCompleterEnabled && findText->hasFocus() && !findText->text().trimmed().isEmpty())
+        onFindTextEdited(findText->text());
 }
 
 

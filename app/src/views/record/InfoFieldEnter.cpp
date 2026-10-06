@@ -220,6 +220,11 @@ void InfoFieldEnter::refreshTagsCompleter(void)
 
     if(tags.isEmpty())
         tagsCompleter->popup()->hide();
+
+    // Словарь обновился под уже набранный тег: переподсказать без
+    // перепечатывания, только если фокус в поле меток
+    if(tagsCompleterEnabled && recordTags->hasFocus() && !recordTags->text().trimmed().isEmpty())
+        onTagsEdited(recordTags->text());
 }
 
 

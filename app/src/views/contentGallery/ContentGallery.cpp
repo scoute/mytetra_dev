@@ -27,6 +27,7 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 #include <QPlainTextEdit>
+#include <QPainter>
 
 #include "ContentGallery.h"
 
@@ -499,12 +500,27 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
     const QString imagePath=galleryImages.at(index).imagePath;
 
     // Нераскрываемый формат: иконка типа вместо тумбы.
+    // Текстовый файл рисуется страницей с содержимым.
     // В режиме файлов так рисуются документы, в режиме картинок
     // битые файлы
     QImageReader probeReader(imagePath);
 
     if(!probeReader.canRead())
     {
+        QMimeDatabase probeMimeDatabase;
+        QMimeType probeMimeType=probeMimeDatabase.mimeTypeForFile(imagePath);
+
+        if(probeMimeType.inherits(QStringLiteral("text/plain")))
+        {
+            const QPixmap textPreview=renderTextPreview(imagePath, tile);
+
+            if(!textPreview.isNull())
+            {
+                item->setIcon(QIcon(textPreview));
+                return;
+            }
+        }
+
         static QIcon fileIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
         item->setIcon(fileIcon);
         return;
@@ -816,4 +832,64 @@ QString ContentGallery::formatFileSize(qint64 bytes)
         return QString::number(bytes/1024)+QStringLiteral(" KB");
 
     return QString::number(bytes/(1024*1024))+QStringLiteral(" MB");
+}
+
+
+// Тумба текстового файла: белая страница с первыми строками содержимого.
+// Читаются первые 4КБ, строк влезает сколько влезает. Пустой pixmap
+// если файл не читается или в нем нет текста
+QPixmap ContentGallery::renderTextPreview(const QString &filePath, int tile)
+{
+    if(tile<16)
+        return QPixmap();
+
+    QFile file(filePath);
+
+    if(!file.open(QIODevice::ReadOnly))
+        return QPixmap();
+
+    const QStringList textLines=QString::fromUtf8(file.read(4*1024)).split('\n');
+    file.close();
+
+    QImage pageImage(tile, tile, QImage::Format_ARGB32);
+    pageImage.fill(Qt::white);
+
+    QPainter painter(&pageImage);
+    painter.setPen(QColor(0x33, 0x33, 0x33));
+
+    QFont previewFont(QStringLiteral("Monospace"));
+    previewFont.setPixelSize(qMax(6, tile/16));
+    painter.setFont(previewFont);
+
+    const QFontMetrics previewMetrics(previewFont);
+    const int lineHeight=previewMetrics.height();
+    const int lineMargin=qMax(2, tile/32);
+
+    int textY=lineMargin+previewMetrics.ascent();
+    int drawnLines=0;
+
+    for(int i=0; i<textLines.size() && textY<tile-lineMargin; ++i)
+    {
+        const QString line=textLines.at(i);
+
+        if(line.trimmed().isEmpty())
+        {
+            textY+=lineHeight/2;
+            continue;
+        }
+
+        painter.drawText(lineMargin, textY,
+                         tile-2*lineMargin, lineHeight,
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         previewMetrics.elidedText(line, Qt::ElideRight, tile-2*lineMargin));
+        textY+=lineHeight;
+        drawnLines++;
+    }
+
+    painter.end();
+
+    if(drawnLines==0)
+        return QPixmap();
+
+    return QPixmap::fromImage(pageImage);
 }

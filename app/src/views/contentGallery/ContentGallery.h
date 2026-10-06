@@ -1,5 +1,5 @@
-#ifndef _IMAGESGALLERY_H_
-#define _IMAGESGALLERY_H_
+#ifndef _CONTENTGALLERY_H_
+#define _CONTENTGALLERY_H_
 
 #include <QDialog>
 #include <QStringList>
@@ -21,20 +21,33 @@ struct GalleryImage
     QString recordId;
     QStringList branchPath;
     QString noteName;
+    QString fileName;
 };
 
-class ImagesGallery : public QDialog
+class ContentGallery : public QDialog
 {
     Q_OBJECT
 
 public:
 
-    ImagesGallery(QWidget *parent=nullptr);
-    virtual ~ImagesGallery(void);
+    enum class GalleryMode
+    {
+        Images,
+        Attaches
+    };
+
+    ContentGallery(GalleryMode mode, QWidget *parent=nullptr);
+    virtual ~ContentGallery(void);
 
     // Собрать картинки базы проходом по дереву в порядке веток.
     // Зашифрованные ветки без пароля пропускаются как в поиске
     static void collectGalleryImages(const TreeItem *curritem,
+                                     const QStringList &branchPath,
+                                     QList<GalleryImage> &images);
+
+    // Собрать прикрепленные файлы базы тем же проходом.
+    // Только файлы на диске: ссылки без локального файла пропускаются
+    static void collectAttachedFiles(const TreeItem *curritem,
                                      const QStringList &branchPath,
                                      QList<GalleryImage> &images);
 
@@ -74,11 +87,16 @@ private:
     // Открыть картинку крупно в модальном просмотрщике
     void openImageViewer(const GalleryImage &image) const;
 
+    // Открыть прикрепленный файл системным обработчиком
+    void openAttachedFile(const GalleryImage &image) const;
+
     // Строка плитки, заголовок и слайдер
     QListWidget *imageGrid;
     QSlider *tileSlider;
     QLabel *tileCountLabel;
     QLabel *galleryCountLabel;
+
+    GalleryMode galleryMode;
 
     QList<GalleryImage> galleryImages;
 
@@ -86,4 +104,4 @@ private:
     static const int prefetchImages=20;
 };
 
-#endif /* _IMAGESGALLERY_H_ */
+#endif /* _CONTENTGALLERY_H_ */

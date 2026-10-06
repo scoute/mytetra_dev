@@ -24,7 +24,7 @@
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
-#include "views/imagesGallery/ImagesGallery.h"
+#include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
@@ -172,6 +172,7 @@ void MainWindow::setupSignals(void)
     // Поиск по базе в стандартном меню
     connect(actionToolsMenuFindInBase, &QAction::triggered, this, &MainWindow::toolsFindInBase);
     connect(actionToolsMenuImagesGallery, &QAction::triggered, this, &MainWindow::toolsImagesGallery);
+    connect(actionToolsMenuFilesGallery, &QAction::triggered, this, &MainWindow::toolsFilesGallery);
     if(mytetraConfig.getInterfaceMode()=="mobile")
     {
         // Кнопка поиска по базе в меню дерева разделов для мобильного интерфейса
@@ -661,6 +662,9 @@ void MainWindow::initToolsMenu(void)
     actionToolsMenuImagesGallery = new QAction(tr("Images &gallery"), this);
     menu->addAction(actionToolsMenuImagesGallery);
 
+    actionToolsMenuFilesGallery = new QAction(tr("Attached &files"), this);
+    menu->addAction(actionToolsMenuFilesGallery);
+
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
 
@@ -1015,7 +1019,16 @@ void MainWindow::toolsFindInBase(void)
 // Открыть окно галереи картинок базы отдельным большим окном
 void MainWindow::toolsImagesGallery(void)
 {
-    ImagesGallery *gallery=new ImagesGallery(this);
+    ContentGallery *gallery=new ContentGallery(ContentGallery::GalleryMode::Images, this);
+    gallery->setAttribute(Qt::WA_DeleteOnClose);
+    gallery->show();
+}
+
+
+// Открыть окно прикрепленных файлов базы тем же окном в режиме файлов
+void MainWindow::toolsFilesGallery(void)
+{
+    ContentGallery *gallery=new ContentGallery(ContentGallery::GalleryMode::Attaches, this);
     gallery->setAttribute(Qt::WA_DeleteOnClose);
     gallery->show();
 }

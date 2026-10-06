@@ -3339,6 +3339,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Images &amp;gallery</source>
         <translation>Галерея картинок</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="665"/>
+        <source>Attached &amp;files</source>
+        <translation>Прикрепленные файлы</translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>
@@ -5640,29 +5645,44 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>ImagesGallery</name>
+    <name>ContentGallery</name>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="29"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="45"/>
         <source>Images gallery</source>
         <translation>Галерея картинок</translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="37"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="47"/>
+        <source>Attached files</source>
+        <translation>Прикрепленные файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="57"/>
         <source>Tiles per row</source>
         <translation>Плиток в строке</translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="166"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="209"/>
         <source>%1 images</source>
         <translation>%1 картинок</translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="325"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="211"/>
+        <source>%1 files</source>
+        <translation>%1 файлов</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="519"/>
+        <source>Can not open file: %1</source>
+        <translation>Не могу открыть файл: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="541"/>
         <source>Can not open image: %1</source>
         <translation>Не могу открыть картинку: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="348"/>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="559"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>

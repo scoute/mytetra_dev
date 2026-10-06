@@ -15,14 +15,18 @@
 #include <QScrollArea>
 #include <QDir>
 #include <QFileInfo>
-#include <QMessageBox>
 #include <QDebug>
 
-#include "ImagesGallery.h"
+#include <QDesktopServices>
+#include <QUrl>
+
+#include "ContentGallery.h"
 
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/RecordTableData.h"
+#include "models/recordTable/Record.h"
+#include "models/attachTable/AttachTableData.h"
 #include "models/appConfig/AppConfig.h"
 #include "views/tree/KnowTreeView.h"
 #include "views/mainWindow/MainWindow.h"
@@ -34,9 +38,14 @@ extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
 
 
-ImagesGallery::ImagesGallery(QWidget *parent) : QDialog(parent)
+ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(parent),
+    galleryMode(mode)
 {
-    setWindowTitle(tr("Images gallery"));
+    if(galleryMode==GalleryMode::Images)
+        setWindowTitle(tr("Images gallery"));
+    else
+        setWindowTitle(tr("Attached files"));
+
     resize(800, 600);
 
     // Число плиток в строке: 4-6-8-12-16, по умолчанию 6
@@ -68,27 +77,27 @@ ImagesGallery::ImagesGallery(QWidget *parent) : QDialog(parent)
     setLayout(centralLayout);
 
     connect(tileSlider, &QSlider::valueChanged,
-            this,       &ImagesGallery::onTileColumnsChanged);
+            this,       &ContentGallery::onTileColumnsChanged);
 
     connect(imageGrid->verticalScrollBar(), &QScrollBar::valueChanged,
-            this,                           &ImagesGallery::onScrollChanged);
+            this,                           &ContentGallery::onScrollChanged);
 
     connect(imageGrid, &QListWidget::itemClicked,
-            this,      &ImagesGallery::onItemClicked);
+            this,      &ContentGallery::onItemClicked);
 
     connect(imageGrid, &QListWidget::itemDoubleClicked,
-            this,      &ImagesGallery::onItemDoubleClicked);
+            this,      &ContentGallery::onItemDoubleClicked);
 }
 
 
-ImagesGallery::~ImagesGallery(void)
+ContentGallery::~ContentGallery(void)
 {
 
 }
 
 
 // Число плиток в строке по позиции ползунка
-int ImagesGallery::tileColumns(int sliderPos)
+int ContentGallery::tileColumns(int sliderPos)
 {
     static const int columns[]={4, 6, 8, 12, 16};
 
@@ -103,7 +112,7 @@ int ImagesGallery::tileColumns(int sliderPos)
 
 
 // Размер плитки по ширине вьюпорта и числу колонок
-int ImagesGallery::tileSize(void) const
+int ContentGallery::tileSize(void) const
 {
     int viewportWidth=imageGrid->viewport()->width();
 
@@ -119,7 +128,7 @@ int ImagesGallery::tileSize(void) const
 }
 
 
-void ImagesGallery::showEvent(QShowEvent *event)
+void ContentGallery::showEvent(QShowEvent *event)
 {
     QDialog::showEvent(event);
 
@@ -127,7 +136,7 @@ void ImagesGallery::showEvent(QShowEvent *event)
 }
 
 
-void ImagesGallery::resizeEvent(QResizeEvent *event)
+void ContentGallery::resizeEvent(QResizeEvent *event)
 {
     QDialog::resizeEvent(event);
 
@@ -135,7 +144,7 @@ void ImagesGallery::resizeEvent(QResizeEvent *event)
 }
 
 
-void ImagesGallery::onTileColumnsChanged(int sliderPos)
+void ContentGallery::onTileColumnsChanged(int sliderPos)
 {
     tileCountLabel->setText(QString::number(tileColumns(sliderPos)));
 
@@ -143,14 +152,14 @@ void ImagesGallery::onTileColumnsChanged(int sliderPos)
 }
 
 
-void ImagesGallery::onScrollChanged(void)
+void ContentGallery::onScrollChanged(void)
 {
     updateVisibleWindow();
 }
 
 
 // Перестроить сетку и подгрузить видимое окно
-void ImagesGallery::layoutGrid(void)
+void ContentGallery::layoutGrid(void)
 {
     const int tile=tileSize();
 
@@ -162,7 +171,7 @@ void ImagesGallery::layoutGrid(void)
 
 
 // Собрать галерею заново проходом по базе
-void ImagesGallery::refreshGallery(void)
+void ContentGallery::refreshGallery(void)
 {
     galleryImages.clear();
     imageGrid->clear();
@@ -175,19 +184,31 @@ void ImagesGallery::refreshGallery(void)
         const TreeItem *rootItem=treeModel->getRootItem();
 
         if(rootItem!=nullptr)
-            collectGalleryImages(rootItem, QStringList(), galleryImages);
+        {
+            if(galleryMode==GalleryMode::Images)
+                collectGalleryImages(rootItem, QStringList(), galleryImages);
+            else
+                collectAttachedFiles(rootItem, QStringList(), galleryImages);
+        }
     }
 
     for(int i=0; i<galleryImages.size(); ++i)
     {
         const GalleryImage &image=galleryImages.at(i);
 
-        QListWidgetItem *item=new QListWidgetItem(image.noteName, imageGrid);
+        // В режиме файлов подпись имя файла, в режиме картинок имя заметки
+        const QString itemText=(galleryMode==GalleryMode::Images)
+                               ? image.noteName : image.fileName;
+
+        QListWidgetItem *item=new QListWidgetItem(itemText, imageGrid);
         item->setData(Qt::UserRole, i);
         item->setToolTip(image.noteName+"\n"+image.imagePath);
     }
 
-    galleryCountLabel->setText(tr("%1 images").arg(galleryImages.size()));
+    if(galleryMode==GalleryMode::Images)
+        galleryCountLabel->setText(tr("%1 images").arg(galleryImages.size()));
+    else
+        galleryCountLabel->setText(tr("%1 files").arg(galleryImages.size()));
 
     layoutGrid();
 }
@@ -195,7 +216,7 @@ void ImagesGallery::refreshGallery(void)
 
 // Собрать картинки базы проходом по дереву в порядке веток.
 // Зашифрованные ветки без пароля пропускаются как в поиске
-void ImagesGallery::collectGalleryImages(const TreeItem *curritem,
+void ContentGallery::collectGalleryImages(const TreeItem *curritem,
                                          const QStringList &branchPath,
                                          QList<GalleryImage> &images)
 {
@@ -232,6 +253,7 @@ void ImagesGallery::collectGalleryImages(const TreeItem *curritem,
                 image.recordId=recordTable->getField("id", i);
                 image.branchPath=itemPath;
                 image.noteName=recordTable->getField("name", i);
+                image.fileName=imageFiles.at(f);
                 images.append(image);
             }
         }
@@ -242,10 +264,69 @@ void ImagesGallery::collectGalleryImages(const TreeItem *curritem,
 }
 
 
+// Собрать прикрепленные файлы базы тем же проходом.
+// Только файлы на диске: ссылки без локального файла пропускаются.
+// Таблица берется указателем: копирование AttachTableData
+// по значению оставляет висячие ссылки
+void ContentGallery::collectAttachedFiles(const TreeItem *curritem,
+                                          const QStringList &branchPath,
+                                          QList<GalleryImage> &images)
+{
+    if(curritem==nullptr)
+        return;
+
+    // Зашифрованная ветка без введенного пароля недоступна
+    if(curritem->getField("crypt")=="1" &&
+       globalParameters.getCryptKey().length()==0)
+        return;
+
+    QStringList itemPath=branchPath;
+    const QString itemId=curritem->getField("id");
+
+    if(!itemId.isEmpty())
+        itemPath << itemId;
+
+    if(curritem->recordtableGetRowCount() > 0)
+    {
+        // Константность снимается: файлы только читаются
+        RecordTableData *recordTable=const_cast<TreeItem *>(curritem)->recordtableGetTableData();
+
+        for(int i=0; i<static_cast<int>(recordTable->size()); i++)
+        {
+            Record *record=recordTable->getRecord(i);
+
+            if(record==nullptr)
+                continue;
+
+            AttachTableData *attachTable=record->getAttachTablePointer();
+
+            for(int a=0; a<attachTable->size(); ++a)
+            {
+                const QString diskPath=attachTable->getAbsoluteInnerFileName(a);
+
+                if(!QFileInfo(diskPath).isFile())
+                    continue;
+
+                GalleryImage image;
+                image.imagePath=diskPath;
+                image.recordId=recordTable->getField("id", i);
+                image.branchPath=itemPath;
+                image.noteName=recordTable->getField("name", i);
+                image.fileName=attachTable->getFileName(a);
+                images.append(image);
+            }
+        }
+    }
+
+    for(int i=0; i<curritem->childCount(); i++)
+        collectAttachedFiles(curritem->child(i), itemPath, images);
+}
+
+
 // Графические файлы каталога записи, кроме текста заметки.
 // Имена файлов на диске, а не отображаемые: у вставленных картинок
 // имена технические, их и показываем как есть
-QStringList ImagesGallery::recordImageFiles(const QString &recordDir)
+QStringList ContentGallery::recordImageFiles(const QString &recordDir)
 {
     QDir dir(recordDir);
 
@@ -266,7 +347,7 @@ QStringList ImagesGallery::recordImageFiles(const QString &recordDir)
 
 // Подгрузить [первый-20, последний+20], остальное выгрузить.
 // В памяти только видимое окно с запасом, старые выгружаются
-void ImagesGallery::updateVisibleWindow(void)
+void ContentGallery::updateVisibleWindow(void)
 {
     if(imageGrid->count()==0)
         return;
@@ -334,7 +415,7 @@ void ImagesGallery::updateVisibleWindow(void)
 // Загрузить уменьшенную картинку в пункт.
 // Чтение идет через QImageReader сразу в размер плитки:
 // полный кадр в память не поднимается
-void ImagesGallery::loadItemIcon(QListWidgetItem *item, int tile)
+void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
 {
     if(item==nullptr)
         return;
@@ -343,6 +424,14 @@ void ImagesGallery::loadItemIcon(QListWidgetItem *item, int tile)
 
     if(index<0 || index>=galleryImages.size())
         return;
+
+    // Прикрепленные файлы рисуются иконкой типа, тумбы не нужны
+    if(galleryMode==GalleryMode::Attaches)
+    {
+        static QIcon fileIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+        item->setIcon(fileIcon);
+        return;
+    }
 
     const QString imagePath=galleryImages.at(index).imagePath;
 
@@ -380,7 +469,7 @@ void ImagesGallery::loadItemIcon(QListWidgetItem *item, int tile)
 
 
 // Клик прыгает в заметку с картинкой
-void ImagesGallery::onItemClicked(QListWidgetItem *item)
+void ContentGallery::onItemClicked(QListWidgetItem *item)
 {
     if(item==nullptr)
         return;
@@ -401,8 +490,8 @@ void ImagesGallery::onItemClicked(QListWidgetItem *item)
 }
 
 
-// Двойной клик открывает картинку крупно
-void ImagesGallery::onItemDoubleClicked(QListWidgetItem *item)
+// Двойной клик: картинку крупно, файл открыть
+void ContentGallery::onItemDoubleClicked(QListWidgetItem *item)
 {
     if(item==nullptr)
         return;
@@ -412,24 +501,48 @@ void ImagesGallery::onItemDoubleClicked(QListWidgetItem *item)
     if(index<0 || index>=galleryImages.size())
         return;
 
-    openImageViewer(galleryImages.at(index));
+    if(galleryMode==GalleryMode::Images)
+        openImageViewer(galleryImages.at(index));
+    else
+        openAttachedFile(galleryImages.at(index));
+}
+
+
+// Открыть прикрепленный файл системным обработчиком.
+// Путь абсолютный: относительный file-URL файловый менеджер не открывает
+void ContentGallery::openAttachedFile(const GalleryImage &image) const
+{
+    if(!QFileInfo(image.imagePath).isFile())
+    {
+        QMessageBox::information(const_cast<ContentGallery *>(this),
+                                 tr("Attached files"),
+                                 tr("Can not open file: %1").arg(image.imagePath));
+        return;
+    }
+
+    if(!QDesktopServices::openUrl(QUrl::fromLocalFile(image.imagePath)))
+    {
+        QMessageBox::information(const_cast<ContentGallery *>(this),
+                                 tr("Attached files"),
+                                 tr("Can not open file: %1").arg(image.imagePath));
+    }
 }
 
 
 // Открыть картинку крупно в модальном просмотрщике с прокруткой
-void ImagesGallery::openImageViewer(const GalleryImage &image) const
+void ContentGallery::openImageViewer(const GalleryImage &image) const
 {
     QPixmap pixmap(image.imagePath);
 
     if(pixmap.isNull())
     {
-        QMessageBox::information(const_cast<ImagesGallery *>(this),
+        QMessageBox::information(const_cast<ContentGallery *>(this),
                                  tr("Images gallery"),
                                  tr("Can not open image: %1").arg(image.imagePath));
         return;
     }
 
-    QDialog *viewer=new QDialog(const_cast<ImagesGallery *>(this));
+    QDialog *viewer=new QDialog(const_cast<ContentGallery *>(this));
     viewer->setAttribute(Qt::WA_DeleteOnClose);
     viewer->setWindowTitle(image.noteName);
     viewer->resize(640, 480);

@@ -89,6 +89,8 @@ public slots:
 
     void toolsImagesGallery(void);
 
+    void toolsFilesGallery(void);
+
     void setupShortcuts(void);
 
 private slots:
@@ -174,6 +176,7 @@ private:
 
     QAction *actionToolsMenuFindInBase;
     QAction *actionToolsMenuImagesGallery;
+    QAction *actionToolsMenuFilesGallery;
     QAction *actionToolsMenuActionLog;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 

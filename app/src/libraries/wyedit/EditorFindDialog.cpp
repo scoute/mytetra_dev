@@ -28,6 +28,10 @@ void EditorFindDialog::setup_ui(void)
   lineEdit=new QLineEdit();
   lineEdit->setMinimumWidth(120);
 
+  replaceEdit=new QLineEdit();
+  replaceEdit->setMinimumWidth(120);
+  replaceEdit->setPlaceholderText(tr("Replace with"));
+
   mathCase=new QCheckBox(tr("&Case sensitive"));
   wholeWords=new QCheckBox(tr("&Whole words only"));
   searchBackward=new QCheckBox(tr("Search &backward"));
@@ -36,7 +40,10 @@ void EditorFindDialog::setup_ui(void)
   findButton->setDefault(true);
   findButton->setEnabled(false);
 
-  this->setWindowTitle(tr("Find in the text"));
+  replaceButton=new QPushButton(tr("&Replace"));
+  replaceAllButton=new QPushButton(tr("Replace &all"));
+
+  this->setWindowTitle(tr("Find and replace"));
 }
 
 
@@ -47,6 +54,12 @@ void EditorFindDialog::setup_signals(void)
 
   connect(findButton, &QPushButton::clicked,
           this,       &EditorFindDialog::find_clicked);
+
+  connect(replaceButton, &QPushButton::clicked,
+          this,         &EditorFindDialog::replace_clicked);
+
+  connect(replaceAllButton, &QPushButton::clicked,
+          this,             &EditorFindDialog::replace_all_clicked);
 }
 
 
@@ -56,8 +69,14 @@ void EditorFindDialog::assembly(void)
   findLineLayout->addWidget(lineEdit);
   findLineLayout->addWidget(findButton);
 
+  QHBoxLayout *replaceLineLayout=new QHBoxLayout();
+  replaceLineLayout->addWidget(replaceEdit);
+  replaceLineLayout->addWidget(replaceButton);
+  replaceLineLayout->addWidget(replaceAllButton);
+
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(findLineLayout);
+  centralLayout->addLayout(replaceLineLayout);
   centralLayout->addWidget(mathCase);
   centralLayout->addWidget(wholeWords);
   centralLayout->addWidget(searchBackward);
@@ -71,14 +90,33 @@ void EditorFindDialog::assembly(void)
 // Действия при нажатии кнопки Find
 void EditorFindDialog::find_clicked(void)
 {
-  QString text=lineEdit->text();
+  emit find_text(lineEdit->text(), collectFlags());
+}
 
+
+// Действия при нажатии кнопки Replace
+void EditorFindDialog::replace_clicked(void)
+{
+  emit replace_text(lineEdit->text(), replaceEdit->text(), collectFlags());
+}
+
+
+// Действия при нажатии кнопки Replace all
+void EditorFindDialog::replace_all_clicked(void)
+{
+  emit replace_all_text(lineEdit->text(), replaceEdit->text(), collectFlags());
+}
+
+
+// Флаги поиска из состояния галочек
+QTextDocument::FindFlags EditorFindDialog::collectFlags(void) const
+{
   QTextDocument::FindFlags flags=0;
   if(mathCase->isChecked())      flags|=QTextDocument::FindCaseSensitively;
   if(wholeWords->isChecked())    flags|=QTextDocument::FindWholeWords;
   if(searchBackward->isChecked())flags|=QTextDocument::FindBackward;
 
-  emit find_text(text, flags);
+  return flags;
 }
 
 

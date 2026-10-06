@@ -107,6 +107,9 @@ void MetaEditor::setupLabels(void)
                                      Qt::TextSelectableByKeyboard |
                                      Qt::LinksAccessibleByMouse |
                                      Qt::LinksAccessibleByKeyboard);
+  // Отступ текста слева как у строки меток: обе строки контента
+  // в одной колонке сетки должны начинаться одинаково
+  recordUrl->setIndent(2);
   recordUrl->setVisible(false);
   recordUrl->setWordWrap(true);
 

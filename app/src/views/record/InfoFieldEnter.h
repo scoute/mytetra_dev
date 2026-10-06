@@ -31,6 +31,11 @@ public:
     void setReadOnly(bool state);
     bool isReadOnly();
 
+    // Показывать только редактируемые поля (название, автор, url, метки).
+    // Служебные readonly-поля id и каталога прячутся: нужно для окна
+    // создания записи, где id еще не существует
+    void setDisplayOnlyEditableFields(bool value);
+
     // Последний недопечатанный тег: хвост после крайней запятой
     // или точки с запятой. Разделитель в конце значит тег допечатан
     static QString lastTagToken(const QString &text);
@@ -73,6 +78,16 @@ private:
     QLabel    *recordTagsLabel;
     QLineEdit *recordTags;
 
+    // Служебные readonly-поля: id записи и имя каталога.
+    // Показываются в свойствах записи, прячутся при создании
+    QLabel    *recordIdLabel;
+    QLineEdit *recordId;
+    QLabel    *dirNameLabel;
+    QLineEdit *dirName;
+
+    // Флаг показа только редактируемых полей, см. setDisplayOnlyEditableFields
+    bool isDisplayOnlyEditableFields;
+
     // Кнопка, раскрывающая и скрывающая поля author, url, tags
     QToolButton *expandInfo;
 
@@ -84,6 +99,10 @@ private:
     void assembly(void);
 
     void expandInfoOnDisplay(QString expand);
+
+    // Применить видимость служебных полей по флагу
+    // isDisplayOnlyEditableFields и развернутости инфополей
+    void updateReadOnlyFieldsVisibility(bool infoExpanded);
 
     // Подсказка тегов из базы. Словарь собирается при каждом показе:
     // теги могли измениться. Выпадашка с двух букв, не больше десяти

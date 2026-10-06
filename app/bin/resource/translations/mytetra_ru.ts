@@ -2932,6 +2932,16 @@ Try to search for entire database.</source>
         <source>Note directory is unknown, there is nothing to open.</source>
         <translation>Каталог заметки неизвестен, открывать нечего.</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="318"/>
+        <source>Directory does not exist: %1</source>
+        <translation>Каталог не существует: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="326"/>
+        <source>Can not open directory: %1</source>
+        <translation>Не могу открыть каталог: %1</translation>
+    </message>
 </context>
 <context>
     <name>InfoFieldEnter</name>

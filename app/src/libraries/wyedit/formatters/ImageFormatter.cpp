@@ -306,7 +306,25 @@ void ImageFormatter::onShowImageInFolder(void)
             return;
         }
 
-        QDesktopServices::openUrl(QUrl::fromLocalFile(directory));
+        // Путь делается абсолютным: workDirectory обычно относительный
+        // (./data/base/...), а файловому менеджеру относительный file-URL
+        // не открывается
+        QString absoluteDirectory=QDir(directory).absolutePath();
+
+        if(!QDir(absoluteDirectory).exists())
+        {
+            QMessageBox::information(editor,
+                                     tr("Show in folder"),
+                                     tr("Directory does not exist: %1").arg(absoluteDirectory));
+            return;
+        }
+
+        if(!QDesktopServices::openUrl(QUrl::fromLocalFile(absoluteDirectory)))
+        {
+            QMessageBox::information(editor,
+                                     tr("Show in folder"),
+                                     tr("Can not open directory: %1").arg(absoluteDirectory));
+        }
     }
 }
 

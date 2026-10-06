@@ -126,6 +126,7 @@ void MetaEditor::setupUI(void)
 
  // Область текстовых меток QHBoxLayout невозможно добавить в QScrollArea, поэтому оборачивается в виджет
  recordTagsContainer = new QWidget();
+ recordTagsContainer->setObjectName("recordTagsContainer"); // Имя нужно CSS-теме чтобы снять общий паддинг QLabel
  recordTagsContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
  recordTagsContainer->setLayout(recordTagsLayout);
 

@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="15" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="16" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -552,10 +552,11 @@ QScrollArea#recordTagsScrollArea {
 }
 
 /* Чипы меток в той же строке: общий паддинг QLabel из темы дает
- * каждому слову по 4px лишней ширины, промежутки в 2-3 раза шире
- * светлой темы. Здесь паддинг снят */
+ * каждому слову лишнюю ширину. По горизонтали паддинг снят,
+ * вертикальный оставлен как в теме чтобы строке хватало высоты */
 QWidget#recordTagsContainer QLabel {
-  padding: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 /* QScrollBar -------------------------------------------------------------

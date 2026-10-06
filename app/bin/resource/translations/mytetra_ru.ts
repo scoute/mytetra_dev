@@ -3281,6 +3281,84 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     </message>
 </context>
 <context>
+    <name>TagsPanel</name>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="45"/>
+        <source>Filter tags</source>
+        <translation>Отбор меток</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="52"/>
+        <source>Tag</source>
+        <translation>Метка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="52"/>
+        <source>Count</source>
+        <translation>Кол-во</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="124"/>
+        <source>Tags [%1]</source>
+        <translation>Метки [%1]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="141"/>
+        <source>Tags</source>
+        <translation>Метки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="238"/>
+        <source>Rename tag...</source>
+        <translation>Переименовать метку...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="239"/>
+        <source>Delete tag...</source>
+        <translation>Удалить метку...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="266"/>
+        <source>Rename tag</source>
+        <translation>Переименование метки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="267"/>
+        <source>New name for tag &quot;%1&quot;:</source>
+        <translation>Новое имя метки &quot;%1&quot;:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="284"/>
+        <source>Empty name removes nothing. Use Delete tag to remove it.</source>
+        <translation>Пустое имя ничего не удаляет. Для удаления используйте Удалить метку.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="292"/>
+        <source>Name must be a single tag without comma or semicolon.</source>
+        <translation>Имя должно быть одной меткой без запятой и точки с запятой.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="311"/>
+        <source>Tag &quot;%1&quot; already exists. Merging is not implemented yet.</source>
+        <translation>Метка &quot;%1&quot; уже существует. Слияние пока не поддерживается.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="317"/>
+        <source>Rename tag &quot;%1&quot; to &quot;%2&quot; in %3 note(s)? Undo is not available.</source>
+        <translation>Переименовать метку &quot;%1&quot; в &quot;%2&quot; в %3 записях? Отмена недоступна.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="365"/>
+        <source>Delete tag</source>
+        <translation>Удаление метки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="365"/>
+        <source>Remove tag &quot;%1&quot; from %2 note(s)? Undo is not available.</source>
+        <translation>Убрать метку &quot;%1&quot; из %2 записей? Отмена недоступна.</translation>
+    </message>
+</context>
+<context>
     <name>MathExpressionFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/MathExpressionFormatter.cpp" line="180"/>
@@ -4962,6 +5040,11 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="174"/>
         <source>Find in base</source>
         <translation>Найти в базе</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="174"/>
+        <source>Show tags panel</source>
+        <translation>Показать панель меток</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>

@@ -408,6 +408,13 @@ void MetaEditor::setTags(QString tags)
 }
 
 
+// Список меток открытой записи для обновления извне
+QStringList MetaEditor::getTagsList(void) const
+{
+ return recordTagsTextList;
+}
+
+
 // Метод определяет, в какой строке сетки находится переданный виджет
 // и настраивается строку сетки так, чтобы она занимала минимальное пространство
 void MetaEditor::setMininizeGridRow(QWidget *widget)

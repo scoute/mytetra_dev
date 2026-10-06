@@ -2446,6 +2446,84 @@ You need to update MyTetra.</source>
         <source>Dark</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="141"/>
+        <source>Tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TagsPanel</name>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="45"/>
+        <source>Filter tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="52"/>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="52"/>
+        <source>Count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="124"/>
+        <source>Tags [%1]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="238"/>
+        <source>Rename tag...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="239"/>
+        <source>Delete tag...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="266"/>
+        <source>Rename tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="267"/>
+        <source>New name for tag &quot;%1&quot;:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="284"/>
+        <source>Empty name removes nothing. Use Delete tag to remove it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="292"/>
+        <source>Name must be a single tag without comma or semicolon.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="311"/>
+        <source>Tag &quot;%1&quot; already exists. Merging is not implemented yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="317"/>
+        <source>Rename tag &quot;%1&quot; to &quot;%2&quot; in %3 note(s)? Undo is not available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="365"/>
+        <source>Delete tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="365"/>
+        <source>Remove tag &quot;%1&quot; from %2 note(s)? Undo is not available.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -3577,6 +3655,11 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="174"/>
         <source>Find in base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="174"/>
+        <source>Show tags panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

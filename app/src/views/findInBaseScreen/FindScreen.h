@@ -39,6 +39,10 @@ public slots:
     void findClicked(void);
     void setFindText(QString text);
 
+    // Разбить поле тегов записи на отдельные теги: разделители запятая
+    // и точка с запятой, пробелы по краям отбрасываются
+    static QStringList splitRecordTags(const QString &tagsField);
+
 
 private slots:
 

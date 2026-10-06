@@ -222,6 +222,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorAbsTableCell.h \
     src/libraries/wyedit/EditorAbsTable.h \
     src/libraries/wyedit/EditorAddTableForm.h \
+    src/libraries/wyedit/EditorImageOpenDialog.h \
     src/libraries/wyedit/EditorImageProperties.h \
     src/libraries/wyedit/EditorMultiLineInputDialog.h \
     src/libraries/FixedParameters.h \
@@ -394,6 +395,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorAbsTableCell.cpp \
     src/libraries/wyedit/EditorAbsTable.cpp \
     src/libraries/wyedit/EditorAddTableForm.cpp \
+    src/libraries/wyedit/EditorImageOpenDialog.cpp \
     src/libraries/wyedit/EditorImageProperties.cpp \
     src/libraries/wyedit/EditorMultiLineInputDialog.cpp \
     src/libraries/FixedParameters.cpp \

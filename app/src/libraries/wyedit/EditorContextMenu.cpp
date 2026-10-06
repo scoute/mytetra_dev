@@ -44,6 +44,7 @@ void EditorContextMenu::setupActions(void)
  actionEditImageProperties=new QAction(this);
  actionShowImageInFolder=new QAction(this);
  actionOpenImage=new QAction(this);
+ actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
 
@@ -73,6 +74,9 @@ void EditorContextMenu::setupShortcuts(void)
     // "Умное" действие открытия изображения во внешней программе
     shortcutManager.initAction("editor-openImage", actionOpenImage );
     actionOpenImage->setText(tr("Open image"));
+
+    // Открытие изображения в выбранной программе, без своего шортката
+    actionOpenImageWith->setText(tr("Open image with..."));
 
     // "Умное" действие Вставить / Редактировать формулу
     shortcutManager.initAction("editor-mathExpression", actionEditMathExpression );
@@ -157,6 +161,9 @@ void EditorContextMenu::setImageProperties(bool flag)
     actionOpenImage->setVisible(flag);
     actionOpenImage->setEnabled(flag);
 
+    actionOpenImageWith->setVisible(flag);
+    actionOpenImageWith->setEnabled(flag);
+
     actionEditImageProperties->setVisible(flag);
     actionEditImageProperties->setEnabled(flag);
 
@@ -221,6 +228,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
     connect(actionShowImageInFolder,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowImageInFolder);
     connect(actionOpenImage,            &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImage);
+    connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
 
@@ -253,6 +261,7 @@ void EditorContextMenu::setupMenu(void)
 
     this->addAction(actionSelectAll);
     this->addAction(actionOpenImage);
+    this->addAction(actionOpenImageWith);
     this->addAction(actionEditImageProperties);
     this->addAction(actionShowImageInFolder);
     this->addAction(actionEditMathExpression);
@@ -321,6 +330,14 @@ void EditorContextMenu::onActionContextMenuOpenImage()
     update();
     if(actionOpenImage->isEnabled()) {
         emit contextMenuOpenImage();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuOpenImageWith()
+{
+    update();
+    if(actionOpenImageWith->isEnabled()) {
+        emit contextMenuOpenImageWith();
     }
 }
 

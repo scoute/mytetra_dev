@@ -743,8 +743,12 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
     qDebug() << "Insert source HTML text: " << html;
 
     // Код вставляется не напрямую, а пропускается через временный документ,
-    // чтобы вставить более понятный для QTextEdit HTML-код
+    // чтобы вставить более понятный для QTextEdit HTML-код.
+    // Шрифт по умолчанию у временного документа выставляется как у редактора:
+    // иначе расхождение базовых шрифтов роняет семейство шрифта
+    // вставляемого фрагмента (баг: вставка меняла шрифт на системный)
     QTextDocument htmlFilterDoc;
+    htmlFilterDoc.setDefaultFont(document()->defaultFont());
     htmlFilterDoc.setHtml(html);
 
     qDebug() << "Insert filtered HTML text: " << htmlFilterDoc.toHtml();

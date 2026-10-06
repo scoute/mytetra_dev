@@ -290,8 +290,11 @@ void ImageFormatter::onDownloadImages(const QString html)
 {
   // qDebug() << "HTML for download images: " << html;
 
-  // Создается временный документ на основе HTML (именно документ, так как у QTextDocumentFragment нет методов перебора блоков текста)
+  // Создается временный документ на основе HTML (именно документ, так как у QTextDocumentFragment нет методов перебора блоков текста).
+  // Шрифт по умолчанию как у редактора, иначе расхождение базовых шрифтов
+  // роняет семейство шрифта при промежуточном toHtml (см. onDownloadImagesSuccessfull)
   QTextDocument textDocument;
+  textDocument.setDefaultFont(textArea->document()->defaultFont());
   QTextCursor textCursor(&textDocument);
   textCursor.insertHtml(html);
 

@@ -3305,7 +3305,7 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="45"/>
         <source>Filter tags</source>
-        <translation>Отбор меток</translation>
+        <translation>Фильтр меток</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="52"/>

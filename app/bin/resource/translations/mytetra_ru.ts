@@ -5662,6 +5662,36 @@ Please select single item for enabling edit operation.</source>
         <translation>Плиток в строке</translation>
     </message>
     <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="86"/>
+        <source>Tiles</source>
+        <translation>Плитка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="87"/>
+        <source>List</source>
+        <translation>Список</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Name</source>
+        <translation>Имя</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Size</source>
+        <translation>Размер</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Type</source>
+        <translation>Тип</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Modified</source>
+        <translation>Изменен</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="209"/>
         <source>%1 images</source>
         <translation>%1 картинок</translation>

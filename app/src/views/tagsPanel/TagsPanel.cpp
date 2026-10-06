@@ -26,7 +26,10 @@
 extern GlobalParameters globalParameters;
 
 
-TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent)
+TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
+    treeMetadataConnected(false),
+    tagColumnWidth(-1),
+    resizingProgrammatically(false)
 {
     setupUi();
     assembly();
@@ -37,6 +40,29 @@ TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent)
 TagsPanel::~TagsPanel(void)
 {
 
+}
+
+
+TagsTable::TagsTable(QWidget *parent) : QTableWidget(parent),
+    maxContentWidth(QWIDGETSIZE_MAX)
+{
+
+}
+
+
+void TagsTable::setMaxContentWidth(int width)
+{
+    maxContentWidth=width;
+    updateGeometry();
+}
+
+
+QSize TagsTable::sizeHint(void) const
+{
+    QSize hint=QTableWidget::sizeHint();
+    hint.setWidth(qMin(hint.width(), maxContentWidth));
+
+    return hint;
 }
 
 
@@ -54,14 +80,17 @@ void TagsPanel::setupUi(void)
     // Таблица тег и количество заметок с ним. Строки минимальные
     // чтобы больше влезало. Заголовок у колонки количества пустой:
     // и так понятно что цифры это количество, зато экономия места.
-    // Колонка тегов растягивается на всю ширину дока чтобы справа
-    // не оставалось пустого поля, колонка цифр всегда по содержимому
-    tagsTable=new QTableWidget(this);
+    // Колонки двигаются вручную за границу заголовка: так можно
+    // растянуть колонку тегов и увидеть длинное имя целиком.
+    // Горизонтальной прокрутки нет, при широком содержимом
+    // растягивается сам док
+    tagsTable=new TagsTable(this);
     tagsTable->setColumnCount(2);
     tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << QString());
-    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+    tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
     tagsTable->verticalHeader()->setVisible(false);
+    tagsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     // Дефолтный минимум секции необоснованно раздувает колонку цифр:
     // минимумом ставится ширина одной цифры, дальше колонка растет
@@ -108,6 +137,9 @@ void TagsPanel::setupSignals(void)
 
     connect(tagsTable, &QTableWidget::customContextMenuRequested,
             this,      &TagsPanel::onTagsContextMenu);
+
+    connect(tagsTable->horizontalHeader(), &QHeaderView::sectionResized,
+            this,                           &TagsPanel::onSectionResized);
 }
 
 
@@ -122,6 +154,23 @@ void TagsPanel::showEvent(QShowEvent *event)
 // Пересборка таблицы по всему дереву
 void TagsPanel::refreshTags(void)
 {
+    // Живое обновление: метаданные дерева сохраняются при любом
+    // изменении тегов записи, панель пересобирается следом.
+    // Подписка ленивая и однократная: в конструкторе treeScreen
+    // может еще не существовать
+    if(!treeMetadataConnected)
+    {
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        if(treeScreen!=nullptr)
+        {
+            treeMetadataConnected=true;
+
+            connect(treeScreen, &TreeScreen::treeMetadataSaved,
+                    this,        &TagsPanel::refreshTags);
+        }
+    }
+
     QMap<QString, int> counts;
     QMap<QString, QString> display;
 
@@ -146,6 +195,19 @@ void TagsPanel::refreshTags(void)
             dock->setWindowTitle(tr("Tags [%1]").arg(treeModel->getAllRecordCount()));
     }
 
+    // Запоминается выделенная метка: живые обновления пересобирают
+    // таблицу, а сбрасывать выбор пользователя нельзя
+    QString selectedTag;
+    int selectedRow=tagsTable->currentRow();
+
+    if(selectedRow>=0)
+    {
+        QTableWidgetItem *selectedItem=tagsTable->item(selectedRow, 0);
+
+        if(selectedItem!=nullptr)
+            selectedTag=selectedItem->text();
+    }
+
     // Теги по алфавиту без учета регистра
     QStringList ordered=display.keys();
     ordered.sort(Qt::CaseInsensitive);
@@ -166,9 +228,92 @@ void TagsPanel::refreshTags(void)
         tagsTable->setItem(i, 1, countItem);
     }
 
+    resizingProgrammatically=true;
+
     tagsTable->resizeColumnsToContents();
 
+    // Ручная ширина колонки тегов переживает пересборку.
+    // Автоширина ограничена потолком в сорок цифр чтобы длинное имя
+    // не раздувало док: дальше колонка и док растягиваются только вручную
+    int autoWidth=qMin(tagsTable->columnWidth(0),
+                       tagsTable->fontMetrics().horizontalAdvance('0')*40);
+
+    if(tagColumnWidth<0)
+        tagsTable->setColumnWidth(0, autoWidth);
+    else
+        tagsTable->setColumnWidth(0, tagColumnWidth);
+
+    tagsTable->setMaxContentWidth(tagsTable->columnWidth(0)
+                                  +tagsTable->columnWidth(1)
+                                  +2*tagsTable->frameWidth());
+
+    resizingProgrammatically=false;
+
+    restoreTagSelection(selectedRow, selectedTag);
+
     onFilterChanged(filterEdit->text());
+}
+
+
+// Восстановить выделение метки после пересборки таблицы.
+// Ищется та же строка, затем вся таблица: метка могла съехать
+// при сортировке. Выделение программное и поиск не запускает:
+// глобальный поиск обрабатывается только через двойной клик
+void TagsPanel::restoreTagSelection(int selectedRow, const QString &selectedTag)
+{
+    if(selectedTag.isEmpty())
+        return;
+
+    int rowToSelect=-1;
+    int rowCount=tagsTable->rowCount();
+
+    if(selectedRow>=0 && selectedRow<rowCount)
+    {
+        QTableWidgetItem *candidate=tagsTable->item(selectedRow, 0);
+
+        if(candidate!=nullptr && candidate->text()==selectedTag)
+            rowToSelect=selectedRow;
+    }
+
+    if(rowToSelect<0)
+    {
+        for(int i=0; i<rowCount; i++)
+        {
+            QTableWidgetItem *candidate=tagsTable->item(i, 0);
+
+            if(candidate!=nullptr && candidate->text()==selectedTag)
+            {
+                rowToSelect=i;
+                break;
+            }
+        }
+    }
+
+    if(rowToSelect>=0)
+    {
+        tagsTable->selectRow(rowToSelect);
+        tagsTable->scrollToItem(tagsTable->item(rowToSelect, 0));
+    }
+}
+
+
+// Пользователь подвигал границу колонки тегов: ширина запоминается
+// чтобы пересборка ее не сбрасывала, док подстраивается следом
+void TagsPanel::onSectionResized(int logicalIndex, int oldSize, int newSize)
+{
+    Q_UNUSED(oldSize);
+
+    if(resizingProgrammatically)
+        return;
+
+    if(logicalIndex!=0)
+        return;
+
+    tagColumnWidth=newSize;
+
+    tagsTable->setMaxContentWidth(tagsTable->columnWidth(0)
+                                  +tagsTable->columnWidth(1)
+                                  +2*tagsTable->frameWidth());
 }
 
 

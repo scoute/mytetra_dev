@@ -41,7 +41,8 @@ QT_SDK="/media/user/big_data/soft/windows/QT_installed/5.15.2/5.15.2/mingw81_32"
 # Тулчейн MinGW: разрядность обязана совпадать с Qt (32 бита).
 # Несовпадение версий gcc (7.3 против 8.1 у Qt) на практике линкуется,
 # libstdc++ обратно совместима. Строго по науке нужен mingw810_32
-MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/Tools/mingw730_32"
+###MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/Tools/mingw730_32"
+MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/5.15/Tools/mingw810_32"
 
 # OpenSSL 1.1 32 бита для Qt 5.15 (https-качалки). Лежит в QtCreator:
 # отдельный OpenSSL Toolkit в эту установку не ставился

@@ -84,6 +84,10 @@ private:
 
     void switchReferenceClickMode(bool flag);
 
+    // Снять один уровень отступа в начале строки с курсором.
+    // Вызывается по Shift+Tab из keyPressEvent
+    void unindentCurrentLine(void);
+
 
     bool m_flagShowFormatting; //< Рисовать ли символы форматирования
 

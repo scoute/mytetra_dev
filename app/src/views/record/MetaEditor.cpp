@@ -408,8 +408,9 @@ void MetaEditor::setTags(QString tags)
  // Высота зоны задается жестко по содержимому: sizeHint() у QScrollArea
  // околонулевой, и сетка дает зоне нулевую высоту. height() в момент
  // вызова тоже ненадежен (виджет может быть еще не разложен).
+ // Плюс пара пикселей воздуха сверху и снизу чтобы текст не лип к краям.
  // Хром темы (рамка+отступы) снят селектором recordTagsScrollArea в CSS
- recordTagsScrollArea->setFixedHeight(recordTagsContainer->sizeHint().height());
+ recordTagsScrollArea->setFixedHeight(recordTagsContainer->sizeHint().height()+4);
 }
 
 

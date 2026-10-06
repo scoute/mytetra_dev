@@ -1551,6 +1551,16 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>&lt;/b&gt;&apos; не найдена</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1497"/>
+        <source>Replaced </source>
+        <translation>Заменено </translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1497"/>
+        <source> occurrence(s)</source>
+        <translation> совпадений</translation>
+    </message>
+    <message>
         <source>Real image size </source>
         <translation type="vanished">Истинный размер изображения </translation>
     </message>
@@ -1843,6 +1853,26 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="39"/>
         <source>Find in the text</source>
         <translation>Поиск в тексте</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="33"/>
+        <source>Replace with</source>
+        <translation>Заменить на</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="43"/>
+        <source>&amp;Replace</source>
+        <translation>Заменить</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="44"/>
+        <source>Replace &amp;all</source>
+        <translation>Заменить всё</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="46"/>
+        <source>Find and replace</source>
+        <translation>Поиск и замена</translation>
     </message>
 </context>
 <context>

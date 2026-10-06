@@ -1151,6 +1151,16 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>&lt;/b&gt;&apos; not found</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1497"/>
+        <source>Replaced </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1497"/>
+        <source> occurrence(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -1359,6 +1369,26 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="39"/>
         <source>Find in the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="33"/>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="43"/>
+        <source>&amp;Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="44"/>
+        <source>Replace &amp;all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="46"/>
+        <source>Find and replace</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

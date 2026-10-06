@@ -447,6 +447,14 @@ void Editor::setupSignals(void)
           this,       &Editor::onFindtextSignalDetect,
           Qt::DirectConnection);
 
+  connect(findDialog, &EditorFindDialog::replace_text,
+          this,       &Editor::onReplacetextSignalDetect,
+          Qt::DirectConnection);
+
+  connect(findDialog, &EditorFindDialog::replace_all_text,
+          this,       &Editor::onReplaceAllSignalDetect,
+          Qt::DirectConnection);
+
   connect(textArea,              &EditorTextArea::updateIndentlineGeometry,
           indentSliderAssistant, &EditorIndentSliderAssistant::onUpdateGeometry,
           Qt::DirectConnection);
@@ -1391,6 +1399,103 @@ void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlag
                              tr("String '<b>")+text+tr("</b>' not found"),
                              QMessageBox::Close);
   }
+}
+
+
+// Совпадает ли текущее выделение с искомой строкой при заданных флагах
+bool Editor::isSelectionMatch(const QString &text, QTextDocument::FindFlags flags) const
+{
+  QTextCursor cursor=textArea->textCursor();
+
+  if(!cursor.hasSelection())
+    return false;
+
+  QString selected=cursor.selectedText();
+
+  if(flags & QTextDocument::FindCaseSensitively)
+    return selected==text;
+  else
+    return selected.compare(text, Qt::CaseInsensitive)==0;
+}
+
+
+// Слот замены по кнопке Replace: если выделен подходящий фрагмент, он
+// заменяется, затем ищется следующее совпадение
+void Editor::onReplacetextSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags)
+{
+  qDebug() << "Replace text " << text << " with flags " << flags;
+
+  if(text.isEmpty())
+    return;
+
+  if(isSelectionMatch(text, flags))
+  {
+    QTextCursor cursor=textArea->textCursor();
+    cursor.beginEditBlock();
+    cursor.removeSelectedText();
+    cursor.insertText(replaceText);
+    cursor.endEditBlock();
+    textArea->setTextCursor(cursor);
+  }
+
+  if(!textArea->find(text, flags))
+  {
+    findDialog->hide();
+    QMessageBox::information(this,
+                             tr("Search result"),
+                             tr("String '<b>")+text+tr("</b>' not found"),
+                             QMessageBox::Close);
+  }
+}
+
+
+// Слот замены по кнопке Replace all: все совпадения заменяются за один
+// проход с начала документа одной операцией отмены
+void Editor::onReplaceAllSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags)
+{
+  qDebug() << "Replace all text " << text << " with flags " << flags;
+
+  if(text.isEmpty())
+    return;
+
+  // Замена идет всегда вперед с начала документа, флаг Search backward здесь не применяется
+  QTextDocument::FindFlags forwardFlags=flags & ~QTextDocument::FindBackward;
+
+  QTextCursor cursor=textArea->document()->find(text, 0, forwardFlags);
+
+  if(cursor.isNull())
+  {
+    findDialog->hide();
+    QMessageBox::information(this,
+                             tr("Search result"),
+                             tr("String '<b>")+text+tr("</b>' not found"),
+                             QMessageBox::Close);
+    return;
+  }
+
+  int replaceCount=0;
+
+  // Один блок отмены на всю замену: блок открывается явным курсором
+  // документа, иначе временные копии textCursor() не сгруппируют правки
+  QTextCursor editCursor(textArea->document());
+  editCursor.beginEditBlock();
+
+  while(!cursor.isNull())
+  {
+    cursor.removeSelectedText();
+    cursor.insertText(replaceText);
+    replaceCount++;
+
+    cursor=textArea->document()->find(text, cursor, forwardFlags);
+  }
+
+  editCursor.endEditBlock();
+
+  findDialog->hide();
+  QMessageBox::information(this,
+                           tr("Search result"),
+                           tr("Replaced ")+QString::number(replaceCount)+tr(" occurrence(s)"),
+                           QMessageBox::Close);
 }
 
 

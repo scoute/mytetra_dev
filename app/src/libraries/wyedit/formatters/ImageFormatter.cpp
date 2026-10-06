@@ -23,6 +23,9 @@
 #include "main.h"
 #include "libraries//Downloader.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/GlobalParameters.h"
+
+extern GlobalParameters globalParameters;
 
 
 ImageFormatter::ImageFormatter()
@@ -264,7 +267,8 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
 
 
 // Открыть картинку под курсором во внешней программе ОС.
-// Если файла нет на диске, показывается предупреждение
+// Если файла нет на диске, показывается предупреждение.
+// Если курсор не на картинке, подсказка уходит в строку статуса
 void ImageFormatter::openImage(void)
 {
   // Данные обрабатываемой картинки
@@ -279,6 +283,7 @@ void ImageFormatter::openImage(void)
     imageFormat=imageFormatOnCursor();
   }
   else {
+    globalParameters.getStatusBar()->showMessage(tr("Place the cursor on the image to open it"));
     return;
   }
 
@@ -295,7 +300,15 @@ void ImageFormatter::openImage(void)
   }
 
   // Открытие файла средствами операционной системы
-  QDesktopServices::openUrl(QUrl("file:"+fullFileName));
+  bool opened=QDesktopServices::openUrl(QUrl::fromLocalFile(fullFileName));
+
+  qDebug() << "Open image result: " << opened;
+
+  if(!opened) {
+    QMessageBox::warning(editor,
+                         tr("Open image"),
+                         tr("Can not open image file:\n%1").arg(fullFileName));
+  }
 }
 
 

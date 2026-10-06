@@ -1824,6 +1824,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
         <translation>Редактировать формулу</translation>
     </message>
@@ -2908,7 +2913,29 @@ Try to search for entire database.</source>
         <translation>Вставка изображения</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="331"/>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="292"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="293"/>
+        <source>Image file not found:
+%1</source>
+        <translation>Файл изображения не найден:
+%1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="445"/>
+        <source>Download %1 external image(s) from the Internet?</source>
+        <translation>Скачать %1 внешних изображений из Интернета?</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="446"/>
+        <source>The pasted text contains images stored on external sites. They will be downloaded now.</source>
+        <translation>Вставленный текст содержит изображения с внешних сайтов. Они будут скачаны сейчас.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="495"/>
         <source>Images download initiating...</source>
         <translation>Инициализация загрузки изображений...</translation>
     </message>
@@ -4976,6 +5003,16 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
         <source>Insert image from file or edit selected image properties</source>
         <translation>Вставка картинки из файла / Редактирование свойств картинки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="149"/>
+        <source>Open selected image in external viewer</source>
+        <translation>Открыть выделенное изображение во внешней программе</translation>
     </message>
     <message>
         <source>Insert image from file or edit image properties of selected image</source>

@@ -1,6 +1,8 @@
 #include <QTextBlock>
 #include <QTextFragment>
 #include <QDebug>
+#include <QDesktopServices>
+#include <QFile>
 #include <QFileDialog>
 #include <QImage>
 #include <QImageReader>
@@ -258,6 +260,69 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
     } // Закончился цикл перебора файлов картинок
   } // Завершилось условие что картинка не выбрана и нужно добавлять из файла
 
+}
+
+
+// Открыть картинку под курсором во внешней программе ОС.
+// Если файла нет на диске, показывается предупреждение
+void ImageFormatter::openImage(void)
+{
+  // Данные обрабатываемой картинки
+  QTextImageFormat imageFormat;
+
+  // Если выбрано изображение
+  if(editor->cursorPositionDetector->isImageSelect()) {
+    imageFormat=imageFormatOnSelect();
+  }
+  else if(editor->cursorPositionDetector->isCursorOnImage()) {
+    // Если изображение не выбрано, но курсор находится в позиции изображения
+    imageFormat=imageFormatOnCursor();
+  }
+  else {
+    return;
+  }
+
+  // Выясняется путь к файлу
+  QString fullFileName=editor->getWorkDirectory()+"/"+imageFormat.name();
+
+  qDebug() << "Open image file: "+fullFileName;
+
+  if(!QFile::exists(fullFileName)) {
+    QMessageBox::warning(editor,
+                         tr("Open image"),
+                         tr("Image file not found:\n%1").arg(fullFileName));
+    return;
+  }
+
+  // Открытие файла средствами операционной системы
+  QDesktopServices::openUrl(QUrl("file:"+fullFileName));
+}
+
+
+// Вызов открытия изображения из контекстного меню
+void ImageFormatter::onContextMenuOpenImage(void)
+{
+  // Для картинки с формулой свойства изображения редактироваться не должны
+  if(editor->cursorPositionDetector->isMathExpressionSelect() ||
+      editor->cursorPositionDetector->isCursorOnMathExpression()) {
+    return;
+  }
+
+  // Если выделена картинка
+  if(editor->cursorPositionDetector->isImageSelect() ||
+     editor->cursorPositionDetector->isCursorOnImage())
+  {
+    qDebug() << "Open image selected";
+
+    openImage();
+  }
+}
+
+
+// Открытие картинки по одинарному Ctrl+клику
+void ImageFormatter::onClickOnImage(void)
+{
+  openImage();
 }
 
 

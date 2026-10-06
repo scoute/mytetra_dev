@@ -84,6 +84,7 @@ public:
     QAction *tableProperties;
 
     QAction *insertImageFromFile;
+    QAction *openImage;
     QAction *insertHorizontalLine;
     QAction *mathExpression;
     QAction *expandEditArea;

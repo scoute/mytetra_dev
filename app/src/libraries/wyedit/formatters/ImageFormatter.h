@@ -22,6 +22,9 @@ public:
 
   void editImageProperties(void);
 
+  // Открыть картинку под курсором во внешней программе ОС
+  void openImage(void);
+
 signals:
 
   void downloadImagesSuccessfull(const QString html,
@@ -33,6 +36,10 @@ public slots:
   void onInsertImageFromFileClicked(void);
   void onContextMenuEditImageProperties(void);
   void onShowImageInFolder(void);
+
+  // Открытие картинки из контекстного меню и по Ctrl+клику
+  void onContextMenuOpenImage(void);
+  void onClickOnImage(void);
 
   void onDownloadImages(const QString html);
 

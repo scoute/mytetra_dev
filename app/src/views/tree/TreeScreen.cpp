@@ -1687,6 +1687,8 @@ void TreeScreen::saveKnowTree(void)
   knowTreeModel->save();
 
   updateLastKnowTreeData( QFileInfo(), false );
+
+  emit treeMetadataSaved();
 }
 
 

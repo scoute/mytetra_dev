@@ -12,6 +12,14 @@
 #include <QTextDocument>
 #include <QApplication>
 
+#include <QCompleter>
+#include <QStandardItemModel>
+#include <QStandardItem>
+#include <QTimer>
+#include <QDebug>
+
+#include <algorithm>
+
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
 #include "FindTableWidget.h"
@@ -47,6 +55,8 @@ FindScreen::FindScreen(QWidget *parent) : QWidget(parent)
     assembly();
 
     setupSignals();
+
+    setupFieldCompleter();
 }
 
 
@@ -754,6 +764,9 @@ void FindScreen::changedFindInField(QString fieldname, int state)
     else i=false;
 
     mytetraConfig.set_findscreen_find_in_field(fieldname,i);
+
+    // Набор полей для подсказок зависит от галочек
+    refreshFieldCompleter();
 }
 
 
@@ -764,6 +777,10 @@ void FindScreen::widgetShow(void)
 
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
+
+    // Словарь подсказок пересобирается при каждом показе:
+    // теги и названия могли измениться с прошлого раза
+    refreshFieldCompleter();
 }
 
 
@@ -884,4 +901,288 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
     qDebug() << "Find split list:" << list;
 
     return list;
+}
+
+
+// Создание подсказки автодополнения для строки запроса.
+// Словарь подставится позже в refreshFieldCompleter
+void FindScreen::setupFieldCompleter(void)
+{
+    // Словарь подсказок пересобирается не только при показе виджета,
+    // но и при изменении метаданных дерева, пока виджет открыт
+    completerRefreshTimer=new QTimer(this);
+    completerRefreshTimer->setSingleShot(true);
+    completerRefreshTimer->setInterval(300);
+
+    connect(completerRefreshTimer, &QTimer::timeout,
+            this,                   &FindScreen::refreshFieldCompleter);
+
+    treeMetadataConnected=false;
+
+    // Словарь подсказок: регистр не важен, модель отсортирована
+    // для быстрого поиска. Выпадашка показывает не больше десяти строк.
+    // Модель с иконками типов: иконки из ресурсов рисуются везде
+    fieldCompleterModel=new QStandardItemModel(this);
+
+    fieldCompleter=new QCompleter(this);
+    fieldCompleter->setModel(fieldCompleterModel);
+    fieldCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    fieldCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    fieldCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
+    fieldCompleter->setMaxVisibleItems(10);
+
+    // Совпадение подстрокой а не с начала слова.
+    // Словарь уже собран, фильтрация по нему копеечная
+    fieldCompleter->setFilterMode(Qt::MatchContains);
+
+    // Только привязка к виджету для позиционирования выпадашки.
+    // setCompleter не используется: иначе QLineEdit ищет совпадение
+    // всей строки и подсказка после пробела не появляется.
+    // Привод полностью ручной из onFindTextEdited
+    fieldCompleter->setWidget(findText);
+    fieldCompleterEnabled=false;
+
+    connect(findText, &QLineEdit::textEdited,
+            this,     &FindScreen::onFindTextEdited);
+
+    connect(fieldCompleter, qOverload<const QString &>(&QCompleter::activated),
+            this,          &FindScreen::onFieldCompletion);
+}
+
+
+// Метаданные дерева изменились: пересборка словаря откладывается,
+// чтобы пакетная операция не пересобирала его на каждый шаг
+void FindScreen::onTreeMetadataSaved(void)
+{
+    completerRefreshTimer->start();
+}
+
+
+// Пересборка словаря подсказок по всем значениям полей,
+// отмеченных галочками. Полнотекстовое поле Text не участвует:
+// дополнять среди всего текста заметок бессмысленно
+void FindScreen::refreshFieldCompleter(void)
+{
+    // Подписка на изменения дерева делается один раз и только когда
+    // дерево уже собрано: иначе find_object() на отсутствующем объекте
+    // завершает программу. Пока виджет скрыт, пересборку откладываем:
+    // словарь и так обновится при показе из showEvent
+    if(!treeMetadataConnected)
+    {
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        treeMetadataConnected=true;
+
+        connect(treeScreen, &TreeScreen::treeMetadataSaved,
+                this,       &FindScreen::onTreeMetadataSaved);
+    }
+
+    if(isVisible()==false)
+        return;
+
+    // Словарь собирается по всему дереву: значения из других веток
+    // в подсказке безвредны, зато словарь всегда полный и свежий
+    QMap<QString, QStringList> dictionaries;
+    QSet<QString> seen;
+
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+    if(treeView!=nullptr)
+    {
+        KnowTreeModel *searchModel=static_cast<KnowTreeModel*>(treeView->model());
+
+        const TreeItem *rootItem=searchModel->getRootItem();
+
+        if(rootItem!=nullptr)
+            collectBranchValues(rootItem, dictionaries, seen);
+    }
+
+    // Подсказка показывает объединение словарей отмеченных полей.
+    // Тип значения виден по иконке слева, текст значения чистый
+    // без префиксов: дополняется и ищется как есть
+    QMap<QString, QStringList> enabledFields;
+
+    if(findInName->isChecked())
+        enabledFields["name"]=dictionaries.value("name");
+
+    if(findInAuthor->isChecked())
+        enabledFields["author"]=dictionaries.value("author");
+
+    if(findInUrl->isChecked())
+        enabledFields["url"]=dictionaries.value("url");
+
+    if(findInTags->isChecked())
+        enabledFields["tags"]=dictionaries.value("tags");
+
+    if(findInNameItem->isChecked())
+        enabledFields["nameItem"]=dictionaries.value("nameItem");
+
+    fieldCompleterModel->clear();
+
+    // Пары иконка-значение для глобальной сортировки: completer
+    // с CaseInsensitivelySortedModel требует отсортированный источник
+    QList< QPair<QString, QString> > pairs;
+
+    QMapIterator<QString, QStringList> fieldIt(enabledFields);
+    while(fieldIt.hasNext())
+    {
+        fieldIt.next();
+
+        foreach(QString word, fieldIt.value())
+            pairs << qMakePair(fieldIt.key(), word);
+    }
+
+    std::sort(pairs.begin(), pairs.end(),
+              [](const QPair<QString, QString> &a, const QPair<QString, QString> &b)
+              {
+                  return a.second.compare(b.second, Qt::CaseInsensitive)<0;
+              });
+
+    foreach(auto pair, pairs)
+    {
+        QStandardItem *item=new QStandardItem(completionTypeIcon(pair.first), pair.second);
+        item->setEditable(false);
+        fieldCompleterModel->appendRow(item);
+    }
+
+    // Подсказывать нечего: ручной привод выключается
+    fieldCompleterEnabled=(fieldCompleterModel->rowCount()>0);
+
+    if(fieldCompleterModel->rowCount()==0)
+        fieldCompleter->popup()->hide();
+}
+
+
+// Рекурсивный сбор значений полей ветки и всех подветок в словари.
+// Ключи словарей совпадают с именами полей поиска
+void FindScreen::collectBranchValues(const TreeItem *curritem,
+                                     QMap<QString, QStringList> &dictionaries,
+                                     QSet<QString> &seen)
+{
+    if(curritem==nullptr)
+        return;
+
+    // Зашифрованная ветка без введенного пароля недоступна
+    // так же как для самого поиска
+    if(curritem->getField("crypt")=="1" &&
+       globalParameters.getCryptKey().length()==0)
+        return;
+
+    // Имя самой ветки
+    addDictionaryWord(dictionaries, seen, "nameItem", curritem->getField("name"));
+
+    // Значения полей всех записей ветки
+    if(curritem->recordtableGetRowCount() > 0)
+    {
+        const RecordTableData *recordTable=curritem->recordtableGetTableData();
+
+        for(int i=0; i<static_cast<int>(recordTable->size()); i++)
+        {
+            addDictionaryWord(dictionaries, seen, "name", recordTable->getField("name", i));
+            addDictionaryWord(dictionaries, seen, "author", recordTable->getField("author", i));
+            addDictionaryWord(dictionaries, seen, "url", recordTable->getField("url", i));
+
+            QStringList recordTags=splitRecordTags(recordTable->getField("tags", i));
+
+            for(int t=0; t<recordTags.size(); t++)
+                addDictionaryWord(dictionaries, seen, "tags", recordTags.at(t));
+        }
+    }
+
+    // Рекурсивный обход подчиненных веток
+    for(int i=0; i<curritem->childCount(); i++)
+        collectBranchValues(curritem->child(i), dictionaries, seen);
+}
+
+
+// Добавить слово в словарь поля. Пустые значения отбрасываются,
+// повторы без учета регистра тоже: пишется первое встречное
+// написание. Дедуп в пределах поля: одно и то же слово из разных
+// полей показывается с каждой своей меткой типа
+void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
+                                   QSet<QString> &seen,
+                                   const QString &field,
+                                   const QString &word)
+{
+    QString trimmed=word.trimmed();
+
+    if(trimmed.isEmpty())
+        return;
+
+    QString key=field+trimmed.toLower();
+
+    if(seen.contains(key))
+        return;
+
+    seen.insert(key);
+    dictionaries[field].append(trimmed);
+}
+
+
+// Иконка типа значения для выпадашки. Рисуется из ресурсов,
+// от шрифтов системы не зависит
+QIcon FindScreen::completionTypeIcon(const QString &field)
+{
+    QString iconPath;
+
+    if(field=="tags")
+        iconPath=":/resource/pic/tag.svg";
+    else if(field=="name")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_document.svg";
+    else if(field=="url")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_link.svg";
+    else if(field=="nameItem")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_opened_folder.svg";
+    else if(field=="author")
+        iconPath=":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg";
+    else
+        return QIcon();
+
+    QIcon icon(iconPath);
+
+    // Ресурс не найден или не отрисовался: молчать нельзя, иначе
+    // в выпадашке пустые места без понятной причины
+    if(icon.isNull() || icon.pixmap(16, 16).isNull())
+        qWarning() << "FindScreen::completionTypeIcon: bad icon resource" << iconPath;
+
+    return icon;
+}
+
+
+// Дополняется весь ввод целиком: фишка подсказки найти полное совпадение
+// с именем заметки. Выпадашка появляется начиная с двух букв,
+// при отсутствии совпадений прячется а не висит пустой
+void FindScreen::onFindTextEdited(const QString &text)
+{
+    if(!fieldCompleterEnabled)
+        return;
+
+    QString prefix=text.trimmed();
+
+    if(prefix.length()<2)
+    {
+        fieldCompleter->popup()->hide();
+        return;
+    }
+
+    fieldCompleter->setCompletionPrefix(prefix);
+
+    if(fieldCompleter->completionCount()==0)
+    {
+        fieldCompleter->popup()->hide();
+        return;
+    }
+
+    fieldCompleter->complete();
+}
+
+
+void FindScreen::onFieldCompletion(const QString &completion)
+{
+    // Выбранное дополнение заменяет весь ввод: в модели лежит
+    // чистое значение с иконкой типа, вставляется как есть,
+    // дальше сразу запускается поиск
+    findText->setText(completion);
+
+    findClicked();
 }

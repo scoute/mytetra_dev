@@ -51,6 +51,10 @@ signals:
 
     void treeScreenFindInBaseClicked();
 
+    // Метаданные дерева сохранены (имена, авторы, теги могли измениться).
+    // Подписаны подсказки автодополнения для пересборки словарей
+    void treeMetadataSaved(void);
+
 public slots:
 
     void setupShortcuts(void);

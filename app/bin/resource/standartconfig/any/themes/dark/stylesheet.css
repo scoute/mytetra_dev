@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="16" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="17" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -551,14 +551,6 @@ QScrollArea#recordTagsScrollArea {
   padding: 0px;
 }
 
-/* Чипы меток в той же строке: общий паддинг QLabel из темы дает
- * каждому слову лишнюю ширину. По горизонтали паддинг снят,
- * вертикальный оставлен как в теме чтобы строке хватало высоты */
-QWidget#recordTagsContainer QLabel {
-  padding-left: 0px;
-  padding-right: 0px;
-}
-
 /* QScrollBar -------------------------------------------------------------
 
 https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qscrollbar
@@ -893,10 +885,13 @@ QAbstractSpinBox:selected {
 https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qframe
 
 --------------------------------------------------------------------------- */
+/* Глобального паддинга у надписей нет как в светлой теме:
+ * он раздувал промежутки везде (в т.ч. между словами меток).
+ * Отступы задаются точечно там где нужны */
 QLabel {
   background-color: transparent; /* #19232D */
   border: 0px solid #455364;
-  padding: 2px;
+  padding: 0px;
   margin: 0px;
   color: #DFE1E2;
 }
@@ -930,52 +925,8 @@ QTextBrowser:hover, QTextBrowser:!hover, QTextBrowser:selected, QTextBrowser:pre
   border: 1px solid #455364;
 }
 
-/* QGraphicsView ----------------------------------------------------------
 
---------------------------------------------------------------------------- */
-QGraphicsView {
-  background-color: #19232D;
-  border: 1px solid #455364;
-  color: #DFE1E2;
-  border-radius: 4px;
-}
 
-QGraphicsView:disabled {
-  background-color: #19232D;
-  border: 1px solid #455364;
-  color: #788D9C;
-  border-radius: 4px;
-}
-
-QGraphicsView:hover, QGraphicsView:!hover, QGraphicsView:selected, QGraphicsView:pressed {
-  border: 1px solid #455364;
-}
-
-/* QCalendarWidget --------------------------------------------------------
-
---------------------------------------------------------------------------- */
-QCalendarWidget {
-  border: 1px solid #455364;
-  border-radius: 4px;
-}
-
-QCalendarWidget:disabled {
-  background-color: #19232D;
-  color: #788D9C;
-}
-
-/* QLCDNumber -------------------------------------------------------------
-
---------------------------------------------------------------------------- */
-QLCDNumber {
-  background-color: #19232D;
-  color: #DFE1E2;
-}
-
-QLCDNumber:disabled {
-  background-color: #19232D;
-  color: #788D9C;
-}
 
 /* QProgressBar -----------------------------------------------------------
 
@@ -1204,23 +1155,6 @@ QToolButton::menu-arrow {
 
 QToolButton::menu-arrow:hover {
   image: url("themes/dark/pic/arrow_down_focus.png");
-}
-
-/* QCommandLinkButton -----------------------------------------------------
-
---------------------------------------------------------------------------- */
-QCommandLinkButton {
-  background-color: transparent;
-  border: 1px solid #455364;
-  color: #DFE1E2;
-  border-radius: 4px;
-  padding: 0px;
-  margin: 0px;
-}
-
-QCommandLinkButton:disabled {
-  background-color: transparent;
-  color: #788D9C;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1459,33 +1393,6 @@ QLineEdit:selected {
   color: #455364;
 }
 
-/* QTabWiget --------------------------------------------------------------
-
-https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qtabwidget-and-qtabbar
-
---------------------------------------------------------------------------- */
-QTabWidget {
-  padding: 2px;
-  selection-background-color: #455364;
-}
-
-QTabWidget QWidget {
-  /* Fixes #189 */
-  border-radius: 4px;
-}
-
-QTabWidget::pane {
-  border: 1px solid #455364;
-  border-radius: 4px;
-  margin: 0px;
-  /* Fixes double border inside pane with pyqt5 */
-  padding: 0px;
-}
-
-QTabWidget::pane:selected {
-  background-color: #455364;
-  border: 1px solid #346792;
-}
 
 /* QTabBar ----------------------------------------------------------------
 
@@ -2042,63 +1949,6 @@ QHeaderView::up-arrow {
   image: url("themes/dark/pic/arrow_up.png");
 }
 
-/* QToolBox --------------------------------------------------------------
-
-https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qtoolbox
-
---------------------------------------------------------------------------- */
-QToolBox {
-  padding: 0px;
-  border: 0px;
-  border: 1px solid #455364;
-}
-
-QToolBox:selected {
-  padding: 0px;
-  border: 2px solid #346792;
-}
-
-QToolBox::tab {
-  background-color: #19232D;
-  border: 1px solid #455364;
-  color: #DFE1E2;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-}
-
-QToolBox::tab:disabled {
-  color: #788D9C;
-}
-
-QToolBox::tab:selected {
-  background-color: #60798B;
-  border-bottom: 2px solid #346792;
-}
-
-QToolBox::tab:selected:disabled {
-  background-color: #455364;
-  border-bottom: 2px solid #26486B;
-}
-
-QToolBox::tab:!selected {
-  background-color: #455364;
-  border-bottom: 2px solid #455364;
-}
-
-QToolBox::tab:!selected:disabled {
-  background-color: #19232D;
-}
-
-QToolBox::tab:hover {
-  border-color: #1A72BB;
-  border-bottom: 2px solid #1A72BB;
-}
-
-QToolBox QScrollArea {
-  padding: 0px;
-  border: 0px;
-  background-color: #19232D;
-}
 
 /* QFrame -----------------------------------------------------------------
 
@@ -2168,50 +2018,6 @@ QSplitter::handle:vertical {
   image: url("themes/dark/pic/line_horizontal.png");
 }
 
-/* QDateEdit, QDateTimeEdit -----------------------------------------------
-
---------------------------------------------------------------------------- */
-QDateEdit, QDateTimeEdit {
-  selection-background-color: #346792;
-  border-style: solid;
-  border: 1px solid #455364;
-  border-radius: 4px;
-  /* This fixes 103, 111 */
-  padding-top: 2px;
-  /* This fixes 103, 111 */
-  padding-bottom: 2px;
-  padding-left: 4px;
-  padding-right: 4px;
-  min-width: 10px;
-}
-
-QDateEdit:on, QDateTimeEdit:on {
-  selection-background-color: #346792;
-}
-
-QDateEdit::drop-down, QDateTimeEdit::drop-down {
-  subcontrol-origin: padding;
-  subcontrol-position: top right;
-  width: 12px;
-  border-left: 1px solid #455364;
-}
-
-QDateEdit::down-arrow, QDateTimeEdit::down-arrow {
-  image: url("themes/dark/pic/arrow_down_disabled.png");
-  height: 8px;
-  width: 8px;
-}
-
-QDateEdit::down-arrow:on, QDateEdit::down-arrow:hover, QDateEdit::down-arrow:focus, QDateTimeEdit::down-arrow:on, QDateTimeEdit::down-arrow:hover, QDateTimeEdit::down-arrow:focus {
-  image: url("themes/dark/pic/arrow_down.png");
-}
-
-QDateEdit QAbstractItemView, QDateTimeEdit QAbstractItemView {
-  background-color: #19232D;
-  border-radius: 4px;
-  border: 1px solid #455364;
-  selection-background-color: #346792;
-}
 
 /* QAbstractView ----------------------------------------------------------
 
@@ -2225,15 +2031,6 @@ QAbstractView:selected {
   background: #346792;
   color: #455364;
 }
-
-/* PlotWidget -------------------------------------------------------------
-
---------------------------------------------------------------------------- */
-PlotWidget {
-  /* Fix cut labels in plots #134 */
-  padding: 0px;
-}
-
 
 /* Дополнительно настроенные параметры */
 

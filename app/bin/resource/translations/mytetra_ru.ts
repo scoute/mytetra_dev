@@ -3234,6 +3234,21 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Mi&amp;nimize window</source>
         <translation>Свернуть окно</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="742"/>
+        <source>&amp;Themes</source>
+        <translation>Темы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="747"/>
+        <source>Default</source>
+        <translation>Основная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="748"/>
+        <source>Dark</source>
+        <translation>Темная</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

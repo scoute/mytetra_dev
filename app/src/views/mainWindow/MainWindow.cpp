@@ -24,6 +24,7 @@
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
+#include "views/imagesGallery/ImagesGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
@@ -170,6 +171,7 @@ void MainWindow::setupSignals(void)
 
     // Поиск по базе в стандартном меню
     connect(actionToolsMenuFindInBase, &QAction::triggered, this, &MainWindow::toolsFindInBase);
+    connect(actionToolsMenuImagesGallery, &QAction::triggered, this, &MainWindow::toolsImagesGallery);
     if(mytetraConfig.getInterfaceMode()=="mobile")
     {
         // Кнопка поиска по базе в меню дерева разделов для мобильного интерфейса
@@ -656,6 +658,9 @@ void MainWindow::initToolsMenu(void)
     actionToolsMenuFindInBase = new QAction(this); // Так как есть this, указатель не будет потерян основным окном
     menu->addAction(actionToolsMenuFindInBase);
 
+    actionToolsMenuImagesGallery = new QAction(tr("Images &gallery"), this);
+    menu->addAction(actionToolsMenuImagesGallery);
+
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
 
@@ -851,6 +856,8 @@ void MainWindow::setupShortcuts(void)
 
     shortcutManager.initAction("misc-findInBase", actionToolsMenuFindInBase );
 
+    shortcutManager.initAction("misc-imagesGallery", actionToolsMenuImagesGallery );
+
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
     shortcutManager.initAction("misc-focusEditor", actionFocusEditor );
@@ -1002,6 +1009,15 @@ void MainWindow::toolsFindInBase(void)
         findScreenRel->widgetShow();
     else
         findScreenRel->widgetHide();
+}
+
+
+// Открыть окно галереи картинок базы отдельным большим окном
+void MainWindow::toolsImagesGallery(void)
+{
+    ImagesGallery *gallery=new ImagesGallery(this);
+    gallery->setAttribute(Qt::WA_DeleteOnClose);
+    gallery->show();
 }
 
 

@@ -3329,6 +3329,16 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Dark</source>
         <translation>Темная</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="141"/>
+        <source>Tags</source>
+        <translation>Метки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="662"/>
+        <source>Images &amp;gallery</source>
+        <translation>Галерея картинок</translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>
@@ -3351,11 +3361,6 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="124"/>
         <source>Tags [%1]</source>
         <translation>Метки [%1]</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="141"/>
-        <source>Tags</source>
-        <translation>Метки</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="238"/>
@@ -5098,6 +5103,11 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
+        <source>Show images gallery</source>
+        <translation>Показать галерею картинок</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
         <source>Synchronization</source>
         <translation>Синхронизация</translation>
     </message>
@@ -5627,6 +5637,34 @@ Please select single item for enabling edit operation.</source>
 %3</source>
         <translation>Ошибка парсера на строке %1, в позиции %2:
 %3.</translation>
+    </message>
+</context>
+<context>
+    <name>ImagesGallery</name>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="29"/>
+        <source>Images gallery</source>
+        <translation>Галерея картинок</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="37"/>
+        <source>Tiles per row</source>
+        <translation>Плиток в строке</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="166"/>
+        <source>%1 images</source>
+        <translation>%1 картинок</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="325"/>
+        <source>Can not open image: %1</source>
+        <translation>Не могу открыть картинку: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="348"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
     </message>
 </context>
 </TS>

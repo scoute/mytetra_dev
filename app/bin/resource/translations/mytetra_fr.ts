@@ -4162,6 +4162,36 @@ All data imported will be encrypted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="86"/>
+        <source>Tiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="87"/>
+        <source>List</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="110"/>
+        <source>Modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="209"/>
         <source>%1 images</source>
         <translation type="unfinished"></translation>

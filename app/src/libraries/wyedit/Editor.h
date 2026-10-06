@@ -202,11 +202,18 @@ private slots:
  void onSelectAll(void);
 
  void onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags);
+ void onFindPrevSignalDetect(const QString &text, QTextDocument::FindFlags flags);
  void onReplacetextSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags);
  void onReplaceAllSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags);
 
  // Совпадает ли текущее выделение с искомой строкой при заданных флагах
  bool isSelectionMatch(const QString &text, QTextDocument::FindFlags flags) const;
+
+ // Искать текст с указанного направления с зацикливанием и подсветкой
+ bool findInText(const QString &text, QTextDocument::FindFlags flags, bool backward);
+
+ // Подсветить все совпадения запроса. Пустой запрос гасит подсветку
+ void highlightMatches(const QString &text, QTextDocument::FindFlags flags);
 
  // Открытие контекстного меню
  void onCustomContextMenuRequested(const QPoint &pos);

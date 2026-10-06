@@ -654,7 +654,11 @@ void EditorToolBar::insertButtonToToolsLine(QString toolName, QToolBar &line)
         QAction *toolAsAction=qobject_cast<QAction *>(this->findChild<QObject *>(name));
 
         if(!toolAsWidget && !toolAsAction) {
-            criticalError("WyEdit: Can not find editor tool with name '"+toolName+"'. Please check editor *.ini file");
+            // Неизвестный инструмент пропускается с предупреждением, а не роняет
+            // программу: в конфиге может остаться имя из более новой версии
+            // (откат бинарника), при обратном обновлении кнопка вернется сама
+            qWarning() << "WyEdit: skip unknown editor tool" << toolName;
+            return;
         }
 
         // Если данный инструмент не содержится в списке заблокированных

@@ -429,6 +429,9 @@ void Editor::setupSignals(void)
   connect(editorContextMenu, &EditorContextMenu::contextMenuEditImageProperties,
           imageFormatter,    &ImageFormatter::onContextMenuEditImageProperties,
           Qt::DirectConnection);
+  connect(editorContextMenu, &EditorContextMenu::contextMenuShowImageInFolder,
+          imageFormatter,    &ImageFormatter::onShowImageInFolder,
+          Qt::DirectConnection);
   connect(editorContextMenu,       &EditorContextMenu::contextMenuEditMathExpression,
           mathExpressionFormatter, &MathExpressionFormatter::onContextMenuEditMathExpression,
           Qt::DirectConnection);

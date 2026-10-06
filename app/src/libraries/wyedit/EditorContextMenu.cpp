@@ -42,6 +42,7 @@ void EditorContextMenu::setupActions(void)
  actionSelectAll=new QAction(this);
 
  actionEditImageProperties=new QAction(this);
+ actionShowImageInFolder=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
 
@@ -65,6 +66,8 @@ void EditorContextMenu::setupShortcuts(void)
     // "Умное" действие Вставить изображение / Редактировать свойства изображения
     shortcutManager.initAction("editor-insertImageFromFile", actionEditImageProperties );
     actionEditImageProperties->setText(tr("Edit image properties")); // В контекстном меню это редактирование свойств изображения
+
+    actionShowImageInFolder->setText(tr("Show in folder")); // Открыть каталог с файлом картинки
 
     // "Умное" действие Вставить / Редактировать формулу
     shortcutManager.initAction("editor-mathExpression", actionEditMathExpression );
@@ -148,6 +151,9 @@ void EditorContextMenu::setImageProperties(bool flag)
 
     actionEditImageProperties->setVisible(flag);
     actionEditImageProperties->setEnabled(flag);
+
+    actionShowImageInFolder->setVisible(flag);
+    actionShowImageInFolder->setEnabled(flag);
 }
 
 
@@ -205,6 +211,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionSelectAll,       &QAction::triggered, this, &EditorContextMenu::onActionSelectAll);
 
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
+    connect(actionShowImageInFolder,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowImageInFolder);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
 
@@ -237,6 +244,7 @@ void EditorContextMenu::setupMenu(void)
 
     this->addAction(actionSelectAll);
     this->addAction(actionEditImageProperties);
+    this->addAction(actionShowImageInFolder);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
 }
@@ -303,6 +311,14 @@ void EditorContextMenu::onActionContextMenuEditImageProperties()
     update();
     if(actionEditImageProperties->isEnabled()) {
         emit contextMenuEditImageProperties();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuShowImageInFolder()
+{
+    update();
+    if(actionShowImageInFolder->isEnabled()) {
+        emit contextMenuShowImageInFolder();
     }
 }
 

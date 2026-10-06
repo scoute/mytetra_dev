@@ -1818,6 +1818,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Свойства картинки</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="70"/>
+        <source>Show in folder</source>
+        <translation>Открыть в папке</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
         <translation>Редактировать формулу</translation>
@@ -2916,6 +2921,16 @@ Try to search for entire database.</source>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="407"/>
         <source>Probably error in a process of images download.</source>
         <translation>Возникла ошибка в процессе скачивания изображений.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="303"/>
+        <source>Show in folder</source>
+        <translation>Открыть в папке</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="305"/>
+        <source>Note directory is unknown, there is nothing to open.</source>
+        <translation>Каталог заметки неизвестен, открывать нечего.</translation>
     </message>
 </context>
 <context>

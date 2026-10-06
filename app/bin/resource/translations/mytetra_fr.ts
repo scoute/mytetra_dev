@@ -1339,6 +1339,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="70"/>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
         <translation type="unfinished"></translation>
@@ -2123,6 +2128,16 @@ Try to search for entire database.</source>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="407"/>
         <source>Probably error in a process of images download.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="303"/>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="305"/>
+        <source>Note directory is unknown, there is nothing to open.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

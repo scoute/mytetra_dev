@@ -32,6 +32,7 @@ public slots:
 
   void onInsertImageFromFileClicked(void);
   void onContextMenuEditImageProperties(void);
+  void onShowImageInFolder(void);
 
   void onDownloadImages(const QString html);
 

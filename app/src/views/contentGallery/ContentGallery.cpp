@@ -1,6 +1,11 @@
 #include <QListWidget>
 #include <QSlider>
 #include <QLabel>
+#include <QComboBox>
+#include <QStackedWidget>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QHeaderView>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QShowEvent>
@@ -19,6 +24,9 @@
 
 #include <QDesktopServices>
 #include <QUrl>
+#include <QMimeDatabase>
+#include <QMimeType>
+#include <QPlainTextEdit>
 
 #include "ContentGallery.h"
 
@@ -36,6 +44,25 @@
 
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
+
+
+// Пункт списка с числовой сортировкой: размер и дата сортируются
+// по значению из UserRole, а не по отображаемому тексту
+class GallerySortItem : public QTableWidgetItem
+{
+public:
+
+    explicit GallerySortItem(const QString &text, qlonglong sortValue)
+        : QTableWidgetItem(text)
+    {
+        setData(Qt::UserRole, sortValue);
+    }
+
+    bool operator<(const QTableWidgetItem &other) const override
+    {
+        return data(Qt::UserRole).toLongLong() < other.data(Qt::UserRole).toLongLong();
+    }
+};
 
 
 ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(parent),
@@ -59,9 +86,15 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
     tileCountLabel=new QLabel(QString::number(tileColumns(1)), this);
     galleryCountLabel=new QLabel(this);
 
+    // Вид: плитка или список. Список умеет сортировку по всем колонкам
+    viewCombo=new QComboBox(this);
+    viewCombo->addItem(tr("Tiles"));
+    viewCombo->addItem(tr("List"));
+
     QHBoxLayout *topLayout=new QHBoxLayout();
     topLayout->addWidget(tileCountLabel);
     topLayout->addWidget(tileSlider, 1);
+    topLayout->addWidget(viewCombo);
     topLayout->addWidget(galleryCountLabel);
 
     imageGrid=new QListWidget(this);
@@ -70,11 +103,32 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
     imageGrid->setMovement(QListWidget::Static);
     imageGrid->setSelectionMode(QAbstractItemView::SingleSelection);
 
+    // Список: имя, размер, тип, дата. Сортировка кликом по заголовку
+    filesList=new QTableWidget(this);
+    filesList->setColumnCount(4);
+    filesList->setHorizontalHeaderLabels(QStringList() << tr("Name") << tr("Size") << tr("Type") << tr("Modified"));
+    filesList->verticalHeader()->setVisible(false);
+    filesList->setSelectionBehavior(QAbstractItemView::SelectRows);
+    filesList->setSelectionMode(QAbstractItemView::SingleSelection);
+    filesList->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    filesList->setSortingEnabled(true);
+    filesList->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    filesList->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    filesList->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    filesList->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+
+    viewStack=new QStackedWidget(this);
+    viewStack->addWidget(imageGrid);
+    viewStack->addWidget(filesList);
+
     QVBoxLayout *centralLayout=new QVBoxLayout(this);
     centralLayout->addLayout(topLayout);
-    centralLayout->addWidget(imageGrid, 1);
+    centralLayout->addWidget(viewStack, 1);
 
     setLayout(centralLayout);
+
+    connect(viewCombo, qOverload<int>(&QComboBox::currentIndexChanged),
+            this,      &ContentGallery::onViewModeChanged);
 
     connect(tileSlider, &QSlider::valueChanged,
             this,       &ContentGallery::onTileColumnsChanged);
@@ -87,6 +141,12 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
 
     connect(imageGrid, &QListWidget::itemDoubleClicked,
             this,      &ContentGallery::onItemDoubleClicked);
+
+    connect(filesList, &QTableWidget::cellClicked,
+            this,      &ContentGallery::onListCellClicked);
+
+    connect(filesList, &QTableWidget::cellDoubleClicked,
+            this,      &ContentGallery::onListCellDoubleClicked);
 }
 
 
@@ -152,6 +212,15 @@ void ContentGallery::onTileColumnsChanged(int sliderPos)
 }
 
 
+// Переключение плитки и списка. Слайдер работает только в плитке
+void ContentGallery::onViewModeChanged(int comboIndex)
+{
+    viewStack->setCurrentIndex(comboIndex);
+    tileSlider->setEnabled(comboIndex==0);
+    tileCountLabel->setEnabled(comboIndex==0);
+}
+
+
 void ContentGallery::onScrollChanged(void)
 {
     updateVisibleWindow();
@@ -209,6 +278,8 @@ void ContentGallery::refreshGallery(void)
         galleryCountLabel->setText(tr("%1 images").arg(galleryImages.size()));
     else
         galleryCountLabel->setText(tr("%1 files").arg(galleryImages.size()));
+
+    fillFilesList();
 
     layoutGrid();
 }
@@ -425,20 +496,28 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
     if(index<0 || index>=galleryImages.size())
         return;
 
-    // Прикрепленные файлы рисуются иконкой типа, тумбы не нужны
-    if(galleryMode==GalleryMode::Attaches)
+    const QString imagePath=galleryImages.at(index).imagePath;
+
+    // Нераскрываемый формат: иконка типа вместо тумбы.
+    // В режиме файлов так рисуются документы, в режиме картинок
+    // битые файлы
+    QImageReader probeReader(imagePath);
+
+    if(!probeReader.canRead())
     {
         static QIcon fileIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
         item->setIcon(fileIcon);
         return;
     }
 
-    const QString imagePath=galleryImages.at(index).imagePath;
-
     QImageReader reader(imagePath);
 
     if(!reader.canRead())
+    {
+        static QIcon brokenIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+        item->setIcon(brokenIcon);
         return;
+    }
 
     QSize sourceSize=reader.size();
 
@@ -462,7 +541,11 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
     const QImage image=reader.read();
 
     if(image.isNull())
+    {
+        static QIcon brokenReadIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+        item->setIcon(brokenReadIcon);
         return;
+    }
 
     item->setIcon(QIcon(QPixmap::fromImage(image)));
 }
@@ -479,14 +562,66 @@ void ContentGallery::onItemClicked(QListWidgetItem *item)
     if(index<0 || index>=galleryImages.size())
         return;
 
-    const GalleryImage &image=galleryImages.at(index);
+    jumpToImage(galleryImages.at(index));
+}
 
+
+// Прыгнуть в заметку по данным пункта
+void ContentGallery::jumpToImage(const GalleryImage &image) const
+{
     MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
 
     if(mainWindow==nullptr)
         return;
 
     mainWindow->setTreeAndRecordtablePositions(image.branchPath, image.recordId);
+}
+
+
+// Клик в списке прыгает в заметку
+void ContentGallery::onListCellClicked(int row, int column)
+{
+    Q_UNUSED(column);
+
+    QTableWidgetItem *item=filesList->item(row, 0);
+
+    if(item==nullptr)
+        return;
+
+    jumpToImage(galleryImageFromItem(item));
+}
+
+
+// Двойной клик в списке открывает по режиму
+void ContentGallery::onListCellDoubleClicked(int row, int column)
+{
+    Q_UNUSED(column);
+
+    QTableWidgetItem *item=filesList->item(row, 0);
+
+    if(item==nullptr)
+        return;
+
+    openGalleryImage(galleryImageFromItem(item));
+}
+
+
+// Собрать данные пункта списка обратно в структуру.
+// Индексы строк после сортировки не годятся, поэтому путь,
+// запись и файл хранятся прямо в пункте
+GalleryImage ContentGallery::galleryImageFromItem(QTableWidgetItem *item) const
+{
+    GalleryImage image;
+
+    if(item==nullptr)
+        return image;
+
+    image.branchPath=item->data(Qt::UserRole).toStringList();
+    image.recordId=item->data(Qt::UserRole+1).toString();
+    image.imagePath=item->data(Qt::UserRole+2).toString();
+    image.noteName=item->text();
+
+    return image;
 }
 
 
@@ -501,10 +636,27 @@ void ContentGallery::onItemDoubleClicked(QListWidgetItem *item)
     if(index<0 || index>=galleryImages.size())
         return;
 
+    openGalleryImage(galleryImages.at(index));
+}
+
+
+// Открыть по режиму: картинку в просмотрщик, файл наружу.
+// Текстовый файл показывается встроенным просмотрщиком текста
+void ContentGallery::openGalleryImage(const GalleryImage &image) const
+{
     if(galleryMode==GalleryMode::Images)
-        openImageViewer(galleryImages.at(index));
+    {
+        openImageViewer(image);
+        return;
+    }
+
+    QMimeDatabase mimeDatabase;
+    QMimeType mimeType=mimeDatabase.mimeTypeForFile(image.imagePath);
+
+    if(mimeType.inherits(QStringLiteral("text/plain")))
+        openTextViewer(image);
     else
-        openAttachedFile(galleryImages.at(index));
+        openAttachedFile(image);
 }
 
 
@@ -526,6 +678,45 @@ void ContentGallery::openAttachedFile(const GalleryImage &image) const
                                  tr("Attached files"),
                                  tr("Can not open file: %1").arg(image.imagePath));
     }
+}
+
+
+// Показать текстовый файл встроенным просмотрщиком.
+// Читаются первые 200КБ как UTF-8: бинарные форматы (pdf, doc)
+// так не открыть, для них нет зависимостей
+void ContentGallery::openTextViewer(const GalleryImage &image) const
+{
+    QFile file(image.imagePath);
+
+    if(!file.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::information(const_cast<ContentGallery *>(this),
+                                 tr("Attached files"),
+                                 tr("Can not open file: %1").arg(image.imagePath));
+        return;
+    }
+
+    const QString textContent=QString::fromUtf8(file.read(200*1024));
+    file.close();
+
+    QDialog *viewer=new QDialog(const_cast<ContentGallery *>(this));
+    viewer->setAttribute(Qt::WA_DeleteOnClose);
+    viewer->setWindowTitle(image.fileName.isEmpty() ? image.noteName : image.fileName);
+    viewer->resize(640, 480);
+
+    QPlainTextEdit *textView=new QPlainTextEdit(viewer);
+    textView->setPlainText(textContent);
+    textView->setReadOnly(true);
+
+    QPushButton *closeButton=new QPushButton(tr("Close"), viewer);
+    connect(closeButton, &QPushButton::clicked, viewer, &QDialog::accept);
+
+    QVBoxLayout *viewerLayout=new QVBoxLayout(viewer);
+    viewerLayout->addWidget(textView, 1);
+    viewerLayout->addWidget(closeButton);
+
+    viewer->setLayout(viewerLayout);
+    viewer->exec();
 }
 
 
@@ -565,4 +756,64 @@ void ContentGallery::openImageViewer(const GalleryImage &image) const
 
     viewer->setLayout(viewerLayout);
     viewer->exec();
+}
+
+
+// Заполнить список файлов: имя, размер, тип, дата. Сортировка
+// кликом по заголовку, числа и даты сортируются как числа.
+// Данные для прыжка и открытия хранятся в пунктах: индексы строк
+// после сортировки не годятся
+void ContentGallery::fillFilesList(void)
+{
+    filesList->setSortingEnabled(false);
+    filesList->setRowCount(0);
+    filesList->setRowCount(galleryImages.size());
+
+    static QIcon fileIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+
+    for(int i=0; i<galleryImages.size(); ++i)
+    {
+        const GalleryImage &image=galleryImages.at(i);
+        const QFileInfo fileInfo(image.imagePath);
+
+        QTableWidgetItem *nameItem=new QTableWidgetItem(fileIcon, image.fileName.isEmpty() ? image.noteName : image.fileName);
+        nameItem->setData(Qt::UserRole, image.branchPath);
+        nameItem->setData(Qt::UserRole+1, image.recordId);
+        nameItem->setData(Qt::UserRole+2, image.imagePath);
+        nameItem->setToolTip(image.noteName+"\n"+image.imagePath);
+        filesList->setItem(i, 0, nameItem);
+
+        const qint64 fileSize=fileInfo.exists() ? fileInfo.size() : 0;
+        GallerySortItem *sizeItem=new GallerySortItem(formatFileSize(fileSize), fileSize);
+        filesList->setItem(i, 1, sizeItem);
+
+        const QString fileType=fileInfo.suffix().toLower();
+        QTableWidgetItem *typeItem=new QTableWidgetItem(fileType);
+        filesList->setItem(i, 2, typeItem);
+
+        const qint64 modifiedMsecs=fileInfo.exists()
+            ? fileInfo.lastModified().toMSecsSinceEpoch() : 0;
+        GallerySortItem *dateItem=new GallerySortItem(
+            fileInfo.exists()
+            ? fileInfo.lastModified().toString(QStringLiteral("yyyy-MM-dd hh:mm"))
+            : QString(),
+            modifiedMsecs);
+        filesList->setItem(i, 3, dateItem);
+    }
+
+    filesList->resizeColumnsToContents();
+    filesList->setSortingEnabled(true);
+}
+
+
+// Человекочитаемый размер файла
+QString ContentGallery::formatFileSize(qint64 bytes)
+{
+    if(bytes<1024)
+        return QString::number(bytes);
+
+    if(bytes<1024*1024)
+        return QString::number(bytes/1024)+QStringLiteral(" KB");
+
+    return QString::number(bytes/(1024*1024))+QStringLiteral(" MB");
 }

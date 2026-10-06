@@ -11,8 +11,12 @@
 
 class QListWidget;
 class QListWidgetItem;
+class QTableWidget;
+class QTableWidgetItem;
 class QSlider;
 class QLabel;
+class QComboBox;
+class QStackedWidget;
 class TreeItem;
 
 struct GalleryImage
@@ -58,8 +62,11 @@ private slots:
 
     void onTileColumnsChanged(int sliderPos);
     void onScrollChanged(void);
+    void onViewModeChanged(int comboIndex);
     void onItemClicked(QListWidgetItem *item);
     void onItemDoubleClicked(QListWidgetItem *item);
+    void onListCellClicked(int row, int column);
+    void onListCellDoubleClicked(int row, int column);
     void refreshGallery(void);
 
 protected:
@@ -90,8 +97,31 @@ private:
     // Открыть прикрепленный файл системным обработчиком
     void openAttachedFile(const GalleryImage &image) const;
 
-    // Строка плитки, заголовок и слайдер
+    // Показать текстовый файл встроенным просмотрщиком (первые 200КБ).
+    // Бинарные форматы так не открыть: нет зависимостей для их рендера
+    void openTextViewer(const GalleryImage &image) const;
+
+    // Прыгнуть в заметку и открыть по дабл-клику по данным пункта
+    void jumpToImage(const GalleryImage &image) const;
+    void openGalleryImage(const GalleryImage &image) const;
+
+    // Собрать данные пункта списка обратно в структуру.
+    // Индексы строк после сортировки не годятся, поэтому путь,
+    // запись и файл хранятся прямо в пункте
+    GalleryImage galleryImageFromItem(QTableWidgetItem *item) const;
+
+    // Заполнить список файлов: имя, размер, тип, дата. Сортировка
+    // кликом по заголовку, числа и даты сортируются как числа
+    void fillFilesList(void);
+
+    // Человекочитаемый размер файла
+    static QString formatFileSize(qint64 bytes);
+
+    // Строка плитки, заголовок, слайдер и переключение вида
     QListWidget *imageGrid;
+    QTableWidget *filesList;
+    QStackedWidget *viewStack;
+    QComboBox *viewCombo;
     QSlider *tileSlider;
     QLabel *tileCountLabel;
     QLabel *galleryCountLabel;

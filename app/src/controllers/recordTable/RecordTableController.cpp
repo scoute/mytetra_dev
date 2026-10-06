@@ -709,11 +709,14 @@ void RecordTableController::editFieldContext(QModelIndex proxyIndex)
   // Выясняется ссылка на таблицу конечных данных
   RecordTableData *table=recordSourceModel->getTableData();
 
-  // Поля окна заполняются начальными значениями
+  // Поля окна заполняются начальными значениями.
+  // Служебные id и каталог только отображаются для справки
   editRecordWin.setField("name",  table->getField("name",   pos) );
   editRecordWin.setField("author",table->getField("author", pos) );
   editRecordWin.setField("url",   table->getField("url",    pos) );
   editRecordWin.setField("tags",  table->getField("tags",   pos) );
+  editRecordWin.setField("id",    table->getField("id",     pos) );
+  editRecordWin.setField("dir",   table->getField("dir",    pos) );
 
   // Если запись заблокирована
   if(table->getField("block",   pos)=="1")

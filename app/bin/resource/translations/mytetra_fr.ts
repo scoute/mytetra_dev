@@ -2143,6 +2143,16 @@ Try to search for entire database.</source>
         <source>Tags</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="72"/>
+        <source>Id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="78"/>
+        <source>Directory name</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>

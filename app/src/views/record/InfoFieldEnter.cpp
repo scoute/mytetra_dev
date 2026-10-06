@@ -27,7 +27,8 @@ extern AppConfig mytetraConfig;
 // Виджет ввода инфополей
 
 
-InfoFieldEnter::InfoFieldEnter(QWidget *parent) : QWidget(parent)
+InfoFieldEnter::InfoFieldEnter(QWidget *parent) : QWidget(parent),
+    isDisplayOnlyEditableFields(false)
 {
     setup_ui();
     setup_signals();
@@ -73,6 +74,23 @@ void InfoFieldEnter::setup_ui(void)
     recordTagsLabel = new QLabel(this);
     recordTagsLabel->setText(tr("Tags"));
     recordTags = new QLineEdit(this);
+
+    // Служебные поля только для чтения: id записи и имя каталога.
+    // Фон как у диалога чтобы не выглядели вводом, текст можно копировать
+    QPalette readOnlyPalette=palette();
+    readOnlyPalette.setColor(QPalette::Base, readOnlyPalette.color(QPalette::Window));
+
+    recordIdLabel = new QLabel(this);
+    recordIdLabel->setText(tr("Id"));
+    recordId = new QLineEdit(this);
+    recordId->setReadOnly(true);
+    recordId->setPalette(readOnlyPalette);
+
+    dirNameLabel = new QLabel(this);
+    dirNameLabel->setText(tr("Directory name"));
+    dirName = new QLineEdit(this);
+    dirName->setReadOnly(true);
+    dirName->setPalette(readOnlyPalette);
 
     // Кнопка раскрытия или закрытия полей author, url, tags...
     // Она в два раза меньше обычного размера
@@ -336,6 +354,13 @@ void InfoFieldEnter::assembly(void)
     infoFieldLayout->addWidget(recordTagsLabel,++y,0);
     infoFieldLayout->addWidget(recordTags,y,1);
 
+    // Служебные поля идут последними, после редактируемых
+    infoFieldLayout->addWidget(recordIdLabel,++y,0);
+    infoFieldLayout->addWidget(recordId,y,1);
+
+    infoFieldLayout->addWidget(dirNameLabel,++y,0);
+    infoFieldLayout->addWidget(dirName,y,1);
+
     // Устанавливается видимость или невидимость полей author, url, tags...
     expandInfoOnDisplay( mytetraConfig.get_addnewrecord_expand_info() );
 
@@ -369,6 +394,8 @@ void InfoFieldEnter::expandInfoOnDisplay(QString expand)
 
     recordTagsLabel->setVisible(i);
     recordTags->setVisible(i);
+
+    updateReadOnlyFieldsVisibility(i);
 }
 
 
@@ -416,7 +443,9 @@ bool InfoFieldEnter::checkFieldName(QString name)
     if (name=="name" ||
             name=="author" ||
             name=="url" ||
-            name=="tags")
+            name=="tags" ||
+            name=="id" ||
+            name=="dir")
         return true;
     else
         return false;
@@ -447,6 +476,10 @@ void InfoFieldEnter::setField(QString name,QString value)
         if (name=="author")recordAuthor->setText(value);
         if (name=="url")   recordUrl->setText(value);
         if (name=="tags")  recordTags->setText(value.simplified()); // При внешней установке значения, для тегов обязательно нужно убирать переносы строк, если они есть
+
+        // Служебные поля только отображаются, ввод в них запрещен
+        if (name=="id")  recordId->setText(value);
+        if (name=="dir") dirName->setText(value);
     }
     else
         criticalError("Can not set field "+name+" in InfoFieldEnter method set_field");
@@ -465,4 +498,28 @@ void InfoFieldEnter::setReadOnly(bool state)
 bool InfoFieldEnter::isReadOnly()
 {
     return recordName->isReadOnly();
+}
+
+
+// Показывать только редактируемые поля. Служебные id и каталог
+// прячутся: нужно для окна создания записи
+void InfoFieldEnter::setDisplayOnlyEditableFields(bool value)
+{
+    isDisplayOnlyEditableFields=value;
+
+    updateReadOnlyFieldsVisibility(mytetraConfig.get_addnewrecord_expand_info()!="0");
+}
+
+
+// Видимость служебных полей: скрыты в свернутом виде и в режиме
+// только редактируемых полей
+void InfoFieldEnter::updateReadOnlyFieldsVisibility(bool infoExpanded)
+{
+    bool visible=infoExpanded && !isDisplayOnlyEditableFields;
+
+    recordIdLabel->setVisible(visible);
+    recordId->setVisible(visible);
+
+    dirNameLabel->setVisible(visible);
+    dirName->setVisible(visible);
 }

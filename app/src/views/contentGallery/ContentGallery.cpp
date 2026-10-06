@@ -1,7 +1,7 @@
 #include <QListWidget>
 #include <QSlider>
 #include <QLabel>
-#include <QComboBox>
+#include <QRadioButton>
 #include <QStackedWidget>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -87,17 +87,17 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
     tileCountLabel=new QLabel(QString::number(tileColumns(1)), this);
     galleryCountLabel=new QLabel(this);
 
-    // Вид: плитка или список. Размер по содержимому чтобы текст
-    // пунктов не резался: в растягивающемся слое комбобокс иначе ужмется
-    viewCombo=new QComboBox(this);
-    viewCombo->addItem(tr("Tiles"));
-    viewCombo->addItem(tr("List"));
-    viewCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    // Вид точкой-переключателем: для двух вариантов честнее радиокнопки,
+    // выпадашка не нужна и текст не режется
+    tilesRadio=new QRadioButton(tr("Tiles"), this);
+    tilesRadio->setChecked(true);
+    listRadio=new QRadioButton(tr("List"), this);
 
     QHBoxLayout *topLayout=new QHBoxLayout();
     topLayout->addWidget(tileCountLabel);
     topLayout->addWidget(tileSlider, 1);
-    topLayout->addWidget(viewCombo);
+    topLayout->addWidget(tilesRadio);
+    topLayout->addWidget(listRadio);
     topLayout->addWidget(galleryCountLabel);
 
     imageGrid=new QListWidget(this);
@@ -130,8 +130,8 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
 
     setLayout(centralLayout);
 
-    connect(viewCombo, qOverload<int>(&QComboBox::currentIndexChanged),
-            this,      &ContentGallery::onViewModeChanged);
+    connect(tilesRadio, &QRadioButton::toggled,
+            this,       &ContentGallery::onTilesViewSelected);
 
     connect(tileSlider, &QSlider::valueChanged,
             this,       &ContentGallery::onTileColumnsChanged);
@@ -216,11 +216,11 @@ void ContentGallery::onTileColumnsChanged(int sliderPos)
 
 
 // Переключение плитки и списка. Слайдер работает только в плитке
-void ContentGallery::onViewModeChanged(int comboIndex)
+void ContentGallery::onTilesViewSelected(bool checked)
 {
-    viewStack->setCurrentIndex(comboIndex);
-    tileSlider->setEnabled(comboIndex==0);
-    tileCountLabel->setEnabled(comboIndex==0);
+    viewStack->setCurrentIndex(checked ? 0 : 1);
+    tileSlider->setEnabled(checked);
+    tileCountLabel->setEnabled(checked);
 }
 
 

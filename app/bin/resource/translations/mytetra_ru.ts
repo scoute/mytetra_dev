@@ -2925,6 +2925,18 @@ Try to search for entire database.</source>
 %1</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="286"/>
+        <source>Place the cursor on the image to open it</source>
+        <translation>Поставьте курсор на изображение чтобы открыть его</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="310"/>
+        <source>Can not open image file:
+%1</source>
+        <translation>Не удалось открыть файл изображения:
+%1</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="445"/>
         <source>Download %1 external image(s) from the Internet?</source>
         <translation>Скачать %1 внешних изображений из Интернета?</translation>

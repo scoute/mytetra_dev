@@ -79,7 +79,10 @@ void TagsPanel::setupSignals(void)
     connect(filterEdit, &QLineEdit::textChanged,
             this,        &TagsPanel::onFilterChanged);
 
-    connect(tagsTable, &QTableWidget::cellClicked,
+    // Одинарный клик только выделяет строку средствами таблицы.
+    // Глобальный поиск запускается двойным кликом чтобы не сбивать
+    // текущий поиск случайным одинарным кликом
+    connect(tagsTable, &QTableWidget::cellDoubleClicked,
             this,      &TagsPanel::onTagClicked);
 
     tagsTable->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -161,7 +164,7 @@ void TagsPanel::onFilterChanged(const QString &text)
 }
 
 
-// Клик по тегу запускает глобальный поиск как клик по тегу в заметке
+// Двойной клик по тегу запускает глобальный поиск как клик по тегу в заметке
 void TagsPanel::onTagClicked(int row, int column)
 {
     Q_UNUSED(column);

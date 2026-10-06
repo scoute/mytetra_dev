@@ -15,7 +15,7 @@ class QTableWidget;
 class QTableWidgetItem;
 class QSlider;
 class QLabel;
-class QComboBox;
+class QRadioButton;
 class QStackedWidget;
 class TreeItem;
 
@@ -69,7 +69,7 @@ private slots:
 
     void onTileColumnsChanged(int sliderPos);
     void onScrollChanged(void);
-    void onViewModeChanged(int comboIndex);
+    void onTilesViewSelected(bool checked);
     void onItemClicked(QListWidgetItem *item);
     void onItemDoubleClicked(QListWidgetItem *item);
     void onListCellClicked(int row, int column);
@@ -125,7 +125,8 @@ private:
     QListWidget *imageGrid;
     QTableWidget *filesList;
     QStackedWidget *viewStack;
-    QComboBox *viewCombo;
+    QRadioButton *tilesRadio;
+    QRadioButton *listRadio;
     QSlider *tileSlider;
     QLabel *tileCountLabel;
     QLabel *galleryCountLabel;

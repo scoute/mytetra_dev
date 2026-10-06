@@ -167,15 +167,21 @@ void MetaEditor::metaAssembly(void)
   gridLayout->addWidget(treePath,                                 2,0, 1,2);
   gridLayout->addWidget(recordName,                               3,0, 1,2);
   gridLayout->addWidget(recordAuthor,                             4,0, 1,2);
-  gridLayout->addWidget(textArea,                                 5,0, 1,2);
 
-  gridLayout->addWidget(labelUrl,             6,0);
-  gridLayout->addWidget(recordUrl,            6,1);
-  labelUrl->setProperty("rowNumber", 6); // Запоминается, в какой строке находится Url
+  // Полоска поиска в заметке живет над текстом. Скрыта пока не понадобится:
+  // скрытый виджет места в сетке не занимает
+  if(findBarWidget()!=nullptr)
+    gridLayout->addWidget(findBarWidget(),                       5,0, 1,2);
 
-  gridLayout->addWidget(labelTags,            7,0);
-  gridLayout->addWidget(recordTagsScrollArea, 7,1);
-  labelTags->setProperty("rowNumber", 7); // Запоминается, в какой строке находятся текстовые метки
+  gridLayout->addWidget(textArea,                                 6,0, 1,2);
+
+  gridLayout->addWidget(labelUrl,             7,0);
+  gridLayout->addWidget(recordUrl,            7,1);
+  labelUrl->setProperty("rowNumber", 7); // Запоминается, в какой строке находится Url
+
+  gridLayout->addWidget(labelTags,            8,0);
+  gridLayout->addWidget(recordTagsScrollArea, 8,1);
+  labelTags->setProperty("rowNumber", 8); // Запоминается, в какой строке находятся текстовые метки
 
   gridLayout->setColumnStretch(1,1);
 

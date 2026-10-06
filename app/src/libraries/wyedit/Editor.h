@@ -14,6 +14,7 @@
 #include <QStringList>
 
 #include "EditorFindDialog.h"
+#include "EditorFindBar.h"
 #include "formatters/Formatter.h"
 #include "formatters/PlacementFormatter.h"
 #include "formatters/TypefaceFormatter.h"
@@ -99,6 +100,9 @@ public:
  void setTextareaModified(bool modify);
  bool getTextareaModified(void);
 
+ // Виджет полоски поиска для вставки в сетку MetaEditor
+ EditorFindBar *findBarWidget(void);
+
  // Абсолютный или относительный путь (т.е. директория),
  // куда будет сохраняться текст. Без завершающего слеша
  bool setWorkDirectory(QString dirName);
@@ -169,6 +173,9 @@ signals:
 
  void wyeditFindInBaseClicked();
 
+// Уход из полоски в глобальный поиск с текстом запроса
+void wyeditFindInBaseWithText(const QString &text);
+
  void updateIndentsliderToActualFormat();
  void updateIndentSliderGeometry();
 
@@ -209,11 +216,34 @@ private slots:
  // Совпадает ли текущее выделение с искомой строкой при заданных флагах
  bool isSelectionMatch(const QString &text, QTextDocument::FindFlags flags) const;
 
- // Искать текст с указанного направления с зацикливанием и подсветкой
- bool findInText(const QString &text, QTextDocument::FindFlags flags, bool backward);
+// Слоты полоски поиска: тот же движок, свое поведение на краях
+// (без окон сообщений, счетчик вместо них, зацикливание всегда)
+ void onFindBarFind(const QString &text, QTextDocument::FindFlags flags);
+ void onFindBarPrevious(void);
+ void onFindBarNext(void);
+ void onFindBarHighlight(const QString &text, QTextDocument::FindFlags flags);
+ void onFindBarHidden(void);
+ void onFindBarReplaceOne(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags);
+ void onFindBarReplaceAll(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags);
+ void onFindBarInBase(const QString &text);
 
- // Подсветить все совпадения запроса. Пустой запрос гасит подсветку
- void highlightMatches(const QString &text, QTextDocument::FindFlags flags);
+// Переключение окна и полоски с переносом запроса, режим хранится в конфиге
+ void onAttachToBar(void);
+ void onDetachToWindow(void);
+
+// Движок поиска в заметке, общий для окна и полоски.
+// Совпадения собираются вперед от начала документа, навигация ходит
+// по списку, подсветка красит все желтым и текущее оранжевым
+ void collectFindMatches(const QString &text, QTextDocument::FindFlags flags);
+ void paintFindMatches(void);
+ bool goToFindMatch(bool backward, bool wrap);
+ void clearFindMatches(void);
+ void updateFindCounter(void);
+ void showFindNotFound(const QString &text);
+ void onFindDocumentChanged(void);
+ void rehighlightFindMatches(void);
+ int indexFromCursor(bool backward) const;
+
 
  // Открытие контекстного меню
  void onCustomContextMenuRequested(const QPoint &pos);
@@ -266,6 +296,18 @@ private:
  int viewMode; // Режим отображения редактора - WYEDIT_DESKTOP_MODE или WYEDIT_MOBILE_MODE
 
  EditorFindDialog *findDialog; // Виджет поиска
+ EditorFindBar *findBar; // Встраиваемая полоска поиска, тот же движок
+
+ // Состояние движка поиска: запрос, флаги, совпадения, текущий индекс.
+ // findCurrentIndex=-1 означает отсутствие текущего (после набора текста)
+ QString findQuery;
+ QTextDocument::FindFlags findFlags;
+ QList<QTextCursor> findMatches;
+ int findCurrentIndex=-1;
+
+ // Отложенный пересчет подсветки при правке документа: правка в процессе
+ // setHtml видит недособранный документ, пересчет откладывается в очередь
+ bool findRehighlightPending=false;
 
  bool expandEditAreaFlag; // Распахнуто ли на максимум окно редактора
 

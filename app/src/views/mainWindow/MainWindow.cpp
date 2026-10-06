@@ -182,6 +182,10 @@ void MainWindow::setupSignals(void)
         connect(editorScreen, &MetaEditor::wyeditFindInBaseClicked, this, &MainWindow::toolsFindInBase);
     }
 
+    // Мост из полоски поиска в заметке: запрос уходит в глобальный поиск.
+    // Нужен всегда, а не только в мобильном режиме: у полоски есть кнопка
+    connect(editorScreen, &MetaEditor::wyeditFindInBaseWithText, this, &MainWindow::toolsFindInBaseWithText);
+
     // Вызов окна просмотра лога
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
@@ -1013,6 +1017,18 @@ void MainWindow::toolsFindInBase(void)
         findScreenRel->widgetShow();
     else
         findScreenRel->widgetHide();
+}
+
+
+// Уход из полоски поиска в заметке в глобальный поиск с текстом запроса
+void MainWindow::toolsFindInBaseWithText(const QString &text)
+{
+    FindScreen *findScreenRel=find_object<FindScreen>("findScreenDisp");
+
+    if( !(findScreenRel->isVisible()) )
+        findScreenRel->widgetShow();
+
+    findScreenRel->setFindText(text);
 }
 
 

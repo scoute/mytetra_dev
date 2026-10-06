@@ -189,6 +189,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorConfigFont.h \
     src/libraries/wyedit/EditorConfigMisc.h \
     src/libraries/wyedit/EditorFindDialog.h \
+    src/libraries/wyedit/EditorFindBar.h \
     src/views/mainWindow/MainWindow.h \
     src/views/printPreview/PrintPreview.h \
     src/views/printPreview/PreviewView.h \
@@ -362,6 +363,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorConfigFont.cpp \
     src/libraries/wyedit/EditorConfigMisc.cpp \
     src/libraries/wyedit/EditorFindDialog.cpp \
+    src/libraries/wyedit/EditorFindBar.cpp \
     src/views/mainWindow/MainWindow.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \

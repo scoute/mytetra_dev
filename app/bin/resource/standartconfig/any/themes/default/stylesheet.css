@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="default" version="4" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="default" version="5" about="QDarkStyleSheet"/> */
 
 /* CSS style for any desktop OS */
 /* Set your Qt CSS style in this file */
@@ -6,6 +6,15 @@
 /* Псевдо-правило для установки значений системной палитры */
 CustomPalette {
   PlaceholderText: DarkGray;
+}
+
+/* Кнопки полоски поиска в заметке: ужатые отступы вместо широких
+ * нативных. Сами кнопки светлая тема не красит, только отступы */
+EditorFindBar QPushButton {
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 3px;
+  padding-bottom: 3px;
 }
 
 /* Линии иерархии в дереве веток: как в темной теме, но серым пунктиром

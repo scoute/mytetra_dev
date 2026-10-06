@@ -782,6 +782,18 @@ void AppConfig::setFindInBaseExpand(bool state)
 }
 
 
+bool AppConfig::get_editorFindEmbedded(void)
+{
+    return m_conf->value("editorFindEmbedded", false).toBool();
+}
+
+
+void AppConfig::set_editorFindEmbedded(bool state)
+{
+    m_conf->setValue("editorFindEmbedded", state);
+}
+
+
 
 // Разрешено ли использовать собственный формат вывода даты и времени
 bool AppConfig::getEnableCustomDateTimeFormat(void)

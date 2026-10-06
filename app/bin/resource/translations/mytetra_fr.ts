@@ -2501,6 +2501,11 @@ You need to update MyTetra.</source>
         <source>Tags</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="662"/>
+        <source>Images &amp;gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>
@@ -3714,6 +3719,11 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
+        <source>Show images gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
         <source>Synchronization</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4126,6 +4136,34 @@ All data imported will be encrypted.</source>
         <location filename="../../../src/models/tree/XmlTree.cpp" line="42"/>
         <source>Parse error at line %1, column %2:
 %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ImagesGallery</name>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="29"/>
+        <source>Images gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="37"/>
+        <source>Tiles per row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="166"/>
+        <source>%1 images</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="325"/>
+        <source>Can not open image: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/imagesGallery/ImagesGallery.cpp" line="348"/>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

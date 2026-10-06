@@ -32,11 +32,6 @@ void AppConfigPage_Misc::setupUi(void)
 {
   qDebug() << "Create misc config page";
 
-  // Блок настройки подтверждения для действия "cut" на ветке
-  cutBranchConfirm=new QCheckBox(this);
-  cutBranchConfirm->setText(tr("Confirm item cut"));
-  cutBranchConfirm->setChecked(mytetraConfig.get_cutbranchconfirm());
-
   // Блок настройки отображения отладочных сообщений в консоли
   printDebugMessages=new QCheckBox(this);
   printDebugMessages->setText(tr("Print debug messages to console"));
@@ -79,7 +74,6 @@ void AppConfigPage_Misc::assembly(void)
 
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
-  centralLayout->addWidget(cutBranchConfirm);
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
@@ -108,10 +102,6 @@ int AppConfigPage_Misc::applyChanges(void)
   qDebug() << "Apply changes misc";
 
   int result=0;
-
-  // Сохраняется настройка подтверждения для действия "cut" на ветке
-  if(mytetraConfig.get_cutbranchconfirm()!=cutBranchConfirm->isChecked())
-    mytetraConfig.set_cutbranchconfirm(cutBranchConfirm->isChecked());
 
   // Сохраняется настройка отображения отладочных сообщений в консоли
   if(mytetraConfig.get_printdebugmessages()!=printDebugMessages->isChecked())

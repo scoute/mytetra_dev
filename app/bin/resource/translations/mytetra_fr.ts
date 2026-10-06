@@ -4036,6 +4036,16 @@ Please select single item for enabling edit operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1200"/>
+        <source>Cut item no longer exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1208"/>
+        <source>Cannot move item inside itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="952"/>
         <source>This item contains both unencrypted and encrypted data. Copy/paste operation is possible only for item that contain similar type data.</source>
         <translation type="unfinished"></translation>

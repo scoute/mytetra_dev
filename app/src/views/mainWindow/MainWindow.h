@@ -17,11 +17,13 @@ class QMenu;
 class QCloseEvent;
 class QSplitter;
 class QStatusBar;
+class QDockWidget;
 
 class TreeScreen;
 class MetaEditor;
 class RecordTableScreen;
 class FindScreen;
+class TagsPanel;
 class WindowSwitcher;
 class CommandRunner;
 
@@ -198,6 +200,11 @@ private:
 
     // Меню Темы в menubar: один клик вместо похода в настройки
     QMenu *themesMenu=nullptr;
+
+    // Панель списка тегов. Переключается из меню Tools и горячей клавишей,
+    // в свернутом виде места не занимает
+    TagsPanel *tagsPanel=nullptr;
+    QDockWidget *tagsPanelDock=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

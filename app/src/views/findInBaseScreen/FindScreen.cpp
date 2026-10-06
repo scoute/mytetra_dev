@@ -357,6 +357,21 @@ void FindScreen::setFindText(QString text)
 }
 
 
+// Разбить поле тегов записи на отдельные теги: разделители запятая
+// и точка с запятой, пробелы по краям отбрасываются
+QStringList FindScreen::splitRecordTags(const QString &tagsField)
+{
+    QStringList tags=tagsField.split(QRegExp("[,;]+"), QString::SkipEmptyParts);
+
+    for(int i=0; i<tags.size(); ++i)
+        tags[i]=tags[i].trimmed();
+
+    tags.removeAll(QString(""));
+
+    return tags;
+}
+
+
 // Слот, срабатывающий при нажатии на кнопку начала поиска
 void FindScreen::findClicked(void)
 {

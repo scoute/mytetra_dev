@@ -38,6 +38,9 @@ public:
  void setUrl     (QString url);
  void setTags    (QString tags);
 
+ // Список меток открытой записи для обновления извне
+ QStringList getTagsList(void) const;
+
  static void toAttachCallback(void);
 
  void switchToEditorLayout(void);

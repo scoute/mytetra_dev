@@ -10,6 +10,7 @@
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QSplitter>
+#include <QDockWidget>
 #include <QStatusBar>
 #include <QActionGroup>
 
@@ -22,6 +23,7 @@
 #include "views/tree/TreeScreen.h"
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
+#include "views/tagsPanel/TagsPanel.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
@@ -130,6 +132,16 @@ void MainWindow::setupUI(void)
     // Вспомогательный объект с виджетом синхронизации базы знаний
     syncroCommandRun=new CommandRunner( this );
     globalParameters.setSyncroCommandRunner( syncroCommandRun );
+
+    // Панель списка тегов в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools и горячей клавишей
+    tagsPanel=new TagsPanel(this);
+    tagsPanel->setObjectName("tagsPanel");
+
+    tagsPanelDock=new QDockWidget(tr("Tags"), this);
+    tagsPanelDock->setObjectName("tagsPanelDock");
+    tagsPanelDock->setWidget(tagsPanel);
+    tagsPanelDock->hide();
 
     // todo: Для проверки, почему то в этом месте поиск объекта по имени не работает, разобраться.
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
@@ -250,6 +262,12 @@ void MainWindow::assembly(void)
     findSplitter->setCollapsible(0,false); // Верхняя часть не должна смыкаться
     findSplitter->setCollapsible(1,false); // Часть для поиска не должна смыкаться
     findSplitter->setObjectName("findsplitter");
+
+    addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
+
+    // Кнопка-бирка справа от поиска по базе во второй линии записей.
+    // Тот же переключатель что в меню Tools: состояние синхронно само
+    recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
 
     setCentralWidget(findSplitter);
 }
@@ -640,6 +658,14 @@ void MainWindow::initToolsMenu(void)
 
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
+
+    // Переключатель панели тегов: видимость дока и галочка синхронны сами.
+    // Текст берет из таблицы шорткатов через initAction как у соседей
+    QAction *tagsPanelToggle=tagsPanelDock->toggleViewAction();
+    tagsPanelToggle->setIcon(QIcon(":/resource/pic/tag.svg"));
+    menu->addAction(tagsPanelToggle);
+
+    shortcutManager.initAction("misc-tagsPanel", tagsPanelToggle);
 
     menu->addSeparator();
 

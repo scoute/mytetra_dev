@@ -441,7 +441,12 @@ void AppConfig::setFindScreenTreeSearchArea(int pos)
 
 bool AppConfig::get_findscreen_find_in_field(QString fieldName)
 {
-    return m_conf->value("findscreen_find_in"+fieldName, 0).toBool();
+    // Дефолт для отсутствующего ключа: искать везде, кроме текста записи.
+    // Поиск по тексту медленный и шумит, остальные поля быстрые
+    // и нужны для полноты (в том числе автокомплита)
+    bool defaultValue=(fieldName!="text");
+
+    return m_conf->value("findscreen_find_in"+fieldName, defaultValue).toBool();
 }
 
 

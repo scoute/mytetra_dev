@@ -24,6 +24,7 @@ class MetaEditor;
 class RecordTableScreen;
 class FindScreen;
 class TagsPanel;
+class HistoryPanel;
 class WindowSwitcher;
 class CommandRunner;
 
@@ -213,6 +214,11 @@ private:
     // в свернутом виде места не занимает
     TagsPanel *tagsPanel=nullptr;
     QDockWidget *tagsPanelDock=nullptr;
+
+    // Панель истории посещений. Переключается из меню Tools и горячей
+    // клавишей, в закрытом виде место не занимает
+    HistoryPanel *historyPanel=nullptr;
+    QDockWidget *historyPanelDock=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

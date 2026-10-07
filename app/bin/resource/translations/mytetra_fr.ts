@@ -2149,6 +2149,114 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
+    <name>HistoryPanel</name>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="81"/>
+        <source>Filter by note title</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="88"/>
+        <source>Note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="88"/>
+        <source>Branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="89"/>
+        <source>Last visit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="89"/>
+        <source>Visits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="90"/>
+        <source>Images</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="90"/>
+        <source>Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="90"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="100"/>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="101"/>
+        <source>Forget all visit history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="229"/>
+        <source>Go to note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="230"/>
+        <source>Forget this note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="246"/>
+        <source>Clear visit history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="247"/>
+        <source>Forget all visit history?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="275"/>
+        <source>just now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="279"/>
+        <source>%1 min ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="283"/>
+        <source>%1 h ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="287"/>
+        <source>%1 d ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="453"/>
+        <source>(encrypted note)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="454"/>
+        <source>(encrypted)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="475"/>
+        <source>Visits: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>IconSelectDialog</name>
     <message>
         <location filename="../../../src/libraries/IconSelectDialog.cpp" line="123"/>
@@ -3818,6 +3926,11 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="174"/>
         <source>Show tags panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="176"/>
+        <source>Show history panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

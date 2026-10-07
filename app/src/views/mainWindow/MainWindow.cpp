@@ -24,6 +24,7 @@
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
+#include "views/historyPanel/HistoryPanel.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
@@ -143,6 +144,16 @@ void MainWindow::setupUI(void)
     tagsPanelDock->setObjectName("tagsPanelDock");
     tagsPanelDock->setWidget(tagsPanel);
     tagsPanelDock->hide();
+
+    // Панель истории посещений в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools и горячей клавишей
+    historyPanel=new HistoryPanel(this);
+    historyPanel->setObjectName("historyPanel");
+
+    historyPanelDock=new QDockWidget(tr("History"), this);
+    historyPanelDock->setObjectName("historyPanelDock");
+    historyPanelDock->setWidget(historyPanel);
+    historyPanelDock->hide();
 
     // todo: Для проверки, почему то в этом месте поиск объекта по имени не работает, разобраться.
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
@@ -271,6 +282,8 @@ void MainWindow::assembly(void)
     findSplitter->setObjectName("findsplitter");
 
     addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
+
+    addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
 
     // Кнопка-бирка справа от поиска по базе во второй линии записей.
     // Тот же переключатель что в меню Tools: состояние синхронно само
@@ -679,6 +692,13 @@ void MainWindow::initToolsMenu(void)
     menu->addAction(tagsPanelToggle);
 
     shortcutManager.initAction("misc-tagsPanel", tagsPanelToggle);
+
+    // Переключатель панели истории: видимость дока и галочка синхронны сами
+    QAction *historyPanelToggle=historyPanelDock->toggleViewAction();
+    historyPanelToggle->setIcon(QIcon(":/resource/pic/history.svg"));
+    menu->addAction(historyPanelToggle);
+
+    shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
 
     menu->addSeparator();
 

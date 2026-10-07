@@ -29,6 +29,7 @@
 
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/WalkHistory.h"
+#include "libraries/VisitHistory.h"
 #include "libraries/WindowSwitcher.h"
 #include "libraries/crypt/Password.h"
 #include "libraries/ShortcutManager.h"
@@ -68,6 +69,9 @@ TrashMonitoring trashMonitoring;
 
 // Объект с историей посещаемых записей
 WalkHistory walkHistory;
+
+// Объект с журналом посещений для панели истории
+VisitHistory visitHistory;
 
 // Логгер действий с данными
 ActionLogger actionLogger;

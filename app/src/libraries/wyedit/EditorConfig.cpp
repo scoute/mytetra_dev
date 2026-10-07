@@ -419,6 +419,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_20;
     parameterFunctions << get_parameter_table_21;
     parameterFunctions << get_parameter_table_22;
+    parameterFunctions << get_parameter_table_23;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -861,6 +862,24 @@ QStringList EditorConfig::get_parameter_table_22(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_23(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 22.
+    // Новых параметров нет, только докатка кнопок в update_version_change_value()
+
+    table << get_parameter_table_22(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 // Метод разрешения конфликтов если исходные и конечные типы не совпадают
 // Должен включать в себя логику обработки только тех параметров
 // и только для тех версий конфигов, которые действительно
@@ -1095,6 +1114,30 @@ QString EditorConfig::update_version_change_value(int versionFrom,
               auto value=names.value(key);
 
               result.replace(key, value);
+            }
+        }
+
+    // Докатка новых кнопок в существующие панели: спойлер и открытие
+    // картинки наружу. Своих кнопок миграция не трогает и не дублирует
+    if(versionFrom==22 && versionTo==23)
+        if(name=="tools_line_1")
+        {
+            if(!result.contains("spoiler"))
+            {
+                if(result.contains("reference"))
+                    result.replace("reference", "reference,spoiler");
+                else
+                    result=result+",spoiler";
+            }
+
+            if(!result.contains("open_image") && !result.contains("openImage"))
+            {
+                if(result.contains("insert_image_from_file"))
+                    result.replace("insert_image_from_file", "insert_image_from_file,open_image");
+                else if(result.contains("insertImageFromFile"))
+                    result.replace("insertImageFromFile", "insertImageFromFile,openImage");
+                else
+                    result=result+",open_image";
             }
         }
 

@@ -81,7 +81,7 @@ Editor::~Editor(void)
   delete imageFormatter;
   delete mathExpressionFormatter;
   delete referenceFormatter;
-  delete spoilerFormatter;
+  delete secretFormatter;
 }
 
 
@@ -280,9 +280,9 @@ void Editor::setupFormatters(void)
   referenceFormatter->setTextArea(textArea);
 
   // Закрашиваемая область для секретов
-  spoilerFormatter=new SpoilerFormatter();
-  spoilerFormatter->setEditor(this);
-  spoilerFormatter->setTextArea(textArea);
+  secretFormatter=new SecretFormatter();
+  secretFormatter->setEditor(this);
+  secretFormatter->setTextArea(textArea);
 }
 
 
@@ -466,8 +466,8 @@ void Editor::setupSignals(void)
   connect(editorContextMenu,  &EditorContextMenu::contextMenuGotoReference,
           referenceFormatter, &ReferenceFormatter::onContextMenuGotoReference,
           Qt::DirectConnection);
-  connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySpoiler,
-          spoilerFormatter,   &SpoilerFormatter::onContextMenuCopySpoiler,
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySecret,
+          secretFormatter,   &SecretFormatter::onContextMenuCopySecret,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::lowercase,
           typefaceFormatter, &TypefaceFormatter::onLowerCase,
@@ -665,8 +665,8 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->reference, &QAction::triggered,
             referenceFormatter,                &ReferenceFormatter::onReferenceClicked);
 
-    connect(editorToolBarAssistant->spoiler, &QAction::triggered,
-            spoilerFormatter,                &SpoilerFormatter::onSpoilerClicked);
+    connect(editorToolBarAssistant->secret, &QAction::triggered,
+            secretFormatter,                &SecretFormatter::onSecretClicked);
 
     connect(editorToolBarAssistant->showHtml, &QAction::triggered,
             this,                             &Editor::onShowhtmlClicked);
@@ -1583,7 +1583,7 @@ void Editor::collectFindMatches(const QString &text, QTextDocument::FindFlags fl
       // содержимое. Позиция +1: Qt отдает формат символа слева от курсора
       QTextCursor probeCursor(textArea->document());
       probeCursor.setPosition(matchStart+1);
-      if(!SpoilerFormatter::isSpoilerFormat(probeCursor.charFormat()))
+      if(!SecretFormatter::isSecretFormat(probeCursor.charFormat()))
         findMatches.append(cursor);
 
       cursor=textArea->document()->find(text, cursor, findFlags);

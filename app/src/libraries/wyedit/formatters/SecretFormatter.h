@@ -1,5 +1,5 @@
-#ifndef SPOILERFORMATTER_H
-#define SPOILERFORMATTER_H
+#ifndef SECRETFORMATTER_H
+#define SECRETFORMATTER_H
 
 #include <QString>
 #include <QTextCharFormat>
@@ -13,30 +13,30 @@
 // переживает сохранение (HTML) и копипаст, дает границы для копирования
 // и позволяет поиску пропускать совпадения чтобы не выдавать содержимое
 
-class SpoilerFormatter : public Formatter
+class SecretFormatter : public Formatter
 {
   Q_OBJECT
 
 public:
 
-  // Метка спойлера в anchorHref
-  static QString spoilerHref(void);
+  // Метка секрета в anchorHref
+  static QString secretHref(void);
 
-  // Спойлер ли формат (метка совпала)
-  static bool isSpoilerFormat(const QTextCharFormat &format);
+  // Секрет ли формат (своя или старая метка)
+  static bool isSecretFormat(const QTextCharFormat &format);
 
   // Цвет закраски: виден боксом в обеих темах, текст на нем скрыт
-  static QColor spoilerColor(void);
+  static QColor secretColor(void);
 
 public slots:
 
   // Кнопка тулбара: закрасить выделение. Без выделения только подсказка
-  void onSpoilerClicked(void);
+  void onSecretClicked(void);
 
   // Контекстное меню: скопировать содержимое спойлера под курсором
   // в буфер без выделения
-  void onContextMenuCopySpoiler(void);
+  void onContextMenuCopySecret(void);
 };
 
 
-#endif // SPOILERFORMATTER_H
+#endif // SECRETFORMATTER_H

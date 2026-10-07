@@ -5,7 +5,7 @@
 #include <QApplication>
 #include <QClipboard>
 
-#include "SpoilerFormatter.h"
+#include "SecretFormatter.h"
 #include "../Editor.h"
 #include "../EditorTextArea.h"
 #include "../EditorCursorPositionDetector.h"
@@ -15,19 +15,19 @@
 extern GlobalParameters globalParameters;
 
 
-QString SpoilerFormatter::spoilerHref(void)
+QString SecretFormatter::secretHref(void)
 {
-  return QStringLiteral("spoiler");
+  return QStringLiteral("secret");
 }
 
 
-bool SpoilerFormatter::isSpoilerFormat(const QTextCharFormat &format)
+bool SecretFormatter::isSecretFormat(const QTextCharFormat &format)
 {
-  return format.isAnchor() && format.anchorHref()==spoilerHref();
+  return format.isAnchor() && format.anchorHref()==secretHref();
 }
 
 
-QColor SpoilerFormatter::spoilerColor(void)
+QColor SecretFormatter::secretColor(void)
 {
   return QColor(0x2e, 0x8b, 0x57);
 }
@@ -35,7 +35,7 @@ QColor SpoilerFormatter::spoilerColor(void)
 
 // Закрасить выделение. Без выделения только подсказка в статусной строке:
 // красить нечего, а слово под курсором угадывать не надо
-void SpoilerFormatter::onSpoilerClicked(void)
+void SecretFormatter::onSecretClicked(void)
 {
   QTextCursor cursor=textArea->textCursor();
 
@@ -44,27 +44,27 @@ void SpoilerFormatter::onSpoilerClicked(void)
     QStatusBar *statusBar=globalParameters.getStatusBar();
 
     if(statusBar!=nullptr)
-      statusBar->showMessage(tr("Select text to hide as spoiler"));
+      statusBar->showMessage(tr("Select text to hide as secret"));
 
     return;
   }
 
   QTextCharFormat charFormat;
   charFormat.setAnchor(true);
-  charFormat.setAnchorHref(spoilerHref());
-  charFormat.setForeground(spoilerColor());
-  charFormat.setBackground(spoilerColor());
+  charFormat.setAnchorHref(secretHref());
+  charFormat.setForeground(secretColor());
+  charFormat.setBackground(secretColor());
   charFormat.setFontUnderline(false);
 
   cursor.mergeCharFormat(charFormat);
 }
 
 
-// Скопировать содержимое спойлера под курсором в буфер.
+// Скопировать содержимое секрета под курсором в буфер.
 // Границы берутся по метке соседних символов, курсор возвращается как был
-void SpoilerFormatter::onContextMenuCopySpoiler(void)
+void SecretFormatter::onContextMenuCopySecret(void)
 {
-  if(!editor->cursorPositionDetector->isCursorOnSpoiler())
+  if(!editor->cursorPositionDetector->isCursorOnSecret())
     return; // под курсором не спойлер
 
   QTextCursor cursor=textArea->textCursor();
@@ -85,7 +85,7 @@ void SpoilerFormatter::onContextMenuCopySpoiler(void)
   while(left>0)
   {
     probeCursor.setPosition(left);
-    if(!isSpoilerFormat(probeCursor.charFormat()))
+    if(!isSecretFormat(probeCursor.charFormat()))
       break;
     left--;
   }
@@ -93,7 +93,7 @@ void SpoilerFormatter::onContextMenuCopySpoiler(void)
   while(right<docEnd)
   {
     probeCursor.setPosition(right+1);
-    if(!isSpoilerFormat(probeCursor.charFormat()))
+    if(!isSecretFormat(probeCursor.charFormat()))
       break;
     right++;
   }

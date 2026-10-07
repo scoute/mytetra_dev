@@ -175,7 +175,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("misc-findInBase",  Data{ QKeySequence("Ctrl+Shift+F"), tr("Find in base"), tr("") });
     defaultKeyTable.insert("misc-tagsPanel",   Data{ QKeySequence("F8"), tr("Show tags panel"), tr("") });
     defaultKeyTable.insert("misc-historyPanel", Data{ QKeySequence("F11"), tr("Show history panel"), tr("") });
-    defaultKeyTable.insert("misc-imagesGallery", Data{ QKeySequence("Ctrl+Shift+G"), tr("Show images gallery"), tr("") });
+    defaultKeyTable.insert("misc-imagesGallery", Data{ QKeySequence("Ctrl+Shift+G"), tr("Images gallery"), tr("") });
     defaultKeyTable.insert("misc-syncro",      Data{ QKeySequence("F9"), tr("Synchronization"), tr("Run synchronization") });
     defaultKeyTable.insert("misc-editConfirm", Data{ QKeySequence(Qt::CTRL + Qt::Key_Return), tr("Ok"), tr("") });
     defaultKeyTable.insert("misc-print",       Data{ QKeySequence("Ctrl+P"), tr("Print"), tr("") });

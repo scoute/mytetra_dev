@@ -517,6 +517,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Danger actions (Attention!)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="0"/>
+        <source>Secret color: </source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

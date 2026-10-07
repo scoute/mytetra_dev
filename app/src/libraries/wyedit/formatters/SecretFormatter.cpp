@@ -10,9 +10,11 @@
 #include "../EditorTextArea.h"
 #include "../EditorCursorPositionDetector.h"
 #include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
 
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 QString SecretFormatter::secretHref(void)
@@ -29,6 +31,13 @@ bool SecretFormatter::isSecretFormat(const QTextCharFormat &format)
 
 QColor SecretFormatter::secretColor(void)
 {
+  // Цвет из настроек: пользователь выбирает любой, по умолчанию зеленый.
+  // Уже закрашенное хранит свой цвет в документе и не перекрашивается
+  const QColor configuredColor(mytetraConfig.get_secretColor());
+
+  if(configuredColor.isValid())
+    return configuredColor;
+
   return QColor(0x2e, 0x8b, 0x57);
 }
 

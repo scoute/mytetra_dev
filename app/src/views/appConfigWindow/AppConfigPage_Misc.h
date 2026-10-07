@@ -7,6 +7,9 @@ class QWidget;
 class QCheckBox;
 class QGroupBox;
 class QPushButton;
+class QLabel;
+class QToolButton;
+class QColor;
 
 class AppConfigPage_Misc : public ConfigPage
 {
@@ -20,6 +23,9 @@ public:
 
 private slots:
   void onClickedEditMyTetraConfigFile(void);
+  void onClickedSecretColor(void);
+
+  void setColorForSecretButton(QColor iColor);
 
 protected:
 
@@ -31,6 +37,10 @@ protected:
   QCheckBox *enableActionLog;         // Разрешено ли логирование действий
   QCheckBox *enableCreateEmptyRecord; // Разрешено ли создание записи, не содержащей текст (а только заголовок)
   QPushButton *editMyTetraConfigFile;
+
+  QLabel *secretColorLabel;
+  QToolButton *secretColorButton;
+  QColor *secretColor;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

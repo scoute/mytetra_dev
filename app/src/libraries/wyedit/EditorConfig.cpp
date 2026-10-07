@@ -1122,12 +1122,22 @@ QString EditorConfig::update_version_change_value(int versionFrom,
     if(versionFrom==22 && versionTo==23)
         if(name=="tools_line_1")
         {
-            if(!result.contains("spoiler"))
+            // Старый токен прототипа переименовывается на месте
+            result.replace(",spoiler,", ",secret,");
+            if(result.startsWith("spoiler,"))
+                result.replace(0, 8, "secret,");
+            if(result.endsWith(",spoiler"))
+            {
+                result.chop(8);
+                result+=QStringLiteral(",secret");
+            }
+
+            if(!result.contains("secret"))
             {
                 if(result.contains("code"))
-                    result.replace("code", "code,spoiler");
+                    result.replace("code", "code,secret");
                 else
-                    result=result+",spoiler";
+                    result=result+",secret";
             }
 
             if(!result.contains("open_image") && !result.contains("openImage"))

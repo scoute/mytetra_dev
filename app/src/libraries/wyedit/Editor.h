@@ -23,7 +23,7 @@
 #include "formatters/ImageFormatter.h"
 #include "formatters/MathExpressionFormatter.h"
 #include "formatters/ReferenceFormatter.h"
-#include "formatters/SpoilerFormatter.h"
+#include "formatters/SecretFormatter.h"
 
 
 // ----------------------------------------------------------
@@ -61,7 +61,7 @@ class Editor : public QWidget
  friend class ImageFormatter;
  friend class MathExpressionFormatter;
  friend class ReferenceFormatter;
- friend class SpoilerFormatter;
+ friend class SecretFormatter;
 
  friend class EditorContextMenu;
 
@@ -282,7 +282,7 @@ private:
  ImageFormatter          *imageFormatter=nullptr;
  MathExpressionFormatter *mathExpressionFormatter=nullptr;
  ReferenceFormatter      *referenceFormatter=nullptr;
- SpoilerFormatter        *spoilerFormatter=nullptr;
+ SecretFormatter        *secretFormatter=nullptr;
 
  bool isInit;
 

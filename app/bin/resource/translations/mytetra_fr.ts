@@ -1365,7 +1365,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="0"/>
-        <source>Copy spoiler</source>
+        <source>Copy secret</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1554,10 +1554,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>SpoilerFormatter</name>
+    <name>SecretFormatter</name>
     <message>
-        <location filename="../../../src/libraries/wyedit/formatters/SpoilerFormatter.cpp" line="0"/>
-        <source>Select text to hide as spoiler</source>
+        <location filename="../../../src/libraries/wyedit/formatters/SecretFormatter.cpp" line="0"/>
+        <source>Select text to hide as secret</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3755,14 +3755,15 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="138"/>
         <source>Edit reference URL</source>
         <translation type="unfinished"></translation>
-    </message>    <message>
-        <location filename="../../../src/libraries/ShortcutManager.cpp" line="0"/>
-        <source>Hide as spoiler</source>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="138"/>
+        <source>Hide as secret</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/ShortcutManager.cpp" line="0"/>
-        <source>Paint selected text as spoiler</source>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="138"/>
+        <source>Paint selected text as secret</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

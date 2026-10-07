@@ -67,7 +67,7 @@ public:
     EditorDropDownButton *backgroundColor;
 
     QAction *reference;
-    QAction *spoiler;
+    QAction *secret;
 
     QAction *showHtml;
 

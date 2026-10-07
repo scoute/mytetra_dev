@@ -43,7 +43,7 @@ void EditorContextMenu::setupActions(void)
 
  actionEditImageProperties=new QAction(this);
  actionShowImageInFolder=new QAction(this);
- actionCopySpoiler=new QAction(this);
+ actionCopySecret=new QAction(this);
  actionOpenImage=new QAction(this);
  actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
@@ -72,7 +72,7 @@ void EditorContextMenu::setupShortcuts(void)
 
     actionShowImageInFolder->setText(tr("Show in folder")); // Открыть каталог с файлом картинки
 
-    actionCopySpoiler->setText(tr("Copy spoiler")); // Скопировать содержимое спойлера
+    actionCopySecret->setText(tr("Copy secret")); // Скопировать содержимое секрета
 
     // "Умное" действие открытия изображения во внешней программе
     shortcutManager.initAction("editor-openImage", actionOpenImage );
@@ -97,7 +97,7 @@ void EditorContextMenu::update(void)
     // Сначала скрываются пункты редактирования формулы и картинки
     setEditMathExpression( false );
     setImageProperties( false );
-    setCopySpoiler( false );
+    setCopySecret( false );
 
     setFormatToLowerCase( true );
     setFormatToUpperCase( true );
@@ -128,7 +128,7 @@ void EditorContextMenu::update(void)
     }
 
     // Курсор в спойлере: доступен пункт быстрого копирования содержимого
-    setCopySpoiler(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSpoiler());
+    setCopySecret(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
 
     // Если в буфере обмена есть текст
     if(QGuiApplication::clipboard()->text().size()>0) {
@@ -180,12 +180,12 @@ void EditorContextMenu::setImageProperties(bool flag)
 
 
 // Показывать или нет пункт копирования спойлера
-void EditorContextMenu::setCopySpoiler(bool flag)
+void EditorContextMenu::setCopySecret(bool flag)
 {
-    qDebug() << "In EditorContextMenu::setCopySpoiler() " << flag;
+    qDebug() << "In EditorContextMenu::setCopySecret() " << flag;
 
-    actionCopySpoiler->setVisible(flag);
-    actionCopySpoiler->setEnabled(flag);
+    actionCopySecret->setVisible(flag);
+    actionCopySecret->setEnabled(flag);
 }
 
 
@@ -244,7 +244,7 @@ void EditorContextMenu::setupSignals(void)
 
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
     connect(actionShowImageInFolder,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowImageInFolder);
-    connect(actionCopySpoiler,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuCopySpoiler);
+    connect(actionCopySecret,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuCopySecret);
     connect(actionOpenImage,            &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImage);
     connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
@@ -282,7 +282,7 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionOpenImageWith);
     this->addAction(actionEditImageProperties);
     this->addAction(actionShowImageInFolder);
-    this->addAction(actionCopySpoiler);
+    this->addAction(actionCopySecret);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
 }
@@ -376,11 +376,11 @@ void EditorContextMenu::onActionContextMenuShowImageInFolder()
     }
 }
 
-void EditorContextMenu::onActionContextMenuCopySpoiler()
+void EditorContextMenu::onActionContextMenuCopySecret()
 {
     update();
-    if(actionCopySpoiler->isEnabled()) {
-        emit contextMenuCopySpoiler();
+    if(actionCopySecret->isEnabled()) {
+        emit contextMenuCopySecret();
     }
 }
 

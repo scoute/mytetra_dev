@@ -5,7 +5,7 @@
 #include <QDebug>
 
 #include "EditorCursorPositionDetector.h"
-#include "formatters/SpoilerFormatter.h"
+#include "formatters/SecretFormatter.h"
 #include "EditorTextArea.h"
 #include "libraries/FixedParameters.h"
 
@@ -321,11 +321,11 @@ bool EditorCursorPositionDetector::isCursorOnReferenceSmart(QString &resultHref)
 
 
 // Курсор в спойлере: метка слева или справа от курсора.
-// В выделении смотрятся оба конца через isSpoilerSelect
-bool EditorCursorPositionDetector::isCursorOnSpoiler(void)
+// В выделении смотрятся оба конца через isSecretSelect
+bool EditorCursorPositionDetector::isCursorOnSecret(void)
 {
   if(textArea->textCursor().hasSelection())
-    return isSpoilerSelect();
+    return isSecretSelect();
 
   QString hrefLeft=textArea->textCursor().charFormat().anchorHref();
 
@@ -333,32 +333,32 @@ bool EditorCursorPositionDetector::isCursorOnSpoiler(void)
   cursor.movePosition(QTextCursor::Right);
   QString hrefRight=cursor.charFormat().anchorHref();
 
-  const QString spoilerHref=SpoilerFormatter::spoilerHref();
+  const QString secretHref=SecretFormatter::secretHref();
 
-  return hrefLeft==spoilerHref || hrefRight==spoilerHref;
+  return hrefLeft==secretHref || hrefRight==secretHref;
 }
 
 
 // Выделение целиком внутри одного спойлера
-bool EditorCursorPositionDetector::isSpoilerSelect(void)
+bool EditorCursorPositionDetector::isSecretSelect(void)
 {
   if(!textArea->textCursor().hasSelection())
     return false;
 
-  const QString spoilerHref=SpoilerFormatter::spoilerHref();
+  const QString secretHref=SecretFormatter::secretHref();
 
   int start=textArea->textCursor().selectionStart()+1;
   int stop=textArea->textCursor().selectionEnd();
 
   QTextCursor cursor=textArea->textCursor();
   cursor.setPosition(start);
-  if(cursor.charFormat().anchorHref()!=spoilerHref)
+  if(cursor.charFormat().anchorHref()!=secretHref)
     return false;
 
   for(int i=start+1; i<=stop; ++i)
   {
     cursor.setPosition(i);
-    if(cursor.charFormat().anchorHref()!=spoilerHref)
+    if(cursor.charFormat().anchorHref()!=secretHref)
       return false;
   }
 

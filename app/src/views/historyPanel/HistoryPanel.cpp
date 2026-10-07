@@ -89,9 +89,11 @@ void HistoryPanel::setupUi(void)
     historyTable->setHorizontalHeaderLabels(QStringList() << tr("Note") << tr("Branch")
                                             << tr("Last visit") << tr("Visits")
                                             << tr("Images") << tr("Files") << tr("Size"));
-    historyTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    for(int column=1; column<7; ++column)
-        historyTable->horizontalHeader()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
+    // Границы тянутся мышью как у тегов: автоширина выставляется
+    // программно при пересборке, режимы Stretch/ResizeToContents
+    // запрещают ручное растягивание
+    for(int column=0; column<7; ++column)
+        historyTable->horizontalHeader()->setSectionResizeMode(column, QHeaderView::Interactive);
     historyTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     historyTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     historyTable->setSelectionMode(QAbstractItemView::SingleSelection);

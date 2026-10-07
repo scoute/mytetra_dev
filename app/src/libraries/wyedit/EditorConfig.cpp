@@ -1124,8 +1124,8 @@ QString EditorConfig::update_version_change_value(int versionFrom,
         {
             if(!result.contains("spoiler"))
             {
-                if(result.contains("reference"))
-                    result.replace("reference", "reference,spoiler");
+                if(result.contains("code"))
+                    result.replace("code", "code,spoiler");
                 else
                     result=result+",spoiler";
             }

@@ -138,6 +138,10 @@ void SecretFormatter::onContextMenuChangeSecretColor(void)
 
   mytetraConfig.set_secretColor(chosenColor.name());
 
+  // Сразу на диск: иначе смена живет только до выхода
+  // (или до первой потери фокуса окном)
+  mytetraConfig.sync();
+
   repaintSecrets();
 }
 

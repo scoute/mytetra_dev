@@ -76,9 +76,11 @@ void SpoilerFormatter::onContextMenuCopySpoiler(void)
 
   // Граница по символам: символ c спойлер если формат позиции c+1
   // с меткой (Qt отдает формат символа слева от курсора).
-  // Позиции 0..N валидны всегда, за документ не выходим
+  // Правая граница упирается в конец документа: setPosition за
+  // границей игнорируется, а не клиппится
   QTextCursor probeCursor(cursor);
   QTextDocument *document=textArea->document();
+  const int docEnd=document->characterCount()-1;
 
   while(left>0)
   {
@@ -88,7 +90,7 @@ void SpoilerFormatter::onContextMenuCopySpoiler(void)
     left--;
   }
 
-  while(right<document->characterCount())
+  while(right<docEnd)
   {
     probeCursor.setPosition(right+1);
     if(!isSpoilerFormat(probeCursor.charFormat()))
@@ -98,7 +100,12 @@ void SpoilerFormatter::onContextMenuCopySpoiler(void)
 
   cursor.setPosition(left);
   cursor.setPosition(right, QTextCursor::KeepAnchor);
-  QApplication::clipboard()->setText(cursor.selectedText());
+
+  // selectedText разделяет абзацы символом U+2029: в одну строку он
+  // превращается в кракозябру, в plain-текст идет обычный перевод строки
+  QString plainText=cursor.selectedText();
+  plainText.replace(QChar::ParagraphSeparator, '\n');
+  QApplication::clipboard()->setText(plainText);
 
   cursor.setPosition(savedAnchor);
   cursor.setPosition(savedPosition, QTextCursor::KeepAnchor);

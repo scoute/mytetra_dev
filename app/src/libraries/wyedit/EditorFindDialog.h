@@ -1,11 +1,11 @@
 #ifndef _EDITORFINDDIALOG_H_
 #define	_EDITORFINDDIALOG_H_
 
-#include <QWidget>
 #include <QDialog>
 #include <QTextDocument>
 
 
+class QWidget;
 class QCheckBox;
 class QLineEdit;
 class QPushButton;

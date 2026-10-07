@@ -1,5 +1,7 @@
 #include "MtTableWidget.h"
 
+#include <QStyledItemDelegate>
+
 // Этот класс не используется, скорее всего будет удален
 
 MtTableWidget::MtTableWidget(QWidget *parent) : QTableWidget(parent)

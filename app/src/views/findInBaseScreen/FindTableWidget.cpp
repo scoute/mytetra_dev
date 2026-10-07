@@ -2,7 +2,6 @@
 #include <QRegion>
 #include <QLayout>
 #include <QString>
-#include <QWidget>
 #include <QVariant>
 #include <QTableWidget>
 #include <QtDebug>

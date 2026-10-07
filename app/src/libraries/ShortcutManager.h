@@ -5,8 +5,8 @@
 #include <QKeySequence>
 #include <QMap>
 #include <QSettings>
-#include <QAction>
-#include <QToolButton>
+class QAction;
+class QToolButton;
 
 
 class ShortcutManager : public QObject

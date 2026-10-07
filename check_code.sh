@@ -25,6 +25,20 @@ if [ ${#FILES[@]} -eq 0 ]; then
   exit 0
 fi
 
+# Дубли инклудов в файле: всегда ошибка внимания, чинится удалением повтора
+dup_failed=0
+for f in "${FILES[@]}"; do
+  dups=$(grep -oE '#include [<"][^>"]+[>"]' "$f" | xargs -n1 basename 2>/dev/null | sort | uniq -d)
+  if [ -n "$dups" ]; then
+    echo "check_code: duplicate includes in $f:"
+    echo "$dups" | sed 's/^/  /'
+    dup_failed=1
+  fi
+done
+if [ "$dup_failed" -ne 0 ]; then
+  exit 1
+fi
+
 # Путь к заголовкам Qt для точности разбора, без него только макросы из --library=qt
 QT_HEADERS=""
 if command -v qmake >/dev/null 2>&1; then

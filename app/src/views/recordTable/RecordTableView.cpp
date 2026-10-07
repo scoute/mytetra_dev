@@ -310,6 +310,7 @@ void RecordTableView::assemblyContextMenu(void)
     contextMenu->addSeparator();
     contextMenu->addAction(parentPointer->actionEditField);
     contextMenu->addAction(parentPointer->actionBlock);
+    contextMenu->addAction(parentPointer->actionFavorite);
     contextMenu->addAction(parentPointer->actionDelete);
     contextMenu->addSeparator();
     contextMenu->addAction(parentPointer->actionCut);
@@ -350,6 +351,20 @@ void RecordTableView::onCustomContextMenuRequested(const QPoint &mousePos)
             parentPointer->actionBlock->setText(tr("Block note")+" "+shortcutManager.getKeySequenceAsText("note-block", mode));
         }
     }
+
+    // Звездочка избранного: надпись по состоянию, пункт скрыт
+    // при выключенной фиче в настройках
+    if(mytetraConfig.get_favoritesEnabled() && selectItem.isValid())
+    {
+        parentPointer->actionFavorite->setVisible(true);
+
+        if(parentPointer->isCurrentRecordFavorite())
+            parentPointer->actionFavorite->setText(tr("Remove from favorites"));
+        else
+            parentPointer->actionFavorite->setText(tr("Add to favorites"));
+    }
+    else
+        parentPointer->actionFavorite->setVisible(false);
 
     // Устанавливается надпись для режима выбора записей
     if(selectionMode()==QAbstractItemView::SingleSelection)

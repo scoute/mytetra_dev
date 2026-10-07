@@ -14,6 +14,11 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/favoritesPanel/FavoritesPanel.h"
+
+
+extern QObject *pMainWindow;
 
 
 extern AppConfig mytetraConfig;
@@ -47,6 +52,11 @@ void AppConfigPage_Misc::setupUi(void)
   enableActionLog=new QCheckBox(this);
   enableActionLog->setText(tr("Enable action logging (experimental)"));
   enableActionLog->setChecked(mytetraConfig.getEnableLogging());
+
+  // Панель избранного над деревом
+  enableFavoritesPanel=new QCheckBox(this);
+  enableFavoritesPanel->setText(tr("Show favorites panel"));
+  enableFavoritesPanel->setChecked(mytetraConfig.get_favoritesEnabled());
 
   // Разрешение/запрещение создавать пустую запись (без текста)
   enableCreateEmptyRecord=new QCheckBox(this);
@@ -99,6 +109,7 @@ void AppConfigPage_Misc::assembly(void)
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
+  centralLayout->addWidget(enableFavoritesPanel);
   centralLayout->addLayout(secretColorLayout);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
@@ -162,6 +173,17 @@ int AppConfigPage_Misc::applyChanges(void)
   // Сохраняется настройка возможности создания записи, не содержащей текст
   if(mytetraConfig.getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
     mytetraConfig.setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
+
+  // Сохраняется показ панели избранного
+  if(mytetraConfig.get_favoritesEnabled()!=enableFavoritesPanel->isChecked())
+  {
+    mytetraConfig.set_favoritesEnabled(enableFavoritesPanel->isChecked());
+
+    // Панель применяется живьем без перезапуска
+    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
+    if(favoritesPanel!=nullptr)
+      favoritesPanel->setVisible(enableFavoritesPanel->isChecked());
+  }
 
   // Сохраняется цвет закраски секрета
   if(mytetraConfig.get_secretColor()!=secretColor->name())

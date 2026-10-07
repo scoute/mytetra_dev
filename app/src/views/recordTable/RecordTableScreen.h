@@ -40,6 +40,10 @@ public:
  QAction *actionAddNewAfter;
  QAction *actionEditField;
  QAction *actionBlock;
+ QAction *actionFavorite;
+
+  // Звездочка текущей записи для меню (текст зависит от состояния)
+  bool isCurrentRecordFavorite(void);
  QAction *actionDelete;
  QAction *actionCut;
  QAction *actionCopy;

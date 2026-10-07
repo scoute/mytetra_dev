@@ -646,6 +646,45 @@ void RecordTableController::onEditFieldContext(void)
 }
 
 
+// Звездочка избранного: флаг едет атрибутом XML и синхронизируется
+// как обычное поле. Сохранение дергает пересборку панели по сигналу
+void RecordTableController::onFavoriteContext(void)
+{
+  QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
+  if(selectItems.isEmpty())
+    return;
+
+  QModelIndex index=selectItems.at(0);
+
+  QModelIndex sourceIndex=convertProxyIndexToSourceIndex(index);
+  int pos=sourceIndex.row();
+
+  RecordTableData *table=recordSourceModel->getTableData();
+
+  const bool starred=(table->getField(QStringLiteral("favorite"), pos)==QStringLiteral("1"));
+  table->setField(QStringLiteral("favorite"), starred ? QString() : QStringLiteral("1"), pos);
+
+  int viewPos=index.row();
+  view->updateRow(viewPos);
+
+  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+}
+
+
+// Звездочка стоит на текущей записи
+bool RecordTableController::isCurrentRecordFavorite(void)
+{
+  QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
+  if(selectItems.isEmpty())
+    return false;
+
+  QModelIndex sourceIndex=convertProxyIndexToSourceIndex(selectItems.at(0));
+  RecordTableData *table=recordSourceModel->getTableData();
+
+  return table->getField(QStringLiteral("favorite"), sourceIndex.row())==QStringLiteral("1");
+}
+
+
 // При выборе пункта "Блокировка записи" в контекстном меню
 void RecordTableController::onBlockContext(void)
 {

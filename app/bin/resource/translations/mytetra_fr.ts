@@ -522,6 +522,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Secret color: </source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="0"/>
+        <source>Show favorites panel</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -2172,6 +2177,19 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
+    <name>FavoritesPanel</name>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="127"/>
+        <source>Go to note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="128"/>
+        <source>Remove from favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>HistoryPanel</name>
     <message>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="81"/>
@@ -3307,6 +3325,16 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="368"/>
         <source>Disable sorting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="362"/>
+        <source>Remove from favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="364"/>
+        <source>Add to favorites</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

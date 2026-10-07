@@ -31,6 +31,7 @@ class Record
 public:
   Record();
   Record(const Record &obj);
+  Record &operator=(const Record &obj);
   virtual ~Record();
 
   void setupDataFromDom(QDomElement iDomElement);

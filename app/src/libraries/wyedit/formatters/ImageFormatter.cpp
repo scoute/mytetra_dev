@@ -11,7 +11,7 @@
 #include <QMessageBox>
 #include <QImage>
 #include <QUrl>
-#include <QProcess> (Редактор: диалог выбора программы для открытия картинки)
+#include <QProcess>
 
 #include "ImageFormatter.h"
 

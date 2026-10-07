@@ -18,6 +18,7 @@
 #include <QTimer>
 #include <QDebug>
 #include <QShowEvent>
+#include <QRegularExpression>
 
 #include <algorithm>
 
@@ -381,7 +382,7 @@ void FindScreen::setFindText(QString text)
 // и точка с запятой, пробелы по краям отбрасываются
 QStringList FindScreen::splitRecordTags(const QString &tagsField)
 {
-    QStringList tags=tagsField.split(QRegExp("[,;]+"), QString::SkipEmptyParts);
+    QStringList tags=tagsField.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
 
     for(int i=0; i<tags.size(); ++i)
         tags[i]=tags[i].trimmed();

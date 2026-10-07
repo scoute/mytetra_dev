@@ -522,11 +522,6 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Secret color: </source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="0"/>
-        <source>Show favorites panel</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -2173,6 +2168,19 @@ Try to search for entire database.</source>
     <message>
         <location filename="../../../src/libraries/FixedParameters.cpp" line="105"/>
         <source>Block</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Favorites</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="0"/>
+        <source>Favorite notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="0"/>
+        <source>Show favorites panel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

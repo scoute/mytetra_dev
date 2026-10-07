@@ -694,11 +694,6 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Secret color: </source>
         <translation>Цвет секрета: </translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="0"/>
-        <source>Show favorites panel</source>
-        <translation>Показывать панель избранного</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -3017,6 +3012,19 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
+    <name>AppConfigPage_Favorites</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="0"/>
+        <source>Favorite notes</source>
+        <translation>Избранные заметки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="0"/>
+        <source>Show favorites panel</source>
+        <translation>Показывать панель избранного</translation>
+    </message>
+</context>
+<context>
     <name>FavoritesPanel</name>
     <message>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="127"/>
@@ -4404,6 +4412,11 @@ MyTetra will try to create a blank entry to fix it.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
         <source>Misc</source>
         <translation>Разное</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="0"/>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/TrashMonitoring.cpp" line="170"/>

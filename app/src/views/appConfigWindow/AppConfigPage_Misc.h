@@ -36,7 +36,6 @@ protected:
   QCheckBox *printDebugMessages;      // Выводить ли в консоль отладочные сообщения
   QCheckBox *enableActionLog;         // Разрешено ли логирование действий
   QCheckBox *enableCreateEmptyRecord; // Разрешено ли создание записи, не содержащей текст (а только заголовок)
-  QCheckBox *enableFavoritesPanel;      // Показывать панель избранного, включена по умолчанию
   QPushButton *editMyTetraConfigFile;
 
   QLabel *secretColorLabel;

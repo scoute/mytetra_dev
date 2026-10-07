@@ -14,6 +14,7 @@
 #include "AppConfigPage_Attach.h"
 #include "AppConfigPage_Keyboard.h"
 #include "AppConfigPage_History.h"
+#include "AppConfigPage_Favorites.h"
 #include "AppConfigPage_Appearance.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
@@ -55,6 +56,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Keyboard"));
     pageHistory    =configDialog->addWidget(new AppConfigPage_History( parent ),
                                             QObject::tr("History"));
+    pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( parent ),
+                                            QObject::tr("Favorites"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
 
@@ -96,6 +99,7 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageAttach") item=pageAttach;
     if(name=="pageKeyboard") item=pageKeyboard;
     if(name=="pageHistory") item=pageHistory;
+    if(name=="pageFavorites") item=pageFavorites;
     if(name=="pageMisc") item=pageMisc;
 
     if(item!=nullptr)

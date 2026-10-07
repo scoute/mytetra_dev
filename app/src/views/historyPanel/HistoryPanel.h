@@ -2,6 +2,7 @@
 #define _HISTORYPANEL_H_
 
 #include <QWidget>
+#include <QMap>
 
 // Панель истории посещений заметок в доке справа, как панель тегов.
 // Данные - журнал VisitHistory (факты посещений со временем), панель
@@ -49,6 +50,10 @@ private slots:
     void onVisitLogged(const QString &id);
     void onTreeMetadataSaved(void);
 
+    // Пользователь подвигал границу колонки: ширина запоминается
+    // чтобы пересборка ее не сбрасывала
+    void onSectionResized(int logicalIndex, int oldSize, int newSize);
+
     // Прыжок к заметке через готовый механизм позиционирования
     void goToNote(const QString &id);
 
@@ -78,6 +83,13 @@ private:
 
     // Строка контекстного меню для пункта "забыть"
     QString contextNoteId;
+
+    // Ширины колонок, заданные пользователем вручную.
+    // Пусто значит автоширина по содержимому с потолком
+    QMap<int, int> userColumnWidths;
+
+    // Свои программные ресайзы не запоминать как пользовательские
+    bool resizingProgrammatically;
 };
 
 #endif /* _HISTORYPANEL_H_ */

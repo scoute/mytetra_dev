@@ -251,7 +251,7 @@ void EditorFindBar::detach_clicked(void)
 // Флаги поиска, собранные из состояния чекбоксов
 QTextDocument::FindFlags EditorFindBar::collectFlags(void) const
 {
-  QTextDocument::FindFlags flags=0;
+  QTextDocument::FindFlags flags;
   if(mathCase->isChecked())   flags|=QTextDocument::FindCaseSensitively;
   if(wholeWords->isChecked()) flags|=QTextDocument::FindWholeWords;
 

@@ -117,7 +117,7 @@ void EditorMathExpressionDialog::showEvent(QShowEvent *event)
 // Масштабирование картинки формулы в зависимости от изменения размеров диалога
 void EditorMathExpressionDialog::resizeEvent(QResizeEvent *event)
 {
-    if (imageLabel!=nullptr && imageLabel->pixmap()!=nullptr) {
+    if (imageLabel!=nullptr && !imageLabel->pixmap(Qt::ReturnByValue).isNull()) {
         if (fitToScrollAreaCheckBox->isChecked()) {
             // Масштабирование картинки формулы
             pictureZoom();
@@ -428,8 +428,8 @@ void EditorMathExpressionDialog::updateFormulaPicture()
 // Масштабирование картинки формулы
 void EditorMathExpressionDialog::pictureZoom()
 {
-    double pixHeight = imageLabel->pixmap()->height();
-    double pixWidth = imageLabel->pixmap()->width();
+    double pixHeight = imageLabel->pixmap(Qt::ReturnByValue).height();
+    double pixWidth = imageLabel->pixmap(Qt::ReturnByValue).width();
     double imageScrollAreaHeight = imageScrollArea->geometry().height()-10;
     double imageScrollAreaWidth = imageScrollArea->geometry().width()-10;
     if (pixHeight > imageScrollAreaHeight || pixWidth > imageScrollAreaWidth) {

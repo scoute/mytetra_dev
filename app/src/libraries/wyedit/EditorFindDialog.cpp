@@ -188,7 +188,7 @@ void EditorFindDialog::setFindRequest(const QString &text, QTextDocument::FindFl
 // Направление задают кнопки (назад добавляет FindBackward сама)
 QTextDocument::FindFlags EditorFindDialog::collectFlags(void) const
 {
-  QTextDocument::FindFlags flags=0;
+  QTextDocument::FindFlags flags;
   if(mathCase->isChecked())  flags|=QTextDocument::FindCaseSensitively;
   if(wholeWords->isChecked())flags|=QTextDocument::FindWholeWords;
 

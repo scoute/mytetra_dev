@@ -107,7 +107,7 @@ void ClipboardBranch::addBranch( QString parent_id, QMap<QString, QString> branc
  QMap<QString, QString> line;
  
  line["parent_id"]=parent_id;
- line.unite(branch_fields);
+ line.insert(branch_fields);
 
  branchData.branch << line;
 }

@@ -180,7 +180,7 @@ QMap<QString, QString> EditorImageOpenDialog::availableImagePrograms(void)
     if(xdgDataDirs.isEmpty())
         xdgDataDirs="/usr/local/share:/usr/share";
 
-    QStringList dataDirs=xdgDataDirs.split(':', QString::SkipEmptyParts);
+    QStringList dataDirs=xdgDataDirs.split(':', Qt::SkipEmptyParts);
 
     for(int i=0; i<dataDirs.size(); i++)
         applicationsDirs << dataDirs.at(i)+"/applications";
@@ -260,7 +260,7 @@ QMap<QString, QString> EditorImageOpenDialog::availableImagePrograms(void)
 
             // Нужны только умеющие картинки: image/png, image/jpeg, image/*...
             bool handlesImages=false;
-            QStringList mimeTypes=entryMime.split(';', QString::SkipEmptyParts);
+            QStringList mimeTypes=entryMime.split(';', Qt::SkipEmptyParts);
 
             for(int m=0; m<mimeTypes.size(); m++)
             {

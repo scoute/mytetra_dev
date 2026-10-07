@@ -289,6 +289,10 @@ void MainWindow::assembly(void)
     // Тот же переключатель что в меню Tools: состояние синхронно само
     recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
 
+    // Кнопка истории посещений рядом с биркой тегов.
+    // Тот же переключатель что в меню Tools
+    recordTableScreen->addExtraToolAction(historyPanelDock->toggleViewAction());
+
     setCentralWidget(findSplitter);
 }
 

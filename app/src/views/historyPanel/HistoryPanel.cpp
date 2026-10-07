@@ -56,7 +56,8 @@ public:
 
 
 HistoryPanel::HistoryPanel(QWidget *parent) : QWidget(parent),
-    treeMetadataConnected(false)
+    treeMetadataConnected(false),
+    resizingProgrammatically(false)
 {
     setupUi();
     assembly();
@@ -143,6 +144,9 @@ void HistoryPanel::setupSignals(void)
 
     connect(refreshDebounce, &QTimer::timeout,
             this,            &HistoryPanel::refreshHistory);
+
+    connect(historyTable->horizontalHeader(), &QHeaderView::sectionResized,
+            this,                             &HistoryPanel::onSectionResized);
 }
 
 
@@ -263,6 +267,19 @@ void HistoryPanel::onForgetNote(void)
     visitHistory.forget(contextNoteId);
     contextNoteId.clear();
     refreshHistory();
+}
+
+
+// Пользователь подвигал границу колонки: ширина запоминается
+// чтобы пересборка ее не сбрасывала
+void HistoryPanel::onSectionResized(int logicalIndex, int oldSize, int newSize)
+{
+    Q_UNUSED(oldSize);
+
+    if(resizingProgrammatically)
+        return;
+
+    userColumnWidths[logicalIndex]=newSize;
 }
 
 
@@ -500,6 +517,26 @@ void HistoryPanel::refreshHistory(void)
 
     // По умолчанию сначала недавние. Дальше выбор запоминается
     // таблицей (индикатор показан) и переживает пересборки
+    resizingProgrammatically=true;
+
+    historyTable->resizeColumnsToContents();
+
+    // Автоширина текстовых колонок ограничена потолком чтобы длинное
+    // название не раздувало док: дальше только вручную
+    const int digitWidth=historyTable->fontMetrics().horizontalAdvance('0');
+    for(int column=0; column<2; ++column)
+    {
+        const int autoWidth=qMin(historyTable->columnWidth(column),
+                                 digitWidth*40);
+        historyTable->setColumnWidth(column, autoWidth);
+    }
+
+    // Ручные ширины переживают пересборку
+    for(auto it=userColumnWidths.constBegin(); it!=userColumnWidths.constEnd(); ++it)
+        historyTable->setColumnWidth(it.key(), it.value());
+
+    resizingProgrammatically=false;
+
     if(!historyTable->horizontalHeader()->isSortIndicatorShown())
         historyTable->sortByColumn(2, Qt::DescendingOrder);
 

@@ -3958,7 +3958,7 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
-        <source>Show images gallery</source>
+        <source>Images gallery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

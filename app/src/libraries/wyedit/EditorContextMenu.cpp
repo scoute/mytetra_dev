@@ -44,6 +44,7 @@ void EditorContextMenu::setupActions(void)
  actionEditImageProperties=new QAction(this);
  actionShowImageInFolder=new QAction(this);
  actionCopySecret=new QAction(this);
+ actionChangeSecretColor=new QAction(this);
  actionOpenImage=new QAction(this);
  actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
@@ -74,6 +75,8 @@ void EditorContextMenu::setupShortcuts(void)
 
     actionCopySecret->setText(tr("Copy secret")); // Скопировать содержимое секрета
 
+    actionChangeSecretColor->setText(tr("Change secret color...")); // Сменить глобальный цвет секретов
+
     // "Умное" действие открытия изображения во внешней программе
     shortcutManager.initAction("editor-openImage", actionOpenImage );
     actionOpenImage->setText(tr("Open image"));
@@ -98,6 +101,7 @@ void EditorContextMenu::update(void)
     setEditMathExpression( false );
     setImageProperties( false );
     setCopySecret( false );
+    setChangeSecretColor( false );
 
     setFormatToLowerCase( true );
     setFormatToUpperCase( true );
@@ -129,6 +133,7 @@ void EditorContextMenu::update(void)
 
     // Курсор в спойлере: доступен пункт быстрого копирования содержимого
     setCopySecret(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
+    setChangeSecretColor(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
 
     // Если в буфере обмена есть текст
     if(QGuiApplication::clipboard()->text().size()>0) {
@@ -179,13 +184,21 @@ void EditorContextMenu::setImageProperties(bool flag)
 }
 
 
-// Показывать или нет пункт копирования спойлера
+// Показывать или нет пункт копирования секрета
 void EditorContextMenu::setCopySecret(bool flag)
 {
     qDebug() << "In EditorContextMenu::setCopySecret() " << flag;
 
     actionCopySecret->setVisible(flag);
     actionCopySecret->setEnabled(flag);
+}
+
+
+// Показывать или нет пункт смены цвета секрета
+void EditorContextMenu::setChangeSecretColor(bool flag)
+{
+    actionChangeSecretColor->setVisible(flag);
+    actionChangeSecretColor->setEnabled(flag);
 }
 
 
@@ -245,6 +258,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
     connect(actionShowImageInFolder,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowImageInFolder);
     connect(actionCopySecret,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuCopySecret);
+    connect(actionChangeSecretColor,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuChangeSecretColor);
     connect(actionOpenImage,            &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImage);
     connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
@@ -283,6 +297,7 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionEditImageProperties);
     this->addAction(actionShowImageInFolder);
     this->addAction(actionCopySecret);
+    this->addAction(actionChangeSecretColor);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
 }
@@ -381,6 +396,14 @@ void EditorContextMenu::onActionContextMenuCopySecret()
     update();
     if(actionCopySecret->isEnabled()) {
         emit contextMenuCopySecret();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuChangeSecretColor()
+{
+    update();
+    if(actionChangeSecretColor->isEnabled()) {
+        emit contextMenuChangeSecretColor();
     }
 }
 

@@ -1866,6 +1866,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Copy secret</source>
         <translation>Скопировать секрет</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="0"/>
+        <source>Change secret color...</source>
+        <translation>Изменить цвет секретов...</translation>
+    </message>
 </context>
 <context>
     <name>EditorFindBar</name>

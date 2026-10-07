@@ -17,6 +17,7 @@ public:
 
  void setImageProperties(bool flag);
  void setCopySecret(bool flag); // Показ пункта "Скопировать секрет"
+ void setChangeSecretColor(bool flag); // Показ пункта "Изменить цвет секретов"
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
  void setPasteAsPlainText(bool flag);
@@ -40,6 +41,7 @@ signals:
   void contextMenuEditImageProperties(void);
   void contextMenuShowImageInFolder(void);
   void contextMenuCopySecret(void);
+  void contextMenuChangeSecretColor(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
   void lowercase(void);
@@ -64,6 +66,7 @@ private:
   QAction *actionEditImageProperties;
   QAction *actionShowImageInFolder;
   QAction *actionCopySecret;
+  QAction *actionChangeSecretColor;
   QAction *actionOpenImage;
   QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
@@ -87,6 +90,7 @@ protected slots:
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuShowImageInFolder(void);
   void onActionContextMenuCopySecret(void);
+  void onActionContextMenuChangeSecretColor(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
 

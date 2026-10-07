@@ -469,6 +469,9 @@ void Editor::setupSignals(void)
   connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySecret,
           secretFormatter,   &SecretFormatter::onContextMenuCopySecret,
           Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuChangeSecretColor,
+          secretFormatter,   &SecretFormatter::onContextMenuChangeSecretColor,
+          Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::lowercase,
           typefaceFormatter, &TypefaceFormatter::onLowerCase,
           Qt::DirectConnection);
@@ -773,6 +776,10 @@ void Editor::setTextarea(QString text)
 
   // Очищается URL документа, так как документ создается "из ничего"
   textArea->document()->setMetaInformation( QTextDocument::DocumentUrl, "" );
+
+  // Секреты подтягиваются под глобальный цвет из настроек
+  if(secretFormatter!=nullptr)
+    secretFormatter->repaintSecrets();
 }
 
 

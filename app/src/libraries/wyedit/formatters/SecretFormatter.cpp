@@ -1,7 +1,9 @@
 #include <QTextCursor>
 #include <QTextDocument>
+#include <QTextBlock>
 #include <QColor>
 #include <QStatusBar>
+#include <QColorDialog>
 #include <QApplication>
 #include <QClipboard>
 
@@ -119,4 +121,87 @@ void SecretFormatter::onContextMenuCopySecret(void)
   cursor.setPosition(savedAnchor);
   cursor.setPosition(savedPosition, QTextCursor::KeepAnchor);
   textArea->setTextCursor(cursor);
+}
+
+
+// Сменить глобальный цвет секретов: диалог, запись в конфиг,
+// живая перекраска текущей заметки
+void SecretFormatter::onContextMenuChangeSecretColor(void)
+{
+  if(!editor->cursorPositionDetector->isCursorOnSecret())
+    return; // под курсором не секрет
+
+  const QColor chosenColor=QColorDialog::getColor(secretColor(), textArea);
+
+  if(!chosenColor.isValid())
+    return;
+
+  mytetraConfig.set_secretColor(chosenColor.name());
+
+  repaintSecrets();
+}
+
+
+// Перекрасить все секреты документа глобальным цветом.
+// Идут только несовпадающие: уже conforming документ не трогается
+// вообще (ни undo, ни modified). Одна операция отмены на все
+void SecretFormatter::repaintSecrets(void)
+{
+  QTextDocument *document=textArea->document();
+  const QColor targetColor=secretColor();
+
+  struct SecretRange
+  {
+    int start;
+    int length;
+  };
+  QList<SecretRange> ranges;
+
+  for(QTextBlock block=document->begin(); block.isValid(); block=block.next())
+  {
+    for(QTextBlock::iterator it=block.begin(); !(it.atEnd()); ++it)
+    {
+      QTextFragment fragment=it.fragment();
+      if(!fragment.isValid() || fragment.length()<=0)
+        continue;
+
+      const QTextCharFormat format=fragment.charFormat();
+      if(!isSecretFormat(format))
+        continue;
+
+      if(format.foreground().color()==targetColor &&
+         format.background().color()==targetColor)
+        continue;
+
+      SecretRange range;
+      range.start=fragment.position();
+      range.length=fragment.length();
+      ranges << range;
+    }
+  }
+
+  if(ranges.isEmpty())
+    return;
+
+  const bool wasModified=document->isModified();
+
+  QTextCursor editCursor(document);
+  editCursor.beginEditBlock();
+
+  QTextCharFormat paintFormat;
+  paintFormat.setForeground(targetColor);
+  paintFormat.setBackground(targetColor);
+
+  for(const SecretRange &range : ranges)
+  {
+    editCursor.setPosition(range.start);
+    editCursor.setPosition(range.start+range.length, QTextCursor::KeepAnchor);
+    editCursor.mergeCharFormat(paintFormat);
+  }
+
+  editCursor.endEditBlock();
+
+  // Подтяжка не правка пользователя
+  if(!wasModified)
+    document->setModified(false);
 }

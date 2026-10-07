@@ -264,6 +264,11 @@ void EditorToolBar::setupToolBarTools(void)
     reference->setIcon(QIcon(":/resource/pic/edit_reference.svg"));
     reference->setObjectName("editor_tb_reference");
 
+    // Кнопка закрашивания спойлера для секретов
+    spoiler=new QAction(this);
+    spoiler->setIcon(QIcon(":/resource/pic/spoiler.svg"));
+    spoiler->setObjectName("editor_tb_spoiler");
+
     // Кнопка просмотра HTML кода
     showHtml=new QAction(this);
     showHtml->setIcon(QIcon(":/resource/pic/edit_showhtml.svg"));
@@ -420,6 +425,7 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-findText", findText);
     shortcutManager.initAction("editor-settings", settings);
     shortcutManager.initAction("editor-reference", reference);
+    shortcutManager.initAction("editor-spoiler", spoiler);
     shortcutManager.initAction("editor-showHtml", showHtml);
     shortcutManager.initAction("editor-showFormatting", showFormatting);
     shortcutManager.initAction("editor-createTable", createTable);

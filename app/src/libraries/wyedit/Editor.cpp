@@ -81,6 +81,7 @@ Editor::~Editor(void)
   delete imageFormatter;
   delete mathExpressionFormatter;
   delete referenceFormatter;
+  delete spoilerFormatter;
 }
 
 
@@ -277,6 +278,11 @@ void Editor::setupFormatters(void)
   referenceFormatter=new ReferenceFormatter();
   referenceFormatter->setEditor(this);
   referenceFormatter->setTextArea(textArea);
+
+  // Закрашиваемая область для секретов
+  spoilerFormatter=new SpoilerFormatter();
+  spoilerFormatter->setEditor(this);
+  spoilerFormatter->setTextArea(textArea);
 }
 
 
@@ -459,6 +465,9 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuGotoReference,
           referenceFormatter, &ReferenceFormatter::onContextMenuGotoReference,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySpoiler,
+          spoilerFormatter,   &SpoilerFormatter::onContextMenuCopySpoiler,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::lowercase,
           typefaceFormatter, &TypefaceFormatter::onLowerCase,
@@ -655,6 +664,9 @@ void Editor::setupToolsSignals(void)
 
     connect(editorToolBarAssistant->reference, &QAction::triggered,
             referenceFormatter,                &ReferenceFormatter::onReferenceClicked);
+
+    connect(editorToolBarAssistant->spoiler, &QAction::triggered,
+            spoilerFormatter,                &SpoilerFormatter::onSpoilerClicked);
 
     connect(editorToolBarAssistant->showHtml, &QAction::triggered,
             this,                             &Editor::onShowhtmlClicked);
@@ -1566,7 +1578,13 @@ void Editor::collectFindMatches(const QString &text, QTextDocument::FindFlags fl
     while(!cursor.isNull())
     {
       const int matchStart=cursor.selectionStart();
-      findMatches.append(cursor);
+
+      // Спойлер в поиске не участвует чтобы подсветка не выдавала
+      // содержимое. Позиция +1: Qt отдает формат символа слева от курсора
+      QTextCursor probeCursor(textArea->document());
+      probeCursor.setPosition(matchStart+1);
+      if(!SpoilerFormatter::isSpoilerFormat(probeCursor.charFormat()))
+        findMatches.append(cursor);
 
       cursor=textArea->document()->find(text, cursor, findFlags);
 

@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include "EditorCursorPositionDetector.h"
+#include "formatters/SpoilerFormatter.h"
 #include "EditorTextArea.h"
 #include "libraries/FixedParameters.h"
 
@@ -316,4 +317,50 @@ bool EditorCursorPositionDetector::isCursorOnReferenceSmart(QString &resultHref)
 
     return false;
   }
+}
+
+
+// Курсор в спойлере: метка слева или справа от курсора.
+// В выделении смотрятся оба конца через isSpoilerSelect
+bool EditorCursorPositionDetector::isCursorOnSpoiler(void)
+{
+  if(textArea->textCursor().hasSelection())
+    return isSpoilerSelect();
+
+  QString hrefLeft=textArea->textCursor().charFormat().anchorHref();
+
+  QTextCursor cursor=textArea->textCursor();
+  cursor.movePosition(QTextCursor::Right);
+  QString hrefRight=cursor.charFormat().anchorHref();
+
+  const QString spoilerHref=SpoilerFormatter::spoilerHref();
+
+  return hrefLeft==spoilerHref || hrefRight==spoilerHref;
+}
+
+
+// Выделение целиком внутри одного спойлера
+bool EditorCursorPositionDetector::isSpoilerSelect(void)
+{
+  if(!textArea->textCursor().hasSelection())
+    return false;
+
+  const QString spoilerHref=SpoilerFormatter::spoilerHref();
+
+  int start=textArea->textCursor().selectionStart()+1;
+  int stop=textArea->textCursor().selectionEnd();
+
+  QTextCursor cursor=textArea->textCursor();
+  cursor.setPosition(start);
+  if(cursor.charFormat().anchorHref()!=spoilerHref)
+    return false;
+
+  for(int i=start+1; i<=stop; ++i)
+  {
+    cursor.setPosition(i);
+    if(cursor.charFormat().anchorHref()!=spoilerHref)
+      return false;
+  }
+
+  return true;
 }

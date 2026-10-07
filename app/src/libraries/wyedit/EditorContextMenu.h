@@ -15,7 +15,8 @@ public:
 
  QList<QAction *> getActionsList(void);
 
- void setImageProperties(bool flag); // Активирование добавочного пункта меню "Свойства картинки")
+ void setImageProperties(bool flag);
+ void setCopySpoiler(bool flag); // Показ пункта "Скопировать спойлер"
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
  void setPasteAsPlainText(bool flag);
@@ -38,6 +39,7 @@ signals:
   void contextMenuOpenImageWith(void);
   void contextMenuEditImageProperties(void);
   void contextMenuShowImageInFolder(void);
+  void contextMenuCopySpoiler(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
   void lowercase(void);
@@ -61,6 +63,7 @@ private:
 
   QAction *actionEditImageProperties;
   QAction *actionShowImageInFolder;
+  QAction *actionCopySpoiler;
   QAction *actionOpenImage;
   QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
@@ -83,6 +86,7 @@ protected slots:
   void onActionContextMenuOpenImageWith(void);
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuShowImageInFolder(void);
+  void onActionContextMenuCopySpoiler(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
 

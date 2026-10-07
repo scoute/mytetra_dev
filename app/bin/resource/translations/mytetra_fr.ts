@@ -1363,6 +1363,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Edit math expression</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="0"/>
+        <source>Copy spoiler</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorFindBar</name>
@@ -1545,6 +1550,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="109"/>
         <source>Image info</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SpoilerFormatter</name>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/SpoilerFormatter.cpp" line="0"/>
+        <source>Select text to hide as spoiler</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3741,6 +3754,15 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="138"/>
         <source>Edit reference URL</source>
+        <translation type="unfinished"></translation>
+    </message>    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="0"/>
+        <source>Hide as spoiler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="0"/>
+        <source>Paint selected text as spoiler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

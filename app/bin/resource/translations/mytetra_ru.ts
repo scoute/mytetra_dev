@@ -1856,6 +1856,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Go to URL or reference</source>
         <translation type="vanished">Перейти по URL или по ссылке</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="0"/>
+        <source>Copy spoiler</source>
+        <translation>Скопировать спойлер</translation>
+    </message>
 </context>
 <context>
     <name>EditorFindBar</name>
@@ -2077,6 +2082,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="114"/>
         <source>%1 (custom)</source>
         <translation>%1 (вручную)</translation>
+    </message>
+</context>
+<context>
+    <name>SpoilerFormatter</name>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/SpoilerFormatter.cpp" line="0"/>
+        <source>Select text to hide as spoiler</source>
+        <translation>Выделите текст чтобы скрыть спойлером</translation>
     </message>
 </context>
 <context>
@@ -5216,6 +5229,15 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="138"/>
         <source>Edit reference URL</source>
         <translation>Редактировать ссылку</translation>
+    </message>    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="0"/>
+        <source>Hide as spoiler</source>
+        <translation>Скрыть спойлером</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="0"/>
+        <source>Paint selected text as spoiler</source>
+        <translation>Закрасить выделенный текст спойлером</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="139"/>

@@ -15,8 +15,6 @@
 #include <QInputDialog>
 #include <QFileDialog>
 #include <QScrollBar>
-#include <QColor>
-#include <QtGlobal>
 #include <QApplication>
 #include <QTimer>
 

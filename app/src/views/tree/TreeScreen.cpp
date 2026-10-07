@@ -4,7 +4,6 @@
 #include <QMessageBox>
 #include <QString>
 #include <QMap>
-#include <QAction>
 #include <QItemSelectionModel>
 #include <QVBoxLayout>
 #include <QToolBar>

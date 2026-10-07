@@ -39,7 +39,6 @@
 #include "models/appConfig/AppConfig.h"
 #include "views/tree/KnowTreeView.h"
 #include "views/mainWindow/MainWindow.h"
-#include "views/mainWindow/MainWindow.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 

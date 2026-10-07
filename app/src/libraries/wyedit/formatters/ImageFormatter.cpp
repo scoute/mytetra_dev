@@ -9,7 +9,6 @@
 #include <QImageReader>
 #include <QTextDocumentFragment>
 #include <QMessageBox>
-#include <QImage>
 #include <QUrl>
 #include <QProcess>
 

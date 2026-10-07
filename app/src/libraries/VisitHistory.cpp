@@ -1,11 +1,9 @@
 #include <QFile>
-#include <QDir>
 #include <QTextStream>
 #include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
-#include <QDebug>
 
 #include "VisitHistory.h"
 #include "libraries/GlobalParameters.h"

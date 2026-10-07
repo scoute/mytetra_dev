@@ -2035,6 +2035,16 @@ void Editor::onCustomContextMenuRequested(const QPoint &pos)
 {
     qDebug() << "In Editor on_customContextMenuRequested";
 
+    // Курсор ставится в точку клика, но выделение бережется: клик внутри
+    // него курсор не двигает. Иначе пункты меню (включая копирование
+    // секрета) работали бы со старым местом, а не с точкой клика
+    QTextCursor clickCursor=textArea->cursorForPosition(pos);
+    QTextCursor currentCursor=textArea->textCursor();
+    if(!currentCursor.hasSelection() ||
+       clickCursor.position() < currentCursor.selectionStart() ||
+       clickCursor.position() > currentCursor.selectionEnd())
+      textArea->setTextCursor(clickCursor);
+
     // В контекстном меню выставляются допустимые пункты
     editorContextMenu->update();
 

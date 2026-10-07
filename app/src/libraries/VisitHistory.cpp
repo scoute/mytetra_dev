@@ -14,9 +14,10 @@
 extern GlobalParameters globalParameters;
 
 
-// Сколько последних строк держать в файле при ротации.
-// Строка короткая (~60 байт), лимита хватает на годы посещений
-#define VISIT_HISTORY_KEEP_LINES 10000
+// Сколько последних визитов держать в журнале. Хватает на месяцы
+// работы, файл болтается около 60КБ и не растет. По дате не режем
+// осознанно: давний редкий визит не мусор
+#define VISIT_HISTORY_KEEP_VISITS 1000
 
 
 VisitHistory::VisitHistory(void) : loaded(false)
@@ -178,23 +179,18 @@ void VisitHistory::appendLine(const QString &line)
     if(!historyFile.open(QIODevice::Append | QIODevice::Text))
         return;
 
-    if(historyFile.size() > 512*1024)
-    {
-        historyFile.close();
-
-        ensureLoaded();
-
-        if(entries.size() > VISIT_HISTORY_KEEP_LINES)
-        {
-            entries=entries.mid(entries.size()-VISIT_HISTORY_KEEP_LINES);
-
-            rewriteFile();
-
-            return;
-        }
-    }
-
     QTextStream historyOut(&historyFile);
     historyOut << line << '\n';
     historyFile.close();
+
+    // Авточистка по количеству: старые визиты отваливаются,
+// файл не растет. Память и диск режутся одной операцией
+    ensureLoaded();
+
+    if(entries.size() > VISIT_HISTORY_KEEP_VISITS)
+    {
+        entries=entries.mid(entries.size()-VISIT_HISTORY_KEEP_VISITS);
+
+        rewriteFile();
+    }
 }

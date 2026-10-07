@@ -235,6 +235,10 @@ public:
     QString getRecordWithAttachHighlightColor(void);
     void setRecordWithAttachHighlightColor(QString color); // Формат цвета - "#0099FF"
 
+    // Цвет закраски секрета
+    QString get_secretColor(void);
+    void set_secretColor(QString color); // Формат цвета - "#2e8b57"
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -340,6 +344,7 @@ private:
     QStringList get_parameter_table_40(bool withEndSignature=true);
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
+    QStringList get_parameter_table_43(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

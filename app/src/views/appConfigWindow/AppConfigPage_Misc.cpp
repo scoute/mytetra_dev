@@ -1,8 +1,14 @@
 #include <QWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QPushButton>
+#include <QToolButton>
+#include <QColorDialog>
+#include <QPixmap>
+#include <QColor>
 
 #include "AppConfigPage_Misc.h"
 #include "models/appConfig/AppConfig.h"
@@ -47,6 +53,15 @@ void AppConfigPage_Misc::setupUi(void)
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   enableCreateEmptyRecord->setChecked(mytetraConfig.getEnableCreateEmptyRecord());
 
+  // Цвет закраски секрета: кнопка с квадратиком-образцом,
+  // диалог дает всю радугу включая кастомные цвета
+  secretColorLabel=new QLabel(this);
+  secretColorLabel->setText(tr("Secret color: "));
+
+  secretColorButton=new QToolButton(this);
+  secretColor=new QColor();
+  this->setColorForSecretButton(QColor(mytetraConfig.get_secretColor()));
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -57,6 +72,7 @@ void AppConfigPage_Misc::setupUi(void)
 void AppConfigPage_Misc::setupSignals(void)
 {
   connect(editMyTetraConfigFile, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedEditMyTetraConfigFile);
+  connect(secretColorButton, &QToolButton::clicked, this, &AppConfigPage_Misc::onClickedSecretColor);
 }
 
 
@@ -72,16 +88,45 @@ void AppConfigPage_Misc::assembly(void)
   dangerBox->setLayout(dangerLayout);
 
 
+  // Слой для надписи цвета секрета и кнопки выбора
+  QHBoxLayout *secretColorLayout=new QHBoxLayout();
+  secretColorLayout->addWidget(secretColorLabel);
+  secretColorLayout->addWidget(secretColorButton);
+  secretColorLayout->addStretch();
+
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
+  centralLayout->addLayout(secretColorLayout);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
   // Основной слой устанавливается
   setLayout(centralLayout);
+}
+
+
+void AppConfigPage_Misc::setColorForSecretButton(QColor iColor)
+{
+  // Квадратик на кнопке выбора цвета
+  QPixmap pix(16, 16);
+  pix.fill(iColor.rgb());
+  secretColorButton->setIcon(pix);
+
+  *secretColor=iColor;
+}
+
+
+void AppConfigPage_Misc::onClickedSecretColor()
+{
+  // Диалог запроса цвета со всей радугой
+  QColor selectedColor=QColorDialog::getColor(*secretColor, this);
+
+  // Если цвет выбран, и он правильный
+  if(selectedColor.isValid())
+    this->setColorForSecretButton(selectedColor);
 }
 
 
@@ -117,6 +162,10 @@ int AppConfigPage_Misc::applyChanges(void)
   // Сохраняется настройка возможности создания записи, не содержащей текст
   if(mytetraConfig.getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
     mytetraConfig.setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
+
+  // Сохраняется цвет закраски секрета
+  if(mytetraConfig.get_secretColor()!=secretColor->name())
+    mytetraConfig.set_secretColor(secretColor->name());
 
   return result;
 }

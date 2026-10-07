@@ -916,6 +916,25 @@ void AppConfig::setRecordWithAttachHighlightColor(QString color)
 }
 
 
+// Цвет закраски секрета в формате "#2e8b57"
+QString AppConfig::get_secretColor(void)
+{
+    return this->get_parameter("secretColor");
+}
+
+
+void AppConfig::set_secretColor(QString color)
+{
+    QColor saveColor(color);
+
+    // Если сохраняема строка действительно содержит закодированный цвет
+    if (saveColor.isValid())
+    {
+        m_conf->setValue("secretColor", color);
+    }
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -1260,6 +1279,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_40;
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
+    parameterFunctions << &AppConfig::get_parameter_table_43;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2123,6 +2143,25 @@ QStringList AppConfig::get_parameter_table_42(bool withEndSignature)
     // Размер обозначается специальными строками, начинающимися на "META_ICON_"
     // Если размер пустой, используется системный размер иконок
     table << "interfaceIconSize" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 42
+    table << get_parameter_table_42(false);
+
+    // Цвет закраски секрета в формате "#2e8b57"
+    table << "secretColor" << "QString" << "#2e8b57";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

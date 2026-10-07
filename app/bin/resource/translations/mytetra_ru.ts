@@ -689,6 +689,11 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Try remember cursor position at ordinary selection</source>
         <translation type="vanished">Пытаться вспомнить позицию курсора при обычном выборе записи</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="0"/>
+        <source>Secret color: </source>
+        <translation>Цвет секрета: </translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

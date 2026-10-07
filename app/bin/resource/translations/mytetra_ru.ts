@@ -3024,6 +3024,11 @@ Try to search for entire database.</source>
         <translation>Перейти к заметке</translation>
     </message>
     <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="0"/>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="128"/>
         <source>Remove from favorites</source>
         <translation>Убрать из избранного</translation>
@@ -3085,6 +3090,11 @@ Try to search for entire database.</source>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="229"/>
         <source>Go to note</source>
         <translation>Перейти к заметке</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="0"/>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
     </message>
     <message>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="230"/>
@@ -6044,8 +6054,8 @@ Please select single item for enabling edit operation.</source>
     </message>
     <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="57"/>
-        <source>Tiles per row</source>
-        <translation>Плиток в строке</translation>
+        <source>Tile size</source>
+        <translation>Размер ячейки</translation>
     </message>
     <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="86"/>

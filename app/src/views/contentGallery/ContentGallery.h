@@ -18,6 +18,7 @@ class QLabel;
 class QRadioButton;
 class QStackedWidget;
 class TreeItem;
+class GalleryTileDelegate;
 
 struct GalleryImage
 {
@@ -67,7 +68,7 @@ public:
 
 private slots:
 
-    void onTileColumnsChanged(int sliderPos);
+    void onTileSizeChanged(int sliderPos);
     void onScrollChanged(void);
     void onTilesViewSelected(bool checked);
     void onItemClicked(QListWidgetItem *item);
@@ -83,11 +84,10 @@ protected:
 
 private:
 
-    // Число плиток в строке по позиции ползунка
-    static int tileColumns(int sliderPos);
-
-    // Размер плитки по ширине вьюпорта и числу колонок
-    int tileSize(void) const;
+    // Размер ячейки-места под картинку по позиции ползунка.
+    // Слева крупные ячейки, справа мелкие. Сколько ячеек влезет
+    // в строку решает сама раскладка при текущей ширине окна
+    static int tileSize(int sliderPos);
 
     // Перестроить сетку и подгрузить видимое окно
     void layoutGrid(void);
@@ -123,6 +123,7 @@ private:
 
     // Строка плитки, заголовок, слайдер и переключение вида
     QListWidget *imageGrid;
+    GalleryTileDelegate *tileDelegate;
     QTableWidget *filesList;
     QStackedWidget *viewStack;
     QRadioButton *tilesRadio;

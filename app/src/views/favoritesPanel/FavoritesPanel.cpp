@@ -1,7 +1,11 @@
 #include <QListWidget>
+#include <QLabel>
 #include <QMenu>
+#include <QIcon>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QShowEvent>
+#include <QAbstractScrollArea>
 #include <QDebug>
 
 #include "FavoritesPanel.h"
@@ -13,10 +17,12 @@
 #include "views/tree/KnowTreeView.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ObjectHelper.h"
 
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
@@ -26,7 +32,19 @@ FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
     assembly();
     setupSignals();
 
-    refreshFavorites();
+    // Стартуем скрытыми чтобы не ломать дизайн пустой панелью
+    headerLabel->setText(tr("Favorites")+QStringLiteral(" (0)"));
+    hide();
+
+    // Подписка сразу через родителя: скрытая панель не получит showEvent,
+    // а find_object() в конструкторе завершил бы программу (TreeScreen
+    // еще без имени). Родитель уже есть - это и есть TreeScreen
+    if(TreeScreen *treeScreen=qobject_cast<TreeScreen *>(parent))
+    {
+        treeMetadataConnected=true;
+        connect(treeScreen, &TreeScreen::treeMetadataSaved,
+                this,       &FavoritesPanel::onTreeMetadataSaved);
+    }
 }
 
 
@@ -38,15 +56,35 @@ FavoritesPanel::~FavoritesPanel(void)
 
 void FavoritesPanel::setupUi(void)
 {
+    // Шапка чтобы панель не висела одиноко: звездочка и слово
+    headerIcon=new QLabel(this);
+    headerIcon->setPixmap(QIcon(QStringLiteral(":/resource/pic/note_favorite.svg")).pixmap(16, 16));
+
+    headerLabel=new QLabel(this);
+    QFont headerFont=headerLabel->font();
+    headerFont.setBold(true);
+    headerLabel->setFont(headerFont);
+
     favoritesList=new QListWidget(this);
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    // Высота по содержимому с потолком: пара звездочек не должна
+    // отъедать полдерева
+    favoritesList->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    favoritesList->setMaximumHeight(180);
 }
 
 
 void FavoritesPanel::assembly(void)
 {
+    QHBoxLayout *headerLayout=new QHBoxLayout();
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->addWidget(headerIcon);
+    headerLayout->addWidget(headerLabel, 1);
+
     QVBoxLayout *panelLayout=new QVBoxLayout();
     panelLayout->setContentsMargins(0, 0, 0, 0);
+    panelLayout->addLayout(headerLayout);
     panelLayout->addWidget(favoritesList, 1);
 
     setLayout(panelLayout);
@@ -74,11 +112,12 @@ void FavoritesPanel::showEvent(QShowEvent *event)
 }
 
 
-// Удаление и переименование чистят список при следующей пересборке
+// Любое сохранение метаданных пересобирает список. Видимость решает
+// сам refresh: скрытая пустая панель так сама показывается при
+// появлении первой звездочки
 void FavoritesPanel::onTreeMetadataSaved(void)
 {
-    if(isVisible())
-        refreshFavorites();
+    refreshFavorites();
 }
 
 
@@ -177,22 +216,22 @@ void FavoritesPanel::onRemoveFavorite(void)
 // проходом по дереву. Мертвые id отбрасываются
 void FavoritesPanel::refreshFavorites(void)
 {
-    // Подписка на изменения дерева делается один раз и только когда
-    // дерево уже собрано: иначе find_object() на отсутствующем объекте
-    // завершает программу
+    // Панель живет внутри TreeScreen, поэтому дерево берется через
+    // родителя без find_object(): в конструкторе TreeScreen еще без
+    // имени и find_object() завершил бы программу
+    TreeScreen *treeScreen=qobject_cast<TreeScreen *>(parentWidget());
+    if(treeScreen==nullptr)
+        return;
+
     if(!treeMetadataConnected)
     {
-        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
-        if(treeScreen==nullptr)
-            return;
-
         treeMetadataConnected=true;
 
         connect(treeScreen, &TreeScreen::treeMetadataSaved,
                 this,       &FavoritesPanel::onTreeMetadataSaved);
     }
 
-    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+    KnowTreeModel *dataModel=treeScreen->knowTreeModel;
 
     struct NoteInfo
     {
@@ -268,4 +307,15 @@ void FavoritesPanel::refreshFavorites(void)
         item->setData(Qt::UserRole, mapIt.key());
         item->setToolTip(mapIt->branch);
     }
+
+    // Шапка со счетчиком чтобы панель не висела одиноко:
+    // звездочка слева уже стоит в assembly, тут слово и число
+    headerLabel->setText(tr("Favorites")+QStringLiteral(" (%1)").arg(noteInfo.size()));
+
+    // Пустая панель прячется совсем чтобы не ломать дизайн дерева.
+    // Показ тоже отсюда: первая звездочка сама выводит панель
+    if(!mytetraConfig.get_favoritesEnabled() || noteInfo.isEmpty())
+        setVisible(false);
+    else if(!isVisible())
+        setVisible(true);
 }

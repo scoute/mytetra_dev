@@ -24,7 +24,6 @@ class MetaEditor;
 class RecordTableScreen;
 class FindScreen;
 class TagsPanel;
-class FavoritesPanel;
 class HistoryPanel;
 class WindowSwitcher;
 class CommandRunner;
@@ -216,10 +215,6 @@ private:
     TagsPanel *tagsPanel=nullptr;
     QDockWidget *tagsPanelDock=nullptr;
 
-    // Панель избранного над деревом. Видимость из настроек,
-    // по умолчанию включена
-    FavoritesPanel *favoritesPanel=nullptr;
-    QSplitter *treeSplitter=nullptr;
 
     // Панель истории посещений. Переключается из меню Tools и горячей
     // клавишей, в закрытом виде место не занимает

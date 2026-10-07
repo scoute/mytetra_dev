@@ -23,7 +23,6 @@
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
-#include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/historyPanel/HistoryPanel.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
@@ -144,12 +143,6 @@ void MainWindow::setupUI(void)
     tagsPanelDock->setObjectName("tagsPanelDock");
     tagsPanelDock->setWidget(tagsPanel);
     tagsPanelDock->hide();
-
-    // Панель избранного живет над деревом в том же сплиттере.
-    // Скрыта при выключенной фиче в настройках
-    favoritesPanel=new FavoritesPanel(this);
-    favoritesPanel->setObjectName("favoritesPanel");
-    favoritesPanel->setVisible(mytetraConfig.get_favoritesEnabled());
 
     // Панель истории посещений в доке справа. По умолчанию скрыта,
     // переключается из меню Tools и горячей клавишей
@@ -275,18 +268,7 @@ void MainWindow::assembly(void)
     vSplitter->setCollapsible(1,false); // Содержимое записи не может смыкаться
 
     hSplitter=new QSplitter(Qt::Horizontal);
-
-    // Панель избранного над деревом в вертикальном сплиттере.
-    // Высота панели по содержимому, дерево забирает остаток
-    treeSplitter=new QSplitter(Qt::Vertical);
-    treeSplitter->addWidget(favoritesPanel);
-    treeSplitter->addWidget(treeScreen); // Дерево веток
-    treeSplitter->setCollapsible(0, true);
-    treeSplitter->setCollapsible(1,false); // Дерево веток не может смыкаться
-    treeSplitter->setStretchFactor(0, 0);
-    treeSplitter->setStretchFactor(1, 1);
-
-    hSplitter->addWidget(treeSplitter);
+    hSplitter->addWidget(treeScreen); // Дерево веток
     hSplitter->addWidget(vSplitter);
     hSplitter->setCollapsible(0,false); // Дерево веток не может смыкаться
     hSplitter->setCollapsible(1,false); // Столбец со списком и содержимым записи не может смыкаться

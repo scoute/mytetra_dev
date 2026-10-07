@@ -11,6 +11,7 @@
 
 #include "TreeScreen.h"
 #include "KnowTreeView.h"
+#include "views/favoritesPanel/FavoritesPanel.h"
 
 #include "models/recordTable/RecordTableData.h"
 #include "views/recordTable/RecordTableScreen.h"
@@ -270,6 +271,13 @@ void TreeScreen::setupUI(void)
 
  // Представление не должно позволять редактировать элементы обычным путем
  knowTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+ // Панель избранного между кнопками веток и деревом. Создается здесь,
+ // а не в MainWindow, чтобы лежать ровно под тулбаром. Скрыта пока
+ // пусто или фича выключена: дизайн не ломается
+ favoritesPanel=new FavoritesPanel(this);
+ favoritesPanel->setObjectName("favoritesPanel");
+ favoritesPanel->hide();
 }
 
 
@@ -288,6 +296,11 @@ void TreeScreen::setupModels(void)
 
  // Модель подключется к виду
  knowTreeView->setModel(knowTreeModel);
+
+ // Первичная пересборка избранного после загрузки модели:
+ // покажет панель если в базе уже есть звездочки
+ if(favoritesPanel!=nullptr)
+   favoritesPanel->refreshFavorites();
 }
 
 
@@ -446,7 +459,8 @@ void TreeScreen::assembly(void)
  treeScreenLayout->setObjectName("treescreen_QVBoxLayout");
 
  treeScreenLayout->addWidget(toolsLine);
- treeScreenLayout->addWidget(knowTreeView);
+  treeScreenLayout->addWidget(favoritesPanel);
+ treeScreenLayout->addWidget(knowTreeView, 1);
 
  setLayout(treeScreenLayout);
 

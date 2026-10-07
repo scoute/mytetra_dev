@@ -10,6 +10,7 @@
 
 class QListWidget;
 class QListWidgetItem;
+class QLabel;
 class QShowEvent;
 
 class FavoritesPanel : public QWidget
@@ -48,7 +49,11 @@ private:
     void assembly(void);
     void setupSignals(void);
 
-    QListWidget *favoritesList;
+    QListWidget *favoritesList=nullptr;
+
+    // Шапка чтобы панель не висела одиноко: звездочка и слово
+    QLabel *headerIcon=nullptr;
+    QLabel *headerLabel=nullptr;
 
     // Подписки делаются один раз и лениво: в конструкторе
     // treeScreen может еще не существовать

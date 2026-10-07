@@ -185,6 +185,7 @@ HEADERS = src/main.h \
     src/views/favoritesPanel/FavoritesPanel.h \
     src/views/historyPanel/HistoryPanel.h \
     src/views/contentGallery/ContentGallery.h \
+    src/views/contentGallery/GalleryTileDelegate.h \
     src/libraries/wyedit/Editor.h \
     src/libraries/wyedit/EditorConfig.h \
     src/libraries/wyedit/EditorConfigDialog.h \
@@ -363,6 +364,7 @@ SOURCES = src/main.cpp \
     src/views/favoritesPanel/FavoritesPanel.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
     src/views/contentGallery/ContentGallery.cpp \
+    src/views/contentGallery/GalleryTileDelegate.cpp \
     src/libraries/wyedit/Editor.cpp \
     src/libraries/wyedit/EditorConfig.cpp \
     src/libraries/wyedit/EditorConfigDialog.cpp \

@@ -15,6 +15,7 @@ class QToolBar;
 class KnowTreeModel;
 class KnowTreeView;
 class ClipboardBranch;
+class FavoritesPanel;
 
 class TreeScreen : public QWidget
 {
@@ -126,6 +127,9 @@ private:
  QToolBar *toolsLine;
 
  KnowTreeView  *knowTreeView;
+
+  // Избранное между тулбаром веток и деревом. Прячется когда пусто
+  FavoritesPanel *favoritesPanel=nullptr;
 
  QVBoxLayout *treeScreenLayout;
 

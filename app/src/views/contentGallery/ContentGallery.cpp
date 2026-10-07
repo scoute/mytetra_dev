@@ -30,6 +30,7 @@
 #include <QPainter>
 
 #include "ContentGallery.h"
+#include "GalleryTileDelegate.h"
 
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
@@ -75,15 +76,16 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
 
     resize(800, 600);
 
-    // Число плиток в строке: 4-6-8-12-16, по умолчанию 6
+    // Размер ячейки-места: 384-288-216-160-120-84-56px, по умолчанию 160.
+    // Сколько ячеек влезет в строку решает раскладка при ширине окна
     tileSlider=new QSlider(Qt::Horizontal, this);
     tileSlider->setMinimum(0);
-    tileSlider->setMaximum(4);
-    tileSlider->setValue(1);
+    tileSlider->setMaximum(6);
+    tileSlider->setValue(3);
     tileSlider->setTickPosition(QSlider::TicksBelow);
-    tileSlider->setToolTip(tr("Tiles per row"));
+    tileSlider->setToolTip(tr("Tile size"));
 
-    tileCountLabel=new QLabel(QString::number(tileColumns(1)), this);
+    tileCountLabel=new QLabel(QString::number(tileSize(3)), this);
     galleryCountLabel=new QLabel(this);
 
     // Вид точкой-переключателем: для двух вариантов честнее радиокнопки,
@@ -104,6 +106,15 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
     imageGrid->setResizeMode(QListWidget::Adjust);
     imageGrid->setMovement(QListWidget::Static);
     imageGrid->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    // Свой делегат: фиксированный размер ячейки и отрисовка с клипом.
+    // Геометрию больше не раздувает стиль окружения
+    tileDelegate=new GalleryTileDelegate(this);
+    imageGrid->setItemDelegate(tileDelegate);
+
+    // Ховер для подсветки рамки: вид сам трекинг не включает
+    imageGrid->setMouseTracking(true);
+    imageGrid->viewport()->setMouseTracking(true);
 
     // Список: имя, размер, тип, дата. Сортировка кликом по заголовку
     filesList=new QTableWidget(this);
@@ -133,7 +144,7 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
             this,       &ContentGallery::onTilesViewSelected);
 
     connect(tileSlider, &QSlider::valueChanged,
-            this,       &ContentGallery::onTileColumnsChanged);
+            this,       &ContentGallery::onTileSizeChanged);
 
     connect(imageGrid->verticalScrollBar(), &QScrollBar::valueChanged,
             this,                           &ContentGallery::onScrollChanged);
@@ -158,35 +169,21 @@ ContentGallery::~ContentGallery(void)
 }
 
 
-// Число плиток в строке по позиции ползунка
-int ContentGallery::tileColumns(int sliderPos)
+// Размер ячейки-места под картинку по позиции ползунка.
+// Слева крупные ячейки, справа мелкие. Сколько влезет в строку
+// решает потоковая раскладка при текущей ширине окна, обещания
+// точного числа в ряду больше нет
+int ContentGallery::tileSize(int sliderPos)
 {
-    static const int columns[]={4, 6, 8, 12, 16};
+    static const int sizes[]={384, 288, 216, 160, 120, 84, 56};
 
     if(sliderPos<0)
         sliderPos=0;
 
-    if(sliderPos>4)
-        sliderPos=4;
+    if(sliderPos>6)
+        sliderPos=6;
 
-    return columns[sliderPos];
-}
-
-
-// Размер плитки по ширине вьюпорта и числу колонок
-int ContentGallery::tileSize(void) const
-{
-    int viewportWidth=imageGrid->viewport()->width();
-
-    if(viewportWidth<=0)
-        viewportWidth=imageGrid->width();
-
-    int tile=viewportWidth/tileColumns(tileSlider->value());
-
-    if(tile<32)
-        tile=32;
-
-    return tile;
+    return sizes[sliderPos];
 }
 
 
@@ -206,9 +203,20 @@ void ContentGallery::resizeEvent(QResizeEvent *event)
 }
 
 
-void ContentGallery::onTileColumnsChanged(int sliderPos)
+void ContentGallery::onTileSizeChanged(int sliderPos)
 {
-    tileCountLabel->setText(QString::number(tileColumns(sliderPos)));
+    tileCountLabel->setText(QString::number(tileSize(sliderPos)));
+
+    // Иконки грузятся один раз под размер ячейки: при смене размера
+    // старые сбрасываются, иначе картинки остаются маленькими
+    // а растет только пустое место вокруг
+    for(int i=0; i<imageGrid->count(); ++i)
+    {
+        QListWidgetItem *item=imageGrid->item(i);
+
+        if(item!=nullptr && !item->icon().isNull())
+            item->setIcon(QIcon());
+    }
 
     layoutGrid();
 }
@@ -229,13 +237,23 @@ void ContentGallery::onScrollChanged(void)
 }
 
 
-// Перестроить сетку и подгрузить видимое окно
+// Перестроить сетку и подгрузить видимое окно. Размер ячейки
+// задает ползунок, заполнение строки берет на себя потоковая
+// раскладка: при растягивании окна ячейки сами доплывают в ряд.
+// Размер сетки один в один равен sizeHint делегата, совпадение
+// гарантировано конструкцией. Раскладка дожимается синхронно:
+// во время драга ползунка тики идут быстрее отложенной внутренней
+// раскладки вида, без этого плитки рисуются в старых позициях
+// новыми размерами (захлесты и дыры)
 void ContentGallery::layoutGrid(void)
 {
-    const int tile=tileSize();
+    const int tile=tileSize(tileSlider->value());
+
+    tileDelegate->setTile(tile);
 
     imageGrid->setIconSize(QSize(tile, tile));
     imageGrid->setGridSize(QSize(tile+8, tile+8+24));
+    imageGrid->doItemsLayout();
 
     updateVisibleWindow();
 }
@@ -425,7 +443,11 @@ void ContentGallery::updateVisibleWindow(void)
     if(imageGrid->count()==0)
         return;
 
-    const int tile=tileSize();
+    // Фактический размер выставленных иконок из layoutGrid
+    int tile=imageGrid->iconSize().width();
+
+    if(tile<=0)
+        tile=tileSize(tileSlider->value());
 
     // Границы видимого: первая и последняя строки через углы вьюпорта.
     // Угол может попасть в пустое место сетки: тогда оценка по геометрии
@@ -564,7 +586,18 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
         return;
     }
 
-    item->setIcon(QIcon(QPixmap::fromImage(image)));
+    // Вписать в квадрат ячейки: картинка по центру, поля залиты цветом
+    // ячейки. Иначе разные пропорции дают рваные строки
+    QPixmap tilePixmap(tile, tile);
+    tilePixmap.fill(GalleryTileDelegate::cellColor());
+
+    QPainter tilePainter(&tilePixmap);
+    tilePainter.drawImage((tile-image.width())/2,
+                          (tile-image.height())/2,
+                          image);
+    tilePainter.end();
+
+    item->setIcon(QIcon(tilePixmap));
 }
 
 

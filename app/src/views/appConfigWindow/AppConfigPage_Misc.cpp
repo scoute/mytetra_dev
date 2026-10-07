@@ -179,10 +179,11 @@ int AppConfigPage_Misc::applyChanges(void)
   {
     mytetraConfig.set_favoritesEnabled(enableFavoritesPanel->isChecked());
 
-    // Панель применяется живьем без перезапуска
+    // Панель применяется живьем без перезапуска. Сам refresh решит
+    // показать или спрятать по наличию звездочек
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
     if(favoritesPanel!=nullptr)
-      favoritesPanel->setVisible(enableFavoritesPanel->isChecked());
+      favoritesPanel->refreshFavorites();
   }
 
   // Сохраняется цвет закраски секрета

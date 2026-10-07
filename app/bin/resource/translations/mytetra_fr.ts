@@ -2184,6 +2184,11 @@ Try to search for entire database.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="0"/>
+        <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="128"/>
         <source>Remove from favorites</source>
         <translation type="unfinished"></translation>
@@ -2244,6 +2249,11 @@ Try to search for entire database.</source>
     <message>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="229"/>
         <source>Go to note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="0"/>
+        <source>Favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4440,7 +4450,7 @@ All data imported will be encrypted.</source>
     </message>
     <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="57"/>
-        <source>Tiles per row</source>
+        <source>Tile size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

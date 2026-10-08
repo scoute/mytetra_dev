@@ -10,6 +10,7 @@
 #include "libraries/FixedParameters.h"
 #include "controllers/recordTable/RecordTableController.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "views/record/MetaEditor.h"
 
 
 extern AppConfig mytetraConfig;
@@ -55,6 +56,20 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   groupBoxVisibleHeaders->setLayout(vboxVisibleHeaders);
 
 
+  // Шапка заметки над редактором: название и автор отъедают место,
+  // отключаются здесь
+  showRecordHeader=new QCheckBox(this);
+  showRecordHeader->setText( tr("Show note header (name and author)") );
+  if(mytetraConfig.get_recordHeaderVisible())
+    showRecordHeader->setCheckState( Qt::Checked );
+
+  QVBoxLayout *vboxNoteHeader = new QVBoxLayout;
+  vboxNoteHeader->addWidget(showRecordHeader);
+
+  QGroupBox *groupBoxNoteHeader = new QGroupBox(tr("Note header"));
+  groupBoxNoteHeader->setLayout(vboxNoteHeader);
+
+
   // Область настройки видимости столбцов
   QVBoxLayout *vboxVisibleColumns = new QVBoxLayout;
   foreach(QCheckBox *currentCheckBox, fields)
@@ -69,6 +84,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
 
   central_layout->addWidget(groupBoxVisibleHeaders);
   central_layout->addWidget(groupBoxVisibleColumns);
+  central_layout->addWidget(groupBoxNoteHeader);
   central_layout->addStretch();
 
   // Устанавливается основной слой
@@ -151,6 +167,17 @@ int AppConfigPage_RecordTable::applyChanges(void)
  // Запоминание в конфигурацию отображения нумерации строк
  if(mytetraConfig.getRecordTableShowVerticalHeaders()!=showVerticalHeader->isChecked())
    mytetraConfig.setRecordTableShowVerticalHeaders(showVerticalHeader->isChecked());
+
+ // Шапка заметки: пишется в конфиг и применяется живьем
+ // к открытой записи без перезапуска
+ if(mytetraConfig.get_recordHeaderVisible()!=showRecordHeader->isChecked())
+ {
+   mytetraConfig.set_recordHeaderVisible(showRecordHeader->isChecked());
+
+   MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
+   if(metaEditor!=nullptr)
+     metaEditor->updateRecordHeaderVisibility();
+ }
 
 
  QStringList addFieldsList; // Список полей, которые добавились в результате настройки

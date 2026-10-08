@@ -35,6 +35,7 @@ public:
  void setTreePath(QString path);
  void setName    (QString name);
  void setAuthor  (QString author);
+ void updateRecordHeaderVisibility(void);
  void setUrl     (QString url);
  void setTags    (QString tags);
 

@@ -31,6 +31,7 @@ protected:
 
   QCheckBox *showHorizontalHeader;
   QCheckBox *showVerticalHeader;
+  QCheckBox *showRecordHeader;
 
   // Объединяющая рамка
   QGroupBox *showFieldsBox;

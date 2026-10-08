@@ -280,9 +280,9 @@ void MetaEditor::setTreePath(QString path)
 
 void MetaEditor::setName(QString name)
 {
-  // Наименование записи есть всегда, оно просто отображается
-  recordName->setVisible(true);
+  // Наименование записи есть всегда, видимость из настроек
   recordName->setText("<b>"+name.toHtmlEscaped()+"</b>");
+  updateRecordHeaderVisibility();
 }
 
 
@@ -295,9 +295,19 @@ void MetaEditor::setAuthor(QString author)
   }
   else
   {
-    recordAuthor->setVisible(true);
     recordAuthor->setText("<i>"+author.toHtmlEscaped()+"</i>");
+    updateRecordHeaderVisibility();
   }
+}
+
+
+// Видимость шапки из настроек. Пустой автор скрыт всегда
+void MetaEditor::updateRecordHeaderVisibility(void)
+{
+  const bool show=mytetraConfig.get_recordHeaderVisible();
+
+  recordName->setVisible(show);
+  recordAuthor->setVisible(show && !recordAuthor->text().isEmpty());
 }
 
 

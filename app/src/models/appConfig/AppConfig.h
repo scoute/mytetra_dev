@@ -239,6 +239,11 @@ public:
     QString get_secretColor(void);
     void set_secretColor(QString color); // Формат цвета - "#2e8b57"
 
+    // Шапка заметки (название и автор) над редактором.
+    // По умолчанию показана
+    bool get_recordHeaderVisible(void);
+    void set_recordHeaderVisible(bool state);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -345,6 +350,7 @@ private:
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
     QStringList get_parameter_table_43(bool withEndSignature=true);
+    QStringList get_parameter_table_44(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

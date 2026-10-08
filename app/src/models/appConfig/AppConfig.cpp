@@ -935,6 +935,18 @@ void AppConfig::set_secretColor(QString color)
 }
 
 
+bool AppConfig::get_recordHeaderVisible(void)
+{
+    return m_conf->value("recordHeaderVisible", true).toBool();
+}
+
+
+void AppConfig::set_recordHeaderVisible(bool state)
+{
+    m_conf->setValue("recordHeaderVisible", state);
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -1280,6 +1292,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
+    parameterFunctions << &AppConfig::get_parameter_table_44;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2162,6 +2175,23 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
 
     // Цвет закраски секрета в формате "#2e8b57"
     table << "secretColor" << "QString" << "#2e8b57";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 43
+    table << get_parameter_table_43(false);
+
+    // Шапка заметки показана
+    table << "recordHeaderVisible" << "bool" << "true";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

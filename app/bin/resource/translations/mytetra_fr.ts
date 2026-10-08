@@ -545,6 +545,16 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Columns visible</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="0"/>
+        <source>Note header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="0"/>
+        <source>Show note header (name and author)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Synchro</name>

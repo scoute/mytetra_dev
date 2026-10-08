@@ -717,6 +717,16 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Columns visible</source>
         <translation>Отображаемые колонки</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="0"/>
+        <source>Note header</source>
+        <translation>Шапка заметки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="0"/>
+        <source>Show note header (name and author)</source>
+        <translation>Показывать шапку заметки (название и автор)</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Synchro</name>

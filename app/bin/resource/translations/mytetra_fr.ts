@@ -3349,7 +3349,7 @@ Please report about this problem to the developers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select...</source>
+        <source>Browse...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

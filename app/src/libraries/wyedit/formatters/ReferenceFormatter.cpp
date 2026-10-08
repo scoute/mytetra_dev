@@ -60,7 +60,7 @@ void ReferenceFormatter::onReferenceClicked(void)
     // имя не затирается если уже введено вручную
     QHBoxLayout *urlRowLayout=new QHBoxLayout();
     urlRowLayout->addWidget(urlEdit);
-    QPushButton *selectNoteButton=new QPushButton(tr("Select..."), &linkDialog);
+    QPushButton *selectNoteButton=new QPushButton(tr("Browse..."), &linkDialog);
     urlRowLayout->addWidget(selectNoteButton);
 
     linkLayout->addRow(urlLabel, urlRowLayout);
@@ -309,57 +309,12 @@ void ReferenceFormatter::pickNoteIntoFields(QDialog *parent,                    
 }
 
 
-// Перенацеливание ссылки под курсором.
-// Внешняя: стандартный двухполевый диалог. Внутренняя: снова поиск,
-// href меняется, текст обновляется только если совпадал со старым именем цели
+// Редактирование ссылки под курсором: всегда обычный двухполевый диалог
+// (он сам натянет выделение и предзаполнит поля), выбор из поиска —
+// по кнопке "Обзор" внутри диалога. Протокол тут не важен
 void ReferenceFormatter::onEditReferenceAtCursor(void)
 {
-    const QString href=selectReferenceUnderCursor();
-    if(href.isEmpty())
-        return;
-
-    // Внешняя ссылка: обычный диалог, он сам подхватит ссылку и текст
-    if(!LinkHelper::isHrefInternal(href))
-    {
-        onReferenceClicked();
-        return;
-    }
-
-    const QString oldName=targetRecordName(href);
-
-    NotePickerDialog picker(editor, editor->getMiscField(QStringLiteral("id")));
-    if(picker.exec()!=QDialog::Accepted)
-        return;
-
-    const QString pickedId=picker.selectedRecordId();
-    if(pickedId.isEmpty())
-        return;
-
-    const QString newHref=FixedParameters::appTextId+
-                          QStringLiteral("://note/")+
-                          pickedId;
-    if(newHref==href)
-        return; // Выбрана та же запись
-
-    // Выделение натянуто helper'ом выше
-    QTextCursor cursor=textArea->textCursor();
-    QString currentText=cursor.selectedText();
-    currentText.replace(QChar(0x2029), QStringLiteral(" "));
-
-    QString display=currentText;
-    if(!oldName.isEmpty() && currentText==oldName)
-        display=picker.selectedRecordName();
-
-    QTextCharFormat linkFormat;
-    linkFormat.setAnchor(true);
-    linkFormat.setAnchorHref(newHref);
-    linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
-    linkFormat.setFontUnderline(true);
-
-    cursor.insertText(display, linkFormat);
-    textArea->setTextCursor(cursor);
-
-    // Защита от себя не нужна: своя запись исключена из выдачи
+    onReferenceClicked();
 }
 
 

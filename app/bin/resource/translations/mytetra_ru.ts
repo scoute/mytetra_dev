@@ -4819,8 +4819,8 @@ Please report about this problem to the developers.</source>
         <translation>Вставить всё равно</translation>
     </message>
     <message>
-        <source>Select...</source>
-        <translation>Выбрать...</translation>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
     </message>
 </context>
 <context>

@@ -69,6 +69,10 @@ public:
   // панель красит их красным через isSourceStale()
   QSet<QString> backlinksOf(const QString &recordId) const;
 
+  // Исходящие ссылки: на кого ссылается recordId.
+  // Цели-призраки сюда тоже попадают, панель красит их красным
+  QSet<QString> outgoingOf(const QString &recordId) const;
+
   // Источник есть в индексе, но записи с таким id нет в дереве
   bool isSourceStale(const QString &sourceId) const;
 

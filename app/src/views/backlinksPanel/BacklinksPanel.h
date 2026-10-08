@@ -2,6 +2,7 @@
 #define BACKLINKSPANEL_H
 
 #include <QWidget>
+#include <QSet>
 
 class QLabel;
 class QListWidget;
@@ -41,9 +42,13 @@ private:
 
   QString currentRecordId(void) const;
   void setupLazySignals(void);
+  void fillList(QListWidget *list, const QSet<QString> &ids);
 
-  QLabel *headerLabel;
-  QListWidget *linksList;
+  QLabel *incomingHeaderLabel;
+  QListWidget *incomingList;
+
+  QLabel *outgoingHeaderLabel;
+  QListWidget *outgoingList;
 
   bool signalsConnected=false;
 };

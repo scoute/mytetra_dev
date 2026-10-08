@@ -25,21 +25,26 @@ extern VisitHistory visitHistory;
 
 BacklinksPanel::BacklinksPanel(QWidget *parent) : QWidget(parent)
 {
-  headerLabel=new QLabel(this);
+  incomingHeaderLabel=new QLabel(this);
+  incomingList=new QListWidget(this);
 
-  linksList=new QListWidget(this);
-  linksList->setContextMenuPolicy(Qt::CustomContextMenu);
+  outgoingHeaderLabel=new QLabel(this);
+  outgoingList=new QListWidget(this);
 
   QVBoxLayout *layout=new QVBoxLayout(this);
   layout->setContentsMargins(4, 4, 4, 4);
-  layout->addWidget(headerLabel);
-  layout->addWidget(linksList);
+  layout->addWidget(incomingHeaderLabel);
+  layout->addWidget(incomingList);
+  layout->addWidget(outgoingHeaderLabel);
+  layout->addWidget(outgoingList);
   setLayout(layout);
 
-  connect(linksList, &QListWidget::itemActivated,
-          this,      &BacklinksPanel::onItemActivated);
-  connect(linksList, &QListWidget::customContextMenuRequested,
-          this,      [this](const QPoint &pos) {
+  connect(incomingList, &QListWidget::itemActivated,
+          this,          &BacklinksPanel::onItemActivated);
+  connect(outgoingList, &QListWidget::itemActivated,
+          this,          &BacklinksPanel::onItemActivated);
+
+  auto showContextMenu=[this](QListWidget *list, const QPoint &pos) {
     QMenu menu(this);
 
     QAction *cleanupAction=menu.addAction(tr("Remove missing sources"));
@@ -50,7 +55,19 @@ BacklinksPanel::BacklinksPanel(QWidget *parent) : QWidget(parent)
     connect(rebuildAction, &QAction::triggered,
             this,          &BacklinksPanel::onRebuildAll);
 
-    menu.exec(linksList->mapToGlobal(pos));
+    menu.exec(list->mapToGlobal(pos));
+  };
+
+  incomingList->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(incomingList, &QListWidget::customContextMenuRequested,
+          this,          [showContextMenu, this](const QPoint &pos) {
+    showContextMenu(incomingList, pos);
+  });
+
+  outgoingList->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(outgoingList, &QListWidget::customContextMenuRequested,
+          this,          [showContextMenu, this](const QPoint &pos) {
+    showContextMenu(outgoingList, pos);
   });
 
   connect(&BacklinkIndex::instance(), &BacklinkIndex::backlinksChanged,
@@ -116,12 +133,14 @@ void BacklinksPanel::refreshBacklinks(void)
 {
   setupLazySignals();
 
-  linksList->clear();
+  incomingList->clear();
+  outgoingList->clear();
 
   const QString recordId=currentRecordId();
   if(recordId.isEmpty())
   {
-    headerLabel->setText(tr("Incoming links"));
+    incomingHeaderLabel->setText(tr("Incoming links"));
+    outgoingHeaderLabel->setText(tr("Outgoing links"));
     return;
   }
 
@@ -131,19 +150,36 @@ void BacklinksPanel::refreshBacklinks(void)
   KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
   if(treeModel==nullptr)
   {
-    headerLabel->setText(tr("Incoming links"));
+    incomingHeaderLabel->setText(tr("Incoming links"));
+    outgoingHeaderLabel->setText(tr("Outgoing links"));
     return;
   }
 
   QSet<QString> sources=BacklinkIndex::instance().backlinksOf(recordId);
-  headerLabel->setText(tr("Incoming links (%1)").arg(sources.size()));
+  incomingHeaderLabel->setText(tr("Incoming links (%1)").arg(sources.size()));
+  fillList(incomingList, sources);
 
-  QStringList sorted=sources.toList();
+  QSet<QString> targets=BacklinkIndex::instance().outgoingOf(recordId);
+  outgoingHeaderLabel->setText(tr("Outgoing links (%1)").arg(targets.size()));
+  fillList(outgoingList, targets);
+}
+
+
+// Общая отрисовка списка: живые строки с именем и веткой,
+// призраки красным без прыжка. Одинаково для входящих и исходящих
+void BacklinksPanel::fillList(QListWidget *list,
+                              const QSet<QString> &ids)
+{
+  KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
+  if(treeModel==nullptr)
+    return;
+
+  QStringList sorted=ids.toList();
   sorted.sort();
 
-  for(const QString &sourceId : sorted)
+  for(const QString &linkId : sorted)
   {
-    Record *record=treeModel->getRecord(sourceId);
+    Record *record=treeModel->getRecord(linkId);
 
     QString title;
     QString hint;
@@ -151,15 +187,15 @@ void BacklinksPanel::refreshBacklinks(void)
 
     if(record==nullptr)
     {
-      // Источник из сайдкара не найден в дереве: красным, без прыжка
-      title=tr("Missing record %1").arg(sourceId);
+      // Запись из сайдкара не найдена в дереве: красным, без прыжка
+      title=tr("Missing record %1").arg(linkId);
       stale=true;
     }
     else
     {
       title=record->getField(QStringLiteral("name"));
 
-      QStringList branchPath=treeModel->getRecordPath(sourceId);
+      QStringList branchPath=treeModel->getRecordPath(linkId);
       QStringList branchNames;
       for(const QString &branchId : branchPath)
       {
@@ -170,12 +206,12 @@ void BacklinksPanel::refreshBacklinks(void)
       hint=branchNames.join(QStringLiteral(" / "));
     }
 
-    QListWidgetItem *item=new QListWidgetItem(title, linksList);
-    item->setData(Qt::UserRole, sourceId);
+    QListWidgetItem *item=new QListWidgetItem(title, list);
+    item->setData(Qt::UserRole, linkId);
     if(!hint.isEmpty())
       item->setToolTip(hint);
 
-    if(stale || BacklinkIndex::instance().isSourceStale(sourceId))
+    if(stale || BacklinkIndex::instance().isSourceStale(linkId))
       item->setForeground(QBrush(Qt::red));
   }
 }
@@ -186,18 +222,18 @@ void BacklinksPanel::onItemActivated(QListWidgetItem *item)
   if(item==nullptr)
     return;
 
-  const QString sourceId=item->data(Qt::UserRole).toString();
+  const QString linkId=item->data(Qt::UserRole).toString();
 
   KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
   if(treeModel==nullptr)
     return;
 
-  // Призрачный источник: прыгать некуда
-  const QStringList path=treeModel->getRecordPath(sourceId);
+  // Призрачная запись: прыгать некуда
+  const QStringList path=treeModel->getRecordPath(linkId);
   if(path.isEmpty())
     return;
 
-  find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, sourceId);
+  find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, linkId);
 }
 
 

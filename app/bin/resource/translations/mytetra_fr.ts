@@ -4590,5 +4590,13 @@ All data imported will be encrypted.</source>
         <source>Recheck all links</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Outgoing links</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outgoing links (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

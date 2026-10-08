@@ -430,6 +430,12 @@ QSet<QString> BacklinkIndex::backlinksOf(const QString &recordId) const
 }
 
 
+QSet<QString> BacklinkIndex::outgoingOf(const QString &recordId) const
+{
+  return m_forward.value(recordId);
+}
+
+
 bool BacklinkIndex::isSourceStale(const QString &sourceId) const
 {
   return !recordExists(sourceId);

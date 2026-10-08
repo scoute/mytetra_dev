@@ -6202,5 +6202,13 @@ Please select single item for enabling edit operation.</source>
         <source>Recheck all links</source>
         <translation>Перепроверить все ссылки</translation>
     </message>
+    <message>
+        <source>Outgoing links</source>
+        <translation>Исходящие ссылки</translation>
+    </message>
+    <message>
+        <source>Outgoing links (%1)</source>
+        <translation>Исходящие ссылки (%1)</translation>
+    </message>
 </context>
 </TS>

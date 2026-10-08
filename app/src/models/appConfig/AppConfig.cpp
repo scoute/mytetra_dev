@@ -2174,7 +2174,7 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
     table << get_parameter_table_42(false);
 
     // Цвет закраски секрета в формате "#2e8b57"
-    table << "secretColor" << "QString" << "#2e8b57";
+    table << "secretColor" << "QString" << "#77767b";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

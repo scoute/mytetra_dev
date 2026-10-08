@@ -237,7 +237,7 @@ public:
 
     // Цвет закраски секрета
     QString get_secretColor(void);
-    void set_secretColor(QString color); // Формат цвета - "#2e8b57"
+    void set_secretColor(QString color); // Формат цвета - "#77767b"
 
     // Шапка заметки (название и автор) над редактором.
     // По умолчанию показана

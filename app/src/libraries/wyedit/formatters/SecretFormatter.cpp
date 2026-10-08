@@ -33,14 +33,14 @@ bool SecretFormatter::isSecretFormat(const QTextCharFormat &format)
 
 QColor SecretFormatter::secretColor(void)
 {
-  // Цвет из настроек: пользователь выбирает любой, по умолчанию зеленый.
+  // Цвет из настроек: пользователь выбирает любой, по умолчанию серый.
   // Уже закрашенное хранит свой цвет в документе и не перекрашивается
   const QColor configuredColor(mytetraConfig.get_secretColor());
 
   if(configuredColor.isValid())
     return configuredColor;
 
-  return QColor(0x2e, 0x8b, 0x57);
+  return QColor(0x77, 0x76, 0x7b);
 }
 
 

@@ -6,6 +6,7 @@
 #include "Editor.h"
 #include "EditorCursorPositionDetector.h"
 #include "libraries/ShortcutManager.h"
+#include "libraries/helpers/LinkHelper.h"
 
 
 extern ShortcutManager shortcutManager;
@@ -49,6 +50,9 @@ void EditorContextMenu::setupActions(void)
  actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
+ actionPasteNoteReference=new QAction(this);
+ actionPasteNoteReference->setObjectName(QStringLiteral("editor_pasteNoteReference"));
+ actionPasteNoteReference->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
 
  actionLowercase=new QAction(this);
  actionUppercase=new QAction(this);
@@ -89,6 +93,8 @@ void EditorContextMenu::setupShortcuts(void)
     actionEditMathExpression->setText(tr("Edit math expression")); // В контекстном меню это редактирование формулы
 
     shortcutManager.initAction("editor-gotoReference", actionGotoReference );
+
+    shortcutManager.initAction("editor-pasteNoteReference", actionPasteNoteReference );
 
     shortcutManager.initAction("editor-lowercase", actionLowercase );
     shortcutManager.initAction("editor-uppercase", actionUppercase );
@@ -131,6 +137,9 @@ void EditorContextMenu::update(void)
         setGotoReference( false );
     }
 
+    // Если в буфере ссылка на заметку, доступен пункт ее вставки
+    setPasteNoteReference( LinkHelper::isHrefInternal( QGuiApplication::clipboard()->text().trimmed() ) );
+
     // Курсор в спойлере: доступен пункт быстрого копирования содержимого
     setCopySecret(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
     setChangeSecretColor(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
@@ -159,6 +168,7 @@ QList<QAction *> EditorContextMenu::getActionsList()
          << actionPaste
          << actionPasteAsPlainText
          << actionSelectAll
+         << actionPasteNoteReference
          << actionGotoReference;
 
     return list;
@@ -221,6 +231,14 @@ void EditorContextMenu::setGotoReference(bool flag)
 }
 
 
+// Показывать или нет пункт вставки ссылки на заметку из буфера
+void EditorContextMenu::setPasteNoteReference(bool flag)
+{
+  actionPasteNoteReference->setVisible(flag);
+  actionPasteNoteReference->setEnabled(flag);
+}
+
+
 // Показывать или нет пункт "Вставить только текст"
 void EditorContextMenu::setPasteAsPlainText(bool flag)
 {
@@ -263,6 +281,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
+    connect(actionPasteNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPasteNoteReference);
 
     connect(actionLowercase, &QAction::triggered, this, &EditorContextMenu::onActionLowercase);
     connect(actionUppercase, &QAction::triggered, this, &EditorContextMenu::onActionUppercase);
@@ -300,6 +319,7 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionChangeSecretColor);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
+    this->addAction(actionPasteNoteReference);
 }
 
 
@@ -420,6 +440,14 @@ void EditorContextMenu::onActionContextMenuGotoReference()
     update();
     if(actionGotoReference->isEnabled()) {
         emit contextMenuGotoReference();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuPasteNoteReference()
+{
+    update();
+    if(actionPasteNoteReference->isEnabled()) {
+        emit contextMenuPasteNoteReference();
     }
 }
 

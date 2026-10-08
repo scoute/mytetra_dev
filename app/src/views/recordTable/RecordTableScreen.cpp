@@ -138,6 +138,12 @@ void RecordTableScreen::setupActions(void)
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
  actionCopyRecordReference->setIcon(QIcon(":/resource/pic/note_reference.svg"));
 
+ // Кнопка вставки ссылки на запись в открытую заметку:
+ // кладет ссылку в буфер и сразу открывает диалог вставки
+ actionPasteRecordReferenceIntoNote = new QAction(tr("Paste note reference into note"), this);
+ actionPasteRecordReferenceIntoNote->setStatusTip(tr("Copy note reference and open insert dialog in editor"));
+ actionPasteRecordReferenceIntoNote->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
+
  // Кнопка переключения режима одинарного выбора и мультивыбора (горячая кнопка не требуется)
  actionSwitchSelectionMode = new QAction(tr("Switch select/multiselect"), this);
  actionSwitchSelectionMode->setStatusTip(tr("Switch note selection mode (Notice: if multiselect is on, drag-and-drop is disabled)"));
@@ -319,6 +325,9 @@ void RecordTableScreen::setupSignals(void)
     // Кнопка копирования ссылки на запись
     connect(actionCopyRecordReference, &QAction::triggered, this, &RecordTableScreen::onCopyRecordReference);
 
+    // Кнопка вставки ссылки на запись в открытую заметку
+    connect(actionPasteRecordReferenceIntoNote, &QAction::triggered, this, &RecordTableScreen::onPasteRecordReferenceIntoNote);
+
     // Кнопка переключения режима одинарного выбора и мультивыбора
     connect(actionSwitchSelectionMode, &QAction::triggered, recordTableController, &RecordTableController::onSwitchSelectionMode);
 
@@ -371,6 +380,8 @@ void RecordTableScreen::disableAllActions(void)
  actionMoveDn->setEnabled(false);
 
  actionCopyRecordReference->setEnabled(false);
+
+ actionPasteRecordReferenceIntoNote->setEnabled(false);
 
  actionSwitchSelectionMode->setEnabled(false);
 }
@@ -431,6 +442,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
+   actionPasteRecordReferenceIntoNote->setEnabled(true);
  }
 
  // Удаление записи
@@ -575,6 +587,22 @@ void RecordTableScreen::onCopyRecordReference()
 
   QClipboard *clipboard = QApplication::clipboard();
   clipboard->setText(reference);
+}
+
+
+// Ссылка на запись в буфер + сразу открыть диалог вставки в редакторе.
+// Диалог сам подхватит ссылку из буфера и покажет имя цели
+void RecordTableScreen::onPasteRecordReferenceIntoNote()
+{
+  onCopyRecordReference();
+
+  MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
+  if(metaEditor==nullptr || metaEditor->getMiscField(QStringLiteral("id")).isEmpty())
+    return;
+
+  QAction *referenceAction=find_object<QAction>("editor_tb_reference");
+  if(referenceAction!=nullptr)
+    referenceAction->trigger();
 }
 
 

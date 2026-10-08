@@ -50,6 +50,7 @@ public:
  QAction *actionSort;
  QAction *actionPrint;
  QAction *actionCopyRecordReference;
+ QAction *actionPasteRecordReferenceIntoNote;
  QAction *actionSwitchSelectionMode;
 
  // Действие, которое может быть вызвано из MainWindows
@@ -75,6 +76,7 @@ private slots:
  void onWalkHistoryNextClick(void);
  void onBackClick(void);
  void onCopyRecordReference(void);
+ void onPasteRecordReferenceIntoNote(void);
 
 private:
  QToolBar *toolsLine;

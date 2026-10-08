@@ -1,4 +1,8 @@
-#include <QInputDialog>
+#include <QDialog>
+#include <QFormLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QDialogButtonBox>
 #include <QDebug>
 #include <QDesktopServices>
 #include <QApplication>
@@ -90,15 +94,34 @@ void ReferenceFormatter::onReferenceClicked(void)
         textArea->setTextCursor(cursor); // Дополнительный курсор устанавливается как основной
     }
 
-    // Создание виджета запроса URL с указанием редактора как родительского виджета
-    QInputDialog inputDialog(editor);
+    // Диалог запроса ссылки: два поля, ссылка и текст ссылки.
+    // Пустой текст = старое поведение (выделение как есть, иначе имя цели)
+    QDialog linkDialog(editor);
+    linkDialog.setWindowTitle(tr("Reference or URL"));
 
-    // Установка ширины виджета запроса URL
-    int dialogWidth=int(0.8*(float)textArea->width());
-    inputDialog.setMinimumWidth( dialogWidth );
-    inputDialog.resize(inputDialog.size());
+    QLineEdit *urlEdit=new QLineEdit(&linkDialog);
+    QLineEdit *nameEdit=new QLineEdit(&linkDialog);
 
-    inputDialog.setWindowTitle(tr("Reference or URL"));
+    QFormLayout *linkLayout=new QFormLayout(&linkDialog);
+    QLabel *urlLabel=new QLabel(tr("Reference or URL"), &linkDialog);
+    QLabel *nameLabel=new QLabel(tr("Link text"), &linkDialog);
+    linkLayout->addRow(urlLabel, urlEdit);
+    linkLayout->addRow(nameLabel, nameEdit);
+
+    QDialogButtonBox *linkButtons=new QDialogButtonBox(QDialogButtonBox::Ok |
+                                                       QDialogButtonBox::Cancel,
+                                                       Qt::Horizontal,
+                                                       &linkDialog);
+    QObject::connect(linkButtons, &QDialogButtonBox::accepted,
+                     &linkDialog, &QDialog::accept);
+    QObject::connect(linkButtons, &QDialogButtonBox::rejected,
+                     &linkDialog, &QDialog::reject);
+    linkLayout->addRow(linkButtons);
+
+    // Ширина как у старого однострочного диалога
+    const int dialogWidth=int(0.8*(float)textArea->width());
+    linkDialog.setMinimumWidth(dialogWidth);
+    linkDialog.resize(linkDialog.size());
 
     // Умная вставка: курсор не на ссылке, а в буфере внутренняя ссылка.
     // Подставить ее в поле и показать имя цели, чтобы было видно куда сошлемся.
@@ -111,38 +134,70 @@ void ReferenceFormatter::onReferenceClicked(void)
             href=clipText;
     }
 
-    QString targetName;
-    if(href.isEmpty())
-        inputDialog.setLabelText(tr("Reference or URL"));
+    urlEdit->setText(href);
+
+    if(textArea->textCursor().hasSelection())
+    {
+        // Текст ссылки по умолчанию: выделенное (для существующей ссылки
+        // выделение уже натянуто на нее выше)
+        QString selected=textArea->textCursor().selectedText();
+        selected.replace(QChar(0x2029), QStringLiteral(" "));
+        nameEdit->setText(selected);
+    }
     else if(LinkHelper::isHrefInternal(href))
     {
-        targetName=targetRecordName(href);
+        const QString targetName=targetRecordName(href);
         if(targetName.isEmpty())
-            inputDialog.setLabelText(tr("Reference or URL (record not found)"));
+            urlLabel->setText(tr("Reference or URL (record not found)"));
         else
-            inputDialog.setLabelText(tr("Reference or URL")+" → "+targetName);
+            nameEdit->setText(targetName);
     }
-    else
-        inputDialog.setLabelText(tr("Reference or URL"));
 
-    inputDialog.setTextValue(href);
-    inputDialog.setTextEchoMode(QLineEdit::Normal);
-
-    bool ok=inputDialog.exec();
-    QString refereceUrl=inputDialog.textValue();
+    const bool ok=linkDialog.exec()==QDialog::Accepted;
+    const QString refereceUrl=urlEdit->text().trimmed();
+    const QString linkText=nameEdit->text();
 
     if(!ok)
         return;
 
-    // Вставка внутренней ссылки без выделения: titled-ссылка
-    // с именем цели + пробел, чтобы не править поле вручную.
+    // Без выделения и с текстом: вставка titled-ссылки с пробелом.
+    // Работает для любых ссылок, не только внутренних
+    if(!textArea->textCursor().hasSelection() &&
+       !refereceUrl.isEmpty() &&
+       !linkText.isEmpty())
+    {
+        insertTitledLink(refereceUrl, linkText);
+        return;
+    }
+
+    // Вставка внутренней ссылки без выделения и без текста:
+    // текст дает имя цели (или голый href для призрака).
     // Старый путь (ссылка на выделение, снятие ссылки) ниже без изменений
     if(!startedOnReference &&
        !textArea->textCursor().hasSelection() &&
        LinkHelper::isHrefInternal(refereceUrl))
     {
-        insertTitledInternalLink(refereceUrl, targetRecordName(refereceUrl));
+        QString display=targetRecordName(refereceUrl);
+        if(display.isEmpty())
+            display=refereceUrl;
+
+        insertTitledLink(refereceUrl, display);
         return;
+    }
+
+    // Текст из поля отличается от выделения: заменить выделение текстом,
+    // дальше ссылка вешается на него старым путем
+    if(textArea->textCursor().hasSelection() && !linkText.isEmpty())
+    {
+        QTextCursor cursor=textArea->textCursor();
+        QString selected=cursor.selectedText();
+        selected.replace(QChar(0x2029), QStringLiteral(" "));
+
+        if(selected!=linkText)
+        {
+            cursor.insertText(linkText);
+            textArea->setTextCursor(cursor);
+        }
     }
 
     // Устанавливается текст ссылки
@@ -186,7 +241,7 @@ QString ReferenceFormatter::targetRecordName(const QString &internalHref) const
 }
 
 
-void ReferenceFormatter::insertTitledInternalLink(const QString &internalHref,
+void ReferenceFormatter::insertTitledLink(const QString &internalHref,
                                                  const QString &targetName)
 {
     // Без имени (удалена, шифр): вставляется голый href как раньше,

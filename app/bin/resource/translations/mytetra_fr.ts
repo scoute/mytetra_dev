@@ -3281,6 +3281,14 @@ Please report about this problem to the developers.</source>
         <source>&lt;b&gt;Path:&lt;/b&gt; </source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Paste note reference into note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy note reference and open insert dialog in editor</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecordTableView</name>
@@ -3330,6 +3338,10 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <source>Reference or URL (record not found)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link text</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4013,6 +4025,10 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="179"/>
         <source>Quit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste note reference</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

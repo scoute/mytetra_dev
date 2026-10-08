@@ -30,7 +30,7 @@ private:
 
     // Вставка titled-ссылки в курсор + пробел-разделитель,
     // чтобы рядом стоящие ссылки не сливались в одну
-    void insertTitledInternalLink(const QString &internalHref,
+    void insertTitledLink(const QString &internalHref,
                                   const QString &targetName);
 
 };

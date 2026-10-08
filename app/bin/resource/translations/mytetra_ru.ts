@@ -4751,6 +4751,14 @@ Please report about this problem to the developers.</source>
         <source>Cancel</source>
         <translation type="vanished">Отмена</translation>
     </message>
+    <message>
+        <source>Paste note reference into note</source>
+        <translation>Вставить ссылку на запись в заметку</translation>
+    </message>
+    <message>
+        <source>Copy note reference and open insert dialog in editor</source>
+        <translation>Копировать ссылку на запись и открыть диалог вставки в редакторе</translation>
+    </message>
 </context>
 <context>
     <name>RecordTableView</name>
@@ -4801,6 +4809,10 @@ Please report about this problem to the developers.</source>
     <message>
         <source>Reference or URL (record not found)</source>
         <translation>Ссылка или URL (запись не найдена)</translation>
+    </message>
+    <message>
+        <source>Link text</source>
+        <translation>Текст ссылки</translation>
     </message>
 </context>
 <context>
@@ -5502,6 +5514,10 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="179"/>
         <source>Quit</source>
         <translation>Выход</translation>
+    </message>
+    <message>
+        <source>Paste note reference</source>
+        <translation>Вставить ссылку на заметку</translation>
     </message>
 </context>
 <context>

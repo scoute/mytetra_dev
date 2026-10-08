@@ -320,6 +320,7 @@ void RecordTableView::assemblyContextMenu(void)
     contextMenu->addAction(parentPointer->actionSort);
     contextMenu->addAction(parentPointer->actionPrint);
     contextMenu->addAction(parentPointer->actionCopyRecordReference);
+    contextMenu->addAction(parentPointer->actionPasteRecordReferenceIntoNote);
     contextMenu->addAction(parentPointer->actionSettings);
 }
 

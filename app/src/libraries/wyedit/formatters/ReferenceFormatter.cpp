@@ -44,8 +44,8 @@ void ReferenceFormatter::onReferenceClicked(void)
 
     QString href=selectReferenceUnderCursor();
 
-    // Защита от вставки в середину слова (см. snapWordUnderCursor)
-    snapWordUnderCursor();
+    // Защита от вставки в середину слова (см. moveCursorToWordEnd)
+    moveCursorToWordEnd();
 
     // Диалог запроса ссылки: два поля, ссылка и текст ссылки.
     // Пустой текст = старое поведение (выделение как есть, иначе имя цели)
@@ -271,25 +271,22 @@ QString ReferenceFormatter::selectReferenceUnderCursor(void)
 }
 
 
-bool ReferenceFormatter::snapWordUnderCursor(void)
+bool ReferenceFormatter::moveCursorToWordEnd(void)
 {
-    if(!textArea->textCursor().hasSelection())
-    {
-        QTextCursor cursor=textArea->textCursor();
-        const int pos=cursor.position();
-        QTextDocument *doc=textArea->document();
+    if(textArea->textCursor().hasSelection())
+        return false;
 
-        if(pos>0 &&
-           doc->characterAt(pos-1).isLetterOrNumber() &&
-           doc->characterAt(pos).isLetterOrNumber())
-        {
-            cursor.select(QTextCursor::WordUnderCursor);
-            if(!cursor.selectedText().isEmpty())
-            {
-                textArea->setTextCursor(cursor);
-                return true;
-            }
-        }
+    QTextCursor cursor=textArea->textCursor();
+    const int pos=cursor.position();
+    QTextDocument *doc=textArea->document();
+
+    if(pos>0 &&
+       doc->characterAt(pos-1).isLetterOrNumber() &&
+       doc->characterAt(pos).isLetterOrNumber())
+    {
+        cursor.movePosition(QTextCursor::EndOfWord);
+        textArea->setTextCursor(cursor);
+        return true;
     }
 
     return false;
@@ -365,21 +362,9 @@ void ReferenceFormatter::onInsertNoteReferenceClicked(void)
                              QStringLiteral("://note/")+
                              pickedId;
 
-    snapWordUnderCursor();
-
-    if(textArea->textCursor().hasSelection())
-    {
-        // Слово под курсором: оставить слово, повесить ссылку.
-        // Тот же исход что у диалога с предзаполненным именем
-        QTextCharFormat linkFormat;
-        linkFormat.setAnchor(true);
-        linkFormat.setAnchorHref(pickedHref);
-        linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
-        linkFormat.setFontUnderline(true);
-
-        textArea->textCursor().mergeCharFormat(linkFormat);
-        return;
-    }
+    // Середина слова: курсор в конец слова, слово целое,
+    // ссылка со своим именем ложится рядом
+    moveCursorToWordEnd();
 
     insertTitledLink(pickedHref, picker.selectedRecordName());
 }
@@ -399,16 +384,19 @@ void ReferenceFormatter::insertTitledLink(const QString &internalHref,
     linkFormat.setFontUnderline(true);
 
     QTextCursor cursor=textArea->textCursor();
-    cursor.insertText(title, linkFormat);
 
-    // Пробел-разделитель шрифтом окружения без якоря и подчеркивания:
-    // рядом стоящие ссылки иначе воспринимаются как одна
-    QTextCharFormat spaceFormat=textArea->textCursor().charFormat();
-    spaceFormat.setAnchor(false);
-    spaceFormat.setAnchorHref(QString());
-    spaceFormat.clearForeground();
-    spaceFormat.setFontUnderline(false);
-    cursor.insertText(QStringLiteral(" "), spaceFormat);
+    // Пробелы по краям без условий: ссылка никогда не приклеится
+    // ни к слову, ни к другой ссылке. Двойной пробел при готовом
+    // разделителе безвреден и виден сразу
+    QTextCharFormat edgeFormat=textArea->textCursor().charFormat();
+    edgeFormat.setAnchor(false);
+    edgeFormat.setAnchorHref(QString());
+    edgeFormat.clearForeground();
+    edgeFormat.setFontUnderline(false);
+    cursor.insertText(QStringLiteral(" "), edgeFormat);
+
+    cursor.insertText(title, linkFormat);
+    cursor.insertText(QStringLiteral(" "), edgeFormat);
 
     textArea->setTextCursor(cursor);
 }

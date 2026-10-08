@@ -25,6 +25,8 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/historyPanel/HistoryPanel.h"
+#include "views/backlinksPanel/BacklinksPanel.h"
+#include "libraries/BacklinkIndex.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
@@ -156,6 +158,16 @@ void MainWindow::setupUI(void)
     historyPanelDock->setWidget(historyPanel);
     historyPanelDock->hide();
 
+    // Панель входящих ссылок в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools
+    backlinksPanel=new BacklinksPanel(this);
+    backlinksPanel->setObjectName("backlinksPanel");
+
+    backlinksPanelDock=new QDockWidget(tr("Backlinks"), this);
+    backlinksPanelDock->setObjectName("backlinksPanelDock");
+    backlinksPanelDock->setWidget(backlinksPanel);
+    backlinksPanelDock->hide();
+
     // todo: Для проверки, почему то в этом месте поиск объекта по имени не работает, разобраться.
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
 }
@@ -286,6 +298,7 @@ void MainWindow::assembly(void)
 
     addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
 
+    addDockWidget(Qt::RightDockWidgetArea, backlinksPanelDock);
     // Кнопка-бирка справа от поиска по базе во второй линии записей.
     // Тот же переключатель что в меню Tools: состояние синхронно само
     recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
@@ -294,7 +307,15 @@ void MainWindow::assembly(void)
     // Тот же переключатель что в меню Tools
     recordTableScreen->addExtraToolAction(historyPanelDock->toggleViewAction());
 
+    // Кнопка входящих ссылок рядом с биркой истории.
+    // Тот же переключатель что в меню Tools
+    recordTableScreen->addExtraToolAction(backlinksPanelDock->toggleViewAction());
+
     setCentralWidget(findSplitter);
+
+    // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
+    // при первом запуске строится полным сканом базы
+    BacklinkIndex::instance().loadOrBuild();
 }
 
 
@@ -704,6 +725,13 @@ void MainWindow::initToolsMenu(void)
     menu->addAction(historyPanelToggle);
 
     shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
+
+    // Переключатель панели входящих ссылок: видимость дока и галочка синхронны сами
+    QAction *backlinksPanelToggle=backlinksPanelDock->toggleViewAction();
+    backlinksPanelToggle->setIcon(QIcon(":/resource/pic/backlinks.svg"));
+    menu->addAction(backlinksPanelToggle);
+
+    shortcutManager.initAction("misc-backlinksPanel", backlinksPanelToggle);
 
     menu->addSeparator();
 
@@ -1669,6 +1697,10 @@ void MainWindow::saveTextarea(void)
     qDebug() << "MainWindow::saveTextarea() : id :" << id;
 
     editorScreen->saveTextarea();
+
+    // Текст на диске обновился: перепарсить исходящие ссылки записи
+    if(!id.isEmpty())
+      BacklinkIndex::instance().updateSource(id);
 
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),

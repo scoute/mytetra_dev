@@ -19,6 +19,7 @@
 #include "models/recordTable/Record.h"
 #include "models/recordTable/RecordTableData.h"
 #include "models/recordTable/RecordTableModel.h"
+#include "libraries/BacklinkIndex.h"
 #include "models/recordTable/RecordTableProxyModel.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/tree/TreeItem.h"
@@ -852,6 +853,9 @@ void RecordTableController::deleteRecords(void)
 
   // Вызывается удаление отмеченных записей
   removeRowsByIdList(delIds);
+
+  // Чистка обратного индекса: источники ушли в корзину
+  BacklinkIndex::instance().removeSources(delIds.toList());
 
   // Сохранение дерева веток
   find_object<TreeScreen>("treeScreen")->saveKnowTree();

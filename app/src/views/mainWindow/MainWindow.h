@@ -25,6 +25,7 @@ class RecordTableScreen;
 class FindScreen;
 class TagsPanel;
 class HistoryPanel;
+class BacklinksPanel;
 class WindowSwitcher;
 class CommandRunner;
 
@@ -233,6 +234,11 @@ private:
     // клавишей, в закрытом виде место не занимает
     HistoryPanel *historyPanel=nullptr;
     QDockWidget *historyPanelDock=nullptr;
+
+    // Панель входящих ссылок. Переключается из меню Tools,
+    // в закрытом виде место не занимает
+    BacklinksPanel *backlinksPanel=nullptr;
+    QDockWidget *backlinksPanelDock=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

@@ -3689,6 +3689,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Change secret color...</source>
         <translation>Изменить цвет секретов...</translation>
     </message>
+    <message>
+        <source>Backlinks</source>
+        <translation>Обратные ссылки</translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>
@@ -5555,6 +5559,10 @@ Please report about this problem to the developers.</source>
         <source>Insert note reference using search...</source>
         <translation>Вставить ссылку через поиск</translation>
     </message>
+    <message>
+        <source>Show backlinks panel</source>
+        <translation>Показать панель обратных ссылок</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -6170,6 +6178,29 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>BacklinksPanel</name>
+    <message>
+        <source>Incoming links</source>
+        <translation>Входящие ссылки</translation>
+    </message>
+    <message>
+        <source>Incoming links (%1)</source>
+        <translation>Входящие ссылки (%1)</translation>
+    </message>
+    <message>
+        <source>Missing record %1</source>
+        <translation>Запись отсутствует %1</translation>
+    </message>
+    <message>
+        <source>Remove missing sources</source>
+        <translation>Убрать отсутствующие источники</translation>
+    </message>
+    <message>
+        <source>Recheck all links</source>
+        <translation>Перепроверить все ссылки</translation>
     </message>
 </context>
 </TS>

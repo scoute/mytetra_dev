@@ -1,7 +1,9 @@
 #include <QDialog>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPushButton>
 #include <QDialogButtonBox>
 #include <QMessageBox>
 #include <QDebug>
@@ -20,6 +22,7 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/LinkHelper.h"
+#include "views/notePicker/NotePickerDialog.h"
 #include "../Editor.h"
 #include "../EditorConfig.h"
 #include "../EditorTextArea.h"
@@ -39,61 +42,7 @@ void ReferenceFormatter::onReferenceClicked(void)
 {
     // TRACELOG
 
-    QString href="";
-
-    // Если курсор установлен на ссылке
-    if(editor->cursorPositionDetector->isCursorOnReference())
-        href=editor->cursorPositionDetector->referenceHref(); // Выясняется текст ссылки
-
-    // Если имеется текст ссылки, надо выделить курсором область текста, где эта ссылка находится
-    // в случае, если пользователь нажал на кнопку редактирования URL без предварительного выделения
-    if(href.size()>0 && !textArea->textCursor().hasSelection()) {
-        QTextCursor cursor=textArea->textCursor(); // Создается дополнительный курсор
-
-        // Запоминается позиция курсора
-        int cursorPosition=cursor.position();
-
-        // Выясняется, надо ли вообще двигаться влево (не надо, если курсор стоит перед ссылкой, вот так: _|ссылка )
-        if(cursor.charFormat().anchorHref()==href) {
-            // Движение влево
-            do {
-                if(!cursor.movePosition(QTextCursor::PreviousCharacter)) {
-                    break;
-                }
-            } while(cursor.charFormat().anchorHref()==href);
-        }
-
-        // Запоминается откуда началась ссылка
-        int firstCursorPosition=cursor.position();
-
-        // Курсор снова устанавливается на начальную позицию
-        cursor.setPosition(cursorPosition);
-
-        // Движение вправо
-        bool isRightMoveBreak=false;
-        do {
-            if (!cursor.movePosition(QTextCursor::NextCharacter)) { // Если достигнут конец текста
-                isRightMoveBreak=true;
-                break;
-            }
-        } while(cursor.charFormat().anchorHref()==href);
-
-        // Запоминается где закончилась ссылка
-        int secondCursorPosition;
-        if(isRightMoveBreak) {
-            // Если это конец текста, нужно полное выделение чтобы захватился последний символ
-            secondCursorPosition=cursor.position();
-        } else {
-            // Если это не конец текста, прерывания цикла не было, и нужно исключить последний символ,
-            // так как он проверялся в цикле и на последней итерации достиг символа, где ссылки уже не было
-            secondCursorPosition=cursor.position()-1;
-        }
-
-        // Происходит выделение дополнительным курсором
-        cursor.setPosition(firstCursorPosition);
-        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, secondCursorPosition-firstCursorPosition);
-        textArea->setTextCursor(cursor); // Дополнительный курсор устанавливается как основной
-    }
+    QString href=selectReferenceUnderCursor();
 
     // Диалог запроса ссылки: два поля, ссылка и текст ссылки.
     // Пустой текст = старое поведение (выделение как есть, иначе имя цели)
@@ -106,8 +55,21 @@ void ReferenceFormatter::onReferenceClicked(void)
     QFormLayout *linkLayout=new QFormLayout(&linkDialog);
     QLabel *urlLabel=new QLabel(tr("Reference or URL"), &linkDialog);
     QLabel *nameLabel=new QLabel(tr("Link text"), &linkDialog);
-    linkLayout->addRow(urlLabel, urlEdit);
+
+    // Выбор заметки глобальным поиском: заполняет оба поля,
+    // имя не затирается если уже введено вручную
+    QHBoxLayout *urlRowLayout=new QHBoxLayout();
+    urlRowLayout->addWidget(urlEdit);
+    QPushButton *selectNoteButton=new QPushButton(tr("Select..."), &linkDialog);
+    urlRowLayout->addWidget(selectNoteButton);
+
+    linkLayout->addRow(urlLabel, urlRowLayout);
     linkLayout->addRow(nameLabel, nameEdit);
+
+    QObject::connect(selectNoteButton, &QPushButton::clicked,
+                     &linkDialog, [this, &linkDialog, urlEdit, nameEdit]() {
+      this->pickNoteIntoFields(&linkDialog, urlEdit, nameEdit);
+    });
 
     QDialogButtonBox *linkButtons=new QDialogButtonBox(QDialogButtonBox::Ok |
                                                        QDialogButtonBox::Cancel,
@@ -244,6 +206,68 @@ void ReferenceFormatter::onReferenceClicked(void)
 }
 
 
+QString ReferenceFormatter::selectReferenceUnderCursor(void)
+{
+    QString href="";
+
+    // Если курсор установлен на ссылке
+    if(editor->cursorPositionDetector->isCursorOnReference())
+        href=editor->cursorPositionDetector->referenceHref(); // Выясняется текст ссылки
+
+    // Если имеется текст ссылки, надо выделить курсором область текста, где эта ссылка находится
+    // в случае, если пользователь нажал на кнопку редактирования URL без предварительного выделения
+    if(href.size()>0 && !textArea->textCursor().hasSelection()) {
+        QTextCursor cursor=textArea->textCursor(); // Создается дополнительный курсор
+
+        // Запоминается позиция курсора
+        int cursorPosition=cursor.position();
+
+        // Выясняется, надо ли вообще двигаться влево (не надо, если курсор стоит перед ссылкой, вот так: _|ссылка )
+        if(cursor.charFormat().anchorHref()==href) {
+            // Движение влево
+            do {
+                if(!cursor.movePosition(QTextCursor::PreviousCharacter)) {
+                    break;
+                }
+            } while(cursor.charFormat().anchorHref()==href);
+        }
+
+        // Запоминается откуда началась ссылка
+        int firstCursorPosition=cursor.position();
+
+        // Курсор снова устанавливается на начальную позицию
+        cursor.setPosition(cursorPosition);
+
+        // Движение вправо
+        bool isRightMoveBreak=false;
+        do {
+            if (!cursor.movePosition(QTextCursor::NextCharacter)) { // Если достигнут конец текста
+                isRightMoveBreak=true;
+                break;
+            }
+        } while(cursor.charFormat().anchorHref()==href);
+
+        // Запоминается где закончилась ссылка
+        int secondCursorPosition;
+        if(isRightMoveBreak) {
+            // Если это конец текста, нужно полное выделение чтобы захватился последний символ
+            secondCursorPosition=cursor.position();
+        } else {
+            // Если это не конец текста, прерывания цикла не было, и нужно исключить последний символ,
+            // так как он проверялся в цикле и на последней итерации достиг символа, где ссылки уже не было
+            secondCursorPosition=cursor.position()-1;
+        }
+
+        // Происходит выделение дополнительным курсором
+        cursor.setPosition(firstCursorPosition);
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, secondCursorPosition-firstCursorPosition);
+        textArea->setTextCursor(cursor); // Дополнительный курсор устанавливается как основной
+    }
+
+    return href;
+}
+
+
 QString ReferenceFormatter::targetRecordName(const QString &internalHref) const
 {
     const QString id=LinkHelper::getIdFromInternalHref(internalHref);
@@ -259,6 +283,104 @@ QString ReferenceFormatter::targetRecordName(const QString &internalHref) const
         return QString();
 
     return record->getField(QStringLiteral("name"));
+}
+
+
+void ReferenceFormatter::pickNoteIntoFields(QDialog *parent,                                            QLineEdit *urlEdit,
+                                            QLineEdit *nameEdit)
+{
+    // Своя запись исключается из выдачи: ссылка на себя бессмысленна
+    const QString currentId=editor->getMiscField(QStringLiteral("id"));
+
+    NotePickerDialog picker(parent, currentId);
+    if(picker.exec()!=QDialog::Accepted)
+        return;
+
+    const QString pickedId=picker.selectedRecordId();
+    if(pickedId.isEmpty())
+        return;
+
+    urlEdit->setText(FixedParameters::appTextId+
+                     QStringLiteral("://note/")+
+                     pickedId);
+
+    if(nameEdit->text().isEmpty())
+        nameEdit->setText(picker.selectedRecordName());
+}
+
+
+// Перенацеливание ссылки под курсором.
+// Внешняя: стандартный двухполевый диалог. Внутренняя: снова поиск,
+// href меняется, текст обновляется только если совпадал со старым именем цели
+void ReferenceFormatter::onEditReferenceAtCursor(void)
+{
+    const QString href=selectReferenceUnderCursor();
+    if(href.isEmpty())
+        return;
+
+    // Внешняя ссылка: обычный диалог, он сам подхватит ссылку и текст
+    if(!LinkHelper::isHrefInternal(href))
+    {
+        onReferenceClicked();
+        return;
+    }
+
+    const QString oldName=targetRecordName(href);
+
+    NotePickerDialog picker(editor, editor->getMiscField(QStringLiteral("id")));
+    if(picker.exec()!=QDialog::Accepted)
+        return;
+
+    const QString pickedId=picker.selectedRecordId();
+    if(pickedId.isEmpty())
+        return;
+
+    const QString newHref=FixedParameters::appTextId+
+                          QStringLiteral("://note/")+
+                          pickedId;
+    if(newHref==href)
+        return; // Выбрана та же запись
+
+    // Выделение натянуто helper'ом выше
+    QTextCursor cursor=textArea->textCursor();
+    QString currentText=cursor.selectedText();
+    currentText.replace(QChar(0x2029), QStringLiteral(" "));
+
+    QString display=currentText;
+    if(!oldName.isEmpty() && currentText==oldName)
+        display=picker.selectedRecordName();
+
+    QTextCharFormat linkFormat;
+    linkFormat.setAnchor(true);
+    linkFormat.setAnchorHref(newHref);
+    linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
+    linkFormat.setFontUnderline(true);
+
+    cursor.insertText(display, linkFormat);
+    textArea->setTextCursor(cursor);
+
+    // Защита от себя не нужна: своя запись исключена из выдачи
+}
+
+
+// Вставка ссылки через глобальный выбор заметки.
+// Своя запись в выдаче отсутствует, защита не срабатывает
+void ReferenceFormatter::onInsertNoteReferenceClicked(void)
+{
+    const QString currentId=editor->getMiscField(QStringLiteral("id"));
+
+    NotePickerDialog picker(editor, currentId);
+    if(picker.exec()!=QDialog::Accepted)
+        return;
+
+    const QString pickedId=picker.selectedRecordId();
+    if(pickedId.isEmpty())
+        return;
+
+    insertTitledLink(FixedParameters::appTextId+
+                     QStringLiteral("://note/")+
+                     pickedId,
+                     picker.selectedRecordName());
 }
 
 

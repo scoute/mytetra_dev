@@ -464,8 +464,14 @@ void Editor::setupSignals(void)
   connect(editorContextMenu,  &EditorContextMenu::contextMenuGotoReference,
           referenceFormatter, &ReferenceFormatter::onContextMenuGotoReference,
           Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuEditReference,
+          referenceFormatter, &ReferenceFormatter::onEditReferenceAtCursor,
+          Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuPasteNoteReference,
           referenceFormatter, &ReferenceFormatter::onReferenceClicked,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuInsertNoteReference,
+          referenceFormatter, &ReferenceFormatter::onInsertNoteReferenceClicked,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySecret,
           secretFormatter,   &SecretFormatter::onContextMenuCopySecret,

@@ -50,9 +50,14 @@ void EditorContextMenu::setupActions(void)
  actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
+ actionEditReference=new QAction(this);
+ actionEditReference->setObjectName(QStringLiteral("editor_editReference"));
  actionPasteNoteReference=new QAction(this);
  actionPasteNoteReference->setObjectName(QStringLiteral("editor_pasteNoteReference"));
  actionPasteNoteReference->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
+ actionInsertNoteReference=new QAction(this);
+ actionInsertNoteReference->setObjectName(QStringLiteral("editor_insertNoteReference"));
+ actionInsertNoteReference->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
 
  actionLowercase=new QAction(this);
  actionUppercase=new QAction(this);
@@ -94,7 +99,11 @@ void EditorContextMenu::setupShortcuts(void)
 
     shortcutManager.initAction("editor-gotoReference", actionGotoReference );
 
+    shortcutManager.initAction("editor-editReference", actionEditReference );
+
     shortcutManager.initAction("editor-pasteNoteReference", actionPasteNoteReference );
+
+    shortcutManager.initAction("editor-insertNoteReference", actionInsertNoteReference );
 
     shortcutManager.initAction("editor-lowercase", actionLowercase );
     shortcutManager.initAction("editor-uppercase", actionUppercase );
@@ -133,8 +142,10 @@ void EditorContextMenu::update(void)
     // Если курсор находится на ссылке (URL)
     if(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnReference()) {
         setGotoReference( true );
+        setEditReference( true );
     } else {
         setGotoReference( false );
+        setEditReference( false );
     }
 
     // Если в буфере ссылка на заметку, доступен пункт ее вставки
@@ -169,7 +180,9 @@ QList<QAction *> EditorContextMenu::getActionsList()
          << actionPasteAsPlainText
          << actionSelectAll
          << actionPasteNoteReference
-         << actionGotoReference;
+         << actionInsertNoteReference
+         << actionGotoReference
+         << actionEditReference;
 
     return list;
 }
@@ -231,6 +244,14 @@ void EditorContextMenu::setGotoReference(bool flag)
 }
 
 
+// Показывать или нет пункт редактирования ссылки под курсором
+void EditorContextMenu::setEditReference(bool flag)
+{
+  actionEditReference->setVisible(flag);
+  actionEditReference->setEnabled(flag);
+}
+
+
 // Показывать или нет пункт вставки ссылки на заметку из буфера
 void EditorContextMenu::setPasteNoteReference(bool flag)
 {
@@ -281,7 +302,9 @@ void EditorContextMenu::setupSignals(void)
     connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
+    connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
     connect(actionPasteNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPasteNoteReference);
+    connect(actionInsertNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuInsertNoteReference);
 
     connect(actionLowercase, &QAction::triggered, this, &EditorContextMenu::onActionLowercase);
     connect(actionUppercase, &QAction::triggered, this, &EditorContextMenu::onActionUppercase);
@@ -319,7 +342,9 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionChangeSecretColor);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
+    this->addAction(actionEditReference);
     this->addAction(actionPasteNoteReference);
+    this->addAction(actionInsertNoteReference);
 }
 
 
@@ -443,11 +468,27 @@ void EditorContextMenu::onActionContextMenuGotoReference()
     }
 }
 
+void EditorContextMenu::onActionContextMenuEditReference()
+{
+    update();
+    if(actionEditReference->isEnabled()) {
+        emit contextMenuEditReference();
+    }
+}
+
 void EditorContextMenu::onActionContextMenuPasteNoteReference()
 {
     update();
     if(actionPasteNoteReference->isEnabled()) {
         emit contextMenuPasteNoteReference();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuInsertNoteReference()
+{
+    update();
+    if(actionInsertNoteReference->isEnabled()) {
+        emit contextMenuInsertNoteReference();
     }
 }
 

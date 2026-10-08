@@ -182,6 +182,7 @@ HEADERS = src/main.h \
     src/views/record/InfoFieldEnter.h \
     src/views/record/MetaEditor.h \
     src/views/tagsPanel/TagsPanel.h \
+    src/views/notePicker/NotePickerDialog.h \
     src/views/historyPanel/HistoryPanel.h \
     src/views/contentGallery/ContentGallery.h \
     src/libraries/wyedit/Editor.h \
@@ -359,6 +360,7 @@ SOURCES = src/main.cpp \
     src/views/record/InfoFieldEnter.cpp \
     src/views/record/MetaEditor.cpp \
     src/views/tagsPanel/TagsPanel.cpp \
+    src/views/notePicker/NotePickerDialog.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
     src/views/contentGallery/ContentGallery.cpp \
     src/libraries/wyedit/Editor.cpp \

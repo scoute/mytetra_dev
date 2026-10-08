@@ -159,7 +159,9 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-showText",            Data{ QKeySequence("Ctrl+Shift+W"), tr("Show detached window"), tr("") });
     defaultKeyTable.insert("editor-toAttach",            Data{ QKeySequence("Ctrl+Shift+A"), tr("Attach files"), tr("") });
     defaultKeyTable.insert("editor-gotoReference",       Data{ QKeySequence("Alt+Shift+U"), tr("Go to URL or reference"), tr("") }); // Сочетание Alt+U перестает работать после того, как нажато на месте без URL-a
+    defaultKeyTable.insert("editor-editReference",       Data{ QKeySequence(), tr("Edit reference..."), tr("") });
     defaultKeyTable.insert("editor-pasteNoteReference",  Data{ QKeySequence(), tr("Paste note reference"), tr("") });
+    defaultKeyTable.insert("editor-insertNoteReference", Data{ QKeySequence(), tr("Insert note reference..."), tr("") });
 
     defaultKeyTable.insert("actionLog-copy", Data{ QKeySequence("Ctrl+C"), tr("Copy selected rows"), tr("") });
 

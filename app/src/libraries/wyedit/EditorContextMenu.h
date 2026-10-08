@@ -20,6 +20,7 @@ public:
  void setChangeSecretColor(bool flag); // Показ пункта "Изменить цвет секретов"
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
+ void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
  void setPasteNoteReference(bool flag); // Пункт "Вставить ссылку на заметку", виден если в буфере внутренняя ссылка
  void setPasteAsPlainText(bool flag);
  void setFormatToLowerCase(bool flag); // Активирование добавочного пункта меню "Строчные"
@@ -46,6 +47,8 @@ signals:
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
   void contextMenuPasteNoteReference(void);
+  void contextMenuInsertNoteReference(void);
+  void contextMenuEditReference(void);
   void lowercase(void);
   void uppercase(void);
 
@@ -73,7 +76,9 @@ private:
   QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
+  QAction *actionEditReference;
   QAction *actionPasteNoteReference;
+  QAction *actionInsertNoteReference;
 
   void setupActions(void);
   void setupSignals(void);
@@ -96,7 +101,9 @@ protected slots:
   void onActionContextMenuChangeSecretColor(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
+  void onActionContextMenuEditReference(void);
   void onActionContextMenuPasteNoteReference(void);
+  void onActionContextMenuInsertNoteReference(void);
 
   void onActionLowercase();
   void onActionUppercase();

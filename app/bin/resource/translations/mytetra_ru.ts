@@ -4751,14 +4751,6 @@ Please report about this problem to the developers.</source>
         <source>Cancel</source>
         <translation type="vanished">Отмена</translation>
     </message>
-    <message>
-        <source>Copy note reference and open insert dialog in editor</source>
-        <translation>Копировать ссылку на запись и открыть диалог вставки в редакторе</translation>
-    </message>
-    <message>
-        <source>Copy and paste note reference</source>
-        <translation>Копировать и вставить ссылку на запись</translation>
-    </message>
 </context>
 <context>
     <name>RecordTableView</name>
@@ -4825,6 +4817,10 @@ Please report about this problem to the developers.</source>
     <message>
         <source>Insert anyway</source>
         <translation>Вставить всё равно</translation>
+    </message>
+    <message>
+        <source>Select...</source>
+        <translation>Выбрать...</translation>
     </message>
 </context>
 <context>
@@ -5531,6 +5527,14 @@ Please report about this problem to the developers.</source>
         <source>Paste note reference</source>
         <translation>Вставить ссылку на заметку</translation>
     </message>
+    <message>
+        <source>Insert note reference...</source>
+        <translation>Вставить ссылку на запись...</translation>
+    </message>
+    <message>
+        <source>Edit reference...</source>
+        <translation>Редактировать ссылку...</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -6115,6 +6119,37 @@ Please select single item for enabling edit operation.</source>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="559"/>
         <source>Close</source>
         <translation>Закрыть</translation>
+    </message>
+</context>
+<context>
+    <name>NotePickerDialog</name>
+    <message>
+        <source>Select note</source>
+        <translation>Выбор заметки</translation>
+    </message>
+    <message>
+        <source>Search note</source>
+        <translation>Поиск заметки</translation>
+    </message>
+    <message>
+        <source>Type a name or tag to search</source>
+        <translation>Введите имя или тег для поиска</translation>
+    </message>
+    <message>
+        <source>Shown %1 of %2</source>
+        <translation>Показано %1 из %2</translation>
+    </message>
+    <message>
+        <source>Nothing found</source>
+        <translation>Ничего не найдено</translation>
+    </message>
+    <message>
+        <source>Select</source>
+        <translation>Выбрать</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
     </message>
 </context>
 </TS>

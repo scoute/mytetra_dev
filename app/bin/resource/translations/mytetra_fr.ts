@@ -3281,14 +3281,6 @@ Please report about this problem to the developers.</source>
         <source>&lt;b&gt;Path:&lt;/b&gt; </source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Copy note reference and open insert dialog in editor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy and paste note reference</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>RecordTableView</name>
@@ -3354,6 +3346,10 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <source>Insert anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4043,6 +4039,14 @@ Please report about this problem to the developers.</source>
         <source>Paste note reference</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Insert note reference...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit reference...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4510,6 +4514,37 @@ All data imported will be encrypted.</source>
     <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="559"/>
         <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NotePickerDialog</name>
+    <message>
+        <source>Select note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a name or tag to search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

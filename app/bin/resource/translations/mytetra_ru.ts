@@ -5535,6 +5535,14 @@ Please report about this problem to the developers.</source>
         <source>Edit reference...</source>
         <translation>Редактировать ссылку...</translation>
     </message>
+    <message>
+        <source>Paste note reference from clipboard</source>
+        <translation>Вставить ссылку из буфера обмена</translation>
+    </message>
+    <message>
+        <source>Insert note reference using search...</source>
+        <translation>Вставить ссылку через поиск</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>

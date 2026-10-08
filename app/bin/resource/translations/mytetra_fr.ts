@@ -4036,11 +4036,11 @@ Please report about this problem to the developers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Paste note reference</source>
+        <source>Paste note reference from clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Insert note reference...</source>
+        <source>Insert note reference using search...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

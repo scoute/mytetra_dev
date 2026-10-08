@@ -3282,11 +3282,11 @@ Please report about this problem to the developers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Paste note reference into note</source>
+        <source>Copy note reference and open insert dialog in editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy note reference and open insert dialog in editor</source>
+        <source>Copy and paste note reference</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

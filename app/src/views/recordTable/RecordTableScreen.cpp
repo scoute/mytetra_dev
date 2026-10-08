@@ -140,7 +140,7 @@ void RecordTableScreen::setupActions(void)
 
  // Кнопка вставки ссылки на запись в открытую заметку:
  // кладет ссылку в буфер и сразу открывает диалог вставки
- actionPasteRecordReferenceIntoNote = new QAction(tr("Paste note reference into note"), this);
+ actionPasteRecordReferenceIntoNote = new QAction(tr("Copy and paste note reference"), this);
  actionPasteRecordReferenceIntoNote->setStatusTip(tr("Copy note reference and open insert dialog in editor"));
  actionPasteRecordReferenceIntoNote->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
 

@@ -4752,12 +4752,12 @@ Please report about this problem to the developers.</source>
         <translation type="vanished">Отмена</translation>
     </message>
     <message>
-        <source>Paste note reference into note</source>
-        <translation>Вставить ссылку на запись в заметку</translation>
-    </message>
-    <message>
         <source>Copy note reference and open insert dialog in editor</source>
         <translation>Копировать ссылку на запись и открыть диалог вставки в редакторе</translation>
+    </message>
+    <message>
+        <source>Copy and paste note reference</source>
+        <translation>Копировать и вставить ссылку на запись</translation>
     </message>
 </context>
 <context>

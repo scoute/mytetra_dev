@@ -44,24 +44,8 @@ void ReferenceFormatter::onReferenceClicked(void)
 
     QString href=selectReferenceUnderCursor();
 
-    // Защита от вставки в середину слова: буквы с обеих сторон курсора —
-    // почти всегда случайный тык, а не намерение разрезать слово.
-    // Натягиваем слово целиком, дальше обычный диалог с предзаполненным именем
-    if(href.isEmpty() && !textArea->textCursor().hasSelection())
-    {
-        QTextCursor cursor=textArea->textCursor();
-        const int pos=cursor.position();
-        QTextDocument *doc=textArea->document();
-
-        if(pos>0 &&
-           doc->characterAt(pos-1).isLetterOrNumber() &&
-           doc->characterAt(pos).isLetterOrNumber())
-        {
-            cursor.select(QTextCursor::WordUnderCursor);
-            if(!cursor.selectedText().isEmpty())
-                textArea->setTextCursor(cursor);
-        }
-    }
+    // Защита от вставки в середину слова (см. snapWordUnderCursor)
+    snapWordUnderCursor();
 
     // Диалог запроса ссылки: два поля, ссылка и текст ссылки.
     // Пустой текст = старое поведение (выделение как есть, иначе имя цели)
@@ -287,6 +271,31 @@ QString ReferenceFormatter::selectReferenceUnderCursor(void)
 }
 
 
+bool ReferenceFormatter::snapWordUnderCursor(void)
+{
+    if(!textArea->textCursor().hasSelection())
+    {
+        QTextCursor cursor=textArea->textCursor();
+        const int pos=cursor.position();
+        QTextDocument *doc=textArea->document();
+
+        if(pos>0 &&
+           doc->characterAt(pos-1).isLetterOrNumber() &&
+           doc->characterAt(pos).isLetterOrNumber())
+        {
+            cursor.select(QTextCursor::WordUnderCursor);
+            if(!cursor.selectedText().isEmpty())
+            {
+                textArea->setTextCursor(cursor);
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+
 QString ReferenceFormatter::targetRecordName(const QString &internalHref) const
 {
     const QString id=LinkHelper::getIdFromInternalHref(internalHref);
@@ -338,7 +347,8 @@ void ReferenceFormatter::onEditReferenceAtCursor(void)
 
 
 // Вставка ссылки через глобальный выбор заметки.
-// Своя запись в выдаче отсутствует, защита не срабатывает
+// Своя запись в выдаче отсутствует, защита не срабатывает.
+// Середина слова: слово остается якорем, на него вешается ссылка
 void ReferenceFormatter::onInsertNoteReferenceClicked(void)
 {
     const QString currentId=editor->getMiscField(QStringLiteral("id"));
@@ -351,10 +361,27 @@ void ReferenceFormatter::onInsertNoteReferenceClicked(void)
     if(pickedId.isEmpty())
         return;
 
-    insertTitledLink(FixedParameters::appTextId+
-                     QStringLiteral("://note/")+
-                     pickedId,
-                     picker.selectedRecordName());
+    const QString pickedHref=FixedParameters::appTextId+
+                             QStringLiteral("://note/")+
+                             pickedId;
+
+    snapWordUnderCursor();
+
+    if(textArea->textCursor().hasSelection())
+    {
+        // Слово под курсором: оставить слово, повесить ссылку.
+        // Тот же исход что у диалога с предзаполненным именем
+        QTextCharFormat linkFormat;
+        linkFormat.setAnchor(true);
+        linkFormat.setAnchorHref(pickedHref);
+        linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
+        linkFormat.setFontUnderline(true);
+
+        textArea->textCursor().mergeCharFormat(linkFormat);
+        return;
+    }
+
+    insertTitledLink(pickedHref, picker.selectedRecordName());
 }
 
 

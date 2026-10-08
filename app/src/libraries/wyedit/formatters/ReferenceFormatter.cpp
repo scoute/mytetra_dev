@@ -44,6 +44,25 @@ void ReferenceFormatter::onReferenceClicked(void)
 
     QString href=selectReferenceUnderCursor();
 
+    // Защита от вставки в середину слова: буквы с обеих сторон курсора —
+    // почти всегда случайный тык, а не намерение разрезать слово.
+    // Натягиваем слово целиком, дальше обычный диалог с предзаполненным именем
+    if(href.isEmpty() && !textArea->textCursor().hasSelection())
+    {
+        QTextCursor cursor=textArea->textCursor();
+        const int pos=cursor.position();
+        QTextDocument *doc=textArea->document();
+
+        if(pos>0 &&
+           doc->characterAt(pos-1).isLetterOrNumber() &&
+           doc->characterAt(pos).isLetterOrNumber())
+        {
+            cursor.select(QTextCursor::WordUnderCursor);
+            if(!cursor.selectedText().isEmpty())
+                textArea->setTextCursor(cursor);
+        }
+    }
+
     // Диалог запроса ссылки: два поля, ссылка и текст ссылки.
     // Пустой текст = старое поведение (выделение как есть, иначе имя цели)
     QDialog linkDialog(editor);

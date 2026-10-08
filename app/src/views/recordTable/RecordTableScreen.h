@@ -51,6 +51,19 @@ public:
  QAction *actionPrint;
  QAction *actionCopyRecordReference;
  QAction *actionPasteRecordReferenceIntoNote;
+
+ // Строка, кликнутая ПКМ при вызове меню (может отличаться от выделения:
+ // ПКМ успевает передвинуть курсор до открытия меню).
+ // Источник ссылки для копирования берется отсюда, а не из выделения
+ QString contextClickRecordId;
+
+ // Запись, открытая до клика ПКМ. Вставка возвращается к ней,
+ // иначе ссылка вставилась бы в ту же запись, по которой кликнули
+ QString recordIdBeforeContextMenu;
+
+ void setContextMenuRecordIds(const QString &clickedId, const QString &beforeId);
+ void setContextClickRecordId(const QString &clickedId);
+ QString contextSourceRecordId(void);
  QAction *actionSwitchSelectionMode;
 
  // Действие, которое может быть вызвано из MainWindows

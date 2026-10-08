@@ -580,10 +580,15 @@ void RecordTableScreen::onBackClick(void)
 }
 
 
-// Копирование в системный буфер обмена ссылки на запись
+// Копирование в системный буфер обмена ссылки на запись.
+// Берется кликнутая строка, а не выделение: ПКМ передвигает курсор
 void RecordTableScreen::onCopyRecordReference()
 {
-  QString reference=FixedParameters::appTextId+"://note/"+getFirstSelectionId();
+  const QString sourceId=contextSourceRecordId();
+  if(sourceId.isEmpty())
+    return;
+
+  QString reference=FixedParameters::appTextId+"://note/"+sourceId;
 
   QClipboard *clipboard = QApplication::clipboard();
   clipboard->setText(reference);
@@ -591,10 +596,23 @@ void RecordTableScreen::onCopyRecordReference()
 
 
 // Ссылка на запись в буфер + сразу открыть диалог вставки в редакторе.
-// Диалог сам подхватит ссылку из буфера и покажет имя цели
+// Диалог сам подхватит ссылку из буфера и покажет имя цели.
+// Выделение возвращается к записи, открытой до клика ПКМ,
+// иначе вставка ушла бы в ту же запись, по которой кликнули
 void RecordTableScreen::onPasteRecordReferenceIntoNote()
 {
-  onCopyRecordReference();
+  const QString sourceId=contextSourceRecordId();
+  if(sourceId.isEmpty())
+    return;
+
+  QString reference=FixedParameters::appTextId+"://note/"+sourceId;
+
+  QClipboard *clipboard = QApplication::clipboard();
+  clipboard->setText(reference);
+
+  const QString beforeId=recordIdBeforeContextMenu;
+  if(!beforeId.isEmpty() && beforeId!=sourceId)
+    setSelectionToId(beforeId);
 
   MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
   if(metaEditor==nullptr || metaEditor->getMiscField(QStringLiteral("id")).isEmpty())
@@ -603,6 +621,29 @@ void RecordTableScreen::onPasteRecordReferenceIntoNote()
   QAction *referenceAction=find_object<QAction>("editor_tb_reference");
   if(referenceAction!=nullptr)
     referenceAction->trigger();
+}
+
+
+void RecordTableScreen::setContextMenuRecordIds(const QString &clickedId,
+                                                const QString &beforeId)
+{
+  contextClickRecordId=clickedId;
+  recordIdBeforeContextMenu=beforeId;
+}
+
+
+void RecordTableScreen::setContextClickRecordId(const QString &clickedId)
+{
+  contextClickRecordId=clickedId;
+}
+
+
+QString RecordTableScreen::contextSourceRecordId(void)
+{
+  if(!contextClickRecordId.isEmpty())
+    return contextClickRecordId;
+
+  return getFirstSelectionId();
 }
 
 

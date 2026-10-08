@@ -4814,6 +4814,18 @@ Please report about this problem to the developers.</source>
         <source>Link text</source>
         <translation>Текст ссылки</translation>
     </message>
+    <message>
+        <source>Self reference</source>
+        <translation>Ссылка на саму себя</translation>
+    </message>
+    <message>
+        <source>A link to the note itself makes no sense.</source>
+        <translation>Ссылка на саму себя в заметке не имеет смысла.</translation>
+    </message>
+    <message>
+        <source>Insert anyway</source>
+        <translation>Вставить всё равно</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>

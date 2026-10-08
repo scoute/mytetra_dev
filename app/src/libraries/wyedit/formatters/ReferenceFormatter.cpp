@@ -3,6 +3,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QDialogButtonBox>
+#include <QMessageBox>
 #include <QDebug>
 #include <QDesktopServices>
 #include <QApplication>
@@ -159,6 +160,26 @@ void ReferenceFormatter::onReferenceClicked(void)
 
     if(!ok)
         return;
+
+    // Защита от ссылки на саму себя: в своей же заметке она не имеет смысла.
+    // Спрашиваем, отказ по умолчанию
+    if(LinkHelper::isHrefInternal(refereceUrl) &&
+       !editor->getMiscField(QStringLiteral("id")).isEmpty() &&
+       LinkHelper::getIdFromInternalHref(refereceUrl)==editor->getMiscField(QStringLiteral("id")))
+    {
+        QMessageBox guardBox(QMessageBox::Warning,
+                             tr("Self reference"),
+                             tr("A link to the note itself makes no sense."),
+                             QMessageBox::NoButton,
+                             editor);
+        guardBox.addButton(tr("Insert anyway"), QMessageBox::AcceptRole);
+        guardBox.addButton(QMessageBox::Cancel);
+        guardBox.setDefaultButton(QMessageBox::Cancel);
+
+        // Ответ через результат: согласие и программный accept() тоже считаются
+        if(guardBox.exec()!=QDialog::Accepted)
+            return;
+    }
 
     // Без выделения и с текстом: вставка titled-ссылки с пробелом.
     // Работает для любых ссылок, не только внутренних

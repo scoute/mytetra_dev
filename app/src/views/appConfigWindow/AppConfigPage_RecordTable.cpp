@@ -82,9 +82,9 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   // Собирается основной слой
   QVBoxLayout *central_layout=new QVBoxLayout();
 
+  central_layout->addWidget(groupBoxNoteHeader);
   central_layout->addWidget(groupBoxVisibleHeaders);
   central_layout->addWidget(groupBoxVisibleColumns);
-  central_layout->addWidget(groupBoxNoteHeader);
   central_layout->addStretch();
 
   // Устанавливается основной слой

@@ -139,8 +139,8 @@ void BacklinksPanel::refreshBacklinks(void)
   const QString recordId=currentRecordId();
   if(recordId.isEmpty())
   {
-    incomingHeaderLabel->setText(tr("Incoming links"));
-    outgoingHeaderLabel->setText(tr("Outgoing links"));
+    incomingHeaderLabel->setText(tr("Incoming links")+QStringLiteral(" <=="));
+    outgoingHeaderLabel->setText(tr("Outgoing links")+QStringLiteral(" ==>"));
     return;
   }
 
@@ -150,17 +150,17 @@ void BacklinksPanel::refreshBacklinks(void)
   KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
   if(treeModel==nullptr)
   {
-    incomingHeaderLabel->setText(tr("Incoming links"));
-    outgoingHeaderLabel->setText(tr("Outgoing links"));
+    incomingHeaderLabel->setText(tr("Incoming links")+QStringLiteral(" <=="));
+    outgoingHeaderLabel->setText(tr("Outgoing links")+QStringLiteral(" ==>"));
     return;
   }
 
   QSet<QString> sources=BacklinkIndex::instance().backlinksOf(recordId);
-  incomingHeaderLabel->setText(tr("Incoming links (%1)").arg(sources.size()));
+  incomingHeaderLabel->setText(tr("Incoming links (%1)").arg(sources.size())+QStringLiteral(" <=="));
   fillList(incomingList, sources);
 
   QSet<QString> targets=BacklinkIndex::instance().outgoingOf(recordId);
-  outgoingHeaderLabel->setText(tr("Outgoing links (%1)").arg(targets.size()));
+  outgoingHeaderLabel->setText(tr("Outgoing links (%1)").arg(targets.size())+QStringLiteral(" ==>"));
   fillList(outgoingList, targets);
 }
 

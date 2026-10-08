@@ -138,12 +138,6 @@ void RecordTableScreen::setupActions(void)
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
  actionCopyRecordReference->setIcon(QIcon(":/resource/pic/note_reference.svg"));
 
- // Кнопка вставки ссылки на запись в открытую заметку:
- // кладет ссылку в буфер и сразу открывает диалог вставки
- actionPasteRecordReferenceIntoNote = new QAction(tr("Copy and paste note reference"), this);
- actionPasteRecordReferenceIntoNote->setStatusTip(tr("Copy note reference and open insert dialog in editor"));
- actionPasteRecordReferenceIntoNote->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
-
  // Кнопка переключения режима одинарного выбора и мультивыбора (горячая кнопка не требуется)
  actionSwitchSelectionMode = new QAction(tr("Switch select/multiselect"), this);
  actionSwitchSelectionMode->setStatusTip(tr("Switch note selection mode (Notice: if multiselect is on, drag-and-drop is disabled)"));
@@ -325,9 +319,6 @@ void RecordTableScreen::setupSignals(void)
     // Кнопка копирования ссылки на запись
     connect(actionCopyRecordReference, &QAction::triggered, this, &RecordTableScreen::onCopyRecordReference);
 
-    // Кнопка вставки ссылки на запись в открытую заметку
-    connect(actionPasteRecordReferenceIntoNote, &QAction::triggered, this, &RecordTableScreen::onPasteRecordReferenceIntoNote);
-
     // Кнопка переключения режима одинарного выбора и мультивыбора
     connect(actionSwitchSelectionMode, &QAction::triggered, recordTableController, &RecordTableController::onSwitchSelectionMode);
 
@@ -380,8 +371,6 @@ void RecordTableScreen::disableAllActions(void)
  actionMoveDn->setEnabled(false);
 
  actionCopyRecordReference->setEnabled(false);
-
- actionPasteRecordReferenceIntoNote->setEnabled(false);
 
  actionSwitchSelectionMode->setEnabled(false);
 }
@@ -442,7 +431,6 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
-   actionPasteRecordReferenceIntoNote->setEnabled(true);
  }
 
  // Удаление записи
@@ -580,70 +568,13 @@ void RecordTableScreen::onBackClick(void)
 }
 
 
-// Копирование в системный буфер обмена ссылки на запись.
-// Берется кликнутая строка, а не выделение: ПКМ передвигает курсор
+// Копирование в системный буфер обмена ссылки на запись
 void RecordTableScreen::onCopyRecordReference()
 {
-  const QString sourceId=contextSourceRecordId();
-  if(sourceId.isEmpty())
-    return;
-
-  QString reference=FixedParameters::appTextId+"://note/"+sourceId;
+  QString reference=FixedParameters::appTextId+"://note/"+getFirstSelectionId();
 
   QClipboard *clipboard = QApplication::clipboard();
   clipboard->setText(reference);
-}
-
-
-// Ссылка на запись в буфер + сразу открыть диалог вставки в редакторе.
-// Диалог сам подхватит ссылку из буфера и покажет имя цели.
-// Выделение возвращается к записи, открытой до клика ПКМ,
-// иначе вставка ушла бы в ту же запись, по которой кликнули
-void RecordTableScreen::onPasteRecordReferenceIntoNote()
-{
-  const QString sourceId=contextSourceRecordId();
-  if(sourceId.isEmpty())
-    return;
-
-  QString reference=FixedParameters::appTextId+"://note/"+sourceId;
-
-  QClipboard *clipboard = QApplication::clipboard();
-  clipboard->setText(reference);
-
-  const QString beforeId=recordIdBeforeContextMenu;
-  if(!beforeId.isEmpty() && beforeId!=sourceId)
-    setSelectionToId(beforeId);
-
-  MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
-  if(metaEditor==nullptr || metaEditor->getMiscField(QStringLiteral("id")).isEmpty())
-    return;
-
-  QAction *referenceAction=find_object<QAction>("editor_tb_reference");
-  if(referenceAction!=nullptr)
-    referenceAction->trigger();
-}
-
-
-void RecordTableScreen::setContextMenuRecordIds(const QString &clickedId,
-                                                const QString &beforeId)
-{
-  contextClickRecordId=clickedId;
-  recordIdBeforeContextMenu=beforeId;
-}
-
-
-void RecordTableScreen::setContextClickRecordId(const QString &clickedId)
-{
-  contextClickRecordId=clickedId;
-}
-
-
-QString RecordTableScreen::contextSourceRecordId(void)
-{
-  if(!contextClickRecordId.isEmpty())
-    return contextClickRecordId;
-
-  return getFirstSelectionId();
 }
 
 

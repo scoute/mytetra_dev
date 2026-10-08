@@ -320,7 +320,6 @@ void RecordTableView::assemblyContextMenu(void)
     contextMenu->addAction(parentPointer->actionSort);
     contextMenu->addAction(parentPointer->actionPrint);
     contextMenu->addAction(parentPointer->actionCopyRecordReference);
-    contextMenu->addAction(parentPointer->actionPasteRecordReferenceIntoNote);
     contextMenu->addAction(parentPointer->actionSettings);
 }
 
@@ -331,20 +330,6 @@ void RecordTableView::onCustomContextMenuRequested(const QPoint &mousePos)
     qDebug() << "In on_customContextMenuRequested";
 
     RecordTableScreen *parentPointer=qobject_cast<RecordTableScreen *>(parent());
-
-    // Строка под курсором для ссылочных действий. С клавиатуры позиции мыши
-    // нет: работаем с текущим выделением и сбрасываем докликовую запись,
-    // чтобы вставка не прыгала к устаревшей
-    const QModelIndex clickedIndex=this->indexAt(mousePos);
-    if(clickedIndex.isValid())
-        parentPointer->setContextClickRecordId(clickedIndex.data(RECORD_ID_ROLE).toString());
-    else
-    {
-        QString currentId;
-        if(currentIndex().isValid())
-            currentId=currentIndex().data(RECORD_ID_ROLE).toString();
-        parentPointer->setContextMenuRecordIds(currentId, currentId);
-    }
 
     // Установка надписи блокировки/разблокировки записи
     QModelIndex selectItem=currentIndex();
@@ -641,27 +626,6 @@ void RecordTableView::mousePressEvent(QMouseEvent *event)
     // При клике перетаскивание еще не начинается,
     // и кроме того флаг от предыдущего пертаскивания надо очистить
     isDragHappeningNow=false;
-
-    // Клик ПКМ: запомнить кликнутую строку и запись, открытую до клика.
-    // Базовый вызов ниже передвинет курсор, а копирование ссылки
-    // и возврат вставки должны работать с докликовыми данными
-    if(event->button()==Qt::RightButton)
-    {
-        RecordTableScreen *screen=qobject_cast<RecordTableScreen *>(parent());
-
-        QString beforeId;
-        const QModelIndex current=currentIndex();
-        if(current.isValid())
-            beforeId=current.data(RECORD_ID_ROLE).toString();
-
-        QString clickedId;
-        const QModelIndex clicked=this->indexAt(event->pos());
-        if(clicked.isValid())
-            clickedId=clicked.data(RECORD_ID_ROLE).toString();
-
-        if(screen!=nullptr)
-            screen->setContextMenuRecordIds(clickedId, beforeId);
-    }
 
     QTableView::mousePressEvent(event);
 }

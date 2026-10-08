@@ -22,6 +22,17 @@ public slots:
     void onClickedGotoReference(QString href);
     void onTextChanged(void);
 
+private:
+
+    // Имя записи по внутренней ссылке mytetra://note/<id>.
+    // Пусто если запись не найдена (удалена, шифр, опечатка)
+    QString targetRecordName(const QString &internalHref) const;
+
+    // Вставка titled-ссылки в курсор + пробел-разделитель,
+    // чтобы рядом стоящие ссылки не сливались в одну
+    void insertTitledInternalLink(const QString &internalHref,
+                                  const QString &targetName);
+
 };
 
 

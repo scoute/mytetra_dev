@@ -3328,6 +3328,10 @@ Please report about this problem to the developers.</source>
         <source>Reference or URL</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Reference or URL (record not found)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>

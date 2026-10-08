@@ -4798,6 +4798,10 @@ Please report about this problem to the developers.</source>
         <source>Reference or URL</source>
         <translation>Ссылка или URL</translation>
     </message>
+    <message>
+        <source>Reference or URL (record not found)</source>
+        <translation>Ссылка или URL (запись не найдена)</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>

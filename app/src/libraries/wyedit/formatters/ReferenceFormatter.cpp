@@ -1,6 +1,8 @@
 #include <QInputDialog>
 #include <QDebug>
 #include <QDesktopServices>
+#include <QApplication>
+#include <QClipboard>
 
 #include "ReferenceFormatter.h"
 #include "SecretFormatter.h"
@@ -9,6 +11,7 @@
 #include "views/mainWindow/MainWindow.h"
 #include "views/tree/KnowTreeView.h"
 #include "models/tree/KnowTreeModel.h"
+#include "models/recordTable/Record.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/LinkHelper.h"
@@ -96,7 +99,32 @@ void ReferenceFormatter::onReferenceClicked(void)
     inputDialog.resize(inputDialog.size());
 
     inputDialog.setWindowTitle(tr("Reference or URL"));
-    inputDialog.setLabelText(tr("Reference or URL"));
+
+    // Умная вставка: курсор не на ссылке, а в буфере внутренняя ссылка.
+    // Подставить ее в поле и показать имя цели, чтобы было видно куда сошлемся.
+    // Флаг запоминается до подстановки: сам href ниже перезапишется буфером
+    const bool startedOnReference=!href.isEmpty();
+    if(!startedOnReference)
+    {
+        const QString clipText=QApplication::clipboard()->text().trimmed();
+        if(LinkHelper::isHrefInternal(clipText))
+            href=clipText;
+    }
+
+    QString targetName;
+    if(href.isEmpty())
+        inputDialog.setLabelText(tr("Reference or URL"));
+    else if(LinkHelper::isHrefInternal(href))
+    {
+        targetName=targetRecordName(href);
+        if(targetName.isEmpty())
+            inputDialog.setLabelText(tr("Reference or URL (record not found)"));
+        else
+            inputDialog.setLabelText(tr("Reference or URL")+" → "+targetName);
+    }
+    else
+        inputDialog.setLabelText(tr("Reference or URL"));
+
     inputDialog.setTextValue(href);
     inputDialog.setTextEchoMode(QLineEdit::Normal);
 
@@ -105,6 +133,17 @@ void ReferenceFormatter::onReferenceClicked(void)
 
     if(!ok)
         return;
+
+    // Вставка внутренней ссылки без выделения: titled-ссылка
+    // с именем цели + пробел, чтобы не править поле вручную.
+    // Старый путь (ссылка на выделение, снятие ссылки) ниже без изменений
+    if(!startedOnReference &&
+       !textArea->textCursor().hasSelection() &&
+       LinkHelper::isHrefInternal(refereceUrl))
+    {
+        insertTitledInternalLink(refereceUrl, targetRecordName(refereceUrl));
+        return;
+    }
 
     // Устанавливается текст ссылки
     QTextCharFormat charFormat;
@@ -126,6 +165,53 @@ void ReferenceFormatter::onReferenceClicked(void)
 
         textArea->textCursor().setCharFormat(charFormat);
     }
+}
+
+
+QString ReferenceFormatter::targetRecordName(const QString &internalHref) const
+{
+    const QString id=LinkHelper::getIdFromInternalHref(internalHref);
+    if(id.isEmpty())
+        return QString();
+
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+    if(treeView==nullptr)
+        return QString();
+
+    Record *record=static_cast<KnowTreeModel *>(treeView->model())->getRecord(id);
+    if(record==nullptr)
+        return QString();
+
+    return record->getField(QStringLiteral("name"));
+}
+
+
+void ReferenceFormatter::insertTitledInternalLink(const QString &internalHref,
+                                                 const QString &targetName)
+{
+    // Без имени (удалена, шифр): вставляется голый href как раньше,
+    // молчаливой вставки мусора нет, видно что именно вставилось
+    const QString title=targetName.isEmpty() ? internalHref : targetName;
+
+    QTextCharFormat linkFormat;
+    linkFormat.setAnchor(true);
+    linkFormat.setAnchorHref(internalHref);
+    linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
+    linkFormat.setFontUnderline(true);
+
+    QTextCursor cursor=textArea->textCursor();
+    cursor.insertText(title, linkFormat);
+
+    // Пробел-разделитель шрифтом окружения без якоря и подчеркивания:
+    // рядом стоящие ссылки иначе воспринимаются как одна
+    QTextCharFormat spaceFormat=textArea->textCursor().charFormat();
+    spaceFormat.setAnchor(false);
+    spaceFormat.setAnchorHref(QString());
+    spaceFormat.clearForeground();
+    spaceFormat.setFontUnderline(false);
+    cursor.insertText(QStringLiteral(" "), spaceFormat);
+
+    textArea->setTextCursor(cursor);
 }
 
 

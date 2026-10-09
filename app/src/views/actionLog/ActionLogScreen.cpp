@@ -1,4 +1,5 @@
 #include <QDialogButtonBox>
+#include "libraries/helpers/IconHelper.h"
 #include <QDebug>
 #include <QVBoxLayout>
 #include <QAction>
@@ -60,7 +61,7 @@ void ActionLogScreen::setupUI(void)
 void ActionLogScreen::setupActions(void)
 {
   actionCopy = new QAction(tr("Copy selected rows"), this);
-  actionCopy->setIcon(QIcon(":/resource/pic/cb_copy.svg"));
+  actionCopy->setIcon(IconHelper::get("cb_copy.svg"));
   connect(actionCopy, &QAction::triggered, actionLogController, &ActionLogController::onCopyClicked);
 }
 

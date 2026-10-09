@@ -1,4 +1,5 @@
 #include <QAction>
+#include "libraries/helpers/IconHelper.h"
 #include <QDebug>
 #include <QtGui>
 
@@ -30,10 +31,10 @@ EditorContextMenu::~EditorContextMenu(void)
 void EditorContextMenu::setupActions(void)
 {
  actionUndo=new QAction(this);
- actionUndo->setIcon(QIcon(":/resource/pic/edit_undo.svg"));
+ actionUndo->setIcon(IconHelper::get("edit_undo.svg"));
  actionUndo->setEnabled(false); // undo недоступно при создании actionUndo еще не было ни одного действия с текстом
  actionRedo=new QAction(this);
- actionRedo->setIcon(QIcon(":/resource/pic/edit_redo.svg"));
+ actionRedo->setIcon(IconHelper::get("edit_redo.svg"));
  actionRedo->setEnabled(false); // redo недоступно при создании actionRedo еще не было ни одного действия с текстом
 
  actionCut=new QAction(this);
@@ -54,10 +55,10 @@ void EditorContextMenu::setupActions(void)
  actionEditReference->setObjectName(QStringLiteral("editor_editReference"));
  actionPasteNoteReference=new QAction(this);
  actionPasteNoteReference->setObjectName(QStringLiteral("editor_pasteNoteReference"));
- actionPasteNoteReference->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
+ actionPasteNoteReference->setIcon(IconHelper::get("note_reference_plus.svg"));
  actionInsertNoteReference=new QAction(this);
  actionInsertNoteReference->setObjectName(QStringLiteral("editor_insertNoteReference"));
- actionInsertNoteReference->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
+ actionInsertNoteReference->setIcon(IconHelper::get("note_reference_plus.svg"));
 
  actionLowercase=new QAction(this);
  actionUppercase=new QAction(this);

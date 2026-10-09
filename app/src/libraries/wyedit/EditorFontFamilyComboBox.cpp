@@ -1,4 +1,5 @@
 #include <QDebug>
+#include "libraries/helpers/IconHelper.h"
 #include <QtGlobal>
 
 #include "EditorFontFamilyComboBox.h"
@@ -15,7 +16,7 @@ EditorFontFamilyComboBox::EditorFontFamilyComboBox(QWidget *parent) :
     // Пустой пункт в конце списка шрифтов, используется для обозначения что в
     // выделенном тексте несколько шрифтов
     this->insertItem(0, "");
-    this->setItemIcon(0, QIcon(":/resource/pic/edit_font_many.svg")); // Установка иконки в QFontComboBox не работает, но пока оставлено
+    this->setItemIcon(0, IconHelper::get("edit_font_many.svg")); // Установка иконки в QFontComboBox не работает, но пока оставлено
 
     previousIndex=this->currentIndex();
 

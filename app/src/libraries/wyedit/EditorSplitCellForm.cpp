@@ -1,4 +1,5 @@
 #include <QGridLayout>
+#include "libraries/helpers/IconHelper.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
@@ -33,10 +34,10 @@ EditorSplitCellForm::EditorSplitCellForm(int fixHorisontalSplit, int fixVertical
 
 
  labelPictogramH=new QLabel();
- labelPictogramH->setPixmap(QPixmap(":/resource/pic/edit_table_split_h.svg"));
+ labelPictogramH->setPixmap(QPixmap(IconHelper::resolvedPath("edit_table_split_h.svg")));
 
  labelPictogramV=new QLabel();
- labelPictogramV->setPixmap(QPixmap(":/resource/pic/edit_table_split_v.svg"));
+ labelPictogramV->setPixmap(QPixmap(IconHelper::resolvedPath("edit_table_split_v.svg")));
 
 
  labelH=new QLabel(tr("Split horizontally by: "));

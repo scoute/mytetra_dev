@@ -1,4 +1,5 @@
 #include <QMessageBox>
+#include "libraries/helpers/IconHelper.h"
 #include <QCommonStyle>
 
 #include "EditorToolbarSettingsScreen.h"
@@ -67,16 +68,16 @@ void EditorToolbarSettingsScreen::setupUI()
     exchangeButtonsLabel=new QLabel(" ");
 
     // Кнопки для перемещения выбранных кнопок
-    toUsedCommandsPushButton = new QPushButton(QIcon(":/resource/pic/move_right.svg"), "", this);
+    toUsedCommandsPushButton = new QPushButton(IconHelper::get("move_right.svg"), "", this);
     toUsedCommandsPushButton->setShortcut(QKeySequence("Alt+Right"));
 
-    toAvailableCommandsPushButton = new QPushButton(QIcon(":/resource/pic/move_left.svg"), "", this);
+    toAvailableCommandsPushButton = new QPushButton(IconHelper::get("move_left.svg"), "", this);
     toAvailableCommandsPushButton->setShortcut(QKeySequence("Alt+Left"));
 
-    usedCommandUpPushButton = new QPushButton(QIcon(":/resource/pic/move_up.svg"), "", this);
+    usedCommandUpPushButton = new QPushButton(IconHelper::get("move_up.svg"), "", this);
     usedCommandUpPushButton->setShortcut(QKeySequence("Alt+Up"));
 
-    usedCommandDownPushButton = new QPushButton(QIcon(":/resource/pic/move_dn.svg"), "", this);
+    usedCommandDownPushButton = new QPushButton(IconHelper::get("move_dn.svg"), "", this);
     usedCommandDownPushButton->setShortcut(QKeySequence("Alt+Down"));
 
     // Текущие команды на панели инструментов

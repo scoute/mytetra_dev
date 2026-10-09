@@ -1,4 +1,5 @@
 #include <QFile>
+#include "libraries/helpers/IconHelper.h"
 #include <QScrollBar>
 #include <QWidget>
 #include <QDialogButtonBox>
@@ -186,11 +187,11 @@ void EditorMathExpressionDialog::setupUi()
     textFormalaLabel = new QLabel(tr("Formula text"), this);
 
     textFormulaZoomInPushButton = new QToolButton(this);
-    textFormulaZoomInPushButton->setIcon(QIcon(":/resource/pic/edit_zoom-in.svg"));
+    textFormulaZoomInPushButton->setIcon(IconHelper::get("edit_zoom-in.svg"));
     textFormulaZoomInPushButton->setToolTip(tr("Zoom in"));
 
     textFormulaZoomOutPushButton = new QToolButton(this);
-    textFormulaZoomOutPushButton->setIcon(QIcon(":/resource/pic/edit_zoom-out.svg"));
+    textFormulaZoomOutPushButton->setIcon(IconHelper::get("edit_zoom-out.svg"));
     textFormulaZoomOutPushButton->setToolTip(tr("Zoom out"));
 
 

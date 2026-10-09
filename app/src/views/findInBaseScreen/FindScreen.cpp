@@ -1,4 +1,5 @@
 #include <QLineEdit>
+#include "libraries/helpers/IconHelper.h"
 #include <QPushButton>
 #include <QToolButton>
 #include <QHBoxLayout>
@@ -84,7 +85,7 @@ void FindScreen::setupFindTextAndButton(void)
 
     // Кнопка разворачивания инструментов
     toolsExpand=new QToolButton(this);
-    toolsExpand->setIcon(QIcon(":/resource/pic/find_in_base_expand_tools.svg"));
+    toolsExpand->setIcon(IconHelper::get("find_in_base_expand_tools.svg"));
     toolsExpand->setEnabled(true);
 }
 
@@ -109,20 +110,20 @@ void FindScreen::setupComboOption(void)
 {
     // Выбор "Любое слово" - "Все слова"
     wordRegard=new MtComboBox();
-    wordRegard->addItem(QIcon(":/resource/pic/find_in_base_any.svg"), tr("Any word"));
-    wordRegard->addItem(QIcon(":/resource/pic/find_in_base_all.svg"), tr("All words"));
+    wordRegard->addItem(IconHelper::get("find_in_base_any.svg"), tr("Any word"));
+    wordRegard->addItem(IconHelper::get("find_in_base_all.svg"), tr("All words"));
     wordRegard->setCurrentIndex(mytetraConfig.get_findscreen_wordregard());
 
     // Выбор "Только целые слова" - "Подстрока"
     howExtract=new MtComboBox();
-    howExtract->addItem(QIcon(":/resource/pic/find_in_base_separate.svg"), tr("Whole words"));
-    howExtract->addItem(QIcon(":/resource/pic/find_in_base_substring.svg"), tr("Substring"));
+    howExtract->addItem(IconHelper::get("find_in_base_separate.svg"), tr("Whole words"));
+    howExtract->addItem(IconHelper::get("find_in_base_substring.svg"), tr("Substring"));
     howExtract->setCurrentIndex(mytetraConfig.get_findscreen_howextract());
 
     // Выбор "Во всей базе" - "В текущей ветке"
     treeSearchArea=new MtComboBox();
-    treeSearchArea->addItem(QIcon(":/resource/pic/find_in_base_search_all.svg"), tr("Entire base")); // Вся база
-    treeSearchArea->addItem(QIcon(":/resource/pic/find_in_base_search_branch.svg"), tr("Current tree item")); // Текущая ветка
+    treeSearchArea->addItem(IconHelper::get("find_in_base_search_all.svg"), tr("Entire base")); // Вся база
+    treeSearchArea->addItem(IconHelper::get("find_in_base_search_branch.svg"), tr("Current tree item")); // Текущая ветка
     treeSearchArea->setCurrentIndex(mytetraConfig.getFindScreenTreeSearchArea());
 
     if(mytetraConfig.getInterfaceMode()=="mobile")
@@ -1191,7 +1192,7 @@ QIcon FindScreen::completionTypeIcon(const QString &field)
     QString iconPath;
 
     if(field=="tags")
-        iconPath=":/resource/pic/tag.svg";
+        iconPath=IconHelper::resolvedPath("tag.svg");
     else if(field=="name")
         iconPath=":/resource/icons/Flat/color_icons8_flat_document.svg";
     else if(field=="url")
@@ -1201,7 +1202,7 @@ QIcon FindScreen::completionTypeIcon(const QString &field)
     else if(field=="author")
         iconPath=":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg";
     else if(field=="attach")
-        iconPath=":/resource/pic/attach_is_file.svg";
+        iconPath=IconHelper::resolvedPath("attach_is_file.svg");
     else
         return QIcon();
 

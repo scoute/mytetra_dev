@@ -1,4 +1,5 @@
 #include <QScrollBar>
+#include "libraries/helpers/IconHelper.h"
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -39,7 +40,7 @@ void ConsoleEmulator::setupUI(void)
  messageLabel=new QLabel(this);
 
  buttonDetails=new QToolButton(this);
- buttonDetails->setIcon(QIcon(":/resource/pic/expand_console.svg"));
+ buttonDetails->setIcon(IconHelper::get("expand_console.svg"));
 
  buttonCancel=new QPushButton(this);
  buttonCancel->setText(tr("Cancel"));

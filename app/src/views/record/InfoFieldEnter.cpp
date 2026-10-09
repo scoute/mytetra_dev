@@ -1,4 +1,5 @@
 #include <QLabel>
+#include "libraries/helpers/IconHelper.h"
 #include <QLineEdit>
 #include <QPushButton>
 #include <QGridLayout>
@@ -106,12 +107,12 @@ void InfoFieldEnter::setup_ui(void)
     expandInfo->resize(x,x);
     if (mytetraConfig.get_addnewrecord_expand_info()=="0")
     {
-        expandInfo->setIcon(QIcon(":/resource/pic/triangl_dn.svg"));
+        expandInfo->setIcon(IconHelper::get("triangl_dn.svg"));
         // expandInfo->setIcon(this->style()->standardIcon(QStyle::SP_ArrowDown));
     }
     else
     {
-        expandInfo->setIcon(QIcon(":/resource/pic/triangl_up.svg"));
+        expandInfo->setIcon(IconHelper::get("triangl_up.svg"));
         // expandInfo->setIcon(this->style()->standardIcon(QStyle::SP_ArrowUp));
     }
 }
@@ -414,7 +415,7 @@ void InfoFieldEnter::expandInfoClick(void)
 
         mytetraConfig.set_addnewrecord_expand_info("1");
 
-        expandInfo->setIcon(QIcon(":/resource/pic/triangl_up.svg"));
+        expandInfo->setIcon(IconHelper::get("triangl_up.svg"));
     }
     else
     {
@@ -423,7 +424,7 @@ void InfoFieldEnter::expandInfoClick(void)
 
         mytetraConfig.set_addnewrecord_expand_info("0");
 
-        expandInfo->setIcon(QIcon(":/resource/pic/triangl_dn.svg"));
+        expandInfo->setIcon(IconHelper::get("triangl_dn.svg"));
     }
 }
 

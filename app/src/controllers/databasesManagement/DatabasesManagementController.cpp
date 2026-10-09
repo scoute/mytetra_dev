@@ -1,4 +1,5 @@
 #include <QObject>
+#include "libraries/helpers/IconHelper.h"
 #include <QHeaderView>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -218,7 +219,7 @@ void DatabasesManagementController::onCreateClicked()
     firstBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     firstBox.setDefaultButton(QMessageBox::Ok);
     firstBox.button(QMessageBox::Ok)->setText(tr("I understand"));
-    firstBox.setIconPixmap( QIcon(":/resource/pic/dbmanagement_db_icon.svg").pixmap(QSize(32, 32)) );
+    firstBox.setIconPixmap( IconHelper::get("dbmanagement_db_icon.svg").pixmap(QSize(32, 32)) );
     if( firstBox.exec()!=QMessageBox::Ok )
     {
         return;
@@ -289,7 +290,7 @@ void DatabasesManagementController::onCreateClicked()
                      "<span style='font-family: monospace;'>"+trashPath+"</span>");
     applyBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     applyBox.setDefaultButton(QMessageBox::Ok);
-    applyBox.setIconPixmap( QIcon(":/resource/pic/dbmanagement_db_icon.svg").pixmap(QSize(32, 32)) );
+    applyBox.setIconPixmap( IconHelper::get("dbmanagement_db_icon.svg").pixmap(QSize(32, 32)) );
     if( applyBox.exec()!=QMessageBox::Ok )
     {
         return;
@@ -322,7 +323,7 @@ void DatabasesManagementController::onAddClicked()
     firstBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     firstBox.setDefaultButton(QMessageBox::Ok);
     firstBox.button(QMessageBox::Ok)->setText(tr("I understand"));
-    firstBox.setIconPixmap( QIcon(":/resource/pic/dbmanagement_db_icon.svg").pixmap(QSize(32, 32)) );
+    firstBox.setIconPixmap( IconHelper::get("dbmanagement_db_icon.svg").pixmap(QSize(32, 32)) );
     if ( firstBox.exec()!=QMessageBox::Ok )
     {
         return;
@@ -385,7 +386,7 @@ void DatabasesManagementController::onAddClicked()
     secondBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     secondBox.setDefaultButton(QMessageBox::Ok);
     secondBox.button(QMessageBox::Ok)->setText(tr("I understand"));
-    secondBox.setIconPixmap( QIcon(":/resource/pic/dbmanagement_trash_icon.svg").pixmap(QSize(32, 32)) );
+    secondBox.setIconPixmap( IconHelper::get("dbmanagement_trash_icon.svg").pixmap(QSize(32, 32)) );
     if ( secondBox.exec()!=QMessageBox::Ok )
     {
         return;

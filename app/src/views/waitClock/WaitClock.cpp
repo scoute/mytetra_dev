@@ -1,4 +1,5 @@
 #include <QHBoxLayout>
+#include "libraries/helpers/IconHelper.h"
 #include <QIcon>
 
 #include "WaitClock.h"
@@ -8,9 +9,9 @@ WaitClock::WaitClock(QWidget *parent) : QWidget(parent)
 {
  currentIconNum=0;
 
- kadr_00=QIcon(":/resource/pic/waitclock_00.svg").pixmap(32, 32);
- kadr_01=QIcon(":/resource/pic/waitclock_01.svg").pixmap(32, 32);
- kadr_02=QIcon(":/resource/pic/waitclock_02.svg").pixmap(32, 32);
+ kadr_00=IconHelper::get("waitclock_00.svg").pixmap(32, 32);
+ kadr_01=IconHelper::get("waitclock_01.svg").pixmap(32, 32);
+ kadr_02=IconHelper::get("waitclock_02.svg").pixmap(32, 32);
 
  centralLayout=new QHBoxLayout(this);
 

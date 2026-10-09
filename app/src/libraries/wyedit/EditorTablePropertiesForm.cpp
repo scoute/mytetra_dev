@@ -1,4 +1,5 @@
 #include <QGridLayout>
+#include "libraries/helpers/IconHelper.h"
 #include <QVBoxLayout>
 #include <QColorDialog>
 #include <QDebug>
@@ -38,22 +39,22 @@ void EditorTablePropertiesForm::setupUi()
 
 
   labelBackgroundColor.setText( tr("Background color: ") );
-  buttonBackgroundColor.addAction( new QAction(QIcon(":/resource/pic/edit_fontbackgroundcolor.svg"), tr("Select color"), this) );
-  buttonBackgroundColor.addAction( new QAction(QIcon(":/resource/pic/edit_no_color.svg"), tr("No color"), this) );
+  buttonBackgroundColor.addAction( new QAction(IconHelper::get("edit_fontbackgroundcolor.svg"), tr("Select color"), this) );
+  buttonBackgroundColor.addAction( new QAction(IconHelper::get("edit_no_color.svg"), tr("No color"), this) );
 
 
   labelAlign.setText( tr("Table align: ") );
 
   buttonAlignLeft.setStatusTip(tr("Table align left"));
-  buttonAlignLeft.setIcon(QIcon(":/resource/pic/edit_alignleft.svg"));
+  buttonAlignLeft.setIcon(IconHelper::get("edit_alignleft.svg"));
   buttonAlignLeft.setCheckable(true); // Кнопка является зажимаемой
 
   buttonAlignCenter.setStatusTip(tr("Table align center"));
-  buttonAlignCenter.setIcon(QIcon(":/resource/pic/edit_aligncenter.svg"));
+  buttonAlignCenter.setIcon(IconHelper::get("edit_aligncenter.svg"));
   buttonAlignCenter.setCheckable(true);
 
   buttonAlignRight.setStatusTip(tr("Table align right"));
-  buttonAlignRight.setIcon(QIcon(":/resource/pic/edit_alignright.svg"));
+  buttonAlignRight.setIcon(IconHelper::get("edit_alignright.svg"));
   buttonAlignRight.setCheckable(true);
 
   buttonBox.setOrientation(Qt::Horizontal);
@@ -200,7 +201,7 @@ void EditorTablePropertiesForm::setColorForButtonBackgroundColor(QColor iColor)
   else // Иначе цвет прозрачный
   {
       // Рисуется пустой квадрат
-      pix = QIcon(":/resource/pic/edit_no_color.svg").pixmap(16, 16);
+      pix = IconHelper::get("edit_no_color.svg").pixmap(16, 16);
   }
 
   this->buttonBackgroundColor.setIcon(pix);

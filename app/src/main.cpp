@@ -2,6 +2,7 @@
 // Поэтому приходится работать через TARGET_OS
 #if TARGET_OS!=ANDROID_OS
 #include <sys/timeb.h>
+#include "libraries/helpers/IconHelper.h"
 #endif
 
 
@@ -306,7 +307,7 @@ int main(int argc, char ** argv)
 
 
     // Экран загрузки, показывается только в Андроид версии (так как загрузка идет ~10 сек, и без сплешскрина непонятно что происходит)
-    QSplashScreen splash(QPixmap(":/resource/pic/mytetra_splash.png"));
+    QSplashScreen splash(QPixmap(IconHelper::resolvedPath("mytetra_splash.png")));
     if (mytetraConfig.getShowSplashScreen())
     {
         splash.show();

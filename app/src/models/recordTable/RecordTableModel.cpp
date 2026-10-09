@@ -1,4 +1,5 @@
 #include <QIcon>
+#include "libraries/helpers/IconHelper.h"
 #include <QBrush>
 #include <QDateTime>
 
@@ -127,15 +128,15 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
         if(fieldName=="name")
             if( !showFields.contains("block") ) // Среди отображаемых столбцов нет столбца "block" (чтобы не отрисовывалось два замочка в строке)
                 if( table->getField("block", index.row())=="1" ) // Если есть блокировка
-                    return QIcon(":/resource/pic/note_block.svg");
+                    return IconHelper::get("note_block.svg");
 
         // Иконка наличия аттачей в специально предназначенном для этого столбце
         if(fieldName=="hasAttach" && field=="1")
-            return QIcon(":/resource/pic/attach.svg");
+            return IconHelper::get("attach.svg");
 
         // Иконка блокировки в специально предназначенном для этого столбце
         if(fieldName=="block" && field=="1")
-            return QIcon(":/resource/pic/note_block.svg");
+            return IconHelper::get("note_block.svg");
     }
 
 

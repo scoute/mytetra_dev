@@ -1,4 +1,5 @@
 #include <QDialog>
+#include "libraries/helpers/IconHelper.h"
 #include <QString>
 #include <QDir>
 #include <QDesktopWidget>
@@ -741,21 +742,21 @@ void MainWindow::initToolsMenu(void)
     // Переключатель панели тегов: видимость дока и галочка синхронны сами.
     // Текст берет из таблицы шорткатов через initAction как у соседей
     QAction *tagsPanelToggle=tagsPanelDock->toggleViewAction();
-    tagsPanelToggle->setIcon(QIcon(":/resource/pic/tag.svg"));
+    tagsPanelToggle->setIcon(IconHelper::get("tag.svg"));
     menu->addAction(tagsPanelToggle);
 
     shortcutManager.initAction("misc-tagsPanel", tagsPanelToggle);
 
     // Переключатель панели истории: видимость дока и галочка синхронны сами
     QAction *historyPanelToggle=historyPanelDock->toggleViewAction();
-    historyPanelToggle->setIcon(QIcon(":/resource/pic/history.svg"));
+    historyPanelToggle->setIcon(IconHelper::get("history.svg"));
     menu->addAction(historyPanelToggle);
 
     shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
 
     // Переключатель панели входящих ссылок: видимость дока и галочка синхронны сами
     QAction *backlinksPanelToggle=backlinksPanelDock->toggleViewAction();
-    backlinksPanelToggle->setIcon(QIcon(":/resource/pic/backlinks.svg"));
+    backlinksPanelToggle->setIcon(IconHelper::get("backlinks.svg"));
     menu->addAction(backlinksPanelToggle);
 
     shortcutManager.initAction("misc-backlinksPanel", backlinksPanelToggle);
@@ -865,6 +866,8 @@ void MainWindow::initThemesMenu(void)
     QMap<QString, QString> translateNames;
     translateNames["default"]=tr("Default");
     translateNames["dark"]=tr("Dark");
+    translateNames["modern"]=tr("Modern");
+    translateNames["midnight"]=tr("Midnight");
 
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);
@@ -1594,7 +1597,7 @@ void MainWindow::setIcon(void)
     connect(trayIcon, &QSystemTrayIcon::activated,
             this,     &MainWindow::iconActivated);
 
-    QIcon icon = QIcon(":/resource/pic/logo.svg");
+    QIcon icon = IconHelper::get("logo.svg");
     trayIcon->setIcon(icon);
     setWindowIcon(icon);
 

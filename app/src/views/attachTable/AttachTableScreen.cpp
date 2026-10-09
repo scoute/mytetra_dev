@@ -1,4 +1,5 @@
 #include <QDebug>
+#include "libraries/helpers/IconHelper.h"
 #include <QToolBar>
 #include <QVBoxLayout>
 #include <QAction>
@@ -43,39 +44,39 @@ void AttachTableScreen::setupActions(void)
 {
   // Добавление локального файла
   actionAddAttach = new QAction(this);
-  actionAddAttach->setIcon(QIcon(":/resource/pic/attach_add.svg"));
+  actionAddAttach->setIcon(IconHelper::get("attach_add.svg"));
 
   // Добавление локального файла
   actionAddAttachFromUrl = new QAction(this);
-  actionAddAttachFromUrl->setIcon(QIcon(":/resource/pic/attach_add_from_url.svg"));
+  actionAddAttachFromUrl->setIcon(IconHelper::get("attach_add_from_url.svg"));
 
   // Добавление линка на локальный файл
   actionAddLink = new QAction(this);
-  actionAddLink->setIcon(QIcon(":/resource/pic/attach_add_link.svg"));
+  actionAddLink->setIcon(IconHelper::get("attach_add_link.svg"));
 
   // Редактирование информации о файле (имени файла)
   actionEditFileName = new QAction(this);
-  actionEditFileName->setIcon(QIcon(":/resource/pic/attach_edit.svg"));
+  actionEditFileName->setIcon(IconHelper::get("attach_edit.svg"));
 
   // Удаление файла
   actionDeleteAttach = new QAction(this);
-  actionDeleteAttach->setIcon(QIcon(":/resource/pic/attach_delete.svg"));
+  actionDeleteAttach->setIcon(IconHelper::get("attach_delete.svg"));
 
   // Просмотр файла
   actionOpenAttach = new QAction(this);
-  actionOpenAttach->setIcon(QIcon(":/resource/pic/attach_preview.svg"));
+  actionOpenAttach->setIcon(IconHelper::get("attach_preview.svg"));
 
   // Сохранить как... файл
   actionSaveAsAttach = new QAction(this);
-  actionSaveAsAttach->setIcon(QIcon(":/resource/pic/attach_save_as.svg"));
+  actionSaveAsAttach->setIcon(IconHelper::get("attach_save_as.svg"));
 
   // Информация об аттаче
   actionShowAttachInfo = new QAction(this);
-  actionShowAttachInfo->setIcon(QIcon(":/resource/pic/attach_info.svg"));
+  actionShowAttachInfo->setIcon(IconHelper::get("attach_info.svg"));
 
   // Переключение на редактор
   actionSwitchToEditor = new QAction(this);
-  actionSwitchToEditor->setIcon(QIcon(":/resource/pic/attach_switch_to_editor.svg"));
+  actionSwitchToEditor->setIcon(IconHelper::get("attach_switch_to_editor.svg"));
 }
 
 

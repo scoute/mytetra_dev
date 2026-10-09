@@ -1,4 +1,5 @@
 #include <QString>
+#include "libraries/helpers/IconHelper.h"
 #include <QWidget>
 #include <QLabel>
 #include <QHBoxLayout>
@@ -87,9 +88,9 @@ void AppConfigPage_Main::setupUi(void)
  interfaceLanguage=new MtComboBox(this);
  interfaceLanguage->setMinimumContentsLength(2);
  interfaceLanguage->addItem("en");
- interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/United-Kingdom.png"));
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, IconHelper::get("countryFlags/United-Kingdom.png"));
  interfaceLanguage->addItem("ru");
- interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Russia.png"));
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, IconHelper::get("countryFlags/Russia.png"));
  interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(mytetraConfig.get_interfacelanguage(), Qt::MatchCaseSensitive));
 
 

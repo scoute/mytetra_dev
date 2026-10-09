@@ -1,4 +1,5 @@
 #include <QDialogButtonBox>
+#include "libraries/helpers/IconHelper.h"
 #include <QDebug>
 #include <QToolBar>
 #include <QAction>
@@ -44,32 +45,32 @@ DatabasesManagementScreen::~DatabasesManagementScreen()
 void DatabasesManagementScreen::setupActions(void)
 {
   actionSelect = new QAction(tr("Select database"), this);
-  actionSelect->setIcon(QIcon(":/resource/pic/dbmanagement_select.svg"));
+  actionSelect->setIcon(IconHelper::get("dbmanagement_select.svg"));
   connect(actionSelect, &QAction::triggered,
           databasesManagementController, &DatabasesManagementController::onSelectClicked);
 
   actionCreate = new QAction(tr("Create new database"), this);
-  actionCreate->setIcon(QIcon(":/resource/pic/dbmanagement_create.svg"));
+  actionCreate->setIcon(IconHelper::get("dbmanagement_create.svg"));
   connect(actionCreate, &QAction::triggered,
           databasesManagementController, &DatabasesManagementController::onCreateClicked);
 
   actionAdd = new QAction(tr("Append exists database"), this);
-  actionAdd->setIcon(QIcon(":/resource/pic/dbmanagement_append.svg"));
+  actionAdd->setIcon(IconHelper::get("dbmanagement_append.svg"));
   connect(actionAdd, &QAction::triggered,
           databasesManagementController, &DatabasesManagementController::onAddClicked);
 
   actionEdit = new QAction(tr("Edit database description"), this);
-  actionEdit->setIcon(QIcon(":/resource/pic/dbmanagement_edit.svg"));
+  actionEdit->setIcon(IconHelper::get("dbmanagement_edit.svg"));
   connect(actionEdit, &QAction::triggered,
           databasesManagementController, &DatabasesManagementController::onEditClicked);
 
   actionDelete = new QAction(tr("Remove database"), this);
-  actionDelete->setIcon(QIcon(":/resource/pic/dbmanagement_delete.svg"));
+  actionDelete->setIcon(IconHelper::get("dbmanagement_delete.svg"));
   connect(actionDelete, &QAction::triggered,
           databasesManagementController, &DatabasesManagementController::onDeleteClicked);
 
   actionCopy = new QAction(tr("Copy selected rows"), this);
-  actionCopy->setIcon(QIcon(":/resource/pic/cb_copy.svg"));
+  actionCopy->setIcon(IconHelper::get("cb_copy.svg"));
   connect(actionCopy, &QAction::triggered,
           databasesManagementController, &DatabasesManagementController::onCopyClicked);
 }

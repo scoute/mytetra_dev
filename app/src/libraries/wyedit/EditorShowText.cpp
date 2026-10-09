@@ -1,4 +1,5 @@
 #include <QVBoxLayout>
+#include "libraries/helpers/IconHelper.h"
 #include <QDebug>
 #include <QIcon>
 #include <QScrollBar>
@@ -37,7 +38,7 @@ void EditorShowText::setupUi()
     setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint); // Скрывается кнопка с вопросом
 
     // Задается иконка окна
-    QIcon icon = QIcon(":/resource/pic/detach_window_icon.svg");
+    QIcon icon = IconHelper::get("detach_window_icon.svg");
     this->setWindowIcon( icon );
 
     // Создается новая область редактора и запоминается указательна него

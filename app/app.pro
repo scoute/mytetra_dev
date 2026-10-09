@@ -150,6 +150,7 @@ HEADERS = src/main.h \
     src/libraries/helpers/DiskHelper.h \
     src/libraries/helpers/GestureHelper.h \
     src/libraries/helpers/HtmlHelper.h \
+    src/libraries/helpers/IconHelper.h \
     src/libraries/helpers/LinkHelper.h \
     src/libraries/helpers/MessageHelper.h \
     src/libraries/helpers/ObjectHelper.h \
@@ -333,6 +334,7 @@ SOURCES = src/main.cpp \
     src/libraries/helpers/DiskHelper.cpp \
     src/libraries/helpers/GestureHelper.cpp \
     src/libraries/helpers/HtmlHelper.cpp \
+    src/libraries/helpers/IconHelper.cpp \
     src/libraries/helpers/LinkHelper.cpp \
     src/libraries/helpers/MessageHelper.cpp \
     src/libraries/helpers/ObjectHelper.cpp \

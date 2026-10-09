@@ -1,4 +1,5 @@
 #include <QColor>
+#include "libraries/helpers/IconHelper.h"
 #include <QMessageBox>
 #include <QTextTable>
 #include <QTextTableFormat>
@@ -269,7 +270,7 @@ void EditorToolBarAssistant::onChangeFontcolor(const QColor &color)
         fillColor=m_textArea->palette().windowText().color();
     }
 
-    fontColor->setIcon( drawIconOverColor(fillColor, QIcon(":/resource/pic/edit_fontcolor.svg")) );
+    fontColor->setIcon( drawIconOverColor(fillColor, IconHelper::get("edit_fontcolor.svg")) );
 }
 
 
@@ -396,7 +397,7 @@ void EditorToolBarAssistant::onChangeBackgroundColor(const QColor &color)
         }
     }
 
-    backgroundColor->setIcon( this->drawIconOverColor(fillColor, QIcon(":/resource/pic/edit_fontbackgroundcolor.svg")) );
+    backgroundColor->setIcon( this->drawIconOverColor(fillColor, IconHelper::get("edit_fontbackgroundcolor.svg")) );
 }
 
 

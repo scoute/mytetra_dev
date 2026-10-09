@@ -1,4 +1,5 @@
 #include <QAbstractItemView>
+#include "libraries/helpers/IconHelper.h"
 #include <QAction>
 #include <QMenu>
 #include <QMessageBox>
@@ -78,73 +79,73 @@ void TreeScreen::setupActions(void)
 
  // Разворачивание всех подветок
  ac=new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/expand_all_subbranch.svg"));
+ ac->setIcon(IconHelper::get("expand_all_subbranch.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::expandAllSubbranch);
  actionList["expandAllSubbranch"]=ac;
 
  // Сворачивание всех подветок
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/collapse_all_subbranch.svg"));
+ ac->setIcon(IconHelper::get("collapse_all_subbranch.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::collapseAllSubbranch);
  actionList["collapseAllSubbranch"]=ac;
 
  // Перемещение ветки вверх
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/move_up.svg"));
+ ac->setIcon(IconHelper::get("move_up.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::moveUpBranch);
  actionList["moveUpBranch"]=ac;
 
  // Перемещение ветки вниз
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/move_dn.svg"));
+ ac->setIcon(IconHelper::get("move_dn.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::moveDownBranch);
  actionList["moveDownBranch"]=ac;
 
  // Вставка новой подветки
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/add_subbranch.svg"));
+ ac->setIcon(IconHelper::get("add_subbranch.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::insSubbranch);
  actionList["insSubbranch"]=ac;
 
  // Вставка новой ветки
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/add_branch.svg"));
+ ac->setIcon(IconHelper::get("add_branch.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::insBranch);
  actionList["insBranch"]=ac;
 
  // Редактирование ветки
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/note_edit.svg"));
+ ac->setIcon(IconHelper::get("note_edit.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::editBranch);
  actionList["editBranch"]=ac;
 
  // Удаление ветки
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/note_delete.svg"));
+ ac->setIcon(IconHelper::get("note_delete.svg"));
  connect(ac, SIGNAL(triggered()), this, SLOT(delBranch())); // Разобраться с новым синтаксисом сигнал-слот для слота с параметром по-умолчанию
  actionList["delBranch"]=ac;
 
  // Удаление ветки с сохранением копии в буфер обмена
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/branch_cut.svg"));
+ ac->setIcon(IconHelper::get("branch_cut.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::cutBranch);
  actionList["cutBranch"]=ac;
 
  // Копирование ветки в буфер обмена
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/branch_copy.svg"));
+ ac->setIcon(IconHelper::get("branch_copy.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::copyBranch);
  actionList["copyBranch"]=ac;
 
  // Вставка ветки из буфера обмена
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/branch_paste.svg"));
+ ac->setIcon(IconHelper::get("branch_paste.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::pasteBranch);
  actionList["pasteBranch"]=ac;
 
  // Вставка ветки из буфера обмена в виде подветки
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/branch_paste.svg"));
+ ac->setIcon(IconHelper::get("branch_paste.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::pasteSubbranch);
  actionList["pasteSubbranch"]=ac;
 
@@ -169,14 +170,14 @@ void TreeScreen::setupActions(void)
 
  // Добавление иконки к ветке
  ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/set_icon.svg"));
+ ac->setIcon(IconHelper::get("set_icon.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::setIcon);
  actionList["setIcon"]=ac;
 
  // Открытие поиска по базе (связывание клика происходит в MainWindows)
  ac = new QAction(tr("Find in base"), this);
  ac->setStatusTip(tr("Find in base"));
- ac->setIcon(QIcon(":/resource/pic/find_in_base.svg"));
+ ac->setIcon(IconHelper::get("find_in_base.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::treeScreenFindInBaseClicked);
  actionList["findInBase"]=ac;
 }

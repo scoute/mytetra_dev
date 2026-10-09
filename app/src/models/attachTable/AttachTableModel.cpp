@@ -1,4 +1,5 @@
 #include <QIcon>
+#include "libraries/helpers/IconHelper.h"
 #include <QDebug>
 
 #include "AttachTableModel.h"
@@ -71,10 +72,10 @@ QVariant AttachTableModel::data(const QModelIndex& index, int role) const
     QString attachType=table->getAttach(id).getField("type");
 
     if(attachType=="file")
-      return QIcon(":/resource/pic/attach_is_file.svg");
+      return IconHelper::get("attach_is_file.svg");
 
     if(attachType=="link")
-      return QIcon(":/resource/pic/attach_is_link.svg");
+      return IconHelper::get("attach_is_link.svg");
   }
 
   return QVariant();

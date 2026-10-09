@@ -1,4 +1,5 @@
 #include <QListWidget>
+#include "libraries/helpers/IconHelper.h"
 #include <QSlider>
 #include <QLabel>
 #include <QRadioButton>
@@ -544,7 +545,7 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
             }
         }
 
-        static QIcon fileIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+        static QIcon fileIcon(IconHelper::get(QStringLiteral("attach_is_file.svg")));
         item->setIcon(fileIcon);
         return;
     }
@@ -553,7 +554,7 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
 
     if(!reader.canRead())
     {
-        static QIcon brokenIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+        static QIcon brokenIcon(IconHelper::get(QStringLiteral("attach_is_file.svg")));
         item->setIcon(brokenIcon);
         return;
     }
@@ -581,7 +582,7 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
 
     if(image.isNull())
     {
-        static QIcon brokenReadIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+        static QIcon brokenReadIcon(IconHelper::get(QStringLiteral("attach_is_file.svg")));
         item->setIcon(brokenReadIcon);
         return;
     }
@@ -819,7 +820,7 @@ void ContentGallery::fillFilesList(void)
     filesList->setRowCount(0);
     filesList->setRowCount(galleryImages.size());
 
-    static QIcon fileIcon(QStringLiteral(":/resource/pic/attach_is_file.svg"));
+    static QIcon fileIcon(IconHelper::get(QStringLiteral("attach_is_file.svg")));
 
     for(int i=0; i<galleryImages.size(); ++i)
     {

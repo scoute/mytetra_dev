@@ -11,6 +11,9 @@ class QSocketNotifier;
 class QTextDocument;
 class KnowTreeModel;
 class TreeItem;
+#if defined(Q_OS_WIN)
+class ClipperWinFilter;
+#endif
 
 // Веб-клиппер: вставка содержимого буфера обмена в ветку unsorted_notes
 // по глобальному хоткею (выделил -> Ctrl+C -> хоткей).
@@ -20,10 +23,10 @@ class TreeItem;
 // запись создаётся штатными средствами модели. Защита от повторной
 // вставки — по sha256 нормализованного HTML.
 //
-// Глобальный хоткей работает только под X11 (XGrabKey через dlopen libX11,
-// без новых зависимостей сборки). Под Wayland/macOS/Windows хоткей
-// недоступен — остаётся кнопка «Вставить сейчас» в настройках и вызов
-// clipNow() из кода.
+// Глобальный хоткей работает под X11 (XGrabKey через dlopen libX11,
+// без новых зависимостей сборки) и под Windows (RegisterHotKey).
+// Под Wayland/macOS хоткей недоступен — остаётся кнопка «Вставить сейчас»
+// в настройках и вызов clipNow() из кода.
 
 class Clipper : public QObject
 {
@@ -83,6 +86,11 @@ public slots:
     // Ссылка пишется в поле url записи, иначе ищется в тексте
     void clipNowWithUrl(const QString &urlHint);
 
+#if defined(Q_OS_WIN)
+    // Нажатие глобального хоткея Windows: скопировать выделение и забрать
+    void onWinHotkey(void);
+#endif
+
 signals:
     void clipFinished(bool ok, const QString &message);
 
@@ -130,6 +138,10 @@ private:
     int xKeycode=0;
     unsigned int xModifiers=0;
     QSocketNotifier *xNotifier=nullptr;
+
+#if defined(Q_OS_WIN)
+    ClipperWinFilter *winFilter=nullptr; // Приёмник WM_HOTKEY
+#endif
 
     bool hotkeyActive=false;
     QString hotkeyActiveSequence;

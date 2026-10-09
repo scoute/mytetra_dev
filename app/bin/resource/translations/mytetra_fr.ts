@@ -270,7 +270,7 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <name>AppConfigPage_Clipper</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="47"/>
-        <source>Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11 only)</source>
+        <source>Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

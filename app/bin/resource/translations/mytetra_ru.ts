@@ -380,8 +380,8 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <name>AppConfigPage_Clipper</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="47"/>
-        <source>Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11 only)</source>
-        <translation>Веб-клиппер: вставка буфера обмена в unsorted_notes по глобальному хоткею (только X11)</translation>
+        <source>Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)</source>
+        <translation>Веб-клиппер: вставка буфера обмена в unsorted_notes по глобальному хоткею (X11, Windows)</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="51"/>
@@ -1132,6 +1132,11 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/libraries/Clipper.cpp" line="229"/>
         <source>X11 hotkey active: %1</source>
         <translation>Хоткей X11 активен: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/Clipper.cpp" line="233"/>
+        <source>Windows hotkey active: %1</source>
+        <translation>Горячая клавиша Windows активна: %1</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="233"/>

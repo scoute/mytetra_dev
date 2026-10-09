@@ -26,6 +26,13 @@
 #include <dlfcn.h>
 #endif
 
+#if defined(Q_OS_WIN)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <QAbstractNativeEventFilter>
+#include <QCoreApplication>
+#endif
+
 #include "Clipper.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
@@ -50,6 +57,136 @@ static const qint64 defaultClipMaxImageSizeBytes=5*1024*1024;
 
 static int clipMaxImages=defaultClipMaxImages;
 static qint64 clipMaxImageBytes=defaultClipMaxImageSizeBytes;
+
+
+#if defined(Q_OS_WIN)
+namespace {
+
+// Id единственного глобального хоткея в потоке GUI
+const int clipperWinHotkeyId=1;
+
+// Разбор "Ctrl+Alt+V" в модификаторы и виртуальный код для RegisterHotKey.
+// Только латинские клавиши, как и в хоткей-редакторе настроек
+bool parseWinHotkey(const QString &sequence, UINT &modifiers, UINT &vkCode)
+{
+    modifiers=0;
+    vkCode=0;
+
+    const QStringList parts=sequence.split('+', Qt::SkipEmptyParts);
+    if(parts.isEmpty())
+        return false;
+
+    for(int i=0; i<parts.size()-1; ++i)
+    {
+        const QString mod=parts[i].trimmed().toLower();
+        if(mod=="ctrl")
+            modifiers|=MOD_CONTROL;
+        else if(mod=="alt")
+            modifiers|=MOD_ALT;
+        else if(mod=="shift")
+            modifiers|=MOD_SHIFT;
+        else if(mod=="meta" || mod=="win")
+            modifiers|=MOD_WIN;
+        else
+            return false;
+    }
+
+    const QString key=parts.last().trimmed();
+    if(key.size()==1)
+    {
+        const ushort ch=key[0].toUpper().unicode();
+        if((ch>='A' && ch<='Z') || (ch>='0' && ch<='9'))
+        {
+            vkCode=ch;
+            return true;
+        }
+        if(ch==' ')
+        {
+            vkCode=VK_SPACE;
+            return true;
+        }
+        return false;
+    }
+
+    if(key.size()>1 && (key[0]=='F' || key[0]=='f'))
+    {
+        bool ok=false;
+        const int n=key.mid(1).toInt(&ok);
+        if(ok && n>=1 && n<=24)
+        {
+            vkCode=VK_F1+n-1;
+            return true;
+        }
+        return false;
+    }
+
+    const QString lower=key.toLower();
+    if(lower=="tab")            { vkCode=VK_TAB;    return true; }
+    if(lower=="return" ||
+       lower=="enter")          { vkCode=VK_RETURN; return true; }
+    if(lower=="escape" ||
+       lower=="esc")            { vkCode=VK_ESCAPE; return true; }
+    if(lower=="backspace")      { vkCode=VK_BACK;   return true; }
+    if(lower=="delete")         { vkCode=VK_DELETE; return true; }
+    if(lower=="insert")         { vkCode=VK_INSERT; return true; }
+    if(lower=="home")           { vkCode=VK_HOME;   return true; }
+    if(lower=="end")            { vkCode=VK_END;    return true; }
+    if(lower=="pageup")         { vkCode=VK_PRIOR;  return true; }
+    if(lower=="pagedown")       { vkCode=VK_NEXT;   return true; }
+    if(lower=="left")           { vkCode=VK_LEFT;   return true; }
+    if(lower=="up")             { vkCode=VK_UP;     return true; }
+    if(lower=="right")          { vkCode=VK_RIGHT;  return true; }
+    if(lower=="down")           { vkCode=VK_DOWN;   return true; }
+    if(lower=="space")          { vkCode=VK_SPACE;  return true; }
+
+    return false;
+}
+
+// Эмуляция Ctrl+C чтобы забрать текущее выделение (как CintaNotes).
+// Копирование чужое выделение не портит, повторная вставка того же
+// отсекается дедупом по хешу
+void sendCopyKeys(void)
+{
+    INPUT input[4]={};
+    for(int i=0; i<4; ++i)
+        input[i].type=INPUT_KEYBOARD;
+    input[0].ki.wVk=VK_CONTROL;
+    input[1].ki.wVk='C';
+    input[2].ki.wVk='C';
+    input[2].ki.dwFlags=KEYEVENTF_KEYUP;
+    input[3].ki.wVk=VK_CONTROL;
+    input[3].ki.dwFlags=KEYEVENTF_KEYUP;
+    SendInput(4, input, sizeof(INPUT));
+}
+
+} // namespace
+
+
+// Приёмник WM_HOTKEY из очереди потока GUI (без Q_OBJECT: дёргает слот напрямую)
+class ClipperWinFilter : public QAbstractNativeEventFilter
+{
+public:
+    explicit ClipperWinFilter(Clipper *owner) : m_owner(owner) {}
+
+    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override
+    {
+        Q_UNUSED(result);
+        if(eventType=="windows_generic_MSG")
+        {
+            MSG *msg=static_cast<MSG*>(message);
+            if(msg->message==WM_HOTKEY && msg->wParam==clipperWinHotkeyId)
+            {
+                QMetaObject::invokeMethod(m_owner, "onWinHotkey", Qt::QueuedConnection);
+                return false;
+            }
+        }
+        return false;
+    }
+
+private:
+    Clipper *m_owner;
+};
+#endif // defined(Q_OS_WIN)
 
 
 void Clipper::reloadLimits(void)
@@ -239,7 +376,11 @@ bool Clipper::isHotkeyAvailable(void) const
 QString Clipper::backendStatus(void) const
 {
     if(hotkeyActive)
+#if defined(Q_OS_WIN)
+        return tr("Windows hotkey active: %1").arg(hotkeyActiveSequence);
+#else
         return tr("X11 hotkey active: %1").arg(hotkeyActiveSequence);
+#endif
 
 #if defined(Q_OS_LINUX)
     if(QGuiApplication::platformName()!="xcb")
@@ -880,7 +1021,22 @@ unsigned long Clipper::qtKeyToKeysym(int qtKey)
 
 bool Clipper::grabHotkey(const QString &sequence)
 {
-#if !defined(Q_OS_LINUX)
+#if defined(Q_OS_WIN)
+    ungrabHotkey();
+
+    UINT modifiers=0;
+    UINT vkCode=0;
+    if(!parseWinHotkey(sequence, modifiers, vkCode))
+        return false;
+
+    // Хоткей на очередь потока GUI, без окна. Поток один, id один
+    if(!RegisterHotKey(nullptr, clipperWinHotkeyId, modifiers, vkCode))
+        return false;
+
+    winFilter=new ClipperWinFilter(this);
+    QCoreApplication::instance()->installNativeEventFilter(winFilter);
+    return true;
+#elif !defined(Q_OS_LINUX)
     Q_UNUSED(sequence)
     return false;
 #else
@@ -982,6 +1138,16 @@ bool Clipper::grabHotkey(const QString &sequence)
 
 void Clipper::ungrabHotkey(void)
 {
+#if defined(Q_OS_WIN)
+    if(winFilter)
+    {
+        if(QCoreApplication::instance())
+            QCoreApplication::instance()->removeNativeEventFilter(winFilter);
+        delete winFilter;
+        winFilter=nullptr;
+    }
+    UnregisterHotKey(nullptr, clipperWinHotkeyId);
+#endif
 #if defined(Q_OS_LINUX)
     if(xNotifier)
     {
@@ -1048,3 +1214,16 @@ void Clipper::onX11Activity(void)
     }
 #endif
 }
+
+
+#if defined(Q_OS_WIN)
+void Clipper::onWinHotkey(void)
+{
+    qDebug() << "Clipper: global hotkey pressed";
+
+    // Один хоткей на всё: сначала скопировать выделение в буфер,
+    // затем забрать буфер в unsorted_notes
+    sendCopyKeys();
+    QTimer::singleShot(300, this, &Clipper::clipNow);
+}
+#endif

@@ -44,7 +44,7 @@ void AppConfigPage_Clipper::setupUi(void)
   // Веб-клиппер: вставка из буфера обмена в unsorted_notes по глобальному хоткею.
   // Сам хоткей работает только под X11; кнопка проверки — везде
   clipperEnable=new QCheckBox(this);
-  clipperEnable->setText(tr("Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11 only)"));
+  clipperEnable->setText(tr("Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
   clipperEnable->setChecked(mytetraConfig.get_clipperenable());
 
   clipperHotkeyEdit=new QKeySequenceEdit(this);

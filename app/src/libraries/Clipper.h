@@ -8,6 +8,7 @@
 #include <QString>
 
 class QSocketNotifier;
+class QTextDocument;
 class KnowTreeModel;
 class TreeItem;
 
@@ -102,6 +103,12 @@ private:
     };
 
     bool collectFromClipboard(ClipData &clipData);
+
+    // Замена внешних картинок документа на внутренние с докачкой.
+    // alreadyHave — картинок уже в наборе (прямая из буфера), лимит общий.
+    // Чистая от буфера обмена часть — покрыта тестами без него.
+    // Заполняет clipData.html/images/skippedImages
+    bool processDocument(QTextDocument &document, ClipData &clipData, int alreadyHave=0);
     QByteArray fetchUrl(const QString &url, bool *ok);
     bool ensureBranch(TreeItem* &branchItem, QString *errorMessage=nullptr);
     bool isDuplicate(TreeItem *branchItem, const QByteArray &hash);

@@ -413,6 +413,28 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
     QTextDocument document;
     document.setHtml(html);
 
+    if(!processDocument(document, clipData, directImages.size()))
+        return false;
+
+    // Прямая картинка из буфера — тоже в набор
+    for(auto it=directImages.constBegin(); it!=directImages.constEnd(); ++it)
+        clipData.images.insert(it.key(), it.value());
+
+    QString plainText=document.toPlainText();
+    clipData.title=makeTitle(plainText);
+
+    // Ссылка на источник: только явная из --url или одинокий URL в буфере.
+    // Первую ссылку из текста не берём: в скопированной странице это
+    // обычно чужой URL, а не адрес самой страницы
+    clipData.url=resolveUrl(m_urlHint, plainText);
+
+    clipData.valid=true;
+    return true;
+}
+
+
+bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int alreadyHave)
+{
     // Замена внешних картинок на внутренние с докачкой (логика ImageFormatter:
     // имя вида image<10 цифр><символы>.png считается уже внутренним)
     QRegularExpression internalRe("^image\\d{10}[a-z0-9]+\\.png$");
@@ -446,7 +468,7 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
 
                 // Лимит числа картинок в одном клипе. Остальные остаются
                 // внешними ссылками, о пропуске сообщается в итоге
-                if(fetchedImages.size()+directImages.size()>=clipMaxImages)
+                if(fetchedImages.size()+alreadyHave>=clipMaxImages)
                 {
                     qWarning() << "Clipper: too many images, rest left as external references";
                     clipData.skippedImages++;
@@ -515,22 +537,11 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
         }
     }
 
-    // Прямая картинка из буфера — тоже в набор
-    for(auto it=directImages.constBegin(); it!=directImages.constEnd(); ++it)
-        fetchedImages.insert(it.key(), it.value());
-
+    // Готовый HTML и докачанные картинки. Прямую картинку из буфера
+    // добавляет вызывающий collectFromClipboard
     clipData.html=document.toHtml();
     clipData.images=fetchedImages;
 
-    QString plainText=document.toPlainText();
-    clipData.title=makeTitle(plainText);
-
-    // Ссылка на источник: только явная из --url или одинокий URL в буфере.
-    // Первую ссылку из текста не берём: в скопированной странице это
-    // обычно чужой URL, а не адрес самой страницы
-    clipData.url=resolveUrl(m_urlHint, plainText);
-
-    clipData.valid=true;
     return true;
 }
 

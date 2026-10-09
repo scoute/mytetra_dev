@@ -56,8 +56,16 @@ public:
     // Чистая функция — покрыта тестами
     static QString makeTitle(const QString &plainText);
 
-    // sha256 нормализованного HTML для дедупликации. Чистая функция
+    // sha256 нормализованного HTML для дедупликации. Внутренние имена
+    // картинок каноникализируются, иначе повторный клип той же страницы
+    // с картинками никогда не совпадёт (имена случайны). Чистая функция
     static QByteArray contentHash(const QString &normalizedHtml);
+
+    // Id записи из хеша содержимого: тот же формат, что getUniqueId()
+    // (10 цифр + 10 символов 0-9a-z). Одинаковый контент даёт одинаковый
+    // id — дедуплика превращается в поиск по id вместо чтения файлов.
+    // Чистая функция — покрыта тестами
+    static QString recordIdForHash(const QByteArray &hash);
 
     // Похожа ли строка на http(s) ссылку. Чистая функция
     static bool looksLikeUrl(const QString &value);
@@ -119,8 +127,8 @@ private:
     bool processDocument(QTextDocument &document, ClipData &clipData, int alreadyHave=0);
     QByteArray fetchUrl(const QString &url, bool *ok);
     bool ensureBranch(TreeItem* &branchItem, QString *errorMessage=nullptr);
-    bool isDuplicate(TreeItem *branchItem, const QByteArray &hash);
-    bool storeRecord(TreeItem *branchItem, const QString &title,
+    bool isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash);
+    bool storeRecord(TreeItem *branchItem, const QString &recordId, const QString &title,
                      const QString &url, const QString &html,
                      const QMap<QString, QImage> &images,
                      QString *errorMessage);

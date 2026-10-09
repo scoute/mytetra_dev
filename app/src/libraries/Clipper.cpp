@@ -419,7 +419,37 @@ QString Clipper::makeTitle(const QString &plainText)
 
 QByteArray Clipper::contentHash(const QString &normalizedHtml)
 {
-    return QCryptographicHash::hash(normalizedHtml.toUtf8(), QCryptographicHash::Sha256);
+    // Внутренние имена картинок случайны при каждом клипе — заменить их
+    // фиксированным токеном, иначе хеши одного и того же содержимого
+    // не сойдутся ни у новой, ни у уже лежащей записи
+    QString canonical=normalizedHtml;
+    static QRegularExpression internalNameRe("image\\d{10}[a-z0-9]+\\.png");
+    canonical.replace(internalNameRe, "image.png");
+
+    return QCryptographicHash::hash(canonical.toUtf8(), QCryptographicHash::Sha256);
+}
+
+
+QString Clipper::recordIdForHash(const QByteArray &hash)
+{
+    // Первые 5 байт хеша -> 10 цифр, следующие 10 байт -> 10 символов 0-9a-z.
+    // Формат как у getUniqueId(), существующий код работает с id как
+    // с непрозрачной строкой
+    static const char *alphabet="0123456789abcdefghijklmnopqrstuvwxyz";
+
+    QByteArray bytes=hash;
+    while(bytes.size()<15)
+        bytes+=hash; // Теоретически короткие хеши — зациклить
+
+    quint64 digits=0;
+    for(int i=0; i<5; ++i)
+        digits=(digits<<8) | static_cast<quint8>(bytes[i]);
+    QString id=QString::number(digits % 10000000000ULL).rightJustified(10, '0');
+
+    for(int i=0; i<10; ++i)
+        id+=alphabet[static_cast<quint8>(bytes[5+i]) % 36];
+
+    return id;
 }
 
 
@@ -456,7 +486,8 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
     }
 
     const QByteArray newHash=contentHash(clipData.html);
-    if(isDuplicate(branchItem, newHash))
+    const QString recordId=recordIdForHash(newHash);
+    if(isDuplicate(branchItem, recordId, newHash))
     {
         const QString message=tr("Already clipped, skipped.");
         notify(tr("Web Clipper"), message);
@@ -465,7 +496,7 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
     }
 
     QString storeError;
-    if(!storeRecord(branchItem, clipData.title, clipData.url, clipData.html, clipData.images, &storeError))
+    if(!storeRecord(branchItem, recordId, clipData.title, clipData.url, clipData.html, clipData.images, &storeError))
     {
         notify(tr("Web Clipper"), storeError);
         emit clipFinished(false, storeError);
@@ -814,12 +845,18 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage)
 }
 
 
-// Защита от повторной вставки: sha256 нормализованного HTML против
-// текстов заметок ветки (читаются с диска). Ограничение — свежие 2000
-bool Clipper::isDuplicate(TreeItem *branchItem, const QByteArray &hash)
+// Защита от повторной вставки: быстрый путь — запись с id из хеша уже
+// есть в дереве; медленный — сравнение хешей текстов свежих 2000 записей
+// ветки (ловит дубли, вставленные до хеш-id). Ограничение сканирования —
+// свежие 2000
+bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash)
 {
     if(!branchItem || hash.isEmpty())
         return false;
+
+    KnowTreeModel *model=treeModel();
+    if(model && !recordId.isEmpty() && model->isRecordIdExists(recordId))
+        return true;
 
     RecordTableData *table=branchItem->recordtableGetTableData();
     if(!table)
@@ -855,8 +892,12 @@ bool Clipper::isDuplicate(TreeItem *branchItem, const QByteArray &hash)
 
 
 // Сохранение записи штатными средствами модели (как ручное создание):
-// FAT-запись -> insertNewRecord -> PNG картинок в каталог -> saveKnowTree
-bool Clipper::storeRecord(TreeItem *branchItem, const QString &title,
+// FAT-запись -> insertNewRecord -> PNG картинок в каталог -> saveKnowTree.
+// Id записи — из хеша содержимого: повторный клип того же получит тот же
+// id и отсечётся проверкой до вставки (insert всё равно бы заменил id
+// при коллизии, так что гонка безопасна)
+bool Clipper::storeRecord(TreeItem *branchItem, const QString &recordId,
+                          const QString &title,
                           const QString &url, const QString &html,
                           const QMap<QString, QImage> &images,
                           QString *errorMessage)
@@ -879,6 +920,9 @@ bool Clipper::storeRecord(TreeItem *branchItem, const QString &title,
     Record record;
     record.switchToFat();
     record.setText(html);
+    record.setField("id", recordId);
+    record.setField("dir", getUniqueId());
+    record.setField("file", "text.html");
     record.setField("name", title);
     record.setField("author", QString());
     record.setField("url", url);

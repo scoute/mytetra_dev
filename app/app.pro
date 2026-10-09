@@ -215,6 +215,7 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/ConfigPage.h \
     src/views/appConfigWindow/AppConfigPage_Main.h \
     src/views/appConfigWindow/AppConfigPage_Misc.h \
+    src/views/appConfigWindow/AppConfigPage_Clipper.h \
     src/views/appConfigWindow/AppConfigPage_Crypt.h \
     src/views/appConfigWindow/AppConfigPage_Synchro.h \
     src/views/appConfigWindow/AppConfigPage_RecordTable.h \
@@ -310,6 +311,7 @@ HEADERS+=\
     src/libraries/WalkHistory.h \
     src/libraries/VisitHistory.h \
     src/libraries/BacklinkIndex.h \
+    src/libraries/Clipper.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
     src/libraries/crypt/Password.h \
@@ -396,6 +398,7 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/ConfigPage.cpp \
     src/views/appConfigWindow/AppConfigPage_Main.cpp \
     src/views/appConfigWindow/AppConfigPage_Misc.cpp \
+    src/views/appConfigWindow/AppConfigPage_Clipper.cpp \
     src/views/appConfigWindow/AppConfigPage_Crypt.cpp \
     src/views/appConfigWindow/AppConfigPage_Synchro.cpp \
     src/views/appConfigWindow/AppConfigPage_RecordTable.cpp \
@@ -495,6 +498,7 @@ SOURCES+=\
     src/libraries/WalkHistory.cpp \
     src/libraries/VisitHistory.cpp \
     src/libraries/BacklinkIndex.cpp \
+    src/libraries/Clipper.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \
     src/libraries/crypt/Password.cpp \

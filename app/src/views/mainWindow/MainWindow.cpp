@@ -27,6 +27,7 @@
 #include "views/historyPanel/HistoryPanel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
+#include "libraries/Clipper.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
@@ -84,6 +85,9 @@ MainWindow::MainWindow() : QMainWindow()
     // Инициализируется объект слежения за корзиной
     trashMonitoring.init(mytetraConfig.get_trashdir());
     trashMonitoring.update();
+
+    // Старт веб-клиппера (перехват глобального хоткея по настройкам)
+    clipper.start();
 
     // Закрывать ли по-настоящему окно при обнаружении сигнала closeEvent
     enableRealClose=false;
@@ -212,6 +216,9 @@ void MainWindow::setupSignals(void)
 
     // Вызов окна просмотра лога
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
+
+    // Клиппер: заметка из буфера обмена в ветку unsorted_notes
+    connect(actionToolsMenuClipFromClipboard, &QAction::triggered, this, &MainWindow::runClipperNow);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -436,6 +443,13 @@ void MainWindow::messageHandler(QString message)
 
         // Установка курсора в дереве
         treeScreen->setCursorToId( commandArgument );
+    }
+
+    else if(command=="clipboard")
+    {
+        // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
+        // Аргумент команды это ссылка на источник, может отсутствовать
+        clipper.clipNowWithUrl(commandArgument);
     }
 }
 
@@ -710,6 +724,9 @@ void MainWindow::initToolsMenu(void)
 
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
+
+    actionToolsMenuClipFromClipboard = new QAction(this);
+    menu->addAction(actionToolsMenuClipFromClipboard);
 
     // Переключатель панели тегов: видимость дока и галочка синхронны сами.
     // Текст берет из таблицы шорткатов через initAction как у соседей
@@ -986,6 +1003,8 @@ void MainWindow::setupShortcuts(void)
 
     shortcutManager.initAction("misc-imagesGallery", actionToolsMenuImagesGallery );
 
+    shortcutManager.initAction("misc-clipFromClipboard", actionToolsMenuClipFromClipboard );
+
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
     shortcutManager.initAction("misc-focusEditor", actionFocusEditor );
@@ -1174,6 +1193,9 @@ void MainWindow::toolsPreferences(void)
 {
     AppConfigDialog dialog("", this); // this нужен чтобы пробрасывать иконку приложения
     dialog.exec();
+
+    // Настройки могли поменять хоткей клиппера — перечитать
+    clipper.rereadSettings();
 }
 
 
@@ -1181,6 +1203,35 @@ void MainWindow::onActionLogClicked()
 {
     ActionLogScreen actionLogScreen(this);
     actionLogScreen.exec();
+}
+
+
+// Показ всплывающего сообщения в системном трее.
+// Используется фоновыми задачами (клиппер), которым некого спросить,
+// но надо сообщить пользователю о результате
+void MainWindow::showTrayMessage(const QString &title, const QString &text)
+{
+    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
+        return;
+
+    if(trayIcon==nullptr || trayIcon->isVisible()==false)
+        return;
+
+    trayIcon->showMessage(title, text, QSystemTrayIcon::Warning);
+}
+
+
+// Клиппер из меню Tools: вставка из буфера в unsorted_notes сейчас.
+// Ссылка на источник ищется в самом тексте буфера
+void MainWindow::runClipperNow(void)
+{
+    clipper.clipNow();
+}
+
+
+Clipper *MainWindow::getClipper(void)
+{
+    return &clipper;
 }
 
 

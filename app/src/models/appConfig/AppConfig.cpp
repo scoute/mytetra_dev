@@ -947,6 +947,87 @@ void AppConfig::set_recordHeaderVisible(bool state)
 }
 
 
+int AppConfig::get_clipperMaxImages(void)
+{
+    return this->get_parameter("clipperMaxImages").toInt();
+}
+
+
+bool AppConfig::set_clipperMaxImages(int count)
+{
+    if(count>0)
+    {
+        m_conf->setValue("clipperMaxImages", count);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// Максимальный размер одной картинки клиппера в мегабайтах
+int AppConfig::get_clipperMaxImageSizeMb(void)
+{
+    return this->get_parameter("clipperMaxImageSizeMb").toInt();
+}
+
+
+bool AppConfig::set_clipperMaxImageSizeMb(int mbSize)
+{
+    if(mbSize>0)
+    {
+        m_conf->setValue("clipperMaxImageSizeMb", mbSize);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// Веб-клиппер включен или нет
+bool AppConfig::get_clipperenable(void)
+{
+    return m_conf->value("clipperenable").toBool();
+}
+
+
+void AppConfig::set_clipperenable(bool flag)
+{
+    m_conf->setValue("clipperenable", flag);
+}
+
+
+// Глобальный хоткей клиппера в формате QKeySequence (работает под X11)
+QString AppConfig::get_clipperhotkey(void)
+{
+    return this->get_parameter("clipperhotkey");
+}
+
+
+void AppConfig::set_clipperhotkey(QString sequence)
+{
+    m_conf->setValue("clipperhotkey", sequence);
+}
+
+
+// Id ветки unsorted_notes (запоминается после создания,
+// переживает переименования ветки)
+QString AppConfig::get_clipperbranchid(void)
+{
+    return this->get_parameter("clipperbranchid");
+}
+
+
+void AppConfig::set_clipperbranchid(QString id)
+{
+    m_conf->setValue("clipperbranchid", id);
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -1293,6 +1374,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
     parameterFunctions << &AppConfig::get_parameter_table_44;
+    parameterFunctions << &AppConfig::get_parameter_table_45;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2192,6 +2274,30 @@ QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
 
     // Шапка заметки показана
     table << "recordHeaderVisible" << "bool" << "true";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 44
+    table << get_parameter_table_44(false);
+
+    // Веб-клиппер: лимиты картинок, включение, глобальный хоткей (X11),
+    // запомненная ветка unsorted_notes. Без SyncTetra-профиля
+    table << "clipperMaxImages" << "int" << "20";
+    table << "clipperMaxImageSizeMb" << "int" << "5";
+    table << "clipperenable" << "bool" << "true";
+    table << "clipperhotkey" << "QString" << "Ctrl+Alt+V";
+    table << "clipperbranchid" << "QString" << "";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

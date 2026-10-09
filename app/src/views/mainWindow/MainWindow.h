@@ -10,6 +10,8 @@
 #include <QFileInfo>
 #include <QSystemTrayIcon>
 
+#include "libraries/Clipper.h"
+
 
 class QAction;
 class QWidget;
@@ -94,6 +96,16 @@ public slots:
     void toolsImagesGallery(void);
 
     void toolsFilesGallery(void);
+
+    // Показ всплывающего сообщения в системном трее.
+    // Молча ничего не делает, если трей недоступен или скрыт
+    void showTrayMessage(const QString &title, const QString &text);
+
+    // Веб-клиппер: вставка из буфера в unsorted_notes сейчас
+    void runClipperNow(void);
+
+    // Доступ к клипперу для настроек (статус хоткея)
+    Clipper *getClipper(void);
 
     void setupShortcuts(void);
 
@@ -192,6 +204,7 @@ private:
     QAction *actionToolsMenuImagesGallery;
     QAction *actionToolsMenuFilesGallery;
     QAction *actionToolsMenuActionLog;
+    QAction *actionToolsMenuClipFromClipboard;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
@@ -242,6 +255,9 @@ private:
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;
+
+    // Веб-клиппер (глобальный хоткей -> unsorted_notes)
+    Clipper clipper;
 
     QSplitter *vSplitter;
     QSplitter *hSplitter;

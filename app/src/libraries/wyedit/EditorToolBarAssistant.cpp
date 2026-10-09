@@ -411,7 +411,7 @@ void EditorToolBarAssistant::onChangeIconBackgroundColor(const QTextCharFormat &
 QPixmap EditorToolBarAssistant::drawIconOverColor(const QColor &fillColor, const QIcon &icon ) const
 {
     QPixmap pixMap( getIconSize() );
-    pixMap.fill( fillColor );
+    pixMap.fill( Qt::transparent );
 
     QPainter painter;
     painter.begin(&pixMap);
@@ -419,6 +419,12 @@ QPixmap EditorToolBarAssistant::drawIconOverColor(const QColor &fillColor, const
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::HighQualityAntialiasing);
     painter.drawPixmap(0, 0, icon.pixmap( pixMap.size() ));
+
+    // Текущий цвет полосой внизу значка (стиль LibreOffice),
+    // а не заливкой всего фона: тонкие контурные иконки иначе тонут
+    const int stripHeight=qMax(3, pixMap.height()/5);
+    painter.fillRect(0, pixMap.height()-stripHeight,
+                     pixMap.width(), stripHeight, fillColor);
     painter.end();
 
     return pixMap;

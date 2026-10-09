@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="modern" version="1" about="Light modern theme with indigo accent"/> */
+/* <MyTetraStyle name="modern" version="4" about="Light modern theme with indigo accent"/> */
 
 /* Светлая современная тема: белые панели на светло-сером фоне,
  * индиго-акцент #4F46E5, скругления 6px, тонкие разделители.
@@ -126,6 +126,26 @@ QToolButton:checked {
 
 QToolButton:disabled {
   color: #CBD5E1;
+}
+
+/* Сегмент стрелки выпадашки (MenuButtonPopup): без явной заливки
+ * остается незалитым и выглядит черной пилюлей, поэтому красим
+ * в тон тулбара. Сама стрелка остается нативной */
+QToolButton::menu-button {
+  background: #FFFFFF;
+  border: none;
+  border-left: 1px solid #E2E8F0;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  width: 6px;
+}
+
+QToolButton::menu-button:hover {
+  background: #F1F5F9;
+}
+
+QToolButton::menu-button:pressed {
+  background: #E0E7FF;
 }
 
 /* Дерево веток: белое, выбранная ветка залита светло-индиго */

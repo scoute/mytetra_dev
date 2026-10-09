@@ -2750,6 +2750,18 @@ You need to update MyTetra.</source>
         <source>Attached &amp;files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show note header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change secret color...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>

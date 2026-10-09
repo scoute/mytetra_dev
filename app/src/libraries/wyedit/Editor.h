@@ -102,6 +102,10 @@ public:
  void setTextareaModified(bool modify);
  bool getTextareaModified(void);
 
+ // Перекрасить секреты открытого документа глобальным цветом.
+ // Для меню Вид: конфиг уже обновлен, документ трогать не надо
+ void repaintSecrets(void);
+
  // Виджет полоски поиска для вставки в сетку MetaEditor
  EditorFindBar *findBarWidget(void);
 

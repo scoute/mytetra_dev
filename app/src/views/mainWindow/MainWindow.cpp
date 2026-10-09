@@ -12,6 +12,7 @@
 #include <QDockWidget>
 #include <QStatusBar>
 #include <QActionGroup>
+#include <QColorDialog>
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -63,6 +64,7 @@ MainWindow::MainWindow() : QMainWindow()
     setupUI();
     initFileMenu();
     initToolsMenu();
+    initViewMenu();
     initThemesMenu();
     initHelpMenu();
     initHiddenActions();
@@ -842,6 +844,73 @@ void MainWindow::syncThemeMenu(void)
 
     for(QAction *themeAction : themesMenu->actions())
         themeAction->setChecked(themeAction->data().toString()==currentTheme);
+}
+
+
+// Меню Вид между Tools и Themes: дублирует быстрые переключатели
+// отображения (шапка заметки, цвет секрета), чтобы не
+// лазить за ними в диалог настроек или контекстное меню редактора
+void MainWindow::initViewMenu(void)
+{
+    viewMenu=new QMenu(tr("&View"), this);
+    this->menuBar()->addMenu(viewMenu);
+
+    viewHeaderAction=new QAction(tr("Show note header"), this);
+    viewHeaderAction->setCheckable(true);
+    viewMenu->addAction(viewHeaderAction);
+
+    viewMenu->addSeparator();
+
+    QAction *secretColorAction=new QAction(tr("Change secret color..."), this);
+    viewMenu->addAction(secretColorAction);
+
+    // Начальная пометка до коннектов: setChecked с тем же значением
+    // toggled не дергает, лишних записей в конфиг нет
+    syncViewMenu();
+
+    connect(viewHeaderAction, &QAction::toggled,
+            this,              &MainWindow::onViewHeaderToggled);
+    connect(secretColorAction, &QAction::triggered,
+            this,              &MainWindow::onViewSecretColor);
+
+    connect(viewMenu, &QMenu::aboutToShow,
+            this,      &MainWindow::syncViewMenu);
+}
+
+
+// Пометка текущих состояний при каждом открытии: все три вещи
+// меняются и мимо меню (диалог настроек, контекстное меню секрета)
+void MainWindow::syncViewMenu(void)
+{
+    if(viewHeaderAction!=nullptr)
+        viewHeaderAction->setChecked(mytetraConfig.get_recordHeaderVisible());
+}
+
+
+void MainWindow::onViewHeaderToggled(bool checked)
+{
+    mytetraConfig.set_recordHeaderVisible(checked);
+
+    if(editorScreen!=nullptr)
+        editorScreen->updateRecordHeaderVisibility();
+}
+
+
+void MainWindow::onViewSecretColor(void)
+{
+    const QColor current(mytetraConfig.get_secretColor());
+    const QColor chosen=QColorDialog::getColor(current, this);
+
+    if(!chosen.isValid() || chosen==current)
+        return;
+
+    mytetraConfig.set_secretColor(chosen.name());
+
+    // Сразу на диск как в контекстном меню секрета
+    mytetraConfig.sync();
+
+    if(editorScreen!=nullptr)
+        editorScreen->repaintSecrets();
 }
 
 

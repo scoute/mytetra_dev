@@ -117,6 +117,10 @@ private slots:
     // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
     void onThemeMenuTriggered(QAction *action);
 
+    // Меню Вид: дубли быстрых переключателей отображения
+    void onViewHeaderToggled(bool checked);
+    void onViewSecretColor(void);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -152,6 +156,12 @@ private:
     // сменить и из диалога настроек
     void initThemesMenu(void);
     void syncThemeMenu(void);
+
+    // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
+    // Пометка обновляется при каждом открытии, так как все три вещи
+    // меняются и из других мест (диалог настроек, контекстное меню)
+    void initViewMenu(void);
+    void syncViewMenu(void);
 
     void initRecordTableActions(void);
 
@@ -209,6 +219,10 @@ private:
 
     // Меню Темы в menubar: один клик вместо похода в настройки
     QMenu *themesMenu=nullptr;
+
+    // Меню Вид в menubar между Tools и Themes: шапка, цвет секрета
+    QMenu *viewMenu=nullptr;
+    QAction *viewHeaderAction=nullptr;
 
     // Панель списка тегов. Переключается из меню Tools и горячей клавишей,
     // в свернутом виде места не занимает

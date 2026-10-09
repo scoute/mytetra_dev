@@ -832,6 +832,15 @@ QTextDocument *Editor::getTextareaDocument(void)
 }
 
 
+// Перекраска секретов открытого документа под глобальный цвет.
+// Вызывается из меню Вид после смены цвета в конфиге
+void Editor::repaintSecrets(void)
+{
+  if(secretFormatter!=nullptr)
+    secretFormatter->repaintSecrets();
+}
+
+
 bool Editor::setWorkDirectory(QString dirName)
 {
   QDir directory(dirName);

@@ -3677,6 +3677,18 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Attached &amp;files</source>
         <translation>Прикрепленные файлы</translation>
     </message>
+    <message>
+        <source>&amp;View</source>
+        <translation>Вид</translation>
+    </message>
+    <message>
+        <source>Show note header</source>
+        <translation>Показывать шапку заметки</translation>
+    </message>
+    <message>
+        <source>Change secret color...</source>
+        <translation>Изменить цвет секретов...</translation>
+    </message>
 </context>
 <context>
     <name>TagsPanel</name>

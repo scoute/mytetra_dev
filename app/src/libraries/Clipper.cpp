@@ -106,6 +106,18 @@ QString Clipper::extractUrl(const QString &text)
 }
 
 
+QString Clipper::resolveUrl(const QString &urlHint, const QString &plainText)
+{
+    if(looksLikeUrl(urlHint))
+        return urlHint.trimmed();
+
+    if(looksLikeUrl(plainText.trimmed()))
+        return plainText.trimmed();
+
+    return QString();
+}
+
+
 QImage Clipper::imageFromDataUrl(const QString &url)
 {
     int commaPos=url.indexOf(",");
@@ -246,7 +258,11 @@ QString Clipper::makeTitle(const QString &plainText)
     const QStringList lines=plainText.split('\n', Qt::SkipEmptyParts);
     for(const QString &rawLine : lines)
     {
-        const QString line=rawLine.trimmed().simplified();
+        // Значок картинки без текста (U+FFFC от QTextDocument) именем
+        // быть не должен — иначе получаются «пустые» заметки
+        QString line=rawLine.trimmed().simplified();
+        line.remove(QChar::ObjectReplacementCharacter);
+        line=line.trimmed();
         if(line.isEmpty())
             continue;
 
@@ -255,7 +271,7 @@ QString Clipper::makeTitle(const QString &plainText)
         return line.left(77)+"...";
     }
 
-    return tr("Clip ")+QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm");
+    return tr("Clipped note ")+QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
 }
 
 
@@ -509,11 +525,10 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
     QString plainText=document.toPlainText();
     clipData.title=makeTitle(plainText);
 
-    // Ссылка на источник: явная из --url важнее найденной в тексте
-    if(looksLikeUrl(m_urlHint))
-        clipData.url=m_urlHint.trimmed();
-    else
-        clipData.url=extractUrl(plainText);
+    // Ссылка на источник: только явная из --url или одинокий URL в буфере.
+    // Первую ссылку из текста не берём: в скопированной странице это
+    // обычно чужой URL, а не адрес самой страницы
+    clipData.url=resolveUrl(m_urlHint, plainText);
 
     clipData.valid=true;
     return true;

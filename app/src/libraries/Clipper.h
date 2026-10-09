@@ -61,6 +61,11 @@ public:
     // Первая http(s) ссылка в тексте. Чистая функция
     static QString extractUrl(const QString &text);
 
+    // Ссылка на источник для поля url: только явный --url или одинокий
+    // URL в буфере. Первая ссылка из текста не берётся: в скопированной
+    // странице это обычно чужой URL. Чистая функция — покрыта тестами
+    static QString resolveUrl(const QString &urlHint, const QString &plainText);
+
     // Картинка из data: URL. Пустая если разобрать не удалось. Чистая функция
     static QImage imageFromDataUrl(const QString &url);
 

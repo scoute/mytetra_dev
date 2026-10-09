@@ -1150,8 +1150,8 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="258"/>
-        <source>Clip </source>
-        <translation>Заметка </translation>
+        <source>Clipped note </source>
+        <translation>Скопированная заметка </translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="286"/>

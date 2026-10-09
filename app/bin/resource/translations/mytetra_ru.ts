@@ -5917,12 +5917,12 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="163"/>
         <source>Paste note reference from clipboard</source>
-        <translation>Вставить ссылку из буфера обмена</translation>
+        <translation>Вставить ссылку на заметку из буфера обмена</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="164"/>
         <source>Insert note reference using search...</source>
-        <translation>Вставить ссылку через поиск</translation>
+        <translation>Вставить ссылку на заметку через поиск</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>

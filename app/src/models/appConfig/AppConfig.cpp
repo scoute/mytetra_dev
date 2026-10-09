@@ -138,6 +138,18 @@ QString AppConfig::get_parameter(QString name)
     }
     else
     {
+        // Страховка вместо жёсткого падения: если параметр известен
+        // актуальной таблице, вернуть его дефолт (ключ мог потеряться
+        // из-за усечённых лимитом 100 миграций или чужого conf.ini).
+        // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
+        QStringList actualTable=get_parameter_table_47(true);
+        if(!getParameterTypeFromTable(name, actualTable).isEmpty())
+        {
+            QString defValue=getParameterDefaultValueFromTable(name, actualTable);
+            qWarning() << "In config not found parameter" << name << ", using default value:" << defValue;
+            return defValue;
+        }
+
         criticalError("In config not found parameter " + name);
     }
 }
@@ -1375,6 +1387,8 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_43;
     parameterFunctions << &AppConfig::get_parameter_table_44;
     parameterFunctions << &AppConfig::get_parameter_table_45;
+    parameterFunctions << &AppConfig::get_parameter_table_46;
+    parameterFunctions << &AppConfig::get_parameter_table_47;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2298,6 +2312,42 @@ QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
     table << "clipperenable" << "bool" << "true";
     table << "clipperhotkey" << "QString" << "Ctrl+Alt+V";
     table << "clipperbranchid" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_46(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Ремонтная версия без новых ключей: миграция 44->45 была усечена
+    // лимитом апдейтера в 100 параметров, и conf.ini мог остаться на
+    // версии 45 без клиппер-ключей. Перепрогон добавляет недостающее
+    // дефолтами, имеющиеся значения не трогает
+    table << get_parameter_table_45(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_47(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Второй ремонтный перепрогон: conf.ini со штампом версии 46 из других
+    // веток может не содержать клиппер-ключей. Состав тот же, что в 45
+    table << get_parameter_table_46(false);
 
     if(withEndSignature)
         table << "0" << "0" << "0";

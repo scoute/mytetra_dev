@@ -370,6 +370,8 @@ private:
     QStringList get_parameter_table_43(bool withEndSignature=true);
     QStringList get_parameter_table_44(bool withEndSignature=true);
     QStringList get_parameter_table_45(bool withEndSignature=true);
+    QStringList get_parameter_table_46(bool withEndSignature=true);
+    QStringList get_parameter_table_47(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

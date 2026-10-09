@@ -230,12 +230,15 @@ void TreeItem::setField(QString name, QString value)
 
 // Установка данных напрямую - какие данные переданы, те и запомнятся
 // без всяких преобразований, без шифрации
-// Метод используется в одном месте - при инициализации дерева из XML файла
+// Метод используется в одном месте - при инициализации дерева из XML файла.
+// Неизвестные поля новых версий не роняют программу: запоминаются как есть
+// и возвращаются при сохранении (сейв пишет все поля без фильтра).
+// Использовать их нельзя, только донести до сейва
 void TreeItem::setAllFieldDirect(const QMap<QString, QString> nameAndValue)
 {
   foreach(QString name, nameAndValue.keys())
     if( !FixedParameters::itemFieldAvailableList.contains(name) )
-      criticalError("TreeItem::setFieldDirect() : Set unavailable field \""+ name +"\" to tree item");
+      qWarning() << "TreeItem::setAllFieldDirect() : unknown field" << name << "kept as-is";
 
   // Устанавливаются значения полей
   fieldsTable=nameAndValue; // Qt сам должен правильно сделать привязку к переданным данным и оставить их в памяти

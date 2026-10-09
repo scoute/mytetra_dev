@@ -35,6 +35,21 @@ private:
     int maxContentWidth;
 };
 
+
+// Элемент колонки количества в панели меток: сортировка числовая
+class CountTableWidgetItem : public QTableWidgetItem
+{
+public:
+
+    explicit CountTableWidgetItem(int count);
+
+    bool operator<(const QTableWidgetItem &other) const override;
+
+private:
+
+    int countValue;
+};
+
 class TagsPanel : public QWidget
 {
     Q_OBJECT

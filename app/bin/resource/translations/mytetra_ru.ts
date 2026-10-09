@@ -6077,6 +6077,11 @@ Please report about this problem to the developers.</source>
         <translation>Метка</translation>
     </message>
     <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="93"/>
+        <source>Count</source>
+        <translation>кол-во</translation>
+    </message>
+    <message>
         <source>Count</source>
         <translation type="vanished">Кол-во</translation>
     </message>

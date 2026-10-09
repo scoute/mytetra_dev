@@ -4662,6 +4662,11 @@ Please report about this problem to the developers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="93"/>
+        <source>Count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
         <source>Tags [%1]</source>
         <translation type="unfinished"></translation>

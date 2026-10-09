@@ -12,6 +12,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSslError>
 #include <QRegularExpression>
 #include <QSocketNotifier>
 #include <QTextCursor>
@@ -573,6 +574,11 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
                          QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply=manager.get(request);
+
+    // Как ручная докачка картинок (Downloader::onSslErrors): не ронять
+    // загрузку из-за сертификата, иначе остаются битые фреймы
+    QObject::connect(&manager, &QNetworkAccessManager::sslErrors,
+                     [](QNetworkReply *r, const QList<QSslError> &){ r->ignoreSslErrors(); });
 
     QEventLoop loop;
     QTimer timer;

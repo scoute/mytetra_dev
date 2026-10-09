@@ -13,6 +13,9 @@
     <file>resource/standartconfig/any/themes/default/pic/branch_more.png</file>
     <file>resource/standartconfig/any/themes/default/pic/branch_end.png</file>
   </qresource>
+  <qresource prefix="/">
+    <file>resource/standartconfig/any/themes/modern/stylesheet.css</file>
+  </qresource>
   <qresource prefix="/" about="QDarkStyleSheet project">
     <file>resource/standartconfig/any/themes/dark/stylesheet.css</file>
     

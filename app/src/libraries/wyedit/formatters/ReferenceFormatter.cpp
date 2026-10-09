@@ -385,15 +385,28 @@ void ReferenceFormatter::insertTitledLink(const QString &internalHref,
 
     QTextCursor cursor=textArea->textCursor();
 
-    // Пробелы по краям без условий: ссылка никогда не приклеится
-    // ни к слову, ни к другой ссылке. Двойной пробел при готовом
-    // разделителе безвреден и виден сразу
+    // Ведущий пробел только если слева не начало строки и не пробел:
+    // в начале строки он давал бы висячий отступ. Замыкающий всегда:
+    // ссылка никогда не приклеится к продолжению набора.
+    // Двойной пробел при готовом разделителе безвреден и виден сразу
     QTextCharFormat edgeFormat=textArea->textCursor().charFormat();
     edgeFormat.setAnchor(false);
     edgeFormat.setAnchorHref(QString());
     edgeFormat.clearForeground();
     edgeFormat.setFontUnderline(false);
-    cursor.insertText(QStringLiteral(" "), edgeFormat);
+
+    bool needLeading=true;
+    if(cursor.atBlockStart())
+        needLeading=false;
+    else if(cursor.position()>0)
+    {
+        const QChar prev=textArea->document()->characterAt(cursor.position()-1);
+        if(prev.isSpace() || prev.unicode()==0x2029)
+            needLeading=false;
+    }
+
+    if(needLeading)
+        cursor.insertText(QStringLiteral(" "), edgeFormat);
 
     cursor.insertText(title, linkFormat);
     cursor.insertText(QStringLiteral(" "), edgeFormat);

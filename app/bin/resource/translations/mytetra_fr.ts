@@ -992,6 +992,11 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <source>Can not insert note into unsorted_notes.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/Clipper.cpp" line="290"/>
+        <source>Read-only mode is enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ConfigDialog</name>
@@ -4437,6 +4442,16 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
         <source>Clip from clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
+        <source>Read-only mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
+        <source>Forbid any changes to the base</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

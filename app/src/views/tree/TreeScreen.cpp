@@ -1788,6 +1788,31 @@ void TreeScreen::treeEmptyControl(void)
 }
 
 
+// Глобальный режим только чтения: мутирующие действия гаснут,
+// копирование ветки, сворачивание и поиск разрешены
+void TreeScreen::setReadOnly(bool state)
+{
+ const QStringList mutatingActions=QStringList()
+  << "moveUpBranch" << "moveDownBranch"
+  << "insSubbranch" << "insBranch"
+  << "editBranch" << "delBranch"
+  << "cutBranch" << "pasteBranch" << "pasteSubbranch"
+  << "encryptBranch" << "decryptBranch"
+  << "setIcon";
+
+ for(const QString &name : mutatingActions)
+  if(actionList.contains(name))
+   actionList[name]->setEnabled(!state);
+
+ // Перетаскивание веток запрещено, раскрытие и выбор работают
+ if(knowTreeView!=nullptr)
+  {
+   knowTreeView->setDragEnabled(!state);
+   knowTreeView->setAcceptDrops(!state);
+  }
+}
+
+
 // Метод, следящий, не стало ли дерево содержать только незашифрованные записи
 // Если в дереве нет шифрования, задается вопрос, нужно ли сбросить пароль
 void TreeScreen::treeCryptControl(void)

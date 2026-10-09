@@ -142,7 +142,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом 100 миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_47(true);
+        QStringList actualTable=get_parameter_table_48(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -959,6 +959,18 @@ void AppConfig::set_recordHeaderVisible(bool state)
 }
 
 
+bool AppConfig::get_readOnly(void)
+{
+    return m_conf->value("readOnly", false).toBool();
+}
+
+
+void AppConfig::set_readOnly(bool state)
+{
+    m_conf->setValue("readOnly", state);
+}
+
+
 int AppConfig::get_clipperMaxImages(void)
 {
     return this->get_parameter("clipperMaxImages").toInt();
@@ -1389,6 +1401,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_45;
     parameterFunctions << &AppConfig::get_parameter_table_46;
     parameterFunctions << &AppConfig::get_parameter_table_47;
+    parameterFunctions << &AppConfig::get_parameter_table_48;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2348,6 +2361,25 @@ QStringList AppConfig::get_parameter_table_47(bool withEndSignature)
     // Второй ремонтный перепрогон: conf.ini со штампом версии 46 из других
     // веток может не содержать клиппер-ключей. Состав тот же, что в 45
     table << get_parameter_table_46(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_48(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 47
+    table << get_parameter_table_47(false);
+
+    // Глобальный режим только чтения (без изменений базы)
+    table << "readOnly" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

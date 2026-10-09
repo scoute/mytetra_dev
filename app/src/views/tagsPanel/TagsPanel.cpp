@@ -22,8 +22,10 @@
 #include "views/findInBaseScreen/FindScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
@@ -423,6 +425,10 @@ void TagsPanel::onTagsContextMenu(const QPoint &pos)
 // в существующее имя блокируется: это слияние, оно отложено
 void TagsPanel::onRenameTag(void)
 {
+    // Глобальный режим только чтения: теги не переименовываются
+    if(mytetraConfig.get_readOnly())
+        return;
+
     int row=tagsTable->currentRow();
     QTableWidgetItem *tagItem=(row>=0) ? tagsTable->item(row, 0) : nullptr;
 
@@ -513,6 +519,10 @@ void TagsPanel::onRenameTag(void)
 // Удаление тега из всех записей с диалогом подтверждения
 void TagsPanel::onDeleteTag(void)
 {
+    // Глобальный режим только чтения: теги не удаляются
+    if(mytetraConfig.get_readOnly())
+        return;
+
     int row=tagsTable->currentRow();
     QTableWidgetItem *tagItem=(row>=0) ? tagsTable->item(row, 0) : nullptr;
 

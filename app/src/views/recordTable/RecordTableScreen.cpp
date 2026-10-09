@@ -354,6 +354,13 @@ void RecordTableScreen::assembly(void)
 // (но не всех действий на панели инструментов,
 // так как на панели инструментов есть действия,
 // не оказывающие воздействия на записи)
+// Переприменить read-only редактора (для глобального режима без смены засветки)
+void RecordTableScreen::refreshEditorReadOnly(void)
+{
+ recordTableController->refreshEditorReadOnly();
+}
+
+
 void RecordTableScreen::disableAllActions(void)
 {
  actionAddNewToEnd->setEnabled(false);
@@ -488,6 +495,27 @@ void RecordTableScreen::toolsWidgetsUpdate()
 
  // Переключение между режимами выбора в списке записей возможно всегда
  actionSwitchSelectionMode->setEnabled(true);
+
+ // Глобальный режим только чтения: мутирующие действия недоступны.
+ // Копирование записей, печать, поиск и навигация разрешены
+ if(mytetraConfig.get_readOnly())
+  {
+   actionAddNewToEnd->setEnabled(false);
+   actionAddNewBefore->setEnabled(false);
+   actionAddNewAfter->setEnabled(false);
+   actionEditField->setEnabled(false);
+   actionBlock->setEnabled(false);
+   actionDelete->setEnabled(false);
+
+   actionCut->setEnabled(false);
+   actionPaste->setEnabled(false);
+
+   actionMoveUp->setEnabled(false);
+   actionMoveDn->setEnabled(false);
+  }
+
+ // Перетаскивание записей запрещено, выбор работает
+ recordTableController->getView()->setDragEnabled(!mytetraConfig.get_readOnly());
 }
 
 

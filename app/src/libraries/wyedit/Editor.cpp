@@ -997,6 +997,13 @@ void Editor::saveTextarea(void)
 {
   qDebug() << "Save textarea...";
 
+  // Глобальный режим только чтения: запись запрещена на последнем рубеже
+  if(mytetraConfig.get_readOnly())
+    {
+     qDebug() << "Save textarea blocked: read-only mode";
+     return;
+    }
+
   // Если запись была открыта на просмотр и изменена
   if(getWorkDirectory().length()!=0 &&
      getFileName().length()!=0 &&

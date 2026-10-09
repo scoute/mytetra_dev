@@ -118,6 +118,28 @@ void RecordTableController::clickToRecord(const QModelIndex &index)
 }
 
 
+// Переприменить read-only редактора по текущей записи и глобальному
+// флагу режима только чтения (для переключения режима без смены засветки)
+void RecordTableController::refreshEditorReadOnly(void)
+{
+  MetaEditor *edView=find_object<MetaEditor>("editorScreen");
+  if(edView==nullptr)
+    return;
+
+  RecordTableData *table=recordSourceModel->getTableData();
+  if(table==nullptr)
+    {
+     edView->setReadOnly(true);
+     return;
+    }
+
+  const int pos=table->getWorkPos();
+  const bool blocked=(pos>=0 && pos<table->size() && table->getField("block", pos)=="1");
+
+  edView->setReadOnly(blocked || mytetraConfig.get_readOnly());
+}
+
+
 void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
 {
   // Внимание! Наверно, всю эту логику следует перенести в MetaEditor. А здесь только получить данные из таблицы
@@ -131,7 +153,8 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   RecordTableData *table=recordSourceModel->getTableData();
 
   // Элементы управления редактором становятся доступными только при условии что запись не заблокирована на изменение
-  if( table->getField("block", pos)=="1" )
+  // и не включен глобальный режим только чтения
+  if( table->getField("block", pos)=="1" || mytetraConfig.get_readOnly() )
     edView->setReadOnly(true);
   else
     edView->setReadOnly(false);
@@ -719,9 +742,15 @@ void RecordTableController::editFieldContext(QModelIndex proxyIndex)
   editRecordWin.setField("id",    table->getField("id",     pos) );
   editRecordWin.setField("dir",   table->getField("dir",    pos) );
 
-  // Если запись заблокирована
-  if(table->getField("block",   pos)=="1")
-    editRecordWin.setReadOnly(true);
+  // Если запись заблокирована или включен глобальный режим только чтения.
+  // Во втором случае диалог тоже не открывается: проверять нечего
+  if(table->getField("block",   pos)=="1" || mytetraConfig.get_readOnly())
+    {
+     if(mytetraConfig.get_readOnly())
+      return;
+
+     editRecordWin.setReadOnly(true);
+    }
 
   int i=editRecordWin.exec();
   if(i==QDialog::Rejected)

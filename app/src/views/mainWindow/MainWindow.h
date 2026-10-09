@@ -134,6 +134,10 @@ private slots:
     void onViewHeaderToggled(bool checked);
     void onViewSecretColor(void);
 
+    // Меню Вид: глобальный режим только чтения
+    void onViewReadOnlyToggled(bool checked);
+    void applyReadOnly(void);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -237,6 +241,7 @@ private:
     // Меню Вид в menubar между Tools и Themes: шапка, цвет секрета
     QMenu *viewMenu=nullptr;
     QAction *viewHeaderAction=nullptr;
+    QAction *viewReadOnlyAction=nullptr;
 
     // Панель списка тегов. Переключается из меню Tools и горячей клавишей,
     // в свернутом виде места не занимает

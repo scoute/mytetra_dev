@@ -244,6 +244,11 @@ public:
     bool get_recordHeaderVisible(void);
     void set_recordHeaderVisible(bool state);
 
+    // Глобальный режим только чтения: запрещены любые изменения базы,
+    // разрешены навигация и просмотр. По умолчанию выключен
+    bool get_readOnly(void);
+    void set_readOnly(bool state);
+
     // Лимиты клиппера: сколько картинок забирать в одну заметку
     // и максимальный размер одной картинки в мегабайтах
     int get_clipperMaxImages(void);
@@ -372,6 +377,7 @@ private:
     QStringList get_parameter_table_45(bool withEndSignature=true);
     QStringList get_parameter_table_46(bool withEndSignature=true);
     QStringList get_parameter_table_47(bool withEndSignature=true);
+    QStringList get_parameter_table_48(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

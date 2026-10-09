@@ -6,11 +6,13 @@
 #include <QTimer>
 #include <QBrush>
 #include <QDebug>
+#include <QTextDocument>
 
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
 #include "libraries/VisitHistory.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "libraries/wyedit/Editor.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
@@ -107,6 +109,90 @@ void BacklinksPanel::setupLazySignals(void)
   // Смена записи: читаем id отложенно, редактор подгружается чуть позже
   connect(&visitHistory, &VisitHistory::visitLogged,
           this,          &BacklinksPanel::refreshDeferred);
+
+  setupLiveDocument();
+}
+
+
+void BacklinksPanel::setupLiveDocument(void)
+{
+  MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
+  if(metaEditor==nullptr)
+    return;
+
+  QTextDocument *doc=metaEditor->getTextareaDocument();
+  if(doc==nullptr || doc==liveDoc)
+    return;
+
+  if(liveDoc!=nullptr)
+    disconnect(liveDoc, nullptr, this, nullptr);
+
+  liveDoc=doc;
+  connect(liveDoc, &QTextDocument::contentsChanged,
+          this,    &BacklinksPanel::onLiveDocumentChanged);
+}
+
+
+void BacklinksPanel::onLiveDocumentChanged(void)
+{
+  if(!isVisible())
+    return;
+
+  // Дебаунс печати: полный refresh тут не нужен (там ensureIndexed
+  // по всей базе на каждое нажатие), достаточно перепарсить исходящие
+  if(outgoingPending)
+    return;
+
+  outgoingPending=true;
+  QTimer::singleShot(400, this, &BacklinksPanel::refreshOutgoingLive);
+}
+
+
+QSet<QString> BacklinksPanel::liveOutgoing(bool *ok) const
+{
+  if(ok!=nullptr)
+    *ok=false;
+
+  MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
+  if(metaEditor==nullptr)
+    return QSet<QString>();
+
+  const QString recordId=currentRecordId();
+  if(recordId.isEmpty())
+    return QSet<QString>();
+
+  QTextDocument *doc=metaEditor->getTextareaDocument();
+  if(doc==nullptr)
+    return QSet<QString>();
+
+  if(ok!=nullptr)
+    *ok=true;
+
+  return BacklinkIndex::parseOutgoing(recordId, doc->toHtml());
+}
+
+
+void BacklinksPanel::refreshOutgoingLive(void)
+{
+  outgoingPending=false;
+
+  if(!isVisible())
+    return;
+
+  setupLiveDocument();
+
+  const QString recordId=currentRecordId();
+  if(recordId.isEmpty())
+    return;
+
+  bool ok=false;
+  const QSet<QString> targets=liveOutgoing(&ok);
+  if(!ok)
+    return;
+
+  outgoingHeaderLabel->setText(tr("Outgoing links (%1)").arg(targets.size())+QStringLiteral(" \u21d2"));
+  outgoingList->clear();
+  fillList(outgoingList, targets);
 }
 
 
@@ -132,6 +218,7 @@ QString BacklinksPanel::currentRecordId(void) const
 void BacklinksPanel::refreshBacklinks(void)
 {
   setupLazySignals();
+  setupLiveDocument();
 
   incomingList->clear();
   outgoingList->clear();
@@ -159,7 +246,12 @@ void BacklinksPanel::refreshBacklinks(void)
   incomingHeaderLabel->setText(tr("Incoming links (%1)").arg(sources.size())+QStringLiteral(" \u21d0"));
   fillList(incomingList, sources);
 
-  QSet<QString> targets=BacklinkIndex::instance().outgoingOf(recordId);
+  // Исходящие живьем из документа: вставка через диалог видна сразу,
+  // до сейва. Редактор недоступен - откат на сохраненный индекс
+  bool liveOk=false;
+  QSet<QString> targets=liveOutgoing(&liveOk);
+  if(!liveOk)
+    targets=BacklinkIndex::instance().outgoingOf(recordId);
   outgoingHeaderLabel->setText(tr("Outgoing links (%1)").arg(targets.size())+QStringLiteral(" \u21d2"));
   fillList(outgoingList, targets);
 }

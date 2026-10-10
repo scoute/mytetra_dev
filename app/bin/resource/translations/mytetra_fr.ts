@@ -658,6 +658,24 @@ MyTetra must be running.</source>
     </message>
 </context>
 <context>
+    <name>AppConfigPage_Search</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="36"/>
+        <source>Embedded bar in note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="39"/>
+        <source>Separate window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="58"/>
+        <source>Find in note</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AppConfigPage_Synchro</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="39"/>
@@ -3496,52 +3514,57 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="44"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="45"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="46"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="47"/>
         <source>Appearance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="48"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="49"/>
         <source>Crypt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="50"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="51"/>
         <source>Synchro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="52"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
         <source>Notes area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="54"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="55"/>
         <source>Attaches</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="56"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="57"/>
         <source>Keyboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="58"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
         <source>History</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="60"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="61"/>
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="63"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="62"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="65"/>
         <source>Clipper</source>
         <translation type="unfinished"></translation>
     </message>

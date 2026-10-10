@@ -837,6 +837,24 @@ Stored password will be cleared if uncheck this checkbox.</source>
     </message>
 </context>
 <context>
+    <name>AppConfigPage_Search</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="36"/>
+        <source>Embedded bar in note</source>
+        <translation>Встроенная полоска в заметке</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="39"/>
+        <source>Separate window</source>
+        <translation>Отдельное окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="58"/>
+        <source>Find in note</source>
+        <translation>Поиск в заметке</translation>
+    </message>
+</context>
+<context>
     <name>AppConfigPage_Synchro</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="39"/>
@@ -4698,32 +4716,32 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation>Настройки MyTetra</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="44"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="45"/>
         <source>Main</source>
         <translation>Основные</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="46"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="47"/>
         <source>Appearance</source>
         <translation>Внешний вид</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="48"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="49"/>
         <source>Crypt</source>
         <translation>Шифрование</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="50"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="51"/>
         <source>Synchro</source>
         <translation>Синхронизация</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="52"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
         <source>Notes area</source>
         <translation>Список записей</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="62"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="65"/>
         <source>Clipper</source>
         <translation>Клиппер</translation>
     </message>
@@ -4732,22 +4750,27 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation type="vanished">Список записей</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="54"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="55"/>
         <source>Attaches</source>
         <translation>Прикрепленные файлы</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="56"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="57"/>
         <source>Keyboard</source>
         <translation>Клавиатура</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="58"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
         <source>History</source>
         <translation>История</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="60"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="61"/>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="63"/>
         <source>Misc</source>
         <translation>Разное</translation>
     </message>

@@ -1597,9 +1597,11 @@ void MainWindow::setIcon(void)
     connect(trayIcon, &QSystemTrayIcon::activated,
             this,     &MainWindow::iconActivated);
 
-    QIcon icon = IconHelper::get("logo.svg");
-    // В трее всегда классический логотип, независимо от темы
-    trayIcon->setIcon(QIcon(":/resource/pic/logo.svg"));
+    // Логотип всегда классический синий, независимо от темы:
+    // иначе смена темы меняет узнаваемость программы
+    // (зеленый/индиго в трее и таскбаре)
+    QIcon icon = QIcon(":/resource/pic/logo.svg");
+    trayIcon->setIcon(icon);
     setWindowIcon(icon);
 
     // tray_icon->setToolTip(iconComboBox->itemText(index));

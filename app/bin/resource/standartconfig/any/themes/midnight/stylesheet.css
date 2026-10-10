@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="6" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="7" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: глубокий фон #161822, панели #1e2029,
  * emerald-акцент #10b981, скругления 6px, тонкие разделители.
@@ -105,7 +105,7 @@ QMenu::indicator:non-exclusive:checked {
 
 /* Тулбар: темный, кнопки с hover-скруглением */
 QToolBar {
-  background: #1e2029;
+  background: #455364;
   border: none;
   border-bottom: 1px solid #2e3040;
   spacing: 2px;

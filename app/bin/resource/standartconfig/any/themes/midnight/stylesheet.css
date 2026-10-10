@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="4" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="5" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: глубокий фон #161822, панели #1e2029,
  * emerald-акцент #10b981, скругления 6px, тонкие разделители.
@@ -278,6 +278,13 @@ QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDateTimeEdit:disable
   background: #252734;
   color: #4b4e5e;
   border: 1px solid #262836;
+}
+
+/* Текст заметки: серая бумага как в авторской темной теме (#B0BAC7),
+ * иначе черный шрифт заметки не читается на черном фоне */
+QWidget[objectName="textArea"] {
+  background-color: #B0BAC7;
+  color: #000000;
 }
 
 QComboBox::drop-down {

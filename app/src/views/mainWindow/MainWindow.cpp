@@ -868,7 +868,6 @@ void MainWindow::initThemesMenu(void)
     translateNames["dark"]=tr("Dark");
     translateNames["modern"]=tr("Modern");
     translateNames["midnight"]=tr("Midnight");
-    translateNames["midnight-thin"]=tr("Midnight thin");
 
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);

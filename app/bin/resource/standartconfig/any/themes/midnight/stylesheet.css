@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="11" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="12" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: поверхности как в авторской dark (окна #19232D,
  * панели и шапки #455364), emerald-акцент #10b981,
@@ -219,11 +219,6 @@ QHeaderView::section {
   border: none;
   border-right: 1px solid #262836;
   padding: 0px 4px;
-}
-
-QHeaderView::section:checked {
-  background: #1a2e28;
-  color: #6ee7b7;
 }
 
 QTableCornerButton::section {

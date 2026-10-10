@@ -1,0 +1,547 @@
+/* <MyTetraStyle name="modern" version="8" about="Light modern theme with indigo accent"/> */
+
+/* Светлая современная тема: белые панели на светло-сером фоне,
+ * индиго-акцент #4F46E5, скругления 6px, тонкие разделители.
+ * Картинок нет, только CSS: относительных url() сознательно
+ * избегаем, стрелки дерева и индикаторы остаются нативными */
+
+/* Псевдо-правило для установки значений системной палитры */
+CustomPalette {
+  Window: #F8FAFC;
+  WindowText: #1E293B;
+  Base: #FFFFFF;
+  AlternateBase: #F1F5F9;
+  Text: #1E293B;
+  Button: #FFFFFF;
+  ButtonText: #1E293B;
+  BrightText: #EF4444;
+  Highlight: #4F46E5;
+  HighlightedText: #FFFFFF;
+  Link: #4F46E5;
+  PlaceholderText: #94A3B8;
+  ToolTipBase: #FFFFFF;
+  ToolTipText: #1E293B;
+}
+
+/* Убрать пунктирные рамки фокуса у всего */
+*:focus {
+  outline: 0;
+}
+
+QMainWindow, QDialog {
+  background: #F8FAFC;
+}
+
+/* Верхнее меню: белое, с нижней линией-разделителем */
+QMenuBar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 2px 4px;
+}
+
+QMenuBar::item {
+  background: transparent;
+  color: #334155;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+QMenuBar::item:selected {
+  background: #EEF2FF;
+  color: #312E81;
+}
+
+QMenuBar::item:pressed {
+  background: #E0E7FF;
+}
+
+QMenu {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+QMenu::item {
+  color: #1E293B;
+  padding: 4px 28px 4px 10px;
+  border-radius: 6px;
+}
+
+QMenu::item:selected {
+  background: #EEF2FF;
+  color: #312E81;
+}
+
+QMenu::item:disabled {
+  color: #94A3B8;
+}
+
+QMenu::separator {
+  height: 1px;
+  background: #E2E8F0;
+  margin: 2px 8px;
+}
+
+QMenu::indicator {
+  width: 16px;
+  height: 16px;
+}
+
+/* Квадрат чекбокса: без явной рамки видна только галка,
+ * и непонятно что пункт переключаемый */
+QMenu::indicator:non-exclusive:unchecked {
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  border-radius: 4px;
+}
+
+QMenu::indicator:non-exclusive:checked {
+  border: 1px solid #4F46E5;
+  background: #EEF2FF;
+  border-radius: 4px;
+  image: url("themes/modern/pic/menu_check.svg");
+}
+
+/* Тулбар: белый, кнопки с hover-скруглением */
+QToolBar {
+  background: #FFFFFF;
+  border: none;
+  border-bottom: 1px solid #E2E8F0;
+  spacing: 2px;
+  padding: 2px;
+}
+
+QToolBar::separator {
+  background: #E2E8F0;
+  width: 1px;
+  margin: 2px 4px;
+}
+
+QToolButton {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 3px;
+  color: #334155;
+}
+
+QToolButton:hover {
+  background: #F1F5F9;
+}
+
+QToolButton:pressed {
+  background: #E0E7FF;
+}
+
+QToolButton:checked {
+  background: #E0E7FF;
+  color: #312E81;
+}
+
+QToolButton:disabled {
+  color: #CBD5E1;
+}
+
+/* Сегмент стрелки выпадашки (MenuButtonPopup): без явной заливки
+ * остается незалитым и выглядит черной пилюлей, поэтому красим
+ * в тон тулбара. Сама стрелка остается нативной */
+QToolButton::menu-button {
+  background: #FFFFFF;
+  border: none;
+  border-left: 1px solid #E2E8F0;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  width: 6px;
+}
+
+QToolButton::menu-button:hover {
+  background: #F1F5F9;
+}
+
+QToolButton::menu-button:pressed {
+  background: #E0E7FF;
+}
+
+/* Дерево веток: белое, выбранная ветка залита светло-индиго */
+QTreeView {
+  background: #FFFFFF;
+  alternate-background-color: #FFFFFF;
+  color: #1E293B;
+  border: none;
+  outline: 0;
+}
+
+QTreeView::item {
+  padding: 2px 2px;
+  border: none;
+}
+
+QTreeView::item:hover {
+  background: #F1F5F9;
+}
+
+QTreeView::item:selected {
+  background: #E0E7FF;
+  color: #1E293B;
+}
+
+QTreeView::item:selected:!active {
+  background: #E0E7FF;
+  color: #1E293B;
+}
+
+/* Таблицы (записи, метки): сетка едва видна, шапка серая */
+QTableView, QListView {
+  background: #FFFFFF;
+  alternate-background-color: #F8FAFC;
+  color: #1E293B;
+  border: none;
+  outline: 0;
+  gridline-color: #F1F5F9;
+}
+
+QTableView::item:selected, QListView::item:selected {
+  background: #E0E7FF;
+  color: #1E293B;
+}
+
+QTableView::item:selected:!active, QListView::item:selected:!active {
+  background: #E0E7FF;
+  color: #1E293B;
+}
+
+QHeaderView::section {
+  background: #F8FAFC;
+  color: #64748B;
+  border: none;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #F1F5F9;
+  padding: 3px 6px;
+}
+
+QHeaderView::section:checked {
+  background: #EEF2FF;
+  color: #312E81;
+}
+
+QTableCornerButton::section {
+  background: #F8FAFC;
+  border: none;
+}
+
+/* Вкладки редактора и диалогов */
+QTabWidget::pane {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0 8px 8px 8px;
+}
+
+QTabBar::tab {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+  border-bottom: none;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  padding: 4px 10px;
+  margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+  background: #FFFFFF;
+  color: #312E81;
+}
+
+QTabBar::tab:hover:!selected {
+  background: #E2E8F0;
+  color: #334155;
+}
+
+/* Поля ввода: белые со скруглением, фокус индиго */
+QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QTextEdit {
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 3px 6px;
+  selection-background-color: #C7D2FE;
+  selection-color: #1E293B;
+}
+
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus, QTextEdit:focus {
+  border: 1px solid #4F46E5;
+}
+
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDateTimeEdit:disabled {
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+QComboBox::drop-down {
+  border: none;
+  width: 18px;
+}
+
+QComboBox QAbstractItemView {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  selection-background-color: #EEF2FF;
+  selection-color: #312E81;
+  outline: 0;
+}
+
+/* Кнопки: белые с рамкой, акцентная залита индиго */
+QPushButton {
+  background: #FFFFFF;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+QPushButton:hover {
+  background: #EEF2FF;
+  border: 1px solid #4F46E5;
+  color: #312E81;
+}
+
+QPushButton:pressed {
+  background: #E0E7FF;
+}
+
+QPushButton:disabled {
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+QPushButton[default="true"] {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: 1px solid #4F46E5;
+}
+
+QPushButton[default="true"]:hover {
+  background: #4338CA;
+  border: 1px solid #4338CA;
+  color: #FFFFFF;
+}
+
+/* Кнопки полоски поиска в заметке: ужатые отступы вместо широких
+ * нативных, как в светлой теме по умолчанию */
+EditorFindBar QPushButton {
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+QCheckBox, QRadioButton {
+  color: #334155;
+  spacing: 6px;
+  padding: 2px;
+}
+
+QCheckBox:disabled, QRadioButton:disabled {
+  color: #94A3B8;
+}
+
+/* Квадраты чекбоксов и кружки радиокнопок в стиле темы.
+ * Галка и точка — картинками, иначе своя рамка съедает
+ * нативный знак как в QMenu */
+QCheckBox::indicator, QRadioButton::indicator {
+  width: 16px;
+  height: 16px;
+}
+
+QCheckBox::indicator:unchecked {
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+  border: 1px solid #4F46E5;
+  background: #EEF2FF;
+  border-radius: 4px;
+  image: url("themes/modern/pic/menu_check.svg");
+}
+
+QCheckBox::indicator:disabled {
+  border: 1px solid #E2E8F0;
+  background: #F1F5F9;
+}
+
+QRadioButton::indicator:unchecked {
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  border-radius: 8px;
+}
+
+QRadioButton::indicator:checked {
+  border: 1px solid #4F46E5;
+  background: #EEF2FF;
+  border-radius: 8px;
+  image: url("themes/modern/pic/menu_dot.svg");
+}
+
+QRadioButton::indicator:disabled {
+  border: 1px solid #E2E8F0;
+  background: #F1F5F9;
+}
+
+QGroupBox {
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  margin-top: 14px;
+  padding-top: 8px;
+  background: #FFFFFF;
+}
+
+QGroupBox::title {
+  color: #64748B;
+  subcontrol-origin: margin;
+  subcontrol-position: top left;
+  left: 10px;
+  padding: 0 4px;
+}
+
+/* Доки: серый заголовок приглушенным текстом */
+QDockWidget {
+  color: #334155;
+}
+
+QDockWidget::title {
+  background: #F8FAFC;
+  color: #64748B;
+  padding: 3px 6px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+QDockWidget::float-button, QDockWidget::close-button {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+}
+
+QDockWidget::float-button:hover, QDockWidget::close-button:hover {
+  background: #E2E8F0;
+}
+
+/* Сплиттеры: тонкая серая ручка */
+QSplitter::handle {
+  background: #E2E8F0;
+}
+
+QSplitter::handle:horizontal {
+  width: 1px;
+}
+
+QSplitter::handle:vertical {
+  height: 1px;
+}
+
+/* Тонкие современные скроллбары */
+QScrollBar:horizontal, QScrollBar:vertical {
+  background: transparent;
+  border: none;
+}
+
+QScrollBar:horizontal {
+  height: 10px;
+}
+
+QScrollBar:vertical {
+  width: 10px;
+}
+
+QScrollBar::handle:horizontal, QScrollBar::handle:vertical {
+  background: #CBD5E1;
+  border-radius: 5px;
+  min-width: 30px;
+  min-height: 30px;
+  margin: 1px;
+}
+
+QScrollBar::handle:horizontal:hover, QScrollBar::handle:vertical:hover {
+  background: #94A3B8;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal,
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+  background: none;
+  border: none;
+  width: 0;
+  height: 0;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+  background: none;
+}
+
+QStatusBar {
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  color: #64748B;
+}
+
+QStatusBar::item {
+  border: none;
+}
+
+QToolTip {
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+QProgressBar {
+  background: #E2E8F0;
+  border: none;
+  border-radius: 4px;
+  height: 8px;
+  text-align: center;
+  color: #64748B;
+}
+
+QProgressBar::chunk {
+  background: #4F46E5;
+  border-radius: 4px;
+}
+
+/* Слайдер отступа в редакторе: тонкая дорожка, круглая ручка */
+QSlider::groove:horizontal {
+  background: #E2E8F0;
+  height: 4px;
+  border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+  background: #FFFFFF;
+  border: 2px solid #4F46E5;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0;
+  border-radius: 7px;
+}
+
+QSlider::groove:vertical {
+  background: #E2E8F0;
+  width: 4px;
+  border-radius: 2px;
+}
+
+QSlider::handle:vertical {
+  background: #FFFFFF;
+  border: 2px solid #4F46E5;
+  width: 12px;
+  height: 12px;
+  margin: 0 -6px;
+  border-radius: 7px;
+}

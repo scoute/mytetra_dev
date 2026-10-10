@@ -319,6 +319,16 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation>Темная</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="73"/>
+        <source>Modern</source>
+        <translation>Современная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="74"/>
+        <source>Midnight</source>
+        <translation>Полуночная</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
         <source>Run MyTetra in a minimized window</source>
         <translation>Запускать MyTetra в свернутом окне</translation>
@@ -4009,6 +4019,16 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="857"/>
         <source>Dark</source>
         <translation>Темная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="868"/>
+        <source>Modern</source>
+        <translation>Современная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="869"/>
+        <source>Midnight</source>
+        <translation>Полуночная</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="150"/>

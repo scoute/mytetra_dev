@@ -865,6 +865,8 @@ void MainWindow::initThemesMenu(void)
     QMap<QString, QString> translateNames;
     translateNames["default"]=tr("Default");
     translateNames["dark"]=tr("Dark");
+    translateNames["modern"]=tr("Modern");
+    translateNames["midnight"]=tr("Midnight");
 
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);

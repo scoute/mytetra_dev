@@ -228,6 +228,16 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="73"/>
+        <source>Modern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="74"/>
+        <source>Midnight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="110"/>
         <source>Icon size</source>
         <translation type="unfinished"></translation>
@@ -3152,6 +3162,16 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="857"/>
         <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="868"/>
+        <source>Modern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="869"/>
+        <source>Midnight</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

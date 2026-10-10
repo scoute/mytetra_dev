@@ -63,9 +63,6 @@ MetaEditor::~MetaEditor(void)
 
 void MetaEditor::setupSignals(void)
 {
-  connect(this,                             &MetaEditor::setFindTextSignal,
-          globalParameters.getFindScreen(), &FindScreen::setFindText);
-
   connect(recordUrl, &QLabel::linkActivated,
           this,      &MetaEditor::onClickToUrl);
 }
@@ -514,7 +511,7 @@ void MetaEditor::onClickToTag(const QString &tagNum)
  qDebug() << "Tag text " << tag;
 
  // -----------------------------
- // Запуск поиска по тексту метки
+ // Запуск поиска по метке только в поле тегов
  // -----------------------------
 
  // Определяется ссылка на виджет поиска
@@ -524,7 +521,7 @@ void MetaEditor::onClickToTag(const QString &tagNum)
  if(findScreen->isVisible()==false)
   findScreen->widgetShow();
 
- emit setFindTextSignal(tag);
+ findScreen->setFindTag(tag);
 }
 
 

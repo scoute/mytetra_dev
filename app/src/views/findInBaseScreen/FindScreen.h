@@ -46,6 +46,11 @@ public slots:
     void findClicked(void);
     void setFindText(QString text);
 
+    // Поиск кликнутого тега только в поле тегов: остальные галки
+    // на время поиска снимаются и возвращаются обратно, иначе клик
+    // ищет слово везде (заголовок, текст...), что неожиданно
+    void setFindTag(QString tag);
+
     // Разбить поле тегов записи на отдельные теги: разделители запятая
     // и точка с запятой, пробелы по краям отбрасываются
     static QStringList splitRecordTags(const QString &tagsField);

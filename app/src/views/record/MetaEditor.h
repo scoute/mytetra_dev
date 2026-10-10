@@ -24,10 +24,6 @@ public slots:
  void onClickToTag(const QString &tagNum);
  void onClickToUrl(const QString &link);
 
-signals:
- // Сигнал вырабатывается при клике на текстовой метке
- void setFindTextSignal(QString text);
-
 public:
  MetaEditor(QWidget *parent=nullptr);
  ~MetaEditor(void);

@@ -369,7 +369,7 @@ void TagsPanel::onFilterChanged(const QString &text)
 }
 
 
-// Двойной клик по тегу запускает глобальный поиск как клик по тегу в заметке
+// Двойной клик по тегу ищет только в поле тегов, а не слово везде
 void TagsPanel::onTagClicked(int row, int column)
 {
     Q_UNUSED(column);
@@ -387,7 +387,7 @@ void TagsPanel::onTagClicked(int row, int column)
     if(!findScreen->isVisible())
         findScreen->widgetShow();
 
-    findScreen->setFindText(tagItem->text());
+    findScreen->setFindTag(tagItem->text());
 }
 
 

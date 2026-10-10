@@ -380,6 +380,74 @@ void FindScreen::setFindText(QString text)
 }
 
 
+// Поиск кликнутого тега только в поле тегов.
+// Галки пользователя запоминаются, на время поиска остается только
+// "Теги", потом все возвращается. Сигналы чекбоксов блокируются:
+// иначе временное переключение затрет сохраненные настройки поиска.
+// Сам поиск синхронный (setFindText дергает findClicked напрямую),
+// поэтому возврат после него безопасен
+void FindScreen::setFindTag(QString tag)
+{
+    bool savedName=findInName->isChecked();
+    bool savedAuthor=findInAuthor->isChecked();
+    bool savedUrl=findInUrl->isChecked();
+    bool savedTags=findInTags->isChecked();
+    bool savedText=findInText->isChecked();
+    bool savedNameItem=findInNameItem->isChecked();
+    bool savedAttach=findInAttach->isChecked();
+
+    findInName->blockSignals(true);
+    findInAuthor->blockSignals(true);
+    findInUrl->blockSignals(true);
+    findInTags->blockSignals(true);
+    findInText->blockSignals(true);
+    findInNameItem->blockSignals(true);
+    findInAttach->blockSignals(true);
+
+    findInName->setChecked(false);
+    findInAuthor->setChecked(false);
+    findInUrl->setChecked(false);
+    findInTags->setChecked(true);
+    findInText->setChecked(false);
+    findInNameItem->setChecked(false);
+    findInAttach->setChecked(false);
+
+    findInName->blockSignals(false);
+    findInAuthor->blockSignals(false);
+    findInUrl->blockSignals(false);
+    findInTags->blockSignals(false);
+    findInText->blockSignals(false);
+    findInNameItem->blockSignals(false);
+    findInAttach->blockSignals(false);
+
+    setFindText(tag);
+
+    findInName->blockSignals(true);
+    findInAuthor->blockSignals(true);
+    findInUrl->blockSignals(true);
+    findInTags->blockSignals(true);
+    findInText->blockSignals(true);
+    findInNameItem->blockSignals(true);
+    findInAttach->blockSignals(true);
+
+    findInName->setChecked(savedName);
+    findInAuthor->setChecked(savedAuthor);
+    findInUrl->setChecked(savedUrl);
+    findInTags->setChecked(savedTags);
+    findInText->setChecked(savedText);
+    findInNameItem->setChecked(savedNameItem);
+    findInAttach->setChecked(savedAttach);
+
+    findInName->blockSignals(false);
+    findInAuthor->blockSignals(false);
+    findInUrl->blockSignals(false);
+    findInTags->blockSignals(false);
+    findInText->blockSignals(false);
+    findInNameItem->blockSignals(false);
+    findInAttach->blockSignals(false);
+}
+
+
 // Разбить поле тегов записи на отдельные теги: разделители запятая
 // и точка с запятой, пробелы по краям отбрасываются
 QStringList FindScreen::splitRecordTags(const QString &tagsField)

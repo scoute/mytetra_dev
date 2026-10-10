@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="5" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="6" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: глубокий фон #161822, панели #1e2029,
  * emerald-акцент #10b981, скругления 6px, тонкие разделители.
@@ -36,13 +36,13 @@ QMainWindow, QDialog {
 QMenuBar {
   background: #1e2029;
   border-bottom: 1px solid #2e3040;
-  padding: 2px 6px;
+  padding: 2px 4px;
 }
 
 QMenuBar::item {
   background: transparent;
   color: #a0a3b1;
-  padding: 5px 10px;
+  padding: 3px 8px;
   border-radius: 6px;
 }
 
@@ -59,12 +59,12 @@ QMenu {
   background: #252734;
   border: 1px solid #2e3040;
   border-radius: 8px;
-  padding: 4px;
+  padding: 2px;
 }
 
 QMenu::item {
   color: #e4e6eb;
-  padding: 6px 28px 6px 12px;
+  padding: 4px 28px 4px 10px;
   border-radius: 6px;
 }
 
@@ -80,7 +80,7 @@ QMenu::item:disabled {
 QMenu::separator {
   height: 1px;
   background: #2e3040;
-  margin: 4px 8px;
+  margin: 2px 8px;
 }
 
 QMenu::indicator {
@@ -109,20 +109,20 @@ QToolBar {
   border: none;
   border-bottom: 1px solid #2e3040;
   spacing: 2px;
-  padding: 4px;
+  padding: 2px;
 }
 
 QToolBar::separator {
   background: #2e3040;
   width: 1px;
-  margin: 4px 6px;
+  margin: 2px 4px;
 }
 
 QToolButton {
   background: transparent;
   border: none;
   border-radius: 6px;
-  padding: 5px;
+  padding: 3px;
   color: #a0a3b1;
 }
 
@@ -174,7 +174,7 @@ QTreeView {
 }
 
 QTreeView::item {
-  padding: 4px 2px;
+  padding: 2px 2px;
   border: none;
 }
 
@@ -218,7 +218,7 @@ QHeaderView::section {
   border: none;
   border-bottom: 1px solid #2e3040;
   border-right: 1px solid #262836;
-  padding: 5px 8px;
+  padding: 3px 6px;
 }
 
 QHeaderView::section:checked {
@@ -245,7 +245,7 @@ QTabBar::tab {
   border-bottom: none;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
-  padding: 6px 14px;
+  padding: 4px 10px;
   margin-right: 2px;
 }
 
@@ -265,7 +265,7 @@ QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QTextEdit {
   color: #e4e6eb;
   border: 1px solid #2e3040;
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 3px 6px;
   selection-background-color: #065f46;
   selection-color: #e4e6eb;
 }
@@ -289,7 +289,7 @@ QWidget[objectName="textArea"] {
 
 QComboBox::drop-down {
   border: none;
-  width: 22px;
+  width: 18px;
 }
 
 QComboBox QAbstractItemView {
@@ -307,7 +307,7 @@ QPushButton {
   color: #a0a3b1;
   border: 1px solid #323544;
   border-radius: 6px;
-  padding: 5px 14px;
+  padding: 4px 10px;
 }
 
 QPushButton:hover {
@@ -349,7 +349,7 @@ EditorFindBar QPushButton {
 
 QCheckBox, QRadioButton {
   color: #a0a3b1;
-  spacing: 8px;
+  spacing: 6px;
   padding: 2px;
 }
 
@@ -425,7 +425,7 @@ QDockWidget {
 QDockWidget::title {
   background: #161822;
   color: #6b6e7d;
-  padding: 5px 8px;
+  padding: 3px 6px;
   border-bottom: 1px solid #2e3040;
 }
 

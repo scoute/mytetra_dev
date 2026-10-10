@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="10" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="11" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: поверхности как в авторской dark (окна #19232D,
  * панели и шапки #455364), emerald-акцент #10b981,
@@ -445,17 +445,17 @@ QDockWidget::float-button:hover, QDockWidget::close-button:hover {
   background: #2a2d3a;
 }
 
-/* Сплиттеры: тонкая темная ручка */
+/* Сплиттеры: серая ручка 2px, тоньше теряется на темном фоне */
 QSplitter::handle {
   background: #455364;
 }
 
 QSplitter::handle:horizontal {
-  width: 1px;
+  width: 2px;
 }
 
 QSplitter::handle:vertical {
-  height: 1px;
+  height: 2px;
 }
 
 /* Тонкие темные скроллбары */

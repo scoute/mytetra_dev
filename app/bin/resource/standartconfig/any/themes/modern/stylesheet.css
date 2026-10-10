@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="modern" version="8" about="Light modern theme with indigo accent"/> */
+/* <MyTetraStyle name="modern" version="9" about="Light modern theme with indigo accent"/> */
 
 /* Светлая современная тема: белые панели на светло-сером фоне,
  * индиго-акцент #4F46E5, скругления 6px, тонкие разделители.
@@ -431,17 +431,17 @@ QDockWidget::float-button:hover, QDockWidget::close-button:hover {
   background: #E2E8F0;
 }
 
-/* Сплиттеры: тонкая серая ручка */
+/* Сплиттеры: серая ручка 2px, 1px теряется на светлом фоне */
 QSplitter::handle {
   background: #E2E8F0;
 }
 
 QSplitter::handle:horizontal {
-  width: 1px;
+  width: 2px;
 }
 
 QSplitter::handle:vertical {
-  height: 1px;
+  height: 2px;
 }
 
 /* Тонкие современные скроллбары */

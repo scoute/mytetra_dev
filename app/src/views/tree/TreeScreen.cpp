@@ -453,6 +453,10 @@ void TreeScreen::assembly(void)
  treeScreenLayout=new QVBoxLayout();
  treeScreenLayout->setObjectName("treescreen_QVBoxLayout");
 
+// Зазора между тулбаром и верхней веткой нет: штатный spacing
+// раскладки давал полосу пустоты под тулбаром
+ treeScreenLayout->setSpacing(0);
+
  treeScreenLayout->addWidget(toolsLine);
  treeScreenLayout->addWidget(knowTreeView);
 

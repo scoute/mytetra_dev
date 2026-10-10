@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="8" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="9" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: поверхности как в авторской dark (окна #19232D,
  * панели и шапки #455364), emerald-акцент #10b981,
@@ -36,13 +36,13 @@ QMainWindow, QDialog {
 QMenuBar {
   background: #455364;
   border-bottom: 1px solid #2e3040;
-  padding: 2px 4px;
+  padding: 1px;
 }
 
 QMenuBar::item {
   background: transparent;
   color: #e4e6eb;
-  padding: 3px 8px;
+  padding: 3px;
   border-radius: 6px;
 }
 
@@ -107,22 +107,23 @@ QMenu::indicator:non-exclusive:checked {
 QToolBar {
   background: #455364;
   border: none;
-  border-bottom: 1px solid #2e3040;
   spacing: 2px;
-  padding: 2px;
+  padding: 1px;
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 
 QToolBar::separator {
   background: #2e3040;
   width: 1px;
-  margin: 2px 4px;
+  margin: 0px 2px;
 }
 
 QToolButton {
   background: transparent;
   border: none;
   border-radius: 6px;
-  padding: 3px;
+  padding: 2px;
   color: #a0a3b1;
 }
 
@@ -174,7 +175,7 @@ QTreeView {
 }
 
 QTreeView::item {
-  padding: 2px 2px;
+  padding: 0px 2px;
   border: none;
 }
 
@@ -216,9 +217,8 @@ QHeaderView::section {
   background: #455364;
   color: #e4e6eb;
   border: none;
-  border-bottom: 1px solid #2e3040;
   border-right: 1px solid #262836;
-  padding: 3px 6px;
+  padding: 0px 4px;
 }
 
 QHeaderView::section:checked {

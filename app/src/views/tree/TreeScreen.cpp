@@ -457,7 +457,7 @@ void TreeScreen::assembly(void)
  // Границы убираются, так как данный объект будет использоваться как виджет
  QLayout *lt;
  lt=layout();
- lt->setContentsMargins(0,2,0,0);
+ lt->setContentsMargins(0,1,0,0);
 }
 
 

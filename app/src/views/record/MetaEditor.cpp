@@ -186,6 +186,10 @@ void MetaEditor::metaAssembly(void)
 
   gridLayout->setColumnStretch(1,1);
 
+  // Вертикальные зазоры по 1px: штатный spacing давал полосы
+  // пустоты между тулбаром и текстом заметки
+  gridLayout->setVerticalSpacing(1);
+
   gridLayout->setContentsMargins(0,0,0,0);
 
   m_extendEditorScreen->setLayout(gridLayout);

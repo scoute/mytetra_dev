@@ -196,6 +196,11 @@ protected:
     // Список слов, которые нужно искать
     QStringList searchWordList;
 
+    // Разовый режим строгого совпадения тега (клик по тегу):
+    // ищется тег целиком без учета регистра, подстроки не катят
+    bool exactTagMode;
+    QString exactTag;
+
     int totalProgressCounter;
 
     int cancelFlag;

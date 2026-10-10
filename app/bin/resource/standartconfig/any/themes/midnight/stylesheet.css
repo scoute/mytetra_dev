@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="1" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="3" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: глубокий фон #161822, панели #1e2029,
  * emerald-акцент #10b981, скругления 6px, тонкие разделители.
@@ -86,6 +86,21 @@ QMenu::separator {
 QMenu::indicator {
   width: 16px;
   height: 16px;
+}
+
+/* Квадрат чекбокса: без явной рамки видна только галка,
+ * и непонятно что пункт переключаемый */
+QMenu::indicator:non-exclusive:unchecked {
+  border: 1px solid #3a3d4e;
+  background: #161822;
+  border-radius: 4px;
+}
+
+QMenu::indicator:non-exclusive:checked {
+  border: 1px solid #10b981;
+  background: #1a2e28;
+  border-radius: 4px;
+  image: url("themes/midnight/pic/menu_check.svg");
 }
 
 /* Тулбар: темный, кнопки с hover-скруглением */

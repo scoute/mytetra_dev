@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="3" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="4" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: глубокий фон #161822, панели #1e2029,
  * emerald-акцент #10b981, скругления 6px, тонкие разделители.
@@ -348,6 +348,50 @@ QCheckBox, QRadioButton {
 
 QCheckBox:disabled, QRadioButton:disabled {
   color: #4b4e5e;
+}
+
+/* Квадраты чекбоксов и кружки радиокнопок: нативные теряются
+ * на темном фоне, рисуются явно. Галка и точка — картинками,
+ * иначе своя рамка съедает нативный знак как в QMenu */
+QCheckBox::indicator, QRadioButton::indicator {
+  width: 16px;
+  height: 16px;
+}
+
+QCheckBox::indicator:unchecked {
+  border: 1px solid #3a3d4e;
+  background: #161822;
+  border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+  border: 1px solid #10b981;
+  background: #1a2e28;
+  border-radius: 4px;
+  image: url("themes/midnight/pic/menu_check.svg");
+}
+
+QCheckBox::indicator:disabled {
+  border: 1px solid #262836;
+  background: #252734;
+}
+
+QRadioButton::indicator:unchecked {
+  border: 1px solid #3a3d4e;
+  background: #161822;
+  border-radius: 8px;
+}
+
+QRadioButton::indicator:checked {
+  border: 1px solid #10b981;
+  background: #1a2e28;
+  border-radius: 8px;
+  image: url("themes/midnight/pic/menu_dot.svg");
+}
+
+QRadioButton::indicator:disabled {
+  border: 1px solid #262836;
+  background: #252734;
 }
 
 QGroupBox {

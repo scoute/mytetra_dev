@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="modern" version="6" about="Light modern theme with indigo accent"/> */
+/* <MyTetraStyle name="modern" version="7" about="Light modern theme with indigo accent"/> */
 
 /* Светлая современная тема: белые панели на светло-сером фоне,
  * индиго-акцент #4F46E5, скругления 6px, тонкие разделители.
@@ -347,6 +347,50 @@ QCheckBox, QRadioButton {
 
 QCheckBox:disabled, QRadioButton:disabled {
   color: #94A3B8;
+}
+
+/* Квадраты чекбоксов и кружки радиокнопок в стиле темы.
+ * Галка и точка — картинками, иначе своя рамка съедает
+ * нативный знак как в QMenu */
+QCheckBox::indicator, QRadioButton::indicator {
+  width: 16px;
+  height: 16px;
+}
+
+QCheckBox::indicator:unchecked {
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+  border: 1px solid #4F46E5;
+  background: #EEF2FF;
+  border-radius: 4px;
+  image: url("themes/modern/pic/menu_check.svg");
+}
+
+QCheckBox::indicator:disabled {
+  border: 1px solid #E2E8F0;
+  background: #F1F5F9;
+}
+
+QRadioButton::indicator:unchecked {
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  border-radius: 8px;
+}
+
+QRadioButton::indicator:checked {
+  border: 1px solid #4F46E5;
+  background: #EEF2FF;
+  border-radius: 8px;
+  image: url("themes/modern/pic/menu_dot.svg");
+}
+
+QRadioButton::indicator:disabled {
+  border: 1px solid #E2E8F0;
+  background: #F1F5F9;
 }
 
 QGroupBox {

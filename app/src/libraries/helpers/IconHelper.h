@@ -5,6 +5,7 @@
 #include <QIconEngine>
 #include <QPixmap>
 #include <QPainter>
+#include <QColor>
 
 
 // Выдача иконок из набора текущей темы оформления.
@@ -27,6 +28,12 @@ public:
     // в момент отрисовки, поэтому переключение темы применяется
     // вживую без перезапуска и без обновления каждого виджета
     static QIcon get(const QString &iconFileName);
+
+    // Иконка цвета текста/фона (кнопки A с полосой): глиф из набора
+    // текущей темы плюс полоса цвета внизу (стиль LibreOffice).
+    // В отличие от запекания в QPixmap, тема резолвится при каждой
+    // отрисовке, поэтому переключение темы не оставляет старый глиф
+    static QIcon colorStripIcon(const QString &iconFileName, const QColor &stripColor);
 
 private:
 
@@ -57,6 +64,37 @@ private:
     QIcon currentIcon(void) const;
 
     QString iconFileName;
+};
+
+
+ // Движок кнопок цвета текста/фона: тематический глиф плюс полоса
+// текущего цвета внизу значка. Имя файла хранится, реальный файл
+// подставляется из набора текущей темы при каждой отрисовке,
+// поэтому переключение темы применяется без пересоздания иконки
+class ColorStripIconEngine : public QIconEngine
+{
+public:
+
+    explicit ColorStripIconEngine(const QString &iconFileName,
+                                  const QColor &stripColor);
+    virtual ~ColorStripIconEngine(void) {}
+
+    virtual void paint(QPainter *painter, const QRect &rect,
+                       QIcon::Mode mode, QIcon::State state) override;
+    virtual QPixmap pixmap(const QSize &size,
+                           QIcon::Mode mode, QIcon::State state) override;
+    virtual QSize actualSize(const QSize &size,
+                             QIcon::Mode mode, QIcon::State state) override;
+    virtual QIconEngine *clone(void) const override;
+    virtual QString key(void) const override;
+
+private:
+
+    QPixmap render(const QSize &size,
+                   QIcon::Mode mode, QIcon::State state) const;
+
+    QString iconFileName;
+    QColor stripColor;
 };
 
 #endif // _ICONHELPER_H_

@@ -48,6 +48,12 @@ QIcon IconHelper::get(const QString &iconFileName)
 }
 
 
+QIcon IconHelper::colorStripIcon(const QString &iconFileName, const QColor &stripColor)
+{
+    return QIcon(new ColorStripIconEngine(iconFileName, stripColor));
+}
+
+
 ThemeIconEngine::ThemeIconEngine(const QString &iconFileName)
     : iconFileName(iconFileName)
 {
@@ -104,4 +110,79 @@ QIconEngine *ThemeIconEngine::clone(void) const
 QString ThemeIconEngine::key(void) const
 {
     return "ThemeIcon:"+iconFileName+":"+IconHelper::themeIconSet();
+}
+
+
+ColorStripIconEngine::ColorStripIconEngine(const QString &iconFileName,
+                                           const QColor &stripColor)
+    : iconFileName(iconFileName),
+      stripColor(stripColor)
+{
+
+}
+
+
+QPixmap ColorStripIconEngine::render(const QSize &size,
+                                     QIcon::Mode mode, QIcon::State state) const
+{
+    if(size.isEmpty())
+        return QPixmap();
+
+    QPixmap result(size);
+    result.fill(Qt::transparent);
+
+    QPainter painter(&result);
+
+    // Глиф из набора текущей темы (резолвится здесь, а не в конструкторе)
+    QIcon glyph(IconHelper::resolvedPath(iconFileName));
+    QPixmap glyphPixmap=glyph.pixmap(size, mode, state);
+    painter.drawPixmap((size.width()-glyphPixmap.width())/2,
+                       (size.height()-glyphPixmap.height())/2,
+                       glyphPixmap);
+
+    // Текущий цвет полосой внизу значка (стиль LibreOffice),
+    // а не заливкой всего фона: тонкие контурные иконки иначе тонут
+    const int stripHeight=qMax(3, size.height()/5);
+    painter.fillRect(0, size.height()-stripHeight,
+                     size.width(), stripHeight, stripColor);
+    painter.end();
+
+    return result;
+}
+
+
+void ColorStripIconEngine::paint(QPainter *painter, const QRect &rect,
+                                 QIcon::Mode mode, QIcon::State state)
+{
+    QPixmap rendered=render(rect.size(), mode, state);
+    painter->drawPixmap(rect.topLeft(), rendered);
+}
+
+
+QPixmap ColorStripIconEngine::pixmap(const QSize &size,
+                                     QIcon::Mode mode, QIcon::State state)
+{
+    return render(size, mode, state);
+}
+
+
+QSize ColorStripIconEngine::actualSize(const QSize &size,
+                                       QIcon::Mode mode, QIcon::State state)
+{
+    return QIcon(IconHelper::resolvedPath(iconFileName)).actualSize(size, mode, state);
+}
+
+
+QIconEngine *ColorStripIconEngine::clone(void) const
+{
+    return new ColorStripIconEngine(iconFileName, stripColor);
+}
+
+
+// Ключ кеша зависит от темы и цвета полосы: после переключения темы
+// или смены цвета pixmap-кеш Qt промахивается и иконка перерисовывается
+QString ColorStripIconEngine::key(void) const
+{
+    return "ColorStrip:"+iconFileName+":"+IconHelper::themeIconSet()
+           +":"+QString::number(stripColor.rgba(), 16);
 }

@@ -270,7 +270,7 @@ void EditorToolBarAssistant::onChangeFontcolor(const QColor &color)
         fillColor=m_textArea->palette().windowText().color();
     }
 
-    fontColor->setIcon( drawIconOverColor(fillColor, IconHelper::get("edit_fontcolor.svg")) );
+    fontColor->setIcon( IconHelper::colorStripIcon("edit_fontcolor.svg", fillColor) );
 }
 
 
@@ -397,7 +397,7 @@ void EditorToolBarAssistant::onChangeBackgroundColor(const QColor &color)
         }
     }
 
-    backgroundColor->setIcon( this->drawIconOverColor(fillColor, IconHelper::get("edit_fontbackgroundcolor.svg")) );
+    backgroundColor->setIcon( IconHelper::colorStripIcon("edit_fontbackgroundcolor.svg", fillColor) );
 }
 
 
@@ -406,29 +406,6 @@ void EditorToolBarAssistant::onChangeIconBackgroundColor(const QTextCharFormat &
 {
     QColor color = format.background().color();
     this->onChangeBackgroundColor(color);
-}
-
-
-QPixmap EditorToolBarAssistant::drawIconOverColor(const QColor &fillColor, const QIcon &icon ) const
-{
-    QPixmap pixMap( getIconSize() );
-    pixMap.fill( Qt::transparent );
-
-    QPainter painter;
-    painter.begin(&pixMap);
-    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
-    painter.drawPixmap(0, 0, icon.pixmap( pixMap.size() ));
-
-    // Текущий цвет полосой внизу значка (стиль LibreOffice),
-    // а не заливкой всего фона: тонкие контурные иконки иначе тонут
-    const int stripHeight=qMax(3, pixMap.height()/5);
-    painter.fillRect(0, pixMap.height()-stripHeight,
-                     pixMap.width(), stripHeight, fillColor);
-    painter.end();
-
-    return pixMap;
 }
 
 

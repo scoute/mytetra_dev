@@ -87,8 +87,6 @@ protected:
 
   QColor findNonTransparentBackground();
 
-  QPixmap drawIconOverColor(const QColor &fillColor, const QIcon &icon ) const;
-
   Editor *m_editor; // Указатель на объект редактора, с которым работает эта панель кнопок
   EditorTextArea *m_textArea; // Указатель на объект области редактирования, с которой работает эта панель кнопок
 

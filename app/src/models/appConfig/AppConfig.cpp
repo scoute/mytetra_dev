@@ -801,7 +801,7 @@ void AppConfig::setFindInBaseExpand(bool state)
 
 bool AppConfig::get_editorFindEmbedded(void)
 {
-    return m_conf->value("editorFindEmbedded", false).toBool();
+    return m_conf->value("editorFindEmbedded", true).toBool();
 }
 
 

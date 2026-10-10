@@ -31,6 +31,7 @@ private:
     QListWidgetItem *pageAttach;
     QListWidgetItem *pageKeyboard;
     QListWidgetItem *pageHistory;
+    QListWidgetItem *pageSearch;
     QListWidgetItem *pageMisc;
     QListWidgetItem *pageClipper;
 

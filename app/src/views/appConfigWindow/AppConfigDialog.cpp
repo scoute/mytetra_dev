@@ -14,6 +14,7 @@
 #include "AppConfigPage_Attach.h"
 #include "AppConfigPage_Keyboard.h"
 #include "AppConfigPage_History.h"
+#include "AppConfigPage_Search.h"
 #include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Appearance.h"
 #include "models/appConfig/AppConfig.h"
@@ -56,6 +57,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Keyboard"));
     pageHistory    =configDialog->addWidget(new AppConfigPage_History( parent ),
                                             QObject::tr("History"));
+    pageSearch     =configDialog->addWidget(new AppConfigPage_Search( parent ),
+                                            QObject::tr("Search"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
     pageClipper    =configDialog->addWidget(new AppConfigPage_Clipper( parent ),
@@ -99,6 +102,7 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageAttach") item=pageAttach;
     if(name=="pageKeyboard") item=pageKeyboard;
     if(name=="pageHistory") item=pageHistory;
+    if(name=="pageSearch") item=pageSearch;
     if(name=="pageMisc") item=pageMisc;
     if(name=="pageClipper") item=pageClipper;
 

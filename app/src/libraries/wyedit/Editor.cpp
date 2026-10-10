@@ -1535,7 +1535,7 @@ void Editor::onFindtextClicked(void)
     return;
   }
 
-  // Новая панель по запомненному режиму: по умолчанию отдельное окно
+  // Новая панель по запомненному режиму: по умолчанию полоска
   if(mytetraConfig.get_editorFindEmbedded())
   {
     findBar->showBar();

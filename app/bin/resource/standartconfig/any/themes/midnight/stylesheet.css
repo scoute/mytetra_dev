@@ -1,19 +1,19 @@
-/* <MyTetraStyle name="midnight" version="7" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="8" about="Dark theme with emerald accent"/> */
 
-/* Темная тема: глубокий фон #161822, панели #1e2029,
- * emerald-акцент #10b981, скругления 6px, тонкие разделители.
+/* Темная тема: поверхности как в авторской dark (окна #19232D,
+ * панели и шапки #455364), emerald-акцент #10b981,
  * Картинок нет, только CSS: относительных url() сознательно
  * избегаем, стрелки дерева и индикаторы остаются нативными */
 
 /* Псевдо-правило для установки значений системной палитры */
 CustomPalette {
-  Window: #161822;
+  Window: #19232D;
   WindowText: #e4e6eb;
-  Base: #1e2029;
+  Base: #19232D;
   AlternateBase: #232533;
   Text: #e4e6eb;
-  Button: #252734;
-  ButtonText: #a0a3b1;
+  Button: #455364;
+  ButtonText: #e4e6eb;
   BrightText: #f87171;
   Highlight: #10b981;
   HighlightedText: #ffffff;
@@ -29,19 +29,19 @@ CustomPalette {
 }
 
 QMainWindow, QDialog {
-  background: #161822;
+  background: #19232D;
 }
 
 /* Верхнее меню: темное, с нижней линией-разделителем */
 QMenuBar {
-  background: #1e2029;
+  background: #455364;
   border-bottom: 1px solid #2e3040;
   padding: 2px 4px;
 }
 
 QMenuBar::item {
   background: transparent;
-  color: #a0a3b1;
+  color: #e4e6eb;
   padding: 3px 8px;
   border-radius: 6px;
 }
@@ -92,7 +92,7 @@ QMenu::indicator {
  * и непонятно что пункт переключаемый */
 QMenu::indicator:non-exclusive:unchecked {
   border: 1px solid #3a3d4e;
-  background: #161822;
+  background: #19232D;
   border-radius: 4px;
 }
 
@@ -148,7 +148,7 @@ QToolButton:disabled {
  * остается незалитым и выглядит черной пилюлей, поэтому красим
  * в тон тулбара. Сама стрелка остается нативной */
 QToolButton::menu-button {
-  background: #1e2029;
+  background: #455364;
   border: none;
   border-left: 1px solid #2e3040;
   border-top-right-radius: 6px;
@@ -166,8 +166,8 @@ QToolButton::menu-button:pressed {
 
 /* Дерево веток: выбранная ветка залита темным emerald */
 QTreeView {
-  background: #1e2029;
-  alternate-background-color: #1e2029;
+  background: #19232D;
+  alternate-background-color: #19232D;
   color: #e4e6eb;
   border: none;
   outline: 0;
@@ -194,7 +194,7 @@ QTreeView::item:selected:!active {
 
 /* Таблицы (записи, метки): сетка едва видна, шапка темная */
 QTableView, QListView {
-  background: #1e2029;
+  background: #19232D;
   alternate-background-color: #232533;
   color: #e4e6eb;
   border: none;
@@ -213,8 +213,8 @@ QTableView::item:selected:!active, QListView::item:selected:!active {
 }
 
 QHeaderView::section {
-  background: #161822;
-  color: #6b6e7d;
+  background: #455364;
+  color: #e4e6eb;
   border: none;
   border-bottom: 1px solid #2e3040;
   border-right: 1px solid #262836;
@@ -227,7 +227,7 @@ QHeaderView::section:checked {
 }
 
 QTableCornerButton::section {
-  background: #161822;
+  background: #455364;
   border: none;
 }
 
@@ -261,7 +261,7 @@ QTabBar::tab:hover:!selected {
 
 /* Поля ввода: углубленные темные, фокус emerald */
 QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QTextEdit {
-  background: #161822;
+  background: #19232D;
   color: #e4e6eb;
   border: 1px solid #2e3040;
   border-radius: 6px;
@@ -303,8 +303,8 @@ QComboBox QAbstractItemView {
 
 /* Кнопки: темные с рамкой, акцентная залита emerald */
 QPushButton {
-  background: #252734;
-  color: #a0a3b1;
+  background: #455364;
+  color: #e4e6eb;
   border: 1px solid #323544;
   border-radius: 6px;
   padding: 4px 10px;
@@ -367,7 +367,7 @@ QCheckBox::indicator, QRadioButton::indicator {
 
 QCheckBox::indicator:unchecked {
   border: 1px solid #3a3d4e;
-  background: #161822;
+  background: #19232D;
   border-radius: 4px;
 }
 
@@ -385,7 +385,7 @@ QCheckBox::indicator:disabled {
 
 QRadioButton::indicator:unchecked {
   border: 1px solid #3a3d4e;
-  background: #161822;
+  background: #19232D;
   border-radius: 8px;
 }
 
@@ -406,7 +406,7 @@ QGroupBox {
   border-radius: 8px;
   margin-top: 14px;
   padding-top: 8px;
-  background: #1e2029;
+  background: #19232D;
 }
 
 QGroupBox::title {
@@ -423,8 +423,8 @@ QDockWidget {
 }
 
 QDockWidget::title {
-  background: #161822;
-  color: #6b6e7d;
+  background: #455364;
+  color: #e4e6eb;
   padding: 3px 6px;
   border-bottom: 1px solid #2e3040;
 }
@@ -441,7 +441,7 @@ QDockWidget::float-button:hover, QDockWidget::close-button:hover {
 
 /* Сплиттеры: тонкая темная ручка */
 QSplitter::handle {
-  background: #2e3040;
+  background: #455364;
 }
 
 QSplitter::handle:horizontal {
@@ -492,9 +492,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 QStatusBar {
-  background: #1e2029;
+  background: #455364;
   border-top: 1px solid #2e3040;
-  color: #6b6e7d;
+  color: #e4e6eb;
 }
 
 QStatusBar::item {
@@ -531,7 +531,7 @@ QSlider::groove:horizontal {
 }
 
 QSlider::handle:horizontal {
-  background: #1e2029;
+  background: #19232D;
   border: 2px solid #10b981;
   width: 12px;
   height: 12px;
@@ -546,7 +546,7 @@ QSlider::groove:vertical {
 }
 
 QSlider::handle:vertical {
-  background: #1e2029;
+  background: #19232D;
   border: 2px solid #10b981;
   width: 12px;
   height: 12px;

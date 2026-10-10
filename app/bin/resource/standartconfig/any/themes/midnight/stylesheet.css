@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="midnight" version="9" about="Dark theme with emerald accent"/> */
+/* <MyTetraStyle name="midnight" version="10" about="Dark theme with emerald accent"/> */
 
 /* Темная тема: поверхности как в авторской dark (окна #19232D,
  * панели и шапки #455364), emerald-акцент #10b981,
@@ -278,6 +278,12 @@ QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDateTimeEdit:disable
   background: #252734;
   color: #4b4e5e;
   border: 1px solid #262836;
+}
+
+/* Подложка редактора как в авторской темной теме: зазоры сетки
+ * между тулбаром и текстом серые, в тон тулбара */
+QWidget[objectName="extendEditorScreen"] {
+  background-color: #455364;
 }
 
 /* Текст заметки: серая бумага как в авторской темной теме (#B0BAC7),

@@ -158,13 +158,15 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::cancelCutBranch);
  actionList["cancelCutBranch"]=ac;
 
- // Шифрование ветки (пока нет иконки)
+ // Шифрование ветки
  ac = new QAction(this);
+ ac->setIcon(IconHelper::get("branch_encrypt.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::encryptBranch);
  actionList["encryptBranch"]=ac;
 
- // Расшифровка ветки, т. е. снятие пароля (пока нет иконки)
+ // Расшифровка ветки, т. е. снятие пароля
  ac = new QAction(this);
+ ac->setIcon(IconHelper::get("branch_decrypt.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::decryptBranch);
  actionList["decryptBranch"]=ac;
 
@@ -239,15 +241,20 @@ void TreeScreen::setupUI(void)
      insertActionAsButton(toolsLine, actionList["findInBase"]); // Клик по этой кнопке связывается с действием в MainWindow
  }
 
- // Добавление скрытых действий, которые не видны на тулбаре, но видны на контекстном меню
- insertActionAsButton(toolsLine, actionList["cutBranch"], false);
- insertActionAsButton(toolsLine, actionList["copyBranch"], false);
- insertActionAsButton(toolsLine, actionList["pasteBranch"], false);
- insertActionAsButton(toolsLine, actionList["pasteSubbranch"], false);
+ // Действия буфера обмена, шифрования и иконки ветки на тулбар не
+ // выносятся (там только самые важные кнопки), они доступны из
+ // контекстного меню. Нулевые кнопки для них не создаются: иначе QToolBar
+ // показывает кнопку-расширение » с фантомными пунктами, которые не
+ // появляются при расширении панели. Регистрация действий на виджете
+ // нужна чтобы продолжали работать шорткаты
+ addAction(actionList["cutBranch"]);
+ addAction(actionList["copyBranch"]);
+ addAction(actionList["pasteBranch"]);
+ addAction(actionList["pasteSubbranch"]);
 
- insertActionAsButton(toolsLine, actionList["encryptBranch"], false);
- insertActionAsButton(toolsLine, actionList["decryptBranch"], false);
- insertActionAsButton(toolsLine, actionList["setIcon"], false);
+ addAction(actionList["encryptBranch"]);
+ addAction(actionList["decryptBranch"]);
+ addAction(actionList["setIcon"]);
 
 
  knowTreeView=new KnowTreeView(this);

@@ -4,6 +4,8 @@
         <file>resource/pic/add_subbranch.svg</file>
         <file>resource/pic/branch_copy.svg</file>
         <file>resource/pic/branch_cut.svg</file>
+        <file>resource/pic/branch_decrypt.svg</file>
+        <file>resource/pic/branch_encrypt.svg</file>
         <file>resource/pic/branch_paste.svg</file>
         <file>resource/pic/tag.svg</file>
         <file>resource/pic/history.svg</file>
@@ -162,6 +164,8 @@
         <file>resource/pic_modern/branch_closed.svg</file>
         <file>resource/pic_modern/branch_copy.svg</file>
         <file>resource/pic_modern/branch_cut.svg</file>
+        <file>resource/pic_modern/branch_decrypt.svg</file>
+        <file>resource/pic_modern/branch_encrypt.svg</file>
         <file>resource/pic_modern/branch_opened.svg</file>
         <file>resource/pic_modern/branch_paste.svg</file>
         <file>resource/pic_modern/cb_copy.svg</file>
@@ -284,6 +288,8 @@
         <file>resource/pic_dark/branch_closed.svg</file>
         <file>resource/pic_dark/branch_copy.svg</file>
         <file>resource/pic_dark/branch_cut.svg</file>
+        <file>resource/pic_dark/branch_decrypt.svg</file>
+        <file>resource/pic_dark/branch_encrypt.svg</file>
         <file>resource/pic_dark/branch_opened.svg</file>
         <file>resource/pic_dark/branch_paste.svg</file>
         <file>resource/pic_dark/cb_copy.svg</file>

@@ -17,6 +17,9 @@ QString IconHelper::themeIconSet(void)
     if(theme=="midnight")
         return "pic_dark";
 
+    if(theme=="midnight-thin")
+        return "pic_dark_thin";
+
     return "pic";
 }
 

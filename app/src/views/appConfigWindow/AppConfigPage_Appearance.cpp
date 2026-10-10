@@ -72,6 +72,7 @@ void AppConfigPage_Appearance::setupThemeComboBox()
     translateNames[ "dark" ]    = tr("Dark");
     translateNames[ "modern" ]  = tr("Modern");
     translateNames[ "midnight" ]= tr("Midnight");
+    translateNames[ "midnight-thin" ]= tr("Midnight thin");
 
     // Какая строка будет выбрана как текущая тема
     int count = -1;

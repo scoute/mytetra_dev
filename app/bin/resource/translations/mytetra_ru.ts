@@ -329,6 +329,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation>Полуночная</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="75"/>
+        <source>Midnight thin</source>
+        <translation>Полуночная тонкая</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
         <source>Run MyTetra in a minimized window</source>
         <translation>Запускать MyTetra в свернутом окне</translation>
@@ -4029,6 +4034,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="859"/>
         <source>Midnight</source>
         <translation>Полуночная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="860"/>
+        <source>Midnight thin</source>
+        <translation>Полуночная тонкая</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="150"/>

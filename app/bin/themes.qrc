@@ -23,6 +23,11 @@
     <file>resource/standartconfig/any/themes/midnight/pic/menu_check.svg</file>
     <file>resource/standartconfig/any/themes/midnight/pic/menu_dot.svg</file>
   </qresource>
+  <qresource prefix="/">
+    <file>resource/standartconfig/any/themes/midnight-thin/stylesheet.css</file>
+    <file>resource/standartconfig/any/themes/midnight-thin/pic/menu_check.svg</file>
+    <file>resource/standartconfig/any/themes/midnight-thin/pic/menu_dot.svg</file>
+  </qresource>
   <qresource prefix="/" about="QDarkStyleSheet project">
     <file>resource/standartconfig/any/themes/dark/stylesheet.css</file>
     

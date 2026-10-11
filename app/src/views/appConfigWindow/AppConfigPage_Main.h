@@ -35,6 +35,9 @@ private slots:
   void onEnableCustomDateTimeFormatToggle(bool checked);
   void onDateTimeFormatHelpButton(void);
 
+  // Язык применяется сразу по выбору, без Apply
+  void onLanguageChanged(int index);
+
 private:
 
   QLabel *tetradirLabel;

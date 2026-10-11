@@ -154,6 +154,9 @@ void AppConfigPage_Main::setupSignals(void)
   connect(enableCustomDateTimeFormat,  &QRadioButton::toggled, this, &AppConfigPage_Main::onEnableCustomDateTimeFormatToggle);
 
   connect(dateTimeFormatHelpButton, &QToolButton::clicked, this, &AppConfigPage_Main::onDateTimeFormatHelpButton);
+
+  connect(interfaceLanguage, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this, &AppConfigPage_Main::onLanguageChanged);
 }
 
 
@@ -280,6 +283,29 @@ void AppConfigPage_Main::onEnableCustomDateTimeFormatToggle(bool checked)
 }
 
 
+// Язык применяется сразу по выбору в выпадашке: конфиг, переводчик,
+// все экраны и шорткаты. Порядок как в applyChanges: сначала прямые
+// тексты, потом тексты на шорткатах
+void AppConfigPage_Main::onLanguageChanged(int index)
+{
+  QString code=interfaceLanguage->itemText(index);
+
+  if(code.isEmpty() || mytetraConfig.get_interfacelanguage()==code)
+    return;
+
+  mytetraConfig.set_interfacelanguage(code);
+
+  LanguageHelper::switchLanguage(code);
+
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->retranslateUi();
+
+  shortcutManager.retranslate();
+}
+
+
 void AppConfigPage_Main::onDateTimeFormatHelpButton(void)
 {
   QString text="Format symbols:\n\
@@ -378,8 +404,8 @@ int AppConfigPage_Main::applyChanges(void)
   }
 
  
- // Если был изменен язык: применяется на лету без перезапуска.
- // Порядок важен: сначала прямые тексты, потом тексты на шорткатах
+ // Если был изменен язык: обычно уже применен на лету в onLanguageChanged,
+// здесь страховка на случай программного изменения комбо без сигналов
  if(mytetraConfig.get_interfacelanguage()!=interfaceLanguage->currentText())
   {
    mytetraConfig.set_interfacelanguage(interfaceLanguage->currentText());

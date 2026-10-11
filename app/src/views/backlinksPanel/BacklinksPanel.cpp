@@ -215,6 +215,12 @@ QString BacklinksPanel::currentRecordId(void) const
 }
 
 
+void BacklinksPanel::retranslateUi(void)
+{
+  refreshBacklinks();
+}
+
+
 void BacklinksPanel::refreshBacklinks(void)
 {
   setupLazySignals();

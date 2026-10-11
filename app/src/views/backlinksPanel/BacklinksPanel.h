@@ -29,6 +29,9 @@ public slots:
 
   void refreshBacklinks(void);
 
+  // Обновить прямые тексты новым языком через полную пересборку
+  void retranslateUi(void);
+
 protected:
 
   void showEvent(QShowEvent *event) override;

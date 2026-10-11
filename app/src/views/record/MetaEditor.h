@@ -47,6 +47,9 @@ public:
 
  void setFocusToBaseWidget();
 
+ // Прямые подписи Url и Tags. Вызывается из MainWindow::retranslateUi
+ void retranslateUi(void);
+
  // Цвет фона поля заметки: настройка поверх цвета темы.
  // Пустая строка effectiveNotePaperColor означает цвет темы
  static QString effectiveNotePaperColor(const QString &themeName,

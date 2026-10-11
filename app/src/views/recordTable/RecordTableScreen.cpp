@@ -617,6 +617,37 @@ void RecordTableScreen::setTreePath(QString path)
 }
 
 
+// Прямые тексты действий и пути. Тексты на шорткатах освежает
+// setupShortcuts по сигналу updateWidgetShortcut
+void RecordTableScreen::retranslateUi(void)
+{
+  actionSettings->setText(tr("View settings"));
+  actionSettings->setStatusTip(tr("Setup table view settins"));
+
+  actionFindInBase->setText(shortcutManager.getDescriptionWithShortcut("misc-findInBase"));
+
+  actionWalkHistoryPrevious->setText(tr("Previous viewing note"));
+  actionWalkHistoryNext->setText(tr("Next viewing note"));
+
+  actionBack->setText(tr("Back to item tree"));
+  actionBack->setStatusTip(tr("Back to item tree"));
+
+  actionSort->setText(tr("Toggle sorting"));
+  actionSort->setStatusTip(tr("Enable/disable sorting by column"));
+
+  actionPrint->setText(tr("Print table"));
+  actionPrint->setStatusTip(tr("Print current notes table"));
+
+  actionCopyRecordReference->setText(tr("Copy note reference"));
+  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
+
+  actionSwitchSelectionMode->setText(tr("Switch select/multiselect"));
+  actionSwitchSelectionMode->setStatusTip(tr("Switch note selection mode (Notice: if multiselect is on, drag-and-drop is disabled)"));
+
+  treePathLabel->setText(tr("<b>Path:</b> ")+treePath);
+}
+
+
 QString RecordTableScreen::getTreePath(void)
 {
   return treePath;

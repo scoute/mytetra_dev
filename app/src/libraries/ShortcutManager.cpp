@@ -68,6 +68,15 @@ void ShortcutManager::updateShortcutInApplication()
 }
 
 
+void ShortcutManager::retranslate(void)
+{
+    initDefaultKeyTable();
+    initKeyTable();
+
+    updateShortcutInApplication();
+}
+
+
 void ShortcutManager::initDefaultKeyTable()
 {
     defaultKeyTable.clear();

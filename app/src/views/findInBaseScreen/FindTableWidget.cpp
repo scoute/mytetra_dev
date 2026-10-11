@@ -131,6 +131,15 @@ void FindTableWidget::clearAll(void)
 }
 
 
+// Заголовки колонок новым языком. Строки результатов не трогаются
+void FindTableWidget::retranslateUi(void)
+{
+    QStringList list;
+    list << tr("Title") << tr("Details");
+    findTableModel->setHorizontalHeaderLabels(list);
+}
+
+
 void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId)
 {
     int i=findTableModel->rowCount();

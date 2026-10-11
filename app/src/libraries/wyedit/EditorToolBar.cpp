@@ -239,14 +239,18 @@ void EditorToolBar::setupToolBarTools(void)
     // Кнопка выбора цвета шрифта
     fontColor=new EditorDropDownButton(this);
     fontColor->setObjectName("editor_tb_fontColor");
-    fontColor->addAction( new QAction(QIcon(":/resource/pic/edit_fontcolor.svg"), tr("Select color"), this) );
-    fontColor->addAction( new QAction(QIcon(":/resource/pic/edit_no_color.svg"), tr("No color"), this) );
+    fontColorSelectAction=new QAction(QIcon(":/resource/pic/edit_fontcolor.svg"), tr("Select color"), this);
+    fontColorNoColorAction=new QAction(QIcon(":/resource/pic/edit_no_color.svg"), tr("No color"), this);
+    fontColor->addAction(fontColorSelectAction);
+    fontColor->addAction(fontColorNoColorAction);
 
     // Кнопка выбора цвета фона текста
     backgroundColor=new EditorDropDownButton(this);
     backgroundColor->setObjectName("editor_tb_backgroundColor");
-    backgroundColor->addAction( new QAction(QIcon(":/resource/pic/edit_fontbackgroundcolor.svg"), tr("Select color"), this) );
-    backgroundColor->addAction( new QAction(QIcon(":/resource/pic/edit_no_color.svg"), tr("No color"), this) );
+    backgroundColorSelectAction=new QAction(QIcon(":/resource/pic/edit_fontbackgroundcolor.svg"), tr("Select color"), this);
+    backgroundColorNoColorAction=new QAction(QIcon(":/resource/pic/edit_no_color.svg"), tr("No color"), this);
+    backgroundColor->addAction(backgroundColorSelectAction);
+    backgroundColor->addAction(backgroundColorNoColorAction);
 
 
     // Кнопка вызова виджета поиска текста
@@ -445,6 +449,23 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-save", save);
     shortcutManager.initAction("editor-showText", showText);
     shortcutManager.initAction("editor-toAttach", toAttach);
+}
+
+
+// Прямые тексты: пункты выпадашек цвета и подсказки без шорткатов.
+// Остальное освежает setupShortcuts по сигналу updateWidgetShortcut
+void EditorToolBar::retranslateUi(void)
+{
+    fontColorSelectAction->setText(tr("Select color"));
+    fontColorNoColorAction->setText(tr("No color"));
+
+    backgroundColorSelectAction->setText(tr("Select color"));
+    backgroundColorNoColorAction->setText(tr("No color"));
+
+    // save покрыт шорткатом editor-save через setupShortcuts, здесь
+    // только подсказки кнопок без горячих клавиш (мобильные)
+    mobileBack->setStatusTip(tr("Back"));
+    mobileFindInBase->setStatusTip(tr("Find in base"));
 }
 
 

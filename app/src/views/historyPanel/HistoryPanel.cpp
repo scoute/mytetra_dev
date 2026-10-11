@@ -327,6 +327,21 @@ qint64 HistoryPanel::recordDirSize(const QString &recordDir)
 }
 
 
+// Прямые тексты новым языком. Полная пересборка заодно освежает
+// относительные времена в строках
+void HistoryPanel::retranslateUi(void)
+{
+    filterEdit->setPlaceholderText(tr("Filter by note title"));
+    historyTable->setHorizontalHeaderLabels(QStringList() << tr("Note") << tr("Branch")
+                                            << tr("Last visit") << tr("Visits")
+                                            << tr("Images") << tr("Files") << tr("Size"));
+    clearButton->setText(tr("Clear"));
+    clearButton->setToolTip(tr("Forget all visit history"));
+
+    refreshHistory();
+}
+
+
 // Пересборка таблицы из журнала: агрегат, фильтр, сортировка заголовком.
 // Мертвые id (удаленные заметки) отбрасываются, шифрованные без пароля
 // показываются заглушкой

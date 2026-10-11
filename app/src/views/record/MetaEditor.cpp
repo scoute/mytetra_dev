@@ -555,6 +555,15 @@ void MetaEditor::setFocusToBaseWidget()
 }
 
 
+void MetaEditor::retranslateUi(void)
+{
+  labelUrl->setText(tr("<B>Url:</B> "));
+  labelTags->setText(tr("<B>Tags:</B> "));
+
+  editorToolBarAssistant->retranslateUi();
+}
+
+
 // Действующий цвет фона поля заметки. Настройка имеет приоритет,
 // пустая настройка отдает цвет темы: midnight серая бумага как
 // в авторской темной теме, modern белый, классические темы без

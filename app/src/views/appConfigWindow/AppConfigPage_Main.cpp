@@ -15,9 +15,15 @@
 #include "AppConfigPage_Main.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/MtComboBox.h"
+#include "libraries/GlobalParameters.h"
+#include "libraries/ShortcutManager.h"
+#include "libraries/helpers/LanguageHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/mainWindow/MainWindow.h"
 
 
 extern AppConfig mytetraConfig;
+extern ShortcutManager shortcutManager;
 
 
 AppConfigPage_Main::AppConfigPage_Main(QWidget *parent) : ConfigPage(parent)
@@ -372,11 +378,20 @@ int AppConfigPage_Main::applyChanges(void)
   }
 
  
- // Если был изменен язык
+ // Если был изменен язык: применяется на лету без перезапуска.
+ // Порядок важен: сначала прямые тексты, потом тексты на шорткатах
  if(mytetraConfig.get_interfacelanguage()!=interfaceLanguage->currentText())
   {
    mytetraConfig.set_interfacelanguage(interfaceLanguage->currentText());
-   difficultChanges=1;
+
+   LanguageHelper::switchLanguage(interfaceLanguage->currentText());
+
+   MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+   if(mainWindow!=nullptr)
+     mainWindow->retranslateUi();
+
+   shortcutManager.retranslate();
   }
 
  return difficultChanges;

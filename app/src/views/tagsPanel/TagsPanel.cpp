@@ -369,6 +369,18 @@ void TagsPanel::onFilterChanged(const QString &text)
 }
 
 
+// Прямые тексты новым языком. Полная пересборка заодно освежает
+// заголовок дока и строки. Сортировка и ширины колонок переживают:
+// refreshTags их не сбрасывает
+void TagsPanel::retranslateUi(void)
+{
+    filterEdit->setPlaceholderText(tr("Filter tags"));
+    tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << tr("Count"));
+
+    refreshTags();
+}
+
+
 // Двойной клик по тегу ищет только в поле тегов, а не слово везде
 void TagsPanel::onTagClicked(int row, int column)
 {

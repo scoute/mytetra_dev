@@ -71,6 +71,10 @@ public slots:
 
  void setupShortcuts(void);
 
+ // Обновить прямые тексты новым языком. Тексты на шорткатах
+ // освежает setupShortcuts по сигналу updateWidgetShortcut
+ void retranslateUi(void);
+
 private slots:
  
  void onSyncroClick(void);

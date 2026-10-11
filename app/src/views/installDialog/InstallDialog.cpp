@@ -49,7 +49,7 @@ void InstallDialog::setupSignals()
 void InstallDialog::setupAutoLangTranslation()
 {
     QString lang=QLocale().system().name().split('_').first().toLower();
-    QStringList availableLang={"en", "ru"};
+    QStringList availableLang={"en", "ru", "fr", "de", "uk", "ja", "zh"};
 
     if( !availableLang.contains(lang) )
     {

@@ -90,6 +90,10 @@
 
         <file>resource/translations/mytetra_ru.qm</file>
         <file>resource/translations/mytetra_fr.qm</file>
+        <file>resource/translations/mytetra_de.qm</file>
+        <file>resource/translations/mytetra_uk.qm</file>
+        <file>resource/translations/mytetra_ja.qm</file>
+        <file>resource/translations/mytetra_zh.qm</file>
 
         <file>resource/standartconfig/any/conf.ini</file>
         <file>resource/standartconfig/any/editorconf.ini</file>
@@ -127,6 +131,11 @@
         <file>resource/pic/edit_text_only.svg</file>
         <file>resource/pic/countryFlags/Russia.png</file>
         <file>resource/pic/countryFlags/United-Kingdom.png</file>
+        <file>resource/pic/countryFlags/France.png</file>
+        <file>resource/pic/countryFlags/Germany.png</file>
+        <file>resource/pic/countryFlags/Ukraine.png</file>
+        <file>resource/pic/countryFlags/Japan.png</file>
+        <file>resource/pic/countryFlags/China.png</file>
         <file>resource/pic/edit_math_expression.svg</file>
         <file>resource/pic/edit_insert_horizontal_line.svg</file>
         <file>resource/pic/edit_strikeout.svg</file>

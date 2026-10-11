@@ -925,6 +925,9 @@ void MainWindow::initViewMenu(void)
     QAction *secretColorAction=new QAction(tr("Change secret color..."), this);
     viewMenu->addAction(secretColorAction);
 
+    QAction *paperColorAction=new QAction(tr("Change note background color..."), this);
+    viewMenu->addAction(paperColorAction);
+
     // Начальная пометка до коннектов: setChecked с тем же значением
     // toggled не дергает, лишних записей в конфиг нет
     syncViewMenu();
@@ -935,6 +938,9 @@ void MainWindow::initViewMenu(void)
             this,               &MainWindow::onViewReadOnlyToggled);
     connect(secretColorAction, &QAction::triggered,
             this,              &MainWindow::onViewSecretColor);
+
+    connect(paperColorAction, &QAction::triggered,
+            this,              &MainWindow::onViewPaperColor);
 
     connect(viewMenu, &QMenu::aboutToShow,
             this,      &MainWindow::syncViewMenu);
@@ -1016,6 +1022,26 @@ void MainWindow::onViewSecretColor(void)
 
     if(editorScreen!=nullptr)
         editorScreen->repaintSecrets();
+}
+
+
+void MainWindow::onViewPaperColor(void)
+{
+    const QColor current(
+        MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(),
+                                           mytetraConfig.get_notePaperColor()));
+    const QColor chosen=QColorDialog::getColor(current, this);
+
+    if(!chosen.isValid() || chosen==current)
+        return;
+
+    mytetraConfig.set_notePaperColor(chosen.name());
+
+    // Сразу на диск как в соседнем пункте про цвет секрета
+    mytetraConfig.sync();
+
+    if(editorScreen!=nullptr)
+        editorScreen->applyNotePaperColor();
 }
 
 

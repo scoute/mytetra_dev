@@ -3231,6 +3231,10 @@ You need to update MyTetra.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Change note background color...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="170"/>
         <source>Backlinks</source>
         <translation type="unfinished"></translation>

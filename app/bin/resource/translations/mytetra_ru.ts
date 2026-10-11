@@ -4087,6 +4087,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Изменить цвет секретов...</translation>
     </message>
     <message>
+        <source>Change note background color...</source>
+        <translation>Изменить цвет фона заметки...</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="170"/>
         <source>Backlinks</source>
         <translation>Обратные ссылки</translation>

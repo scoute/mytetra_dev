@@ -133,6 +133,7 @@ private slots:
     // Меню Вид: дубли быстрых переключателей отображения
     void onViewHeaderToggled(bool checked);
     void onViewSecretColor(void);
+    void onViewPaperColor(void);
 
     // Меню Вид: глобальный режим только чтения
     void onViewReadOnlyToggled(bool checked);

@@ -1138,15 +1138,16 @@ void MainWindow::updateStats(void)
 
     int branches=0;
     int records=0;
+    int files=0;
+    int images=0;
+    int links=0;
+    int tags=0;
 
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
-    {
-        branches=treeScreen->knowTreeModel->getBranchCount();
-        records=treeScreen->knowTreeModel->getAllRecordCount();
-    }
+        treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
 
-    statsLabel->setText(tr("Branches: %1 | Records: %2").arg(branches).arg(records));
-    statsLabel->setToolTip(tr("Total branches and records in the database"));
+    statsLabel->setText(tr("Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6").arg(branches).arg(records).arg(files).arg(images).arg(links).arg(tags));
+    statsLabel->setToolTip(tr("Base statistics: branches, records, attached files, images, links and tags"));
 }
 
 
@@ -2030,6 +2031,9 @@ void MainWindow::saveTextarea(void)
     // Текст на диске обновился: перепарсить исходящие ссылки записи
     if(!id.isEmpty())
       BacklinkIndex::instance().updateSource(id);
+
+    // Текст мог принести/убрать картинки и ссылки - освежить статистику
+    updateStats();
 
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),

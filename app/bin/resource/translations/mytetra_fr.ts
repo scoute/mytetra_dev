@@ -3029,6 +3029,16 @@ Veuillez mettre à jour MyTetra.</translation>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
+        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
+        <translation>Branches : %1 | Notes : %2 | Fichiers : %3 | Images : %4 | Liens : %5 | Étiquettes : %6</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
+        <source>Base statistics: branches, records, attached files, images, links and tags</source>
+        <translation>Statistiques de la base : branches, notes, fichiers, images, liens et étiquettes</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>
         <source>&amp;File</source>
         <translation>&amp;Fichier</translation>

@@ -21,6 +21,7 @@
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "views/record/MetaEditor.h"
+#include "views/mainWindow/MainWindow.h"
 
 
 extern GlobalParameters globalParameters;
@@ -267,6 +268,12 @@ void AttachTableController::saveState()
     metaEditor->switchAttachIconExists(true);
   else
     metaEditor->switchAttachIconExists(false);
+
+  // Число файлов изменилось - освежить статистику в статусбаре
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->updateStats();
 }
 
 
@@ -525,6 +532,12 @@ void AttachTableController::onDeleteAttach(void)
   // Обновление иконки аттачей в редакторе
   if(attachTableData->size()==0)
     metaEditor->switchAttachIconExists(false);
+
+  // Число файлов изменилось - освежить статистику в статусбаре
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->updateStats();
 }
 
 

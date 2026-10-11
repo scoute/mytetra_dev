@@ -1,4 +1,6 @@
 #include <QMap>
+#include <QSet>
+#include <QRegularExpression>
 #include <QDomNamedNodeMap>
 #include <QXmlStreamWriter>
 #include <QSaveFile>
@@ -1185,6 +1187,74 @@ int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
     n+=getBranchCountRecurse(item->child(i));
 
   return n;
+}
+
+
+// Общая статистика базы одним проходом по дереву
+void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags)
+{
+  branches=getBranchCount();
+  records=0;
+  files=0;
+  images=0;
+  links=0;
+
+  QSet<QString> tagSet;
+
+  getBaseStatsRecurse(rootItem, records, files, images, links, tagSet);
+
+  tags=tagSet.size();
+}
+
+
+void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, int &links, QSet<QString> &tagSet)
+{
+  if(item==nullptr)
+    return;
+
+  RecordTableData *recordTable=item->recordtableGetTableData();
+
+  if(recordTable!=nullptr)
+    for(unsigned i=0; i<recordTable->size(); ++i)
+    {
+      Record *record=recordTable->getRecord(i);
+
+      if(record==nullptr)
+        continue;
+
+      records++;
+
+      AttachTableData *attachTable=record->getAttachTablePointer();
+
+      if(attachTable!=nullptr)
+        files+=attachTable->size();
+
+      QString html=record->getTextForStats();
+      images+=html.count("<img", Qt::CaseInsensitive);
+
+      // Скрытый текст секретов хранится служебными якорями
+      // <a href="secret"> - это не ссылки, они вычитаются.
+      // (SecretFormatter::secretHref, Qt пишет их именно в таком виде)
+      int anchors=html.count("<a href", Qt::CaseInsensitive);
+      int secrets=html.count("<a href=\"secret\">", Qt::CaseInsensitive);
+      links+=anchors-secrets;
+
+      // Метки: тот же разбор что в FindScreen::splitRecordTags
+      // (запятая/точка с запятой, пробелы по краям). Регистр не важен:
+      // поиск тега регистронезависимый, дубли не считаются
+      QStringList recordTags=record->getField("tags").split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
+
+      foreach(QString tag, recordTags)
+      {
+        tag=tag.trimmed();
+
+        if(!tag.isEmpty())
+          tagSet.insert(tag.toLower());
+      }
+    }
+
+  for(int i=0; i<item->childCount(); ++i)
+    getBaseStatsRecurse(item->child(i), records, files, images, links, tagSet);
 }
 
 

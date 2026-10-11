@@ -510,6 +510,39 @@ QString Record::getText() const
 }
 
 
+// Получение текста для подсчета статистики: без диалогов о битой базе
+// (в отличие от getTextDirect) и без создания недостающих файлов.
+// Нет пути, нет файла или закрытый шифр - возвращается пусто
+QString Record::getTextForStats() const
+{
+  // Если запись зашифрована, но ключ не установлен - расшифровка невозможна
+  if(fieldList.value("crypt")=="1" &&
+     globalParameters.getCryptKey().length()==0)
+    return "";
+
+  // Без пути к файлу - пусто, без criticalError:
+  // статистика не должна падать на битой базе
+  if(!fieldList.contains("dir") || !fieldList.contains("file"))
+    return "";
+
+  QFile f(getFullTextFileName());
+
+  if(!f.exists() || !f.open(QIODevice::ReadOnly))
+    return "";
+
+  const QByteArray rawData=f.readAll();
+
+  // Зашифрованный текст при установленном ключе
+  if(fieldList.value("crypt")=="1")
+    return CryptService::decryptStringFromByteArray(globalParameters.getCryptKey(), rawData);
+
+  QString result=QString::fromUtf8(rawData.constData(), rawData.size());
+  result.remove(QChar('\0'));
+
+  return result;
+}
+
+
 // Получение значения текста напрямую из файла, без заполнения свойства text
 QString Record::getTextDirect() const
 {

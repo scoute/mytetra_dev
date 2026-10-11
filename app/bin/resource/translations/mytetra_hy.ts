@@ -3056,13 +3056,13 @@ You need to update MyTetra.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5</source>
-        <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Ֆայլեր: %3 | Պատկերներ: %4 | Հղումներ: %5</translation>
+        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
+        <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Ֆայլեր: %3 | Պատկերներ: %4 | Հղումներ: %5 | Պիտակներ: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
-        <source>Base statistics: branches, records, attached files, images and links</source>
-        <translation>Բազայի վիճակագրություն՝ ճյուղեր, գրառումներ, ֆայլեր, պատկերներ և հղումներ</translation>
+        <source>Base statistics: branches, records, attached files, images, links and tags</source>
+        <translation>Բազայի վիճակագրություն՝ ճյուղեր, գրառումներ, ֆայլեր, պատկերներ, հղումներ և պիտակներ</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>

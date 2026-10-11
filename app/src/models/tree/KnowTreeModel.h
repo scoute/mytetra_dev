@@ -79,6 +79,12 @@ public:
 
     //! Возвращает общее количество веток в дереве (без невидимого корня)
     int getBranchCount(void) const;
+
+    //! Общая статистика базы: ветки, записи, приаттаченные файлы,
+    //! картинки (<img), ссылки (<a href, кроме служебных secret-якорей)
+    //! и distinct-метки (без учета регистра). Тексты читаются
+    //! тихо (нет файла = пусто, закрытый шифр = пусто), модель не меняется
+    void getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags);
     
     //! Возвращает количество записей в ветке и всех подветках
     int getRecordCountForItem(const TreeItem *item);
@@ -176,6 +182,8 @@ private:
     int getAllRecordCountRecurse(const TreeItem *item, int mode) const;
 
     int getBranchCountRecurse(const TreeItem *item) const;
+
+    void getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, int &links, QSet<QString> &tagSet);
 
     QString pasteSubbranchRecurse(TreeItem *item,
                                   QString startBranchId,

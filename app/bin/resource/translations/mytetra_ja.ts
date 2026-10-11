@@ -3052,6 +3052,16 @@ MyTetra を更新してください。</translation>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
+        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
+        <translation>ブランチ: %1 | ノート: %2 | ファイル: %3 | 画像: %4 | リンク: %5 | タグ: %6</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
+        <source>Base statistics: branches, records, attached files, images, links and tags</source>
+        <translation>ベース統計: ブランチ、ノート、ファイル、画像、リンク、タグ</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>
         <source>&amp;File</source>
         <translation>&amp;ファイル</translation>

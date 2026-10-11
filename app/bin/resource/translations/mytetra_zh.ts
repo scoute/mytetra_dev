@@ -3052,6 +3052,16 @@ You need to update MyTetra.</source>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
+        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
+        <translation>分支：%1 | 笔记：%2 | 文件：%3 | 图片：%4 | 链接：%5 | 标签：%6</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
+        <source>Base statistics: branches, records, attached files, images, links and tags</source>
+        <translation>库统计：分支、笔记、文件、图片、链接和标签</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>
         <source>&amp;File</source>
         <translation>&amp;文件</translation>

@@ -24,10 +24,6 @@ public slots:
  void onClickToTag(const QString &tagNum);
  void onClickToUrl(const QString &link);
 
-signals:
- // Сигнал вырабатывается при клике на текстовой метке
- void setFindTextSignal(QString text);
-
 public:
  MetaEditor(QWidget *parent=nullptr);
  ~MetaEditor(void);
@@ -35,6 +31,7 @@ public:
  void setTreePath(QString path);
  void setName    (QString name);
  void setAuthor  (QString author);
+ void updateRecordHeaderVisibility(void);
  void setUrl     (QString url);
  void setTags    (QString tags);
 
@@ -49,6 +46,12 @@ public:
  void setReadOnly(bool state);
 
  void setFocusToBaseWidget();
+
+ // Цвет фона поля заметки: настройка поверх цвета темы.
+ // Пустая строка effectiveNotePaperColor означает цвет темы
+ static QString effectiveNotePaperColor(const QString &themeName,
+                                       const QString &setting);
+ void applyNotePaperColor(void);
 
 private:
  void setupLabels(void);

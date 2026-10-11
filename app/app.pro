@@ -172,6 +172,7 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Appearance.h \
     src/views/appConfigWindow/AppConfigPage_History.h \
     src/views/appConfigWindow/AppConfigPage_Favorites.h \
+    src/views/appConfigWindow/AppConfigPage_Search.h \
     src/views/consoleEmulator/CommandRunner.h \
     src/views/databasesManagement/DatabasesManagementPathDelegate.h \
     src/views/databasesManagement/DatabasesManagementScreen.h \
@@ -184,6 +185,8 @@ HEADERS = src/main.h \
     src/views/record/MetaEditor.h \
     src/views/tagsPanel/TagsPanel.h \
     src/views/favoritesPanel/FavoritesPanel.h \
+    src/views/notePicker/NotePickerDialog.h \
+    src/views/backlinksPanel/BacklinksPanel.h \
     src/views/historyPanel/HistoryPanel.h \
     src/views/contentGallery/ContentGallery.h \
     src/views/contentGallery/GalleryTileDelegate.h \
@@ -215,6 +218,7 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/ConfigPage.h \
     src/views/appConfigWindow/AppConfigPage_Main.h \
     src/views/appConfigWindow/AppConfigPage_Misc.h \
+    src/views/appConfigWindow/AppConfigPage_Clipper.h \
     src/views/appConfigWindow/AppConfigPage_Crypt.h \
     src/views/appConfigWindow/AppConfigPage_Synchro.h \
     src/views/appConfigWindow/AppConfigPage_RecordTable.h \
@@ -309,6 +313,8 @@ HEADERS+=\
     src/views/waitClock/WaitClock.h \
     src/libraries/WalkHistory.h \
     src/libraries/VisitHistory.h \
+    src/libraries/BacklinkIndex.h \
+    src/libraries/Clipper.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
     src/libraries/crypt/Password.h \
@@ -352,6 +358,7 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Appearance.cpp \
     src/views/appConfigWindow/AppConfigPage_History.cpp \
     src/views/appConfigWindow/AppConfigPage_Favorites.cpp \
+    src/views/appConfigWindow/AppConfigPage_Search.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \
     src/views/databasesManagement/DatabasesManagementPathDelegate.cpp \
     src/views/databasesManagement/DatabasesManagementScreen.cpp \
@@ -364,6 +371,8 @@ SOURCES = src/main.cpp \
     src/views/record/MetaEditor.cpp \
     src/views/tagsPanel/TagsPanel.cpp \
     src/views/favoritesPanel/FavoritesPanel.cpp \
+    src/views/notePicker/NotePickerDialog.cpp \
+    src/views/backlinksPanel/BacklinksPanel.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
     src/views/contentGallery/ContentGallery.cpp \
     src/views/contentGallery/GalleryTileDelegate.cpp \
@@ -395,6 +404,7 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/ConfigPage.cpp \
     src/views/appConfigWindow/AppConfigPage_Main.cpp \
     src/views/appConfigWindow/AppConfigPage_Misc.cpp \
+    src/views/appConfigWindow/AppConfigPage_Clipper.cpp \
     src/views/appConfigWindow/AppConfigPage_Crypt.cpp \
     src/views/appConfigWindow/AppConfigPage_Synchro.cpp \
     src/views/appConfigWindow/AppConfigPage_RecordTable.cpp \
@@ -493,6 +503,8 @@ SOURCES+=\
     src/views/waitClock/WaitClock.cpp \
     src/libraries/WalkHistory.cpp \
     src/libraries/VisitHistory.cpp \
+    src/libraries/BacklinkIndex.cpp \
+    src/libraries/Clipper.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \
     src/libraries/crypt/Password.cpp \

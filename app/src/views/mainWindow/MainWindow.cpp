@@ -12,6 +12,7 @@
 #include <QDockWidget>
 #include <QStatusBar>
 #include <QActionGroup>
+#include <QColorDialog>
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -24,6 +25,9 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/historyPanel/HistoryPanel.h"
+#include "views/backlinksPanel/BacklinksPanel.h"
+#include "libraries/BacklinkIndex.h"
+#include "libraries/Clipper.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
@@ -63,6 +67,7 @@ MainWindow::MainWindow() : QMainWindow()
     setupUI();
     initFileMenu();
     initToolsMenu();
+    initViewMenu();
     initThemesMenu();
     initHelpMenu();
     initHiddenActions();
@@ -80,6 +85,12 @@ MainWindow::MainWindow() : QMainWindow()
     // Инициализируется объект слежения за корзиной
     trashMonitoring.init(mytetraConfig.get_trashdir());
     trashMonitoring.update();
+
+    // Старт веб-клиппера (перехват глобального хоткея по настройкам)
+    clipper.start();
+
+    // Применить сохранённый режим только чтения (если был включен)
+    applyReadOnly();
 
     // Закрывать ли по-настоящему окно при обнаружении сигнала closeEvent
     enableRealClose=false;
@@ -154,6 +165,16 @@ void MainWindow::setupUI(void)
     historyPanelDock->setWidget(historyPanel);
     historyPanelDock->hide();
 
+    // Панель входящих ссылок в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools
+    backlinksPanel=new BacklinksPanel(this);
+    backlinksPanel->setObjectName("backlinksPanel");
+
+    backlinksPanelDock=new QDockWidget(tr("Backlinks"), this);
+    backlinksPanelDock->setObjectName("backlinksPanelDock");
+    backlinksPanelDock->setWidget(backlinksPanel);
+    backlinksPanelDock->hide();
+
     // todo: Для проверки, почему то в этом месте поиск объекта по имени не работает, разобраться.
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
 }
@@ -198,6 +219,9 @@ void MainWindow::setupSignals(void)
 
     // Вызов окна просмотра лога
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
+
+    // Клиппер: заметка из буфера обмена в ветку unsorted_notes
+    connect(actionToolsMenuClipFromClipboard, &QAction::triggered, this, &MainWindow::runClipperNow);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -284,6 +308,7 @@ void MainWindow::assembly(void)
 
     addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
 
+    addDockWidget(Qt::RightDockWidgetArea, backlinksPanelDock);
     // Кнопка-бирка справа от поиска по базе во второй линии записей.
     // Тот же переключатель что в меню Tools: состояние синхронно само
     recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
@@ -292,7 +317,15 @@ void MainWindow::assembly(void)
     // Тот же переключатель что в меню Tools
     recordTableScreen->addExtraToolAction(historyPanelDock->toggleViewAction());
 
+    // Кнопка входящих ссылок рядом с биркой истории.
+    // Тот же переключатель что в меню Tools
+    recordTableScreen->addExtraToolAction(backlinksPanelDock->toggleViewAction());
+
     setCentralWidget(findSplitter);
+
+    // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
+    // при первом запуске строится полным сканом базы
+    BacklinkIndex::instance().loadOrBuild();
 }
 
 
@@ -379,6 +412,9 @@ void MainWindow::messageHandler(QString message)
 
     else if(command=="addNoteDialog")
     {
+        // Глобальный режим только чтения: создание записей запрещено
+        if(mytetraConfig.get_readOnly())
+            return;
         // Определение, было ли окно MyTetra скрыто при обработке сообщения
         bool isHidden=this->isHidden();
 
@@ -413,6 +449,17 @@ void MainWindow::messageHandler(QString message)
 
         // Установка курсора в дереве
         treeScreen->setCursorToId( commandArgument );
+    }
+
+    else if(command=="clipboard")
+    {
+        // Глобальный режим только чтения: клиппер не создаёт записи
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
+        // Аргумент команды это ссылка на источник, может отсутствовать
+        clipper.clipNowWithUrl(commandArgument);
     }
 }
 
@@ -688,6 +735,9 @@ void MainWindow::initToolsMenu(void)
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
 
+    actionToolsMenuClipFromClipboard = new QAction(this);
+    menu->addAction(actionToolsMenuClipFromClipboard);
+
     // Переключатель панели тегов: видимость дока и галочка синхронны сами.
     // Текст берет из таблицы шорткатов через initAction как у соседей
     QAction *tagsPanelToggle=tagsPanelDock->toggleViewAction();
@@ -702,6 +752,13 @@ void MainWindow::initToolsMenu(void)
     menu->addAction(historyPanelToggle);
 
     shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
+
+    // Переключатель панели входящих ссылок: видимость дока и галочка синхронны сами
+    QAction *backlinksPanelToggle=backlinksPanelDock->toggleViewAction();
+    backlinksPanelToggle->setIcon(QIcon(":/resource/pic/backlinks.svg"));
+    menu->addAction(backlinksPanelToggle);
+
+    shortcutManager.initAction("misc-backlinksPanel", backlinksPanelToggle);
 
     menu->addSeparator();
 
@@ -808,6 +865,8 @@ void MainWindow::initThemesMenu(void)
     QMap<QString, QString> translateNames;
     translateNames["default"]=tr("Default");
     translateNames["dark"]=tr("Dark");
+    translateNames["modern"]=tr("Modern");
+    translateNames["midnight"]=tr("Midnight");
 
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);
@@ -845,6 +904,147 @@ void MainWindow::syncThemeMenu(void)
 }
 
 
+// Меню Вид между Tools и Themes: дублирует быстрые переключатели
+// отображения (шапка заметки, цвет секрета), чтобы не
+// лазить за ними в диалог настроек или контекстное меню редактора
+void MainWindow::initViewMenu(void)
+{
+    viewMenu=new QMenu(tr("&View"), this);
+    this->menuBar()->addMenu(viewMenu);
+
+    viewHeaderAction=new QAction(tr("Show note header"), this);
+    viewHeaderAction->setCheckable(true);
+    viewMenu->addAction(viewHeaderAction);
+
+    viewReadOnlyAction=new QAction(this);
+    viewReadOnlyAction->setCheckable(true);
+    viewMenu->addAction(viewReadOnlyAction);
+
+    viewMenu->addSeparator();
+
+    QAction *secretColorAction=new QAction(tr("Change secret color..."), this);
+    viewMenu->addAction(secretColorAction);
+
+    QAction *paperColorAction=new QAction(tr("Change note background color..."), this);
+    viewMenu->addAction(paperColorAction);
+
+    // Начальная пометка до коннектов: setChecked с тем же значением
+    // toggled не дергает, лишних записей в конфиг нет
+    syncViewMenu();
+
+    connect(viewHeaderAction, &QAction::toggled,
+            this,              &MainWindow::onViewHeaderToggled);
+    connect(viewReadOnlyAction, &QAction::toggled,
+            this,               &MainWindow::onViewReadOnlyToggled);
+    connect(secretColorAction, &QAction::triggered,
+            this,              &MainWindow::onViewSecretColor);
+
+    connect(paperColorAction, &QAction::triggered,
+            this,              &MainWindow::onViewPaperColor);
+
+    connect(viewMenu, &QMenu::aboutToShow,
+            this,      &MainWindow::syncViewMenu);
+}
+
+
+// Пометка текущих состояний при каждом открытии: все три вещи
+// меняются и мимо меню (диалог настроек, контекстное меню секрета)
+void MainWindow::syncViewMenu(void)
+{
+    if(viewHeaderAction!=nullptr)
+        viewHeaderAction->setChecked(mytetraConfig.get_recordHeaderVisible());
+
+    if(viewReadOnlyAction!=nullptr)
+        viewReadOnlyAction->setChecked(mytetraConfig.get_readOnly());
+}
+
+
+void MainWindow::onViewHeaderToggled(bool checked)
+{
+    mytetraConfig.set_recordHeaderVisible(checked);
+
+    if(editorScreen!=nullptr)
+        editorScreen->updateRecordHeaderVisibility();
+}
+
+
+// Переключение глобального режима только чтения: навигация и просмотр
+// разрешены, любые изменения базы запрещены
+void MainWindow::onViewReadOnlyToggled(bool checked)
+{
+    mytetraConfig.set_readOnly(checked);
+
+    applyReadOnly();
+}
+
+
+// Применить глобальный режим только чтения ко всем экранам.
+// Вызывается при переключении и при старте программы
+void MainWindow::applyReadOnly(void)
+{
+    const bool readOnly=mytetraConfig.get_readOnly();
+
+    if(treeScreen!=nullptr)
+        treeScreen->setReadOnly(readOnly);
+
+    // Действия таблицы записей пересчитываются с учётом флага,
+    // редактор — по текущей записи и флагу
+    if(recordTableScreen!=nullptr)
+        {
+         recordTableScreen->toolsUpdate();
+         recordTableScreen->refreshEditorReadOnly();
+
+         // Кнопка синхронизации меняет базу (и дёргает её же автосинхронизация)
+         recordTableScreen->actionSyncro->setEnabled(!readOnly);
+        }
+
+    // Импорт ветки и управление базами меняют данные
+    if(actionFileMenuImportTreeItem!=nullptr)
+        actionFileMenuImportTreeItem->setEnabled(!readOnly);
+
+    if(actionFileMenuDatabasesManagement!=nullptr)
+        actionFileMenuDatabasesManagement->setEnabled(!readOnly);
+}
+
+
+void MainWindow::onViewSecretColor(void)
+{
+    const QColor current(mytetraConfig.get_secretColor());
+    const QColor chosen=QColorDialog::getColor(current, this);
+
+    if(!chosen.isValid() || chosen==current)
+        return;
+
+    mytetraConfig.set_secretColor(chosen.name());
+
+    // Сразу на диск как в контекстном меню секрета
+    mytetraConfig.sync();
+
+    if(editorScreen!=nullptr)
+        editorScreen->repaintSecrets();
+}
+
+
+void MainWindow::onViewPaperColor(void)
+{
+    const QColor current(
+        MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(),
+                                           mytetraConfig.get_notePaperColor()));
+    const QColor chosen=QColorDialog::getColor(current, this);
+
+    if(!chosen.isValid() || chosen==current)
+        return;
+
+    mytetraConfig.set_notePaperColor(chosen.name());
+
+    // Сразу на диск как в соседнем пункте про цвет секрета
+    mytetraConfig.sync();
+
+    if(editorScreen!=nullptr)
+        editorScreen->applyNotePaperColor();
+}
+
+
 // Клик по пункту меню Темы: применить выбранную тему сразу
 void MainWindow::onThemeMenuTriggered(QAction *action)
 {
@@ -857,7 +1057,14 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         return;
 
     if(mytetraConfig.setInterfaceTheme(themeName))
+    {
         CssHelper::loadCurrentTheme();
+
+        // Своя бумага поверх темы переживает смену темы,
+        // пустая настройка подхватывает цвет новой темы
+        if(editorScreen!=nullptr)
+            editorScreen->applyNotePaperColor();
+    }
 }
 
 
@@ -888,6 +1095,10 @@ void MainWindow::setupShortcuts(void)
     shortcutManager.initAction("misc-findInBase", actionToolsMenuFindInBase );
 
     shortcutManager.initAction("misc-imagesGallery", actionToolsMenuImagesGallery );
+
+    shortcutManager.initAction("misc-clipFromClipboard", actionToolsMenuClipFromClipboard );
+
+    shortcutManager.initAction("misc-readOnly", viewReadOnlyAction );
 
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
@@ -986,6 +1197,10 @@ void MainWindow::fileExportBranch(void)
 
 void MainWindow::fileImportBranch(void)
 {
+    // Глобальный режим только чтения: импорт меняет базу
+    if(mytetraConfig.get_readOnly())
+        return;
+
     // Создается окно выбора директории, откуда необходимо сделать импорт
     QFileDialog directorySelectDialog(this);
     directorySelectDialog.setFileMode(QFileDialog::Directory);
@@ -1077,6 +1292,9 @@ void MainWindow::toolsPreferences(void)
 {
     AppConfigDialog dialog("", this); // this нужен чтобы пробрасывать иконку приложения
     dialog.exec();
+
+    // Настройки могли поменять хоткей клиппера — перечитать
+    clipper.rereadSettings();
 }
 
 
@@ -1084,6 +1302,35 @@ void MainWindow::onActionLogClicked()
 {
     ActionLogScreen actionLogScreen(this);
     actionLogScreen.exec();
+}
+
+
+// Показ всплывающего сообщения в системном трее.
+// Используется фоновыми задачами (клиппер), которым некого спросить,
+// но надо сообщить пользователю о результате
+void MainWindow::showTrayMessage(const QString &title, const QString &text)
+{
+    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
+        return;
+
+    if(trayIcon==nullptr || trayIcon->isVisible()==false)
+        return;
+
+    trayIcon->showMessage(title, text, QSystemTrayIcon::Warning);
+}
+
+
+// Клиппер из меню Tools: вставка из буфера в unsorted_notes сейчас.
+// Ссылка на источник ищется в самом тексте буфера
+void MainWindow::runClipperNow(void)
+{
+    clipper.clipNow();
+}
+
+
+Clipper *MainWindow::getClipper(void)
+{
+    return &clipper;
 }
 
 
@@ -1260,6 +1507,10 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
 // Старт синхронизации
 void MainWindow::synchronization(bool visible)
 {
+    // Глобальный режим только чтения: синхронизация может менять базу
+    if(mytetraConfig.get_readOnly())
+        return;
+
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
     if(!recordTableScreen->actionSyncro->isEnabled())
         return;
@@ -1595,11 +1846,19 @@ void MainWindow::goWalkHistory(void)
 // текст редактируемой записи
 void MainWindow::saveTextarea(void)
 {
+    // Глобальный режим только чтения
+    if(mytetraConfig.get_readOnly())
+        return;
+
     QString id=editorScreen->getMiscField("id");
 
     qDebug() << "MainWindow::saveTextarea() : id :" << id;
 
     editorScreen->saveTextarea();
+
+    // Текст на диске обновился: перепарсить исходящие ссылки записи
+    if(!id.isEmpty())
+      BacklinkIndex::instance().updateSource(id);
 
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),

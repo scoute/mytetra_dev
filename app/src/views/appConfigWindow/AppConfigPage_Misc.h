@@ -24,8 +24,11 @@ public:
 private slots:
   void onClickedEditMyTetraConfigFile(void);
   void onClickedSecretColor(void);
+  void onClickedNotePaperColor(void);
+  void onClickedNotePaperColorReset(void);
 
   void setColorForSecretButton(QColor iColor);
+  void setColorForNotePaperButton(QColor iColor);
 
 protected:
 
@@ -41,6 +44,15 @@ protected:
   QLabel *secretColorLabel;
   QToolButton *secretColorButton;
   QColor *secretColor;
+
+  QLabel *notePaperColorLabel;
+  QToolButton *notePaperColorButton;
+  QColor *notePaperColor;
+  QPushButton *notePaperColorReset;
+
+  // True пока действует цвет темы (настройка пуста): тогда Apply
+  // не пишет выбранный на кнопке цвет в конфиг
+  bool notePaperColorIsTheme;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

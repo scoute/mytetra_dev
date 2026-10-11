@@ -22,8 +22,10 @@
 #include "views/findInBaseScreen/FindScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
@@ -47,6 +49,26 @@ TagsTable::TagsTable(QWidget *parent) : QTableWidget(parent),
     maxContentWidth(QWIDGETSIZE_MAX)
 {
 
+}
+
+
+// Элемент колонки количества: сортировка числовая, а не строковая
+// (строкой "10" меньше "9"). Текст для отображения тот же — цифры
+CountTableWidgetItem::CountTableWidgetItem(int count)
+    : QTableWidgetItem(QString::number(count)), countValue(count)
+{
+
+}
+
+
+bool CountTableWidgetItem::operator<(const QTableWidgetItem &other) const
+{
+    const CountTableWidgetItem *o=dynamic_cast<const CountTableWidgetItem *>(&other);
+
+    if(o!=nullptr)
+        return countValue < o->countValue;
+
+    return QTableWidgetItem::operator<(other);
 }
 
 
@@ -78,15 +100,16 @@ void TagsPanel::setupUi(void)
     filterEdit->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
 
     // Таблица тег и количество заметок с ним. Строки минимальные
-    // чтобы больше влезало. Заголовок у колонки количества пустой:
-    // и так понятно что цифры это количество, зато экономия места.
+    // чтобы больше влезало.
     // Колонки двигаются вручную за границу заголовка: так можно
     // растянуть колонку тегов и увидеть длинное имя целиком.
+    // Клик по заголовку сортирует по метке или по количеству
+    // (количество сортируется численно через CountTableWidgetItem).
     // Горизонтальной прокрутки нет, при широком содержимом
     // растягивается сам док
     tagsTable=new TagsTable(this);
     tagsTable->setColumnCount(2);
-    tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << QString());
+    tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << tr("Count"));
     tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
     tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
     tagsTable->verticalHeader()->setVisible(false);
@@ -108,6 +131,11 @@ void TagsPanel::setupUi(void)
     tagsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     tagsTable->setSelectionMode(QAbstractItemView::SingleSelection);
     tagsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // Сортировка кликом по заголовку: по имени метки или по количеству.
+    // По умолчанию сверху самые частые метки (количество по убыванию)
+    tagsTable->setSortingEnabled(true);
+    tagsTable->sortByColumn(1, Qt::DescendingOrder);
 }
 
 
@@ -208,9 +236,14 @@ void TagsPanel::refreshTags(void)
             selectedTag=selectedItem->text();
     }
 
-    // Теги по алфавиту без учета регистра
+    // Теги по алфавиту без учета регистра — порядок заполнения,
+    // показ определяется текущей сортировкой (по умолчанию кол-во вниз)
     QStringList ordered=display.keys();
     ordered.sort(Qt::CaseInsensitive);
+
+    // Сортировка на время заполнения выключается: иначе каждая
+    // вставка пересортировывала бы таблицу, а итог тот же
+    tagsTable->setSortingEnabled(false);
 
     tagsTable->setRowCount(0);
     tagsTable->setRowCount(ordered.size());
@@ -222,11 +255,15 @@ void TagsPanel::refreshTags(void)
         // Полное имя тега в подсказке: длинное имя режется шириной колонки
         tagItem->setToolTip(display.value(ordered.at(i)));
 
-        QTableWidgetItem *countItem=new QTableWidgetItem(QString::number(counts.value(ordered.at(i))));
+        QTableWidgetItem *countItem=new CountTableWidgetItem(counts.value(ordered.at(i)));
 
         tagsTable->setItem(i, 0, tagItem);
         tagsTable->setItem(i, 1, countItem);
     }
+
+    // Сортировка включается обратно: таблица встанет по выбранной
+    // пользователем колонке (по умолчанию кол-во по убыванию)
+    tagsTable->setSortingEnabled(true);
 
     resizingProgrammatically=true;
 
@@ -332,7 +369,7 @@ void TagsPanel::onFilterChanged(const QString &text)
 }
 
 
-// Двойной клик по тегу запускает глобальный поиск как клик по тегу в заметке
+// Двойной клик по тегу ищет только в поле тегов, а не слово везде
 void TagsPanel::onTagClicked(int row, int column)
 {
     Q_UNUSED(column);
@@ -350,7 +387,7 @@ void TagsPanel::onTagClicked(int row, int column)
     if(!findScreen->isVisible())
         findScreen->widgetShow();
 
-    findScreen->setFindText(tagItem->text());
+    findScreen->setFindTag(tagItem->text());
 }
 
 
@@ -423,6 +460,10 @@ void TagsPanel::onTagsContextMenu(const QPoint &pos)
 // в существующее имя блокируется: это слияние, оно отложено
 void TagsPanel::onRenameTag(void)
 {
+    // Глобальный режим только чтения: теги не переименовываются
+    if(mytetraConfig.get_readOnly())
+        return;
+
     int row=tagsTable->currentRow();
     QTableWidgetItem *tagItem=(row>=0) ? tagsTable->item(row, 0) : nullptr;
 
@@ -513,6 +554,10 @@ void TagsPanel::onRenameTag(void)
 // Удаление тега из всех записей с диалогом подтверждения
 void TagsPanel::onDeleteTag(void)
 {
+    // Глобальный режим только чтения: теги не удаляются
+    if(mytetraConfig.get_readOnly())
+        return;
+
     int row=tagsTable->currentRow();
     QTableWidgetItem *tagItem=(row>=0) ? tagsTable->item(row, 0) : nullptr;
 

@@ -138,6 +138,18 @@ QString AppConfig::get_parameter(QString name)
     }
     else
     {
+        // Страховка вместо жёсткого падения: если параметр известен
+        // актуальной таблице, вернуть его дефолт (ключ мог потеряться
+        // из-за усечённых лимитом 100 миграций или чужого conf.ini).
+        // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
+        QStringList actualTable=get_parameter_table_48(true);
+        if(!getParameterTypeFromTable(name, actualTable).isEmpty())
+        {
+            QString defValue=getParameterDefaultValueFromTable(name, actualTable);
+            qWarning() << "In config not found parameter" << name << ", using default value:" << defValue;
+            return defValue;
+        }
+
         criticalError("In config not found parameter " + name);
     }
 }
@@ -789,7 +801,8 @@ void AppConfig::setFindInBaseExpand(bool state)
 
 bool AppConfig::get_editorFindEmbedded(void)
 {
-    return m_conf->value("editorFindEmbedded", false).toBool();
+    return m_conf->value("editorFindEmbedded", true).toBool();
+}
 }
 
 
@@ -944,6 +957,137 @@ bool AppConfig::get_favoritesEnabled(void)
 void AppConfig::set_favoritesEnabled(bool state)
 {
     m_conf->setValue("favoritesEnabled", state);
+}
+// Цвет фона поля заметки. Пустая строка означает цвет темы по умолчанию.
+// Параметр намеренно не входит в версионные таблицы (как editorFindEmbedded):
+// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
+QString AppConfig::get_notePaperColor(void)
+{
+    return m_conf->value("notePaperColor", "").toString();
+}
+
+
+void AppConfig::set_notePaperColor(QString color)
+{
+    // Пустая строка разрешена: это возврат к цвету темы
+    if(color.isEmpty())
+    {
+        m_conf->setValue("notePaperColor", "");
+        return;
+    }
+
+    QColor saveColor(color);
+
+    // Если сохраняема строка действительно содержит закодированный цвет
+    if (saveColor.isValid())
+    {
+        m_conf->setValue("notePaperColor", color);
+    }
+}
+
+
+bool AppConfig::get_recordHeaderVisible(void)
+{
+    return m_conf->value("recordHeaderVisible", true).toBool();
+}
+
+
+void AppConfig::set_recordHeaderVisible(bool state)
+{
+    m_conf->setValue("recordHeaderVisible", state);
+}
+
+
+bool AppConfig::get_readOnly(void)
+{
+    return m_conf->value("readOnly", false).toBool();
+}
+
+
+void AppConfig::set_readOnly(bool state)
+{
+    m_conf->setValue("readOnly", state);
+}
+
+
+int AppConfig::get_clipperMaxImages(void)
+{
+    return this->get_parameter("clipperMaxImages").toInt();
+}
+
+
+bool AppConfig::set_clipperMaxImages(int count)
+{
+    if(count>0)
+    {
+        m_conf->setValue("clipperMaxImages", count);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// Максимальный размер одной картинки клиппера в мегабайтах
+int AppConfig::get_clipperMaxImageSizeMb(void)
+{
+    return this->get_parameter("clipperMaxImageSizeMb").toInt();
+}
+
+
+bool AppConfig::set_clipperMaxImageSizeMb(int mbSize)
+{
+    if(mbSize>0)
+    {
+        m_conf->setValue("clipperMaxImageSizeMb", mbSize);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// Веб-клиппер включен или нет
+bool AppConfig::get_clipperenable(void)
+{
+    return m_conf->value("clipperenable").toBool();
+}
+
+
+void AppConfig::set_clipperenable(bool flag)
+{
+    m_conf->setValue("clipperenable", flag);
+}
+
+
+// Глобальный хоткей клиппера в формате QKeySequence (работает под X11)
+QString AppConfig::get_clipperhotkey(void)
+{
+    return this->get_parameter("clipperhotkey");
+}
+
+
+void AppConfig::set_clipperhotkey(QString sequence)
+{
+    m_conf->setValue("clipperhotkey", sequence);
+}
+
+
+// Id ветки unsorted_notes (запоминается после создания,
+// переживает переименования ветки)
+QString AppConfig::get_clipperbranchid(void)
+{
+    return this->get_parameter("clipperbranchid");
+}
+
+
+void AppConfig::set_clipperbranchid(QString id)
+{
+    m_conf->setValue("clipperbranchid", id);
 }
 
 
@@ -1293,6 +1437,10 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
     parameterFunctions << &AppConfig::get_parameter_table_44;
+    parameterFunctions << &AppConfig::get_parameter_table_45;
+    parameterFunctions << &AppConfig::get_parameter_table_46;
+    parameterFunctions << &AppConfig::get_parameter_table_47;
+    parameterFunctions << &AppConfig::get_parameter_table_48;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2181,8 +2329,6 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
 
     return table;
 }
-
-
 QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
 {
     // Таблица параметров
@@ -2194,6 +2340,88 @@ QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
 
     // Панель избранного включена
     table << "favoritesEnabled" << "bool" << "true";
+
+    // Шапка заметки показана
+    table << "recordHeaderVisible" << "bool" << "true";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 44
+    table << get_parameter_table_44(false);
+
+    // Веб-клиппер: лимиты картинок, включение, глобальный хоткей (X11),
+    // запомненная ветка unsorted_notes. Без SyncTetra-профиля
+    table << "clipperMaxImages" << "int" << "20";
+    table << "clipperMaxImageSizeMb" << "int" << "5";
+    table << "clipperenable" << "bool" << "true";
+    table << "clipperhotkey" << "QString" << "Ctrl+Alt+V";
+    table << "clipperbranchid" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_46(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Ремонтная версия без новых ключей: миграция 44->45 была усечена
+    // лимитом апдейтера в 100 параметров, и conf.ini мог остаться на
+    // версии 45 без клиппер-ключей. Перепрогон добавляет недостающее
+    // дефолтами, имеющиеся значения не трогает
+    table << get_parameter_table_45(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_47(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Второй ремонтный перепрогон: conf.ini со штампом версии 46 из других
+    // веток может не содержать клиппер-ключей. Состав тот же, что в 45
+    table << get_parameter_table_46(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_48(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 47
+    table << get_parameter_table_47(false);
+
+    // Глобальный режим только чтения (без изменений базы)
+    table << "readOnly" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

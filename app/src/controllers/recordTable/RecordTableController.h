@@ -24,6 +24,10 @@ public:
 
   void clickToRecord(const QModelIndex &index);
 
+  // Переприменить read-only редактора по текущей записи и глобальному
+  // флагу (для переключения режима без смены засветки)
+  void refreshEditorReadOnly(void);
+
   bool isTableNotExists(void);
   void setTableData(RecordTableData *rtData);
 

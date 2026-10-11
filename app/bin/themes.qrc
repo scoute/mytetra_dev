@@ -13,6 +13,16 @@
     <file>resource/standartconfig/any/themes/default/pic/branch_more.png</file>
     <file>resource/standartconfig/any/themes/default/pic/branch_end.png</file>
   </qresource>
+  <qresource prefix="/">
+    <file>resource/standartconfig/any/themes/modern/stylesheet.css</file>
+    <file>resource/standartconfig/any/themes/modern/pic/menu_check.svg</file>
+    <file>resource/standartconfig/any/themes/modern/pic/menu_dot.svg</file>
+  </qresource>
+  <qresource prefix="/">
+    <file>resource/standartconfig/any/themes/midnight/stylesheet.css</file>
+    <file>resource/standartconfig/any/themes/midnight/pic/menu_check.svg</file>
+    <file>resource/standartconfig/any/themes/midnight/pic/menu_dot.svg</file>
+  </qresource>
   <qresource prefix="/" about="QDarkStyleSheet project">
     <file>resource/standartconfig/any/themes/dark/stylesheet.css</file>
     

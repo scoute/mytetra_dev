@@ -464,6 +464,15 @@ void Editor::setupSignals(void)
   connect(editorContextMenu,  &EditorContextMenu::contextMenuGotoReference,
           referenceFormatter, &ReferenceFormatter::onContextMenuGotoReference,
           Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuEditReference,
+          referenceFormatter, &ReferenceFormatter::onEditReferenceAtCursor,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuPasteNoteReference,
+          referenceFormatter, &ReferenceFormatter::onReferenceClicked,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuInsertNoteReference,
+          referenceFormatter, &ReferenceFormatter::onInsertNoteReferenceClicked,
+          Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySecret,
           secretFormatter,   &SecretFormatter::onContextMenuCopySecret,
           Qt::DirectConnection);
@@ -823,6 +832,15 @@ QTextDocument *Editor::getTextareaDocument(void)
 }
 
 
+// Перекраска секретов открытого документа под глобальный цвет.
+// Вызывается из меню Вид после смены цвета в конфиге
+void Editor::repaintSecrets(void)
+{
+  if(secretFormatter!=nullptr)
+    secretFormatter->repaintSecrets();
+}
+
+
 bool Editor::setWorkDirectory(QString dirName)
 {
   QDir directory(dirName);
@@ -978,6 +996,13 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
 void Editor::saveTextarea(void)
 {
   qDebug() << "Save textarea...";
+
+  // Глобальный режим только чтения: запись запрещена на последнем рубеже
+  if(mytetraConfig.get_readOnly())
+    {
+     qDebug() << "Save textarea blocked: read-only mode";
+     return;
+    }
 
   // Если запись была открыта на просмотр и изменена
   if(getWorkDirectory().length()!=0 &&
@@ -1510,7 +1535,7 @@ void Editor::onFindtextClicked(void)
     return;
   }
 
-  // Новая панель по запомненному режиму: по умолчанию отдельное окно
+  // Новая панель по запомненному режиму: по умолчанию полоска
   if(mytetraConfig.get_editorFindEmbedded())
   {
     findBar->showBar();

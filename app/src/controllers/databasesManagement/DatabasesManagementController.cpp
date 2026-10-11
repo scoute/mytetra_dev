@@ -25,6 +25,8 @@
 #include "controllers/recordTable/RecordTableController.h"
 #include "views/consoleEmulator/CommandRunner.h"
 #include "views/tagsPanel/TagsPanel.h"
+#include "views/backlinksPanel/BacklinksPanel.h"
+#include "libraries/BacklinkIndex.h"
 
 
 extern GlobalParameters globalParameters;
@@ -188,6 +190,15 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
 
     if(tagsPanel!=nullptr)
         tagsPanel->refreshTags();
+
+    // Обратный индекс перечитывается под новое хранилище
+    BacklinkIndex::instance().setTreeModel(knowTreeModel);
+    BacklinkIndex::instance().loadOrBuild();
+
+    BacklinksPanel *backlinksPanel=find_object<BacklinksPanel>("backlinksPanel");
+
+    if(backlinksPanel!=nullptr)
+        backlinksPanel->refreshBacklinks();
 
     return true;
 }

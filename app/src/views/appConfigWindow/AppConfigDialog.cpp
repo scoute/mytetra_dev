@@ -15,6 +15,8 @@
 #include "AppConfigPage_Keyboard.h"
 #include "AppConfigPage_History.h"
 #include "AppConfigPage_Favorites.h"
+#include "AppConfigPage_Search.h"
+#include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Appearance.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
@@ -58,8 +60,12 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("History"));
     pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( parent ),
                                             QObject::tr("Favorites"));
+    pageSearch     =configDialog->addWidget(new AppConfigPage_Search( parent ),
+                                            QObject::tr("Search"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
+    pageClipper    =configDialog->addWidget(new AppConfigPage_Clipper( parent ),
+                                            QObject::tr("Clipper"));
 
 
     configDialog->updateListWidth();
@@ -100,7 +106,9 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageKeyboard") item=pageKeyboard;
     if(name=="pageHistory") item=pageHistory;
     if(name=="pageFavorites") item=pageFavorites;
+    if(name=="pageSearch") item=pageSearch;
     if(name=="pageMisc") item=pageMisc;
+    if(name=="pageClipper") item=pageClipper;
 
     if(item!=nullptr)
         configDialog->externalChangePage(item);

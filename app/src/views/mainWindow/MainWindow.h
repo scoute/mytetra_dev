@@ -10,6 +10,8 @@
 #include <QFileInfo>
 #include <QSystemTrayIcon>
 
+#include "libraries/Clipper.h"
+
 
 class QAction;
 class QWidget;
@@ -25,6 +27,7 @@ class RecordTableScreen;
 class FindScreen;
 class TagsPanel;
 class HistoryPanel;
+class BacklinksPanel;
 class WindowSwitcher;
 class CommandRunner;
 
@@ -94,6 +97,16 @@ public slots:
 
     void toolsFilesGallery(void);
 
+    // Показ всплывающего сообщения в системном трее.
+    // Молча ничего не делает, если трей недоступен или скрыт
+    void showTrayMessage(const QString &title, const QString &text);
+
+    // Веб-клиппер: вставка из буфера в unsorted_notes сейчас
+    void runClipperNow(void);
+
+    // Доступ к клипперу для настроек (статус хоткея)
+    Clipper *getClipper(void);
+
     void setupShortcuts(void);
 
 private slots:
@@ -116,6 +129,15 @@ private slots:
 
     // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
     void onThemeMenuTriggered(QAction *action);
+
+    // Меню Вид: дубли быстрых переключателей отображения
+    void onViewHeaderToggled(bool checked);
+    void onViewSecretColor(void);
+    void onViewPaperColor(void);
+
+    // Меню Вид: глобальный режим только чтения
+    void onViewReadOnlyToggled(bool checked);
+    void applyReadOnly(void);
 
     void onExpandEditArea(bool flag);
 
@@ -153,6 +175,12 @@ private:
     void initThemesMenu(void);
     void syncThemeMenu(void);
 
+    // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
+    // Пометка обновляется при каждом открытии, так как все три вещи
+    // меняются и из других мест (диалог настроек, контекстное меню)
+    void initViewMenu(void);
+    void syncViewMenu(void);
+
     void initRecordTableActions(void);
 
     void setupIconActions(void);
@@ -181,6 +209,7 @@ private:
     QAction *actionToolsMenuImagesGallery;
     QAction *actionToolsMenuFilesGallery;
     QAction *actionToolsMenuActionLog;
+    QAction *actionToolsMenuClipFromClipboard;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
@@ -210,19 +239,31 @@ private:
     // Меню Темы в menubar: один клик вместо похода в настройки
     QMenu *themesMenu=nullptr;
 
+    // Меню Вид в menubar между Tools и Themes: шапка, цвет секрета
+    QMenu *viewMenu=nullptr;
+    QAction *viewHeaderAction=nullptr;
+    QAction *viewReadOnlyAction=nullptr;
+
     // Панель списка тегов. Переключается из меню Tools и горячей клавишей,
     // в свернутом виде места не занимает
     TagsPanel *tagsPanel=nullptr;
     QDockWidget *tagsPanelDock=nullptr;
-
 
     // Панель истории посещений. Переключается из меню Tools и горячей
     // клавишей, в закрытом виде место не занимает
     HistoryPanel *historyPanel=nullptr;
     QDockWidget *historyPanelDock=nullptr;
 
+    // Панель входящих ссылок. Переключается из меню Tools,
+    // в закрытом виде место не занимает
+    BacklinksPanel *backlinksPanel=nullptr;
+    QDockWidget *backlinksPanelDock=nullptr;
+
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;
+
+    // Веб-клиппер (глобальный хоткей -> unsorted_notes)
+    Clipper clipper;
 
     QSplitter *vSplitter;
     QSplitter *hSplitter;

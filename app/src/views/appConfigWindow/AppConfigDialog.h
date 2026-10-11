@@ -32,7 +32,9 @@ private:
     QListWidgetItem *pageKeyboard;
     QListWidgetItem *pageHistory;
     QListWidgetItem *pageFavorites;
+    QListWidgetItem *pageSearch;
     QListWidgetItem *pageMisc;
+    QListWidgetItem *pageClipper;
 
     void changePage(QString name);
 };

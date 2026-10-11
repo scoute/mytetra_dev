@@ -102,6 +102,7 @@ void printHelp()
     printf("./mytetra --control --openNote <noteId> - Jump to note with <noteId>\n");
     printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
+    printf("./mytetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
     printf("\n");
 }
 
@@ -169,7 +170,7 @@ void parseConsoleOption(QtSingleApplication &app)
         // параметра, иначе обращение за его значением выходит за границу списка
         // аргументов и приводит к аварийному завершению программы
         QStringList optionsWithParameter;
-        optionsWithParameter << "--openNote" << "--openBranch" << "--openTreeItem";
+        optionsWithParameter << "--openNote" << "--openBranch" << "--openTreeItem" << "--url";
 
         for (const QString &optionName : optionsWithParameter)
         {
@@ -217,6 +218,17 @@ void parseConsoleOption(QtSingleApplication &app)
         {
             int openTreeItemIndex=app.arguments().indexOf("--openTreeItem");
             sendControlCommandAndExit(app, "openTreeItem "+app.arguments().at(openTreeItemIndex+1));
+        }
+        else if (app.arguments().contains("--clipboard"))
+        {
+            // Клиппер: работающий экземпляр сам читает буфер обмена,
+            // через командную строку передается только ссылка на источник
+            QString message="clipboard";
+            int urlIndex=app.arguments().indexOf("--url");
+            if(urlIndex!=-1)
+                message+=" "+app.arguments().at(urlIndex+1);
+
+            sendControlCommandAndExit(app, message);
         }
         else
         {

@@ -28,7 +28,7 @@ const int FixedParameters::mathExpVersionNumberLen=4; // Сколько симв
 const int FixedParameters::mathExpHeaderLen=29; // Сколько символов занимает весь заголовок (префикс, номер версии, три двоеточия)
 
 // Имена доступных тем оформления
-const QStringList FixedParameters::themesAvailableList={"default", "dark"};
+const QStringList FixedParameters::themesAvailableList={"default", "dark", "modern", "midnight"};
 
 // Таблица доступных размеров иконок
 const OrderedMap< QString, QPair<QString, float> > FixedParameters::interfaceIconSizeAvailableMap = {

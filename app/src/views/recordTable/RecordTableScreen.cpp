@@ -348,12 +348,16 @@ void RecordTableScreen::assembly(void)
  recordTableScreenLayout->addWidget(treePathLabel);
  recordTableScreenLayout->addWidget(recordTableController->getView());
 
+ // Зазоры по 1px: штатный spacing давал полосу пустоты
+ // между тулбаром и таблицей
+ recordTableScreenLayout->setSpacing(1);
+
  setLayout(recordTableScreenLayout);
 
  // Границы убираются, так как данный объект будет использоваться как виджет
  QLayout *lt;
  lt=layout();
- lt->setContentsMargins(0,2,0,0);
+ lt->setContentsMargins(0,1,0,0);
 }
 
 
@@ -361,6 +365,13 @@ void RecordTableScreen::assembly(void)
 // (но не всех действий на панели инструментов,
 // так как на панели инструментов есть действия,
 // не оказывающие воздействия на записи)
+// Переприменить read-only редактора (для глобального режима без смены засветки)
+void RecordTableScreen::refreshEditorReadOnly(void)
+{
+ recordTableController->refreshEditorReadOnly();
+}
+
+
 void RecordTableScreen::disableAllActions(void)
 {
  actionAddNewToEnd->setEnabled(false);
@@ -495,6 +506,27 @@ void RecordTableScreen::toolsWidgetsUpdate()
 
  // Переключение между режимами выбора в списке записей возможно всегда
  actionSwitchSelectionMode->setEnabled(true);
+
+ // Глобальный режим только чтения: мутирующие действия недоступны.
+ // Копирование записей, печать, поиск и навигация разрешены
+ if(mytetraConfig.get_readOnly())
+  {
+   actionAddNewToEnd->setEnabled(false);
+   actionAddNewBefore->setEnabled(false);
+   actionAddNewAfter->setEnabled(false);
+   actionEditField->setEnabled(false);
+   actionBlock->setEnabled(false);
+   actionDelete->setEnabled(false);
+
+   actionCut->setEnabled(false);
+   actionPaste->setEnabled(false);
+
+   actionMoveUp->setEnabled(false);
+   actionMoveDn->setEnabled(false);
+  }
+
+ // Перетаскивание записей запрещено, выбор работает
+ recordTableController->getView()->setDragEnabled(!mytetraConfig.get_readOnly());
 }
 
 

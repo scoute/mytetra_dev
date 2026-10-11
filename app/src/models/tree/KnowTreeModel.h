@@ -76,6 +76,9 @@ public:
 
     //! Возвращает общее количество записей, хранимых в дереве
     int getAllRecordCount(void);
+
+    //! Возвращает общее количество веток в дереве (без невидимого корня)
+    int getBranchCount(void) const;
     
     //! Возвращает количество записей в ветке и всех подветках
     int getRecordCountForItem(const TreeItem *item);
@@ -171,6 +174,8 @@ private:
     QModelIndex moveUpDownBranch(const QModelIndex &index,int direction);
 
     int getAllRecordCountRecurse(const TreeItem *item, int mode) const;
+
+    int getBranchCountRecurse(const TreeItem *item) const;
 
     QString pasteSubbranchRecurse(TreeItem *item,
                                   QString startBranchId,

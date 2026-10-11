@@ -1167,6 +1167,27 @@ QModelIndex KnowTreeModel::getIndexByItem(TreeItem *item)
 }
 
 
+// Возвращает общее количество веток в дереве (невидимый корень не считается)
+int KnowTreeModel::getBranchCount(void) const
+{
+  return getBranchCountRecurse(rootItem);
+}
+
+
+int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
+{
+  if(item==nullptr)
+    return 0;
+
+  int n=item->childCount();
+
+  for(int i=0; i<item->childCount(); ++i)
+    n+=getBranchCountRecurse(item->child(i));
+
+  return n;
+}
+
+
 // Возвращает общее количество записей, хранимых в дереве
 int KnowTreeModel::getAllRecordCount(void)
 {

@@ -19,6 +19,7 @@ class QMenu;
 class QCloseEvent;
 class QSplitter;
 class QStatusBar;
+class QLabel;
 class QDockWidget;
 
 class TreeScreen;
@@ -44,6 +45,11 @@ public:
     MetaEditor *editorScreen=nullptr;
     FindScreen *findScreenDisp=nullptr;
     QStatusBar *statusBar=nullptr;
+
+    // Статистика базы справа в статусбаре (постоянный виджет).
+    // Ссылки при наведении показываются слева через showMessage
+    // и постоянный виджет не затирают
+    QLabel *statsLabel=nullptr;
     WindowSwitcher *windowSwitcher=nullptr;
 
     void restoreWindowGeometry(void);
@@ -108,6 +114,10 @@ public slots:
     Clipper *getClipper(void);
 
     void setupShortcuts(void);
+
+    // Пересчитать и показать статистику базы в статусбаре.
+    // Вызывается по сигналам модели и при смене языка
+    void updateStats(void);
 
     // Перевести статичные тексты новым языком без перезапуска.
     // Тексты на шорткатах обновляются отдельно сигналом

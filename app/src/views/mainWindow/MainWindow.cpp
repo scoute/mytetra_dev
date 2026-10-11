@@ -11,6 +11,7 @@
 #include <QSplitter>
 #include <QDockWidget>
 #include <QStatusBar>
+#include <QLabel>
 #include <QActionGroup>
 #include <QColorDialog>
 
@@ -135,6 +136,14 @@ void MainWindow::setupUI(void)
     statusBar->setObjectName("statusBar");
     setStatusBar(statusBar);
     globalParameters.setStatusBar(statusBar);
+
+    // Статистика базы справа. Постоянный виджет: showMessage (ссылки
+    // при наведении слева) его не затирает
+    statsLabel=new QLabel( this );
+    statsLabel->setObjectName("statsLabel");
+    statsLabel->setToolTip(tr("Total branches and records in the database"));
+    statusBar->addPermanentWidget(statsLabel);
+    updateStats();
 
     // Вспомогательный объект переключения окон, используется в мобильном интерфейсе
     windowSwitcher=new WindowSwitcher( this );
@@ -280,6 +289,19 @@ void MainWindow::setupSignals(void)
 
     // Обновление горячих клавиш, если они были изменены
     connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &MainWindow::setupShortcuts);
+
+    // Статистика в статусбаре: ветки (структура) и записи ([N] в именах
+    // обновляется тем же сигналом dataChanged, что и счетчики веток)
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
+    {
+        KnowTreeModel *treeModel=treeScreen->knowTreeModel;
+
+        connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::rowsRemoved, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::dataChanged, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::modelReset, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::layoutChanged, this, &MainWindow::updateStats);
+    }
 }
 
 
@@ -1109,6 +1131,25 @@ void MainWindow::setupShortcuts(void)
 // Перевести статичные тексты новым языком. Вызывается до
 // shortcutManager.retranslate(): тексты на шорткатах освежит сигнал,
 // а прямой setText их бы затер
+void MainWindow::updateStats(void)
+{
+    if(statsLabel==nullptr)
+        return;
+
+    int branches=0;
+    int records=0;
+
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
+    {
+        branches=treeScreen->knowTreeModel->getBranchCount();
+        records=treeScreen->knowTreeModel->getAllRecordCount();
+    }
+
+    statsLabel->setText(tr("Branches: %1 | Records: %2").arg(branches).arg(records));
+    statsLabel->setToolTip(tr("Total branches and records in the database"));
+}
+
+
 void MainWindow::retranslateUi(void)
 {
     if(fileMenu!=nullptr)
@@ -1230,6 +1271,9 @@ void MainWindow::retranslateUi(void)
 
     if(backlinksPanel!=nullptr)
         backlinksPanel->retranslateUi();
+
+    // Статистика тоже на новом языке
+    updateStats();
 }
 
 

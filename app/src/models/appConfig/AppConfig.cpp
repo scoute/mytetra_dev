@@ -803,7 +803,6 @@ bool AppConfig::get_editorFindEmbedded(void)
 {
     return m_conf->value("editorFindEmbedded", true).toBool();
 }
-}
 
 
 void AppConfig::set_editorFindEmbedded(bool state)

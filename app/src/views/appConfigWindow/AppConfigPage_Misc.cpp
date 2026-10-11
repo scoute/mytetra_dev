@@ -203,6 +203,21 @@ void AppConfigPage_Misc::onClickedEditMyTetraConfigFile(void)
 }
 
 
+void AppConfigPage_Misc::retranslateUi(void)
+{
+  printDebugMessages->setText(tr("Print debug messages to console"));
+  enableActionLog->setText(tr("Enable action logging (experimental)"));
+  enableCreateEmptyRecord->setText(tr("Create empty note enable"));
+
+  secretColorLabel->setText(tr("Secret color: "));
+  notePaperColorLabel->setText(tr("Note paper color: "));
+  notePaperColorReset->setText(tr("Reset"));
+
+  editMyTetraConfigFile->setText(tr("Edit config file"));
+  dangerBox->setTitle(tr("Danger actions (Attention!)"));
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

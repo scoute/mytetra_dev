@@ -168,6 +168,29 @@ void AppConfigPage_Synchro::onEnablePeriodicSyncro(bool state)
 }
 
 
+void AppConfigPage_Synchro::retranslateUi(void)
+{
+  synchroOnStartup->setText(tr("Synchronize at MyTetra startup"));
+  synchroOnExit->setText(tr("Synchronize when exit from MyTetra"));
+  synchroOnPeriodic->setText(tr("Enable periodic background synchronize"));
+
+  commandText->setText(tr("Synchronization command"));
+  commandAboutText->setText(tr("Use <b>%a</b> macro for get database directory path"));
+
+  synchroOnBox->setTitle(tr("Automatic start synchronization"));
+
+  synchroPeriodText->setText(tr("Synchronization period: "));
+  synchroPeriodPostfix->setText(tr("sec."));
+
+  enablePeriodicCheckBase->setText(tr("Periodic check database tree for change at 3rd-party app"));
+  checkBasePeriodText->setText(tr("Checking period: "));
+  checkBasePeriodPostfix->setText(tr("sec."));
+  enablePeriodicCheckMessage->setText(tr("Show message if a database tree was changed by external app"));
+
+  periodicCheckBox->setTitle(tr("Periodic checking database tree"));
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

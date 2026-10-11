@@ -20,6 +20,7 @@ public:
   virtual ~AppConfigPage_Crypt();
 
   int applyChanges(void);
+  void retranslateUi(void) override;
 
 private slots:
 

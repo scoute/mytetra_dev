@@ -102,13 +102,13 @@ void AppConfigPage_Clipper::setupSignals(void)
 
 void AppConfigPage_Clipper::assembly(void)
 {
-  QLabel *clipperMaxImagesLabel=new QLabel(tr("Maximum images per note:"), this);
-  QLabel *clipperMaxImageSizeLabel=new QLabel(tr("Maximum size of one image:"), this);
+  clipperMaxImagesLabel=new QLabel(tr("Maximum images per note:"), this);
+  clipperMaxImageSizeLabel=new QLabel(tr("Maximum size of one image:"), this);
 
   QVBoxLayout *clipperLayout=new QVBoxLayout;
 
   // Строка заголовка группы: название и знак вопроса рядом с ним
-  QLabel *clipperTitleLabel=new QLabel(tr("Clipper"), this);
+  clipperTitleLabel=new QLabel(tr("Clipper"), this);
   QFont clipperTitleFont=clipperTitleLabel->font();
   clipperTitleFont.setBold(true);
   clipperTitleLabel->setFont(clipperTitleFont);
@@ -119,7 +119,7 @@ void AppConfigPage_Clipper::assembly(void)
   clipperTitleLayout->addStretch();
   clipperLayout->addLayout(clipperTitleLayout);
 
-  QFormLayout *clipperFormLayout=new QFormLayout;
+  clipperFormLayout=new QFormLayout;
   clipperFormLayout->addRow(clipperEnable);
   clipperFormLayout->addRow(tr("Hotkey:"), clipperHotkeyEdit);
   clipperFormLayout->addRow(tr("Status:"), clipperStatusLabel);
@@ -171,6 +171,52 @@ void AppConfigPage_Clipper::onClickedClipperTest(void)
   if(mainWindow)
     mainWindow->runClipperNow();
 
+  updateClipperStatus();
+}
+
+
+void AppConfigPage_Clipper::retranslateUi(void)
+{
+  clipperEnable->setText(tr("Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
+  clipperHotkeyEdit->setToolTip(tr("Global hotkey, for example Ctrl+Alt+V. Latin keys only."));
+
+  clipperTestButton->setText(tr("Clip now"));
+  clipperTestButton->setToolTip(tr("Paste clipboard to unsorted_notes right now (works everywhere, no hotkey needed)"));
+
+  clipperMaxImages->setWhatsThis(tr("How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once."));
+  clipperMaxImages->setToolTip(tr("Images per note, the rest stay as links"));
+  clipperMaxImages->setSuffix(tr(" MB"));
+
+  clipperMaxImageSizeMb->setWhatsThis(tr("Images larger than this stay as external links instead of files."));
+  clipperMaxImageSizeMb->setToolTip(tr("Larger images stay as links, not files"));
+
+  clipperHelpButton->setToolTip(tr("How to use the clipper"));
+
+  clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
+  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: mytetra --control --clipboard [--url]"));
+
+  clipperMaxImagesLabel->setText(tr("Maximum images per note:"));
+  clipperMaxImageSizeLabel->setText(tr("Maximum size of one image:"));
+  clipperTitleLabel->setText(tr("Clipper"));
+
+  // Подписи строк формы Hotkey:/Status: лежат в layout
+  auto setRowLabel=[this](QWidget *field, const QString &text)
+  {
+    for(int i=0; i<clipperFormLayout->rowCount(); ++i)
+      if(clipperFormLayout->itemAt(i, QFormLayout::FieldRole)!=nullptr &&
+         clipperFormLayout->itemAt(i, QFormLayout::FieldRole)->widget()==field)
+      {
+        QLayoutItem *labelItem=clipperFormLayout->itemAt(i, QFormLayout::LabelRole);
+
+        if(labelItem!=nullptr && labelItem->widget()!=nullptr)
+          qobject_cast<QLabel *>(labelItem->widget())->setText(text);
+      }
+  };
+
+  setRowLabel(clipperHotkeyEdit, tr("Hotkey:"));
+  setRowLabel(clipperStatusLabel, tr("Status:"));
+
+  // Динамический статус перечитывается текущим языком
   updateClipperStatus();
 }
 

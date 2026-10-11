@@ -112,6 +112,14 @@ void AppConfigPage_Attach::onClickedHighlightColor()
 }
 
 
+void AppConfigPage_Attach::retranslateUi(void)
+{
+  enableRecordWithAttachHighlight->setText(tr("Enable highlight notes with attachments"));
+  labelHighlightColor->setText(tr("Highlight color: "));
+  decorBox->setTitle(tr("Displaying notes with attachments"));
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

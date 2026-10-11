@@ -3,8 +3,10 @@
 #include <QDialog>
 #include <QDebug>
 #include <QWidget>
+#include <QListWidgetItem>
 
 #include "ConfigDialog.h"
+#include "ConfigPage.h"
 #include "AppConfigDialog.h"
 #include "AppConfigPage_Main.h"
 #include "AppConfigPage_Crypt.h"
@@ -22,6 +24,9 @@
 
 
 extern AppConfig mytetraConfig;
+
+
+QList<AppConfigDialog *> AppConfigDialog::openDialogs;
 
 
 AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
@@ -77,14 +82,48 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
 AppConfigDialog::~AppConfigDialog()
 {
     qDebug() << Q_FUNC_INFO;
+
+    openDialogs.removeAll(this);
 }
 
 
 void AppConfigDialog::exec()
 {
     qDebug() << "Before config dialog exec";
+
+    openDialogs.append(this);
     configDialog->exec();
+    openDialogs.removeAll(this);
+
     qDebug() << "Config dialog exec finish";
+}
+
+
+// Прямые тексты новым языком: заголовок, пункты списка страниц
+// и все страницы. Вызывается при смене языка из страницы Main
+void AppConfigDialog::retranslateUi(void)
+{
+    if(configDialog==nullptr)
+        return;
+
+    configDialog->setWindowTitle(QObject::tr("MyTetra settings"));
+
+    pageMain->setText(QObject::tr("Main"));
+    pageAppearance->setText(QObject::tr("Appearance"));
+    pageCrypt->setText(QObject::tr("Crypt"));
+    pageSynchro->setText(QObject::tr("Synchro"));
+    pageRecordTable->setText(QObject::tr("Notes area"));
+    pageAttach->setText(QObject::tr("Attaches"));
+    pageKeyboard->setText(QObject::tr("Keyboard"));
+    pageHistory->setText(QObject::tr("History"));
+    pageSearch->setText(QObject::tr("Search"));
+    pageMisc->setText(QObject::tr("Misc"));
+    pageClipper->setText(QObject::tr("Clipper"));
+
+    QList<ConfigPage *> pages=configDialog->findChildren<ConfigPage *>();
+
+    foreach(ConfigPage *page, pages)
+        page->retranslateUi();
 }
 
 

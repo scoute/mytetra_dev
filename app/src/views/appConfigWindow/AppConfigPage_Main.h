@@ -26,6 +26,7 @@ public:
   void assembly(void);
 
   int applyChanges(void);
+  void retranslateUi(void) override;
     
 private slots:
   void onClickedTetradirSelectDialog(void);

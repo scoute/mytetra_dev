@@ -13,6 +13,10 @@ public:
     virtual ~ConfigPage();
 
     virtual int applyChanges(void);
+
+    // Обновить прямые тексты новым языком. По умолчанию нечего:
+    // переопределяют страницы со статичными надписями
+    virtual void retranslateUi(void) {}
 };
 
 

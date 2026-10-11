@@ -199,6 +199,33 @@ void AppConfigPage_Appearance::assembly()
 
 
 // Метод должен возвращать уровень сложности сделанных изменений
+void AppConfigPage_Appearance::retranslateUi(void)
+{
+  runInMinimizedWindow->setText(tr("Run MyTetra in a minimized window"));
+  dockableWindowsBehavior->setText(tr("Hide detached windows if close main window"));
+
+  themeLabel->setText(tr("Interface theme"));
+
+  QMap<QString, QString> translateNames;
+  translateNames[ "default" ] = tr("Default");
+  translateNames[ "dark" ]    = tr("Dark");
+  translateNames[ "modern" ]  = tr("Modern");
+  translateNames[ "midnight" ]= tr("Midnight");
+
+  for(int i=0; i<themeNameComboBox->count(); ++i)
+  {
+    QString name=fixedParameters.themesAvailableList.value(i, "Unknown");
+    themeNameComboBox->setItemText(i, translateNames.value(name, "Unknown"));
+  }
+
+  iconSizeLabel->setText(tr("Icon size"));
+  iconSizeComboBox->setItemText(0, tr("System"));
+
+  interfaceBox->setTitle(tr("Interface"));
+  behaviorBox->setTitle(tr("Windows behavior"));
+}
+
+
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
 int AppConfigPage_Appearance::applyChanges()

@@ -20,6 +20,7 @@
 #include "libraries/helpers/LanguageHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/mainWindow/MainWindow.h"
+#include "views/appConfigWindow/AppConfigDialog.h"
 
 
 extern AppConfig mytetraConfig;
@@ -106,6 +107,8 @@ void AppConfigPage_Main::setupUi(void)
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Japan.png"));
  interfaceLanguage->addItem("zh");
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/China.png"));
+ interfaceLanguage->addItem("hy");
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Armenia.png"));
  interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(mytetraConfig.get_interfacelanguage(), Qt::MatchCaseSensitive));
 
 
@@ -302,6 +305,10 @@ void AppConfigPage_Main::onLanguageChanged(int index)
   if(mainWindow!=nullptr)
     mainWindow->retranslateUi();
 
+  // Открытый диалог настроек тоже переводится сразу
+  foreach(AppConfigDialog *dialog, AppConfigDialog::openDialogs)
+    dialog->retranslateUi();
+
   shortcutManager.retranslate();
 }
 
@@ -333,6 +340,28 @@ Sample: dd.MM.yyyy - hh:mm:ss";
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
+void AppConfigPage_Main::retranslateUi(void)
+{
+  tetradirLabel->setText(tr("Data directory"));
+  tetradirButton->setText(tr("..."));
+
+  trashdirLabel->setText(tr("Trash directory"));
+  trashdirButton->setText(tr("..."));
+
+  trashsizeLabel->setText(tr("Trash size"));
+  trashsizeFlexion->setText(tr("Mb"));
+
+  trashmaxfilecountLabel->setText(tr("Maximum files in trash"));
+  trashmaxfilecountFlexion->setText(tr("files"));
+
+  interfaceLanguageLabel->setText(tr("Language"));
+
+  dateTimeFormatBox->setTitle(tr("Displaying date and time format"));
+  disableCustomDateTimeFormat->setText(tr("Locale settings"));
+  enableCustomDateTimeFormat->setText(tr("Custom format"));
+}
+
+
 int AppConfigPage_Main::applyChanges(void)
 {
  qDebug() << "Apply changes main";

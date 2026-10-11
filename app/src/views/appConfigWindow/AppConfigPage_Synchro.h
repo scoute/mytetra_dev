@@ -20,6 +20,7 @@ public:
   AppConfigPage_Synchro(QWidget *parent = nullptr);
 
   int applyChanges(void);
+  void retranslateUi(void) override;
 
 private slots:
 

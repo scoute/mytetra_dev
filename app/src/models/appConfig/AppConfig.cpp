@@ -947,6 +947,34 @@ void AppConfig::set_secretColor(QString color)
 }
 
 
+// Цвет фона поля заметки. Пустая строка означает цвет темы по умолчанию.
+// Параметр намеренно не входит в версионные таблицы (как editorFindEmbedded):
+// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
+QString AppConfig::get_notePaperColor(void)
+{
+    return m_conf->value("notePaperColor", "").toString();
+}
+
+
+void AppConfig::set_notePaperColor(QString color)
+{
+    // Пустая строка разрешена: это возврат к цвету темы
+    if(color.isEmpty())
+    {
+        m_conf->setValue("notePaperColor", "");
+        return;
+    }
+
+    QColor saveColor(color);
+
+    // Если сохраняема строка действительно содержит закодированный цвет
+    if (saveColor.isValid())
+    {
+        m_conf->setValue("notePaperColor", color);
+    }
+}
+
+
 bool AppConfig::get_recordHeaderVisible(void)
 {
     return m_conf->value("recordHeaderVisible", true).toBool();

@@ -623,6 +623,14 @@ MyTetra must be running.</source>
         <source>Secret color: </source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Note paper color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

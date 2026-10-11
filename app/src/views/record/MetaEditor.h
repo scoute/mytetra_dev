@@ -47,6 +47,12 @@ public:
 
  void setFocusToBaseWidget();
 
+ // Цвет фона поля заметки: настройка поверх цвета темы.
+ // Пустая строка effectiveNotePaperColor означает цвет темы
+ static QString effectiveNotePaperColor(const QString &themeName,
+                                       const QString &setting);
+ void applyNotePaperColor(void);
+
 private:
  void setupLabels(void);
  void setupUI(void);

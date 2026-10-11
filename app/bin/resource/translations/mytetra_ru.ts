@@ -802,6 +802,14 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Secret color: </source>
         <translation>Цвет секрета: </translation>
     </message>
+    <message>
+        <source>Note paper color: </source>
+        <translation>Цвет бумаги заметки: </translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Сбросить</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

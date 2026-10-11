@@ -239,6 +239,11 @@ public:
     QString get_secretColor(void);
     void set_secretColor(QString color); // Формат цвета - "#77767b"
 
+    // Цвет фона поля заметки. Пустая строка означает цвет темы
+    // по умолчанию, иначе формат цвета - "#B0BAC7"
+    QString get_notePaperColor(void);
+    void set_notePaperColor(QString color);
+
     // Шапка заметки (название и автор) над редактором.
     // По умолчанию показана
     bool get_recordHeaderVisible(void);

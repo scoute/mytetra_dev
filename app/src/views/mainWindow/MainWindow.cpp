@@ -1031,7 +1031,14 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         return;
 
     if(mytetraConfig.setInterfaceTheme(themeName))
+    {
         CssHelper::loadCurrentTheme();
+
+        // Своя бумага поверх темы переживает смену темы,
+        // пустая настройка подхватывает цвет новой темы
+        if(editorScreen!=nullptr)
+            editorScreen->applyNotePaperColor();
+    }
 }
 
 

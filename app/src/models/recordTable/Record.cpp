@@ -1,6 +1,8 @@
 #include <QObject>
 #include <QMessageBox>
 #include <QSet>
+#include <QSaveFile>
+#include <QFileInfo>
 #include <QXmlStreamWriter>
 
 #include "Record.h"
@@ -16,6 +18,46 @@
 
 extern AppConfig mytetraConfig;
 extern GlobalParameters globalParameters;
+
+
+// Атомарная запись файла с текстом записи: данные пишутся во временный
+// файл в том же каталоге, затем temp атомарно переименовывается поверх
+// цели (QSaveFile). Параллельный читатель (второй процесс, MCP-сервер)
+// видит либо старый, либо новый файл целиком, рваного состояния между
+// truncate и записью не бывает. Права существующего файла сохраняются
+// (temp создается с ограниченными), новый файл получает 0644 как раньше
+// через QFile. Байтовое поведение прежнее: текстовый режим с UTF-8
+// (на Windows сохраняется трансляция \n), бинарный - как есть.
+// При любой ошибке вызывается criticalError (завершает процесс),
+// недописанный temp отменяется деструктором QSaveFile, цель не тронута
+static void atomicWriteRecordFile(const QString &fileName, const QByteArray &data, bool textMode)
+{
+  QFile::Permissions permissions=QFile::ReadOwner | QFile::WriteOwner |
+                                 QFile::ReadGroup | QFile::ReadOther;
+
+  QFileInfo fileInfo(fileName);
+
+  if(fileInfo.exists())
+    permissions=fileInfo.permissions();
+
+  QSaveFile writeFile(fileName);
+
+  QIODevice::OpenMode openMode=QIODevice::WriteOnly;
+
+  if(textMode)
+    openMode|=QIODevice::Text;
+
+  if(!writeFile.open(openMode))
+    criticalError("Cant open text file "+fileName+" for atomic write.");
+
+  if(writeFile.write(data)!=data.size())
+    criticalError("Cant write text file "+fileName+".");
+
+  if(!writeFile.commit())
+    criticalError("Cant commit text file "+fileName+".");
+
+  QFile::setPermissions(fileName, permissions);
+}
 
 
 Record::Record() : attachTableData(this)
@@ -639,45 +681,32 @@ void Record::saveTextDirect(QString iText) const
   // Если шифровать не нужно
   if(fieldList.value("crypt").length()==0 || fieldList.value("crypt")=="0")
   {
-    // Текст сохраняется в файл
-    QFile wfile(fileName);
-
-    if(!wfile.open(QIODevice::WriteOnly | QIODevice::Text))
-      criticalError("Cant open text file "+fileName+" for write.");
-
-    QTextStream out(&wfile);
-    out.setCodec("UTF-8");
-    out << iText;
+    // Текст сохраняется в файл атомарно через временный файл
+    // (QTextStream с UTF-8 эквивалентен прямой записи UTF-8 байтов)
+    atomicWriteRecordFile(fileName, iText.toUtf8(), true);
   }
   else if(fieldList.value("crypt")=="1")
   {
     // Текст шифруется
     QByteArray encryptData=CryptService::encryptStringToByteArray(globalParameters.getCryptKey(), iText);
 
-    // В файл сохраняются зашифрованные данные
-    QFile wfile(fileName);
-
-    if(!wfile.open(QIODevice::WriteOnly))
-      criticalError("Cant open binary file "+fileName+" for write.");
-
-    wfile.write(encryptData);
+    // В файл сохраняются зашифрованные данные, атомарно
+    atomicWriteRecordFile(fileName, encryptData, false);
   }
   else
     criticalError("Record::saveTextDirect() : Unavailable crypt field value \""+fieldList.value("crypt")+"\"");
 }
 
 
-// Запись текста записи, хранимого в памяти, на диск
+// Запись текста записи, хранимого в памяти, на диск.
+// Атомарно через временный файл: параллельный читатель никогда
+// не увидит частично записанный файл
 void Record::saveText()
 {
   QString fileName=getFullTextFileName();
-  QFile wfile(fileName);
-
-  if(!wfile.open(QIODevice::WriteOnly))
-    criticalError("Record::saveText() : Cant open binary file "+fileName+" for write.");
 
   // Сохраняется QByteArray с текстом записи (в QByteArray могут быть как зашифрованные, так и не зашифрованные данные)
-  wfile.write(text);
+  atomicWriteRecordFile(fileName, text, false);
 }
 
 

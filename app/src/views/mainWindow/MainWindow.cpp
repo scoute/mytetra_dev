@@ -1146,7 +1146,7 @@ void MainWindow::updateStats(void)
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
         treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
 
-    statsLabel->setText(tr("Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6").arg(branches).arg(records).arg(files).arg(images).arg(links).arg(tags));
+    statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
     statsLabel->setToolTip(tr("Base statistics: branches, records, attached files, images, links and tags"));
 }
 

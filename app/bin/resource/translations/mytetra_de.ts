@@ -3056,8 +3056,8 @@ Bitte MyTetra aktualisieren.</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
-        <translation>Zweige: %1 | Notizen: %2 | Dateien: %3 | Bilder: %4 | Links: %5 | Tags: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>Zweige: %1 | Notizen: %2 | Tags: %3 | Dateien: %4 | Bilder: %5 | Links: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>

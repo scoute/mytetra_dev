@@ -3030,8 +3030,8 @@ Veuillez mettre à jour MyTetra.</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
-        <translation>Branches : %1 | Notes : %2 | Fichiers : %3 | Images : %4 | Liens : %5 | Étiquettes : %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>Branches : %1 | Notes : %2 | Étiquettes : %3 | Fichiers : %4 | Images : %5 | Liens : %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>

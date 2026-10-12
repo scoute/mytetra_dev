@@ -3056,8 +3056,8 @@ You need to update MyTetra.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
-        <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Ֆայլեր: %3 | Պատկերներ: %4 | Հղումներ: %5 | Պիտակներ: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Պիտակներ: %3 | Ֆայլեր: %4 | Պատկերներ: %5 | Հղումներ: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>

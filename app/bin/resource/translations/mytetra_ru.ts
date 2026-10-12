@@ -3821,8 +3821,8 @@ You need to update MyTetra.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
-        <translation>Веток: %1 | Записей: %2 | Файлов: %3 | Картинок: %4 | Ссылок: %5 | Меток: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>Веток: %1 | Записей: %2 | Меток: %3 | Файлов: %4 | Картинок: %5 | Ссылок: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>

@@ -3053,8 +3053,8 @@ You need to update MyTetra.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
-        <translation>分支：%1 | 笔记：%2 | 文件：%3 | 图片：%4 | 链接：%5 | 标签：%6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>分支：%1 | 笔记：%2 | 标签：%3 | 文件：%4 | 图片：%5 | 链接：%6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>

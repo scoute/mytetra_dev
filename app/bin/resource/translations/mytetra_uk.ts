@@ -3048,8 +3048,8 @@ You need to update MyTetra.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Files: %3 | Images: %4 | Links: %5 | Tags: %6</source>
-        <translation>Гілок: %1 | Записів: %2 | Файлів: %3 | Зображень: %4 | Посилань: %5 | Міток: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>Гілок: %1 | Записів: %2 | Міток: %3 | Файлів: %4 | Зображень: %5 | Посилань: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>

@@ -83,10 +83,11 @@ public:
 
     //! Общая статистика базы: ветки, записи, приаттаченные файлы,
     //! файлы картинок на диске (как галерея картинок), distinct-ссылки
-    //! на заметку (Qt дробит одну ссылку на несколько <a href>, голый
-    //! подсчет тегов врет) и distinct-метки. Служебные secret-якоря
-    //! не ссылки. Тексты читаются тихо (нет файла = пусто, закрытый
-    //! шифр = пусто), модель не меняется
+    //! на всю базу (одна ссылка в десяти заметках - одна ссылка; Qt
+    //! дробит одну ссылку на несколько <a href>, голый подсчет врет)
+    //! и distinct-метки. Служебные secret-якоря не ссылки. Тексты
+    //! читаются тихо (нет файла = пусто, закрытый шифр = пусто),
+    //! модель не меняется
     void getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags);
     
     //! Возвращает количество записей в ветке и всех подветках
@@ -186,7 +187,7 @@ private:
 
     int getBranchCountRecurse(const TreeItem *item) const;
 
-    void getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, int &links, QSet<QString> &tagSet, const QRegularExpression &hrefPattern);
+    void getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, QSet<QString> &linkSet, QSet<QString> &tagSet, const QRegularExpression &hrefPattern);
 
     QString pasteSubbranchRecurse(TreeItem *item,
                                   QString startBranchId,

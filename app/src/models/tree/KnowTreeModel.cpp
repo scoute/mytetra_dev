@@ -1198,21 +1198,22 @@ void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &i
   records=0;
   files=0;
   images=0;
-  links=0;
 
   QSet<QString> tagSet;
+  QSet<QString> linkSet;
 
   // Шаблон адресов ссылок: Qt пишет якоря именно в виде <a href="...">
   static QRegularExpression hrefPattern("<a\\s+[^>]*href\\s*=\\s*\"([^\"]*)\"",
                                         QRegularExpression::CaseInsensitiveOption);
 
-  getBaseStatsRecurse(rootItem, records, files, images, links, tagSet, hrefPattern);
+  getBaseStatsRecurse(rootItem, records, files, images, linkSet, tagSet, hrefPattern);
 
+  links=linkSet.size();
   tags=tagSet.size();
 }
 
 
-void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, int &links, QSet<QString> &tagSet, const QRegularExpression &hrefPattern)
+void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, QSet<QString> &linkSet, QSet<QString> &tagSet, const QRegularExpression &hrefPattern)
 {
   if(item==nullptr)
     return;
@@ -1254,24 +1255,23 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
         }
       }
 
-      // Ссылки: distinct-адреса на заметку, просуммированные по базе.
+      // Ссылки: distinct-адреса на всю базу (как метки). Одна и та же
+      // ссылка в десяти заметках - это одна ссылка, а не десять.
       // Qt при сохранении дробит одну видимую ссылку с неоднородным
       // форматированием на несколько элементов <a href> с тем же адресом,
       // поэтому голый подсчет тегов дает кратно больше, чем видит человек.
-      // Служебные якоря секретов (<a href="secret">) не ссылки
-      QSet<QString> noteLinks;
-
+      // Служебные якоря секретов (<a href="secret">) не ссылки.
+      // &amp; приводится к &, иначе один адрес считается дважды
       QRegularExpressionMatchIterator hrefIt=hrefPattern.globalMatch(html);
 
       while(hrefIt.hasNext())
       {
         QString url=hrefIt.next().captured(1);
+        url.replace("&amp;", "&");
 
         if(!url.isEmpty() && url!="secret")
-          noteLinks.insert(url);
+          linkSet.insert(url);
       }
-
-      links+=noteLinks.size();
 
       // Метки: тот же разбор что в FindScreen::splitRecordTags
       // (запятая/точка с запятой, пробелы по краям). Регистр не важен:
@@ -1288,7 +1288,7 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
     }
 
   for(int i=0; i<item->childCount(); ++i)
-    getBaseStatsRecurse(item->child(i), records, files, images, links, tagSet, hrefPattern);
+    getBaseStatsRecurse(item->child(i), records, files, images, linkSet, tagSet, hrefPattern);
 }
 
 

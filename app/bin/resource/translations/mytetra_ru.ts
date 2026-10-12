@@ -3820,14 +3820,44 @@ You need to update MyTetra.</source>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Statistics</source>
+        <translation>Статистика</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Note</source>
+        <translation>Заметка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Internal links</source>
+        <translation>Внутренние ссылки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Images</source>
+        <translation>Картинки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Files</source>
+        <translation>Файлы</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>Веток: %1 | Записей: %2 | Меток: %3 | Файлов: %4 | Картинок: %5 | Ссылок: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation>Веток: %1 | Записей: %2 | Меток: %3 | Файлов: %4 | Картинок: %5 | Внутренних ссылок: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
-        <source>Base statistics: branches, records, attached files, images, links and tags</source>
-        <translation>Статистика базы: ветки, записи, файлы, картинки, ссылки и метки</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation>Статистика базы: ветки, записи, метки, файлы, картинки и ссылки. Ссылки — это ссылки mytetra:// между заметками. Клик открывает детали по заметкам.</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>

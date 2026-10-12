@@ -3055,14 +3055,44 @@ You need to update MyTetra.</source>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Statistics</source>
+        <translation>Վիճակագրություն</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Branch</source>
+        <translation>Ճյուղ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Note</source>
+        <translation>Գրառում</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Internal links</source>
+        <translation>Ներքին հղումներ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Images</source>
+        <translation>Պատկերներ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Files</source>
+        <translation>Ֆայլեր</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Պիտակներ: %3 | Ֆայլեր: %4 | Պատկերներ: %5 | Հղումներ: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Պիտակներ: %3 | Ֆայլեր: %4 | Պատկերներ: %5 | Ներքին հղումներ: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
-        <source>Base statistics: branches, records, attached files, images, links and tags</source>
-        <translation>Բազայի վիճակագրություն՝ ճյուղեր, գրառումներ, ֆայլեր, պատկերներ, հղումներ և պիտակներ</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation>Բազայի վիճակագրություն՝ ճյուղեր, գրառումներ, պիտակներ, ֆայլեր, պատկերներ և հղումներ։ Հղումները mytetra:// հղումներ են գրառումների միջև։ Կտոցը բացում է մանրամասները ըստ գրառումների։</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>

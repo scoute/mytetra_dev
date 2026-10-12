@@ -3052,14 +3052,44 @@ You need to update MyTetra.</source>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Statistics</source>
+        <translation>统计</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Branch</source>
+        <translation>分支</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Note</source>
+        <translation>笔记</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Internal links</source>
+        <translation>内部链接</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Images</source>
+        <translation>图片</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Files</source>
+        <translation>文件</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>分支：%1 | 笔记：%2 | 标签：%3 | 文件：%4 | 图片：%5 | 链接：%6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation>分支：%1 | 笔记：%2 | 标签：%3 | 文件：%4 | 图片：%5 | 内部链接：%6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
-        <source>Base statistics: branches, records, attached files, images, links and tags</source>
-        <translation>库统计：分支、笔记、文件、图片、链接和标签</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation>库统计：分支、笔记、标签、文件、图片和链接。链接是指笔记之间的 mytetra:// 链接。点击打开按笔记的明细。</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>

@@ -3055,14 +3055,44 @@ Bitte MyTetra aktualisieren.</translation>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Statistics</source>
+        <translation>Statistik</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Branch</source>
+        <translation>Zweig</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Note</source>
+        <translation>Notiz</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Internal links</source>
+        <translation>Interne Links</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Images</source>
+        <translation>Bilder</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Files</source>
+        <translation>Dateien</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>Zweige: %1 | Notizen: %2 | Tags: %3 | Dateien: %4 | Bilder: %5 | Links: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation>Zweige: %1 | Notizen: %2 | Tags: %3 | Dateien: %4 | Bilder: %5 | Interne Links: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
-        <source>Base statistics: branches, records, attached files, images, links and tags</source>
-        <translation>Datenbankstatistik: Zweige, Notizen, Dateien, Bilder, Links und Tags</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation>Datenbankstatistik: Zweige, Notizen, Tags, Dateien, Bilder und Links. Links sind mytetra://-Notizlinks. Klick öffnet Details pro Notiz.</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>

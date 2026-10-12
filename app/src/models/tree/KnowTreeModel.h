@@ -4,6 +4,7 @@
 #include <QModelIndex>
 #include <QObject>
 #include <QSet>
+#include <QList>
 #include <QDomElement>
 #include <QDateTime>
 #include <QRegularExpression>
@@ -17,6 +18,18 @@
 class ClipboardBranch;
 class Record;
 class QXmlStreamWriter;
+
+// Одна строка детализации статистики: откуда что посчиталось
+struct BaseStatRow
+{
+  QString branchPath; // Имена веток от корня через " / "
+  QString noteName;
+  QString recordId;
+  int files=0;
+  int images=0;
+  int links=0;
+  int tags=0;
+};
 
 class KnowTreeModel : public TreeModel
 {
@@ -82,13 +95,19 @@ public:
     int getBranchCount(void) const;
 
     //! Общая статистика базы: ветки, записи, приаттаченные файлы,
-    //! файлы картинок на диске (как галерея картинок), distinct-ссылки
-    //! на всю базу (одна ссылка в десяти заметках - одна ссылка; Qt
-    //! дробит одну ссылку на несколько <a href>, голый подсчет врет)
+    //! файлы картинок на диске (как галерея картинок), distinct
+    //! внутренних ссылок mytetra://note/ на всю базу (http-ссылки
+    //! из веб-клипов не считаются; одна ссылка в десяти заметках -
+    //! одна ссылка; Qt дробит одну ссылку на несколько <a href>)
     //! и distinct-метки. Служебные secret-якоря не ссылки. Тексты
     //! читаются тихо (нет файла = пусто, закрытый шифр = пусто),
     //! модель не меняется
     void getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags);
+
+    //! Построчная детализация статистики для диалога по клику:
+    //! каждая запись со своим путем, счетчиками и идентификатором
+    //! (двойной клик прыгает к заметке). Тот же тихий проход что статистика
+    QList<BaseStatRow> getBaseStatRows(void);
     
     //! Возвращает количество записей в ветке и всех подветках
     int getRecordCountForItem(const TreeItem *item);
@@ -187,7 +206,9 @@ private:
 
     int getBranchCountRecurse(const TreeItem *item) const;
 
-    void getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, QSet<QString> &linkSet, QSet<QString> &tagSet, const QRegularExpression &hrefPattern);
+    void getBaseStatsRecurse(TreeItem *item, QList<BaseStatRow> &rows, QSet<QString> &linkSet, QSet<QString> &tagSet, const QRegularExpression &hrefPattern);
+
+    QList<BaseStatRow> getBaseStatRowsInternal(QSet<QString> &linkSet, QSet<QString> &tagSet);
 
     QString pasteSubbranchRecurse(TreeItem *item,
                                   QString startBranchId,

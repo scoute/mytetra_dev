@@ -3052,14 +3052,44 @@ MyTetra を更新してください。</translation>
 <context>
     <name>MainWindow</name>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Statistics</source>
+        <translation>統計</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Branch</source>
+        <translation>ブランチ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Note</source>
+        <translation>ノート</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Internal links</source>
+        <translation>内部リンク</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Images</source>
+        <translation>画像</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1155"/>
+        <source>Files</source>
+        <translation>ファイル</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1148"/>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>ブランチ: %1 | ノート: %2 | タグ: %3 | ファイル: %4 | 画像: %5 | リンク: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation>ブランチ: %1 | ノート: %2 | タグ: %3 | ファイル: %4 | 画像: %5 | 内部リンク: %6</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1149"/>
-        <source>Base statistics: branches, records, attached files, images, links and tags</source>
-        <translation>ベース統計: ブランチ、ノート、ファイル、画像、リンク、タグ</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation>ベース統計: ブランチ、ノート、タグ、ファイル、画像、リンク。リンクはノート間のmytetra://リンクです。クリックでノート別の詳細を開きます。</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="679"/>

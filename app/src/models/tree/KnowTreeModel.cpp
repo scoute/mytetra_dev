@@ -1195,25 +1195,53 @@ int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
 void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags)
 {
   branches=getBranchCount();
-  records=0;
-  files=0;
-  images=0;
 
   QSet<QString> tagSet;
   QSet<QString> linkSet;
 
-  // Шаблон адресов ссылок: Qt пишет якоря именно в виде <a href="...">
-  static QRegularExpression hrefPattern("<a\\s+[^>]*href\\s*=\\s*\"([^\"]*)\"",
-                                        QRegularExpression::CaseInsensitiveOption);
+  QList<BaseStatRow> rows=getBaseStatRowsInternal(linkSet, tagSet);
 
-  getBaseStatsRecurse(rootItem, records, files, images, linkSet, tagSet, hrefPattern);
+  records=0;
+  files=0;
+  images=0;
+
+  foreach(const BaseStatRow &row, rows)
+  {
+    records++;
+    files+=row.files;
+    images+=row.images;
+  }
 
   links=linkSet.size();
   tags=tagSet.size();
 }
 
 
-void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, QSet<QString> &linkSet, QSet<QString> &tagSet, const QRegularExpression &hrefPattern)
+// Построчная детализация статистики
+QList<BaseStatRow> KnowTreeModel::getBaseStatRows(void)
+{
+  QSet<QString> tagSet;
+  QSet<QString> linkSet;
+
+  return getBaseStatRowsInternal(linkSet, tagSet);
+}
+
+
+QList<BaseStatRow> KnowTreeModel::getBaseStatRowsInternal(QSet<QString> &linkSet, QSet<QString> &tagSet)
+{
+  // Шаблон адресов ссылок: Qt пишет якоря именно в виде <a href="...">
+  static QRegularExpression hrefPattern("<a\\s+[^>]*href\\s*=\\s*\"([^\"]*)\"",
+                                        QRegularExpression::CaseInsensitiveOption);
+
+  QList<BaseStatRow> rows;
+
+  getBaseStatsRecurse(rootItem, rows, linkSet, tagSet, hrefPattern);
+
+  return rows;
+}
+
+
+void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, QList<BaseStatRow> &rows, QSet<QString> &linkSet, QSet<QString> &tagSet, const QRegularExpression &hrefPattern)
 {
   if(item==nullptr)
     return;
@@ -1228,12 +1256,18 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
       if(record==nullptr)
         continue;
 
-      records++;
+      BaseStatRow row;
+      row.recordId=record->getField("id");
+      row.noteName=record->getField("name");
+
+      QStringList pathNames=item->getPathAsField("name");
+      pathNames.removeAll(QString(""));
+      row.branchPath=pathNames.join(" / ");
 
       AttachTableData *attachTable=record->getAttachTablePointer();
 
       if(attachTable!=nullptr)
-        files+=attachTable->size();
+        row.files=attachTable->size();
 
       QString html=record->getTextForStats();
 
@@ -1251,17 +1285,22 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
           QStringList imageFilters;
           imageFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.gif" << "*.bmp";
 
-          images+=recordDir.entryList(imageFilters, QDir::Files | QDir::Readable, QDir::Name).size();
+          row.images=recordDir.entryList(imageFilters, QDir::Files | QDir::Readable, QDir::Name).size();
         }
       }
 
-      // Ссылки: distinct-адреса на всю базу (как метки). Одна и та же
-      // ссылка в десяти заметках - это одна ссылка, а не десять.
-      // Qt при сохранении дробит одну видимую ссылку с неоднородным
-      // форматированием на несколько элементов <a href> с тем же адресом,
-      // поэтому голый подсчет тегов дает кратно больше, чем видит человек.
+      // Ссылки: только внутренние mytetra://note/ между заметками
+      // (http-ссылки из веб-клипов не считаются). Distinct-адреса
+      // на всю базу (как метки): одна и та же ссылка в десяти заметках -
+      // это одна ссылка, а не десять. Qt при сохранении дробит одну
+      // видимую ссылку с неоднородным форматированием на несколько
+      // элементов <a href> с тем же адресом, поэтому голый подсчет
+      // тегов дает кратно больше, чем видит человек.
       // Служебные якоря секретов (<a href="secret">) не ссылки.
-      // &amp; приводится к &, иначе один адрес считается дважды
+      // &amp; приводится к &, иначе один адрес считается дважды.
+      // В строку идет distinct на заметку, в общий набор - для итога
+      QSet<QString> noteLinks;
+
       QRegularExpressionMatchIterator hrefIt=hrefPattern.globalMatch(html);
 
       while(hrefIt.hasNext())
@@ -1269,26 +1308,44 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
         QString url=hrefIt.next().captured(1);
         url.replace("&amp;", "&");
 
-        if(!url.isEmpty() && url!="secret")
-          linkSet.insert(url);
+        if(url.isEmpty() || url=="secret")
+          continue;
+
+        // Только внутренние ссылки между заметками
+        if(!url.startsWith("mytetra://", Qt::CaseInsensitive))
+          continue;
+
+        noteLinks.insert(url);
+        linkSet.insert(url);
       }
+
+      row.links=noteLinks.size();
 
       // Метки: тот же разбор что в FindScreen::splitRecordTags
       // (запятая/точка с запятой, пробелы по краям). Регистр не важен:
       // поиск тега регистронезависимый, дубли не считаются
       QStringList recordTags=record->getField("tags").split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
 
+      QSet<QString> noteTags;
+
       foreach(QString tag, recordTags)
       {
         tag=tag.trimmed();
 
         if(!tag.isEmpty())
+        {
+          noteTags.insert(tag.toLower());
           tagSet.insert(tag.toLower());
+        }
       }
+
+      row.tags=noteTags.size();
+
+      rows.append(row);
     }
 
   for(int i=0; i<item->childCount(); ++i)
-    getBaseStatsRecurse(item->child(i), records, files, images, linkSet, tagSet, hrefPattern);
+    getBaseStatsRecurse(item->child(i), rows, linkSet, tagSet, hrefPattern);
 }
 
 

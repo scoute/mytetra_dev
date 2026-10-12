@@ -13,6 +13,12 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QActionGroup>
+#include <QDialog>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QVBoxLayout>
+#include <QMouseEvent>
+#include <algorithm>
 #include <QColorDialog>
 
 #include "main.h"
@@ -138,12 +144,13 @@ void MainWindow::setupUI(void)
     globalParameters.setStatusBar(statusBar);
 
     // Статистика базы справа. Постоянный виджет: showMessage (ссылки
-    // при наведении слева) его не затирает
+    // при наведении слева) его не затирает. Клик открывает разбивку
     statsLabel=new QLabel( this );
     statsLabel->setObjectName("statsLabel");
-    statsLabel->setToolTip(tr("Total branches and records in the database"));
+    statsLabel->setCursor(Qt::PointingHandCursor);
+    statsLabel->installEventFilter(this);
     statusBar->addPermanentWidget(statsLabel);
-    updateStats();
+    updateStats(); // Там же выставляется текст и тултип на текущем языке
 
     // Вспомогательный объект переключения окон, используется в мобильном интерфейсе
     windowSwitcher=new WindowSwitcher( this );
@@ -1146,8 +1153,77 @@ void MainWindow::updateStats(void)
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
         treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
 
-    statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
-    statsLabel->setToolTip(tr("Base statistics: branches, records, attached files, images, links and tags"));
+    statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
+    statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details."));
+}
+
+
+// Разбивка статистики по заметкам: кто сколько ссылок держит.
+// Сортировка по ссылкам вниз, двойной клик прыгает к заметке
+void MainWindow::showStatsDetails(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    QList<BaseStatRow> rows=treeScreen->knowTreeModel->getBaseStatRows();
+
+    std::sort(rows.begin(), rows.end(), [](const BaseStatRow &a, const BaseStatRow &b)
+    {
+        return a.links > b.links;
+    });
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Statistics"));
+    dialog.resize(640, 400);
+
+    QTableWidget *table=new QTableWidget(&dialog);
+    table->setColumnCount(6);
+    table->setHorizontalHeaderLabels(QStringList() << tr("Branch") << tr("Note") << tr("Internal links") << tr("Images") << tr("Files") << tr("Tags"));
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setRowCount(rows.size());
+
+    for(int r=0; r<rows.size(); ++r)
+    {
+        const BaseStatRow &row=rows.at(r);
+
+        QTableWidgetItem *branchItem=new QTableWidgetItem(row.branchPath);
+        branchItem->setData(Qt::UserRole, row.recordId);
+        table->setItem(r, 0, branchItem);
+        table->setItem(r, 1, new QTableWidgetItem(row.noteName));
+        table->setItem(r, 2, new QTableWidgetItem(QString::number(row.links)));
+        table->setItem(r, 3, new QTableWidgetItem(QString::number(row.images)));
+        table->setItem(r, 4, new QTableWidgetItem(QString::number(row.files)));
+        table->setItem(r, 5, new QTableWidgetItem(QString::number(row.tags)));
+    }
+
+    table->resizeColumnsToContents();
+
+    connect(table, &QTableWidget::cellDoubleClicked, this, [this, table](int row, int)
+    {
+        QTableWidgetItem *branchItem=table->item(row, 0);
+
+        if(branchItem==nullptr)
+            return;
+
+        QString recordId=branchItem->data(Qt::UserRole).toString();
+
+        if(recordId.isEmpty() || treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+            return;
+
+        QStringList treePath=treeScreen->knowTreeModel->getRecordPath(recordId);
+
+        if(treePath.isEmpty())
+            return;
+
+        setTreeAndRecordtablePositions(treePath, recordId);
+    });
+
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    layout->addWidget(table);
+
+    dialog.exec();
 }
 
 
@@ -1917,6 +1993,18 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
     {
         qDebug() << "Main window focus deactivate, save all state.";
         saveAllState();
+    }
+
+    // Клик по строке статистики открывает разбивку по заметкам
+    if(o==statsLabel && e->type()==QEvent::MouseButtonRelease)
+    {
+        QMouseEvent *mouseEvent=static_cast<QMouseEvent *>(e);
+
+        if(mouseEvent->button()==Qt::LeftButton)
+        {
+            showStatsDetails();
+            return true;
+        }
     }
 
     // Продолжать оработку событий дальше

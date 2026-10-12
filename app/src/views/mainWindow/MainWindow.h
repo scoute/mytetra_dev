@@ -21,6 +21,7 @@ class QSplitter;
 class QStatusBar;
 class QLabel;
 class QDockWidget;
+class QTableWidget;
 
 class TreeScreen;
 class MetaEditor;
@@ -122,6 +123,10 @@ public slots:
     // Разбивка статистики по заметкам (клик по строке статистики).
     // Двойной клик по строке прыгает к заметке
     void showStatsDetails(void);
+
+    // Таблица разбивки для диалога (вынесена чтобы тестировать
+    // сортировку без модального окна)
+    QTableWidget *buildStatsTableWidget(QWidget *parent);
 
     // Перевести статичные тексты новым языком без перезапуска.
     // Тексты на шорткатах обновляются отдельно сигналом

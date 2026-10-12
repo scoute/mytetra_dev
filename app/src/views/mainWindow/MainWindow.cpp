@@ -18,7 +18,23 @@
 #include <QHeaderView>
 #include <QVBoxLayout>
 #include <QMouseEvent>
-#include <algorithm>
+
+
+// Элемент таблицы с числовой сортировкой: по клику на заголовок
+// QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
+class NumberTableItem : public QTableWidgetItem
+{
+public:
+  explicit NumberTableItem(int value) : QTableWidgetItem(QString::number(value))
+  {
+    setData(Qt::UserRole, value);
+  }
+
+  bool operator<(const QTableWidgetItem &other) const override
+  {
+    return data(Qt::UserRole).toInt() < other.data(Qt::UserRole).toInt();
+  }
+};
 #include <QColorDialog>
 
 #include "main.h"
@@ -1158,30 +1174,24 @@ void MainWindow::updateStats(void)
 }
 
 
-// Разбивка статистики по заметкам: кто сколько ссылок держит.
-// Сортировка по ссылкам вниз, двойной клик прыгает к заметке
-void MainWindow::showStatsDetails(void)
+// Таблица разбивки статистики: строится отдельно чтобы сортировку
+// можно было проверить без модального окна. Начальный порядок -
+// по внутренним ссылкам вниз
+QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
 {
-    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
-        return;
+    QList<BaseStatRow> rows;
 
-    QList<BaseStatRow> rows=treeScreen->knowTreeModel->getBaseStatRows();
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
+        rows=treeScreen->knowTreeModel->getBaseStatRows();
 
-    std::sort(rows.begin(), rows.end(), [](const BaseStatRow &a, const BaseStatRow &b)
-    {
-        return a.links > b.links;
-    });
-
-    QDialog dialog(this);
-    dialog.setWindowTitle(tr("Statistics"));
-    dialog.resize(640, 400);
-
-    QTableWidget *table=new QTableWidget(&dialog);
+    QTableWidget *table=new QTableWidget(parent);
     table->setColumnCount(6);
     table->setHorizontalHeaderLabels(QStringList() << tr("Branch") << tr("Note") << tr("Internal links") << tr("Images") << tr("Files") << tr("Tags"));
     table->horizontalHeader()->setStretchLastSection(true);
+    table->horizontalHeader()->setSectionsClickable(true);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSortingEnabled(true);
     table->setRowCount(rows.size());
 
     for(int r=0; r<rows.size(); ++r)
@@ -1192,13 +1202,32 @@ void MainWindow::showStatsDetails(void)
         branchItem->setData(Qt::UserRole, row.recordId);
         table->setItem(r, 0, branchItem);
         table->setItem(r, 1, new QTableWidgetItem(row.noteName));
-        table->setItem(r, 2, new QTableWidgetItem(QString::number(row.links)));
-        table->setItem(r, 3, new QTableWidgetItem(QString::number(row.images)));
-        table->setItem(r, 4, new QTableWidgetItem(QString::number(row.files)));
-        table->setItem(r, 5, new QTableWidgetItem(QString::number(row.tags)));
+        table->setItem(r, 2, new NumberTableItem(row.links));
+        table->setItem(r, 3, new NumberTableItem(row.images));
+        table->setItem(r, 4, new NumberTableItem(row.files));
+        table->setItem(r, 5, new NumberTableItem(row.tags));
     }
 
     table->resizeColumnsToContents();
+    table->sortByColumn(2, Qt::DescendingOrder);
+
+    return table;
+}
+
+
+// Разбивка статистики по заметкам: кто сколько ссылок держит.
+// Сортировка по любому столбцу кликом на заголовок (числа сортируются
+// как числа через NumberTableItem), двойной клик прыгает к заметке
+void MainWindow::showStatsDetails(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Statistics"));
+    dialog.resize(640, 400);
+
+    QTableWidget *table=buildStatsTableWidget(&dialog);
 
     connect(table, &QTableWidget::cellDoubleClicked, this, [this, table](int row, int)
     {

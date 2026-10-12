@@ -1191,7 +1191,6 @@ QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
     table->horizontalHeader()->setSectionsClickable(true);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    table->setSortingEnabled(true);
     table->setRowCount(rows.size());
 
     for(int r=0; r<rows.size(); ++r)
@@ -1210,6 +1209,26 @@ QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
 
     table->resizeColumnsToContents();
     table->sortByColumn(2, Qt::DescendingOrder);
+
+    // Первый клик по столбцу сортирует по убыванию (там обычно
+    // интереснее крупные), повторный клик переключает порядок.
+    // Ручной обработчик вместо автосортировки: встроенная всегда
+    // начинает с возрастания. Порядок помнится свой, а не читается
+    // с индикатора: встроенный слот срабатывает раньше нашего
+    // и успевает индикатор перевернуть
+    connect(table->horizontalHeader(), &QHeaderView::sectionClicked, table,
+            [table, lastColumn=2, lastOrder=Qt::DescendingOrder](int logicalIndex) mutable
+    {
+      Qt::SortOrder order=Qt::DescendingOrder;
+
+      if(logicalIndex==lastColumn && lastOrder==Qt::DescendingOrder)
+        order=Qt::AscendingOrder;
+
+      lastColumn=logicalIndex;
+      lastOrder=order;
+
+      table->sortByColumn(logicalIndex, order);
+    });
 
     return table;
 }

@@ -1,5 +1,6 @@
 #include <QMap>
 #include <QSet>
+#include <QDir>
 #include <QRegularExpression>
 #include <QDomNamedNodeMap>
 #include <QXmlStreamWriter>
@@ -1201,13 +1202,17 @@ void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &i
 
   QSet<QString> tagSet;
 
-  getBaseStatsRecurse(rootItem, records, files, images, links, tagSet);
+  // Шаблон адресов ссылок: Qt пишет якоря именно в виде <a href="...">
+  static QRegularExpression hrefPattern("<a\\s+[^>]*href\\s*=\\s*\"([^\"]*)\"",
+                                        QRegularExpression::CaseInsensitiveOption);
+
+  getBaseStatsRecurse(rootItem, records, files, images, links, tagSet, hrefPattern);
 
   tags=tagSet.size();
 }
 
 
-void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, int &links, QSet<QString> &tagSet)
+void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files, int &images, int &links, QSet<QString> &tagSet, const QRegularExpression &hrefPattern)
 {
   if(item==nullptr)
     return;
@@ -1230,14 +1235,43 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
         files+=attachTable->size();
 
       QString html=record->getTextForStats();
-      images+=html.count("<img", Qt::CaseInsensitive);
 
-      // Скрытый текст секретов хранится служебными якорями
-      // <a href="secret"> - это не ссылки, они вычитаются.
-      // (SecretFormatter::secretHref, Qt пишет их именно в таком виде)
-      int anchors=html.count("<a href", Qt::CaseInsensitive);
-      int secrets=html.count("<a href=\"secret\">", Qt::CaseInsensitive);
-      links+=anchors-secrets;
+      // Картинки как в галерее картинок: файлы на диске в каталоге
+      // записи (то же определение что ContentGallery::recordImageFiles),
+      // а не упоминания <img> в HTML. Один файл может вставляться
+      // в текст несколько раз, а удаленные файлы оставляют висячие
+      // ссылки - отсюда и расхождение было
+      if(record->getField("dir").length()>0)
+      {
+        QDir recordDir(mytetraConfig.get_tetradir()+"/base/"+record->getField("dir"));
+
+        if(recordDir.exists())
+        {
+          QStringList imageFilters;
+          imageFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.gif" << "*.bmp";
+
+          images+=recordDir.entryList(imageFilters, QDir::Files | QDir::Readable, QDir::Name).size();
+        }
+      }
+
+      // Ссылки: distinct-адреса на заметку, просуммированные по базе.
+      // Qt при сохранении дробит одну видимую ссылку с неоднородным
+      // форматированием на несколько элементов <a href> с тем же адресом,
+      // поэтому голый подсчет тегов дает кратно больше, чем видит человек.
+      // Служебные якоря секретов (<a href="secret">) не ссылки
+      QSet<QString> noteLinks;
+
+      QRegularExpressionMatchIterator hrefIt=hrefPattern.globalMatch(html);
+
+      while(hrefIt.hasNext())
+      {
+        QString url=hrefIt.next().captured(1);
+
+        if(!url.isEmpty() && url!="secret")
+          noteLinks.insert(url);
+      }
+
+      links+=noteLinks.size();
 
       // Метки: тот же разбор что в FindScreen::splitRecordTags
       // (запятая/точка с запятой, пробелы по краям). Регистр не важен:
@@ -1254,7 +1288,7 @@ void KnowTreeModel::getBaseStatsRecurse(TreeItem *item, int &records, int &files
     }
 
   for(int i=0; i<item->childCount(); ++i)
-    getBaseStatsRecurse(item->child(i), records, files, images, links, tagSet);
+    getBaseStatsRecurse(item->child(i), records, files, images, links, tagSet, hrefPattern);
 }
 
 

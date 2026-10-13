@@ -1923,6 +1923,10 @@ Try to search for entire database.</source>
         <source>[Tree item]</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Close find widget</source>
+        <translation>Fermer le widget de recherche</translation>
+    </message>
 </context>
 <context>
     <name>FindTableWidget</name>

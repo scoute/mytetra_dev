@@ -7,6 +7,7 @@
 class QLineEdit;
 class QPushButton;
 class QToolButton;
+class QShowEvent;
 class QHBoxLayout;
 class QVBoxLayout;
 class QGridLayout;
@@ -72,7 +73,7 @@ private:
     QToolButton *toolsExpand;
 
     QVBoxLayout *toolsAreaCloseButton;
-    QToolButton *closeButton;
+    QPushButton *closeButton;
 
     QHBoxLayout *toolsAreaComboOption;
     MtComboBox *wordRegard;
@@ -105,6 +106,7 @@ private:
 
     void setupCloseButton(void);
     void assemblyCloseButton(void);
+    void fixCloseButtonSize(void);
 
     void setupWhereFindLine(void);
     void assemblyWhereFindLine(void);
@@ -136,6 +138,9 @@ private:
     int cancelFlag;
 
     bool isUnsearchCryptBranchPresent; // Флаг, определяющий, были ли непросмотренные ветки при поиске (зашированные ветки, но пароль небыл введен)
+
+protected:
+    void showEvent(QShowEvent *event) override;
 };
 
 #endif	/* _FINDSCREEN_H_ */

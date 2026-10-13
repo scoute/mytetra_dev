@@ -298,9 +298,12 @@ bool RecordTableModel::removeRows(int row, int count, const QModelIndex &parent)
 
     beginRemoveRows(QModelIndex(), row, row+count-1);
 
-    // Удаляются строки непосредственно в таблице
-    for(int i=row; i<row+count; ++i)
-        table->deleteRecord(i);
+    // Удаляются строки непосредственно в таблице.
+    // Удаляется всегда строка с номером row, так как после каждого удаления
+    // индексы сдвигаются: удаление нарастающего i удалило бы чужие записи
+    // и ушло бы за границу в последней итерации
+    for(int n=0; n<count; ++n)
+        table->deleteRecord(row);
 
     endRemoveRows();
 

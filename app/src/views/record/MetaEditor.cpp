@@ -512,3 +512,12 @@ void MetaEditor::setFocusToBaseWidget()
 {
     textArea->setFocus();
 }
+
+
+void MetaEditor::retranslateUi(void)
+{
+  labelUrl->setText(tr("<B>Url:</B> "));
+  labelTags->setText(tr("<B>Tags:</B> "));
+
+  editorToolBarAssistant->retranslateUi();
+}

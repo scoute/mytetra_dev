@@ -47,6 +47,9 @@ public:
 
  void setFocusToBaseWidget();
 
+ // Прямые подписи Url и Tags. Вызывается из MainWindow::retranslateUi
+ void retranslateUi(void);
+
 private:
  void setupLabels(void);
  void setupUI(void);

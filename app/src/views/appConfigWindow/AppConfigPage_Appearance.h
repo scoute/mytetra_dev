@@ -18,6 +18,7 @@ public:
     virtual ~AppConfigPage_Appearance();
 
     int applyChanges(void);
+    void retranslateUi(void);
 
   protected:
 

@@ -66,6 +66,12 @@ public:
     EditorDropDownButton *fontColor;
     EditorDropDownButton *backgroundColor;
 
+    // Пункты выпадашек цвета: анонимные, указатели нужны для перевода
+    QAction *fontColorSelectAction;
+    QAction *fontColorNoColorAction;
+    QAction *backgroundColorSelectAction;
+    QAction *backgroundColorNoColorAction;
+
     QAction *reference;
 
     QAction *showHtml;
@@ -119,6 +125,10 @@ public:
 public slots:
 
     void setupShortcuts(void);
+
+    // Прямые тексты выпадашек цвета и подсказок. Остальное освежает
+    // setupShortcuts по сигналу updateWidgetShortcut
+    void retranslateUi(void);
 
 protected:
 

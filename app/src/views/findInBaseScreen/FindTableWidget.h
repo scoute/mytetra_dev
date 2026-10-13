@@ -24,6 +24,9 @@ public:
   void updateColumnsWidth(void);
   void setOverdrawMessage(const QString iOverdrawMessage); // Установка надписи, которая появляется поверх виджета
 
+  // Обновить заголовки колонок новым языком. Строки не трогаются
+  void retranslateUi(void);
+
 private slots:
 
   // void selectCell(int row, int column);

@@ -6,6 +6,7 @@
 
 
 #include <QTranslator>
+#include "libraries/helpers/LanguageHelper.h"
 #include <QToolButton>
 #include <QSplashScreen>
 #include <QTextOption>
@@ -298,11 +299,7 @@ int main(int argc, char ** argv)
 
 
     // Подключение перевода интерфейса
-    QString langFileName=":/resource/translations/mytetra_"+mytetraConfig.get_interfacelanguage()+".qm";
-    qDebug() << "Use language file " << langFileName;
-    QTranslator langTranslator;
-    langTranslator.load(langFileName);
-    app.installTranslator(&langTranslator);
+    LanguageHelper::switchLanguage(mytetraConfig.get_interfacelanguage());
 
     //Загрузка переводов стандартных диалогов и кнопок
     QTranslator qtTranslator;

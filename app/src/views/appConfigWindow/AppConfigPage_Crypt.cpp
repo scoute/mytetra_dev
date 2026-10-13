@@ -293,6 +293,29 @@ void AppConfigPage_Crypt::onAutoClosePasswordEnableToggle(bool checked)
 }
 
 
+void AppConfigPage_Crypt::retranslateUi(void)
+{
+  passRetrieveBox->setTitle(tr("Password settings"));
+
+  howPassRequestBox->setTitle(tr("Access to encrypted data"));
+  howPassRequestRadio1->setText(tr("Ask the password when you click on an encrypted item"));
+  howPassRequestRadio2->setText(tr("Ask the password at MyTetra startup"));
+
+  storePassRequestBox->setTitle(tr("Store password"));
+  passwordSaveEnable->setText(tr("Store password locally"));
+  passwordSaveAnnotation->setText(tr("Password will be saved at first next entered.<br>Stored password will be cleared if uncheck this checkbox."));
+
+  autoClosePasswordBox->setTitle(tr("Auto closing password window"));
+  autoClosePasswordEnable->setText(tr("Enable auto closing password window, sec"));
+
+  decryptFileToTrashDirectoryBox->setTitle(tr("File decrypt method for attach preview"));
+  decryptFileToTrashDirectoryEnable->setText(tr("Enable temporary decrypt attach file to trash directory"));
+
+  // Динамическая строка состояния перечитывается текущим языком
+  updateUi();
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

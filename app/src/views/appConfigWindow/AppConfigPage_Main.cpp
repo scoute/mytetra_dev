@@ -11,10 +11,21 @@
 #include <QSpinBox>
 #include <QGroupBox>
 #include <QRadioButton>
+#include <QComboBox>
 
 #include "AppConfigPage_Main.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/MtComboBox.h"
+#include "libraries/GlobalParameters.h"
+#include "libraries/ShortcutManager.h"
+#include "libraries/helpers/LanguageHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/mainWindow/MainWindow.h"
+#include "views/appConfigWindow/AppConfigDialog.h"
+
+
+extern AppConfig mytetraConfig;
+extern ShortcutManager shortcutManager;
 
 
 extern AppConfig mytetraConfig;
@@ -138,6 +149,9 @@ void AppConfigPage_Main::setupSignals(void)
   connect(enableCustomDateTimeFormat,  &QRadioButton::toggled, this, &AppConfigPage_Main::onEnableCustomDateTimeFormatToggle);
 
   connect(dateTimeFormatHelpButton, &QToolButton::clicked, this, &AppConfigPage_Main::onDateTimeFormatHelpButton);
+
+  connect(interfaceLanguage, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this, &AppConfigPage_Main::onLanguageChanged);
 }
 
 
@@ -264,6 +278,33 @@ void AppConfigPage_Main::onEnableCustomDateTimeFormatToggle(bool checked)
 }
 
 
+// Язык применяется сразу по выбору в выпадашке: конфиг, переводчик,
+// все экраны и шорткаты. Порядок как в applyChanges: сначала прямые
+// тексты, потом тексты на шорткатах
+void AppConfigPage_Main::onLanguageChanged(int index)
+{
+  QString code=interfaceLanguage->itemText(index);
+
+  if(code.isEmpty() || mytetraConfig.get_interfacelanguage()==code)
+    return;
+
+  mytetraConfig.set_interfacelanguage(code);
+
+  LanguageHelper::switchLanguage(code);
+
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->retranslateUi();
+
+  // Открытый диалог настроек тоже переводится сразу
+  foreach(AppConfigDialog *dialog, AppConfigDialog::openDialogs)
+    dialog->retranslateUi();
+
+  shortcutManager.retranslate();
+}
+
+
 void AppConfigPage_Main::onDateTimeFormatHelpButton(void)
 {
   QString text="Format symbols:\n\
@@ -291,6 +332,28 @@ Sample: dd.MM.yyyy - hh:mm:ss";
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
+void AppConfigPage_Main::retranslateUi(void)
+{
+  tetradirLabel->setText(tr("Data directory"));
+  tetradirButton->setText(tr("..."));
+
+  trashdirLabel->setText(tr("Trash directory"));
+  trashdirButton->setText(tr("..."));
+
+  trashsizeLabel->setText(tr("Trash size"));
+  trashsizeFlexion->setText(tr("Mb"));
+
+  trashmaxfilecountLabel->setText(tr("Maximum files in trash"));
+  trashmaxfilecountFlexion->setText(tr("files"));
+
+  interfaceLanguageLabel->setText(tr("Language"));
+
+  dateTimeFormatBox->setTitle(tr("Displaying date and time format"));
+  disableCustomDateTimeFormat->setText(tr("Locale settings"));
+  enableCustomDateTimeFormat->setText(tr("Custom format"));
+}
+
+
 int AppConfigPage_Main::applyChanges(void)
 {
  qDebug() << "Apply changes main";
@@ -362,11 +425,20 @@ int AppConfigPage_Main::applyChanges(void)
   }
 
  
- // Если был изменен язык
+ // Если был изменен язык: применяется на лету без перезапуска.
+ // Порядок важен: сначала прямые тексты, потом тексты на шорткатах
  if(mytetraConfig.get_interfacelanguage()!=interfaceLanguage->currentText())
   {
    mytetraConfig.set_interfacelanguage(interfaceLanguage->currentText());
-   difficultChanges=1;
+
+   LanguageHelper::switchLanguage(interfaceLanguage->currentText());
+
+   MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+   if(mainWindow!=nullptr)
+     mainWindow->retranslateUi();
+
+   shortcutManager.retranslate();
   }
 
  return difficultChanges;

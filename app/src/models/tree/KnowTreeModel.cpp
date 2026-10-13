@@ -1,4 +1,7 @@
 #include <QMap>
+#include <QSet>
+#include <QDir>
+#include <QRegularExpression>
 #include <QDomNamedNodeMap>
 #include <QXmlStreamWriter>
 #include <QSaveFile>
@@ -1173,6 +1176,332 @@ int KnowTreeModel::getAllRecordCount(void)
   getAllRecordCountRecurse(rootItem, 0);
 
   return getAllRecordCountRecurse(rootItem, 1);
+}
+
+
+// Возвращает общее количество веток в дереве (невидимый корень не считается)
+int KnowTreeModel::getBranchCount(void) const
+{
+  return getBranchCountRecurse(rootItem);
+}
+
+
+int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
+{
+  if(item==nullptr)
+    return 0;
+
+  int n=item->childCount();
+
+  for(int i=0; i<item->childCount(); ++i)
+    n+=getBranchCountRecurse(item->child(i));
+
+  return n;
+}
+
+
+// Общая статистика базы: считается один раз, дальше кеш
+void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags)
+{
+  ensureStats();
+
+  branches=getBranchCount();
+
+  records=0;
+  files=0;
+  images=0;
+
+  for(auto it=m_statsRows.constBegin(); it!=m_statsRows.constEnd(); ++it)
+  {
+    records++;
+    files+=it->files;
+    images+=it->images;
+  }
+
+  links=m_linkRefs.size();
+  tags=m_tagRefs.size();
+}
+
+
+// Построчная детализация статистики: из кеша в порядке дерева
+QList<BaseStatRow> KnowTreeModel::getBaseStatRows(void)
+{
+  ensureStats();
+
+  QList<BaseStatRow> rows;
+
+  for(const QString &id : m_statsOrder)
+  {
+    auto it=m_statsRows.constFind(id);
+
+    if(it!=m_statsRows.constEnd())
+      rows.append(it.value());
+  }
+
+  return rows;
+}
+
+
+void KnowTreeModel::invalidateStats(void)
+{
+  m_statsDirty=true;
+}
+
+
+// Одна запись из кеша вон: distinct-наборы через счетчики
+void KnowTreeModel::removeRecordStats(const QString &recordId)
+{
+  if(m_statsDirty)
+    return;
+
+  if(!m_statsRows.contains(recordId))
+    return;
+
+  unrefStatsRow(recordId);
+  m_statsRows.remove(recordId);
+  m_statsOrder.removeAll(recordId);
+}
+
+
+// Одна запись пересчитывается: текст, метки, аттачи. Нет записи -
+// выкидывается как при удалении. Полного прохода нет, distinct
+// держится счетчиками
+void KnowTreeModel::refreshRecordStats(const QString &recordId)
+{
+  if(recordId.isEmpty())
+    return;
+
+  ensureStats();
+
+  const QStringList path=getRecordPath(recordId);
+
+  if(path.isEmpty())
+  {
+    removeRecordStats(recordId);
+
+    return;
+  }
+
+  TreeItem *branchItem=getItemById(path.last());
+
+  if(branchItem==nullptr)
+  {
+    removeRecordStats(recordId);
+
+    return;
+  }
+
+  Record *record=getRecord(recordId);
+
+  if(record==nullptr)
+  {
+    removeRecordStats(recordId);
+
+    return;
+  }
+
+  static QRegularExpression hrefPattern("<a\\s+[^>]*href\\s*=\\s*\"([^\"]*)\"",
+                                        QRegularExpression::CaseInsensitiveOption);
+
+  QSet<QString> noteLinks;
+  QSet<QString> noteTags;
+
+  BaseStatRow row=computeStatsRow(record, branchItem, noteLinks, noteTags, hrefPattern);
+
+  unrefStatsRow(recordId);
+
+  m_statsRows[recordId]=row;
+  m_statsRowLinks[recordId]=noteLinks;
+  m_statsRowTags[recordId]=noteTags;
+
+  if(!m_statsOrder.contains(recordId))
+    m_statsOrder.append(recordId);
+
+  refStatsSets(noteLinks, noteTags);
+}
+
+
+void KnowTreeModel::ensureStats(void)
+{
+  if(!m_statsDirty)
+    return;
+
+  m_statsRows.clear();
+  m_statsOrder.clear();
+  m_statsRowLinks.clear();
+  m_statsRowTags.clear();
+  m_linkRefs.clear();
+  m_tagRefs.clear();
+
+  static QRegularExpression hrefPattern("<a\\s+[^>]*href\\s*=\\s*\"([^\"]*)\"",
+                                        QRegularExpression::CaseInsensitiveOption);
+
+  // Тот же обход что раньше: порядок строк - порядок дерева.
+  // Нерекурсивно: глубина дерева непредсказуема, а строк тысячи.
+  // Порядок тот же что у рекурсии: родитель, затем дети по порядку
+  QList<TreeItem *> stack;
+  stack << rootItem;
+
+  QList<TreeItem *> order;
+
+  while(!stack.isEmpty())
+  {
+    TreeItem *item=stack.takeLast();
+    order << item;
+
+    for(int i=item->childCount()-1; i>=0; --i)
+      stack << item->child(i);
+  }
+
+  for(TreeItem *item : order)
+  {
+    if(item==nullptr)
+      continue;
+
+    RecordTableData *recordTable=item->recordtableGetTableData();
+
+    if(recordTable==nullptr)
+      continue;
+
+    for(unsigned i=0; i<recordTable->size(); ++i)
+    {
+      Record *record=recordTable->getRecord(i);
+
+      if(record==nullptr)
+        continue;
+
+      QSet<QString> noteLinks;
+      QSet<QString> noteTags;
+
+      BaseStatRow row=computeStatsRow(record, item, noteLinks, noteTags, hrefPattern);
+
+      const QString id=row.recordId;
+
+      m_statsRows[id]=row;
+      m_statsOrder.append(id);
+      m_statsRowLinks[id]=noteLinks;
+      m_statsRowTags[id]=noteTags;
+
+      refStatsSets(noteLinks, noteTags);
+    }
+  }
+
+  m_statsDirty=false;
+}
+
+
+void KnowTreeModel::refStatsSets(const QSet<QString> &links, const QSet<QString> &tags)
+{
+  for(const QString &url : links)
+    m_linkRefs[url]++;
+
+  for(const QString &tag : tags)
+    m_tagRefs[tag]++;
+}
+
+
+void KnowTreeModel::unrefStatsRow(const QString &recordId)
+{
+  for(const QString &url : m_statsRowLinks.value(recordId))
+  {
+    auto it=m_linkRefs.find(url);
+
+    if(it!=m_linkRefs.end())
+    {
+      if(--(it.value())<=0)
+        m_linkRefs.erase(it);
+    }
+  }
+
+  for(const QString &tag : m_statsRowTags.value(recordId))
+  {
+    auto it=m_tagRefs.find(tag);
+
+    if(it!=m_tagRefs.end())
+    {
+      if(--(it.value())<=0)
+        m_tagRefs.erase(it);
+    }
+  }
+
+  m_statsRowLinks.remove(recordId);
+  m_statsRowTags.remove(recordId);
+}
+
+
+// Строка одной записи: тихий подсчет (имена, файлы, картинки с диска,
+// ссылки, метки)
+BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
+                                           QSet<QString> &noteLinks, QSet<QString> &noteTags,
+                                           const QRegularExpression &hrefPattern)
+{
+  BaseStatRow row;
+  row.recordId=record->getField("id");
+  row.noteName=record->getField("name");
+
+  QStringList pathNames=branchItem->getPathAsField("name");
+  pathNames.removeAll(QString(""));
+  row.branchPath=pathNames.join(" / ");
+
+  AttachTableData *attachTable=record->getAttachTablePointer();
+
+  if(attachTable!=nullptr)
+    row.files=attachTable->size();
+
+  QString html=record->getTextForStats();
+
+  // Картинки: файлы на диске в каталоге записи, а не упоминания
+  // <img> в HTML (один файл вставляется несколько раз, удаленные
+  // файлы оставляют висячие ссылки - отсюда расхождение)
+  if(record->getField("dir").length()>0)
+  {
+    QDir recordDir(mytetraConfig.get_tetradir()+"/base/"+record->getField("dir"));
+
+    if(recordDir.exists())
+    {
+      QStringList imageFilters;
+      imageFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.gif" << "*.bmp";
+
+      row.images=recordDir.entryList(imageFilters, QDir::Files | QDir::Readable, QDir::Name).size();
+    }
+  }
+
+  // Ссылки: distinct-адреса (отдельной схемы внутренних ссылок
+  // в этом дереве нет, ссылки задаются свободным URL - считаются
+  // все). Qt при сохранении дробит одну видимую ссылку на несколько
+  // <a href> с тем же адресом, голый подсчет тегов врет.
+  // &amp; приводится к &, иначе один адрес считается дважды.
+  // В строку идет distinct на заметку, наружу - наборы для refcount
+  QRegularExpressionMatchIterator hrefIt=hrefPattern.globalMatch(html);
+
+  while(hrefIt.hasNext())
+  {
+    QString url=hrefIt.next().captured(1);
+    url.replace("&amp;", "&");
+
+    if(url.isEmpty())
+      continue;
+
+    noteLinks.insert(url);
+  }
+
+  row.links=noteLinks.size();
+
+  // Метки: разбор по запятой/точке с запятой, пробелы по краям.
+  // Регистр не важен, дубли не считаются
+  QStringList recordTags=record->getField("tags").split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
+
+  foreach(QString tag, recordTags)
+  {
+    tag=tag.trimmed();
+
+    if(!tag.isEmpty())
+      noteTags.insert(tag.toLower());
+  }
+
+  row.tags=noteTags.size();
+
+  return row;
 }
 
 

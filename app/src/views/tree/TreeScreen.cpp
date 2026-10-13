@@ -540,6 +540,9 @@ void TreeScreen::moveUpDownBranch(int direction)
  
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+
+  // Порядок веток поменялся: пути в кеше статистики в пересчет
+  knowTreeModel->invalidateStats();
 }
 
 
@@ -726,6 +729,9 @@ void TreeScreen::editBranch(void)
  
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+
+  // Имя ветки: пути записей в кеше статистики в пересчет
+  knowTreeModel->invalidateStats();
  
  find_object<MainWindow>("mainwindow")->setEnabled(true);
 }
@@ -893,6 +899,9 @@ void TreeScreen::delBranch(QString mode)
 
    // Сохранение дерева веток
    find_object<TreeScreen>("treeScreen")->saveKnowTree();
+
+  // Ветка с записями ушла: кеш статистики в пересчет
+  knowTreeModel->invalidateStats();
 
    qDebug() << "Save new tree finish";
   }
@@ -1158,6 +1167,9 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
 
+  // Ветка с записями приехала: кеш статистики в пересчет
+  knowTreeModel->invalidateStats();
+
  // Разблокируется главное окно
  find_object<MainWindow>("mainwindow")->setEnabled(true);
 }
@@ -1233,6 +1245,9 @@ void TreeScreen::pasteCutBranch(bool is_branch)
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
 
+  // Ветка перемещена вырезанием: состав и пути поменялись
+  knowTreeModel->invalidateStats();
+
  // Вырезание завершено, серая подсветка снимается
  knowTreeModel->clearCutBranchId();
 }
@@ -1295,6 +1310,9 @@ void TreeScreen::encryptBranchItem(void)
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
 
+  // Текст шифрован: читаемость в кеше статистики в пересчет
+  knowTreeModel->invalidateStats();
+
  // Обновляеются на экране ветка и ее подветки
  updateBranchOnScreen( getCurrentItemIndex() );
 }
@@ -1313,6 +1331,9 @@ void TreeScreen::decryptBranchItem(void)
 
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+
+  // Текст расшифрован: читаемость в кеше статистики в пересчет
+  knowTreeModel->invalidateStats();
 
  // Обновляеются на экране ветка и ее подветки
  updateBranchOnScreen( getCurrentItemIndex() );
@@ -1464,7 +1485,12 @@ void TreeScreen::importBranchFromDirectory(QString importDir)
 
   // Если импорт данных был успешным
   if(importNodeId.count()>0)
+  {
     setCursorToId(importNodeId); // Курсор устанавливается на только что импортированную ветку
+
+    // Приехала целая ветка: кеш статистики в пересчет
+    knowTreeModel->invalidateStats();
+  }
 
   showMessageBox(tr("Item importing finished."));
 }

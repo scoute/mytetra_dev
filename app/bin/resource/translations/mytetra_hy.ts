@@ -208,11 +208,6 @@ This can happen if there is no free space left on the hard disk or it is impossi
 </context>
 <context>
     <name>AppConfigDialog</name>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
-        <source>Favorites</source>
-        <translation>Ընտրյալներ</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -3690,6 +3685,11 @@ MyTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկել�
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="65"/>
         <source>Clipper</source>
         <translation>Կլիպպեր</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>Ընտրյալներ</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="55"/>

@@ -3688,6 +3688,11 @@ MyTetra va créer une note vide pour corriger cela.</translation>
         <translation>Clipper</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>Favoris</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/TrashMonitoring.cpp" line="171"/>
         <source>Important information</source>
         <translation>Information importante</translation>
@@ -5193,11 +5198,6 @@ La mise en forme peut être altérée.</translation>
 </context>
 <context>
     <name>AppConfigDialog</name>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
-        <source>Favorites</source>
-        <translation>Favoris</translation>
-    </message>
 </context>
 <context>
     <name>FavoritesPanel</name>

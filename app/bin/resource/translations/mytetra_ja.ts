@@ -208,11 +208,6 @@ This can happen if there is no free space left on the hard disk or it is impossi
 </context>
 <context>
     <name>AppConfigDialog</name>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
-        <source>Favorites</source>
-        <translation>お気に入り</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -3686,6 +3681,11 @@ MyTetra will try to create a blank entry to fix it.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="65"/>
         <source>Clipper</source>
         <translation>クリッパー</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>お気に入り</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="55"/>

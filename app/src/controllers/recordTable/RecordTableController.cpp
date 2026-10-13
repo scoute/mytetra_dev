@@ -916,6 +916,12 @@ void RecordTableController::moveUp(void)
   // Выясняется ссылка на таблицу конечных данных
   RecordTableData *table=recordSourceModel->getTableData();
 
+  // Без выделенной записи или на верхней границе двигать нечего.
+  // Раньше холостой вызов все равно менял выделение, показывал
+  // отладочный диалог и сохранял дерево веток
+  if(pos<=0 || pos>=static_cast<int>(table->size()))
+    return;
+
   // Перемещение текущей записи вверх
   table->moveUp(pos);
 
@@ -937,6 +943,10 @@ void RecordTableController::moveDn(void)
 
   // Выясняется ссылка на таблицу конечных данных
   RecordTableData *table=recordSourceModel->getTableData();
+
+  // Без выделенной записи или на нижней границе двигать нечего
+  if(pos<0 || pos>=static_cast<int>(table->size())-1)
+    return;
 
   // Перемещение текущей записи вниз
   table->moveDn(pos);

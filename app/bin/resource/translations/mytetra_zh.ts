@@ -4833,7 +4833,12 @@ Please report about this problem to the developers.</source>
         <translation>计数</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="226"/>
+        <source>Tags [%1]</source>
+        <translation>标签 [%1]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="227"/>
         <source>Tags</source>
         <translation>标签</translation>
     </message>

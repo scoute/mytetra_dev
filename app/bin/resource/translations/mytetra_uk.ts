@@ -4831,7 +4831,12 @@ Please report about this problem to the developers.</source>
         <translation>к-сть</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="226"/>
+        <source>Tags [%1]</source>
+        <translation>Мітки [%1]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="227"/>
         <source>Tags</source>
         <translation>Мітки</translation>
     </message>

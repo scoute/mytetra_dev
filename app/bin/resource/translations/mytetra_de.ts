@@ -4837,7 +4837,12 @@ Bitte dieses Problem den Entwicklern melden.</translation>
         <translation>Anzahl</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="226"/>
+        <source>Tags [%1]</source>
+        <translation>Tags [%1]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="227"/>
         <source>Tags</source>
         <translation>Tags</translation>
     </message>

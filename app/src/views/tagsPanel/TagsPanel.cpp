@@ -216,12 +216,16 @@ void TagsPanel::refreshTags(void)
             collectTagCounts(rootItem, counts, display);
     }
 
-    // Заголовок дока без счётчиков: текст зеркалится в пункт меню
-    // Tools через toggleViewAction, а там нужны короткие названия
+    // Заголовок дока со счётчиком заметок. Пункт меню Tools при этом
+    // короткий: toggleViewAction зеркалит заголовок, поэтому текст
+    // меню ставится отдельно сразу после, до следующего обновления
     if(treeModel!=nullptr)
     {
         if(QDockWidget *dock=qobject_cast<QDockWidget *>(parentWidget()))
-            dock->setWindowTitle(tr("Tags"));
+        {
+            dock->setWindowTitle(tr("Tags [%1]").arg(treeModel->getAllRecordCount()));
+            dock->toggleViewAction()->setText(tr("Tags"));
+        }
     }
 
     // Запоминается выделенная метка: живые обновления пересобирают

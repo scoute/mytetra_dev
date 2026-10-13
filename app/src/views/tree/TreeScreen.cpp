@@ -493,6 +493,7 @@ void TreeScreen::assembly(void)
  favoritesSplitter->setStretchFactor(0, 0);
  favoritesSplitter->setStretchFactor(1, 1);
  favoritesSplitter->setCollapsible(0, false);
+ favoritesSplitter->setCollapsible(1, false);
  treeScreenLayout->addWidget(favoritesSplitter, 1);
 
  setLayout(treeScreenLayout);

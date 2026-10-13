@@ -3305,6 +3305,14 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Statistics</source>
         <translation>Статистика</translation>
     </message>
+        <message>
+            <source>Images &amp;gallery</source>
+            <translation>Галерея картинок</translation>
+        </message>
+        <message>
+            <source>Attached &amp;files</source>
+            <translation>Прикрепленные файлы</translation>
+        </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -5027,6 +5035,10 @@ Please report about this problem to the developers.</source>
             <source>Tags</source>
             <translation>Метки</translation>
         </message>
+        <message>
+            <source>Images gallery</source>
+            <translation>Галерея картинок</translation>
+        </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -5686,6 +5698,65 @@ Please select single item for enabling edit operation.</source>
         <message>
             <source>Remove tag "%1" from %2 note(s)? Undo is not available.</source>
             <translation>Убрать метку "%1" из %2 записей? Отмена недоступна.</translation>
+        </message>
+    </context>
+    <context>
+        <name>ContentGallery</name>
+        <message>
+            <source>Images gallery</source>
+            <translation>Галерея картинок</translation>
+        </message>
+        <message>
+            <source>Attached files</source>
+            <translation>Прикрепленные файлы</translation>
+        </message>
+        <message>
+            <source>Tile size</source>
+            <translation>Размер плитки</translation>
+        </message>
+        <message>
+            <source>Tiles</source>
+            <translation>Плитка</translation>
+        </message>
+        <message>
+            <source>List</source>
+            <translation>Список</translation>
+        </message>
+        <message>
+            <source>Name</source>
+            <translation>Имя</translation>
+        </message>
+        <message>
+            <source>Size</source>
+            <translation>Размер</translation>
+        </message>
+        <message>
+            <source>Type</source>
+            <translation>Тип</translation>
+        </message>
+        <message>
+            <source>Modified</source>
+            <translation>Изменен</translation>
+        </message>
+        <message>
+            <source>%1 images</source>
+            <translation>%1 картинок</translation>
+        </message>
+        <message>
+            <source>%1 files</source>
+            <translation>%1 файлов</translation>
+        </message>
+        <message>
+            <source>Can not open file: %1</source>
+            <translation>Не могу открыть файл: %1</translation>
+        </message>
+        <message>
+            <source>Can not open image: %1</source>
+            <translation>Не могу открыть картинку: %1</translation>
+        </message>
+        <message>
+            <source>Close</source>
+            <translation>Закрыть</translation>
         </message>
     </context>
 </TS>

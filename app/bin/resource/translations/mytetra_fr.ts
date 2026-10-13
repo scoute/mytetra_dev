@@ -3368,8 +3368,8 @@ Veuillez mettre à jour MyTetra.</translation>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>Saisissez un nom ou une étiquette pour chercher</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>Saisissez un nom, une branche ou une étiquette pour chercher</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -3390,6 +3390,21 @@ Veuillez mettre à jour MyTetra.</translation>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>Note</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>Branche</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>Étiquettes</translation>
     </message>
 </context>
 <context>

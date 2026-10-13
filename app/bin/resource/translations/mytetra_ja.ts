@@ -3391,8 +3391,8 @@ MyTetra を更新してください。</translation>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>検索する名前やタグを入力</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>名前、ブランチ、タグで検索</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -3413,6 +3413,21 @@ MyTetra を更新してください。</translation>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>ノート</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>ブランチ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>タグ</translation>
     </message>
 </context>
 <context>

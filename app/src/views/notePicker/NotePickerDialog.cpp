@@ -1,8 +1,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLineEdit>
-#include <QListWidget>
-#include <QListWidgetItem>
+#include <QTableWidget>
+#include <QHeaderView>
 #include <QLabel>
 #include <QTimer>
 #include <QDialogButtonBox>
@@ -32,7 +32,16 @@ NotePickerDialog::NotePickerDialog(QWidget *parent,
   filterEdit->setPlaceholderText(tr("Search note"));
   filterEdit->setClearButtonEnabled(true);
 
-  resultsList=new QListWidget(this);
+  resultsTable=new QTableWidget(this);
+  resultsTable->setColumnCount(ColumnCount);
+  resultsTable->setHorizontalHeaderLabels(QStringList() << tr("Note") << tr("Branch") << tr("Tags"));
+  resultsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+  resultsTable->setSelectionMode(QAbstractItemView::SingleSelection);
+  resultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  resultsTable->setSortingEnabled(true);
+  resultsTable->horizontalHeader()->setSectionResizeMode(ColumnName, QHeaderView::Stretch);
+  resultsTable->horizontalHeader()->setSectionResizeMode(ColumnBranch, QHeaderView::ResizeToContents);
+  resultsTable->horizontalHeader()->setSectionResizeMode(ColumnTags, QHeaderView::ResizeToContents);
 
   counterLabel=new QLabel(this);
 
@@ -45,19 +54,19 @@ NotePickerDialog::NotePickerDialog(QWidget *parent,
   buttons->addButton(cancelButton, QDialogButtonBox::RejectRole);
 
   connect(buttons, &QDialogButtonBox::accepted, this, [this]() {
-    if(resultsList->currentRow()>=0)
+    if(resultsTable->currentRow()>=0)
       accept();
   });
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
   QVBoxLayout *layout=new QVBoxLayout(this);
   layout->addWidget(filterEdit);
-  layout->addWidget(resultsList);
+  layout->addWidget(resultsTable);
   layout->addWidget(counterLabel);
   layout->addWidget(buttons);
   setLayout(layout);
 
-  resize(420, 380);
+  resize(620, 380);
 
   filterTimer=new QTimer(this);
   filterTimer->setSingleShot(true);
@@ -67,18 +76,18 @@ NotePickerDialog::NotePickerDialog(QWidget *parent,
           this,        &NotePickerDialog::scheduleFilter);
   connect(filterTimer, &QTimer::timeout,
           this,        &NotePickerDialog::rebuildResults);
-  connect(resultsList, &QListWidget::itemActivated,
+  connect(resultsTable, &QTableWidget::itemActivated,
           this,        &NotePickerDialog::onItemActivated);
-  connect(resultsList, &QListWidget::itemDoubleClicked,
+  connect(resultsTable, &QTableWidget::itemDoubleClicked,
           this,        &NotePickerDialog::onItemActivated);
 
-  counterLabel->setText(tr("Type a name or tag to search"));
+  counterLabel->setText(tr("Type a name, branch or tag to search"));
 }
 
 
 QString NotePickerDialog::selectedRecordId(void) const
 {
-  QListWidgetItem *item=resultsList->currentItem();
+  QTableWidgetItem *item=resultsTable->item(resultsTable->currentRow(), ColumnName);
   if(item==nullptr)
     return QString();
 
@@ -88,7 +97,7 @@ QString NotePickerDialog::selectedRecordId(void) const
 
 QString NotePickerDialog::selectedRecordName(void) const
 {
-  QListWidgetItem *item=resultsList->currentItem();
+  QTableWidgetItem *item=resultsTable->item(resultsTable->currentRow(), ColumnName);
   if(item==nullptr)
     return QString();
 
@@ -106,13 +115,13 @@ void NotePickerDialog::applyFilter(const QString &text)
 
 void NotePickerDialog::setCurrentRow(int row)
 {
-  resultsList->setCurrentRow(row);
+  resultsTable->selectRow(row);
 }
 
 
 int NotePickerDialog::resultCount(void) const
 {
-  return resultsList->count();
+  return resultsTable->rowCount();
 }
 
 
@@ -128,12 +137,12 @@ void NotePickerDialog::scheduleFilter(void)
 }
 
 
-void NotePickerDialog::onItemActivated(QListWidgetItem *item)
+void NotePickerDialog::onItemActivated(QTableWidgetItem *item)
 {
   if(item==nullptr)
     return;
 
-  resultsList->setCurrentItem(item);
+  resultsTable->setCurrentCell(item->row(), ColumnName);
   accept();
 }
 
@@ -196,10 +205,6 @@ QList<NotePickerDialog::Hit> NotePickerDialog::searchHits(const QString &query) 
     const QString name=record->getField(QStringLiteral("name"));
     const QString tags=record->getField(QStringLiteral("tags"));
 
-    if(!name.contains(query, Qt::CaseInsensitive) &&
-       !tags.contains(query, Qt::CaseInsensitive))
-      continue;
-
     QStringList branchNames;
     for(const QString &branchId : treeModel->getRecordPath(id))
     {
@@ -208,10 +213,20 @@ QList<NotePickerDialog::Hit> NotePickerDialog::searchHits(const QString &query) 
         branchNames << branchItem->getField(QStringLiteral("name"));
     }
 
+    // Поиск сразу по трём столбцам: имя, ветка, метки
+    const QString branch=branchNames.isEmpty() ? QString() : branchNames.last();
+
+    if(!name.contains(query, Qt::CaseInsensitive) &&
+       !branch.contains(query, Qt::CaseInsensitive) &&
+       !tags.contains(query, Qt::CaseInsensitive))
+      continue;
+
     Hit hit;
     hit.id=id;
     hit.name=name;
+    hit.branch=branch;
     hit.branchPath=branchNames.join(QStringLiteral(" / "));
+    hit.tags=tags;
     hits << hit;
   }
 
@@ -226,13 +241,14 @@ QList<NotePickerDialog::Hit> NotePickerDialog::searchHits(const QString &query) 
 
 void NotePickerDialog::rebuildResults(void)
 {
-  resultsList->clear();
+  resultsTable->setSortingEnabled(false);
+  resultsTable->setRowCount(0);
 
   const QList<Hit> hits=searchHits(filterEdit->text().trimmed());
 
   if(filterEdit->text().trimmed().isEmpty())
   {
-    counterLabel->setText(tr("Type a name or tag to search"));
+    counterLabel->setText(tr("Type a name, branch or tag to search"));
     return;
   }
 
@@ -245,11 +261,26 @@ void NotePickerDialog::rebuildResults(void)
   const int shown=hits.size()<DISPLAY_LIMIT ? hits.size() : DISPLAY_LIMIT;
   for(int i=0; i<shown; ++i)
   {
-    QListWidgetItem *item=new QListWidgetItem(hits.at(i).name, resultsList);
-    item->setData(Qt::UserRole, hits.at(i).id);
-    if(!hits.at(i).branchPath.isEmpty())
-      item->setToolTip(hits.at(i).branchPath);
+    const Hit &hit=hits.at(i);
+
+    const int row=resultsTable->rowCount();
+    resultsTable->insertRow(row);
+
+    QTableWidgetItem *nameItem=new QTableWidgetItem(hit.name);
+    nameItem->setData(Qt::UserRole, hit.id);
+    resultsTable->setItem(row, ColumnName, nameItem);
+
+    QTableWidgetItem *branchItem=new QTableWidgetItem(hit.branch);
+
+    if(!hit.branchPath.isEmpty())
+      branchItem->setToolTip(hit.branchPath);
+
+    resultsTable->setItem(row, ColumnBranch, branchItem);
+
+    resultsTable->setItem(row, ColumnTags, new QTableWidgetItem(hit.tags));
   }
+
+  resultsTable->setSortingEnabled(true);
 
   counterLabel->setText(tr("Shown %1 of %2").arg(shown).arg(hits.size()));
 }

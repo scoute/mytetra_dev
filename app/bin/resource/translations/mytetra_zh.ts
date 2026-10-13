@@ -3391,8 +3391,8 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>输入名称或标签进行搜索</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>输入名称、分支或标签进行搜索</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -3413,6 +3413,21 @@ You need to update MyTetra.</source>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>取消</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>笔记</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>分支</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>标签</translation>
     </message>
 </context>
 <context>

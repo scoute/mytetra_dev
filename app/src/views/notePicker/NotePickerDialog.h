@@ -6,14 +6,14 @@
 #include <QString>
 
 class QLineEdit;
-class QListWidget;
-class QListWidgetItem;
+class QTableWidget;
+class QTableWidgetItem;
 class QLabel;
 class QTimer;
 
 
 // Быстрый выбор заметки для вставки ссылки.
-// Живой фильтр только по именам и тегам (мгновенно, без чтения файлов).
+// Живой фильтр по именам, веткам и тегам (мгновенно, без чтения файлов).
 // Выдача ужата до 50 строк со счетчиком "Показано 50 из 55".
 // Текущая запись исключается: ссылка на себя бессмысленна.
 
@@ -40,7 +40,7 @@ private slots:
 
   void scheduleFilter(void);
   void rebuildResults(void);
-  void onItemActivated(QListWidgetItem *item);
+  void onItemActivated(QTableWidgetItem *item);
 
 private:
 
@@ -48,14 +48,25 @@ private:
   {
     QString id;
     QString name;
+    QString branch;
     QString branchPath;
+    QString tags;
   };
 
   QList<Hit> searchHits(const QString &query) const;
   bool isRecordSkippable(const QString &recordId) const;
 
+  // Столбцы выдачи: имя заметки, ветка, метки
+  enum Columns
+  {
+    ColumnName=0,
+    ColumnBranch=1,
+    ColumnTags=2,
+    ColumnCount=3
+  };
+
   QLineEdit *filterEdit;
-  QListWidget *resultsList;
+  QTableWidget *resultsTable;
   QLabel *counterLabel;
   QTimer *filterTimer;
 

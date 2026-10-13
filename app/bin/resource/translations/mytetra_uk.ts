@@ -3386,8 +3386,8 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>Введіть ім'я або мітку для пошуку</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>Введіть ім'я, гілку або мітку для пошуку</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -3408,6 +3408,21 @@ You need to update MyTetra.</source>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>Скасувати</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>Нотатка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>Гілка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>Мітки</translation>
     </message>
 </context>
 <context>

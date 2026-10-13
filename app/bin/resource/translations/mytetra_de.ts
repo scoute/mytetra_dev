@@ -3394,8 +3394,8 @@ Bitte MyTetra aktualisieren.</translation>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>Namen oder Tag zur Suche eingeben</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>Namen, Zweig oder Tag zur Suche eingeben</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -3416,6 +3416,21 @@ Bitte MyTetra aktualisieren.</translation>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>Notiz</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>Zweig</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>Tags</translation>
     </message>
 </context>
 <context>

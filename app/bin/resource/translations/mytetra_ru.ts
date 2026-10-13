@@ -4192,8 +4192,8 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>Введите имя или тег для поиска</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>Введите имя, ветку или метку для поиска</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -4214,6 +4214,21 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>Заметка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>Метки</translation>
     </message>
 </context>
 <context>

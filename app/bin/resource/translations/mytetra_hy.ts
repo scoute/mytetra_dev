@@ -3394,8 +3394,8 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="75"/>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="235"/>
-        <source>Type a name or tag to search</source>
-        <translation>Որոնելու համար մուտքագրեք անուն կամ պիտակ</translation>
+        <source>Type a name, branch or tag to search</source>
+        <translation>Որոնման համար մուտքագրեք անուն, ճյուղ կամ պիտակ</translation>
     </message>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="254"/>
@@ -3416,6 +3416,21 @@ You need to update MyTetra.</source>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="41"/>
         <source>Cancel</source>
         <translation>Չեղարկել</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Note</source>
+        <translation>Նշում</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Branch</source>
+        <translation>Ճյուղ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="37"/>
+        <source>Tags</source>
+        <translation>Պիտակներ</translation>
     </message>
 </context>
 <context>

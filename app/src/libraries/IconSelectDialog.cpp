@@ -270,7 +270,11 @@ void IconSelectDialog::setDefaultSection(QString sectionName)
     return;
   }
 
-  for (int i = 0; m_sectionComboBox.count(); ++i)
+  // Сравнение идет по индексам, а не по значению count(), так как count()
+  // всегда возвращает ненулевое число и в таком виде цикл никогда не
+  // заканчивается, что приводит к выходу за границы списка разделов,
+  // если нужный раздел не найден
+  for (int i = 0; i < m_sectionComboBox.count(); ++i)
   {
     if(m_sectionComboBox.itemText(i) == sectionName) {
 
@@ -306,10 +310,18 @@ void IconSelectDialog::onSectionCurrentIndexChanged(int idx)
   if(!m_enableIconUpdate)
     return;
 
+  // Индекс раздела может оказаться неверным, например при пустом списке
+  // разделов, тогда работать дальше не с чем
+  if(idx<0 || idx>=m_sectionComboBox.count())
+    return;
+
   m_currentSectionIndex=idx;
 
   // Очищается экранный список иконок
-  m_iconList.clear(); // todo: Здесь сегфолт... Разобраться.
+  // Обратите внимание: очистка списка вызывает сигнал itemSelectionChanged,
+  // поэтому слот onIconItemSelectionChanged() вызывается сразу же, когда
+  // список еще пуст и выбранного элемента в нем нет
+  m_iconList.clear();
 
   QString iconDirName=m_path+"/"+m_sectionComboBox.itemText(idx);
 
@@ -353,8 +365,19 @@ void IconSelectDialog::onSectionCurrentIndexChanged(int idx)
 // Когда выбрана иконка
 void IconSelectDialog::onIconItemSelectionChanged()
 {
-  // QString shortSelectFileName=iconList.selectedItems().at(0)->text(); // Неясно, но похоже что после этой конструкции идет сегфолт в методе clean()
-  QString shortSelectFileName=m_iconList.currentItem()->text();
+  // Выбранного элемента может не быть, например, когда список иконок был только
+  // что очищен или когда снято выделение со всех элементов.
+  // В таком случае currentItem() возвращает nullptr и обращение к нему
+  // приводит к падению программы, поэтому этот случай надо пропустить
+  QListWidgetItem *currentItem=m_iconList.currentItem();
+
+  if(currentItem==nullptr)
+  {
+    m_currentFileName.clear();
+    return;
+  }
+
+  QString shortSelectFileName=currentItem->text();
 
   m_currentFileName=m_path+"/"+this->getCurrentSection()+"/"+shortSelectFileName;
 }

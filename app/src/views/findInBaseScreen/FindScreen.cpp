@@ -199,9 +199,12 @@ void FindScreen::fixCloseButtonSize(void)
 
 void FindScreen::assemblyCloseButton(void)
 {
-    // Вертикальная область с кнопкой закрытия и распоркой
-    // чтобы кнопка была вверху
+    // Вертикальная область с кнопкой закрытия и распорками
+    // с обеих сторон: кнопка центрируется по высоте строки,
+    // как поле ввода в соседней области. Без верхней распорки
+    // кнопка прижималась к верху и выходила на 1-2 пикселя выше
     toolsAreaCloseButton=new QVBoxLayout();
+    toolsAreaCloseButton->addStretch();
     toolsAreaCloseButton->addWidget(closeButton);
     toolsAreaCloseButton->addStretch();
 

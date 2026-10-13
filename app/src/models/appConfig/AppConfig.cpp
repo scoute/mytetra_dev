@@ -811,6 +811,30 @@ void AppConfig::set_editorFindEmbedded(bool state)
 }
 
 
+bool AppConfig::get_favoritesEnabled(void)
+{
+    return m_conf->value("favoritesEnabled", true).toBool();
+}
+
+
+void AppConfig::set_favoritesEnabled(bool state)
+{
+    m_conf->setValue("favoritesEnabled", state);
+}
+
+
+QString AppConfig::get_favoritesStorage(void)
+{
+    return m_conf->value("favoritesStorage", "sidecar").toString();
+}
+
+
+void AppConfig::set_favoritesStorage(const QString &mode)
+{
+    m_conf->setValue("favoritesStorage", mode);
+}
+
+
 
 // Разрешено ли использовать собственный формат вывода даты и времени
 bool AppConfig::getEnableCustomDateTimeFormat(void)

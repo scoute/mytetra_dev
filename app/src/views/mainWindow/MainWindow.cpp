@@ -48,6 +48,7 @@ public:
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/historyPanel/HistoryPanel.h"
+#include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
 #include "libraries/Clipper.h"
@@ -961,6 +962,10 @@ void MainWindow::initViewMenu(void)
     viewHeaderAction->setCheckable(true);
     viewMenu->addAction(viewHeaderAction);
 
+    viewFavoritesAction=new QAction(tr("Show favorites panel"), this);
+    viewFavoritesAction->setCheckable(true);
+    viewMenu->addAction(viewFavoritesAction);
+
     viewReadOnlyAction=new QAction(this);
     viewReadOnlyAction->setCheckable(true);
     viewMenu->addAction(viewReadOnlyAction);
@@ -979,6 +984,8 @@ void MainWindow::initViewMenu(void)
 
     connect(viewHeaderAction, &QAction::toggled,
             this,              &MainWindow::onViewHeaderToggled);
+    connect(viewFavoritesAction, &QAction::toggled,
+            this,                &MainWindow::onViewFavoritesToggled);
     connect(viewReadOnlyAction, &QAction::toggled,
             this,               &MainWindow::onViewReadOnlyToggled);
     connect(viewSecretColorAction, &QAction::triggered,
@@ -999,6 +1006,9 @@ void MainWindow::syncViewMenu(void)
     if(viewHeaderAction!=nullptr)
         viewHeaderAction->setChecked(mytetraConfig.get_recordHeaderVisible());
 
+    if(viewFavoritesAction!=nullptr)
+        viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
+
     if(viewReadOnlyAction!=nullptr)
         viewReadOnlyAction->setChecked(mytetraConfig.get_readOnly());
 }
@@ -1010,6 +1020,17 @@ void MainWindow::onViewHeaderToggled(bool checked)
 
     if(editorScreen!=nullptr)
         editorScreen->updateRecordHeaderVisibility();
+}
+
+
+void MainWindow::onViewFavoritesToggled(bool checked)
+{
+    mytetraConfig.set_favoritesEnabled(checked);
+
+    // Сам refresh решит показать или спрятать по наличию звездочек
+    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
+    if(favoritesPanel!=nullptr)
+        favoritesPanel->refreshFavorites();
 }
 
 
@@ -1331,6 +1352,7 @@ void MainWindow::retranslateUi(void)
         viewMenu->setTitle(tr("&View"));
 
         viewHeaderAction->setText(tr("Show note header"));
+        viewFavoritesAction->setText(tr("Show favorites panel"));
         viewSecretColorAction->setText(tr("Change secret color..."));
         viewPaperColorAction->setText(tr("Change note background color..."));
     }
@@ -1386,6 +1408,11 @@ void MainWindow::retranslateUi(void)
 
     if(tagsPanel!=nullptr)
         tagsPanel->retranslateUi();
+
+    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
+
+    if(favoritesPanel!=nullptr)
+        favoritesPanel->retranslateUi();
 
     HistoryPanel *historyPanel=find_object<HistoryPanel>("historyPanel");
 

@@ -301,6 +301,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Misc</source>
         <translation type="vanished">Разное</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -4140,6 +4145,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Backlinks</source>
         <translation>Обратные ссылки</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="965"/>
+        <source>Show favorites panel</source>
+        <translation>Показывать панель избранного</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -5247,6 +5257,16 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="371"/>
         <source>Disable sorting</source>
         <translation>Запретить сортировку</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="362"/>
+        <source>Remove from favorites</source>
+        <translation>Убрать из избранного</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="364"/>
+        <source>Add to favorites</source>
+        <translation>Добавить в избранное</translation>
     </message>
 </context>
 <context>
@@ -6649,6 +6669,57 @@ Please select single item for enabling edit operation.</source>
 %3</source>
         <translation>Ошибка парсера на строке %1, в позиции %2:
 %3.</translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesPanel</name>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="38"/>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="189"/>
+        <source>Go to note</source>
+        <translation>Перейти к заметке</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="190"/>
+        <source>Remove from favorites</source>
+        <translation>Убрать из избранного</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Favorites</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="73"/>
+        <source>Favorite notes</source>
+        <translation>Избранные заметки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="41"/>
+        <source>Show favorites panel</source>
+        <translation>Показывать панель избранного</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="82"/>
+        <source>Favorites storage</source>
+        <translation>Хранение избранного</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="47"/>
+        <source>Sidecar file (data/favorites.xml)</source>
+        <translation>Отдельный файл (data/favorites.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="50"/>
+        <source>Main file (mytetra.xml)</source>
+        <translation>Основной файл (mytetra.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="58"/>
+        <source>Switching storage moves existing stars</source>
+        <translation>При переключении существующие звёздочки переносятся</translation>
     </message>
 </context>
 </TS>

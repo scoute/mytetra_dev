@@ -208,6 +208,11 @@ Dies kann passieren, wenn auf der Festplatte kein freier Platz mehr ist oder das
 </context>
 <context>
     <name>AppConfigDialog</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>Favoriten</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -3342,6 +3347,11 @@ Bitte MyTetra aktualisieren.</translation>
         <source>Backlinks</source>
         <translation>Eingehende Links</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="965"/>
+        <source>Show favorites panel</source>
+        <translation>Favoritenpanel anzeigen</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -3918,6 +3928,16 @@ Bitte dieses Problem den Entwicklern melden.</translation>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="371"/>
         <source>Disable sorting</source>
         <translation>Sortierung aus</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="362"/>
+        <source>Remove from favorites</source>
+        <translation>Aus Favoriten entfernen</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="364"/>
+        <source>Add to favorites</source>
+        <translation>Zu Favoriten hinzufügen</translation>
     </message>
 </context>
 <context>
@@ -5194,6 +5214,57 @@ Bitte einzelnen Zweig zum Bearbeiten wählen.</translation>
 %3</source>
         <translation>Parserfehler in Zeile %1, Spalte %2:
 %3</translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesPanel</name>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="38"/>
+        <source>Favorites</source>
+        <translation>Favoriten</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="189"/>
+        <source>Go to note</source>
+        <translation>Zur Notiz springen</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="190"/>
+        <source>Remove from favorites</source>
+        <translation>Aus Favoriten entfernen</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Favorites</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="73"/>
+        <source>Favorite notes</source>
+        <translation>Favoritennotizen</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="41"/>
+        <source>Show favorites panel</source>
+        <translation>Favoritenpanel anzeigen</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="82"/>
+        <source>Favorites storage</source>
+        <translation>Favoriten-Speicherung</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="47"/>
+        <source>Sidecar file (data/favorites.xml)</source>
+        <translation>Sidecar-Datei (data/favorites.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="50"/>
+        <source>Main file (mytetra.xml)</source>
+        <translation>Hauptdatei (mytetra.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="58"/>
+        <source>Switching storage moves existing stars</source>
+        <translation>Beim Wechsel werden vorhandene Sterne übernommen</translation>
     </message>
 </context>
 </TS>

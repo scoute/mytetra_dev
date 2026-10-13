@@ -5176,4 +5176,63 @@ La mise en forme peut être altérée.</translation>
 %3</translation>
     </message>
 </context>
+<context>
+    <name>AppConfigDialog</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>Favoris</translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesPanel</name>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="38"/>
+        <source>Favorites</source>
+        <translation>Favoris</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="189"/>
+        <source>Go to note</source>
+        <translation>Aller à la note</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="190"/>
+        <source>Remove from favorites</source>
+        <translation>Retirer des favoris</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Favorites</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="73"/>
+        <source>Favorite notes</source>
+        <translation>Notes favorites</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="41"/>
+        <source>Show favorites panel</source>
+        <translation>Afficher le panneau des favoris</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="82"/>
+        <source>Favorites storage</source>
+        <translation>Stockage des favoris</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="47"/>
+        <source>Sidecar file (data/favorites.xml)</source>
+        <translation>Fichier sidecar (data/favorites.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="50"/>
+        <source>Main file (mytetra.xml)</source>
+        <translation>Fichier principal (mytetra.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="58"/>
+        <source>Switching storage moves existing stars</source>
+        <translation>Le changement de stockage déplace les étoiles existantes</translation>
+    </message>
+</context>
 </TS>

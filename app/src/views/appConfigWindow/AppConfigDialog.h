@@ -40,6 +40,7 @@ private:
     QListWidgetItem *pageKeyboard;
     QListWidgetItem *pageHistory;
     QListWidgetItem *pageSearch;
+    QListWidgetItem *pageFavorites;
     QListWidgetItem *pageMisc;
     QListWidgetItem *pageClipper;
 

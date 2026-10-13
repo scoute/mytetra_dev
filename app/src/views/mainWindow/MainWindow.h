@@ -156,6 +156,7 @@ private slots:
 
     // Меню Вид: дубли быстрых переключателей отображения
     void onViewHeaderToggled(bool checked);
+    void onViewFavoritesToggled(bool checked);
     void onViewSecretColor(void);
     void onViewPaperColor(void);
 
@@ -276,6 +277,7 @@ private:
     // Меню Вид в menubar между Tools и Themes: шапка, цвет секрета
     QMenu *viewMenu=nullptr;
     QAction *viewHeaderAction=nullptr;
+    QAction *viewFavoritesAction=nullptr;
     QAction *viewReadOnlyAction=nullptr;
 
     // Панель списка тегов. Переключается из меню Tools и горячей клавишей,

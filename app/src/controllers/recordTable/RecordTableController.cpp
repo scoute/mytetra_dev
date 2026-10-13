@@ -20,6 +20,7 @@
 #include "models/recordTable/RecordTableData.h"
 #include "models/recordTable/RecordTableModel.h"
 #include "libraries/BacklinkIndex.h"
+#include "libraries/Favorites.h"
 #include "models/recordTable/RecordTableProxyModel.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/tree/TreeItem.h"
@@ -667,6 +668,45 @@ void RecordTableController::addNew(int mode, Record record)
 void RecordTableController::onEditFieldContext(void)
 {
     view->editFieldContext();
+}
+
+
+// Звездочка избранного: пишется в активное хранилище (сайдкар
+// или поля XML, см. Favorites). Панель обновляется сигналом,
+// сохранение дерева для XML едет внутри
+void RecordTableController::onFavoriteContext(void)
+{
+  QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
+  if(selectItems.isEmpty())
+    return;
+
+  QModelIndex index=selectItems.at(0);
+
+  QModelIndex sourceIndex=convertProxyIndexToSourceIndex(index);
+  int pos=sourceIndex.row();
+
+  RecordTableData *table=recordSourceModel->getTableData();
+
+  const QString id=table->getField("id", pos);
+
+  Favorites::instance().setFavorite(id, !Favorites::instance().isFavorite(id));
+
+  int viewPos=index.row();
+  view->updateRow(viewPos);
+}
+
+
+// Звездочка стоит на текущей записи
+bool RecordTableController::isCurrentRecordFavorite(void)
+{
+  QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
+  if(selectItems.isEmpty())
+    return false;
+
+  QModelIndex sourceIndex=convertProxyIndexToSourceIndex(selectItems.at(0));
+  RecordTableData *table=recordSourceModel->getTableData();
+
+  return Favorites::instance().isFavorite(table->getField("id", sourceIndex.row()));
 }
 
 

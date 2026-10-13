@@ -208,6 +208,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
 </context>
 <context>
     <name>AppConfigDialog</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <source>Favorites</source>
+        <translation>Ընտրյալներ</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -3342,6 +3347,11 @@ You need to update MyTetra.</source>
         <source>Backlinks</source>
         <translation>Հետադարձ հղումներ</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="965"/>
+        <source>Show favorites panel</source>
+        <translation>Ցույց տալ ընտրյալների վահանակը</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -3918,6 +3928,16 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="371"/>
         <source>Disable sorting</source>
         <translation>Անջատել դասավորումը</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="362"/>
+        <source>Remove from favorites</source>
+        <translation>Հեռացնել ընտրյալներից</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="364"/>
+        <source>Add to favorites</source>
+        <translation>Ավելացնել ընտրյալներին</translation>
     </message>
 </context>
 <context>
@@ -5194,6 +5214,57 @@ Please select single item for enabling edit operation.</source>
 %3</source>
         <translation>Վերլուծիչի սխալ %1 տողում, %2 դիրքում․
 %3։</translation>
+    </message>
+</context>
+<context>
+    <name>FavoritesPanel</name>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="38"/>
+        <source>Favorites</source>
+        <translation>Ընտրյալներ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="189"/>
+        <source>Go to note</source>
+        <translation>Անցնել գրառմանը</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="190"/>
+        <source>Remove from favorites</source>
+        <translation>Հեռացնել ընտրյալներից</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Favorites</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="73"/>
+        <source>Favorite notes</source>
+        <translation>Ընտրյալ գրառումներ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="41"/>
+        <source>Show favorites panel</source>
+        <translation>Ցույց տալ ընտրյալների վահանակը</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="82"/>
+        <source>Favorites storage</source>
+        <translation>Ընտրյալների պահպանում</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="47"/>
+        <source>Sidecar file (data/favorites.xml)</source>
+        <translation>Առանձին ֆայլ (data/favorites.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="50"/>
+        <source>Main file (mytetra.xml)</source>
+        <translation>Հիմնական ֆայլ (mytetra.xml)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="58"/>
+        <source>Switching storage moves existing stars</source>
+        <translation>Պահպանման փոփոխությունը տեղափոխում է առկա աստղերը</translation>
     </message>
 </context>
 </TS>

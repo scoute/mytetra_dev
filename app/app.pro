@@ -173,6 +173,7 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Appearance.h \
     src/views/appConfigWindow/AppConfigPage_History.h \
     src/views/appConfigWindow/AppConfigPage_Search.h \
+    src/views/appConfigWindow/AppConfigPage_Favorites.h \
     src/views/consoleEmulator/CommandRunner.h \
     src/views/databasesManagement/DatabasesManagementPathDelegate.h \
     src/views/databasesManagement/DatabasesManagementScreen.h \
@@ -184,6 +185,7 @@ HEADERS = src/main.h \
     src/views/record/InfoFieldEnter.h \
     src/views/record/MetaEditor.h \
     src/views/tagsPanel/TagsPanel.h \
+    src/views/favoritesPanel/FavoritesPanel.h \
     src/views/notePicker/NotePickerDialog.h \
     src/views/backlinksPanel/BacklinksPanel.h \
     src/views/historyPanel/HistoryPanel.h \
@@ -313,6 +315,7 @@ HEADERS+=\
     src/libraries/WalkHistory.h \
     src/libraries/VisitHistory.h \
     src/libraries/BacklinkIndex.h \
+    src/libraries/Favorites.h \
     src/libraries/Clipper.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
@@ -358,6 +361,7 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Appearance.cpp \
     src/views/appConfigWindow/AppConfigPage_History.cpp \
     src/views/appConfigWindow/AppConfigPage_Search.cpp \
+    src/views/appConfigWindow/AppConfigPage_Favorites.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \
     src/views/databasesManagement/DatabasesManagementPathDelegate.cpp \
     src/views/databasesManagement/DatabasesManagementScreen.cpp \
@@ -369,6 +373,7 @@ SOURCES = src/main.cpp \
     src/views/record/InfoFieldEnter.cpp \
     src/views/record/MetaEditor.cpp \
     src/views/tagsPanel/TagsPanel.cpp \
+    src/views/favoritesPanel/FavoritesPanel.cpp \
     src/views/notePicker/NotePickerDialog.cpp \
     src/views/backlinksPanel/BacklinksPanel.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
@@ -502,6 +507,7 @@ SOURCES+=\
     src/libraries/WalkHistory.cpp \
     src/libraries/VisitHistory.cpp \
     src/libraries/BacklinkIndex.cpp \
+    src/libraries/Favorites.cpp \
     src/libraries/Clipper.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \

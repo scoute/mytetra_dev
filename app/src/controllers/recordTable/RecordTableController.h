@@ -79,6 +79,8 @@ public slots:
 
   void onEditFieldContext(void);
   void onBlockContext(void);
+  void onFavoriteContext(void);
+  bool isCurrentRecordFavorite(void);
 
   void deleteRecords(void);
 

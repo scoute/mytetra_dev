@@ -4601,13 +4601,13 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="182"/>
-        <source>Show tags panel</source>
-        <translation>Ցույց տալ պիտակների վահանակը</translation>
+        <source>Tags</source>
+        <translation>Պիտակներ</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="183"/>
-        <source>Show history panel</source>
-        <translation>Ցույց տալ պատմության վահանակը</translation>
+        <source>History panel</source>
+        <translation>Պատմության վահանակը</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
@@ -4681,8 +4681,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
-        <source>Show backlinks panel</source>
-        <translation>Ցույց տալ հետադարձ հղումների վահանակը</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>Ուղիղ և հետադարձ հղումների վահանակը</translation>
     </message>
 </context>
 <context>
@@ -4837,9 +4837,9 @@ Please report about this problem to the developers.</source>
         <translation>Քանակ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
-        <source>Tags [%1]</source>
-        <translation>Պիտակներ [%1]</translation>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <source>Tags</source>
+        <translation>Պիտակներ</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="409"/>

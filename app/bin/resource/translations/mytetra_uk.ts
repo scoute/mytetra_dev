@@ -4595,13 +4595,13 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="182"/>
-        <source>Show tags panel</source>
-        <translation>Показати панель міток</translation>
+        <source>Tags</source>
+        <translation>Мітки</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="183"/>
-        <source>Show history panel</source>
-        <translation>Показати панель історії</translation>
+        <source>History panel</source>
+        <translation>Панель історії</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
@@ -4675,8 +4675,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
-        <source>Show backlinks panel</source>
-        <translation>Показати панель зворотних посилань</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>Панель прямих і зворотних посилань</translation>
     </message>
 </context>
 <context>
@@ -4831,9 +4831,9 @@ Please report about this problem to the developers.</source>
         <translation>к-сть</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
-        <source>Tags [%1]</source>
-        <translation>Мітки [%1]</translation>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <source>Tags</source>
+        <translation>Мітки</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="409"/>

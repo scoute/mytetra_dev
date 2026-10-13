@@ -4601,13 +4601,13 @@ Bitte dieses Problem den Entwicklern melden.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="182"/>
-        <source>Show tags panel</source>
-        <translation>Tagspanel zeigen</translation>
+        <source>Tags</source>
+        <translation>Tags</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="183"/>
-        <source>Show history panel</source>
-        <translation>Verlaufspanel zeigen</translation>
+        <source>History panel</source>
+        <translation>Verlaufspanel</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
@@ -4681,8 +4681,8 @@ Bitte dieses Problem den Entwicklern melden.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
-        <source>Show backlinks panel</source>
-        <translation>Backlinkspanel zeigen</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>Panel für direkte und eingehende Links</translation>
     </message>
 </context>
 <context>
@@ -4837,9 +4837,9 @@ Bitte dieses Problem den Entwicklern melden.</translation>
         <translation>Anzahl</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
-        <source>Tags [%1]</source>
-        <translation>Tags [%1]</translation>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <source>Tags</source>
+        <translation>Tags</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="409"/>

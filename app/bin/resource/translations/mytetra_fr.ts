@@ -4577,13 +4577,13 @@ Veuillez signaler ce problème aux développeurs.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="182"/>
-        <source>Show tags panel</source>
-        <translation>Afficher le panneau des étiquettes</translation>
+        <source>Tags</source>
+        <translation>Étiquettes</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="183"/>
-        <source>Show history panel</source>
-        <translation>Afficher le panneau de l'historique</translation>
+        <source>History panel</source>
+        <translation>Panneau de l'historique</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
@@ -4657,8 +4657,8 @@ Veuillez signaler ce problème aux développeurs.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
-        <source>Show backlinks panel</source>
-        <translation>Afficher le panneau des liens entrants</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>Panneau des liens directs et entrants</translation>
     </message>
 </context>
 <context>
@@ -4813,9 +4813,9 @@ Veuillez signaler ce problème aux développeurs.</translation>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
-        <source>Tags [%1]</source>
-        <translation>Étiquettes [%1]</translation>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <source>Tags</source>
+        <translation>Étiquettes</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="409"/>

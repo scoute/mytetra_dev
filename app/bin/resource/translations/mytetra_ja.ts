@@ -4597,13 +4597,13 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="182"/>
-        <source>Show tags panel</source>
-        <translation>タグパネルを表示</translation>
+        <source>Tags</source>
+        <translation>タグ</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="183"/>
-        <source>Show history panel</source>
-        <translation>履歴パネルを表示</translation>
+        <source>History panel</source>
+        <translation>履歴パネル</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
@@ -4677,8 +4677,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
-        <source>Show backlinks panel</source>
-        <translation>被リンクパネルを表示</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>発リンクと被リンクのパネル</translation>
     </message>
 </context>
 <context>
@@ -4833,9 +4833,9 @@ Please report about this problem to the developers.</source>
         <translation>件数</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
-        <source>Tags [%1]</source>
-        <translation>タグ [%1]</translation>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <source>Tags</source>
+        <translation>タグ</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="409"/>

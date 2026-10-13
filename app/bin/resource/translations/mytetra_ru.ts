@@ -5938,13 +5938,13 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="182"/>
-        <source>Show tags panel</source>
-        <translation>Показать панель меток</translation>
+        <source>Tags</source>
+        <translation>Метки</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="183"/>
-        <source>Show history panel</source>
-        <translation>Показать панель истории</translation>
+        <source>History panel</source>
+        <translation>Панель истории</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
@@ -6026,8 +6026,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
-        <source>Show backlinks panel</source>
-        <translation>Показать панель обратных ссылок</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>Панель прямых и обратных ссылок</translation>
     </message>
 </context>
 <context>
@@ -6186,9 +6186,9 @@ Please report about this problem to the developers.</source>
         <translation type="vanished">Кол-во</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="195"/>
-        <source>Tags [%1]</source>
-        <translation>Метки [%1]</translation>
+        <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="224"/>
+        <source>Tags</source>
+        <translation>Метки</translation>
     </message>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="409"/>

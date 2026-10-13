@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QTextDocument>
 #include <QApplication>
+#include <QRegularExpression>
 
 #include "views/mainWindow/MainWindow.h"
 #include "FindScreen.h"
@@ -30,7 +31,8 @@ extern AppConfig mytetraConfig;
 extern GlobalParameters globalParameters;
 
 
-FindScreen::FindScreen(QWidget *parent) : QWidget(parent)
+FindScreen::FindScreen(QWidget *parent) : QWidget(parent),
+    exactTagMode(false)
 {
     setupFindTextAndButton();
     assemblyFindTextAndButton();
@@ -398,6 +400,83 @@ void FindScreen::setFindText(QString text)
 }
 
 
+// Поиск кликнутого тега только в поле тегов.
+// Галки пользователя запоминаются, на время поиска остается только
+// "Теги", потом все возвращается. Сигналы чекбоксов блокируются:
+// иначе временное переключение затрет сохраненные настройки поиска.
+// Сам поиск синхронный (setFindText дергает findClicked напрямую),
+// поэтому возврат после него безопасен
+void FindScreen::setFindTag(QString tag)
+{
+    bool savedName=findInName->isChecked();
+    bool savedAuthor=findInAuthor->isChecked();
+    bool savedUrl=findInUrl->isChecked();
+    bool savedTags=findInTags->isChecked();
+    bool savedText=findInText->isChecked();
+    bool savedNameItem=findInNameItem->isChecked();
+
+    findInName->blockSignals(true);
+    findInAuthor->blockSignals(true);
+    findInUrl->blockSignals(true);
+    findInTags->blockSignals(true);
+    findInText->blockSignals(true);
+    findInNameItem->blockSignals(true);
+
+    findInName->setChecked(false);
+    findInAuthor->setChecked(false);
+    findInUrl->setChecked(false);
+    findInTags->setChecked(true);
+    findInText->setChecked(false);
+    findInNameItem->setChecked(false);
+
+    // Строгое совпадение: ищется тег целиком, а не подстрока.
+    // Взводится до синхронного поиска, снимается после него
+    exactTagMode=true;
+    exactTag=tag;
+
+    setFindText(tag);
+
+    exactTagMode=false;
+    exactTag.clear();
+
+    findInName->blockSignals(true);
+    findInAuthor->blockSignals(true);
+    findInUrl->blockSignals(true);
+    findInTags->blockSignals(true);
+    findInText->blockSignals(true);
+    findInNameItem->blockSignals(true);
+
+    findInName->setChecked(savedName);
+    findInAuthor->setChecked(savedAuthor);
+    findInUrl->setChecked(savedUrl);
+    findInTags->setChecked(savedTags);
+    findInText->setChecked(savedText);
+    findInNameItem->setChecked(savedNameItem);
+
+    findInName->blockSignals(false);
+    findInAuthor->blockSignals(false);
+    findInUrl->blockSignals(false);
+    findInTags->blockSignals(false);
+    findInText->blockSignals(false);
+    findInNameItem->blockSignals(false);
+}
+
+
+// Разбить поле тегов записи на отдельные теги: разделители запятая
+// и точка с запятой, пробелы по краям отбрасываются
+QStringList FindScreen::splitRecordTags(const QString &tagsField)
+{
+    QStringList tags=tagsField.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
+
+    for(int i=0; i<tags.size(); ++i)
+        tags[i]=tags[i].trimmed();
+
+    tags.removeAll(QString(""));
+
+    return tags;
+}
+
+
 // Слот, срабатывающий при нажатии на кнопку начала поиска
 void FindScreen::findClicked(void)
 {
@@ -425,10 +504,13 @@ void FindScreen::findClicked(void)
         return;
     }
 
-    // Выясняется список слов, которые нужно искать
+    // Выясняется список слов, которые нужно искать.
+    // В строгом режиме тега слова не нужны: совпадение проверяется
+    // целиком, пустой список не мешает (тег из одних разделителей
+    // все равно ищется строго)
     searchWordList=textDelimiterDecompose(findText->text());
 
-    if(searchWordList.size()==0)
+    if(searchWordList.size()==0 && !exactTagMode)
     {
         QMessageBox messageBox(this);
         messageBox.setWindowTitle(tr("Can not start find process"));
@@ -603,6 +685,17 @@ void FindScreen::findRecurse(const TreeItem* curritem)
             iteration_search_result["tags"]  =false;
             iteration_search_result["text"]  =false;
 
+            // Строгий режим тега: тег целиком без учета регистра.
+            // Обычный цикл по полям пропускается
+            if(exactTagMode)
+            {
+                QStringList recordTags=splitRecordTags(searchRecordTable->getField("tags", i));
+
+                if(recordTags.contains(exactTag, Qt::CaseInsensitive))
+                    iteration_search_result["tags"]=true;
+            }
+            else
+            {
             // Текст в котором будет проводиться поиск
             QString inspectText;
 
@@ -635,6 +728,7 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     }
                 }
             } // Закрылся цикл поиска в полях
+            } // Закрылся обычный поиск, строгий режим тега идет своей веткой
 
 
             // Проверяется, есть ли поле, в котором поиск был успешен

@@ -77,6 +77,10 @@ void FavoritesPanel::setupUi(void)
     favoritesList=new QListWidget(this);
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
 
+    // Список не растягивается выше содержимого: нулевого стретча
+    // в раскладке мало, у вьюпорта своя политика Expanding
+    favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+
     // Высота по содержимому с потолком: пара звездочек не должна
     // отъедать полдерева
     favoritesList->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
@@ -94,7 +98,10 @@ void FavoritesPanel::assembly(void)
     QVBoxLayout *panelLayout=new QVBoxLayout();
     panelLayout->setContentsMargins(0, 0, 0, 0);
     panelLayout->addLayout(headerLayout);
-    panelLayout->addWidget(favoritesList, 1);
+
+    // Без растяжения: высота списка по содержимому (AdjustToContents),
+    // иначе пара звездочек болтается в пустом вьюпорте на полпанели
+    panelLayout->addWidget(favoritesList);
 
     setLayout(panelLayout);
 }

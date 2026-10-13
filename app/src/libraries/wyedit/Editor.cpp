@@ -773,6 +773,10 @@ bool Editor::saveTextareaText()
 
   QTextStream out(&wfile);
   QString content=textArea->document()->toHtml("UTF-8");
+  // Нулевые байты в файл не пишутся: QString::fromUtf8() при чтении
+  // останавливается на первом 0x00 и обрезает остаток текста (баг #134:
+  // такой байт попадает в документ при вставке из браузера)
+  content.remove(QChar('\0'));
   out.setCodec("UTF-8");
   out << content;
 

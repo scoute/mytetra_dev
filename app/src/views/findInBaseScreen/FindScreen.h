@@ -40,6 +40,10 @@ public slots:
     void findClicked(void);
     void setFindText(QString text);
 
+    // Обновить прямые тексты новым языком. Вызывается из
+    // MainWindow::retranslateUi
+    void retranslateUi(void);
+
 
 private slots:
 

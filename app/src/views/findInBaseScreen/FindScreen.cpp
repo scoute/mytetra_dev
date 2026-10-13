@@ -198,6 +198,34 @@ void FindScreen::assemblyCloseButton(void)
 }
 
 
+// Обновление прямых текстов новым языком. Индексы комбобоксов
+// не трогаются: setItemText выбор не меняет
+void FindScreen::retranslateUi(void)
+{
+    findStartButton->setText(tr("Find"));
+
+    wordRegard->setItemText(0, tr("Any word"));
+    wordRegard->setItemText(1, tr("All words"));
+
+    howExtract->setItemText(0, tr("Whole words"));
+    howExtract->setItemText(1, tr("Substring"));
+
+    treeSearchArea->setItemText(0, tr("Entire base"));
+    treeSearchArea->setItemText(1, tr("Current tree item"));
+
+    whereFindLabel->setText(tr("Find in: "));
+
+    findInName->setText(tr("Title"));
+    findInAuthor->setText(tr("Author(s)"));
+    findInUrl->setText(tr("Url"));
+    findInTags->setText(tr("Tags"));
+    findInText->setText(tr("Text"));
+    findInNameItem->setText(tr("Name tree item"));
+
+    findTable->retranslateUi();
+}
+
+
 void FindScreen::setupWhereFindLine(void)
 {
     whereFindLabel=new QLabel(tr("Find in: "));

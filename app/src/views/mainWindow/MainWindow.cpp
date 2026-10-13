@@ -1,4 +1,5 @@
 #include <QDialog>
+#include <QMap>
 #include <QString>
 #include <QDir>
 #include <QString>
@@ -598,33 +599,33 @@ void MainWindow::restoreDockableWindowsState()
 void MainWindow::initFileMenu(void)
 {
     // Создание меню
-    QMenu *menu = new QMenu(tr("&File"), this);
-    this->menuBar()->addMenu(menu);
+    fileMenu = new QMenu(tr("&File"), this);
+    this->menuBar()->addMenu(fileMenu);
 
     actionFileMenuDatabasesManagement = new QAction(tr("Databases management"), this);
-    menu->addAction(actionFileMenuDatabasesManagement);
+    fileMenu->addAction(actionFileMenuDatabasesManagement);
 
     actionFileMenuExportTreeItem = new QAction(tr("Export tree item"), this);
-    menu->addAction(actionFileMenuExportTreeItem);
+    fileMenu->addAction(actionFileMenuExportTreeItem);
 
     actionFileMenuImportTreeItem = new QAction(tr("Import tree item"), this);
-    menu->addAction(actionFileMenuImportTreeItem);
+    fileMenu->addAction(actionFileMenuImportTreeItem);
 
-    menu->addSeparator();
+    fileMenu->addSeparator();
 
     actionFileMenuPrint = new QAction(tr("&Print..."), this);
-    menu->addAction(actionFileMenuPrint);
+    fileMenu->addAction(actionFileMenuPrint);
 
     actionFileMenuPrintPreview = new QAction(tr("Print Preview..."), this);
-    menu->addAction(actionFileMenuPrintPreview);
+    fileMenu->addAction(actionFileMenuPrintPreview);
 
     actionFileMenuExportPdf = new QAction(tr("&Export PDF..."), this);
-    menu->addAction(actionFileMenuExportPdf);
+    fileMenu->addAction(actionFileMenuExportPdf);
 
-    menu->addSeparator();
+    fileMenu->addSeparator();
 
     actionFileMenuQuit = new QAction(tr("&Quit"), this);
-    menu->addAction(actionFileMenuQuit);
+    fileMenu->addAction(actionFileMenuQuit);
 }
 
 
@@ -632,28 +633,28 @@ void MainWindow::initFileMenu(void)
 void MainWindow::initToolsMenu(void)
 {
     // Создание меню
-    QMenu *menu = new QMenu(tr("&Tools"), this);
-    this->menuBar()->addMenu(menu);
+    toolsMenu = new QMenu(tr("&Tools"), this);
+    this->menuBar()->addMenu(toolsMenu);
 
     actionToolsMenuFindInBase = new QAction(this); // Так как есть this, указатель не будет потерян основным окном
-    menu->addAction(actionToolsMenuFindInBase);
+    toolsMenu->addAction(actionToolsMenuFindInBase);
 
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
-    menu->addAction(actionToolsMenuActionLog);
+    toolsMenu->addAction(actionToolsMenuActionLog);
 
-    menu->addSeparator();
+    toolsMenu->addSeparator();
 
     if(mytetraConfig.getInterfaceMode()=="desktop")
     {
         actionToolsMenuPreferences = new QAction(tr("&Preferences"), this);
-        menu->addAction(actionToolsMenuPreferences);
+        toolsMenu->addAction(actionToolsMenuPreferences);
     }
     else
     {
         // Создание подменю
-        QMenu *subMenu = new QMenu(tr("&Preferences"), this);
-        initPreferencesMenu(subMenu);
-        menu->addMenu(subMenu);
+        preferencesSubMenu = new QMenu(tr("&Preferences"), this);
+        initPreferencesMenu(preferencesSubMenu);
+        toolsMenu->addMenu(preferencesSubMenu);
     }
 }
 
@@ -720,17 +721,17 @@ void MainWindow::runDirectPreferences(QAction *action)
 void MainWindow::initHelpMenu(void)
 {
     // Создание меню
-    QMenu *menu = new QMenu(tr("&Help"), this);
-    this->menuBar()->addMenu(menu);
+    helpMenu = new QMenu(tr("&Help"), this);
+    this->menuBar()->addMenu(helpMenu);
 
     actionHelpMenuAboutMyTetra = new QAction(tr("About MyTetra"), this);
-    menu->addAction(actionHelpMenuAboutMyTetra);
+    helpMenu->addAction(actionHelpMenuAboutMyTetra);
 
     actionHelpMenuAboutQt = new QAction(tr("About Qt"), this);
-    menu->addAction(actionHelpMenuAboutQt);
+    helpMenu->addAction(actionHelpMenuAboutQt);
 
     actionHelpMenuTechnicalInfo = new QAction(tr("Technical info"), this);
-    menu->addAction(actionHelpMenuTechnicalInfo);
+    helpMenu->addAction(actionHelpMenuTechnicalInfo);
 }
 
 
@@ -828,6 +829,96 @@ void MainWindow::setupShortcuts(void)
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
     shortcutManager.initAction("misc-focusEditor", actionFocusEditor );
+}
+
+
+// Перевести статичные тексты новым языком. Вызывается до
+// shortcutManager.retranslate(): тексты на шорткатах освежит сигнал,
+// а прямой setText их бы затер
+void MainWindow::retranslateUi(void)
+{
+    if(fileMenu!=nullptr)
+    {
+        fileMenu->setTitle(tr("&File"));
+
+        actionFileMenuDatabasesManagement->setText(tr("Databases management"));
+        actionFileMenuExportTreeItem->setText(tr("Export tree item"));
+        actionFileMenuImportTreeItem->setText(tr("Import tree item"));
+        actionFileMenuPrintPreview->setText(tr("Print Preview..."));
+    }
+
+    if(toolsMenu!=nullptr)
+    {
+        toolsMenu->setTitle(tr("&Tools"));
+
+        actionToolsMenuActionLog->setText(tr("Action &log"));
+
+        if(actionToolsMenuPreferences!=nullptr)
+            actionToolsMenuPreferences->setText(tr("&Preferences"));
+
+        if(preferencesSubMenu!=nullptr)
+        {
+            preferencesSubMenu->setTitle(tr("&Preferences"));
+
+            // Пары действие-текст как в initPreferencesMenu
+            const struct { QAction **slot; const char *text; } pages[]={
+                {&actionDirectPreferencesMain, "Main"},
+                {&actionDirectPreferencesAppearance, "Appearance"},
+                {&actionDirectPreferencesCrypt, "Crypt"},
+                {&actionDirectPreferencesSyncro, "Syncro"},
+                {&actionDirectPreferencesRecordTable, "Notes Area"},
+                {&actionDirectPreferencesAttach, "Attaches"},
+                {&actionDirectPreferencesKeyboard, "Keyboard"},
+                {&actionDirectPreferencesHistory, "History"},
+                {&actionDirectPreferencesMisc, "Misc"},
+            };
+
+            for(unsigned i=0; i<sizeof(pages)/sizeof(pages[0]); ++i)
+                if(*pages[i].slot!=nullptr)
+                    (*pages[i].slot)->setText(tr(pages[i].text));
+        }
+    }
+
+    if(themesMenu!=nullptr)
+    {
+        themesMenu->setTitle(tr("&Themes"));
+
+        QMap<QString, QString> translateNames;
+        translateNames["default"]=tr("Default");
+        translateNames["dark"]=tr("Dark");
+
+        for(QAction *themeAction : themesMenu->actions())
+            themeAction->setText(translateNames.value(themeAction->data().toString(), "Unknown"));
+    }
+
+    if(helpMenu!=nullptr)
+    {
+        helpMenu->setTitle(tr("&Help"));
+
+        actionHelpMenuAboutMyTetra->setText(tr("About MyTetra"));
+        actionHelpMenuAboutQt->setText(tr("About Qt"));
+        actionHelpMenuTechnicalInfo->setText(tr("Technical info"));
+    }
+
+    actionTrayRestore->setText(tr("&Restore window"));
+    actionTrayMaximize->setText(tr("Ma&ximize window"));
+    actionTrayMinimize->setText(tr("Mi&nimize window"));
+    actionTrayQuit->setText(tr("&Quit"));
+
+    // Дочерние экраны со статичными текстами
+    if(treeScreen!=nullptr)
+        treeScreen->retranslateUi();
+
+    if(recordTableScreen!=nullptr)
+        recordTableScreen->retranslateUi();
+
+    if(editorScreen!=nullptr)
+        editorScreen->retranslateUi();
+
+    FindScreen *findScreen=find_object<FindScreen>("findScreenDisp");
+
+    if(findScreen!=nullptr)
+        findScreen->retranslateUi();
 }
 
 

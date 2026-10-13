@@ -178,6 +178,11 @@ void TreeScreen::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->metaObject()->className();
 
+    // Прямой текст кнопки поиска: шортката у нее нет,
+    // поэтому освежается здесь же вместе со всеми
+    actionList["findInBase"]->setText(tr("Find in base"));
+    actionList["findInBase"]->setStatusTip(tr("Find in base"));
+
     shortcutManager.initAction("tree-expandAllSubbranch", actionList["expandAllSubbranch"] );
     shortcutManager.initAction("tree-collapseAllSubbranch", actionList["collapseAllSubbranch"] );
     shortcutManager.initAction("tree-moveUpBranch", actionList["moveUpBranch"] );
@@ -193,6 +198,14 @@ void TreeScreen::setupShortcuts(void)
     shortcutManager.initAction("tree-encryptBranch", actionList["encryptBranch"] );
     shortcutManager.initAction("tree-decryptBranch", actionList["decryptBranch"] );
     shortcutManager.initAction("tree-setIcon", actionList["setIcon"] );
+}
+
+
+// Прямых текстов кроме кнопки поиска нет: все освежает setupShortcuts
+// по сигналу updateWidgetShortcut. Метод оставлен для единого интерфейса
+void TreeScreen::retranslateUi(void)
+{
+    setupShortcuts();
 }
 
 

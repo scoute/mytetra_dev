@@ -17,6 +17,7 @@ public:
   virtual ~AppConfigPage_Keyboard(void);
 
   int applyChanges(void);
+  void retranslateUi(void);
 
 private slots:
   void onClickedEditShortcutConfigFile(void);

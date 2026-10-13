@@ -17,6 +17,7 @@ public:
   virtual ~AppConfigPage_Misc(void);
 
   int applyChanges(void);
+  void retranslateUi(void);
 
 private slots:
   void onClickedEditMyTetraConfigFile(void);

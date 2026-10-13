@@ -22,6 +22,7 @@ public:
   void assembly(void);
 
   int applyChanges(void);
+  void retranslateUi(void);
 
 private slots:
 

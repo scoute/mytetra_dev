@@ -182,6 +182,7 @@ HEADERS = src/main.h \
     src/views/record/RecordInfoFieldsEditor.h \
     src/views/record/InfoFieldEnter.h \
     src/views/record/MetaEditor.h \
+    src/views/historyPanel/HistoryPanel.h \
     src/libraries/wyedit/Editor.h \
     src/libraries/wyedit/EditorConfig.h \
     src/libraries/wyedit/EditorConfigDialog.h \
@@ -300,6 +301,7 @@ HEADERS+=\
     src/views/consoleEmulator/ConsoleEmulator.h \
     src/views/waitClock/WaitClock.h \
     src/libraries/WalkHistory.h \
+    src/libraries/VisitHistory.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
     src/libraries/crypt/Password.h \
@@ -353,6 +355,7 @@ SOURCES = src/main.cpp \
     src/views/record/RecordInfoFieldsEditor.cpp \
     src/views/record/InfoFieldEnter.cpp \
     src/views/record/MetaEditor.cpp \
+    src/views/historyPanel/HistoryPanel.cpp \
     src/libraries/wyedit/Editor.cpp \
     src/libraries/wyedit/EditorConfig.cpp \
     src/libraries/wyedit/EditorConfigDialog.cpp \
@@ -475,6 +478,7 @@ SOURCES+=\
     src/views/consoleEmulator/ConsoleEmulator.cpp \
     src/views/waitClock/WaitClock.cpp \
     src/libraries/WalkHistory.cpp \
+    src/libraries/VisitHistory.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \
     src/libraries/crypt/Password.cpp \

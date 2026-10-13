@@ -3589,6 +3589,10 @@ Please report about this problem to the developers.</source>
         <source>Find in base</source>
         <translation type="unfinished"></translation>
     </message>
+        <message>
+            <source>Show history panel</source>
+            <translation type="unfinished"></translation>
+        </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
         <source>Synchronization</source>
@@ -4014,4 +4018,91 @@ All data imported will be encrypted.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
+    <context>
+        <name>HistoryPanel</name>
+        <message>
+            <source>Filter by note title</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Note</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Branch</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Last visit</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Visits</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Images</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Files</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Size</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Clear</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Forget all visit history</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Go to note</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Forget this note</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Clear visit history</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Forget all visit history?</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>just now</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 min ago</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 h ago</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 d ago</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>(encrypted note)</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>(encrypted)</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Visits: %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
 </TS>

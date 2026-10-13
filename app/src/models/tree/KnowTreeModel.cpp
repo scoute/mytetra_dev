@@ -29,6 +29,26 @@ extern AppConfig mytetraConfig;
 extern GlobalParameters globalParameters;
 
 
+// Проверка имени файла или директории, взятого из импортируемых данных.
+// Импортируемый XML считается недоверенным, поэтому имя обязано быть
+// одиночным именем без разделителей пути, ссылок на родительскую
+// директорию и указания диска. Иначе crafted-экспорт с dir вида "../../evil"
+// увел бы копирование файлов за пределы каталога импорта и базы знаний
+static bool isSafeImportFileName(const QString &name)
+{
+    if(name.isEmpty())
+        return false;
+
+    if(name=="." || name=="..")
+        return false;
+
+    if(name.contains('/') || name.contains('\\') || name.contains(':'))
+        return false;
+
+    return true;
+}
+
+
 // Конструктор модели дерева, состоящего из Item элементов
 KnowTreeModel::KnowTreeModel(QObject *parent) : TreeModel(parent)
 {
@@ -498,6 +518,22 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
     QString shortFromDir=nodeList.at(i).toElement().attribute("dir");
     QString shortToDir=shortFromDir;
 
+    // Имена директорий из чужого файла импорта недоверенные и проверяются
+    // до построения путей, иначе возможна запись за пределами базы знаний
+    if(!isSafeImportFileName(shortFromDir))
+    {
+      showMessageBox(tr("Import error: incorrect record directory name \"%1\".").arg(shortFromDir));
+      return false;
+    }
+
+    // Имя файла записи тоже недоверенное и проверяется до построения пути
+    QString shortFileName=nodeList.at(i).toElement().attribute("file");
+    if(!isSafeImportFileName(shortFileName))
+    {
+      showMessageBox(tr("Import error: incorrect record file name \"%1\".").arg(shortFileName));
+      return false;
+    }
+
     // Если запись содержит нормальный атрибут dir
     if(shortFromDir.length()>0)
     {
@@ -516,7 +552,7 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
       DiskHelper::copyDirectory(fullFromDir, fullToDir);
 
       // В файле записи меняются внутренние ссылки формата "mytetra:" в случае, если импортируемые записи получили новые идентификаторы
-      QString recordFileName=fullToDir+"/"+nodeList.at(i).toElement().attribute("file");
+      QString recordFileName=fullToDir+"/"+shortFileName;
       Record::replaceInternalReferenceByTranslateTable(recordFileName, idRecordTranslate);
     }
     else

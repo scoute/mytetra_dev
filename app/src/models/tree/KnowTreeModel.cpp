@@ -3,6 +3,7 @@
 #include <QXmlStreamWriter>
 #include <QSaveFile>
 #include <QElapsedTimer>
+#include <QApplication>
 
 #include "main.h"
 #include "KnowTreeModel.h"
@@ -982,6 +983,123 @@ QModelIndex KnowTreeModel::moveUpDownBranch(const QModelIndex &index,int directi
   // Возвращается указатель на перемещенную ветку
   if(moveok) return this->index(swpidx_row, swpidx_column, swpidx_parent);
   else return QModelIndex(); // Возвращается пустой указатель
+}
+
+
+// Перемещение ветки к другой ветке с сохранением идентификатора.
+// В отличие от копирования со вставкой здесь не генерируются новые ID
+// и не копируются файлы записей, перемещается сам элемент дерева
+bool KnowTreeModel::moveBranch(const QString &sourceId, const QString &targetId, bool asChild)
+{
+    TreeItem *source=getItemById(sourceId);
+    TreeItem *target=getItemById(targetId);
+
+    if(source==nullptr || target==nullptr || source==target || source==rootItem)
+      return false;
+
+    // Цель внутри источника: перемещение создало бы зацикливание дерева
+    QStringList sourcePath=source->getPath();
+    QStringList targetPath=target->getPath();
+    if(targetPath.size()>=sourcePath.size() &&
+       targetPath.mid(0, sourcePath.size())==sourcePath)
+      return false;
+
+    TreeItem *oldParent=source->parent();
+    if(oldParent==nullptr)
+      return false;
+
+    // Новый родитель и позиция: подветка - в конец детей цели,
+    // соседняя - сразу после цели
+    TreeItem *newParent;
+    int newRow;
+    if(asChild)
+    {
+      newParent=target;
+      newRow=target->childCount();
+    }
+    else
+    {
+      newParent=target->parent();
+      if(newParent==nullptr)
+        newParent=rootItem;
+      newRow=target->childNumber()+1;
+    }
+
+    int oldRow=source->childNumber();
+
+    // Поправка при перемещении внутри одного родителя вниз:
+    // удаление элемента сдвигает последующие позиции
+    int insertRow=newRow;
+    if(oldParent==newParent && oldRow<newRow)
+      insertRow--;
+
+    // Оповещение вида как при перемещении вверх/вниз: вид сам обновит
+    // отображение и постоянные индексы
+    emit layoutAboutToBeChanged();
+    bool moveok=oldParent->moveChildTo(oldRow, newParent, insertRow);
+    emit layoutChanged();
+
+    return moveok;
+}
+
+
+// Данные для вида. Вырезанная ветка красится приглушенным цветом,
+// остальное отдается базовой реализации
+QVariant KnowTreeModel::data(const QModelIndex &index, int role) const
+{
+    if(role==Qt::ForegroundRole && !cutBranchIdValue.isEmpty())
+    {
+      TreeItem *item=getItem(index);
+
+      if(item!=nullptr && item->getField("id")==cutBranchIdValue)
+      {
+        // Цвет отключенного текста текущей темы: семантика "вырезано",
+        // видно и в светлой и в темной теме
+        return QApplication::palette().color(QPalette::Disabled, QPalette::Text);
+      }
+    }
+
+    return TreeModel::data(index, role);
+}
+
+
+QString KnowTreeModel::cutBranchId(void) const
+{
+    return cutBranchIdValue;
+}
+
+
+void KnowTreeModel::setCutBranchId(const QString &id)
+{
+    if(cutBranchIdValue==id)
+      return;
+
+    QModelIndex oldIndex=getIndexByItem(getItemById(cutBranchIdValue));
+
+    cutBranchIdValue=id;
+
+    // Вид перерисовывает бывшую и новую вырезанные ветки
+    if(oldIndex.isValid())
+      emit dataChanged(oldIndex, oldIndex);
+
+    QModelIndex newIndex=getIndexByItem(getItemById(cutBranchIdValue));
+
+    if(newIndex.isValid())
+      emit dataChanged(newIndex, newIndex);
+}
+
+
+void KnowTreeModel::clearCutBranchId(void)
+{
+    if(cutBranchIdValue.isEmpty())
+      return;
+
+    QModelIndex oldIndex=getIndexByItem(getItemById(cutBranchIdValue));
+
+    cutBranchIdValue.clear();
+
+    if(oldIndex.isValid())
+      emit dataChanged(oldIndex, oldIndex);
 }
 
 

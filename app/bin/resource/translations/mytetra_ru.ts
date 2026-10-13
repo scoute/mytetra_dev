@@ -5414,6 +5414,14 @@ Please select single item for enabling edit operation.</source>
         <translation>Выберите, пожалуйста, одну ветку для копирования.</translation>
     </message>
     <message>
+        <source>Cut item no longer exists.</source>
+        <translation>Вырезанная ветка больше не существует.</translation>
+    </message>
+    <message>
+        <source>Cannot move item inside itself.</source>
+        <translation>Нельзя переместить ветку внутрь самой себя.</translation>
+    </message>
+    <message>
         <source>Info groups</source>
         <translation type="vanished">Группы информации</translation>
     </message>

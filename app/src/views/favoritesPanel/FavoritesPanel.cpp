@@ -28,7 +28,8 @@ extern AppConfig mytetraConfig;
 
 
 FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
-    treeMetadataConnected(false)
+    treeMetadataConnected(false),
+    treeScreenRef(qobject_cast<TreeScreen *>(parent))
 {
     setupUi();
     assembly();
@@ -45,12 +46,12 @@ FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
 
     // Подписка сразу через родителя: скрытая панель не получит showEvent,
     // а find_object() в конструкторе завершил бы программу (TreeScreen
-    // еще без имени). Родитель уже есть - это и есть TreeScreen
-    if(TreeScreen *treeScreen=qobject_cast<TreeScreen *>(parent))
+    // еще без имени)
+    if(treeScreenRef!=nullptr)
     {
         treeMetadataConnected=true;
-        connect(treeScreen, &TreeScreen::treeMetadataSaved,
-                this,       &FavoritesPanel::onTreeMetadataSaved);
+        connect(treeScreenRef, &TreeScreen::treeMetadataSaved,
+                this,          &FavoritesPanel::onTreeMetadataSaved);
     }
 }
 
@@ -217,10 +218,9 @@ void FavoritesPanel::onRemoveFavorite(void)
 // Мертвые id тихо выкидываются из сайдкара
 void FavoritesPanel::refreshFavorites(void)
 {
-    // Панель живет внутри TreeScreen, поэтому дерево берется через
-    // родителя без find_object(): в конструкторе TreeScreen еще без
-    // имени и find_object() завершил бы программу
-    TreeScreen *treeScreen=qobject_cast<TreeScreen *>(parentWidget());
+    // Дерево берется из захваченного указателя, а не через
+    // parentWidget(): панель живет в сплиттере
+    TreeScreen *treeScreen=treeScreenRef;
     if(treeScreen==nullptr)
         return;
 

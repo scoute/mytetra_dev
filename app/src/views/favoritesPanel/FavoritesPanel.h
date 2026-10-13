@@ -14,6 +14,7 @@ class QListWidget;
 class QListWidgetItem;
 class QLabel;
 class QShowEvent;
+class TreeScreen;
 
 class FavoritesPanel : public QWidget
 {
@@ -64,6 +65,10 @@ private:
     // Подписки делаются один раз и лениво: в конструкторе
     // treeScreen может еще не существовать
     bool treeMetadataConnected;
+
+    // TreeScreen захватывается в конструкторе: позже панель
+    // переедет в сплиттер и parentWidget им уже не будет
+    TreeScreen *treeScreenRef=nullptr;
 
     // Строка контекстного меню для пункта "убрать"
     QString contextNoteId;

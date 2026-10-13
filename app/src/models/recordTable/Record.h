@@ -39,6 +39,10 @@ public:
 
   QString getText() const;
   QString getTextDirect() const;
+
+  // Текст для подсчета статистики: тихо, без диалогов и без создания
+  // файлов. Нет файла = пусто, закрытый шифр = пусто
+  QString getTextForStats() const;
   QSharedPointer<QTextDocument> getTextDocument() const;
   // QTextDocument* getTextDocument() const;
   void setText(const QString &iText);

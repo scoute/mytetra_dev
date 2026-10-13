@@ -78,13 +78,10 @@ void FavoritesPanel::setupUi(void)
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
 
     // Список не растягивается выше содержимого: нулевого стретча
-    // в раскладке мало, у вьюпорта своя политика Expanding
+    // в раскладке мало, у вьюпорта своя политика Expanding.
+    // Потолок высоты ставится динамически в refreshFavorites
     favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-
-    // Высота по содержимому с потолком: пара звездочек не должна
-    // отъедать полдерева
     favoritesList->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-    favoritesList->setMaximumHeight(180);
 }
 
 
@@ -100,8 +97,11 @@ void FavoritesPanel::assembly(void)
     panelLayout->addLayout(headerLayout);
 
     // Без растяжения: высота списка по содержимому (AdjustToContents),
-    // иначе пара звездочек болтается в пустом вьюпорте на полпанели
+    // иначе пара звездочек болтается в пустом вьюпорте на полпанели.
+    // Хвостовая распорка забирает весь лишний простор вниз: без нее
+    // он делится поровну и пухнет сама шапка
     panelLayout->addWidget(favoritesList);
+    panelLayout->addStretch(1);
 
     setLayout(panelLayout);
 }
@@ -330,6 +330,15 @@ void FavoritesPanel::refreshFavorites(void)
         item->setForeground(QBrush(Qt::red));
         item->setToolTip(tr("Note is missing from the base"));
     }
+
+    // Высота списка ровно по строкам с потолком: пустого вьюпорта
+    // не бывает ни при каком размере панели
+    int listHeight=favoritesList->frameWidth()*2;
+
+    if(favoritesList->count()>0)
+        listHeight+=favoritesList->sizeHintForRow(0)*favoritesList->count();
+
+    favoritesList->setMaximumHeight(qMin(listHeight, 180));
 
     // Шапка со счетчиком чтобы панель не висела одиноко:
     // звездочка слева уже стоит в assembly, тут слово и число

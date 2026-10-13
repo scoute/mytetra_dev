@@ -13,6 +13,28 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QActionGroup>
+#include <QLabel>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QVBoxLayout>
+#include <QMouseEvent>
+
+
+// Элемент таблицы с числовой сортировкой: по клику на заголовок
+// QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
+class NumberTableItem : public QTableWidgetItem
+{
+public:
+  explicit NumberTableItem(int value) : QTableWidgetItem(QString::number(value))
+  {
+    setData(Qt::UserRole, value);
+  }
+
+  bool operator<(const QTableWidgetItem &other) const override
+  {
+    return data(Qt::UserRole).toInt() < other.data(Qt::UserRole).toInt();
+  }
+};
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -123,6 +145,15 @@ void MainWindow::setupUI(void)
     setStatusBar(statusBar);
     globalParameters.setStatusBar(statusBar);
 
+    // Статистика базы справа. Постоянный виджет: showMessage
+    // его не затирает
+    statsLabel=new QLabel( this );
+    statsLabel->setObjectName("statsLabel");
+    statsLabel->setCursor(Qt::PointingHandCursor);
+    statsLabel->installEventFilter(this);
+    statusBar->addPermanentWidget(statsLabel);
+    updateStats();
+
     // Вспомогательный объект переключения окон, используется в мобильном интерфейсе
     windowSwitcher=new WindowSwitcher( this );
     windowSwitcher->setObjectName("windowSwitcher");
@@ -228,6 +259,19 @@ void MainWindow::setupSignals(void)
 
     // Обновление горячих клавиш, если они были изменены
     connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &MainWindow::setupShortcuts);
+
+    // Статистика в статусбаре: ветки (структура) и записи
+    // обновляются сигналами модели
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
+    {
+        KnowTreeModel *treeModel=treeScreen->knowTreeModel;
+
+        connect(treeModel, &QAbstractItemModel::rowsInserted, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::rowsRemoved, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::dataChanged, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::modelReset, this, &MainWindow::updateStats);
+        connect(treeModel, &QAbstractItemModel::layoutChanged, this, &MainWindow::updateStats);
+    }
 }
 
 
@@ -813,6 +857,127 @@ void MainWindow::initHiddenActions(void)
 
     actionFocusEditor = new QAction(this);
     this->addAction(actionFocusEditor);
+}
+
+
+// Пересчитать и показать статистику базы в статусбаре.
+// Вызывается по сигналам модели и точечно после правок
+void MainWindow::updateStats(void)
+{
+    if(statsLabel==nullptr)
+        return;
+
+    int branches=0;
+    int records=0;
+    int files=0;
+    int images=0;
+    int links=0;
+    int tags=0;
+
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
+        treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
+
+    statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
+    statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Click opens per-note details."));
+}
+
+
+// Таблица разбивки статистики: строится отдельно чтобы сортировку
+// можно было проверить без модального окна
+QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
+{
+    QList<BaseStatRow> rows;
+
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
+        rows=treeScreen->knowTreeModel->getBaseStatRows();
+
+    QTableWidget *table=new QTableWidget(parent);
+    table->setColumnCount(6);
+    table->setHorizontalHeaderLabels(QStringList() << tr("Branch") << tr("Note") << tr("Links") << tr("Images") << tr("Files") << tr("Tags"));
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->horizontalHeader()->setSectionsClickable(true);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setRowCount(rows.size());
+
+    for(int r=0; r<rows.size(); ++r)
+    {
+        const BaseStatRow &row=rows.at(r);
+
+        QTableWidgetItem *branchItem=new QTableWidgetItem(row.branchPath);
+        branchItem->setData(Qt::UserRole, row.recordId);
+        table->setItem(r, 0, branchItem);
+        table->setItem(r, 1, new QTableWidgetItem(row.noteName));
+        table->setItem(r, 2, new NumberTableItem(row.links));
+        table->setItem(r, 3, new NumberTableItem(row.images));
+        table->setItem(r, 4, new NumberTableItem(row.files));
+        table->setItem(r, 5, new NumberTableItem(row.tags));
+    }
+
+    table->resizeColumnsToContents();
+    table->sortByColumn(2, Qt::DescendingOrder);
+
+    // Первый клик по столбцу сортирует по убыванию (там обычно
+    // интереснее крупные), повторный клик переключает порядок.
+    // Ручной обработчик вместо автосортировки: встроенная всегда
+    // начинает с возрастания. Порядок помнится свой, а не читается
+    // с индикатора: встроенный слот срабатывает раньше нашего
+    // и успевает индикатор перевернуть
+    connect(table->horizontalHeader(), &QHeaderView::sectionClicked, table,
+            [table, lastColumn=2, lastOrder=Qt::DescendingOrder](int logicalIndex) mutable
+    {
+      Qt::SortOrder order=Qt::DescendingOrder;
+
+      if(logicalIndex==lastColumn && lastOrder==Qt::DescendingOrder)
+        order=Qt::AscendingOrder;
+
+      lastColumn=logicalIndex;
+      lastOrder=order;
+
+      table->sortByColumn(logicalIndex, order);
+    });
+
+    return table;
+}
+
+
+// Разбивка статистики по заметкам: кто сколько ссылок держит.
+// Двойной клик прыгает к заметке
+void MainWindow::showStatsDetails(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Statistics"));
+    dialog.resize(640, 400);
+
+    QTableWidget *table=buildStatsTableWidget(&dialog);
+
+    connect(table, &QTableWidget::cellDoubleClicked, this, [this, table](int row, int)
+    {
+        QTableWidgetItem *branchItem=table->item(row, 0);
+
+        if(branchItem==nullptr)
+            return;
+
+        QString recordId=branchItem->data(Qt::UserRole).toString();
+
+        if(recordId.isEmpty() || treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+            return;
+
+        QStringList treePath=treeScreen->knowTreeModel->getRecordPath(recordId);
+
+        if(treePath.isEmpty())
+            return;
+
+        setTreeAndRecordtablePositions(treePath, recordId);
+    });
+
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    layout->addWidget(table);
+
+    dialog.exec();
 }
 
 
@@ -1493,6 +1658,18 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
         saveAllState();
     }
 
+    // Клик по строке статистики открывает разбивку по заметкам
+    if(o==statsLabel && e->type()==QEvent::MouseButtonRelease)
+    {
+        QMouseEvent *mouseEvent=static_cast<QMouseEvent *>(e);
+
+        if(mouseEvent->button()==Qt::LeftButton)
+        {
+            showStatsDetails();
+            return true;
+        }
+    }
+
     // Продолжать оработку событий дальше
     // return false;
     return QMainWindow::eventFilter(o, e);
@@ -1596,11 +1773,25 @@ void MainWindow::saveTextarea(void)
 
     qDebug() << "MainWindow::saveTextarea() : id :" << id;
 
+    // Дорогая статистика только при правленном тексте: иначе каждый
+    // клик по ветке гнал бы полный проход по базе (тысячи чтений файлов)
+    const bool modified=editorScreen->getTextareaModified();
+
     editorScreen->saveTextarea();
 
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),
                     editorScreen->getScrollBarPosition());
+
+    if(!modified)
+      return;
+
+    // Текст мог принести/убрать картинки и ссылки: одна строка
+    // в кеше без полного прохода, подпись из него же
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr && !id.isEmpty())
+      treeScreen->knowTreeModel->refreshRecordStats(id);
+
+    updateStats();
 }
 
 

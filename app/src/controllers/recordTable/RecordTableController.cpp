@@ -14,6 +14,7 @@
 #include "views/recordTable/RecordTablePrint.h"
 #include "views/mainWindow/MainWindow.h"
 #include "views/tree/TreeScreen.h"
+#include "models/tree/KnowTreeModel.h"
 #include "views/record/RecordInfoFieldsEditor.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "models/recordTable/Record.h"
@@ -635,7 +636,14 @@ void RecordTableController::addNew(int mode, Record record)
         view->moveCursorToNewRecord(mode, convertSourcePosToProxyPos(selPos) );
 
         // Сохранение дерева веток
-        find_object<TreeScreen>("treeScreen")->saveKnowTree();
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+        treeScreen->saveKnowTree();
+
+        // Новая строка в кеш статистики без полного прохода
+        RecordTableData *table=recordSourceModel->getTableData();
+
+        if(table!=nullptr)
+            treeScreen->knowTreeModel->refreshRecordStats(table->getField("id", selPos));
     }
 }
 
@@ -762,7 +770,11 @@ void RecordTableController::editField(int pos,
   metaEditor->setTags(tags);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Имя и метки в кеш статистики без полного прохода
+  treeScreen->knowTreeModel->refreshRecordStats(table->getField("id", pos));
 }
 
 
@@ -851,7 +863,15 @@ void RecordTableController::deleteRecords(void)
   removeRowsByIdList(delIds);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Удаленные строки вон из кеша статистики без полного прохода.
+  // refresh сам выкинет отсутствующие, отдельного remove не надо:
+  // DnD идет через removeRowById мимо этого места и дотягивается
+  // инвалидацией в KnowTreeView
+  for(const QString &delId : delIds)
+    treeScreen->knowTreeModel->refreshRecordStats(delId);
 
   // Обновление на экране ветки, на которой стоит засветка,
   // так как количество хранимых в ветке записей поменялось
@@ -929,7 +949,12 @@ void RecordTableController::moveUp(void)
   view->setSelectionToPos(pos-1);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Порядок строк в диалоге статистики: точечно не правится,
+  // редкий явный клик переживет один пересчет
+  treeScreen->knowTreeModel->invalidateStats();
 }
 
 
@@ -955,7 +980,12 @@ void RecordTableController::moveDn(void)
   view->setSelectionToPos(pos+1);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Порядок строк в диалоге статистики: точечно не правится,
+  // редкий явный клик переживет один пересчет
+  treeScreen->knowTreeModel->invalidateStats();
 }
 
 

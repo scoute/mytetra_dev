@@ -283,73 +283,90 @@ void MainWindow::messageHandler(QString message)
 {
     qDebug() << "MainWindow recieved message: "+message;
 
-    if(message=="show")
+    // Сообщение разбивается на команду и ее аргумент до обращений по индексу.
+    // Раньше цепочка if/else if была оборвана (ветки show и hide висели
+    // отдельно), а message.split(" ").at(1) вызывался до проверки наличия
+    // аргумента и падал при сообщении без параметра
+    QStringList messageParts=message.split(" ");
+
+    if(messageParts.isEmpty())
+        return;
+
+    QString command=messageParts.at(0);
+
+    // Значение аргумента команды, если он был передан
+    QString commandArgument;
+    if(messageParts.count()>1)
+        commandArgument=messageParts.at(1);
+
+    if(command=="show")
     {
         showWindow();
     }
 
-    if(message=="hide")
+    else if(command=="hide")
     {
         hide();
     }
 
-    if(message=="quit")
+    else if(command=="quit")
     {
         applicationExit();
     }
 
-    else if(message=="reload")
+    else if(command=="reload")
     {
         reload();
     }
 
-    else if(message.split(" ").at(0)=="openNote")
+    else if(command=="openNote")
     {
-        QString recordId=message.split(" ").at(1);
-
         // Если аргумент опции --openNote не обнаружен
-        if(recordId.length()==0)
+        if(commandArgument.isEmpty())
             return;
 
         // Нахождение ветки, в которой лежит запись с указанным идентификатором
-        QStringList pathToRecord=treeScreen->knowTreeModel->getRecordPath(recordId);
+        QStringList pathToRecord=treeScreen->knowTreeModel->getRecordPath(commandArgument);
 
-        this->setTreeAndRecordtablePositions(pathToRecord, recordId);
+        this->setTreeAndRecordtablePositions(pathToRecord, commandArgument);
     }
 
-    else if(message=="addNoteDialog")
+    else if(command=="addNoteDialog")
     {
         // Определение, было ли окно MyTetra скрыто при обработке сообщения
         bool isHidden=this->isHidden();
 
         // Окно показыается, чтобы небыло некорректного выхода QtSingleApplication при свернутом окне после добавления записи
-        if(isHidden) {
+        if(isHidden)
+        {
             this->showWindow();
         }
 
         // Нажимается кнопка добавления записи
-        if( recordTableScreen->actionAddNewToEnd->isEnabled() ) {
+        if( recordTableScreen->actionAddNewToEnd->isEnabled() )
+        {
             recordTableScreen->actionAddNewToEnd->trigger();
-        } else {
+        }
+        else
+        {
             qDebug() << "Can not initial add new note dialog. Add new note action is disable now. Try again.";
         }
 
         // Окно скрывается
-        if(isHidden) {
+        if(isHidden)
+        {
             this->hide();
         }
     }
 
-    else if(message.split(" ").at(0)=="openTreeItem")
+    else if(command=="openTreeItem")
     {
-        QString branchId=message.split(" ").at(1);
-
         // Если аргумент опции --openTreeItem (устаревшее --openBranch) не обнаружен
-        if(branchId.length()==0)
+        if(commandArgument.isEmpty())
             return;
 
         // Установка курсора в дереве
-        treeScreen->setCursorToId( branchId );
+        treeScreen->setCursorToId( commandArgument );
     }
 }
 

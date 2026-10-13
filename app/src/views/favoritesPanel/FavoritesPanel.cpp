@@ -310,9 +310,9 @@ void FavoritesPanel::refreshFavorites(void)
     // звездочка слева уже стоит в assembly, тут слово и число
     headerLabel->setText(tr("Favorites")+QStringLiteral(" (%1)").arg(favoritesList->count()));
 
-    // Пустая панель прячется совсем чтобы не ломать дизайн дерева.
-    // Показ тоже отсюда: первая звездочка сама выводит панель
-    if(!mytetraConfig.get_favoritesEnabled() || favoritesList->count()==0)
+    // Панель видна всегда пока фича включена, даже пустая:
+    // иначе непонятно куда делась звездочка из меню
+    if(!mytetraConfig.get_favoritesEnabled())
         setVisible(false);
     else if(!isVisible())
         setVisible(true);

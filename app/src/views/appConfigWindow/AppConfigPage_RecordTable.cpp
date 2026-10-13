@@ -51,7 +51,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   vboxVisibleHeaders->addWidget(showHorizontalHeader);
   vboxVisibleHeaders->addWidget(showVerticalHeader);
 
-  QGroupBox *groupBoxVisibleHeaders = new QGroupBox(tr("Headers and numbers visible"));
+  groupBoxVisibleHeaders = new QGroupBox(tr("Headers and numbers visible"));
   groupBoxVisibleHeaders->setLayout(vboxVisibleHeaders);
 
 
@@ -60,7 +60,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   foreach(QCheckBox *currentCheckBox, fields)
     vboxVisibleColumns->addWidget(currentCheckBox);
 
-  QGroupBox *groupBoxVisibleColumns = new QGroupBox(tr("Columns visible"));
+  groupBoxVisibleColumns = new QGroupBox(tr("Columns visible"));
   groupBoxVisibleColumns->setLayout(vboxVisibleColumns);
 
 
@@ -125,6 +125,27 @@ void AppConfigPage_RecordTable::onFieldToggle(bool flag)
     fields["name"]->setCheckState( Qt::Checked );
   }
 
+}
+
+
+void AppConfigPage_RecordTable::retranslateUi(void)
+{
+  QStringList allFieldNames=FixedParameters::recordFieldAvailableList;
+  QMap<QString, QString> descriptionFields=FixedParameters::recordFieldDescription(allFieldNames);
+
+  QMapIterator<QString, QCheckBox *> i(fields);
+
+  while(i.hasNext())
+  {
+    i.next();
+    i.value()->setText(descriptionFields.value(i.key()));
+  }
+
+  showHorizontalHeader->setText(tr("Show horisontal header"));
+  showVerticalHeader->setText(tr("Show row number"));
+
+  groupBoxVisibleHeaders->setTitle(tr("Headers and numbers visible"));
+  groupBoxVisibleColumns->setTitle(tr("Columns visible"));
 }
 
 

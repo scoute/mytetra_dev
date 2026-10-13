@@ -26,6 +26,7 @@ public:
   void assembly(void);
 
   int applyChanges(void);
+  void retranslateUi(void);
     
 private slots:
   void onClickedTetradirSelectDialog(void);
@@ -34,6 +35,9 @@ private slots:
   void onDisableCustomDateTimeFormatToggle(bool checked);
   void onEnableCustomDateTimeFormatToggle(bool checked);
   void onDateTimeFormatHelpButton(void);
+
+  // Язык применяется сразу по выбору, без Apply
+  void onLanguageChanged(int index);
 
 private:
 

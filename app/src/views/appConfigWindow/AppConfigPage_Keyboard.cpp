@@ -74,6 +74,13 @@ void AppConfigPage_Keyboard::onClickedEditShortcutConfigFile(void)
 }
 
 
+void AppConfigPage_Keyboard::retranslateUi(void)
+{
+  editShortcutConfigFile->setText(tr("Edit shortcuts"));
+  shortcutBox->setTitle(tr("Keyboard preferences"));
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

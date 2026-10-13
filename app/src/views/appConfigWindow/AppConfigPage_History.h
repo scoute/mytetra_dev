@@ -16,6 +16,7 @@ public:
     virtual ~AppConfigPage_History();
 
     int applyChanges(void);
+  void retranslateUi(void);
 
   protected:
 

@@ -2472,6 +2472,14 @@ You need to update MyTetra.</source>
         <source>Statistics</source>
         <translation>Statistiques</translation>
     </message>
+        <message>
+            <source>Images &amp;gallery</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Attached &amp;files</source>
+            <translation type="unfinished"></translation>
+        </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -3643,6 +3651,10 @@ Please report about this problem to the developers.</source>
             <source>Tags</source>
             <translation type="unfinished"></translation>
         </message>
+        <message>
+            <source>Images gallery</source>
+            <translation type="unfinished"></translation>
+        </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4185,6 +4197,65 @@ All data imported will be encrypted.</source>
         </message>
         <message>
             <source>Remove tag "%1" from %2 note(s)? Undo is not available.</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>ContentGallery</name>
+        <message>
+            <source>Images gallery</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Attached files</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Tile size</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Tiles</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>List</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Name</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Size</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Type</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Modified</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 images</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>%1 files</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Can not open file: %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Can not open image: %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Close</source>
             <translation type="unfinished"></translation>
         </message>
     </context>

@@ -48,6 +48,7 @@ public:
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
 #include "views/tagsPanel/TagsPanel.h"
+#include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
@@ -213,6 +214,8 @@ void MainWindow::setupSignals(void)
 
     // Поиск по базе в стандартном меню
     connect(actionToolsMenuFindInBase, &QAction::triggered, this, &MainWindow::toolsFindInBase);
+    connect(actionToolsMenuImagesGallery, &QAction::triggered, this, &MainWindow::toolsImagesGallery);
+    connect(actionToolsMenuFilesGallery, &QAction::triggered, this, &MainWindow::toolsFilesGallery);
     if(mytetraConfig.getInterfaceMode()=="mobile")
     {
         // Кнопка поиска по базе в меню дерева разделов для мобильного интерфейса
@@ -709,6 +712,12 @@ void MainWindow::initToolsMenu(void)
     actionToolsMenuFindInBase = new QAction(this); // Так как есть this, указатель не будет потерян основным окном
     toolsMenu->addAction(actionToolsMenuFindInBase);
 
+    actionToolsMenuImagesGallery = new QAction(tr("Images &gallery"), this);
+    toolsMenu->addAction(actionToolsMenuImagesGallery);
+
+    actionToolsMenuFilesGallery = new QAction(tr("Attached &files"), this);
+    toolsMenu->addAction(actionToolsMenuFilesGallery);
+
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     toolsMenu->addAction(actionToolsMenuActionLog);
 
@@ -1033,6 +1042,8 @@ void MainWindow::setupShortcuts(void)
 
     shortcutManager.initAction("misc-findInBase", actionToolsMenuFindInBase );
 
+    shortcutManager.initAction("misc-imagesGallery", actionToolsMenuImagesGallery );
+
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
     shortcutManager.initAction("misc-focusEditor", actionFocusEditor );
@@ -1059,6 +1070,8 @@ void MainWindow::retranslateUi(void)
         toolsMenu->setTitle(tr("&Tools"));
 
         actionToolsMenuActionLog->setText(tr("Action &log"));
+
+        actionToolsMenuFilesGallery->setText(tr("Attached &files"));
 
         // Переключатель дока истории: текст тоже идет через шорткаты,
         // но initAction для него звался один раз при построении
@@ -1294,6 +1307,22 @@ void MainWindow::toolsFindInBase(void)
         findScreenRel->widgetShow();
     else
         findScreenRel->widgetHide();
+}
+
+
+void MainWindow::toolsImagesGallery(void)
+{
+    ContentGallery *gallery=new ContentGallery(ContentGallery::GalleryMode::Images, this);
+    gallery->setAttribute(Qt::WA_DeleteOnClose);
+    gallery->show();
+}
+
+
+void MainWindow::toolsFilesGallery(void)
+{
+    ContentGallery *gallery=new ContentGallery(ContentGallery::GalleryMode::Attaches, this);
+    gallery->setAttribute(Qt::WA_DeleteOnClose);
+    gallery->show();
 }
 
 

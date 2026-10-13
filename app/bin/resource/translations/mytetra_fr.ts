@@ -3623,6 +3623,10 @@ Please report about this problem to the developers.</source>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
+        <message>
+            <source>Tags</source>
+            <translation type="unfinished"></translation>
+        </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4102,6 +4106,69 @@ All data imported will be encrypted.</source>
         </message>
         <message>
             <source>Visits: %1</source>
+            <translation type="unfinished"></translation>
+        </message>
+    </context>
+    <context>
+        <name>TagsPanel</name>
+        <message>
+            <source>Filter tags</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Tag</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Count</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Tags [%1]</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Tags</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Rename tag...</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Delete tag...</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Rename tag</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>New name for tag "%1":</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Empty name removes nothing. Use Delete tag to remove it.</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Name must be a single tag without comma or semicolon.</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Tag "%1" already exists. Merging is not implemented yet.</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Rename tag "%1" to "%2" in %3 note(s)? Undo is not available.</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Delete tag</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Remove tag "%1" from %2 note(s)? Undo is not available.</source>
             <translation type="unfinished"></translation>
         </message>
     </context>

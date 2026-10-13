@@ -5007,6 +5007,10 @@ Please report about this problem to the developers.</source>
         <source>Quit</source>
         <translation>Выход</translation>
     </message>
+        <message>
+            <source>Tags</source>
+            <translation>Метки</translation>
+        </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -5603,6 +5607,69 @@ Please select single item for enabling edit operation.</source>
         <message>
             <source>Visits: %1</source>
             <translation>Визиты: %1</translation>
+        </message>
+    </context>
+    <context>
+        <name>TagsPanel</name>
+        <message>
+            <source>Filter tags</source>
+            <translation>Фильтр меток</translation>
+        </message>
+        <message>
+            <source>Tag</source>
+            <translation>Метка</translation>
+        </message>
+        <message>
+            <source>Count</source>
+            <translation>кол-во</translation>
+        </message>
+        <message>
+            <source>Tags [%1]</source>
+            <translation>Метки [%1]</translation>
+        </message>
+        <message>
+            <source>Tags</source>
+            <translation>Метки</translation>
+        </message>
+        <message>
+            <source>Rename tag...</source>
+            <translation>Переименовать метку...</translation>
+        </message>
+        <message>
+            <source>Delete tag...</source>
+            <translation>Удалить метку...</translation>
+        </message>
+        <message>
+            <source>Rename tag</source>
+            <translation>Переименование метки</translation>
+        </message>
+        <message>
+            <source>New name for tag "%1":</source>
+            <translation>Новое имя метки "%1":</translation>
+        </message>
+        <message>
+            <source>Empty name removes nothing. Use Delete tag to remove it.</source>
+            <translation>Пустое имя ничего не удаляет. Для удаления используйте Удалить метку.</translation>
+        </message>
+        <message>
+            <source>Name must be a single tag without comma or semicolon.</source>
+            <translation>Имя должно быть одной меткой без запятой и точки с запятой.</translation>
+        </message>
+        <message>
+            <source>Tag "%1" already exists. Merging is not implemented yet.</source>
+            <translation>Метка "%1" уже существует. Слияние пока не поддерживается.</translation>
+        </message>
+        <message>
+            <source>Rename tag "%1" to "%2" in %3 note(s)? Undo is not available.</source>
+            <translation>Переименовать метку "%1" в "%2" в %3 записях? Отмена недоступна.</translation>
+        </message>
+        <message>
+            <source>Delete tag</source>
+            <translation>Удаление метки</translation>
+        </message>
+        <message>
+            <source>Remove tag "%1" from %2 note(s)? Undo is not available.</source>
+            <translation>Убрать метку "%1" из %2 записей? Отмена недоступна.</translation>
         </message>
     </context>
 </TS>

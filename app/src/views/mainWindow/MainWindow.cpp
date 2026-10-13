@@ -2207,7 +2207,11 @@ void MainWindow::saveTextarea(void)
     if(!id.isEmpty())
       BacklinkIndex::instance().updateSource(id);
 
-    // Текст мог принести/убрать картинки и ссылки - освежить статистику
+    // Текст мог принести/убрать картинки и ссылки: одна строка
+    // в кеше без полного прохода, подпись из него же
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr && !id.isEmpty())
+      treeScreen->knowTreeModel->refreshRecordStats(id);
+
     updateStats();
 }
 

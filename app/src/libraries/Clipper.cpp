@@ -307,7 +307,12 @@ void Clipper::saveTree(void) const
 
     TreeScreen *treeScreen=globalParameters.getTreeScreen();
     if(treeScreen)
+    {
         treeScreen->saveKnowTree();
+
+        // Пачка новых записей: кеш статистики в пересчет
+        treeScreen->knowTreeModel->invalidateStats();
+    }
 }
 
 

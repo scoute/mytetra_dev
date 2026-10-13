@@ -672,7 +672,12 @@ void TagsPanel::saveBaseAndRefresh(const QString &oldLower, const QString &newSp
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
 
     if(treeScreen!=nullptr)
+    {
         treeScreen->saveKnowTree();
+
+        // Тег переименован сразу во многих записях: кеш в пересчет
+        treeScreen->knowTreeModel->invalidateStats();
+    }
 
     refreshTags();
 

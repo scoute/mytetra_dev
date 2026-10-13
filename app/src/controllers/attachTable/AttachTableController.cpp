@@ -10,6 +10,7 @@
 #include "views/attachTable/AttachTableView.h"
 #include "models/attachTable/AttachTableModel.h"
 #include "models/attachTable/AttachTableData.h"
+#include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/crypt/CryptService.h"
@@ -256,8 +257,8 @@ bool AttachTableController::addAttach(QString attachType, QString currFullFileNa
 void AttachTableController::saveState()
 {
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
-
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
 
   // Указатель на данные таблицы приаттаченных файлов, чтобы обновить иконку аттачей в редакторе
   AttachTableData *attachTableData=getAttachTableData();
@@ -268,6 +269,11 @@ void AttachTableController::saveState()
     metaEditor->switchAttachIconExists(true);
   else
     metaEditor->switchAttachIconExists(false);
+
+  // Файлы приехали: строка записи в кеше статистики без полного
+  // прохода, подпись статусбара из него же
+  if(metaEditor!=nullptr)
+    treeScreen->knowTreeModel->refreshRecordStats(metaEditor->getMiscField("id"));
 
   // Число файлов изменилось - освежить статистику в статусбаре
   MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
@@ -493,7 +499,12 @@ void AttachTableController::onEditFileName(void)
   attachTableData->modifyAttach(id, tempAttach);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Расширение могло смениться: строка записи в кеше без полного прохода
+  if(metaEditor!=nullptr)
+    treeScreen->knowTreeModel->refreshRecordStats(metaEditor->getMiscField("id"));
 }
 
 
@@ -527,13 +538,18 @@ void AttachTableController::onDeleteAttach(void)
 
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
 
   // Обновление иконки аттачей в редакторе
   if(attachTableData->size()==0)
     metaEditor->switchAttachIconExists(false);
 
-  // Число файлов изменилось - освежить статистику в статусбаре
+  // Число файлов изменилось - строка записи в кеше без полного
+  // прохода, подпись статусбара из него же
+  if(metaEditor!=nullptr)
+    treeScreen->knowTreeModel->refreshRecordStats(metaEditor->getMiscField("id"));
+
   MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
 
   if(mainWindow!=nullptr)

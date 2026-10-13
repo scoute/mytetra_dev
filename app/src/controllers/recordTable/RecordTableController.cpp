@@ -24,6 +24,7 @@
 #include "models/recordTable/RecordTableProxyModel.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/tree/TreeItem.h"
+#include "models/tree/KnowTreeModel.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/WindowSwitcher.h"
@@ -660,7 +661,14 @@ void RecordTableController::addNew(int mode, Record record)
         view->moveCursorToNewRecord(mode, convertSourcePosToProxyPos(selPos) );
 
         // Сохранение дерева веток
-        find_object<TreeScreen>("treeScreen")->saveKnowTree();
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+        treeScreen->saveKnowTree();
+
+        // Новая строка в кеш статистики без полного прохода
+        RecordTableData *table=recordSourceModel->getTableData();
+
+        if(table!=nullptr)
+            treeScreen->knowTreeModel->refreshRecordStats(table->getField("id", selPos));
     }
 }
 
@@ -835,7 +843,11 @@ void RecordTableController::editField(int pos,
   metaEditor->setTags(tags);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Имя и метки в кеш статистики без полного прохода
+  treeScreen->knowTreeModel->refreshRecordStats(table->getField("id", pos));
 }
 
 
@@ -927,7 +939,12 @@ void RecordTableController::deleteRecords(void)
   BacklinkIndex::instance().removeSources(delIds.toList());
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Удаленные строки вон из кеша статистики без полного прохода
+  for(const QString &delId : delIds)
+    treeScreen->knowTreeModel->refreshRecordStats(delId);
 
   // Обновление на экране ветки, на которой стоит засветка,
   // так как количество хранимых в ветке записей поменялось
@@ -1005,7 +1022,12 @@ void RecordTableController::moveUp(void)
   view->setSelectionToPos(pos-1);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Порядок строк в диалоге статистики: точечно не правится,
+  // редкий явный клик переживет один пересчет
+  treeScreen->knowTreeModel->invalidateStats();
 }
 
 
@@ -1031,7 +1053,12 @@ void RecordTableController::moveDn(void)
   view->setSelectionToPos(pos+1);
 
   // Сохранение дерева веток
-  find_object<TreeScreen>("treeScreen")->saveKnowTree();
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+  treeScreen->saveKnowTree();
+
+  // Порядок строк в диалоге статистики: точечно не правится,
+  // редкий явный клик переживет один пересчет
+  treeScreen->knowTreeModel->invalidateStats();
 }
 
 

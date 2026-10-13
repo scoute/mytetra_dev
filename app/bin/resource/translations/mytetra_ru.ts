@@ -1350,12 +1350,12 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/samples/buttonwidth.ui" line="14"/>
         <source>Dialog</source>
-        <translation type="unfinished">Диалог инсталляции</translation>
+        <translation>Диалог</translation>
     </message>
     <message>
         <location filename="../../../src/samples/buttonwidth.ui" line="60"/>
         <source>PushButton</source>
-        <translation type="unfinished">Кнопка</translation>
+        <translation>Кнопка</translation>
     </message>
 </context>
 <context>

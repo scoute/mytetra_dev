@@ -3316,6 +3316,11 @@ Veuillez mettre à jour MyTetra.</translation>
         <source>Backlinks</source>
         <translation>Liens entrants</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="965"/>
+        <source>Show favorites panel</source>
+        <translation>Afficher le panneau des favoris</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -3894,6 +3899,16 @@ Veuillez signaler ce problème aux développeurs.</translation>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="371"/>
         <source>Disable sorting</source>
         <translation>Interdire le tri</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="362"/>
+        <source>Remove from favorites</source>
+        <translation>Retirer des favoris</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="364"/>
+        <source>Add to favorites</source>
+        <translation>Ajouter aux favoris</translation>
     </message>
 </context>
 <context>

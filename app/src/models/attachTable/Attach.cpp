@@ -605,7 +605,14 @@ void Attach::renameFile(QString newFileName){
   
   QString resultFileName=getFullInnerDirName()+"/"+constructFileName(type, getField("id"), newFileName);
 
-  file.rename(resultFileName);
+  // Результат переименования проверяется до обновления метаданных, иначе
+  // при неудаче (занятое имя, права, регистрозависимость) поле fileName
+  // указывало бы на несуществующий файл
+  if(!file.rename(resultFileName))
+  {
+    showMessageBox(QObject::tr("Unable to rename the file %1 to %2 from disk.").arg( getFullInnerFileName() ).arg( resultFileName ));
+    return;
+  }
 
   setField("fileName", newFileName);
 }

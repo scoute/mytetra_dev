@@ -240,7 +240,20 @@ int CssHelper::getMyTetraStyleVersion(const QString& text)
 
 void CssHelper::loadCurrentTheme()
 {
-    applyTheme( mytetraConfig.getInterfaceTheme() );
+    QString themeName=mytetraConfig.getInterfaceTheme();
+
+    // Тема из конфига может отсутствовать в сборке (удалена
+    // или конфиг пришел из другой ветки): откат на default
+    // вместо неоформленного Fusion
+    if( !fixedParameters.themesAvailableList.contains(themeName) )
+    {
+        qWarning() << "Unknown interface theme in config:" << themeName
+                   << ", fallback to default";
+        themeName="default";
+        mytetraConfig.setInterfaceTheme(themeName);
+    }
+
+    applyTheme( themeName );
 }
 
 

@@ -831,6 +831,7 @@ void MainWindow::initThemesMenu(void)
     QMap<QString, QString> translateNames;
     translateNames["default"]=tr("Default");
     translateNames["dark"]=tr("Dark");
+    translateNames["modern"]=tr("Modern");
 
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);
@@ -1099,6 +1100,7 @@ void MainWindow::retranslateUi(void)
         QMap<QString, QString> translateNames;
         translateNames["default"]=tr("Default");
         translateNames["dark"]=tr("Dark");
+        translateNames["modern"]=tr("Modern");
 
         for(QAction *themeAction : themesMenu->actions())
             themeAction->setText(translateNames.value(themeAction->data().toString(), "Unknown"));

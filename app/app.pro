@@ -183,6 +183,7 @@ HEADERS = src/main.h \
     src/views/record/InfoFieldEnter.h \
     src/views/record/MetaEditor.h \
     src/views/historyPanel/HistoryPanel.h \
+    src/views/tagsPanel/TagsPanel.h \
     src/libraries/wyedit/Editor.h \
     src/libraries/wyedit/EditorConfig.h \
     src/libraries/wyedit/EditorConfigDialog.h \
@@ -356,6 +357,7 @@ SOURCES = src/main.cpp \
     src/views/record/InfoFieldEnter.cpp \
     src/views/record/MetaEditor.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
+    src/views/tagsPanel/TagsPanel.cpp \
     src/libraries/wyedit/Editor.cpp \
     src/libraries/wyedit/EditorConfig.cpp \
     src/libraries/wyedit/EditorConfigDialog.cpp \

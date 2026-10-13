@@ -161,22 +161,33 @@ bool DiskHelper::isTrashDirectoryExists()
 
 
 // Создание временной директории
+// Результат создания проверяется: раньше игнорировался, и при коллизии имени
+// картинки писались бы в чужую или несуществующую директорию
 QString DiskHelper::createTempDirectory(void)
 {
   QDir dir;
   QString systemTempDirName=dir.tempPath();
 
-  QString temp_dir_name=FixedParameters::appTextId+getUniqueId();
-
   // Создается директория
   dir.setPath(systemTempDirName);
-  dir.mkdir(temp_dir_name);
 
-  QString createTempDirName=systemTempDirName+"/"+temp_dir_name;
+  for(int attempt=0; attempt<10; ++attempt)
+  {
+    QString temp_dir_name=FixedParameters::appTextId+getUniqueId();
 
-  qDebug() << "Create temporary directory "+createTempDirName;
+    if(dir.mkdir(temp_dir_name))
+    {
+      QString createTempDirName=systemTempDirName+"/"+temp_dir_name;
 
-  return createTempDirName;
+      qDebug() << "Create temporary directory "+createTempDirName;
+
+      return createTempDirName;
+    }
+  }
+
+  criticalError("Cant create temporary directory in "+systemTempDirName);
+
+  return QString();
 }
 
 

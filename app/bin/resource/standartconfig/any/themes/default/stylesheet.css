@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="default" version="2" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="default" version="3" about="QDarkStyleSheet"/> */
 
 /* CSS style for any desktop OS */
 /* Set your Qt CSS style in this file */
@@ -6,4 +6,19 @@
 /* Псевдо-правило для установки значений системной палитры */
 CustomPalette {
   PlaceholderText: DarkGray;
+}
+
+/* Линии иерархии в дереве веток: как в темной теме, но серым пунктиром
+ * по светлому фону. Стрелки раскрытия не трогаются и остаются нативными:
+ * заданы только соединительные линии (вертикаль, тройник, уголок) */
+QTreeView::branch:has-siblings:!adjoins-item {
+  border-image: url("themes/default/pic/branch_line.png") 0;
+}
+
+QTreeView::branch:has-siblings:adjoins-item {
+  border-image: url("themes/default/pic/branch_more.png") 0;
+}
+
+QTreeView::branch:!has-children:!has-siblings:adjoins-item {
+  border-image: url("themes/default/pic/branch_end.png") 0;
 }

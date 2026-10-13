@@ -5229,6 +5229,11 @@ Please select single item for enabling edit operation.</source>
         <source>Remove from favorites</source>
         <translation>从收藏中移除</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="324"/>
+        <source>Note is missing from the base</source>
+        <translation>笔记已不在库中</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Favorites</name>

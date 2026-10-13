@@ -6688,6 +6688,11 @@ Please select single item for enabling edit operation.</source>
         <source>Remove from favorites</source>
         <translation>Убрать из избранного</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="324"/>
+        <source>Note is missing from the base</source>
+        <translation>Запись отсутствует в базе</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Favorites</name>

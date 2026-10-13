@@ -5233,6 +5233,11 @@ Bitte einzelnen Zweig zum Bearbeiten wählen.</translation>
         <source>Remove from favorites</source>
         <translation>Aus Favoriten entfernen</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="324"/>
+        <source>Note is missing from the base</source>
+        <translation>Notiz fehlt in der Datenbank</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Favorites</name>

@@ -5216,6 +5216,11 @@ La mise en forme peut être altérée.</translation>
         <source>Remove from favorites</source>
         <translation>Retirer des favoris</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="324"/>
+        <source>Note is missing from the base</source>
+        <translation>Note absente de la base</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Favorites</name>

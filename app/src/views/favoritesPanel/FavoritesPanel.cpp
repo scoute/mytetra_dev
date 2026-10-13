@@ -2,6 +2,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QIcon>
+#include <QBrush>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QShowEvent>
@@ -150,6 +151,10 @@ void FavoritesPanel::onNoteClicked(QListWidgetItem *item)
     if(item==nullptr)
         return;
 
+    // По мертвой строке прыгать некуда
+    if(item->data(DeadRole).toBool())
+        return;
+
     goToNote(item->data(Qt::UserRole).toString());
 }
 
@@ -187,7 +192,13 @@ void FavoritesPanel::onFavoritesContextMenu(const QPoint &pos)
         return;
 
     QMenu menu(this);
-    QAction *goAction=menu.addAction(tr("Go to note"));
+
+    // Для мертвой строки прыжка нет, только убрать
+    QAction *goAction=nullptr;
+
+    if(!item->data(DeadRole).toBool())
+        goAction=menu.addAction(tr("Go to note"));
+
     QAction *removeAction=menu.addAction(tr("Remove from favorites"));
 
     QAction *chosen=menu.exec(favoritesList->viewport()->mapToGlobal(pos));
@@ -215,7 +226,9 @@ void FavoritesPanel::onRemoveFavorite(void)
 
 // Пересборка списка: id берутся из хранилища, названия и ветки
 // резолвятся вживую (ветку могли переименовать или переместить).
-// Мертвые id тихо выкидываются из сайдкара
+// Мертвые id (запись не найдена: удалена или подменена база)
+// показываются красным и хранятся дальше: при возврате базы
+// звездочки оживают сами
 void FavoritesPanel::refreshFavorites(void)
 {
     // Дерево берется из захваченного указателя, а не через
@@ -242,7 +255,8 @@ void FavoritesPanel::refreshFavorites(void)
         {
             const QStringList path=dataModel->getRecordPath(id);
 
-            // Заметки больше нет: кандидат на выкидывание из сайдкара
+            // Заметки нет в текущей базе: удалена или база подменена.
+            // Строка останется красной, id из хранилища не выкидывается
             if(path.isEmpty() || !dataModel->isItemValid(path))
             {
                 dead << id;
@@ -281,10 +295,6 @@ void FavoritesPanel::refreshFavorites(void)
             branches[id]=branchNames.join(QStringLiteral(" / "));
         }
 
-    // Мертвые id выкидываются тихо без сигнала: пересборка уже идет
-    if(!dead.isEmpty())
-        Favorites::instance().removeIdsSilent(dead);
-
     favoritesList->clear();
 
     if(dataModel!=nullptr)
@@ -303,8 +313,16 @@ void FavoritesPanel::refreshFavorites(void)
             item->setToolTip(mapIt.value());
         }
 
-    if(!dead.isEmpty())
-        Favorites::instance().removeIdsSilent(dead);
+    // Мертвые строки в хвост красным: id вместо названия (названия
+    // больше нет), прыжок для них скрыт, убрать можно как обычно
+    for(const QString &id : dead)
+    {
+        QListWidgetItem *item=new QListWidgetItem(id, favoritesList);
+        item->setData(Qt::UserRole, id);
+        item->setData(DeadRole, true);
+        item->setForeground(QBrush(Qt::red));
+        item->setToolTip(tr("Note is missing from the base"));
+    }
 
     // Шапка со счетчиком чтобы панель не висела одиноко:
     // звездочка слева уже стоит в assembly, тут слово и число

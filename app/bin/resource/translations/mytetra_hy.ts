@@ -5233,6 +5233,11 @@ Please select single item for enabling edit operation.</source>
         <source>Remove from favorites</source>
         <translation>Հեռացնել ընտրյալներից</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="324"/>
+        <source>Note is missing from the base</source>
+        <translation>Գրառումը բացակայում է բազայում</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Favorites</name>

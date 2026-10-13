@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QItemSelectionModel>
 #include <QVBoxLayout>
+#include <QSplitter>
 #include <QToolBar>
 #include <QInputDialog>
 
@@ -481,8 +482,18 @@ void TreeScreen::assembly(void)
  treeScreenLayout->setSpacing(0);
 
  treeScreenLayout->addWidget(toolsLine);
- treeScreenLayout->addWidget(favoritesPanel);
- treeScreenLayout->addWidget(knowTreeView, 1);
+
+ // Избранное и дерево в двигаемом разделителе: долю панели
+ // выбирает пользователь. Панель не схлопывается в ноль чтобы
+ // ее нельзя было потерять drag-ом, дерево забирает остаток
+ QSplitter *favoritesSplitter=new QSplitter(Qt::Vertical, this);
+ favoritesSplitter->setObjectName("favoritesSplitter");
+ favoritesSplitter->addWidget(favoritesPanel);
+ favoritesSplitter->addWidget(knowTreeView);
+ favoritesSplitter->setStretchFactor(0, 0);
+ favoritesSplitter->setStretchFactor(1, 1);
+ favoritesSplitter->setCollapsible(0, false);
+ treeScreenLayout->addWidget(favoritesSplitter, 1);
 
  setLayout(treeScreenLayout);
 

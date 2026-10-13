@@ -100,7 +100,7 @@ void IconSelectDialog::iconsCollectionCheck()
       // qDebug() << "Copy icon file. From: " << iconFromName << " To: " << iconToName;
 
       QFile::copy(iconFromName, iconToName);
-      QFile::setPermissions(iconFromName, QFile::ReadUser | QFile::WriteUser);
+      QFile::setPermissions(iconToName, QFile::ReadUser | QFile::WriteUser);
     }
   }
 

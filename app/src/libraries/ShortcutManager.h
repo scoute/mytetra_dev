@@ -54,6 +54,11 @@ public:
     void initAction(QString actionName, QAction *action);
     void initToolButton(QString actionName, QToolButton *action);
 
+    // Перечитать описания действий новым языком и разослать виджетам
+    // обновление текстов через updateWidgetShortcut. Сами сочетания
+    // из shortcut.ini не трогаются: там лежат только клавиши
+    void retranslate(void);
+
     // Получение списка коротких имен действий в секции
     QStringList getActionsNameList(QString sectionName);
 

@@ -69,6 +69,14 @@ void AppConfigPage_History::assembly()
 }
 
 
+void AppConfigPage_History::retranslateUi(void)
+{
+  rememberAtHistoryNavigationCheckBox->setText(tr("Remember cursor position at history navigation"));
+  rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
+  historyBox->setTitle(tr("History of visited notes"));
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

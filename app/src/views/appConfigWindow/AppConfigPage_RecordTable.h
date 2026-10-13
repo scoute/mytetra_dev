@@ -16,6 +16,7 @@ class AppConfigPage_RecordTable : public ConfigPage
 public:
   AppConfigPage_RecordTable(QWidget *parent = nullptr);
   int applyChanges(void);
+  void retranslateUi(void);
 
 signals:
   void recordTableConfigChange(void); // Сигнал, испускающийся когда изменились настройки таблицы конечных записей
@@ -31,6 +32,9 @@ protected:
 
   QCheckBox *showHorizontalHeader;
   QCheckBox *showVerticalHeader;
+
+  QGroupBox *groupBoxVisibleHeaders;
+  QGroupBox *groupBoxVisibleColumns;
 
   // Объединяющая рамка
   QGroupBox *showFieldsBox;

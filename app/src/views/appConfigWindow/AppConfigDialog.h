@@ -2,6 +2,7 @@
 #define APPCONFIGDIALOG_H
 
 #include <QString>
+#include <QList>
 
 // Объект, подготавливающий и отображающий диалог настройки MyTetra
 
@@ -19,6 +20,13 @@ public:
     void exec();
 
     void setMenuListVisible(bool visible);
+
+    // Обновить прямыми текстами заголовок, список страниц и сами страницы
+    void retranslateUi(void);
+
+    // Открытые диалоги настроек: смена языка из страницы Main
+    // переводит их на лету через retranslateUi
+    static QList<AppConfigDialog *> openDialogs;
     
 private:
     ConfigDialog *configDialog;

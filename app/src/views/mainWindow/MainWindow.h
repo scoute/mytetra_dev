@@ -87,6 +87,11 @@ public slots:
 
     void setupShortcuts(void);
 
+    // Перевести статичные тексты новым языком без перезапуска.
+    // Тексты на шорткатах обновляются отдельно сигналом
+    // updateWidgetShortcut, порядок вызывает applyLanguage
+    void retranslateUi(void);
+
 private slots:
 
     void showWindow();
@@ -198,6 +203,12 @@ private:
 
     // Меню Темы в menubar: один клик вместо похода в настройки
     QMenu *themesMenu=nullptr;
+
+    // Корневые меню: указатели нужны для перевода названий на лету
+    QMenu *fileMenu=nullptr;
+    QMenu *toolsMenu=nullptr;
+    QMenu *helpMenu=nullptr;
+    QMenu *preferencesSubMenu=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

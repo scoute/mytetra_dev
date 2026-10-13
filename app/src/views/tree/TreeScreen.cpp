@@ -1084,8 +1084,15 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
   pasted_branch_id=knowTreeModel->pasteNewChildBranch(index, (ClipboardBranch *)branch);
 
 
- // Установка курсора на новую созданную ветку
+ // Установка курсора на новую созданную ветку.
+ // Ветки может не быть, если вставка не удалась, тогда дальше делать нечего
  TreeItem *pasted_branch_item=knowTreeModel->getItemById(pasted_branch_id);
+ if(pasted_branch_item==nullptr)
+ {
+  find_object<MainWindow>("mainwindow")->setEnabled(true);
+  return;
+ }
+
  QStringList pasted_branch_path=pasted_branch_item->getPath();
  find_object<MainWindow>("mainwindow")->setTreePosition(pasted_branch_path);
 

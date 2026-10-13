@@ -10,6 +10,7 @@
 #include <QSplashScreen>
 #include <QTextOption>
 #include <QMessageBox>
+#include <QStringList>
 
 #include <QScroller>
 #include <QScrollerProperties>
@@ -144,6 +145,24 @@ void parseConsoleOption(QtSingleApplication &app)
     // Если MyTetra запущена в режиме управления, и есть другой экземпляр, которым нужно управлять
     if (app.arguments().contains("--control") && app.isRunning())
     {
+        // Опции, требующие дополнительного параметра, проверяются на наличие этого
+        // параметра, иначе обращение за его значением выходит за границу списка
+        // аргументов и приводит к аварийному завершению программы
+        QStringList optionsWithParameter;
+        optionsWithParameter << "--openNote" << "--openBranch" << "--openTreeItem";
+
+        for (const QString &optionName : optionsWithParameter)
+        {
+            int optionIndex=app.arguments().indexOf(optionName);
+
+            if (optionIndex!=-1 && optionIndex+1>=app.arguments().count())
+            {
+                QString message="Missing parameter for option \""+optionName+"\".\n";
+                printf("%s", message.toLocal8Bit().data());
+                exit(4);
+            }
+        }
+
         if (app.arguments().contains("--show"))
         {
             app.sendMessage("show");

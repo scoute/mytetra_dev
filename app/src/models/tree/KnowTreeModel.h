@@ -59,6 +59,12 @@ public:
     //! Перемещение ветки вниз
     QModelIndex moveDownBranch(const QModelIndex &index);
 
+    //! Перемещение ветки к другой ветке с сохранением идентификатора.
+    //! asChild=true - сделать подветкой targetId, иначе - соседней после нее.
+    //! Файлы записей не трогаются, т.к. идентификаторы не меняются.
+    //! Возвращает false если ветка не найдена или цель внутри источника
+    bool moveBranch(const QString &sourceId, const QString &targetId, bool asChild);
+
 
     //! Получение индекса подчиненного элемента с указанным номером
     QModelIndex indexChildren(const QModelIndex &parent, int n) const;
@@ -76,6 +82,16 @@ public:
 
     QString pasteNewChildBranch(const QModelIndex &index, ClipboardBranch *subbranch);
     QString pasteNewSiblingBranch(const QModelIndex &index, ClipboardBranch *subbranch);
+
+    //! Данные для вида. Переопределен чтобы красить вырезанную ветку серым
+    QVariant data(const QModelIndex &index, int role) const;
+
+    //! ID ветки в состоянии "вырезана" (серая, ждет вставки-перемещения).
+    //! Пустая строка означает отсутствие вырезания. Состояние только
+    //! в памяти, в mytetra.xml не сохраняется и после перезагрузки сброшено
+    QString cutBranchId(void) const;
+    void setCutBranchId(const QString &id);
+    void clearCutBranchId(void);
 
     void reEncrypt(QString previousPassword, QString currentPassword);
 
@@ -121,6 +137,9 @@ signals:
 private:
 
     QString m_xmlFileName;
+
+    // ID вырезанной ветки, см. cutBranchId(). Не поле данных, не сохраняется
+    QString cutBranchIdValue;
 
     QDateTime m_lastSaveDateTime;
     QDateTime m_lastLoadDateTime;

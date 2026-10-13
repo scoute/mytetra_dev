@@ -71,6 +71,7 @@ void AppConfigPage_Appearance::setupThemeComboBox()
     translateNames[ "default" ] = tr("Default");
     translateNames[ "dark" ]    = tr("Dark");
     translateNames[ "modern" ]  = tr("Modern");
+    translateNames[ "midnight" ]= tr("Midnight");
 
     // Какая строка будет выбрана как текущая тема
     int count = -1;
@@ -208,6 +209,8 @@ void AppConfigPage_Appearance::retranslateUi(void)
   QMap<QString, QString> translateNames;
   translateNames[ "default" ] = tr("Default");
   translateNames[ "dark" ]    = tr("Dark");
+  translateNames[ "modern" ]  = tr("Modern");
+  translateNames[ "midnight" ]= tr("Midnight");
 
   for(int i=0; i<themeNameComboBox->count(); ++i)
   {

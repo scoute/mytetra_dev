@@ -167,22 +167,33 @@ void FindScreen::assemblyComboOption(void)
 
 void FindScreen::setupCloseButton(void)
 {
-    // Кнопка закрытия виджета
-    closeButton=new QToolButton(this);
+    // Кнопка закрытия виджета. Та же что крестик полоски поиска
+    // в заметке (EditorFindBar): QPushButton с иконкой диалога,
+    // квадрат со стороной в высоту поля ввода. Размер ставится
+    // в fixCloseButtonSize при показе: до раскладки высота поля
+    // неизвестна, а собственная геометрия кнопки здесь еще мусор
+    closeButton=new QPushButton(this);
     closeButton->setVisible(true);
-    closeButton->setIcon(this->style()->standardIcon(QStyle::SP_TitleBarCloseButton)); // SP_TitleBarCloseButton SP_DialogCloseButton
+    closeButton->setIcon(this->style()->standardIcon(QStyle::SP_DialogCloseButton));
+    closeButton->setObjectName("findbarSquareButton");
+    closeButton->setToolTip(tr("Close find widget"));
+}
 
-    if(mytetraConfig.getInterfaceMode()=="desktop")
-    {
-        int w=closeButton->geometry().width();
-        int h=closeButton->geometry().height();
-        int x=qMin(w,h)/2;
 
-        closeButton->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed, QSizePolicy::ToolButton));
-        closeButton->setMinimumSize(x,x);
-        closeButton->setMaximumSize(x,x);
-        closeButton->resize(x,x);
-    }
+// Квадратная кнопка в размер поля ввода, как fixSquareButtons
+// в полоске поиска заметки. Значку оставляется запас на
+// внутренние отступы, иначе стиль его обрежет
+void FindScreen::fixCloseButtonSize(void)
+{
+    int side=findText->sizeHint().height();
+
+    if(side<=0)
+      return;
+
+    closeButton->setFixedSize(side, side);
+
+    int iconSide=qMax(side-8, 12);
+    closeButton->setIconSize(QSize(iconSide, iconSide));
 }
 
 
@@ -937,6 +948,8 @@ void FindScreen::widgetShow(void)
     mytetraConfig.set_findscreen_show(true);
     this->show();
 
+    fixCloseButtonSize();
+
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
 }
@@ -945,6 +958,8 @@ void FindScreen::widgetShow(void)
 void FindScreen::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
+
+    fixCloseButtonSize();
 
     // Словарь подсказок пересобирается при каждом показе:
     // теги и названия могли измениться с прошлого раза

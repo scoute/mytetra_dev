@@ -3159,6 +3159,11 @@ Enter your old password and new password.
         <translation>Поиск</translation>
     </message>
     <message>
+        <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="179"/>
+        <source>Close find widget</source>
+        <translation>Закрыть панель поиска</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="112"/>
         <source>Any word</source>
         <translation>Любое слово</translation>

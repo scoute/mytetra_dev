@@ -2413,6 +2413,11 @@ Enter your old password and new password.
         <translation>查找</translation>
     </message>
     <message>
+        <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="179"/>
+        <source>Close find widget</source>
+        <translation>关闭查找窗口</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="112"/>
         <source>Any word</source>
         <translation>任意词</translation>

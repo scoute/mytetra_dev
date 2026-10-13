@@ -2387,6 +2387,11 @@ Enter your old password and new password.
         <translation>Rechercher</translation>
     </message>
     <message>
+        <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="179"/>
+        <source>Close find widget</source>
+        <translation>Fermer le panneau de recherche</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="112"/>
         <source>Any word</source>
         <translation>N'importe quel mot</translation>

@@ -2414,6 +2414,11 @@ Enter your old password and new password.
         <translation>Որոնել</translation>
     </message>
     <message>
+        <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="179"/>
+        <source>Close find widget</source>
+        <translation>Փակել որոնման վահանակը</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="112"/>
         <source>Any word</source>
         <translation>Ցանկացած բառ</translation>

@@ -2414,6 +2414,11 @@ Geben Sie Ihr altes und Ihr neues Passwort ein.
         <translation>Suchen</translation>
     </message>
     <message>
+        <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="179"/>
+        <source>Close find widget</source>
+        <translation>Such-Widget schließen</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="112"/>
         <source>Any word</source>
         <translation>Beliebiges Wort</translation>

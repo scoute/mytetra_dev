@@ -120,7 +120,7 @@ private:
     QToolButton *toolsExpand;
 
     QVBoxLayout *toolsAreaCloseButton;
-    QToolButton *closeButton;
+    QPushButton *closeButton;
 
     QHBoxLayout *toolsAreaComboOption;
     MtComboBox *wordRegard;
@@ -174,6 +174,7 @@ protected:
 
     void setupCloseButton(void);
     void assemblyCloseButton(void);
+    void fixCloseButtonSize(void);
 
     void setupWhereFindLine(void);
     void assemblyWhereFindLine(void);

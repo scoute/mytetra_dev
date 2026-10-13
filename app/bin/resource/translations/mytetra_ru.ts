@@ -2707,6 +2707,10 @@ Try to search for entire database.</source>
         <source>Search...</source>
         <translation>Поиск...</translation>
     </message>
+    <message>
+        <source>Close find widget</source>
+        <translation>Закрыть виджет поиска</translation>
+    </message>
 </context>
 <context>
     <name>FindTableWidget</name>

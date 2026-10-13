@@ -174,6 +174,10 @@ void MetaEditor::metaAssembly(void)
 
   gridLayout->setColumnStretch(1,1);
 
+  // Вертикальные зазоры 2px: 1px теряется на темном фоне,
+  // штатные 6px давали полосы пустоты
+  gridLayout->setVerticalSpacing(2);
+
   gridLayout->setContentsMargins(0,0,0,0);
 
   m_extendEditorScreen->setLayout(gridLayout);

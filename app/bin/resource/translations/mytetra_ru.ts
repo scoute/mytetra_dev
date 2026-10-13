@@ -322,6 +322,10 @@ This can happen if there is no free space left on the hard disk or it is impossi
             <source>Modern</source>
             <translation>Современная</translation>
         </message>
+        <message>
+            <source>Midnight</source>
+            <translation>Полуночная</translation>
+        </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="43"/>
         <source>Run MyTetra in a minimized window</source>
@@ -3260,6 +3264,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <message>
             <source>Modern</source>
             <translation>Современная</translation>
+        </message>
+        <message>
+            <source>Midnight</source>
+            <translation>Полуночная</translation>
         </message>
     <message>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>

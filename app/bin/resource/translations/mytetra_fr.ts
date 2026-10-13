@@ -231,6 +231,10 @@ This can happen if there is no free space left on the hard disk or it is impossi
             <source>Modern</source>
             <translation type="unfinished"></translation>
         </message>
+        <message>
+            <source>Midnight</source>
+            <translation type="unfinished"></translation>
+        </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="106"/>
         <source>Icon size</source>
@@ -2426,6 +2430,10 @@ You need to update MyTetra.</source>
     </message>
         <message>
             <source>Modern</source>
+            <translation type="unfinished"></translation>
+        </message>
+        <message>
+            <source>Midnight</source>
             <translation type="unfinished"></translation>
         </message>
     <message>

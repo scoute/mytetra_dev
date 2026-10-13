@@ -53,6 +53,11 @@ class TreeItem
 
     // Добавление уже существующего Item-элемента
     bool addChildrenItem(TreeItem *item);
+
+    // Перемещение подчиненного элемента к другому родителю с сохранением ID.
+    // position - номер элемента у текущего родителя, newPosition - номер
+    // под которым элемент встанет у нового родителя
+    bool moveChildTo(int position, TreeItem *newParent, int newPosition);
     
     // Возвращение ссылки на родительский элемент
     TreeItem *parent() const;

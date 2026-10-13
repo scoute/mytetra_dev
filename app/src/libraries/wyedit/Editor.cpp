@@ -1123,9 +1123,12 @@ bool Editor::loadTextarea()
   // qDebug() << "Set content:";
   // qDebug() << textArea->toHtml();
 
-  // Секреты подтягиваются под глобальный цвет из настроек
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();
+
+  // Свежезагруженное не изменено: иначе первый же клик мимо
+  // посчитает текст правленным и погонит полный пересчет
+  setTextareaModified(false);
 
   return true;
 }

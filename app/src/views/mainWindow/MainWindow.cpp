@@ -2189,7 +2189,19 @@ void MainWindow::saveTextarea(void)
 
     qDebug() << "MainWindow::saveTextarea() : id :" << id;
 
+    // Текст правили или только ходили по веткам: индекс и статистика
+    // нужны лишь в первом случае, иначе это полный рескан базы
+    // на каждый клик (тысячи чтений text.html с диска)
+    const bool modified=editorScreen->getTextareaModified();
+
     editorScreen->saveTextarea();
+
+    walkHistory.add(id,
+                    editorScreen->getCursorPosition(),
+                    editorScreen->getScrollBarPosition());
+
+    if(!modified)
+      return;
 
     // Текст на диске обновился: перепарсить исходящие ссылки записи
     if(!id.isEmpty())
@@ -2197,10 +2209,6 @@ void MainWindow::saveTextarea(void)
 
     // Текст мог принести/убрать картинки и ссылки - освежить статистику
     updateStats();
-
-    walkHistory.add(id,
-                    editorScreen->getCursorPosition(),
-                    editorScreen->getScrollBarPosition());
 }
 
 

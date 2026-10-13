@@ -438,7 +438,15 @@ QString Record::getText() const
 
   // Если шифровать не нужно
   if(fieldList.value("crypt").length()==0 || fieldList.value("crypt")=="0")
-    return QString(text); // Текст просто преобразуется из QByteArray
+  {
+    // Байты 0x00 вычищаются: QString::fromUtf8() останавливается на первом
+    // нулевом байте и обрезает остаток текста (баг #134: такой байт попадает
+    // в текст при вставке из браузера, и после переоткрытия заметки видна
+    // только первая половина). Нулевых символов в HTML-тексте быть не должно
+    QString result=QString::fromUtf8(text.constData(), text.size());
+    result.remove(QChar('\0'));
+    return result; // Текст просто преобразуется из QByteArray
+  }
   else if(fieldList.value("crypt")=="1") // Если нужно шифровать
     return CryptService::decryptStringFromByteArray(globalParameters.getCryptKey(), text);
   else
@@ -476,7 +484,12 @@ QString Record::getTextDirect() const
   if(fieldList.value("crypt").length()==0 || fieldList.value("crypt")=="0")
   {
     qDebug() << "Record::getTextDirect() : return direct data";
-    return QString::fromUtf8( f.readAll() );
+    // Чтение с явным размером и вычищением 0x00, иначе fromUtf8() обрежет
+    // текст по первому нулевому байту (баг #134)
+    const QByteArray rawData=f.readAll();
+    QString result=QString::fromUtf8(rawData.constData(), rawData.size());
+    result.remove(QChar('\0'));
+    return result;
   }
   else
   {

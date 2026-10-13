@@ -184,6 +184,8 @@ HEADERS = src/main.h \
     src/views/record/MetaEditor.h \
     src/views/historyPanel/HistoryPanel.h \
     src/views/tagsPanel/TagsPanel.h \
+    src/views/contentGallery/ContentGallery.h \
+    src/views/contentGallery/GalleryTileDelegate.h \
     src/libraries/wyedit/Editor.h \
     src/libraries/wyedit/EditorConfig.h \
     src/libraries/wyedit/EditorConfigDialog.h \
@@ -358,6 +360,8 @@ SOURCES = src/main.cpp \
     src/views/record/MetaEditor.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
     src/views/tagsPanel/TagsPanel.cpp \
+    src/views/contentGallery/ContentGallery.cpp \
+    src/views/contentGallery/GalleryTileDelegate.cpp \
     src/libraries/wyedit/Editor.cpp \
     src/libraries/wyedit/EditorConfig.cpp \
     src/libraries/wyedit/EditorConfigDialog.cpp \

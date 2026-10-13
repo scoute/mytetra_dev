@@ -93,6 +93,9 @@ public slots:
 
     void toolsFindInBase(void);
 
+    void toolsImagesGallery(void);
+    void toolsFilesGallery(void);
+
     void setupShortcuts(void);
 
     // Пересчитать и показать статистику базы в статусбаре.
@@ -192,6 +195,8 @@ private:
     QAction *actionFileMenuQuit;
 
     QAction *actionToolsMenuFindInBase;
+    QAction *actionToolsMenuImagesGallery;
+    QAction *actionToolsMenuFilesGallery;
     QAction *actionToolsMenuActionLog;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 

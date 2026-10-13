@@ -1,5 +1,6 @@
 #include <QWidget>
 #include <QLabel>
+#include <QRegularExpression>
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QScrollArea>
@@ -62,9 +63,6 @@ MetaEditor::~MetaEditor(void)
 
 void MetaEditor::setupSignals(void)
 {
-  connect(this,                             &MetaEditor::setFindTextSignal,
-          globalParameters.getFindScreen(), &FindScreen::setFindText);
-
   connect(recordUrl, &QLabel::linkActivated,
           this,      &MetaEditor::onClickToUrl);
 }
@@ -122,7 +120,9 @@ void MetaEditor::setupUI(void)
  // Область текстовых меток, которые выглядят на экране как [метка1] [метка2] [метка3] ...
  recordTagsLayout=new QHBoxLayout();
  recordTagsLayout->setAlignment(Qt::AlignLeft);
- recordTagsLayout->setMargin(0);
+ // Слева 2 пикселя чтобы первый тег не лип к началу строки,
+ // остальные стороны в ноль чтобы не ломать высоту зоны
+ recordTagsLayout->setContentsMargins(2, 0, 0, 0);
 
  // Область текстовых меток QHBoxLayout невозможно добавить в QScrollArea, поэтому оборачивается в виджет
  recordTagsContainer = new QWidget();
@@ -322,7 +322,7 @@ void MetaEditor::setTags(QString tags)
 
 
  // Строка с метками разделяется на отдельные меки
- recordTagsTextList = recordTagsText.split(QRegExp("[,;]+"), QString::SkipEmptyParts);
+ recordTagsTextList = recordTagsText.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
 
  // В каждой метке убираются лишние пробелы по краям
  for(int i = 0; i < recordTagsTextList.size(); ++i)
@@ -404,7 +404,19 @@ void MetaEditor::setTags(QString tags)
  }
 
  recordTagsContainer->adjustSize();
- recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height());
+ // Высота зоны задается жестко по содержимому: sizeHint() у QScrollArea
+ // околонулевой, и сетка дает зоне нулевую высоту. height() в момент
+ // вызова тоже ненадежен (виджет может быть еще не разложен).
+ // Плюс пиксель воздуха сверху и снизу чтобы текст не лип к краям.
+ // Хром темы (рамка+отступы) снят селектором recordTagsScrollArea в CSS
+ recordTagsScrollArea->setFixedHeight(recordTagsContainer->sizeHint().height()+2);
+}
+
+
+// Список меток открытой записи для обновления извне
+QStringList MetaEditor::getTagsList(void) const
+{
+ return recordTagsTextList;
 }
 
 
@@ -474,7 +486,7 @@ void MetaEditor::onClickToTag(const QString &tagNum)
  qDebug() << "Tag text " << tag;
 
  // -----------------------------
- // Запуск поиска по тексту метки
+ // Запуск поиска по метке только в поле тегов
  // -----------------------------
 
  // Определяется ссылка на виджет поиска
@@ -484,7 +496,7 @@ void MetaEditor::onClickToTag(const QString &tagNum)
  if(findScreen->isVisible()==false)
   findScreen->widgetShow();
 
- emit setFindTextSignal(tag);
+ findScreen->setFindTag(tag);
 }
 
 

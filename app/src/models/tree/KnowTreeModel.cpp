@@ -1,6 +1,7 @@
 #include <QMap>
 #include <QDomNamedNodeMap>
 #include <QXmlStreamWriter>
+#include <QSaveFile>
 #include <QElapsedTimer>
 
 #include "main.h"
@@ -720,13 +721,18 @@ void KnowTreeModel::save()
   if(m_xmlFileName=="")
     criticalError("In KnowTreeModel can't set file name for XML file");
 
-  // Перенос текущего файла дерева в корзину
-  DiskHelper::removeFileToTrash(m_xmlFileName);
-
-  // Создается новый файл дерева
-  QFile writeFile(m_xmlFileName);
-  if (!writeFile.open(QIODevice::WriteOnly)) // | QIODevice::Text
+  // Запись ведется через QSaveFile: данные сначала пишутся во временный файл,
+  // и только после успешной записи он атомарно переименовывается в рабочий.
+  // Старый mytetra.xml остается на месте до успешного коммита, поэтому сбой,
+  // падение или нехватка диска больше не оставляют базу знаний без файла дерева.
+  // Копия предыдущего файла в корзину при каждом сохранении больше не создается
+  QSaveFile writeFile(m_xmlFileName);
+  if(!writeFile.open(QIODevice::WriteOnly)) // | QIODevice::Text
     criticalError("Cant open file "+m_xmlFileName+" for write.");
+
+  // Новому файлу сразу выставляются приватные права, чтобы данные базы
+  // не оказались читаемыми посторонними между созданием и переименованием
+  writeFile.setPermissions(QFile::ReadUser | QFile::WriteUser);
 
   // Создание объекта потоковой генерации XML-данных в файл
   QXmlStreamWriter xmlWriter(&writeFile);
@@ -757,8 +763,17 @@ void KnowTreeModel::save()
   // Завершение документа
   xmlWriter.writeEndDocument();
 
+  // Проверка ошибок записи до коммита: поврежденный временный файл
+  // просто отбрасывается, рабочий файл не затрагивается
+  if(xmlWriter.hasError())
+  {
+    writeFile.cancelWriting();
+    criticalError("Cant write data to file "+m_xmlFileName);
+  }
 
-  writeFile.close();
+  // Атомарная замена рабочего файла записанным
+  if(!writeFile.commit())
+    criticalError("Cant commit file "+m_xmlFileName);
 
   m_lastSaveDateTime=QDateTime::currentDateTime();
 }

@@ -105,6 +105,9 @@ private slots:
     void toolsPreferences(void);
     void onActionLogClicked(void);
 
+    // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
+    void onThemeMenuTriggered(QAction *action);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -134,6 +137,12 @@ private:
     void initPreferencesMenu(QMenu *menu);
     void initHelpMenu(void);
     void initHiddenActions(void);
+
+    // Меню быстрого переключения темы и пометка в нем текущей темы.
+    // Пометка обновляется при каждом открытии меню, так как тему можно
+    // сменить и из диалога настроек
+    void initThemesMenu(void);
+    void syncThemeMenu(void);
 
     void initRecordTableActions(void);
 
@@ -186,6 +195,9 @@ private:
     QAction *actionFocusTree;
     QAction *actionFocusNoteTable;
     QAction *actionFocusEditor;
+
+    // Меню Темы в menubar: один клик вместо похода в настройки
+    QMenu *themesMenu=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

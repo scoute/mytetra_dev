@@ -1847,6 +1847,11 @@ void TreeScreen::saveKnowTree(void)
   knowTreeModel->save();
 
   updateLastKnowTreeData( QFileInfo(), false );
+
+  // Сохранено дерево, значит изменились метаданные: заголовки веток,
+  // имена, авторы, теги и url заметок, состав веток. Подписчики
+  // (панель истории) обновляются по этому сигналу
+  emit treeMetadataSaved();
 }
 
 

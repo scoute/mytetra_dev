@@ -19,11 +19,13 @@ class QSplitter;
 class QStatusBar;
 class QLabel;
 class QTableWidget;
+class QDockWidget;
 
 class TreeScreen;
 class MetaEditor;
 class RecordTableScreen;
 class FindScreen;
+class HistoryPanel;
 class WindowSwitcher;
 class CommandRunner;
 
@@ -224,6 +226,11 @@ private:
     QMenu *toolsMenu=nullptr;
     QMenu *helpMenu=nullptr;
     QMenu *preferencesSubMenu=nullptr;
+
+    // Панель истории посещений. Переключается из меню Tools и горячей
+    // клавишей, в закрытом виде место не занимает
+    HistoryPanel *historyPanel=nullptr;
+    QDockWidget *historyPanelDock=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

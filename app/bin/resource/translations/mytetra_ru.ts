@@ -4973,6 +4973,10 @@ Please report about this problem to the developers.</source>
         <source>Find in base</source>
         <translation>Найти в базе</translation>
     </message>
+        <message>
+            <source>Show history panel</source>
+            <translation>Показать панель истории</translation>
+        </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
         <source>Synchronization</source>
@@ -5514,4 +5518,91 @@ Please select single item for enabling edit operation.</source>
 %3.</translation>
     </message>
 </context>
+    <context>
+        <name>HistoryPanel</name>
+        <message>
+            <source>Filter by note title</source>
+            <translation>Фильтр по названию заметки</translation>
+        </message>
+        <message>
+            <source>Note</source>
+            <translation>Заметка</translation>
+        </message>
+        <message>
+            <source>Branch</source>
+            <translation>Ветка</translation>
+        </message>
+        <message>
+            <source>Last visit</source>
+            <translation>Последний визит</translation>
+        </message>
+        <message>
+            <source>Visits</source>
+            <translation>Визиты</translation>
+        </message>
+        <message>
+            <source>Images</source>
+            <translation>Картинки</translation>
+        </message>
+        <message>
+            <source>Files</source>
+            <translation>Файлы</translation>
+        </message>
+        <message>
+            <source>Size</source>
+            <translation>Размер</translation>
+        </message>
+        <message>
+            <source>Clear</source>
+            <translation>Очистить</translation>
+        </message>
+        <message>
+            <source>Forget all visit history</source>
+            <translation>Забыть всю историю посещений</translation>
+        </message>
+        <message>
+            <source>Go to note</source>
+            <translation>Перейти к заметке</translation>
+        </message>
+        <message>
+            <source>Forget this note</source>
+            <translation>Забыть эту заметку</translation>
+        </message>
+        <message>
+            <source>Clear visit history</source>
+            <translation>Очистить историю посещений</translation>
+        </message>
+        <message>
+            <source>Forget all visit history?</source>
+            <translation>Забыть всю историю посещений?</translation>
+        </message>
+        <message>
+            <source>just now</source>
+            <translation>только что</translation>
+        </message>
+        <message>
+            <source>%1 min ago</source>
+            <translation>%1 мин назад</translation>
+        </message>
+        <message>
+            <source>%1 h ago</source>
+            <translation>%1 ч назад</translation>
+        </message>
+        <message>
+            <source>%1 d ago</source>
+            <translation>%1 дн назад</translation>
+        </message>
+        <message>
+            <source>(encrypted note)</source>
+            <translation>(шифрованная заметка)</translation>
+        </message>
+        <message>
+            <source>(encrypted)</source>
+            <translation>(шифровано)</translation>
+        </message>
+        <message>
+            <source>Visits: %1</source>
+            <translation>Визиты: %1</translation>
+        </message>
+    </context>
 </TS>

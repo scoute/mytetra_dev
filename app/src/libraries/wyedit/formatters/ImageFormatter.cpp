@@ -7,6 +7,7 @@
 #include <QTextDocumentFragment>
 #include <QMessageBox>
 #include <QImage>
+#include <QUrl>
 
 #include "ImageFormatter.h"
 
@@ -294,6 +295,54 @@ void ImageFormatter::onDownloadImages(const QString html)
   QTextCursor textCursor(&textDocument);
   textCursor.insertHtml(html);
 
+  // Внешние картинки скачиваются только по http и https. Другие схемы
+  // (в частности file) никогда не подставляются в сетевой запрос, иначе
+  // вставленный HTML мог бы заставить программу прочитать локальный файл
+  // или обратиться во внутреннюю сеть без ведома пользователя
+  auto isDownloadableImageReference=[](const QString &imageName)
+  {
+    QString scheme=QUrl(imageName).scheme().toLower();
+    return scheme=="http" || scheme=="https";
+  };
+
+  // Предварительный подсчет внешних картинок без изменения документа,
+  // чтобы спросить подтверждение до того, как документ будет изменен
+  QStringList externalHttpReferences;
+  QTextBlock preBlock=textDocument.begin();
+  while(preBlock.isValid())
+  {
+    QTextBlock::iterator preIt;
+    for(preIt=preBlock.begin(); !(preIt.atEnd()); ++preIt)
+    {
+      QTextFragment preFragment=preIt.fragment();
+      if(preFragment.isValid() && preFragment.charFormat().isImageFormat())
+      {
+        QString preImageName=preFragment.charFormat().toImageFormat().name();
+        if(!preImageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")) &&
+           isDownloadableImageReference(preImageName) &&
+           !externalHttpReferences.contains(preImageName))
+          externalHttpReferences << preImageName;
+      }
+    }
+    preBlock=preBlock.next();
+  }
+
+  // Загрузка внешних картинок выполняется только с согласия пользователя
+  if(!externalHttpReferences.isEmpty())
+  {
+    QMessageBox askBox;
+    askBox.setText(tr("Download %1 external image(s) from the Internet?").arg(externalHttpReferences.count()));
+    askBox.setInformativeText(tr("The pasted text contains images stored on external sites. They will be downloaded now."));
+    askBox.setDetailedText(externalHttpReferences.join("\n"));
+    askBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    askBox.setDefaultButton(QMessageBox::No);
+    if(askBox.exec()!=QMessageBox::Yes)
+    {
+      emit downloadImagesSuccessfull( html, QMap<QString, QByteArray>(), QMap<QString, QString>() );
+      return;
+    }
+  }
+
   QStringList downloadReferences; // Список ссылок на изображения, которые надо загрузить
 
   QMap<QString, QString> referencesAndInternalNames; // Соответствие ссылок на изображения и внутренних имен изображений
@@ -323,8 +372,12 @@ void ImageFormatter::onDownloadImages(const QString html)
           QString imageName=imgFmt.name();
           qDebug() << "Find " << imageName << "\n"; // имя файла
 
-          // Если имя файла не является "внутренним", значит картинка еще не добавлена
-          if(!imageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")))
+          // Если имя файла не является "внутренним", значит картинка еще не добавлена.
+          // В очередь скачивания попадают только http(s)-ссылки, остальные
+          // внешние имена (file, data и прочие) остаются в документе как есть
+          // и никогда не уходят в сетевой запрос
+          if(!imageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")) &&
+             isDownloadableImageReference(imageName))
           {
             if(msgBox.text().length()==0)
             {

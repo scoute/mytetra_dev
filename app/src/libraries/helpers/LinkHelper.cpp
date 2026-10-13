@@ -1,7 +1,7 @@
 #include <QUrl>
 #include <QString>
 #include <QStringList>
-#include <QProcess>
+#include <QFileInfo>
 #include <QDesktopServices>
 #include <QDebug>
 
@@ -49,41 +49,46 @@ void LinkHelper::gotoReference(QString href)
 
 bool LinkHelper::openLinkWithDesktopServices(const QString &link)
 {
-    // qDebug() << "Try open link " << link;
+    // Если передан существующий локальный путь, он открывается системным
+    // обработчиком напрямую через file:// URL, без вызова shell. Раньше сырая
+    // строка уходила в "cmd /C start" (Windows) без кавычек, и метасимволы
+    // в пути выполнялись командным интерпретатором как отдельные команды
+    QFileInfo directFileInfo(link);
+    if(directFileInfo.exists())
+        return QDesktopServices::openUrl(QUrl::fromLocalFile(directFileInfo.absoluteFilePath()));
 
     QUrl url = QUrl(link);
+
+    if(!url.isValid())
+        return false;
+
+    QString scheme=url.scheme().toLower();
+
+    // Опасные схемы никогда не открываются
+    if(scheme=="javascript" || scheme=="data" || scheme=="vbscript")
+        return false;
 
     // Использовать метод QUrl::isLocalFile() нельзя, так как он просто
     // возвращает true если схема "file" и все.
     // Вместо этого написана специальная функция определения, внешняя это
     // или внутренняя ссылка
-    if ( isExternal( url ) )
+    if ( isExternal( url ) || scheme=="mailto" )
     {
         // Для внешних ссылок используется QDesktopServices
         return QDesktopServices::openUrl(url);
     }
-    else
+
+    // Локальный file:// URL открывается только если файл существует
+    if(scheme=="file")
     {
-        // Определено, что передана локальная ссылка
+        QFileInfo fileInfo(url.toLocalFile());
+        if(fileInfo.exists())
+            return QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
 
-        QString filePath = link; // url.toLocalFile();
-
-        // qDebug() << "Try open file " << filePath;
-
-        // Используем QProcess для вызова системной команды
-#ifdef Q_OS_WIN
-        QStringList args;
-        args << "/C" << "start" << "" << filePath.replace("/", "\\");
-        QProcess::startDetached("cmd", args);
-#elif defined(Q_OS_MAC)
-        QProcess::startDetached("open", QStringList() << filePath);
-#elif defined(Q_OS_LINUX)
-        QProcess::startDetached("xdg-open", QStringList() << filePath);
-#else
-        return false; // Не поддерживается на других платформах
-#endif
-        return true;
+        return false;
     }
+
+    return false; // Неизвестная схема, ничего не открываем
 }
 
 

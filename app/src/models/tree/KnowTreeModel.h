@@ -144,8 +144,9 @@ private:
     QDomElement createStandartRootElement(QDomDocument &doc);
 
     //! Расшифровка зашифрованных атрибутов документа
-    void exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString exportDir);
-    void exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &element, QString exportDir);
+    //! Возвращают false, если копирование связанных данных не удалось
+    bool exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString exportDir);
+    bool exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &element, QString exportDir);
     
     //! Перемещение ветки вверх или вниз
     QModelIndex moveUpDownBranch(const QModelIndex &index,int direction);

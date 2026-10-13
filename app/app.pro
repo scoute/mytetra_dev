@@ -85,7 +85,7 @@ RESOURCES = bin/mytetra.qrc \
             bin/themes.qrc 
 TRANSLATIONS = bin/resource/translations/mytetra_ru.ts \ 
                bin/resource/translations/mytetra_fr.ts
-CODECFORTR  = utf8
+CODECFORSRC  = utf8
 
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/src

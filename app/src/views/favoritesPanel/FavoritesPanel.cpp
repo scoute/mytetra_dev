@@ -86,7 +86,7 @@ void FavoritesPanel::setupUi(void)
 void FavoritesPanel::assembly(void)
 {
     QHBoxLayout *headerLayout=new QHBoxLayout();
-    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setContentsMargins(3, 0, 0, 0);
     headerLayout->addWidget(headerIcon);
     headerLayout->addWidget(headerLabel, 1);
 

@@ -180,6 +180,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("misc-focusNoteTable", Data{ QKeySequence("F6"), tr("Set focus to notes table"), tr("") });
     defaultKeyTable.insert("misc-focusEditor", Data{ QKeySequence("F4"), tr("Set focus to editor"), tr("") });
     defaultKeyTable.insert("misc-findInBase",  Data{ QKeySequence("Ctrl+Shift+F"), tr("Find in base"), tr("") });
+    defaultKeyTable.insert("misc-historyPanel", Data{ QKeySequence("F11"), tr("Show history panel"), tr("") });
     defaultKeyTable.insert("misc-syncro",      Data{ QKeySequence("F9"), tr("Synchronization"), tr("Run synchronization") });
     defaultKeyTable.insert("misc-editConfirm", Data{ QKeySequence(Qt::CTRL + Qt::Key_Return), tr("Ok"), tr("") });
     defaultKeyTable.insert("misc-print",       Data{ QKeySequence("Ctrl+P"), tr("Print"), tr("") });

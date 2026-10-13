@@ -1,9 +1,13 @@
 #include <QString>
 
 #include "WalkHistory.h"
+#include "VisitHistory.h"
 #include "models/tree/KnowTreeModel.h"
 #include "views/tree/KnowTreeView.h"
 #include "libraries/helpers/ObjectHelper.h"
+
+
+extern VisitHistory visitHistory;
 
 
 WalkHistory::WalkHistory(void)
@@ -88,6 +92,9 @@ void WalkHistory::add(QString id,
     // Без этой команды работало правильно, но она вроде должна быть в этом месте
     leaveMarkPoint=-1;
 
+    // Факт посещения уходит в журнал панели истории
+    visitHistory.logVisit(id);
+
     print();
     return;
   } // Закончилось условие что происходит запоминание без движения по истории
@@ -120,6 +127,9 @@ void WalkHistory::add(QString id,
 
     // Идентификатор добавляется в историю
     historyId << id;
+
+    // Факт посещения уходит в журнал панели истории
+    visitHistory.logVisit(id);
 
     qDebug() << "WalkHistory add id: " << id;
     qDebug() << "WalkHistory pointer: " << historyPoint;

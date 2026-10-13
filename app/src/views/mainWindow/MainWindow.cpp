@@ -11,6 +11,7 @@
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QSplitter>
+#include <QDockWidget>
 #include <QStatusBar>
 #include <QActionGroup>
 #include <QLabel>
@@ -45,6 +46,7 @@ public:
 #include "views/tree/TreeScreen.h"
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
+#include "views/historyPanel/HistoryPanel.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
@@ -162,6 +164,16 @@ void MainWindow::setupUI(void)
     // Вспомогательный объект с виджетом синхронизации базы знаний
     syncroCommandRun=new CommandRunner( this );
     globalParameters.setSyncroCommandRunner( syncroCommandRun );
+
+    // Панель истории посещений в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools и горячей клавишей
+    historyPanel=new HistoryPanel(this);
+    historyPanel->setObjectName("historyPanel");
+
+    historyPanelDock=new QDockWidget(tr("History"), this);
+    historyPanelDock->setObjectName("historyPanelDock");
+    historyPanelDock->setWidget(historyPanel);
+    historyPanelDock->hide();
 
     // todo: Для проверки, почему то в этом месте поиск объекта по имени не работает, разобраться.
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
@@ -297,6 +309,8 @@ void MainWindow::assembly(void)
     findSplitter->setObjectName("findsplitter");
 
     setCentralWidget(findSplitter);
+
+    addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
 }
 
 
@@ -686,6 +700,13 @@ void MainWindow::initToolsMenu(void)
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     toolsMenu->addAction(actionToolsMenuActionLog);
 
+    // Переключатель панели истории: видимость дока и галочка синхронны сами
+    QAction *historyPanelToggle=historyPanelDock->toggleViewAction();
+    historyPanelToggle->setIcon(QIcon(":/resource/pic/history.svg"));
+    toolsMenu->addAction(historyPanelToggle);
+
+    shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
+
     toolsMenu->addSeparator();
 
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -1018,6 +1039,10 @@ void MainWindow::retranslateUi(void)
 
         actionToolsMenuActionLog->setText(tr("Action &log"));
 
+        // Переключатель дока истории: текст тоже идет через шорткаты,
+        // но initAction для него звался один раз при построении
+        shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
+
         if(actionToolsMenuPreferences!=nullptr)
             actionToolsMenuPreferences->setText(tr("&Preferences"));
 
@@ -1070,6 +1095,8 @@ void MainWindow::retranslateUi(void)
     actionTrayMinimize->setText(tr("Mi&nimize window"));
     actionTrayQuit->setText(tr("&Quit"));
 
+    historyPanelDock->setWindowTitle(tr("History"));
+
     // Дочерние экраны со статичными текстами
     if(treeScreen!=nullptr)
         treeScreen->retranslateUi();
@@ -1084,6 +1111,9 @@ void MainWindow::retranslateUi(void)
 
     if(findScreen!=nullptr)
         findScreen->retranslateUi();
+
+    if(historyPanel!=nullptr)
+        historyPanel->retranslateUi();
 }
 
 

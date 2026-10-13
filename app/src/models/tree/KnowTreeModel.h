@@ -3,9 +3,12 @@
 
 #include <QModelIndex>
 #include <QObject>
+#include <QMap>
 #include <QSet>
+#include <QList>
 #include <QDomElement>
 #include <QDateTime>
+#include <QRegularExpression>
 
 #include "TreeModel.h"
 
@@ -16,6 +19,18 @@
 class ClipboardBranch;
 class Record;
 class QXmlStreamWriter;
+
+// Одна строка детализации статистики: откуда что посчиталось
+struct BaseStatRow
+{
+  QString branchPath; // Имена веток от корня через " / "
+  QString noteName;
+  QString recordId;
+  int files=0;
+  int images=0;
+  int links=0;
+  int tags=0;
+};
 
 class KnowTreeModel : public TreeModel
 {
@@ -76,6 +91,39 @@ public:
 
     //! Возвращает общее количество записей, хранимых в дереве
     int getAllRecordCount(void);
+
+    //! Возвращает общее количество веток в дереве (без невидимого корня)
+    int getBranchCount(void) const;
+
+    //! Общая статистика базы: ветки, записи, приаттаченные файлы,
+    //! файлы картинок на диске в каталогах записей, distinct-ссылки
+    //! на всю базу (одна ссылка в десяти заметках - одна ссылка; Qt
+    //! дробит одну ссылку на несколько <a href>, голый подсчет врет)
+    //! и distinct-метки. Тексты читаются тихо (нет файла = пусто,
+    //! закрытый шифр = пусто), модель не меняется.
+    //! Считается один раз, дальше кеш: точечные обновления строк
+    //! (refreshRecordStats) и сброс флага на структурных правках
+    void getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags);
+
+    //! Построчная детализация статистики для диалога по клику:
+    //! каждая запись со своим путем, счетчиками и идентификатором
+    //! (двойной клик прыгает к заметке). Тот же тихий проход что статистика
+    QList<BaseStatRow> getBaseStatRows(void);
+
+    //! Сбросить кеш статистики: следующий запрос посчитает все заново.
+    //! Вызывается на структурных правках (ветки, bulk-операции),
+    //! построчные правки идут через refresh/remove без сброса
+    void invalidateStats(void);
+
+    //! Пересчитать одну запись (текст, метки, аттачи): distinct-наборы
+    //! правятся через счетчики ссылок, полного прохода нет.
+    //! Нет записи - строка тихо выкидывается. При грязном кеше
+    //! сначала полный пересчет
+    void refreshRecordStats(const QString &recordId);
+
+    //! Выкинуть одну запись из кеша (удаление). При грязном кеше
+    //! ничего не делает: пересчет все равно впереди
+    void removeRecordStats(const QString &recordId);
     
     //! Возвращает количество записей в ветке и всех подветках
     int getRecordCountForItem(const TreeItem *item);
@@ -171,6 +219,30 @@ private:
     QModelIndex moveUpDownBranch(const QModelIndex &index,int direction);
 
     int getAllRecordCountRecurse(const TreeItem *item, int mode) const;
+
+    int getBranchCountRecurse(const TreeItem *item) const;
+
+    // Кеш статистики: строки по id в порядке дерева, наборы ссылок
+    // и меток построчно (для refcount distinct-итогов), сами итоги
+    // как счетчики (сколько записей ссылается/метит)
+    bool m_statsDirty=true;
+    QMap<QString, BaseStatRow> m_statsRows;
+    QStringList m_statsOrder;
+    QMap<QString, QSet<QString>> m_statsRowLinks;
+    QMap<QString, QSet<QString>> m_statsRowTags;
+    QMap<QString, int> m_linkRefs;
+    QMap<QString, int> m_tagRefs;
+
+    void ensureStats(void);
+
+    // Посчитать строку одной записи. Ссылки и метки отдаются наружу
+    // наборами для refcount, в строку идут только счетчики
+    BaseStatRow computeStatsRow(Record *record, TreeItem *branchItem,
+                                QSet<QString> &noteLinks, QSet<QString> &noteTags,
+                                const QRegularExpression &hrefPattern);
+
+    void refStatsSets(const QSet<QString> &links, const QSet<QString> &tags);
+    void unrefStatsRow(const QString &recordId);
 
     QString pasteSubbranchRecurse(TreeItem *item,
                                   QString startBranchId,

@@ -3253,6 +3253,42 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Dark</source>
         <translation>Темная</translation>
     </message>
+    <message>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
+        <translation>Ветки: %1 | Записи: %2 | Метки: %3 | Файлы: %4 | Картинки: %5 | Ссылки: %6</translation>
+    </message>
+    <message>
+        <source>Base statistics: branches, records, tags, files, images and links. Click opens per-note details.</source>
+        <translation>Статистика базы: ветки, записи, метки, файлы, картинки и ссылки. Клик открывает разбивку по заметкам.</translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>Заметка</translation>
+    </message>
+    <message>
+        <source>Links</source>
+        <translation>Ссылки</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation>Картинки</translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation>Файлы</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Метки</translation>
+    </message>
+    <message>
+        <source>Statistics</source>
+        <translation>Статистика</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

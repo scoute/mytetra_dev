@@ -303,7 +303,12 @@ void KnowTreeView::dropEvent(QDropEvent *event)
                                              record);
 
             // Сохранение дерева веток
-            find_object<TreeScreen>("treeScreen")->saveKnowTree();
+            TreeScreen *dropTreeScreen=find_object<TreeScreen>("treeScreen");
+            dropTreeScreen->saveKnowTree();
+
+            // Запись прилетела дропом: состав и пути поменялись,
+            // точечно не правится
+            dropTreeScreen->knowTreeModel->invalidateStats();
         }
 
         // Обновление исходной ветки чтобы было видно что записей убавилось
@@ -570,6 +575,9 @@ void KnowTreeView::dropBranch(QDropEvent *event)
     if(treeScreen!=nullptr)
     {
         treeScreen->saveKnowTree();
+
+        // Ветка перемещена дропом: состав и пути поменялись
+        treeModel->invalidateStats();
     }
 
     // В модели данных дерева обнуляется элемент,

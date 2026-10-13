@@ -9,6 +9,9 @@
 
   <qresource prefix="/">
     <file>resource/standartconfig/any/themes/default/stylesheet.css</file>
+    <file>resource/standartconfig/any/themes/default/pic/branch_line.png</file>
+    <file>resource/standartconfig/any/themes/default/pic/branch_more.png</file>
+    <file>resource/standartconfig/any/themes/default/pic/branch_end.png</file>
   </qresource>
   <qresource prefix="/" about="QDarkStyleSheet project">
     <file>resource/standartconfig/any/themes/dark/stylesheet.css</file>

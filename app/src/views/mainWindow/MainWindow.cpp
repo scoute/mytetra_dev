@@ -20,6 +20,8 @@
 #include <QHeaderView>
 #include <QVBoxLayout>
 #include <QMouseEvent>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 
 // Элемент таблицы с числовой сортировкой: по клику на заголовок
@@ -69,6 +71,7 @@ public:
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/CssHelper.h"
+#include "libraries/mcp/McpTools.h"
 
 
 extern AppConfig mytetraConfig;
@@ -398,6 +401,26 @@ void MainWindow::commitData(QSessionManager& manager)
 
 // Слот, обрабатывающий внешние сообщения
 // Используется для обработки ссобщений, приходящих от других экземпляров MyTetra
+// Разбор аргумента MCP-команд: весь текст после первого пробела это
+// компактный JSON (пробелы внутри допустимы, переводов строк нет)
+static QJsonObject parseMcpCommandArgs(const QString &message)
+{
+  int spacePos=message.indexOf(' ');
+
+  if(spacePos<0)
+    return QJsonObject();
+
+  QJsonParseError parseError;
+  QJsonDocument doc=QJsonDocument::fromJson(message.mid(spacePos+1).toUtf8(),
+                                            &parseError);
+
+  if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
+    return QJsonObject();
+
+  return doc.object();
+}
+
+
 void MainWindow::messageHandler(QString message)
 {
     qDebug() << "MainWindow recieved message: "+message;
@@ -500,6 +523,146 @@ void MainWindow::messageHandler(QString message)
         // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
         // Аргумент команды это ссылка на источник, может отсутствовать
         clipper.clipNowWithUrl(commandArgument);
+    }
+
+    // MCP-команды записи от внешнего AI-клиента: применяются к живой
+    // модели (со всем несохраненным состоянием GUI) и сохраняются.
+    // Ответного канала нет: MCP проверяет применение сам, перечитывая
+    // базу по mtime. При коллизии id вставка не делается чтобы MCP
+    // не вернул чужой id (проверка сама перегенерирует и повторит)
+    else if(command=="mcpCreateBranch")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        QJsonObject created=McpTools::applyCreateBranch(treeScreen->knowTreeModel,
+                                                        args.value("parent_id").toString(),
+                                                        args.value("id").toString(),
+                                                        args.value("name").toString(),
+                                                        error);
+
+        if(!error.isEmpty() || created.isEmpty())
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpCreateNote")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        QJsonObject created=McpTools::applyCreateNote(treeScreen->knowTreeModel,
+                                                      args.value("branch_id").toString(),
+                                                      args.value("id").toString(),
+                                                      args.value("name").toString(),
+                                                      args.value("html").toString(),
+                                                      args.value("tags").toString(),
+                                                      error);
+
+        if(!error.isEmpty() || created.isEmpty())
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpUpdateNote")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        QStringList updatedFields;
+
+        // Открытый в редакторе текст не трогается: редактор держит свой
+        // буфер до перевыбора (last writer wins), как при любом
+        // стороннем изменении файла
+        bool ok=McpTools::applyUpdateNote(treeScreen->knowTreeModel,
+                                          args.value("id").toString(),
+                                          args.value("has_name").toBool(false),
+                                          args.value("name").toString(),
+                                          args.value("has_html").toBool(false),
+                                          args.value("html").toString(),
+                                          args.value("has_tags").toBool(false),
+                                          args.value("tags").toString(),
+                                          error,
+                                          updatedFields);
+
+        if(!ok)
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    // Удаление из-под AI: тот же состав что ручное удаление записи,
+    // минус диалог подтверждения (его заменяет флаг режима сервера).
+    // Редактор намеренно не чистится: его буфер доживает до перевыбора,
+    // как при любом стороннем изменении файла
+    else if(command=="mcpDeleteNote")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString id=args.value("id").toString();
+
+        if(id.isEmpty())
+            return;
+
+        QString error;
+
+        if(!McpTools::applyDeleteNote(treeScreen->knowTreeModel, id, error))
+            return;
+
+        emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpDeleteBranch")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString id=args.value("id").toString();
+
+        if(id.isEmpty())
+            return;
+
+        QString error;
+        QJsonObject deleted=McpTools::applyDeleteBranch(treeScreen->knowTreeModel,
+                                                        id, error);
+
+        if(!error.isEmpty() || deleted.isEmpty())
+            return;
+
+        treeScreen->knowTreeModel->save();
     }
 }
 

@@ -105,7 +105,10 @@ void printHelp()
     printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
     printf("./mytetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
-    printf("./mytetra --mcp - Run read-only MCP server (Model Context Protocol) over stdio for AI clients\n");
+    printf("./mytetra --mcp - Run read-only MCP server (as --mcp-ro)\n");
+    printf("./mytetra --mcp-ro - Run read-only MCP server over stdio for AI clients\n");
+    printf("./mytetra --mcp-rw - Run read-write MCP server (create and update, no delete)\n");
+    printf("./mytetra --mcp-rw-with-delete - Run MCP server with delete tools, files go to trash\n");
     printf("\n");
 }
 
@@ -246,11 +249,17 @@ void parseConsoleOption(QtSingleApplication &app)
 
 int main(int argc, char ** argv)
 {
-    // MCP-режим раньше всего остального: ни GUI, ни single-instance,
-    // ни вывод в stdout (он отдан протоколу) здесь не нужны
+    // MCP-режимы раньше всего остального: ни GUI, ни single-instance,
+    // ни вывод в stdout (он отдан протоколу) здесь не нужны.
+    // --mcp оставлен для совместимости и означает read-only
     for(int i=1; i<argc; ++i)
-        if(QString::fromLocal8Bit(argv[i])=="--mcp")
+    {
+        QString arg=QString::fromLocal8Bit(argv[i]);
+
+        if(arg=="--mcp" || arg=="--mcp-ro" ||
+           arg=="--mcp-rw" || arg=="--mcp-rw-with-delete")
             return runMcpServer(argc, argv);
+    }
 
     printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
 

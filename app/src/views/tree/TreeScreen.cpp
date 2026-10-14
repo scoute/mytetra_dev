@@ -486,6 +486,12 @@ void TreeScreen::assembly(void)
  favoritesSplitter->setStretchFactor(1, 1);
  favoritesSplitter->setCollapsible(0, false);
  favoritesSplitter->setCollapsible(1, false);
+
+ // Ручной драг: панель уходит из компактного режима,
+ // список наливается на выставленную высоту
+ connect(favoritesSplitter, &QSplitter::splitterMoved,
+         favoritesPanel, &FavoritesPanel::setUserResized);
+
  treeScreenLayout->addWidget(favoritesSplitter, 1);
 
  setLayout(treeScreenLayout);

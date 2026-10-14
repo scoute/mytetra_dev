@@ -15,6 +15,7 @@ class QListWidget;
 class QListWidgetItem;
 class QLabel;
 class QShowEvent;
+class QVBoxLayout;
 class TreeScreen;
 
 class FavoritesPanel : public QWidget
@@ -30,6 +31,9 @@ public slots:
 
     // Пересборка списка. Публичный для обновления извне
     void refreshFavorites(void);
+
+    // Границу подвинули руками: список на всю высоту панели
+    void setUserResized(void);
 
     // Обновить прямые тексты новым языком
     void retranslateUi(void);
@@ -64,6 +68,11 @@ private:
     };
 
     QListWidget *favoritesList=nullptr;
+
+    QVBoxLayout *favoritesLayout=nullptr;
+
+    // Ручной драг был: компактный режим выключен до перезапуска
+    bool m_userResized=false;
 
     // Шапка чтобы панель не висела одиноко: звездочка и слово
     QLabel *headerIcon=nullptr;

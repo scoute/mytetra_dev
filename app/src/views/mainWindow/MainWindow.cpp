@@ -1184,6 +1184,12 @@ QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setRowCount(rows.size());
 
+    // Компактные строки в одну текстовую строку как в истории и метках:
+    // дефолтная высота секции QTableWidget заметно выше шрифта
+    const int rowHeight=table->fontMetrics().height()+2;
+    table->verticalHeader()->setMinimumSectionSize(rowHeight);
+    table->verticalHeader()->setDefaultSectionSize(rowHeight);
+
     for(int r=0; r<rows.size(); ++r)
     {
         const BaseStatRow &row=rows.at(r);

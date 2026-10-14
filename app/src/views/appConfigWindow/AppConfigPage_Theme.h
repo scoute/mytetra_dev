@@ -54,24 +54,23 @@ private slots:
     void onClickedInterfaceFont(void);
     void onClickedInterfaceFontReset(void);
     void onClickedResetAll(void);
-    void onThemeComboChanged(int index);
+    void onSwitchToCustom(void);
 
 protected:
     void setupUi(void);
     void setupSignals(void);
     void assembly(void);
 
-    void setupThemeComboBox(void);
     void setupIconSizeComboBox(void);
 
     void setColorForButton(QToolButton *button, QColor *color, const QColor &value);
     void refreshInterfaceFontButton(void);
 
-    // Базовая тема и размер иконок (переехало из Appearance)
+    // Базовая тема и размер иконок (переехало из Appearance).
+    // Переключатель тем живёт в меню Вид-Темы: здесь только редактор Custom
     QGroupBox *baseBox;
-    QLabel *themeLabel;
-    MtComboBox *themeNameComboBox;
     QLabel *customHint;
+    QPushButton *switchToCustomButton;
     QLabel *baseThemeLabel;
     MtComboBox *baseThemeComboBox;
     QLabel *iconSizeLabel;

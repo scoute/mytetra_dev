@@ -68,12 +68,15 @@ void AppConfigPage_Theme::setupUi(void)
 {
   qDebug() << "Create theme config page";
 
-  setupThemeComboBox();
   setupIconSizeComboBox();
 
   baseBox=new QGroupBox(this);
   customHint=new QLabel(this);
   customHint->setWordWrap(true);
+
+  // Переход на Custom в один клик: видна только вне Custom.
+  // Переключатель тем живёт в меню Вид-Темы
+  switchToCustomButton=new QPushButton(this);
 
   // --- Заметка (переехало из Misc) ---
   noteBox=new QGroupBox(this);
@@ -195,7 +198,20 @@ void AppConfigPage_Theme::setupUi(void)
 
   refreshNotePaperImageLabel();
 
-  // Группы кастома по текущему выбору темы (группы уже созданы выше)
+  // Основа для Custom: одна из четырёх базовых тем.
+  // Порядок фиксирован и повторяется в retranslateUi
+  baseThemeLabel=new QLabel(this);
+  baseThemeComboBox=new MtComboBox(this);
+  baseThemeComboBox->addItem(tr("Default"));
+  baseThemeComboBox->addItem(tr("Dark"));
+  baseThemeComboBox->addItem(tr("Modern"));
+  baseThemeComboBox->addItem(tr("Midnight"));
+
+  const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
+  const int baseIndex=baseThemes.indexOf(mytetraConfig.get_themeCustomBaseTheme());
+  baseThemeComboBox->setCurrentIndex(baseIndex>=0 ? baseIndex : 0);
+
+  // Группы кастома по текущей теме (группы уже созданы выше)
   updateCustomEnabled();
 
   retranslateUi();
@@ -216,49 +232,8 @@ void AppConfigPage_Theme::refreshInterfaceFontButton(void)
 }
 
 
-// Выбор темы интерфейса (переехало из Appearance)
-void AppConfigPage_Theme::setupThemeComboBox()
-{
-  themeLabel=new QLabel(this);
-  themeLabel->setText(tr("Interface theme"));
-
-  themeNameComboBox=new MtComboBox(this);
-
-  QMap<QString, QString> translateNames;
-  translateNames[ "default" ] = tr("Default");
-  translateNames[ "dark" ]    = tr("Dark");
-  translateNames[ "modern" ]  = tr("Modern");
-  translateNames[ "midnight" ]= tr("Midnight");
-  translateNames[ "custom" ]  = tr("Custom");
-
-  int count = -1;
-  int currentIndex = -1;
-
-  for (auto name : fixedParameters.themesAvailableList )
-  {
-    QString translateName=translateNames.value(name, "Unknown");
-    themeNameComboBox->addItem(translateName);
-
-    count++;
-    if ( name == mytetraConfig.getInterfaceTheme() )
-      currentIndex = count;
-  }
-
-  themeNameComboBox->setCurrentIndex( currentIndex );
-
-  // Основа для Custom: одна из четырёх базовых тем.
-  // Порядок фиксирован и повторяется в retranslateUi
-  baseThemeLabel=new QLabel(this);
-  baseThemeComboBox=new MtComboBox(this);
-  baseThemeComboBox->addItem(tr("Default"));
-  baseThemeComboBox->addItem(tr("Dark"));
-  baseThemeComboBox->addItem(tr("Modern"));
-  baseThemeComboBox->addItem(tr("Midnight"));
-
-  const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
-  const int baseIndex=baseThemes.indexOf(mytetraConfig.get_themeCustomBaseTheme());
-  baseThemeComboBox->setCurrentIndex(baseIndex>=0 ? baseIndex : 0);
-}
+// Выбор темы интерфейса убран со страницы: переключатель живёт
+// в меню Вид-Темы. Здесь только редактор Custom
 
 
 // Выбор размера иконок (переехало из Appearance)
@@ -313,8 +288,7 @@ void AppConfigPage_Theme::setupSignals(void)
   connect(interfaceFontButton, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedInterfaceFont);
   connect(interfaceFontReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedInterfaceFontReset);
   connect(resetAllButton, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedResetAll);
-  connect(themeNameComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          this, &AppConfigPage_Theme::onThemeComboChanged);
+  connect(switchToCustomButton, &QPushButton::clicked, this, &AppConfigPage_Theme::onSwitchToCustom);
 }
 
 
@@ -334,19 +308,14 @@ static QHBoxLayout *colorRowLayout(QWidget *label, QWidget *button, QWidget *res
 void AppConfigPage_Theme::assembly(void)
 {
   // Базовая тема и иконки
-  QHBoxLayout *themeLayout=new QHBoxLayout();
-  themeLayout->addWidget(themeLabel);
-  themeLayout->addWidget(themeNameComboBox);
-  themeLayout->addStretch();
-
   QHBoxLayout *iconSizeLayout=new QHBoxLayout();
   iconSizeLayout->addWidget(iconSizeLabel);
   iconSizeLayout->addWidget(iconSizeComboBox);
   iconSizeLayout->addStretch();
 
   QVBoxLayout *baseLayout=new QVBoxLayout();
-  baseLayout->addLayout(themeLayout);
   baseLayout->addWidget(customHint);
+  baseLayout->addWidget(switchToCustomButton);
 
   QHBoxLayout *baseThemeLayout=new QHBoxLayout();
   baseThemeLayout->addWidget(baseThemeLabel);
@@ -676,26 +645,15 @@ void AppConfigPage_Theme::onClickedInterfaceFontReset()
 }
 
 
-void AppConfigPage_Theme::onThemeComboChanged(int index)
-{
-  Q_UNUSED(index);
-  updateCustomEnabled();
-}
-
-
-// Группы кастома активны только при выбранном Custom: на базовых
+// Группы кастома активны только на теме Custom: на базовых
 // темах настройки не действуют и контролы гаснут.
 // Гарды на null: вызывается и из конструктора до создания групп
 void AppConfigPage_Theme::updateCustomEnabled(void)
 {
-  if(themeNameComboBox==nullptr)
-    return;
+  const bool custom=(mytetraConfig.getInterfaceTheme()=="custom");
 
-  const int themeIndex=themeNameComboBox->currentIndex();
-  const QString themeName=(themeIndex>=0 && themeIndex<fixedParameters.themesAvailableList.size())
-                          ? fixedParameters.themesAvailableList.at(themeIndex)
-                          : QString();
-  const bool custom=(themeName=="custom");
+  if(switchToCustomButton!=nullptr)
+    switchToCustomButton->setVisible(!custom);
 
   if(noteBox!=nullptr)
     noteBox->setEnabled(custom);
@@ -708,6 +666,24 @@ void AppConfigPage_Theme::updateCustomEnabled(void)
 
   if(fontBox!=nullptr)
     fontBox->setEnabled(custom);
+}
+
+
+void AppConfigPage_Theme::onSwitchToCustom(void)
+{
+  // Основа новой кастомной сессии: текущая тема. Дальше страница
+  // правится уже под Custom без закрытия диалога
+  mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
+
+  if(mytetraConfig.setInterfaceTheme("custom"))
+    CssHelper::loadCurrentTheme();
+
+  MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
+
+  if(editorScreen!=nullptr)
+    editorScreen->applyNoteColors();
+
+  updateCustomEnabled();
 }
 
 
@@ -753,26 +729,13 @@ void AppConfigPage_Theme::onClickedResetAll(void)
 void AppConfigPage_Theme::retranslateUi(void)
 {
   baseBox->setTitle(tr("Base theme"));
-  themeLabel->setText(tr("Interface theme"));
   customHint->setText(tr("Settings below apply to the Custom theme only."));
+  switchToCustomButton->setText(tr("Switch to Custom theme"));
   baseThemeLabel->setText(tr("Custom base: "));
   baseThemeComboBox->setItemText(0, tr("Default"));
   baseThemeComboBox->setItemText(1, tr("Dark"));
   baseThemeComboBox->setItemText(2, tr("Modern"));
   baseThemeComboBox->setItemText(3, tr("Midnight"));
-
-  QMap<QString, QString> translateNames;
-  translateNames[ "default" ] = tr("Default");
-  translateNames[ "dark" ]    = tr("Dark");
-  translateNames[ "modern" ]  = tr("Modern");
-  translateNames[ "midnight" ]= tr("Midnight");
-  translateNames[ "custom" ]  = tr("Custom");
-
-  for(int i=0; i<themeNameComboBox->count(); ++i)
-  {
-    QString name=fixedParameters.themesAvailableList.value(i, "Unknown");
-    themeNameComboBox->setItemText(i, translateNames.value(name, "Unknown"));
-  }
 
   iconSizeLabel->setText(tr("Icon size"));
   iconSizeComboBox->setItemText(0, tr("System"));
@@ -832,19 +795,12 @@ int AppConfigPage_Theme::applyChanges(void)
   const QString baseName=baseThemes.value(baseThemeComboBox->currentIndex(), "default");
 
   if(mytetraConfig.get_themeCustomBaseTheme()!=baseName)
+  {
     mytetraConfig.set_themeCustomBaseTheme(baseName);
 
-  // Смена базовой темы: перечитывается полностью, кастом ляжет следом
-  if ( mytetraConfig.getInterfaceTheme() !=
-       fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] )
-  {
-    if ( themeNameComboBox->currentText()!="Unknown")
-    {
-      mytetraConfig.setInterfaceTheme(
-        fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] );
-
+    // Новая база видна сразу, но только на теме Custom
+    if(mytetraConfig.getInterfaceTheme()=="custom")
       CssHelper::loadCurrentTheme();
-    }
   }
 
   // Размер иконок

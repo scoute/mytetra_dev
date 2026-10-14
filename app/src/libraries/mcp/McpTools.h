@@ -2,12 +2,14 @@
 #define MCP_TOOLS_H
 
 #include <QString>
+#include <QList>
+#include <QMap>
 #include <QJsonObject>
 
-// Read-only инструменты MCP-сервера поверх живой модели дерева.
-// Структура читается из модели, тексты - тихо с диска через
+// Инструменты MCP-сервера поверх живой модели дерева.
+// Чтение: структура из модели, тексты - тихо с диска через
 // Record::getTextForStats (нет файла или закрытый шифр = пусто).
-// Модель не меняется
+// Запись: apply-методы меняют модель, сохранение решает вызывающий
 
 class KnowTreeModel;
 class TreeItem;
@@ -113,11 +115,95 @@ public:
   QJsonObject deleteNoteDirect(const QString &noteId, QString &error);
   QJsonObject deleteBranchDirect(const QString &branchId, QString &error);
 
+  // --- Переименование, перенос, поиск дублей, статистика ---
+
+  // Новое имя ветки. Возвращает {id}. Пустое имя отклоняется,
+  // шифр не мешает (только атрибут XML)
+  static QJsonObject applyRenameBranch(KnowTreeModel *model,
+                                       const QString &branchId,
+                                       const QString &name,
+                                       QString &error);
+
+  // Перенос ветки: asChild=true - внутрь цели, false - соседней после.
+  // Возвращает {id, new_parent_id} (пустой - верхний уровень).
+  // Циклы, self-move и корень отклоняются моделью
+  static QJsonObject applyMoveBranch(KnowTreeModel *model,
+                                     const QString &sourceId,
+                                     const QString &targetId,
+                                     bool asChild,
+                                     QString &error);
+
+  // Перенос записи в другую ветку без трогания файлов: id и каталог
+  // сохраняются, внутренние ссылки целы. Возвращает {id, branch_id}.
+  // В ту же ветку, в шифр и из шифра - отказ
+  static QJsonObject applyMoveNote(KnowTreeModel *model,
+                                   const QString &noteId,
+                                   const QString &targetBranchId,
+                                   QString &error);
+
+  QJsonObject renameBranchDirect(const QString &branchId,
+                                 const QString &name,
+                                 QString &error);
+  QJsonObject moveBranchDirect(const QString &sourceId,
+                               const QString &targetId,
+                               bool asChild,
+                               QString &error);
+  QJsonObject moveNoteDirect(const QString &noteId,
+                             const QString &targetBranchId,
+                             QString &error);
+
+  // Группы дублей: по имени (без учета регистра) и по содержимому
+  // (sha1 текста). Пустые имена и тексты не сравниваются
+  QJsonObject findDuplicates(int limit);
+
+  // Итоги базы как в статусбаре + построчная детализация при detailed
+  QJsonObject baseStats(bool detailed);
+
+  // --- Метки ---
+
+  // Все метки с количеством заметок, по убыванию популярности
+  QJsonObject listTags(void);
+
+  // Заметки с точным совпадением метки (целиком, без учета регистра).
+  // error при пустой метке
+  QJsonObject tagNotes(const QString &tag, QString &error);
+
+  // Заметки без меток (до limit, с флагом truncated)
+  QJsonObject untaggedNotes(int limit);
+
+  // Переименование метки по всей базе (совпадение как в tagNotes).
+  // Совпадение с собой отклоняется (слияние делается через rename
+  // в существующую). Шифрованные без ключа пропускаются в skipped.
+  // Возвращает false + error на пустых именах
+  static bool applyRenameTag(KnowTreeModel *model,
+                             const QString &oldTag,
+                             const QString &newTag,
+                             QString &error,
+                             int &renamed,
+                             int &skipped);
+
+  // Удаление метки из всех заметок. Шифрованные пропускаются
+  static bool applyDeleteTag(KnowTreeModel *model,
+                             const QString &tag,
+                             QString &error,
+                             int &cleared,
+                             int &skipped);
+
+  // Сколько читаемых заметок несет метку (для проверки применения)
+  static int countTagNotes(KnowTreeModel *model, const QString &tagLower);
+
+  QJsonObject renameTagDirect(const QString &oldTag,
+                              const QString &newTag,
+                              QString &error);
+  QJsonObject deleteTagDirect(const QString &tag, QString &error);
+
 private:
   KnowTreeModel *m_model;
 
   void appendBranches(const QModelIndex &parent, const QString &parentId, QJsonArray &out);
   void collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &out);
+  void collectFromModel(QMap<QString, QList<QJsonObject>> &byName,
+                        QMap<QString, QList<QJsonObject>> &byText);
   void searchBranch(TreeItem *item, const QString &queryLower, int limit, QJsonArray &out);
   void searchModel(const QModelIndex &parent, const QString &queryLower, int limit, QJsonArray &out);
 

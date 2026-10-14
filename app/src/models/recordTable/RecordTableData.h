@@ -75,6 +75,11 @@ public:
     void deleteRecord(int i);
     void deleteRecordById(QString id);
 
+    // Перемещение записи в другую таблицу без трогания файлов:
+    // каталог и id сохраняются (внутренние ссылки целы).
+    // Возвращает false если записи нет или цель та же/пустая
+    bool moveRecordTo(QString id, RecordTableData *target);
+
     bool isRecordExists(QString id);
     bool isBlockRecordExists();
 

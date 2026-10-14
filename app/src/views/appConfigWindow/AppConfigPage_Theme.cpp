@@ -195,6 +195,9 @@ void AppConfigPage_Theme::setupUi(void)
 
   refreshNotePaperImageLabel();
 
+  // Группы кастома по текущему выбору темы (группы уже созданы выше)
+  updateCustomEnabled();
+
   retranslateUi();
 }
 
@@ -242,6 +245,19 @@ void AppConfigPage_Theme::setupThemeComboBox()
   }
 
   themeNameComboBox->setCurrentIndex( currentIndex );
+
+  // Основа для Custom: одна из четырёх базовых тем.
+  // Порядок фиксирован и повторяется в retranslateUi
+  baseThemeLabel=new QLabel(this);
+  baseThemeComboBox=new MtComboBox(this);
+  baseThemeComboBox->addItem(tr("Default"));
+  baseThemeComboBox->addItem(tr("Dark"));
+  baseThemeComboBox->addItem(tr("Modern"));
+  baseThemeComboBox->addItem(tr("Midnight"));
+
+  const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
+  const int baseIndex=baseThemes.indexOf(mytetraConfig.get_themeCustomBaseTheme());
+  baseThemeComboBox->setCurrentIndex(baseIndex>=0 ? baseIndex : 0);
 }
 
 
@@ -297,6 +313,8 @@ void AppConfigPage_Theme::setupSignals(void)
   connect(interfaceFontButton, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedInterfaceFont);
   connect(interfaceFontReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedInterfaceFontReset);
   connect(resetAllButton, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedResetAll);
+  connect(themeNameComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this, &AppConfigPage_Theme::onThemeComboChanged);
 }
 
 
@@ -329,6 +347,13 @@ void AppConfigPage_Theme::assembly(void)
   QVBoxLayout *baseLayout=new QVBoxLayout();
   baseLayout->addLayout(themeLayout);
   baseLayout->addWidget(customHint);
+
+  QHBoxLayout *baseThemeLayout=new QHBoxLayout();
+  baseThemeLayout->addWidget(baseThemeLabel);
+  baseThemeLayout->addWidget(baseThemeComboBox);
+  baseThemeLayout->addStretch();
+  baseLayout->addLayout(baseThemeLayout);
+
   baseLayout->addLayout(iconSizeLayout);
 
   baseBox->setLayout(baseLayout);
@@ -651,6 +676,41 @@ void AppConfigPage_Theme::onClickedInterfaceFontReset()
 }
 
 
+void AppConfigPage_Theme::onThemeComboChanged(int index)
+{
+  Q_UNUSED(index);
+  updateCustomEnabled();
+}
+
+
+// Группы кастома активны только при выбранном Custom: на базовых
+// темах настройки не действуют и контролы гаснут.
+// Гарды на null: вызывается и из конструктора до создания групп
+void AppConfigPage_Theme::updateCustomEnabled(void)
+{
+  if(themeNameComboBox==nullptr)
+    return;
+
+  const int themeIndex=themeNameComboBox->currentIndex();
+  const QString themeName=(themeIndex>=0 && themeIndex<fixedParameters.themesAvailableList.size())
+                          ? fixedParameters.themesAvailableList.at(themeIndex)
+                          : QString();
+  const bool custom=(themeName=="custom");
+
+  if(noteBox!=nullptr)
+    noteBox->setEnabled(custom);
+
+  if(treeBox!=nullptr)
+    treeBox->setEnabled(custom);
+
+  if(tableBox!=nullptr)
+    tableBox->setEnabled(custom);
+
+  if(fontBox!=nullptr)
+    fontBox->setEnabled(custom);
+}
+
+
 void AppConfigPage_Theme::onClickedResetAll(void)
 {
   // Всё к теме: цвета чистятся, размеры в -1, шрифт в тему
@@ -694,7 +754,12 @@ void AppConfigPage_Theme::retranslateUi(void)
 {
   baseBox->setTitle(tr("Base theme"));
   themeLabel->setText(tr("Interface theme"));
-  customHint->setText(tr("Custom theme builds on Default plus settings below."));
+  customHint->setText(tr("Settings below apply to the Custom theme only."));
+  baseThemeLabel->setText(tr("Custom base: "));
+  baseThemeComboBox->setItemText(0, tr("Default"));
+  baseThemeComboBox->setItemText(1, tr("Dark"));
+  baseThemeComboBox->setItemText(2, tr("Modern"));
+  baseThemeComboBox->setItemText(3, tr("Midnight"));
 
   QMap<QString, QString> translateNames;
   translateNames[ "default" ] = tr("Default");
@@ -761,6 +826,13 @@ void AppConfigPage_Theme::retranslateUi(void)
 int AppConfigPage_Theme::applyChanges(void)
 {
   qDebug() << "Apply changes theme";
+
+  // Основа Custom: одна из четырёх базовых тем
+  const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
+  const QString baseName=baseThemes.value(baseThemeComboBox->currentIndex(), "default");
+
+  if(mytetraConfig.get_themeCustomBaseTheme()!=baseName)
+    mytetraConfig.set_themeCustomBaseTheme(baseName);
 
   // Смена базовой темы: перечитывается полностью, кастом ляжет следом
   if ( mytetraConfig.getInterfaceTheme() !=

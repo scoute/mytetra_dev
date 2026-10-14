@@ -606,6 +606,11 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
 {
     QStringList declarations;
 
+    // Цвета и мозаика заметок живут только на теме Custom:
+    // базовые темы всегда выглядят как есть
+    if(mytetraConfig.getInterfaceTheme()!="custom")
+        return "";
+
     QString paperSetting=mytetraConfig.get_notePaperColor();
     QColor paperColor(paperSetting);
 

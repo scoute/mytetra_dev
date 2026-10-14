@@ -10,6 +10,7 @@ class QLabel;
 class QPushButton;
 class QComboBox;
 class QRadioButton;
+class QLineEdit;
 class QTimer;
 class QAudioRecorder;
 class QAudioProbe;
@@ -63,6 +64,8 @@ public:
 private slots:
 
     void onFormatRadio(bool checked);
+    void onQualityRadio(bool checked);
+    void onFileNameEdited(const QString &text);
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
     void onStateChanged(QMediaRecorder::State state);
@@ -81,6 +84,14 @@ private:
         VoiceFormatWavFallback
     };
 
+    // Качество записи low/middle/high, средний по умолчанию
+    enum VoiceQuality
+    {
+        VoiceQualityLow,
+        VoiceQualityMedium,
+        VoiceQualityHigh
+    };
+
     // Завершить запись и решить про вставку. Вызывается из стопа
     // и из смены состояния: идемпотентно
     void finishRecording(void);
@@ -89,8 +100,22 @@ private:
     // Вызывается перед стартом записи
     void applyFormat(VoiceFormat format);
 
-    // Свободное имя voice-ГГГГММДД-ччммсс.расширение в каталоге записи
-    QString uniqueFileName(const QString &extension) const;
+    // Обновить подсказку с параметрами выбранного качества
+    void updateQualityHint(void);
+
+    // Расширение текущего формата
+    QString currentExtension(void) const;
+
+    // Метка времени для предложенного имени
+    QString autoStem(void) const;
+
+    // Свободное имя в каталоге записи: основа плюс расширение,
+    // при занятости дописывается -2, -3 и так далее
+    QString uniqueFileName(const QString &stem, const QString &extension) const;
+
+    // Имя из строки пользователя: без путей и запретных символов,
+    // с расширением текущего формата
+    QString userFileName(void) const;
 
     // Пик первого канала буфера 0..1
     static qreal bufferPeak(const QAudioBuffer &buffer);
@@ -102,6 +127,11 @@ private:
     QLabel *timeLabel;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
+    QRadioButton *qualityLowRadio;
+    QRadioButton *qualityMediumRadio;
+    QRadioButton *qualityHighRadio;
+    QLabel *qualityHintLabel;
+    QLineEdit *fileNameEdit;
     QComboBox *deviceCombo;
     QPushButton *recordButton;
     QPushButton *insertButton;
@@ -112,9 +142,14 @@ private:
     QTimer *timer;
 
     VoiceFormat currentFormat;
+    VoiceQuality currentQuality;
     bool opusAvailable;
     bool mp3Available;
     bool wavAvailable;
+
+    // Пользователь правил имя руками: расширение при смене
+    // формата меняется, основа сохраняется
+    bool fileNameEdited;
 
     // Длительность меряется своим секундомером: duration() бэкенда
     // на части систем ноль при живом файле записи

@@ -27,6 +27,7 @@
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/helpers/SortHelper.h"
+#include "libraries/BacklinkIndex.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 
 
@@ -1685,6 +1686,9 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 
     // Закрываются открепляемые окна для удаленных записей
     emit doCloseDetachedWindowByIdSet( deleteResordsId );
+
+    // Чистка обратного индекса: записи веток ушли в корзину
+    BacklinkIndex::instance().removeSources(deleteResordsId.toList());
 }
 
 

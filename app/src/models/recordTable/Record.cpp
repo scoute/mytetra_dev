@@ -82,6 +82,27 @@ Record::Record(const Record &obj)
 }
 
 
+// Оператор присваивания повторяет конструктор копирования:
+// копируется каждый кусочек класса, обратный указатель таблицы
+// аттачей переводится на новый экземпляр
+Record &Record::operator=(const Record &obj)
+{
+  if(this==&obj)
+    return *this;
+
+  liteFlag=obj.liteFlag;
+  fieldList=obj.fieldList;
+  text=obj.text;
+  pictureFiles=obj.pictureFiles;
+  attachTableData=obj.attachTableData;
+
+  attachTableData.setRecord(this);
+  attachTableData.updateAttachTableBackLink();
+
+  return *this;
+}
+
+
 Record::~Record()
 {
 
@@ -335,6 +356,12 @@ void Record::setField(const QString &name, const QString &value)
   if(FixedParameters::isRecordFieldNatural(name)==false)
     criticalError("In RecordTableData::setField() unavailable field name "+name+" try set to "+value);
 
+  // Нулевые байты вычищаются: QString::fromUtf8() при чтении останавливается
+  // на первом 0x00, а QXmlStreamWriter молча режет хвост (баг #134: такой байт
+  // попадает из буфера обмена браузера, в т.ч. в поле Url)
+  QString cleanValue=value;
+  cleanValue.remove(QChar('\0'));
+
   bool isCrypt=false;
 
   // Если имя поля принадлежит списку полей, которые могут шифроваться
@@ -344,7 +371,7 @@ void Record::setField(const QString &name, const QString &value)
   if(FixedParameters::recordFieldCryptedList.contains(name))
     if(fieldList.contains("crypt"))
       if(fieldList["crypt"]=="1")
-        if(value.length()>0)
+        if(cleanValue.length()>0)
         {
           if(globalParameters.getCryptKey().length()>0)
             isCrypt=true;
@@ -355,12 +382,12 @@ void Record::setField(const QString &name, const QString &value)
   // Устанавливается значение поля
   if(!isCrypt)
   {
-      fieldList.insert(name, value);
+      fieldList.insert(name, cleanValue);
   }
   else
   {
       // Если нужно шифровать, поле шифруется
-      fieldList.insert(name, CryptService::encryptString(globalParameters.getCryptKey(), value) );
+      fieldList.insert(name, CryptService::encryptString(globalParameters.getCryptKey(), cleanValue) );
   }
 }
 

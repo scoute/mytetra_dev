@@ -209,68 +209,52 @@ This can happen if there is no free space left on the hard disk or it is impossi
 <context>
     <name>AppConfigPage_Appearance</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="64"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="209"/>
         <source>Interface theme</source>
-        <translation>インターフェースのテーマ</translation>
+        <translation type="vanished">インターフェースのテーマ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="74"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="213"/>
         <source>Dark</source>
-        <translation>ダーク</translation>
+        <translation type="vanished">ダーク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="75"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="214"/>
         <source>Modern</source>
-        <translation>モダン</translation>
+        <translation type="vanished">モダン</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="76"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="215"/>
         <source>Midnight</source>
-        <translation>ミッドナイト</translation>
+        <translation type="vanished">ミッドナイト</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="49"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="206"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
         <source>Run MyTetra in a minimized window</source>
         <translation>MyTetra を最小化したウィンドウで起動する</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="55"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="207"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="86"/>
         <source>Hide detached windows if close main window</source>
         <translation>メインウィンドウを閉じたら分離ウィンドウを隠す</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="73"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="212"/>
         <source>Default</source>
-        <translation>デフォルト</translation>
+        <translation type="vanished">デフォルト</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="114"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="223"/>
         <source>Icon size</source>
-        <translation>アイコンサイズ</translation>
+        <translation type="vanished">アイコンサイズ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="119"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="224"/>
         <source>System</source>
-        <translation>システム</translation>
+        <translation type="vanished">システム</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="176"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="226"/>
         <source>Interface</source>
-        <translation>インターフェース</translation>
+        <translation type="vanished">インターフェース</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="182"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="227"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="62"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="88"/>
         <source>Windows behavior</source>
         <translation>ウィンドウの動作</translation>
     </message>
@@ -859,60 +843,46 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
 <context>
     <name>AppConfigPage_Misc</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="45"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="270"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="38"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="100"/>
         <source>Print debug messages to console</source>
         <translation>デバッグメッセージをコンソールに出力する</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="50"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="271"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="43"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="101"/>
         <source>Enable action logging (experimental)</source>
         <translation>アクション記録を有効にする (実験的)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="55"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="272"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="48"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="102"/>
         <source>Create empty note enable</source>
         <translation>空ノートの作成を許可する</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="87"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="279"/>
-        <source>Note font color: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="101"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="282"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="53"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="104"/>
         <source>Edit config file</source>
         <translation>設定ファイルを編集</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="121"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="283"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="68"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="105"/>
         <source>Danger actions (Attention!)</source>
         <translation>危険な操作 (注意!)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="61"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="274"/>
         <source>Secret color: </source>
-        <translation>シークレット色: </translation>
+        <translation type="vanished">シークレット色: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="71"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="276"/>
         <source>Note paper color: </source>
-        <translation>ノート用紙色: </translation>
+        <translation type="vanished">ノート用紙色: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="81"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="97"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="277"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="280"/>
         <source>Reset</source>
-        <translation>リセット</translation>
+        <translation type="vanished">リセット</translation>
     </message>
 </context>
 <context>
@@ -1058,6 +1028,182 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="257"/>
         <source>The first background &lt;b&gt;checking base&lt;/b&gt; starting.&lt;br/&gt;Maybe a slight delay or freezing window...</source>
         <translation>最初のバックグラウンド&lt;b&gt;ベースチェック&lt;/b&gt;を開始します。&lt;br/&gt;少し遅延やウィンドウのフリーズの可能性...</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Theme</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="115"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="121"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="154"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="160"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="182"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="632"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="634"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="644"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="646"/>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="184"/>
+        <source>Size %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="189"/>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="197"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="601"/>
+        <source>Interface theme</source>
+        <translation type="unfinished">インターフェースのテーマ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="202"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="604"/>
+        <source>Default</source>
+        <translation type="unfinished">デフォルト</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="203"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="605"/>
+        <source>Dark</source>
+        <translation type="unfinished">ダーク</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="204"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="606"/>
+        <source>Modern</source>
+        <translation type="unfinished">モダン</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="205"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="607"/>
+        <source>Midnight</source>
+        <translation type="unfinished">ミッドナイト</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="228"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="615"/>
+        <source>Icon size</source>
+        <translation type="unfinished">アイコンサイズ</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="231"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="616"/>
+        <source>System</source>
+        <translation type="unfinished">システム</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="600"/>
+        <source>Base theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="618"/>
+        <source>Note</source>
+        <translation type="unfinished">ノート</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="619"/>
+        <source>Note paper color: </source>
+        <translation type="unfinished">ノート用紙色: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="620"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="622"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="624"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="628"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="630"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="638"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="640"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="642"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="650"/>
+        <source>Reset</source>
+        <translation type="unfinished">リセット</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="621"/>
+        <source>Note font color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="623"/>
+        <source>Secret color: </source>
+        <translation type="unfinished">シークレット色: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="626"/>
+        <source>Branches tree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="627"/>
+        <source>Tree background: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="629"/>
+        <source>Tree text color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="631"/>
+        <source>Tree font size: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="633"/>
+        <source>Tree indentation: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="636"/>
+        <source>Notes list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="637"/>
+        <source>List background: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="639"/>
+        <source>List text color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="641"/>
+        <source>Alternate row color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="643"/>
+        <source>List font size: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="645"/>
+        <source>Row height: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="648"/>
+        <source>Interface font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="649"/>
+        <source>Font: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="653"/>
+        <source>Reset all to theme</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3391,47 +3537,47 @@ MyTetra を更新してください。</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1756"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1849"/>
         <source>Statistics</source>
         <translation>統計</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1694"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
         <source>Branch</source>
         <translation>ブランチ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1590"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1683"/>
         <source>MCP session is active%1, MyTetra works in read-only mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1694"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
         <source>Note</source>
         <translation>ノート</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1694"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
         <source>Internal links</source>
         <translation>内部リンク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1694"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
         <source>Images</source>
         <translation>画像</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1694"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
         <source>Files</source>
         <translation>ファイル</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1561"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1654"/>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
         <translation>ブランチ: %1 | ノート: %2 | タグ: %3 | ファイル: %4 | 画像: %5 | 内部リンク: %6</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1562"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1655"/>
         <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
         <translation>ベース統計: ブランチ、ノート、タグ、ファイル、画像、リンク。リンクはノート間のmytetra://リンクです。クリックでノート別の詳細を開きます。</translation>
     </message>
@@ -3444,282 +3590,282 @@ MyTetra を更新してください。</translation>
         <translation type="vanished">承認</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1126"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1817"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1219"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1910"/>
         <source>&amp;File</source>
         <translation>&amp;ファイル</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1129"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1819"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1222"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1912"/>
         <source>Databases management</source>
         <translation>データベース管理</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1140"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1233"/>
         <source>&amp;Print...</source>
         <translation>&amp;印刷...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1143"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1822"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1236"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1915"/>
         <source>Print Preview...</source>
         <translation>印刷プレビュー...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1146"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1239"/>
         <source>&amp;Export PDF...</source>
         <translation>&amp;PDF へ出力...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1132"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1820"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
         <source>Export tree item</source>
         <translation>ツリー項目をエクスポート</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1135"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1821"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1228"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1914"/>
         <source>Import tree item</source>
         <translation>ツリー項目をインポート</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1151"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2445"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1244"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2006"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2538"/>
         <source>&amp;Quit</source>
         <translation>&amp;終了</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1160"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1827"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1253"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1920"/>
         <source>&amp;Tools</source>
         <translation>&amp;ツール</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1172"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1829"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1265"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1922"/>
         <source>Action &amp;log</source>
         <translation>アクション&amp;履歴</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1203"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1209"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1842"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1846"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1296"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1302"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1935"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1939"/>
         <source>&amp;Preferences</source>
         <translation>&amp;設定</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1221"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1314"/>
         <source>Main</source>
         <translation>メイン</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1222"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1315"/>
         <source>Appearance</source>
         <translation>外観</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1223"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1316"/>
         <source>Crypt</source>
         <translation>暗号化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1229"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1322"/>
         <source>Misc</source>
         <translation>その他</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1278"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1903"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1371"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1996"/>
         <source>&amp;Help</source>
         <translation>&amp;ヘルプ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1281"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1905"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1374"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1998"/>
         <source>About MyTetra</source>
         <translation>MyTetra について</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1284"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1906"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1377"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1999"/>
         <source>About Qt</source>
         <translation>Qt について</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1287"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1907"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2270"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2000"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2363"/>
         <source>Technical info</source>
         <translation>技術情報</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1224"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1317"/>
         <source>Syncro</source>
         <translation>同期</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1318"/>
         <source>Notes Area</source>
         <translation>ノート領域</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1226"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1319"/>
         <source>Attaches</source>
         <translation>添付</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1227"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1320"/>
         <source>Keyboard</source>
         <translation>キーボード</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="194"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1228"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1915"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="196"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1321"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2008"/>
         <source>History</source>
         <translation>履歴</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1984"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2077"/>
         <source>Print Document</source>
         <translation>ドキュメントを印刷</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2039"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2132"/>
         <source>Select an empty directory to export data</source>
         <translation>データ出力用の空ディレクトリを選択</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2057"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2150"/>
         <source>Select directory to import data</source>
         <translation>データ入力用のディレクトリを選択</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2271"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2364"/>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;技術情報&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2380"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2473"/>
         <source>MyTetra: can&apos;t synchronization</source>
         <translation>MyTetra: 同期できません</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2381"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2474"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>同期コマンド未設定。&lt;br&gt;「ツール」メニューの「同期」設定を確認</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2400"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2493"/>
         <source>MyTetra synchronization</source>
         <translation>MyTetra の同期</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2401"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2494"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>同期中です、お待ちください...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1910"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2436"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2003"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2529"/>
         <source>&amp;Restore window</source>
         <translation>&amp;ウィンドウを復元</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1911"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2439"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2004"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2532"/>
         <source>Ma&amp;ximize window</source>
         <translation>ウィンドウを最&amp;大化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1912"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2442"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2005"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2535"/>
         <source>Mi&amp;nimize window</source>
         <translation>ウィンドウを最&amp;小化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1297"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1869"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1390"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1962"/>
         <source>&amp;Themes</source>
         <translation>&amp;テーマ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1302"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1872"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1395"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1965"/>
         <source>Default</source>
         <translation>デフォルト</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1303"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1873"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1396"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1966"/>
         <source>Dark</source>
         <translation>ダーク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1304"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1874"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1397"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1967"/>
         <source>Modern</source>
         <translation>モダン</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1305"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1875"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1398"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1968"/>
         <source>Midnight</source>
         <translation>ミッドナイト</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="214"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1694"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1917"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="216"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
         <source>Tags</source>
         <translation>タグ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1166"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1259"/>
         <source>Images &amp;gallery</source>
         <translation>画像&amp;ギャラリー</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1169"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1831"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1262"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1924"/>
         <source>Attached &amp;files</source>
         <translation>添付&amp;ファイル</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1348"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1883"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1441"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1976"/>
         <source>&amp;View</source>
         <translation>&amp;表示</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1351"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1886"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1444"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1979"/>
         <source>Show note header</source>
         <translation>ノートヘッダーを表示</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1365"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1892"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1458"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1985"/>
         <source>Change secret color...</source>
         <translation>シークレット色を変更...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1369"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1895"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1462"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1988"/>
         <source>Change note background color...</source>
         <translation>ノート背景色を変更...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="204"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="206"/>
         <source>Backlinks</source>
         <translation>被リンク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1355"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1889"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1448"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1982"/>
         <source>Show favorites panel</source>
         <translation>お気に入りパネルを表示</translation>
     </message>
@@ -4072,86 +4218,92 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation>変更を有効にするには再起動が必要です。</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="40"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="115"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
         <source>MyTetra settings</source>
         <translation>MyTetra 設定</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="52"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="117"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="120"/>
         <source>Main</source>
         <translation>メイン</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="54"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="55"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="121"/>
         <source>Appearance</source>
         <translation>外観</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="56"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="119"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="57"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="122"/>
+        <source>Themes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="123"/>
         <source>Crypt</source>
         <translation>暗号化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="58"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="120"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="61"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="124"/>
         <source>Synchro</source>
         <translation>同期</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="60"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="121"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="63"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="125"/>
         <source>Notes area</source>
         <translation>ノート領域</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="72"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="127"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="75"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="131"/>
         <source>Clipper</source>
         <translation>クリッパー</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="126"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="73"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="130"/>
         <source>Favorites</source>
         <translation>お気に入り</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="62"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="122"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="65"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="126"/>
         <source>Attaches</source>
         <translation>添付</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="64"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="123"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="67"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="127"/>
         <source>Keyboard</source>
         <translation>キーボード</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="66"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="124"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="69"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="128"/>
         <source>History</source>
         <translation>履歴</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="68"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="125"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="71"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="129"/>
         <source>Search</source>
         <translation>検索</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="74"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="128"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="77"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="132"/>
         <source>MCP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="76"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="129"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="79"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="133"/>
         <source>Misc</source>
         <translation>その他</translation>
     </message>

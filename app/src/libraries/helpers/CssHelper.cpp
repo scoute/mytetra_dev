@@ -7,11 +7,16 @@
 #include <QLabel>
 #include <QTimer>
 #include <QRegularExpression>
+#include <QHeaderView>
 
 #include "CssHelper.h"
 
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
+#include "models/appConfig/AppConfig.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/tree/KnowTreeView.h"
+#include "views/recordTable/RecordTableView.h"
 #include "libraries/OrderedMap.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/appConfig/AppFiles.h"
@@ -254,6 +259,10 @@ void CssHelper::loadCurrentTheme()
     }
 
     applyTheme( themeName );
+
+    // Свои цвета и размеры поверх свежей темы (тема сносит
+    // per-widget stylesheets, поэтому после, а не до)
+    applyCustomDesign();
 }
 
 
@@ -422,3 +431,135 @@ void CssHelper::updateInterface()
     */
 }
 
+
+
+// Кастомный дизайн поверх темы. Оригиналы запоминаются один раз
+// чтобы сброс возвращал именно тему, а не дефолты Qt
+void CssHelper::applyCustomDesign(void)
+{
+    static bool originalsTaken=false;
+    static QFont appFontOrig;
+    static QFont treeFontOrig;
+    static QFont tableFontOrig;
+    static int treeIndentOrig=-1;
+    static int tableRowHeightOrig=-1;
+    static bool tableAlternatingOrig=false;
+
+    // Шрифт интерфейса: пусто означает шрифт темы
+    const QString family=mytetraConfig.get_themeCustomInterfaceFontFamily();
+    const int size=mytetraConfig.get_themeCustomInterfaceFontSize();
+
+    if(qApp!=nullptr)
+    {
+        if(!originalsTaken)
+            appFontOrig=qApp->font();
+
+        if(family.isEmpty() && size<=0)
+            qApp->setFont(appFontOrig);
+        else
+        {
+            QFont font=qApp->font();
+
+            if(!family.isEmpty())
+                font.setFamily(family);
+
+            if(size>0)
+                font.setPointSize(size);
+
+            qApp->setFont(font);
+        }
+    }
+
+    KnowTreeView *tree=find_object<KnowTreeView>("knowTreeView");
+    RecordTableView *table=find_object<RecordTableView>("recordTableView");
+
+    if(tree==nullptr && table==nullptr)
+        return;
+
+    if(!originalsTaken)
+    {
+        if(tree!=nullptr)
+        {
+            treeFontOrig=tree->font();
+            treeIndentOrig=tree->indentation();
+        }
+
+        if(table!=nullptr)
+        {
+            tableFontOrig=table->font();
+            tableRowHeightOrig=table->verticalHeader()->defaultSectionSize();
+            tableAlternatingOrig=table->alternatingRowColors();
+        }
+
+        originalsTaken=true;
+    }
+
+    // Дерево веток: пустые цвета означают цвета темы
+    if(tree!=nullptr)
+    {
+        QString treeStyle;
+
+        if(!mytetraConfig.get_themeCustomTreeBackground().isEmpty())
+            treeStyle+="background: "+mytetraConfig.get_themeCustomTreeBackground()+"; ";
+
+        if(!mytetraConfig.get_themeCustomTreeText().isEmpty())
+            treeStyle+="color: "+mytetraConfig.get_themeCustomTreeText()+"; ";
+
+        tree->setStyleSheet(treeStyle.isEmpty() ? QString() :
+                            QString("QTreeView { %1 }").arg(treeStyle));
+
+        const int treeSize=mytetraConfig.get_themeCustomTreeFontSize();
+
+        if(treeSize>0)
+        {
+            QFont font=treeFontOrig;
+            font.setPointSize(treeSize);
+            tree->setFont(font);
+        }
+        else
+            tree->setFont(treeFontOrig);
+
+        const int indent=mytetraConfig.get_themeCustomTreeIndentation();
+        tree->setIndentation(indent>=0 ? indent : treeIndentOrig);
+    }
+
+    // Список заметок: пустые цвета означают цвета темы
+    if(table!=nullptr)
+    {
+        QString tableStyle;
+
+        if(!mytetraConfig.get_themeCustomTableBackground().isEmpty())
+            tableStyle+="background: "+mytetraConfig.get_themeCustomTableBackground()+"; ";
+
+        if(!mytetraConfig.get_themeCustomTableText().isEmpty())
+            tableStyle+="color: "+mytetraConfig.get_themeCustomTableText()+"; ";
+
+        const QString alternate=mytetraConfig.get_themeCustomTableAlternate();
+
+        if(!alternate.isEmpty())
+        {
+            table->setAlternatingRowColors(true);
+            tableStyle+="alternate-background-color: "+alternate+"; ";
+        }
+        else
+            table->setAlternatingRowColors(tableAlternatingOrig);
+
+        table->setStyleSheet(tableStyle.isEmpty() ? QString() :
+                             QString("QTableView { %1 }").arg(tableStyle));
+
+        const int tableSize=mytetraConfig.get_themeCustomTableFontSize();
+
+        if(tableSize>0)
+        {
+            QFont font=tableFontOrig;
+            font.setPointSize(tableSize);
+            table->setFont(font);
+        }
+        else
+            table->setFont(tableFontOrig);
+
+        const int rowHeight=mytetraConfig.get_themeCustomTableRowHeight();
+        table->verticalHeader()->setDefaultSectionSize(
+            rowHeight>=0 ? rowHeight : tableRowHeightOrig);
+    }
+}

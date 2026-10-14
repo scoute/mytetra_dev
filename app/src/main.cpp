@@ -375,6 +375,10 @@ int main(int argc, char ** argv)
     // Восстанавливаются открепляемые окна
     win.restoreDockableWindowsState();
 
+    // Кастомный дизайн поверх темы: окна уже созданы,
+    // при старте внутри загрузки темы их ещё не было
+    CssHelper::applyCustomDesign();
+
     // Восстановление видимости виджета, который был активный, для мобильного интерфейса
     if (mytetraConfig.getInterfaceMode()=="mobile")
         globalParameters.getWindowSwitcher()->restoreFocusWidget();

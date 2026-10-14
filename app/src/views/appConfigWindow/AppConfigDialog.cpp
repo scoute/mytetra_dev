@@ -21,6 +21,7 @@
 #include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Mcp.h"
 #include "AppConfigPage_Appearance.h"
+#include "AppConfigPage_Theme.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
 
@@ -52,6 +53,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Main"));
     pageAppearance=configDialog->addWidget(new AppConfigPage_Appearance( parent ),
                                             QObject::tr("Appearance"));
+    pageTheme      =configDialog->addWidget(new AppConfigPage_Theme( parent ),
+                                            QObject::tr("Themes"));
     pageCrypt      =configDialog->addWidget(new AppConfigPage_Crypt( parent ),
                                             QObject::tr("Crypt"));
     pageSynchro    =configDialog->addWidget(new AppConfigPage_Synchro( parent ),
@@ -116,6 +119,7 @@ void AppConfigDialog::retranslateUi(void)
 
     pageMain->setText(QObject::tr("Main"));
     pageAppearance->setText(QObject::tr("Appearance"));
+    pageTheme->setText(QObject::tr("Themes"));
     pageCrypt->setText(QObject::tr("Crypt"));
     pageSynchro->setText(QObject::tr("Synchro"));
     pageRecordTable->setText(QObject::tr("Notes area"));
@@ -143,6 +147,7 @@ void AppConfigDialog::changePage(QString name)
 
     if(name=="pageMain") item=pageMain;
     if(name=="pageAppearance") item=pageAppearance;
+    if(name=="pageTheme") item=pageTheme;
     if(name=="pageCrypt") item=pageCrypt;
     if(name=="pageSynchro") item=pageSynchro;
     if(name=="pageRecordTable") item=pageRecordTable;

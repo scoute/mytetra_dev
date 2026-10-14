@@ -67,6 +67,10 @@ public slots:
  // Обновление состояния экранных элементов согласно состоянию записи и положении зиписи в таблице
  void toolsUpdate(void);
 
+ // Добавить кнопку во вторую линию инструментов (для внешних действий
+ // вроде переключателя панели тегов)
+ void addExtraToolAction(QAction *action);
+
  void onSyncroCommandFinishWork(void);
 
  void setupShortcuts(void);

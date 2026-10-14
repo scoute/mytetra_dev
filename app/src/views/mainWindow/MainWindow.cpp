@@ -355,6 +355,12 @@ void MainWindow::assembly(void)
     addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
     addDockWidget(Qt::RightDockWidgetArea, backlinksPanelDock);
 
+    // Кнопки-бирок во второй линии записей: те же переключатели
+    // что в меню Tools, состояние синхронно само
+    recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
+    recordTableScreen->addExtraToolAction(historyPanelDock->toggleViewAction());
+    recordTableScreen->addExtraToolAction(backlinksPanelDock->toggleViewAction());
+
     // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
     // при первом запуске строится полным сканом базы
     BacklinkIndex::instance().loadOrBuild();

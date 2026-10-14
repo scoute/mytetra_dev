@@ -1,6 +1,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QColor>
+#include <QFileInfo>
 #include <QStringList>
 #include <QRegularExpression>
 #include <QBoxLayout>
@@ -614,6 +615,13 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
 
     if(!fontSetting.isEmpty() && fontColor.isValid())
         declarations << QString("color: %1;").arg(fontColor.name());
+
+    // Мозаичный фон: тайл повторяется по горизонтали и вертикали.
+    // Цвет бумаги под ним виден сквозь прозрачные места картинки
+    QString imageSetting=mytetraConfig.get_themeCustomNotePaperImage();
+
+    if(!imageSetting.isEmpty() && QFileInfo(imageSetting).isReadable())
+        declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(imageSetting);
 
     if(declarations.isEmpty())
         return "";

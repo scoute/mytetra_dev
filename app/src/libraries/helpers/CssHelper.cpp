@@ -142,9 +142,13 @@ void CssHelper::extractCssStyles()
     }
     else // Иначе есть каталог с темами
     {
-        // Надо проверить все ли каталоги тем существуют
+        // Надо проверить все ли каталоги тем существуют.
+        // custom пропускается: своих файлов у неё нет, она на основе Default
         for ( const auto &themeName : fixedParameters.themesAvailableList )
         {
+            if(themeName=="custom")
+                continue;
+
             QDir themeDir(dirName+"/themes/"+themeName);
             if ( !themeDir.exists() )
             {
@@ -183,6 +187,10 @@ void CssHelper::removePreviousThemes()
 {
     for ( const auto &themeName : fixedParameters.themesAvailableList )
     {
+        // Своя тема не имеет эталона в ресурсах: сравнивать не с чем
+        if(themeName=="custom")
+            continue;
+
         // На диске
         QString hddStyleText = getCssFileContentForTheme(themeName);
         QString hddHeaderText = hddStyleText.section('\n', 0, 0); // Первая строка
@@ -274,6 +282,9 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
         return QString();
     }
 
+    // Своя тема собирается на основе Default: своих CSS-файлов нет
+    const QString cssName=(themeName=="custom") ? "default" : themeName;
+
     QString fileName;
 
     if (fromResources)
@@ -281,12 +292,12 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
         QString targetOs = globalParameters.getTargetOs();
         QString qrcPath = QString(":/resource/standartconfig/")+targetOs+QString("/themes");
 
-        fileName = qrcPath+"/"+themeName+"/stylesheet.css";
+        fileName = qrcPath+"/"+cssName+"/stylesheet.css";
     }
     else
     {
         QString dirName = globalParameters.getWorkDirectory();
-        fileName = dirName+"/themes/"+themeName+"/stylesheet.css";
+        fileName = dirName+"/themes/"+cssName+"/stylesheet.css";
     }
 
 

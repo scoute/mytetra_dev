@@ -31,6 +31,8 @@ public:
     void setReadOnly(bool state);
     bool isReadOnly();
 
+    void setDisplayOnlyEditableFields(bool value);
+
     // Последний недопечатанный тег: хвост после крайней запятой
     // или точки с запятой. Разделитель в конце значит тег допечатан
     static QString lastTagToken(const QString &text);
@@ -72,6 +74,15 @@ private:
     // Ввод текстовых меток
     QLabel    *recordTagsLabel;
     QLineEdit *recordTags;
+
+    // Служебные readonly-поля: id записи и имя каталога
+    QLabel    *recordIdLabel;
+    QLineEdit *recordId;
+    QLabel    *dirNameLabel;
+    QLineEdit *dirName;
+    bool isDisplayOnlyEditableFields=false;
+
+    void updateReadOnlyFieldsVisibility(bool infoExpanded);
 
     // Кнопка, раскрывающая и скрывающая поля author, url, tags
     QToolButton *expandInfo;

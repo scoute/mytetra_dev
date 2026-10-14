@@ -10,12 +10,17 @@
 #include <QGestureEvent>
 #include <QTextDocumentFragment>
 #include <QMimeData>
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QMap>
 #include <QPaintEvent>
 #include <QTapAndHoldGesture>
 #include <QDebug>
 #include <QApplication>
 
 #include "EditorTextArea.h"
+#include "Editor.h"
 #include "../TraceLogger.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/VoiceNoteHelper.h"
@@ -697,6 +702,17 @@ void EditorTextArea::insertFromMimeData(const QMimeData *source)
 {
     MimeDataFormat mimeDataFormat=detectMimeDataFormat( source );
 
+    // Голосовые вставки доделываются после асинхронной вставки HTML:
+    // файлы докопируются, ссылки материализуются в баблы
+    if(source!=nullptr && mimeDataFormat==MimeDataHtml)
+    {
+        if(source->hasFormat(VoiceNoteHelper::voiceMimeTypeName()))
+            pendingVoiceMimes.append(
+                source->data(VoiceNoteHelper::voiceMimeTypeName()));
+        else if(source->hasHtml() && source->html().contains(QStringLiteral("voicenote://")))
+            pendingVoiceMimes.append(QByteArray());
+    }
+
     QTextCursor cursor = this->textCursor();
     QTextDocument *document = this->document();
 
@@ -817,6 +833,238 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
     qDebug() << "Insert filtered HTML text: " << htmlFilterDoc.toHtml();
 
     this->textCursor().insertHtml( htmlFilterDoc.toHtml() );
+
+    // Доделка голосовой вставки: файлы из другой заметки,
+    // материализация баблов
+    if(!pendingVoiceMimes.isEmpty())
+        finishVoicePaste(pendingVoiceMimes.takeFirst());
+}
+
+
+QStringList EditorTextArea::voiceHrefsInRange(int from, int to) const
+{
+    QStringList hrefs;
+
+    if(from>to)
+        qSwap(from, to);
+
+    QTextDocument *doc=document();
+
+    if(doc==nullptr)
+        return hrefs;
+
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid())
+                continue;
+
+            const int start=fragment.position();
+            const int end=start+fragment.length();
+
+            if(end<=from || start>=to)
+                continue;
+
+            const QTextCharFormat format=fragment.charFormat();
+            QString href;
+
+            if(VoiceNoteHelper::isVoiceHref(format.anchorHref()))
+                href=format.anchorHref();
+            else if(VoiceNoteHelper::isBubbleFormat(format))
+                href=format.property(VoiceNoteHelper::BubblePropHref).toString();
+
+            if(!href.isEmpty() && !hrefs.contains(href))
+                hrefs.append(href);
+        }
+
+    return hrefs;
+}
+
+
+QString EditorTextArea::voiceWorkDirectory(void) const
+{
+    const Editor *editor=qobject_cast<const Editor*>(parent());
+
+    if(editor==nullptr)
+        return QString();
+
+    return const_cast<Editor*>(editor)->getWorkDirectory();
+}
+
+
+QString EditorTextArea::uniqueVoiceFileName(const QString &dir, const QString &baseName)
+{
+    if(!QFileInfo(QDir(dir).absoluteFilePath(baseName)).isFile())
+        return baseName;
+
+    const int dotPos=baseName.lastIndexOf(QLatin1Char('.'));
+    const QString stem=(dotPos>0) ? baseName.left(dotPos) : baseName;
+    const QString ext=(dotPos>0) ? baseName.mid(dotPos) : QString();
+
+    for(int attempt=2; attempt<1000; ++attempt)
+    {
+        const QString candidate=stem+QStringLiteral("-")+QString::number(attempt)+ext;
+
+        if(!QFileInfo(QDir(dir).absoluteFilePath(candidate)).isFile())
+            return candidate;
+    }
+
+    return QString();
+}
+
+
+QMimeData *EditorTextArea::createMimeDataFromSelection(void) const
+{
+    QTextCursor cursor=textCursor();
+
+    if(!cursor.hasSelection())
+        return QTextEdit::createMimeDataFromSelection();
+
+    const QStringList hrefs=voiceHrefsInRange(cursor.selectionStart(),
+                                              cursor.selectionEnd());
+
+    if(hrefs.isEmpty())
+        return QTextEdit::createMimeDataFromSelection();
+
+    // Копия выделения во временный документ: баблы подменяются
+    // ссылками, иначе в буфер уедет пустой плейсхолдер
+    QTextDocument tmp;
+    tmp.setDefaultFont(document()->defaultFont());
+
+    QTextCursor tmpCursor(&tmp);
+    tmpCursor.insertFragment(cursor.selection());
+    VoiceNoteHelper::dematerializeBubbles(&tmp);
+
+    QMimeData *mime=new QMimeData();
+    mime->setHtml(tmp.toHtml("UTF-8"));
+    mime->setText(tmp.toPlainText());
+
+    // Абсолютные пути файлов для переноса в другую заметку
+    const QString workDir=voiceWorkDirectory();
+    QStringList lines;
+
+    for(const QString &href : hrefs)
+    {
+        const QString absPath=VoiceNoteHelper::resolveFilePath(workDir, href);
+
+        if(!absPath.isEmpty() && QFileInfo(absPath).isFile())
+            lines << href << absPath;
+    }
+
+    if(!lines.isEmpty())
+        mime->setData(VoiceNoteHelper::voiceMimeTypeName(),
+                      lines.join(QStringLiteral("\n")).toUtf8());
+
+    return mime;
+}
+
+
+void EditorTextArea::finishVoicePaste(const QByteArray &voiceMime)
+{
+    // Пары href-путь из буфера обмена
+    QMap<QString, QString> srcPaths;
+    const QStringList lines=QString::fromUtf8(voiceMime).split(
+        QStringLiteral("\n"), Qt::SkipEmptyParts);
+
+    for(int i=0; i+1<lines.size(); i+=2)
+        srcPaths.insert(lines.at(i), lines.at(i+1));
+
+    const QString workDir=voiceWorkDirectory();
+
+    QTextCursor cursor=textCursor();
+    cursor.beginEditBlock();
+
+    if(!workDir.isEmpty() && QDir(workDir).exists() && !srcPaths.isEmpty())
+    {
+        // Позиции собираются заранее: правка форматов во время
+        // итерации сбивает итератор и пропускает фрагменты
+        struct VoiceLinkPos
+        {
+            int pos;
+            int len;
+            QString href;
+        };
+
+        QList<VoiceLinkPos> linkPositions;
+
+        for(QTextBlock block=document()->firstBlock(); block.isValid(); block=block.next())
+            for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+            {
+                const QTextFragment fragment=it.fragment();
+
+                if(!fragment.isValid())
+                    continue;
+
+                const QString href=fragment.charFormat().anchorHref();
+
+                if(VoiceNoteHelper::isVoiceHref(href))
+                    linkPositions.append({fragment.position(), fragment.length(), href});
+            }
+
+        // Файла нет в каталоге заметки значит приехал из другой:
+        // докопировать. Имя занято чужим файлом значит дописать
+        // со свободным именем и починить ссылку
+        for(const VoiceLinkPos &link : linkPositions)
+        {
+            const QString href=link.href;
+            const QString dstPath=VoiceNoteHelper::resolveFilePath(workDir, href);
+
+            if(dstPath.isEmpty())
+                continue;
+
+            const QString srcPath=srcPaths.value(href);
+            const bool dstExists=QFileInfo(dstPath).isFile();
+            const bool srcExists=!srcPath.isEmpty() && QFileInfo(srcPath).isFile();
+
+            if(dstExists)
+            {
+                // Свой файл на месте или источник неизвестен: делать нечего
+                if(!srcExists)
+                    continue;
+
+                if(QFileInfo(srcPath).absoluteFilePath()==
+                   QFileInfo(dstPath).absoluteFilePath())
+                    continue;
+            }
+            else if(!srcExists)
+                continue;
+
+            QString fileName=VoiceNoteHelper::fileNameFromHref(href);
+
+            if(dstExists)
+            {
+                // Чужой файл с тем же именем: свободное имя
+                fileName=uniqueVoiceFileName(workDir, fileName);
+
+                if(fileName.isEmpty())
+                    continue;
+            }
+
+            if(!QFile::copy(srcPath, QDir(workDir).absoluteFilePath(fileName)))
+                continue;
+
+            if(dstExists)
+            {
+                // Ссылка правится на новое имя
+                const QString newHref=VoiceNoteHelper::makeHref(fileName);
+
+                QTextCharFormat linkFormat;
+                linkFormat.setAnchor(true);
+                linkFormat.setAnchorHref(newHref);
+
+                QTextCursor fix(document());
+                fix.setPosition(link.pos);
+                fix.setPosition(link.pos+link.len, QTextCursor::KeepAnchor);
+                fix.mergeCharFormat(linkFormat);
+            }
+        }
+    }
+
+    VoiceNoteHelper::materializeVoiceLinks(document());
+
+    cursor.endEditBlock();
 }
 
 

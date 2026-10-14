@@ -6023,6 +6023,38 @@ Please select single item for enabling edit operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Quality:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opus, %1 kbit/s, %2 Hz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MP3, %1 kbit/s, %2 Hz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV, %1 Hz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opus (.opus)</source>
         <translation type="unfinished"></translation>
     </message>

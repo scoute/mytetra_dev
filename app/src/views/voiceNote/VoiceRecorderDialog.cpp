@@ -3,7 +3,9 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QButtonGroup>
 #include <QComboBox>
+#include <QLineEdit>
 #include <QTimer>
 #include <QPainter>
 #include <QPaintEvent>
@@ -18,6 +20,7 @@
 #include <QAudioDeviceInfo>
 #include <QtMath>
 #include <QElapsedTimer>
+#include <QRegularExpression>
 
 #include "VoiceRecorderDialog.h"
 #include "libraries/VoiceNoteHelper.h"
@@ -91,9 +94,11 @@ void WaveformWidget::paintEvent(QPaintEvent *event)
 VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent) : QDialog(parent),
     workDir(workDir),
     currentFormat(VoiceFormatOpus),
+    currentQuality(VoiceQualityMedium),
     opusAvailable(false),
     mp3Available(false),
     wavAvailable(false),
+    fileNameEdited(false),
     elapsedRunning(false),
     durationMs(0),
     hasRecording(false)
@@ -108,6 +113,29 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     QLabel *formatLabel=new QLabel(tr("Format:"), this);
     opusRadio=new QRadioButton(tr("Opus (.opus)"), this);
     mp3Radio=new QRadioButton(tr("MP3 (.mp3)"), this);
+
+    // Свои группы: иначе autoExclusive сиблингов сбрасывает
+    // выбор формата при выборе качества и наоборот
+    QButtonGroup *formatGroup=new QButtonGroup(this);
+    formatGroup->addButton(opusRadio);
+    formatGroup->addButton(mp3Radio);
+
+    QLabel *fileNameLabel=new QLabel(tr("File name:"), this);
+    fileNameEdit=new QLineEdit(this);
+    fileNameEdit->setClearButtonEnabled(true);
+
+    // Качество: low/middle/high радио-кнопками, средний по умолчанию
+    QLabel *qualityLabel=new QLabel(tr("Quality:"), this);
+    qualityLowRadio=new QRadioButton(tr("Low"), this);
+    qualityMediumRadio=new QRadioButton(tr("Medium"), this);
+    qualityHighRadio=new QRadioButton(tr("High"), this);
+    qualityMediumRadio->setChecked(true);
+    qualityHintLabel=new QLabel(this);
+
+    QButtonGroup *qualityGroup=new QButtonGroup(this);
+    qualityGroup->addButton(qualityLowRadio);
+    qualityGroup->addButton(qualityMediumRadio);
+    qualityGroup->addButton(qualityHighRadio);
 
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);
     deviceCombo=new QComboBox(this);
@@ -138,6 +166,19 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     formatLayout->addWidget(mp3Radio);
     formatLayout->addStretch();
     centralLayout->addLayout(formatLayout);
+
+    QHBoxLayout *fileNameLayout=new QHBoxLayout();
+    fileNameLayout->addWidget(fileNameLabel);
+    fileNameLayout->addWidget(fileNameEdit, 1);
+    centralLayout->addLayout(fileNameLayout);
+
+    QVBoxLayout *qualityLayout=new QVBoxLayout();
+    qualityLayout->addWidget(qualityLabel);
+    qualityLayout->addWidget(qualityLowRadio);
+    qualityLayout->addWidget(qualityMediumRadio);
+    qualityLayout->addWidget(qualityHighRadio);
+    qualityLayout->addWidget(qualityHintLabel);
+    centralLayout->addLayout(qualityLayout);
 
     QHBoxLayout *deviceLayout=new QHBoxLayout();
     deviceLayout->addWidget(deviceLabel);
@@ -214,6 +255,11 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
         formatLabel->setText(tr("Format: WAV (Opus and MP3 unsupported)"));
     }
 
+    // Предложенное имя: метка времени плюс расширение формата
+    fileNameEdit->setText(autoStem()+currentExtension());
+
+    updateQualityHint();
+
     probe=new QAudioProbe(this);
     probe->setSource(recorder);
 
@@ -224,6 +270,14 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
             this,       &VoiceRecorderDialog::onFormatRadio);
     connect(mp3Radio, &QRadioButton::toggled,
             this,      &VoiceRecorderDialog::onFormatRadio);
+    connect(qualityLowRadio, &QRadioButton::toggled,
+            this,            &VoiceRecorderDialog::onQualityRadio);
+    connect(qualityMediumRadio, &QRadioButton::toggled,
+            this,               &VoiceRecorderDialog::onQualityRadio);
+    connect(qualityHighRadio, &QRadioButton::toggled,
+            this,              &VoiceRecorderDialog::onQualityRadio);
+    connect(fileNameEdit, &QLineEdit::textEdited,
+            this,          &VoiceRecorderDialog::onFileNameEdited);
     connect(recordButton, &QPushButton::toggled,
             this,          &VoiceRecorderDialog::onRecordToggled);
     connect(deviceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -300,8 +354,43 @@ qint64 VoiceRecorderDialog::recordedDurationMs(void) const
 
 void VoiceRecorderDialog::applyFormat(VoiceFormat format)
 {
+    // Профили качества low/middle/high для каждого формата
+    struct VoiceQualityProfile
+    {
+        int bitRate;
+        int sampleRate;
+    };
+
+    static const VoiceQualityProfile opusProfiles[3]=
+    {
+        {24000, 11025},
+        {32000, 22050},
+        {48000, 44100}
+    };
+
+    static const VoiceQualityProfile mp3Profiles[3]=
+    {
+        {32000, 11025},
+        {48000, 22050},
+        {64000, 44100}
+    };
+
+    static const int wavSampleRates[3]=
+    {
+        11025,
+        22050,
+        44100
+    };
+
+    const int quality=qBound(0, static_cast<int>(currentQuality), 2);
+
     QAudioEncoderSettings audioSettings;
     audioSettings.setChannelCount(1);
+
+    // Явный CBR: дефолт Qt ConstantQualityEncoding давал VBR
+    // везде и битрейт профиля ничего не значил. На качество
+    // сильнее влияет частота, она и разнится по профилям
+    audioSettings.setEncodingMode(QMultimedia::ConstantBitRateEncoding);
 
     if(format==VoiceFormatOpus)
     {
@@ -319,8 +408,8 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
                 break;
             }
 
-        audioSettings.setSampleRate(48000);
-        audioSettings.setBitRate(48000);
+        audioSettings.setSampleRate(opusProfiles[quality].sampleRate);
+        audioSettings.setBitRate(opusProfiles[quality].bitRate);
     }
     else if(format==VoiceFormatMp3)
     {
@@ -334,8 +423,8 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
         else
             recorder->setContainerFormat(QStringLiteral("audio/mpeg"));
 
-        audioSettings.setSampleRate(44100);
-        audioSettings.setBitRate(64000);
+        audioSettings.setSampleRate(mp3Profiles[quality].sampleRate);
+        audioSettings.setBitRate(mp3Profiles[quality].bitRate);
     }
     else
     {
@@ -350,19 +439,67 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
 
         recorder->setContainerFormat(QStringLiteral("audio/x-wav"));
 
-        audioSettings.setSampleRate(44100);
+        audioSettings.setSampleRate(wavSampleRates[quality]);
     }
 
     recorder->setAudioSettings(audioSettings);
 }
 
 
-QString VoiceRecorderDialog::uniqueFileName(const QString &extension) const
+void VoiceRecorderDialog::updateQualityHint(void)
+{
+    const int quality=qBound(0, static_cast<int>(currentQuality), 2);
+
+    if(currentFormat==VoiceFormatMp3)
+    {
+        static const int bitRates[3]={32, 48, 64};
+        static const int sampleRates[3]={11025, 22050, 44100};
+
+        qualityHintLabel->setText(
+            tr("MP3, %1 kbit/s, %2 Hz").arg(bitRates[quality]).arg(sampleRates[quality]));
+    }
+    else if(currentFormat==VoiceFormatWavFallback)
+    {
+        static const int sampleRates[3]={11025, 22050, 44100};
+
+        qualityHintLabel->setText(
+            tr("WAV, %1 Hz").arg(sampleRates[quality]));
+    }
+    else
+    {
+        static const int bitRates[3]={24, 32, 48};
+        static const int sampleRates[3]={11025, 22050, 44100};
+
+        qualityHintLabel->setText(
+            tr("Opus, %1 kbit/s, %2 Hz").arg(bitRates[quality]).arg(sampleRates[quality]));
+    }
+}
+
+
+QString VoiceRecorderDialog::currentExtension(void) const
+{
+    if(currentFormat==VoiceFormatMp3)
+        return QStringLiteral(".mp3");
+
+    if(currentFormat==VoiceFormatWavFallback)
+        return QStringLiteral(".wav");
+
+    return QStringLiteral(".opus");
+}
+
+
+QString VoiceRecorderDialog::autoStem(void) const
+{
+    return QStringLiteral("voice-")+
+           QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss"));
+}
+
+
+QString VoiceRecorderDialog::uniqueFileName(const QString &stem, const QString &extension) const
 {
     for(int attempt=0; attempt<100; ++attempt)
     {
-        QString name=QStringLiteral("voice-")+
-                     QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss"));
+        QString name=stem;
 
         if(attempt>0)
             name+=QStringLiteral("-")+QString::number(attempt);
@@ -374,6 +511,32 @@ QString VoiceRecorderDialog::uniqueFileName(const QString &extension) const
     }
 
     return QString();
+}
+
+
+QString VoiceRecorderDialog::userFileName(void) const
+{
+    // Без путей: только имя файла
+    QString text=QFileInfo(fileNameEdit->text().trimmed()).fileName().trimmed();
+
+    // Запретные для файловых систем символы
+    text.remove(QRegularExpression(QStringLiteral("[\\\\/:*?\"<>|\\x00-\\x1f]")));
+    text=text.trimmed();
+
+    // Чужая отсебятина с расширением не проходит: расширение
+    // всегда от текущего формата
+    static const QRegularExpression knownExt(
+        QStringLiteral("\\.(opus|mp3|wav|oga|ogg)$"),
+        QRegularExpression::CaseInsensitiveOption);
+
+    text.remove(knownExt);
+
+    QString stem=text.trimmed().left(100);
+
+    if(stem.isEmpty())
+        stem=autoStem();
+
+    return uniqueFileName(stem, currentExtension());
 }
 
 
@@ -441,6 +604,43 @@ void VoiceRecorderDialog::onFormatRadio(bool checked)
         currentFormat=VoiceFormatOpus;
     else if(mp3Radio->isChecked())
         currentFormat=VoiceFormatMp3;
+
+    updateQualityHint();
+
+    // Расширение в поле имени следует за форматом: нетронутое
+    // имя предлагается заново, правленное сохраняет основу
+    if(!fileNameEdited)
+        fileNameEdit->setText(autoStem()+currentExtension());
+    else
+    {
+        QString text=fileNameEdit->text();
+        text.remove(QRegularExpression(QStringLiteral("\\.[A-Za-z0-9]+$")));
+        fileNameEdit->setText(text+currentExtension());
+    }
+}
+
+
+void VoiceRecorderDialog::onQualityRadio(bool checked)
+{
+    if(!checked)
+        return;
+
+    if(qualityLowRadio->isChecked())
+        currentQuality=VoiceQualityLow;
+    else if(qualityHighRadio->isChecked())
+        currentQuality=VoiceQualityHigh;
+    else
+        currentQuality=VoiceQualityMedium;
+
+    updateQualityHint();
+}
+
+
+void VoiceRecorderDialog::onFileNameEdited(const QString &text)
+{
+    Q_UNUSED(text);
+
+    fileNameEdited=true;
 }
 
 
@@ -467,14 +667,8 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
 
         currentFormat=format;
 
-        QString extension=QStringLiteral(".opus");
-
-        if(format==VoiceFormatMp3)
-            extension=QStringLiteral(".mp3");
-        else if(format==VoiceFormatWavFallback)
-            extension=QStringLiteral(".wav");
-
-        const QString name=uniqueFileName(extension);
+        // Имя из поля пользователя, пусто если каталога нет
+        const QString name=userFileName();
 
         if(name.isEmpty() || workDir.isEmpty())
         {
@@ -495,10 +689,14 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
         recorder->record();
         timer->start();
 
-        // Устройство и формат не переключают на ходу
+        // Устройство, формат, качество и имя не переключают на ходу
         deviceCombo->setEnabled(false);
         opusRadio->setEnabled(false);
         mp3Radio->setEnabled(false);
+        qualityLowRadio->setEnabled(false);
+        qualityMediumRadio->setEnabled(false);
+        qualityHighRadio->setEnabled(false);
+        fileNameEdit->setEnabled(false);
 
         recordButton->setText(tr("Stop"));
         statusLabel->setText(tr("Recording..."));
@@ -535,6 +733,10 @@ void VoiceRecorderDialog::finishRecording(void)
     deviceCombo->setEnabled(true);
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
+    qualityLowRadio->setEnabled(true);
+    qualityMediumRadio->setEnabled(true);
+    qualityHighRadio->setEnabled(true);
+    fileNameEdit->setEnabled(true);
     recordButton->setText(tr("Record"));
 
     if(recordButton->isChecked())
@@ -596,6 +798,10 @@ void VoiceRecorderDialog::onRecorderError(QMediaRecorder::Error error)
     deviceCombo->setEnabled(true);
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
+    qualityLowRadio->setEnabled(true);
+    qualityMediumRadio->setEnabled(true);
+    qualityHighRadio->setEnabled(true);
+    fileNameEdit->setEnabled(true);
     recordButton->setText(tr("Record"));
 
     if(recordButton->isChecked())

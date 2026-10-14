@@ -489,6 +489,11 @@ void MainWindow::messageHandler(QString message)
     if(messageParts.count()>1)
         commandArgument=messageParts.at(1);
 
+    // MCP выключен в настройках: все внешние mcp-команды игнорируются.
+    // Отдельный if до цепочки чтобы не рвать else if
+    if(command.startsWith("mcp") && !mytetraConfig.get_mcpAllow())
+        return;
+
     if(command=="show")
     {
         showWindow();

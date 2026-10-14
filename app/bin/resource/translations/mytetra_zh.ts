@@ -794,6 +794,69 @@ MyTetra 必须正在运行。</translation>
     </message>
 </context>
 <context>
+    <name>AppConfigPage_Mcp</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="46"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="215"/>
+        <source>Allow MCP access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="53"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="216"/>
+        <source>What is MCP and how to connect it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="57"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="218"/>
+        <source>Client setup (copy to client config)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="60"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="219"/>
+        <source>OpenCode (opencode.json):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="66"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="75"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="220"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="222"/>
+        <source>Copy</source>
+        <translation type="unfinished">复制</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="69"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="221"/>
+        <source>Claude Code (.mcp.json):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
+        <source>MCP lets an AI client (opencode, Claude Code) read and search MyTetra notes.
+
+Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this MyTetra.
+
+Server modes:
+--mcp-ro: read-only (recommended)
+--mcp-rw: create and update notes, no delete
+--mcp-rw-with-delete: full write, deletes go to trash
+
+While the AI writes, MyTetra shows a banner. Keep read-only unless writes are needed.
+
+Claude Code terminal way:
+claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="195"/>
+        <source>MCP help</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AppConfigPage_Misc</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="45"/>
@@ -3328,322 +3391,322 @@ You need to update MyTetra.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1685"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1690"/>
         <source>Statistics</source>
         <translation>统计</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1623"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
         <source>Branch</source>
         <translation>分支</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1623"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
         <source>Note</source>
         <translation>笔记</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1623"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
         <source>Internal links</source>
         <translation>内部链接</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1623"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
         <source>Images</source>
         <translation>图片</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1623"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
         <source>Files</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1530"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1535"/>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
         <translation>分支：%1 | 笔记：%2 | 标签：%3 | 文件：%4 | 图片：%5 | 内部链接：%6</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1531"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1536"/>
         <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
         <translation>库统计：分支、笔记、标签、文件、图片和链接。链接是指笔记之间的 mytetra:// 链接。点击打开按笔记的明细。</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1553"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1558"/>
         <source>MCP edit applied — avoid editing in parallel</source>
         <translation>已应用 MCP 编辑 — 请避免同时编辑</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="393"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1884"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1889"/>
         <source>Approve</source>
         <translation>批准</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1095"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1746"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1100"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1751"/>
         <source>&amp;File</source>
         <translation>&amp;文件</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1098"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1748"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1103"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1753"/>
         <source>Databases management</source>
         <translation>数据库管理</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1109"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1114"/>
         <source>&amp;Print...</source>
         <translation>&amp;打印...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1112"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1751"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1117"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1756"/>
         <source>Print Preview...</source>
         <translation>打印预览...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1115"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1120"/>
         <source>&amp;Export PDF...</source>
         <translation>&amp;导出 PDF...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1101"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1749"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1106"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1754"/>
         <source>Export tree item</source>
         <translation>导出树项目</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1104"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1750"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1109"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1755"/>
         <source>Import tree item</source>
         <translation>导入树项目</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1120"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1842"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2374"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1125"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1847"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2379"/>
         <source>&amp;Quit</source>
         <translation>&amp;退出</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1129"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1756"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1134"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1761"/>
         <source>&amp;Tools</source>
         <translation>&amp;工具</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1141"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1758"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1146"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1763"/>
         <source>Action &amp;log</source>
         <translation>动作&amp;日志</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1172"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1178"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1771"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1775"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1177"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1183"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1776"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1780"/>
         <source>&amp;Preferences</source>
         <translation>&amp;首选项</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1190"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1195"/>
         <source>Main</source>
         <translation>常规</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1191"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1196"/>
         <source>Appearance</source>
         <translation>外观</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1192"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1197"/>
         <source>Crypt</source>
         <translation>加密</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1198"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1203"/>
         <source>Misc</source>
         <translation>杂项</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1247"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1832"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1252"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1837"/>
         <source>&amp;Help</source>
         <translation>&amp;帮助</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1250"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1834"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1255"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1839"/>
         <source>About MyTetra</source>
         <translation>关于 MyTetra</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1253"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1835"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1258"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1840"/>
         <source>About Qt</source>
         <translation>关于 Qt</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1256"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1836"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2199"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1261"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1841"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2204"/>
         <source>Technical info</source>
         <translation>技术信息</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1193"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1198"/>
         <source>Syncro</source>
         <translation>同步</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1194"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1199"/>
         <source>Notes Area</source>
         <translation>笔记区</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1195"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1200"/>
         <source>Attaches</source>
         <translation>附件</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1196"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1201"/>
         <source>Keyboard</source>
         <translation>键盘</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="194"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1197"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1844"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1202"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1849"/>
         <source>History</source>
         <translation>历史</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1918"/>
         <source>Print Document</source>
         <translation>打印文档</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1968"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1973"/>
         <source>Select an empty directory to export data</source>
         <translation>选择空目录以导出数据</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1986"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1991"/>
         <source>Select directory to import data</source>
         <translation>选择目录以导入数据</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2200"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2205"/>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;技术信息&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2309"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2314"/>
         <source>MyTetra: can&apos;t synchronization</source>
         <translation>MyTetra：无法同步</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2310"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2315"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>未设置同步命令。&lt;br&gt;请检查“工具”菜单“同步”设置</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2329"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2334"/>
         <source>MyTetra synchronization</source>
         <translation>MyTetra 同步</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2330"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2335"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>正在同步，请稍候...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1839"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2365"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1844"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2370"/>
         <source>&amp;Restore window</source>
         <translation>&amp;恢复窗口</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1840"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2368"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1845"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2373"/>
         <source>Ma&amp;ximize window</source>
         <translation>最&amp;大化窗口</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1841"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2371"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1846"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2376"/>
         <source>Mi&amp;nimize window</source>
         <translation>最&amp;小化窗口</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1266"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1798"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1271"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1803"/>
         <source>&amp;Themes</source>
         <translation>&amp;主题</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1271"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1801"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1276"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1806"/>
         <source>Default</source>
         <translation>默认</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1272"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1802"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1277"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1807"/>
         <source>Dark</source>
         <translation>深色</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1273"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1803"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1278"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
         <source>Modern</source>
         <translation>现代</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1274"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1804"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1279"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1809"/>
         <source>Midnight</source>
         <translation>午夜</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="214"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1623"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1846"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1851"/>
         <source>Tags</source>
         <translation>标签</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1135"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1140"/>
         <source>Images &amp;gallery</source>
         <translation>图片&amp;库</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1138"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1760"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1143"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1765"/>
         <source>Attached &amp;files</source>
         <translation>附件&amp;文件</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1317"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1812"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1322"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1817"/>
         <source>&amp;View</source>
         <translation>&amp;视图</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1320"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1815"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1325"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1820"/>
         <source>Show note header</source>
         <translation>显示笔记头</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1334"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1821"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1339"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1826"/>
         <source>Change secret color...</source>
         <translation>更改私密颜色...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1338"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1824"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1343"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1829"/>
         <source>Change note background color...</source>
         <translation>更改笔记背景色...</translation>
     </message>
@@ -3653,8 +3716,8 @@ You need to update MyTetra.</source>
         <translation>反链</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1324"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1818"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1329"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1823"/>
         <source>Show favorites panel</source>
         <translation>显示收藏面板</translation>
     </message>
@@ -3964,80 +4027,86 @@ MyTetra 将尝试创建空白条目进行修复。</translation>
         <translation>更改生效需要重启程序。</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="39"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="112"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="40"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="115"/>
         <source>MyTetra settings</source>
         <translation>MyTetra 设置</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="51"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="114"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="52"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="117"/>
         <source>Main</source>
         <translation>常规</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="115"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="54"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
         <source>Appearance</source>
         <translation>外观</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="55"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="116"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="56"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="119"/>
         <source>Crypt</source>
         <translation>加密</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="57"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="117"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="58"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="120"/>
         <source>Synchro</source>
         <translation>同步</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="60"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="121"/>
         <source>Notes area</source>
         <translation>笔记区</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="71"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="124"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="72"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="127"/>
         <source>Clipper</source>
         <translation>剪藏器</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="69"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="123"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="126"/>
         <source>Favorites</source>
         <translation>收藏</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="61"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="119"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="62"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="122"/>
         <source>Attaches</source>
         <translation>附件</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="63"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="120"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="64"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="123"/>
         <source>Keyboard</source>
         <translation>键盘</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="65"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="121"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="66"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="124"/>
         <source>History</source>
         <translation>历史</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="67"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="122"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="68"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="125"/>
         <source>Search</source>
         <translation>搜索</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="73"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="125"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="74"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="128"/>
+        <source>MCP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="76"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="129"/>
         <source>Misc</source>
         <translation>杂项</translation>
     </message>

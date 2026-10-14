@@ -463,6 +463,15 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
 {
     qDebug() << "Clipper: clip requested";
 
+    // Глобальный режим только чтения: записи не создаются
+    if(mytetraConfig.get_readOnly())
+    {
+        const QString message=tr("Read-only mode is enabled.");
+        notify(tr("Web Clipper"), message);
+        emit clipFinished(false, message);
+        return;
+    }
+
     // Актуальные лимиты картинок из настроек
     reloadLimits();
 

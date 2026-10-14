@@ -5182,6 +5182,14 @@ Please report about this problem to the developers.</source>
         <source>Create note in unsorted_notes branch from clipboard content</source>
         <translation>Создать заметку в ветке unsorted_notes из содержимого буфера обмена</translation>
     </message>
+    <message>
+        <source>Read-only mode</source>
+        <translation>Режим только чтения</translation>
+    </message>
+    <message>
+        <source>Forbid any changes to the base</source>
+        <translation>Запретить любые изменения базы</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -6142,7 +6150,11 @@ Please select single item for enabling edit operation.</source>
         <source>Can not insert note into unsorted_notes.</source>
         <translation>Не могу вставить заметку в unsorted_notes.</translation>
     </message>
-    </context>
+        <message>
+        <source>Read-only mode is enabled.</source>
+        <translation>Включён режим только чтения.</translation>
+    </message>
+</context>
     <context>
         <name>AppConfigPage_Clipper</name>
     <message>

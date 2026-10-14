@@ -27,6 +27,10 @@ public:
     int applyChanges(void);
     void retranslateUi(void);
 
+    // Группы кастома активны только при выбранном Custom:
+    // на базовых темах настройки не действуют
+    void updateCustomEnabled(void);
+
 private slots:
     void onClickedNotePaperColor(void);
     void onClickedNotePaperColorReset(void);
@@ -50,6 +54,7 @@ private slots:
     void onClickedInterfaceFont(void);
     void onClickedInterfaceFontReset(void);
     void onClickedResetAll(void);
+    void onThemeComboChanged(int index);
 
 protected:
     void setupUi(void);
@@ -67,6 +72,8 @@ protected:
     QLabel *themeLabel;
     MtComboBox *themeNameComboBox;
     QLabel *customHint;
+    QLabel *baseThemeLabel;
+    MtComboBox *baseThemeComboBox;
     QLabel *iconSizeLabel;
     MtComboBox *iconSizeComboBox;
 

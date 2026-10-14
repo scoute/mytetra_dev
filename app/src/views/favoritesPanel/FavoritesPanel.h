@@ -15,6 +15,10 @@ class QListWidget;
 class QListWidgetItem;
 class QLabel;
 class QShowEvent;
+class QDragEnterEvent;
+class QDragMoveEvent;
+class QDropEvent;
+class QMimeData;
 class QVBoxLayout;
 class TreeScreen;
 
@@ -45,6 +49,14 @@ protected:
 
     // Список пересобирается при каждом показе: могли star/unstar
     void showEvent(QShowEvent *event) override;
+
+    // Бросок записи из таблицы записей: дроп добавляет в избранное
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+
+    // Проверка ноши на формат записей таблицы
+    bool canAcceptRecordsDrop(const QMimeData *mimeData) const;
 
 private slots:
 

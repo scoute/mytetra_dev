@@ -75,6 +75,26 @@ void GlobalParameters::init(void)
 }
 
 
+// Бездиалоговая инициализация для headless-режимов (MCP-сервер):
+// кодеки и поиск рабочей директории без InstallDialog.
+// Возвращает false если conf.ini не найден
+bool GlobalParameters::initHeadless(void)
+{
+ m_pointTreeScreen=nullptr;
+ m_pointRecordTableScreen=nullptr;
+ m_pointFindScreen=nullptr;
+ m_pointMetaEditor=nullptr;
+ m_pointStatusBar=nullptr;
+ m_windowSwitcher=nullptr;
+
+ initCodepage(); // устанавливаются кодеки локали и кодеки консоли
+
+ qDebug() << "Set main program file to " << m_mainProgramFile;
+
+ return findWorkDirectory();
+}
+
+
 QString GlobalParameters::getInitSystemCodepage()
 {
 #ifdef Q_OS_WIN32

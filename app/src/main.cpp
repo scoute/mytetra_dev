@@ -18,6 +18,7 @@
 #include <QScrollBar>
 
 #include "main.h"
+#include "libraries/mcp/McpServer.h"
 #include "views/mainWindow/MainWindow.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/appConfig/AppFiles.h"
@@ -104,6 +105,7 @@ void printHelp()
     printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
     printf("./mytetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
+    printf("./mytetra --mcp - Run read-only MCP server (Model Context Protocol) over stdio for AI clients\n");
     printf("\n");
 }
 
@@ -244,6 +246,12 @@ void parseConsoleOption(QtSingleApplication &app)
 
 int main(int argc, char ** argv)
 {
+    // MCP-режим раньше всего остального: ни GUI, ни single-instance,
+    // ни вывод в stdout (он отдан протоколу) здесь не нужны
+    for(int i=1; i<argc; ++i)
+        if(QString::fromLocal8Bit(argv[i])=="--mcp")
+            return runMcpServer(argc, argv);
+
     printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
 
     // Разрешение масштабирования в высоком DPI, вызывается перед подгрузкой ресурсов с графикой

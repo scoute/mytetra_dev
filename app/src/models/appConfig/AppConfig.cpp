@@ -1163,6 +1163,20 @@ void AppConfig::set_themeCustomNotePaperMode(QString mode)
     m_conf->setValue("themeCustomNotePaperMode", mode);
 }
 
+QString AppConfig::get_themeCustomBaseTheme(void)
+{
+    return m_conf->value("themeCustomBaseTheme", "default").toString();
+}
+
+void AppConfig::set_themeCustomBaseTheme(QString name)
+{
+    if(name!="default" && name!="dark" &&
+       name!="modern" && name!="midnight")
+        name="default";
+
+    m_conf->setValue("themeCustomBaseTheme", name);
+}
+
 
 // Человеко-читаемые имена вложенных файлов на диске.
 // Параметр намеренно не входит в версионные таблицы (как noteFontColor):

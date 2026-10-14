@@ -1571,6 +1571,16 @@ void MainWindow::onViewSecretColor(void)
     // Сразу на диск как в контекстном меню секрета
     mytetraConfig.sync();
 
+    // Цвет действует только на Custom: быстрый выбор сам переводит
+    // туда с текущей темой как базой, иначе клик ничего не меняет
+    if(mytetraConfig.getInterfaceTheme()!="custom")
+    {
+        mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
+
+        if(mytetraConfig.setInterfaceTheme("custom"))
+            CssHelper::loadCurrentTheme();
+    }
+
     if(editorScreen!=nullptr)
         editorScreen->repaintSecrets();
 }
@@ -1590,6 +1600,16 @@ void MainWindow::onViewPaperColor(void)
 
     // Сразу на диск как в соседнем пункте про цвет секрета
     mytetraConfig.sync();
+
+    // Бумага действует только на Custom: быстрый выбор сам переводит
+    // туда с текущей темой как базой, иначе клик ничего не меняет
+    if(mytetraConfig.getInterfaceTheme()!="custom")
+    {
+        mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
+
+        if(mytetraConfig.setInterfaceTheme("custom"))
+            CssHelper::loadCurrentTheme();
+    }
 
     if(editorScreen!=nullptr)
         editorScreen->applyNoteColors();

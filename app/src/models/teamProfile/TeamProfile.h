@@ -29,6 +29,9 @@ public:
     bool isTeamIdSet(void);
     void generateNewTeamId(void);
 
+    // Профиль настроен: задано имя пользователя
+    bool isConfigured(void);
+
     QString getSharedDirConfigValue(void);
     QString getSharedDir(void);
     void setSharedDir(const QString &path);

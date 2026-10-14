@@ -69,6 +69,7 @@ private slots:
     void changedFindInTags(int state);
     void changedFindInText(int state);
     void changedFindInNameItem(int state);
+    void changedFindInAttach(int state);
 
 signals:
 
@@ -101,6 +102,7 @@ private:
     QCheckBox *findInTags;
     QCheckBox *findInText;
     QCheckBox *findInNameItem;
+    QCheckBox *findInAttach;
 
     QHBoxLayout *toolsLine;
     QGridLayout *toolsGrid;

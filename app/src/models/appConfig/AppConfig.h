@@ -200,6 +200,16 @@ public:
     bool get_editorFindEmbedded(void);
     void set_editorFindEmbedded(bool state);
 
+    // Панель избранного видна (по умолчанию да). Намеренно вне
+    // версионных таблиц, как editorFindEmbedded
+    bool get_favoritesEnabled(void);
+    void set_favoritesEnabled(bool state);
+
+    // Хранилище избранного: "sidecar" (data/favorites.xml, по умолчанию)
+    // или "xml" (поля favorite в mytetra.xml). Тоже без версий
+    QString get_favoritesStorage(void);
+    void set_favoritesStorage(const QString &mode);
+
     // Разрешено ли использовать собственный формат вывода даты и времени
     bool getEnableCustomDateTimeFormat(void);
     void setEnableCustomDateTimeFormat(bool state);

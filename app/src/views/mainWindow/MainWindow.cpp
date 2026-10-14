@@ -47,6 +47,7 @@ public:
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
+#include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
@@ -739,6 +740,18 @@ void MainWindow::initToolsMenu(void)
 
     shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
 
+    // Переключатель панели избранного: дока нет (панель живет в TreeScreen),
+    // поэтому обычное checkable-действие. Сам refresh решит показать
+    // или спрятать по наличию звездочек
+    actionToolsMenuFavorites=new QAction(tr("Show favorites panel"), this);
+    actionToolsMenuFavorites->setCheckable(true);
+    actionToolsMenuFavorites->setChecked(mytetraConfig.get_favoritesEnabled());
+    actionToolsMenuFavorites->setIcon(QIcon(":/resource/pic/note_favorite.svg"));
+    toolsMenu->addAction(actionToolsMenuFavorites);
+
+    connect(actionToolsMenuFavorites, &QAction::toggled,
+            this,                     &MainWindow::onToolsMenuFavoritesToggled);
+
     toolsMenu->addSeparator();
 
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -1077,6 +1090,9 @@ void MainWindow::retranslateUi(void)
 
         actionToolsMenuFilesGallery->setText(tr("Attached &files"));
 
+        actionToolsMenuFavorites->setText(tr("Show favorites panel"));
+        actionToolsMenuFavorites->setChecked(mytetraConfig.get_favoritesEnabled());
+
         // Переключатель дока истории: текст тоже идет через шорткаты,
         // но initAction для него звался один раз при построении
         shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
@@ -1163,6 +1179,11 @@ void MainWindow::retranslateUi(void)
 
     if(tagsPanel!=nullptr)
         tagsPanel->retranslateUi();
+
+    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
+
+    if(favoritesPanel!=nullptr)
+        favoritesPanel->retranslateUi();
 }
 
 
@@ -1323,6 +1344,18 @@ void MainWindow::toolsFindInBaseWithText(const QString &text)
         findScreenRel->widgetShow();
 
     findScreenRel->setFindText(text);
+}
+
+
+// Тумблер панели избранного: сам refresh решит показать или спрятать
+// по наличию звездочек
+void MainWindow::onToolsMenuFavoritesToggled(bool checked)
+{
+    mytetraConfig.set_favoritesEnabled(checked);
+
+    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
+    if(favoritesPanel!=nullptr)
+        favoritesPanel->refreshFavorites();
 }
 
 

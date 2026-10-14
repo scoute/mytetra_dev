@@ -40,6 +40,7 @@ private:
     QListWidgetItem *pageKeyboard;
     QListWidgetItem *pageHistory;
     QListWidgetItem *pageSearch;
+    QListWidgetItem *pageFavorites;
     QListWidgetItem *pageMisc;
 
     void changePage(QString name);

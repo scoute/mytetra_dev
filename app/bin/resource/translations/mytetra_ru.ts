@@ -705,6 +705,14 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Secret color: </source>
         <translation>Цвет секрета: </translation>
     </message>
+    <message>
+        <source>Note paper color: </source>
+        <translation>Цвет бумаги заметки: </translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Сбросить</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -727,6 +735,14 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="63"/>
         <source>Columns visible</source>
         <translation>Отображаемые колонки</translation>
+    </message>
+    <message>
+        <source>Note header</source>
+        <translation>Шапка заметки</translation>
+    </message>
+    <message>
+        <source>Show note header (name and author)</source>
+        <translation>Показывать шапку заметки (название и автор)</translation>
     </message>
 </context>
 <context>
@@ -3387,6 +3403,22 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <source>Backlinks</source>
         <translation>Обратные ссылки</translation>
+    </message>
+    <message>
+        <source>&amp;View</source>
+        <translation>Вид</translation>
+    </message>
+    <message>
+        <source>Show note header</source>
+        <translation>Показывать шапку заметки</translation>
+    </message>
+    <message>
+        <source>Change secret color...</source>
+        <translation>Изменить цвет секретов...</translation>
+    </message>
+    <message>
+        <source>Change note background color...</source>
+        <translation>Изменить цвет фона заметки...</translation>
     </message>
 </context>
 <context>

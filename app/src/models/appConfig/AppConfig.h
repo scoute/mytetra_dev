@@ -249,6 +249,16 @@ public:
     QString get_secretColor(void);
     void set_secretColor(QString color);
 
+    // Цвет фона поля заметки. Пустая строка означает цвет темы
+    // по умолчанию, иначе формат цвета - "#B0BAC7"
+    QString get_notePaperColor(void);
+    void set_notePaperColor(QString color);
+
+    // Шапка заметки (название и автор) над редактором.
+    // По умолчанию показана
+    bool get_recordHeaderVisible(void);
+    void set_recordHeaderVisible(bool state);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -355,6 +365,7 @@ private:
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
     QStringList get_parameter_table_43(bool withEndSignature=true);
+    QStringList get_parameter_table_44(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

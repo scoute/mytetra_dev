@@ -12,7 +12,9 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/CssHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
 #include "libraries/MtComboBox.h"
+#include "views/record/MetaEditor.h"
 
 
 extern AppConfig mytetraConfig;
@@ -242,6 +244,12 @@ int AppConfigPage_Appearance::applyChanges()
                 fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] );
 
             CssHelper::loadCurrentTheme();
+
+            // Бумага поверх темы переживает смену темы
+            MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
+
+            if(editorScreen!=nullptr)
+                editorScreen->applyNotePaperColor();
         }
     }
 
@@ -264,6 +272,12 @@ int AppConfigPage_Appearance::applyChanges()
 
         // Для обновления размера иконок перечитывается тема оформления
         CssHelper::loadCurrentTheme();
+
+        // Перечитывание темы сносит свой stylesheet бумаги
+        MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
+
+        if(editorScreen!=nullptr)
+            editorScreen->applyNotePaperColor();
     }
 
 

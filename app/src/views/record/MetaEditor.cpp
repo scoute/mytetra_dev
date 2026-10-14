@@ -1,5 +1,6 @@
 #include <QWidget>
 #include <QLabel>
+#include <QColor>
 #include <QRegularExpression>
 #include <QBoxLayout>
 #include <QGridLayout>
@@ -50,6 +51,9 @@ MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
 
     // В редакторе устанавливается функция обратного вызова на кнопку Attach
     setAttachCallback( toAttachCallback );
+
+    // Фон поля заметки из настройки поверх цвета темы
+    applyNotePaperColor();
 
     emit updateIndentSliderGeometry();
 }
@@ -278,9 +282,9 @@ void MetaEditor::setTreePath(QString path)
 
 void MetaEditor::setName(QString name)
 {
-  // Наименование записи есть всегда, оно просто отображается
-  recordName->setVisible(true);
+  // Наименование записи есть всегда, видимость из настроек
   recordName->setText("<b>"+name.toHtmlEscaped()+"</b>");
+  updateRecordHeaderVisibility();
 }
 
 
@@ -293,9 +297,19 @@ void MetaEditor::setAuthor(QString author)
   }
   else
   {
-    recordAuthor->setVisible(true);
     recordAuthor->setText("<i>"+author.toHtmlEscaped()+"</i>");
+    updateRecordHeaderVisibility();
   }
+}
+
+
+// Видимость шапки из настроек. Пустой автор скрыт всегда
+void MetaEditor::updateRecordHeaderVisibility(void)
+{
+  const bool show=mytetraConfig.get_recordHeaderVisible();
+
+  recordName->setVisible(show);
+  recordAuthor->setVisible(show && !recordAuthor->text().isEmpty());
 }
 
 
@@ -533,6 +547,46 @@ void MetaEditor::setReadOnly(bool state)
 void MetaEditor::setFocusToBaseWidget()
 {
     textArea->setFocus();
+}
+
+
+// Действующий цвет фона поля заметки. Настройка имеет приоритет,
+// пустая настройка отдает цвет темы: midnight серая бумага как
+// в авторской темной теме, modern белый, классические темы без
+// переопределения (пусто — решает тема/палитра)
+QString MetaEditor::effectiveNotePaperColor(const QString &themeName,
+                                           const QString &setting)
+{
+    QColor custom(setting);
+
+    if(!setting.isEmpty() && custom.isValid())
+        return custom.name();
+
+    if(themeName=="midnight")
+        return "#b0bac7";
+
+    if(themeName=="modern")
+        return "#ffffff";
+
+    return "";
+}
+
+
+// Применение цвета фона поля заметки. Свой stylesheet виджета бьет
+// тему, поэтому кладется только при явном цвете в настройке.
+// Пустая настройка полностью отдает бумагу теме: так правки цвета
+// бумаги в CSS темы не маскируются застывшим оверрайдом
+void MetaEditor::applyNotePaperColor(void)
+{
+    QString setting=mytetraConfig.get_notePaperColor();
+
+    QColor custom(setting);
+
+    if(!setting.isEmpty() && custom.isValid())
+        textArea->setStyleSheet(
+            QString("QWidget[objectName=\"textArea\"] { background-color: %1; }").arg(custom.name()));
+    else
+        textArea->setStyleSheet("");
 }
 
 

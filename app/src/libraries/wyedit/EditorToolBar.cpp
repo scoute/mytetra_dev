@@ -325,6 +325,10 @@ void EditorToolBar::setupToolBarTools(void)
     openImage->setIcon(QIcon(":/resource/pic/open_image.svg"));
     openImage->setObjectName("editor_tb_openImage");
 
+    micRecord=new QAction(this);
+    micRecord->setIcon(QIcon(":/resource/pic/edit_mic_record.svg"));
+    micRecord->setObjectName("editor_tb_micRecord");
+
     insertHorizontalLine=new QAction(this);
     insertHorizontalLine->setIcon(QIcon(":/resource/pic/edit_insert_horizontal_line.svg"));
     insertHorizontalLine->setObjectName("editor_tb_insertHorizontalLine");
@@ -442,6 +446,7 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-tableProperties", tableProperties);
     shortcutManager.initAction("editor-insertImageFromFile", insertImageFromFile);
     shortcutManager.initAction("editor-openImage", openImage);
+    shortcutManager.initAction("editor-micRecord", micRecord);
     shortcutManager.initAction("editor-insertHorizontalLine", insertHorizontalLine);
     shortcutManager.initAction("editor-mathExpression", mathExpression);
     shortcutManager.initAction("editor-expandEditArea", expandEditArea);

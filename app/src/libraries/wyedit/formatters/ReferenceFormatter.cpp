@@ -22,6 +22,8 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/LinkHelper.h"
+#include "libraries/VoiceNoteHelper.h"
+#include "views/voiceNote/VoicePlayerDialog.h"
 #include "views/notePicker/NotePickerDialog.h"
 #include "../Editor.h"
 #include "../EditorConfig.h"
@@ -426,6 +428,17 @@ void ReferenceFormatter::onContextMenuGotoReference()
 
 void ReferenceFormatter::onClickedGotoReference(QString href)
 {
+    // Голосовая заметка: вместо внешнего открывателя свой плеер.
+    // Файл лежит в каталоге записи рядом с картинками
+    if(VoiceNoteHelper::isVoiceHref(href))
+    {
+      const QString filePath=VoiceNoteHelper::resolveFilePath(editor->getWorkDirectory(), href);
+
+      VoicePlayerDialog player(filePath, VoiceNoteHelper::fileNameFromHref(href), editor);
+      player.exec();
+      return;
+    }
+
     // Клик по спойлеру не навигация: выделение и так показывает содержимое.
     // Метка живет в том же anchor-канале что ссылки
     if(href==SecretFormatter::secretHref())

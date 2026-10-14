@@ -57,6 +57,12 @@ void EditorFindDialog::setup_ui(void)
   replaceButton=new QPushButton(tr("&Replace"));
   replaceAllButton=new QPushButton(tr("Replace &all"));
 
+  // Прикрепление полоской вместо окна: запрос и флаги переезжают с окном
+  attachButton=new QPushButton();
+  attachButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarShadeButton));
+  attachButton->setToolTip(tr("Show as embedded bar"));
+  attachButton->setMaximumWidth(28);
+
   this->setWindowTitle(tr("Find and replace"));
 }
 
@@ -80,6 +86,9 @@ void EditorFindDialog::setup_signals(void)
 
   connect(replaceAllButton, &QPushButton::clicked,
           this,             &EditorFindDialog::replace_all_clicked);
+
+  connect(attachButton, &QPushButton::clicked,
+          this,        &EditorFindDialog::attach_clicked);
 }
 
 
@@ -90,6 +99,7 @@ void EditorFindDialog::assembly(void)
   findLineLayout->addWidget(findButton);
   findLineLayout->addWidget(prevButton);
   findLineLayout->addWidget(nextButton);
+  findLineLayout->addWidget(attachButton);
 
   QHBoxLayout *replaceLineLayout=new QHBoxLayout();
   replaceLineLayout->addWidget(replaceEdit);
@@ -146,11 +156,39 @@ void EditorFindDialog::replace_all_clicked(void)
 }
 
 
+// Прикрепление: редактор перенесет запрос в полоску и спрячет окно
+void EditorFindDialog::attach_clicked(void)
+{
+  emit attach_to_bar();
+}
+
+
+// Текст и флаги запроса для переноса между окном и полоской
+QString EditorFindDialog::findRequestText(void) const
+{
+  return lineEdit->text();
+}
+
+
+QTextDocument::FindFlags EditorFindDialog::findRequestFlags(void) const
+{
+  return collectFlags();
+}
+
+
+void EditorFindDialog::setFindRequest(const QString &text, QTextDocument::FindFlags flags)
+{
+  lineEdit->setText(text);
+  mathCase->setChecked(flags & QTextDocument::FindCaseSensitively);
+  wholeWords->setChecked(flags & QTextDocument::FindWholeWords);
+}
+
+
 // Флаги поиска из состояния галочек.
 // Направление задают кнопки (назад добавляет FindBackward сама)
 QTextDocument::FindFlags EditorFindDialog::collectFlags(void) const
 {
-  QTextDocument::FindFlags flags=0;
+  QTextDocument::FindFlags flags;
   if(mathCase->isChecked())  flags|=QTextDocument::FindCaseSensitively;
   if(wholeWords->isChecked())flags|=QTextDocument::FindWholeWords;
 

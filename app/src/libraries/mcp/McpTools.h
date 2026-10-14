@@ -21,16 +21,22 @@ class McpTools
 public:
   explicit McpTools(KnowTreeModel *model);
 
+  // Лимиты ответов: экономия токенов, обрезка с флагом truncated
+  static const int DEFAULT_LIST_LIMIT=50;
+  static const int MAX_LIST_LIMIT=200;
+  static const int DEFAULT_NOTE_CHARS=20000;
+  static const int MAX_TEXT_LENGTH=200000;
+
   // Плоский список веток в порядке дерева: {branches: [{id, name, parent_id}]}
   QJsonObject listBranches(void);
 
-  // Записи ветки: {notes: [{id, name, tags, branch_id, branch_path}]}.
-  // error заполняется если ветка не найдена
-  QJsonObject listNotes(const QString &branchId, bool recursive, QString &error);
+  // Записи ветки: {notes, truncated}. error если ветка не найдена
+  QJsonObject listNotes(const QString &branchId, bool recursive, int limit,
+                        QString &error);
 
-  // Одна запись с плейнтекстом: {note: {id, name, tags, branch_id,
-  // branch_path, format, text, truncated}}. error если запись не найдена
-  QJsonObject getNote(const QString &noteId, QString &error);
+  // Одна запись с плейнтекстом (до maxChars): {note: {...}}.
+  // error если запись не найдена
+  QJsonObject getNote(const QString &noteId, int maxChars, QString &error);
 
   // Подстрока без учета регистра по имени, меткам и тексту:
   // {results: [{id, name, branch_path, snippet}]}.
@@ -166,7 +172,7 @@ public:
 
   // Заметки с точным совпадением метки (целиком, без учета регистра).
   // error при пустой метке
-  QJsonObject tagNotes(const QString &tag, QString &error);
+  QJsonObject tagNotes(const QString &tag, int limit, QString &error);
 
   // Заметки без меток (до limit, с флагом truncated)
   QJsonObject untaggedNotes(int limit);

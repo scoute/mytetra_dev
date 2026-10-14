@@ -1,4 +1,5 @@
 #include <QObject>
+#include <QFile>
 #include <QHeaderView>
 #include <QApplication>
 #include <QMessageBox>
@@ -19,6 +20,9 @@
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "models/recordTable/Record.h"
 #include "models/recordTable/RecordTableData.h"
+#include "views/changeHistory/ChangeHistoryDialog.h"
+#include "libraries/GitHelper.h"
+#include "libraries/ChangeHistory.h"
 #include "libraries/Favorites.h"
 #include "libraries/BacklinkIndex.h"
 #include "models/recordTable/RecordTableModel.h"
@@ -1136,6 +1140,90 @@ void RecordTableController::onPrintClick(void)
   printDialog.generateHtmlTableFromModel();
   printDialog.setTitleToHtml( recordSourceModel->getTableData()->getItem()->getPathAsNameWithDelimeter(" / ") );
   printDialog.exec();
+}
+
+
+// История изменений записи: версии, diff, откат текстом в редактор.
+// Откат идет обычным сохранением и сам становится новой версией
+void RecordTableController::onChangeHistoryClick(void)
+{
+  RecordTableScreen *parentPointer=qobject_cast<RecordTableScreen *>(parent());
+
+  QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
+
+  if(selectItems.isEmpty())
+    return;
+
+  QModelIndex sourceIndex=convertProxyIndexToSourceIndex(selectItems.at(0));
+  const int pos=sourceIndex.row();
+
+  RecordTableData *table=recordSourceModel->getTableData();
+
+  const QString id=table->getField("id", pos);
+  const QString name=table->getField("name", pos);
+
+  if(table->getField("crypt", pos)==QStringLiteral("1"))
+  {
+    QMessageBox::information(parentPointer,
+                             tr("Change history"),
+                             tr("Change history is unavailable for encrypted notes."));
+    return;
+  }
+
+  if(!GitHelper::isAvailable())
+  {
+    QMessageBox::information(parentPointer,
+                             tr("Change history"),
+                             tr("Cannot show history: git is not installed.\n"
+                                "Linux: install the git package. Windows: https://git-scm.com."));
+    return;
+  }
+
+  const QString tetradir=mytetraConfig.get_tetradir();
+
+  // Текущий текст: из открытого редактора если та же запись
+  // (захватываются несохраненные правки), иначе из файла
+  QString currentHtml;
+  MetaEditor *edView=find_object<MetaEditor>("editorScreen");
+
+  if(edView!=nullptr && edView->getMiscField("id")==id)
+    currentHtml=edView->getTextarea();
+  else
+  {
+    QFile file(tetradir+QStringLiteral("/base/")+
+               table->getField("dir", pos)+QStringLiteral("/")+
+               table->getField("file", pos));
+
+    if(file.open(QIODevice::ReadOnly))
+      currentHtml=QString::fromUtf8(file.readAll());
+  }
+
+  ChangeHistoryDialog historyDialog(tetradir, id, name, currentHtml, parentPointer);
+
+  if(historyDialog.exec()!=QDialog::Accepted)
+    return;
+
+  const QString rollback=historyDialog.rollbackContent();
+
+  if(rollback.isNull())
+    return;
+
+  // Откат подставляется в редактор: запись открывается если надо.
+  // Дальше обычное сохранение, оно и станет новой версией
+  edView=find_object<MetaEditor>("editorScreen");
+
+  if(edView==nullptr || edView->getMiscField("id")!=id)
+  {
+    setSelectionToId(id);
+    clickToRecord(convertIdToProxyIndex(id));
+    edView=find_object<MetaEditor>("editorScreen");
+  }
+
+  if(edView==nullptr)
+    return;
+
+  edView->setTextarea(rollback);
+  edView->setTextareaModified(true);
 }
 
 

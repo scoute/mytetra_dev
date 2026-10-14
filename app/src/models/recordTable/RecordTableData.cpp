@@ -21,6 +21,7 @@
 #include "libraries/ActionLogger.h"
 
 #include "libraries/wyedit/Editor.h"
+#include "libraries/ChangeHistory.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 
@@ -226,6 +227,13 @@ void RecordTableData::editorSaveCallback(QObject *editor,
     {
         data["recordName"]=currEditor->getMiscField("title");
         actionLogger.addAction("editRecordText", data);
+
+        // Снапшот в историю изменений: только при реальных
+        // изменениях, шифрованные пропускаются выше
+        ChangeHistory::snapshot(mytetraConfig.get_tetradir(),
+                                currEditor->getMiscField("id"),
+                                currEditor->getMiscField("title"),
+                                saveText);
     }
     else
     {

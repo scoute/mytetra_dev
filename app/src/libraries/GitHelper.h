@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QList>
 
 // Центральная обертка над внешним git для тяжелой линии.
 // Все вызовы идут через один run с таймаутом, без шелла.
@@ -41,6 +42,17 @@ public:
     // Однострочный журнал: "хеш тема". limit<=0 значит без лимита
     static QStringList logOneline(const QString &dir, int limit=0,
                                   const QString &path=QString());
+
+    // Подробный журнал для истории: ревизия, дата, тема
+    struct LogEntry
+    {
+        QString rev;
+        QString date;
+        QString subject;
+    };
+
+    static QList<LogEntry> logDetailed(const QString &dir, int limit=0,
+                                       const QString &path=QString());
 
     // Содержимое файла в ревизии, пусто если нет
     static QString showFile(const QString &dir, const QString &rev,

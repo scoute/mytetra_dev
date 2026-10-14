@@ -5639,6 +5639,20 @@ Please report about this problem to the developers.</source>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
+    <message>
+        <source>Change history</source>
+        <translation>История изменений</translation>
+    </message>
+    <message>
+        <source>Change history is unavailable for encrypted notes.</source>
+        <translation>История изменений недоступна для шифрованных заметок.</translation>
+    </message>
+    <message>
+        <source>Cannot show history: git is not installed.
+Linux: install the git package. Windows: https://git-scm.com.</source>
+        <translation>Невозможно показать историю: git не установлен.
+Linux: поставьте пакет git. Windows: https://git-scm.com.</translation>
+    </message>
 </context>
 <context>
     <name>RecordTableModel</name>
@@ -5954,6 +5968,14 @@ Please report about this problem to the developers.</source>
     <message>
         <source>Cancel</source>
         <translation type="vanished">Отмена</translation>
+    </message>
+    <message>
+        <source>Change history</source>
+        <translation>История изменений</translation>
+    </message>
+    <message>
+        <source>Show change history with diff and rollback</source>
+        <translation>Показать историю изменений с diff и откатом</translation>
     </message>
 </context>
 <context>
@@ -7641,6 +7663,37 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>High</source>
         <translation>Высокое</translation>
+    </message>
+</context>
+<context>
+    <name>ChangeHistoryDialog</name>
+    <message>
+        <source>Change history: %1</source>
+        <translation>История изменений: %1</translation>
+    </message>
+    <message>
+        <source>Rollback to selected</source>
+        <translation>Откатить к выбранной</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>No saved versions yet</source>
+        <translation>Сохранённых версий пока нет</translation>
+    </message>
+    <message>
+        <source>%1 versions</source>
+        <translation>Версий: %1</translation>
+    </message>
+    <message>
+        <source>Can not read version</source>
+        <translation>Не удаётся прочитать версию</translation>
+    </message>
+    <message>
+        <source>No differences from current text</source>
+        <translation>Отличий от текущего текста нет</translation>
     </message>
 </context>
 </TS>

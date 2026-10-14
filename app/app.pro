@@ -203,6 +203,7 @@ HEADERS = src/main.h \
     src/views/notePicker/NotePickerDialog.h \
     src/views/contentGallery/ContentGallery.h \
     src/views/contentGallery/GalleryTileDelegate.h \
+    src/views/changeHistory/ChangeHistoryDialog.h \
     src/views/voiceNote/VoiceRecorderDialog.h \
     src/views/voiceNote/VoicePlayerDialog.h \
     src/libraries/wyedit/Editor.h \
@@ -323,6 +324,8 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
     src/libraries/GitHelper.h \
+    src/libraries/UnifiedDiff.h \
+    src/libraries/ChangeHistory.h \
     src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
@@ -403,6 +406,7 @@ SOURCES = src/main.cpp \
     src/views/notePicker/NotePickerDialog.cpp \
     src/views/contentGallery/ContentGallery.cpp \
     src/views/contentGallery/GalleryTileDelegate.cpp \
+    src/views/changeHistory/ChangeHistoryDialog.cpp \
     src/views/voiceNote/VoiceRecorderDialog.cpp \
     src/views/voiceNote/VoicePlayerDialog.cpp \
     src/libraries/wyedit/Editor.cpp \
@@ -527,6 +531,8 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
     src/libraries/GitHelper.cpp \
+    src/libraries/UnifiedDiff.cpp \
+    src/libraries/ChangeHistory.cpp \
     src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \

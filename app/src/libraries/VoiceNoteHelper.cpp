@@ -3,9 +3,15 @@
 #include <QDir>
 #include <QTextDocument>
 #include <QTextCursor>
+#include <QTextBlock>
 #include <QRegularExpression>
 
 static const char *voiceSchemePrefix="voicenote://";
+
+// MIME для переноса голосовых между заметками: пары строк
+// "ссылка \n абсолютный путь файла". По нему вставка в другую
+// заметку копирует файл в ее каталог
+static const char *voiceMimeType="application/x-mytetra-voice";
 
 
 QString VoiceNoteHelper::makeHref(const QString &fileName)
@@ -118,4 +124,148 @@ QString VoiceNoteHelper::bubbleHrefAt(QTextDocument *doc, int pos)
     }
 
     return QString();
+}
+
+
+const char *VoiceNoteHelper::voiceMimeTypeName(void)
+{
+    return voiceMimeType;
+}
+
+
+bool VoiceNoteHelper::hasVoiceLinks(QTextDocument *doc)
+{
+    if(doc==nullptr)
+        return false;
+
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(fragment.isValid() && isVoiceHref(fragment.charFormat().anchorHref()))
+                return true;
+        }
+
+    return false;
+}
+
+
+int VoiceNoteHelper::materializeVoiceLinks(QTextDocument *doc)
+{
+    if(doc==nullptr)
+        return 0;
+
+    struct VoiceLinkRange
+    {
+        int start;
+        int end;
+        QString href;
+        QString text;
+    };
+
+    QList<VoiceLinkRange> ranges;
+
+    // Собираются все голосовые ссылки: идущие подряд фрагменты
+    // с одним href склеиваются в один диапазон
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid())
+                continue;
+
+            const QString href=fragment.charFormat().anchorHref();
+
+            if(!isVoiceHref(href))
+                continue;
+
+            const int start=fragment.position();
+            const int end=start+fragment.length();
+
+            if(!ranges.isEmpty() && ranges.last().href==href && ranges.last().end==start)
+            {
+                ranges.last().end=end;
+                ranges.last().text+=fragment.text();
+            }
+            else
+                ranges.append({start, end, href, fragment.text()});
+        }
+
+    if(ranges.isEmpty())
+        return 0;
+
+    // Замена с конца чтобы позиции не съезжали
+    QTextCursor cursor(doc);
+
+    for(int i=ranges.size()-1; i>=0; --i)
+    {
+        const VoiceLinkRange range=ranges.at(i);
+        const QString fileName=fileNameFromHref(range.href);
+        qint64 durationMs=parseDuration(range.text);
+
+        if(durationMs<0)
+            durationMs=0;
+
+        cursor.setPosition(range.start);
+        cursor.setPosition(range.end, QTextCursor::KeepAnchor);
+        cursor.insertText(QString(QChar::ObjectReplacementCharacter),
+                          bubbleCharFormat(range.href, durationMs, fileName));
+    }
+
+    return ranges.size();
+}
+
+
+int VoiceNoteHelper::dematerializeBubbles(QTextDocument *doc)
+{
+    if(doc==nullptr)
+        return 0;
+
+    struct BubbleRange
+    {
+        int pos;
+        QString href;
+        qint64 durationMs;
+    };
+
+    QList<BubbleRange> ranges;
+
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid())
+                continue;
+
+            const QTextCharFormat format=fragment.charFormat();
+
+            if(!isBubbleFormat(format))
+                continue;
+
+            ranges.append({fragment.position(),
+                           format.property(BubblePropHref).toString(),
+                           format.property(BubblePropDurationMs).toLongLong()});
+        }
+
+    if(ranges.isEmpty())
+        return 0;
+
+    QTextCursor cursor(doc);
+
+    for(int i=ranges.size()-1; i>=0; --i)
+    {
+        const BubbleRange range=ranges.at(i);
+        const QString text=linkText(range.durationMs);
+
+        cursor.setPosition(range.pos);
+        cursor.setPosition(range.pos+1, QTextCursor::KeepAnchor);
+        cursor.insertHtml(QStringLiteral("<a href=\"")+range.href.toHtmlEscaped()+
+                          QStringLiteral("\">")+text.toHtmlEscaped()+
+                          QStringLiteral("</a>"));
+    }
+
+    return ranges.size();
 }

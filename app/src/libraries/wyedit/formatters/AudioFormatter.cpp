@@ -59,11 +59,30 @@ void AudioFormatter::bubblePlaybackState(const QString &href, bool &playing,
 void AudioFormatter::insertBubble(const QString &href, qint64 durationMs,
                                   const QString &fileName)
 {
+  QTextDocument *doc=textArea->document();
   QTextCursor cursor=textArea->textCursor();
+  const int at=cursor.position();
+
+  // Формат для текста вокруг: из символа перед вставкой,
+  // без бабловых свойств. Иначе печатаемый следом текст
+  // наследует формат бабла: setPlainText и ввод берут текущий
+  QTextCharFormat base;
+
+  if(at>0)
+  {
+    QTextCursor probe(doc);
+    probe.setPosition(at);
+    base=probe.charFormat();
+    base.setObjectType(QTextFormat::NoObject);
+    base.clearProperty(VoiceNoteHelper::BubblePropHref);
+    base.clearProperty(VoiceNoteHelper::BubblePropDurationMs);
+    base.clearProperty(VoiceNoteHelper::BubblePropFileName);
+  }
 
   cursor.insertText(QString(QChar::ObjectReplacementCharacter),
                     VoiceNoteHelper::bubbleCharFormat(href, durationMs, fileName));
-  cursor.insertText(QStringLiteral(" "));
+  cursor.insertText(QStringLiteral(" "), base);
+  cursor.setCharFormat(base);
 }
 
 
@@ -113,66 +132,13 @@ void AudioFormatter::materializeBubbles(void)
 {
   QTextDocument *doc=textArea->document();
 
-  struct VoiceLinkRange
-  {
-    int start;
-    int end;
-    QString href;
-    QString text;
-  };
-
-  QList<VoiceLinkRange> ranges;
-
-  // Собираются все голосовые ссылки: идущие подряд фрагменты
-  // с одним href склеиваются в один диапазон
-  for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
-    for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
-    {
-      const QTextFragment fragment=it.fragment();
-
-      if(!fragment.isValid())
-        continue;
-
-      const QString href=fragment.charFormat().anchorHref();
-
-      if(!VoiceNoteHelper::isVoiceHref(href))
-        continue;
-
-      const int start=fragment.position();
-      const int end=start+fragment.length();
-
-      if(!ranges.isEmpty() && ranges.last().href==href && ranges.last().end==start)
-      {
-        ranges.last().end=end;
-        ranges.last().text+=fragment.text();
-      }
-      else
-        ranges.append({start, end, href, fragment.text()});
-    }
-
-  if(ranges.isEmpty())
+  if(!VoiceNoteHelper::hasVoiceLinks(doc))
     return;
 
-  // Замена с конца чтобы позиции не съезжали. Одна операция
-  // отмены на все, как repaintSecrets
+  // Одна операция отмены на все, как repaintSecrets
   QTextCursor cursor(doc);
   cursor.beginEditBlock();
-
-  for(int i=ranges.size()-1; i>=0; --i)
-  {
-    const VoiceLinkRange range=ranges.at(i);
-    const QString fileName=VoiceNoteHelper::fileNameFromHref(range.href);
-    qint64 durationMs=VoiceNoteHelper::parseDuration(range.text);
-
-    if(durationMs<0)
-      durationMs=0;
-
-    cursor.setPosition(range.start);
-    cursor.setPosition(range.end, QTextCursor::KeepAnchor);
-    cursor.insertText(QString(QChar::ObjectReplacementCharacter),
-                      VoiceNoteHelper::bubbleCharFormat(range.href, durationMs, fileName));
-  }
-
+  VoiceNoteHelper::materializeVoiceLinks(doc);
   cursor.endEditBlock();
 }
 
@@ -190,52 +156,7 @@ QString AudioFormatter::exportHtml(void)
   copy->setMetaInformation(QTextDocument::DocumentUrl,
                            live->metaInformation(QTextDocument::DocumentUrl));
 
-  QTextCursor cursor(copy);
-  cursor.beginEditBlock();
-
-  // Позиции собираются заранее, замена с конца
-  struct BubbleRange
-  {
-    int pos;
-    QString href;
-    qint64 durationMs;
-  };
-
-  QList<BubbleRange> ranges;
-
-  for(QTextBlock block=copy->firstBlock(); block.isValid(); block=block.next())
-    for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
-    {
-      const QTextFragment fragment=it.fragment();
-
-      if(!fragment.isValid())
-        continue;
-
-      const QTextCharFormat format=fragment.charFormat();
-
-      if(!VoiceNoteHelper::isBubbleFormat(format))
-        continue;
-
-      ranges.append({fragment.position(),
-                     format.property(VoiceNoteHelper::BubblePropHref).toString(),
-                     format.property(VoiceNoteHelper::BubblePropDurationMs).toLongLong()});
-    }
-
-  cursor.beginEditBlock();
-
-  for(int i=ranges.size()-1; i>=0; --i)
-  {
-    const BubbleRange range=ranges.at(i);
-    const QString text=VoiceNoteHelper::linkText(range.durationMs);
-
-    cursor.setPosition(range.pos);
-    cursor.setPosition(range.pos+1, QTextCursor::KeepAnchor);
-    cursor.insertHtml(QStringLiteral("<a href=\"")+range.href.toHtmlEscaped()+
-                      QStringLiteral("\">")+text.toHtmlEscaped()+
-                      QStringLiteral("</a>"));
-  }
-
-  cursor.endEditBlock();
+  VoiceNoteHelper::dematerializeBubbles(copy);
 
   const QString html=copy->toHtml("UTF-8");
   delete copy;

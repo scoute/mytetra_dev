@@ -30,6 +30,7 @@ public:
 
     virtual bool canInsertFromMimeData(const QMimeData *source) const;
     virtual void insertFromMimeData(const QMimeData *source);
+    virtual QMimeData *createMimeDataFromSelection(void) const;
     MimeDataFormat detectMimeDataFormat(const QMimeData *source);
 
     //! Получение флага, указывающего рисовать ли символы форматирования
@@ -106,6 +107,24 @@ private:
     // Имя картинки под точкой: пусто если картинки нет.
     // Нужно для ховер-подсказки и Ctrl+клика по изображению
     QString imageAt(const QPoint &point);
+
+    // Очередь голосовых MIME вставок: HTML вставляется асинхронно
+    // через downloadImages, пары href-путь ждут своей вставки здесь
+    QList<QByteArray> pendingVoiceMimes;
+
+    // Голосовые ссылки и баблы в диапазоне документа без дублей
+    QStringList voiceHrefsInRange(int from, int to) const;
+
+    // Рабочий каталог заметки через родителя-редактор
+    QString voiceWorkDirectory(void) const;
+
+    // Свободное имя voice-*.ext в каталоге
+    static QString uniqueVoiceFileName(const QString &dir, const QString &baseName);
+
+    // Докопировать голосовые файлы вставки в каталог заметки
+    // (перенос между заметками), починить ссылки при коллизии
+    // имен, материализовать баблы. Вызывается после вставки HTML
+    void finishVoicePaste(const QByteArray &voiceMime);
 };
 
 #endif // _EDITORTEXTAREA_H_

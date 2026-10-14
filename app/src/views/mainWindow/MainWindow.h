@@ -12,6 +12,7 @@
 #include <QSystemTrayIcon>
 
 #include "libraries/Clipper.h"
+#include "views/mcpHistory/McpHistoryDialog.h"
 
 
 class QAction;
@@ -65,6 +66,11 @@ public:
 
     // Режимы пиров: pid -> флаг (--mcp-ro и т.п.). Показывается в баннере
     QMap<QString, QString> mcpPeerModes;
+
+    // История действий сессии: только в памяти, на диск не пишется,
+    // при дисконнекте чистится. Окно показывается на старт сессии
+    QList<McpHistoryEntry> mcpHistory;
+    McpHistoryDialog *mcpHistoryDialog=nullptr;
     WindowSwitcher *windowSwitcher=nullptr;
 
     void restoreWindowGeometry(void);
@@ -148,6 +154,14 @@ public slots:
     // своё досохраняется до блокировки. MCP-записи не трогает.
     // Идемпотентна: повторный вызов с тем же состоянием ничего не делает
     void setMcpUiLock(bool locked);
+
+    // Накопить действие в историю сессии (с обрезкой) и обновить окно
+    void addMcpHistoryEntry(const QString &kind,
+                            const QString &tool,
+                            const QString &summary);
+
+    // Передать окну текущий список (с его фильтром)
+    void updateMcpHistoryDialog(void);
 
     // Таблица разбивки статистики для проверки без модального окна
     QTableWidget *buildStatsTableWidget(QWidget *parent);

@@ -758,6 +758,49 @@ static void notifyMcpPresence(const QString &binaryPath, McpMode mode,
 }
 
 
+// История действий для GUI-окна: чтение и запись, итог каждого
+// tools/call. Без ожидания ack (иначе каждое чтение висло бы под
+// модальным диалогом GUI): сообщение ждёт обработки в буфере сокета.
+// GUI нет - тихий пропуск
+static void notifyMcpHistory(const QString &binaryPath,
+                             const QString &toolName,
+                             const QString &kind,
+                             const QString &summary)
+{
+  QLocalSocket socket;
+
+  bool connected=false;
+
+  foreach(const QString &socketName, controlSocketCandidates(binaryPath))
+  {
+    socket.connectToServer(socketName);
+
+    if(socket.waitForConnected(300))
+    {
+      connected=true;
+      break;
+    }
+  }
+
+  if(!connected)
+    return;
+
+  QJsonObject payload;
+  payload["tool"]=toolName;
+  payload["kind"]=kind;
+  payload["summary"]=summary;
+
+  QString message=QStringLiteral("mcpHistory ")+
+                  QString::fromUtf8(QJsonDocument(payload).toJson(QJsonDocument::Compact));
+
+  QByteArray uMsg=message.toUtf8();
+
+  QDataStream ds(&socket);
+  ds.writeBytes(uMsg.constData(), uMsg.size());
+  socket.waitForBytesWritten(2000);
+}
+
+
 class McpSession
 {
 public:
@@ -850,10 +893,34 @@ public:
       QString toolError;
       bool known=true;
 
+      // История для GUI-окна: что спросили и чем кончилось.
+      // Сводка это компактный JSON аргументов (до 120 символов)
+      auto historyKind=[&]() -> QString {
+        if(isWriteTool(toolName))
+          return QStringLiteral("write");
+
+        if(isKnownTool(toolName))
+          return QStringLiteral("read");
+
+        return QStringLiteral("other");
+      };
+
+      auto historyNotify=[&](const QString &outcome) {
+        QString argStr=QString::fromUtf8(
+          QJsonDocument(arguments).toJson(QJsonDocument::Compact));
+
+        if(argStr.size()>120)
+          argStr=argStr.left(120)+QStringLiteral("...");
+
+        notifyMcpHistory(m_binaryPath, toolName, historyKind(),
+                         argStr+QStringLiteral(" -> ")+outcome);
+      };
+
       if(!toolAllowed(m_mode, toolName))
       {
         if(isKnownTool(toolName))
         {
+          historyNotify(QStringLiteral("error: not enabled in ")+mcpModeName(m_mode));
           response=makeResponse(id, QJsonValue(),
                                 errorObject(-32602, "Tool '"+toolName+
                                             "' is not enabled in "+
@@ -961,6 +1028,7 @@ public:
 
         if(format!="text" && format!="html")
         {
+          historyNotify(QStringLiteral("error: bad format, use text or html"));
           response=makeResponse(id, QJsonValue(), errorObject(-32602, "Bad format, use text or html"));
           return true;
         }
@@ -985,6 +1053,7 @@ public:
 
         if(hasText && format!="text" && format!="html")
         {
+          historyNotify(QStringLiteral("error: bad format, use text or html"));
           response=makeResponse(id, QJsonValue(), errorObject(-32602, "Bad format, use text or html"));
           return true;
         }
@@ -1045,14 +1114,25 @@ public:
 
       if(!known)
       {
+        historyNotify(QStringLiteral("error: unknown tool"));
         response=makeResponse(id, QJsonValue(), errorObject(-32602, "Unknown tool: "+toolName));
         return true;
       }
 
       if(!toolError.isEmpty())
       {
+        historyNotify(QStringLiteral("error: ")+toolError);
         response=makeResponse(id, QJsonValue(), errorObject(-32602, toolError));
         return true;
+      }
+
+      {
+        QString outcome=QStringLiteral("ok");
+
+        if(result.contains(QStringLiteral("applied_via")))
+          outcome+=QStringLiteral(" via ")+result.value(QStringLiteral("applied_via")).toString();
+
+        historyNotify(outcome);
       }
 
       QJsonObject content;

@@ -2531,6 +2531,10 @@ You need to update MyTetra.</source>
             <source>Attached &amp;files</source>
             <translation type="unfinished"></translation>
         </message>
+    <message>
+        <source>Show favorites panel</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -2836,6 +2840,10 @@ Please report about this problem to the developers.</source>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecordInfoFieldsEditor</name>
@@ -3029,6 +3037,14 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="368"/>
         <source>Disable sorting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to favorites</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4389,6 +4405,52 @@ All data imported will be encrypted.</source>
     </message>
     <message>
         <source>Find in note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>FavoritesPanel</name>
+    <message>
+        <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note is missing from the base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>AppConfigPage_Favorites</name>
+    <message>
+        <source>Favorite notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show favorites panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Favorites storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sidecar file (data/favorites.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Main file (mytetra.xml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switching storage moves existing stars</source>
         <translation type="unfinished"></translation>
     </message>
     </context>

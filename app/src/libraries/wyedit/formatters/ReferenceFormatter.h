@@ -3,6 +3,9 @@
 
 #include "Formatter.h"
 
+class QDialog;
+class QLineEdit;
+
 // Класс форматирования ссылок
 
 
@@ -18,9 +21,38 @@ signals:
 public slots:
 
     void onReferenceClicked(void);
+    void onInsertNoteReferenceClicked(void);
+    void onEditReferenceAtCursor(void);
     void onContextMenuGotoReference(void);
     void onClickedGotoReference(QString href);
     void onTextChanged(void);
+
+private:
+
+    // Выделить ссылку под курсором если она там есть.
+    // Возвращает href или пусто. Курсор без выделения не трогается
+    QString selectReferenceUnderCursor(void);
+
+    // Защита от вставки в середину слова: буквы с обеих сторон курсора —
+    // почти всегда случайный тык. Уводить курсор в конец слова,
+    // чтобы слово осталось целым, а ссылка легла рядом со своим именем.
+    // Возвращает true если подвинула
+    bool moveCursorToWordEnd(void);
+
+    // Имя записи по внутренней ссылке mytetra://note/<id>.
+    // Пусто если запись не найдена (удалена, шифр, опечатка)
+    QString targetRecordName(const QString &internalHref) const;
+
+    // Глобальный выбор заметки в поля диалога ссылки.
+    // Имя не затирается если уже введено вручную
+    void pickNoteIntoFields(QDialog *parent,
+                            QLineEdit *urlEdit,
+                            QLineEdit *nameEdit);
+
+    // Вставка titled-ссылки в курсор + пробел-разделитель,
+    // чтобы рядом стоящие ссылки не сливались в одну
+    void insertTitledLink(const QString &internalHref,
+                                  const QString &targetName);
 
 };
 

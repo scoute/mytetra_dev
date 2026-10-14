@@ -3108,6 +3108,30 @@ Please report about this problem to the developers.</source>
         <source>Reference or URL</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Link text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference or URL (record not found)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Self reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A link to the note itself makes no sense.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>
@@ -3804,6 +3828,18 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <source>Forbid any changes to the base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit reference...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste note reference from clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert note reference using search...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4730,6 +4766,49 @@ MyTetra must be running.</source>
     </message>
     <message>
         <source>Clipper status is unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>NotePickerDialog</name>
+    <message>
+        <source>Select note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a name, branch or tag to search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shown %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
         <translation type="unfinished"></translation>
     </message>
     </context>

@@ -392,6 +392,12 @@ void MainWindow::assembly(void)
 
     mcpBannerBar->hide();
 
+    // Окно истории действий сессии: создаётся сразу, показывается
+    // на старт сессии, на дисконнект скрывается и чистится
+    mcpHistoryDialog=new McpHistoryDialog(this);
+    mcpHistoryDialog->hide();
+    mcpBanner->installEventFilter(this);
+
     // Сторож протухших пиров: убитый без Bye гаснет сам раз в минуту
     mcpBannerTimer=new QTimer(this);
     connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::updateMcpBanner);
@@ -850,9 +856,21 @@ void MainWindow::messageHandler(QString message)
         if(pid.isEmpty())
             return;
 
+        // Старт сессии с нуля: история чистая, окно появляется само
+        const bool sessionStarts=mcpPeers.isEmpty();
+
         mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
         mcpPeerModes[pid]=args.value("mode").toString();
         updateMcpBanner();
+
+        if(sessionStarts)
+        {
+            mcpHistory.clear();
+            updateMcpHistoryDialog();
+
+            if(mcpHistoryDialog!=nullptr)
+                mcpHistoryDialog->show();
+        }
     }
 
     else if(command=="mcpBye")
@@ -865,6 +883,20 @@ void MainWindow::messageHandler(QString message)
         mcpPeers.remove(args.value("pid").toString());
         mcpPeerModes.remove(args.value("pid").toString());
         updateMcpBanner();
+    }
+
+    // Строка истории действий MCP: только накопление в памяти,
+    // на диск ничего не пишется
+    else if(command=="mcpHistory")
+    {
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        addMcpHistoryEntry(args.value("kind").toString(),
+                           args.value("tool").toString(),
+                           args.value("summary").toString());
     }
 }
 
@@ -1586,6 +1618,13 @@ void MainWindow::updateMcpBanner(void)
     {
         setMcpUiLock(false);
         mcpBannerBar->hide();
+
+        // Дисконнект: история исчезает сразу и нигде не сохраняется
+        mcpHistory.clear();
+        updateMcpHistoryDialog();
+
+        if(mcpHistoryDialog!=nullptr)
+            mcpHistoryDialog->close();
     }
     else
     {
@@ -1610,6 +1649,34 @@ void MainWindow::setMcpUiLock(bool locked)
 
     mytetraConfig.setMcpUiLock(locked);
     applyReadOnly();
+}
+
+
+// Накопление истории действий MCP-сессии. Хвост обрезан до трёхсот:
+// окну нужен обзор, а не архив. На диск ничего не пишется
+void MainWindow::addMcpHistoryEntry(const QString &kind,
+                                    const QString &tool,
+                                    const QString &summary)
+{
+    McpHistoryEntry entry;
+    entry.msecs=QDateTime::currentMSecsSinceEpoch();
+    entry.kind=kind.isEmpty() ? QStringLiteral("other") : kind;
+    entry.tool=tool;
+    entry.summary=summary;
+
+    mcpHistory.append(entry);
+
+    while(mcpHistory.size()>300)
+        mcpHistory.removeFirst();
+
+    updateMcpHistoryDialog();
+}
+
+
+void MainWindow::updateMcpHistoryDialog(void)
+{
+    if(mcpHistoryDialog!=nullptr)
+        mcpHistoryDialog->setHistory(mcpHistory);
 }
 
 
@@ -1883,6 +1950,9 @@ void MainWindow::retranslateUi(void)
     // Видимый баннер MCP — тоже
     if(mcpBanner!=nullptr && mcpBanner->isVisible())
         mcpBanner->setText(mcpBannerText());
+
+    if(mcpHistoryDialog!=nullptr)
+        mcpHistoryDialog->retranslateUi();
 }
 
 
@@ -2523,6 +2593,18 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
     {
         qDebug() << "Main window focus deactivate, save all state.";
         saveAllState();
+    }
+
+    // Клик по баннеру MCP открывает окно истории сессии
+    if(o==mcpBanner && e->type()==QEvent::MouseButtonRelease)
+    {
+        if(mcpHistoryDialog!=nullptr)
+        {
+            mcpHistoryDialog->show();
+            mcpHistoryDialog->raise();
+        }
+
+        return true;
     }
 
     // Клик по строке статистики открывает разбивку по заметкам

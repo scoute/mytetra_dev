@@ -1,6 +1,7 @@
 #include <QMap>
 #include <QSet>
 #include <QDir>
+#include <QFile>
 #include <QRegularExpression>
 #include <QDomNamedNodeMap>
 #include <QXmlStreamWriter>
@@ -423,13 +424,32 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
            // На диске расшифровываются только аттачи с типом file
            if(fileElement.attribute("type")=="file")
            {
-             // Выясняется внутрисистемное имя прикрепленного файла
-             QString fileName=Attach::constructFileName( fileElement.attribute("type"),
+             // Выясняются кандидаты внутрисистемного имени прикрепленного файла.
+             // Пробуются обе схемы: база могла быть смигрирована наполовину
+             // или открыта с другой настройкой схемы имен
+             QStringList candidateNames;
+             candidateNames << Attach::constructFileName( fileElement.attribute("type"),
+                                                          fileElement.attribute("id"),
+                                                          fileElement.attribute("fileName") );
+             QString otherName;
+             if(mytetraConfig.get_attachHumanReadableNames())
+               otherName=Attach::constructLegacyFileName( fileElement.attribute("type"),
+                                                          fileElement.attribute("id"),
+                                                          fileElement.attribute("fileName") );
+             else
+               otherName=Attach::constructHumanFileName( fileElement.attribute("type"),
                                                          fileElement.attribute("id"),
                                                          fileElement.attribute("fileName") );
+             if(otherName!=candidateNames.first())
+               candidateNames << otherName;
 
              // Файл на диске расшифровывается
-             CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+fileName);
+             foreach(QString candidateFileName, candidateNames)
+               if(QFile::exists(toDir+"/"+candidateFileName))
+               {
+                 CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+candidateFileName);
+                 break;
+               }
            }
          }
        }

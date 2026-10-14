@@ -32,7 +32,11 @@ public:
 
   // Работа с именем файла
   static QString constructFileName(const QString type, const QString id, const QString fileName);
+  static QString constructLegacyFileName(const QString type, const QString id, const QString fileName);
+  static QString constructHumanFileName(const QString type, const QString id, const QString fileName);
+  static QString sanitizeHumanNamePart(const QString fileName);
   QString getInnerFileName() const;
+  QString getExistingInnerFileName() const;
   QString getFullInnerFileName() const;
   QString getFullInnerDirName() const;
   QString getAbsoluteInnerFileName() const;

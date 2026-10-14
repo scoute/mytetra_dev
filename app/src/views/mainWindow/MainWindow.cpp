@@ -179,6 +179,16 @@ void MainWindow::setupUI(void)
     statusBar->addPermanentWidget(statsLabel);
     updateStats();
 
+    // Позиция курсора заметки слева. Обычный виджет: важные
+    // showMessage-сообщения его перекрывают, потом он возвращается
+    cursorLabel=new QLabel( this );
+    cursorLabel->setObjectName("cursorLabel");
+    statusBar->addWidget(cursorLabel);
+
+    // Начальное значение: редактор и статусбар уже созданы
+    if(editorScreen!=nullptr)
+        editorScreen->updateCursorLabel();
+
     // Вспомогательный объект переключения окон, используется в мобильном интерфейсе
     windowSwitcher=new WindowSwitcher( this );
     windowSwitcher->setObjectName("windowSwitcher");

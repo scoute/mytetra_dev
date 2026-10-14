@@ -19,7 +19,7 @@
     <file>resource/standartconfig/any/themes/modern/pic/menu_dot.svg</file>
   </qresource>
   <qresource prefix="/">
-    <file>resource/standartconfig/any/themes/custom/pic/tx_fabric.jpg</file>
+    <file>resource/standartconfig/any/themes/custom/pic/background_001.jpg</file>
     <file>resource/standartconfig/any/themes/custom/pic/white-background_002.jpg</file>
     <file>resource/standartconfig/any/themes/custom/pic/white-background_003.jpg</file>
     <file>resource/standartconfig/any/themes/custom/pic/white-background_004.jpg</file>

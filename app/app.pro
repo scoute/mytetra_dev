@@ -84,7 +84,11 @@ RESOURCES = bin/mytetra.qrc \
             bin/icons.qrc \ 
             bin/themes.qrc 
 TRANSLATIONS = bin/resource/translations/mytetra_ru.ts \ 
-               bin/resource/translations/mytetra_fr.ts
+               bin/resource/translations/mytetra_fr.ts \
+               bin/resource/translations/mytetra_de.ts \
+               bin/resource/translations/mytetra_ja.ts \
+               bin/resource/translations/mytetra_zh.ts \
+               bin/resource/translations/mytetra_hy.ts
 CODECFORSRC  = utf8
 
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib

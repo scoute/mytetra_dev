@@ -101,6 +101,16 @@ void AppConfigPage_Main::setupUi(void)
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/United-Kingdom.png"));
  interfaceLanguage->addItem("ru");
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Russia.png"));
+ interfaceLanguage->addItem("fr");
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/France.png"));
+ interfaceLanguage->addItem("de");
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Germany.png"));
+ interfaceLanguage->addItem("ja");
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Japan.png"));
+ interfaceLanguage->addItem("zh");
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/China.png"));
+ interfaceLanguage->addItem("hy");
+ interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Armenia.png"));
  interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(mytetraConfig.get_interfacelanguage(), Qt::MatchCaseSensitive));
 
 

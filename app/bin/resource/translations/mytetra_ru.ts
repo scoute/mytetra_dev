@@ -3025,6 +3025,14 @@ Try to search for entire database.</source>
         <source>Can not open directory: %1</source>
         <translation>Не могу открыть каталог: %1</translation>
     </message>
+    <message>
+        <source>Download %1 external image(s) from the Internet?</source>
+        <translation>Скачать %1 внешних изображений из Интернета?</translation>
+    </message>
+    <message>
+        <source>The pasted text contains images stored on external sites. They will be downloaded now.</source>
+        <translation>Вставленный текст содержит изображения с внешних сайтов. Они будут скачаны сейчас.</translation>
+    </message>
 </context>
 <context>
     <name>InfoFieldEnter</name>
@@ -3159,6 +3167,14 @@ You need to update MyTetra.</source>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="524"/>
         <source>Find record id=&quot;%1&quot; without dir attribute</source>
         <translation>Найдена запись с id=&quot;%1&quot; без аттрибута директории</translation>
+    </message>
+    <message>
+        <source>Export error: unable to copy record data from %1 to %2.</source>
+        <translation>Ошибка экспорта: не могу скопировать данные записи из %1 в %2.</translation>
+    </message>
+    <message>
+        <source>Import error: unable to copy record data from %1 to %2.</source>
+        <translation>Ошибка импорта: не могу скопировать данные записи из %1 в %2.</translation>
     </message>
 </context>
 <context>
@@ -4153,6 +4169,10 @@ Please report about this problem to the developers.</source>
     <message>
         <source>Clipper</source>
         <translation>Клиппер</translation>
+    </message>
+    <message>
+        <source>Unable to rename the file %1 to %2 from disk.</source>
+        <translation>Не могу переименовать файл %1 в %2 на диске.</translation>
     </message>
 </context>
 <context>
@@ -5295,6 +5315,10 @@ Please report about this problem to the developers.</source>
     <message>
         <source>Open image</source>
         <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <source>Open selected image in external viewer</source>
+        <translation>Открыть выделенное изображение во внешней программе</translation>
     </message>
 </context>
 <context>

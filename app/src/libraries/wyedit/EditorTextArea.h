@@ -49,7 +49,7 @@ signals:
     void clickedOnReference(QString href);
 
     // Одинарный клик по баблу голосовой заметки: play/pause на месте
-    void clickedOnVoiceBubble(QString href);
+    void clickedOnVoiceBubble(QString href, QPointF docPoint);
 
     void downloadImages(const QString href);
 

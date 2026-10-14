@@ -18,6 +18,8 @@ public:
  void setImageProperties(bool flag); // Активирование добавочного пункта меню "Свойства картинки")
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
+ void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
+ void setPasteNoteReference(bool flag); // Пункт "Вставить ссылку на заметку", виден если в буфере внутренняя ссылка
  void setCopySecret(bool flag); // Показ пункта "Скопировать секрет"
  void setChangeSecretColor(bool flag); // Показ пункта "Изменить цвет секретов"
  void setPasteAsPlainText(bool flag);
@@ -39,6 +41,9 @@ signals:
   void contextMenuEditImageProperties(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
+  void contextMenuEditReference(void);
+  void contextMenuPasteNoteReference(void);
+  void contextMenuInsertNoteReference(void);
   void contextMenuCopySecret(void);
   void contextMenuChangeSecretColor(void);
   void lowercase(void);
@@ -63,6 +68,9 @@ private:
   QAction *actionEditImageProperties;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
+  QAction *actionEditReference;
+  QAction *actionPasteNoteReference;
+  QAction *actionInsertNoteReference;
   QAction *actionCopySecret;
   QAction *actionChangeSecretColor;
 
@@ -82,6 +90,9 @@ protected slots:
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
+  void onActionContextMenuEditReference(void);
+  void onActionContextMenuPasteNoteReference(void);
+  void onActionContextMenuInsertNoteReference(void);
   void onActionContextMenuCopySecret(void);
   void onActionContextMenuChangeSecretColor(void);
 

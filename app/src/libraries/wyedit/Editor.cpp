@@ -1126,6 +1126,10 @@ bool Editor::loadTextarea()
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();
 
+  // Свежезагруженное не изменено: иначе первый же клик мимо
+  // посчитает текст правленным и погонит полный пересчет
+  setTextareaModified(false);
+
   return true;
 }
 

@@ -183,10 +183,11 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
      toolName=="update_note" ||
      toolName=="rename_branch" || toolName=="move_branch" ||
      toolName=="move_note" ||
-     toolName=="rename_tag" || toolName=="delete_tag")
+     toolName=="rename_tag")
     return mode==McpMode::ReadWrite || mode==McpMode::ReadWriteDelete;
 
-  if(toolName=="delete_note" || toolName=="delete_branch")
+  if(toolName=="delete_note" || toolName=="delete_branch" ||
+     toolName=="delete_tag")
     return mode==McpMode::ReadWriteDelete;
 
   return false;
@@ -220,27 +221,32 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     tools.append(toolDescription(
       "list_branches",
-      "List all branches of the MyTetra knowledge tree in tree order. "
-      "Read-only, reflects the last saved state.",
+      "All branches in tree order.",
       objectSchema(properties, QJsonArray())));
   }
   {
     QJsonObject properties;
     QJsonObject branchId;
     branchId["type"]="string";
-    branchId["description"]="Branch id from list_branches";
+    branchId["description"]="Branch id";
     properties["branch_id"]=branchId;
     QJsonObject recursive;
     recursive["type"]="boolean";
-    recursive["description"]="Include notes from subbranches (default true)";
-    recursive["default"]=true;
+    recursive["description"]="With subbranches (default false)";
+    recursive["default"]=false;
     properties["recursive"]=recursive;
+    QJsonObject limit;
+    limit["type"]="integer";
+    limit["description"]="Max notes (default 50, max 200)";
+    limit["minimum"]=1;
+    limit["maximum"]=200;
+    limit["default"]=50;
+    properties["limit"]=limit;
     QJsonArray required;
     required.append("branch_id");
     tools.append(toolDescription(
       "list_notes",
-      "List notes in a branch, optionally with subbranches. "
-      "Read-only, reflects the last saved state.",
+      "Notes in a branch.",
       objectSchema(properties, required)));
   }
 
@@ -248,15 +254,19 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject noteId;
     noteId["type"]="string";
-    noteId["description"]="Note id from list_notes or search";
+    noteId["description"]="Note id";
     properties["note_id"]=noteId;
+    QJsonObject maxChars;
+    maxChars["type"]="integer";
+    maxChars["description"]="Max text chars (default 20000)";
+    maxChars["minimum"]=1;
+    maxChars["default"]=20000;
+    properties["max_chars"]=maxChars;
     QJsonArray required;
     required.append("note_id");
     tools.append(toolDescription(
       "get_note",
-      "Read one note as plain text. Notes currently being edited in the GUI "
-      "are visible only after they are saved there. Encrypted locked notes "
-      "and missing texts return empty text.",
+      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty.",
       objectSchema(properties, required)));
   }
 
@@ -264,21 +274,20 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject query;
     query["type"]="string";
-    query["description"]="Case-insensitive substring matched against note names, tags and texts";
+    query["description"]="Case-insensitive substring";
     properties["query"]=query;
     QJsonObject limit;
     limit["type"]="integer";
-    limit["description"]="Maximum number of hits (default 20, max 100)";
+    limit["description"]="Max hits (default 10, max 100)";
     limit["minimum"]=1;
     limit["maximum"]=100;
-    limit["default"]=20;
+    limit["default"]=10;
     properties["limit"]=limit;
     QJsonArray required;
     required.append("query");
     tools.append(toolDescription(
       "search",
-      "Search notes by name, tags and text. Read-only, reflects the last "
-      "saved state.",
+      "Substring search over names, tags, texts.",
       objectSchema(properties, required)));
   }
 
@@ -286,19 +295,17 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject parentId;
     parentId["type"]="string";
-    parentId["description"]="Parent branch id from list_branches, empty means top level";
+    parentId["description"]="Parent id, empty = top level";
     properties["parent_id"]=parentId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="Name of the new branch";
+    name["description"]="Name";
     properties["name"]=name;
     QJsonArray required;
     required.append("name");
     tools.append(toolDescription(
       "create_branch",
-      "Create a new branch. Refused in global read-only mode and inside "
-      "encrypted branches. If the GUI is running the change is applied "
-      "through it, otherwise directly.",
+      "Create a branch.",
       objectSchema(properties, required)));
   }
 
@@ -306,26 +313,26 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject branchId;
     branchId["type"]="string";
-    branchId["description"]="Target branch id from list_branches";
+    branchId["description"]="Branch id";
     properties["branch_id"]=branchId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="Note title";
+    name["description"]="Title";
     properties["name"]=name;
     QJsonObject text;
     text["type"]="string";
-    text["description"]="Note body, plain text or HTML according to format (default empty)";
+    text["description"]="Body (default empty)";
     text["default"]="";
     properties["text"]=text;
     QJsonObject format;
     format["type"]="string";
     format["enum"]=QJsonArray::fromStringList(QStringList() << "text" << "html");
-    format["description"]="Body format (default text)";
+    format["description"]="text or html (default text)";
     format["default"]="text";
     properties["format"]=format;
     QJsonObject tags;
     tags["type"]="string";
-    tags["description"]="Comma-separated tags (default empty)";
+    tags["description"]="Tags, comma-separated";
     tags["default"]="";
     properties["tags"]=tags;
     QJsonArray required;
@@ -333,9 +340,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_note",
-      "Create a new note. Refused in global read-only mode and inside "
-      "encrypted branches. If the GUI is running the change is applied "
-      "through it, otherwise directly.",
+      "Create a note.",
       objectSchema(properties, required)));
   }
 
@@ -343,34 +348,31 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject noteId;
     noteId["type"]="string";
-    noteId["description"]="Note id from list_notes or search";
+    noteId["description"]="Note id";
     properties["note_id"]=noteId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="New title (absent means keep)";
+    name["description"]="New title";
     properties["name"]=name;
     QJsonObject text;
     text["type"]="string";
-    text["description"]="New body (absent means keep)";
+    text["description"]="New body";
     properties["text"]=text;
     QJsonObject format;
     format["type"]="string";
     format["enum"]=QJsonArray::fromStringList(QStringList() << "text" << "html");
-    format["description"]="Body format, used only with text (default text)";
+    format["description"]="text or html";
     format["default"]="text";
     properties["format"]=format;
     QJsonObject tags;
     tags["type"]="string";
-    tags["description"]="New comma-separated tags, empty clears (absent means keep)";
+    tags["description"]="New tags, empty clears";
     properties["tags"]=tags;
     QJsonArray required;
     required.append("note_id");
     tools.append(toolDescription(
       "update_note",
-      "Update title, body and/or tags of a note. Only provided fields "
-      "change. Refused in global read-only mode and for encrypted notes. "
-      "If the note is currently open in the GUI editor, the editor keeps "
-      "its buffer until reselected (last writer wins).",
+      "Update note fields. Only provided fields change; open GUI editor keeps its buffer.",
       objectSchema(properties, required)));
   }
 
@@ -378,15 +380,13 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject noteId;
     noteId["type"]="string";
-    noteId["description"]="Note id from list_notes or search";
+    noteId["description"]="Note id";
     properties["note_id"]=noteId;
     QJsonArray required;
     required.append("note_id");
     tools.append(toolDescription(
       "delete_note",
-      "Delete a note: its files move to trash, the XML entry is removed. "
-      "There is no confirmation beyond this call: the --mcp-rw-with-delete "
-      "flag IS the confirmation. Refused in other modes and in read-only mode.",
+      "Delete a note to trash. No confirmation beyond this call.",
       objectSchema(properties, required)));
   }
 
@@ -394,14 +394,13 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject branchId;
     branchId["type"]="string";
-    branchId["description"]="Branch id from list_branches, with all subbranches and notes";
+    branchId["description"]="Branch id with subtree";
     properties["branch_id"]=branchId;
     QJsonArray required;
     required.append("branch_id");
     tools.append(toolDescription(
       "delete_branch",
-      "Delete a branch with all its subbranches and notes: files move to "
-      "trash, entries are removed. Same confirmation rule as delete_note.",
+      "Delete a branch subtree to trash. No confirmation beyond this call.",
       objectSchema(properties, required)));
   }
 
@@ -409,18 +408,18 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject branchId;
     branchId["type"]="string";
-    branchId["description"]="Branch id from list_branches";
+    branchId["description"]="Branch id";
     properties["branch_id"]=branchId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="New branch name";
+    name["description"]="New name";
     properties["name"]=name;
     QJsonArray required;
     required.append("branch_id");
     required.append("name");
     tools.append(toolDescription(
       "rename_branch",
-      "Rename a branch. Views in a running GUI refresh on branch reselection.",
+      "Rename a branch.",
       objectSchema(properties, required)));
   }
 
@@ -432,11 +431,11 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["branch_id"]=branchId;
     QJsonObject targetId;
     targetId["type"]="string";
-    targetId["description"]="Target branch id (required)";
+    targetId["description"]="Target id";
     properties["target_id"]=targetId;
     QJsonObject asChild;
     asChild["type"]="boolean";
-    asChild["description"]="True: move inside target, false: place after target (default true)";
+    asChild["description"]="Inside target, else after (default true)";
     asChild["default"]=true;
     properties["as_child"]=asChild;
     QJsonArray required;
@@ -444,8 +443,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("target_id");
     tools.append(toolDescription(
       "move_branch",
-      "Move a branch to another place in the tree. Cycles, self-move and "
-      "the root are refused. Views in a running GUI refresh on reselection.",
+      "Move a branch.",
       objectSchema(properties, required)));
   }
 
@@ -453,20 +451,18 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject noteId;
     noteId["type"]="string";
-    noteId["description"]="Note id from list_notes or search";
+    noteId["description"]="Note id";
     properties["note_id"]=noteId;
     QJsonObject branchId;
     branchId["type"]="string";
-    branchId["description"]="Target branch id";
+    branchId["description"]="Target id";
     properties["branch_id"]=branchId;
     QJsonArray required;
     required.append("note_id");
     required.append("branch_id");
     tools.append(toolDescription(
       "move_note",
-      "Move a note to another branch without touching files: id and "
-      "directory are kept, internal links stay valid. To the same branch "
-      "and to/from encrypted branches is refused.",
+      "Move a note, id and links kept.",
       objectSchema(properties, required)));
   }
 
@@ -474,15 +470,14 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject limit;
     limit["type"]="integer";
-    limit["description"]="Maximum groups per list (default 50, max 200)";
+    limit["description"]="Max groups (default 50)";
     limit["minimum"]=1;
     limit["maximum"]=200;
     limit["default"]=50;
     properties["limit"]=limit;
     tools.append(toolDescription(
       "find_duplicates",
-      "Groups of notes with the same name (case-insensitive) or the same "
-      "text (sha1). Empty names and texts are skipped.",
+      "Same-name or same-text note groups.",
       objectSchema(properties, QJsonArray())));
   }
 
@@ -490,13 +485,12 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject detailed;
     detailed["type"]="boolean";
-    detailed["description"]="Include per-note breakdown rows (default false)";
+    detailed["description"]="With per-note rows";
     detailed["default"]=false;
     properties["detailed"]=detailed;
     tools.append(toolDescription(
       "stats",
-      "Database totals as in the status bar: branches, records, tags, "
-      "files, images, internal links. Optionally with per-note rows.",
+      "Totals: branches, notes, tags, files, images, links.",
       objectSchema(properties, QJsonArray())));
   }
 
@@ -504,7 +498,7 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     tools.append(toolDescription(
       "list_tags",
-      "All tags with note counts, most popular first. Read-only.",
+      "Tags with counts.",
       objectSchema(properties, QJsonArray())));
   }
 
@@ -512,13 +506,20 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject tag;
     tag["type"]="string";
-    tag["description"]="Tag name, exact whole-tag match, case-insensitive";
+    tag["description"]="Tag, exact match";
     properties["tag"]=tag;
+    QJsonObject limit;
+    limit["type"]="integer";
+    limit["description"]="Max notes (default 100, max 200)";
+    limit["minimum"]=1;
+    limit["maximum"]=200;
+    limit["default"]=100;
+    properties["limit"]=limit;
     QJsonArray required;
     required.append("tag");
     tools.append(toolDescription(
       "tag_notes",
-      "Notes carrying exactly this tag. Read-only.",
+      "Notes with exactly this tag.",
       objectSchema(properties, required)));
   }
 
@@ -526,14 +527,14 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject limit;
     limit["type"]="integer";
-    limit["description"]="Maximum notes (default 50, max 200)";
+    limit["description"]="Max notes (default 50)";
     limit["minimum"]=1;
     limit["maximum"]=200;
     limit["default"]=50;
     properties["limit"]=limit;
     tools.append(toolDescription(
       "untagged_notes",
-      "Notes without any tags. Read-only, handy for cleanup.",
+      "Notes without tags.",
       objectSchema(properties, QJsonArray())));
   }
 
@@ -541,19 +542,18 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject oldTag;
     oldTag["type"]="string";
-    oldTag["description"]="Existing tag name";
+    oldTag["description"]="Old tag";
     properties["old"]=oldTag;
     QJsonObject newTag;
     newTag["type"]="string";
-    newTag["description"]="New tag name (renaming to an existing one merges)";
+    newTag["description"]="New tag (existing merges)";
     properties["new"]=newTag;
     QJsonArray required;
     required.append("old");
     required.append("new");
     tools.append(toolDescription(
       "rename_tag",
-      "Rename a tag across all notes. Locked encrypted notes are skipped "
-      "(see skipped_locked). Refused in read-only mode.",
+      "Rename a tag everywhere.",
       objectSchema(properties, required)));
   }
 
@@ -561,14 +561,13 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     QJsonObject tag;
     tag["type"]="string";
-    tag["description"]="Tag name to remove everywhere";
+    tag["description"]="Tag";
     properties["tag"]=tag;
     QJsonArray required;
     required.append("tag");
     tools.append(toolDescription(
       "delete_tag",
-      "Remove a tag from all notes. Locked encrypted notes are skipped. "
-      "Refused in read-only mode.",
+      "Remove a tag everywhere. Irreversible.",
       objectSchema(properties, required)));
   }
 
@@ -842,23 +841,35 @@ public:
       }
       else if(toolName=="list_notes")
       {
-        bool recursive=true;
+        bool recursive=false;
 
         if(arguments.contains("recursive"))
-          recursive=arguments.value("recursive").toBool(true);
+          recursive=arguments.value("recursive").toBool(false);
 
-        result=m_tools.listNotes(arguments.value("branch_id").toString(), recursive, toolError);
+        int limit=McpTools::DEFAULT_LIST_LIMIT;
+
+        if(arguments.contains("limit"))
+          limit=arguments.value("limit").toInt(McpTools::DEFAULT_LIST_LIMIT);
+
+        result=m_tools.listNotes(arguments.value("branch_id").toString(),
+                                 recursive, limit, toolError);
       }
       else if(toolName=="get_note")
       {
-        result=m_tools.getNote(arguments.value("note_id").toString(), toolError);
+        int maxChars=McpTools::DEFAULT_NOTE_CHARS;
+
+        if(arguments.contains("max_chars"))
+          maxChars=arguments.value("max_chars").toInt(McpTools::DEFAULT_NOTE_CHARS);
+
+        result=m_tools.getNote(arguments.value("note_id").toString(),
+                               maxChars, toolError);
       }
       else if(toolName=="search")
       {
-        int limit=20;
+        int limit=10;
 
         if(arguments.contains("limit"))
-          limit=arguments.value("limit").toInt(20);
+          limit=arguments.value("limit").toInt(10);
 
         result=m_tools.searchNotes(arguments.value("query").toString(), limit, toolError);
       }
@@ -881,7 +892,12 @@ public:
       }
       else if(toolName=="tag_notes")
       {
-        result=m_tools.tagNotes(arguments.value("tag").toString(), toolError);
+        int limit=100;
+
+        if(arguments.contains("limit"))
+          limit=arguments.value("limit").toInt(100);
+
+        result=m_tools.tagNotes(arguments.value("tag").toString(), limit, toolError);
       }
       else if(toolName=="untagged_notes")
       {

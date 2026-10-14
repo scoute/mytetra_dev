@@ -3368,6 +3368,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
             <source>Attached &amp;files</source>
             <translation>Прикрепленные файлы</translation>
         </message>
+    <message>
+        <source>Show favorites panel</source>
+        <translation>Показывать панель избранного</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -4028,6 +4032,10 @@ It is developer error.
 Please report about this problem to the developers.</source>
         <translation type="vanished">Контроллер корзины не смог удалить файл:\n\n%1\n\nПожалуйста, сообщите о проблеме разработчикам.</translation>
     </message>
+    <message>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
+    </message>
 </context>
 <context>
     <name>RecordInfoFieldsEditor</name>
@@ -4406,6 +4414,14 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="368"/>
         <source>Disable sorting</source>
         <translation>Запретить сортировку</translation>
+    </message>
+    <message>
+        <source>Remove from favorites</source>
+        <translation>Убрать из избранного</translation>
+    </message>
+    <message>
+        <source>Add to favorites</source>
+        <translation>Добавить в избранное</translation>
     </message>
 </context>
 <context>
@@ -5890,6 +5906,52 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Find in note</source>
         <translation>Поиск в заметке</translation>
+    </message>
+    </context>
+    <context>
+        <name>FavoritesPanel</name>
+    <message>
+        <source>Favorites</source>
+        <translation>Избранное</translation>
+    </message>
+    <message>
+        <source>Go to note</source>
+        <translation>Перейти к заметке</translation>
+    </message>
+    <message>
+        <source>Remove from favorites</source>
+        <translation>Убрать из избранного</translation>
+    </message>
+    <message>
+        <source>Note is missing from the base</source>
+        <translation>Запись отсутствует в базе</translation>
+    </message>
+    </context>
+    <context>
+        <name>AppConfigPage_Favorites</name>
+    <message>
+        <source>Favorite notes</source>
+        <translation>Избранные заметки</translation>
+    </message>
+    <message>
+        <source>Show favorites panel</source>
+        <translation>Показывать панель избранного</translation>
+    </message>
+    <message>
+        <source>Favorites storage</source>
+        <translation>Хранение избранного</translation>
+    </message>
+    <message>
+        <source>Sidecar file (data/favorites.xml)</source>
+        <translation>Отдельный файл (data/favorites.xml)</translation>
+    </message>
+    <message>
+        <source>Main file (mytetra.xml)</source>
+        <translation>Основной файл (mytetra.xml)</translation>
+    </message>
+    <message>
+        <source>Switching storage moves existing stars</source>
+        <translation>При переключении существующие звёздочки переносятся</translation>
     </message>
     </context>
 </TS>

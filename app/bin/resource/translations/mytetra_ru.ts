@@ -388,16 +388,16 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation>Имена файлов на диске</translation>
     </message>
     <message>
-        <source>Attachments are stored on disk as id.extension. Renaming switches them to human-readable names id_name.extension, so the file can be recognized without opening it. New attachments will use human-readable names too.</source>
-        <translation>Вложения хранятся на диске как id.расширение. Переименование переключает их на человеко-читаемые имена id_имя.расширение, чтобы файл можно было узнать, не открывая его. Новые вложения тоже будут сохраняться с человеко-читаемыми именами.</translation>
+        <source>File naming for uploaded attachments: system names (id.extension), system + original names (hybrid, id_name.extension), or original names (as uploaded). The choice applies to new attachments.</source>
+        <translation>Именование загружаемых вложений: системные имена (id.расширение), системные + оригинальные (гибрид, id_имя.расширение) или оригинальные (как при загрузке). Выбор действует для новых вложений.</translation>
     </message>
     <message>
-        <source>Rename attachments to human-readable names</source>
-        <translation>Переименовать вложения в человеко-читаемые имена</translation>
+        <source>Name new attachments: </source>
+        <translation>Называть новые вложения: </translation>
     </message>
     <message>
-        <source>Danger, beta version: back up your database directory before renaming. If the database is encrypted, unlock it first.</source>
-        <translation>Опасно, бета-версия: перед переименованием сделайте резервную копию каталога базы. Если база зашифрована, сначала разблокируйте её.</translation>
+        <source>System names (id.extension)</source>
+        <translation>Системные имена (id.расширение)</translation>
     </message>
     <message>
         <source>Database tree is unavailable.</source>
@@ -408,16 +408,36 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation>Не удалось переименовать файл %1 в %2.</translation>
     </message>
     <message>
-        <source>Rename attachments</source>
-        <translation>Переименование вложений</translation>
+        <source>System + original names (id_name.extension)</source>
+        <translation>Системные + оригинальные имена (id_имя.расширение)</translation>
     </message>
     <message>
-        <source>All attachments will be renamed from id.extension to human-readable names id_name.extension. Back up your database directory first. Continue?</source>
-        <translation>Все вложения будут переименованы из id.расширение в человеко-читаемые имена id_имя.расширение. Сначала сделайте резервную копию каталога базы. Продолжить?</translation>
+        <source>Original names (as uploaded)</source>
+        <translation>Оригинальные имена (как при загрузке)</translation>
     </message>
     <message>
-        <source>Renamed files: %1.</source>
-        <translation>Переименовано файлов: %1.</translation>
+        <source>Convert attachments to the selected form</source>
+        <translation>Конвертировать вложения к выбранному виду</translation>
+    </message>
+    <message>
+        <source>Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped.</source>
+        <translation>Опасно, бета-версия: перед конвертацией сделайте резервную копию каталога базы. Если база зашифрована, сначала разблокируйте её. При оригинальных именах файлы с одинаковыми именами в одной заметке конфликтуют и пропускаются.</translation>
+    </message>
+    <message>
+        <source>Convert attachments</source>
+        <translation>Конвертация вложений</translation>
+    </message>
+    <message>
+        <source>All attachments will be brought to the form &quot;%1&quot;. Back up your database directory first. Continue?</source>
+        <translation>Все вложения будут приведены к виду &quot;%1&quot;. Сначала сделайте резервную копию каталога базы. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Converted files: %1.</source>
+        <translation>Сконвертировано файлов: %1.</translation>
+    </message>
+    <message>
+        <source>Name %1 in note &quot;%2&quot; is already taken, file %3 skipped.</source>
+        <translation>Имя %1 в заметке &quot;%2&quot; уже занято, файл %3 пропущен.</translation>
     </message>
     <message>
         <source>Skipped (file not found or encrypted record): %1.</source>

@@ -278,15 +278,15 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Attachments are stored on disk as id.extension. Renaming switches them to human-readable names id_name.extension, so the file can be recognized without opening it. New attachments will use human-readable names too.</source>
+        <source>File naming for uploaded attachments: system names (id.extension), system + original names (hybrid, id_name.extension), or original names (as uploaded). The choice applies to new attachments.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Rename attachments to human-readable names</source>
+        <source>Name new attachments: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Danger, beta version: back up your database directory before renaming. If the database is encrypted, unlock it first.</source>
+        <source>System names (id.extension)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -298,15 +298,35 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Rename attachments</source>
+        <source>System + original names (id_name.extension)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>All attachments will be renamed from id.extension to human-readable names id_name.extension. Back up your database directory first. Continue?</source>
+        <source>Original names (as uploaded)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Renamed files: %1.</source>
+        <source>Convert attachments to the selected form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert attachments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All attachments will be brought to the form "%1". Back up your database directory first. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converted files: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name %1 in note "%2" is already taken, file %3 skipped.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

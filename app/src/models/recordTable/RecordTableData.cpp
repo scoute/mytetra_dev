@@ -424,8 +424,14 @@ int RecordTableData::insertNewRecord(int mode,
     // Если есть, то генерируются новые ID для записи и новая директория хранения
     // Если нет, то это значит что запись была вырезана, но хранится в буфере,
     // и ее желательно вставить с прежним ID и прежним именем директории
-    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+    // В headless-режиме (MCP-сервер) вида дерева нет и find_object
+    // вернет null: модель неизвестна, поэтому всегда генерируются
+    // свежие id и каталог, существующее не затирается. В GUI
+    // поведение прежнее
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+    KnowTreeModel *dataModel=(treeView!=nullptr) ? static_cast<KnowTreeModel*>(treeView->model()) : nullptr;
     if(record.getField("id").length()==0 ||
+            dataModel==nullptr ||
             dataModel->isRecordIdExists( record.getField("id") ) )
     {
         // Создается новая запись (ID был пустой) или

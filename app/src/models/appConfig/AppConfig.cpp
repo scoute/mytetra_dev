@@ -1140,6 +1140,16 @@ void AppConfig::set_themeCustomTableRowHeight(int pixels)
     m_conf->setValue("themeCustomTableRowHeight", pixels);
 }
 
+QString AppConfig::get_themeCustomNotePaperImage(void)
+{
+    return m_conf->value("themeCustomNotePaperImage", "").toString();
+}
+
+void AppConfig::set_themeCustomNotePaperImage(QString path)
+{
+    m_conf->setValue("themeCustomNotePaperImage", path);
+}
+
 
 // Человеко-читаемые имена вложенных файлов на диске.
 // Параметр намеренно не входит в версионные таблицы (как noteFontColor):

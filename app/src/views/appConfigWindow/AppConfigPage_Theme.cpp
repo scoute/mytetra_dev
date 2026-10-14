@@ -8,6 +8,9 @@
 #include <QSpinBox>
 #include <QColorDialog>
 #include <QFontDialog>
+#include <QFileDialog>
+#include <QDir>
+#include <QFileInfo>
 #include <QPixmap>
 #include <QColor>
 #include <QFont>
@@ -68,6 +71,8 @@ void AppConfigPage_Theme::setupUi(void)
   setupIconSizeComboBox();
 
   baseBox=new QGroupBox(this);
+  customHint=new QLabel(this);
+  customHint->setWordWrap(true);
 
   // --- Заметка (переехало из Misc) ---
   noteBox=new QGroupBox(this);
@@ -96,6 +101,11 @@ void AppConfigPage_Theme::setupUi(void)
   setColorForButton(secretColorButton, secretColor,
                     QColor(mytetraConfig.get_secretColor()));
   secretColorReset=new QPushButton(this);
+
+  notePaperImageLabel=new QLabel(this);
+  notePaperImageLoad=new QPushButton(this);
+  notePaperImageClear=new QPushButton(this);
+  notePaperImagePath=mytetraConfig.get_themeCustomNotePaperImage();
 
   // --- Дерево веток ---
   treeBox=new QGroupBox(this);
@@ -179,6 +189,8 @@ void AppConfigPage_Theme::setupUi(void)
 
   resetAllButton=new QPushButton(this);
 
+  refreshNotePaperImageLabel();
+
   retranslateUi();
 }
 
@@ -210,6 +222,7 @@ void AppConfigPage_Theme::setupThemeComboBox()
   translateNames[ "dark" ]    = tr("Dark");
   translateNames[ "modern" ]  = tr("Modern");
   translateNames[ "midnight" ]= tr("Midnight");
+  translateNames[ "custom" ]  = tr("Custom");
 
   int count = -1;
   int currentIndex = -1;
@@ -265,6 +278,8 @@ void AppConfigPage_Theme::setupSignals(void)
   connect(noteFontColorReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedNoteFontColorReset);
   connect(secretColorButton, &QToolButton::clicked, this, &AppConfigPage_Theme::onClickedSecretColor);
   connect(secretColorReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedSecretColorReset);
+  connect(notePaperImageLoad, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedNotePaperImageLoad);
+  connect(notePaperImageClear, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedNotePaperImageClear);
   connect(treeBackgroundButton, &QToolButton::clicked, this, &AppConfigPage_Theme::onClickedTreeBackground);
   connect(treeBackgroundReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedTreeBackgroundReset);
   connect(treeTextButton, &QToolButton::clicked, this, &AppConfigPage_Theme::onClickedTreeText);
@@ -309,6 +324,7 @@ void AppConfigPage_Theme::assembly(void)
 
   QVBoxLayout *baseLayout=new QVBoxLayout();
   baseLayout->addLayout(themeLayout);
+  baseLayout->addWidget(customHint);
   baseLayout->addLayout(iconSizeLayout);
 
   baseBox->setLayout(baseLayout);
@@ -318,6 +334,13 @@ void AppConfigPage_Theme::assembly(void)
   noteLayout->addLayout(colorRowLayout(notePaperColorLabel, notePaperColorButton, notePaperColorReset));
   noteLayout->addLayout(colorRowLayout(noteFontColorLabel, noteFontColorButton, noteFontColorReset));
   noteLayout->addLayout(colorRowLayout(secretColorLabel, secretColorButton, secretColorReset));
+
+  QHBoxLayout *paperImageLayout=new QHBoxLayout();
+  paperImageLayout->addWidget(notePaperImageLabel);
+  paperImageLayout->addWidget(notePaperImageLoad);
+  paperImageLayout->addWidget(notePaperImageClear);
+  paperImageLayout->addStretch();
+  noteLayout->addLayout(paperImageLayout);
 
   noteBox->setLayout(noteLayout);
 
@@ -440,6 +463,56 @@ void AppConfigPage_Theme::onClickedSecretColor()
 void AppConfigPage_Theme::onClickedSecretColorReset()
 {
   setColorForButton(secretColorButton, secretColor, QColor("#77767b"));
+}
+
+
+void AppConfigPage_Theme::refreshNotePaperImageLabel(void)
+{
+  if(notePaperImagePath.isEmpty())
+    notePaperImageLabel->setText(tr("Paper image: none"));
+  else
+    notePaperImageLabel->setText(
+      tr("Paper image: %1").arg(QFileInfo(notePaperImagePath).fileName()));
+}
+
+
+void AppConfigPage_Theme::onClickedNotePaperImageLoad(void)
+{
+  const QString from=QFileDialog::getOpenFileName(
+    this, tr("Select paper image"),
+    QDir::homePath(),
+    tr("Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg)"));
+
+  if(from.isEmpty())
+    return;
+
+  // Тайл копируется в рабочий каталог: исходник могут удалить,
+  // а путь в конфиге должен жить всегда
+  QDir workDir(globalParameters.getWorkDirectory());
+
+  if(!workDir.mkpath("custom-theme"))
+    return;
+
+  const QString target=workDir.absoluteFilePath(
+    "custom-theme/paper."+QFileInfo(from).suffix().toLower());
+
+  QFile::remove(target);
+
+  if(!QFile::copy(from, target))
+    return;
+
+  notePaperImagePath=target;
+  refreshNotePaperImageLabel();
+}
+
+
+void AppConfigPage_Theme::onClickedNotePaperImageClear(void)
+{
+  if(!notePaperImagePath.isEmpty())
+    QFile::remove(notePaperImagePath);
+
+  notePaperImagePath.clear();
+  refreshNotePaperImageLabel();
 }
 
 
@@ -571,8 +644,7 @@ void AppConfigPage_Theme::onClickedInterfaceFontReset()
 void AppConfigPage_Theme::onClickedResetAll(void)
 {
   // Всё к теме: цвета чистятся, размеры в -1, шрифт в тему
-  notePaperColorIsTheme=true;
-  setColorForButton(notePaperColorButton, notePaperColor,
+  notePaperColorIsTheme=true;  setColorForButton(notePaperColorButton, notePaperColor,
     QColor(MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(), "")));
 
   noteFontColorIsTheme=true;
@@ -580,6 +652,12 @@ void AppConfigPage_Theme::onClickedResetAll(void)
     QColor(MetaEditor::effectiveNoteFontColor(mytetraConfig.getInterfaceTheme(), "")));
 
   setColorForButton(secretColorButton, secretColor, QColor("#77767b"));
+
+  if(!notePaperImagePath.isEmpty())
+    QFile::remove(notePaperImagePath);
+
+  notePaperImagePath.clear();
+  refreshNotePaperImageLabel();
 
   treeBackgroundIsTheme=true;
   setColorForButton(treeBackgroundButton, treeBackground, QColor());
@@ -605,12 +683,14 @@ void AppConfigPage_Theme::retranslateUi(void)
 {
   baseBox->setTitle(tr("Base theme"));
   themeLabel->setText(tr("Interface theme"));
+  customHint->setText(tr("Custom theme builds on Default plus settings below."));
 
   QMap<QString, QString> translateNames;
   translateNames[ "default" ] = tr("Default");
   translateNames[ "dark" ]    = tr("Dark");
   translateNames[ "modern" ]  = tr("Modern");
   translateNames[ "midnight" ]= tr("Midnight");
+  translateNames[ "custom" ]  = tr("Custom");
 
   for(int i=0; i<themeNameComboBox->count(); ++i)
   {
@@ -628,6 +708,9 @@ void AppConfigPage_Theme::retranslateUi(void)
   noteFontColorReset->setText(tr("Reset"));
   secretColorLabel->setText(tr("Secret color: "));
   secretColorReset->setText(tr("Reset"));
+  refreshNotePaperImageLabel();
+  notePaperImageLoad->setText(tr("Load..."));
+  notePaperImageClear->setText(tr("Clear"));
 
   treeBox->setTitle(tr("Branches tree"));
   treeBackgroundLabel->setText(tr("Tree background: "));
@@ -711,6 +794,10 @@ int AppConfigPage_Theme::applyChanges(void)
 
   if(mytetraConfig.get_secretColor()!=secretColor->name())
     mytetraConfig.set_secretColor(secretColor->name());
+
+  // Мозаичный фон заметок
+  if(mytetraConfig.get_themeCustomNotePaperImage()!=notePaperImagePath)
+    mytetraConfig.set_themeCustomNotePaperImage(notePaperImagePath);
 
   // Цвета дерева и списка: пусто означает цвет темы
   if(treeBackgroundIsTheme)

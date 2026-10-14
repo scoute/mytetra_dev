@@ -33,6 +33,9 @@ private slots:
     void onClickedNoteFontColorReset(void);
     void onClickedSecretColor(void);
     void onClickedSecretColorReset(void);
+    void onClickedNotePaperImageLoad(void);
+    void onClickedNotePaperImageClear(void);
+    void refreshNotePaperImageLabel(void);
     void onClickedTreeBackground(void);
     void onClickedTreeBackgroundReset(void);
     void onClickedTreeTextReset(void);
@@ -62,6 +65,7 @@ protected:
     QGroupBox *baseBox;
     QLabel *themeLabel;
     MtComboBox *themeNameComboBox;
+    QLabel *customHint;
     QLabel *iconSizeLabel;
     MtComboBox *iconSizeComboBox;
 
@@ -81,6 +85,10 @@ protected:
     QToolButton *secretColorButton;
     QColor *secretColor;
     QPushButton *secretColorReset;
+    QLabel *notePaperImageLabel;
+    QPushButton *notePaperImageLoad;
+    QPushButton *notePaperImageClear;
+    QString notePaperImagePath;
 
     // Дерево веток
     QGroupBox *treeBox;

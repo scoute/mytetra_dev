@@ -19,6 +19,8 @@
 #include "libraries/helpers/DiskHelper.h"
 #include "views/tree/KnowTreeView.h"
 #include "models/tree/KnowTreeModel.h"
+#include "views/backlinksPanel/BacklinksPanel.h"
+#include "libraries/BacklinkIndex.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/IconSelectDialog.h"
@@ -180,6 +182,15 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
 
     // Заполняется модель дерева
     knowTreeModel->initFromXML(dbPath+"/mytetra.xml");
+
+    // Обратный индекс перечитывается под новое хранилище
+    BacklinkIndex::instance().setTreeModel(knowTreeModel);
+    BacklinkIndex::instance().loadOrBuild();
+
+    BacklinksPanel *backlinksPanel=find_object<BacklinksPanel>("backlinksPanel");
+
+    if(backlinksPanel!=nullptr)
+        backlinksPanel->refreshBacklinks();
 
     return true;
 }

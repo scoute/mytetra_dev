@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QStatusBar>
 #include <QTextCursor>
+#include <QTextBlock>
 #include <QStringList>
 #include <QRegularExpression>
 #include <QBoxLayout>
@@ -662,9 +663,12 @@ void MetaEditor::applyNoteColors(void)
 }
 
 
-// Позиция курсора заметки в статусбаре. Виджет обычный, поэтому
-// важные showMessage-сообщения его перекрывают, а после
-// пропадают сами и подпись возвращается
+// Позиция курсора заметки в статусбаре. Строка логическая (абзацы
+// плюс явные разрывы <br> внутри них), колонка по видимым символам:
+// нерисующиеся форматтеры (zero-width из вставленного веб-контента
+// и т.п.) пропускаются, иначе слово после сотни невидимок показывает
+// колонку 121. Виджет обычный, поэтому важные showMessage-сообщения
+// его перекрывают, а после пропадают сами и подпись возвращается
 void MetaEditor::updateCursorLabel(void)
 {
     if(textArea==nullptr)
@@ -681,10 +685,41 @@ void MetaEditor::updateCursorLabel(void)
         return;
 
     QTextCursor cursor=textArea->textCursor();
+    QTextBlock block=cursor.block();
 
-    cursorLabel->setText(tr("Cursor: line %1, position %2")
-                         .arg(cursor.blockNumber()+1)
-                         .arg(cursor.positionInBlock()+1));
+    // Разрывы строк внутри абзаца (<br> хранится как U+2028 и блока
+    // не начинает): визуально строки разные, логически абзац один
+    int extraRows=0;
+    int lineStart=0;
+    int invisible=0;
+
+    if(block.isValid())
+    {
+        const QString text=block.text();
+        const int rel=qBound(0, cursor.position()-block.position(), text.size());
+
+        for(int i=0; i<rel; ++i)
+        {
+            const QChar ch=text.at(i);
+
+            if(ch=='\n' || ch=='\r' || ch==QChar(0x2028) || ch==QChar(0x2029))
+            {
+                ++extraRows;
+                lineStart=i+1;
+                invisible=0;
+            }
+            else if(ch.category()==QChar::Other_Format)
+                ++invisible;
+        }
+
+        cursorLabel->setText(tr("Cursor: line %1, position %2")
+                             .arg(cursor.blockNumber()+1+extraRows)
+                             .arg(rel-lineStart+1-invisible));
+    }
+    else
+        cursorLabel->setText(tr("Cursor: line %1, position %2")
+                             .arg(cursor.blockNumber()+1)
+                             .arg(cursor.positionInBlock()+1));
 }
 
 

@@ -172,6 +172,7 @@ HEADERS = src/main.h \
     src/models/databasesManagement/KnownBasesConfig.h \
     src/views/appConfigWindow/AppConfigPage_Appearance.h \
     src/views/appConfigWindow/AppConfigPage_History.h \
+    src/views/appConfigWindow/AppConfigPage_Search.h \
     src/views/consoleEmulator/CommandRunner.h \
     src/views/databasesManagement/DatabasesManagementPathDelegate.h \
     src/views/databasesManagement/DatabasesManagementScreen.h \
@@ -192,6 +193,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorConfigFont.h \
     src/libraries/wyedit/EditorConfigMisc.h \
     src/libraries/wyedit/EditorFindDialog.h \
+    src/libraries/wyedit/EditorFindBar.h \
     src/views/mainWindow/MainWindow.h \
     src/views/printPreview/PrintPreview.h \
     src/views/printPreview/PreviewView.h \
@@ -348,6 +350,7 @@ SOURCES = src/main.cpp \
     src/models/databasesManagement/KnownBasesConfig.cpp \
     src/views/appConfigWindow/AppConfigPage_Appearance.cpp \
     src/views/appConfigWindow/AppConfigPage_History.cpp \
+    src/views/appConfigWindow/AppConfigPage_Search.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \
     src/views/databasesManagement/DatabasesManagementPathDelegate.cpp \
     src/views/databasesManagement/DatabasesManagementScreen.cpp \
@@ -368,6 +371,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorConfigFont.cpp \
     src/libraries/wyedit/EditorConfigMisc.cpp \
     src/libraries/wyedit/EditorFindDialog.cpp \
+    src/libraries/wyedit/EditorFindBar.cpp \
     src/views/mainWindow/MainWindow.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \

@@ -301,6 +301,10 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Misc</source>
         <translation type="vanished">Разное</translation>
     </message>
+    <message>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -1606,6 +1610,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Select a single cell.</source>
         <translation type="vanished">Необходимо выбрать только одну ячейку.</translation>
     </message>
+    <message>
+        <source>No matches</source>
+        <translation>Нет совпадений</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 из %2</translation>
+    </message>
+    <message>
+        <source>Replaced %1</source>
+        <translation>Заменено %1</translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -1882,6 +1898,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <source>Find and replace</source>
         <translation>Поиск и замена</translation>
+    </message>
+    <message>
+        <source>Show as embedded bar</source>
+        <translation>Показать полоской в заметке</translation>
     </message>
 </context>
 <context>
@@ -5793,5 +5813,83 @@ Please select single item for enabling edit operation.</source>
             <source>Close</source>
             <translation>Закрыть</translation>
         </message>
+    </context>
+    <context>
+        <name>EditorFindBar</name>
+    <message>
+        <source>Find in note</source>
+        <translation>Найти в записи</translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation>Aa</translation>
+    </message>
+    <message>
+        <source>Match case</source>
+        <translation>С учётом регистра</translation>
+    </message>
+    <message>
+        <source>&quot;ab&quot;</source>
+        <translation>&quot;ab&quot;</translation>
+    </message>
+    <message>
+        <source>Whole words only</source>
+        <translation>Только слова целиком</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>Заменить на</translation>
+    </message>
+    <message>
+        <source>&amp;Replace</source>
+        <translation>Заменить</translation>
+    </message>
+    <message>
+        <source>Replace &amp;all</source>
+        <translation>Заменить все</translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation>Найти</translation>
+    </message>
+    <message>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>Предыдущее совпадение (Shift+Enter)</translation>
+    </message>
+    <message>
+        <source>Next match (Enter)</source>
+        <translation>Следующее совпадение (Enter)</translation>
+    </message>
+    <message>
+        <source>Find in base</source>
+        <translation>Найти в базе</translation>
+    </message>
+    <message>
+        <source>Search this text in the whole base</source>
+        <translation>Искать этот текст по всей базе</translation>
+    </message>
+    <message>
+        <source>Close find bar (Esc)</source>
+        <translation>Закрыть панель поиска (Esc)</translation>
+    </message>
+    <message>
+        <source>Open as separate window</source>
+        <translation>Открыть отдельным окном</translation>
+    </message>
+    </context>
+    <context>
+        <name>AppConfigPage_Search</name>
+    <message>
+        <source>Embedded bar in note</source>
+        <translation>Встроенная полоска в заметке</translation>
+    </message>
+    <message>
+        <source>Separate window</source>
+        <translation>Отдельное окно</translation>
+    </message>
+    <message>
+        <source>Find in note</source>
+        <translation>Поиск в заметке</translation>
+    </message>
     </context>
 </TS>

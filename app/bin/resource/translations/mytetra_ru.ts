@@ -5550,6 +5550,10 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation>MCP</translation>
     </message>
     <message>
+        <source>Voice notes</source>
+        <translation>Голосовые заметки</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="79"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="133"/>
         <source>Misc</source>
@@ -7606,6 +7610,37 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Can not record here</source>
         <translation>Здесь записать нельзя</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Voice</name>
+    <message>
+        <source>Default format</source>
+        <translation>Формат по умолчанию</translation>
+    </message>
+    <message>
+        <source>Opus (.opus)</source>
+        <translation>Opus (.opus)</translation>
+    </message>
+    <message>
+        <source>MP3 (.mp3)</source>
+        <translation>MP3 (.mp3)</translation>
+    </message>
+    <message>
+        <source>Default quality</source>
+        <translation>Качество по умолчанию</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>Низкое</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Среднее</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>Высокое</translation>
     </message>
 </context>
 </TS>

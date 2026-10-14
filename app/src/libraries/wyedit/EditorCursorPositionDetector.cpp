@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include "EditorCursorPositionDetector.h"
+#include "formatters/SecretFormatter.h"
 #include "EditorTextArea.h"
 #include "libraries/FixedParameters.h"
 
@@ -316,4 +317,50 @@ bool EditorCursorPositionDetector::isCursorOnReferenceSmart(QString &resultHref)
 
     return false;
   }
+}
+
+
+// Курсор в секрете: метка слева или справа от курсора.
+// В выделении смотрятся оба конца через isSecretSelect
+bool EditorCursorPositionDetector::isCursorOnSecret(void)
+{
+  if(textArea->textCursor().hasSelection())
+    return isSecretSelect();
+
+  QString hrefLeft=textArea->textCursor().charFormat().anchorHref();
+
+  QTextCursor cursor=textArea->textCursor();
+  cursor.movePosition(QTextCursor::Right);
+  QString hrefRight=cursor.charFormat().anchorHref();
+
+  const QString secretHref=SecretFormatter::secretHref();
+
+  return hrefLeft==secretHref || hrefRight==secretHref;
+}
+
+
+// Выделение целиком внутри одного секрета
+bool EditorCursorPositionDetector::isSecretSelect(void)
+{
+  if(!textArea->textCursor().hasSelection())
+    return false;
+
+  const QString secretHref=SecretFormatter::secretHref();
+
+  int start=textArea->textCursor().selectionStart()+1;
+  int stop=textArea->textCursor().selectionEnd();
+
+  QTextCursor cursor=textArea->textCursor();
+  cursor.setPosition(start);
+  if(cursor.charFormat().anchorHref()!=secretHref)
+    return false;
+
+  for(int i=start+1; i<=stop; ++i)
+  {
+    cursor.setPosition(i);
+    if(cursor.charFormat().anchorHref()!=secretHref)
+      return false;
+  }
+
+  return true;
 }

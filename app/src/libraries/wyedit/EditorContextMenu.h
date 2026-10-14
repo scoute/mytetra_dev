@@ -18,6 +18,8 @@ public:
  void setImageProperties(bool flag); // Активирование добавочного пункта меню "Свойства картинки")
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
+ void setCopySecret(bool flag); // Показ пункта "Скопировать секрет"
+ void setChangeSecretColor(bool flag); // Показ пункта "Изменить цвет секретов"
  void setPasteAsPlainText(bool flag);
  void setFormatToLowerCase(bool flag); // Активирование добавочного пункта меню "Строчные"
  void setFormatToUpperCase(bool flag); // Активирование добавочного пункта меню "ПРОПИСНЫЕ"
@@ -37,6 +39,8 @@ signals:
   void contextMenuEditImageProperties(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
+  void contextMenuCopySecret(void);
+  void contextMenuChangeSecretColor(void);
   void lowercase(void);
   void uppercase(void);
 
@@ -59,6 +63,8 @@ private:
   QAction *actionEditImageProperties;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
+  QAction *actionCopySecret;
+  QAction *actionChangeSecretColor;
 
   void setupActions(void);
   void setupSignals(void);
@@ -76,6 +82,8 @@ protected slots:
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
+  void onActionContextMenuCopySecret(void);
+  void onActionContextMenuChangeSecretColor(void);
 
   void onActionLowercase();
   void onActionUppercase();

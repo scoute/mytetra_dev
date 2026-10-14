@@ -1544,12 +1544,12 @@ enable «Decrypt to a temporary file» option in Settings.</source>
 <context>
     <name>ConfigDialog</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/ConfigDialog.cpp" line="170"/>
+        <location filename="../../../src/views/appConfigWindow/ConfigDialog.cpp" line="169"/>
         <source>Warning</source>
         <translation>Ուշադրություն</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/ConfigDialog.cpp" line="171"/>
+        <location filename="../../../src/views/appConfigWindow/ConfigDialog.cpp" line="170"/>
         <source>The program will have to be restarted for changes to take effect.</source>
         <translation>Փոփոխություններն ուժի մեջ մտնելու համար ծրագիրը կփակվի։ Նոր փոփոխություններն ուժի մեջ կմտնեն հաջորդ գործարկման ժամանակ։</translation>
     </message>
@@ -3590,47 +3590,47 @@ You need to update MyTetra.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1849"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1850"/>
         <source>Statistics</source>
         <translation>Վիճակագրություն</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
         <source>Branch</source>
         <translation>Ճյուղ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1683"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1684"/>
         <source>MCP session is active%1, MyTetra works in read-only mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
         <source>Note</source>
         <translation>Գրառում</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
         <source>Internal links</source>
         <translation>Ներքին հղումներ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
         <source>Images</source>
         <translation>Պատկերներ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
         <source>Files</source>
         <translation>Ֆայլեր</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1654"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1655"/>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
         <translation>Ճյուղեր: %1 | Գրառումներ: %2 | Պիտակներ: %3 | Ֆայլեր: %4 | Պատկերներ: %5 | Ներքին հղումներ: %6</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1655"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1656"/>
         <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
         <translation>Բազայի վիճակագրություն՝ ճյուղեր, գրառումներ, պիտակներ, ֆայլեր, պատկերներ և հղումներ։ Հղումները mytetra:// հղումներ են գրառումների միջև։ Կտոցը բացում է մանրամասները ըստ գրառումների։</translation>
     </message>
@@ -3644,13 +3644,13 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1219"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1910"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1911"/>
         <source>&amp;File</source>
         <translation>&amp;Ֆայլ</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1222"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1912"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
         <source>Databases management</source>
         <translation>Տվյալների բազաների կառավարում</translation>
     </message>
@@ -3661,7 +3661,7 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1236"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1915"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1916"/>
         <source>Print Preview...</source>
         <translation>Տպելու նախադիտում...</translation>
     </message>
@@ -3672,40 +3672,40 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1914"/>
         <source>Export tree item</source>
         <translation>Արտահանել ծառի տարրը</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1228"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1914"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1915"/>
         <source>Import tree item</source>
         <translation>Ներմուծել ծառի տարրը</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1244"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2006"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2538"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2008"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2540"/>
         <source>&amp;Quit</source>
         <translation>&amp;Ելք</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1253"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1920"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1921"/>
         <source>&amp;Tools</source>
         <translation>&amp;Գործիքներ</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1265"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1922"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1923"/>
         <source>Action &amp;log</source>
         <translation>Գործողությունների &amp;մատյան</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1296"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1302"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1935"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1939"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1936"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1940"/>
         <source>&amp;Preferences</source>
         <translation>&amp;Նախընտրանքներ</translation>
     </message>
@@ -3731,26 +3731,26 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1371"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1996"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1998"/>
         <source>&amp;Help</source>
         <translation>&amp;Օգնություն</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1374"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1998"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2000"/>
         <source>About MyTetra</source>
         <translation>MyTetra-ի մասին</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1377"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1999"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2001"/>
         <source>About Qt</source>
         <translation>Qt-ի մասին</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2000"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2363"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2002"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2365"/>
         <source>Technical info</source>
         <translation>Տեխնիկական տեղեկություն</translation>
     </message>
@@ -3777,102 +3777,108 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="196"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1321"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2008"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
         <source>History</source>
         <translation>Պատմություն</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2077"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1399"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1970"/>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2079"/>
         <source>Print Document</source>
         <translation>Տպել փաստաթուղթը</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2132"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2134"/>
         <source>Select an empty directory to export data</source>
         <translation>Ընտրեք դատարկ թղթապանակ տվյալներն արտահանելու համար</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2150"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2152"/>
         <source>Select directory to import data</source>
         <translation>Ընտրեք թղթապանակ տվյալներ ներմուծելու համար</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2364"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2366"/>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;Տեխնիկական տեղեկություն&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2473"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2475"/>
         <source>MyTetra: can&apos;t synchronization</source>
         <translation>MyTetra․ համաժամեցումը հնարավոր չէ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2474"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2476"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Համաժամեցման հրամանը տրված չէ։&lt;br&gt;Ստուգեք &quot;Գործիքներ&quot; ընտրացանկի &quot;Համաժամեցում&quot; բաժինը</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2493"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2495"/>
         <source>MyTetra synchronization</source>
         <translation>MyTetra համաժամեցում</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2494"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2496"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>Համաժամեցումն ընթացքի մեջ է, խնդրում ենք սպասել...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2003"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2529"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2005"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2531"/>
         <source>&amp;Restore window</source>
         <translation>&amp;Վերականգնել պատուհանը</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2004"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2532"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2006"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2534"/>
         <source>Ma&amp;ximize window</source>
         <translation>Մեծացնել պատուհանը</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2005"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2535"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2007"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2537"/>
         <source>Mi&amp;nimize window</source>
         <translation>Փոքրացնել պատուհանը</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1390"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1962"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1963"/>
         <source>&amp;Themes</source>
         <translation>&amp;Թեմաներ</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1395"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1965"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1966"/>
         <source>Default</source>
         <translation>Հիմնական</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1396"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1966"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1967"/>
         <source>Dark</source>
         <translation>Մուգ</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1397"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1967"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1968"/>
         <source>Modern</source>
         <translation>Ժամանակակից</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1398"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1968"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1969"/>
         <source>Midnight</source>
         <translation>Կեսգիշերային</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="216"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1787"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2012"/>
         <source>Tags</source>
         <translation>Պիտակներ</translation>
     </message>
@@ -3883,31 +3889,31 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1262"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1924"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1925"/>
         <source>Attached &amp;files</source>
         <translation>Կցված &amp;ֆայլեր</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1441"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1976"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1442"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1978"/>
         <source>&amp;View</source>
         <translation>&amp;Տեսք</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1444"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1979"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1445"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1981"/>
         <source>Show note header</source>
         <translation>Ցույց տալ նշման գլխամասը</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1458"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1985"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1459"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1987"/>
         <source>Change secret color...</source>
         <translation>Փոխել գաղտնիքի գույնը...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1462"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1988"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1463"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1990"/>
         <source>Change note background color...</source>
         <translation>Փոխել նշման ֆոնի գույնը...</translation>
     </message>
@@ -3917,8 +3923,8 @@ You need to update MyTetra.</source>
         <translation>Հետադարձ հղումներ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1448"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1982"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1449"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1984"/>
         <source>Show favorites panel</source>
         <translation>Ցույց տալ ընտրյալների վահանակը</translation>
     </message>

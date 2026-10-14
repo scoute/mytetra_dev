@@ -1396,6 +1396,7 @@ void MainWindow::initThemesMenu(void)
     translateNames["dark"]=tr("Dark");
     translateNames["modern"]=tr("Modern");
     translateNames["midnight"]=tr("Midnight");
+    translateNames["custom"]=tr("Custom");
 
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);
@@ -1966,6 +1967,7 @@ void MainWindow::retranslateUi(void)
         translateNames["dark"]=tr("Dark");
         translateNames["modern"]=tr("Modern");
         translateNames["midnight"]=tr("Midnight");
+        translateNames["custom"]=tr("Custom");
 
         for(QAction *themeAction : themesMenu->actions())
             themeAction->setText(translateNames.value(themeAction->data().toString(), "Unknown"));

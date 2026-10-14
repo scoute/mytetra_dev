@@ -100,6 +100,12 @@ void HistoryPanel::setupUi(void)
     historyTable->verticalHeader()->setVisible(false);
     historyTable->setSortingEnabled(false);
 
+    // Компактные строки в одну текстовую строку как у меток:
+    // дефолтная высота секции QTableWidget заметно выше шрифта
+    const int rowHeight=historyTable->fontMetrics().height()+2;
+    historyTable->verticalHeader()->setMinimumSectionSize(rowHeight);
+    historyTable->verticalHeader()->setDefaultSectionSize(rowHeight);
+
     clearButton=new QPushButton(tr("Clear"), this);
     clearButton->setToolTip(tr("Forget all visit history"));
 

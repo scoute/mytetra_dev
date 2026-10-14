@@ -61,6 +61,20 @@ public:
     // Ссылка бабла в позиции документа, пусто если там не бабл.
     // Проверяются символ под позицией и слева от нее
     static QString bubbleHrefAt(QTextDocument *doc, int pos);
+
+    // Заменить голосовые ссылки документа баблами, вернет их число.
+    // Без edit-блоков: вызыватель решает про undo сам
+    static int materializeVoiceLinks(QTextDocument *doc);
+
+    // Заменить баблы документа ссылками [voice], вернет их число.
+    // Без edit-блоков: вызыватель решает про undo сам
+    static int dematerializeBubbles(QTextDocument *doc);
+
+    // Имя MIME для переноса голосовых между заметками
+    static const char *voiceMimeTypeName(void);
+
+    // Есть ли голосовые ссылки в документе
+    static bool hasVoiceLinks(QTextDocument *doc);
 };
 
 #endif /* _VOICENOTEHELPER_H_ */

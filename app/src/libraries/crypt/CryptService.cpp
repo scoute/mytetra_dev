@@ -263,7 +263,10 @@ void CryptService::decryptFile(QByteArray key, QString fileName)
 
 void CryptService::encDecFileSmart(QByteArray key, QString fileName, int mode)
 {
- QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+ // Headless-процессы (MCP-сервер) живут без QApplication:
+ // курсор дёргается только при живом GUI
+ if(qobject_cast<QApplication *>(QCoreApplication::instance())!=nullptr)
+   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
  QFile file(fileName);
 
@@ -297,5 +300,6 @@ void CryptService::encDecFileSmart(QByteArray key, QString fileName, int mode)
   criticalError("encryptFile() : Cant open binary file "+fileName+" for write.");
  file.write(result);
 
- QApplication::restoreOverrideCursor();
+ if(qobject_cast<QApplication *>(QCoreApplication::instance())!=nullptr)
+   QApplication::restoreOverrideCursor();
 }

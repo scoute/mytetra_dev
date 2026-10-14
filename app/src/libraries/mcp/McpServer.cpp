@@ -14,6 +14,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QSet>
 #include <QLocalSocket>
 #include <QDataStream>
 #include <QRegularExpression>
@@ -176,14 +177,16 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
      toolName=="get_note" || toolName=="search" ||
      toolName=="find_duplicates" || toolName=="stats" ||
      toolName=="list_tags" || toolName=="tag_notes" ||
-     toolName=="untagged_notes" || toolName=="list_favorites")
+     toolName=="untagged_notes" || toolName=="list_favorites" ||
+     toolName=="list_attachments")
     return true;
 
   if(toolName=="create_branch" || toolName=="create_note" ||
      toolName=="update_note" ||
      toolName=="rename_branch" || toolName=="move_branch" ||
      toolName=="move_note" || toolName=="favorite_note" ||
-     toolName=="unfavorite_note" ||
+     toolName=="unfavorite_note" || toolName=="export_branch" ||
+     toolName=="import_branch" ||
      toolName=="rename_tag")
     return mode==McpMode::ReadWrite || mode==McpMode::ReadWriteDelete;
 
@@ -200,10 +203,11 @@ static bool isKnownTool(const QString &toolName)
   static const char *names[]={
     "list_branches", "list_notes", "get_note", "search",
     "find_duplicates", "stats", "list_tags", "tag_notes", "untagged_notes",
-    "list_favorites",
+    "list_favorites", "list_attachments",
     "create_branch", "create_note", "update_note",
     "rename_branch", "move_branch", "move_note",
     "favorite_note", "unfavorite_note",
+    "export_branch", "import_branch",
     "rename_tag", "delete_tag",
     "delete_note", "delete_branch"
   };
@@ -225,6 +229,7 @@ static bool isWriteTool(const QString &toolName)
          toolName=="rename_branch" || toolName=="move_branch" ||
          toolName=="move_note" ||
          toolName=="favorite_note" || toolName=="unfavorite_note" ||
+         toolName=="export_branch" || toolName=="import_branch" ||
          toolName=="rename_tag" || toolName=="delete_tag" ||
          toolName=="delete_note" || toolName=="delete_branch";
 }
@@ -513,6 +518,43 @@ static QJsonArray buildToolsList(McpMode mode)
 
   {
     QJsonObject properties;
+    QJsonObject branchId;
+    branchId["type"]="string";
+    branchId["description"]="Branch id with subtree";
+    properties["branch_id"]=branchId;
+    QJsonObject path;
+    path["type"]="string";
+    path["description"]="Target directory, created if missing";
+    properties["path"]=path;
+    QJsonArray required;
+    required.append("branch_id");
+    required.append("path");
+    tools.append(toolDescription(
+      "export_branch",
+      "Export a branch subtree to a directory in MyTetra exchange format.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject parentId;
+    parentId["type"]="string";
+    parentId["description"]="Parent id, empty = top level";
+    properties["parent_id"]=parentId;
+    QJsonObject path;
+    path["type"]="string";
+    path["description"]="Exchange directory with mytetra.xml";
+    properties["path"]=path;
+    QJsonArray required;
+    required.append("path");
+    tools.append(toolDescription(
+      "import_branch",
+      "Import a branch subtree from a MyTetra exchange directory.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
     QJsonObject limit;
     limit["type"]="integer";
     limit["description"]="Max groups (default 50)";
@@ -589,6 +631,20 @@ static QJsonArray buildToolsList(McpMode mode)
       "list_favorites",
       "Starred notes with branch context.",
       objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject noteId;
+    noteId["type"]="string";
+    noteId["description"]="Note id";
+    properties["note_id"]=noteId;
+    QJsonArray required;
+    required.append("note_id");
+    tools.append(toolDescription(
+      "list_attachments",
+      "Attachments of a note: file names with sizes.",
+      objectSchema(properties, required)));
   }
 
   {
@@ -1053,6 +1109,11 @@ public:
       {
         result=m_tools.listFavorites();
       }
+      else if(toolName=="list_attachments")
+      {
+        result=m_tools.listAttachments(arguments.value("note_id").toString(),
+                                       toolError);
+      }
       else if(toolName=="create_branch")
       {
         QString parentId=arguments.value("parent_id").toString();
@@ -1143,6 +1204,23 @@ public:
       {
         result=writeFavoriteNote(arguments.value("note_id").toString(),
                                  false, toolError);
+      }
+      else if(toolName=="export_branch")
+      {
+        QString error;
+        result=McpTools::applyExportBranch(&m_model,
+                                           arguments.value("branch_id").toString(),
+                                           arguments.value("path").toString(),
+                                           error);
+
+        if(!error.isEmpty())
+          toolError=error;
+      }
+      else if(toolName=="import_branch")
+      {
+        result=writeImportBranch(arguments.value("parent_id").toString(),
+                                 arguments.value("path").toString(),
+                                 toolError);
       }
       else if(toolName=="rename_tag")
       {
@@ -1257,6 +1335,9 @@ private:
   QJsonObject writeDeleteTag(const QString &tag, QString &toolError);
   QJsonObject writeFavoriteNote(const QString &id, bool starred,
                                 QString &toolError);
+  QJsonObject writeImportBranch(const QString &parentId,
+                                const QString &path,
+                                QString &toolError);
 
   static QByteArray makeResponse(const QJsonValue &id,
                                  const QJsonValue &result,
@@ -1289,6 +1370,54 @@ private:
     // серверу состояние клиента не нужно, игнорируются
   }
 };
+
+
+// Дети ветки-родителя (пустой parentId - корень). Только id строками:
+// указатели модели после resync инвалидируются и не хранятся
+static QSet<QString> branchChildIds(KnowTreeModel &model, const QString &parentId)
+{
+  QSet<QString> out;
+
+  const TreeItem *parent=nullptr;
+
+  if(parentId.isEmpty())
+    parent=model.getRootItem();
+  else
+    parent=model.getItemById(parentId);
+
+  if(parent==nullptr)
+    return out;
+
+  for(int i=0; i<parent->childCount(); ++i)
+  {
+    TreeItem *childItem=parent->child(i);
+
+    if(childItem!=nullptr)
+      out.insert(childItem->getField("id"));
+  }
+
+  return out;
+}
+
+
+// Имя верхнего узла обменника: по нему после ввоза находится
+// новая ветка в diff детей родителя
+static QString importTopNodeName(const QString &path)
+{
+  QFile xmlFile(path+"/mytetra.xml");
+
+  if(!xmlFile.open(QIODevice::ReadOnly))
+    return QString();
+
+  QDomDocument doc;
+
+  if(!doc.setContent(&xmlFile, true))
+    return QString();
+
+  QDomElement content=doc.documentElement().firstChildElement("content");
+
+  return content.firstChildElement("node").attribute("name");
+}
 
 
 // Ожидаемый родитель после move_branch: внутрь цели или соседство
@@ -1692,6 +1821,132 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
   }
 
   result=applied;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+QJsonObject McpSession::writeImportBranch(const QString &parentId,
+                                            const QString &path,
+                                            QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  // Предпроверки по свежему снапшоту: мгновенные ошибки без
+  // ложного сообщения живому GUI (там проверки дублируются)
+  if(!parentId.isEmpty())
+  {
+    TreeItem *parent=m_model.getItemById(parentId);
+
+    if(parent==nullptr)
+    {
+      toolError="Unknown parent branch_id: "+parentId;
+
+      return result;
+    }
+
+    if(parent->getField("crypt")=="1")
+    {
+      toolError="Parent branch is encrypted, import refused";
+
+      return result;
+    }
+  }
+
+  {
+    const QString problem=McpTools::checkImportDir(path);
+
+    if(!problem.isEmpty())
+    {
+      toolError=problem;
+
+      return result;
+    }
+  }
+
+  // Дети родителя до ввоза и имя верхнего узла обменника: после
+  // применения по diff находится id новой ветки (сам ввоз id
+  // заранее не знает). Указатели не хранить: resync их инвалидирует
+  const QSet<QString> beforeIds=branchChildIds(m_model, parentId);
+  const QString topName=importTopNodeName(path);
+
+  QJsonObject payload;
+  payload["parent_id"]=parentId;
+  payload["path"]=path;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpImportBranch", payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    // Ввоз сам сохраняет дерево: ждётся сейв GUI, модель
+    // перечитывается, новая ветка ищется по diff детей
+    if(!waitGuiSave(5000))
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    resyncModel();
+
+    QStringList fresh;
+
+    foreach(const QString &id, branchChildIds(m_model, parentId))
+      if(!beforeIds.contains(id))
+      {
+        TreeItem *item=m_model.getItemById(id);
+
+        if(item!=nullptr && item->getField("name")==topName)
+          fresh.append(id);
+      }
+
+    if(fresh.isEmpty())
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    // Конкурентный ввоз с тем же именем: id неоднозначен,
+    // но применение подтверждено сейвом
+    if(fresh.size()==1)
+      result["id"]=fresh.first();
+
+    result["parent_id"]=parentId;
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject imported=m_tools.importBranchDirect(parentId, path, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=imported;
   result["applied_via"]="direct";
   result["verified"]=true;
 
@@ -2392,6 +2647,11 @@ int runMcpServer(int argc, char **argv)
 
   globalParameters.setMainProgramFile(QString::fromLocal8Bit(argv[0]));
 
+  // ГПСЧ первым: trash-бэкап в mytetraConfig.init() уже зовёт rand()
+  // для имён копий, а сдвиг pid разводит одновременно стартовавшие
+  // серверы по разным сериям (иначе одинаковые имена и id)
+  RandomInitter::init(static_cast<long>(QCoreApplication::applicationPid()));
+
   // Headless boot: initHeadless never opens InstallDialog,
   // missing conf.ini is a clean exit instead of a crash
   if(!globalParameters.initHeadless())
@@ -2416,10 +2676,6 @@ int runMcpServer(int argc, char **argv)
 
   if(!validateDatabase(xmlPath))
     return 3;
-
-  // Инициализация ГПСЧ для генерации id (сдвиг pid чтобы два
-  // одновременно стартовавших сервера не дали одну серию rand)
-  RandomInitter::init(static_cast<long>(QCoreApplication::applicationPid()));
 
   McpMode mode=mcpModeFromArgs(argc, argv);
 

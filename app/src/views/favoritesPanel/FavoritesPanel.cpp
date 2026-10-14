@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QShowEvent>
+#include <QSplitter>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
@@ -83,14 +84,24 @@ void FavoritesPanel::setupUi(void)
     favoritesList=new QListWidget(this);
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    // Боковой скролл всегда виден: длинные названия не гадают
-    // появится ли он при наведении, место под него резервируется сразу
-    favoritesList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    // Вертикаль Expanding: лишний простор панели (если сплиттер
+    // вдруг даст больше пина) забирает белый список, а не серая
+    // распорка. В компактном режиме потолок maximumHeight держит
+    // список в контенте, в ручном список наливается на всю панель
+    favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
-    // Вертикаль Preferred: в обычном режиме высота по содержимому
-    // (нулевой стретч + хвостовая распорка), в ручном после драга
-    // список растянется на всю панель через setUserResized()
-    favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    // Вертикальный скролл всегда виден: панель не прыгает
+    // по ширине при появлении/исчезновении ползунка, место под
+    // него резервируется сразу
+    favoritesList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
+    // Длинные названия обрезаются краем списка вместо горизонтальной
+    // прокрутки: трек скроллбара под одной записью читается как
+    // серая полоса-отрыв от дерева, а setTextElideMode в этом Qt
+    // многоточия не дает (проверено пробой). Горизонтального
+    // скролла нет вообще, полное имя видно в тултипе
+    favoritesList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     favoritesList->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     // Прием записей перетаскиванием из таблицы записей:
@@ -110,10 +121,12 @@ void FavoritesPanel::assembly(void)
     panelLayout->setContentsMargins(0, 0, 0, 0);
     panelLayout->addLayout(headerLayout);
 
-    // Без растяжения: высота списка по содержимому (AdjustToContents),
-    // иначе пара звездочек болтается в пустом вьюпорте на полпанели.
-    // Хвостовая распорка забирает весь лишний простор вниз: без нее
-    // он делится поровну и пухнет сама шапка.
+    // Без растяжения списка: высота по содержимому (AdjustToContents
+    // плюс потолок), иначе пара звездочек болтается в пустом вьюпорте
+    // на полпанели. Хвостовая распорка — второй поглотитель простора:
+    // первым забирает сам список (Expanding), так что серой полосы
+    // между списком и деревом нет. Без распорки лишек делился бы
+    // поровну и пухла сама шапка.
     // Ручной драг переключает режим через setUserResized()
     panelLayout->addWidget(favoritesList);
     panelLayout->addStretch(1);
@@ -128,7 +141,9 @@ void FavoritesPanel::assembly(void)
 // только перезапуском: пересборки режим не трогают
 void FavoritesPanel::setUserResized(void)
 {
-    if(m_userResized)
+    // Программная посадка секции (syncSplitterToContent) ручным
+    // драгом не считается и компактный режим не убивает
+    if(m_userResized || m_syncingSplitter)
         return;
 
     m_userResized=true;
@@ -137,8 +152,10 @@ void FavoritesPanel::setUserResized(void)
     favoritesLayout->setStretch(1, 1);
     favoritesLayout->setStretch(2, 0);
 
-    // Потолок по контенту снят: видно столько строк, сколько влезло
+    // Потолок по контенту снят: видно столько строк, сколько влезло.
+    // Пин панели тоже снят: высотой управляет сплиттер
     favoritesList->setMaximumHeight(QWIDGETSIZE_MAX);
+    setMaximumHeight(QWIDGETSIZE_MAX);
 }
 
 
@@ -326,24 +343,134 @@ void FavoritesPanel::onRemoveFavorite(void)
 }
 
 
+// Высота строки списка. Намеренно от шрифта, а не от живой
+// строки: иначе пол прыгает в момент добавления первой записи
+// (эстимейт по шрифту и реальная строка почти никогда не равны,
+// панель ужимается, а сплиттер за ужимкой не следует и остается
+// зазор). Шрифт стабилен весь сеанс, пол не дергается
+int FavoritesPanel::favoritesRowHeight(void) const
+{
+    return favoritesList->fontMetrics().height()+2;
+}
+
+
 // Пол панели: шапка плюс две строки списка. Сплиттер уважает
 // minimumHeight детей, поэтому границу выше двух строк поднять
-// нельзя. Пустой список высоту строки не дает: тогда шрифт
+// нельзя. Пол задается и списку тоже: иначе при пустом списке его
+// maximumHeight-под-контент схлопывает вьюпорт в ноль, место
+// уходит серой распорке и панель выглядит неинициализированной
 void FavoritesPanel::updateMinimumHeight(void)
 {
-    int rowHeight=0;
-
-    if(favoritesList->count()>0)
-        rowHeight=favoritesList->sizeHintForRow(0);
-
-    if(rowHeight<=0)
-        rowHeight=favoritesList->fontMetrics().height()+2;
+    int listMin=favoritesList->frameWidth()*2+favoritesRowHeight()*2;
+    favoritesList->setMinimumHeight(listMin);
 
     int headerHeight=headerLabel->sizeHint().height();
     int spacing=(favoritesLayout!=nullptr) ? favoritesLayout->spacing() : 0;
 
-    setMinimumHeight(headerHeight+spacing+
-                     favoritesList->frameWidth()*2+rowHeight*2);
+    setMinimumHeight(headerHeight+spacing+listMin);
+}
+
+
+// Высота списка ровно по строкам с потолком 180: пустого вьюпорта
+// не бывает ни при каком размере панели. Пол выступает полом
+// и для максимума: maximumHeight ниже minimumHeight это конфликт
+// ограничений, от него вьюпорт серый и строки съезжают до первого
+// драга. В ручном режиме после драга потолок снят: список наливается
+// на всю панель
+void FavoritesPanel::updateListHeight(void)
+{
+    if(m_userResized)
+        return;
+
+    int listHeight=favoritesList->frameWidth()*2;
+
+    if(favoritesList->count()>0)
+        listHeight+=favoritesRowHeight()*favoritesList->count();
+
+    favoritesList->setMaximumHeight(qMin(qMax(listHeight, favoritesList->minimumHeight()), 180));
+}
+
+
+// Высота панели ровно под контент: шапка плюс высота списка.
+// Иначе лишний простор забирает хвостовая распорка и между
+// списком и деревом висит серая полоса (видно при добавлении
+// первых записей). В ручном режиме после драга пин снят:
+// высотой управляет пользователь через сплиттер
+void FavoritesPanel::updatePanelHeight(void)
+{
+    if(m_userResized)
+        return;
+
+    int headerHeight=headerLabel->sizeHint().height();
+    int spacing=(favoritesLayout!=nullptr) ? favoritesLayout->spacing() : 0;
+
+    setMaximumHeight(headerHeight+spacing+favoritesList->maximumHeight());
+}
+
+
+// Посадка секции сплиттера ровно под панель. Сплиттер сам за
+// сменой min/max не следит: после ужимки потолка секция остается
+// высокой и висит зазор, после роста — наоборот. Только компактный
+// режим: в ручном высотой управляет пользователь
+void FavoritesPanel::syncSplitterToContent(void)
+{
+    if(m_userResized)
+        return;
+
+    QSplitter *splitter=qobject_cast<QSplitter *>(parentWidget());
+
+    if(splitter==nullptr)
+        return;
+
+    int index=splitter->indexOf(this);
+
+    if(index<0)
+        return;
+
+    QList<int> sizes=splitter->sizes();
+
+    if(index>=sizes.size())
+        return;
+
+    int target=qBound(minimumHeight(), sizeHint().height(), maximumHeight());
+
+    if(sizes.at(index)==target)
+        return;
+
+    int total=0;
+
+    for(int v : sizes)
+        total+=v;
+
+    int othersTotal=total-sizes.at(index);
+    int othersTarget=total-target;
+
+    if(othersTarget<0)
+        othersTarget=0;
+
+    QList<int> adjusted;
+
+    for(int i=0; i<sizes.size(); ++i)
+    {
+        if(i==index)
+        {
+            adjusted << target;
+            continue;
+        }
+
+        int v=0;
+
+        if(othersTotal>0)
+            v=sizes.at(i)*othersTarget/othersTotal;
+
+        adjusted << v;
+    }
+
+    // Программный сдвиг границы ручным драгом не считается:
+    // иначе первая же посадка убила бы компактный режим
+    m_syncingSplitter=true;
+    splitter->setSizes(adjusted);
+    m_syncingSplitter=false;
 }
 
 
@@ -433,7 +560,15 @@ void FavoritesPanel::refreshFavorites(void)
 
             QListWidgetItem *item=new QListWidgetItem(record->getField(QStringLiteral("name")), favoritesList);
             item->setData(Qt::UserRole, mapIt.key());
-            item->setToolTip(mapIt.value());
+
+            // Тултип несет и полное имя (список его эллидирует),
+            // и путь ветки
+            QString toolTip=record->getField(QStringLiteral("name"));
+
+            if(!mapIt.value().isEmpty())
+                toolTip+=QStringLiteral("\n")+mapIt.value();
+
+            item->setToolTip(toolTip);
         }
 
     // Мертвые строки в хвост красным: id вместо названия (названия
@@ -447,22 +582,14 @@ void FavoritesPanel::refreshFavorites(void)
         item->setToolTip(tr("Note is missing from the base"));
     }
 
-    // Высота списка ровно по строкам с потолком: пустого вьюпорта
-    // не бывает ни при каком размере панели. В ручном режиме после
-    // драга потолок снят: список наливается на всю панель
-    int listHeight=favoritesList->frameWidth()*2;
-
-    if(favoritesList->count()>0)
-        listHeight+=favoritesList->sizeHintForRow(0)*favoritesList->count();
-
-    if(!m_userResized)
-        favoritesList->setMaximumHeight(qMin(listHeight, 180));
-
-    // Пол панели: шапка плюс две строки. Иначе границу сплиттера
-    // можно поднять так, что записи закроются. Две строки, а не одна:
-    // одиночная звездочка не должна прятать соседнюю при драге.
-    // Пересчет при каждой сборке: шрифт и высота строк могут меняться
+    // Пол панели: шапка плюс две строки, затем высота списка
+    // и пин панели под контент. Порядок важен: updateListHeight
+    // берет пол из minimumHeight, updatePanelHeight берет потолок
+    // списка из maximumHeight
     updateMinimumHeight();
+    updateListHeight();
+    updatePanelHeight();
+    syncSplitterToContent();
 
     // Шапка со счетчиком чтобы панель не висела одиноко:
     // звездочка слева уже стоит в assembly, тут слово и число

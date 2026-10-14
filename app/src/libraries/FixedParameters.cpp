@@ -34,9 +34,9 @@ const QStringList FixedParameters::themesAvailableList={"default", "dark", "mode
 // Встроенные тайлы мозаики заметок. Первый - дефолт режима текстуры
 const QStringList FixedParameters::defaultNotePaperTiles=QStringList()
   << ":/resource/standartconfig/any/themes/custom/pic/background_001.jpg"
-  << ":/resource/standartconfig/any/themes/custom/pic/white-background_002.jpg"
-  << ":/resource/standartconfig/any/themes/custom/pic/white-background_003.jpg"
-  << ":/resource/standartconfig/any/themes/custom/pic/white-background_004.jpg";
+  << ":/resource/standartconfig/any/themes/custom/pic/background_002.jpg"
+  << ":/resource/standartconfig/any/themes/custom/pic/background_003.jpg"
+  << ":/resource/standartconfig/any/themes/custom/pic/background_004.jpg";
 
 // Таблица доступных размеров иконок
 const OrderedMap< QString, QPair<QString, float> > FixedParameters::interfaceIconSizeAvailableMap = {

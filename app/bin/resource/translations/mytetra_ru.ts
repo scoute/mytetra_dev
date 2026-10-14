@@ -7696,4 +7696,107 @@ Please select single item for enabling edit operation.</source>
         <translation>Отличий от текущего текста нет</translation>
     </message>
 </context>
+<context>
+    <name>SubscriptionImportEngine</name>
+    <message>
+        <source>Cannot open %1/branch.xml</source>
+        <translation>Не удаётся открыть %1/branch.xml</translation>
+    </message>
+    <message>
+        <source>Publication branch.xml is broken</source>
+        <translation>Файл публикации branch.xml повреждён</translation>
+    </message>
+    <message>
+        <source>Publication is not loaded</source>
+        <translation>Публикация не загружена</translation>
+    </message>
+    <message>
+        <source>Tree model is not passed</source>
+        <translation>Модель дерева не передана</translation>
+    </message>
+    <message>
+        <source>Subscription registry is not passed</source>
+        <translation>Реестр подписок не передан</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестный</translation>
+    </message>
+    <message>
+        <source>branch</source>
+        <translation>ветка</translation>
+    </message>
+    <message>
+        <source>Cannot create import container</source>
+        <translation>Не удаётся создать контейнер импорта</translation>
+    </message>
+    <message>
+        <source>Import container is not found in tree</source>
+        <translation>Контейнер импорта не найден в дереве</translation>
+    </message>
+    <message>
+        <source>Cannot create owner folder</source>
+        <translation>Не удаётся создать папку владельца</translation>
+    </message>
+    <message>
+        <source>Branch %1 is not found in publication</source>
+        <translation>Ветка %1 не найдена в публикации</translation>
+    </message>
+    <message>
+        <source>Parent branch %1 is not found in tree</source>
+        <translation>Ветка-родитель %1 не найдена в дереве</translation>
+    </message>
+    <message>
+        <source>No tree model to create a branch</source>
+        <translation>Нет модели дерева для создания ветки</translation>
+    </message>
+    <message>
+        <source>Local copy of publication is not found</source>
+        <translation>Локальная копия публикации не найдена</translation>
+    </message>
+    <message>
+        <source>Target branch is not found in tree</source>
+        <translation>Ветка-приёмник не найдена в дереве</translation>
+    </message>
+    <message>
+        <source>Cannot create branch</source>
+        <translation>Не удаётся создать ветку</translation>
+    </message>
+    <message>
+        <source>No tree model to move a branch</source>
+        <translation>Нет модели дерева для перемещения ветки</translation>
+    </message>
+    <message>
+        <source>Cannot move branch «%1»</source>
+        <translation>Не удаётся переместить ветку «%1»</translation>
+    </message>
+    <message>
+        <source>Record %1 is not found in publication</source>
+        <translation>Запись %1 не найдена в публикации</translation>
+    </message>
+    <message>
+        <source>Record %1 is not found in branch.xml</source>
+        <translation>Запись %1 не найдена в branch.xml</translation>
+    </message>
+    <message>
+        <source>Cannot insert record into branch</source>
+        <translation>Не удаётся вставить запись в ветку</translation>
+    </message>
+    <message>
+        <source>Record inserted but not found in table</source>
+        <translation>Запись вставлена, но не найдена в таблице</translation>
+    </message>
+    <message>
+        <source>Record directory %1 is not found in publication</source>
+        <translation>Каталог записи %1 не найден в публикации</translation>
+    </message>
+    <message>
+        <source>Cannot create record directory %1</source>
+        <translation>Не удаётся создать каталог записи %1</translation>
+    </message>
+    <message>
+        <source>Cannot copy file %1 to record</source>
+        <translation>Не удаётся скопировать файл %1 в запись</translation>
+    </message>
+</context>
 </TS>

@@ -355,3 +355,20 @@ bool GitHelper::commitAllIfChanged(const QString &dir, const QString &message,
 {
     return commitPathIfChanged(dir, message, QString(), hash);
 }
+
+
+QString GitHelper::findRepositoryRoot(const QString &dir)
+{
+    QDir current(dir);
+
+    for(int level=0; level<32; ++level)
+    {
+        if(QFileInfo::exists(current.absoluteFilePath(".git")))
+            return current.canonicalPath();
+
+        if(!current.cdUp())
+            return QString();
+    }
+
+    return QString();
+}

@@ -69,7 +69,8 @@ equals(WINDOWS_CONSOLE_ENABLE, 1) {
 }
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets \
-                                        printsupport
+                                        printsupport \
+                                        multimedia
 
 contains(TARGET_OS, ANY_OS) {
   DESTDIR = bin
@@ -201,6 +202,8 @@ HEADERS = src/main.h \
     src/views/notePicker/NotePickerDialog.h \
     src/views/contentGallery/ContentGallery.h \
     src/views/contentGallery/GalleryTileDelegate.h \
+    src/views/voiceNote/VoiceRecorderDialog.h \
+    src/views/voiceNote/VoicePlayerDialog.h \
     src/libraries/wyedit/Editor.h \
     src/libraries/wyedit/EditorConfig.h \
     src/libraries/wyedit/EditorConfigDialog.h \
@@ -266,6 +269,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/formatters/ListFormatter.h \
     src/libraries/wyedit/formatters/TableFormatter.h \
     src/libraries/wyedit/formatters/ImageFormatter.h \
+    src/libraries/wyedit/formatters/AudioFormatter.h \
     src/libraries/wyedit/EditorIndentSliderAssistant.h \
     src/libraries/wyedit/EditorToolBarAssistant.h \
     src/libraries/TraceLogger.h \
@@ -316,6 +320,7 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
+    src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/views/enterPassword/EnterPassword.h \
@@ -394,6 +399,8 @@ SOURCES = src/main.cpp \
     src/views/notePicker/NotePickerDialog.cpp \
     src/views/contentGallery/ContentGallery.cpp \
     src/views/contentGallery/GalleryTileDelegate.cpp \
+    src/views/voiceNote/VoiceRecorderDialog.cpp \
+    src/views/voiceNote/VoicePlayerDialog.cpp \
     src/libraries/wyedit/Editor.cpp \
     src/libraries/wyedit/EditorConfig.cpp \
     src/libraries/wyedit/EditorConfigDialog.cpp \
@@ -459,6 +466,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/formatters/ListFormatter.cpp \
     src/libraries/wyedit/formatters/TableFormatter.cpp \
     src/libraries/wyedit/formatters/ImageFormatter.cpp \
+    src/libraries/wyedit/formatters/AudioFormatter.cpp \
     src/libraries/wyedit/EditorIndentSliderAssistant.cpp \
     src/libraries/wyedit/EditorToolBarAssistant.cpp \
     src/libraries/TraceLogger.cpp \
@@ -513,6 +521,7 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
+    src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/views/enterPassword/EnterPassword.cpp \

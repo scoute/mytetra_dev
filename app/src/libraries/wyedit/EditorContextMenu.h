@@ -18,6 +18,9 @@ public:
  void setImageProperties(bool flag); // Активирование добавочного пункта меню "Свойства картинки")
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
+ void setPlayVoice(bool flag); // Пункт "Слушать" на голосовой ссылке
+ void setShowVoiceInFolder(bool flag); // Пункт "Показать файл" на голосовой ссылке
+ void setDeleteVoice(bool flag); // Пункт "Удалить" на голосовой ссылке
  void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
  void setPasteNoteReference(bool flag); // Пункт "Вставить ссылку на заметку", виден если в буфере внутренняя ссылка
  void setCopySecret(bool flag); // Показ пункта "Скопировать секрет"
@@ -44,6 +47,9 @@ signals:
   void contextMenuOpenImageWith(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
+  void contextMenuPlayVoice(void);
+  void contextMenuShowVoiceInFolder(void);
+  void contextMenuDeleteVoice(void);
   void contextMenuEditReference(void);
   void contextMenuPasteNoteReference(void);
   void contextMenuInsertNoteReference(void);
@@ -74,6 +80,9 @@ private:
   QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
+  QAction *actionPlayVoice;
+  QAction *actionShowVoiceInFolder;
+  QAction *actionDeleteVoice;
   QAction *actionEditReference;
   QAction *actionPasteNoteReference;
   QAction *actionInsertNoteReference;
@@ -99,6 +108,9 @@ protected slots:
   void onActionContextMenuOpenImageWith(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
+  void onActionContextMenuPlayVoice(void);
+  void onActionContextMenuShowVoiceInFolder(void);
+  void onActionContextMenuDeleteVoice(void);
   void onActionContextMenuEditReference(void);
   void onActionContextMenuPasteNoteReference(void);
   void onActionContextMenuInsertNoteReference(void);

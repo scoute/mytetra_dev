@@ -269,6 +269,11 @@ void Editor::setupFormatters(void)
   imageFormatter->setEditor(this);
   imageFormatter->setTextArea(textArea);
 
+  // Голосовые заметки в тексте
+  audioFormatter=new AudioFormatter();
+  audioFormatter->setEditor(this);
+  audioFormatter->setTextArea(textArea);
+
   // Редактирование формул в тексте
   mathExpressionFormatter=new MathExpressionFormatter();
   mathExpressionFormatter->setEditor(this);
@@ -465,6 +470,15 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuGotoReference,
           referenceFormatter, &ReferenceFormatter::onContextMenuGotoReference,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuPlayVoice,
+          audioFormatter,     &AudioFormatter::onPlayVoiceClicked,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuShowVoiceInFolder,
+          audioFormatter,     &AudioFormatter::onShowVoiceInFolder,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuDeleteVoice,
+          audioFormatter,     &AudioFormatter::onDeleteVoiceClicked,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuEditReference,
           referenceFormatter, &ReferenceFormatter::onEditReferenceAtCursor,
@@ -705,6 +719,10 @@ void Editor::setupToolsSignals(void)
 
     connect(editorToolBarAssistant->mathExpression, &QAction::triggered,
             mathExpressionFormatter,                &MathExpressionFormatter::onMathExpressionClicked);
+
+  // Кнопка микрофона: запись голосовой заметки
+  connect(editorToolBarAssistant->micRecord, &QAction::triggered,
+          audioFormatter,                    &AudioFormatter::onMicRecordClicked);
 
     connect(editorToolBarAssistant->expandEditArea, &QAction::triggered,
             this,                                   &Editor::onExpandEditAreaClicked);

@@ -5191,6 +5191,38 @@ Veuillez signaler ce problème aux développeurs.</translation>
         <translation>Ouvrir l&apos;image sélectionnée dans un visualiseur externe</translation>
     </message>
     <message>
+        <source>Record voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voice note from microphone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play voice note under cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show voice file in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open record directory in file manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove voice link and move file to trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="160"/>
         <source>Insert horizontal line</source>
         <translation>Insérer une ligne horizontale</translation>
@@ -5899,6 +5931,151 @@ La mise en forme peut être altérée.</translation>
 %3</source>
         <translation>Erreur d&apos;analyse ligne %1, colonne %2 :
 %3</translation>
+    </message>
+</context>
+<context>
+    <name>AudioFormatter</name>
+    <message>
+        <source>Voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Microphone not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the note first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show voice file in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note directory is unknown, there is nothing to open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Directory does not exist: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not open directory: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete voice note %1? Link text will be removed, file moved to trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VoicePlayerDialog</name>
+    <message>
+        <source>Voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VoiceRecorderDialog</name>
+    <message>
+        <source>Voice note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Format:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opus (.opus)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MP3 (.mp3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Microphone:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Microphone not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio backend unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No supported audio format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Format: WAV (Opus and MP3 unsupported)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recording...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File is too small, backend wrote no audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not record here</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

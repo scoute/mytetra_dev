@@ -2186,15 +2186,12 @@ void MainWindow::saveTextarea(void)
 
     qDebug() << "MainWindow::saveTextarea() : id :" << id;
 
-    // Дорогая статистика только при правленном тексте: иначе каждый
-    // клик по ветке гнал бы полный проход по базе (тысячи чтений файлов)
+    // Текст правили или только ходили по веткам: индекс и статистика
+    // нужны лишь в первом случае, иначе это полный рескан базы
+    // на каждый клик (тысячи чтений text.html с диска)
     const bool modified=editorScreen->getTextareaModified();
 
     editorScreen->saveTextarea();
-
-    // Текст на диске обновился: перепарсить исходящие ссылки записи
-    if(!id.isEmpty())
-      BacklinkIndex::instance().updateSource(id);
 
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),
@@ -2202,6 +2199,10 @@ void MainWindow::saveTextarea(void)
 
     if(!modified)
       return;
+
+    // Текст на диске обновился: перепарсить исходящие ссылки записи
+    if(!id.isEmpty())
+      BacklinkIndex::instance().updateSource(id);
 
     // Текст мог принести/убрать картинки и ссылки: одна строка
     // в кеше без полного прохода, подпись из него же

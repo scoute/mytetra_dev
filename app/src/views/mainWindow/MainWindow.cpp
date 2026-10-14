@@ -19,7 +19,12 @@
 #include <QTableWidget>
 #include <QHeaderView>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QPushButton>
+#include <QTimer>
+#include <QTime>
+#include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -353,8 +358,6 @@ void MainWindow::assembly(void)
     findSplitter->setCollapsible(1,false); // Часть для поиска не должна смыкаться
     findSplitter->setObjectName("findsplitter");
 
-    setCentralWidget(findSplitter);
-
     // Порядок доков сверху вниз: теги, история, обратные ссылки
     addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
     addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
@@ -365,6 +368,51 @@ void MainWindow::assembly(void)
     recordTableScreen->addExtraToolAction(tagsPanelDock->toggleViewAction());
     recordTableScreen->addExtraToolAction(historyPanelDock->toggleViewAction());
     recordTableScreen->addExtraToolAction(backlinksPanelDock->toggleViewAction());
+
+    // Полоса внешней MCP-правки: сверху, крупно, немодально.
+    // Инлайн-стиль вместо темы: красный виден и в светлой, и в тёмной.
+    // Кнопка-галочка без текста: языконезависимое подтверждение просмотра
+    mcpBannerBar=new QWidget(this);
+    mcpBannerBar->setObjectName("mcpBannerBar");
+    mcpBannerBar->setStyleSheet("QWidget { background-color: #B00020; }");
+
+    QHBoxLayout *bannerLayout=new QHBoxLayout(mcpBannerBar);
+    bannerLayout->setContentsMargins(8, 6, 8, 6);
+
+    mcpBanner=new QLabel(mcpBannerBar);
+    mcpBanner->setObjectName("mcpBanner");
+    mcpBanner->setStyleSheet("QLabel { background-color: #B00020; color: #FFFFFF; border: none; }");
+    mcpBanner->setAlignment(Qt::AlignCenter);
+    mcpBanner->setWordWrap(true);
+    QFont bannerFont=mcpBanner->font();
+    bannerFont.setPointSize(bannerFont.pointSize()+6);
+    bannerFont.setBold(true);
+    mcpBanner->setFont(bannerFont);
+    bannerLayout->addWidget(mcpBanner, 1);
+
+    mcpBannerApprove=new QPushButton(tr("Approve"), mcpBannerBar);
+    mcpBannerApprove->setObjectName("mcpBannerApprove");
+    mcpBannerApprove->setStyleSheet("QPushButton { background-color: #FFFFFF; color: #B00020; font-weight: bold; }");
+    mcpBannerApprove->setCursor(Qt::PointingHandCursor);
+    connect(mcpBannerApprove, &QPushButton::clicked, this, &MainWindow::approveMcpSession);
+    bannerLayout->addWidget(mcpBannerApprove);
+
+    mcpBannerBar->hide();
+    mcpBanner->installEventFilter(this);
+
+    // Сторож протухших пиров: убитый без Bye гаснет сам раз в минуту
+    mcpBannerTimer=new QTimer(this);
+    connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::updateMcpBanner);
+    mcpBannerTimer->start(60000);
+
+    QWidget *centralContainer=new QWidget(this);
+    QVBoxLayout *centralLayout=new QVBoxLayout(centralContainer);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    centralLayout->addWidget(mcpBannerBar);
+    centralLayout->addWidget(findSplitter);
+
+    setCentralWidget(centralContainer);
 
     // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
     // при первом запуске строится полным сканом базы
@@ -532,7 +580,7 @@ void MainWindow::messageHandler(QString message)
     // не вернул чужой id (проверка сама перегенерирует и повторит)
     else if(command=="mcpCreateBranch")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -551,11 +599,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpCreateNote")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -576,11 +625,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpUpdateNote")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -609,6 +659,7 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     // Удаление из-под AI: тот же состав что ручное удаление записи,
@@ -617,7 +668,7 @@ void MainWindow::messageHandler(QString message)
     // как при любом стороннем изменении файла
     else if(command=="mcpDeleteNote")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -638,11 +689,12 @@ void MainWindow::messageHandler(QString message)
         emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpDeleteBranch")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -663,11 +715,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpRenameBranch")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -685,11 +738,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpMoveBranch")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -708,11 +762,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpMoveNote")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -734,11 +789,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpRenameTag")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -757,11 +813,12 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
     }
 
     else if(command=="mcpDeleteTag")
     {
-        if(mytetraConfig.get_readOnly())
+        if(mytetraConfig.isGlobalReadOnly())
             return;
 
         QJsonObject args=parseMcpCommandArgs(message);
@@ -779,6 +836,36 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
+    }
+
+    // Присутствие MCP: не правки, только Hello/Bye. В read-only тоже
+    // работает — баннер предупреждает, ничего не меняя
+    else if(command=="mcpHello")
+    {
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString pid=args.value("pid").toString();
+
+        if(pid.isEmpty())
+            return;
+
+        mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
+        updateMcpBanner();
+    }
+
+    else if(command=="mcpBye")
+    {
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        mcpPeers.remove(args.value("pid").toString());
+        updateMcpBanner();
     }
 }
 
@@ -1283,7 +1370,7 @@ void MainWindow::syncViewMenu(void)
         viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
 
     if(viewReadOnlyAction!=nullptr)
-        viewReadOnlyAction->setChecked(mytetraConfig.get_readOnly());
+        viewReadOnlyAction->setChecked(mytetraConfig.isGlobalReadOnly());
 }
 
 
@@ -1442,6 +1529,83 @@ void MainWindow::updateStats(void)
 
     statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
     statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details."));
+}
+
+
+// Заметный немодальный сигнал о внешней правке: полоса сверху крупными
+// буквами со временем срабатывания. Висит пока жив хоть один MCP-пир,
+// подтверждение гасит до следующей правки. Ничего не блочит, только
+// просит не править параллельно — разбор конфликтов потом дороже
+void MainWindow::flashMcpWrite(void)
+{
+    if(mcpBannerBar==nullptr || mcpBanner==nullptr)
+        return;
+
+    mcpBannerDismissed=false;
+    setMcpUiLock(true);
+    mcpBanner->setText(mcpBannerText());
+    mcpBannerBar->show();
+}
+
+
+QString MainWindow::mcpBannerText(void)
+{
+    return tr("MCP edit applied — avoid editing in parallel")
+           + " · " + QTime::currentTime().toString("hh:mm:ss");
+}
+
+
+// Липкий баннер присутствия MCP: виден пока жив хоть один пир.
+// Протухшие (kill -9 без Bye) вычищаются по TTL
+void MainWindow::updateMcpBanner(void)
+{
+    qint64 now=QDateTime::currentMSecsSinceEpoch();
+
+    QList<QString> stale;
+
+    for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
+        if(now-it.value()>180000)
+            stale.append(it.key());
+
+    foreach(const QString &pid, stale)
+        mcpPeers.remove(pid);
+
+    if(mcpBannerBar==nullptr)
+        return;
+
+    if(mcpPeers.isEmpty())
+    {
+        mcpBannerDismissed=false;
+        setMcpUiLock(false);
+        mcpBannerBar->hide();
+    }
+    else if(!mcpBannerDismissed)
+        mcpBannerBar->show();
+}
+
+
+// Блокировка UI на время MCP-сессии поверх глобального read-only.
+// Своё досохраняется до блокировки, иначе потеряется на навигации.
+// MCP-записи смотрят сырой флаг и продолжают писать
+void MainWindow::setMcpUiLock(bool locked)
+{
+    if(locked)
+        saveTextarea();
+
+    mytetraConfig.setMcpUiLock(locked);
+    applyReadOnly();
+}
+
+
+// Аппрув сессии: снимает блокировку и гасит баннер до следующей правки.
+// Изменения уже применены; откат будет позже с журналом
+void MainWindow::approveMcpSession(void)
+{
+    mcpBannerDismissed=true;
+    setMcpUiLock(false);
+
+    if(mcpBannerBar!=nullptr)
+        mcpBannerBar->hide();
 }
 
 
@@ -1711,6 +1875,13 @@ void MainWindow::retranslateUi(void)
 
     if(backlinksPanel!=nullptr)
         backlinksPanel->retranslateUi();
+
+    // Видимый баннер MCP — тоже (время в нём обновится)
+    if(mcpBanner!=nullptr && mcpBanner->isVisible())
+        mcpBanner->setText(mcpBannerText());
+
+    if(mcpBannerApprove!=nullptr)
+        mcpBannerApprove->setText(tr("Approve"));
 }
 
 
@@ -2351,6 +2522,13 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
     {
         qDebug() << "Main window focus deactivate, save all state.";
         saveAllState();
+    }
+
+    // Клик по баннеру MCP подтверждает просмотр (до следующей правки)
+    if(o==mcpBanner && e->type()==QEvent::MouseButtonRelease)
+    {
+        approveMcpSession();
+        return true;
     }
 
     // Клик по строке статистики открывает разбивку по заметкам

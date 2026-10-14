@@ -173,11 +173,17 @@ static QString mcpModeName(McpMode mode)
 static bool toolAllowed(McpMode mode, const QString &toolName)
 {
   if(toolName=="list_branches" || toolName=="list_notes" ||
-     toolName=="get_note" || toolName=="search")
+     toolName=="get_note" || toolName=="search" ||
+     toolName=="find_duplicates" || toolName=="stats" ||
+     toolName=="list_tags" || toolName=="tag_notes" ||
+     toolName=="untagged_notes")
     return true;
 
   if(toolName=="create_branch" || toolName=="create_note" ||
-     toolName=="update_note")
+     toolName=="update_note" ||
+     toolName=="rename_branch" || toolName=="move_branch" ||
+     toolName=="move_note" ||
+     toolName=="rename_tag" || toolName=="delete_tag")
     return mode==McpMode::ReadWrite || mode==McpMode::ReadWriteDelete;
 
   if(toolName=="delete_note" || toolName=="delete_branch")
@@ -191,7 +197,10 @@ static bool isKnownTool(const QString &toolName)
 {
   static const char *names[]={
     "list_branches", "list_notes", "get_note", "search",
+    "find_duplicates", "stats", "list_tags", "tag_notes", "untagged_notes",
     "create_branch", "create_note", "update_note",
+    "rename_branch", "move_branch", "move_note",
+    "rename_tag", "delete_tag",
     "delete_note", "delete_branch"
   };
 
@@ -396,10 +405,176 @@ static QJsonArray buildToolsList(McpMode mode)
       objectSchema(properties, required)));
   }
 
+  {
+    QJsonObject properties;
+    QJsonObject branchId;
+    branchId["type"]="string";
+    branchId["description"]="Branch id from list_branches";
+    properties["branch_id"]=branchId;
+    QJsonObject name;
+    name["type"]="string";
+    name["description"]="New branch name";
+    properties["name"]=name;
+    QJsonArray required;
+    required.append("branch_id");
+    required.append("name");
+    tools.append(toolDescription(
+      "rename_branch",
+      "Rename a branch. Views in a running GUI refresh on branch reselection.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject branchId;
+    branchId["type"]="string";
+    branchId["description"]="Branch id to move";
+    properties["branch_id"]=branchId;
+    QJsonObject targetId;
+    targetId["type"]="string";
+    targetId["description"]="Target branch id (required)";
+    properties["target_id"]=targetId;
+    QJsonObject asChild;
+    asChild["type"]="boolean";
+    asChild["description"]="True: move inside target, false: place after target (default true)";
+    asChild["default"]=true;
+    properties["as_child"]=asChild;
+    QJsonArray required;
+    required.append("branch_id");
+    required.append("target_id");
+    tools.append(toolDescription(
+      "move_branch",
+      "Move a branch to another place in the tree. Cycles, self-move and "
+      "the root are refused. Views in a running GUI refresh on reselection.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject noteId;
+    noteId["type"]="string";
+    noteId["description"]="Note id from list_notes or search";
+    properties["note_id"]=noteId;
+    QJsonObject branchId;
+    branchId["type"]="string";
+    branchId["description"]="Target branch id";
+    properties["branch_id"]=branchId;
+    QJsonArray required;
+    required.append("note_id");
+    required.append("branch_id");
+    tools.append(toolDescription(
+      "move_note",
+      "Move a note to another branch without touching files: id and "
+      "directory are kept, internal links stay valid. To the same branch "
+      "and to/from encrypted branches is refused.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject limit;
+    limit["type"]="integer";
+    limit["description"]="Maximum groups per list (default 50, max 200)";
+    limit["minimum"]=1;
+    limit["maximum"]=200;
+    limit["default"]=50;
+    properties["limit"]=limit;
+    tools.append(toolDescription(
+      "find_duplicates",
+      "Groups of notes with the same name (case-insensitive) or the same "
+      "text (sha1). Empty names and texts are skipped.",
+      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject detailed;
+    detailed["type"]="boolean";
+    detailed["description"]="Include per-note breakdown rows (default false)";
+    detailed["default"]=false;
+    properties["detailed"]=detailed;
+    tools.append(toolDescription(
+      "stats",
+      "Database totals as in the status bar: branches, records, tags, "
+      "files, images, internal links. Optionally with per-note rows.",
+      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    tools.append(toolDescription(
+      "list_tags",
+      "All tags with note counts, most popular first. Read-only.",
+      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject tag;
+    tag["type"]="string";
+    tag["description"]="Tag name, exact whole-tag match, case-insensitive";
+    properties["tag"]=tag;
+    QJsonArray required;
+    required.append("tag");
+    tools.append(toolDescription(
+      "tag_notes",
+      "Notes carrying exactly this tag. Read-only.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject limit;
+    limit["type"]="integer";
+    limit["description"]="Maximum notes (default 50, max 200)";
+    limit["minimum"]=1;
+    limit["maximum"]=200;
+    limit["default"]=50;
+    properties["limit"]=limit;
+    tools.append(toolDescription(
+      "untagged_notes",
+      "Notes without any tags. Read-only, handy for cleanup.",
+      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject oldTag;
+    oldTag["type"]="string";
+    oldTag["description"]="Existing tag name";
+    properties["old"]=oldTag;
+    QJsonObject newTag;
+    newTag["type"]="string";
+    newTag["description"]="New tag name (renaming to an existing one merges)";
+    properties["new"]=newTag;
+    QJsonArray required;
+    required.append("old");
+    required.append("new");
+    tools.append(toolDescription(
+      "rename_tag",
+      "Rename a tag across all notes. Locked encrypted notes are skipped "
+      "(see skipped_locked). Refused in read-only mode.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject tag;
+    tag["type"]="string";
+    tag["description"]="Tag name to remove everywhere";
+    properties["tag"]=tag;
+    QJsonArray required;
+    required.append("tag");
+    tools.append(toolDescription(
+      "delete_tag",
+      "Remove a tag from all notes. Locked encrypted notes are skipped. "
+      "Refused in read-only mode.",
+      objectSchema(properties, required)));
+  }
+
   // Режимы младше полного видят не все: фильтр по toolAllowed
   if(mode==McpMode::ReadWriteDelete)
     return tools;
-
   QJsonArray filtered;
 
   foreach(const QJsonValue &value, tools)
@@ -687,6 +862,36 @@ public:
 
         result=m_tools.searchNotes(arguments.value("query").toString(), limit, toolError);
       }
+      else if(toolName=="find_duplicates")
+      {
+        int limit=50;
+
+        if(arguments.contains("limit"))
+          limit=arguments.value("limit").toInt(50);
+
+        result=m_tools.findDuplicates(limit);
+      }
+      else if(toolName=="stats")
+      {
+        result=m_tools.baseStats(arguments.value("detailed").toBool(false));
+      }
+      else if(toolName=="list_tags")
+      {
+        result=m_tools.listTags();
+      }
+      else if(toolName=="tag_notes")
+      {
+        result=m_tools.tagNotes(arguments.value("tag").toString(), toolError);
+      }
+      else if(toolName=="untagged_notes")
+      {
+        int limit=50;
+
+        if(arguments.contains("limit"))
+          limit=arguments.value("limit").toInt(50);
+
+        result=m_tools.untaggedNotes(limit);
+      }
       else if(toolName=="create_branch")
       {
         QString parentId=arguments.value("parent_id").toString();
@@ -743,11 +948,43 @@ public:
                                hasTags, arguments.value("tags").toString(),
                                toolError);
       }
+      else if(toolName=="rename_branch")
+      {
+        result=writeRenameBranch(arguments.value("branch_id").toString(),
+                                 arguments.value("name").toString(),
+                                 toolError);
+      }
+      else if(toolName=="move_branch")
+      {
+        bool asChild=true;
+
+        if(arguments.contains("as_child"))
+          asChild=arguments.value("as_child").toBool(true);
+
+        result=writeMoveBranch(arguments.value("branch_id").toString(),
+                               arguments.value("target_id").toString(),
+                               asChild, toolError);
+      }
+      else if(toolName=="move_note")
+      {
+        result=writeMoveNote(arguments.value("note_id").toString(),
+                             arguments.value("branch_id").toString(),
+                             toolError);
+      }
+      else if(toolName=="rename_tag")
+      {
+        result=writeRenameTag(arguments.value("old").toString(),
+                              arguments.value("new").toString(),
+                              toolError);
+      }
+      else if(toolName=="delete_tag")
+      {
+        result=writeDeleteTag(arguments.value("tag").toString(), toolError);
+      }
       else if(toolName=="delete_note")
       {
         result=writeDeleteNote(arguments.value("note_id").toString(), toolError);
-      }
-      else if(toolName=="delete_branch")
+      }      else if(toolName=="delete_branch")
       {
         result=writeDeleteBranch(arguments.value("branch_id").toString(), toolError);
       }
@@ -825,6 +1062,15 @@ private:
                               QString &toolError);
   QJsonObject writeDeleteNote(const QString &id, QString &toolError);
   QJsonObject writeDeleteBranch(const QString &id, QString &toolError);
+  QJsonObject writeRenameBranch(const QString &id, const QString &name,
+                                QString &toolError);
+  QJsonObject writeMoveBranch(const QString &id, const QString &targetId,
+                              bool asChild, QString &toolError);
+  QJsonObject writeMoveNote(const QString &id, const QString &branchId,
+                            QString &toolError);
+  QJsonObject writeRenameTag(const QString &oldTag, const QString &newTag,
+                             QString &toolError);
+  QJsonObject writeDeleteTag(const QString &tag, QString &toolError);
 
   static QByteArray makeResponse(const QJsonValue &id,
                                  const QJsonValue &result,
@@ -857,6 +1103,423 @@ private:
     // серверу состояние клиента не нужно, игнорируются
   }
 };
+
+
+// Ожидаемый родитель после move_branch: внутрь цели или соседство
+static QString expectedMoveParent(KnowTreeModel &model,
+                                  const QString &targetId,
+                                  bool asChild)
+{
+  if(asChild)
+    return targetId;
+
+  TreeItem *target=model.getItemById(targetId);
+
+  if(target==nullptr)
+    return QString();
+
+  QStringList path=target->getPath();
+
+  if(path.size()>=2)
+    return path.at(path.size()-2);
+
+  return QString();
+}
+
+
+QJsonObject McpSession::writeRenameBranch(const QString &id,
+                                          const QString &name,
+                                          QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(name.trimmed().isEmpty())
+  {
+    toolError="Empty branch name";
+
+    return result;
+  }
+
+  if(m_model.getItemById(id)==nullptr)
+  {
+    toolError="Unknown branch_id: "+id;
+
+    return result;
+  }
+
+  QJsonObject payload;
+  payload["id"]=id;
+  payload["name"]=name;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpRenameBranch", payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    waitGuiSave(5000);
+    resyncModel();
+
+    TreeItem *item=m_model.getItemById(id);
+
+    if(item==nullptr || item->getField("name")!=name.trimmed())
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    result["id"]=id;
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject renamed=m_tools.renameBranchDirect(id, name, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=renamed;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+QJsonObject McpSession::writeMoveBranch(const QString &id,
+                                        const QString &targetId,
+                                        bool asChild,
+                                        QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(m_model.getItemById(id)==nullptr)
+  {
+    toolError="Unknown branch_id: "+id;
+
+    return result;
+  }
+
+  if(m_model.getItemById(targetId)==nullptr)
+  {
+    toolError="Unknown target branch_id: "+targetId;
+
+    return result;
+  }
+
+  QJsonObject payload;
+  payload["id"]=id;
+  payload["target_id"]=targetId;
+  payload["as_child"]=asChild;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpMoveBranch", payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    QString expect=expectedMoveParent(m_model, targetId, asChild);
+
+    waitGuiSave(5000);
+    resyncModel();
+
+    TreeItem *moved=m_model.getItemById(id);
+    QString actual;
+
+    if(moved!=nullptr)
+    {
+      QStringList path=moved->getPath();
+
+      if(path.size()>=2)
+        actual=path.at(path.size()-2);
+    }
+
+    if(moved==nullptr || actual!=expect)
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    result["id"]=id;
+    result["new_parent_id"]=actual;
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject movedResult=m_tools.moveBranchDirect(id, targetId, asChild, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=movedResult;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+QJsonObject McpSession::writeMoveNote(const QString &id,
+                                      const QString &branchId,
+                                      QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(!m_model.isRecordIdExists(id))
+  {
+    toolError="Unknown note_id: "+id;
+
+    return result;
+  }
+
+  if(m_model.getItemById(branchId)==nullptr)
+  {
+    toolError="Unknown branch_id: "+branchId;
+
+    return result;
+  }
+
+  QJsonObject payload;
+  payload["id"]=id;
+  payload["branch_id"]=branchId;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpMoveNote", payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    waitGuiSave(5000);
+    resyncModel();
+
+    QStringList path=m_model.getRecordPath(id);
+    QString actual=path.isEmpty() ? QString() : path.last();
+
+    if(actual!=branchId)
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    result["id"]=id;
+    result["branch_id"]=branchId;
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject movedResult=m_tools.moveNoteDirect(id, branchId, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=movedResult;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+QJsonObject McpSession::writeRenameTag(const QString &oldTag,
+                                       const QString &newTag,
+                                       QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(McpTools::countTagNotes(&m_model, oldTag.trimmed().toLower())==0)
+  {
+    toolError="Unknown tag: "+oldTag.trimmed();
+
+    return result;
+  }
+
+  QJsonObject payload;
+  payload["old"]=oldTag;
+  payload["new"]=newTag;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpRenameTag", payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    waitGuiSave(5000);
+    resyncModel();
+
+    if(McpTools::countTagNotes(&m_model, oldTag.trimmed().toLower())!=0)
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    result["renamed_tag"]=oldTag.trimmed();
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject renamed=m_tools.renameTagDirect(oldTag, newTag, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=renamed;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+QJsonObject McpSession::writeDeleteTag(const QString &tag, QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(McpTools::countTagNotes(&m_model, tag.trimmed().toLower())==0)
+  {
+    toolError="Unknown tag: "+tag.trimmed();
+
+    return result;
+  }
+
+  QJsonObject payload;
+  payload["tag"]=tag;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpDeleteTag", payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    waitGuiSave(5000);
+    resyncModel();
+
+    if(McpTools::countTagNotes(&m_model, tag.trimmed().toLower())!=0)
+    {
+      toolError="GUI did not apply the change in time, retry";
+
+      return result;
+    }
+
+    result["deleted_tag"]=tag.trimmed();
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject deleted=m_tools.deleteTagDirect(tag, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=deleted;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
 
 
 bool McpSession::waitGuiSave(int timeoutMs)

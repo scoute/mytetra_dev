@@ -25,12 +25,8 @@
 
 extern AppConfig mytetraConfig;
 
-// Максимальная длина текста в ответе get_note, остальное режется
-// с флагом truncated
-static const int MCP_MAX_TEXT_LENGTH=200000;
-
 // Контекст сниппета поиска с каждой стороны от совпадения
-static const int MCP_SNIPPET_CONTEXT=120;
+static const int MCP_SNIPPET_CONTEXT=100;
 
 
 McpTools::McpTools(KnowTreeModel *model) : m_model(model)
@@ -134,9 +130,16 @@ void McpTools::collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &ou
 }
 
 
-QJsonObject McpTools::listNotes(const QString &branchId, bool recursive, QString &error)
+QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
+                                int limit, QString &error)
 {
   QJsonObject result;
+
+  if(limit<1)
+    limit=1;
+
+  if(limit>McpTools::MAX_LIST_LIMIT)
+    limit=McpTools::MAX_LIST_LIMIT;
 
   TreeItem *start=m_model->getItemById(branchId);
 
@@ -147,8 +150,16 @@ QJsonObject McpTools::listNotes(const QString &branchId, bool recursive, QString
     return result;
   }
 
+  QJsonArray collected;
+  collectBranchNotes(start, recursive, collected);
+
+  result["truncated"]=(collected.size()>limit);
+
   QJsonArray notes;
-  collectBranchNotes(start, recursive, notes);
+
+  for(int i=0; i<collected.size() && i<limit; ++i)
+    notes.append(collected.at(i));
+
   result["notes"]=notes;
 
   return result;
@@ -184,9 +195,15 @@ QString McpTools::readTextWithRetry(Record *record)
 }
 
 
-QJsonObject McpTools::getNote(const QString &noteId, QString &error)
+QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &error)
 {
   QJsonObject result;
+
+  if(maxChars<1)
+    maxChars=1;
+
+  if(maxChars>McpTools::MAX_TEXT_LENGTH)
+    maxChars=McpTools::MAX_TEXT_LENGTH;
 
   if(!m_model->isRecordIdExists(noteId))
   {
@@ -221,9 +238,9 @@ QJsonObject McpTools::getNote(const QString &noteId, QString &error)
 
   bool truncated=false;
 
-  if(plain.length()>MCP_MAX_TEXT_LENGTH)
+  if(plain.length()>maxChars)
   {
-    plain=plain.left(MCP_MAX_TEXT_LENGTH);
+    plain=plain.left(maxChars);
     truncated=true;
   }
 
@@ -1500,22 +1517,29 @@ QJsonObject McpTools::listTags(void)
 
   QJsonArray tags;
 
+  int shown=0;
+
   for(const auto &entry : sorted)
   {
+    if(shown>=McpTools::MAX_LIST_LIMIT)
+      break;
+
     QJsonObject item;
     item["name"]=entry.first;
     item["count"]=entry.second;
     tags.append(item);
+    shown++;
   }
 
   QJsonObject result;
   result["tags"]=tags;
+  result["truncated"]=(sorted.size()>shown);
 
   return result;
 }
 
 
-QJsonObject McpTools::tagNotes(const QString &tag, QString &error)
+QJsonObject McpTools::tagNotes(const QString &tag, int limit, QString &error)
 {
   QJsonObject result;
 
@@ -1528,7 +1552,13 @@ QJsonObject McpTools::tagNotes(const QString &tag, QString &error)
     return result;
   }
 
-  QJsonArray notes;
+  if(limit<1)
+    limit=1;
+
+  if(limit>McpTools::MAX_LIST_LIMIT)
+    limit=McpTools::MAX_LIST_LIMIT;
+
+  QJsonArray collected;
 
   forEachRecord(modelRoot(m_model),
                 [&](Record *record, TreeItem *item)
@@ -1536,11 +1566,18 @@ QJsonObject McpTools::tagNotes(const QString &tag, QString &error)
     foreach(const QString &recordTag, splitTags(record->getField("tags")))
       if(recordTag.toLower()==key)
       {
-        notes.append(noteObject(record, item->getField("id"),
-                                branchPathOf(item)));
+        collected.append(noteObject(record, item->getField("id"),
+                                    branchPathOf(item)));
         break;
       }
   });
+
+  result["truncated"]=(collected.size()>limit);
+
+  QJsonArray notes;
+
+  for(int i=0; i<collected.size() && i<limit; ++i)
+    notes.append(collected.at(i));
 
   result["notes"]=notes;
 
@@ -1769,10 +1806,17 @@ QJsonObject McpTools::baseStats(bool detailed)
 
   if(detailed)
   {
+    QList<BaseStatRow> all=m_model->getBaseStatRows();
+
     QJsonArray rows;
 
-    foreach(const BaseStatRow &row, m_model->getBaseStatRows())
+    int shown=0;
+
+    foreach(const BaseStatRow &row, all)
     {
+      if(shown>=McpTools::MAX_LIST_LIMIT)
+        break;
+
       QJsonObject item;
       item["branch_path"]=row.branchPath;
       item["note_name"]=row.noteName;
@@ -1782,9 +1826,11 @@ QJsonObject McpTools::baseStats(bool detailed)
       item["links"]=row.links;
       item["tags"]=row.tags;
       rows.append(item);
+      shown++;
     }
 
     result["rows"]=rows;
+    result["truncated"]=(all.size()>shown);
   }
 
   return result;

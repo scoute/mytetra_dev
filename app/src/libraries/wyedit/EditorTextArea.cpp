@@ -18,6 +18,7 @@
 #include "EditorTextArea.h"
 #include "../TraceLogger.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/VoiceNoteHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 
 
@@ -288,6 +289,14 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
         // что ее можно открыть, клик при этом обычный
         QString imageName=imageAt(m_currentMousePosition);
 
+        // Бабл голосовой заметки: рука и имя файла в статусе,
+        // клик играет на месте
+        QString voiceHref;
+
+        if(imageName.isEmpty())
+            voiceHref=VoiceNoteHelper::bubbleHrefAt(
+                document(), cursorForPosition(m_currentMousePosition).position());
+
         if(!imageName.isEmpty())
         {
             if(!m_mouseCursorOverriden)
@@ -295,6 +304,16 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
                 qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
                 m_mouseCursorOverriden = true;
                 globalParameters.getStatusBar()->showMessage(imageName);
+            }
+        }
+        else if(!voiceHref.isEmpty())
+        {
+            if(!m_mouseCursorOverriden)
+            {
+                qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
+                m_mouseCursorOverriden = true;
+                globalParameters.getStatusBar()->showMessage(
+                    VoiceNoteHelper::fileNameFromHref(voiceHref));
             }
         }
         else if(m_mouseCursorOverriden)
@@ -311,6 +330,24 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
 
 void EditorTextArea::mousePressEvent(QMouseEvent *event)
 {
+    // Обычный клик по баблу голосовой заметки играет на месте.
+    // Курсор при этом ставится как обычно, дальше сигнал
+    if(event->type()==QEvent::MouseButtonPress &&
+       event->button()==Qt::LeftButton &&
+       (QApplication::keyboardModifiers() & Qt::ControlModifier)==0)
+    {
+        const QString voiceHref=VoiceNoteHelper::bubbleHrefAt(
+            document(), cursorForPosition(event->pos()).position());
+
+        if(!voiceHref.isEmpty())
+        {
+            QTextEdit::mousePressEvent(event);
+
+            emit clickedOnVoiceBubble(voiceHref);
+            return;
+        }
+    }
+
     // Если клик происходит вместе с клавишей-модификатором Ctrl
     if( event->type()==QEvent::MouseButtonPress && (QApplication::keyboardModifiers() & Qt::ControlModifier) )
     {

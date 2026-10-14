@@ -48,6 +48,9 @@ signals:
     void updateIndentlineGeometry(void);
     void clickedOnReference(QString href);
 
+    // Одинарный клик по баблу голосовой заметки: play/pause на месте
+    void clickedOnVoiceBubble(QString href);
+
     void downloadImages(const QString href);
 
     void doubleClickOnImage();

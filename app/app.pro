@@ -270,6 +270,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/formatters/TableFormatter.h \
     src/libraries/wyedit/formatters/ImageFormatter.h \
     src/libraries/wyedit/formatters/AudioFormatter.h \
+    src/libraries/wyedit/formatters/VoiceBubbleObject.h \
     src/libraries/wyedit/EditorIndentSliderAssistant.h \
     src/libraries/wyedit/EditorToolBarAssistant.h \
     src/libraries/TraceLogger.h \
@@ -467,6 +468,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/formatters/TableFormatter.cpp \
     src/libraries/wyedit/formatters/ImageFormatter.cpp \
     src/libraries/wyedit/formatters/AudioFormatter.cpp \
+    src/libraries/wyedit/formatters/VoiceBubbleObject.cpp \
     src/libraries/wyedit/EditorIndentSliderAssistant.cpp \
     src/libraries/wyedit/EditorToolBarAssistant.cpp \
     src/libraries/TraceLogger.cpp \

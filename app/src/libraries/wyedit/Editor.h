@@ -21,6 +21,7 @@
 #include "formatters/ListFormatter.h"
 #include "formatters/TableFormatter.h"
 #include "formatters/ImageFormatter.h"
+#include "formatters/AudioFormatter.h"
 #include "formatters/MathExpressionFormatter.h"
 #include "formatters/ReferenceFormatter.h"
 #include "formatters/SecretFormatter.h"
@@ -59,6 +60,7 @@ class Editor : public QWidget
  friend class ListFormatter;
  friend class TableFormatter;
  friend class ImageFormatter;
+ friend class AudioFormatter;
  friend class MathExpressionFormatter;
  friend class ReferenceFormatter;
  friend class SecretFormatter;
@@ -287,6 +289,7 @@ private:
  ListFormatter           *listFormatter=nullptr;
  TableFormatter          *tableFormatter=nullptr;
  ImageFormatter          *imageFormatter=nullptr;
+ AudioFormatter          *audioFormatter=nullptr;
  MathExpressionFormatter *mathExpressionFormatter=nullptr;
  ReferenceFormatter      *referenceFormatter=nullptr;
  SecretFormatter         *secretFormatter=nullptr;

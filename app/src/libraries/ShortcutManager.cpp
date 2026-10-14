@@ -157,6 +157,10 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-tableProperties",     Data{ QKeySequence(""), tr("Table properties"), tr("") });
     defaultKeyTable.insert("editor-insertImageFromFile", Data{ QKeySequence("Ctrl+Shift+I"), tr("Insert/edit image"), tr("Insert image from file or edit selected image properties") });
     defaultKeyTable.insert("editor-openImage",           Data{ QKeySequence("Ctrl+Shift+Y"), tr("Open image"), tr("Open selected image in external viewer") });
+    defaultKeyTable.insert("editor-micRecord",          Data{ QKeySequence("Ctrl+Shift+V"), tr("Record voice note"), tr("Record voice note from microphone") });
+    defaultKeyTable.insert("editor-playVoice",          Data{ QKeySequence(""), tr("Play voice note"), tr("Play voice note under cursor") });
+    defaultKeyTable.insert("editor-showVoiceInFolder",  Data{ QKeySequence(""), tr("Show voice file in folder"), tr("Open record directory in file manager") });
+    defaultKeyTable.insert("editor-deleteVoice",        Data{ QKeySequence(""), tr("Delete voice note"), tr("Remove voice link and move file to trash") });
     defaultKeyTable.insert("editor-insertHorizontalLine",Data{ QKeySequence("Ctrl+H"), tr("Insert horizontal line"), tr("Insert a horizontal line into the empty paragraph from cursor") });
     defaultKeyTable.insert("editor-mathExpression",      Data{ QKeySequence("Ctrl+Shift+M"), tr("Insert/edit math expression"), tr("") });
     defaultKeyTable.insert("editor-expandEditArea",      Data{ QKeySequence("Ctrl+Shift+E"), tr("Expand edit area"), tr("") });

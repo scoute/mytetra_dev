@@ -420,6 +420,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_21;
     parameterFunctions << get_parameter_table_22;
     parameterFunctions << get_parameter_table_23;
+    parameterFunctions << get_parameter_table_24;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -881,6 +882,25 @@ QStringList EditorConfig::get_parameter_table_23(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_24(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 23.
+    // Новых параметров нет, только докатка кнопки микрофона
+    // в update_version_change_value()
+
+    table << get_parameter_table_23(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 // Метод разрешения конфликтов если исходные и конечные типы не совпадают
 // Должен включать в себя логику обработки только тех параметров
 // и только для тех версий конфигов, которые действительно
@@ -1094,6 +1114,7 @@ QString EditorConfig::update_version_change_value(int versionFrom,
             names["insert_horizontal_line"]="insertHorizontalLine";
             names["insert_image_from_file"]="insertImageFromFile";
             names["open_image"]="openImage";
+            names["mic_record"]="micRecord";
             names["math_expression"]="mathExpression";
             names["numericlist"]="numericList";
             names["showformatting"]="showFormatting";
@@ -1142,6 +1163,24 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result.replace("insertImageFromFile", "insertImageFromFile,openImage");
                 else
                     result=result+",open_image";
+            }
+        }
+
+    if(versionFrom==23 && versionTo==24)
+        if(name=="tools_line_1")
+        {
+            // Кнопка микрофона после открытия картинки.
+            // На версии 23 имена уже camelCase (алиасы отработали
+            // на 21->22), поэтому вставляется сразу camel.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("micRecord"))
+            {
+                if(result.contains("openImage"))
+                    result.replace("openImage", "openImage,micRecord");
+                else if(result.contains("insertImageFromFile"))
+                    result.replace("insertImageFromFile", "insertImageFromFile,micRecord");
+                else
+                    result=result+",micRecord";
             }
         }
 

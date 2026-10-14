@@ -19,6 +19,7 @@
 #include "AppConfigPage_Search.h"
 #include "AppConfigPage_Favorites.h"
 #include "AppConfigPage_Clipper.h"
+#include "AppConfigPage_Mcp.h"
 #include "AppConfigPage_Appearance.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
@@ -69,6 +70,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Favorites"));
     pageClipper    =configDialog->addWidget(new AppConfigPage_Clipper( parent ),
                                             QObject::tr("Clipper"));
+    pageMcp        =configDialog->addWidget(new AppConfigPage_Mcp( parent ),
+                                            QObject::tr("MCP"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
 
@@ -122,6 +125,7 @@ void AppConfigDialog::retranslateUi(void)
     pageSearch->setText(QObject::tr("Search"));
     pageFavorites->setText(QObject::tr("Favorites"));
     pageClipper->setText(QObject::tr("Clipper"));
+    pageMcp->setText(QObject::tr("MCP"));
     pageMisc->setText(QObject::tr("Misc"));
 
     QList<ConfigPage *> pages=configDialog->findChildren<ConfigPage *>();
@@ -148,6 +152,7 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageSearch") item=pageSearch;
     if(name=="pageFavorites") item=pageFavorites;
     if(name=="pageClipper") item=pageClipper;
+    if(name=="pageMcp") item=pageMcp;
     if(name=="pageMisc") item=pageMisc;
 
     if(item!=nullptr)

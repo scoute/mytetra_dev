@@ -2,6 +2,8 @@
 #include <QLabel>
 #include <QColor>
 #include <QFileInfo>
+#include <QStatusBar>
+#include <QTextCursor>
 #include <QStringList>
 #include <QRegularExpression>
 #include <QBoxLayout>
@@ -73,6 +75,14 @@ void MetaEditor::setupSignals(void)
 {
   connect(recordUrl, &QLabel::linkActivated,
           this,      &MetaEditor::onClickToUrl);
+
+  if(textArea!=nullptr)
+  {
+    connect(textArea, &QTextEdit::cursorPositionChanged,
+            this,    &MetaEditor::updateCursorLabel);
+
+    updateCursorLabel();
+  }
 }
 
 
@@ -652,10 +662,38 @@ void MetaEditor::applyNoteColors(void)
 }
 
 
+// Позиция курсора заметки в статусбаре. Виджет обычный, поэтому
+// важные showMessage-сообщения его перекрывают, а после
+// пропадают сами и подпись возвращается
+void MetaEditor::updateCursorLabel(void)
+{
+    if(textArea==nullptr)
+        return;
+
+    QStatusBar *statusBar=globalParameters.getStatusBar();
+
+    if(statusBar==nullptr)
+        return;
+
+    QLabel *cursorLabel=statusBar->findChild<QLabel *>("cursorLabel");
+
+    if(cursorLabel==nullptr)
+        return;
+
+    QTextCursor cursor=textArea->textCursor();
+
+    cursorLabel->setText(tr("Cursor: line %1, position %2")
+                         .arg(cursor.blockNumber()+1)
+                         .arg(cursor.positionInBlock()+1));
+}
+
+
 void MetaEditor::retranslateUi(void)
 {
   labelUrl->setText(tr("<B>Url:</B> "));
   labelTags->setText(tr("<B>Tags:</B> "));
+
+  updateCursorLabel();
 
   editorToolBarAssistant->retranslateUi();
 }

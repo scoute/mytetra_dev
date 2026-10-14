@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QEvent>
 #include <QAbstractTextDocumentLayout>
+#include <QFontMetrics>
 #include <QGestureEvent>
 #include <QTextDocumentFragment>
 #include <QMimeData>
@@ -119,9 +120,76 @@ void EditorTextArea::keyPressEvent(QKeyEvent *event)
 {
     // Если нажата клавиша Ctrl
     if( event->key() == Qt::Key_Control )
+    {
         switchReferenceClickMode(true);
 
-    QTextEdit::keyPressEvent(event);
+        QTextEdit::keyPressEvent(event);
+    }
+    else if( event->key() == Qt::Key_Backtab )
+    {
+        unindentCurrentLine();
+    }
+    else
+    {
+        QTextEdit::keyPressEvent(event);
+    }
+}
+
+
+// Shift+Tab снимает один уровень отступа в начале строки:
+// символ табуляции либо пробелы шириной в один размер табуляции.
+// Курсор и выделение возвращаются на место со сдвигом на снятое
+void EditorTextArea::unindentCurrentLine(void)
+{
+    QTextCursor cursor=textCursor();
+    int pos=cursor.position();
+    int anchor=cursor.anchor();
+    cursor.clearSelection();
+    cursor.movePosition(QTextCursor::StartOfLine);
+    cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+    if(cursor.selectedText().startsWith('\t'))
+    {
+        cursor.removeSelectedText();
+        cursor.setPosition(anchor-1);
+        cursor.setPosition(pos-1, QTextCursor::KeepAnchor);
+    }
+    else
+    {
+        #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+        qreal tabDistance=tabStopDistance();
+        #else
+        qreal tabDistance=tabStopWidth();
+        #endif
+        int spaceWidth=QFontMetrics(currentCharFormat().font()).averageCharWidth();
+        int tabSpaces=(spaceWidth>0) ? qMax(1, qRound(tabDistance/spaceWidth)) : 4;
+        cursor.clearSelection();
+        cursor.movePosition(QTextCursor::StartOfLine);
+        int removed=0;
+        while(removed<tabSpaces)
+        {
+            cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+            if(cursor.selectedText().endsWith(' '))
+            {
+                removed++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if(removed>0)
+        {
+            cursor.removeSelectedText();
+            cursor.setPosition(anchor-removed);
+            cursor.setPosition(pos-removed, QTextCursor::KeepAnchor);
+        }
+        else
+        {
+            cursor.setPosition(anchor);
+            cursor.setPosition(pos, QTextCursor::KeepAnchor);
+        }
+    }
+    setTextCursor(cursor);
 }
 
 

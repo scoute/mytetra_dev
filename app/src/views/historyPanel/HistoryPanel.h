@@ -69,14 +69,6 @@ private:
     // Суммарный размер файлов каталога записи в байтах
     static qint64 recordDirSize(const QString &recordDir);
 
-    // Файлы картинок каталога записи. Локальный аналог из галереи:
-    // та фича позже, зависимость сюда тянуть нельзя
-    static QStringList historyImageFiles(const QString &recordDir);
-
-    // Человекочитаемый размер. Локальный аналог из галереи:
-    // та фича позже, зависимость сюда тянуть нельзя
-    static QString formatHistorySize(qint64 bytes);
-
     void setupUi(void);
     void assembly(void);
     void setupSignals(void);

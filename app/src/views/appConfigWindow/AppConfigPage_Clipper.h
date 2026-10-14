@@ -7,6 +7,7 @@ class QWidget;
 class QGroupBox;
 class QSpinBox;
 class QLabel;
+class QFormLayout;
 class QToolButton;
 class QCheckBox;
 class QKeySequenceEdit;
@@ -24,6 +25,7 @@ public:
   virtual ~AppConfigPage_Clipper(void);
 
   int applyChanges(void);
+  void retranslateUi(void) override;
 
 private slots:
 
@@ -55,6 +57,12 @@ protected:
   // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
   QSpinBox *clipperMaxImages;
   QSpinBox *clipperMaxImageSizeMb;
+
+  // Подписи формы и сама форма: нужны для перевода на лету
+  QLabel *clipperMaxImagesLabel;
+  QLabel *clipperMaxImageSizeLabel;
+  QLabel *clipperTitleLabel;
+  QFormLayout *clipperFormLayout;
 };
 
 #endif // _CONFIGPAGE_CLIPPER_H_

@@ -16,6 +16,7 @@ public:
     virtual ~AppConfigPage_Search();
 
     int applyChanges(void);
+  void retranslateUi(void) override;
 
   protected:
 

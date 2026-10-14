@@ -188,8 +188,8 @@ void ShortcutManager::initDefaultKeyTable()
     // Короткое название: пункт меню зеркалит заголовок дока,
     // а тот со счетчиком; длинное имя не влезло бы
     defaultKeyTable.insert("misc-tagsPanel",   Data{ QKeySequence("F8"), tr("Tags"), tr("") });
-    defaultKeyTable.insert("misc-historyPanel", Data{ QKeySequence("F11"), tr("Show history panel"), tr("") });
-    defaultKeyTable.insert("misc-backlinksPanel", Data{ QKeySequence(), tr("Show backlinks panel"), tr("") });
+    defaultKeyTable.insert("misc-historyPanel", Data{ QKeySequence("F11"), tr("History panel"), tr("") });
+    defaultKeyTable.insert("misc-backlinksPanel", Data{ QKeySequence(), tr("Direct and backlinks panel"), tr("") });
     defaultKeyTable.insert("misc-readOnly", Data{ QKeySequence(), tr("Read-only mode"), tr("Forbid any changes to the base") });
     defaultKeyTable.insert("misc-clipFromClipboard", Data{ QKeySequence(), tr("Clip from clipboard"), tr("Create note in unsorted_notes branch from clipboard content") });
     defaultKeyTable.insert("misc-imagesGallery", Data{ QKeySequence("Ctrl+Shift+G"), tr("Images gallery"), tr("") });

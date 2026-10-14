@@ -44,6 +44,8 @@ void EditorContextMenu::setupActions(void)
  actionEditImageProperties=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
+ actionCopySecret=new QAction(this);
+ actionChangeSecretColor=new QAction(this);
 
  actionLowercase=new QAction(this);
  actionUppercase=new QAction(this);
@@ -72,6 +74,10 @@ void EditorContextMenu::setupShortcuts(void)
 
     shortcutManager.initAction("editor-gotoReference", actionGotoReference );
 
+    actionCopySecret->setText(tr("Copy secret")); // Скопировать содержимое секрета
+
+    actionChangeSecretColor->setText(tr("Change secret color...")); // Сменить глобальный цвет секретов
+
     shortcutManager.initAction("editor-lowercase", actionLowercase );
     shortcutManager.initAction("editor-uppercase", actionUppercase );
 }
@@ -82,6 +88,8 @@ void EditorContextMenu::update(void)
     // Сначала скрываются пункты редактирования формулы и картинки
     setEditMathExpression( false );
     setImageProperties( false );
+    setCopySecret( false );
+    setChangeSecretColor( false );
 
     setFormatToLowerCase( true );
     setFormatToUpperCase( true );
@@ -110,6 +118,10 @@ void EditorContextMenu::update(void)
     } else {
         setGotoReference( false );
     }
+
+    // Курсор в секрете: доступны копирование содержимого и смена цвета
+    setCopySecret(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
+    setChangeSecretColor(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
 
     // Если в буфере обмена есть текст
     if(QGuiApplication::clipboard()->text().size()>0) {
@@ -170,6 +182,24 @@ void EditorContextMenu::setGotoReference(bool flag)
 }
 
 
+// Показывать или нет пункт копирования секрета
+void EditorContextMenu::setCopySecret(bool flag)
+{
+    qDebug() << "In EditorContextMenu::setCopySecret() " << flag;
+
+    actionCopySecret->setVisible(flag);
+    actionCopySecret->setEnabled(flag);
+}
+
+
+// Показывать или нет пункт смены цвета секрета
+void EditorContextMenu::setChangeSecretColor(bool flag)
+{
+    actionChangeSecretColor->setVisible(flag);
+    actionChangeSecretColor->setEnabled(flag);
+}
+
+
 // Показывать или нет пункт "Вставить только текст"
 void EditorContextMenu::setPasteAsPlainText(bool flag)
 {
@@ -207,6 +237,8 @@ void EditorContextMenu::setupSignals(void)
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
+    connect(actionCopySecret,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuCopySecret);
+    connect(actionChangeSecretColor,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuChangeSecretColor);
 
     connect(actionLowercase, &QAction::triggered, this, &EditorContextMenu::onActionLowercase);
     connect(actionUppercase, &QAction::triggered, this, &EditorContextMenu::onActionUppercase);
@@ -239,6 +271,8 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionEditImageProperties);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
+    this->addAction(actionCopySecret);
+    this->addAction(actionChangeSecretColor);
 }
 
 
@@ -319,6 +353,22 @@ void EditorContextMenu::onActionContextMenuGotoReference()
     update();
     if(actionGotoReference->isEnabled()) {
         emit contextMenuGotoReference();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuCopySecret()
+{
+    update();
+    if(actionCopySecret->isEnabled()) {
+        emit contextMenuCopySecret();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuChangeSecretColor()
+{
+    update();
+    if(actionChangeSecretColor->isEnabled()) {
+        emit contextMenuChangeSecretColor();
     }
 }
 

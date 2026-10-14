@@ -3,6 +3,7 @@
 #include <QDesktopServices>
 
 #include "ReferenceFormatter.h"
+#include "SecretFormatter.h"
 
 #include "main.h"
 #include "views/mainWindow/MainWindow.h"
@@ -139,6 +140,11 @@ void ReferenceFormatter::onContextMenuGotoReference()
 
 void ReferenceFormatter::onClickedGotoReference(QString href)
 {
+    // Клик по секрету не навигация: выделение и так показывает содержимое.
+    // Метка живет в том же anchor-канале что ссылки
+    if(href==SecretFormatter::secretHref())
+      return;
+
     LinkHelper::gotoReference(href);
 }
 

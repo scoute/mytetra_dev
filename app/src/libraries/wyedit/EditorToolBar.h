@@ -73,6 +73,7 @@ public:
     QAction *backgroundColorNoColorAction;
 
     QAction *reference;
+    QAction *secret;
 
     QAction *showHtml;
 

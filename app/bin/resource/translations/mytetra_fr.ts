@@ -525,6 +525,10 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Danger actions (Attention!)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Secret color: </source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -1359,6 +1363,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="71"/>
         <source>Edit math expression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy secret</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change secret color...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3734,6 +3746,14 @@ Please report about this problem to the developers.</source>
         <source>Show backlinks panel</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Hide as secret</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint selected text as secret</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4490,6 +4510,13 @@ All data imported will be encrypted.</source>
     </message>
     <message>
         <source>Outgoing links (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>SecretFormatter</name>
+    <message>
+        <source>Select text to hide as secret</source>
         <translation type="unfinished"></translation>
     </message>
     </context>

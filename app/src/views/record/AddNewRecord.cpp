@@ -11,6 +11,7 @@
 
 #include "AddNewRecord.h"
 #include "InfoFieldEnter.h"
+#include "views/record/MetaEditor.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/wyedit/Editor.h"
@@ -61,6 +62,9 @@ void AddNewRecord::setupUI(void)
   // В редакторе текста записи устанавливается пустой текст, что активирует правильное
   // начальное положение различных кнопок редактора, например кнопок цвета текста
   recordTextEditor.setTextarea("");
+
+  // Цвета поля как в открытой заметке: бумага и шрифт из настроек
+  recordTextEditor.setTextAreaStyleSheet(MetaEditor::noteTextAreaStyleSheet());
 
   // Кнопки OK и Cancel
   buttonBox.setOrientation(Qt::Horizontal);

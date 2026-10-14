@@ -27,9 +27,12 @@ private slots:
   void onClickedSecretColor(void);
   void onClickedNotePaperColor(void);
   void onClickedNotePaperColorReset(void);
+  void onClickedNoteFontColor(void);
+  void onClickedNoteFontColorReset(void);
 
   void setColorForSecretButton(QColor iColor);
   void setColorForNotePaperButton(QColor iColor);
+  void setColorForNoteFontButton(QColor iColor);
 
 protected:
 
@@ -54,6 +57,15 @@ protected:
   // True пока действует цвет темы (настройка пуста): тогда Apply
   // не пишет выбранный на кнопке цвет в конфиг
   bool notePaperColorIsTheme;
+
+  QLabel *noteFontColorLabel;
+  QToolButton *noteFontColorButton;
+  QColor *noteFontColor;
+  QPushButton *noteFontColorReset;
+
+  // True пока действует цвет темы (настройка пуста): тогда Apply
+  // не пишет выбранный на кнопке цвет в конфиг
+  bool noteFontColorIsTheme;
 
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

@@ -534,6 +534,10 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Note font color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>

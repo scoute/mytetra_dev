@@ -710,6 +710,10 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Цвет бумаги заметки: </translation>
     </message>
     <message>
+        <source>Note font color: </source>
+        <translation>Цвет шрифта заметки: </translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>Сбросить</translation>
     </message>

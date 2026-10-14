@@ -834,6 +834,14 @@ QTextDocument *Editor::getTextareaDocument(void)
 }
 
 
+// Свой stylesheet области текста (цвета поля заметки из настроек).
+// Нужен окнам с собственным редактором вроде создания записи
+void Editor::setTextAreaStyleSheet(const QString &styleSheet)
+{
+  textArea->setStyleSheet(styleSheet);
+}
+
+
 // Перекраска секретов открытого документа под глобальный цвет.
 // Вызывается из меню Вид после смены цвета в конфиге
 void Editor::repaintSecrets(void)

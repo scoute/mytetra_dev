@@ -38,8 +38,8 @@ protected:
 
   // Приведение всех вложений к заданному виду имен.
   // Возвращает число сконвертированных файлов, через счетчики сообщает
-  // о пропущенных (файл не найден, запись зашифрована) и ошибках
-  int convertAllAttachesToMode(int targetMode, int &missingCount, QStringList &errors);
+  // о ненайденных на диске, пропущенных зашифрованных и ошибках
+  int convertAllAttachesToMode(int targetMode, int &notFoundCount, int &encryptedCount, QStringList &errors);
 
   // Галка разрешения/запрещения подсветки записи с прикрепленными файлами
   QCheckBox *enableRecordWithAttachHighlight;

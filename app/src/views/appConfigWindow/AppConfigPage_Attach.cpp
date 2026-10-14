@@ -213,13 +213,14 @@ int AppConfigPage_Attach::applyChanges(void)
 // Проход идет только по метаданным (id, видимое имя, тип) и файлам на диске,
 // содержимое вложений в память не загружается. XML базы не меняется:
 // внутреннее имя вычисляется из id и видимого имени, а не хранится.
-// Зашифрованные при закрытой базе записи пропускаются (видимое имя
-// недоступно без пароля) и попадают в счетчик пропущенных.
+// Зашифрованные при закрытой базе записи пропускаются отдельно
+// (видимое имя недоступно без пароля), ненайденные на диске - отдельно.
 // Конфликтующее целевое имя (в оригинальном режиме) не затирается,
 // а попадает в список ошибок
-int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &missingCount, QStringList &errors)
+int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &notFoundCount, int &encryptedCount, QStringList &errors)
 {
-    missingCount=0;
+    notFoundCount=0;
+    encryptedCount=0;
     errors.clear();
 
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
@@ -260,10 +261,10 @@ int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &missingC
             QString visibleName=attach.getField("fileName");
 
             // Пустое видимое имя означает зашифрованную при закрытой базе
-            // запись: конвертировать нельзя, файл пропускается
+            // запись: конвертировать нельзя, считается отдельно
             if(visibleName.isEmpty())
             {
-                ++missingCount;
+                ++encryptedCount;
                 continue;
             }
 
@@ -280,10 +281,10 @@ int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &missingC
                     break;
                 }
 
-            // Исходного файла нет на диске: запись-сирота, пропускается
+            // Исходного файла нет на диске: запись-сирота, считается отдельно
             if(existingName.isEmpty())
             {
-                ++missingCount;
+                ++notFoundCount;
                 continue;
             }
 
@@ -328,9 +329,10 @@ void AppConfigPage_Attach::onClickedConvertAttaches()
     if(answer!=QMessageBox::Yes)
         return;
 
-    int missingCount=0;
+    int notFoundCount=0;
+    int encryptedCount=0;
     QStringList errors;
-    int renamedCount=convertAllAttachesToMode(targetMode, missingCount, errors);
+    int renamedCount=convertAllAttachesToMode(targetMode, notFoundCount, encryptedCount, errors);
 
     // Режим переключается только после прохода без ошибок, чтобы новые
     // вложения сразу сохранялись в заданном виде
@@ -341,8 +343,10 @@ void AppConfigPage_Attach::onClickedConvertAttaches()
     }
 
     QString resultText=tr("Converted files: %1.").arg(renamedCount);
-    if(missingCount>0)
-        resultText+=QString(" ")+tr("Skipped (file not found or encrypted record): %1.").arg(missingCount);
+    if(notFoundCount>0)
+        resultText+=QString(" ")+tr("Not found on disk: %1.").arg(notFoundCount);
+    if(encryptedCount>0)
+        resultText+=QString(" ")+tr("Skipped (encrypted record, unlock the database first): %1.").arg(encryptedCount);
     if(!errors.isEmpty())
         resultText+=QString(" ")+tr("Errors: %1. First error: %2").arg(errors.size()).arg(errors.first());
 

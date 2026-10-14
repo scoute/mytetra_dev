@@ -330,7 +330,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Skipped (file not found or encrypted record): %1.</source>
+        <source>Not found on disk: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skipped (encrypted record, unlock the database first): %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

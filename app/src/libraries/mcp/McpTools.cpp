@@ -11,11 +11,13 @@
 #include <QSaveFile>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QDomDocument>
 
 #include <functional>
 #include <algorithm>
 
 #include "McpTools.h"
+#include "main.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/RecordTableData.h"
@@ -28,6 +30,7 @@
 #include <QFile>
 
 extern AppConfig mytetraConfig;
+extern GlobalParameters globalParameters;
 
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
@@ -2050,6 +2053,309 @@ QJsonObject McpTools::unfavoriteNoteDirect(const QString &noteId, QString &error
 QSet<QString> McpTools::sidecarFavoriteIds(void)
 {
   return favoritesSidecarRead();
+}
+
+
+QJsonObject McpTools::listAttachments(const QString &noteId, QString &error)
+{
+  QJsonObject result;
+
+  if(!m_model->isRecordIdExists(noteId))
+  {
+    error="Unknown note_id: "+noteId;
+
+    return result;
+  }
+
+  Record *record=m_model->getRecord(noteId);
+
+  if(record==nullptr)
+  {
+    error="Unknown note_id: "+noteId;
+
+    return result;
+  }
+
+  if(record->getField("crypt")=="1")
+  {
+    error="Note is encrypted, attachments hidden";
+
+    return result;
+  }
+
+  AttachTableData table=record->getAttachTable();
+
+  QJsonArray attachments;
+
+  for(int row=0; row<table.size(); ++row)
+  {
+    QJsonObject one;
+    one["id"]=table.getIdByRow(row);
+    one["name"]=table.getFileName(row);
+    one["size"]=static_cast<qint64>(table.getFileSize(row));
+    attachments.append(one);
+  }
+
+  result["attachments"]=attachments;
+
+  return result;
+}
+
+
+// Есть ли в поддереве шифр: ветки или записи с crypt=="1".
+// Ключа в серверном процессе нет, такое выгружать нельзя -
+// внутри выгрузки расшифровка пустым ключом дала бы мусор
+static bool subtreeHasLocked(TreeItem *item)
+{
+  if(item==nullptr)
+    return false;
+
+  if(item->getField("crypt")=="1")
+    return true;
+
+  RecordTableData *table=item->recordtableGetTableData();
+
+  if(table!=nullptr)
+    for(unsigned i=0; i<table->size(); ++i)
+    {
+      Record *record=table->getRecord(i);
+
+      if(record!=nullptr && record->getField("crypt")=="1")
+        return true;
+    }
+
+  for(int i=0; i<item->childCount(); ++i)
+    if(subtreeHasLocked(item->child(i)))
+      return true;
+
+  return false;
+}
+
+
+// Сколько записей в поддереве (для итога выгрузки)
+static int countSubtreeNotes(TreeItem *item)
+{
+  if(item==nullptr)
+    return 0;
+
+  int count=0;
+
+  RecordTableData *table=item->recordtableGetTableData();
+
+  if(table!=nullptr)
+    count+=static_cast<int>(table->size());
+
+  for(int i=0; i<item->childCount(); ++i)
+    count+=countSubtreeNotes(item->child(i));
+
+  return count;
+}
+
+
+QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
+                                        const QString &branchId,
+                                        const QString &path,
+                                        QString &error)
+{
+  QJsonObject result;
+
+  TreeItem *branch=model->getItemById(branchId);
+
+  if(branch==nullptr)
+  {
+    error="Unknown branch_id: "+branchId;
+
+    return result;
+  }
+
+  // Шифр без ключа: выгрузка попыталась бы расшифровать пустым ключом
+  // и отдала бы мусор. Ключа в серверном процессе не бывает
+  if(subtreeHasLocked(branch))
+  {
+    error="Branch contains locked notes, export refused";
+
+    return result;
+  }
+
+  // Приемник: каталог создается заранее, иначе внутри выгрузки
+  // модальный диалог о незаписываемом файле
+  if(!QDir().mkpath(path))
+  {
+    error="Can not create export directory: "+path;
+
+    return result;
+  }
+
+  QFileInfo probe(path);
+
+  if(!probe.isDir() || !probe.isWritable())
+  {
+    error="Export directory is not writable: "+path;
+
+    return result;
+  }
+
+  const int notes=countSubtreeNotes(branch);
+
+  if(!model->exportBranchToDirectory(branch, path))
+  {
+    error="Export failed, see server log";
+
+    return result;
+  }
+
+  QFileInfo xml(path+"/mytetra.xml");
+
+  if(!xml.isReadable())
+  {
+    error="Export failed, result is missing mytetra.xml";
+
+    return result;
+  }
+
+  result["path"]=QDir::cleanPath(path);
+  result["notes"]=notes;
+
+  return result;
+}
+
+
+// Одиночное имя без разделителей, точек-вверх и диска:
+// то же правило что isSafeImportFileName внутри модели
+static bool isSingleFileName(const QString &name)
+{
+  if(name.isEmpty() || name==QStringLiteral(".") || name==QStringLiteral(".."))
+    return false;
+
+  if(name.contains('/') || name.contains('\\') || name.contains(':'))
+    return false;
+
+  return true;
+}
+
+
+QString McpTools::checkImportDir(const QString &path)
+{
+  QFileInfo dirInfo(path);
+
+  if(!dirInfo.isDir() || !dirInfo.isReadable())
+    return "Import directory is not readable: "+path;
+
+  const QString xmlPath=path+"/mytetra.xml";
+  QFile xmlFile(xmlPath);
+
+  if(!xmlFile.open(QIODevice::ReadOnly))
+    return "Import error: unable to read the XML file "+xmlPath+".";
+
+  const QByteArray xmlData=xmlFile.readAll();
+  xmlFile.close();
+
+  QDomDocument doc;
+  QString errorText;
+  int errorLine=0;
+  int errorColumn=0;
+
+  if(!doc.setContent(xmlData, true, &errorText, &errorLine, &errorColumn))
+    return "Import error: unable to parse the XML file "+xmlPath+".";
+
+  QDomElement format=doc.documentElement().firstChildElement("format");
+  const int version=format.attribute("version", "0").toInt();
+  const int subversion=format.attribute("subversion", "0").toInt();
+
+  if(version>CURRENT_FORMAT_VERSION || subversion>CURRENT_FORMAT_SUBVERSION)
+    return "Import error: unsupported database format.";
+
+  // Имена из чужого обменника проверяются тем же правилом что при
+  // ввозе: иначе внутри вылезет модальный диалог вместо ошибки
+  QDomNodeList records=doc.elementsByTagName("record");
+
+  for(int i=0; i<records.count(); ++i)
+  {
+    QDomElement record=records.at(i).toElement();
+    const QString dir=record.attribute("dir");
+    const QString file=record.attribute("file");
+
+    if(dir.isEmpty() || !isSingleFileName(dir))
+      return "Import error: incorrect record directory name \""+dir+"\".";
+
+    if(file.isEmpty() || !isSingleFileName(file))
+      return "Import error: incorrect record file name \""+file+"\".";
+
+    if(!QFileInfo(path+"/base/"+dir).isDir())
+      return "Import error: missing record directory \""+dir+"\".";
+
+    if(!QFileInfo(path+"/base/"+dir+"/"+file).isReadable())
+      return "Import error: unable to read record file \""+file+"\".";
+  }
+
+  return QString();
+}
+
+
+QJsonObject McpTools::applyImportBranch(KnowTreeModel *model,
+                                        const QString &parentId,
+                                        const QString &path,
+                                        QString &error)
+{
+  QJsonObject result;
+
+  if(!parentId.isEmpty())
+  {
+    TreeItem *parent=model->getItemById(parentId);
+
+    if(parent==nullptr)
+    {
+      error="Unknown parent branch_id: "+parentId;
+
+      return result;
+    }
+
+    if(parent->getField("crypt")=="1")
+    {
+      error="Parent branch is encrypted, import refused";
+
+      return result;
+    }
+  }
+
+  const QString problem=checkImportDir(path);
+
+  if(!problem.isEmpty())
+  {
+    error=problem;
+
+    return result;
+  }
+
+  // Ввоз сам сохраняет дерево в конце; пустой итог - отказ
+  // (диалоги внутри уже обезврежены проверкой выше)
+  TreeItem *parentItem=modelRoot(model);
+
+  if(!parentId.isEmpty())
+    parentItem=model->getItemById(parentId);
+
+  const QString newId=model->importBranchFromDirectory(parentItem, path);
+
+  if(newId.isEmpty())
+  {
+    error="Import failed, see server log";
+
+    return result;
+  }
+
+  result["id"]=newId;
+  result["parent_id"]=parentId;
+
+  return result;
+}
+
+
+QJsonObject McpTools::importBranchDirect(const QString &parentId,
+                                         const QString &path,
+                                         QString &error)
+{
+  // importBranchFromDirectory сохраняет сам, повторный save не нужен
+  return applyImportBranch(m_model, parentId, path, error);
 }
 
 

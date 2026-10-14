@@ -851,6 +851,43 @@ void MainWindow::messageHandler(QString message)
         flashMcpWrite();
     }
 
+    // Ввоз ветки из обменника от внешнего AI: проверки те же что
+    // на сервере (плохой обменник вместо модального диалога -
+    // тихий отказ). Ввоз сам сохраняет дерево в конце
+    else if(command=="mcpImportBranch")
+    {
+        if(mytetraConfig.isGlobalReadOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        const QString parentId=args.value("parent_id").toString();
+        const QString path=args.value("path").toString();
+
+        if(!parentId.isEmpty())
+        {
+            TreeItem *parentItem=treeScreen->knowTreeModel->getItemById(parentId);
+
+            if(parentItem==nullptr || parentItem->getField("crypt")=="1")
+                return;
+        }
+
+        if(!McpTools::checkImportDir(path).isEmpty())
+            return;
+
+        QString error;
+        QJsonObject imported=McpTools::applyImportBranch(treeScreen->knowTreeModel,
+                                                         parentId, path, error);
+
+        if(!error.isEmpty() || imported.isEmpty())
+            return;
+
+        flashMcpWrite();
+    }
+
     else if(command=="mcpRenameTag")
     {
         if(mytetraConfig.isGlobalReadOnly())

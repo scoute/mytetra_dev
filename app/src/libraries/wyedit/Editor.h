@@ -102,6 +102,10 @@ public:
  void setTextareaModified(bool modify);
  bool getTextareaModified(void);
 
+ // Свой stylesheet области текста (цвета поля заметки из настроек).
+ // Нужен окнам с собственным редактором вроде создания записи
+ void setTextAreaStyleSheet(const QString &styleSheet);
+
  // Перекрасить секреты открытого документа глобальным цветом.
  // Для меню Вид: конфиг уже обновлен, документ трогать не надо
  void repaintSecrets(void);

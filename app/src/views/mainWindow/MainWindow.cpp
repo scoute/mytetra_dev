@@ -1101,7 +1101,7 @@ void MainWindow::onViewPaperColor(void)
     mytetraConfig.sync();
 
     if(editorScreen!=nullptr)
-        editorScreen->applyNotePaperColor();
+        editorScreen->applyNoteColors();
 }
 
 
@@ -1123,7 +1123,7 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         // Своя бумага поверх темы переживает смену темы,
         // пустая настройка подхватывает цвет новой темы
         if(editorScreen!=nullptr)
-            editorScreen->applyNotePaperColor();
+            editorScreen->applyNoteColors();
     }
 }
 

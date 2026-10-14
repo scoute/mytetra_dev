@@ -51,7 +51,15 @@ public:
  // Пустая строка effectiveNotePaperColor означает цвет темы
  static QString effectiveNotePaperColor(const QString &themeName,
                                        const QString &setting);
- void applyNotePaperColor(void);
+ // Цвет шрифта поля заметки: настройка поверх цвета темы.
+ // Пустая строка effectiveNoteFontColor означает цвет темы
+ static QString effectiveNoteFontColor(const QString &themeName,
+                                      const QString &setting);
+ // Общий stylesheet поля заметки из обеих настроек (бумага и шрифт).
+ // Свой stylesheet виджета бьет тему, поэтому в него попадает только
+ // явный цвет из настроек; пустые настройки полностью отдают поле теме
+ static QString noteTextAreaStyleSheet(void);
+ void applyNoteColors(void);
 
  // Прямые подписи Url и Tags. Вызывается из MainWindow::retranslateUi
  void retranslateUi(void);

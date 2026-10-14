@@ -273,6 +273,50 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Displaying notes with attachments</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>File names on disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attachments are stored on disk as id.extension. Renaming switches them to human-readable names id_name.extension, so the file can be recognized without opening it. New attachments will use human-readable names too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename attachments to human-readable names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Danger, beta version: back up your database directory before renaming. If the database is encrypted, unlock it first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Database tree is unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to rename file %1 to %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename attachments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All attachments will be renamed from id.extension to human-readable names id_name.extension. Back up your database directory first. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Renamed files: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skipped (file not found or encrypted record): %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors: %1. First error: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Crypt</name>

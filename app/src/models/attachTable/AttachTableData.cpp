@@ -284,13 +284,16 @@ QStringList AttachTableData::getInnerFileNameList()
 
 
 // Список внутренних имен файлов без пути, хранимых на диске (файлы линков в этот список не входят)
+// Возвращаются реально лежащие на диске имена (с учетом обеих схем имен),
+// чтобы чистка неиспользуемых картинок не сносила файлы,
+// смигрированные наполовину или с другой настройкой схемы
 QStringList AttachTableData::getInnerFileNameOnDiskList()
 {
   QStringList list;
 
   for(int i=0; i<attachTable.count(); ++i)
     if( attachTable.at(i).getField("type")!="link" )
-      list.append( attachTable.at(i).getInnerFileName() );
+      list.append( attachTable.at(i).getExistingInnerFileName() );
 
   return list;
 }

@@ -3798,6 +3798,14 @@ Please report about this problem to the developers.</source>
         <source>Create note in unsorted_notes branch from clipboard content</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Read-only mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Forbid any changes to the base</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4642,7 +4650,11 @@ All data imported will be encrypted.</source>
         <source>Can not insert note into unsorted_notes.</source>
         <translation type="unfinished"></translation>
     </message>
-    </context>
+        <message>
+        <source>Read-only mode is enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
     <context>
         <name>AppConfigPage_Clipper</name>
     <message>

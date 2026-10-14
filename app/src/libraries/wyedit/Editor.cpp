@@ -81,6 +81,7 @@ Editor::~Editor(void)
   delete imageFormatter;
   delete mathExpressionFormatter;
   delete referenceFormatter;
+  delete secretFormatter;
 }
 
 
@@ -277,6 +278,11 @@ void Editor::setupFormatters(void)
   referenceFormatter=new ReferenceFormatter();
   referenceFormatter->setEditor(this);
   referenceFormatter->setTextArea(textArea);
+
+  // Закрашиваемая область для секретов
+  secretFormatter=new SecretFormatter();
+  secretFormatter->setEditor(this);
+  secretFormatter->setTextArea(textArea);
 }
 
 
@@ -445,6 +451,12 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuGotoReference,
           referenceFormatter, &ReferenceFormatter::onContextMenuGotoReference,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySecret,
+          secretFormatter,   &SecretFormatter::onContextMenuCopySecret,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuChangeSecretColor,
+          secretFormatter,   &SecretFormatter::onContextMenuChangeSecretColor,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::lowercase,
           typefaceFormatter, &TypefaceFormatter::onLowerCase,
@@ -642,6 +654,9 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->reference, &QAction::triggered,
             referenceFormatter,                &ReferenceFormatter::onReferenceClicked);
 
+    connect(editorToolBarAssistant->secret, &QAction::triggered,
+            secretFormatter,               &SecretFormatter::onSecretClicked);
+
     connect(editorToolBarAssistant->showHtml, &QAction::triggered,
             this,                             &Editor::onShowhtmlClicked);
 
@@ -744,6 +759,10 @@ void Editor::setTextarea(QString text)
 
   // Очищается URL документа, так как документ создается "из ничего"
   textArea->document()->setMetaInformation( QTextDocument::DocumentUrl, "" );
+
+  // Секреты подтягиваются под глобальный цвет из настроек
+  if(secretFormatter!=nullptr)
+    secretFormatter->repaintSecrets();
 }
 
 
@@ -1063,6 +1082,10 @@ bool Editor::loadTextarea()
 
   // qDebug() << "Set content:";
   // qDebug() << textArea->toHtml();
+
+  // Секреты подтягиваются под глобальный цвет из настроек
+  if(secretFormatter!=nullptr)
+    secretFormatter->repaintSecrets();
 
   return true;
 }
@@ -1550,7 +1573,13 @@ void Editor::collectFindMatches(const QString &text, QTextDocument::FindFlags fl
     while(!cursor.isNull())
     {
       const int matchStart=cursor.selectionStart();
-      findMatches.append(cursor);
+
+      // Секрет в поиске не участвует чтобы подсветка не выдавала
+      // содержимое. Позиция +1: Qt отдает формат символа слева от курсора
+      QTextCursor probeCursor(textArea->document());
+      probeCursor.setPosition(matchStart+1);
+      if(!SecretFormatter::isSecretFormat(probeCursor.charFormat()))
+        findMatches.append(cursor);
 
       cursor=textArea->document()->find(text, cursor, findFlags);
 

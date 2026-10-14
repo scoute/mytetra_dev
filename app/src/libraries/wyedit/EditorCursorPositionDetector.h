@@ -29,6 +29,8 @@ public:
   bool isBlockSelect(void);
 
   bool isCursorOnReference(void);
+  bool isCursorOnSecret(void);
+  bool isSecretSelect(void);
   QString referenceHref(void);
 
 

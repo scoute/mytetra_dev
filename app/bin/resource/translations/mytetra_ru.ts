@@ -1559,6 +1559,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>&lt;/b&gt;&apos; не найдена</translation>
     </message>
     <message>
+        <source>Replaced </source>
+        <translation>Заменено </translation>
+    </message>
+    <message>
+        <source> occurrence(s)</source>
+        <translation> совпадений</translation>
+    </message>
+    <message>
         <source>Real image size </source>
         <translation type="vanished">Истинный размер изображения </translation>
     </message>
@@ -1838,9 +1846,8 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Только отдельные слова</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="33"/>
-        <source>Search &amp;backward</source>
-        <translation>Искать назад</translation>
+        <source>&amp;Loop search</source>
+        <translation>Зациклить поиск</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="35"/>
@@ -1848,9 +1855,33 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Найти</translation>
     </message>
     <message>
+        <source>Find previous</source>
+        <translation>Найти предыдущее</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>Найти следующее</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="39"/>
         <source>Find in the text</source>
         <translation>Поиск в тексте</translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation>Заменить на</translation>
+    </message>
+    <message>
+        <source>&amp;Replace</source>
+        <translation>Заменить</translation>
+    </message>
+    <message>
+        <source>Replace &amp;all</source>
+        <translation>Заменить всё</translation>
+    </message>
+    <message>
+        <source>Find and replace</source>
+        <translation>Поиск и замена</translation>
     </message>
 </context>
 <context>

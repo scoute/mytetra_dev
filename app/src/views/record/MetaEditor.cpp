@@ -1,6 +1,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QColor>
+#include <QStringList>
 #include <QRegularExpression>
 #include <QBoxLayout>
 #include <QGridLayout>
@@ -53,7 +54,7 @@ MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
     setAttachCallback( toAttachCallback );
 
     // Фон поля заметки из настройки поверх цвета темы
-    applyNotePaperColor();
+    applyNoteColors();
 
     emit updateIndentSliderGeometry();
 }
@@ -574,21 +575,57 @@ QString MetaEditor::effectiveNotePaperColor(const QString &themeName,
 }
 
 
-// Применение цвета фона поля заметки. Свой stylesheet виджета бьет
-// тему, поэтому кладется только при явном цвете в настройке.
-// Пустая настройка полностью отдает бумагу теме: так правки цвета
-// бумаги в CSS темы не маскируются застывшим оверрайдом
-void MetaEditor::applyNotePaperColor(void)
+// Действующий цвет шрифта поля заметки. Настройка имеет приоритет,
+// пустая настройка отдает цвет теме: midnight и modern поверх серой
+// и белой бумаги пишут черным, классические темы без переопределения
+// (пусто — решает тема/палитра)
+QString MetaEditor::effectiveNoteFontColor(const QString &themeName,
+                                          const QString &setting)
 {
-    QString setting=mytetraConfig.get_notePaperColor();
-
     QColor custom(setting);
 
     if(!setting.isEmpty() && custom.isValid())
-        textArea->setStyleSheet(
-            QString("QWidget[objectName=\"textArea\"] { background-color: %1; }").arg(custom.name()));
-    else
-        textArea->setStyleSheet("");
+        return custom.name();
+
+    if(themeName=="midnight" || themeName=="modern")
+        return "#000000";
+
+    return "";
+}
+
+
+// Общий stylesheet поля заметки из настроек бумаги и шрифта.
+// Свой stylesheet виджета бьет тему, поэтому кладется только при явном
+// цвете хотя бы в одной настройке. Пустые настройки полностью отдают
+// поле теме: так правки цветов в CSS темы не маскируются застывшим
+// оверрайдом
+QString MetaEditor::noteTextAreaStyleSheet(void)
+{
+    QStringList declarations;
+
+    QString paperSetting=mytetraConfig.get_notePaperColor();
+    QColor paperColor(paperSetting);
+
+    if(!paperSetting.isEmpty() && paperColor.isValid())
+        declarations << QString("background-color: %1;").arg(paperColor.name());
+
+    QString fontSetting=mytetraConfig.get_noteFontColor();
+    QColor fontColor(fontSetting);
+
+    if(!fontSetting.isEmpty() && fontColor.isValid())
+        declarations << QString("color: %1;").arg(fontColor.name());
+
+    if(declarations.isEmpty())
+        return "";
+
+    return QString("QWidget[objectName=\"textArea\"] { %1 }").arg(declarations.join(" "));
+}
+
+
+// Применение цветов поля заметки (бумага и шрифт)
+void MetaEditor::applyNoteColors(void)
+{
+    textArea->setStyleSheet(noteTextAreaStyleSheet());
 }
 
 

@@ -249,7 +249,7 @@ int AppConfigPage_Appearance::applyChanges()
             MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
 
             if(editorScreen!=nullptr)
-                editorScreen->applyNotePaperColor();
+                editorScreen->applyNoteColors();
         }
     }
 
@@ -277,7 +277,7 @@ int AppConfigPage_Appearance::applyChanges()
         MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
 
         if(editorScreen!=nullptr)
-            editorScreen->applyNotePaperColor();
+            editorScreen->applyNoteColors();
     }
 
 

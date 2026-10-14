@@ -623,15 +623,17 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
     if(!fontSetting.isEmpty() && fontColor.isValid())
         declarations << QString("color: %1;").arg(fontColor.name());
 
-    // Фон заметок: или цвет, или мозаика. Текстура без своего файла
-    // означает встроенный tx_fabric.jpg. Пустой/битый свой файл
-    // тоже откатывается на встроенный: без мозаики не остаёмся
+    // Фон заметок: или цвет, или мозаика. Свой файл имеет приоритет,
+    // иначе встроенный тайл по индексу (0 - tx_fabric.jpg).
+    // Битый свой файл откатывается на встроенный
     if(mytetraConfig.get_themeCustomNotePaperMode()=="texture")
     {
         QString tile=mytetraConfig.get_themeCustomNotePaperImage();
 
         if(tile.isEmpty() || !QFileInfo(tile).isReadable())
-            tile=fixedParameters.defaultNotePaperImage;
+            tile=fixedParameters.defaultNotePaperTiles.value(
+                mytetraConfig.get_themeCustomNotePaperBuiltin(),
+                fixedParameters.defaultNotePaperTiles.value(0));
 
         declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(tile);
     }

@@ -289,6 +289,11 @@ public:
     QString get_themeCustomNotePaperImage(void);
     void set_themeCustomNotePaperImage(QString path);
 
+    // Индекс встроенного тайла (0 - tx_fabric.jpg). Свой файл выше
+    // имеет приоритет над индексом
+    int get_themeCustomNotePaperBuiltin(void);
+    void set_themeCustomNotePaperBuiltin(int index);
+
     // Режим фона заметок: "color" или "texture". Текстура без своего
     // файла означает встроенный tx_fabric.jpg
     QString get_themeCustomNotePaperMode(void);

@@ -33,6 +33,7 @@ private:
 
     QListWidgetItem *pageMain;
     QListWidgetItem *pageAppearance;
+    QListWidgetItem *pageTheme;
     QListWidgetItem *pageCrypt;
     QListWidgetItem *pageSynchro;
     QListWidgetItem *pageRecordTable;

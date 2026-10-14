@@ -259,6 +259,31 @@ public:
     QString get_noteFontColor(void);
     void set_noteFontColor(QString color);
 
+    // Кастомный дизайн поверх темы. Пусто/-1 означает цвет/размер темы,
+    // иначе значение пользователя. Применяется CssHelper::applyCustomDesign
+    QString get_themeCustomTreeBackground(void);
+    void set_themeCustomTreeBackground(QString color);
+    QString get_themeCustomTreeText(void);
+    void set_themeCustomTreeText(QString color);
+    QString get_themeCustomTableBackground(void);
+    void set_themeCustomTableBackground(QString color);
+    QString get_themeCustomTableText(void);
+    void set_themeCustomTableText(QString color);
+    QString get_themeCustomTableAlternate(void);
+    void set_themeCustomTableAlternate(QString color);
+    QString get_themeCustomInterfaceFontFamily(void);
+    void set_themeCustomInterfaceFontFamily(QString family);
+    int get_themeCustomInterfaceFontSize(void);
+    void set_themeCustomInterfaceFontSize(int size);
+    int get_themeCustomTreeFontSize(void);
+    void set_themeCustomTreeFontSize(int size);
+    int get_themeCustomTableFontSize(void);
+    void set_themeCustomTableFontSize(int size);
+    int get_themeCustomTreeIndentation(void);
+    void set_themeCustomTreeIndentation(int pixels);
+    int get_themeCustomTableRowHeight(void);
+    void set_themeCustomTableRowHeight(int pixels);
+
     // Человеко-читаемые имена вложенных файлов на диске (схема id_имя.ext
     // вместо id.ext). По умолчанию выключено. Включается кнопкой миграции
     // в настройках прикрепленных файлов, после чего новые вложения

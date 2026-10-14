@@ -1027,6 +1027,120 @@ void AppConfig::set_noteFontColor(QString color)
 }
 
 
+// Кастомный дизайн поверх темы. Параметры намеренно не входят
+// в версионные таблицы (как noteFontColor): отсутствующий ключ
+// покрывается значением по умолчанию, миграция conf не нужна
+QString AppConfig::get_themeCustomTreeBackground(void)
+{
+    return m_conf->value("themeCustomTreeBackground", "").toString();
+}
+
+void AppConfig::set_themeCustomTreeBackground(QString color)
+{
+    m_conf->setValue("themeCustomTreeBackground", color);
+}
+
+QString AppConfig::get_themeCustomTreeText(void)
+{
+    return m_conf->value("themeCustomTreeText", "").toString();
+}
+
+void AppConfig::set_themeCustomTreeText(QString color)
+{
+    m_conf->setValue("themeCustomTreeText", color);
+}
+
+QString AppConfig::get_themeCustomTableBackground(void)
+{
+    return m_conf->value("themeCustomTableBackground", "").toString();
+}
+
+void AppConfig::set_themeCustomTableBackground(QString color)
+{
+    m_conf->setValue("themeCustomTableBackground", color);
+}
+
+QString AppConfig::get_themeCustomTableText(void)
+{
+    return m_conf->value("themeCustomTableText", "").toString();
+}
+
+void AppConfig::set_themeCustomTableText(QString color)
+{
+    m_conf->setValue("themeCustomTableText", color);
+}
+
+QString AppConfig::get_themeCustomTableAlternate(void)
+{
+    return m_conf->value("themeCustomTableAlternate", "").toString();
+}
+
+void AppConfig::set_themeCustomTableAlternate(QString color)
+{
+    m_conf->setValue("themeCustomTableAlternate", color);
+}
+
+QString AppConfig::get_themeCustomInterfaceFontFamily(void)
+{
+    return m_conf->value("themeCustomInterfaceFontFamily", "").toString();
+}
+
+void AppConfig::set_themeCustomInterfaceFontFamily(QString family)
+{
+    m_conf->setValue("themeCustomInterfaceFontFamily", family);
+}
+
+int AppConfig::get_themeCustomInterfaceFontSize(void)
+{
+    return m_conf->value("themeCustomInterfaceFontSize", -1).toInt();
+}
+
+void AppConfig::set_themeCustomInterfaceFontSize(int size)
+{
+    m_conf->setValue("themeCustomInterfaceFontSize", size);
+}
+
+int AppConfig::get_themeCustomTreeFontSize(void)
+{
+    return m_conf->value("themeCustomTreeFontSize", -1).toInt();
+}
+
+void AppConfig::set_themeCustomTreeFontSize(int size)
+{
+    m_conf->setValue("themeCustomTreeFontSize", size);
+}
+
+int AppConfig::get_themeCustomTableFontSize(void)
+{
+    return m_conf->value("themeCustomTableFontSize", -1).toInt();
+}
+
+void AppConfig::set_themeCustomTableFontSize(int size)
+{
+    m_conf->setValue("themeCustomTableFontSize", size);
+}
+
+int AppConfig::get_themeCustomTreeIndentation(void)
+{
+    return m_conf->value("themeCustomTreeIndentation", -1).toInt();
+}
+
+void AppConfig::set_themeCustomTreeIndentation(int pixels)
+{
+    m_conf->setValue("themeCustomTreeIndentation", pixels);
+}
+
+int AppConfig::get_themeCustomTableRowHeight(void)
+{
+    return m_conf->value("themeCustomTableRowHeight", -1).toInt();
+}
+
+void AppConfig::set_themeCustomTableRowHeight(int pixels)
+{
+    m_conf->setValue("themeCustomTableRowHeight", pixels);
+}
+
+
 // Человеко-читаемые имена вложенных файлов на диске.
 // Параметр намеренно не входит в версионные таблицы (как noteFontColor):
 // отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна

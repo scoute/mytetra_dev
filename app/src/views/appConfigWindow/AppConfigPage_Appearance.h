@@ -6,8 +6,6 @@
 class QWidget;
 class QGroupBox;
 class QCheckBox;
-class QLabel;
-class MtComboBox;
 
 class AppConfigPage_Appearance : public ConfigPage
 {
@@ -26,18 +24,9 @@ public:
     void setupSignals(void);
     void assembly(void);
 
-    void setupThemeComboBox(void);
-    void setupIconSizeComboBox(void);
-
-    // Объединяющая рамка
+    // Объединяющая рамка поведения окон. Дизайн (тема, иконки,
+    // цвета, шрифты) живёт на странице Themes
     QGroupBox *behaviorBox;
-    QGroupBox *interfaceBox;
-
-    QLabel *themeLabel;
-    MtComboBox *themeNameComboBox;
-
-    QLabel *iconSizeLabel;
-    MtComboBox *iconSizeComboBox;
 
     QCheckBox *runInMinimizedWindow; // Разрешен ли запуск в свернутом окне
     QCheckBox *dockableWindowsBehavior; // Поведение открепляемых окон

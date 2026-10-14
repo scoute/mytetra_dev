@@ -142,7 +142,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_48(true);
+        QStringList actualTable=get_parameter_table_49(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1285,6 +1285,19 @@ void AppConfig::setEnableCreateEmptyRecord(bool state)
 }
 
 
+// Разрешен ли доступ внешнего AI-клиента через MCP.
+// По умолчанию запрещен: включается галочкой на странице MCP
+bool AppConfig::get_mcpAllow(void)
+{
+    return m_conf->value("mcpAllow", false).toBool();
+}
+
+void AppConfig::set_mcpAllow(bool state)
+{
+    m_conf->setValue("mcpAllow", state);
+}
+
+
 QString AppConfig::getDockableWindowsState(void)
 {
     return this->get_parameter("dockableWindowsState");
@@ -1537,6 +1550,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_46;
     parameterFunctions << &AppConfig::get_parameter_table_47;
     parameterFunctions << &AppConfig::get_parameter_table_48;
+    parameterFunctions << &AppConfig::get_parameter_table_49;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2516,6 +2530,25 @@ QStringList AppConfig::get_parameter_table_48(bool withEndSignature)
 
     // Глобальный режим только чтения (без изменений базы)
     table << "readOnly" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_49(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 48
+    table << get_parameter_table_48(false);
+
+    // Разрешение доступа внешнего AI-клиента через MCP, по умолчанию закрыт
+    table << "mcpAllow" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

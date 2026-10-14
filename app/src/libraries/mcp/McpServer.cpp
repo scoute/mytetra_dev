@@ -2135,6 +2135,15 @@ int runMcpServer(int argc, char **argv)
   }
 
   mytetraConfig.init();
+
+  // Доступ закрыт галочкой на странице MCP: сервер не стартует.
+  // Код 4 чтобы отличать от отсутствия conf.ini (2) и битой базы (3)
+  if(!mytetraConfig.get_mcpAllow())
+  {
+    fprintf(stderr, "mcp: access is disabled, allow it on the MCP settings page\n");
+    return 4;
+  }
+
   dataBaseConfig.init();
 
   QString xmlPath=mytetraConfig.get_tetradir()+"/mytetra.xml";

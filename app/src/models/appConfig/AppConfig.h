@@ -345,6 +345,10 @@ public:
     bool getEnableCreateEmptyRecord(void);
     void setEnableCreateEmptyRecord(bool state);
 
+    // Разрешен ли запуск MCP-сервера внешним AI-клиентом
+    bool get_mcpAllow(void);
+    void set_mcpAllow(bool state);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);
@@ -424,6 +428,7 @@ private:
     QStringList get_parameter_table_46(bool withEndSignature=true);
     QStringList get_parameter_table_47(bool withEndSignature=true);
     QStringList get_parameter_table_48(bool withEndSignature=true);
+    QStringList get_parameter_table_49(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

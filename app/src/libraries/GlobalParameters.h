@@ -40,6 +40,11 @@ public:
 
     void init(void);
 
+    // Бездиалоговая инициализация для headless-режимов (MCP-сервер):
+    // кодеки и поиск рабочей директории. В отличие от init() при
+    // отсутствии conf.ini НЕ открывает InstallDialog, а возвращает false
+    bool initHeadless(void);
+
     QString getSystemCodepage(void);
     QString getConsoleCodepage(void);
 

@@ -158,6 +158,8 @@ HEADERS = src/main.h \
     src/libraries/helpers/ScreenHelper.h \
     src/libraries/helpers/SortHelper.h \
     src/libraries/helpers/UniqueIdHelper.h \
+    src/libraries/mcp/McpServer.h \
+    src/libraries/mcp/McpTools.h \
     src/libraries/wyedit/EditorConfigMathExpression.h \
     src/libraries/wyedit/EditorDropDownButton.h \
     src/libraries/wyedit/EditorShowTextContextMenu.h \
@@ -346,6 +348,8 @@ SOURCES = src/main.cpp \
     src/libraries/helpers/ScreenHelper.cpp \
     src/libraries/helpers/SortHelper.cpp \
     src/libraries/helpers/UniqueIdHelper.cpp \
+    src/libraries/mcp/McpServer.cpp \
+    src/libraries/mcp/McpTools.cpp \
     src/libraries/wyedit/EditorConfigMathExpression.cpp \
     src/libraries/wyedit/EditorDropDownButton.cpp \
     src/libraries/wyedit/EditorShowTextContextMenu.cpp \

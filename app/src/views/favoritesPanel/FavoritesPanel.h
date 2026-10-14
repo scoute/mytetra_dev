@@ -32,6 +32,9 @@ public slots:
     // Пересборка списка. Публичный для обновления извне
     void refreshFavorites(void);
 
+    // Пол панели: шапка плюс две строки. Публичный для стенда
+    void updateMinimumHeight(void);
+
     // Границу подвинули руками: список на всю высоту панели
     void setUserResized(void);
 

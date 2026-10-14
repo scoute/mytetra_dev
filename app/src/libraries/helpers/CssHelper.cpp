@@ -282,8 +282,17 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
         return QString();
     }
 
-    // Своя тема собирается на основе Default: своих CSS-файлов нет
-    const QString cssName=(themeName=="custom") ? "default" : themeName;
+    // Своя тема собирается на выбранной базе: своих CSS-файлов нет
+    QString cssName=themeName;
+
+    if(themeName=="custom")
+    {
+        cssName=mytetraConfig.get_themeCustomBaseTheme();
+
+        if(cssName!="default" && cssName!="dark" &&
+           cssName!="modern" && cssName!="midnight")
+            cssName="default";
+    }
 
     QString fileName;
 
@@ -444,17 +453,74 @@ void CssHelper::updateInterface()
 
 
 
-// Кастомный дизайн поверх темы. Оригиналы запоминаются один раз
-// чтобы сброс возвращал именно тему, а не дефолты Qt
+// Кастомный дизайн поверх темы. Работает ТОЛЬКО на теме Custom:
+// базовые темы всегда выглядят как есть. При уходе с Custom
+// ранее наложенное снимается обратно до значений темы.
+// Оригиналы запоминаются один раз чтобы сброс возвращал именно
+// тему, а не дефолты Qt
 void CssHelper::applyCustomDesign(void)
 {
-    static bool originalsTaken=false;
+    static bool appFontOrigTaken=false;
+    static bool treeOrigTaken=false;
+    static bool tableOrigTaken=false;
     static QFont appFontOrig;
     static QFont treeFontOrig;
     static QFont tableFontOrig;
-    static int treeIndentOrig=-1;
-    static int tableRowHeightOrig=-1;
+    static int treeIndentOrig=20;
+    static int tableRowHeightOrig=30;
     static bool tableAlternatingOrig=false;
+
+    const bool customActive=(mytetraConfig.getInterfaceTheme()=="custom");
+
+    KnowTreeView *tree=find_object<KnowTreeView>("knowTreeView");
+    RecordTableView *table=find_object<RecordTableView>("recordTableView");
+
+    if(qApp!=nullptr && !appFontOrigTaken)
+    {
+        appFontOrig=qApp->font();
+        appFontOrigTaken=true;
+    }
+
+    // Оригиналы виджетов берутся при первом живом вызове: стартовый
+    // вызов до создания окон их ещё не видит
+    if(tree!=nullptr && !treeOrigTaken)
+    {
+        treeFontOrig=tree->font();
+        treeIndentOrig=tree->indentation();
+        treeOrigTaken=true;
+    }
+
+    if(table!=nullptr && !tableOrigTaken)
+    {
+        tableFontOrig=table->font();
+        tableRowHeightOrig=table->verticalHeader()->defaultSectionSize();
+        tableAlternatingOrig=table->alternatingRowColors();
+        tableOrigTaken=true;
+    }
+
+    // Не Custom: всё своё снять, вернуть значения темы
+    if(!customActive)
+    {
+        if(qApp!=nullptr)
+            qApp->setFont(appFontOrig);
+
+        if(tree!=nullptr)
+        {
+            tree->setStyleSheet(QString());
+            tree->setFont(treeFontOrig);
+            tree->setIndentation(treeIndentOrig);
+        }
+
+        if(table!=nullptr)
+        {
+            table->setStyleSheet(QString());
+            table->setFont(tableFontOrig);
+            table->setAlternatingRowColors(tableAlternatingOrig);
+            table->verticalHeader()->setDefaultSectionSize(tableRowHeightOrig);
+        }
+
+        return;
+    }
 
     // Шрифт интерфейса: пусто означает шрифт темы
     const QString family=mytetraConfig.get_themeCustomInterfaceFontFamily();
@@ -462,9 +528,6 @@ void CssHelper::applyCustomDesign(void)
 
     if(qApp!=nullptr)
     {
-        if(!originalsTaken)
-            appFontOrig=qApp->font();
-
         if(family.isEmpty() && size<=0)
             qApp->setFont(appFontOrig);
         else
@@ -479,30 +542,6 @@ void CssHelper::applyCustomDesign(void)
 
             qApp->setFont(font);
         }
-    }
-
-    KnowTreeView *tree=find_object<KnowTreeView>("knowTreeView");
-    RecordTableView *table=find_object<RecordTableView>("recordTableView");
-
-    if(tree==nullptr && table==nullptr)
-        return;
-
-    if(!originalsTaken)
-    {
-        if(tree!=nullptr)
-        {
-            treeFontOrig=tree->font();
-            treeIndentOrig=tree->indentation();
-        }
-
-        if(table!=nullptr)
-        {
-            tableFontOrig=table->font();
-            tableRowHeightOrig=table->verticalHeader()->defaultSectionSize();
-            tableAlternatingOrig=table->alternatingRowColors();
-        }
-
-        originalsTaken=true;
     }
 
     // Дерево веток: пустые цвета означают цвета темы

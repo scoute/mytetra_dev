@@ -1232,10 +1232,10 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="175"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="181"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="205"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="733"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="735"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="745"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="747"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="786"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="788"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="798"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="800"/>
         <source>Theme</source>
         <translation>Тема</translation>
     </message>
@@ -1251,49 +1251,57 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="220"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="696"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="744"/>
         <source>Interface theme</source>
         <translation>Тема интерфейса</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="225"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="700"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="250"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="747"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="753"/>
         <source>Default</source>
         <translation>Основная</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="226"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="701"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="251"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="748"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="754"/>
         <source>Dark</source>
         <translation>Темная</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="227"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="702"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="252"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="749"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="755"/>
         <source>Modern</source>
         <translation>Современная</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="228"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="703"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="253"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="750"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="756"/>
         <source>Midnight</source>
         <translation>Полуночная</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="229"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="704"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="757"/>
         <source>Custom</source>
         <translation>Настраиваемая тема</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="252"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="712"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="267"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="765"/>
         <source>Icon size</source>
         <translation>Размер иконок</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="255"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="713"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="270"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="766"/>
         <source>System</source>
         <translation>Системный</translation>
     </message>
@@ -1302,32 +1310,31 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <translation type="vanished">Фоновая картинка: нет</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="482"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="506"/>
         <source>Paper image: %1</source>
         <translation>Фоновая картинка: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="489"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="513"/>
         <source>Select paper image</source>
         <translation>Выбор фоновой картинки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="491"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="515"/>
         <source>Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg)</source>
         <translation>Картинки (*.png *.jpg *.jpeg *.bmp *.gif *.svg)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="695"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="743"/>
         <source>Base theme</source>
         <translation>Базовая тема</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="697"/>
         <source>Custom theme builds on Default plus settings below.</source>
-        <translation>Своя тема собирается на основе Default плюс настройки ниже.</translation>
+        <translation type="vanished">Своя тема собирается на основе Default плюс настройки ниже.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="715"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="768"/>
         <source>Note</source>
         <translation>Заметка</translation>
     </message>
@@ -1336,120 +1343,130 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <translation type="vanished">Цвет бумаги заметки: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="479"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="503"/>
         <source>Paper image: tx_fabric.jpg (default)</source>
         <translation>Фоновая картинка: tx_fabric.jpg (встроенная)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="716"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="745"/>
+        <source>Settings below apply to the Custom theme only.</source>
+        <translation>Настройки ниже применяются только к теме Custom.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="746"/>
+        <source>Custom base: </source>
+        <translation>Основа Custom: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="769"/>
         <source>Paper color: </source>
         <translation>Цвет фона: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="717"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="719"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="721"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="729"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="731"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="739"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="741"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="743"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="751"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="770"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="772"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="774"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="782"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="784"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="792"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="794"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="796"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="804"/>
         <source>Reset</source>
         <translation>Сбросить</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="718"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="771"/>
         <source>Note font color: </source>
         <translation>Цвет шрифта заметки: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="720"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="773"/>
         <source>Secret color: </source>
         <translation>Цвет секрета: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="723"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="776"/>
         <source>Paper texture: </source>
         <translation>Файл-текстура: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="724"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="777"/>
         <source>Load...</source>
         <translation>Загрузить...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="725"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="778"/>
         <source>Clear</source>
         <translation>Очистить</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="727"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="780"/>
         <source>Branches tree</source>
         <translation>Дерево веток</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="728"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="781"/>
         <source>Tree background: </source>
         <translation>Фон дерева: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="730"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="783"/>
         <source>Tree text color: </source>
         <translation>Цвет текста дерева: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="732"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="785"/>
         <source>Tree font size: </source>
         <translation>Размер шрифта дерева: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="734"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="787"/>
         <source>Tree indentation: </source>
         <translation>Отступ дерева: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="737"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="790"/>
         <source>Notes list</source>
         <translation>Список заметок</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="738"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="791"/>
         <source>List background: </source>
         <translation>Фон списка: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="740"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="793"/>
         <source>List text color: </source>
         <translation>Цвет текста списка: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="742"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="795"/>
         <source>Alternate row color: </source>
         <translation>Цвет чередующихся строк: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="744"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="797"/>
         <source>List font size: </source>
         <translation>Размер шрифта списка: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="746"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="799"/>
         <source>Row height: </source>
         <translation>Высота строк: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="749"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="802"/>
         <source>Interface font</source>
         <translation>Шрифт интерфейса</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="750"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="803"/>
         <source>Font: </source>
         <translation>Шрифт: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="754"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="807"/>
         <source>Reset all to theme</source>
         <translation>Сбросить всё к теме</translation>
     </message>
@@ -4394,13 +4411,13 @@ You need to update MyTetra.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1219"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1911"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1931"/>
         <source>&amp;File</source>
         <translation>Файл</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1222"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1933"/>
         <source>Databases management</source>
         <translation>Управление базами данных</translation>
     </message>
@@ -4411,7 +4428,7 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1236"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1916"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1936"/>
         <source>Print Preview...</source>
         <translation>Предварительный просмотр</translation>
     </message>
@@ -4430,26 +4447,26 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1914"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1934"/>
         <source>Export tree item</source>
         <translation>Экспорт ветки</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1228"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1915"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1935"/>
         <source>Import tree item</source>
         <translation>Импорт ветки</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1244"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2008"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2540"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2028"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2560"/>
         <source>&amp;Quit</source>
         <translation>Выход</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1253"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1921"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1941"/>
         <source>&amp;Tools</source>
         <translation>Инструменты</translation>
     </message>
@@ -4459,15 +4476,15 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1265"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1923"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1943"/>
         <source>Action &amp;log</source>
         <translation>Журнал действий</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1296"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1302"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1936"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1940"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1956"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1960"/>
         <source>&amp;Preferences</source>
         <translation>Настройки</translation>
     </message>
@@ -4501,26 +4518,26 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1371"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1998"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2018"/>
         <source>&amp;Help</source>
         <translation>Справка</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1374"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2000"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2020"/>
         <source>About MyTetra</source>
         <translation>О программе MyTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1377"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2001"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2021"/>
         <source>About Qt</source>
         <translation>О фреймворке Qt</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2002"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2365"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2022"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2385"/>
         <source>Technical info</source>
         <translation>Техническая информация</translation>
     </message>
@@ -4555,7 +4572,7 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="196"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1321"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2030"/>
         <source>History</source>
         <translation>История</translation>
     </message>
@@ -4564,32 +4581,32 @@ You need to update MyTetra.</source>
         <translation type="vanished">MCP-сессия активна, программа работает в режиме только чтения</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2079"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2099"/>
         <source>Print Document</source>
         <translation>Печать документа</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2134"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2154"/>
         <source>Select an empty directory to export data</source>
         <translation>Укажите пустую директорию для экспорта данных</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2152"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2172"/>
         <source>Select directory to import data</source>
         <translation>Укажите директорию для импорта данных</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2366"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2386"/>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;Техническая информация&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2475"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2495"/>
         <source>MyTetra: can&apos;t synchronization</source>
         <translation>MyTetra: Синхронизация невозможна</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2476"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2496"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Не задана команда синхронизации.&lt;br&gt;Проверьте меню &quot;Инструменты&quot;, &quot;Настройки&quot;, раздел &quot;Синхронизация&quot;.</translation>
     </message>
@@ -4599,81 +4616,81 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation type="obsolete">Не задана команда синхронизации.\nПроверьте меню \&quot;Инструменты\&quot;, \&quot;Настройки\&quot;, раздел \&quot;Синхронизация\&quot;.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2495"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2515"/>
         <source>MyTetra synchronization</source>
         <translation>Синхронизация MyTetra</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2496"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2516"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>Происходит синхронизация. Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2005"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2531"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2025"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2551"/>
         <source>&amp;Restore window</source>
         <translation>Показать окно</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1684"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1704"/>
         <source>MCP session is active%1, MyTetra works in read-only mode</source>
         <translation>MCP-сессия активна%1, MyTetra работает в режиме только чтения</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2006"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2534"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2554"/>
         <source>Ma&amp;ximize window</source>
         <translation>Развернуть окно</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2007"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2537"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2557"/>
         <source>Mi&amp;nimize window</source>
         <translation>Свернуть окно</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1390"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1963"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1983"/>
         <source>&amp;Themes</source>
         <translation>Темы</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1395"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1966"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1986"/>
         <source>Default</source>
         <translation>Основная</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1396"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1967"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1987"/>
         <source>Dark</source>
         <translation>Темная</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1397"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1968"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1988"/>
         <source>Modern</source>
         <translation>Современная</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1398"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1969"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1989"/>
         <source>Midnight</source>
         <translation>Полуночная</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1399"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1970"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1990"/>
         <source>Custom</source>
         <translation>Настраиваемая тема</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1655"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1675"/>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
         <translation>Веток: %1 | Записей: %2 | Меток: %3 | Файлов: %4 | Картинок: %5 | Внутренних ссылок: %6</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1656"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1676"/>
         <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
         <translation>Статистика базы: ветки, записи, метки, файлы, картинки и ссылки. Ссылки — это ссылки mytetra:// между заметками. Клик открывает детали по заметкам.</translation>
     </message>
@@ -4686,39 +4703,39 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation type="vanished">Принято</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
         <source>Branch</source>
         <translation>Ветка</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
         <source>Note</source>
         <translation>Заметка</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
         <source>Internal links</source>
         <translation>Внутренние ссылки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
         <source>Images</source>
         <translation>Картинки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
         <source>Files</source>
         <translation>Файлы</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="216"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1788"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2012"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2032"/>
         <source>Tags</source>
         <translation>Метки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1850"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1870"/>
         <source>Statistics</source>
         <translation>Статистика</translation>
     </message>
@@ -4729,13 +4746,13 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1262"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1925"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1945"/>
         <source>Attached &amp;files</source>
         <translation>Прикрепленные файлы</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1449"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1984"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2004"/>
         <source>Show favorites panel</source>
         <translation>Показывать панель избранного</translation>
     </message>
@@ -4746,25 +4763,25 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1442"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1978"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1998"/>
         <source>&amp;View</source>
         <translation>Вид</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1445"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1981"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2001"/>
         <source>Show note header</source>
         <translation>Показывать шапку заметки</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1459"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1987"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2007"/>
         <source>Change secret color...</source>
         <translation>Изменить цвет секретов...</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1463"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1990"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
         <source>Change note background color...</source>
         <translation>Изменить цвет фона заметки...</translation>
     </message>
@@ -4834,13 +4851,13 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <name>MetaEditor</name>
     <message>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="107"/>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="650"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="655"/>
         <source>&lt;B&gt;Url:&lt;/B&gt; </source>
         <translation>&lt;B&gt;Url:&lt;/B&gt; </translation>
     </message>
     <message>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="121"/>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="651"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="656"/>
         <source>&lt;B&gt;Tags:&lt;/B&gt; </source>
         <translation>&lt;B&gt;Метки:&lt;/B&gt; </translation>
     </message>
@@ -6019,7 +6036,7 @@ Please report about this problem to the developers.</source>
 <context>
     <name>SecretFormatter</name>
     <message>
-        <location filename="../../../src/libraries/wyedit/formatters/SecretFormatter.cpp" line="58"/>
+        <location filename="../../../src/libraries/wyedit/formatters/SecretFormatter.cpp" line="62"/>
         <source>Select text to hide as secret</source>
         <translation>Выделите текст чтобы скрыть секретом</translation>
     </message>

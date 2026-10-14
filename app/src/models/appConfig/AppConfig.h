@@ -294,6 +294,11 @@ public:
     QString get_themeCustomNotePaperMode(void);
     void set_themeCustomNotePaperMode(QString mode);
 
+    // Базовая тема для Custom: одна из четырех (default, dark,
+    // modern, midnight). Сами базовые темы не меняются никогда
+    QString get_themeCustomBaseTheme(void);
+    void set_themeCustomBaseTheme(QString name);
+
     // Человеко-читаемые имена вложенных файлов на диске (схема id_имя.ext
     // вместо id.ext). По умолчанию выключено. Включается кнопкой миграции
     // в настройках прикрепленных файлов, после чего новые вложения

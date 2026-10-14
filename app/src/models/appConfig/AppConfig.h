@@ -259,6 +259,24 @@ public:
     bool get_recordHeaderVisible(void);
     void set_recordHeaderVisible(bool state);
 
+    // Лимиты клиппера: сколько картинок забирать в одну заметку
+    // и максимальный размер одной картинки в мегабайтах
+    int get_clipperMaxImages(void);
+    bool set_clipperMaxImages(int count);
+
+    int get_clipperMaxImageSizeMb(void);
+    bool set_clipperMaxImageSizeMb(int mbSize);
+
+    // Веб-клиппер: включение, глобальный хоткей, запомненная ветка
+    bool get_clipperenable(void);
+    void set_clipperenable(bool flag);
+
+    QString get_clipperhotkey(void);
+    void set_clipperhotkey(QString sequence);
+
+    QString get_clipperbranchid(void);
+    void set_clipperbranchid(QString id);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -366,6 +384,9 @@ private:
     QStringList get_parameter_table_42(bool withEndSignature=true);
     QStringList get_parameter_table_43(bool withEndSignature=true);
     QStringList get_parameter_table_44(bool withEndSignature=true);
+    QStringList get_parameter_table_45(bool withEndSignature=true);
+    QStringList get_parameter_table_46(bool withEndSignature=true);
+    QStringList get_parameter_table_47(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

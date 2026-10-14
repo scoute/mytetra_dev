@@ -77,6 +77,10 @@ void FavoritesPanel::setupUi(void)
     favoritesList=new QListWidget(this);
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
 
+    // Боковой скролл всегда виден: длинные названия не гадают
+    // появится ли он при наведении, место под него резервируется сразу
+    favoritesList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
     // Вертикаль Preferred: в обычном режиме высота по содержимому
     // (нулевой стретч + хвостовая распорка), в ручном после драга
     // список растянется на всю панель через setUserResized()
@@ -252,6 +256,27 @@ void FavoritesPanel::onRemoveFavorite(void)
 }
 
 
+// Пол панели: шапка плюс две строки списка. Сплиттер уважает
+// minimumHeight детей, поэтому границу выше двух строк поднять
+// нельзя. Пустой список высоту строки не дает: тогда шрифт
+void FavoritesPanel::updateMinimumHeight(void)
+{
+    int rowHeight=0;
+
+    if(favoritesList->count()>0)
+        rowHeight=favoritesList->sizeHintForRow(0);
+
+    if(rowHeight<=0)
+        rowHeight=favoritesList->fontMetrics().height()+2;
+
+    int headerHeight=headerLabel->sizeHint().height();
+    int spacing=(favoritesLayout!=nullptr) ? favoritesLayout->spacing() : 0;
+
+    setMinimumHeight(headerHeight+spacing+
+                     favoritesList->frameWidth()*2+rowHeight*2);
+}
+
+
 // Пересборка списка: id берутся из хранилища, названия и ветки
 // резолвятся вживую (ветку могли переименовать или переместить).
 // Мертвые id (запись не найдена: удалена или подменена база)
@@ -363,14 +388,11 @@ void FavoritesPanel::refreshFavorites(void)
     if(!m_userResized)
         favoritesList->setMaximumHeight(qMin(listHeight, 180));
 
-    // Пол панели: одна строка. Иначе minimumSizeHint списка не дает
-    // поднять границу выше примерно пяти строк
-    int rowHeight=favoritesList->sizeHintForRow(0);
-
-    if(rowHeight<0)
-        rowHeight=0;
-
-    favoritesList->setMinimumHeight(favoritesList->frameWidth()*2+rowHeight);
+    // Пол панели: шапка плюс две строки. Иначе границу сплиттера
+    // можно поднять так, что записи закроются. Две строки, а не одна:
+    // одиночная звездочка не должна прятать соседнюю при драге.
+    // Пересчет при каждой сборке: шрифт и высота строк могут меняться
+    updateMinimumHeight();
 
     // Шапка со счетчиком чтобы панель не висела одиноко:
     // звездочка слева уже стоит в assembly, тут слово и число

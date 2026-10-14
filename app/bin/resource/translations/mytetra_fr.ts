@@ -2535,6 +2535,10 @@ You need to update MyTetra.</source>
         <source>Show favorites panel</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Backlinks</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -3726,6 +3730,10 @@ Please report about this problem to the developers.</source>
             <source>Images gallery</source>
             <translation type="unfinished"></translation>
         </message>
+    <message>
+        <source>Show backlinks panel</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4451,6 +4459,37 @@ All data imported will be encrypted.</source>
     </message>
     <message>
         <source>Switching storage moves existing stars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>BacklinksPanel</name>
+    <message>
+        <source>Incoming links</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Incoming links (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing record %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recheck all links</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outgoing links</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outgoing links (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     </context>

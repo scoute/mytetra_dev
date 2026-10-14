@@ -187,6 +187,7 @@ HEADERS = src/main.h \
     src/views/historyPanel/HistoryPanel.h \
     src/views/tagsPanel/TagsPanel.h \
     src/views/favoritesPanel/FavoritesPanel.h \
+    src/views/backlinksPanel/BacklinksPanel.h \
     src/views/contentGallery/ContentGallery.h \
     src/views/contentGallery/GalleryTileDelegate.h \
     src/libraries/wyedit/Editor.h \
@@ -310,6 +311,7 @@ HEADERS+=\
     src/libraries/WalkHistory.h \
     src/libraries/VisitHistory.h \
     src/libraries/Favorites.h \
+    src/libraries/BacklinkIndex.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
     src/libraries/crypt/Password.h \
@@ -368,6 +370,7 @@ SOURCES = src/main.cpp \
     src/views/historyPanel/HistoryPanel.cpp \
     src/views/tagsPanel/TagsPanel.cpp \
     src/views/favoritesPanel/FavoritesPanel.cpp \
+    src/views/backlinksPanel/BacklinksPanel.cpp \
     src/views/contentGallery/ContentGallery.cpp \
     src/views/contentGallery/GalleryTileDelegate.cpp \
     src/libraries/wyedit/Editor.cpp \
@@ -495,6 +498,7 @@ SOURCES+=\
     src/libraries/WalkHistory.cpp \
     src/libraries/VisitHistory.cpp \
     src/libraries/Favorites.cpp \
+    src/libraries/BacklinkIndex.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \
     src/libraries/crypt/Password.cpp \

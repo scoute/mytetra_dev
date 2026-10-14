@@ -48,6 +48,8 @@ public:
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
 #include "views/favoritesPanel/FavoritesPanel.h"
+#include "views/backlinksPanel/BacklinksPanel.h"
+#include "libraries/BacklinkIndex.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
@@ -177,6 +179,16 @@ void MainWindow::setupUI(void)
     historyPanelDock->setObjectName("historyPanelDock");
     historyPanelDock->setWidget(historyPanel);
     historyPanelDock->hide();
+
+    // Панель входящих ссылок в доке справа. По умолчанию скрыта,
+    // переключается из меню Tools
+    backlinksPanel=new BacklinksPanel(this);
+    backlinksPanel->setObjectName("backlinksPanel");
+
+    backlinksPanelDock=new QDockWidget(tr("Backlinks"), this);
+    backlinksPanelDock->setObjectName("backlinksPanelDock");
+    backlinksPanelDock->setWidget(backlinksPanel);
+    backlinksPanelDock->hide();
 
     // Панель меток в доке справа. По умолчанию скрыта,
     // переключается из меню Tools и горячей клавишей
@@ -330,6 +342,11 @@ void MainWindow::assembly(void)
     setCentralWidget(findSplitter);
 
     addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
+    addDockWidget(Qt::RightDockWidgetArea, backlinksPanelDock);
+
+    // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
+    // при первом запуске строится полным сканом базы
+    BacklinkIndex::instance().loadOrBuild();
     addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
 }
 
@@ -739,6 +756,13 @@ void MainWindow::initToolsMenu(void)
     toolsMenu->addAction(historyPanelToggle);
 
     shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
+
+    // Переключатель панели входящих ссылок: видимость дока и галочка синхронны сами
+    QAction *backlinksPanelToggle=backlinksPanelDock->toggleViewAction();
+    backlinksPanelToggle->setIcon(QIcon(":/resource/pic/backlinks.svg"));
+    toolsMenu->addAction(backlinksPanelToggle);
+
+    shortcutManager.initAction("misc-backlinksPanel", backlinksPanelToggle);
 
     // Переключатель панели избранного: дока нет (панель живет в TreeScreen),
     // поэтому обычное checkable-действие. Сам refresh решит показать
@@ -1184,6 +1208,11 @@ void MainWindow::retranslateUi(void)
 
     if(favoritesPanel!=nullptr)
         favoritesPanel->retranslateUi();
+
+    BacklinksPanel *backlinksPanel=find_object<BacklinksPanel>("backlinksPanel");
+
+    if(backlinksPanel!=nullptr)
+        backlinksPanel->retranslateUi();
 }
 
 
@@ -1918,6 +1947,10 @@ void MainWindow::saveTextarea(void)
     const bool modified=editorScreen->getTextareaModified();
 
     editorScreen->saveTextarea();
+
+    // Текст на диске обновился: перепарсить исходящие ссылки записи
+    if(!id.isEmpty())
+      BacklinkIndex::instance().updateSource(id);
 
     walkHistory.add(id,
                     editorScreen->getCursorPosition(),

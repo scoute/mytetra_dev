@@ -1,5 +1,6 @@
 #include <QFile>
 #include <QFileInfo>
+#include <QStringList>
 #include <QMessageBox>
 #include <QDebug>
 #include <QXmlStreamWriter>
@@ -393,10 +394,15 @@ void Attach::removeFile()
 
 QString Attach::constructFileName(const QString type, const QString id, const QString fileName)
 {
-    // Схема выбирается настройкой: человеко-читаемая id_имя.ext
-    // или исходная id.ext
-    if(type=="file" && mytetraConfig.get_attachHumanReadableNames())
-        return constructHumanFileName(type, id, fileName);
+    // Схема выбирается настройкой режима имен
+    if(type=="file")
+    {
+        int mode=mytetraConfig.get_attachNameMode();
+        if(mode==AppConfig::AttachNameHybrid)
+            return constructHumanFileName(type, id, fileName);
+        if(mode==AppConfig::AttachNameOriginal)
+            return constructOriginalFileName(type, id, fileName);
+    }
 
     return constructLegacyFileName(type, id, fileName);
 }
@@ -437,11 +443,50 @@ QString Attach::constructLegacyFileName(const QString type, const QString id, co
 }
 
 
+// Общая чистка видимого имени для подстановки в имя файла на диске.
+// Пробелы и табы становятся подчеркиваниями (удобно в консоли Linux,
+// не нужно квотирование), разделители пути, NUL, управляющие символы
+// и запрещенные в Windows символы (<>:"|?*) тоже становятся
+// подчеркиваниями: каталог базы могут синхронизировать на Windows.
+// Кириллица и регистр сохраняются. Повторы подчеркиваний схлопываются,
+// краевые подчеркивания снимаются
+QString Attach::sanitizeVisibleName(const QString name)
+{
+    static const QString forbiddenChars=QString::fromLatin1("<>:\"|?*");
+
+    QString result;
+    result.reserve(name.length());
+    for(int i=0; i<name.length(); ++i)
+    {
+        QChar c=name.at(i);
+        if(c==QChar('/') || c==QChar('\\') || c==QChar('\0')
+           || c.category()==QChar::Other_Control
+           || forbiddenChars.contains(c)
+           || c.isSpace())
+            result.append('_');
+        else
+            result.append(c);
+    }
+
+    // Схлопывание повторов подчеркиваний: "my  doc" -> "my_doc"
+    while(result.contains("__"))
+        result.replace("__", "_");
+
+    // Краевые подчеркивания снимаются
+    while(result.startsWith("_"))
+        result=result.mid(1);
+    while(result.endsWith("_"))
+        result.chop(1);
+
+    return result;
+}
+
+
 // Видимая часть имени, пригодная для подстановки в имя файла на диске:
-// вырезаются разделители пути и управляющие символы, ведущие точки
-// снимаются (чтобы не получались скрытые файлы и ".."), остаток режется
-// до разумной длины с сохранением читаемости. Расширение не входит,
-// оно пристыковывается отдельно как в исходной схеме
+// чистится общим хелпером, ведущие точки снимаются (чтобы не получались
+// скрытые файлы и ".."), остаток режется до разумной длины с сохранением
+// читаемости. Расширение не входит, оно пристыковывается отдельно
+// как в исходной схеме
 QString Attach::sanitizeHumanNamePart(const QString fileName)
 {
     // Берется основа без расширения: "Договор.v2.pdf" -> "Договор.v2"
@@ -451,27 +496,15 @@ QString Attach::sanitizeHumanNamePart(const QString fileName)
     if(suffix.length()>0 && stem.endsWith("."+suffix, Qt::CaseSensitive))
         stem=stem.left(stem.length()-suffix.length()-1);
 
-    QString result;
-    result.reserve(stem.length());
-    for(int i=0; i<stem.length(); ++i)
-    {
-        QChar c=stem.at(i);
-        // Разделители пути, NUL и управляющие символы недопустимы в имени
-        if(c==QChar('/') || c==QChar('\\') || c==QChar('\0') || c.category()==QChar::Other_Control)
-            result.append('_');
-        else
-            result.append(c);
-    }
-
-    result=result.trimmed();
+    QString result=sanitizeVisibleName(stem);
 
     // Ведущие точки снимаются: имя не должно становиться скрытым,
     // а ".." вообще недопустимо как часть пути
     while(result.startsWith("."))
         result=result.mid(1).trimmed();
 
-    // Хвостовые точки и пробелы Windows не любит, снимаются тоже
-    while(result.endsWith(".") || result.endsWith(" "))
+    // Хвостовые точки Windows не любит, снимаются тоже
+    while(result.endsWith("."))
         result.chop(1);
 
     // Длинные названия режутся: хватает начала для узнаваемости,
@@ -534,10 +567,109 @@ QString Attach::constructHumanFileName(const QString type, const QString id, con
 }
 
 
-// Имя файла, реально лежащего на диске: сначала проверяется имя по текущей
-// схеме, затем по другой (база могла мигрировать наполовину или быть
-// открыта с другой настройкой). Используется всеми путями чтения/удаления,
-// запись всегда идет по текущей схеме через getInnerFileName()
+// Оригинальная схема: имя как при загрузке, с вычищенными опасными
+// символами (общий хелпер: пробелы в подчеркивания, без path traversal
+// и Windows-запрещенных символов). Уникальность префиксом не защищена:
+// два разных вложения с одинаковым видимым именем в одной записи
+// конфликтуют, такое переименование пропускается с ошибкой,
+// а не затирается
+QString Attach::sanitizeOriginalName(const QString fileName)
+{
+    QString result=sanitizeVisibleName(fileName);
+
+    // Точки в конце Windows не любит, снимаются.
+    // Ведущие точки сохраняются: оригинал остается оригиналом,
+    // dot-файл остается скрытым
+    while(result.endsWith("."))
+        result.chop(1);
+
+    // Имя "." и ".." как часть пути недопустимы
+    if(result=="." || result==".." || result.isEmpty())
+        return QString();
+
+    // Длинные имена режутся с сохранением расширения
+    const int maxLength=150;
+    if(result.length()>maxLength)
+    {
+        QFileInfo fileInfo(result);
+        QString suffix=fileInfo.suffix();
+        if(suffix.length()>0 && result.endsWith("."+suffix, Qt::CaseSensitive)
+           && suffix.length()+1<maxLength)
+            result=result.left(maxLength-suffix.length()-1).trimmed()+"."+suffix;
+        else
+            result=result.left(maxLength).trimmed();
+    }
+
+    if(result=="." || result==".." || result.isEmpty())
+        return QString();
+
+    return result;
+}
+
+
+// Оригинальная схема: вычищенное имя как при загрузке.
+// Если вычищать нечего (пусто, точки), возвращается исходная схема
+QString Attach::constructOriginalFileName(const QString type, const QString id, const QString fileName)
+{
+    if(type=="file")
+    {
+        QString clean=sanitizeOriginalName(fileName);
+        if(!clean.isEmpty())
+            return clean;
+
+        return constructLegacyFileName(type, id, fileName);
+    }
+
+    if(type=="link")
+        return fileName;
+
+    criticalError("Bad attach type in getInnerFileName():"+type);
+
+    return "";
+}
+
+
+// Все возможные имена файла на диске для данного вложения
+// (все три схемы без дублей). Порядок: системное, гибридное, оригинальное.
+// Используется поиском существующего файла и конвертацией между схемами
+QStringList Attach::candidateFileNames(const QString type, const QString id, const QString fileName)
+{
+    QStringList candidates;
+
+    QString legacy=constructLegacyFileName(type, id, fileName);
+    QString human=constructHumanFileName(type, id, fileName);
+    QString original=constructOriginalFileName(type, id, fileName);
+
+    candidates << legacy;
+    if(human!=legacy)
+        candidates << human;
+    if(original!=legacy && original!=human)
+        candidates << original;
+
+    return candidates;
+}
+
+
+// Имя файла по заданному режиму (для конвертации к выбранному виду)
+QString Attach::fileNameForMode(int mode, const QString type, const QString id, const QString fileName)
+{
+    if(type!="file")
+        return constructLegacyFileName(type, id, fileName);
+
+    if(mode==AppConfig::AttachNameHybrid)
+        return constructHumanFileName(type, id, fileName);
+    if(mode==AppConfig::AttachNameOriginal)
+        return constructOriginalFileName(type, id, fileName);
+
+    return constructLegacyFileName(type, id, fileName);
+}
+
+
+// Имя файла, реально лежащего на диске: перебираются все схемы
+// (база могла конвертироваться наполовину или быть открыта
+// с другой настройкой режима). Используется всеми путями
+// чтения/удаления, запись всегда идет по текущей схеме
+// через getInnerFileName()
 QString Attach::getExistingInnerFileName() const
 {
     QString current=getInnerFileName();
@@ -546,14 +678,10 @@ QString Attach::getExistingInnerFileName() const
     if(QFile::exists(dirName+"/"+current))
         return current;
 
-    QString other;
-    if(mytetraConfig.get_attachHumanReadableNames())
-        other=constructLegacyFileName(getField("type"), getField("id"), getField("fileName"));
-    else
-        other=constructHumanFileName(getField("type"), getField("id"), getField("fileName"));
-
-    if(other!=current && QFile::exists(dirName+"/"+other))
-        return other;
+    QStringList candidates=candidateFileNames(getField("type"), getField("id"), getField("fileName"));
+    foreach(QString candidate, candidates)
+        if(candidate!=current && QFile::exists(dirName+"/"+candidate))
+            return candidate;
 
     return current;
 }

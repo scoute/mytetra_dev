@@ -9,6 +9,7 @@ class QGroupBox;
 class QLabel;
 class QToolButton;
 class QPushButton;
+class QComboBox;
 
 class AppConfigPage_Attach : public ConfigPage
 {
@@ -29,16 +30,16 @@ private slots:
 
   void onEnableRecordWithAttachHighlight(bool);
   void onClickedHighlightColor();
-  void onClickedRenameAttachesToHumanNames();
+  void onClickedConvertAttaches();
 
 protected:
 
   void setColorForButtonHighlightColor(QColor iColor);
 
-  // Переименование всех вложений в человеко-читаемые имена.
-  // Возвращает число переименованных файлов, через счетчики сообщает
+  // Приведение всех вложений к заданному виду имен.
+  // Возвращает число сконвертированных файлов, через счетчики сообщает
   // о пропущенных (файл не найден, запись зашифрована) и ошибках
-  int renameAllAttachesToHumanNames(int &missingCount, QStringList &errors);
+  int convertAllAttachesToMode(int targetMode, int &missingCount, QStringList &errors);
 
   // Галка разрешения/запрещения подсветки записи с прикрепленными файлами
   QCheckBox *enableRecordWithAttachHighlight;
@@ -51,10 +52,13 @@ protected:
   // Объединяющая рамка
   QGroupBox *decorBox;
 
-  // Имена файлов на диске: пояснение, кнопка переименования, предупреждение
+  // Имена файлов на диске: пояснение, выбор режима, кнопка конвертации,
+  // предупреждение
   QGroupBox *fileNamesBox;
   QLabel *fileNamesInfo;
-  QPushButton *renameAttachesButton;
+  QLabel *attachNameModeLabel;
+  QComboBox *attachNameModeCombo;
+  QPushButton *convertAttachesButton;
   QLabel *fileNamesWarning;
 };
 

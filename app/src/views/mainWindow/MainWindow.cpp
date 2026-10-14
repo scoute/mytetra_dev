@@ -664,6 +664,122 @@ void MainWindow::messageHandler(QString message)
 
         treeScreen->knowTreeModel->save();
     }
+
+    else if(command=="mcpRenameBranch")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        QJsonObject renamed=McpTools::applyRenameBranch(treeScreen->knowTreeModel,
+                                                        args.value("id").toString(),
+                                                        args.value("name").toString(),
+                                                        error);
+
+        if(!error.isEmpty() || renamed.isEmpty())
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpMoveBranch")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        QJsonObject moved=McpTools::applyMoveBranch(treeScreen->knowTreeModel,
+                                                    args.value("id").toString(),
+                                                    args.value("target_id").toString(),
+                                                    args.value("as_child").toBool(true),
+                                                    error);
+
+        if(!error.isEmpty() || moved.isEmpty())
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpMoveNote")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        // Как при удалении: редактор может держать указатель внутрь
+        // таблицы-источника, его состояние сбрасывается до переноса
+        find_object<MetaEditor>("editorScreen")->clearAll();
+
+        QString error;
+        QJsonObject moved=McpTools::applyMoveNote(treeScreen->knowTreeModel,
+                                                  args.value("id").toString(),
+                                                  args.value("branch_id").toString(),
+                                                  error);
+
+        if(!error.isEmpty() || moved.isEmpty())
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpRenameTag")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        int renamed=0;
+        int skipped=0;
+
+        if(!McpTools::applyRenameTag(treeScreen->knowTreeModel,
+                                     args.value("old").toString(),
+                                     args.value("new").toString(),
+                                     error, renamed, skipped))
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
+
+    else if(command=="mcpDeleteTag")
+    {
+        if(mytetraConfig.get_readOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QString error;
+        int cleared=0;
+        int skipped=0;
+
+        if(!McpTools::applyDeleteTag(treeScreen->knowTreeModel,
+                                     args.value("tag").toString(),
+                                     error, cleared, skipped))
+            return;
+
+        treeScreen->knowTreeModel->save();
+    }
 }
 
 

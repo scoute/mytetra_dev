@@ -629,6 +629,26 @@ void RecordTableData::deleteRecordById(QString id)
 }
 
 
+bool RecordTableData::moveRecordTo(QString id, RecordTableData *target)
+{
+    if(target==nullptr || target==this)
+        return false;
+
+    int pos=getPosById(id);
+
+    if(pos<0 || pos>=static_cast<int>(tableData.size()))
+        return false;
+
+    // Копия переносится как есть (обычно легкая): файлы на диске
+    // не трогаются, каталог и id сохраняются. Корзина не используется
+    Record moving=tableData.at(pos);
+    tableData.removeAt(pos);
+    target->tableData.append(moving);
+
+    return true;
+}
+
+
 // Удаление всех элементов таблицы конечных записей
 void RecordTableData::deleteAllRecords(void)
 {

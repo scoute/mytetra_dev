@@ -6,6 +6,10 @@
 #include <QDir>
 #include <QDateTime>
 #include <QThread>
+#include <QCryptographicHash>
+
+#include <functional>
+#include <algorithm>
 
 #include "McpTools.h"
 #include "models/tree/KnowTreeModel.h"
@@ -475,6 +479,99 @@ static bool trashReady(QString &error)
 }
 
 
+// Корень модели: getRootItem отдает const, модель по факту живая
+static TreeItem *modelRoot(KnowTreeModel *model)
+{
+  return const_cast<TreeItem*>(model->getRootItem());
+}
+
+
+// Id сиблинга с таким именем среди детей parent (без учёта регистра,
+// пробелы по краям долой). Пусто если свободно. excludeId пропускается:
+// переименование самого себя и перенос внутри своего уровня не дубль
+static QString takenSiblingId(TreeItem *parent, const QString &name,
+                              const QString &excludeId)
+{
+  if(parent==nullptr)
+    return QString();
+
+  QString key=name.trimmed().toLower();
+
+  for(int i=0; i<parent->childCount(); ++i)
+  {
+    TreeItem *child=parent->child(i);
+
+    if(child==nullptr)
+      continue;
+
+    if(!excludeId.isEmpty() && child->getField("id")==excludeId)
+      continue;
+
+    if(child->getField("name").trimmed().toLower()==key)
+      return child->getField("id");
+  }
+
+  return QString();
+}
+
+
+// Id заметки с таким именем внутри ветки (без учёта регистра).
+// Пусто если свободно. excludeId пропускается: своё же имя не дубль
+static QString takenNoteId(RecordTableData *table, const QString &name,
+                           const QString &excludeId)
+{
+  if(table==nullptr)
+    return QString();
+
+  QString key=name.trimmed().toLower();
+
+  for(unsigned i=0; i<table->size(); ++i)
+  {
+    Record *other=table->getRecord(i);
+
+    if(other==nullptr)
+      continue;
+
+    if(!excludeId.isEmpty() && other->getField("id")==excludeId)
+      continue;
+
+    if(other->getField("name").trimmed().toLower()==key)
+      return other->getField("id");
+  }
+
+  return QString();
+}
+
+
+// Ветка, содержащая запись: полный обход, первая найденная
+static TreeItem *findBranchOfNote(TreeItem *item, const QString &noteId)
+{
+  if(item==nullptr)
+    return nullptr;
+
+  RecordTableData *table=item->recordtableGetTableData();
+
+  if(table!=nullptr)
+    for(unsigned i=0; i<table->size(); ++i)
+    {
+      Record *record=table->getRecord(i);
+
+      if(record!=nullptr && record->getField("id")==noteId)
+        return item;
+    }
+
+  for(int i=0; i<item->childCount(); ++i)
+  {
+    TreeItem *found=findBranchOfNote(item->child(i), noteId);
+
+    if(found!=nullptr)
+      return found;
+  }
+
+  return nullptr;
+}
+
+
 QJsonObject McpTools::applyCreateBranch(KnowTreeModel *model,
                                         const QString &parentId,
                                         const QString &branchId,
@@ -507,6 +604,7 @@ QJsonObject McpTools::applyCreateBranch(KnowTreeModel *model,
   // Невалидный индекс модели это корень: пустой parentId создает
   // ветку верхнего уровня
   QModelIndex parentIndex;
+  TreeItem *parentItem=modelRoot(model);
 
   if(!parentId.isEmpty())
   {
@@ -529,6 +627,17 @@ QJsonObject McpTools::applyCreateBranch(KnowTreeModel *model,
     }
 
     parentIndex=model->getIndexByItem(parent);
+    parentItem=parent;
+  }
+
+  QString dupBranchId=takenSiblingId(parentItem, name, QString());
+
+  if(!dupBranchId.isEmpty())
+  {
+    error="Branch already exists at this level: "+name.trimmed()+
+          " (id: "+dupBranchId+")";
+
+    return result;
   }
 
   QMap<QString, QString> fields;
@@ -590,6 +699,16 @@ QJsonObject McpTools::applyCreateNote(KnowTreeModel *model,
   if(table==nullptr)
   {
     error="Branch has no record table";
+
+    return result;
+  }
+
+  QString dupNoteId=takenNoteId(table, name, QString());
+
+  if(!dupNoteId.isEmpty())
+  {
+    error="Note already exists in this branch: "+name.trimmed()+
+          " (id: "+dupNoteId+")";
 
     return result;
   }
@@ -678,6 +797,22 @@ bool McpTools::applyUpdateNote(KnowTreeModel *model,
     if(name.trimmed().isEmpty())
     {
       error="Empty note name";
+
+      return false;
+    }
+
+    TreeItem *noteBranch=findBranchOfNote(modelRoot(model), noteId);
+
+    RecordTableData *noteTable=(noteBranch!=nullptr)
+                               ? noteBranch->recordtableGetTableData()
+                               : nullptr;
+
+    QString dupNoteId=takenNoteId(noteTable, name, noteId);
+
+    if(!dupNoteId.isEmpty())
+    {
+      error="Note already exists in this branch: "+name.trimmed()+
+            " (id: "+dupNoteId+")";
 
       return false;
     }
@@ -884,6 +1019,773 @@ QJsonObject McpTools::deleteBranchDirect(const QString &branchId, QString &error
     return result;
 
   m_model->save();
+
+  return result;
+}
+
+
+QJsonObject McpTools::applyRenameBranch(KnowTreeModel *model,
+                                        const QString &branchId,
+                                        const QString &name,
+                                        QString &error)
+{
+  QJsonObject result;
+
+  if(name.trimmed().isEmpty())
+  {
+    error="Empty branch name";
+
+    return result;
+  }
+
+  TreeItem *item=model->getItemById(branchId);
+
+  if(item==nullptr)
+  {
+    error="Unknown branch_id: "+branchId;
+
+    return result;
+  }
+
+  QString dupBranchId=takenSiblingId(item->parent(), name, branchId);
+
+  if(!dupBranchId.isEmpty())
+  {
+    error="Branch already exists at this level: "+name.trimmed()+
+          " (id: "+dupBranchId+")";
+
+    return result;
+  }
+
+  item->setField("name", name.trimmed());
+
+  result["id"]=branchId;
+
+  return result;
+}
+
+
+QJsonObject McpTools::applyMoveBranch(KnowTreeModel *model,
+                                      const QString &sourceId,
+                                      const QString &targetId,
+                                      bool asChild,
+                                      QString &error)
+{
+  QJsonObject result;
+
+  TreeItem *source=model->getItemById(sourceId);
+
+  if(source==nullptr)
+  {
+    error="Unknown branch_id: "+sourceId;
+
+    return result;
+  }
+
+  TreeItem *target=model->getItemById(targetId);
+
+  if(target==nullptr)
+  {
+    error="Unknown target branch_id: "+targetId;
+
+    return result;
+  }
+
+  // Новый родитель: внутрь цели или на её уровень. Дубль имени
+  // на целевом уровне запрещён как при создании
+  TreeItem *newParent=asChild ? target : target->parent();
+
+  if(newParent==nullptr)
+    newParent=modelRoot(model);
+
+  QString dupBranchId=takenSiblingId(newParent, source->getField("name"),
+                                    sourceId);
+
+  if(!dupBranchId.isEmpty())
+  {
+    error="Branch already exists at this level: "+
+          source->getField("name").trimmed()+" (id: "+dupBranchId+")";
+
+    return result;
+  }
+
+  if(!model->moveBranch(sourceId, targetId, asChild))
+  {
+    error="Move refused: self-move, root or target inside source";
+
+    return result;
+  }
+
+  // Новый родитель: предпоследний id в пути (пусто - верхний уровень)
+  QString newParentId;
+  TreeItem *moved=model->getItemById(sourceId);
+
+  if(moved!=nullptr)
+  {
+    QStringList path=moved->getPath();
+
+    if(path.size()>=2)
+      newParentId=path.at(path.size()-2);
+  }
+
+  result["id"]=sourceId;
+  result["new_parent_id"]=newParentId;
+
+  return result;
+}
+
+
+QJsonObject McpTools::applyMoveNote(KnowTreeModel *model,
+                                    const QString &noteId,
+                                    const QString &targetBranchId,
+                                    QString &error)
+{
+  QJsonObject result;
+
+  if(!model->isRecordIdExists(noteId))
+  {
+    error="Unknown note_id: "+noteId;
+
+    return result;
+  }
+
+  QStringList path=model->getRecordPath(noteId);
+
+  if(path.isEmpty())
+  {
+    error="Unknown note_id: "+noteId;
+
+    return result;
+  }
+
+  QString sourceBranchId=path.last();
+
+  if(sourceBranchId==targetBranchId)
+  {
+    error="Note is already in this branch";
+
+    return result;
+  }
+
+  TreeItem *source=model->getItemById(sourceBranchId);
+  TreeItem *target=model->getItemById(targetBranchId);
+
+  if(source==nullptr || target==nullptr)
+  {
+    error="Unknown branch for move";
+
+    return result;
+  }
+
+  // Шифр с обеих сторон закрыт: переходы между шифром и открытыми
+  // требуют ключа и преобразований, в MVP отказ
+  if(source->getField("crypt")=="1" || target->getField("crypt")=="1")
+  {
+    error="Move to or from encrypted branch refused";
+
+    return result;
+  }
+
+  RecordTableData *sourceTable=source->recordtableGetTableData();
+  RecordTableData *targetTable=target->recordtableGetTableData();
+
+  if(sourceTable==nullptr || targetTable==nullptr)
+  {
+    error="Branch has no record table";
+
+    return result;
+  }
+
+  QString movingName;
+
+  for(unsigned i=0; i<sourceTable->size(); ++i)
+  {
+    Record *candidate=sourceTable->getRecord(i);
+
+    if(candidate!=nullptr && candidate->getField("id")==noteId)
+    {
+      movingName=candidate->getField("name");
+      break;
+    }
+  }
+
+  QString dupNoteId=takenNoteId(targetTable, movingName, QString());
+
+  if(!dupNoteId.isEmpty())
+  {
+    error="Note already exists in this branch: "+movingName.trimmed()+
+          " (id: "+dupNoteId+")";
+
+    return result;
+  }
+
+  if(!sourceTable->moveRecordTo(noteId, targetTable))
+  {
+    error="Can not move note";
+
+    return result;
+  }
+
+  result["id"]=noteId;
+  result["branch_id"]=targetBranchId;
+
+  return result;
+}
+
+
+QJsonObject McpTools::renameBranchDirect(const QString &branchId,
+                                         const QString &name,
+                                         QString &error)
+{
+  QJsonObject result=applyRenameBranch(m_model, branchId, name, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  m_model->save();
+
+  return result;
+}
+
+
+QJsonObject McpTools::moveBranchDirect(const QString &sourceId,
+                                       const QString &targetId,
+                                       bool asChild,
+                                       QString &error)
+{
+  QJsonObject result=applyMoveBranch(m_model, sourceId, targetId, asChild, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  m_model->save();
+
+  return result;
+}
+
+
+QJsonObject McpTools::moveNoteDirect(const QString &noteId,
+                                     const QString &targetBranchId,
+                                     QString &error)
+{
+  QJsonObject result=applyMoveNote(m_model, noteId, targetBranchId, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  m_model->save();
+
+  return result;
+}
+
+
+static QJsonObject duplicateNoteObject(Record *record,
+                                       const QString &branchId,
+                                       const QString &branchPath)
+{
+  QJsonObject note;
+  note["id"]=record->getField("id");
+  note["name"]=record->getField("name");
+  note["branch_id"]=branchId;
+  note["branch_path"]=branchPath;
+
+  return note;
+}
+
+
+static void collectDuplicates(TreeItem *item,
+                              QMap<QString, QList<QJsonObject>> &byName,
+                              QMap<QString, QList<QJsonObject>> &byText)
+{
+  QString branchId=item->getField("id");
+
+  QStringList names=item->getPathAsField("name");
+  names.removeAll(QString(""));
+  QString path=names.join(" / ");
+
+  RecordTableData *table=item->recordtableGetTableData();
+
+  if(table!=nullptr)
+    for(unsigned i=0; i<table->size(); ++i)
+    {
+      Record *record=table->getRecord(i);
+
+      if(record==nullptr)
+        continue;
+
+      QString nameKey=record->getField("name").trimmed().toLower();
+
+      if(!nameKey.isEmpty())
+        byName[nameKey].append(duplicateNoteObject(record, branchId, path));
+
+      QString html=record->getTextForStats();
+
+      if(!html.isEmpty())
+      {
+        QString textKey=QString::fromLatin1(
+          QCryptographicHash::hash(html.toUtf8(),
+                                   QCryptographicHash::Sha1).toHex());
+
+        if(!record->getField("crypt").isEmpty() && record->getField("crypt")!="0")
+          textKey=QString(); // Шифр без ключа читается пусто: ложные дубли не нужны
+        else
+          byText[textKey].append(duplicateNoteObject(record, branchId, path));
+      }
+    }
+
+  for(int i=0; i<item->childCount(); ++i)
+    collectDuplicates(item->child(i), byName, byText);
+}
+
+
+QJsonObject McpTools::findDuplicates(int limit)
+{
+  if(limit<1)
+    limit=1;
+
+  if(limit>200)
+    limit=200;
+
+  QMap<QString, QList<QJsonObject>> byName;
+  QMap<QString, QList<QJsonObject>> byText;
+
+  // Точка входа - все ветки верхнего уровня через getBaseStatRows? Нет:
+  // проще обойти через QModelIndex как в appendBranches
+  QJsonObject result;
+  result["by_name"]=QJsonArray();
+  result["by_text"]=QJsonArray();
+
+  // Собираем через публичный обход модели
+  collectFromModel(byName, byText);
+
+  QJsonArray nameGroups;
+  QMap<QString, QList<QJsonObject>>::const_iterator nameIt;
+
+  for(nameIt=byName.constBegin();
+      nameIt!=byName.constEnd() && nameGroups.size()<limit;
+      ++nameIt)
+  {
+    if(nameIt.value().size()<2)
+      continue;
+
+    QJsonObject group;
+    group["name"]=nameIt.value().first().value("name").toString();
+    group["count"]=nameIt.value().size();
+
+    QJsonArray members;
+
+    foreach(const QJsonObject &member, nameIt.value())
+      members.append(member);
+
+    group["notes"]=members;
+    nameGroups.append(group);
+  }
+
+  QJsonArray textGroups;
+  QMap<QString, QList<QJsonObject>>::const_iterator textIt;
+
+  for(textIt=byText.constBegin();
+      textIt!=byText.constEnd() && textGroups.size()<limit;
+      ++textIt)
+  {
+    if(textIt.value().size()<2)
+      continue;
+
+    QJsonObject group;
+    group["count"]=textIt.value().size();
+
+    QJsonArray members;
+
+    foreach(const QJsonObject &member, textIt.value())
+      members.append(member);
+
+    group["notes"]=members;
+    textGroups.append(group);
+  }
+
+  result["by_name"]=nameGroups;
+  result["by_text"]=textGroups;
+
+  return result;
+}
+
+
+void McpTools::collectFromModel(QMap<QString, QList<QJsonObject>> &byName,
+                                QMap<QString, QList<QJsonObject>> &byText)
+{
+  TreeItem *root=modelRoot(m_model);
+
+  if(root!=nullptr)
+    collectDuplicates(root, byName, byText);
+}
+
+
+// Тот же разбор меток что в статистике и поиске по клику:
+// разделители запятая/точка с запятой, пробелы по краям долой
+static QStringList splitTags(const QString &tagsField)
+{
+  QStringList result;
+
+  QStringList parts=tagsField.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
+
+  foreach(const QString &part, parts)
+  {
+    QString tag=part.trimmed();
+
+    if(!tag.isEmpty())
+      result.append(tag);
+  }
+
+  return result;
+}
+
+
+// Обход всех записей базы колбэком. Файлы не трогаются
+static void forEachRecord(TreeItem *item,
+                          std::function<void(Record*, TreeItem*)> visit)
+{
+  if(item==nullptr)
+    return;
+
+  RecordTableData *table=item->recordtableGetTableData();
+
+  if(table!=nullptr)
+    for(unsigned i=0; i<table->size(); ++i)
+    {
+      Record *record=table->getRecord(i);
+
+      if(record!=nullptr)
+        visit(record, item);
+    }
+
+  for(int i=0; i<item->childCount(); ++i)
+    forEachRecord(item->child(i), visit);
+}
+
+
+QJsonObject McpTools::listTags(void)
+{
+  // Группировка без учета регистра: имя для показа - первый вариант
+  QMap<QString, QPair<QString, int>> aggregate;
+
+  forEachRecord(modelRoot(m_model),
+                [&](Record *record, TreeItem *)
+  {
+    foreach(const QString &tag, splitTags(record->getField("tags")))
+    {
+      QString key=tag.toLower();
+      QMap<QString, QPair<QString, int>>::iterator it=aggregate.find(key);
+
+      if(it==aggregate.end())
+        aggregate.insert(key, qMakePair(tag, 1));
+      else
+        it.value().second++;
+    }
+  });
+
+  QList<QPair<QString, int>> sorted;
+
+  // Range-for вместо foreach: запятая в QPair ломает макрос Q_FOREACH
+  for(const auto &entry : aggregate.values())
+    sorted.append(entry);
+
+  std::sort(sorted.begin(), sorted.end(),
+            [](const QPair<QString, int> &a, const QPair<QString, int> &b)
+  {
+    if(a.second!=b.second)
+      return a.second>b.second;
+
+    return QString::localeAwareCompare(a.first, b.first)<0;
+  });
+
+  QJsonArray tags;
+
+  for(const auto &entry : sorted)
+  {
+    QJsonObject item;
+    item["name"]=entry.first;
+    item["count"]=entry.second;
+    tags.append(item);
+  }
+
+  QJsonObject result;
+  result["tags"]=tags;
+
+  return result;
+}
+
+
+QJsonObject McpTools::tagNotes(const QString &tag, QString &error)
+{
+  QJsonObject result;
+
+  QString key=tag.trimmed().toLower();
+
+  if(key.isEmpty())
+  {
+    error="Empty tag";
+
+    return result;
+  }
+
+  QJsonArray notes;
+
+  forEachRecord(modelRoot(m_model),
+                [&](Record *record, TreeItem *item)
+  {
+    foreach(const QString &recordTag, splitTags(record->getField("tags")))
+      if(recordTag.toLower()==key)
+      {
+        notes.append(noteObject(record, item->getField("id"),
+                                branchPathOf(item)));
+        break;
+      }
+  });
+
+  result["notes"]=notes;
+
+  return result;
+}
+
+
+QJsonObject McpTools::untaggedNotes(int limit)
+{
+  if(limit<1)
+    limit=1;
+
+  if(limit>200)
+    limit=200;
+
+  QJsonArray collected;
+
+  forEachRecord(modelRoot(m_model),
+                [&](Record *record, TreeItem *item)
+  {
+    if(splitTags(record->getField("tags")).isEmpty())
+      collected.append(noteObject(record, item->getField("id"),
+                                  branchPathOf(item)));
+  });
+
+  QJsonObject result;
+  result["truncated"]=(collected.size()>limit);
+
+  QJsonArray notes;
+
+  for(int i=0; i<collected.size() && i<limit; ++i)
+    notes.append(collected.at(i));
+
+  result["notes"]=notes;
+
+  return result;
+}
+
+
+bool McpTools::applyRenameTag(KnowTreeModel *model,
+                              const QString &oldTag,
+                              const QString &newTag,
+                              QString &error,
+                              int &renamed,
+                              int &skipped)
+{
+  renamed=0;
+  skipped=0;
+
+  QString oldKey=oldTag.trimmed().toLower();
+  QString freshTag=newTag.trimmed();
+
+  if(oldKey.isEmpty() || freshTag.isEmpty())
+  {
+    error="Empty tag name";
+
+    return false;
+  }
+
+  if(oldKey==freshTag.toLower())
+  {
+    error="Same tag name";
+
+    return false;
+  }
+
+  forEachRecord(modelRoot(model),
+                [&](Record *record, TreeItem *)
+  {
+    // Шифрованные без ключа исключаются: поле нечитаемо, портить нельзя
+    if(record->getField("crypt")=="1")
+    {
+      skipped++;
+      return;
+    }
+
+    QStringList parts=splitTags(record->getField("tags"));
+    bool hit=false;
+
+    for(int i=0; i<parts.size(); ++i)
+      if(parts.at(i).toLower()==oldKey)
+      {
+        parts[i]=freshTag;
+        hit=true;
+      }
+
+    if(hit)
+    {
+      record->setField("tags", parts.join(", "));
+      renamed++;
+    }
+  });
+
+  return true;
+}
+
+
+bool McpTools::applyDeleteTag(KnowTreeModel *model,
+                              const QString &tag,
+                              QString &error,
+                              int &cleared,
+                              int &skipped)
+{
+  cleared=0;
+  skipped=0;
+
+  QString key=tag.trimmed().toLower();
+
+  if(key.isEmpty())
+  {
+    error="Empty tag";
+
+    return false;
+  }
+
+  forEachRecord(modelRoot(model),
+                [&](Record *record, TreeItem *)
+  {
+    if(record->getField("crypt")=="1")
+    {
+      skipped++;
+      return;
+    }
+
+    QStringList parts=splitTags(record->getField("tags"));
+    QStringList kept;
+
+    foreach(const QString &part, parts)
+      if(part.toLower()!=key)
+        kept.append(part);
+
+    if(kept.size()!=parts.size())
+    {
+      record->setField("tags", kept.join(", "));
+      cleared++;
+    }
+  });
+
+  return true;
+}
+
+
+int McpTools::countTagNotes(KnowTreeModel *model, const QString &tagLower)
+{
+  int count=0;
+
+  forEachRecord(modelRoot(model),
+                [&](Record *record, TreeItem *)
+  {
+    if(record->getField("crypt")=="1")
+      return;
+
+    foreach(const QString &part, splitTags(record->getField("tags")))
+      if(part.toLower()==tagLower)
+      {
+        count++;
+        break;
+      }
+  });
+
+  return count;
+}
+
+
+QJsonObject McpTools::renameTagDirect(const QString &oldTag,
+                                      const QString &newTag,
+                                      QString &error)
+{
+  QJsonObject result;
+
+  int renamed=0;
+  int skipped=0;
+
+  if(!applyRenameTag(m_model, oldTag, newTag, error, renamed, skipped))
+    return result;
+
+  m_model->save();
+
+  result["renamed_notes"]=renamed;
+  result["skipped_locked"]=skipped;
+
+  return result;
+}
+
+
+QJsonObject McpTools::deleteTagDirect(const QString &tag, QString &error)
+{
+  QJsonObject result;
+
+  int cleared=0;
+  int skipped=0;
+
+  if(!applyDeleteTag(m_model, tag, error, cleared, skipped))
+    return result;
+
+  m_model->save();
+
+  result["cleared_notes"]=cleared;
+  result["skipped_locked"]=skipped;
+
+  return result;
+}
+
+
+QJsonObject McpTools::baseStats(bool detailed)
+{
+  QJsonObject result;
+
+  // Тот же порядок что в статусбаре: ветки, записи, метки,
+  // файлы, картинки, внутренние ссылки
+  int branches=0;
+  int records=0;
+  int files=0;
+  int images=0;
+  int links=0;
+  int tags=0;
+
+  m_model->getBaseStats(branches, records, files, images, links, tags);
+
+  result["branches"]=branches;
+  result["records"]=records;
+  result["tags"]=tags;
+  result["files"]=files;
+  result["images"]=images;
+  result["links"]=links;
+
+  if(detailed)
+  {
+    QJsonArray rows;
+
+    foreach(const BaseStatRow &row, m_model->getBaseStatRows())
+    {
+      QJsonObject item;
+      item["branch_path"]=row.branchPath;
+      item["note_name"]=row.noteName;
+      item["record_id"]=row.recordId;
+      item["files"]=row.files;
+      item["images"]=row.images;
+      item["links"]=row.links;
+      item["tags"]=row.tags;
+      rows.append(item);
+    }
+
+    result["rows"]=rows;
+  }
 
   return result;
 }

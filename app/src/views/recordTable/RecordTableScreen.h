@@ -57,6 +57,7 @@ public:
  QAction *actionSort;
  QAction *actionPrint;
  QAction *actionCopyRecordReference;
+ QAction *actionChangeHistory;
  QAction *actionSwitchSelectionMode;
 
  // Действие, которое может быть вызвано из MainWindows

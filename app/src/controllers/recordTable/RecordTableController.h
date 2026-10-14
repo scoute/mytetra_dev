@@ -107,6 +107,9 @@ public slots:
   // Печать таблицы конечных записей
   void onPrintClick(void);
 
+  // История изменений записи: версии, diff, откат
+  void onChangeHistoryClick(void);
+
   void onSwitchSelectionMode(void);
 
 protected:

@@ -176,6 +176,52 @@ QStringList GitHelper::logOneline(const QString &dir, int limit, const QString &
 }
 
 
+QList<GitHelper::LogEntry> GitHelper::logDetailed(const QString &dir, int limit,
+                                                 const QString &path)
+{
+    QList<LogEntry> entries;
+
+    QStringList args;
+    args << QStringLiteral("log")
+         << QStringLiteral("--format=%H%x01%ad%x01%s")
+         << QStringLiteral("--date=iso")
+         << QStringLiteral("--no-color");
+
+    if(limit>0)
+    {
+        args << QStringLiteral("-n") << QString::number(limit);
+    }
+
+    if(!path.isEmpty())
+    {
+        args << QStringLiteral("--") << path;
+    }
+
+    QString out;
+
+    if(run(dir, args, &out)!=0)
+        return entries;
+
+    const QStringList lines=out.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
+
+    for(const QString &line : lines)
+    {
+        const QStringList parts=line.split(QLatin1Char('\x01'));
+
+        if(parts.size()<3)
+            continue;
+
+        LogEntry entry;
+        entry.rev=parts.at(0);
+        entry.date=parts.at(1);
+        entry.subject=parts.at(2);
+        entries.append(entry);
+    }
+
+    return entries;
+}
+
+
 QString GitHelper::showFile(const QString &dir, const QString &rev, const QString &path)
 {
     if(rev.isEmpty() || path.isEmpty())

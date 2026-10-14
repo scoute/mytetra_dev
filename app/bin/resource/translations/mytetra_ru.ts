@@ -1876,6 +1876,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Change secret color...</source>
         <translation>Изменить цвет секретов...</translation>
     </message>
+    <message>
+        <source>Show in folder</source>
+        <translation>Открыть в папке</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <source>Open image with...</source>
+        <translation>Открыть изображение с помощью...</translation>
+    </message>
 </context>
 <context>
     <name>EditorFindDialog</name>
@@ -2966,6 +2978,52 @@ Try to search for entire database.</source>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="407"/>
         <source>Probably error in a process of images download.</source>
         <translation>Возникла ошибка в процессе скачивания изображений.</translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
+    <message>
+        <source>Image file not found:
+%1</source>
+        <translation>Файл изображения не найден:
+%1</translation>
+    </message>
+    <message>
+        <source>Place the cursor on the image to open it</source>
+        <translation>Поставьте курсор на изображение чтобы открыть его</translation>
+    </message>
+    <message>
+        <source>Can not open image file:
+%1</source>
+        <translation>Не удалось открыть файл изображения:
+%1</translation>
+    </message>
+    <message>
+        <source>Open image with</source>
+        <translation>Открыть изображение с помощью</translation>
+    </message>
+    <message>
+        <source>Can not start program:
+%1</source>
+        <translation>Не удалось запустить программу:
+%1</translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation>Открыть в папке</translation>
+    </message>
+    <message>
+        <source>Note directory is unknown, there is nothing to open.</source>
+        <translation>Каталог заметки неизвестен, открывать нечего.</translation>
+    </message>
+    <message>
+        <source>Directory does not exist: %1</source>
+        <translation>Каталог не существует: %1</translation>
+    </message>
+    <message>
+        <source>Can not open directory: %1</source>
+        <translation>Не могу открыть каталог: %1</translation>
     </message>
 </context>
 <context>
@@ -5226,6 +5284,10 @@ Please report about this problem to the developers.</source>
         <source>Insert note reference using search...</source>
         <translation>Вставить ссылку на заметку через поиск</translation>
     </message>
+    <message>
+        <source>Open image</source>
+        <translation>Открыть изображение</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -6313,6 +6375,37 @@ MyTetra должна быть запущена.</translation>
     <message>
         <source>Tags</source>
         <translation>Метки</translation>
+    </message>
+    </context>
+    <context>
+        <name>EditorImageOpenDialog</name>
+    <message>
+        <source>Open image with</source>
+        <translation>Открыть изображение с помощью</translation>
+    </message>
+    <message>
+        <source>%1 (default)</source>
+        <translation>%1 (по умолчанию)</translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Открыть</translation>
+    </message>
+    <message>
+        <source>Program to open %1:</source>
+        <translation>Программа для открытия %1:</translation>
+    </message>
+    <message>
+        <source>Select program</source>
+        <translation>Выбор программы</translation>
+    </message>
+    <message>
+        <source>%1 (custom)</source>
+        <translation>%1 (вручную)</translation>
     </message>
     </context>
 </TS>

@@ -1093,6 +1093,7 @@ QString EditorConfig::update_version_change_value(int versionFrom,
             names["indentplus"]="indentPlus";
             names["insert_horizontal_line"]="insertHorizontalLine";
             names["insert_image_from_file"]="insertImageFromFile";
+            names["open_image"]="openImage";
             names["math_expression"]="mathExpression";
             names["numericlist"]="numericList";
             names["showformatting"]="showFormatting";
@@ -1120,12 +1121,27 @@ QString EditorConfig::update_version_change_value(int versionFrom,
     if(versionFrom==22 && versionTo==23)
         if(name=="tools_line_1")
         {
+            // Кнопка секрета после reference, как в штатной поставке
             if(!result.contains("secret"))
             {
-                if(result.contains("code"))
+                if(result.contains("reference"))
+                    result.replace("reference", "reference,secret");
+                else if(result.contains("code"))
                     result.replace("code", "code,secret");
                 else
                     result=result+",secret";
+            }
+
+            // Кнопка открытия картинки после вставки картинки.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("open_image") && !result.contains("openImage"))
+            {
+                if(result.contains("insert_image_from_file"))
+                    result.replace("insert_image_from_file", "insert_image_from_file,open_image");
+                else if(result.contains("insertImageFromFile"))
+                    result.replace("insertImageFromFile", "insertImageFromFile,openImage");
+                else
+                    result=result+",open_image";
             }
         }
 

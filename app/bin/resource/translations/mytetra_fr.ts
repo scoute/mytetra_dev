@@ -1167,6 +1167,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source> occurrence(s)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaced %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -1398,6 +1410,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <source>Find and replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show as embedded bar</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2814,6 +2830,10 @@ MyTetra will try to create a blank entry to fix it.</source>
 %1
 
 Please report about this problem to the developers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4293,5 +4313,83 @@ All data imported will be encrypted.</source>
             <source>Close</source>
             <translation type="unfinished"></translation>
         </message>
+    </context>
+    <context>
+        <name>EditorFindBar</name>
+    <message>
+        <source>Find in note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Match case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;ab&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whole words only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace &amp;all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous match (Shift+Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next match (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find in base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search this text in the whole base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close find bar (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open as separate window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>AppConfigPage_Search</name>
+    <message>
+        <source>Embedded bar in note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separate window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find in note</source>
+        <translation type="unfinished"></translation>
+    </message>
     </context>
 </TS>

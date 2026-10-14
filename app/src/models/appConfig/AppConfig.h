@@ -194,6 +194,12 @@ public:
     bool getFindInBaseExpand(void);
     void setFindInBaseExpand(bool state);
 
+    // Режим поиска в заметке: встраиваемая полоска (true) или отдельное окно
+    // (false). По умолчанию полоска, переключается кнопками в окне,
+    // на полоске и радиокнопками на странице настроек Search
+    bool get_editorFindEmbedded(void);
+    void set_editorFindEmbedded(bool state);
+
     // Разрешено ли использовать собственный формат вывода даты и времени
     bool getEnableCustomDateTimeFormat(void);
     void setEnableCustomDateTimeFormat(bool state);

@@ -52,6 +52,9 @@ signals:
 
     void doubleClickOnImage();
 
+    // Одинарный Ctrl+клик по картинке: открыть во внешней программе
+    void clickOnImage();
+
 public slots:
     void showIndentEdge(bool i);
     void setIndentEdgePos(int i);
@@ -93,6 +96,10 @@ private:
     bool m_mouseCursorOverriden;
 
     QPoint m_currentMousePosition;
+
+    // Имя картинки под точкой: пусто если картинки нет.
+    // Нужно для ховер-подсказки и Ctrl+клика по изображению
+    QString imageAt(const QPoint &point);
 };
 
 #endif // _EDITORTEXTAREA_H_

@@ -1084,7 +1084,19 @@ void AppConfig::set_recordHeaderVisible(bool state)
 
 bool AppConfig::get_readOnly(void)
 {
+    return m_conf->value("readOnly", false).toBool() || m_mcpUiLock;
+}
+
+
+bool AppConfig::isGlobalReadOnly(void)
+{
     return m_conf->value("readOnly", false).toBool();
+}
+
+
+void AppConfig::setMcpUiLock(bool locked)
+{
+    m_mcpUiLock=locked;
 }
 
 

@@ -213,6 +213,19 @@ static bool isKnownTool(const QString &toolName)
 }
 
 
+// Пишущий инструмент (для присутствия: чтения GUI не дёргают,
+// иначе каждое чтение ждало бы ack event loop и висло под модалкой)
+static bool isWriteTool(const QString &toolName)
+{
+  return toolName=="create_branch" || toolName=="create_note" ||
+         toolName=="update_note" ||
+         toolName=="rename_branch" || toolName=="move_branch" ||
+         toolName=="move_note" ||
+         toolName=="rename_tag" || toolName=="delete_tag" ||
+         toolName=="delete_note" || toolName=="delete_branch";
+}
+
+
 static QJsonArray buildToolsList(McpMode mode)
 {
   QJsonArray tools;
@@ -729,6 +742,22 @@ static GuiWriteState sendGuiCommand(const QString &binaryPath,
 }
 
 
+// Присутствие MCP для GUI-баннера: Hello при старте и при каждой записи
+// (дешевый локальный IPC), Bye при чистом выходе. GUI держит TTL:
+// убитый -9 сервер гаснет сам
+static void notifyMcpPresence(const QString &binaryPath, McpMode mode,
+                              const QString &command)
+{
+  QJsonObject payload;
+  payload["pid"]=QString::number(QCoreApplication::applicationPid());
+  payload["mode"]=mcpModeName(mode);
+
+  QString error;
+
+  sendGuiCommand(binaryPath, command, payload, error);
+}
+
+
 class McpSession
 {
 public:
@@ -834,6 +863,11 @@ public:
 
         known=false;
       }
+
+      // Жив и пишу: GUI держит липкий баннер пока идут записи.
+      // Чтения не пингуют (см. isWriteTool)
+      if(known && isWriteTool(toolName))
+        notifyMcpPresence(m_binaryPath, m_mode, "mcpHello");
 
       if(known && toolName=="list_branches")
       {
@@ -2121,6 +2155,9 @@ int runMcpServer(int argc, char **argv)
   McpSession session(model, xmlPath, tools,
                      QString::fromLocal8Bit(argv[0]), mode);
 
+  // GUI-баннер: я жив. Парный Bye — в конце цикла
+  notifyMcpPresence(QString::fromLocal8Bit(argv[0]), mode, "mcpHello");
+
   QFile stdIn;
   stdIn.open(stdin, QIODevice::ReadOnly);
 
@@ -2148,6 +2185,9 @@ int runMcpServer(int argc, char **argv)
       stdOut.flush();
     }
   }
+
+  // Чистый выход: GUI гасит баннер когда уйдут все пиры
+  notifyMcpPresence(QString::fromLocal8Bit(argv[0]), mode, "mcpBye");
 
   return 0;
 }

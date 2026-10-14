@@ -287,6 +287,14 @@ public:
     bool get_readOnly(void);
     void set_readOnly(bool state);
 
+    // Сырой глобальный флаг без учёта сессии. Им смотрят только
+    // MCP-записи: они продолжают писать при заблокированном UI
+    bool isGlobalReadOnly(void);
+
+    // Блокировка UI на время MCP-сессии: только в памяти, никогда
+    // не сохраняется. get_readOnly() учитывает её для интерфейса
+    void setMcpUiLock(bool locked);
+
     // Лимиты клиппера: сколько картинок забирать в одну заметку
     // и максимальный размер одной картинки в мегабайтах
     int get_clipperMaxImages(void);
@@ -419,6 +427,10 @@ private:
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;
+
+    // Блокировка UI на время MCP-сессии. Только рантайм: в QSettings
+    // не пишется, после перезапуска всегда false
+    bool m_mcpUiLock=false;
 };
 
 #endif // __APPCONFIG_H__

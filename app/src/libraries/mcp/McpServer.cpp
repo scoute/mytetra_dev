@@ -176,13 +176,14 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
      toolName=="get_note" || toolName=="search" ||
      toolName=="find_duplicates" || toolName=="stats" ||
      toolName=="list_tags" || toolName=="tag_notes" ||
-     toolName=="untagged_notes")
+     toolName=="untagged_notes" || toolName=="list_favorites")
     return true;
 
   if(toolName=="create_branch" || toolName=="create_note" ||
      toolName=="update_note" ||
      toolName=="rename_branch" || toolName=="move_branch" ||
-     toolName=="move_note" ||
+     toolName=="move_note" || toolName=="favorite_note" ||
+     toolName=="unfavorite_note" ||
      toolName=="rename_tag")
     return mode==McpMode::ReadWrite || mode==McpMode::ReadWriteDelete;
 
@@ -199,8 +200,10 @@ static bool isKnownTool(const QString &toolName)
   static const char *names[]={
     "list_branches", "list_notes", "get_note", "search",
     "find_duplicates", "stats", "list_tags", "tag_notes", "untagged_notes",
+    "list_favorites",
     "create_branch", "create_note", "update_note",
     "rename_branch", "move_branch", "move_note",
+    "favorite_note", "unfavorite_note",
     "rename_tag", "delete_tag",
     "delete_note", "delete_branch"
   };
@@ -221,6 +224,7 @@ static bool isWriteTool(const QString &toolName)
          toolName=="update_note" ||
          toolName=="rename_branch" || toolName=="move_branch" ||
          toolName=="move_note" ||
+         toolName=="favorite_note" || toolName=="unfavorite_note" ||
          toolName=="rename_tag" || toolName=="delete_tag" ||
          toolName=="delete_note" || toolName=="delete_branch";
 }
@@ -481,6 +485,34 @@ static QJsonArray buildToolsList(McpMode mode)
 
   {
     QJsonObject properties;
+    QJsonObject noteId;
+    noteId["type"]="string";
+    noteId["description"]="Note id";
+    properties["note_id"]=noteId;
+    QJsonArray required;
+    required.append("note_id");
+    tools.append(toolDescription(
+      "favorite_note",
+      "Star a note.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject noteId;
+    noteId["type"]="string";
+    noteId["description"]="Note id";
+    properties["note_id"]=noteId;
+    QJsonArray required;
+    required.append("note_id");
+    tools.append(toolDescription(
+      "unfavorite_note",
+      "Unstar a note.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
     QJsonObject limit;
     limit["type"]="integer";
     limit["description"]="Max groups (default 50)";
@@ -548,6 +580,14 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "untagged_notes",
       "Notes without tags.",
+      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    tools.append(toolDescription(
+      "list_favorites",
+      "Starred notes with branch context.",
       objectSchema(properties, QJsonArray())));
   }
 
@@ -1009,6 +1049,10 @@ public:
 
         result=m_tools.untaggedNotes(limit);
       }
+      else if(toolName=="list_favorites")
+      {
+        result=m_tools.listFavorites();
+      }
       else if(toolName=="create_branch")
       {
         QString parentId=arguments.value("parent_id").toString();
@@ -1089,6 +1133,16 @@ public:
         result=writeMoveNote(arguments.value("note_id").toString(),
                              arguments.value("branch_id").toString(),
                              toolError);
+      }
+      else if(toolName=="favorite_note")
+      {
+        result=writeFavoriteNote(arguments.value("note_id").toString(),
+                                 true, toolError);
+      }
+      else if(toolName=="unfavorite_note")
+      {
+        result=writeFavoriteNote(arguments.value("note_id").toString(),
+                                 false, toolError);
       }
       else if(toolName=="rename_tag")
       {
@@ -1201,6 +1255,8 @@ private:
   QJsonObject writeRenameTag(const QString &oldTag, const QString &newTag,
                              QString &toolError);
   QJsonObject writeDeleteTag(const QString &tag, QString &toolError);
+  QJsonObject writeFavoriteNote(const QString &id, bool starred,
+                                QString &toolError);
 
   static QByteArray makeResponse(const QJsonValue &id,
                                  const QJsonValue &result,
@@ -1506,6 +1562,136 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
   }
 
   result=movedResult;
+  result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+// Ожидание звездочки в сайдкаре после живой записи: GUI пишет
+// файл сам, mtime базы при этом не сдвигается
+static bool waitSidecarFavorite(const QString &id, bool starred, int timeoutMs)
+{
+  QElapsedTimer timer;
+  timer.start();
+
+  while(timer.elapsed()<timeoutMs)
+  {
+    if(McpTools::sidecarFavoriteIds().contains(id)==starred)
+      return true;
+
+    QThread::msleep(100);
+  }
+
+  return McpTools::sidecarFavoriteIds().contains(id)==starred;
+}
+
+
+QJsonObject McpSession::writeFavoriteNote(const QString &id,
+                                          bool starred,
+                                          QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(!m_model.isRecordIdExists(id))
+  {
+    toolError="Unknown note_id: "+id;
+
+    return result;
+  }
+
+  {
+    Record *record=m_model.getRecord(id);
+
+    if(record==nullptr)
+    {
+      toolError="Unknown note_id: "+id;
+
+      return result;
+    }
+
+    if(record->getField("crypt")=="1")
+    {
+      toolError="Note is encrypted, favorite refused";
+
+      return result;
+    }
+  }
+
+  const bool xmlStorage=(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"));
+
+  QJsonObject payload;
+  payload["id"]=id;
+  payload["starred"]=starred;
+
+  QString sendError;
+  GuiWriteState state=sendGuiCommand(m_binaryPath,
+                                     starred ? "mcpFavoriteNote" : "mcpUnfavoriteNote",
+                                     payload, sendError);
+
+  if(state==GUI_FAILED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  if(state==GUI_DELIVERED)
+  {
+    if(xmlStorage)
+    {
+      waitGuiSave(5000);
+      resyncModel();
+
+      Record *record=m_model.isRecordIdExists(id) ? m_model.getRecord(id) : nullptr;
+      const bool applied=(record!=nullptr &&
+                          (record->getField("favorite")=="1")==starred);
+
+      if(!applied)
+      {
+        toolError="GUI did not apply the change in time, retry";
+
+        return result;
+      }
+    }
+    else
+    {
+      if(!waitSidecarFavorite(id, starred, 5000))
+      {
+        toolError="GUI did not apply the change in time, retry";
+
+        return result;
+      }
+    }
+
+    result["id"]=id;
+    result["favorite"]=starred;
+    result["applied_via"]="gui";
+    result["verified"]=true;
+
+    return result;
+  }
+
+  QString error;
+  QJsonObject applied=starred ? m_tools.favoriteNoteDirect(id, error)
+                              : m_tools.unfavoriteNoteDirect(id, error);
+
+  if(!error.isEmpty())
+  {
+    toolError=error;
+
+    return result;
+  }
+
+  result=applied;
   result["applied_via"]="direct";
   result["verified"]=true;
 

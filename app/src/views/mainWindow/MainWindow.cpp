@@ -77,6 +77,8 @@ public:
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/CssHelper.h"
 #include "libraries/mcp/McpTools.h"
+#include "libraries/Favorites.h"
+#include "models/recordTable/Record.h"
 
 
 extern AppConfig mytetraConfig;
@@ -792,6 +794,60 @@ void MainWindow::messageHandler(QString message)
             return;
 
         treeScreen->knowTreeModel->save();
+        flashMcpWrite();
+    }
+
+    // Звездочка от внешнего AI: тот же состав что клик по звезде,
+    // минус вопросы. Идёт через синглетон: он сохраняет сам
+    // (сайдкар или XML) и дёргает сигнал для панели избранного
+    else if(command=="mcpFavoriteNote")
+    {
+        if(mytetraConfig.isGlobalReadOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        const QString id=args.value("id").toString();
+
+        if(!treeScreen->knowTreeModel->isRecordIdExists(id))
+            return;
+
+        Record *record=treeScreen->knowTreeModel->getRecord(id);
+
+        if(record==nullptr || record->getField("crypt")=="1")
+            return;
+
+        Favorites::instance().setFavorite(id, true);
+
+        if(!Favorites::instance().isFavorite(id))
+            return;
+
+        flashMcpWrite();
+    }
+
+    else if(command=="mcpUnfavoriteNote")
+    {
+        if(mytetraConfig.isGlobalReadOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        const QString id=args.value("id").toString();
+
+        if(!treeScreen->knowTreeModel->isRecordIdExists(id))
+            return;
+
+        Favorites::instance().setFavorite(id, false);
+
+        if(Favorites::instance().isFavorite(id))
+            return;
+
         flashMcpWrite();
     }
 

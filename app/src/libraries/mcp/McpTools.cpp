@@ -7,6 +7,10 @@
 #include <QDateTime>
 #include <QThread>
 #include <QCryptographicHash>
+#include <QSet>
+#include <QSaveFile>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 #include <functional>
 #include <algorithm>
@@ -1779,6 +1783,273 @@ QJsonObject McpTools::deleteTagDirect(const QString &tag, QString &error)
   result["skipped_locked"]=skipped;
 
   return result;
+}
+
+
+// Сайдкар избранного напрямую файлом: синглетон Favorites в
+// долгоживущем серверном процессе кэширует и протухает, а в
+// headless за деревом вообще не ходит. Формат тот же:
+// <favorites version="1"><note id="..."/>...</favorites>
+static QString favoritesSidecarPath(void)
+{
+  return QDir::cleanPath(mytetraConfig.get_tetradir()+"/favorites.xml");
+}
+
+
+static QSet<QString> favoritesSidecarRead(void)
+{
+  QSet<QString> out;
+
+  QFile file(favoritesSidecarPath());
+
+  if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    return out;
+
+  QXmlStreamReader xml(&file);
+
+  if(!xml.readNextStartElement() || xml.name()!=QStringLiteral("favorites"))
+    return out;
+
+  while(xml.readNextStartElement())
+  {
+    if(xml.name()==QStringLiteral("note"))
+    {
+      const QString id=xml.attributes().value(QStringLiteral("id")).toString();
+
+      if(!id.isEmpty())
+        out.insert(id);
+
+      xml.skipCurrentElement();
+    }
+    else
+      xml.skipCurrentElement();
+  }
+
+  return out;
+}
+
+
+static bool favoritesSidecarWrite(const QSet<QString> &ids)
+{
+  QSaveFile file(favoritesSidecarPath());
+
+  if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    return false;
+
+  QXmlStreamWriter xml(&file);
+  xml.setAutoFormatting(true);
+  xml.writeStartDocument();
+  xml.writeStartElement(QStringLiteral("favorites"));
+  xml.writeAttribute(QStringLiteral("version"), QStringLiteral("1"));
+
+  QStringList ordered=ids.values();
+  ordered.sort(Qt::CaseInsensitive);
+
+  foreach(const QString &id, ordered)
+  {
+    xml.writeStartElement(QStringLiteral("note"));
+    xml.writeAttribute(QStringLiteral("id"), id);
+    xml.writeEndElement();
+  }
+
+  xml.writeEndElement();
+  xml.writeEndDocument();
+
+  return file.commit();
+}
+
+
+QJsonObject McpTools::listFavorites(void)
+{
+  QSet<QString> starIds;
+
+  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+  {
+    // Флаги прямо в записях: проход по живой модели.
+    // Шифрованные без ключа пропускаются: флаг нечитаем
+    forEachRecord(modelRoot(m_model),
+                  [&](Record *record, TreeItem *)
+    {
+      if(record->getField("crypt")=="1")
+        return;
+
+      if(record->getField("favorite")=="1")
+        starIds.insert(record->getField("id"));
+    });
+  }
+  else
+    starIds=favoritesSidecarRead();
+
+  QStringList ordered=starIds.values();
+  ordered.sort(Qt::CaseInsensitive);
+
+  QJsonArray favorites;
+
+  foreach(const QString &id, ordered)
+  {
+    // Мертвый id сайдкара: записи уже нет, молча пропускается
+    if(!m_model->isRecordIdExists(id))
+      continue;
+
+    Record *record=m_model->getRecord(id);
+
+    if(record==nullptr || record->getField("crypt")=="1")
+      continue;
+
+    QStringList path=m_model->getRecordPath(id);
+
+    if(path.isEmpty())
+      continue;
+
+    TreeItem *branch=m_model->getItemById(path.last());
+
+    if(branch==nullptr)
+      continue;
+
+    favorites.append(noteObject(record, path.last(), branchPathOf(branch)));
+  }
+
+  QJsonObject result;
+  result["favorites"]=favorites;
+
+  return result;
+}
+
+
+QJsonObject McpTools::applyFavoriteNote(KnowTreeModel *model,
+                                        const QString &noteId,
+                                        bool starred,
+                                        QString &error)
+{
+  QJsonObject result;
+
+  if(!model->isRecordIdExists(noteId))
+  {
+    error="Unknown note_id: "+noteId;
+
+    return result;
+  }
+
+  Record *record=model->getRecord(noteId);
+
+  if(record==nullptr)
+  {
+    error="Unknown note_id: "+noteId;
+
+    return result;
+  }
+
+  if(record->getField("crypt")=="1")
+  {
+    error="Note is encrypted, favorite refused";
+
+    return result;
+  }
+
+  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+  {
+    QStringList path=model->getRecordPath(noteId);
+
+    if(path.isEmpty())
+    {
+      error="Unknown note_id: "+noteId;
+
+      return result;
+    }
+
+    TreeItem *branch=model->getItemById(path.last());
+
+    if(branch==nullptr)
+    {
+      error="Unknown note_id: "+noteId;
+
+      return result;
+    }
+
+    RecordTableData *table=branch->recordtableGetTableData();
+
+    if(table==nullptr)
+    {
+      error="Unknown note_id: "+noteId;
+
+      return result;
+    }
+
+    const int pos=table->getPosById(noteId);
+
+    if(pos<0)
+    {
+      error="Unknown note_id: "+noteId;
+
+      return result;
+    }
+
+    table->setField(QStringLiteral("favorite"), starred ? QStringLiteral("1") : QString(), pos);
+  }
+  else
+  {
+    QSet<QString> ids=favoritesSidecarRead();
+
+    if(ids.contains(noteId)==starred)
+    {
+      result["id"]=noteId;
+      result["favorite"]=starred;
+
+      return result;
+    }
+
+    if(starred)
+      ids.insert(noteId);
+    else
+      ids.remove(noteId);
+
+    if(!favoritesSidecarWrite(ids))
+    {
+      error="Can not write favorites file";
+
+      return result;
+    }
+  }
+
+  result["id"]=noteId;
+  result["favorite"]=starred;
+
+  return result;
+}
+
+
+QJsonObject McpTools::favoriteNoteDirect(const QString &noteId, QString &error)
+{
+  QJsonObject result=applyFavoriteNote(m_model, noteId, true, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  // XML-бэкенд меняет дерево: сайдкар уже записан внутри apply
+  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+    m_model->save();
+
+  return result;
+}
+
+
+QJsonObject McpTools::unfavoriteNoteDirect(const QString &noteId, QString &error)
+{
+  QJsonObject result=applyFavoriteNote(m_model, noteId, false, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+    m_model->save();
+
+  return result;
+}
+
+
+QSet<QString> McpTools::sidecarFavoriteIds(void)
+{
+  return favoritesSidecarRead();
 }
 
 

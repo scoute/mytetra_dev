@@ -4,6 +4,7 @@
 #include <QString>
 #include <QList>
 #include <QMap>
+#include <QSet>
 #include <QJsonObject>
 
 // Инструменты MCP-сервера поверх живой модели дерева.
@@ -202,6 +203,27 @@ public:
                               const QString &newTag,
                               QString &error);
   QJsonObject deleteTagDirect(const QString &tag, QString &error);
+
+// --- Избранное ---
+
+// Звездочки активного хранилища (sidecar или поля XML):
+// {favorites: [note...]}. Шифрованные записи без ключа и мертвые
+// id сайдкара пропускаются. Лимита нет: избранного обычно мало
+QJsonObject listFavorites(void);
+
+// Поставить/снять звездочку. Возвращает {id, favorite}.
+// Ошибки: нет записи, шифрованная запись
+static QJsonObject applyFavoriteNote(KnowTreeModel *model,
+                                     const QString &noteId,
+                                     bool starred,
+                                     QString &error);
+
+QJsonObject favoriteNoteDirect(const QString &noteId, QString &error);
+QJsonObject unfavoriteNoteDirect(const QString &noteId, QString &error);
+
+// id звездочек сайдкара напрямую файлом (для проверки применения
+// живой записью: синглетон в серверном процессе может быть протухшим)
+static QSet<QString> sidecarFavoriteIds(void);
 
 private:
   KnowTreeModel *m_model;

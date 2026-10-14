@@ -96,9 +96,6 @@ public slots:
 
     void toolsFindInBaseWithText(const QString &text);
 
-    // Тумблер панели избранного в меню Tools (меню Вид еще нет)
-    void onToolsMenuFavoritesToggled(bool checked);
-
     void toolsImagesGallery(void);
     void toolsFilesGallery(void);
 
@@ -140,6 +137,12 @@ private slots:
     // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
     void onThemeMenuTriggered(QAction *action);
 
+    // Меню Вид: дубли быстрых переключателей отображения
+    void onViewHeaderToggled(bool checked);
+    void onViewFavoritesToggled(bool checked);
+    void onViewSecretColor(void);
+    void onViewPaperColor(void);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -176,6 +179,12 @@ private:
     void initThemesMenu(void);
     void syncThemeMenu(void);
 
+    // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
+    // Пометка обновляется при каждом открытии, так как все меняется
+    // и из других мест (диалог настроек, контекстное меню)
+    void initViewMenu(void);
+    void syncViewMenu(void);
+
     void initRecordTableActions(void);
 
     void setupIconActions(void);
@@ -204,7 +213,6 @@ private:
     QAction *actionToolsMenuImagesGallery;
     QAction *actionToolsMenuFilesGallery;
     QAction *actionToolsMenuActionLog;
-    QAction *actionToolsMenuFavorites;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
@@ -233,6 +241,14 @@ private:
 
     // Меню Темы в menubar: один клик вместо похода в настройки
     QMenu *themesMenu=nullptr;
+
+    // Меню Вид в menubar между Tools и Themes: шапка, избранное,
+    // цвет секрета, бумага
+    QMenu *viewMenu=nullptr;
+    QAction *viewHeaderAction=nullptr;
+    QAction *viewFavoritesAction=nullptr;
+    QAction *viewSecretColorAction=nullptr;
+    QAction *viewPaperColorAction=nullptr;
 
     // Корневые меню: указатели нужны для перевода названий на лету
     QMenu *fileMenu=nullptr;

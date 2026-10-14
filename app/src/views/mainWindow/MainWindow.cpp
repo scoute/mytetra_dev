@@ -14,6 +14,7 @@
 #include <QDockWidget>
 #include <QStatusBar>
 #include <QActionGroup>
+#include <QColorDialog>
 #include <QLabel>
 #include <QTableWidget>
 #include <QHeaderView>
@@ -90,6 +91,7 @@ MainWindow::MainWindow() : QMainWindow()
     setupUI();
     initFileMenu();
     initToolsMenu();
+    initViewMenu();
     initThemesMenu();
     initHelpMenu();
     initHiddenActions();
@@ -764,18 +766,6 @@ void MainWindow::initToolsMenu(void)
 
     shortcutManager.initAction("misc-backlinksPanel", backlinksPanelToggle);
 
-    // Переключатель панели избранного: дока нет (панель живет в TreeScreen),
-    // поэтому обычное checkable-действие. Сам refresh решит показать
-    // или спрятать по наличию звездочек
-    actionToolsMenuFavorites=new QAction(tr("Show favorites panel"), this);
-    actionToolsMenuFavorites->setCheckable(true);
-    actionToolsMenuFavorites->setChecked(mytetraConfig.get_favoritesEnabled());
-    actionToolsMenuFavorites->setIcon(QIcon(":/resource/pic/note_favorite.svg"));
-    toolsMenu->addAction(actionToolsMenuFavorites);
-
-    connect(actionToolsMenuFavorites, &QAction::toggled,
-            this,                     &MainWindow::onToolsMenuFavoritesToggled);
-
     toolsMenu->addSeparator();
 
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -920,6 +910,120 @@ void MainWindow::syncThemeMenu(void)
 }
 
 
+// Меню Вид между Tools и Themes: дублирует быстрые переключатели
+// отображения (шапка заметки, избранное, цвет секрета, бумага), чтобы не
+// лазить за ними в диалог настроек или контекстное меню редактора
+void MainWindow::initViewMenu(void)
+{
+    viewMenu=new QMenu(tr("&View"), this);
+    this->menuBar()->addMenu(viewMenu);
+
+    viewHeaderAction=new QAction(tr("Show note header"), this);
+    viewHeaderAction->setCheckable(true);
+    viewMenu->addAction(viewHeaderAction);
+
+    viewFavoritesAction=new QAction(tr("Show favorites panel"), this);
+    viewFavoritesAction->setCheckable(true);
+    viewMenu->addAction(viewFavoritesAction);
+
+    viewMenu->addSeparator();
+
+    QAction *secretColorAction=new QAction(tr("Change secret color..."), this);
+    viewSecretColorAction=secretColorAction;
+    viewMenu->addAction(secretColorAction);
+
+    QAction *paperColorAction=new QAction(tr("Change note background color..."), this);
+    viewPaperColorAction=paperColorAction;
+    viewMenu->addAction(paperColorAction);
+
+    // Начальная пометка до коннектов: setChecked с тем же значением
+    // toggled не дергает, лишних записей в конфиг нет
+    syncViewMenu();
+
+    connect(viewHeaderAction, &QAction::toggled,
+            this,              &MainWindow::onViewHeaderToggled);
+    connect(viewFavoritesAction, &QAction::toggled,
+            this,                &MainWindow::onViewFavoritesToggled);
+    connect(secretColorAction, &QAction::triggered,
+            this,              &MainWindow::onViewSecretColor);
+    connect(paperColorAction, &QAction::triggered,
+            this,              &MainWindow::onViewPaperColor);
+
+    connect(viewMenu, &QMenu::aboutToShow,
+            this,      &MainWindow::syncViewMenu);
+}
+
+
+// Пометка текущих состояний при каждом открытии: все меняется
+// и мимо меню (диалог настроек, контекстное меню секрета)
+void MainWindow::syncViewMenu(void)
+{
+    if(viewHeaderAction!=nullptr)
+        viewHeaderAction->setChecked(mytetraConfig.get_recordHeaderVisible());
+
+    if(viewFavoritesAction!=nullptr)
+        viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
+}
+
+
+void MainWindow::onViewHeaderToggled(bool checked)
+{
+    mytetraConfig.set_recordHeaderVisible(checked);
+
+    if(editorScreen!=nullptr)
+        editorScreen->updateRecordHeaderVisibility();
+}
+
+
+void MainWindow::onViewFavoritesToggled(bool checked)
+{
+    mytetraConfig.set_favoritesEnabled(checked);
+
+    // Сам refresh решит показать или спрятать по наличию звездочек
+    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
+    if(favoritesPanel!=nullptr)
+        favoritesPanel->refreshFavorites();
+}
+
+
+void MainWindow::onViewSecretColor(void)
+{
+    const QColor current(mytetraConfig.get_secretColor());
+    const QColor chosen=QColorDialog::getColor(current, this);
+
+    if(!chosen.isValid() || chosen==current)
+        return;
+
+    mytetraConfig.set_secretColor(chosen.name());
+
+    // Сразу на диск как в контекстном меню секрета
+    mytetraConfig.sync();
+
+    if(editorScreen!=nullptr)
+        editorScreen->repaintSecrets();
+}
+
+
+void MainWindow::onViewPaperColor(void)
+{
+    const QColor current(
+        MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(),
+                                           mytetraConfig.get_notePaperColor()));
+    const QColor chosen=QColorDialog::getColor(current, this);
+
+    if(!chosen.isValid() || chosen==current)
+        return;
+
+    mytetraConfig.set_notePaperColor(chosen.name());
+
+    // Сразу на диск как в соседнем пункте про цвет секрета
+    mytetraConfig.sync();
+
+    if(editorScreen!=nullptr)
+        editorScreen->applyNotePaperColor();
+}
+
+
 // Клик по пункту меню Темы: применить выбранную тему сразу
 void MainWindow::onThemeMenuTriggered(QAction *action)
 {
@@ -932,7 +1036,14 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         return;
 
     if(mytetraConfig.setInterfaceTheme(themeName))
+    {
         CssHelper::loadCurrentTheme();
+
+        // Своя бумага поверх темы переживает смену темы,
+        // пустая настройка подхватывает цвет новой темы
+        if(editorScreen!=nullptr)
+            editorScreen->applyNotePaperColor();
+    }
 }
 
 
@@ -1114,9 +1225,6 @@ void MainWindow::retranslateUi(void)
 
         actionToolsMenuFilesGallery->setText(tr("Attached &files"));
 
-        actionToolsMenuFavorites->setText(tr("Show favorites panel"));
-        actionToolsMenuFavorites->setChecked(mytetraConfig.get_favoritesEnabled());
-
         // Переключатель дока истории: текст тоже идет через шорткаты,
         // но initAction для него звался один раз при построении
         shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
@@ -1163,6 +1271,26 @@ void MainWindow::retranslateUi(void)
 
         for(QAction *themeAction : themesMenu->actions())
             themeAction->setText(translateNames.value(themeAction->data().toString(), "Unknown"));
+    }
+
+    if(viewMenu!=nullptr)
+    {
+        viewMenu->setTitle(tr("&View"));
+
+        if(viewHeaderAction!=nullptr)
+            viewHeaderAction->setText(tr("Show note header"));
+
+        if(viewFavoritesAction!=nullptr)
+            viewFavoritesAction->setText(tr("Show favorites panel"));
+
+        if(viewSecretColorAction!=nullptr)
+            viewSecretColorAction->setText(tr("Change secret color..."));
+
+        if(viewPaperColorAction!=nullptr)
+            viewPaperColorAction->setText(tr("Change note background color..."));
+
+        // syncViewMenu обновит пометки checkable-пунктов
+        syncViewMenu();
     }
 
     if(helpMenu!=nullptr)
@@ -1373,18 +1501,6 @@ void MainWindow::toolsFindInBaseWithText(const QString &text)
         findScreenRel->widgetShow();
 
     findScreenRel->setFindText(text);
-}
-
-
-// Тумблер панели избранного: сам refresh решит показать или спрятать
-// по наличию звездочек
-void MainWindow::onToolsMenuFavoritesToggled(bool checked)
-{
-    mytetraConfig.set_favoritesEnabled(checked);
-
-    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
-    if(favoritesPanel!=nullptr)
-        favoritesPanel->refreshFavorites();
 }
 
 

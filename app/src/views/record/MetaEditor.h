@@ -31,6 +31,7 @@ public:
  void setTreePath(QString path);
  void setName    (QString name);
  void setAuthor  (QString author);
+ void updateRecordHeaderVisibility(void);
  void setUrl     (QString url);
  void setTags    (QString tags);
 
@@ -45,6 +46,12 @@ public:
  void setReadOnly(bool state);
 
  void setFocusToBaseWidget();
+
+ // Цвет фона поля заметки: настройка поверх цвета темы.
+ // Пустая строка effectiveNotePaperColor означает цвет темы
+ static QString effectiveNotePaperColor(const QString &themeName,
+                                       const QString &setting);
+ void applyNotePaperColor(void);
 
  // Прямые подписи Url и Tags. Вызывается из MainWindow::retranslateUi
  void retranslateUi(void);

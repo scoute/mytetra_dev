@@ -529,6 +529,14 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Secret color: </source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Note paper color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -550,6 +558,14 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="63"/>
         <source>Columns visible</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show note header (name and author)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2549,6 +2565,22 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <source>Backlinks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show note header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change secret color...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change note background color...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

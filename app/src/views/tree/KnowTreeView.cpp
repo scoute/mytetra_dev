@@ -128,11 +128,19 @@ void KnowTreeView::dragMoveEvent(QDragMoveEvent *event)
         // Выясняется элемент дерева, над которым находится курсор
         QModelIndex index=indexAt(event->pos());
 
-        // Указатель на родительский элемент, чтобы далее получить модель данных
-        TreeScreen *parentPointer=qobject_cast<TreeScreen *>( parent() );
+        // Дерево живет в сплиттере с панелью избранного, поэтому
+        // parent() это QSplitter, а не TreeScreen: указатель берется
+        // через поиск объекта, иначе здесь падение на нуле
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        if(treeScreen==nullptr)
+        {
+            event->ignore();
+            return;
+        }
 
         // В модели данных отмечается элемент дерева, над которым находится курсор
-        parentPointer->knowTreeModel->setData(index, QVariant(true), Qt::UserRole);
+        treeScreen->knowTreeModel->setData(index, QVariant(true), Qt::UserRole);
     }
     else
     {
@@ -214,8 +222,13 @@ void KnowTreeView::dropEvent(QDropEvent *event)
             return;
         }
 
-        // Указатель на родительский виджет
-        TreeScreen *parentPointer=qobject_cast<TreeScreen *>( parent() );
+        // Дерево живет в сплиттере с панелью избранного, поэтому
+        // parent() это QSplitter, а не TreeScreen: указатель берется
+        // через поиск объекта, иначе здесь падение на нуле
+        TreeScreen *parentPointer=find_object<TreeScreen>("treeScreen");
+
+        if(parentPointer==nullptr)
+            return;
 
         // Выясняется ссылка на элемент дерева (на ветку), над которым был совершен Drop
         TreeItem *treeItemDrop=parentPointer->knowTreeModel->getItem(index);

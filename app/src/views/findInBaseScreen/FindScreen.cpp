@@ -24,6 +24,8 @@
 #include "views/tree/TreeScreen.h"
 #include "libraries/MtComboBox.h"
 #include "views/tree/KnowTreeView.h"
+#include "models/recordTable/Record.h"
+#include "models/attachTable/AttachTableData.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/CssHelper.h"
 
@@ -223,6 +225,7 @@ void FindScreen::retranslateUi(void)
     findInTags->setText(tr("Tags"));
     findInText->setText(tr("Text"));
     findInNameItem->setText(tr("Name tree item"));
+    findInAttach->setText(tr("Attach files"));
 
     findTable->retranslateUi();
 }
@@ -249,6 +252,9 @@ void FindScreen::setupWhereFindLine(void)
 
     findInNameItem=new QCheckBox(tr("Name tree item"));
     findInNameItem->setChecked(mytetraConfig.get_findscreen_find_in_field("nameItem"));
+
+    findInAttach=new QCheckBox(tr("Attach files"));
+    findInAttach->setChecked(mytetraConfig.get_findscreen_find_in_field("attach"));
 }
 
 
@@ -268,6 +274,7 @@ void FindScreen::assemblyWhereFindLine(void)
     whereFindLine->addWidget(findInTags);
     whereFindLine->addWidget(findInText);
     whereFindLine->addWidget(findInNameItem);
+    whereFindLine->addWidget(findInAttach);
 
     whereFindLine->addStretch();
 
@@ -335,6 +342,9 @@ void FindScreen::setupSignals(void)
 
     connect(findInNameItem, &QCheckBox::stateChanged,
             this,           &FindScreen::changedFindInNameItem);
+
+    connect(findInAttach, &QCheckBox::stateChanged,
+            this,         &FindScreen::changedFindInAttach);
 }
 
 
@@ -414,6 +424,7 @@ void FindScreen::setFindTag(QString tag)
     bool savedTags=findInTags->isChecked();
     bool savedText=findInText->isChecked();
     bool savedNameItem=findInNameItem->isChecked();
+    bool savedAttach=findInAttach->isChecked();
 
     findInName->blockSignals(true);
     findInAuthor->blockSignals(true);
@@ -421,6 +432,7 @@ void FindScreen::setFindTag(QString tag)
     findInTags->blockSignals(true);
     findInText->blockSignals(true);
     findInNameItem->blockSignals(true);
+    findInAttach->blockSignals(true);
 
     findInName->setChecked(false);
     findInAuthor->setChecked(false);
@@ -428,6 +440,7 @@ void FindScreen::setFindTag(QString tag)
     findInTags->setChecked(true);
     findInText->setChecked(false);
     findInNameItem->setChecked(false);
+    findInAttach->setChecked(false);
 
     // Строгое совпадение: ищется тег целиком, а не подстрока.
     // Взводится до синхронного поиска, снимается после него
@@ -445,6 +458,7 @@ void FindScreen::setFindTag(QString tag)
     findInTags->blockSignals(true);
     findInText->blockSignals(true);
     findInNameItem->blockSignals(true);
+    findInAttach->blockSignals(true);
 
     findInName->setChecked(savedName);
     findInAuthor->setChecked(savedAuthor);
@@ -452,6 +466,7 @@ void FindScreen::setFindTag(QString tag)
     findInTags->setChecked(savedTags);
     findInText->setChecked(savedText);
     findInNameItem->setChecked(savedNameItem);
+    findInAttach->setChecked(savedAttach);
 
     findInName->blockSignals(false);
     findInAuthor->blockSignals(false);
@@ -459,6 +474,7 @@ void FindScreen::setFindTag(QString tag)
     findInTags->blockSignals(false);
     findInText->blockSignals(false);
     findInNameItem->blockSignals(false);
+    findInAttach->blockSignals(false);
 }
 
 
@@ -487,6 +503,7 @@ void FindScreen::findClicked(void)
     searchArea["tags"]    =findInTags->isChecked();
     searchArea["text"]    =findInText->isChecked(); // Поиск в тексте записи
     searchArea["nameItem"]=findInNameItem->isChecked(); // Поиск по именам веток
+    searchArea["attach"]  =findInAttach->isChecked(); // Поиск по именам прикрепленных файлов
 
     // Проверяется, установлено ли хоть одно поле для поиска
     int findEnableFlag=0;
@@ -684,6 +701,7 @@ void FindScreen::findRecurse(const TreeItem* curritem)
             iteration_search_result["url"]   =false;
             iteration_search_result["tags"]  =false;
             iteration_search_result["text"]  =false;
+            iteration_search_result["attach"]=false;
 
             // Строгий режим тега: тег целиком без учета регистра.
             // Обычный цикл по полям пропускается
@@ -712,11 +730,31 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     if(key=="nameItem") // Здесь поиск по имени ветки не производится
                         continue;
 
-                    if(key!="text")
+                    if(key!="text" && key!="attach")
                     {
                         // Поиск в обычном поле
                         inspectText=searchRecordTable->getField(key,i);
                         iteration_search_result[key]=findInTextProcess(inspectText);
+                    }
+                    else if(key=="attach")
+                    {
+                        // Поиск по именам прикрепленных файлов записи.
+                        // Таблица берется указателем: копирование AttachTableData
+                        // по значению оставляет висячие ссылки.
+                        // Константность снимается: имена только читаются
+                        Record *record=const_cast<RecordTableData *>(searchRecordTable)->getRecord(i);
+
+                        if(record!=nullptr)
+                        {
+                            AttachTableData *attachTable=record->getAttachTablePointer();
+
+                            QStringList attachNames;
+
+                            for(int a=0; a<attachTable->size(); ++a)
+                                attachNames << attachTable->getFileName(a);
+
+                            iteration_search_result[key]=findInTextProcess(attachNames.join(" "));
+                        }
                     }
                     else
                     {
@@ -867,6 +905,12 @@ void FindScreen::changedFindInNameItem(int state)
 }
 
 
+void FindScreen::changedFindInAttach(int state)
+{
+    changedFindInField("attach",state);
+}
+
+
 void FindScreen::changedFindInField(QString fieldname, int state)
 {
     bool i;
@@ -951,6 +995,7 @@ void FindScreen::switchToolsExpand(bool flag)
     findInTags->setVisible(flag);
     findInText->setVisible(flag);
     findInNameItem->setVisible(flag);
+    findInAttach->setVisible(flag);
 }
 
 // Устаревшая функция, простое обнаружение токенов для поиска

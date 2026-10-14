@@ -284,10 +284,15 @@ public:
     int get_themeCustomTableRowHeight(void);
     void set_themeCustomTableRowHeight(int pixels);
 
-    // Мозаичный фон заметок: путь к картинке-тайлу в рабочем каталоге.
+    // Мозаичный фон заметок: тайл повторяется по обеим осям.
     // Пусто означает без картинки. Повторяется по обеим осям
     QString get_themeCustomNotePaperImage(void);
     void set_themeCustomNotePaperImage(QString path);
+
+    // Режим фона заметок: "color" или "texture". Текстура без своего
+    // файла означает встроенный tx_fabric.jpg
+    QString get_themeCustomNotePaperMode(void);
+    void set_themeCustomNotePaperMode(QString mode);
 
     // Человеко-читаемые имена вложенных файлов на диске (схема id_имя.ext
     // вместо id.ext). По умолчанию выключено. Включается кнопкой миграции

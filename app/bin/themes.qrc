@@ -19,6 +19,9 @@
     <file>resource/standartconfig/any/themes/modern/pic/menu_dot.svg</file>
   </qresource>
   <qresource prefix="/">
+    <file>resource/standartconfig/any/themes/custom/pic/tx_fabric.jpg</file>
+  </qresource>
+  <qresource prefix="/">
     <file>resource/standartconfig/any/themes/midnight/stylesheet.css</file>
     <file>resource/standartconfig/any/themes/midnight/pic/menu_check.svg</file>
     <file>resource/standartconfig/any/themes/midnight/pic/menu_dot.svg</file>

@@ -2892,6 +2892,10 @@ Please report about this problem to the developers.</source>
         <source>Favorites</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Clipper</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecordInfoFieldsEditor</name>
@@ -3786,6 +3790,14 @@ Please report about this problem to the developers.</source>
         <source>Paint selected text as secret</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Clip from clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create note in unsorted_notes branch from clipboard content</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4549,6 +4561,163 @@ All data imported will be encrypted.</source>
         <name>SecretFormatter</name>
     <message>
         <source>Select text to hide as secret</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>Clipper</name>
+    <message>
+        <source>X11 hotkey active: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows hotkey active: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Global hotkey works only on X11 (current: %1). Use the Clip Now button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipper disabled in settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Global hotkey unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipped note </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Web Clipper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already clipped, skipped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved to unsorted_notes: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (skipped %1 image(s), see limits in settings)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No clipboard available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipboard is empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipboard image is not readable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipboard has no text, HTML or image.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Knowledge tree is not ready.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not create unsorted_notes branch.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target branch is not ready.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target branch has no record table.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not insert note into unsorted_notes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>AppConfigPage_Clipper</name>
+    <message>
+        <source>Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Global hotkey, for example Ctrl+Alt+V. Latin keys only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste clipboard to unsorted_notes right now (works everywhere, no hotkey needed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images per note, the rest stay as links</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images larger than this stay as external links instead of files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Larger images stay as links, not files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use the clipper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
+Run: mytetra --control --clipboard [--url]
+Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
+MyTetra must be running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum images per note:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum size of one image:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hotkey:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipper status is unavailable.</source>
         <translation type="unfinished"></translation>
     </message>
     </context>

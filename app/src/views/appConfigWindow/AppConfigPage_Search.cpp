@@ -73,6 +73,14 @@ void AppConfigPage_Search::assembly()
 }
 
 
+void AppConfigPage_Search::retranslateUi(void)
+{
+  findBarRadio->setText(tr("Embedded bar in note"));
+  findWindowRadio->setText(tr("Separate window"));
+  findInNoteBox->setTitle(tr("Find in note"));
+}
+
+
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы

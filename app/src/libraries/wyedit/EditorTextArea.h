@@ -79,6 +79,9 @@ private:
     virtual void keyPressEvent(QKeyEvent *event);
     virtual void keyReleaseEvent(QKeyEvent *event);
 
+    // Shift+Tab снимает один уровень отступа в начале строки
+    void unindentCurrentLine(void);
+
     // Переопределение событий обработки мышки
     // Нужны для обработки кликов по ссылкам в тексте записи
     void mouseMoveEvent(QMouseEvent *event);

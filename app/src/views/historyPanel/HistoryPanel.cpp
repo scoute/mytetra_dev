@@ -17,6 +17,7 @@
 #include "HistoryPanel.h"
 
 #include "libraries/VisitHistory.h"
+#include "views/contentGallery/ContentGallery.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
@@ -326,40 +327,6 @@ qint64 HistoryPanel::recordDirSize(const QString &recordDir)
 }
 
 
-// Файлы картинок каталога записи. Поведение как галерейный
-// перечень: те же расширения, текст заметки картинкой не считается
-QStringList HistoryPanel::historyImageFiles(const QString &recordDir)
-{
-    QDir dir(recordDir);
-
-    if(!dir.exists())
-        return QStringList();
-
-    QStringList filters;
-    filters << "*.png" << "*.jpg" << "*.jpeg" << "*.gif" << "*.bmp";
-
-    QStringList files=dir.entryList(filters, QDir::Files | QDir::Readable, QDir::Name);
-
-    // Текст заметки картинкой не является
-    files.removeAll(QStringLiteral("text.html"));
-
-    return files;
-}
-
-
-// Человекочитаемый размер как в галерее: байты, KB, MB
-QString HistoryPanel::formatHistorySize(qint64 bytes)
-{
-    if(bytes<1024)
-        return QString::number(bytes);
-
-    if(bytes<1024*1024)
-        return QString::number(bytes/1024)+QStringLiteral(" KB");
-
-    return QString::number(bytes/(1024*1024))+QStringLiteral(" MB");
-}
-
-
 // Прямые тексты новым языком. Полная пересборка заодно освежает
 // относительные времена в строках
 void HistoryPanel::retranslateUi(void)
@@ -529,7 +496,7 @@ void HistoryPanel::refreshHistory(void)
 
         const QStringList imageFiles=recordDir.isEmpty()
             ? QStringList()
-            : historyImageFiles(recordDir);
+            : ContentGallery::recordImageFiles(recordDir);
         const qint64 noteBytes=recordDir.isEmpty() ? 0 : recordDirSize(recordDir);
 
         const int row=historyTable->rowCount();
@@ -560,7 +527,7 @@ void HistoryPanel::refreshHistory(void)
                                                        attachCount);
         historyTable->setItem(row, 5, filesItem);
 
-        HistorySortItem *sizeItem=new HistorySortItem(formatHistorySize(noteBytes),
+        HistorySortItem *sizeItem=new HistorySortItem(ContentGallery::formatFileSize(noteBytes),
                                                       noteBytes);
         historyTable->setItem(row, 6, sizeItem);
     }

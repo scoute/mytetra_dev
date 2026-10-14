@@ -73,6 +73,10 @@ void RecordTableScreen::setupActions(void)
  actionBlock = new QAction(this);
  actionBlock->setIcon(QIcon(":/resource/pic/note_block.svg"));
 
+ // Звездочка избранного
+ actionFavorite = new QAction(this);
+ actionFavorite->setIcon(QIcon(":/resource/pic/note_favorite.svg"));
+
  // Удаление записи
  actionDelete = new QAction(this);
  actionDelete->setIcon(QIcon(":/resource/pic/note_delete.svg"));
@@ -265,6 +269,9 @@ void RecordTableScreen::setupSignals(void)
 
     // Блокировка записи
     connect(actionBlock, &QAction::triggered, recordTableController, &RecordTableController::onBlockContext);
+
+    // Звездочка избранного
+    connect(actionFavorite, &QAction::triggered, recordTableController, &RecordTableController::onFavoriteContext);
 
     // Удаление записи
     connect(actionDelete, &QAction::triggered, recordTableController, &RecordTableController::deleteContext);
@@ -618,4 +625,14 @@ void RecordTableScreen::retranslateUi(void)
 void RecordTableScreen::setFocusToBaseWidget()
 {
     recordTableController->setFocusToBaseWidget();
+}
+
+
+// Звездочка текущей записи для меню
+bool RecordTableScreen::isCurrentRecordFavorite(void)
+{
+  if(recordTableController==nullptr)
+    return false;
+
+  return recordTableController->isCurrentRecordFavorite();
 }

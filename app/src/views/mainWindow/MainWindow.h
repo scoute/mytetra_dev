@@ -95,6 +95,9 @@ public slots:
 
     void toolsFindInBaseWithText(const QString &text);
 
+    // Тумблер панели избранного в меню Tools (меню Вид еще нет)
+    void onToolsMenuFavoritesToggled(bool checked);
+
     void toolsImagesGallery(void);
     void toolsFilesGallery(void);
 
@@ -200,6 +203,7 @@ private:
     QAction *actionToolsMenuImagesGallery;
     QAction *actionToolsMenuFilesGallery;
     QAction *actionToolsMenuActionLog;
+    QAction *actionToolsMenuFavorites;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе

@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QItemSelectionModel>
 #include <QVBoxLayout>
+#include <QSplitter>
 #include <QToolBar>
 #include <QInputDialog>
 
@@ -21,6 +22,7 @@
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/ClipboardBranch.h"
 #include "views/record/MetaEditor.h"
+#include "views/favoritesPanel/FavoritesPanel.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/crypt/Password.h"
@@ -180,6 +182,13 @@ void TreeScreen::setupActions(void)
  ac->setIcon(QIcon(":/resource/pic/find_in_base.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::treeScreenFindInBaseClicked);
  actionList["findInBase"]=ac;
+
+ // Панель избранного между кнопками веток и деревом. Создается здесь,
+ // а не в MainWindow, чтобы лежать ровно под тулбаром. Скрыта пока
+ // пусто или фича выключена: дизайн не ломается
+ favoritesPanel=new FavoritesPanel(this);
+ favoritesPanel->setObjectName("favoritesPanel");
+ favoritesPanel->hide();
 }
 
 
@@ -302,6 +311,11 @@ void TreeScreen::setupModels(void)
 
  // Модель подключется к виду
  knowTreeView->setModel(knowTreeModel);
+
+ // Первичная пересборка избранного после загрузки модели:
+ // покажет панель если в базе уже есть звездочки
+ if(favoritesPanel!=nullptr)
+   favoritesPanel->refreshFavorites();
 }
 
 
@@ -460,7 +474,19 @@ void TreeScreen::assembly(void)
  treeScreenLayout->setObjectName("treescreen_QVBoxLayout");
 
  treeScreenLayout->addWidget(toolsLine);
- treeScreenLayout->addWidget(knowTreeView);
+
+ // Избранное и дерево в двигаемом разделителе: долю панели
+ // выбирает пользователь. Панель не схлопывается в ноль чтобы
+ // ее нельзя было потерять drag-ом, дерево забирает остаток
+ QSplitter *favoritesSplitter=new QSplitter(Qt::Vertical, this);
+ favoritesSplitter->setObjectName("favoritesSplitter");
+ favoritesSplitter->addWidget(favoritesPanel);
+ favoritesSplitter->addWidget(knowTreeView);
+ favoritesSplitter->setStretchFactor(0, 0);
+ favoritesSplitter->setStretchFactor(1, 1);
+ favoritesSplitter->setCollapsible(0, false);
+ favoritesSplitter->setCollapsible(1, false);
+ treeScreenLayout->addWidget(favoritesSplitter, 1);
 
  setLayout(treeScreenLayout);
 

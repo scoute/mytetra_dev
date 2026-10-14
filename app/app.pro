@@ -322,6 +322,7 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
+    src/libraries/GitHelper.h \
     src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
@@ -525,6 +526,7 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
+    src/libraries/GitHelper.cpp \
     src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \

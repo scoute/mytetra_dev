@@ -1,0 +1,62 @@
+#ifndef _GITHELPER_H_
+#define _GITHELPER_H_
+
+#include <QString>
+#include <QStringList>
+
+// Центральная обертка над внешним git для тяжелой линии.
+// Все вызовы идут через один run с таймаутом, без шелла.
+// Кэшируется только факт наличия и версия: репозиторий
+// меняется извне, состояние не кэшируется
+
+class GitHelper
+{
+public:
+
+    // Есть ли git в PATH. Результат кэшируется на процесс
+    static bool isAvailable(void);
+
+    // Строка версии ("2.43.0"), пусто если git нет
+    static QString version(void);
+
+    // Запуск git с аргументами в каталоге. Возвращает код,
+    // вывод забирается по указателям. Таймаут 60с по умолчанию
+    static int run(const QString &workDir, const QStringList &args,
+                   QString *stdoutText=nullptr, QString *stderrText=nullptr,
+                   int timeoutMs=60000);
+
+    // Это репозиторий (есть .git выше по дереву)
+    static bool isRepo(const QString &dir);
+
+    // Короткий статус фарфором, пусто если чисто или не репо
+    static QString statusPorcelain(const QString &dir);
+
+    // Unified diff рабочих изменений (не в индексе)
+    static QString diffWorkdir(const QString &dir, const QString &path=QString());
+
+    // Unified diff закоммиченного: rev против рабочих файлов
+    static QString diffAgainst(const QString &dir, const QString &rev,
+                              const QString &path=QString());
+
+    // Однострочный журнал: "хеш тема". limit<=0 значит без лимита
+    static QStringList logOneline(const QString &dir, int limit=0,
+                                  const QString &path=QString());
+
+    // Содержимое файла в ревизии, пусто если нет
+    static QString showFile(const QString &dir, const QString &rev,
+                            const QString &path);
+
+    // HEAD ревизии, пусто если коммитов нет
+    static QString headRev(const QString &dir);
+
+    // Инициализация пустого репозитория
+    static bool initRepo(const QString &dir);
+
+    // Добавить пути в индекс
+    static bool addPaths(const QString &dir, const QStringList &paths);
+
+    // Закоммитить индекс с сообщением
+    static bool commitStaged(const QString &dir, const QString &message);
+};
+
+#endif /* _GITHELPER_H_ */

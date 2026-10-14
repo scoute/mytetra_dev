@@ -38,6 +38,7 @@
 
 #include "../../views/mainWindow/MainWindow.h"
 #include "../TraceLogger.h"
+#include "libraries/VoiceNoteHelper.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/appConfig/AppConfig.h"
@@ -274,6 +275,10 @@ void Editor::setupFormatters(void)
   audioFormatter->setEditor(this);
   audioFormatter->setTextArea(textArea);
 
+  // Рисовальщик баблов регистрируется в раскладке документа
+  textArea->document()->documentLayout()->registerHandler(
+      VoiceNoteHelper::BubbleObjectType, audioFormatter->bubbleHandler());
+
   // Редактирование формул в тексте
   mathExpressionFormatter=new MathExpressionFormatter();
   mathExpressionFormatter->setEditor(this);
@@ -391,6 +396,11 @@ void Editor::setupSignals(void)
   // Клик по ссылке при зажатой клавише Ctrl
   connect(textArea,           &EditorTextArea::clickedOnReference,
           referenceFormatter, &ReferenceFormatter::onClickedGotoReference,
+          Qt::DirectConnection);
+
+  // Клик по баблу голосовой заметки: play/pause на месте
+  connect(textArea,       &EditorTextArea::clickedOnVoiceBubble,
+          audioFormatter, &AudioFormatter::onBubbleClicked,
           Qt::DirectConnection);
 
   // Одинарный Ctrl+клик по картинке открывает ее во внешней программе
@@ -852,6 +862,16 @@ QTextDocument *Editor::getTextareaDocument(void)
 }
 
 
+QString Editor::voiceBubbleHrefAtCursor(void)
+{
+  if(textArea==nullptr || textArea->document()==nullptr)
+    return QString();
+
+  return VoiceNoteHelper::bubbleHrefAt(textArea->document(),
+                                       textArea->textCursor().position());
+}
+
+
 // Свой stylesheet области текста (цвета поля заметки из настроек).
 // Нужен окнам с собственным редактором вроде создания записи
 void Editor::setTextAreaStyleSheet(const QString &styleSheet)
@@ -927,7 +947,9 @@ bool Editor::saveTextareaText()
   qDebug() << "Write to file " << workFileName;
 
   QTextStream out(&wfile);
-  QString content=textArea->document()->toHtml("UTF-8");
+  // Баблы голосовых сохраняются ссылками, живой документ не трогается
+  QString content=audioFormatter!=nullptr ? audioFormatter->exportHtml()
+                                         : textArea->document()->toHtml("UTF-8");
   // Нулевые байты в файл не пишутся: QString::fromUtf8() при чтении
   // останавливается на первом 0x00 и обрезает остаток текста (баг #134:
   // такой байт попадает в документ при вставке из браузера)
@@ -1060,7 +1082,9 @@ void Editor::saveTextarea(void)
     {
       // Иначе задана функция обратного вызова для записи текста и картинок
 
-      QString content=textArea->document()->toHtml("UTF-8");
+      // Баблы голосовых сохраняются ссылками, живой документ не трогается
+      QString content=audioFormatter!=nullptr ? audioFormatter->exportHtml()
+                                             : textArea->document()->toHtml("UTF-8");
       saveCallbackFunc(qobject_cast<QObject *>(this), content);
     }
 
@@ -1154,6 +1178,10 @@ bool Editor::loadTextarea()
   // Секреты подтягиваются под глобальный цвет из настроек
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();
+
+  // Голосовые ссылки превращаются в баблы
+  if(audioFormatter!=nullptr)
+    audioFormatter->materializeBubbles();
 
   // Свежезагруженное не изменено: иначе первый же клик мимо
   // посчитает текст правленным и погонит полный пересчет

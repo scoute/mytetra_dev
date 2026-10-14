@@ -101,6 +101,9 @@ public:
  void setTextareaEditable(bool editable);
  QString getTextarea(void);
  QTextDocument *getTextareaDocument(void);
+
+ // Ссылка голосового бабла под курсором, пусто если курсор не на бабле
+ QString voiceBubbleHrefAtCursor(void);
  void setTextareaModified(bool modify);
  bool getTextareaModified(void);
 

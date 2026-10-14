@@ -7438,6 +7438,10 @@ Please select single item for enabling edit operation.</source>
         <translation>Микрофон не найден</translation>
     </message>
     <message>
+        <source>Voice file not found</source>
+        <translation>Файл голосовой заметки не найден</translation>
+    </message>
+    <message>
         <source>Save the note first</source>
         <translation>Сначала сохраните заметку</translation>
     </message>

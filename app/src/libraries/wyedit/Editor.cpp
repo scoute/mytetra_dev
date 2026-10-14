@@ -447,6 +447,18 @@ void Editor::setupSignals(void)
           this,       &Editor::onFindtextSignalDetect,
           Qt::DirectConnection);
 
+  connect(findDialog, &EditorFindDialog::find_prev_text,
+          this,       &Editor::onFindPrevSignalDetect,
+          Qt::DirectConnection);
+
+  connect(findDialog, &EditorFindDialog::replace_text,
+          this,       &Editor::onReplacetextSignalDetect,
+          Qt::DirectConnection);
+
+  connect(findDialog, &EditorFindDialog::replace_all_text,
+          this,       &Editor::onReplaceAllSignalDetect,
+          Qt::DirectConnection);
+
   connect(textArea,              &EditorTextArea::updateIndentlineGeometry,
           indentSliderAssistant, &EditorIndentSliderAssistant::onUpdateGeometry,
           Qt::DirectConnection);
@@ -1378,19 +1390,191 @@ void Editor::onFindtextClicked(void)
 }
 
 
-// Слот, принимающий данные от окна поиска текста
+// Слот, принимающий данные от окна поиска текста: искать вперед
 void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags)
 {
   qDebug() << "Find text " << text << " with flags " << flags;
 
+  findInText(text, flags & ~QTextDocument::FindBackward, false);
+}
+
+
+// Слот стрелки назад: искать назад
+void Editor::onFindPrevSignalDetect(const QString &text, QTextDocument::FindFlags flags)
+{
+  qDebug() << "Find prev text " << text << " with flags " << flags;
+
+  findInText(text, flags | QTextDocument::FindBackward, true);
+}
+
+
+// Искать текст с указанного направления. При включенной галочке Loop search
+// после конца документа поиск продолжается с другого конца.
+// Найденные совпадения подсвечиваются. Возвращает было ли совпадение
+bool Editor::findInText(const QString &text, QTextDocument::FindFlags flags, bool backward)
+{
+  if(text.isEmpty())
+    return false;
+
   if(!textArea->find(text, flags))
+  {
+    if(findDialog->isLoopSearch())
+    {
+      QTextCursor wrapCursor=textArea->textCursor();
+
+      if(backward)
+        wrapCursor.movePosition(QTextCursor::End);
+      else
+        wrapCursor.movePosition(QTextCursor::Start);
+
+      textArea->setTextCursor(wrapCursor);
+
+      if(textArea->find(text, flags))
+      {
+        highlightMatches(text, flags);
+        return true;
+      }
+    }
+
+    highlightMatches(QString(), flags);
+
+    findDialog->hide();
+    QMessageBox::information(this,
+                             tr("Search result"),
+                             tr("String '<b>")+text+tr("</b>' not found"),
+                             QMessageBox::Close);
+    return false;
+  }
+
+  highlightMatches(text, flags);
+
+  return true;
+}
+
+
+// Подсветить все совпадения запроса. Пустой запрос гасит подсветку
+void Editor::highlightMatches(const QString &text, QTextDocument::FindFlags flags)
+{
+  QList<QTextEdit::ExtraSelection> highlights;
+
+  if(!text.isEmpty())
+  {
+    QTextDocument::FindFlags forwardFlags=flags & ~QTextDocument::FindBackward;
+
+    QTextCharFormat highlightFormat;
+    highlightFormat.setBackground(QColor(Qt::yellow));
+
+    QTextCursor cursor=textArea->document()->find(text, 0, forwardFlags);
+
+    // Ограничение сверху чтобы не вешать редактор на огромных документах
+    int highlightCount=0;
+
+    while(!cursor.isNull() && highlightCount<1000)
+    {
+      QTextEdit::ExtraSelection selection;
+      selection.cursor=cursor;
+      selection.format=highlightFormat;
+      highlights.append(selection);
+
+      highlightCount++;
+
+      cursor=textArea->document()->find(text, cursor, forwardFlags);
+    }
+  }
+
+  textArea->setExtraSelections(highlights);
+}
+
+
+// Совпадает ли текущее выделение с искомой строкой при заданных флагах
+bool Editor::isSelectionMatch(const QString &text, QTextDocument::FindFlags flags) const
+{
+  QTextCursor cursor=textArea->textCursor();
+
+  if(!cursor.hasSelection())
+    return false;
+
+  QString selected=cursor.selectedText();
+
+  if(flags & QTextDocument::FindCaseSensitively)
+    return selected==text;
+  else
+    return selected.compare(text, Qt::CaseInsensitive)==0;
+}
+
+
+// Слот замены по кнопке Replace: если выделен подходящий фрагмент, он
+// заменяется, затем ищется следующее совпадение
+void Editor::onReplacetextSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags)
+{
+  qDebug() << "Replace text " << text << " with flags " << flags;
+
+  if(text.isEmpty())
+    return;
+
+  if(isSelectionMatch(text, flags))
+  {
+    QTextCursor cursor=textArea->textCursor();
+    cursor.beginEditBlock();
+    cursor.removeSelectedText();
+    cursor.insertText(replaceText);
+    cursor.endEditBlock();
+    textArea->setTextCursor(cursor);
+  }
+
+  findInText(text, flags & ~QTextDocument::FindBackward, false);
+}
+
+
+// Слот замены по кнопке Replace all: все совпадения заменяются за один
+// проход с начала документа одной операцией отмены
+void Editor::onReplaceAllSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags)
+{
+  qDebug() << "Replace all text " << text << " with flags " << flags;
+
+  if(text.isEmpty())
+    return;
+
+  // Замена идет всегда вперед с начала документа, флаг Search backward здесь не применяется
+  QTextDocument::FindFlags forwardFlags=flags & ~QTextDocument::FindBackward;
+
+  QTextCursor cursor=textArea->document()->find(text, 0, forwardFlags);
+
+  if(cursor.isNull())
   {
     findDialog->hide();
     QMessageBox::information(this,
                              tr("Search result"),
                              tr("String '<b>")+text+tr("</b>' not found"),
                              QMessageBox::Close);
+    return;
   }
+
+  int replaceCount=0;
+
+  // Один блок отмены на всю замену: блок открывается явным курсором
+  // документа, иначе временные копии textCursor() не сгруппируют правки
+  QTextCursor editCursor(textArea->document());
+  editCursor.beginEditBlock();
+
+  while(!cursor.isNull())
+  {
+    cursor.removeSelectedText();
+    cursor.insertText(replaceText);
+    replaceCount++;
+
+    cursor=textArea->document()->find(text, cursor, forwardFlags);
+  }
+
+  editCursor.endEditBlock();
+
+  highlightMatches(text, forwardFlags);
+
+  findDialog->hide();
+  QMessageBox::information(this,
+                           tr("Search result"),
+                           tr("Replaced ")+QString::number(replaceCount)+tr(" occurrence(s)"),
+                           QMessageBox::Close);
 }
 
 

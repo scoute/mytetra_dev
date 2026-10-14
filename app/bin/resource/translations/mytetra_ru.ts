@@ -701,6 +701,10 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Try remember cursor position at ordinary selection</source>
         <translation type="vanished">Пытаться вспомнить позицию курсора при обычном выборе записи</translation>
     </message>
+    <message>
+        <source>Secret color: </source>
+        <translation>Цвет секрета: </translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -1847,6 +1851,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <source>Go to URL or reference</source>
         <translation type="vanished">Перейти по URL или по ссылке</translation>
+    </message>
+    <message>
+        <source>Copy secret</source>
+        <translation>Скопировать секрет</translation>
+    </message>
+    <message>
+        <source>Change secret color...</source>
+        <translation>Изменить цвет секретов...</translation>
     </message>
 </context>
 <context>
@@ -5118,6 +5130,14 @@ Please report about this problem to the developers.</source>
         <source>Show backlinks panel</source>
         <translation>Показать панель обратных ссылок</translation>
     </message>
+    <message>
+        <source>Hide as secret</source>
+        <translation>Скрыть секретом</translation>
+    </message>
+    <message>
+        <source>Paint selected text as secret</source>
+        <translation>Закрасить выделенный текст как секрет</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -5991,6 +6011,13 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Outgoing links (%1)</source>
         <translation>Исходящие ссылки (%1)</translation>
+    </message>
+    </context>
+    <context>
+        <name>SecretFormatter</name>
+    <message>
+        <source>Select text to hide as secret</source>
+        <translation>Выделите текст чтобы скрыть секретом</translation>
     </message>
     </context>
 </TS>

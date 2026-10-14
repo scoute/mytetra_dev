@@ -40,6 +40,8 @@ private slots:
     void onClickedSecretColorReset(void);
     void onClickedNotePaperImageLoad(void);
     void onClickedNotePaperImageClear(void);
+    void onTileComboChanged(int index);
+    void syncTileCombo(void);
     void refreshNotePaperImageLabel(void);
     void onClickedTreeBackground(void);
     void onClickedTreeBackgroundReset(void);
@@ -94,6 +96,7 @@ protected:
     QPushButton *secretColorReset;
     QLabel *notePaperImageLabel;
     QRadioButton *notePaperTextureRadio;
+    MtComboBox *notePaperTileCombo;
     QPushButton *notePaperImageLoad;
     QPushButton *notePaperImageClear;
     QString notePaperImagePath;

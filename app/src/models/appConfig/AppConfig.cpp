@@ -1150,6 +1150,21 @@ void AppConfig::set_themeCustomNotePaperImage(QString path)
     m_conf->setValue("themeCustomNotePaperImage", path);
 }
 
+int AppConfig::get_themeCustomNotePaperBuiltin(void)
+{
+    return m_conf->value("themeCustomNotePaperBuiltin", 0).toInt();
+}
+
+void AppConfig::set_themeCustomNotePaperBuiltin(int index)
+{
+    // Верхняя граница не проверяется здесь: чтение идёт через
+    // value() с дефолтом, запись только из выпадашки на четыре пункта
+    if(index<0)
+        index=0;
+
+    m_conf->setValue("themeCustomNotePaperBuiltin", index);
+}
+
 QString AppConfig::get_themeCustomNotePaperMode(void)
 {
     return m_conf->value("themeCustomNotePaperMode", "texture").toString();

@@ -31,8 +31,12 @@ const int FixedParameters::mathExpHeaderLen=29; // Сколько символо
 // это Default плюс настройки страницы Themes
 const QStringList FixedParameters::themesAvailableList={"default", "dark", "modern", "midnight", "custom"};
 
-// Встроенный тайл мозаики заметок: дефолт режима текстуры
-const QString FixedParameters::defaultNotePaperImage=":/resource/standartconfig/any/themes/custom/pic/tx_fabric.jpg";
+// Встроенные тайлы мозаики заметок. Первый - дефолт режима текстуры
+const QStringList FixedParameters::defaultNotePaperTiles=QStringList()
+  << ":/resource/standartconfig/any/themes/custom/pic/tx_fabric.jpg"
+  << ":/resource/standartconfig/any/themes/custom/pic/white-background_002.jpg"
+  << ":/resource/standartconfig/any/themes/custom/pic/white-background_003.jpg"
+  << ":/resource/standartconfig/any/themes/custom/pic/white-background_004.jpg";
 
 // Таблица доступных размеров иконок
 const OrderedMap< QString, QPair<QString, float> > FixedParameters::interfaceIconSizeAvailableMap = {

@@ -109,10 +109,31 @@ void AppConfigPage_Theme::setupUi(void)
   notePaperTextureRadio=new QRadioButton(this);
   notePaperTextureRadio->setChecked(mytetraConfig.get_themeCustomNotePaperMode()!="color");
   notePaperColorRadio->setChecked(mytetraConfig.get_themeCustomNotePaperMode()=="color");
+  notePaperTileCombo=new MtComboBox(this);
+
+  foreach(const QString &tilePath, fixedParameters.defaultNotePaperTiles)
+    notePaperTileCombo->addItem(QFileInfo(tilePath).fileName());
+
   notePaperImageLabel=new QLabel(this);
   notePaperImageLoad=new QPushButton(this);
   notePaperImageClear=new QPushButton(this);
   notePaperImagePath=mytetraConfig.get_themeCustomNotePaperImage();
+
+  {
+    int tileIndex=mytetraConfig.get_themeCustomNotePaperBuiltin();
+
+    if(tileIndex<0 || tileIndex>=notePaperTileCombo->count())
+      tileIndex=0;
+
+    // Без блокировки сигналов: смена индекса при своём файле
+    // снесла бы его через onTileComboChanged
+    const bool blocked=notePaperTileCombo->blockSignals(true);
+    notePaperTileCombo->setCurrentIndex(tileIndex);
+    notePaperTileCombo->blockSignals(blocked);
+  }
+
+  syncTileCombo();
+  refreshNotePaperImageLabel();
 
   // --- Дерево веток ---
   treeBox=new QGroupBox(this);
@@ -275,6 +296,8 @@ void AppConfigPage_Theme::setupSignals(void)
   connect(secretColorReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedSecretColorReset);
   connect(notePaperImageLoad, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedNotePaperImageLoad);
   connect(notePaperImageClear, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedNotePaperImageClear);
+  connect(notePaperTileCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this, &AppConfigPage_Theme::onTileComboChanged);
   connect(treeBackgroundButton, &QToolButton::clicked, this, &AppConfigPage_Theme::onClickedTreeBackground);
   connect(treeBackgroundReset, &QPushButton::clicked, this, &AppConfigPage_Theme::onClickedTreeBackgroundReset);
   connect(treeTextButton, &QToolButton::clicked, this, &AppConfigPage_Theme::onClickedTreeText);
@@ -335,11 +358,16 @@ void AppConfigPage_Theme::assembly(void)
 
   QHBoxLayout *paperImageLayout=new QHBoxLayout();
   paperImageLayout->addWidget(notePaperTextureRadio);
-  paperImageLayout->addWidget(notePaperImageLabel);
+  paperImageLayout->addWidget(notePaperTileCombo);
   paperImageLayout->addWidget(notePaperImageLoad);
   paperImageLayout->addWidget(notePaperImageClear);
   paperImageLayout->addStretch();
   noteLayout->addLayout(paperImageLayout);
+
+  QHBoxLayout *paperStatusLayout=new QHBoxLayout();
+  paperStatusLayout->addWidget(notePaperImageLabel);
+  paperStatusLayout->addStretch();
+  noteLayout->addLayout(paperStatusLayout);
 
   noteBox->setLayout(noteLayout);
 
@@ -467,13 +495,35 @@ void AppConfigPage_Theme::onClickedSecretColorReset()
 
 void AppConfigPage_Theme::refreshNotePaperImageLabel(void)
 {
-  // Пустой путь означает встроенный tx_fabric.jpg
-  if(notePaperImagePath.isEmpty())
+  // Свой файл выше встроенных. Пусто означает выбранный в выпадашке
+  if(!notePaperImagePath.isEmpty())
     notePaperImageLabel->setText(
-      tr("Paper image: tx_fabric.jpg (default)"));
+      tr("Texture: %1 (own file)").arg(QFileInfo(notePaperImagePath).fileName()));
   else
     notePaperImageLabel->setText(
-      tr("Paper image: %1").arg(QFileInfo(notePaperImagePath).fileName()));
+      tr("Texture: %1 (built-in)").arg(notePaperTileCombo->currentText()));
+}
+
+
+// Выпадашка доступна только без своего файла: свой приоритетнее
+void AppConfigPage_Theme::syncTileCombo(void)
+{
+  notePaperTileCombo->setEnabled(notePaperImagePath.isEmpty());
+}
+
+
+void AppConfigPage_Theme::onTileComboChanged(int index)
+{
+  Q_UNUSED(index);
+
+  // Ручной выбор встроенной сносит свой файл
+  if(!notePaperImagePath.isEmpty() && !notePaperImagePath.startsWith(":"))
+    QFile::remove(notePaperImagePath);
+
+  notePaperImagePath.clear();
+  notePaperTextureRadio->setChecked(true);
+  syncTileCombo();
+  refreshNotePaperImageLabel();
 }
 
 
@@ -504,18 +554,20 @@ void AppConfigPage_Theme::onClickedNotePaperImageLoad(void)
 
   notePaperImagePath=target;
   notePaperTextureRadio->setChecked(true);
+  syncTileCombo();
   refreshNotePaperImageLabel();
 }
 
 
 void AppConfigPage_Theme::onClickedNotePaperImageClear(void)
 {
-  // Назад на встроенный tx_fabric.jpg. Свой файл из рабочего
+  // Назад на встроенную из выпадашки. Свой файл из рабочего
   // каталога удаляется, ресурсы не трогаются
   if(!notePaperImagePath.isEmpty() && !notePaperImagePath.startsWith(":"))
     QFile::remove(notePaperImagePath);
 
   notePaperImagePath.clear();
+  syncTileCombo();
   refreshNotePaperImageLabel();
 }
 
@@ -704,6 +756,8 @@ void AppConfigPage_Theme::onClickedResetAll(void)
 
   notePaperImagePath.clear();
   notePaperTextureRadio->setChecked(true);
+  notePaperTileCombo->setCurrentIndex(0);
+  syncTileCombo();
   refreshNotePaperImageLabel();
 
   treeBackgroundIsTheme=true;
@@ -843,6 +897,9 @@ int AppConfigPage_Theme::applyChanges(void)
 
   if(mytetraConfig.get_themeCustomNotePaperImage()!=notePaperImagePath)
     mytetraConfig.set_themeCustomNotePaperImage(notePaperImagePath);
+
+  if(mytetraConfig.get_themeCustomNotePaperBuiltin()!=notePaperTileCombo->currentIndex())
+    mytetraConfig.set_themeCustomNotePaperBuiltin(notePaperTileCombo->currentIndex());
 
   // Цвета дерева и списка: пусто означает цвет темы
   if(treeBackgroundIsTheme)

@@ -181,6 +181,7 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Favorites.h \
     src/views/appConfigWindow/AppConfigPage_Search.h \
     src/views/appConfigWindow/AppConfigPage_Clipper.h \
+    src/views/appConfigWindow/AppConfigPage_Mcp.h \
     src/views/consoleEmulator/CommandRunner.h \
     src/views/databasesManagement/DatabasesManagementPathDelegate.h \
     src/views/databasesManagement/DatabasesManagementScreen.h \
@@ -371,6 +372,7 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Favorites.cpp \
     src/views/appConfigWindow/AppConfigPage_Search.cpp \
     src/views/appConfigWindow/AppConfigPage_Clipper.cpp \
+    src/views/appConfigWindow/AppConfigPage_Mcp.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \
     src/views/databasesManagement/DatabasesManagementPathDelegate.cpp \
     src/views/databasesManagement/DatabasesManagementScreen.cpp \

@@ -109,6 +109,7 @@ void printHelp()
     printf("./mytetra --mcp-ro - Run read-only MCP server over stdio for AI clients\n");
     printf("./mytetra --mcp-rw - Run read-write MCP server (create and update, no delete)\n");
     printf("./mytetra --mcp-rw-with-delete - Run MCP server with delete tools, files go to trash\n");
+    printf("MCP server requires Allow MCP enabled on the MCP settings page\n");
     printf("\n");
 }
 

@@ -86,6 +86,23 @@ public:
     // Корень репозитория вверх по дереву (по .git), пусто если нет.
     // Для diff/детекта подписок: единый журнал shared/.git
     static QString findRepositoryRoot(const QString &dir);
+
+    // Файлы ссылки журнала (ls-tree), только под путём при заданном
+    static QStringList listFilesInRef(const QString &repo, const QString &ref,
+                                      const QString &pathspec=QString());
+
+    // checkout пути из ссылки (восстановление). Текст ошибки опционально
+    static bool checkoutFromRef(const QString &repo, const QString &ref,
+                                const QString &pathspec,
+                                QString *errorMessage=nullptr);
+
+    // Однострочный журнал всего репозитория
+    static QStringList getLogOneline(const QString &repo);
+
+    // Архивация истории: текущее состояние новым корнем, старое
+    // чистится. Текст ошибки опционально
+    static bool archiveHistory(const QString &repo, const QString &message,
+                               QString *errorMessage=nullptr);
 };
 
 #endif /* _GITHELPER_H_ */

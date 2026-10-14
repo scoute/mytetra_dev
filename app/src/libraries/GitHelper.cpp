@@ -1,6 +1,7 @@
 #include <QProcess>
 #include <QFileInfo>
 #include <QDir>
+#include <QDateTime>
 #include <QDebug>
 
 #include "GitHelper.h"
@@ -371,4 +372,127 @@ QString GitHelper::findRepositoryRoot(const QString &dir)
     }
 
     return QString();
+}
+
+
+QStringList GitHelper::listFilesInRef(const QString &repo, const QString &ref,
+                                      const QString &pathspec)
+{
+    QStringList args;
+    args << QStringLiteral("ls-tree") << QStringLiteral("-r")
+         << QStringLiteral("--name-only") << ref;
+
+    if(!pathspec.isEmpty())
+    {
+        args << QStringLiteral("--") << pathspec;
+    }
+
+    QString out;
+    run(repo, args, &out);
+
+    QStringList result;
+    const QStringList lines=out.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
+    for(const QString &line : lines)
+        result << line.trimmed();
+
+    return result;
+}
+
+
+bool GitHelper::checkoutFromRef(const QString &repo, const QString &ref,
+                                const QString &pathspec, QString *errorMessage)
+{
+    QStringList args;
+    args << QStringLiteral("checkout") << QStringLiteral("-f") << ref
+         << QStringLiteral("--") << pathspec;
+
+    QString err;
+    const int code=run(repo, args, nullptr, &err);
+
+    if(code!=0 && errorMessage!=nullptr)
+        *errorMessage=QStringLiteral("git checkout ")+ref+QStringLiteral(" -- ")+pathspec
+                      +QStringLiteral(" failed (exit ")+QString::number(code)+QStringLiteral(")");
+
+    return code==0;
+}
+
+
+QStringList GitHelper::getLogOneline(const QString &repo)
+{
+    QString out;
+
+    if(run(repo, QStringList() << QStringLiteral("log")
+                               << QStringLiteral("--oneline"), &out)!=0)
+        return QStringList();
+
+    return out.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
+}
+
+
+bool GitHelper::archiveHistory(const QString &repo, const QString &message,
+                               QString *errorMessage)
+{
+    // Требуется репозиторий минимум с одним коммитом
+    if(headRev(repo).isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Journal repository is empty");
+        return false;
+    }
+
+    QString branch;
+    if(run(repo, QStringList() << QStringLiteral("rev-parse")
+                               << QStringLiteral("--abbrev-ref")
+                               << QStringLiteral("HEAD"), &branch)!=0
+       || branch.trimmed().isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot detect journal branch name");
+        return false;
+    }
+    branch=branch.trimmed();
+
+    // Временная ветка с пустым корнем (рабочий каталог не трогается)
+    const QString tempBranch=QStringLiteral("snapshot_arch_")+
+                             QString::number(QDateTime::currentMSecsSinceEpoch());
+    if(run(repo, QStringList() << QStringLiteral("checkout")
+                               << QStringLiteral("--orphan") << tempBranch)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git checkout --orphan failed");
+        return false;
+    }
+
+    // Всё текущее состояние добавляется как единое корневое состояние
+    if(run(repo, QStringList() << QStringLiteral("add") << QStringLiteral("--all"))!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git add --all failed");
+        return false;
+    }
+
+    if(run(repo, QStringList() << QStringLiteral("commit")
+                               << QStringLiteral("--allow-empty")
+                               << QStringLiteral("-m") << message)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git commit failed during archive");
+        return false;
+    }
+
+    // Старая ветка получает новое корневое состояние; прежняя история
+    // становится недостижимой и удаляется из reflog + уборкой объектов
+    if(run(repo, QStringList() << QStringLiteral("branch")
+                               << QStringLiteral("-M") << branch)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git branch -M failed during archive");
+        return false;
+    }
+
+    run(repo, QStringList() << QStringLiteral("reflog") << QStringLiteral("expire")
+                            << QStringLiteral("--expire=now") << QStringLiteral("--all"));
+    run(repo, QStringList() << QStringLiteral("gc") << QStringLiteral("--prune=now"));
+
+    return true;
 }

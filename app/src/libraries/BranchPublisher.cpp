@@ -626,6 +626,8 @@ bool BranchPublisher::writePublicationManifest(const QString &dirPath,
         out << relative << "\t" << QString::fromLatin1(sha.toHex()) << "\n";
     }
 
+    // Сброс потока до закрытия файла, иначе хвост теряется
+    out.flush();
     manifestFile.close();
     return true;
 }
@@ -818,14 +820,18 @@ bool copyFileAtomic(const QString &sourcePath, const QString &destPath)
 // но promotion копирует их последними
 QStringList publicationDataFiles(const QString &dirPath)
 {
+    // База абсолютизируется: relativeFilePath с относительной базой
+    // не релятивизирует (конфиг разрешает относительный sharedDir)
+    const QString absBase=QDir(dirPath).absolutePath();
+
     QStringList files;
 
-    QDirIterator it(dirPath, QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden,
+    QDirIterator it(absBase, QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden,
                     QDirIterator::Subdirectories);
     while(it.hasNext())
     {
         it.next();
-        const QString relative=QDir(dirPath).relativeFilePath(it.filePath());
+        const QString relative=QDir(absBase).relativeFilePath(it.filePath());
 
         if(relative.startsWith(".git/")
            || relative.startsWith(".")
@@ -1750,13 +1756,16 @@ QMap<QString, QByteArray> BranchPublisher::publicationContentDigest(const QStrin
 {
     QMap<QString, QByteArray> digest;
 
-    QDirIterator it(dir, QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden,
+    // База абсолютизируется по той же причине что в publicationDataFiles
+    const QString absBase=QDir(dir).absolutePath();
+
+    QDirIterator it(absBase, QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden,
                     QDirIterator::Subdirectories);
     while(it.hasNext())
     {
         it.next();
 
-        QString relative=QDir(dir).relativeFilePath(it.filePath());
+        QString relative=QDir(absBase).relativeFilePath(it.filePath());
         // Пропуск служебного: .git/, meta.json, manifest.json, changelog.json
         // и временных сборок
         if(relative=="meta.json"

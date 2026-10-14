@@ -31,6 +31,9 @@ const int FixedParameters::mathExpHeaderLen=29; // Сколько символо
 // это Default плюс настройки страницы Themes
 const QStringList FixedParameters::themesAvailableList={"default", "dark", "modern", "midnight", "custom"};
 
+// Встроенный тайл мозаики заметок: дефолт режима текстуры
+const QString FixedParameters::defaultNotePaperImage=":/resource/standartconfig/any/themes/custom/pic/tx_fabric.jpg";
+
 // Таблица доступных размеров иконок
 const OrderedMap< QString, QPair<QString, float> > FixedParameters::interfaceIconSizeAvailableMap = {
     { "META_ICON_TRIPLE_SIZE",        { QString("x 3"),    3.0 } },

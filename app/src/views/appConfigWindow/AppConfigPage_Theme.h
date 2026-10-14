@@ -10,6 +10,7 @@ class QLabel;
 class QToolButton;
 class QPushButton;
 class QSpinBox;
+class QRadioButton;
 class QFont;
 class MtComboBox;
 
@@ -71,7 +72,7 @@ protected:
 
     // Заметка (переехало из Misc)
     QGroupBox *noteBox;
-    QLabel *notePaperColorLabel;
+    QRadioButton *notePaperColorRadio;
     QToolButton *notePaperColorButton;
     QColor *notePaperColor;
     QPushButton *notePaperColorReset;
@@ -86,6 +87,7 @@ protected:
     QColor *secretColor;
     QPushButton *secretColorReset;
     QLabel *notePaperImageLabel;
+    QRadioButton *notePaperTextureRadio;
     QPushButton *notePaperImageLoad;
     QPushButton *notePaperImageClear;
     QString notePaperImagePath;

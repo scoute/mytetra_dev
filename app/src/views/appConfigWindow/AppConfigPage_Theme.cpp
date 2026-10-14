@@ -9,6 +9,7 @@
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QFileDialog>
+#include <QRadioButton>
 #include <QDir>
 #include <QFileInfo>
 #include <QPixmap>
@@ -77,7 +78,7 @@ void AppConfigPage_Theme::setupUi(void)
   // --- Заметка (переехало из Misc) ---
   noteBox=new QGroupBox(this);
 
-  notePaperColorLabel=new QLabel(this);
+  notePaperColorRadio=new QRadioButton(this);
   notePaperColorButton=new QToolButton(this);
   notePaperColor=new QColor();
   notePaperColorIsTheme=mytetraConfig.get_notePaperColor().isEmpty();
@@ -102,6 +103,9 @@ void AppConfigPage_Theme::setupUi(void)
                     QColor(mytetraConfig.get_secretColor()));
   secretColorReset=new QPushButton(this);
 
+  notePaperTextureRadio=new QRadioButton(this);
+  notePaperTextureRadio->setChecked(mytetraConfig.get_themeCustomNotePaperMode()!="color");
+  notePaperColorRadio->setChecked(mytetraConfig.get_themeCustomNotePaperMode()=="color");
   notePaperImageLabel=new QLabel(this);
   notePaperImageLoad=new QPushButton(this);
   notePaperImageClear=new QPushButton(this);
@@ -331,11 +335,12 @@ void AppConfigPage_Theme::assembly(void)
 
   // Заметка
   QVBoxLayout *noteLayout=new QVBoxLayout();
-  noteLayout->addLayout(colorRowLayout(notePaperColorLabel, notePaperColorButton, notePaperColorReset));
+  noteLayout->addLayout(colorRowLayout(notePaperColorRadio, notePaperColorButton, notePaperColorReset));
   noteLayout->addLayout(colorRowLayout(noteFontColorLabel, noteFontColorButton, noteFontColorReset));
   noteLayout->addLayout(colorRowLayout(secretColorLabel, secretColorButton, secretColorReset));
 
   QHBoxLayout *paperImageLayout=new QHBoxLayout();
+  paperImageLayout->addWidget(notePaperTextureRadio);
   paperImageLayout->addWidget(notePaperImageLabel);
   paperImageLayout->addWidget(notePaperImageLoad);
   paperImageLayout->addWidget(notePaperImageClear);
@@ -468,8 +473,10 @@ void AppConfigPage_Theme::onClickedSecretColorReset()
 
 void AppConfigPage_Theme::refreshNotePaperImageLabel(void)
 {
+  // Пустой путь означает встроенный tx_fabric.jpg
   if(notePaperImagePath.isEmpty())
-    notePaperImageLabel->setText(tr("Paper image: none"));
+    notePaperImageLabel->setText(
+      tr("Paper image: tx_fabric.jpg (default)"));
   else
     notePaperImageLabel->setText(
       tr("Paper image: %1").arg(QFileInfo(notePaperImagePath).fileName()));
@@ -502,13 +509,16 @@ void AppConfigPage_Theme::onClickedNotePaperImageLoad(void)
     return;
 
   notePaperImagePath=target;
+  notePaperTextureRadio->setChecked(true);
   refreshNotePaperImageLabel();
 }
 
 
 void AppConfigPage_Theme::onClickedNotePaperImageClear(void)
 {
-  if(!notePaperImagePath.isEmpty())
+  // Назад на встроенный tx_fabric.jpg. Свой файл из рабочего
+  // каталога удаляется, ресурсы не трогаются
+  if(!notePaperImagePath.isEmpty() && !notePaperImagePath.startsWith(":"))
     QFile::remove(notePaperImagePath);
 
   notePaperImagePath.clear();
@@ -653,10 +663,11 @@ void AppConfigPage_Theme::onClickedResetAll(void)
 
   setColorForButton(secretColorButton, secretColor, QColor("#77767b"));
 
-  if(!notePaperImagePath.isEmpty())
+  if(!notePaperImagePath.isEmpty() && !notePaperImagePath.startsWith(":"))
     QFile::remove(notePaperImagePath);
 
   notePaperImagePath.clear();
+  notePaperTextureRadio->setChecked(true);
   refreshNotePaperImageLabel();
 
   treeBackgroundIsTheme=true;
@@ -702,13 +713,14 @@ void AppConfigPage_Theme::retranslateUi(void)
   iconSizeComboBox->setItemText(0, tr("System"));
 
   noteBox->setTitle(tr("Note"));
-  notePaperColorLabel->setText(tr("Note paper color: "));
+  notePaperColorRadio->setText(tr("Paper color: "));
   notePaperColorReset->setText(tr("Reset"));
   noteFontColorLabel->setText(tr("Note font color: "));
   noteFontColorReset->setText(tr("Reset"));
   secretColorLabel->setText(tr("Secret color: "));
   secretColorReset->setText(tr("Reset"));
   refreshNotePaperImageLabel();
+  notePaperTextureRadio->setText(tr("Paper texture: "));
   notePaperImageLoad->setText(tr("Load..."));
   notePaperImageClear->setText(tr("Clear"));
 
@@ -795,7 +807,12 @@ int AppConfigPage_Theme::applyChanges(void)
   if(mytetraConfig.get_secretColor()!=secretColor->name())
     mytetraConfig.set_secretColor(secretColor->name());
 
-  // Мозаичный фон заметок
+  // Мозаичный фон заметок: радио выбирает цвет или текстуру
+  const QString paperMode=notePaperTextureRadio->isChecked() ? "texture" : "color";
+
+  if(mytetraConfig.get_themeCustomNotePaperMode()!=paperMode)
+    mytetraConfig.set_themeCustomNotePaperMode(paperMode);
+
   if(mytetraConfig.get_themeCustomNotePaperImage()!=notePaperImagePath)
     mytetraConfig.set_themeCustomNotePaperImage(notePaperImagePath);
 

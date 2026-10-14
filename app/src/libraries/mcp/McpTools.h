@@ -40,6 +40,79 @@ public:
   // схлопывание пробелов
   static QString htmlToPlain(const QString &html);
 
+  // Плейнтекст в минимальный HTML для хранения (зеркало htmlToPlain)
+  static QString plainToHtml(const QString &plain);
+
+  // --- Запись. Статические apply-методы работают поверх любой живой
+  // модели (MCP-процесс или GUI) и НЕ сохраняют: вызывающий решает сам.
+  // Прямые create/update-методы сохраняют модель после применения ---
+
+  // Новая подветка с готовым id (пустой parentId = верхний уровень).
+  // Возвращает {id}. Ошибки: пустое имя/id, нет родителя, коллизия id,
+  // шифрованная родительская ветка
+  static QJsonObject applyCreateBranch(KnowTreeModel *model,
+                                       const QString &parentId,
+                                       const QString &branchId,
+                                       const QString &name,
+                                       QString &error);
+
+  // Новая запись с готовым id. Возвращает {id} реально сохраненной
+  // записи. Ошибки: пустое имя, нет ветки, шифрованная ветка
+  static QJsonObject applyCreateNote(KnowTreeModel *model,
+                                     const QString &branchId,
+                                     const QString &noteId,
+                                     const QString &name,
+                                     const QString &html,
+                                     const QString &tags,
+                                     QString &error);
+
+  // Обновление полей записи, меняются только помеченные флагами.
+  // Возвращает {id, updated_fields}. Ошибки: нечего менять, нет записи,
+  // пустое имя, шифрованная запись
+  static bool applyUpdateNote(KnowTreeModel *model,
+                              const QString &noteId,
+                              bool hasName, const QString &name,
+                              bool hasHtml, const QString &html,
+                              bool hasTags, const QString &tags,
+                              QString &error,
+                              QStringList &updatedFields);
+
+  // Прямые методы поверх собственной модели с сохранением
+  QJsonObject createBranchDirect(const QString &parentId,
+                                 const QString &branchId,
+                                 const QString &name,
+                                 QString &error);
+
+  QJsonObject createNoteDirect(const QString &branchId,
+                               const QString &noteId,
+                               const QString &name,
+                               const QString &html,
+                               const QString &tags,
+                               QString &error);
+
+  QJsonObject updateNoteDirect(const QString &noteId,
+                               bool hasName, const QString &name,
+                               bool hasHtml, const QString &html,
+                               bool hasTags, const QString &tags,
+                               QString &error);
+
+  // Удаление записи: файлы в корзину, запись из XML долой, сайдкар
+  // бэклинков чистится. Возвращает {id, deleted}. Шифр не мешает:
+  // для перемещения в корзину ключ не нужен
+  static bool applyDeleteNote(KnowTreeModel *model,
+                              const QString &noteId,
+                              QString &error);
+
+  // Удаление ветки со всеми подветками и записями. Возвращает
+  // {id, deleted, deleted_notes}. Подтверждения нет: флаг режима
+  // и есть подтверждение
+  static QJsonObject applyDeleteBranch(KnowTreeModel *model,
+                                       const QString &branchId,
+                                       QString &error);
+
+  QJsonObject deleteNoteDirect(const QString &noteId, QString &error);
+  QJsonObject deleteBranchDirect(const QString &branchId, QString &error);
+
 private:
   KnowTreeModel *m_model;
 

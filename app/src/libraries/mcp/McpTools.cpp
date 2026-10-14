@@ -3,6 +3,7 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QFileInfo>
+#include <QDir>
 #include <QDateTime>
 #include <QThread>
 
@@ -12,6 +13,11 @@
 #include "models/recordTable/RecordTableData.h"
 #include "models/recordTable/Record.h"
 #include "models/appConfig/AppConfig.h"
+#include "libraries/GlobalParameters.h"
+#include "libraries/BacklinkIndex.h"
+#include "libraries/helpers/UniqueIdHelper.h"
+
+#include <QFile>
 
 extern AppConfig mytetraConfig;
 
@@ -417,4 +423,467 @@ QString McpTools::htmlToPlain(const QString &html)
   text.replace(QRegularExpression("\\s+"), " ");
 
   return text.trimmed();
+}
+
+
+QString McpTools::plainToHtml(const QString &plain)
+{
+  QString html=plain;
+
+  // Порядок важен: сначала амперсанд, иначе &lt; удвоится
+  html.replace("&", "&amp;");
+  html.replace("<", "&lt;");
+  html.replace(">", "&gt;");
+  html.replace("\n", "<br/>");
+
+  return html;
+}
+
+
+// Корзина готова принять файлы: есть и пишемся. Иначе удаление
+// уперлось бы в criticalError с диалогом внутри, а в headless
+// это падение процесса. Создается при отсутствии как при установке
+static bool trashReady(QString &error)
+{
+  QString trashDir=mytetraConfig.get_trashdir();
+
+  if(!QDir(trashDir).exists())
+  {
+    if(!QDir().mkpath(trashDir))
+    {
+      error="Trash directory can not be created: "+trashDir;
+
+      return false;
+    }
+  }
+
+  QString probeName=QDir(trashDir).filePath(".mcp-write-test");
+
+  QFile probe(probeName);
+
+  if(!probe.open(QIODevice::WriteOnly))
+  {
+    error="Trash directory is not writable: "+trashDir;
+
+    return false;
+  }
+
+  probe.close();
+  probe.remove();
+
+  return true;
+}
+
+
+QJsonObject McpTools::applyCreateBranch(KnowTreeModel *model,
+                                        const QString &parentId,
+                                        const QString &branchId,
+                                        const QString &name,
+                                        QString &error)
+{
+  QJsonObject result;
+
+  if(branchId.isEmpty())
+  {
+    error="Empty branch id";
+
+    return result;
+  }
+
+  if(name.trimmed().isEmpty())
+  {
+    error="Empty branch name";
+
+    return result;
+  }
+
+  if(model->isItemIdExists(branchId))
+  {
+    error="Branch id collision, retry with a fresh id: "+branchId;
+
+    return result;
+  }
+
+  // Невалидный индекс модели это корень: пустой parentId создает
+  // ветку верхнего уровня
+  QModelIndex parentIndex;
+
+  if(!parentId.isEmpty())
+  {
+    TreeItem *parent=model->getItemById(parentId);
+
+    if(parent==nullptr)
+    {
+      error="Unknown parent branch_id: "+parentId;
+
+      return result;
+    }
+
+    // В шифрованную ветку без ключа нельзя: switchToEncrypt
+    // у новой ветки отработает некорректно
+    if(parent->getField("crypt")=="1")
+    {
+      error="Parent branch is encrypted, creation refused";
+
+      return result;
+    }
+
+    parentIndex=model->getIndexByItem(parent);
+  }
+
+  QMap<QString, QString> fields;
+  fields["id"]=branchId;
+  fields["name"]=name.trimmed();
+
+  model->addNewChildBranch(parentIndex, fields);
+
+  result["id"]=branchId;
+
+  return result;
+}
+
+
+QJsonObject McpTools::applyCreateNote(KnowTreeModel *model,
+                                      const QString &branchId,
+                                      const QString &noteId,
+                                      const QString &name,
+                                      const QString &html,
+                                      const QString &tags,
+                                      QString &error)
+{
+  QJsonObject result;
+
+  if(noteId.isEmpty())
+  {
+    error="Empty note id";
+
+    return result;
+  }
+
+  if(name.trimmed().isEmpty())
+  {
+    error="Empty note name";
+
+    return result;
+  }
+
+  TreeItem *branch=model->getItemById(branchId);
+
+  if(branch==nullptr)
+  {
+    error="Unknown branch_id: "+branchId;
+
+    return result;
+  }
+
+  // В шифрованную ветку без ключа нельзя: insertNewRecord
+  // аварийно завершится внутри
+  if(branch->getField("crypt")=="1")
+  {
+    error="Branch is encrypted, creation refused";
+
+    return result;
+  }
+
+  RecordTableData *table=branch->recordtableGetTableData();
+
+  if(table==nullptr)
+  {
+    error="Branch has no record table";
+
+    return result;
+  }
+
+  // Тот же набор полей что Clipper::storeRecord при ручном создании
+  Record record;
+  record.switchToFat();
+  record.setText(html);
+  record.setField("id", noteId);
+  record.setField("dir", getUniqueId());
+  record.setField("file", "text.html");
+  record.setField("name", name.trimmed());
+  record.setField("author", QString());
+  record.setField("url", QString());
+  record.setField("tags", tags);
+
+  int pos=table->insertNewRecord(GlobalParameters::AddNewRecordBehavior::ADD_TO_END,
+                                 0, record);
+
+  if(pos<0)
+  {
+    error="Can not insert note into branch: "+branchId;
+
+    return result;
+  }
+
+  Record *stored=table->getRecord(pos);
+
+  if(stored==nullptr)
+  {
+    error="Can not insert note into branch: "+branchId;
+
+    return result;
+  }
+
+  // Headless insert всегда заменяет id на свежий (вида нет),
+  // в GUI сохраняется переданный: возвращается фактический
+  result["id"]=stored->getField("id");
+
+  return result;
+}
+
+
+bool McpTools::applyUpdateNote(KnowTreeModel *model,
+                               const QString &noteId,
+                               bool hasName, const QString &name,
+                               bool hasHtml, const QString &html,
+                               bool hasTags, const QString &tags,
+                               QString &error,
+                               QStringList &updatedFields)
+{
+  if(!hasName && !hasHtml && !hasTags)
+  {
+    error="Nothing to update: provide name, text or tags";
+
+    return false;
+  }
+
+  if(!model->isRecordIdExists(noteId))
+  {
+    error="Unknown note_id: "+noteId;
+
+    return false;
+  }
+
+  Record *record=model->getRecord(noteId);
+
+  if(record==nullptr)
+  {
+    error="Unknown note_id: "+noteId;
+
+    return false;
+  }
+
+  // Шифрованную запись без ключа нельзя ни прочитать, ни
+  // перезаписать без порчи данных
+  if(record->getField("crypt")=="1")
+  {
+    error="Note is encrypted, update refused";
+
+    return false;
+  }
+
+  if(hasName)
+  {
+    if(name.trimmed().isEmpty())
+    {
+      error="Empty note name";
+
+      return false;
+    }
+
+    record->setField("name", name.trimmed());
+    updatedFields.append("name");
+  }
+
+  if(hasTags)
+  {
+    record->setField("tags", tags);
+    updatedFields.append("tags");
+  }
+
+  if(hasHtml)
+  {
+    // Только публичный API: в память, на диск (атомарно через
+    // pushFatAttributes), память освободить. Параллельный читатель
+    // рваного файла не увидит
+    record->switchToFat();
+    record->setText(html);
+    record->pushFatAttributes();
+    record->switchToLite();
+    updatedFields.append("text");
+  }
+
+  return true;
+}
+
+
+QJsonObject McpTools::createBranchDirect(const QString &parentId,
+                                         const QString &branchId,
+                                         const QString &name,
+                                         QString &error)
+{
+  QJsonObject result=applyCreateBranch(m_model, parentId, branchId, name, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  m_model->save();
+
+  return result;
+}
+
+
+QJsonObject McpTools::createNoteDirect(const QString &branchId,
+                                       const QString &noteId,
+                                       const QString &name,
+                                       const QString &html,
+                                       const QString &tags,
+                                       QString &error)
+{
+  QJsonObject result=applyCreateNote(m_model, branchId, noteId, name, html, tags, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  m_model->save();
+
+  return result;
+}
+
+
+QJsonObject McpTools::updateNoteDirect(const QString &noteId,
+                                       bool hasName, const QString &name,
+                                       bool hasHtml, const QString &html,
+                                       bool hasTags, const QString &tags,
+                                       QString &error)
+{
+  QJsonObject result;
+
+  QStringList updatedFields;
+
+  if(!applyUpdateNote(m_model, noteId,
+                      hasName, name, hasHtml, html, hasTags, tags,
+                      error, updatedFields))
+    return result;
+
+  m_model->save();
+
+  result["id"]=noteId;
+  result["updated_fields"]=QJsonArray::fromStringList(updatedFields);
+
+  return result;
+}
+
+
+bool McpTools::applyDeleteNote(KnowTreeModel *model,
+                               const QString &noteId,
+                               QString &error)
+{
+  if(!model->isRecordIdExists(noteId))
+  {
+    error="Unknown note_id: "+noteId;
+
+    return false;
+  }
+
+  if(!trashReady(error))
+    return false;
+
+  QStringList path=model->getRecordPath(noteId);
+
+  if(path.isEmpty())
+  {
+    error="Unknown note_id: "+noteId;
+
+    return false;
+  }
+
+  TreeItem *branch=model->getItemById(path.last());
+
+  if(branch==nullptr)
+  {
+    error="Unknown note_id: "+noteId;
+
+    return false;
+  }
+
+  RecordTableData *table=branch->recordtableGetTableData();
+
+  if(table==nullptr)
+  {
+    error="Branch has no record table";
+
+    return false;
+  }
+
+  // Каталог записи уезжает в корзину внутри, запись из таблицы долой
+  table->deleteRecordById(noteId);
+
+  // Сайдкар бэклинков: только если есть что чистить, иначе
+  // ensureLoaded построит и сохранит пустой индекс без нужды
+  QString sidecar=QDir::cleanPath(mytetraConfig.get_tetradir()+"/backlinks.xml");
+
+  if(QFile::exists(sidecar))
+    BacklinkIndex::instance().removeSources(QStringList() << noteId);
+
+  return true;
+}
+
+
+QJsonObject McpTools::applyDeleteBranch(KnowTreeModel *model,
+                                        const QString &branchId,
+                                        QString &error)
+{
+  QJsonObject result;
+
+  TreeItem *item=model->getItemById(branchId);
+
+  if(item==nullptr)
+  {
+    error="Unknown branch_id: "+branchId;
+
+    return result;
+  }
+
+  if(!trashReady(error))
+    return result;
+
+  int notesCount=0;
+  QSharedPointer< QSet<QString> > ids=model->getRecordsIdList(item);
+
+  if(!ids.isNull())
+    notesCount=ids->size();
+
+  QModelIndexList indexList;
+  indexList.append(model->getIndexByItem(item));
+
+  // Каталоги записей уезжают в корзину внутри, detached-окна
+  // закрываются сигналом, сайдкар бэклинков чистится
+  model->deleteItemsByModelIndexList(indexList);
+
+  result["id"]=branchId;
+  result["deleted"]=true;
+  result["deleted_notes"]=notesCount;
+
+  return result;
+}
+
+
+QJsonObject McpTools::deleteNoteDirect(const QString &noteId, QString &error)
+{
+  QJsonObject result;
+
+  if(!applyDeleteNote(m_model, noteId, error))
+    return result;
+
+  m_model->save();
+
+  result["id"]=noteId;
+  result["deleted"]=true;
+
+  return result;
+}
+
+
+QJsonObject McpTools::deleteBranchDirect(const QString &branchId, QString &error)
+{
+  QJsonObject result=applyDeleteBranch(m_model, branchId, error);
+
+  if(!error.isEmpty())
+    return result;
+
+  m_model->save();
+
+  return result;
 }

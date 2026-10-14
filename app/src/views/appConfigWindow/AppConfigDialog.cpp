@@ -18,6 +18,7 @@
 #include "AppConfigPage_History.h"
 #include "AppConfigPage_Search.h"
 #include "AppConfigPage_Favorites.h"
+#include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Appearance.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
@@ -66,6 +67,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Search"));
     pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( parent ),
                                             QObject::tr("Favorites"));
+    pageClipper    =configDialog->addWidget(new AppConfigPage_Clipper( parent ),
+                                            QObject::tr("Clipper"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
 
@@ -118,6 +121,7 @@ void AppConfigDialog::retranslateUi(void)
     pageHistory->setText(QObject::tr("History"));
     pageSearch->setText(QObject::tr("Search"));
     pageFavorites->setText(QObject::tr("Favorites"));
+    pageClipper->setText(QObject::tr("Clipper"));
     pageMisc->setText(QObject::tr("Misc"));
 
     QList<ConfigPage *> pages=configDialog->findChildren<ConfigPage *>();
@@ -143,6 +147,7 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageHistory") item=pageHistory;
     if(name=="pageSearch") item=pageSearch;
     if(name=="pageFavorites") item=pageFavorites;
+    if(name=="pageClipper") item=pageClipper;
     if(name=="pageMisc") item=pageMisc;
 
     if(item!=nullptr)

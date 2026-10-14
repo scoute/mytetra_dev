@@ -1480,7 +1480,8 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
     QString url=hrefIt.next().captured(1);
     url.replace("&amp;", "&");
 
-    if(url.isEmpty())
+    // Служебные якоря секретов (<a href="secret">) не ссылки
+    if(url.isEmpty() || url=="secret")
       continue;
 
     noteLinks.insert(url);

@@ -4484,6 +4484,30 @@ Please report about this problem to the developers.</source>
         <source>Reference or URL</source>
         <translation>Ссылка или URL</translation>
     </message>
+    <message>
+        <source>Link text</source>
+        <translation>Текст ссылки</translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
+    </message>
+    <message>
+        <source>Reference or URL (record not found)</source>
+        <translation>Ссылка или URL (запись не найдена)</translation>
+    </message>
+    <message>
+        <source>Self reference</source>
+        <translation>Ссылка на саму себя</translation>
+    </message>
+    <message>
+        <source>A link to the note itself makes no sense.</source>
+        <translation>Ссылка на саму себя в заметке не имеет смысла.</translation>
+    </message>
+    <message>
+        <source>Insert anyway</source>
+        <translation>Вставить всё равно</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>
@@ -5189,6 +5213,18 @@ Please report about this problem to the developers.</source>
     <message>
         <source>Forbid any changes to the base</source>
         <translation>Запретить любые изменения базы</translation>
+    </message>
+    <message>
+        <source>Edit reference...</source>
+        <translation>Редактировать ссылку...</translation>
+    </message>
+    <message>
+        <source>Paste note reference from clipboard</source>
+        <translation>Вставить ссылку на заметку из буфера обмена</translation>
+    </message>
+    <message>
+        <source>Insert note reference using search...</source>
+        <translation>Вставить ссылку на заметку через поиск</translation>
     </message>
 </context>
 <context>
@@ -6234,6 +6270,49 @@ MyTetra должна быть запущена.</translation>
     <message>
         <source>Clipper status is unavailable.</source>
         <translation>Статус клиппера недоступен.</translation>
+    </message>
+    </context>
+    <context>
+        <name>NotePickerDialog</name>
+    <message>
+        <source>Select note</source>
+        <translation>Выбор заметки</translation>
+    </message>
+    <message>
+        <source>Search note</source>
+        <translation>Поиск заметки</translation>
+    </message>
+    <message>
+        <source>Type a name, branch or tag to search</source>
+        <translation>Введите имя, ветку или метку для поиска</translation>
+    </message>
+    <message>
+        <source>Shown %1 of %2</source>
+        <translation>Показано %1 из %2</translation>
+    </message>
+    <message>
+        <source>Nothing found</source>
+        <translation>Ничего не найдено</translation>
+    </message>
+    <message>
+        <source>Select</source>
+        <translation>Выбрать</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>Заметка</translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Метки</translation>
     </message>
     </context>
 </TS>

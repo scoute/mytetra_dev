@@ -39,6 +39,15 @@ public slots:
     // Пол панели: шапка плюс две строки. Публичный для стенда
     void updateMinimumHeight(void);
 
+    // Высота списка по строкам с потолком. Публичный для стенда
+    void updateListHeight(void);
+
+    // Пин панели под контент. Публичный для стенда
+    void updatePanelHeight(void);
+
+    // Посадка секции сплиттера под панель. Публичный для стенда
+    void syncSplitterToContent(void);
+
     // Границу подвинули руками: список на всю высоту панели
     void setUserResized(void);
 
@@ -76,6 +85,9 @@ private:
     void assembly(void);
     void setupSignals(void);
 
+    // Высота строки списка с фолбэком на шрифт
+    int favoritesRowHeight(void) const;
+
     // Роль пометки мертвой строки (записи нет в текущей базе)
     enum ItemRoles
     {
@@ -88,6 +100,10 @@ private:
 
     // Ручной драг был: компактный режим выключен до перезапуска
     bool m_userResized=false;
+
+    // Программная посадка секции в процессе: splitterMoved от нее
+    // ручным драгом не считается
+    bool m_syncingSplitter=false;
 
     // Шапка чтобы панель не висела одиноко: звездочка и слово
     QLabel *headerIcon=nullptr;

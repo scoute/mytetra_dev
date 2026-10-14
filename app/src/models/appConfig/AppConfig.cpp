@@ -1100,6 +1100,12 @@ void AppConfig::setMcpUiLock(bool locked)
 }
 
 
+bool AppConfig::isMcpUiLocked(void)
+{
+    return m_mcpUiLock;
+}
+
+
 void AppConfig::set_readOnly(bool state)
 {
     m_conf->setValue("readOnly", state);

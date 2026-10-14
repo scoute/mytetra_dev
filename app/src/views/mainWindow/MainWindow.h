@@ -22,7 +22,6 @@ class QSplitter;
 class QStatusBar;
 class QLabel;
 class QTimer;
-class QPushButton;
 class QTableWidget;
 class QDockWidget;
 
@@ -53,18 +52,19 @@ public:
     // Статистика базы справа в статусбаре (постоянный виджет)
     QLabel *statsLabel=nullptr;
 
-    // Полоса внешней MCP-правки сверху: крупно, немодально.
-    // Висит пока жив хоть один MCP-пир (Hello/Bye + TTL), гаснет
-    // по кнопке-подтверждению до следующей правки. Инлайн-стиль
-    // (не тема): одинаково заметна в светлой и тёмной теме
+    // Полоса MCP-сессии сверху: крупно, немодально, без кнопки.
+    // Висит всё время пока жив хоть один MCP-пир (Hello/Bye + TTL),
+    // скрыть или подтвердить нельзя. Инлайн-стиль (не тема):
+    // одинаково заметна в светлой и тёмной теме
     QWidget *mcpBannerBar=nullptr;
     QLabel *mcpBanner=nullptr;
-    QPushButton *mcpBannerApprove=nullptr;
     QTimer *mcpBannerTimer=nullptr;
 
     // Живые MCP-пиры: pid -> последнее Hello (мсек). Пусто = сессия кончилась
     QMap<QString, qint64> mcpPeers;
-    bool mcpBannerDismissed=false;
+
+    // Режимы пиров: pid -> флаг (--mcp-ro и т.п.). Показывается в баннере
+    QMap<QString, QString> mcpPeerModes;
     WindowSwitcher *windowSwitcher=nullptr;
 
     void restoreWindowGeometry(void);
@@ -133,23 +133,21 @@ public slots:
     // Вызывается по сигналам модели
     void updateStats(void);
 
-    // Короткое немодальное уведомление в статусбаре о внешней
-    // MCP-правке: просит не править параллельно, ничего не блочит
+    // Подтверждение внешней MCP-правки: баннер и так висит всю
+    // сессию, здесь только пересчёт видимости и блокировки
     void flashMcpWrite(void);
 
-    // Текст баннера: та же строка плюс время срабатывания
+    // Текст баннера: сессия активна + режимы пиров
     QString mcpBannerText(void);
 
-    // Пересчитать видимость липкого баннера по пирам (с TTL-чисткой)
+    // Пересчитать баннер и блокировку по пирам (с TTL-чисткой):
+    // пиры есть — баннер виден и UI заблокирован, нет — всё снято
     void updateMcpBanner(void);
 
     // Блокировка UI на время MCP-сессии: фан-аут read-only поверх,
-    // своё досохраняется до блокировки. MCP-записи не трогает
+    // своё досохраняется до блокировки. MCP-записи не трогает.
+    // Идемпотентна: повторный вызов с тем же состоянием ничего не делает
     void setMcpUiLock(bool locked);
-
-    // Аппрув сессии: гасит баннер и снимает блокировку до следующей правки.
-    // Откат тут будет позже с журналом
-    void approveMcpSession(void);
 
     // Таблица разбивки статистики для проверки без модального окна
     QTableWidget *buildStatsTableWidget(QWidget *parent);

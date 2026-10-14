@@ -3,7 +3,6 @@
 #include <QVBoxLayout>
 #include <QGroupBox>
 #include <QCheckBox>
-#include <QLabel>
 
 #include "AppConfigPage_Appearance.h"
 
@@ -11,10 +10,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
-#include "libraries/helpers/CssHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
-#include "libraries/MtComboBox.h"
-#include "views/record/MetaEditor.h"
 
 
 extern AppConfig mytetraConfig;
@@ -40,10 +36,6 @@ void AppConfigPage_Appearance::setupUi()
 {
     qDebug() << "Create appearance config page";
 
-    this->setupThemeComboBox();
-    this->setupIconSizeComboBox();
-
-
     // Настройка запуска MyTetra в свернутом окне
     runInMinimizedWindow=new QCheckBox(this);
     runInMinimizedWindow->setText(tr("Run MyTetra in a minimized window"));
@@ -57,96 +49,6 @@ void AppConfigPage_Appearance::setupUi()
 }
 
 
-// Выбор темы интерфейса
-void AppConfigPage_Appearance::setupThemeComboBox()
-{
-    themeLabel=new QLabel(this);
-    themeLabel->setText(tr("Interface theme"));
-
-    themeNameComboBox=new MtComboBox(this);
-
-    // Размер списка
-    // themeNameComboBox->setMinimumContentsLength( 10 );
-
-    // Таблица переводов элементов списка
-    QMap<QString, QString> translateNames;
-    translateNames[ "default" ] = tr("Default");
-    translateNames[ "dark" ]    = tr("Dark");
-    translateNames[ "modern" ]  = tr("Modern");
-    translateNames[ "midnight" ]= tr("Midnight");
-
-    // Какая строка будет выбрана как текущая тема
-    int count = -1;
-    int currentIndex = -1;
-
-    // Список тем наполняется и одновременно вычисляется индекс текущей темы
-    for (auto name : fixedParameters.themesAvailableList )
-    {
-        QString translateName;
-
-        if ( translateNames.contains(name) )
-        {
-            translateName = translateNames[name];
-        }
-        else
-        {
-            translateName = "Unknown";
-        }
-
-        themeNameComboBox->addItem(translateName);
-
-        count++;
-        if ( name == mytetraConfig.getInterfaceTheme() )
-        {
-            currentIndex = count;
-        }
-    }
-
-    themeNameComboBox->setCurrentIndex( currentIndex );
-
-}
-
-
-// Выбор размера иконок
-void AppConfigPage_Appearance::setupIconSizeComboBox()
-{
-    iconSizeLabel=new QLabel(this);
-    iconSizeLabel->setText(tr("Icon size"));
-
-    iconSizeComboBox=new MtComboBox(this);
-
-    // Первый элемент - системный размер (индекс 0)
-    iconSizeComboBox->addItem( tr("System") );
-
-    // Какая строка будет выбрана как текущий размер
-    int count = 0; // Здесь счет с нуля, чтобы после count++ получился индекс 1
-    int currentIndex = -1;
-
-    // Перебираются имена названий размеров иконок
-    for ( auto sizeName : fixedParameters.interfaceIconSizeAvailableMap.keys() )
-    {
-        // В первом аргументе значения QMap-таблицы хранится человеко-читаемое название
-        QString name = fixedParameters.interfaceIconSizeAvailableMap.at( sizeName ).first;
-
-        // Добавляется элемент
-        iconSizeComboBox->addItem( name );
-
-        count++;
-        if ( sizeName == mytetraConfig.getInterfaceIconSize() )
-        {
-            currentIndex = count;
-        }
-    }
-
-    if ( currentIndex==-1 or mytetraConfig.getInterfaceIconSize()=="" )
-    {
-        currentIndex = 0; // Будет выбран первый элемент
-    }
-
-    iconSizeComboBox->setCurrentIndex( currentIndex );
-}
-
-
 void AppConfigPage_Appearance::setupSignals()
 {
 
@@ -155,28 +57,6 @@ void AppConfigPage_Appearance::setupSignals()
 
 void AppConfigPage_Appearance::assembly()
 {
-    // Выбор темы
-    QHBoxLayout *themeLayout=new QHBoxLayout();
-    themeLayout->addWidget(themeLabel);
-    themeLayout->addWidget(themeNameComboBox);
-    themeLayout->addStretch();
-
-    // Выбор размера иконок
-    QHBoxLayout *iconSizeLayout=new QHBoxLayout();
-    iconSizeLayout->addWidget(iconSizeLabel);
-    iconSizeLayout->addWidget(iconSizeComboBox);
-    iconSizeLayout->addStretch();
-
-    QVBoxLayout *interfaceLayout = new QVBoxLayout;
-    interfaceLayout->addLayout(themeLayout);
-    interfaceLayout->addLayout(iconSizeLayout);
-
-    // Группировщик настроек интерфейса
-    interfaceBox=new QGroupBox(this);
-    interfaceBox->setTitle(tr("Interface"));
-    interfaceBox->setLayout(interfaceLayout);
-
-
     // Группировщик виджетов настройки поведения окна
     behaviorBox=new QGroupBox(this);
     behaviorBox->setTitle(tr("Windows behavior"));
@@ -189,7 +69,6 @@ void AppConfigPage_Appearance::assembly()
 
     // Собирается основной слой
     QVBoxLayout *centralLayout=new QVBoxLayout();
-    centralLayout->addWidget(interfaceBox);
     centralLayout->addWidget(behaviorBox);
     centralLayout->addStretch();
 
@@ -206,24 +85,6 @@ void AppConfigPage_Appearance::retranslateUi(void)
   runInMinimizedWindow->setText(tr("Run MyTetra in a minimized window"));
   dockableWindowsBehavior->setText(tr("Hide detached windows if close main window"));
 
-  themeLabel->setText(tr("Interface theme"));
-
-  QMap<QString, QString> translateNames;
-  translateNames[ "default" ] = tr("Default");
-  translateNames[ "dark" ]    = tr("Dark");
-  translateNames[ "modern" ]  = tr("Modern");
-  translateNames[ "midnight" ]= tr("Midnight");
-
-  for(int i=0; i<themeNameComboBox->count(); ++i)
-  {
-    QString name=fixedParameters.themesAvailableList.value(i, "Unknown");
-    themeNameComboBox->setItemText(i, translateNames.value(name, "Unknown"));
-  }
-
-  iconSizeLabel->setText(tr("Icon size"));
-  iconSizeComboBox->setItemText(0, tr("System"));
-
-  interfaceBox->setTitle(tr("Interface"));
   behaviorBox->setTitle(tr("Windows behavior"));
 }
 
@@ -233,53 +94,6 @@ int AppConfigPage_Appearance::applyChanges()
     qDebug() << "Apply changes appearance";
 
     int result=0;
-
-    // Если была изменена тема
-    if ( mytetraConfig.getInterfaceTheme() !=
-         fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] )
-    {
-        if ( themeNameComboBox->currentText()!="Unknown")
-        {
-            mytetraConfig.setInterfaceTheme(
-                fixedParameters.themesAvailableList[ themeNameComboBox->currentIndex() ] );
-
-            CssHelper::loadCurrentTheme();
-
-            // Бумага поверх темы переживает смену темы
-            MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
-
-            if(editorScreen!=nullptr)
-                editorScreen->applyNoteColors();
-        }
-    }
-
-
-    // Если был изменен размер иконок
-    QString iconSizeName;
-
-    // Для номеров с индексом 1 и выше выставляется имя размера иконок
-    // Если индекс -1 (не был сделан выбор) - имя размера останется пустой строкой
-    // Если индекс 0 (это будет System) - имя размера тоже останется пустой строкой
-    if ( iconSizeComboBox->currentIndex()>0 )
-    {
-        iconSizeName = fixedParameters.interfaceIconSizeAvailableMap.keys()[ iconSizeComboBox->currentIndex()-1 ];
-    }
-
-    // Обнаружено изменение размера иконок
-    if ( mytetraConfig.getInterfaceIconSize() != iconSizeName )
-    {
-        mytetraConfig.setInterfaceIconSize( iconSizeName );
-
-        // Для обновления размера иконок перечитывается тема оформления
-        CssHelper::loadCurrentTheme();
-
-        // Перечитывание темы сносит свой stylesheet бумаги
-        MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
-
-        if(editorScreen!=nullptr)
-            editorScreen->applyNoteColors();
-    }
-
 
     // Сохраняется настройка режима запуска MyTetra - обычный или свернутый
     if(mytetraConfig.get_runinminimizedwindow()!=runInMinimizedWindow->isChecked())

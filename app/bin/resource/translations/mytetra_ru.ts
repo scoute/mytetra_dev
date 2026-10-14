@@ -440,8 +440,12 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation>Имя %1 в заметке &quot;%2&quot; уже занято, файл %3 пропущен.</translation>
     </message>
     <message>
-        <source>Skipped (file not found or encrypted record): %1.</source>
-        <translation>Пропущено (файл не найден или запись зашифрована): %1.</translation>
+        <source>Not found on disk: %1.</source>
+        <translation>Не найдено на диске: %1.</translation>
+    </message>
+    <message>
+        <source>Skipped (encrypted record, unlock the database first): %1.</source>
+        <translation>Пропущено (запись зашифрована, сначала разблокируйте базу): %1.</translation>
     </message>
     <message>
         <source>Errors: %1. First error: %2</source>

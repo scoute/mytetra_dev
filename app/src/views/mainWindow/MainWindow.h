@@ -155,6 +155,10 @@ private slots:
     void onViewSecretColor(void);
     void onViewPaperColor(void);
 
+    // Меню Вид: глобальный режим только чтения
+    void onViewReadOnlyToggled(bool checked);
+    void applyReadOnly(void);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -260,6 +264,7 @@ private:
     QMenu *viewMenu=nullptr;
     QAction *viewHeaderAction=nullptr;
     QAction *viewFavoritesAction=nullptr;
+    QAction *viewReadOnlyAction=nullptr;
     QAction *viewSecretColorAction=nullptr;
     QAction *viewPaperColorAction=nullptr;
 

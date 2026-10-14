@@ -113,6 +113,9 @@ MainWindow::MainWindow() : QMainWindow()
     // Старт веб-клиппера (перехват глобального хоткея по настройкам)
     clipper.start();
 
+    // Применить сохранённый режим только чтения (если был включен)
+    applyReadOnly();
+
     // Закрывать ли по-настоящему окно при обнаружении сигнала closeEvent
     enableRealClose=false;
 
@@ -442,6 +445,9 @@ void MainWindow::messageHandler(QString message)
 
     else if(command=="addNoteDialog")
     {
+        // Глобальный режим только чтения: создание записей запрещено
+        if(mytetraConfig.get_readOnly())
+            return;
         // Определение, было ли окно MyTetra скрыто при обработке сообщения
         bool isHidden=this->isHidden();
 
@@ -480,6 +486,10 @@ void MainWindow::messageHandler(QString message)
 
     else if(command=="clipboard")
     {
+        // Глобальный режим только чтения: клиппер не создаёт записи
+        if(mytetraConfig.get_readOnly())
+            return;
+
         // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
         // Аргумент команды это ссылка на источник, может отсутствовать
         clipper.clipNowWithUrl(commandArgument);
@@ -942,6 +952,10 @@ void MainWindow::initViewMenu(void)
     viewFavoritesAction->setCheckable(true);
     viewMenu->addAction(viewFavoritesAction);
 
+    viewReadOnlyAction=new QAction(this);
+    viewReadOnlyAction->setCheckable(true);
+    viewMenu->addAction(viewReadOnlyAction);
+
     viewMenu->addSeparator();
 
     QAction *secretColorAction=new QAction(tr("Change secret color..."), this);
@@ -960,6 +974,8 @@ void MainWindow::initViewMenu(void)
             this,              &MainWindow::onViewHeaderToggled);
     connect(viewFavoritesAction, &QAction::toggled,
             this,                &MainWindow::onViewFavoritesToggled);
+    connect(viewReadOnlyAction, &QAction::toggled,
+            this,               &MainWindow::onViewReadOnlyToggled);
     connect(secretColorAction, &QAction::triggered,
             this,              &MainWindow::onViewSecretColor);
     connect(paperColorAction, &QAction::triggered,
@@ -979,6 +995,9 @@ void MainWindow::syncViewMenu(void)
 
     if(viewFavoritesAction!=nullptr)
         viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
+
+    if(viewReadOnlyAction!=nullptr)
+        viewReadOnlyAction->setChecked(mytetraConfig.get_readOnly());
 }
 
 
@@ -999,6 +1018,45 @@ void MainWindow::onViewFavoritesToggled(bool checked)
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
     if(favoritesPanel!=nullptr)
         favoritesPanel->refreshFavorites();
+}
+
+
+// Переключение глобального режима только чтения: навигация и просмотр
+// разрешены, любые изменения базы запрещены
+void MainWindow::onViewReadOnlyToggled(bool checked)
+{
+    mytetraConfig.set_readOnly(checked);
+
+    applyReadOnly();
+}
+
+
+// Применить глобальный режим только чтения ко всем экранам.
+// Вызывается при переключении и при старте программы
+void MainWindow::applyReadOnly(void)
+{
+    const bool readOnly=mytetraConfig.get_readOnly();
+
+    if(treeScreen!=nullptr)
+        treeScreen->setReadOnly(readOnly);
+
+    // Действия таблицы записей пересчитываются с учётом флага,
+    // редактор — по текущей записи и флагу
+    if(recordTableScreen!=nullptr)
+        {
+         recordTableScreen->toolsUpdate();
+         recordTableScreen->refreshEditorReadOnly();
+
+         // Кнопка синхронизации меняет базу (и дёргает её же автосинхронизация)
+         recordTableScreen->actionSyncro->setEnabled(!readOnly);
+        }
+
+    // Импорт ветки и управление базами меняют данные
+    if(actionFileMenuImportTreeItem!=nullptr)
+        actionFileMenuImportTreeItem->setEnabled(!readOnly);
+
+    if(actionFileMenuDatabasesManagement!=nullptr)
+        actionFileMenuDatabasesManagement->setEnabled(!readOnly);
 }
 
 
@@ -1213,6 +1271,8 @@ void MainWindow::setupShortcuts(void)
     shortcutManager.initAction("misc-imagesGallery", actionToolsMenuImagesGallery );
 
     shortcutManager.initAction("misc-clipFromClipboard", actionToolsMenuClipFromClipboard );
+
+    shortcutManager.initAction("misc-readOnly", viewReadOnlyAction );
 
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
@@ -1453,6 +1513,10 @@ void MainWindow::fileExportBranch(void)
 
 void MainWindow::fileImportBranch(void)
 {
+    // Глобальный режим только чтения: импорт меняет базу
+    if(mytetraConfig.get_readOnly())
+        return;
+
     // Создается окно выбора директории, откуда необходимо сделать импорт
     QFileDialog directorySelectDialog(this);
     directorySelectDialog.setFileMode(QFileDialog::Directory);
@@ -1757,6 +1821,10 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
 // Старт синхронизации
 void MainWindow::synchronization(bool visible)
 {
+    // Глобальный режим только чтения: синхронизация может менять базу
+    if(mytetraConfig.get_readOnly())
+        return;
+
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
     if(!recordTableScreen->actionSyncro->isEnabled())
         return;
@@ -2104,6 +2172,10 @@ void MainWindow::goWalkHistory(void)
 // текст редактируемой записи
 void MainWindow::saveTextarea(void)
 {
+    // Глобальный режим только чтения
+    if(mytetraConfig.get_readOnly())
+        return;
+
     QString id=editorScreen->getMiscField("id");
 
     qDebug() << "MainWindow::saveTextarea() : id :" << id;

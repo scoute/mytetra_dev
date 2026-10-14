@@ -34,6 +34,9 @@ public:
 
  void setFocusToBaseWidget();
 
+ // Переприменить read-only редактора (для глобального режима без смены засветки)
+ void refreshEditorReadOnly(void);
+
  // Действия, используемые как на тулбаре, так и в контекстном меню списка записей
  QAction *actionAddNewToEnd;
  QAction *actionAddNewBefore;

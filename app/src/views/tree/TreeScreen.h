@@ -48,6 +48,10 @@ public:
 
  void setFocusToBaseWidget(void);
 
+ // Глобальный режим только чтения: гасит мутирующие действия и DnD.
+ // Копирование ветки, сворачивание и поиск разрешены
+ void setReadOnly(bool state);
+
 signals:
 
     void treeScreenFindInBaseClicked();

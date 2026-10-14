@@ -2,6 +2,7 @@
 #define __ATTACH_H__
 
 #include <QString>
+#include <QStringList>
 #include <QMap>
 #include <QByteArray>
 #include <QDomElement>
@@ -34,7 +35,12 @@ public:
   static QString constructFileName(const QString type, const QString id, const QString fileName);
   static QString constructLegacyFileName(const QString type, const QString id, const QString fileName);
   static QString constructHumanFileName(const QString type, const QString id, const QString fileName);
+  static QString constructOriginalFileName(const QString type, const QString id, const QString fileName);
   static QString sanitizeHumanNamePart(const QString fileName);
+  static QString sanitizeOriginalName(const QString fileName);
+  static QString sanitizeVisibleName(const QString name);
+  static QStringList candidateFileNames(const QString type, const QString id, const QString fileName);
+  static QString fileNameForMode(int mode, const QString type, const QString id, const QString fileName);
   QString getInnerFileName() const;
   QString getExistingInnerFileName() const;
   QString getFullInnerFileName() const;

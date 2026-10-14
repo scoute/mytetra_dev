@@ -1032,13 +1032,41 @@ void AppConfig::set_noteFontColor(QString color)
 // отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
 bool AppConfig::get_attachHumanReadableNames(void)
 {
-    return m_conf->value("attachHumanReadableNames", false).toBool();
+    return get_attachNameMode()==AttachNameHybrid;
 }
 
 
 void AppConfig::set_attachHumanReadableNames(bool state)
 {
-    m_conf->setValue("attachHumanReadableNames", state);
+    set_attachNameMode(state ? AttachNameHybrid : AttachNameSystem);
+}
+
+
+// Режим имен вложенных файлов на диске.
+// Параметр намеренно не входит в версионные таблицы (как noteFontColor):
+// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
+int AppConfig::get_attachNameMode(void)
+{
+    if(m_conf->contains("attachNameMode"))
+        return m_conf->value("attachNameMode", AttachNameSystem).toInt();
+
+    // Совместимость с версией 1.69: там был только флаг гибридного режима
+    if(m_conf->value("attachHumanReadableNames", false).toBool())
+        return AttachNameHybrid;
+
+    return AttachNameSystem;
+}
+
+
+void AppConfig::set_attachNameMode(int mode)
+{
+    if(mode<AttachNameSystem || mode>AttachNameOriginal)
+        mode=AttachNameSystem;
+
+    m_conf->setValue("attachNameMode", mode);
+
+    // Устаревший флаг держится в синхроне для чтения старыми версиями
+    m_conf->setValue("attachHumanReadableNames", mode==AttachNameHybrid);
 }
 
 

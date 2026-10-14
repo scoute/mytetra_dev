@@ -425,23 +425,11 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
            if(fileElement.attribute("type")=="file")
            {
              // Выясняются кандидаты внутрисистемного имени прикрепленного файла.
-             // Пробуются обе схемы: база могла быть смигрирована наполовину
-             // или открыта с другой настройкой схемы имен
-             QStringList candidateNames;
-             candidateNames << Attach::constructFileName( fileElement.attribute("type"),
-                                                          fileElement.attribute("id"),
-                                                          fileElement.attribute("fileName") );
-             QString otherName;
-             if(mytetraConfig.get_attachHumanReadableNames())
-               otherName=Attach::constructLegacyFileName( fileElement.attribute("type"),
-                                                          fileElement.attribute("id"),
-                                                          fileElement.attribute("fileName") );
-             else
-               otherName=Attach::constructHumanFileName( fileElement.attribute("type"),
-                                                         fileElement.attribute("id"),
-                                                         fileElement.attribute("fileName") );
-             if(otherName!=candidateNames.first())
-               candidateNames << otherName;
+             // Пробуются все схемы имен: база могла быть сконвертирована
+             // наполовину или открыта с другой настройкой режима имен
+             QStringList candidateNames=Attach::candidateFileNames( fileElement.attribute("type"),
+                                                                    fileElement.attribute("id"),
+                                                                    fileElement.attribute("fileName") );
 
              // Файл на диске расшифровывается
              foreach(QString candidateFileName, candidateNames)

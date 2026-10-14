@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QToolButton>
 #include <QPushButton>
+#include <QComboBox>
 #include <QFile>
 #include <QDir>
 #include <QMessageBox>
@@ -60,16 +61,26 @@ void AppConfigPage_Attach::setupUi(void)
     // Пояснение про схему имен файлов на диске
     fileNamesInfo=new QLabel(this);
     fileNamesInfo->setWordWrap(true);
-    fileNamesInfo->setText( tr("Attachments are stored on disk as id.extension. Renaming switches them to human-readable names id_name.extension, so the file can be recognized without opening it. New attachments will use human-readable names too.") );
+    fileNamesInfo->setText( tr("File naming for uploaded attachments: system names (id.extension), system + original names (hybrid, id_name.extension), or original names (as uploaded). The choice applies to new attachments.") );
 
-    // Кнопка запуска переименования
-    renameAttachesButton=new QPushButton(this);
-    renameAttachesButton->setText( tr("Rename attachments to human-readable names") );
+    // Выбор режима имен: системные, гибридные, оригинальные
+    attachNameModeLabel=new QLabel(this);
+    attachNameModeLabel->setText( tr("Name new attachments: ") );
+
+    attachNameModeCombo=new QComboBox(this);
+    attachNameModeCombo->addItem( tr("System names (id.extension)"), AppConfig::AttachNameSystem );
+    attachNameModeCombo->addItem( tr("System + original names (id_name.extension)"), AppConfig::AttachNameHybrid );
+    attachNameModeCombo->addItem( tr("Original names (as uploaded)"), AppConfig::AttachNameOriginal );
+    attachNameModeCombo->setCurrentIndex( attachNameModeCombo->findData(mytetraConfig.get_attachNameMode()) );
+
+    // Кнопка приведения всех вложений к выбранному виду
+    convertAttachesButton=new QPushButton(this);
+    convertAttachesButton->setText( tr("Convert attachments to the selected form") );
 
     // Предупреждение: действие опасное и пока в бета-версии
     fileNamesWarning=new QLabel(this);
     fileNamesWarning->setWordWrap(true);
-    fileNamesWarning->setText( tr("Danger, beta version: back up your database directory before renaming. If the database is encrypted, unlock it first.") );
+    fileNamesWarning->setText( tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped.") );
 }
 
 
@@ -77,7 +88,7 @@ void AppConfigPage_Attach::setupSignals(void)
 {
     connect( enableRecordWithAttachHighlight, &QCheckBox::toggled, this, &AppConfigPage_Attach::onEnableRecordWithAttachHighlight);
     connect( buttonHighlightColor, &QToolButton::clicked, this, &AppConfigPage_Attach::onClickedHighlightColor);
-    connect( renameAttachesButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedRenameAttachesToHumanNames);
+    connect( convertAttachesButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertAttaches);
 }
 
 
@@ -100,9 +111,15 @@ void AppConfigPage_Attach::assembly(void)
     decorBox->setLayout( decorBoxlayout );
 
     // Рамка имен файлов на диске
+    QHBoxLayout *modeLayout=new QHBoxLayout;
+    modeLayout->addWidget( attachNameModeLabel );
+    modeLayout->addWidget( attachNameModeCombo );
+    modeLayout->addStretch();
+
     QVBoxLayout *fileNamesBoxLayout=new QVBoxLayout;
     fileNamesBoxLayout->addWidget( fileNamesInfo );
-    fileNamesBoxLayout->addWidget( renameAttachesButton );
+    fileNamesBoxLayout->addLayout( modeLayout );
+    fileNamesBoxLayout->addWidget( convertAttachesButton );
     fileNamesBoxLayout->addWidget( fileNamesWarning );
 
     fileNamesBox=new QGroupBox(this);
@@ -155,9 +172,13 @@ void AppConfigPage_Attach::retranslateUi(void)
   labelHighlightColor->setText(tr("Highlight color: "));
   decorBox->setTitle(tr("Displaying notes with attachments"));
   fileNamesBox->setTitle(tr("File names on disk"));
-  fileNamesInfo->setText(tr("Attachments are stored on disk as id.extension. Renaming switches them to human-readable names id_name.extension, so the file can be recognized without opening it. New attachments will use human-readable names too."));
-  renameAttachesButton->setText(tr("Rename attachments to human-readable names"));
-  fileNamesWarning->setText(tr("Danger, beta version: back up your database directory before renaming. If the database is encrypted, unlock it first."));
+  fileNamesInfo->setText(tr("File naming for uploaded attachments: system names (id.extension), system + original names (hybrid, id_name.extension), or original names (as uploaded). The choice applies to new attachments."));
+  attachNameModeLabel->setText(tr("Name new attachments: "));
+  attachNameModeCombo->setItemText(0, tr("System names (id.extension)"));
+  attachNameModeCombo->setItemText(1, tr("System + original names (id_name.extension)"));
+  attachNameModeCombo->setItemText(2, tr("Original names (as uploaded)"));
+  convertAttachesButton->setText(tr("Convert attachments to the selected form"));
+  fileNamesWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped."));
 }
 
 
@@ -178,20 +199,25 @@ int AppConfigPage_Attach::applyChanges(void)
     if(mytetraConfig.getRecordWithAttachHighlightColor()!=highlightColor->name())
         mytetraConfig.setRecordWithAttachHighlightColor(highlightColor->name());
 
-    // Схема имен файлов переключается только кнопкой переименования,
-    // здесь ничего сохранять не нужно
+    // Сохраняется режим имен новых вложений (без переименования
+    // существующих, это делает только кнопка конвертации)
+    int selectedMode=attachNameModeCombo->currentData().toInt();
+    if(mytetraConfig.get_attachNameMode()!=selectedMode)
+        mytetraConfig.set_attachNameMode(selectedMode);
 
     return result;
 }
 
 
-// Переименование всех вложений базы в человеко-читаемые имена.
+// Приведение всех вложений базы к заданному виду имен.
 // Проход идет только по метаданным (id, видимое имя, тип) и файлам на диске,
 // содержимое вложений в память не загружается. XML базы не меняется:
 // внутреннее имя вычисляется из id и видимого имени, а не хранится.
 // Зашифрованные при закрытой базе записи пропускаются (видимое имя
-// недоступно без пароля) и попадают в счетчик пропущенных
-int AppConfigPage_Attach::renameAllAttachesToHumanNames(int &missingCount, QStringList &errors)
+// недоступно без пароля) и попадают в счетчик пропущенных.
+// Конфликтующее целевое имя (в оригинальном режиме) не затирается,
+// а попадает в список ошибок
+int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &missingCount, QStringList &errors)
 {
     missingCount=0;
     errors.clear();
@@ -234,35 +260,47 @@ int AppConfigPage_Attach::renameAllAttachesToHumanNames(int &missingCount, QStri
             QString visibleName=attach.getField("fileName");
 
             // Пустое видимое имя означает зашифрованную при закрытой базе
-            // запись: переименовать нельзя, файл пропускается
+            // запись: конвертировать нельзя, файл пропускается
             if(visibleName.isEmpty())
             {
                 ++missingCount;
                 continue;
             }
 
-            QString legacyName=Attach::constructLegacyFileName("file", attachId, visibleName);
-            QString humanName=Attach::constructHumanFileName("file", attachId, visibleName);
+            QString targetName=Attach::fileNameForMode(targetMode, "file", attachId, visibleName);
 
-            // Схемы совпали (имя с точкой в конце, пустая основа):
-            // переименовывать нечего
-            if(legacyName==humanName)
-                continue;
-
-            // Файл уже по человеко-читаемой схеме: переименовывать нечего
-            if(QFile::exists(attachDir+"/"+humanName))
-                continue;
+            // Выясняется, какой файл реально лежит на диске
+            // (перебираются все схемы имен)
+            QStringList candidates=Attach::candidateFileNames("file", attachId, visibleName);
+            QString existingName;
+            foreach(QString candidate, candidates)
+                if(QFile::exists(attachDir+"/"+candidate))
+                {
+                    existingName=candidate;
+                    break;
+                }
 
             // Исходного файла нет на диске: запись-сирота, пропускается
-            if(!QFile::exists(attachDir+"/"+legacyName))
+            if(existingName.isEmpty())
             {
                 ++missingCount;
                 continue;
             }
 
-            if(!QFile::rename(attachDir+"/"+legacyName, attachDir+"/"+humanName))
+            // Файл уже в заданном виде: конвертировать нечего
+            if(existingName==targetName)
+                continue;
+
+            // Целевое имя занято другим файлом: не затирается, ошибка
+            if(QFile::exists(attachDir+"/"+targetName))
             {
-                errors << tr("Unable to rename file %1 to %2.").arg(attachDir+"/"+legacyName).arg(attachDir+"/"+humanName);
+                errors << tr("Name %1 in note \"%2\" is already taken, file %3 skipped.").arg(targetName).arg(record->getField("name")).arg(existingName);
+                continue;
+            }
+
+            if(!QFile::rename(attachDir+"/"+existingName, attachDir+"/"+targetName))
+            {
+                errors << tr("Unable to rename file %1 to %2.").arg(attachDir+"/"+existingName).arg(attachDir+"/"+targetName);
                 continue;
             }
 
@@ -274,13 +312,16 @@ int AppConfigPage_Attach::renameAllAttachesToHumanNames(int &missingCount, QStri
 }
 
 
-void AppConfigPage_Attach::onClickedRenameAttachesToHumanNames()
+void AppConfigPage_Attach::onClickedConvertAttaches()
 {
+    int targetMode=attachNameModeCombo->currentData().toInt();
+    QString modeName=attachNameModeCombo->currentText();
+
     // Подтверждение: действие меняет много файлов на диске
     QMessageBox::StandardButton answer=QMessageBox::question(
         this,
-        tr("Rename attachments"),
-        tr("All attachments will be renamed from id.extension to human-readable names id_name.extension. Back up your database directory first. Continue?"),
+        tr("Convert attachments"),
+        tr("All attachments will be brought to the form \"%1\". Back up your database directory first. Continue?").arg(modeName),
         QMessageBox::Yes | QMessageBox::No,
         QMessageBox::No);
 
@@ -289,24 +330,24 @@ void AppConfigPage_Attach::onClickedRenameAttachesToHumanNames()
 
     int missingCount=0;
     QStringList errors;
-    int renamedCount=renameAllAttachesToHumanNames(missingCount, errors);
+    int renamedCount=convertAllAttachesToMode(targetMode, missingCount, errors);
 
-    // Схема переключается только после успешного прохода, чтобы новые
-    // вложения сразу сохранялись по человеко-читаемой схеме
+    // Режим переключается только после прохода без ошибок, чтобы новые
+    // вложения сразу сохранялись в заданном виде
     if(errors.isEmpty())
     {
-        mytetraConfig.set_attachHumanReadableNames(true);
+        mytetraConfig.set_attachNameMode(targetMode);
         mytetraConfig.sync();
     }
 
-    QString resultText=tr("Renamed files: %1.").arg(renamedCount);
+    QString resultText=tr("Converted files: %1.").arg(renamedCount);
     if(missingCount>0)
         resultText+=QString(" ")+tr("Skipped (file not found or encrypted record): %1.").arg(missingCount);
     if(!errors.isEmpty())
         resultText+=QString(" ")+tr("Errors: %1. First error: %2").arg(errors.size()).arg(errors.first());
 
     if(errors.isEmpty())
-        QMessageBox::information(this, tr("Rename attachments"), resultText);
+        QMessageBox::information(this, tr("Convert attachments"), resultText);
     else
-        QMessageBox::warning(this, tr("Rename attachments"), resultText);
+        QMessageBox::warning(this, tr("Convert attachments"), resultText);
 }

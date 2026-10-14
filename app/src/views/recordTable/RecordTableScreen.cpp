@@ -348,12 +348,16 @@ void RecordTableScreen::assembly(void)
  recordTableScreenLayout->addWidget(treePathLabel);
  recordTableScreenLayout->addWidget(recordTableController->getView());
 
+ // Зазоры по 1px: штатный spacing давал полосу пустоты
+ // между тулбаром и таблицей
+ recordTableScreenLayout->setSpacing(1);
+
  setLayout(recordTableScreenLayout);
 
  // Границы убираются, так как данный объект будет использоваться как виджет
  QLayout *lt;
  lt=layout();
- lt->setContentsMargins(0,2,0,0);
+ lt->setContentsMargins(0,1,0,0);
 }
 
 

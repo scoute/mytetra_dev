@@ -390,7 +390,9 @@ void FindScreen::assembly(void)
 
     centralDesktopLayout->addLayout(whereFindLine);
     centralDesktopLayout->addWidget(findTable, 10);
-    centralDesktopLayout->setContentsMargins(0,0,0,0); // Границы убираются
+    // Верх 4px: отступ между ручкой сплиттера и строкой поиска,
+    // иначе поиск липнет к разделителю
+    centralDesktopLayout->setContentsMargins(0,4,0,0); // Границы убираются
     centralDesktopLayout->setSizeConstraint(QLayout::SetNoConstraint);
 
     // whereFindLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);

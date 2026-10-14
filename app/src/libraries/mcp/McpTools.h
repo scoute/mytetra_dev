@@ -225,6 +225,38 @@ QJsonObject unfavoriteNoteDirect(const QString &noteId, QString &error);
 // живой записью: синглетон в серверном процессе может быть протухшим)
 static QSet<QString> sidecarFavoriteIds(void);
 
+// --- Аттачи, экспорт, импорт ---
+
+// Аттачи записи: {attachments: [{id, name, size}]}.
+// Ошибка: нет записи, шифрованная запись
+QJsonObject listAttachments(const QString &noteId, QString &error);
+
+// Выгрузка ветки с подветками в каталог в обменном формате MyTetra
+// (mytetra.xml + base/). Возвращает {path, notes}.
+// Ошибки: нет ветки, нет каталога-приемника, сбой выгрузки.
+// В rw-режимах: артефакты вовне, базу не меняет
+static QJsonObject applyExportBranch(KnowTreeModel *model,
+                                     const QString &branchId,
+                                     const QString &path,
+                                     QString &error);
+
+// Проверка обменника перед импортом: каталог, читаемый mytetra.xml
+// валидного формата, безопасные имена dir/file у всех записей.
+// Пустая строка - порядок, иначе текст ошибки. Диалогов нет
+static QString checkImportDir(const QString &path);
+
+// Ввоз ветки из обменника под родителя (пустой - верхний уровень).
+// Возвращает {id, parent_id}. Ошибки: нет родителя, шифрованный
+// родитель, плохой обменник, пустой итог. Сохранение решает вызывающий
+static QJsonObject applyImportBranch(KnowTreeModel *model,
+                                     const QString &parentId,
+                                     const QString &path,
+                                     QString &error);
+
+QJsonObject importBranchDirect(const QString &parentId,
+                               const QString &path,
+                               QString &error);
+
 private:
   KnowTreeModel *m_model;
 

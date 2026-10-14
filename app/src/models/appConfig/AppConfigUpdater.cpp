@@ -9,7 +9,7 @@
 #define APPCONFIGUPDATER_VERSION "APPCONFIGUPDATER v.1.0 Build 29.10.2010"
 
 
-AppConfigUpdater::AppConfigUpdater(QObject *pobj) : maxParameterCount(100)
+AppConfigUpdater::AppConfigUpdater(QObject *pobj) : maxParameterCount(200)
 {
     Q_UNUSED(pobj);
 
@@ -237,10 +237,19 @@ void AppConfigUpdater::updateVersion(int versionFrom,
             // трактуется как-то по-другому. Например, значение хранилась как строка из двух координат,
             // разделенных запятой. А стало храниться как строка из трех координат, разделенных запятой
 
-            QString existsValue = this->updateValueRepresentation(versionFrom,
-                                                                  versionTo,
-                                                                  toName,
-                                                                  conf->value(toName).toString()); // Значение из конфига
+            // Ключа может не быть в самом файле (усечённые лимитом 100 миграции
+            // или чужой conf.ini) — тогда берётся дефолт новой версии, а не пусто
+            QString existsValue;
+            if(conf->contains(toName))
+                existsValue=this->updateValueRepresentation(versionFrom,
+                                                            versionTo,
+                                                            toName,
+                                                            conf->value(toName).toString()); // Значение из конфига
+            else
+            {
+                existsValue=toDefValue;
+                qWarning() << "Config key" << toName << "is missing in file, using default value:" << toDefValue;
+            }
 
             toTable[toName]["value"] = existsValue;
 

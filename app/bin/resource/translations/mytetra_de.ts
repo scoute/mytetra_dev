@@ -3394,322 +3394,324 @@ Bitte MyTetra aktualisieren.</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1690"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1688"/>
         <source>Statistics</source>
         <translation>Statistik</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1626"/>
         <source>Branch</source>
         <translation>Zweig</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1626"/>
         <source>Note</source>
         <translation>Notiz</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1626"/>
         <source>Internal links</source>
         <translation>Interne Links</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1626"/>
         <source>Images</source>
         <translation>Bilder</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1626"/>
         <source>Files</source>
         <translation>Dateien</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1535"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1529"/>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
         <translation>Zweige: %1 | Notizen: %2 | Tags: %3 | Dateien: %4 | Bilder: %5 | Interne Links: %6</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1536"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1530"/>
         <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
         <translation>Datenbankstatistik: Zweige, Notizen, Tags, Dateien, Bilder und Links. Links sind mytetra://-Notizlinks. Klick öffnet Details pro Notiz.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1558"/>
         <source>MCP edit applied — avoid editing in parallel</source>
-        <translation>MCP-Änderung übernommen — bitte nicht parallel bearbeiten</translation>
+        <translation type="vanished">MCP-Änderung übernommen — bitte nicht parallel bearbeiten</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="393"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1889"/>
         <source>Approve</source>
-        <translation>Bestätigen</translation>
+        <translation type="vanished">Bestätigen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1100"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1751"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1094"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1749"/>
         <source>&amp;File</source>
         <translation>&amp;Datei</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1103"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1753"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1097"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1751"/>
         <source>Databases management</source>
         <translation>Datenbankverwaltung</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1114"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1108"/>
         <source>&amp;Print...</source>
         <translation>&amp;Drucken...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1117"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1756"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1111"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1754"/>
         <source>Print Preview...</source>
         <translation>Druckvorschau...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1120"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1114"/>
         <source>&amp;Export PDF...</source>
         <translation>&amp;PDF exportieren...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1106"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1754"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1100"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1752"/>
         <source>Export tree item</source>
         <translation>Zweig exportieren</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1109"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1755"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1103"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1753"/>
         <source>Import tree item</source>
         <translation>Zweig importieren</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1125"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1847"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2379"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1119"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1845"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2374"/>
         <source>&amp;Quit</source>
         <translation>&amp;Beenden</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1134"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1761"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1128"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1759"/>
         <source>&amp;Tools</source>
         <translation>&amp;Werkzeuge</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1146"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1763"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1140"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1761"/>
         <source>Action &amp;log</source>
         <translation>Aktions&amp;protokoll</translation>
     </message>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1171"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1177"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1183"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1776"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1780"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1774"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1778"/>
         <source>&amp;Preferences</source>
         <translation>&amp;Einstellungen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1195"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1189"/>
         <source>Main</source>
         <translation>Allgemein</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1196"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1190"/>
         <source>Appearance</source>
         <translation>Erscheinungsbild</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1197"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1191"/>
         <source>Crypt</source>
         <translation>Verschlüsselung</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1203"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1197"/>
         <source>Misc</source>
         <translation>Sonstiges</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1252"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1837"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1246"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1835"/>
         <source>&amp;Help</source>
         <translation>&amp;Hilfe</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1255"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1839"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1249"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1837"/>
         <source>About MyTetra</source>
         <translation>Über MyTetra</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1258"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1840"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1252"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1838"/>
         <source>About Qt</source>
         <translation>Über Qt</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1261"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1841"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2204"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1255"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1839"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2199"/>
         <source>Technical info</source>
         <translation>Technische Info</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1198"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1192"/>
         <source>Syncro</source>
         <translation>Synchro</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1199"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1193"/>
         <source>Notes Area</source>
         <translation>Notizbereich</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1200"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1194"/>
         <source>Attaches</source>
         <translation>Anhänge</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1201"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1195"/>
         <source>Keyboard</source>
         <translation>Tastatur</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="194"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1202"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1849"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1196"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1847"/>
         <source>History</source>
         <translation>Verlauf</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1918"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1547"/>
+        <source>MCP session is active, the program is in read-only mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1913"/>
         <source>Print Document</source>
         <translation>Dokument drucken</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1973"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1968"/>
         <source>Select an empty directory to export data</source>
         <translation>Leeres Verzeichnis für Datenexport wählen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1991"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1986"/>
         <source>Select directory to import data</source>
         <translation>Verzeichnis für Datenimport wählen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2205"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2200"/>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;Technische Info&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2314"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2309"/>
         <source>MyTetra: can&apos;t synchronization</source>
         <translation>MyTetra: Synchronisierung unmöglich</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2315"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2310"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Kein Synchronisierungsbefehl gesetzt.&lt;br&gt;Bitte im Menü &quot;Werkzeuge&quot;, &quot;Einstellungen&quot;, Bereich &quot;Sync&quot; prüfen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2334"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2329"/>
         <source>MyTetra synchronization</source>
         <translation>MyTetra-Synchronisierung</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2335"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2330"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>Synchronisierung läuft, bitte warten...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1844"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2370"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1842"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2365"/>
         <source>&amp;Restore window</source>
         <translation>&amp;Fenster wiederherstellen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1845"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2373"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1843"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2368"/>
         <source>Ma&amp;ximize window</source>
         <translation>Fenster ma&amp;ximieren</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1846"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2376"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1844"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2371"/>
         <source>Mi&amp;nimize window</source>
         <translation>Fenster mi&amp;nimieren</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1271"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1803"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1265"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1801"/>
         <source>&amp;Themes</source>
         <translation>&amp;Oberflächen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1276"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1806"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1270"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1804"/>
         <source>Default</source>
         <translation>Standard</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1277"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1807"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1271"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1805"/>
         <source>Dark</source>
         <translation>Dunkel</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1278"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1272"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1806"/>
         <source>Modern</source>
         <translation>Modern</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1279"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1809"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1273"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1807"/>
         <source>Midnight</source>
         <translation>Mitternacht</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="214"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1851"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1626"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1849"/>
         <source>Tags</source>
         <translation>Tags</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1140"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1134"/>
         <source>Images &amp;gallery</source>
         <translation>Bilder&amp;galerie</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1143"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1765"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1137"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1763"/>
         <source>Attached &amp;files</source>
         <translation>Angehängte &amp;Dateien</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1322"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1817"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1316"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1815"/>
         <source>&amp;View</source>
         <translation>&amp;Ansicht</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1325"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1820"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1319"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1818"/>
         <source>Show note header</source>
         <translation>Notizkopf anzeigen</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1339"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1826"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1333"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1824"/>
         <source>Change secret color...</source>
         <translation>Geheimfarbe ändern...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1343"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1829"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1337"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1827"/>
         <source>Change note background color...</source>
         <translation>Notizhintergrundfarbe ändern...</translation>
     </message>
@@ -3719,8 +3721,8 @@ Bitte MyTetra aktualisieren.</translation>
         <translation>Eingehende Links</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1329"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1823"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1323"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1821"/>
         <source>Show favorites panel</source>
         <translation>Favoritenpanel anzeigen</translation>
     </message>

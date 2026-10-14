@@ -369,9 +369,9 @@ void MainWindow::assembly(void)
     recordTableScreen->addExtraToolAction(historyPanelDock->toggleViewAction());
     recordTableScreen->addExtraToolAction(backlinksPanelDock->toggleViewAction());
 
-    // Полоса внешней MCP-правки: сверху, крупно, немодально.
+    // Полоса MCP-сессии: сверху, крупно, немодально, без кнопок.
     // Инлайн-стиль вместо темы: красный виден и в светлой, и в тёмной.
-    // Кнопка-галочка без текста: языконезависимое подтверждение просмотра
+    // Скрыть нельзя: висит всё время пока подключён хоть один MCP-пир
     mcpBannerBar=new QWidget(this);
     mcpBannerBar->setObjectName("mcpBannerBar");
     mcpBannerBar->setStyleSheet("QWidget { background-color: #B00020; }");
@@ -390,15 +390,7 @@ void MainWindow::assembly(void)
     mcpBanner->setFont(bannerFont);
     bannerLayout->addWidget(mcpBanner, 1);
 
-    mcpBannerApprove=new QPushButton(tr("Approve"), mcpBannerBar);
-    mcpBannerApprove->setObjectName("mcpBannerApprove");
-    mcpBannerApprove->setStyleSheet("QPushButton { background-color: #FFFFFF; color: #B00020; font-weight: bold; }");
-    mcpBannerApprove->setCursor(Qt::PointingHandCursor);
-    connect(mcpBannerApprove, &QPushButton::clicked, this, &MainWindow::approveMcpSession);
-    bannerLayout->addWidget(mcpBannerApprove);
-
     mcpBannerBar->hide();
-    mcpBanner->installEventFilter(this);
 
     // Сторож протухших пиров: убитый без Bye гаснет сам раз в минуту
     mcpBannerTimer=new QTimer(this);
@@ -859,6 +851,7 @@ void MainWindow::messageHandler(QString message)
             return;
 
         mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
+        mcpPeerModes[pid]=args.value("mode").toString();
         updateMcpBanner();
     }
 
@@ -870,6 +863,7 @@ void MainWindow::messageHandler(QString message)
             return;
 
         mcpPeers.remove(args.value("pid").toString());
+        mcpPeerModes.remove(args.value("pid").toString());
         updateMcpBanner();
     }
 }
@@ -1537,31 +1531,37 @@ void MainWindow::updateStats(void)
 }
 
 
-// Заметный немодальный сигнал о внешней правке: полоса сверху крупными
-// буквами со временем срабатывания. Висит пока жив хоть один MCP-пир,
-// подтверждение гасит до следующей правки. Ничего не блочит, только
-// просит не править параллельно — разбор конфликтов потом дороже
+// Внешняя MCP-правка: баннер и так висит всю сессию, здесь только
+// пересчёт (текст с режимами, видимость, блокировка)
 void MainWindow::flashMcpWrite(void)
 {
-    if(mcpBannerBar==nullptr || mcpBanner==nullptr)
-        return;
-
-    mcpBannerDismissed=false;
-    setMcpUiLock(true);
-    mcpBanner->setText(mcpBannerText());
-    mcpBannerBar->show();
+    updateMcpBanner();
 }
 
 
+// Текст баннера: сессия активна и режимы пиров.
+// UI заблокирован всегда пока висит баннер, независимо от режима
+// сервера: его записи идут мимо блокировки своим каналом
 QString MainWindow::mcpBannerText(void)
 {
-    return tr("MCP edit applied — avoid editing in parallel")
-           + " · " + QTime::currentTime().toString("hh:mm:ss");
+    QString text=tr("MCP session is active, the program is in read-only mode");
+
+    QStringList modes=mcpPeerModes.values();
+    modes.removeAll(QString());
+    modes.removeDuplicates();
+    modes.sort();
+
+    if(!modes.isEmpty())
+        text+=" ("+modes.join(", ")+")";
+
+    return text;
 }
 
 
-// Липкий баннер присутствия MCP: виден пока жив хоть один пир.
-// Протухшие (kill -9 без Bye) вычищаются по TTL
+// Баннер MCP-сессии: висит всё время пока жив хоть один пир.
+// Протухшие (kill -9 без Bye) вычищаются по TTL. Пусто — баннер
+// гаснет и UI разблокируется, есть пиры — баннер виден и UI
+// заблокирован на запись до конца сессии
 void MainWindow::updateMcpBanner(void)
 {
     qint64 now=QDateTime::currentMSecsSinceEpoch();
@@ -1573,44 +1573,42 @@ void MainWindow::updateMcpBanner(void)
             stale.append(it.key());
 
     foreach(const QString &pid, stale)
+    {
         mcpPeers.remove(pid);
+        mcpPeerModes.remove(pid);
+    }
 
-    if(mcpBannerBar==nullptr)
+    if(mcpBannerBar==nullptr || mcpBanner==nullptr)
         return;
 
     if(mcpPeers.isEmpty())
     {
-        mcpBannerDismissed=false;
         setMcpUiLock(false);
         mcpBannerBar->hide();
     }
-    else if(!mcpBannerDismissed)
+    else
+    {
+        setMcpUiLock(true);
+        mcpBanner->setText(mcpBannerText());
         mcpBannerBar->show();
+    }
 }
 
 
 // Блокировка UI на время MCP-сессии поверх глобального read-only.
 // Своё досохраняется до блокировки, иначе потеряется на навигации.
-// MCP-записи смотрят сырой флаг и продолжают писать
+// MCP-записи смотрят сырой флаг и продолжают писать.
+// Идемпотентна: повтор не дёргает сохранение и перераскладку
 void MainWindow::setMcpUiLock(bool locked)
 {
+    if(mytetraConfig.isMcpUiLocked()==locked)
+        return;
+
     if(locked)
         saveTextarea();
 
     mytetraConfig.setMcpUiLock(locked);
     applyReadOnly();
-}
-
-
-// Аппрув сессии: снимает блокировку и гасит баннер до следующей правки.
-// Изменения уже применены; откат будет позже с журналом
-void MainWindow::approveMcpSession(void)
-{
-    mcpBannerDismissed=true;
-    setMcpUiLock(false);
-
-    if(mcpBannerBar!=nullptr)
-        mcpBannerBar->hide();
 }
 
 
@@ -1881,12 +1879,9 @@ void MainWindow::retranslateUi(void)
     if(backlinksPanel!=nullptr)
         backlinksPanel->retranslateUi();
 
-    // Видимый баннер MCP — тоже (время в нём обновится)
+    // Видимый баннер MCP — тоже
     if(mcpBanner!=nullptr && mcpBanner->isVisible())
         mcpBanner->setText(mcpBannerText());
-
-    if(mcpBannerApprove!=nullptr)
-        mcpBannerApprove->setText(tr("Approve"));
 }
 
 
@@ -2527,13 +2522,6 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
     {
         qDebug() << "Main window focus deactivate, save all state.";
         saveAllState();
-    }
-
-    // Клик по баннеру MCP подтверждает просмотр (до следующей правки)
-    if(o==mcpBanner && e->type()==QEvent::MouseButtonRelease)
-    {
-        approveMcpSession();
-        return true;
     }
 
     // Клик по строке статистики открывает разбивку по заметкам

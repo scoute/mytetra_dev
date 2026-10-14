@@ -32,6 +32,7 @@ protected:
 
   QCheckBox *showHorizontalHeader;
   QCheckBox *showVerticalHeader;
+  QCheckBox *showRecordHeader;
 
   QGroupBox *groupBoxVisibleHeaders;
   QGroupBox *groupBoxVisibleColumns;

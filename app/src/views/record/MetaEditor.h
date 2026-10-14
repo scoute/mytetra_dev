@@ -61,6 +61,10 @@ public:
  static QString noteTextAreaStyleSheet(void);
  void applyNoteColors(void);
 
+ // Позиция курсора в статусбаре: строка и колонка с единицы.
+ // Пересчитывается по сигналу курсора и при смене языка
+ void updateCursorLabel(void);
+
  // Прямые подписи Url и Tags. Вызывается из MainWindow::retranslateUi
  void retranslateUi(void);
 

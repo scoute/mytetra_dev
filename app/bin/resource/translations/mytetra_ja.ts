@@ -3589,47 +3589,47 @@ MyTetra を更新してください。</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1870"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1876"/>
         <source>Statistics</source>
         <translation>統計</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1814"/>
         <source>Branch</source>
         <translation>ブランチ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1704"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
         <source>MCP session is active%1, MyTetra works in read-only mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1814"/>
         <source>Note</source>
         <translation>ノート</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1814"/>
         <source>Internal links</source>
         <translation>内部リンク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1814"/>
         <source>Images</source>
         <translation>画像</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1814"/>
         <source>Files</source>
         <translation>ファイル</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1675"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1681"/>
         <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
         <translation>ブランチ: %1 | ノート: %2 | タグ: %3 | ファイル: %4 | 画像: %5 | 内部リンク: %6</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1676"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1682"/>
         <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
         <translation>ベース統計: ブランチ、ノート、タグ、ファイル、画像、リンク。リンクはノート間のmytetra://リンクです。クリックでノート別の詳細を開きます。</translation>
     </message>
@@ -3642,288 +3642,288 @@ MyTetra を更新してください。</translation>
         <translation type="vanished">承認</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1219"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1931"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1937"/>
         <source>&amp;File</source>
         <translation>&amp;ファイル</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1222"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1933"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1228"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1939"/>
         <source>Databases management</source>
         <translation>データベース管理</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1233"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1239"/>
         <source>&amp;Print...</source>
         <translation>&amp;印刷...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1236"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1936"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1242"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1942"/>
         <source>Print Preview...</source>
         <translation>印刷プレビュー...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1239"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1245"/>
         <source>&amp;Export PDF...</source>
         <translation>&amp;PDF へ出力...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1934"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1231"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1940"/>
         <source>Export tree item</source>
         <translation>ツリー項目をエクスポート</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1228"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1935"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1234"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1941"/>
         <source>Import tree item</source>
         <translation>ツリー項目をインポート</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1244"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2028"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2560"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1250"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2034"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2566"/>
         <source>&amp;Quit</source>
         <translation>&amp;終了</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1253"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1941"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1259"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1947"/>
         <source>&amp;Tools</source>
         <translation>&amp;ツール</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1265"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1943"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1271"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1949"/>
         <source>Action &amp;log</source>
         <translation>アクション&amp;履歴</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1296"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1302"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1956"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1960"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1308"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1962"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1966"/>
         <source>&amp;Preferences</source>
         <translation>&amp;設定</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1314"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1320"/>
         <source>Main</source>
         <translation>メイン</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1315"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1321"/>
         <source>Appearance</source>
         <translation>外観</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1316"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1322"/>
         <source>Crypt</source>
         <translation>暗号化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1322"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1328"/>
         <source>Misc</source>
         <translation>その他</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1371"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2018"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1377"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2024"/>
         <source>&amp;Help</source>
         <translation>&amp;ヘルプ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1374"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2020"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
         <source>About MyTetra</source>
         <translation>MyTetra について</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1377"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2021"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1383"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
         <source>About Qt</source>
         <translation>Qt について</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2022"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2385"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1386"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2028"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2391"/>
         <source>Technical info</source>
         <translation>技術情報</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1317"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1323"/>
         <source>Syncro</source>
         <translation>同期</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1318"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1324"/>
         <source>Notes Area</source>
         <translation>ノート領域</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1319"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1325"/>
         <source>Attaches</source>
         <translation>添付</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1320"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1326"/>
         <source>Keyboard</source>
         <translation>キーボード</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="196"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1321"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2030"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="202"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1327"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2036"/>
         <source>History</source>
         <translation>履歴</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1399"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1990"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1405"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1996"/>
         <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2099"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2105"/>
         <source>Print Document</source>
         <translation>ドキュメントを印刷</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2154"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2160"/>
         <source>Select an empty directory to export data</source>
         <translation>データ出力用の空ディレクトリを選択</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2172"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2178"/>
         <source>Select directory to import data</source>
         <translation>データ入力用のディレクトリを選択</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2386"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2392"/>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;技術情報&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2495"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
         <source>MyTetra: can&apos;t synchronization</source>
         <translation>MyTetra: 同期できません</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2496"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2502"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>同期コマンド未設定。&lt;br&gt;「ツール」メニューの「同期」設定を確認</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2515"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
         <source>MyTetra synchronization</source>
         <translation>MyTetra の同期</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2516"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2522"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>同期中です、お待ちください...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2025"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2551"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2031"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2557"/>
         <source>&amp;Restore window</source>
         <translation>&amp;ウィンドウを復元</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2554"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2032"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2560"/>
         <source>Ma&amp;ximize window</source>
         <translation>ウィンドウを最&amp;大化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2557"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2033"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2563"/>
         <source>Mi&amp;nimize window</source>
         <translation>ウィンドウを最&amp;小化</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1390"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1983"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1396"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1989"/>
         <source>&amp;Themes</source>
         <translation>&amp;テーマ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1395"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1986"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1401"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1992"/>
         <source>Default</source>
         <translation>デフォルト</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1396"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1987"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1402"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1993"/>
         <source>Dark</source>
         <translation>ダーク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1397"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1988"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1403"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1994"/>
         <source>Modern</source>
         <translation>モダン</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1398"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1989"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1404"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1995"/>
         <source>Midnight</source>
         <translation>ミッドナイト</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="216"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1808"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2032"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="222"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1814"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2038"/>
         <source>Tags</source>
         <translation>タグ</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1259"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1265"/>
         <source>Images &amp;gallery</source>
         <translation>画像&amp;ギャラリー</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1262"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1945"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1268"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1951"/>
         <source>Attached &amp;files</source>
         <translation>添付&amp;ファイル</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1442"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1998"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1448"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2004"/>
         <source>&amp;View</source>
         <translation>&amp;表示</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1445"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2001"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1451"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2007"/>
         <source>Show note header</source>
         <translation>ノートヘッダーを表示</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1459"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2007"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1465"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2013"/>
         <source>Change secret color...</source>
         <translation>シークレット色を変更...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1463"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1469"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2016"/>
         <source>Change note background color...</source>
         <translation>ノート背景色を変更...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="206"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="212"/>
         <source>Backlinks</source>
         <translation>被リンク</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1449"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2004"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1455"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2010"/>
         <source>Show favorites panel</source>
         <translation>お気に入りパネルを表示</translation>
     </message>
@@ -3992,21 +3992,26 @@ MyTetra を更新してください。</translation>
 <context>
     <name>MetaEditor</name>
     <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="107"/>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="657"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="117"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="693"/>
         <source>&lt;B&gt;Url:&lt;/B&gt; </source>
         <translation>&lt;B&gt;Url:&lt;/B&gt; </translation>
     </message>
     <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="121"/>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="658"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="131"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="694"/>
         <source>&lt;B&gt;Tags:&lt;/B&gt; </source>
         <translation>&lt;B&gt;タグ:&lt;/B&gt; </translation>
     </message>
     <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="285"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="295"/>
         <source>&lt;b&gt;Path: &lt;/b&gt;</source>
         <translation>&lt;b&gt;パス: &lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="685"/>
+        <source>Cursor: line %1, position %2</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

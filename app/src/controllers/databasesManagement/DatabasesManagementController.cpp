@@ -21,6 +21,7 @@
 #include "models/tree/KnowTreeModel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
+#include "views/tagsPanel/TagsPanel.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/IconSelectDialog.h"
@@ -182,6 +183,11 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
 
     // Заполняется модель дерева
     knowTreeModel->initFromXML(dbPath+"/mytetra.xml");
+
+    // Панель меток перечитывается под новую базу
+    TagsPanel *tagsPanel=find_object<TagsPanel>("tagsPanel");
+    if(tagsPanel!=nullptr)
+        tagsPanel->refreshTags();
 
     // Обратный индекс перечитывается под новое хранилище
     BacklinkIndex::instance().setTreeModel(knowTreeModel);

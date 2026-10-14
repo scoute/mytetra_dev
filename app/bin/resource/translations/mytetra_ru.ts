@@ -3048,6 +3048,14 @@ Try to search for entire database.</source>
         <source>Tags</source>
         <translation>Метки</translation>
     </message>
+    <message>
+        <source>Id</source>
+        <translation>ID</translation>
+    </message>
+    <message>
+        <source>Directory name</source>
+        <translation>Имя каталога</translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>

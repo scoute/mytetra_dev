@@ -352,6 +352,8 @@ void MainWindow::assembly(void)
 
     setCentralWidget(findSplitter);
 
+    // Порядок доков сверху вниз: теги, история, обратные ссылки
+    addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
     addDockWidget(Qt::RightDockWidgetArea, historyPanelDock);
     addDockWidget(Qt::RightDockWidgetArea, backlinksPanelDock);
 
@@ -364,7 +366,6 @@ void MainWindow::assembly(void)
     // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
     // при первом запуске строится полным сканом базы
     BacklinkIndex::instance().loadOrBuild();
-    addDockWidget(Qt::RightDockWidgetArea, tagsPanelDock);
 }
 
 

@@ -1150,6 +1150,19 @@ void AppConfig::set_themeCustomNotePaperImage(QString path)
     m_conf->setValue("themeCustomNotePaperImage", path);
 }
 
+QString AppConfig::get_themeCustomNotePaperMode(void)
+{
+    return m_conf->value("themeCustomNotePaperMode", "texture").toString();
+}
+
+void AppConfig::set_themeCustomNotePaperMode(QString mode)
+{
+    if(mode!="color" && mode!="texture")
+        mode="texture";
+
+    m_conf->setValue("themeCustomNotePaperMode", mode);
+}
+
 
 // Человеко-читаемые имена вложенных файлов на диске.
 // Параметр намеренно не входит в версионные таблицы (как noteFontColor):

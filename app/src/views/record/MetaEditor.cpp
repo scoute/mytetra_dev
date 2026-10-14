@@ -23,10 +23,12 @@
 #include "views/attachTable/AttachTableScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/LinkHelper.h"
+#include "libraries/FixedParameters.h"
 
 
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
+extern FixedParameters fixedParameters;
 
 
 MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
@@ -616,12 +618,18 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
     if(!fontSetting.isEmpty() && fontColor.isValid())
         declarations << QString("color: %1;").arg(fontColor.name());
 
-    // Мозаичный фон: тайл повторяется по горизонтали и вертикали.
-    // Цвет бумаги под ним виден сквозь прозрачные места картинки
-    QString imageSetting=mytetraConfig.get_themeCustomNotePaperImage();
+    // Фон заметок: или цвет, или мозаика. Текстура без своего файла
+    // означает встроенный tx_fabric.jpg. Пустой/битый свой файл
+    // тоже откатывается на встроенный: без мозаики не остаёмся
+    if(mytetraConfig.get_themeCustomNotePaperMode()=="texture")
+    {
+        QString tile=mytetraConfig.get_themeCustomNotePaperImage();
 
-    if(!imageSetting.isEmpty() && QFileInfo(imageSetting).isReadable())
-        declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(imageSetting);
+        if(tile.isEmpty() || !QFileInfo(tile).isReadable())
+            tile=fixedParameters.defaultNotePaperImage;
+
+        declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(tile);
+    }
 
     if(declarations.isEmpty())
         return "";

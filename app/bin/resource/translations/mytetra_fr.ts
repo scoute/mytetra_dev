@@ -6201,4 +6201,107 @@ La mise en forme peut être altérée.</translation>
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>SubscriptionImportEngine</name>
+    <message>
+        <source>Cannot open %1/branch.xml</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication branch.xml is broken</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication is not loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tree model is not passed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subscription registry is not passed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create import container</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import container is not found in tree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create owner folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch %1 is not found in publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parent branch %1 is not found in tree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tree model to create a branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local copy of publication is not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target branch is not found in tree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tree model to move a branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot move branch «%1»</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record %1 is not found in publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record %1 is not found in branch.xml</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot insert record into branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record inserted but not found in table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record directory %1 is not found in publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create record directory %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot copy file %1 to record</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

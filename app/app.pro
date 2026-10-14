@@ -328,6 +328,7 @@ HEADERS+=\
     src/libraries/GitHelper.h \
     src/libraries/BranchDiffEngine.h \
     src/libraries/BranchPublisher.h \
+    src/libraries/SubscriptionImportEngine.h \
     src/libraries/UnifiedDiff.h \
     src/libraries/ChangeHistory.h \
     src/libraries/VoiceNoteHelper.h \
@@ -539,6 +540,7 @@ SOURCES+=\
     src/libraries/GitHelper.cpp \
     src/libraries/BranchDiffEngine.cpp \
     src/libraries/BranchPublisher.cpp \
+    src/libraries/SubscriptionImportEngine.cpp \
     src/libraries/UnifiedDiff.cpp \
     src/libraries/ChangeHistory.cpp \
     src/libraries/VoiceNoteHelper.cpp \

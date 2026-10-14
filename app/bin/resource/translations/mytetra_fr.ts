@@ -2675,6 +2675,14 @@ You need to update MyTetra.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>MCP edit applied — avoid editing in parallel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Branch</source>
         <translation>Branche</translation>
     </message>

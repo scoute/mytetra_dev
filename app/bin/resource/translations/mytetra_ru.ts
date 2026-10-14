@@ -3515,6 +3515,14 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Статистика базы: ветки, записи, метки, файлы, картинки и ссылки. Ссылки — это ссылки mytetra:// между заметками. Клик открывает детали по заметкам.</translation>
     </message>
     <message>
+        <source>MCP edit applied — avoid editing in parallel</source>
+        <translation>Правка MCP применена — избегайте параллельного редактирования</translation>
+    </message>
+    <message>
+        <source>Approve</source>
+        <translation>Принято</translation>
+    </message>
+    <message>
         <source>Branch</source>
         <translation>Ветка</translation>
     </message>

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMap>
 #include <QtXml>
 #include <QtGui>
 #include <QDebug>
@@ -20,6 +21,8 @@ class QCloseEvent;
 class QSplitter;
 class QStatusBar;
 class QLabel;
+class QTimer;
+class QPushButton;
 class QTableWidget;
 class QDockWidget;
 
@@ -49,6 +52,19 @@ public:
 
     // Статистика базы справа в статусбаре (постоянный виджет)
     QLabel *statsLabel=nullptr;
+
+    // Полоса внешней MCP-правки сверху: крупно, немодально.
+    // Висит пока жив хоть один MCP-пир (Hello/Bye + TTL), гаснет
+    // по кнопке-подтверждению до следующей правки. Инлайн-стиль
+    // (не тема): одинаково заметна в светлой и тёмной теме
+    QWidget *mcpBannerBar=nullptr;
+    QLabel *mcpBanner=nullptr;
+    QPushButton *mcpBannerApprove=nullptr;
+    QTimer *mcpBannerTimer=nullptr;
+
+    // Живые MCP-пиры: pid -> последнее Hello (мсек). Пусто = сессия кончилась
+    QMap<QString, qint64> mcpPeers;
+    bool mcpBannerDismissed=false;
     WindowSwitcher *windowSwitcher=nullptr;
 
     void restoreWindowGeometry(void);
@@ -116,6 +132,24 @@ public slots:
     // Пересчитать и показать статистику базы в статусбаре.
     // Вызывается по сигналам модели
     void updateStats(void);
+
+    // Короткое немодальное уведомление в статусбаре о внешней
+    // MCP-правке: просит не править параллельно, ничего не блочит
+    void flashMcpWrite(void);
+
+    // Текст баннера: та же строка плюс время срабатывания
+    QString mcpBannerText(void);
+
+    // Пересчитать видимость липкого баннера по пирам (с TTL-чисткой)
+    void updateMcpBanner(void);
+
+    // Блокировка UI на время MCP-сессии: фан-аут read-only поверх,
+    // своё досохраняется до блокировки. MCP-записи не трогает
+    void setMcpUiLock(bool locked);
+
+    // Аппрув сессии: гасит баннер и снимает блокировку до следующей правки.
+    // Откат тут будет позже с журналом
+    void approveMcpSession(void);
 
     // Таблица разбивки статистики для проверки без модального окна
     QTableWidget *buildStatsTableWidget(QWidget *parent);

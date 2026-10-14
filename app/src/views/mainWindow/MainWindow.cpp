@@ -1539,22 +1539,23 @@ void MainWindow::flashMcpWrite(void)
 }
 
 
-// Текст баннера: сессия активна и режимы пиров.
-// UI заблокирован всегда пока висит баннер, независимо от режима
-// сервера: его записи идут мимо блокировки своим каналом
+// Текст баннера: сессия активна и режимы пиров в скобках сразу
+// после «активна». UI заблокирован всегда пока висит баннер,
+// независимо от режима сервера: его записи идут мимо блокировки
+// своим каналом
 QString MainWindow::mcpBannerText(void)
 {
-    QString text=tr("MCP session is active, the program is in read-only mode");
-
     QStringList modes=mcpPeerModes.values();
     modes.removeAll(QString());
     modes.removeDuplicates();
     modes.sort();
 
-    if(!modes.isEmpty())
-        text+=" ("+modes.join(", ")+")";
+    QString modesText;
 
-    return text;
+    if(!modes.isEmpty())
+        modesText=" ("+modes.join(", ")+")";
+
+    return tr("MCP session is active%1, MyTetra works in read-only mode").arg(modesText);
 }
 
 

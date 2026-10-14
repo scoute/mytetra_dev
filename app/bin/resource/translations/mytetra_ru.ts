@@ -1237,7 +1237,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="745"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="747"/>
         <source>Theme</source>
-        <translation></translation>
+        <translation>Тема</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="207"/>
@@ -1247,7 +1247,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="212"/>
         <source>%1, %2</source>
-        <translation></translation>
+        <translation>%1, %2</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="220"/>
@@ -1319,7 +1319,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="695"/>
         <source>Base theme</source>
-        <translation></translation>
+        <translation>Базовая тема</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="697"/>
@@ -1386,7 +1386,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="727"/>
         <source>Branches tree</source>
-        <translation></translation>
+        <translation>Дерево веток</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="728"/>
@@ -1396,7 +1396,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="730"/>
         <source>Tree text color: </source>
-        <translation></translation>
+        <translation>Цвет текста дерева: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="732"/>
@@ -1406,7 +1406,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="734"/>
         <source>Tree indentation: </source>
-        <translation></translation>
+        <translation>Отступ дерева: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="737"/>
@@ -1416,7 +1416,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="738"/>
         <source>List background: </source>
-        <translation></translation>
+        <translation>Фон списка: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="740"/>
@@ -1426,7 +1426,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="742"/>
         <source>Alternate row color: </source>
-        <translation></translation>
+        <translation>Цвет чередующихся строк: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="744"/>
@@ -1436,7 +1436,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="746"/>
         <source>Row height: </source>
-        <translation></translation>
+        <translation>Высота строк: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="749"/>
@@ -1446,7 +1446,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="750"/>
         <source>Font: </source>
-        <translation></translation>
+        <translation>Шрифт: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="754"/>
@@ -2536,7 +2536,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorAddTableForm.cpp" line="19"/>
         <source>%</source>
-        <translation></translation>
+        <translation>%</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorAddTableForm.cpp" line="36"/>
@@ -3762,7 +3762,7 @@ Enter your old password and new password.
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="234"/>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="254"/>
         <source>Url</source>
-        <translation></translation>
+        <translation>Url</translation>
     </message>
     <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="235"/>
@@ -4227,7 +4227,7 @@ Try to search for entire database.</source>
     <message>
         <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="69"/>
         <source>Url</source>
-        <translation></translation>
+        <translation>Url</translation>
     </message>
     <message>
         <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="74"/>
@@ -5466,7 +5466,7 @@ MyTetra will try to create a blank entry to fix it.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="57"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="122"/>
         <source>Themes</source>
-        <translation></translation>
+        <translation>Темы</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
@@ -5646,7 +5646,7 @@ Please report about this problem to the developers.</source>
     <message>
         <location filename="../../../src/views/recordTable/RecordTablePrint.cpp" line="173"/>
         <source>HTML Files (*.html)</source>
-        <translation></translation>
+        <translation>HTML-файлы (*.html)</translation>
     </message>
     <message>
         <location filename="../../../src/views/recordTable/RecordTablePrint.cpp" line="179"/>

@@ -261,15 +261,20 @@ void TreeScreen::setupUI(void)
      insertActionAsButton(toolsLine, actionList["findInBase"]); // Клик по этой кнопке связывается с действием в MainWindow
  }
 
- // Добавление скрытых действий, которые не видны на тулбаре, но видны на контекстном меню
- insertActionAsButton(toolsLine, actionList["cutBranch"], false);
- insertActionAsButton(toolsLine, actionList["copyBranch"], false);
- insertActionAsButton(toolsLine, actionList["pasteBranch"], false);
- insertActionAsButton(toolsLine, actionList["pasteSubbranch"], false);
+ // Действия буфера обмена, шифрования и иконки ветки на тулбар не
+ // выносятся (там только самые важные кнопки), они доступны из
+ // контекстного меню. Нулевые кнопки для них не создаются: иначе QToolBar
+ // показывает кнопку-расширение » с фантомными пунктами, которые не
+ // появляются при расширении панели. Регистрация действий на виджете
+ // нужна чтобы продолжали работать шорткаты
+ addAction(actionList["cutBranch"]);
+ addAction(actionList["copyBranch"]);
+ addAction(actionList["pasteBranch"]);
+ addAction(actionList["pasteSubbranch"]);
 
- insertActionAsButton(toolsLine, actionList["encryptBranch"], false);
- insertActionAsButton(toolsLine, actionList["decryptBranch"], false);
- insertActionAsButton(toolsLine, actionList["setIcon"], false);
+ addAction(actionList["encryptBranch"]);
+ addAction(actionList["decryptBranch"]);
+ addAction(actionList["setIcon"]);
 
 
  knowTreeView=new KnowTreeView(this);
@@ -475,6 +480,10 @@ void TreeScreen::assembly(void)
 
  treeScreenLayout->addWidget(toolsLine);
 
+ // Зазора между тулбаром и верхней веткой нет: штатный spacing
+ // раскладки давал полосу пустоты под тулбаром
+ treeScreenLayout->setSpacing(0);
+
  // Избранное и дерево в двигаемом разделителе: долю панели
  // выбирает пользователь. Панель не схлопывается в ноль чтобы
  // ее нельзя было потерять drag-ом, дерево забирает остаток
@@ -499,7 +508,7 @@ void TreeScreen::assembly(void)
  // Границы убираются, так как данный объект будет использоваться как виджет
  QLayout *lt;
  lt=layout();
- lt->setContentsMargins(0,2,0,0);
+ lt->setContentsMargins(0,1,0,0);
 }
 
 

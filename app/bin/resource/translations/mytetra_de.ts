@@ -1033,216 +1033,225 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
 <context>
     <name>AppConfigPage_Theme</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="132"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="138"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="171"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="177"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="201"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="721"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="723"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="136"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="142"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="175"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="181"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="205"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="733"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="735"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="745"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="747"/>
         <source>Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="203"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="207"/>
         <source>Size %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="208"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="212"/>
         <source>%1, %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="216"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="685"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="220"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="696"/>
         <source>Interface theme</source>
         <translation type="unfinished">Oberfläche</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="221"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="689"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="225"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="700"/>
         <source>Default</source>
         <translation type="unfinished">Standard</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="222"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="690"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="226"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="701"/>
         <source>Dark</source>
         <translation type="unfinished">Dunkel</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="223"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="691"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="227"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="702"/>
         <source>Modern</source>
         <translation type="unfinished">Modern</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="224"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="692"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="228"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="703"/>
         <source>Midnight</source>
         <translation type="unfinished">Mitternacht</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="225"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="693"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="229"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="704"/>
         <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="248"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="701"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="252"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="712"/>
         <source>Icon size</source>
         <translation type="unfinished">Symbolgröße</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="251"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="702"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="255"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="713"/>
         <source>System</source>
         <translation type="unfinished">System</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="472"/>
-        <source>Paper image: none</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="475"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="482"/>
         <source>Paper image: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="482"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="489"/>
         <source>Select paper image</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="484"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="491"/>
         <source>Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="684"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="695"/>
         <source>Base theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="686"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="697"/>
         <source>Custom theme builds on Default plus settings below.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="704"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="715"/>
         <source>Note</source>
         <translation type="unfinished">Notiz</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="705"/>
         <source>Note paper color: </source>
-        <translation type="unfinished">Notizpapierfarbe: </translation>
+        <translation type="obsolete">Notizpapierfarbe: </translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="706"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="708"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="710"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="717"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="719"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="727"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="729"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="731"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="739"/>
-        <source>Reset</source>
-        <translation type="unfinished">Zurücksetzen</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="707"/>
-        <source>Note font color: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="709"/>
-        <source>Secret color: </source>
-        <translation type="unfinished">Geheimfarbe: </translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="712"/>
-        <source>Load...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="713"/>
-        <source>Clear</source>
-        <translation type="unfinished">Leeren</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="715"/>
-        <source>Branches tree</source>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="479"/>
+        <source>Paper image: tx_fabric.jpg (default)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="716"/>
-        <source>Tree background: </source>
+        <source>Paper color: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="717"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="719"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="721"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="729"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="731"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="739"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="741"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="743"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="751"/>
+        <source>Reset</source>
+        <translation type="unfinished">Zurücksetzen</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="718"/>
-        <source>Tree text color: </source>
+        <source>Note font color: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="720"/>
-        <source>Tree font size: </source>
+        <source>Secret color: </source>
+        <translation type="unfinished">Geheimfarbe: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="723"/>
+        <source>Paper texture: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="722"/>
-        <source>Tree indentation: </source>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="724"/>
+        <source>Load...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="725"/>
-        <source>Notes list</source>
-        <translation type="unfinished"></translation>
+        <source>Clear</source>
+        <translation type="unfinished">Leeren</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="726"/>
-        <source>List background: </source>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="727"/>
+        <source>Branches tree</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="728"/>
-        <source>List text color: </source>
+        <source>Tree background: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="730"/>
-        <source>Alternate row color: </source>
+        <source>Tree text color: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="732"/>
-        <source>List font size: </source>
+        <source>Tree font size: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="734"/>
-        <source>Row height: </source>
+        <source>Tree indentation: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="737"/>
-        <source>Interface font</source>
+        <source>Notes list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="738"/>
-        <source>Font: </source>
+        <source>List background: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="740"/>
+        <source>List text color: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="742"/>
+        <source>Alternate row color: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="744"/>
+        <source>List font size: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="746"/>
+        <source>Row height: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="749"/>
+        <source>Interface font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="750"/>
+        <source>Font: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="754"/>
         <source>Reset all to theme</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3075,62 +3084,62 @@ Bitte in der ganzen Datenbank suchen.</translation>
 <context>
     <name>FixedParameters</name>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="95"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="98"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="96"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="99"/>
         <source>Title</source>
         <translation>Titel</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="97"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="100"/>
         <source>Author</source>
         <translation>Autor</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="98"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="101"/>
         <source>Url</source>
         <translation>Url</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="99"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="102"/>
         <source>Tags</source>
         <translation>Tags</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="100"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="103"/>
         <source>Create time</source>
         <translation>Erstellzeit</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="101"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="104"/>
         <source>Directory name</source>
         <translation>Verzeichnisname</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="102"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="105"/>
         <source>File name</source>
         <translation>Dateiname</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="103"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="106"/>
         <source>Is crypt</source>
         <translation>Ist verschlüsselt</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="104"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="107"/>
         <source>Has attaches</source>
         <translation>Hat Anhänge</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="105"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="108"/>
         <source>Attaches count</source>
         <translation>Anhangsanzahl</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/FixedParameters.cpp" line="106"/>
+        <location filename="../../../src/libraries/FixedParameters.cpp" line="109"/>
         <source>Block</source>
         <translation>Blockiert</translation>
     </message>
@@ -3978,19 +3987,19 @@ Bitte MyTetra aktualisieren.</translation>
 <context>
     <name>MetaEditor</name>
     <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="105"/>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="642"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="107"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="650"/>
         <source>&lt;B&gt;Url:&lt;/B&gt; </source>
         <translation>&lt;B&gt;Url:&lt;/B&gt; </translation>
     </message>
     <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="119"/>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="643"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="121"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="651"/>
         <source>&lt;B&gt;Tags:&lt;/B&gt; </source>
         <translation>&lt;B&gt;Tags:&lt;/B&gt; </translation>
     </message>
     <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="283"/>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="285"/>
         <source>&lt;b&gt;Path: &lt;/b&gt;</source>
         <translation>&lt;b&gt;Pfad: &lt;/b&gt;</translation>
     </message>

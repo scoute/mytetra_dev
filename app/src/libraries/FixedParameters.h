@@ -47,6 +47,9 @@ public:
   // Имена доступных тем оформления
   static const QStringList themesAvailableList;
 
+  // Встроенный тайл мозаики заметок: дефолт режима текстуры
+  static const QString defaultNotePaperImage;
+
   // Имена доступных размеров иконок
   static const OrderedMap< QString, QPair<QString, float> > interfaceIconSizeAvailableMap;
 

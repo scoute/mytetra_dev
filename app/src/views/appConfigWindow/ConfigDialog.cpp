@@ -87,7 +87,13 @@ void ConfigDialog::assembly(void)
 
 QListWidgetItem *ConfigDialog::addWidget(QWidget *inswidget, QString name)
 {
-    pagesWidget->addWidget(inswidget);
+    // Страница в прокрутке: длинные страницы (Themes) не раздвигают
+    // окно по высоте, лишнее уезжает в скролл
+    QScrollArea *scroll=new QScrollArea(pagesWidget);
+    scroll->setWidget(inswidget);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    pagesWidget->addWidget(scroll);
 
     return createItems(name);
 }
@@ -144,11 +150,14 @@ void ConfigDialog::applyChanges(void)
 {
     int difficultFlag=0;
 
-    // Перебираются виджеты настройки
+    // Перебираются виджеты настройки (страницы лежат в скроллах)
     for(int i=0;i<pagesWidget->count();i++)
     {
-        // Выясняется указатель на виджет
-        ConfigPage *currentConfigPage=qobject_cast<ConfigPage *>(pagesWidget->widget(i));
+        // Выясняется указатель на страницу
+        QWidget *holder=pagesWidget->widget(i);
+        QScrollArea *scroll=qobject_cast<QScrollArea *>(holder);
+        ConfigPage *currentConfigPage=qobject_cast<ConfigPage *>(
+            scroll!=nullptr ? scroll->widget() : holder);
 
         // Вызывается метод apply_changes() для текущего перебираемого виджета
         if( currentConfigPage->applyChanges()==1 )

@@ -3816,7 +3816,7 @@ Please report about this problem to the developers.</source>
         <translation type="unfinished"></translation>
     </message>
         <message>
-            <source>Show history panel</source>
+            <source>History panel</source>
             <translation type="unfinished"></translation>
         </message>
     <message>
@@ -3858,7 +3858,7 @@ Please report about this problem to the developers.</source>
             <translation type="unfinished"></translation>
         </message>
     <message>
-        <source>Show backlinks panel</source>
+        <source>Direct and backlinks panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

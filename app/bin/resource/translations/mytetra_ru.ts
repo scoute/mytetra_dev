@@ -4135,6 +4135,11 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation>История</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="67"/>
+        <source>Search</source>
+        <translation>Поиск</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="59"/>
         <source>Misc</source>
         <translation>Разное</translation>

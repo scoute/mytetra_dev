@@ -7,6 +7,7 @@
 #include "Attach.h"
 #include "AttachTableData.h"
 #include "models/recordTable/Record.h"
+#include "models/appConfig/AppConfig.h"
 #include "libraries/crypt/CryptService.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DiskHelper.h"
@@ -14,6 +15,7 @@
 #include "libraries/helpers/MessageHelper.h"
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 // Конструктор прикрепляемого файла
@@ -328,7 +330,8 @@ void Attach::popFatDataFromDisk()
 
   fileContent.clear();
 
-  QString innerFileName=getInnerFileName();
+  // Читается реально лежащий на диске файл (учитывает обе схемы имен)
+  QString innerFileName=getExistingInnerFileName();
   QString innerDirName=parentTable->record->getFullDirName();
 
   fileContent.append( (DiskHelper::getFilesFromDirectory(innerDirName, innerFileName)).value(innerFileName) );
@@ -372,7 +375,7 @@ void Attach::removeFile()
     return;
 
   // Проверка наличия файла
-  QFile file( getFullInnerFileName() );
+  QFile file( getFullInnerDirName()+"/"+getExistingInnerFileName() );
 
   if(file.exists()==false)
   {
@@ -389,6 +392,18 @@ void Attach::removeFile()
 
 
 QString Attach::constructFileName(const QString type, const QString id, const QString fileName)
+{
+    // Схема выбирается настройкой: человеко-читаемая id_имя.ext
+    // или исходная id.ext
+    if(type=="file" && mytetraConfig.get_attachHumanReadableNames())
+        return constructHumanFileName(type, id, fileName);
+
+    return constructLegacyFileName(type, id, fileName);
+}
+
+
+// Исходная схема: id.ext (расширение от видимого имени)
+QString Attach::constructLegacyFileName(const QString type, const QString id, const QString fileName)
 {
     // Для файла
     if(type=="file")
@@ -419,6 +434,128 @@ QString Attach::constructFileName(const QString type, const QString id, const QS
     criticalError("Bad attach type in getInnerFileName():"+type);
 
     return "";
+}
+
+
+// Видимая часть имени, пригодная для подстановки в имя файла на диске:
+// вырезаются разделители пути и управляющие символы, ведущие точки
+// снимаются (чтобы не получались скрытые файлы и ".."), остаток режется
+// до разумной длины с сохранением читаемости. Расширение не входит,
+// оно пристыковывается отдельно как в исходной схеме
+QString Attach::sanitizeHumanNamePart(const QString fileName)
+{
+    // Берется основа без расширения: "Договор.v2.pdf" -> "Договор.v2"
+    QString stem=fileName;
+    QFileInfo fileInfo(fileName);
+    QString suffix=fileInfo.suffix();
+    if(suffix.length()>0 && stem.endsWith("."+suffix, Qt::CaseSensitive))
+        stem=stem.left(stem.length()-suffix.length()-1);
+
+    QString result;
+    result.reserve(stem.length());
+    for(int i=0; i<stem.length(); ++i)
+    {
+        QChar c=stem.at(i);
+        // Разделители пути, NUL и управляющие символы недопустимы в имени
+        if(c==QChar('/') || c==QChar('\\') || c==QChar('\0') || c.category()==QChar::Other_Control)
+            result.append('_');
+        else
+            result.append(c);
+    }
+
+    result=result.trimmed();
+
+    // Ведущие точки снимаются: имя не должно становиться скрытым,
+    // а ".." вообще недопустимо как часть пути
+    while(result.startsWith("."))
+        result=result.mid(1).trimmed();
+
+    // Хвостовые точки и пробелы Windows не любит, снимаются тоже
+    while(result.endsWith(".") || result.endsWith(" "))
+        result.chop(1);
+
+    // Длинные названия режутся: хватает начала для узнаваемости,
+    // расширение при этом не страдает, оно хранится отдельно
+    const int maxStemLength=80;
+    if(result.length()>maxStemLength)
+        result=result.left(maxStemLength).trimmed();
+
+    return result;
+}
+
+
+// Человеко-читаемая схема: id_видимоеИмя.ext. Префикс id сохраняет
+// уникальность (коллизии имен, регистрозависимость FS не страшны),
+// видимая часть позволяет узнать файл, не открывая его
+QString Attach::constructHumanFileName(const QString type, const QString id, const QString fileName)
+{
+    if(type=="file")
+    {
+        // Имя с точкой в конце не имеет пригодной основы: остается исходная схема
+        if(fileName.endsWith("."))
+            return constructLegacyFileName(type, id, fileName);
+
+        // Ведущие точки снимаются до разбора: иначе QFileInfo принимает
+        // имя dot-файла за расширение (".hidden" -> suffix "hidden").
+        // Скрытость запоминается и восстанавливается префиксом ниже
+        bool hidden=fileName.startsWith(".");
+        QString work=fileName;
+        while(work.startsWith("."))
+            work=work.mid(1);
+
+        QFileInfo fileInfo(work);
+        QString suffix=fileInfo.suffix();
+
+        QString stem=sanitizeHumanNamePart(work);
+
+        // Если от видимого имени ничего пригодного не осталось,
+        // возвращается исходная схема
+        if(stem.isEmpty())
+            return constructLegacyFileName(type, id, fileName);
+
+        // Скрытость сохраняется: dot-файл остается скрытым,
+        // но получает читаемую часть имени
+        QString prefix=id+"_";
+        if(hidden)
+            prefix="."+prefix;
+
+        if(suffix.length()>0)
+            return prefix+stem+"."+suffix;
+        else
+            return prefix+stem;
+    }
+
+    if(type=="link")
+        return fileName;
+
+    criticalError("Bad attach type in getInnerFileName():"+type);
+
+    return "";
+}
+
+
+// Имя файла, реально лежащего на диске: сначала проверяется имя по текущей
+// схеме, затем по другой (база могла мигрировать наполовину или быть
+// открыта с другой настройкой). Используется всеми путями чтения/удаления,
+// запись всегда идет по текущей схеме через getInnerFileName()
+QString Attach::getExistingInnerFileName() const
+{
+    QString current=getInnerFileName();
+    QString dirName=getFullInnerDirName();
+
+    if(QFile::exists(dirName+"/"+current))
+        return current;
+
+    QString other;
+    if(mytetraConfig.get_attachHumanReadableNames())
+        other=constructLegacyFileName(getField("type"), getField("id"), getField("fileName"));
+    else
+        other=constructHumanFileName(getField("type"), getField("id"), getField("fileName"));
+
+    if(other!=current && QFile::exists(dirName+"/"+other))
+        return other;
+
+    return current;
 }
 
 
@@ -472,7 +609,7 @@ qint64 Attach::getFileSize() const
   if(fields["type"]=="file")
   {
     QString recordDir=parentTable->record->getFullDirName();
-    tempFileName=recordDir+"/"+getInnerFileName();
+    tempFileName=recordDir+"/"+getExistingInnerFileName();
   }
 
   if(fields["type"]=="link")

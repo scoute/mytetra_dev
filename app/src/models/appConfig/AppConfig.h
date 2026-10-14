@@ -259,6 +259,13 @@ public:
     QString get_noteFontColor(void);
     void set_noteFontColor(QString color);
 
+    // Человеко-читаемые имена вложенных файлов на диске (схема id_имя.ext
+    // вместо id.ext). По умолчанию выключено. Включается кнопкой миграции
+    // в настройках прикрепленных файлов, после чего новые вложения
+    // сразу сохраняются по человеко-читаемой схеме
+    bool get_attachHumanReadableNames(void);
+    void set_attachHumanReadableNames(bool state);
+
     // Шапка заметки (название и автор) над редактором.
     // По умолчанию показана
     bool get_recordHeaderVisible(void);

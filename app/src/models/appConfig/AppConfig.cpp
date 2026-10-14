@@ -1027,6 +1027,21 @@ void AppConfig::set_noteFontColor(QString color)
 }
 
 
+// Человеко-читаемые имена вложенных файлов на диске.
+// Параметр намеренно не входит в версионные таблицы (как noteFontColor):
+// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
+bool AppConfig::get_attachHumanReadableNames(void)
+{
+    return m_conf->value("attachHumanReadableNames", false).toBool();
+}
+
+
+void AppConfig::set_attachHumanReadableNames(bool state)
+{
+    m_conf->setValue("attachHumanReadableNames", state);
+}
+
+
 bool AppConfig::get_recordHeaderVisible(void)
 {
     return m_conf->value("recordHeaderVisible", true).toBool();

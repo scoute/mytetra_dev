@@ -17,10 +17,14 @@
 #include <QSet>
 #include <QLocalSocket>
 #include <QDataStream>
+#include <QLibrary>
 #include <QRegularExpression>
-#include <cstdio>
-
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#else
 #include <unistd.h>
+#endif
+#include <cstdio>
 
 #include "McpServer.h"
 #include "McpTools.h"

@@ -7,6 +7,7 @@
 #include "EditorCursorPositionDetector.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/LinkHelper.h"
+#include "libraries/VoiceNoteHelper.h"
 
 
 extern ShortcutManager shortcutManager;
@@ -48,6 +49,9 @@ void EditorContextMenu::setupActions(void)
  actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
+ actionPlayVoice=new QAction(this);
+ actionShowVoiceInFolder=new QAction(this);
+ actionDeleteVoice=new QAction(this);
  actionEditReference=new QAction(this);
  actionEditReference->setObjectName(QStringLiteral("editor_editReference"));
  actionPasteNoteReference=new QAction(this);
@@ -95,6 +99,10 @@ void EditorContextMenu::setupShortcuts(void)
 
     shortcutManager.initAction("editor-gotoReference", actionGotoReference );
 
+    shortcutManager.initAction("editor-playVoice", actionPlayVoice );
+    shortcutManager.initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
+    shortcutManager.initAction("editor-deleteVoice", actionDeleteVoice );
+
     shortcutManager.initAction("editor-editReference", actionEditReference );
 
     shortcutManager.initAction("editor-pasteNoteReference", actionPasteNoteReference );
@@ -141,10 +149,21 @@ void EditorContextMenu::update(void)
 
     // Если курсор находится на ссылке (URL)
     if(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnReference()) {
-        setGotoReference( true );
+        // Голосовая ссылка обслуживается своими пунктами,
+        // общий переход прячется чтобы не дублировать плеер
+        const QString href=static_cast<Editor*>(this->parent())->cursorPositionDetector->referenceHref();
+        const bool voiceLink=VoiceNoteHelper::isVoiceHref(href);
+
+        setGotoReference( !voiceLink );
+        setPlayVoice( voiceLink );
+        setShowVoiceInFolder( voiceLink );
+        setDeleteVoice( voiceLink );
         setEditReference( true );
     } else {
         setGotoReference( false );
+        setPlayVoice( false );
+        setShowVoiceInFolder( false );
+        setDeleteVoice( false );
         setEditReference( false );
     }
 
@@ -226,6 +245,28 @@ void EditorContextMenu::setGotoReference(bool flag)
 }
 
 
+// Показывать или нет пункты голосовой заметки
+void EditorContextMenu::setPlayVoice(bool flag)
+{
+  actionPlayVoice->setVisible(flag);
+  actionPlayVoice->setEnabled(flag);
+}
+
+
+void EditorContextMenu::setShowVoiceInFolder(bool flag)
+{
+  actionShowVoiceInFolder->setVisible(flag);
+  actionShowVoiceInFolder->setEnabled(flag);
+}
+
+
+void EditorContextMenu::setDeleteVoice(bool flag)
+{
+  actionDeleteVoice->setVisible(flag);
+  actionDeleteVoice->setEnabled(flag);
+}
+
+
 // Показывать или нет пункт редактирования ссылки под курсором
 void EditorContextMenu::setEditReference(bool flag)
 {
@@ -300,6 +341,9 @@ void EditorContextMenu::setupSignals(void)
     connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
+    connect(actionPlayVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPlayVoice);
+    connect(actionShowVoiceInFolder,  &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowVoiceInFolder);
+    connect(actionDeleteVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuDeleteVoice);
     connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
     connect(actionPasteNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPasteNoteReference);
     connect(actionInsertNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuInsertNoteReference);
@@ -340,6 +384,9 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionShowImageInFolder);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
+    this->addAction(actionPlayVoice);
+    this->addAction(actionShowVoiceInFolder);
+    this->addAction(actionDeleteVoice);
     this->addAction(actionEditReference);
     this->addAction(actionPasteNoteReference);
     this->addAction(actionInsertNoteReference);
@@ -449,6 +496,30 @@ void EditorContextMenu::onActionContextMenuGotoReference()
     update();
     if(actionGotoReference->isEnabled()) {
         emit contextMenuGotoReference();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuPlayVoice()
+{
+    update();
+    if(actionPlayVoice->isEnabled()) {
+        emit contextMenuPlayVoice();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuShowVoiceInFolder()
+{
+    update();
+    if(actionShowVoiceInFolder->isEnabled()) {
+        emit contextMenuShowVoiceInFolder();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuDeleteVoice()
+{
+    update();
+    if(actionDeleteVoice->isEnabled()) {
+        emit contextMenuDeleteVoice();
     }
 }
 

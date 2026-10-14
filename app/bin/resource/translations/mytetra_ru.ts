@@ -6787,6 +6787,38 @@ Please report about this problem to the developers.</source>
         <source>Open selected image in external viewer</source>
         <translation>Открыть выделенное изображение во внешней программе</translation>
     </message>
+    <message>
+        <source>Record voice note</source>
+        <translation>Записать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Record voice note from microphone</source>
+        <translation>Записать голосовую заметку с микрофона</translation>
+    </message>
+    <message>
+        <source>Play voice note</source>
+        <translation>Слушать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Play voice note under cursor</source>
+        <translation>Слушать голосовую заметку под курсором</translation>
+    </message>
+    <message>
+        <source>Show voice file in folder</source>
+        <translation>Показать файл в папке</translation>
+    </message>
+    <message>
+        <source>Open record directory in file manager</source>
+        <translation>Открыть каталог записи в файловом менеджере</translation>
+    </message>
+    <message>
+        <source>Delete voice note</source>
+        <translation>Удалить голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Remove voice link and move file to trash</source>
+        <translation>Убрать ссылку и переместить файл в корзину</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -7393,6 +7425,151 @@ Please select single item for enabling edit operation.</source>
 %3</source>
         <translation>Ошибка парсера на строке %1, в позиции %2:
 %3.</translation>
+    </message>
+</context>
+<context>
+    <name>AudioFormatter</name>
+    <message>
+        <source>Voice note</source>
+        <translation>Голосовая заметка</translation>
+    </message>
+    <message>
+        <source>Microphone not found</source>
+        <translation>Микрофон не найден</translation>
+    </message>
+    <message>
+        <source>Save the note first</source>
+        <translation>Сначала сохраните заметку</translation>
+    </message>
+    <message>
+        <source>Show voice file in folder</source>
+        <translation>Показать файл в папке</translation>
+    </message>
+    <message>
+        <source>Note directory is unknown, there is nothing to open.</source>
+        <translation>Каталог заметки неизвестен, открывать нечего.</translation>
+    </message>
+    <message>
+        <source>Directory does not exist: %1</source>
+        <translation>Каталог не существует: %1</translation>
+    </message>
+    <message>
+        <source>Can not open directory: %1</source>
+        <translation>Не удаётся открыть каталог: %1</translation>
+    </message>
+    <message>
+        <source>Delete voice note</source>
+        <translation>Удалить голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Delete voice note %1? Link text will be removed, file moved to trash.</source>
+        <translation>Удалить голосовую заметку %1? Текст ссылки будет удалён, файл перемещён в корзину.</translation>
+    </message>
+</context>
+<context>
+    <name>VoicePlayerDialog</name>
+    <message>
+        <source>Voice note</source>
+        <translation>Голосовая заметка</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation>Слушать</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Пауза</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>File not found</source>
+        <translation>Файл не найден</translation>
+    </message>
+    <message>
+        <source>Can not open file</source>
+        <translation>Не удаётся открыть файл</translation>
+    </message>
+</context>
+<context>
+    <name>VoiceRecorderDialog</name>
+    <message>
+        <source>Voice note</source>
+        <translation>Голосовая заметка</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <source>Record</source>
+        <translation>Запись</translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation>Вставить</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Format:</source>
+        <translation>Формат:</translation>
+    </message>
+    <message>
+        <source>Opus (.opus)</source>
+        <translation>Opus (.opus)</translation>
+    </message>
+    <message>
+        <source>MP3 (.mp3)</source>
+        <translation>MP3 (.mp3)</translation>
+    </message>
+    <message>
+        <source>Microphone:</source>
+        <translation>Микрофон:</translation>
+    </message>
+    <message>
+        <source>Microphone not found</source>
+        <translation>Микрофон не найден</translation>
+    </message>
+    <message>
+        <source>Audio backend unavailable</source>
+        <translation>Аудио-бэкенд недоступен</translation>
+    </message>
+    <message>
+        <source>No supported audio format</source>
+        <translation>Нет поддерживаемого аудиоформата</translation>
+    </message>
+    <message>
+        <source>Format: WAV (Opus and MP3 unsupported)</source>
+        <translation>Формат: WAV (Opus и MP3 не поддерживаются)</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Стоп</translation>
+    </message>
+    <message>
+        <source>Recording...</source>
+        <translation>Идёт запись...</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Готово</translation>
+    </message>
+    <message>
+        <source>File is too small, backend wrote no audio</source>
+        <translation>Файл слишком мал, бэкенд не записал звук</translation>
+    </message>
+    <message>
+        <source>Nothing recorded</source>
+        <translation>Ничего не записано</translation>
+    </message>
+    <message>
+        <source>Can not record here</source>
+        <translation>Здесь записать нельзя</translation>
     </message>
 </context>
 </TS>

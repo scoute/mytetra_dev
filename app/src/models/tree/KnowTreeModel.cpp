@@ -1467,12 +1467,16 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
     }
   }
 
-  // Ссылки: distinct-адреса (отдельной схемы внутренних ссылок
-  // в этом дереве нет, ссылки задаются свободным URL - считаются
-  // все). Qt при сохранении дробит одну видимую ссылку на несколько
-  // <a href> с тем же адресом, голый подсчет тегов врет.
+  // Ссылки: только внутренние mytetra://note/ между заметками
+  // (http-ссылки из веб-клипов не считаются). Distinct-адреса
+  // на всю базу (как метки): одна и та же ссылка в десяти заметках -
+  // это одна ссылка, а не десять. Qt при сохранении дробит одну
+  // видимую ссылку с неоднородным форматированием на несколько
+  // элементов <a href> с тем же адресом, поэтому голый подсчет
+  // тегов дает кратно больше, чем видит человек.
+  // Служебные якоря секретов (<a href="secret">) не ссылки.
   // &amp; приводится к &, иначе один адрес считается дважды.
-  // В строку идет distinct на заметку, наружу - наборы для refcount
+  // В строку идет distinct на заметку, наружу - набор для refcount
   QRegularExpressionMatchIterator hrefIt=hrefPattern.globalMatch(html);
 
   while(hrefIt.hasNext())
@@ -1480,8 +1484,11 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
     QString url=hrefIt.next().captured(1);
     url.replace("&amp;", "&");
 
-    // Служебные якоря секретов (<a href="secret">) не ссылки
     if(url.isEmpty() || url=="secret")
+      continue;
+
+    // Только внутренние ссылки между заметками
+    if(!url.startsWith("mytetra://", Qt::CaseInsensitive))
       continue;
 
     noteLinks.insert(url);

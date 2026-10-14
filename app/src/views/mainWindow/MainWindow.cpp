@@ -1160,8 +1160,8 @@ void MainWindow::updateStats(void)
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
         treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
 
-    statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
-    statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Click opens per-note details."));
+    statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
+    statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details."));
 }
 
 
@@ -1176,7 +1176,7 @@ QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
 
     QTableWidget *table=new QTableWidget(parent);
     table->setColumnCount(6);
-    table->setHorizontalHeaderLabels(QStringList() << tr("Branch") << tr("Note") << tr("Links") << tr("Images") << tr("Files") << tr("Tags"));
+    table->setHorizontalHeaderLabels(QStringList() << tr("Branch") << tr("Note") << tr("Internal links") << tr("Images") << tr("Files") << tr("Tags"));
     table->horizontalHeader()->setStretchLastSection(true);
     table->horizontalHeader()->setSectionsClickable(true);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);

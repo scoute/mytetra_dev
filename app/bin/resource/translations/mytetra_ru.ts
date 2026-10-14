@@ -3435,12 +3435,12 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
             <translation>Полуночная</translation>
         </message>
     <message>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>Ветки: %1 | Записи: %2 | Метки: %3 | Файлы: %4 | Картинки: %5 | Ссылки: %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation>Веток: %1 | Записей: %2 | Меток: %3 | Файлов: %4 | Картинок: %5 | Внутренних ссылок: %6</translation>
     </message>
     <message>
-        <source>Base statistics: branches, records, tags, files, images and links. Click opens per-note details.</source>
-        <translation>Статистика базы: ветки, записи, метки, файлы, картинки и ссылки. Клик открывает разбивку по заметкам.</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation>Статистика базы: ветки, записи, метки, файлы, картинки и ссылки. Ссылки — это ссылки mytetra:// между заметками. Клик открывает детали по заметкам.</translation>
     </message>
     <message>
         <source>Branch</source>
@@ -3451,8 +3451,8 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Заметка</translation>
     </message>
     <message>
-        <source>Links</source>
-        <translation>Ссылки</translation>
+        <source>Internal links</source>
+        <translation>Внутренние ссылки</translation>
     </message>
     <message>
         <source>Images</source>

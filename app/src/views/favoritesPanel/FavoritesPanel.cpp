@@ -6,12 +6,18 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QShowEvent>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
 #include <QAbstractScrollArea>
 #include <QDebug>
 
 #include "FavoritesPanel.h"
 
 #include "libraries/Favorites.h"
+#include "libraries/ClipboardRecords.h"
+#include "libraries/FixedParameters.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
@@ -86,6 +92,10 @@ void FavoritesPanel::setupUi(void)
     // список растянется на всю панель через setUserResized()
     favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     favoritesList->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+
+    // Прием записей перетаскиванием из таблицы записей:
+    // события обрабатывает сама панель (включая шапку)
+    setAcceptDrops(true);
 }
 
 
@@ -150,6 +160,66 @@ void FavoritesPanel::showEvent(QShowEvent *event)
     QWidget::showEvent(event);
 
     refreshFavorites();
+}
+
+
+// Та же ноша что тащит дерево из таблицы записей.
+// Чужие данные (текст, файлы, ветки) панели не нужны
+bool FavoritesPanel::canAcceptRecordsDrop(const QMimeData *mimeData) const
+{
+    if(mimeData==nullptr)
+        return false;
+
+    return mimeData->hasFormat(FixedParameters::appTextId+QStringLiteral("/records"));
+}
+
+
+void FavoritesPanel::dragEnterEvent(QDragEnterEvent *event)
+{
+    if(canAcceptRecordsDrop(event->mimeData()))
+    {
+        // Копия, не перенос: запись из таблицы никуда не девается,
+        // только помечается звездой
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
+    }
+}
+
+
+void FavoritesPanel::dragMoveEvent(QDragMoveEvent *event)
+{
+    if(canAcceptRecordsDrop(event->mimeData()))
+    {
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
+    }
+    else
+        event->ignore();
+}
+
+
+// Брошенная запись становится избранной. Список пересобирается
+// сигналом хранилища, отдельное обновление не нужно
+void FavoritesPanel::dropEvent(QDropEvent *event)
+{
+    if(!canAcceptRecordsDrop(event->mimeData()))
+        return;
+
+    const ClipboardRecords *clipboardRecords=qobject_cast<const ClipboardRecords *>(event->mimeData());
+
+    if(clipboardRecords==nullptr)
+        return;
+
+    for(int i=0; i<clipboardRecords->getCount(); ++i)
+    {
+        QString id=clipboardRecords->getRecord(i).getField(QStringLiteral("id"));
+
+        if(!id.isEmpty())
+            Favorites::instance().setFavorite(id, true);
+    }
+
+    event->setDropAction(Qt::CopyAction);
+    event->acceptProposedAction();
 }
 
 

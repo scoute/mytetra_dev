@@ -284,6 +284,11 @@ public:
     int get_themeCustomTableRowHeight(void);
     void set_themeCustomTableRowHeight(int pixels);
 
+    // Мозаичный фон заметок: путь к картинке-тайлу в рабочем каталоге.
+    // Пусто означает без картинки. Повторяется по обеим осям
+    QString get_themeCustomNotePaperImage(void);
+    void set_themeCustomNotePaperImage(QString path);
+
     // Человеко-читаемые имена вложенных файлов на диске (схема id_имя.ext
     // вместо id.ext). По умолчанию выключено. Включается кнопкой миграции
     // в настройках прикрепленных файлов, после чего новые вложения

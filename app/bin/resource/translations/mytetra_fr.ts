@@ -2226,6 +2226,14 @@ Try to search for entire database.</source>
         <source>Can not open directory: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Download %1 external image(s) from the Internet?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The pasted text contains images stored on external sites. They will be downloaded now.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InfoFieldEnter</name>
@@ -2351,6 +2359,14 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="524"/>
         <source>Find record id=&quot;%1&quot; without dir attribute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export error: unable to copy record data from %1 to %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import error: unable to copy record data from %1 to %2.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2957,6 +2973,10 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <source>Clipper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to rename the file %1 to %2 from disk.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3907,6 +3927,10 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <source>Open image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open selected image in external viewer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

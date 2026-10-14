@@ -1,6 +1,10 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QApplication>
+#include <QTextDocument>
+#include <QTextBlock>
+#include <QTextLayout>
+#include <QAbstractTextDocumentLayout>
 
 #include "VoiceBubbleObject.h"
 #include "AudioFormatter.h"
@@ -19,6 +23,39 @@ static const int progressHeight=3;
 VoiceBubbleObject::VoiceBubbleObject(AudioFormatter *formatter) : formatter(formatter)
 {
 
+}
+
+
+int VoiceBubbleObject::toggleZoneWidth(void)
+{
+    // Кружок плюс поля по бокам: совпадает с отрисовкой
+    return bubblePad+circleDiameter+bubblePad;
+}
+
+
+qreal VoiceBubbleObject::bubbleLeftEdge(QTextDocument *doc, int bubblePos)
+{
+    if(doc==nullptr || bubblePos<0 || bubblePos>=doc->characterCount())
+        return -1.0;
+
+    QTextBlock block=doc->findBlock(bubblePos);
+
+    if(!block.isValid() || block.layout()==nullptr)
+        return -1.0;
+
+    const int relative=bubblePos-block.position();
+    const QRectF blockRect=doc->documentLayout()->blockBoundingRect(block);
+
+    for(int i=0; i<block.layout()->lineCount(); ++i)
+    {
+        const QTextLine line=block.layout()->lineAt(i);
+
+        if(relative>=line.textStart() &&
+           relative<line.textStart()+line.textLength())
+            return blockRect.left()+line.cursorToX(relative);
+    }
+
+    return -1.0;
 }
 
 

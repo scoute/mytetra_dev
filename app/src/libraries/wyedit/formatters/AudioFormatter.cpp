@@ -244,7 +244,23 @@ QString AudioFormatter::exportHtml(void)
 }
 
 
-void AudioFormatter::onBubbleClicked(const QString &href)
+AudioFormatter::BubbleClickAction AudioFormatter::bubbleClickAction(qreal bubbleWidth,
+                                                                     qreal offsetX,
+                                                                     qreal &seekFraction)
+{
+  seekFraction=0.0;
+
+  // Нет геометрии (меню, ошибка раскладки): безопасный toggle
+  if(bubbleWidth<=0.0 || offsetX<VoiceBubbleObject::toggleZoneWidth())
+    return BubbleClickToggle;
+
+  seekFraction=qBound(0.0, offsetX/bubbleWidth, 1.0);
+
+  return BubbleClickSeek;
+}
+
+
+void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoint)
 {
   if(href.isEmpty())
     return;
@@ -275,12 +291,39 @@ void AudioFormatter::onBubbleClicked(const QString &href)
     voiceTick->start();
   }
 
-  // Повторный клик по играющему ставит на паузу,
-  // по стоявшему на паузе продолжает
-  if(activeHref==href && voicePlayer->state()==QMediaPlayer::PlayingState)
+  // Клик правее кружка мотает: доля позиции клика в ширине бабла
+  bool seekClicked=false;
+  qreal seekFraction=0.0;
+
+  const int bubblePos=findBubblePos(href);
+
+  if(bubblePos>=0)
   {
-    voicePlayer->pause();
-    return;
+    const qreal leftEdge=VoiceBubbleObject::bubbleLeftEdge(textArea->document(), bubblePos);
+
+    if(leftEdge>=0.0)
+    {
+      // Ширина берется у рисовальщика по формату символа
+      QTextCursor probe(textArea->document());
+      probe.setPosition(bubblePos+1);
+      const qreal width=bubbleObject->intrinsicSize(
+          textArea->document(), bubblePos, probe.charFormat()).width();
+
+      if(bubbleClickAction(width, docPoint.x()-leftEdge, seekFraction)==
+         BubbleClickSeek)
+        seekClicked=true;
+    }
+  }
+
+  // Повторный клик по кружку играющего ставит на паузу,
+  // по стоявшему на паузе продолжает
+  if(!seekClicked)
+  {
+    if(activeHref==href && voicePlayer->state()==QMediaPlayer::PlayingState)
+    {
+      voicePlayer->pause();
+      return;
+    }
   }
 
   if(activeHref!=href)
@@ -293,6 +336,20 @@ void AudioFormatter::onBubbleClicked(const QString &href)
   {
     // Доиграло до конца: повтор с начала
     voicePlayer->setPosition(0);
+  }
+
+  // Мотание по клику: позиция от доли, длительность известна
+  // только после загрузки медиа. Без длительности просто играет
+  if(seekClicked && voicePlayer->duration()>0)
+    voicePlayer->setPosition(static_cast<qint64>(seekFraction*voicePlayer->duration()));
+
+  // На паузе клик по полосе только двигает позицию
+  if(seekClicked && voicePlayer->state()==QMediaPlayer::PausedState)
+  {
+    if(voicePlayer->duration()>0)
+      textArea->document()->markContentsDirty(bubblePos, 1);
+
+    return;
   }
 
   voicePlayer->play();
@@ -505,9 +562,10 @@ void AudioFormatter::onPlayVoiceClicked(void)
   if(href.isEmpty())
     return;
 
-  // Бабл играет на месте, старая ссылка открывает плеер
+  // Бабл играет на месте, старая ссылка открывает плеер.
+  // Из меню точки клика нет: передается пустая, клик считается по кружку
   if(findBubblePos(href)>=0)
-    onBubbleClicked(href);
+    onBubbleClicked(href, QPointF(-1.0, -1.0));
   else
   {
     const QString filePath=VoiceNoteHelper::resolveFilePath(editor->getWorkDirectory(), href);

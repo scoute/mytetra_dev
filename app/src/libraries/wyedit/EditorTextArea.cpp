@@ -336,6 +336,9 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
        event->button()==Qt::LeftButton &&
        (QApplication::keyboardModifiers() & Qt::ControlModifier)==0)
     {
+        // Координаты документа: скролл прибавляется, как в imageAt
+        const QPointF docPoint(event->pos().x()+horizontalScrollBar()->value(),
+                               event->pos().y()+verticalScrollBar()->value());
         const QString voiceHref=VoiceNoteHelper::bubbleHrefAt(
             document(), cursorForPosition(event->pos()).position());
 
@@ -343,7 +346,7 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
         {
             QTextEdit::mousePressEvent(event);
 
-            emit clickedOnVoiceBubble(voiceHref);
+            emit clickedOnVoiceBubble(voiceHref, docPoint);
             return;
         }
     }

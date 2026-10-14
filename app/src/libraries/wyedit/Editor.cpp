@@ -388,6 +388,11 @@ void Editor::setupSignals(void)
           referenceFormatter, &ReferenceFormatter::onClickedGotoReference,
           Qt::DirectConnection);
 
+  // Одинарный Ctrl+клик по картинке открывает ее во внешней программе
+  connect(textArea,       &EditorTextArea::clickOnImage,
+          imageFormatter, &ImageFormatter::onClickOnImage,
+          Qt::DirectConnection);
+
   // Двойной клик по картинке, для ImageFormatter
   connect(textArea,       &EditorTextArea::doubleClickOnImage,
           imageFormatter, &ImageFormatter::onDoubleClickOnImage,
@@ -442,6 +447,12 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
   connect(editorContextMenu, &EditorContextMenu::selectAll,
           this,              &Editor::onSelectAll,
+          Qt::DirectConnection);
+  connect(editorContextMenu, &EditorContextMenu::contextMenuOpenImage,
+          imageFormatter,    &ImageFormatter::onContextMenuOpenImage,
+          Qt::DirectConnection);
+  connect(editorContextMenu, &EditorContextMenu::contextMenuOpenImageWith,
+          imageFormatter,    &ImageFormatter::onContextMenuOpenImageWith,
           Qt::DirectConnection);
   connect(editorContextMenu, &EditorContextMenu::contextMenuEditImageProperties,
           imageFormatter,    &ImageFormatter::onContextMenuEditImageProperties,
@@ -680,6 +691,9 @@ void Editor::setupToolsSignals(void)
 
 
     // Прочие кнопки
+    connect(editorToolBarAssistant->openImage, &QAction::triggered,
+            imageFormatter,                    &ImageFormatter::openImage);
+
     connect(editorToolBarAssistant->insertImageFromFile, &QAction::triggered,
             imageFormatter,                              &ImageFormatter::onInsertImageFromFileClicked);
 

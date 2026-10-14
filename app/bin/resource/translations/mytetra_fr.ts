@@ -1389,6 +1389,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Change secret color...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open image with...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorFindDialog</name>
@@ -2169,6 +2181,49 @@ Try to search for entire database.</source>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="407"/>
         <source>Probably error in a process of images download.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image file not found:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Place the cursor on the image to open it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not open image file:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open image with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not start program:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note directory is unknown, there is nothing to open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Directory does not exist: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not open directory: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3842,6 +3897,10 @@ Please report about this problem to the developers.</source>
         <source>Insert note reference using search...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Open image</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -4809,6 +4868,37 @@ MyTetra must be running.</source>
     </message>
     <message>
         <source>Tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    </context>
+    <context>
+        <name>EditorImageOpenDialog</name>
+    <message>
+        <source>Open image with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Program to open %1:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select program</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (custom)</source>
         <translation type="unfinished"></translation>
     </message>
     </context>

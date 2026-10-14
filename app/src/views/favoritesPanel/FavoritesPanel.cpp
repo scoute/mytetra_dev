@@ -77,10 +77,10 @@ void FavoritesPanel::setupUi(void)
     favoritesList=new QListWidget(this);
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    // Список не растягивается выше содержимого: нулевого стретча
-    // в раскладке мало, у вьюпорта своя политика Expanding.
-    // Потолок высоты ставится динамически в refreshFavorites
-    favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    // Вертикаль Preferred: в обычном режиме высота по содержимому
+    // (нулевой стретч + хвостовая распорка), в ручном после драга
+    // список растянется на всю панель через setUserResized()
+    favoritesList->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     favoritesList->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
@@ -99,11 +99,32 @@ void FavoritesPanel::assembly(void)
     // Без растяжения: высота списка по содержимому (AdjustToContents),
     // иначе пара звездочек болтается в пустом вьюпорте на полпанели.
     // Хвостовая распорка забирает весь лишний простор вниз: без нее
-    // он делится поровну и пухнет сама шапка
+    // он делится поровну и пухнет сама шапка.
+    // Ручной драг переключает режим через setUserResized()
     panelLayout->addWidget(favoritesList);
     panelLayout->addStretch(1);
 
+    favoritesLayout=panelLayout;
     setLayout(panelLayout);
+}
+
+
+// Ручной драг границы: список наливается на всю выставленную
+// высоту вместо компактного содержимого. Обратно в компакт
+// только перезапуском: пересборки режим не трогают
+void FavoritesPanel::setUserResized(void)
+{
+    if(m_userResized)
+        return;
+
+    m_userResized=true;
+
+    // Весь простор панели списку, распорке ничего
+    favoritesLayout->setStretch(1, 1);
+    favoritesLayout->setStretch(2, 0);
+
+    // Потолок по контенту снят: видно столько строк, сколько влезло
+    favoritesList->setMaximumHeight(QWIDGETSIZE_MAX);
 }
 
 
@@ -332,13 +353,24 @@ void FavoritesPanel::refreshFavorites(void)
     }
 
     // Высота списка ровно по строкам с потолком: пустого вьюпорта
-    // не бывает ни при каком размере панели
+    // не бывает ни при каком размере панели. В ручном режиме после
+    // драга потолок снят: список наливается на всю панель
     int listHeight=favoritesList->frameWidth()*2;
 
     if(favoritesList->count()>0)
         listHeight+=favoritesList->sizeHintForRow(0)*favoritesList->count();
 
-    favoritesList->setMaximumHeight(qMin(listHeight, 180));
+    if(!m_userResized)
+        favoritesList->setMaximumHeight(qMin(listHeight, 180));
+
+    // Пол панели: одна строка. Иначе minimumSizeHint списка не дает
+    // поднять границу выше примерно пяти строк
+    int rowHeight=favoritesList->sizeHintForRow(0);
+
+    if(rowHeight<0)
+        rowHeight=0;
+
+    favoritesList->setMinimumHeight(favoritesList->frameWidth()*2+rowHeight);
 
     // Шапка со счетчиком чтобы панель не висела одиноко:
     // звездочка слева уже стоит в assembly, тут слово и число

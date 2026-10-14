@@ -5203,8 +5203,8 @@ Please report about this problem to the developers.</source>
         <translation>Найти в базе</translation>
     </message>
         <message>
-            <source>Show history panel</source>
-            <translation>Показать панель истории</translation>
+            <source>History panel</source>
+            <translation>Панель истории</translation>
         </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="175"/>
@@ -5245,8 +5245,8 @@ Please report about this problem to the developers.</source>
             <translation>Галерея картинок</translation>
         </message>
     <message>
-        <source>Show backlinks panel</source>
-        <translation>Показать панель обратных ссылок</translation>
+        <source>Direct and backlinks panel</source>
+        <translation>Прямые и обратные ссылки</translation>
     </message>
     <message>
         <source>Hide as secret</source>

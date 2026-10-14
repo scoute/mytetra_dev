@@ -1,4 +1,5 @@
 #include <functional>
+#include <QtGlobal>
 #include <QRect>
 #include <QTextCodec>
 
@@ -1467,6 +1468,44 @@ bool AppConfig::get_mcpAllow(void)
 void AppConfig::set_mcpAllow(bool state)
 {
     m_conf->setValue("mcpAllow", state);
+}
+
+
+// Формат голосовых заметок по умолчанию. Opus если не задано
+// или лежит мусор: диалог записи все равно проверяет поддержку
+QString AppConfig::get_voiceNoteFormat(void)
+{
+    const QString format=m_conf->value("voiceNoteFormat", "opus").toString();
+
+    if(format==QStringLiteral("mp3") || format==QStringLiteral("opus"))
+        return format;
+
+    return QStringLiteral("opus");
+}
+
+
+void AppConfig::set_voiceNoteFormat(QString format)
+{
+    if(format!=QStringLiteral("mp3") && format!=QStringLiteral("opus"))
+        format=QStringLiteral("opus");
+
+    m_conf->setValue("voiceNoteFormat", format);
+}
+
+
+// Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high.
+// Середина если не задано или мусор
+int AppConfig::get_voiceNoteQuality(void)
+{
+    const int quality=m_conf->value("voiceNoteQuality", 1).toInt();
+
+    return qBound(0, quality, 2);
+}
+
+
+void AppConfig::set_voiceNoteQuality(int quality)
+{
+    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 2));
 }
 
 

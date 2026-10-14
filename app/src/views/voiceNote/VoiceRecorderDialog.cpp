@@ -24,6 +24,10 @@
 
 #include "VoiceRecorderDialog.h"
 #include "libraries/VoiceNoteHelper.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 WaveformWidget::WaveformWidget(QWidget *parent) : QWidget(parent)
@@ -137,6 +141,25 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     qualityGroup->addButton(qualityMediumRadio);
     qualityGroup->addButton(qualityHighRadio);
 
+    // Качество по умолчанию из настроек
+    const int defaultQuality=mytetraConfig.get_voiceNoteQuality();
+
+    if(defaultQuality==0)
+    {
+        qualityLowRadio->setChecked(true);
+        currentQuality=VoiceQualityLow;
+    }
+    else if(defaultQuality==2)
+    {
+        qualityHighRadio->setChecked(true);
+        currentQuality=VoiceQualityHigh;
+    }
+    else
+    {
+        qualityMediumRadio->setChecked(true);
+        currentQuality=VoiceQualityMedium;
+    }
+
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);
     deviceCombo=new QComboBox(this);
 
@@ -235,7 +258,16 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
 
-    if(opusAvailable)
+    // Предвыбор из настроек, недоступный бэкенду сбрасывается.
+    // По умолчанию Opus
+    const QString defaultFormat=mytetraConfig.get_voiceNoteFormat();
+
+    if(defaultFormat==QStringLiteral("mp3") && mp3Available)
+    {
+        mp3Radio->setChecked(true);
+        currentFormat=VoiceFormatMp3;
+    }
+    else if(opusAvailable)
     {
         opusRadio->setChecked(true);
         currentFormat=VoiceFormatOpus;

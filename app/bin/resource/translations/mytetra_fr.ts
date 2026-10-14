@@ -5944,6 +5944,10 @@ La mise en forme peut être altérée.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Voice file not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save the note first</source>
         <translation type="unfinished"></translation>
     </message>

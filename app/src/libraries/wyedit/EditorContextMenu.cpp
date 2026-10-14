@@ -160,10 +160,14 @@ void EditorContextMenu::update(void)
         setDeleteVoice( voiceLink );
         setEditReference( true );
     } else {
+        // Бабл не ссылка: смотрится формат символа у курсора
+        Editor *cursorEditor=static_cast<Editor*>(this->parent());
+        const bool voiceBubble=!cursorEditor->voiceBubbleHrefAtCursor().isEmpty();
+
         setGotoReference( false );
-        setPlayVoice( false );
-        setShowVoiceInFolder( false );
-        setDeleteVoice( false );
+        setPlayVoice( voiceBubble );
+        setShowVoiceInFolder( voiceBubble );
+        setDeleteVoice( voiceBubble );
         setEditReference( false );
     }
 

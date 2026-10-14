@@ -75,8 +75,7 @@ void ConfigDialog::assembly(void)
     buttonsLayout->addWidget(confirmButtons);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(horizontalLayout);
-    mainLayout->addStretch(1);
+    mainLayout->addLayout(horizontalLayout, 1);
     mainLayout->addSpacing(12);
     mainLayout->addLayout(buttonsLayout);
     setLayout(mainLayout);

@@ -2595,12 +2595,12 @@ You need to update MyTetra.</source>
             <translation type="unfinished"></translation>
         </message>
     <message>
-        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Links: %6</source>
-        <translation>Branches : %1 | Notes : %2 | Étiquettes : %3 | Fichiers : %4 | Images : %5 | Liens : %6</translation>
+        <source>Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Base statistics: branches, records, tags, files, images and links. Click opens per-note details.</source>
-        <translation>Statistiques de la base : branches, notes, étiquettes, fichiers, images et liens. Cliquez pour le détail par note.</translation>
+        <source>Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Branch</source>
@@ -2611,8 +2611,8 @@ You need to update MyTetra.</source>
         <translation>Note</translation>
     </message>
     <message>
-        <source>Links</source>
-        <translation>Liens</translation>
+        <source>Internal links</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Images</source>

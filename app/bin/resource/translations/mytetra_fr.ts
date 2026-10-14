@@ -2249,6 +2249,14 @@ Try to search for entire database.</source>
         <source>Tags</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Directory name</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>

@@ -787,6 +787,10 @@ void RecordTableController::editFieldContext(QModelIndex proxyIndex)
   editRecordWin.setField("url",   table->getField("url",    pos) );
   editRecordWin.setField("tags",  table->getField("tags",   pos) );
 
+  // Служебные id и каталог только отображаются для справки
+  editRecordWin.setField("id",    table->getField("id",     pos) );
+  editRecordWin.setField("dir",   table->getField("dir",    pos) );
+
   // Если запись заблокирована или включен глобальный режим только чтения.
   // Во втором случае диалог тоже не открывается: проверять нечего
   if(table->getField("block",   pos)=="1" || mytetraConfig.get_readOnly())

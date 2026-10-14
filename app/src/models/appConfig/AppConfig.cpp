@@ -954,6 +954,46 @@ void AppConfig::set_secretColor(QString color)
 }
 
 
+// Цвет фона поля заметки. Пустая строка означает цвет темы по умолчанию.
+// Параметр намеренно не входит в версионные таблицы (как editorFindEmbedded):
+// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
+QString AppConfig::get_notePaperColor(void)
+{
+    return m_conf->value("notePaperColor", "").toString();
+}
+
+
+void AppConfig::set_notePaperColor(QString color)
+{
+    // Пустая строка разрешена: это возврат к цвету темы
+    if(color.isEmpty())
+    {
+        m_conf->setValue("notePaperColor", "");
+        return;
+    }
+
+    QColor saveColor(color);
+
+    // Если сохраняема строка действительно содержит закодированный цвет
+    if (saveColor.isValid())
+    {
+        m_conf->setValue("notePaperColor", color);
+    }
+}
+
+
+bool AppConfig::get_recordHeaderVisible(void)
+{
+    return m_conf->value("recordHeaderVisible", true).toBool();
+}
+
+
+void AppConfig::set_recordHeaderVisible(bool state)
+{
+    m_conf->setValue("recordHeaderVisible", state);
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -1299,6 +1339,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
+    parameterFunctions << &AppConfig::get_parameter_table_44;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2181,6 +2222,25 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
 
     // Цвет закраски секрета в формате "#77767b"
     table << "secretColor" << "QString" << "#77767b";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 43
+    table << get_parameter_table_43(false);
+
+    // Шапка заметки показана
+    table << "recordHeaderVisible" << "bool" << "true";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

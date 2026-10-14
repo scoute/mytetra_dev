@@ -4365,6 +4365,10 @@ MyTetra 将尝试创建空白条目进行修复。</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Voice notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="79"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="133"/>
         <source>Misc</source>
@@ -6100,6 +6104,37 @@ Please select single item for enabling edit operation.</source>
     </message>
     <message>
         <source>Can not record here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Voice</name>
+    <message>
+        <source>Default format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opus (.opus)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MP3 (.mp3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

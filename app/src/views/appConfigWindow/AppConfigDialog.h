@@ -44,6 +44,7 @@ private:
     QListWidgetItem *pageFavorites;
     QListWidgetItem *pageClipper;
     QListWidgetItem *pageMcp;
+    QListWidgetItem *pageVoice;
     QListWidgetItem *pageMisc;
 
     void changePage(QString name);

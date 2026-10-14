@@ -395,6 +395,16 @@ public:
     bool get_mcpAllow(void);
     void set_mcpAllow(bool state);
 
+    // Формат голосовых заметок по умолчанию: opus или mp3.
+    // Выбирается радио на странице Voice notes, в диалоге
+    // записи переключается. Неподдержанный бэкендом сбрасывается
+    QString get_voiceNoteFormat(void);
+    void set_voiceNoteFormat(QString format);
+
+    // Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high
+    int get_voiceNoteQuality(void);
+    void set_voiceNoteQuality(int quality);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);

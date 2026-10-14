@@ -3372,6 +3372,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Show favorites panel</source>
         <translation>Показывать панель избранного</translation>
     </message>
+    <message>
+        <source>Backlinks</source>
+        <translation>Обратные ссылки</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -5110,6 +5114,10 @@ Please report about this problem to the developers.</source>
             <source>Images gallery</source>
             <translation>Галерея картинок</translation>
         </message>
+    <message>
+        <source>Show backlinks panel</source>
+        <translation>Показать панель обратных ссылок</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -5952,6 +5960,37 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Switching storage moves existing stars</source>
         <translation>При переключении существующие звёздочки переносятся</translation>
+    </message>
+    </context>
+    <context>
+        <name>BacklinksPanel</name>
+    <message>
+        <source>Incoming links</source>
+        <translation>Входящие ссылки</translation>
+    </message>
+    <message>
+        <source>Incoming links (%1)</source>
+        <translation>Входящие ссылки (%1)</translation>
+    </message>
+    <message>
+        <source>Missing record %1</source>
+        <translation>Запись отсутствует %1</translation>
+    </message>
+    <message>
+        <source>Remove missing sources</source>
+        <translation>Убрать отсутствующие источники</translation>
+    </message>
+    <message>
+        <source>Recheck all links</source>
+        <translation>Перепроверить все ссылки</translation>
+    </message>
+    <message>
+        <source>Outgoing links</source>
+        <translation>Исходящие ссылки</translation>
+    </message>
+    <message>
+        <source>Outgoing links (%1)</source>
+        <translation>Исходящие ссылки (%1)</translation>
     </message>
     </context>
 </TS>

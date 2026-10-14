@@ -7524,6 +7524,38 @@ Please select single item for enabling edit operation.</source>
         <translation>Формат:</translation>
     </message>
     <message>
+        <source>Quality:</source>
+        <translation>Качество:</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>Низкое</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Среднее</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>Высокое</translation>
+    </message>
+    <message>
+        <source>Opus, %1 kbit/s, %2 Hz</source>
+        <translation>Opus, %1 кбит/с, %2 Гц</translation>
+    </message>
+    <message>
+        <source>MP3, %1 kbit/s, %2 Hz</source>
+        <translation>MP3, %1 кбит/с, %2 Гц</translation>
+    </message>
+    <message>
+        <source>WAV, %1 Hz</source>
+        <translation>WAV, %1 Гц</translation>
+    </message>
+    <message>
+        <source>File name:</source>
+        <translation>Имя файла:</translation>
+    </message>
+    <message>
         <source>Opus (.opus)</source>
         <translation>Opus (.opus)</translation>
     </message>

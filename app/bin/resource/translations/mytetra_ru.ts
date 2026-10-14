@@ -384,6 +384,50 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <translation>Отображение записей с прикрепленными файлами</translation>
     </message>
     <message>
+        <source>File names on disk</source>
+        <translation>Имена файлов на диске</translation>
+    </message>
+    <message>
+        <source>Attachments are stored on disk as id.extension. Renaming switches them to human-readable names id_name.extension, so the file can be recognized without opening it. New attachments will use human-readable names too.</source>
+        <translation>Вложения хранятся на диске как id.расширение. Переименование переключает их на человеко-читаемые имена id_имя.расширение, чтобы файл можно было узнать, не открывая его. Новые вложения тоже будут сохраняться с человеко-читаемыми именами.</translation>
+    </message>
+    <message>
+        <source>Rename attachments to human-readable names</source>
+        <translation>Переименовать вложения в человеко-читаемые имена</translation>
+    </message>
+    <message>
+        <source>Danger, beta version: back up your database directory before renaming. If the database is encrypted, unlock it first.</source>
+        <translation>Опасно, бета-версия: перед переименованием сделайте резервную копию каталога базы. Если база зашифрована, сначала разблокируйте её.</translation>
+    </message>
+    <message>
+        <source>Database tree is unavailable.</source>
+        <translation>Дерево базы недоступно.</translation>
+    </message>
+    <message>
+        <source>Unable to rename file %1 to %2.</source>
+        <translation>Не удалось переименовать файл %1 в %2.</translation>
+    </message>
+    <message>
+        <source>Rename attachments</source>
+        <translation>Переименование вложений</translation>
+    </message>
+    <message>
+        <source>All attachments will be renamed from id.extension to human-readable names id_name.extension. Back up your database directory first. Continue?</source>
+        <translation>Все вложения будут переименованы из id.расширение в человеко-читаемые имена id_имя.расширение. Сначала сделайте резервную копию каталога базы. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Renamed files: %1.</source>
+        <translation>Переименовано файлов: %1.</translation>
+    </message>
+    <message>
+        <source>Skipped (file not found or encrypted record): %1.</source>
+        <translation>Пропущено (файл не найден или запись зашифрована): %1.</translation>
+    </message>
+    <message>
+        <source>Errors: %1. First error: %2</source>
+        <translation>Ошибок: %1. Первая ошибка: %2</translation>
+    </message>
+    <message>
         <source>Notes with attachments decor</source>
         <translation type="vanished">Отображение записей с прикрепленными файлами</translation>
     </message>

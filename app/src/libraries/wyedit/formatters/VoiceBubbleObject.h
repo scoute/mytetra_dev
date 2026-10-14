@@ -25,6 +25,15 @@ public:
     void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc,
                     int posInDocument, const QTextFormat &format) override;
 
+    // Левая граница бабла в координатах документа, -1 если не найти.
+    // Нужна чтобы отличать клик по кружку (toggle) от клика
+    // по полосе (seek). Только X: вертикаль не используется
+    static qreal bubbleLeftEdge(QTextDocument *doc, int bubblePos);
+
+    // Ширина зоны кружка от левого края бабла: клик левее
+    // переключает play/pause, правее мотает
+    static int toggleZoneWidth(void);
+
 private:
 
     AudioFormatter *formatter;

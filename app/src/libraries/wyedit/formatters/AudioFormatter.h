@@ -31,6 +31,18 @@ public:
   void insertBubble(const QString &href, qint64 durationMs,
                     const QString &fileName);
 
+  // Клик левее зоны кружка переключает, правее мотает.
+  // Чистая функция для стенда: ширина бабла и смещение клика
+  // от левого края, доля 0..1 на выходе
+  enum BubbleClickAction
+  {
+    BubbleClickToggle,
+    BubbleClickSeek
+  };
+
+  static BubbleClickAction bubbleClickAction(qreal bubbleWidth, qreal offsetX,
+                                             qreal &seekFraction);
+
   // Заменить голосовые ссылки живого документа баблами.
   // Вызывается после загрузки текста, до сброса modified
   void materializeBubbles(void);
@@ -43,8 +55,9 @@ public slots:
 
   void onMicRecordClicked(void);
 
-  // Клик по баблу в тексте: play/pause на месте
-  void onBubbleClicked(const QString &href);
+  // Клик по баблу в тексте: по кружку play/pause,
+  // по полосе правее мотает. Точка в координатах документа
+  void onBubbleClicked(const QString &href, const QPointF &docPoint);
 
   // Контекстное меню на голосовой ссылке или бабле
   void onPlayVoiceClicked(void);

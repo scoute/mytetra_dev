@@ -19,6 +19,9 @@ static const int circleDiameter=28;
 static const int bubbleMaxTextWidth=220;
 static const int progressHeight=3;
 
+// Бабл в полтора раза длиннее текстовой части: имя и прогресс дышат
+static const qreal bubbleLengthFactor=1.5;
+
 
 VoiceBubbleObject::VoiceBubbleObject(AudioFormatter *formatter) : formatter(formatter)
 {
@@ -74,7 +77,8 @@ QSizeF VoiceBubbleObject::intrinsicSize(QTextDocument *doc, int posInDocument,
 
     const int textWidth=qMin(bubbleMaxTextWidth, qMax(nameWidth, timeWidth));
 
-    return QSizeF(bubblePad+circleDiameter+bubblePad+textWidth+bubblePad,
+    return QSizeF((bubblePad+circleDiameter+bubblePad+textWidth+bubblePad)*
+                  bubbleLengthFactor,
                   bubbleHeight);
 }
 

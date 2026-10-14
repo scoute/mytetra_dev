@@ -1159,6 +1159,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>&lt;/b&gt;&apos; not found</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Replaced </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> occurrence(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -1355,8 +1363,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="33"/>
-        <source>Search &amp;backward</source>
+        <source>&amp;Loop search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1365,8 +1372,32 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Find previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="39"/>
         <source>Find in the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace &amp;all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find and replace</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

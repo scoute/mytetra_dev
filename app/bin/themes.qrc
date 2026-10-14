@@ -20,9 +20,9 @@
   </qresource>
   <qresource prefix="/">
     <file>resource/standartconfig/any/themes/custom/pic/background_001.jpg</file>
-    <file>resource/standartconfig/any/themes/custom/pic/white-background_002.jpg</file>
-    <file>resource/standartconfig/any/themes/custom/pic/white-background_003.jpg</file>
-    <file>resource/standartconfig/any/themes/custom/pic/white-background_004.jpg</file>
+    <file>resource/standartconfig/any/themes/custom/pic/background_002.jpg</file>
+    <file>resource/standartconfig/any/themes/custom/pic/background_003.jpg</file>
+    <file>resource/standartconfig/any/themes/custom/pic/background_004.jpg</file>
   </qresource>
   <qresource prefix="/">
     <file>resource/standartconfig/any/themes/midnight/stylesheet.css</file>

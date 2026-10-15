@@ -794,8 +794,8 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Хранить версий:</translation>
     </message>
     <message>
-        <source>Enable note history</source>
-        <translation>Включить историю заметок</translation>
+        <source>Enable note history (git must be installed)</source>
+        <translation>Включить историю заметок (нужен установленный git)</translation>
     </message>
     <message>
         <source>What to do on limit excess:</source>
@@ -812,6 +812,14 @@ Stored password will be cleared if uncheck this checkbox.</source>
     <message>
         <source>Compress every 10 entries into one except the latest 10</source>
         <translation>Сжимать каждые 10 записей в одну, исключая последние 10</translation>
+    </message>
+    <message>
+        <source>Cannot enable note history:
+git is not installed.
+Linux: install the git package. Windows: https://git-scm.com.</source>
+        <translation>Невозможно включить историю заметок:
+git не установлен.
+Linux: поставьте пакет git. Windows: https://git-scm.com.</translation>
     </message>
 </context>
 <context>

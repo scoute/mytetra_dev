@@ -94,6 +94,15 @@ bool FixedParameters::isRecordFieldCalculable(QString name)
 }
 
 
+bool FixedParameters::isRecordFieldColumn(QString name)
+{
+  if(!recordFieldAvailableList.contains(name))
+    return false;
+
+  return recordFieldDescription(QStringList() << name).contains(name);
+}
+
+
 // Получение описаний набора полей
 QMap<QString, QString> FixedParameters::recordFieldDescription(QStringList list)
 {

@@ -137,3 +137,34 @@ QString ChangeHistory::diffToCurrent(const QString &tetradir, const QString &rec
                                   UnifiedDiff::htmlToLines(currentHtml),
                                   title);
 }
+
+
+bool ChangeHistory::resetToVersion(const QString &tetradir, const QString &recordId,
+                                   const QString &rev, QString *errorMessage)
+{
+    if(tetradir.isEmpty() || recordId.isEmpty() || rev.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Empty path, note or revision");
+        return false;
+    }
+
+    if(!GitHelper::isAvailable())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git is not available");
+        return false;
+    }
+
+    const QString dir=historyDir(tetradir);
+
+    if(!GitHelper::isRepo(dir))
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("History storage is not found");
+        return false;
+    }
+
+    return GitHelper::truncateFileHistory(dir, recordFileName(recordId),
+                                          rev, errorMessage);
+}

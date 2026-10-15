@@ -69,6 +69,15 @@ public:
 
     // Закоммитить индекс с сообщением
     static bool commitStaged(const QString &dir, const QString &message);
+
+    // Усечь историю файла до целевой ревизии: все коммиты новее
+    // targetRev, касающиеся file, уничтожаются, остальные
+    // (других файлов) переигрываются поверх. Рабочее дерево
+    // должно быть чистым, иначе отказ без изменений.
+    // Текст ошибки опционально
+    static bool truncateFileHistory(const QString &dir, const QString &file,
+                                    const QString &targetRev,
+                                    QString *errorMessage=nullptr);
 };
 
 #endif /* _GITHELPER_H_ */

@@ -21,6 +21,33 @@
 #include "models/recordTable/Record.h"
 #include "models/recordTable/RecordTableData.h"
 #include "views/changeHistory/ChangeHistoryDialog.h"
+#include "libraries/VoiceNoteHelper.h"
+
+
+// Голосовое содержимое в живом документе: сырые ссылки
+// voicenote:// либо уже материализованные баблы-объекты.
+// Сырой toHtml ни то ни другое не round-trip'ит, поэтому
+// живой предпросмотр для таких заметок отключен
+static bool hasVoiceContent(QTextDocument *doc)
+{
+    if(doc==nullptr)
+        return false;
+
+    if(VoiceNoteHelper::hasVoiceLinks(doc))
+        return true;
+
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(fragment.isValid() &&
+               fragment.charFormat().objectType()==VoiceNoteHelper::BubbleObjectType)
+                return true;
+        }
+
+    return false;
+}
 #include "libraries/GitHelper.h"
 #include "libraries/ChangeHistory.h"
 #include "libraries/Favorites.h"
@@ -1182,12 +1209,13 @@ void RecordTableController::onChangeHistoryClick(void)
   const QString tetradir=mytetraConfig.get_tetradir();
 
   // Текущий текст: из открытого редактора если та же запись
-  // (захватываются несохраненные правки), иначе из файла
+  // (захватываются несохраненные правки), иначе из файла.
+  // Стабильная сериализация: совпадает с сохраняемой
   QString currentHtml;
   MetaEditor *edView=find_object<MetaEditor>("editorScreen");
 
   if(edView!=nullptr && edView->getMiscField("id")==id)
-    currentHtml=edView->getTextarea();
+    currentHtml=edView->getTextareaStable();
   else
   {
     QFile file(tetradir+QStringLiteral("/base/")+
@@ -1201,13 +1229,16 @@ void RecordTableController::onChangeHistoryClick(void)
   ChangeHistoryDialog historyDialog(tetradir, id, name, currentHtml, parentPointer);
 
   // Предпросмотр отката: текст версии сразу показывается в редакторе,
-  // коммитов превью не создает. Только для открытой записи: иначе
-  // превью затерло бы буфер чужой заметки. При отмене исходный
-  // текст и флаг правок возвращаются
+  // коммитов превью не создает. Только для открытой записи без
+  // голосовых баблов: иначе превью затерло бы буфер чужой заметки,
+  // а сырой toHtml баблы не round-trip'ит. При отмене исходный
+  // текст и флаг правок возвращаются. URL документа сохраняется,
+  // поэтому картинки не гаснут
   edView=find_object<MetaEditor>("editorScreen");
 
-  const bool previewLive=(edView!=nullptr && edView->getMiscField("id")==id);
-  const QString previewOriginal=previewLive ? edView->getTextarea() : QString();
+  const bool previewLive=(edView!=nullptr && edView->getMiscField("id")==id &&
+                          !hasVoiceContent(edView->getTextareaDocument()));
+  const QString previewOriginal=previewLive ? edView->getTextareaStable() : QString();
   const bool previewModified=previewLive ? edView->getTextareaModified() : false;
 
   if(previewLive)
@@ -1215,7 +1246,7 @@ void RecordTableController::onChangeHistoryClick(void)
     connect(&historyDialog, &ChangeHistoryDialog::previewRequested,
             edView, [edView, previewOriginal, previewModified](const QString &html)
             {
-              edView->setTextarea(html);
+              edView->previewTextarea(html);
               edView->setTextareaModified(html!=previewOriginal ? true : previewModified);
             });
   }
@@ -1224,7 +1255,7 @@ void RecordTableController::onChangeHistoryClick(void)
   {
     if(previewLive)
     {
-      edView->setTextarea(previewOriginal);
+      edView->previewTextarea(previewOriginal);
       edView->setTextareaModified(previewModified);
     }
 
@@ -1237,7 +1268,7 @@ void RecordTableController::onChangeHistoryClick(void)
   {
     if(previewLive)
     {
-      edView->setTextarea(previewOriginal);
+      edView->previewTextarea(previewOriginal);
       edView->setTextareaModified(previewModified);
     }
 
@@ -1259,7 +1290,7 @@ void RecordTableController::onChangeHistoryClick(void)
   if(edView==nullptr)
     return;
 
-  edView->setTextarea(rollback);
+  edView->previewTextarea(rollback);
   edView->setTextareaModified(true);
 }
 

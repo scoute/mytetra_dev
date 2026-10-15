@@ -384,45 +384,61 @@ qint64 VoiceRecorderDialog::recordedDurationMs(void) const
 }
 
 
-void VoiceRecorderDialog::applyFormat(VoiceFormat format)
+VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(VoiceFormat format,
+                                                                              VoiceQuality quality)
 {
-    // Профили качества low/middle/high для каждого формата
-    struct VoiceQualityProfile
-    {
-        int bitRate;
-        int sampleRate;
-    };
+    const int level=qBound(0, static_cast<int>(quality), 2);
 
+    if(format==VoiceFormatMp3)
+    {
+        static const VoiceQualityProfile mp3Profiles[3]=
+        {
+            {QMultimedia::LowQuality, 12000},
+            {QMultimedia::NormalQuality, 16000},
+            {QMultimedia::HighQuality, 24000}
+        };
+
+        return mp3Profiles[level];
+    }
+
+    if(format==VoiceFormatWavFallback)
+    {
+        // PCM ест любую частоту: низкие ради размера файла
+        static const VoiceQualityProfile wavProfiles[3]=
+        {
+            {QMultimedia::LowQuality, 11025},
+            {QMultimedia::NormalQuality, 22050},
+            {QMultimedia::HighQuality, 44100}
+        };
+
+        return wavProfiles[level];
+    }
+
+    // Opus: только капсы кодера 8/12/16/24/48 кГц,
+    // лесенка 12/16/24 (48 заметочнику ни к чему)
     static const VoiceQualityProfile opusProfiles[3]=
     {
-        {24000, 11025},
-        {32000, 22050},
-        {48000, 44100}
+        {QMultimedia::LowQuality, 12000},
+        {QMultimedia::NormalQuality, 16000},
+        {QMultimedia::HighQuality, 24000}
     };
 
-    static const VoiceQualityProfile mp3Profiles[3]=
-    {
-        {32000, 11025},
-        {48000, 22050},
-        {64000, 44100}
-    };
+    return opusProfiles[level];
+}
 
-    static const int wavSampleRates[3]=
-    {
-        11025,
-        22050,
-        44100
-    };
 
-    const int quality=qBound(0, static_cast<int>(currentQuality), 2);
-
+void VoiceRecorderDialog::applyFormat(VoiceFormat format)
+{
     QAudioEncoderSettings audioSettings;
     audioSettings.setChannelCount(1);
 
-    // Явный CBR: дефолт Qt ConstantQualityEncoding давал VBR
-    // везде и битрейт профиля ничего не значил. На качество
-    // сильнее влияет частота, она и разнится по профилям
-    audioSettings.setEncodingMode(QMultimedia::ConstantBitRateEncoding);
+    // VBR осознанно: переменный битрейт лучше держит качество
+    // голоса при том же размере, битрейт не выставляется
+    audioSettings.setEncodingMode(QMultimedia::ConstantQualityEncoding);
+
+    const VoiceQualityProfile profile=qualityProfile(format, currentQuality);
+    audioSettings.setQuality(profile.quality);
+    audioSettings.setSampleRate(profile.sampleRate);
 
     if(format==VoiceFormatOpus)
     {
@@ -439,9 +455,6 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
                 recorder->setContainerFormat(container);
                 break;
             }
-
-        audioSettings.setSampleRate(opusProfiles[quality].sampleRate);
-        audioSettings.setBitRate(opusProfiles[quality].bitRate);
     }
     else if(format==VoiceFormatMp3)
     {
@@ -454,9 +467,6 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
                 QStringLiteral("audio/mpeg, mpegversion=(int)1"));
         else
             recorder->setContainerFormat(QStringLiteral("audio/mpeg"));
-
-        audioSettings.setSampleRate(mp3Profiles[quality].sampleRate);
-        audioSettings.setBitRate(mp3Profiles[quality].bitRate);
     }
     else
     {
@@ -470,8 +480,6 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
             }
 
         recorder->setContainerFormat(QStringLiteral("audio/x-wav"));
-
-        audioSettings.setSampleRate(wavSampleRates[quality]);
     }
 
     recorder->setAudioSettings(audioSettings);
@@ -481,30 +489,26 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
 void VoiceRecorderDialog::updateQualityHint(void)
 {
     const int quality=qBound(0, static_cast<int>(currentQuality), 2);
+    const VoiceQualityProfile profile=qualityProfile(currentFormat, currentQuality);
+
+    // Слово качества из радиокнопок: уже переведено.
+    // Килобит нет осознанно: в VBR битрейт переменный
+    QString qualityName=qualityMediumRadio->text();
+
+    if(quality==0)
+        qualityName=qualityLowRadio->text();
+    else if(quality==2)
+        qualityName=qualityHighRadio->text();
 
     if(currentFormat==VoiceFormatMp3)
-    {
-        static const int bitRates[3]={32, 48, 64};
-        static const int sampleRates[3]={11025, 22050, 44100};
-
         qualityHintLabel->setText(
-            tr("MP3, %1 kbit/s, %2 Hz").arg(bitRates[quality]).arg(sampleRates[quality]));
-    }
+            tr("MP3, %1 Hz, %2").arg(profile.sampleRate).arg(qualityName));
     else if(currentFormat==VoiceFormatWavFallback)
-    {
-        static const int sampleRates[3]={11025, 22050, 44100};
-
         qualityHintLabel->setText(
-            tr("WAV, %1 Hz").arg(sampleRates[quality]));
-    }
+            tr("WAV, %1 Hz, %2").arg(profile.sampleRate).arg(qualityName));
     else
-    {
-        static const int bitRates[3]={24, 32, 48};
-        static const int sampleRates[3]={11025, 22050, 44100};
-
         qualityHintLabel->setText(
-            tr("Opus, %1 kbit/s, %2 Hz").arg(bitRates[quality]).arg(sampleRates[quality]));
-    }
+            tr("Opus, %1 Hz, %2").arg(profile.sampleRate).arg(qualityName));
 }
 
 

@@ -7622,16 +7622,16 @@ Please select single item for enabling edit operation.</source>
         <translation>Высокое</translation>
     </message>
     <message>
-        <source>Opus, %1 kbit/s, %2 Hz</source>
-        <translation>Opus, %1 кбит/с, %2 Гц</translation>
+        <source>Opus, %1 Hz, %2</source>
+        <translation>Opus, %1 Гц, %2</translation>
     </message>
     <message>
-        <source>MP3, %1 kbit/s, %2 Hz</source>
-        <translation>MP3, %1 кбит/с, %2 Гц</translation>
+        <source>MP3, %1 Hz, %2</source>
+        <translation>MP3, %1 Гц, %2</translation>
     </message>
     <message>
-        <source>WAV, %1 Hz</source>
-        <translation>WAV, %1 Гц</translation>
+        <source>WAV, %1 Hz, %2</source>
+        <translation>WAV, %1 Гц, %2</translation>
     </message>
     <message>
         <source>File name:</source>

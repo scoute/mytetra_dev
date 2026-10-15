@@ -6,10 +6,9 @@
 class QGroupBox;
 class QRadioButton;
 
-// Страница Voice notes: формат записи (Opus/MP3) по умолчанию.
-// Диалог записи предвыбирает его, переключать на ходу можно.
-// Неподдержанный бэкендом формат сбрасывается. Качество одно,
-// лучшее, выбора нет
+// Страница Voice notes: формат (Opus/MP3) и уровень (low/high)
+// записи по умолчанию. Диалог записи предвыбирает их, переключать
+// на ходу можно. Неподдержанный бэкендом формат сбрасывается
 class AppConfigPage_Voice : public ConfigPage
 {
     Q_OBJECT
@@ -29,6 +28,10 @@ protected:
     QGroupBox *formatBox;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
+
+    QGroupBox *qualityBox;
+    QRadioButton *lowRadio;
+    QRadioButton *highRadio;
 };
 
 #endif // APPCONFIGPAGE_VOICE_H

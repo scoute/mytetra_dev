@@ -50,6 +50,24 @@ void AppConfigPage_Voice::setupUi(void)
   else
     opusRadio->setChecked(true);
 
+  // Уровень по умолчанию из конфига: 0 low, иначе high
+  qualityBox=new QGroupBox(this);
+
+  lowRadio=new QRadioButton(this);
+  lowRadio->setText(tr("Low"));
+
+  highRadio=new QRadioButton(this);
+  highRadio->setText(tr("High"));
+
+  QButtonGroup *qualityGroup=new QButtonGroup(this);
+  qualityGroup->addButton(lowRadio);
+  qualityGroup->addButton(highRadio);
+
+  if(mytetraConfig.get_voiceNoteQuality()==0)
+    lowRadio->setChecked(true);
+  else
+    highRadio->setChecked(true);
+
   retranslateUi();
 }
 
@@ -67,8 +85,14 @@ void AppConfigPage_Voice::assembly(void)
   formatLayout->addWidget(mp3Radio);
   formatBox->setLayout(formatLayout);
 
+  QVBoxLayout *qualityLayout=new QVBoxLayout();
+  qualityLayout->addWidget(lowRadio);
+  qualityLayout->addWidget(highRadio);
+  qualityBox->setLayout(qualityLayout);
+
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(formatBox);
+  centralLayout->addWidget(qualityBox);
   centralLayout->addStretch();
   setLayout(centralLayout);
 }
@@ -80,6 +104,10 @@ void AppConfigPage_Voice::retranslateUi(void)
   formatBox->setTitle(tr("Default format"));
   opusRadio->setText(tr("Opus (.opus)"));
   mp3Radio->setText(tr("MP3 (.mp3)"));
+
+  qualityBox->setTitle(tr("Default quality"));
+  lowRadio->setText(tr("Low"));
+  highRadio->setText(tr("High"));
 }
 
 
@@ -94,7 +122,10 @@ int AppConfigPage_Voice::applyChanges(void)
   if(mytetraConfig.get_voiceNoteFormat()!=format)
     mytetraConfig.set_voiceNoteFormat(format);
 
-  // Ключ качества оставлен для совместимости: выбор убран,
-  // профиль один, лучший. Старые значения молча игнорируются
+  const int quality=lowRadio->isChecked() ? 0 : 1;
+
+  if(mytetraConfig.get_voiceNoteQuality()!=quality)
+    mytetraConfig.set_voiceNoteQuality(quality);
+
   return 0;
 }

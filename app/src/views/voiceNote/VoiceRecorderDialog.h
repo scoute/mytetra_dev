@@ -64,6 +64,7 @@ public:
 private slots:
 
     void onFormatRadio(bool checked);
+    void onQualityRadio(bool checked);
     void onFileNameEdited(const QString &text);
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
@@ -83,9 +84,17 @@ private:
         VoiceFormatWavFallback
     };
 
-    // Профиль лучшего качества: VBR-качество, целевой битрейт
-    // и частота. Выбор убран (один оптимум): Opus 16 кГц/24 кбит,
-    // MP3 22050 Гц/48 кбит. Частоты ниже режут голос слышимо
+    // Два уровня: low/high. Opus 48 кГц 16/32 кбит,
+    // MP3 32 кГц 24/48 кбит
+    enum VoiceQuality
+    {
+        VoiceQualityLow,
+        VoiceQualityHigh
+    };
+
+    // Профиль уровня: VBR-качество, целевой битрейт
+    // и частота. VBR оба уровня. Opus 48 кГц 16/32 кбит,
+    // MP3 32 кГц 24/48 кбит
     struct VoiceQualityProfile
     {
         QMultimedia::EncodingQuality quality;
@@ -93,9 +102,9 @@ private:
         int sampleRate;
     };
 
-    // Профиль формата. Статика чтобы стенд проверял параметры
-    // без микрофона и бэкенда
-    static VoiceQualityProfile qualityProfile(VoiceFormat format);
+    // Профиль формата и уровня. Статика чтобы стенд проверял
+    // параметры без микрофона и бэкенда
+    static VoiceQualityProfile qualityProfile(VoiceFormat format, VoiceQuality quality);
 
     // Завершить запись и решить про вставку. Вызывается из стопа
     // и из смены состояния: идемпотентно
@@ -132,6 +141,8 @@ private:
     QLabel *timeLabel;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
+    QRadioButton *qualityLowRadio;
+    QRadioButton *qualityHighRadio;
     QLabel *formatInfoLabel;
     QLineEdit *fileNameEdit;
     QComboBox *deviceCombo;
@@ -144,6 +155,7 @@ private:
     QTimer *timer;
 
     VoiceFormat currentFormat;
+    VoiceQuality currentQuality;
     bool opusAvailable;
     bool mp3Available;
     bool wavAvailable;

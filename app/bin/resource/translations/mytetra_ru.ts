@@ -4830,6 +4830,12 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Change note background color...</source>
         <translation>Изменить цвет фона заметки...</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1440"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2083"/>
+        <source>Configure theme...</source>
+        <translation>Настроить тему...</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

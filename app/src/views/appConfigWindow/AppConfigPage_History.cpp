@@ -101,6 +101,9 @@ void AppConfigPage_History::setupUi()
     squashDeleteOldest->setEnabled(squashActive);
     squashSmartMerge->setEnabled(squashActive);
     squashBundle10->setEnabled(squashActive);
+
+    // Итоговая серость одним слотом (см. выше)
+    updateSquashEnabled();
 }
 
 
@@ -110,14 +113,29 @@ void AppConfigPage_History::setupSignals()
     // и возврат галочки. Проверка здесь, а не в apply: отказ виден сразу
     connect(historyEnable, &QCheckBox::toggled, this, &AppConfigPage_History::onHistoryEnableToggled);
 
-    // Без мастер-тумблера сквош-настройки не при делах
-    connect(historyEnable, &QCheckBox::toggled, squashEnable, &QCheckBox::setEnabled);
-    connect(historyEnable, &QCheckBox::toggled, squashKeep, &QComboBox::setEnabled);
-    connect(historyEnable, &QCheckBox::toggled, squashKeepLabel, &QLabel::setEnabled);
-    connect(historyEnable, &QCheckBox::toggled, squashModeLabel, &QLabel::setEnabled);
-    connect(historyEnable, &QCheckBox::toggled, squashDeleteOldest, &QRadioButton::setEnabled);
-    connect(historyEnable, &QCheckBox::toggled, squashSmartMerge, &QRadioButton::setEnabled);
-    connect(historyEnable, &QCheckBox::toggled, squashBundle10, &QRadioButton::setEnabled);
+    // Серость одним слотом: лимит живет при включенной истории
+    // (нужен и ручной кнопке), а блок стратегий только при
+    // включенном автосжатии
+    connect(historyEnable, &QCheckBox::toggled, this, &AppConfigPage_History::updateSquashEnabled);
+    connect(squashEnable, &QCheckBox::toggled, this, &AppConfigPage_History::updateSquashEnabled);
+}
+
+
+// Единое состояние серости: чтобы два тумблера не дрались
+// за одни виджеты прямыми коннектами
+void AppConfigPage_History::updateSquashEnabled(void)
+{
+    const bool masterOn=historyEnable->isChecked();
+    const bool autoOn=masterOn && squashEnable->isChecked();
+
+    squashEnable->setEnabled(masterOn);
+    squashKeep->setEnabled(masterOn);
+    squashKeepLabel->setEnabled(masterOn);
+
+    squashModeLabel->setEnabled(autoOn);
+    squashDeleteOldest->setEnabled(autoOn);
+    squashSmartMerge->setEnabled(autoOn);
+    squashBundle10->setEnabled(autoOn);
 }
 
 
@@ -159,10 +177,15 @@ void AppConfigPage_History::assembly()
     QVBoxLayout *noteHistoryLayout=new QVBoxLayout;
     noteHistoryLayout->addWidget(historyEnable);
 
+    // Лимит отдельной строкой между включением и сжатием
+    QHBoxLayout *keepLayout=new QHBoxLayout;
+    keepLayout->addWidget(squashKeepLabel);
+    keepLayout->addWidget(squashKeep);
+    keepLayout->addStretch(1);
+    noteHistoryLayout->addLayout(keepLayout);
+
     QHBoxLayout *squashLayout=new QHBoxLayout;
     squashLayout->addWidget(squashEnable);
-    squashLayout->addWidget(squashKeepLabel);
-    squashLayout->addWidget(squashKeep);
     squashLayout->addStretch(1);
     noteHistoryLayout->addLayout(squashLayout);
 

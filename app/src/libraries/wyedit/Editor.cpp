@@ -820,6 +820,19 @@ void Editor::setTextarea(QString text)
 }
 
 
+void Editor::previewTextarea(const QString &text)
+{
+  textArea->setHtml(text);
+
+  // URL документа намеренно сохраняется: предпросмотр показывает
+  // версии той же записи, относительные src картинок резолвятся
+  // как раньше. Иначе картинки гаснут до первой перезагрузки
+
+  if(secretFormatter!=nullptr)
+    secretFormatter->repaintSecrets();
+}
+
+
 // Установка запрета или разрешения редактирования в области редактирования текста
 void Editor::setTextareaEditable(bool editable)
 {
@@ -851,6 +864,17 @@ void Editor::setTextareaEditable(bool editable)
 // Получение текста области редактирования в формате HTML
 QString Editor::getTextarea(void)
 {
+  return textArea->document()->toHtml("UTF-8");
+}
+
+
+QString Editor::getTextareaStable(void)
+{
+  // Та же сериализация что при сохранении: баблы уходят ссылками,
+  // живой документ и его ресурсы не трогаются
+  if(audioFormatter!=nullptr)
+    return audioFormatter->exportHtml();
+
   return textArea->document()->toHtml("UTF-8");
 }
 

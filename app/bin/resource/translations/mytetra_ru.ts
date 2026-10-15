@@ -1074,6 +1074,14 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <source>Reset</source>
         <translation type="vanished">Сбросить</translation>
     </message>
+    <message>
+        <source>Autosave</source>
+        <translation>Автосохранение</translation>
+    </message>
+    <message>
+        <source>Enable autosave, min</source>
+        <translation>Включить автосохранение, мин</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -7952,6 +7960,32 @@ Git-история в общем каталоге будет расти с ка�
     <message>
         <source>No differences from current text</source>
         <translation>Отличий от текущего текста нет</translation>
+    </message>
+    <message>
+        <source>Destroy newer versions?</source>
+        <translation>Уничтожить более новые версии?</translation>
+    </message>
+    <message>
+        <source>Rollback to "%1" (%2) will permanently destroy %3 newer version(s).
+The note text will be replaced by this version, no new commit will be created.
+This cannot be undone.</source>
+        <translation>Откат к "%1" (%2) навсегда уничтожит %3 более новую версию(и).
+Текст заметки будет заменен этой версией, новый коммит создан не будет.
+Это нельзя отменить.</translation>
+    </message>
+    <message>
+        <source>Destroy and rollback</source>
+        <translation>Уничтожить и откатить</translation>
+    </message>
+    <message>
+        <source>Rollback failed</source>
+        <translation>Откат не удался</translation>
+    </message>
+    <message>
+        <source>Can not destroy newer versions:
+%1</source>
+        <translation>Не удается уничтожить более новые версии:
+%1</translation>
     </message>
 </context>
 <context>

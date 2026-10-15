@@ -1,7 +1,9 @@
 #include <QWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QCheckBox>
+#include <QSpinBox>
 #include <QGroupBox>
 #include <QPushButton>
 
@@ -48,6 +50,16 @@ void AppConfigPage_Misc::setupUi(void)
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   enableCreateEmptyRecord->setChecked(mytetraConfig.getEnableCreateEmptyRecord());
 
+  // Умное автосохранение: срабатывает только при реальных правках
+  autosaveBox=new QGroupBox(this);
+  autosaveBox->setTitle(tr("Autosave"));
+  autosaveEnable=new QCheckBox(tr("Enable autosave, min"), this);
+  autosaveEnable->setChecked(mytetraConfig.get_autosaveEnable());
+  autosaveInterval=new QSpinBox(this);
+  autosaveInterval->setValue(mytetraConfig.get_autosaveInterval());
+  autosaveInterval->setRange(1, 999);
+  autosaveInterval->setEnabled(mytetraConfig.get_autosaveEnable());
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -58,6 +70,7 @@ void AppConfigPage_Misc::setupUi(void)
 void AppConfigPage_Misc::setupSignals(void)
 {
   connect(editMyTetraConfigFile, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedEditMyTetraConfigFile);
+  connect(autosaveEnable, &QCheckBox::toggled, autosaveInterval, &QSpinBox::setEnabled);
 }
 
 
@@ -72,12 +85,20 @@ void AppConfigPage_Misc::assembly(void)
   dangerLayout->addWidget(editMyTetraConfigFile);
   dangerBox->setLayout(dangerLayout);
 
+  // Автосохранение: галочка и минуты в одну строку
+  QHBoxLayout *autosaveLayout=new QHBoxLayout;
+  autosaveLayout->addWidget(autosaveEnable);
+  autosaveLayout->addWidget(autosaveInterval);
+  autosaveLayout->addStretch(1);
+  autosaveBox->setLayout(autosaveLayout);
+
 
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
+  centralLayout->addWidget(autosaveBox);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
@@ -100,6 +121,8 @@ void AppConfigPage_Misc::retranslateUi(void)
   printDebugMessages->setText(tr("Print debug messages to console"));
   enableActionLog->setText(tr("Enable action logging (experimental)"));
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
+  autosaveBox->setTitle(tr("Autosave"));
+  autosaveEnable->setText(tr("Enable autosave, min"));
 
   editMyTetraConfigFile->setText(tr("Edit config file"));
   dangerBox->setTitle(tr("Danger actions (Attention!)"));
@@ -129,6 +152,14 @@ int AppConfigPage_Misc::applyChanges(void)
   // Сохраняется настройка возможности создания записи, не содержащей текст
   if(mytetraConfig.getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
     mytetraConfig.setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
+
+  // Умное автосохранение: интервал подхватится сам на следующем
+  // срабатывании (таймер перечитывает конфиг каждый раз)
+  if(mytetraConfig.get_autosaveEnable()!=autosaveEnable->isChecked())
+    mytetraConfig.set_autosaveEnable(autosaveEnable->isChecked());
+
+  if(mytetraConfig.get_autosaveInterval()!=autosaveInterval->value())
+    mytetraConfig.set_autosaveInterval(autosaveInterval->value());
 
   return result;
 }

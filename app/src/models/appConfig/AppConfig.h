@@ -138,6 +138,11 @@ public:
     int  get_historySquashKeep(void);
     void set_historySquashKeep(int count);
 
+    // Мастер-тумблер ведения истории заметок. Выключенная история
+    // не снимается и диалог не открывается. По умолчанию ведется
+    bool get_historyEnable(void);
+    void set_historyEnable(bool flag);
+
     int  get_autoClosePasswordDelay(void);
     void set_autoClosePasswordDelay(int delay);
 

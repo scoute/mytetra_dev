@@ -6,6 +6,10 @@
 
 #include "ChangeHistory.h"
 #include "libraries/UnifiedDiff.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 static QString recordFileName(const QString &recordId)
@@ -25,6 +29,12 @@ bool ChangeHistory::snapshot(const QString &tetradir, const QString &recordId,
                              const QString &recordName, const QString &html)
 {
     if(tetradir.isEmpty() || recordId.isEmpty() || html.isEmpty())
+        return false;
+
+    // История выключена мастер-тумблером: тихо ничего не делаем.
+    // Гейт здесь, а не у вызывателей: безопасны все пути записи,
+    // включая будущие
+    if(!mytetraConfig.get_historyEnable())
         return false;
 
     if(!GitHelper::isAvailable())

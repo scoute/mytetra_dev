@@ -54,7 +54,8 @@ QString GitHelper::version(void)
 
 
 int GitHelper::run(const QString &workDir, const QStringList &args,
-                   QString *stdoutText, QString *stderrText, int timeoutMs)
+                   QString *stdoutText, QString *stderrText, int timeoutMs,
+                   const QByteArray *stdinData)
 {
     if(!isAvailable())
         return -1;
@@ -65,6 +66,12 @@ int GitHelper::run(const QString &workDir, const QStringList &args,
 
     if(!git.waitForStarted(10000))
         return -1;
+
+    if(stdinData!=nullptr)
+    {
+        git.write(*stdinData);
+        git.closeWriteChannel();
+    }
 
     if(!git.waitForFinished(timeoutMs))
     {
@@ -462,23 +469,35 @@ bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
     if(fileCommits.size()<=keepNewest)
         return true;
 
-    // Genesis (якорь отката) плюс свежие, середина под снос
-    QSet<QString> keepSet;
-    keepSet.insert(fileCommits.first().trimmed());
-    for(int i=fileCommits.size()-(keepNewest-1); i<fileCommits.size(); ++i)
-        keepSet.insert(fileCommits.at(i).trimmed());
+    // Свежая зона целиком: последние версии не трогаются никогда.
+    // Genesis отдельно: якорь отката
+    const int freshSize=qMin(20, keepNewest-1);
+    const int firstFresh=fileCommits.size()-freshSize;
 
-    QSet<QString> dropSet;
+    QSet<QString> pinned;
+    pinned.insert(fileCommits.first().trimmed());
+    for(int i=firstFresh; i<fileCommits.size(); ++i)
+        pinned.insert(fileCommits.at(i).trimmed());
+
+    // Умный отбор сносимых: шаги классифицируются, границы
+    // однонаправленных серий (точки разворота) хранятся.
+    // При недоступности содержимого тупой отбор: все кроме пинов
+    QSet<QString> dropSet=smartDropSet(dir, file, fileCommits, pinned,
+                                       keepNewest, freshSize);
+
+    if(dropSet.isEmpty())
+        return true;
+
+    // Хранимые файловые: все коммиты файла минус сносимые.
+    // Чужие файлы в это множество не входят и едут cherry-pick
+    QSet<QString> keepSet;
     for(const QString &rev : fileCommits)
     {
         const QString hash=rev.trimmed();
 
-        if(!keepSet.contains(hash))
-            dropSet.insert(hash);
+        if(!dropSet.contains(hash))
+            keepSet.insert(hash);
     }
-
-    if(dropSet.isEmpty())
-        return true;
 
     // База переигрывания: родитель старейшего сносимого.
     // Существует всегда: genesis хранится, сносится только середина
@@ -579,6 +598,14 @@ bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
                 return false;
             }
 
+            // Пустой перенос: содержимое совпало с текущим деревом
+            // (дубликат через версию). Коммитить нечего, версия
+            // поглощается без ошибки
+            if(run(dir, QStringList() << QStringLiteral("diff") << QStringLiteral("--quiet")
+                                      << QStringLiteral("HEAD") << QStringLiteral("--")
+                                      << file)==0)
+                continue;
+
             QStringList commitArgs;
             commitArgs << QStringLiteral("-c") << QStringLiteral("user.name=MyTetra")
                        << QStringLiteral("-c") << QStringLiteral("user.email=mytetra@local")
@@ -622,4 +649,211 @@ bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
     }
 
     return true;
+}
+
+
+QList<QByteArray> GitHelper::readBlobs(const QString &dir,
+                                       const QStringList &revs)
+{
+    QList<QByteArray> result;
+
+    if(!isAvailable() || revs.isEmpty())
+        return result;
+
+    QByteArray input;
+    for(const QString &rev : revs)
+        input+=rev.toLatin1()+QByteArrayLiteral("\n");
+
+    // Сырой QProcess: QString-конверсия run() режет NUL-байты,
+    // а содержимое обязано дойти побайтово
+    QProcess git;
+    git.setWorkingDirectory(dir);
+    git.start(QStringLiteral("git"),
+              QStringList() << QStringLiteral("cat-file") << QStringLiteral("--batch"));
+
+    if(!git.waitForStarted(10000))
+        return QList<QByteArray>();
+
+    git.write(input);
+    git.closeWriteChannel();
+
+    if(!git.waitForFinished(60000) || git.exitCode()!=0)
+        return QList<QByteArray>();
+
+    const QByteArray out=git.readAllStandardOutput();
+
+    // Разбор: "<blob-hash> blob <size>\n" + ровно size байт + "\n".
+    // Порядок гарантирован протоколом batch (строго по запросам),
+    // имя в заголовке это резолвленный хеш, а не строка запроса
+    int pos=0;
+    for(int n=0; n<revs.size(); ++n)
+    {
+        const int eol=out.indexOf('\n', pos);
+
+        if(eol<0)
+            return QList<QByteArray>();
+
+        const QList<QByteArray> header=out.mid(pos, eol-pos).split(' ');
+
+        if(header.size()<3 || header.at(1)!=QByteArrayLiteral("blob"))
+            return QList<QByteArray>();
+
+        bool ok=false;
+        const int size=header.at(2).toInt(&ok);
+
+        if(!ok || size<0 || eol+1+size>out.size())
+            return QList<QByteArray>();
+
+        result.append(out.mid(eol+1, size));
+        pos=eol+1+size;
+
+        // Завершающий перенос после содержимого
+        if(pos<out.size() && out.at(pos)=='\n')
+            ++pos;
+    }
+
+    if(result.size()!=revs.size())
+        return QList<QByteArray>();
+
+    return result;
+}
+
+
+GitHelper::StepDirection GitHelper::stepDirection(const QSet<QString> &before,
+                                                  const QSet<QString> &after)
+{
+    bool added=false;
+    bool removed=false;
+
+    for(const QString &line : after)
+    {
+        if(!before.contains(line))
+        {
+            added=true;
+            break;
+        }
+    }
+
+    for(const QString &line : before)
+    {
+        if(!after.contains(line))
+        {
+            removed=true;
+            break;
+        }
+    }
+
+    if(added && !removed)
+        return StepAdd;
+
+    if(!added && removed)
+        return StepDelete;
+
+    return StepMixed;
+}
+
+
+QSet<QString> GitHelper::smartDropSet(const QString &dir, const QString &file,
+                                      const QStringList &fileCommits,
+                                      const QSet<QString> &pinned,
+                                      int keepNewest, int freshSize)
+{
+    Q_UNUSED(freshSize)
+
+    const int count=fileCommits.size();
+
+    // Кандидаты: все кроме пинов (genesis, свежая зона)
+    QList<int> candidates;
+    for(int i=0; i<count; ++i)
+    {
+        if(!pinned.contains(fileCommits.at(i).trimmed()))
+            candidates.append(i);
+    }
+
+    if(candidates.isEmpty())
+        return QSet<QString>();
+
+    // Направления шагов по содержимому одним процессом.
+    // Облом в любом месте: тупой отбор (все кандидаты под снос)
+    QSet<QString> dropSet;
+    QStringList blobRevs;
+    for(int i=0; i<count; ++i)
+        blobRevs << fileCommits.at(i).trimmed()+QStringLiteral(":")+file;
+
+    const QList<QByteArray> blobs=readBlobs(dir, blobRevs);
+
+    if(blobs.size()!=count)
+    {
+        for(int i : candidates)
+            dropSet.insert(fileCommits.at(i).trimmed());
+
+        return dropSet;
+    }
+
+    QList<QSet<QString>> lineSets;
+    for(const QByteArray &blob : blobs)
+    {
+        QSet<QString> lines;
+        for(const QByteArray &line : blob.split('\n'))
+            lines.insert(QString::fromUtf8(line));
+
+        lineSets.append(lines);
+    }
+
+    // Класс каждого шага между соседними версиями
+    QList<StepDirection> stepClass;
+    for(int i=0; i+1<count; ++i)
+        stepClass.append(stepDirection(lineSets.at(i), lineSets.at(i+1)));
+
+    // Границы серий: версии на стыке направлений хранятся
+    // (точки разворота информативнее середины серий)
+    QSet<int> protectedIdx;
+    for(int i=1; i+1<count; ++i)
+    {
+        if(stepClass.at(i-1)!=stepClass.at(i))
+            protectedIdx.insert(i);
+    }
+
+    // Фаза A: длинные серии (10+ шагов) прореживаются:
+    // внутри хранится каждая 10-я версия
+    {
+        int runStart=0;
+
+        for(int s=1; s<=stepClass.size(); ++s)
+        {
+            if(s<stepClass.size() && stepClass.at(s)==stepClass.at(runStart))
+                continue;
+
+            // Серия шагов [runStart..s): версии [runStart..s].
+            // Внутри длинной хранится каждая 10-я, остальные сносимы
+            if(s-runStart>=10)
+            {
+                for(int j=runStart+1; j<s; ++j)
+                {
+                    if((j-runStart)%10==0)
+                        protectedIdx.insert(j);
+                }
+            }
+
+            runStart=s;
+        }
+    }
+
+    // Фаза B: сколько надо снести до бюджета, старейшими
+    // внутренними (не границы, не пины)
+    int need=count-keepNewest;
+
+    for(int i=0; i<count && need>0; ++i)
+    {
+        if(pinned.contains(fileCommits.at(i).trimmed()))
+            continue;
+
+        if(protectedIdx.contains(i))
+            continue;
+
+        dropSet.insert(fileCommits.at(i).trimmed());
+        --need;
+    }
+
+    return dropSet;
 }

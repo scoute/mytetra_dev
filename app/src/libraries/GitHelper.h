@@ -21,10 +21,11 @@ public:
     static QString version(void);
 
     // Запуск git с аргументами в каталоге. Возвращает код,
-    // вывод забирается по указателям. Таймаут 60с по умолчанию
+    // вывод забирается по указателям. Таймаут 60с по умолчанию.
+    // stdinData (если задан) пишется в stdin процесса
     static int run(const QString &workDir, const QStringList &args,
                    QString *stdoutText=nullptr, QString *stderrText=nullptr,
-                   int timeoutMs=60000);
+                   int timeoutMs=60000, const QByteArray *stdinData=nullptr);
 
     // Это репозиторий (есть .git выше по дереву)
     static bool isRepo(const QString &dir);
@@ -79,14 +80,44 @@ public:
                                     const QString &targetRev,
                                     QString *errorMessage=nullptr);
 
-    // Сжать историю файла снизу: из коммитов файла keepNewest
-    // хранит genesis (самый старый, якорь отката) и newest-1 свежих,
-    // середина уничтожается. Снапшоты полные, сворачивать нечего.
-    // Чужие файлы переигрываются. keepNewest<2 отказ.
-    // Текст ошибки опционально
+    // Умное сжатие истории файла снизу до бюджета keepNewest.
+    // Направление шагов (добавление/удаление/смешанное) считается
+    // по множествам строк; соседние однонаправленные шаги склеиваются
+    // (добавление с добавлением), точки разворота хранятся всегда.
+    // Пины: genesis (якорь отката) и свежая зона. keepNewest<2 отказ.
+    // При недоступности содержимого деградирует к тупому отбору
+    // (genesis плюс свежие). Текст ошибки опционально
     static bool squashFileHistory(const QString &dir, const QString &file,
                                   int keepNewest,
                                   QString *errorMessage=nullptr);
+
+    // Содержимое blob-объектов одним процессом (cat-file --batch).
+    // Порядок как в revs. Пусто при любой ошибке
+    static QList<QByteArray> readBlobs(const QString &dir,
+                                       const QStringList &revs);
+
+    // Умный отбор сносимых коммитов файла (от старых к новым):
+    // пины и границы однонаправленных серий хранятся, длинные серии
+    // прореживаются по каждой 10-й, остаток добирается старейшими
+    // внутренними до бюджета. Пусто если сносить нечего
+    static QSet<QString> smartDropSet(const QString &dir, const QString &file,
+                                      const QStringList &fileCommits,
+                                      const QSet<QString> &pinned,
+                                      int keepNewest, int freshSize);
+
+    // Направление шага между соседними версиями по множествам строк:
+    // только добавления, только удаления, иначе смешанное.
+    // Эвристика для склейки однонаправленных шагов, turning points
+    // ею не размываются (сомнительное классифицируется смешанным)
+    enum StepDirection
+    {
+        StepAdd,        // Строки только добавились
+        StepDelete,     // Строки только удалились
+        StepMixed       // Правки внутри строк и прочее
+    };
+
+    static StepDirection stepDirection(const QSet<QString> &before,
+                                       const QSet<QString> &after);
 };
 
 #endif /* _GITHELPER_H_ */

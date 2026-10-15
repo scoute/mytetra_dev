@@ -212,6 +212,9 @@ private slots:
     // Клик по пункту меню Темы: переключить интерфейс на выбранную тему
     void onThemeMenuTriggered(QAction *action);
 
+    // Пункт «Настроить тему»: то же окно, что страница Themes в настройках
+    void onThemeConfigure(void);
+
     // Меню Вид: дубли быстрых переключателей отображения
     void onViewHeaderToggled(bool checked);
     void onViewFavoritesToggled(bool checked);
@@ -321,6 +324,7 @@ private:
 
     // Меню Темы в menubar: один клик вместо похода в настройки
     QMenu *themesMenu=nullptr;
+    QAction *themeConfigureAction=nullptr;
 
     // Меню Вид в menubar между Tools и Themes: шапка, избранное,
     // цвет секрета, бумага

@@ -10,6 +10,10 @@
 
 #include "ChangeHistoryDialog.h"
 #include "libraries/UnifiedDiff.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
@@ -32,6 +36,8 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
     statusLabel=new QLabel(this);
     rollbackButton=new QPushButton(tr("Rollback to selected"), this);
     rollbackButton->setEnabled(false);
+    compactButton=new QPushButton(tr("Compact history"), this);
+    compactButton->setEnabled(false);
     closeButton=new QPushButton(tr("Close"), this);
 
     QSplitter *splitter=new QSplitter(Qt::Horizontal, this);
@@ -42,6 +48,7 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
 
     QHBoxLayout *buttonsLayout=new QHBoxLayout();
     buttonsLayout->addWidget(statusLabel, 1);
+    buttonsLayout->addWidget(compactButton);
     buttonsLayout->addWidget(rollbackButton);
     buttonsLayout->addWidget(closeButton);
 
@@ -51,28 +58,14 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
     setLayout(centralLayout);
 
     versionList=ChangeHistory::versions(tetradir, recordId);
-
-    for(const ChangeHistory::Version &version : versionList)
-    {
-        // Штамп времени в хвосте темы ("Имя (2026-10-15 15:26:16)")
-        // дублирует дату слева: для показа срезается, в git остается
-        QString subject=version.subject;
-        subject.remove(QRegularExpression(QStringLiteral("\\s*\\(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\)$")));
-        versionsList->addItem(version.date+QStringLiteral("  ")+subject);
-    }
-
-    if(versionList.isEmpty())
-        statusLabel->setText(tr("No saved versions yet"));
-    else
-    {
-        statusLabel->setText(tr("%1 versions").arg(versionList.size()));
-        versionsList->setCurrentRow(0);
-    }
+    refreshVersionList();
 
     connect(versionsList, &QListWidget::currentRowChanged,
             this,          &ChangeHistoryDialog::onVersionSelected);
     connect(rollbackButton, &QPushButton::clicked,
             this,            &ChangeHistoryDialog::onRollback);
+    connect(compactButton, &QPushButton::clicked,
+            this,           &ChangeHistoryDialog::onCompact);
     connect(closeButton, &QPushButton::clicked,
             this,          &ChangeHistoryDialog::reject);
 
@@ -115,6 +108,51 @@ void ChangeHistoryDialog::updatePreview(void)
         return;
 
     emit previewRequested(content);
+}
+
+
+// Перечитать версии и перестроить список (после сжатия).
+// Выбранной становится новейшая, превью и diff обновляются следом
+void ChangeHistoryDialog::refreshVersionList(void)
+{
+    versionsList->clear();
+
+    for(const ChangeHistory::Version &version : versionList)
+    {
+        // Штамп времени в хвосте темы ("Имя (2026-10-15 15:26:16)")
+        // дублирует дату слева: для показа срезается, в git остается
+        QString subject=version.subject;
+        subject.remove(QRegularExpression(QStringLiteral("\\s*\\(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\)$")));
+        versionsList->addItem(version.date+QStringLiteral("  ")+subject);
+    }
+
+    if(versionList.isEmpty())
+        statusLabel->setText(tr("No saved versions yet"));
+    else
+    {
+        statusLabel->setText(tr("%1 versions").arg(versionList.size()));
+        versionsList->setCurrentRow(0);
+    }
+}
+
+
+// Ручное сжатие истории по лимиту из настроек.
+// Работает независимо от тумблера авточки: раз нажали, значит надо
+void ChangeHistoryDialog::onCompact(void)
+{
+    QString squashError;
+
+    if(!ChangeHistory::squashOldVersions(tetradir, recordId,
+                                         qMax(2, mytetraConfig.get_historySquashKeep()),
+                                         &squashError))
+    {
+        QMessageBox::critical(this, tr("Compaction failed"),
+                              tr("Can not squash old versions:\n%1").arg(squashError));
+        return;
+    }
+
+    versionList=ChangeHistory::versions(tetradir, recordId);
+    refreshVersionList();
 }
 
 
@@ -183,10 +221,12 @@ void ChangeHistoryDialog::updateDiff(void)
     {
         diffView->clear();
         rollbackButton->setEnabled(false);
+        compactButton->setEnabled(false);
         return;
     }
 
     rollbackButton->setEnabled(true);
+    compactButton->setEnabled(true);
 
     const QString diff=ChangeHistory::diffToCurrent(tetradir, recordId,
                                                     versionList.at(row).rev,

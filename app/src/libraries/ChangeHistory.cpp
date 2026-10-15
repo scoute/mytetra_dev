@@ -181,7 +181,7 @@ bool ChangeHistory::resetToVersion(const QString &tetradir, const QString &recor
 
 
 bool ChangeHistory::squashOldVersions(const QString &tetradir, const QString &recordId,
-                                      int keepNewest, QString *errorMessage)
+                                      int keepNewest, int mode, QString *errorMessage)
 {
     if(tetradir.isEmpty() || recordId.isEmpty())
     {
@@ -207,5 +207,5 @@ bool ChangeHistory::squashOldVersions(const QString &tetradir, const QString &re
     }
 
     return GitHelper::squashFileHistory(dir, recordFileName(recordId),
-                                        keepNewest, errorMessage);
+                                        keepNewest, mode, errorMessage);
 }

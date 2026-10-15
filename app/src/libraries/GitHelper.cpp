@@ -412,7 +412,7 @@ bool GitHelper::truncateFileHistory(const QString &dir, const QString &file,
 
 
 bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
-                                  int keepNewest, QString *errorMessage)
+                                  int keepNewest, int mode, QString *errorMessage)
 {
     if(!isRepo(dir))
     {
@@ -469,35 +469,81 @@ bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
     if(fileCommits.size()<=keepNewest)
         return true;
 
-    // Свежая зона целиком: последние версии не трогаются никогда.
-    // Genesis отдельно: якорь отката
-    const int freshSize=qMin(20, keepNewest-1);
-    const int firstFresh=fileCommits.size()-freshSize;
+    const int count=fileCommits.size();
 
-    QSet<QString> pinned;
-    pinned.insert(fileCommits.first().trimmed());
-    for(int i=firstFresh; i<fileCommits.size(); ++i)
-        pinned.insert(fileCommits.at(i).trimmed());
-
-    // Умный отбор сносимых: шаги классифицируются, границы
-    // однонаправленных серий (точки разворота) хранятся.
-    // При недоступности содержимого тупой отбор: все кроме пинов
-    QSet<QString> dropSet=smartDropSet(dir, file, fileCommits, pinned,
-                                       keepNewest, freshSize);
-
-    if(dropSet.isEmpty())
-        return true;
-
-    // Хранимые файловые: все коммиты файла минус сносимые.
-    // Чужие файлы в это множество не входят и едут cherry-pick
+    // Хранимые по стратегии. Genesis (индекс 0) якорь отката,
+    // хранится во всех стратегиях
     QSet<QString> keepSet;
+    keepSet.insert(fileCommits.first().trimmed());
+
+    if(mode==0)
+    {
+        // Удалить старые: хранятся genesis плюс свежие.
+        // Дефолтная стратегия
+        for(int i=count-(keepNewest-1); i<count; ++i)
+            keepSet.insert(fileCommits.at(i).trimmed());
+    }
+    else if(mode==2)
+    {
+        // Паковать каждую 10-ю исключая свежие 10: свежие целиком,
+        // ниже каждая 10-я назад от границы свежей зоны.
+        // Перебор сверх бюджета сносится старейшими пакетами
+        const int freshCount=qMin(10, keepNewest-1);
+        const int boundary=count-freshCount;
+
+        for(int i=boundary; i<count; ++i)
+            keepSet.insert(fileCommits.at(i).trimmed());
+
+        QList<int> bundles;
+        for(int i=boundary-10; i>0; i-=10)
+            bundles.append(i);
+
+        // Сколько пакетов влезает сверх genesis и свежей зоны
+        int room=keepNewest-1-freshCount;
+
+        // Свежие пакеты с конца: старые пакеты уходят первыми
+        for(int b=bundles.size()-1; b>=0 && room>0; --b)
+        {
+            keepSet.insert(fileCommits.at(bundles.at(b)).trimmed());
+            --room;
+        }
+    }
+    else
+    {
+        // Склеить похожие соседние: умный отбор сносимых
+        // (точки разворота и свежая зона хранятся).
+        // При недоступности содержимого тупой отбор
+        const int freshSize=qMin(20, keepNewest-1);
+        const int firstFresh=count-freshSize;
+
+        QSet<QString> pinned=keepSet;
+        for(int i=firstFresh; i<count; ++i)
+            pinned.insert(fileCommits.at(i).trimmed());
+
+        const QSet<QString> smartDrop=smartDropSet(dir, file, fileCommits, pinned,
+                                                    keepNewest, freshSize);
+
+        for(const QString &rev : fileCommits)
+        {
+            const QString hash=rev.trimmed();
+
+            if(!smartDrop.contains(hash))
+                keepSet.insert(hash);
+        }
+    }
+
+    // Сносимые: все коммиты файла минус хранимые
+    QSet<QString> dropSet;
     for(const QString &rev : fileCommits)
     {
         const QString hash=rev.trimmed();
 
-        if(!dropSet.contains(hash))
-            keepSet.insert(hash);
+        if(!keepSet.contains(hash))
+            dropSet.insert(hash);
     }
+
+    if(dropSet.isEmpty())
+        return true;
 
     // База переигрывания: родитель старейшего сносимого.
     // Существует всегда: genesis хранится, сносится только середина
@@ -853,6 +899,18 @@ QSet<QString> GitHelper::smartDropSet(const QString &dir, const QString &file,
 
         dropSet.insert(fileCommits.at(i).trimmed());
         --need;
+    }
+
+    // Последний рубеж: склеивать нечего (все точки разворота),
+    // а бюджет превышен. Сносится старейшее кроме genesis,
+    // иначе лимит недостижим в принципе
+    if(dropSet.isEmpty() && need>0)
+    {
+        for(int i=1; i<count && need>0; ++i)
+        {
+            dropSet.insert(fileCommits.at(i).trimmed());
+            --need;
+        }
     }
 
     return dropSet;

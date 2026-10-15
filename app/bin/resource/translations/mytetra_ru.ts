@@ -797,6 +797,22 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Enable note history tracking</source>
         <translation>Включить ведение истории заметок</translation>
     </message>
+    <message>
+        <source>What to do on limit excess:</source>
+        <translation>Что делать при превышении лимита:</translation>
+    </message>
+    <message>
+        <source>Delete oldest entries</source>
+        <translation>Удалять самые старые записи</translation>
+    </message>
+    <message>
+        <source>Merge similar neighbors</source>
+        <translation>Объединять похожие записи рядом</translation>
+    </message>
+    <message>
+        <source>Compress every 10 entries into one except the latest 10</source>
+        <translation>Сжимать каждые 10 записей в одну, исключая последние 10</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -7773,10 +7789,10 @@ Old versions are removed only above the limit; the first version is always kept.
     </message>
     <message>
         <source>Compact the history of "%1"?
-%2 old version(s) will be permanently destroyed, %3 will be kept (the first and the newest).
+%2 old version(s) will be permanently destroyed, at most %3 will be kept.
 This cannot be undone.</source>
         <translation>Сжать историю "%1"?
-%2 старая версия(и) будут навсегда уничтожены, %3 останутся (первая и новейшие).
+%2 старая версия(и) будут навсегда уничтожены, останется не более %3.
 Это нельзя отменить.</translation>
     </message>
 </context>

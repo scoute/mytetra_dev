@@ -664,7 +664,7 @@ MyTetra が起動している必要があります。</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Squash old note versions automatically</source>
+        <source>Squash note history automatically</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6243,6 +6243,17 @@ This cannot be undone.</source>
     <message>
         <source>Can not squash old versions:
 %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to squash: %1 version(s), the limit is %2.
+Old versions are removed only above the limit; the first version is always kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact the history of "%1"?
+%2 old version(s) will be permanently destroyed, %3 will be kept (the first and the newest).
+This cannot be undone.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

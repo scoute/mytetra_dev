@@ -131,7 +131,7 @@ public:
     void set_autosaveInterval(int minutes);
 
     // Сквош истории изменений: автосжатие снизу по лимиту.
-    // По умолчанию выключено, хранить 100 (genesis плюс свежие)
+    // По умолчанию включено, хранить 100 (genesis плюс свежие)
     bool get_historySquashEnable(void);
     void set_historySquashEnable(bool flag);
 

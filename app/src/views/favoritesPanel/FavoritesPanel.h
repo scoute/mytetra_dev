@@ -70,6 +70,7 @@ protected:
 private slots:
 
     void onNoteClicked(QListWidgetItem *item);
+    void onNoteDoubleClicked(QListWidgetItem *item);
     void onFavoritesContextMenu(const QPoint &pos);
     void onRemoveFavorite(void);
     void onTreeMetadataSaved(void);

@@ -211,8 +211,8 @@ Cela peut arriver s&apos;il ne reste plus d&apos;espace libre sur le disque ou s
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
-        <source>Run MyTetra in a minimized window</source>
-        <translation>Lancer MyTetra dans une fenêtre réduite</translation>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation>Lancer SyncTetra dans une fenêtre réduite</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
@@ -441,19 +441,19 @@ Cela peut arriver s&apos;il ne reste plus d&apos;espace libre sur le disque ou s
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
         <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
-Run: mytetra --control --clipboard [--url]
+Run: synctetra --control --clipboard [--url]
 Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
-MyTetra must be running.</source>
+SyncTetra must be running.</source>
         <translation>Le clipper enregistre le presse-papiers du système dans une note de la branche unsorted_notes.
-Lancement : mytetra --control --clipboard [--url]
+Lancement : synctetra --control --clipboard [--url]
 Associez-le à un raccourci global du système, par exemple : /path/to/start.sh --control --clipboard
-MyTetra doit être en cours d&apos;exécution.</translation>
+SyncTetra doit être en cours d&apos;exécution.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
-        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
-        <translation>Enregistre le presse-papiers du système dans une note : mytetra --control --clipboard [--url]</translation>
+        <source>Saves the OS clipboard into a note: synctetra --control --clipboard [--url]</source>
+        <translation>Enregistre le presse-papiers du système dans une note : synctetra --control --clipboard [--url]</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="105"/>
@@ -514,8 +514,8 @@ MyTetra doit être en cours d&apos;exécution.</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
-        <source>Ask the password at MyTetra startup</source>
-        <translation>Demander le mot de passe au démarrage de MyTetra</translation>
+        <source>Ask the password at SyncTetra startup</source>
+        <translation>Demander le mot de passe au démarrage de SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="82"/>
@@ -819,19 +819,19 @@ MyTetra doit être en cours d&apos;exécution.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
-        <source>MCP lets an AI client (opencode, Claude Code) read and search MyTetra notes.
+        <source>MCP lets an AI client (opencode, Claude Code) read and search SyncTetra notes.
 
-Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this MyTetra.
+Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this SyncTetra.
 
 Server modes:
 --mcp-ro: read-only (recommended)
 --mcp-rw: create and update notes, no delete
 --mcp-rw-with-delete: full write, deletes go to trash
 
-While the AI writes, MyTetra shows a banner. Keep read-only unless writes are needed.
+While the AI writes, SyncTetra shows a banner. Keep read-only unless writes are needed.
 
 Claude Code terminal way:
-claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
+claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -948,14 +948,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
-        <source>Synchronize at MyTetra startup</source>
-        <translation>Synchroniser au démarrage de MyTetra</translation>
+        <source>Synchronize at SyncTetra startup</source>
+        <translation>Synchroniser au démarrage de SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
-        <source>Synchronize when exit from MyTetra</source>
-        <translation>Synchroniser à la sortie de MyTetra</translation>
+        <source>Synchronize when exit from SyncTetra</source>
+        <translation>Synchroniser à la sortie de SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="48"/>
@@ -1794,9 +1794,9 @@ Ce répertoire doit contenir le fichier mytetra.xml.</translation>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
         <source>For database append please select trash directory.
-MyTetra will put changed notes file copies and changed item tree copies to this directory</source>
+SyncTetra will put changed notes file copies and changed item tree copies to this directory</source>
         <translation>Pour ajouter la base, veuillez choisir le répertoire de la corbeille.
-MyTetra y déposera les copies des fichiers des notes modifiées et de l&apos;arbre des notes</translation>
+SyncTetra y déposera les copies des fichiers des notes modifiées et de l&apos;arbre des notes</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="395"/>
@@ -2855,8 +2855,8 @@ Enter your old password and new password.
     </message>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
-        <source>MyTetra: Password</source>
-        <translation>MyTetra : Mot de passe</translation>
+        <source>SyncTetra: Password</source>
+        <translation>SyncTetra : Mot de passe</translation>
     </message>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="237"/>
@@ -3487,8 +3487,8 @@ Essayez une recherche dans toute la base.</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
-        <source>Welcome to MyTetra v.</source>
-        <translation>Bienvenue dans MyTetra v.</translation>
+        <source>Welcome to SyncTetra v.</source>
+        <translation>Bienvenue dans SyncTetra v.</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="25"/>
@@ -3514,9 +3514,9 @@ dans le répertoire actuel &quot;%1&quot;.</translation>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="114"/>
         <source>Can&apos;t create portable version.
-Сan&apos;t write data to MyTetra binary file directory &quot;%1&quot;.</source>
+Сan&apos;t write data to SyncTetra binary file directory &quot;%1&quot;.</source>
         <translation>Impossible de créer la version portable.
-Impossible d&apos;écrire les données dans le répertoire du binaire MyTetra &quot;%1&quot;.</translation>
+Impossible d&apos;écrire les données dans le répertoire du binaire SyncTetra &quot;%1&quot;.</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="142"/>
@@ -3529,9 +3529,9 @@ Impossible d&apos;écrire les données dans le répertoire du binaire MyTetra &q
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
         <source>Unsupported version of the database format.
-You need to update MyTetra.</source>
+You need to update SyncTetra.</source>
         <translation>Version non prise en charge du format de la base.
-Veuillez mettre à jour MyTetra.</translation>
+Veuillez mettre à jour SyncTetra.</translation>
     </message>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="335"/>
@@ -3604,7 +3604,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
-        <source>MCP session is active%1, MyTetra works in read-only mode</source>
+        <source>MCP session is active%1, SyncTetra works in read-only mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3768,8 +3768,8 @@ Veuillez mettre à jour MyTetra.</translation>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
-        <source>About MyTetra</source>
-        <translation>À propos de MyTetra</translation>
+        <source>About SyncTetra</source>
+        <translation>À propos de SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1383"/>
@@ -3812,8 +3812,8 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
-        <source>MyTetra: can&apos;t synchronization</source>
-        <translation>MyTetra : synchronisation impossible</translation>
+        <source>SyncTetra: can&apos;t synchronization</source>
+        <translation>SyncTetra : synchronisation impossible</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2502"/>
@@ -3822,8 +3822,8 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
-        <source>MyTetra synchronization</source>
-        <translation>Synchronisation MyTetra</translation>
+        <source>SyncTetra synchronization</source>
+        <translation>Synchronisation SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2522"/>
@@ -4152,9 +4152,9 @@ dans les paramètres de l&apos;application, rubrique Chiffrement.</translation>
     <message>
         <location filename="../../../src/libraries/PeriodicCheckBase.cpp" line="65"/>
         <source>The database was changed by external application or services.
-MyTetra reload the database tree to keep data consistency.</source>
+SyncTetra reload the database tree to keep data consistency.</source>
         <translation>La base a été modifiée par une application ou un service externe.
-MyTetra recharge l&apos;arbre pour continuer avec les nouvelles données.</translation>
+SyncTetra recharge l&apos;arbre pour continuer avec les nouvelles données.</translation>
     </message>
 </context>
 <context>
@@ -4169,8 +4169,8 @@ MyTetra recharge l&apos;arbre pour continuer avec les nouvelles données.</trans
     <name>PrintPreview</name>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
-        <source>MyTetra - Print Preview</source>
-        <translation>MyTetra - Aperçu avant impression</translation>
+        <source>SyncTetra - Print Preview</source>
+        <translation>SyncTetra - Aperçu avant impression</translation>
     </message>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="88"/>
@@ -4262,10 +4262,10 @@ ou que le fichier cible %3 existe déjà.</translation>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
         <source>The database is not consistent.
 The directory %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
+SyncTetra will try to create a blank entry to fix it.</source>
         <translation>La base de données est incohérente.
 Le répertoire %1 est introuvable.
-MyTetra va créer une note vide pour corriger cela.</translation>
+SyncTetra va créer une note vide pour corriger cela.</translation>
     </message>
     <message>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1061"/>
@@ -4277,10 +4277,10 @@ MyTetra va créer une note vide pour corriger cela.</translation>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
         <source>The database is not consistent.
 The file %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
+SyncTetra will try to create a blank entry to fix it.</source>
         <translation>La base de données est incohérente.
 Le fichier %1 est introuvable.
-MyTetra va créer une note vide pour corriger cela.</translation>
+SyncTetra va créer une note vide pour corriger cela.</translation>
     </message>
     <message>
         <location filename="../../../src/models/tree/TreeItem.cpp" line="104"/>
@@ -4290,8 +4290,8 @@ MyTetra va créer une note vide pour corriger cela.</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
-        <source>MyTetra settings</source>
-        <translation>Paramètres de MyTetra</translation>
+        <source>SyncTetra settings</source>
+        <translation>Paramètres de SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
@@ -5573,8 +5573,8 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
     <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="227"/>
-        <source>Do not use these shortcuts in MyTetra.</source>
-        <translation>Ne les utilisez pas dans MyTetra.</translation>
+        <source>Do not use these shortcuts in SyncTetra.</source>
+        <translation>Ne les utilisez pas dans SyncTetra.</translation>
     </message>
 </context>
 <context>

@@ -224,7 +224,7 @@ void ShortcutSettingsScreen::onInfoClick()
     text+="F5<br/>";
     text+="<br/>";
     text+=tr("<b>Warning:</b> Some keys sequences are bindings as global hot keys in your OS. ");
-    text+=tr("Do not use these shortcuts in MyTetra.");
+    text+=tr("Do not use these shortcuts in SyncTetra.");
 
     QMessageBox msgBox;
     msgBox.setText(text);

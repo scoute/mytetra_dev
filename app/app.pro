@@ -80,7 +80,7 @@ contains(TARGET_OS, ANY_OS) {
 }
 
 
-TARGET = mytetra
+TARGET = synctetra
 RESOURCES = bin/mytetra.qrc \
             bin/icons.qrc \ 
             bin/themes.qrc 
@@ -97,7 +97,7 @@ INCLUDEPATH += $${_PRO_FILE_PWD_}/src
 
 contains(TARGET_OS, ANY_OS) {
   message(Building the any OS version...)
-  SYSTEM_PROGRAM_NAME=mytetra
+  SYSTEM_PROGRAM_NAME=synctetra
   BINARY_INSTALL_PATH=/usr/local/bin
 }
 
@@ -124,22 +124,22 @@ INSTALLS+=target
 
 desktop_file.path=/usr/share/applications
 contains(TARGET_OS, ANY_OS) {
-  desktop_file.files=desktop/any/mytetra.desktop
+  desktop_file.files=desktop/any/synctetra.desktop
 }
 contains(TARGET_OS, MEEGO_OS) {
-  desktop_file.files=desktop/meego/mytetra.desktop
+  desktop_file.files=desktop/meego/synctetra.desktop
 }
 contains(TARGET_OS, ANDROID_OS) {
-  desktop_file.files=desktop/any/mytetra.desktop
+  desktop_file.files=desktop/any/synctetra.desktop
 }
 INSTALLS+=desktop_file
 
 icon_scalable_file.path=/usr/share/icons/hicolor/scalable/apps
-icon_scalable_file.files=desktop/mytetra.svg
+icon_scalable_file.files=desktop/synctetra.svg
 INSTALLS+=icon_scalable_file
 
 icon_48_file.path=/usr/share/icons/hicolor/48x48/apps
-icon_48_file.files=desktop/mytetra.png
+icon_48_file.files=desktop/synctetra.png
 INSTALLS+=icon_48_file
 
 

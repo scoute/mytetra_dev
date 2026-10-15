@@ -20,7 +20,7 @@ InstallDialog::InstallDialog(QWidget *parent) :
 
     this->setupSignals();
 
-    ui->m_title->setText( tr("Welcome to MyTetra v.")+QString::number(APPLICATION_RELEASE_VERSION)+'.'+QString::number(APPLICATION_RELEASE_SUBVERSION)+'.'+QString::number(APPLICATION_RELEASE_MICROVERSION)+"!" );
+    ui->m_title->setText( tr("Welcome to SyncTetra v.")+QString::number(APPLICATION_RELEASE_VERSION)+'.'+QString::number(APPLICATION_RELEASE_SUBVERSION)+'.'+QString::number(APPLICATION_RELEASE_MICROVERSION)+"!" );
 
     ui->m_text->setText( tr("Please select a knowledge base installation mode:") );
 }
@@ -111,7 +111,7 @@ void InstallDialog::update()
     }
     else
     {
-        ui->m_labelPortable->setText( tr("Can't create portable version.\nСan't write data to MyTetra binary file directory \"%1\".").
+        ui->m_labelPortable->setText( tr("Can't create portable version.\nСan't write data to SyncTetra binary file directory \"%1\".").
                                       arg(m_portableFullCurrentPath) );
         ui->m_radioButtonPortable->setEnabled(false);
     }

@@ -88,8 +88,8 @@ void AppConfigPage_Clipper::setupUi(void)
   // название рисуется своей строкой чтобы рядом встал знак вопроса
   clipperBox=new QGroupBox(this);
   clipperBox->setTitle(QString());
-  clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
-  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: mytetra --control --clipboard [--url]"));
+  clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: synctetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nSyncTetra must be running."));
+  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: synctetra --control --clipboard [--url]"));
 }
 
 
@@ -192,8 +192,8 @@ void AppConfigPage_Clipper::retranslateUi(void)
 
   clipperHelpButton->setToolTip(tr("How to use the clipper"));
 
-  clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: mytetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nMyTetra must be running."));
-  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: mytetra --control --clipboard [--url]"));
+  clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: synctetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nSyncTetra must be running."));
+  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: synctetra --control --clipboard [--url]"));
 
   clipperMaxImagesLabel->setText(tr("Maximum images per note:"));
   clipperMaxImageSizeLabel->setText(tr("Maximum size of one image:"));

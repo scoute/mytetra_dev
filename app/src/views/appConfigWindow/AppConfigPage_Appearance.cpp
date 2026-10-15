@@ -38,7 +38,7 @@ void AppConfigPage_Appearance::setupUi()
 
     // Настройка запуска MyTetra в свернутом окне
     runInMinimizedWindow=new QCheckBox(this);
-    runInMinimizedWindow->setText(tr("Run MyTetra in a minimized window"));
+    runInMinimizedWindow->setText(tr("Run SyncTetra in a minimized window"));
     runInMinimizedWindow->setChecked( mytetraConfig.get_runinminimizedwindow() );
 
 
@@ -82,7 +82,7 @@ void AppConfigPage_Appearance::assembly()
 // 1 - изменения требуют перезапуска программы
 void AppConfigPage_Appearance::retranslateUi(void)
 {
-  runInMinimizedWindow->setText(tr("Run MyTetra in a minimized window"));
+  runInMinimizedWindow->setText(tr("Run SyncTetra in a minimized window"));
   dockableWindowsBehavior->setText(tr("Hide detached windows if close main window"));
 
   behaviorBox->setTitle(tr("Windows behavior"));

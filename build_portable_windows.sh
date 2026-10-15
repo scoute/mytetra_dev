@@ -108,7 +108,7 @@ if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
 fi
 
 if [[ "${PORTABLE_DIR_EXPLICIT}" -eq 0 ]]; then
-    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-win-portable"
+    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/SyncTetra-win-portable"
 fi
 
 if ! command -v wine >/dev/null 2>&1; then
@@ -206,14 +206,14 @@ fi
 # Windows-qmake кладет бинари в app/release (или app/debug)
 BUILT_DIR=""
 for cand in "${BUILD_DIR}/app/release" "${BUILD_DIR}/app/debug" "${BUILD_DIR}/app/bin"; do
-    if [[ -x "${cand}/mytetra.exe" ]]; then
+    if [[ -x "${cand}/synctetra.exe" ]]; then
         BUILT_DIR="${cand}"
         break
     fi
 done
 
 if [[ -z "${BUILT_DIR}" ]]; then
-    echo "ОШИБКА: не собран mytetra.exe, смотрим в ${BUILD_DIR}/app" >&2
+    echo "ОШИБКА: не собран synctetra.exe, смотрим в ${BUILD_DIR}/app" >&2
     exit 3
 fi
 
@@ -234,14 +234,14 @@ mkdir -p "${PORTABLE_DIR}"
 
 # Старые бинари убираются. Конфиги и данные пользователя НЕ трогаются:
 # их в поставке нет, а чужие удалять нельзя
-rm -f "${PORTABLE_DIR}/mytetra.exe" "${PORTABLE_DIR}/mimetex.exe"
+rm -f "${PORTABLE_DIR}/synctetra.exe" "${PORTABLE_DIR}/mimetex.exe"
 
-cp "${BUILT_DIR}/mytetra.exe" "${PORTABLE_DIR}/mytetra.exe"
+cp "${BUILT_DIR}/synctetra.exe" "${PORTABLE_DIR}/synctetra.exe"
 cp "${BUILT_DIR}/mimetex.exe" "${PORTABLE_DIR}/mimetex.exe"
 
 STRIP_BIN="${MINGW_DIR}/bin/strip.exe"
 if [[ "${DO_STRIP}" -eq 1 && -f "${STRIP_BIN}" ]]; then
-    wine "${STRIP_BIN}" "$(to_winpath "${PORTABLE_DIR}/mytetra.exe")" \
+    wine "${STRIP_BIN}" "$(to_winpath "${PORTABLE_DIR}/synctetra.exe")" \
                          "$(to_winpath "${PORTABLE_DIR}/mimetex.exe")"
 fi
 
@@ -274,7 +274,7 @@ for dll in ${MINGW_DLLS}; do
 done
 
 # OpenSSL 1.1 для Qt 5.15: Qt грузит через LoadLibrary, в импортах
-# mytetra.exe его не видно. Без этих DLL https-качалки не работают,
+# synctetra.exe его не видно. Без этих DLL https-качалки не работают,
 # программа при этом не падает (см. политику TLS в AGENTS.md)
 for dll in libssl-1_1 libcrypto-1_1; do
     if [[ -f "${SSL_DIR}/${dll}.dll" ]]; then
@@ -311,14 +311,14 @@ EOF
 cat > "${PORTABLE_DIR}/PORTABLE.txt" <<'EOF'
 MyTetra portable для Windows
 ============================
-Запуск: mytetra.exe (двойной клик, DLL рядом подхватываются сами)
+Запуск: synctetra.exe (двойной клик, DLL рядом подхватываются сами)
 
 Первый запуск открывает диалог установки: выбирается портабельный
 режим (база и настройки рядом с программой) или стандартный.
 Конфигов и данных в поставке нет специально, все создается само.
 
 Глобальный хоткей клиппера вешается средствами Windows на команду:
-  "путь\mytetra.exe" --control --clipboard
+  "путь\synctetra.exe" --control --clipboard
 MyTetra при этом должна быть запущена.
 EOF
 
@@ -334,7 +334,7 @@ echo "Содержимое ${PORTABLE_DIR}:"
 ls -lh "${PORTABLE_DIR}" | tail -n +2 | awk '{print "  " $9 "  " $5}'
 echo "Размер папки: $(du -sh "${PORTABLE_DIR}" | awk '{print $1}')"
 echo
-echo "Запуск: ${PORTABLE_DIR}/mytetra.exe"
+echo "Запуск: ${PORTABLE_DIR}/synctetra.exe"
 
 # --------------------------------------------------------------------------
 # Дымовой тест: копия результата с зерном базы, запуск в offscreen
@@ -351,7 +351,7 @@ if [[ "${DO_SMOKE}" -eq 1 ]]; then
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/database.ini" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/base/1300000000aaaaaaaaa2/text.html" "${SMOKE_DIR}/data/base/seed00000000000001/" 2>/dev/null || true
     printf '[General]\nprintdebugmessages=true\n' > "${SMOKE_DIR}/conf.ini"
-    ( cd "${SMOKE_DIR}" && QT_QPA_PLATFORM=offscreen timeout 60 wine ./mytetra.exe >smoke.log 2>&1 ) &
+    ( cd "${SMOKE_DIR}" && QT_QPA_PLATFORM=offscreen timeout 60 wine ./synctetra.exe >smoke.log 2>&1 ) &
     SMOKE_PID=$!
     sleep 45
     if kill -0 $SMOKE_PID 2>/dev/null; then

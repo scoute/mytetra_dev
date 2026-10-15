@@ -479,7 +479,7 @@ void BranchPublisher::ensureSyncIgnore(const QString &syncPath)
         return;
 
     QTextStream out(&ignoreFile);
-    out << "// MyTetra: временные файлы записи и promotion (сгенерировано автоматически)\n";
+    out << "// SyncTetra: временные файлы записи и promotion (сгенерировано автоматически)\n";
     out << "*.part\n";
     out << "*.tmp\n";
     out << ".~lock.*\n";

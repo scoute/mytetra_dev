@@ -227,8 +227,8 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
-        <source>Run MyTetra in a minimized window</source>
-        <translation>Գործարկել MyTetra-ն ծալված պատուհանով</translation>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation>Գործարկել SyncTetra-ն ծալված պատուհանով</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
@@ -441,19 +441,19 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
         <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
-Run: mytetra --control --clipboard [--url]
+Run: synctetra --control --clipboard [--url]
 Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
-MyTetra must be running.</source>
+SyncTetra must be running.</source>
         <translation>Կլիպպերը պահպանում է ՕՀ փոխանակման բուֆերը unsorted_notes ճյուղի նշման մեջ։
-Գործարկում․ mytetra --control --clipboard [--url]
+Գործարկում․ synctetra --control --clipboard [--url]
 Կապել ՕՀ գլոբալ թեժ ստեղնին, օրինակ․ /path/to/start.sh --control --clipboard
-MyTetra-ն պետք է աշխատի։</translation>
+SyncTetra-ն պետք է աշխատի։</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
-        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
-        <translation>Պահպանում է ՕՀ փոխանակման բուֆերը նշման մեջ․ mytetra --control --clipboard [--url]</translation>
+        <source>Saves the OS clipboard into a note: synctetra --control --clipboard [--url]</source>
+        <translation>Պահպանում է ՕՀ փոխանակման բուֆերը նշման մեջ․ synctetra --control --clipboard [--url]</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="105"/>
@@ -514,8 +514,8 @@ MyTetra-ն պետք է աշխատի։</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
-        <source>Ask the password at MyTetra startup</source>
-        <translation>Հարցնել գաղտնաբառը MyTetra-ի մեկնարկի ժամանակ</translation>
+        <source>Ask the password at SyncTetra startup</source>
+        <translation>Հարցնել գաղտնաբառը SyncTetra-ի մեկնարկի ժամանակ</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="82"/>
@@ -819,19 +819,19 @@ MyTetra-ն պետք է աշխատի։</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
-        <source>MCP lets an AI client (opencode, Claude Code) read and search MyTetra notes.
+        <source>MCP lets an AI client (opencode, Claude Code) read and search SyncTetra notes.
 
-Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this MyTetra.
+Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this SyncTetra.
 
 Server modes:
 --mcp-ro: read-only (recommended)
 --mcp-rw: create and update notes, no delete
 --mcp-rw-with-delete: full write, deletes go to trash
 
-While the AI writes, MyTetra shows a banner. Keep read-only unless writes are needed.
+While the AI writes, SyncTetra shows a banner. Keep read-only unless writes are needed.
 
 Claude Code terminal way:
-claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
+claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -948,14 +948,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
-        <source>Synchronize at MyTetra startup</source>
-        <translation>Համաժամեցնել MyTetra-ի մեկնարկի ժամանակ</translation>
+        <source>Synchronize at SyncTetra startup</source>
+        <translation>Համաժամեցնել SyncTetra-ի մեկնարկի ժամանակ</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
-        <source>Synchronize when exit from MyTetra</source>
-        <translation>Համաժամեցնել MyTetra-ից դուրս գալիս</translation>
+        <source>Synchronize when exit from SyncTetra</source>
+        <translation>Համաժամեցնել SyncTetra-ից դուրս գալիս</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="48"/>
@@ -1790,9 +1790,9 @@ This directory should contain the file mytetra.xml.</source>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
         <source>For database append please select trash directory.
-MyTetra will put changed notes file copies and changed item tree copies to this directory</source>
+SyncTetra will put changed notes file copies and changed item tree copies to this directory</source>
         <translation>Բազա ավելացնելու համար ընտրեք աղբարկղի թղթապանակը։
-MyTetra-ն այդ թղթապանակում կդնի փոփոխված նշումների ֆայլերի և նշումների ծառի պատճենները</translation>
+SyncTetra-ն այդ թղթապանակում կդնի փոփոխված նշումների ֆայլերի և նշումների ծառի պատճենները</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="395"/>
@@ -2855,8 +2855,8 @@ Enter your old password and new password.
     </message>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
-        <source>MyTetra: Password</source>
-        <translation>MyTetra․ Գաղտնաբառ</translation>
+        <source>SyncTetra: Password</source>
+        <translation>SyncTetra․ Գաղտնաբառ</translation>
     </message>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="270"/>
@@ -3486,8 +3486,8 @@ Try to search for entire database.</source>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
-        <source>Welcome to MyTetra v.</source>
-        <translation>Բարի գալուստ MyTetra v.</translation>
+        <source>Welcome to SyncTetra v.</source>
+        <translation>Բարի գալուստ SyncTetra v.</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="25"/>
@@ -3513,9 +3513,9 @@ in current directory &quot;%1&quot;.</source>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="114"/>
         <source>Can&apos;t create portable version.
-Сan&apos;t write data to MyTetra binary file directory &quot;%1&quot;.</source>
+Сan&apos;t write data to SyncTetra binary file directory &quot;%1&quot;.</source>
         <translation>Հնարավոր չէ ստեղծել դյուրակիր տարբերակը։
-Հնարավոր չէ գրել տվյալներ MyTetra բինար ֆայլի &quot;%1&quot; թղթապանակ։</translation>
+Հնարավոր չէ գրել տվյալներ SyncTetra բինար ֆայլի &quot;%1&quot; թղթապանակ։</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="142"/>
@@ -3528,9 +3528,9 @@ in current directory &quot;%1&quot;.</source>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
         <source>Unsupported version of the database format.
-You need to update MyTetra.</source>
+You need to update SyncTetra.</source>
         <translation>Բազայի ձևաչափի չաջակցվող տարբերակ։
-Խնդրում ենք թարմացնել MyTetra-ն։</translation>
+Խնդրում ենք թարմացնել SyncTetra-ն։</translation>
     </message>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="335"/>
@@ -3603,7 +3603,7 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
-        <source>MCP session is active%1, MyTetra works in read-only mode</source>
+        <source>MCP session is active%1, SyncTetra works in read-only mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3740,8 +3740,8 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
-        <source>About MyTetra</source>
-        <translation>MyTetra-ի մասին</translation>
+        <source>About SyncTetra</source>
+        <translation>SyncTetra-ի մասին</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1383"/>
@@ -3811,8 +3811,8 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
-        <source>MyTetra: can&apos;t synchronization</source>
-        <translation>MyTetra․ համաժամեցումը հնարավոր չէ</translation>
+        <source>SyncTetra: can&apos;t synchronization</source>
+        <translation>SyncTetra․ համաժամեցումը հնարավոր չէ</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2502"/>
@@ -3821,8 +3821,8 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
-        <source>MyTetra synchronization</source>
-        <translation>MyTetra համաժամեցում</translation>
+        <source>SyncTetra synchronization</source>
+        <translation>SyncTetra համաժամեցում</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2522"/>
@@ -4151,9 +4151,9 @@ in application settings in Crypt section.</source>
     <message>
         <location filename="../../../src/libraries/PeriodicCheckBase.cpp" line="65"/>
         <source>The database was changed by external application or services.
-MyTetra reload the database tree to keep data consistency.</source>
+SyncTetra reload the database tree to keep data consistency.</source>
         <translation>Տվյալների բազան փոխվել է արտաքին ծրագրով կամ ծառայություններով։
-MyTetra-ն վերբեռնում է բազայի ծառը տվյալների հետևողականությունը պահպանելու համար։</translation>
+SyncTetra-ն վերբեռնում է բազայի ծառը տվյալների հետևողականությունը պահպանելու համար։</translation>
     </message>
 </context>
 <context>
@@ -4168,8 +4168,8 @@ MyTetra-ն վերբեռնում է բազայի ծառը տվյալների հե
     <name>PrintPreview</name>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
-        <source>MyTetra - Print Preview</source>
-        <translation>MyTetra - Տպելու նախադիտում</translation>
+        <source>SyncTetra - Print Preview</source>
+        <translation>SyncTetra - Տպելու նախադիտում</translation>
     </message>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="88"/>
@@ -4249,10 +4249,10 @@ MyTetra-ն վերբեռնում է բազայի ծառը տվյալների հե
         <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
         <source>The database is not consistent.
 The directory %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
+SyncTetra will try to create a blank entry to fix it.</source>
         <translation>Տվյալների բազան անհետևողական է։
 %1 թղթապանակը չգտնվեց։
-MyTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկելու համար։</translation>
+SyncTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկելու համար։</translation>
     </message>
     <message>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1061"/>
@@ -4264,10 +4264,10 @@ MyTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկել�
         <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
         <source>The database is not consistent.
 The file %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
+SyncTetra will try to create a blank entry to fix it.</source>
         <translation>Տվյալների բազան անհետևողական է։
 %1 ֆայլը չգտնվեց։
-MyTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկելու համար։</translation>
+SyncTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկելու համար։</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/helpers/ConfigEditorHelper.cpp" line="26"/>
@@ -4287,8 +4287,8 @@ MyTetra-ն կփորձի ստեղծել դատարկ գրառում՝ շտկել�
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
-        <source>MyTetra settings</source>
-        <translation>MyTetra կարգավորումներ</translation>
+        <source>SyncTetra settings</source>
+        <translation>SyncTetra կարգավորումներ</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
@@ -5570,8 +5570,8 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
     <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="227"/>
-        <source>Do not use these shortcuts in MyTetra.</source>
-        <translation>Մի՛ օգտվեք այդ համակցություններից MyTetra-ում։</translation>
+        <source>Do not use these shortcuts in SyncTetra.</source>
+        <translation>Մի՛ օգտվեք այդ համակցություններից SyncTetra-ում։</translation>
     </message>
 </context>
 <context>

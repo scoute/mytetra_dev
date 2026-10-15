@@ -227,8 +227,8 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
-        <source>Run MyTetra in a minimized window</source>
-        <translation>以最小化窗口启动 MyTetra</translation>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation>以最小化窗口启动 SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
@@ -441,19 +441,19 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
         <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
-Run: mytetra --control --clipboard [--url]
+Run: synctetra --control --clipboard [--url]
 Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
-MyTetra must be running.</source>
+SyncTetra must be running.</source>
         <translation>剪藏器将系统剪贴板保存到 unsorted_notes 分支笔记。
-运行：mytetra --control --clipboard [--url]
+运行：synctetra --control --clipboard [--url]
 绑定到系统全局热键，例如：/path/to/start.sh --control --clipboard
-MyTetra 必须正在运行。</translation>
+SyncTetra 必须正在运行。</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
-        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
-        <translation>将系统剪贴板保存到笔记：mytetra --control --clipboard [--url]</translation>
+        <source>Saves the OS clipboard into a note: synctetra --control --clipboard [--url]</source>
+        <translation>将系统剪贴板保存到笔记：synctetra --control --clipboard [--url]</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="105"/>
@@ -514,8 +514,8 @@ MyTetra 必须正在运行。</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
-        <source>Ask the password at MyTetra startup</source>
-        <translation>MyTetra 启动时询问密码</translation>
+        <source>Ask the password at SyncTetra startup</source>
+        <translation>SyncTetra 启动时询问密码</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="82"/>
@@ -819,19 +819,19 @@ MyTetra 必须正在运行。</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
-        <source>MCP lets an AI client (opencode, Claude Code) read and search MyTetra notes.
+        <source>MCP lets an AI client (opencode, Claude Code) read and search SyncTetra notes.
 
-Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this MyTetra.
+Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this SyncTetra.
 
 Server modes:
 --mcp-ro: read-only (recommended)
 --mcp-rw: create and update notes, no delete
 --mcp-rw-with-delete: full write, deletes go to trash
 
-While the AI writes, MyTetra shows a banner. Keep read-only unless writes are needed.
+While the AI writes, SyncTetra shows a banner. Keep read-only unless writes are needed.
 
 Claude Code terminal way:
-claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
+claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -948,14 +948,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
-        <source>Synchronize at MyTetra startup</source>
-        <translation>MyTetra 启动时同步</translation>
+        <source>Synchronize at SyncTetra startup</source>
+        <translation>SyncTetra 启动时同步</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
-        <source>Synchronize when exit from MyTetra</source>
-        <translation>退出 MyTetra 时同步</translation>
+        <source>Synchronize when exit from SyncTetra</source>
+        <translation>退出 SyncTetra 时同步</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="48"/>
@@ -1789,9 +1789,9 @@ This directory should contain the file mytetra.xml.</source>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
         <source>For database append please select trash directory.
-MyTetra will put changed notes file copies and changed item tree copies to this directory</source>
+SyncTetra will put changed notes file copies and changed item tree copies to this directory</source>
         <translation>添加数据库请选择回收站目录。
-MyTetra 将把更改笔记的文件副本和树副本放入此目录</translation>
+SyncTetra 将把更改笔记的文件副本和树副本放入此目录</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="395"/>
@@ -2854,8 +2854,8 @@ Enter your old password and new password.
     </message>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
-        <source>MyTetra: Password</source>
-        <translation>MyTetra：密码</translation>
+        <source>SyncTetra: Password</source>
+        <translation>SyncTetra：密码</translation>
     </message>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="270"/>
@@ -3485,8 +3485,8 @@ Try to search for entire database.</source>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
-        <source>Welcome to MyTetra v.</source>
-        <translation>欢迎使用 MyTetra v.</translation>
+        <source>Welcome to SyncTetra v.</source>
+        <translation>欢迎使用 SyncTetra v.</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="25"/>
@@ -3510,9 +3510,9 @@ in current directory &quot;%1&quot;.</source>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="114"/>
         <source>Can&apos;t create portable version.
-Сan&apos;t write data to MyTetra binary file directory &quot;%1&quot;.</source>
+Сan&apos;t write data to SyncTetra binary file directory &quot;%1&quot;.</source>
         <translation>无法创建便携版。
-无法写入 MyTetra 程序目录 &quot;%1&quot; 的数据。</translation>
+无法写入 SyncTetra 程序目录 &quot;%1&quot; 的数据。</translation>
     </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="142"/>
@@ -3525,9 +3525,9 @@ in current directory &quot;%1&quot;.</source>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
         <source>Unsupported version of the database format.
-You need to update MyTetra.</source>
+You need to update SyncTetra.</source>
         <translation>不支持的数据库格式版本。
-请更新 MyTetra。</translation>
+请更新 SyncTetra。</translation>
     </message>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="335"/>
@@ -3600,7 +3600,7 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
-        <source>MCP session is active%1, MyTetra works in read-only mode</source>
+        <source>MCP session is active%1, SyncTetra works in read-only mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3737,8 +3737,8 @@ You need to update MyTetra.</source>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
-        <source>About MyTetra</source>
-        <translation>关于 MyTetra</translation>
+        <source>About SyncTetra</source>
+        <translation>关于 SyncTetra</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1383"/>
@@ -3808,8 +3808,8 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
-        <source>MyTetra: can&apos;t synchronization</source>
-        <translation>MyTetra：无法同步</translation>
+        <source>SyncTetra: can&apos;t synchronization</source>
+        <translation>SyncTetra：无法同步</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2502"/>
@@ -3818,8 +3818,8 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
-        <source>MyTetra synchronization</source>
-        <translation>MyTetra 同步</translation>
+        <source>SyncTetra synchronization</source>
+        <translation>SyncTetra 同步</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2522"/>
@@ -4147,9 +4147,9 @@ in application settings in Crypt section.</source>
     <message>
         <location filename="../../../src/libraries/PeriodicCheckBase.cpp" line="65"/>
         <source>The database was changed by external application or services.
-MyTetra reload the database tree to keep data consistency.</source>
+SyncTetra reload the database tree to keep data consistency.</source>
         <translation>数据库被外部程序或服务更改。
-MyTetra 重载数据库树以保持数据一致。</translation>
+SyncTetra 重载数据库树以保持数据一致。</translation>
     </message>
 </context>
 <context>
@@ -4164,8 +4164,8 @@ MyTetra 重载数据库树以保持数据一致。</translation>
     <name>PrintPreview</name>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
-        <source>MyTetra - Print Preview</source>
-        <translation>MyTetra - 打印预览</translation>
+        <source>SyncTetra - Print Preview</source>
+        <translation>SyncTetra - 打印预览</translation>
     </message>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="88"/>
@@ -4245,10 +4245,10 @@ MyTetra 重载数据库树以保持数据一致。</translation>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
         <source>The database is not consistent.
 The directory %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
+SyncTetra will try to create a blank entry to fix it.</source>
         <translation>数据库不一致。
 未找到目录 %1。
-MyTetra 将尝试创建空白条目进行修复。</translation>
+SyncTetra 将尝试创建空白条目进行修复。</translation>
     </message>
     <message>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1061"/>
@@ -4260,10 +4260,10 @@ MyTetra 将尝试创建空白条目进行修复。</translation>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
         <source>The database is not consistent.
 The file %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
+SyncTetra will try to create a blank entry to fix it.</source>
         <translation>数据库不一致。
 未找到文件 %1。
-MyTetra 将尝试创建空白条目进行修复。</translation>
+SyncTetra 将尝试创建空白条目进行修复。</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/helpers/ConfigEditorHelper.cpp" line="26"/>
@@ -4283,8 +4283,8 @@ MyTetra 将尝试创建空白条目进行修复。</translation>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
-        <source>MyTetra settings</source>
-        <translation>MyTetra 设置</translation>
+        <source>SyncTetra settings</source>
+        <translation>SyncTetra 设置</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
@@ -5566,8 +5566,8 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
     <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="227"/>
-        <source>Do not use these shortcuts in MyTetra.</source>
-        <translation>请勿在 MyTetra 中使用这些快捷键。</translation>
+        <source>Do not use these shortcuts in SyncTetra.</source>
+        <translation>请勿在 SyncTetra 中使用这些快捷键。</translation>
     </message>
 </context>
 <context>

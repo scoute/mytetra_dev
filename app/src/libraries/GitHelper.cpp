@@ -274,8 +274,8 @@ bool GitHelper::addPaths(const QString &dir, const QStringList &paths)
 bool GitHelper::commitStaged(const QString &dir, const QString &message)
 {
     QStringList args;
-    args << QStringLiteral("-c") << QStringLiteral("user.name=MyTetra")
-         << QStringLiteral("-c") << QStringLiteral("user.email=mytetra@local")
+    args << QStringLiteral("-c") << QStringLiteral("user.name=SyncTetra")
+         << QStringLiteral("-c") << QStringLiteral("user.email=synctetra@local")
          << QStringLiteral("commit") << QStringLiteral("-m") << message;
 
     return run(dir, args)==0;

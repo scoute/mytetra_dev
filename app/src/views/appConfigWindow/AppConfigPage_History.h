@@ -6,6 +6,8 @@
 class QWidget;
 class QGroupBox;
 class QCheckBox;
+class QLabel;
+class QComboBox;
 
 class AppConfigPage_History : public ConfigPage
 {
@@ -29,6 +31,13 @@ public:
 
     QCheckBox *rememberAtHistoryNavigationCheckBox;
     QCheckBox *rememberAtOrdinarySelectionCheckBox;
+
+    // Раздел истории изменений заметки
+    QGroupBox *noteHistoryBox;
+
+    QCheckBox *squashEnable;   // Автосжатие старых версий по лимиту
+    QLabel *squashKeepLabel;   // Подпись выпадашки лимита
+    QComboBox *squashKeep;     // Сколько версий хранить (genesis плюс свежие)
 };
 
 #endif // APPCONFIGPAGE_HISTORY_H

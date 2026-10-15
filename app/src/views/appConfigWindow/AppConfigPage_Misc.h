@@ -5,6 +5,7 @@
 
 class QWidget;
 class QCheckBox;
+class QSpinBox;
 class QGroupBox;
 class QPushButton;
 
@@ -32,6 +33,10 @@ protected:
   QCheckBox *enableActionLog;         // Разрешено ли логирование действий
   QCheckBox *enableCreateEmptyRecord; // Разрешено ли создание записи, не содержащей текст (а только заголовок)
   QPushButton *editMyTetraConfigFile;
+
+  QGroupBox *autosaveBox;      // Рамка умного автосохранения
+  QCheckBox *autosaveEnable;   // Включено ли автосохранение
+  QSpinBox *autosaveInterval;  // Интервал автосохранения, минут
 
   // Цвета заметки и секрета переехали на страницу Themes.
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла

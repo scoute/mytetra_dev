@@ -524,6 +524,30 @@ void AppConfig::set_autoClosePasswordDelay(int delay)
 }
 
 
+bool AppConfig::get_autosaveEnable(void)
+{
+    return m_conf->value("autosaveEnable", true).toBool();
+}
+
+
+void AppConfig::set_autosaveEnable(bool flag)
+{
+    m_conf->setValue("autosaveEnable", flag);
+}
+
+
+int AppConfig::get_autosaveInterval(void)
+{
+    return m_conf->value("autosaveInterval", 10).toInt();
+}
+
+
+void AppConfig::set_autosaveInterval(int minutes)
+{
+    m_conf->setValue("autosaveInterval", minutes);
+}
+
+
 bool AppConfig::get_runinminimizedwindow(void)
 {
     return m_conf->value("runinminimizedwindow").toBool();
@@ -1984,6 +2008,8 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     // Новые параметры
     table << "autoClosePasswordEnable" << "bool" << "false";
     table << "autoClosePasswordDelay" << "int" << "10";
+    table << "autosaveEnable" << "bool" << "true";
+    table << "autosaveInterval" << "int" << "10";
 
     if (withEndSignature)
         table << "0" << "0" << "0";

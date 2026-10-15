@@ -3,12 +3,10 @@
 #include <QGroupBox>
 #include <QRadioButton>
 #include <QButtonGroup>
-#include <QComboBox>
 #include <QDebug>
 
 #include "AppConfigPage_Voice.h"
 #include "models/appConfig/AppConfig.h"
-#include "views/voiceNote/VoicePlayerDialog.h"
 
 
 extern AppConfig mytetraConfig;
@@ -52,16 +50,6 @@ void AppConfigPage_Voice::setupUi(void)
   else
     opusRadio->setChecked(true);
 
-  // Скорость проигрывания по умолчанию из конфига
-  speedBox=new QGroupBox(this);
-  speedCombo=new QComboBox(this);
-
-  for(double step : VoicePlayerDialog::speedSteps())
-    speedCombo->addItem(QString::number(step)+QStringLiteral("x"), step);
-
-  speedCombo->setCurrentIndex(speedCombo->findData(
-      VoicePlayerDialog::snapSpeed(mytetraConfig.get_voiceNoteSpeed())));
-
   retranslateUi();
 }
 
@@ -79,13 +67,8 @@ void AppConfigPage_Voice::assembly(void)
   formatLayout->addWidget(mp3Radio);
   formatBox->setLayout(formatLayout);
 
-  QVBoxLayout *speedLayout=new QVBoxLayout();
-  speedLayout->addWidget(speedCombo);
-  speedBox->setLayout(speedLayout);
-
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(formatBox);
-  centralLayout->addWidget(speedBox);
   centralLayout->addStretch();
   setLayout(centralLayout);
 }
@@ -98,7 +81,6 @@ void AppConfigPage_Voice::retranslateUi(void)
   opusRadio->setText(tr("Opus (.opus)"));
   mp3Radio->setText(tr("MP3 (.mp3)"));
 
-  speedBox->setTitle(tr("Default playback speed"));
 }
 
 
@@ -112,11 +94,6 @@ int AppConfigPage_Voice::applyChanges(void)
 
   if(mytetraConfig.get_voiceNoteFormat()!=format)
     mytetraConfig.set_voiceNoteFormat(format);
-
-  const double speed=speedCombo->currentData().toDouble();
-
-  if(mytetraConfig.get_voiceNoteSpeed()!=speed)
-    mytetraConfig.set_voiceNoteSpeed(speed);
 
   // Ключ качества оставлен для совместимости: выбора нет,
   // профили фиксированы. Старые значения молча игнорируются

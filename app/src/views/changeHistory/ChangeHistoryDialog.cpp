@@ -140,11 +140,41 @@ void ChangeHistoryDialog::refreshVersionList(void)
 // Работает независимо от тумблера авточки: раз нажали, значит надо
 void ChangeHistoryDialog::onCompact(void)
 {
+    const int keep=qMax(2, mytetraConfig.get_historySquashKeep());
+    const int count=versionList.size();
+
+    // Ниже лимита сносить нечего: объясняется сразу, иначе кнопка
+    // выглядит сломанной (как раз случай "5 коммитов, меньше не стало")
+    if(count<=keep)
+    {
+        QMessageBox::information(this, tr("Compact history"),
+                                 tr("Nothing to squash: %1 version(s), the limit is %2.\n"
+                                    "Old versions are removed only above the limit; "
+                                    "the first version is always kept.").arg(count).arg(keep));
+        return;
+    }
+
+    // Пояснение до уничтожения: сколько снесется, сколько останется
+    QMessageBox confirmBox(QMessageBox::Question,
+                           tr("Compact history"),
+                           tr("Compact the history of \"%1\"?\n"
+                              "%2 old version(s) will be permanently destroyed, "
+                              "%3 will be kept (the first and the newest).\n"
+                              "This cannot be undone.").arg(recordName,
+                                                            QString::number(count-keep),
+                                                            QString::number(keep)),
+                           QMessageBox::NoButton, this);
+    confirmBox.addButton(QMessageBox::Ok);
+    confirmBox.addButton(QMessageBox::Cancel);
+    confirmBox.setDefaultButton(QMessageBox::Cancel);
+    confirmBox.setEscapeButton(QMessageBox::Cancel);
+
+    if(confirmBox.exec()!=QMessageBox::Ok)
+        return;
+
     QString squashError;
 
-    if(!ChangeHistory::squashOldVersions(tetradir, recordId,
-                                         qMax(2, mytetraConfig.get_historySquashKeep()),
-                                         &squashError))
+    if(!ChangeHistory::squashOldVersions(tetradir, recordId, keep, &squashError))
     {
         QMessageBox::critical(this, tr("Compaction failed"),
                               tr("Can not squash old versions:\n%1").arg(squashError));

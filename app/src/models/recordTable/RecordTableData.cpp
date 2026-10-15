@@ -229,7 +229,7 @@ void RecordTableData::editorSaveCallback(QObject *editor,
         actionLogger.addAction("editRecordText", data);
 
         // Ротация по лимиту: раз лимит выставлен, сжатие идет
-        // всегда (авто после снапшота и ручной кнопкой).
+        // всегда, авто после снапшота.
         // Отдельной галочки нет осознанно
         if(ChangeHistory::snapshot(mytetraConfig.get_tetradir(),
                                    currEditor->getMiscField("id"),

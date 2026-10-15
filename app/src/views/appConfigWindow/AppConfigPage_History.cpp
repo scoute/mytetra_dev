@@ -71,7 +71,7 @@ void AppConfigPage_History::setupUi()
 
     // Все сквош-виджеты серые без мастер-тумблера.
     // Отдельной галочки автосжатия нет: раз лимит выставлен,
-    // ротация идет всегда (и авто после снапшота, и ручной кнопкой)
+    // ротация идет всегда, авто после снапшота
     const bool squashActive=mytetraConfig.get_historyEnable();
     squashKeep->setEnabled(squashActive);
     squashKeepLabel->setEnabled(squashActive);
@@ -230,7 +230,7 @@ int AppConfigPage_History::applyChanges()
       mytetraConfig.set_historyEnable(historyEnable->isChecked());
 
     // Сквош-лимит и стратегия. Подхватятся сами при следующем
-    // снапшоте и ручной кнопке
+    // снапшоте
     if(mytetraConfig.get_historySquashKeep()!=squashKeep->currentData().toInt())
       mytetraConfig.set_historySquashKeep(squashKeep->currentData().toInt());
 

@@ -36,8 +36,6 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
     statusLabel=new QLabel(this);
     rollbackButton=new QPushButton(tr("Rollback to selected"), this);
     rollbackButton->setEnabled(false);
-    compactButton=new QPushButton(tr("Compact history"), this);
-    compactButton->setEnabled(false);
     closeButton=new QPushButton(tr("Close"), this);
 
     QSplitter *splitter=new QSplitter(Qt::Horizontal, this);
@@ -48,7 +46,6 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
 
     QHBoxLayout *buttonsLayout=new QHBoxLayout();
     buttonsLayout->addWidget(statusLabel, 1);
-    buttonsLayout->addWidget(compactButton);
     buttonsLayout->addWidget(rollbackButton);
     buttonsLayout->addWidget(closeButton);
 
@@ -64,8 +61,6 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
             this,          &ChangeHistoryDialog::onVersionSelected);
     connect(rollbackButton, &QPushButton::clicked,
             this,            &ChangeHistoryDialog::onRollback);
-    connect(compactButton, &QPushButton::clicked,
-            this,           &ChangeHistoryDialog::onCompact);
     connect(closeButton, &QPushButton::clicked,
             this,          &ChangeHistoryDialog::reject);
 
@@ -136,61 +131,6 @@ void ChangeHistoryDialog::refreshVersionList(void)
 }
 
 
-// Ручное сжатие истории по лимиту из настроек.
-// Работает независимо от тумблера автосжатия: раз нажали, значит надо.
-// Лимит берется из выпадашки при любом положении галочки:
-// ручное сжатие это "применить лимит прямо сейчас"
-void ChangeHistoryDialog::onCompact(void)
-{
-    const int keep=qMax(2, mytetraConfig.get_historySquashKeep());
-    const int count=versionList.size();
-
-    // Ниже лимита сносить нечего: объясняется сразу, иначе кнопка
-    // выглядит сломанной (как раз случай "5 коммитов, меньше не стало")
-    if(count<=keep)
-    {
-        QMessageBox::information(this, tr("Compact history"),
-                                 tr("Nothing to squash: %1 version(s), the limit is %2.\n"
-                                    "Old versions are removed only above the limit; "
-                                    "the first version is always kept.").arg(count).arg(keep));
-        return;
-    }
-
-    // Пояснение до уничтожения: сколько снесется, сколько останется.
-    // Формулировка нейтральна к стратегии: хранится не более лимита
-    QMessageBox confirmBox(QMessageBox::Question,
-                           tr("Compact history"),
-                           tr("Compact the history of \"%1\"?\n"
-                              "%2 old version(s) will be permanently destroyed, "
-                              "at most %3 will be kept.\n"
-                              "This cannot be undone.").arg(recordName,
-                                                            QString::number(count-keep),
-                                                            QString::number(keep)),
-                           QMessageBox::NoButton, this);
-    confirmBox.addButton(QMessageBox::Ok);
-    confirmBox.addButton(QMessageBox::Cancel);
-    confirmBox.setDefaultButton(QMessageBox::Cancel);
-    confirmBox.setEscapeButton(QMessageBox::Cancel);
-
-    if(confirmBox.exec()!=QMessageBox::Ok)
-        return;
-
-    QString squashError;
-
-    if(!ChangeHistory::squashOldVersions(tetradir, recordId, keep,
-                                         qBound(0, mytetraConfig.get_historySquashMode(), 2),
-                                         &squashError))
-    {
-        QMessageBox::critical(this, tr("Compaction failed"),
-                              tr("Can not squash old versions:\n%1").arg(squashError));
-        return;
-    }
-
-    versionList=ChangeHistory::versions(tetradir, recordId);
-    refreshVersionList();
-}
-
-
 void ChangeHistoryDialog::onRollback(void)
 {
     const int row=versionsList->currentRow();
@@ -256,12 +196,10 @@ void ChangeHistoryDialog::updateDiff(void)
     {
         diffView->clear();
         rollbackButton->setEnabled(false);
-        compactButton->setEnabled(false);
         return;
     }
 
     rollbackButton->setEnabled(true);
-    compactButton->setEnabled(true);
 
     const QString diff=ChangeHistory::diffToCurrent(tetradir, recordId,
                                                     versionList.at(row).rev,

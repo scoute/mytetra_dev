@@ -165,6 +165,10 @@ void FavoritesPanel::setupSignals(void)
     connect(favoritesList, &QListWidget::itemClicked,
             this,          &FavoritesPanel::onNoteClicked);
 
+    // Дабл-клик открывает заметку тем же прыжком
+    connect(favoritesList, &QListWidget::itemDoubleClicked,
+            this,          &FavoritesPanel::onNoteDoubleClicked);
+
     favoritesList->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(favoritesList, &QListWidget::customContextMenuRequested,
             this,         &FavoritesPanel::onFavoritesContextMenu);
@@ -275,6 +279,14 @@ void FavoritesPanel::onNoteClicked(QListWidgetItem *item)
         return;
 
     goToNote(item->data(Qt::UserRole).toString());
+}
+
+
+// Дабл-клик открывает заметку тем же прыжком что одинарный.
+// Мертвые и пустые отсекаются внутри onNoteClicked
+void FavoritesPanel::onNoteDoubleClicked(QListWidgetItem *item)
+{
+    onNoteClicked(item);
 }
 
 

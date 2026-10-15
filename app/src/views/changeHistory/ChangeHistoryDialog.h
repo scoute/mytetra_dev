@@ -45,7 +45,6 @@ private slots:
 
     void onVersionSelected(int row);
     void onRollback(void);
-    void onCompact(void);
 
 private:
 
@@ -70,7 +69,6 @@ private:
     QTextBrowser *diffView;
     QLabel *statusLabel;
     QPushButton *rollbackButton;
-    QPushButton *compactButton;
     QPushButton *closeButton;
 };
 

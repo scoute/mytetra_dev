@@ -1,4 +1,7 @@
 #include <QMessageBox>
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QRegularExpression>
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QTextBlock>
@@ -476,9 +479,154 @@ bool AudioFormatter::selectVoiceBubbleRange(const QString &href)
 }
 
 
-void AudioFormatter::onPlayVoiceClicked(void)
+QString AudioFormatter::renameVoiceFile(const QString &workDir,
+                                                 const QString &oldHref,
+                                                 const QString &stem,
+                                                 QString *error)
 {
-  const QString href=voiceHrefUnderCursor();
+    const QString done=QString();
+
+    if(!VoiceNoteHelper::isVoiceHref(oldHref))
+    {
+        if(error!=nullptr)
+            *error=tr("Not a voice link");
+
+        return done;
+    }
+
+    const QString oldName=VoiceNoteHelper::fileNameFromHref(oldHref);
+    const QString oldPath=VoiceNoteHelper::resolveFilePath(workDir, oldHref);
+
+    if(oldName.isEmpty() || !QFileInfo(oldPath).isFile())
+    {
+        if(error!=nullptr)
+            *error=tr("Voice file not found");
+
+        return done;
+    }
+
+    // Без путей и запретных символов, как имя в диалоге записи.
+    // Расширение всегда от старого файла: голос должен остаться
+    // проигрываемым
+    QString clean=QFileInfo(stem.trimmed()).fileName().trimmed();
+    clean.remove(QRegularExpression(QStringLiteral("[\\\\/:*?\"<>|\\x00-\\x1f]")));
+    clean=clean.trimmed();
+
+    static const QRegularExpression knownExt(
+        QStringLiteral("\\.(opus|mp3|wav|oga|ogg)$"),
+        QRegularExpression::CaseInsensitiveOption);
+    clean.remove(knownExt);
+    clean=clean.trimmed().left(100);
+
+    if(clean.isEmpty())
+    {
+        if(error!=nullptr)
+            *error=tr("Empty file name");
+
+        return done;
+    }
+
+    const QString newName=clean+QStringLiteral(".")+QFileInfo(oldName).suffix();
+
+    // То же имя не отказ: переименовывать нечего
+    if(newName==oldName)
+        return VoiceNoteHelper::makeHref(oldName);
+
+    const QString newPath=VoiceNoteHelper::resolveFilePath(
+        workDir, VoiceNoteHelper::makeHref(newName));
+
+    if(QFileInfo(newPath).exists())
+    {
+        if(error!=nullptr)
+            *error=tr("File already exists: %1").arg(newName);
+
+        return done;
+    }
+
+    if(!QFile::rename(oldPath, newPath))
+    {
+        if(error!=nullptr)
+            *error=tr("Can not rename voice file: %1").arg(oldName);
+
+        return done;
+    }
+
+    return VoiceNoteHelper::makeHref(newName);
+}
+
+
+void AudioFormatter::onRenameVoiceClicked(void)
+{
+    const QString href=voiceHrefUnderCursor();
+
+    if(href.isEmpty())
+        return;
+
+    const QString oldName=VoiceNoteHelper::fileNameFromHref(href);
+
+    bool ok=false;
+    const QString stem=QInputDialog::getText(editor,
+                                             tr("Rename voice note"),
+                                             tr("New file name:"),
+                                             QLineEdit::Normal,
+                                             QFileInfo(oldName).completeBaseName(),
+                                             &ok);
+
+    if(!ok)
+        return;
+
+    QString error;
+    const QString newHref=renameVoiceFile(editor->getWorkDirectory(),
+                                          href, stem, &error);
+
+    if(newHref.isEmpty())
+    {
+        QMessageBox::information(editor,
+                                 tr("Rename voice note"),
+                                 error);
+        return;
+    }
+
+    if(newHref==href)
+        return;
+
+    // Играющий бабл перед переименованием останавливается:
+    // медиа-источник сменил путь
+    if(activeHref==href)
+        stopVoicePlayback();
+
+    // Текст обновляется: у бабла свойства, у сырой ссылки href.
+    // Длительность и имя в бабле: имя тоже новое
+    const QString newName=VoiceNoteHelper::fileNameFromHref(newHref);
+
+    if(findBubblePos(href)>=0)
+    {
+        if(!selectVoiceBubbleRange(href))
+            return;
+
+        QTextCharFormat format;
+        format.setProperty(VoiceNoteHelper::BubblePropHref, newHref);
+        format.setProperty(VoiceNoteHelper::BubblePropFileName, newName);
+        textArea->textCursor().mergeCharFormat(format);
+    }
+    else
+    {
+        if(!selectVoiceLinkRange(href))
+            return;
+
+        QTextCharFormat format;
+        format.setAnchorHref(newHref);
+        textArea->textCursor().mergeCharFormat(format);
+    }
+
+    if(globalParameters.getStatusBar()!=nullptr)
+        globalParameters.getStatusBar()->showMessage(
+            tr("Renamed to %1").arg(newName), 3000);
+}
+
+
+void AudioFormatter::onPlayVoiceClicked(void)
+{  const QString href=voiceHrefUnderCursor();
 
   if(href.isEmpty())
     return;

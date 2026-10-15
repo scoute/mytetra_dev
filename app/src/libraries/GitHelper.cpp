@@ -1,6 +1,7 @@
 #include <QProcess>
 #include <QFileInfo>
 #include <QDir>
+#include <QSet>
 #include <QDebug>
 
 #include "GitHelper.h"
@@ -278,4 +279,126 @@ bool GitHelper::commitStaged(const QString &dir, const QString &message)
          << QStringLiteral("commit") << QStringLiteral("-m") << message;
 
     return run(dir, args)==0;
+}
+
+
+bool GitHelper::truncateFileHistory(const QString &dir, const QString &file,
+                                    const QString &targetRev,
+                                    QString *errorMessage)
+{
+    if(!isRepo(dir))
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Not a git repository");
+        return false;
+    }
+
+    if(file.isEmpty() || targetRev.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Empty file or revision");
+        return false;
+    }
+
+    // Целевая ревизия обязана существовать
+    QString verifyOut;
+    if(run(dir, QStringList() << QStringLiteral("rev-parse") << QStringLiteral("--verify")
+                              << targetRev+QStringLiteral("^{commit}"), &verifyOut)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Revision is not found");
+        return false;
+    }
+
+    // Рабочее дерево обязано быть чистым: иначе reset/cherry-pick
+    // может затереть незакоммиченное
+    if(!statusPorcelain(dir).trimmed().isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Workdir has uncommitted changes");
+        return false;
+    }
+
+    const QString origHead=headRev(dir);
+
+    if(origHead.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Journal is empty");
+        return false;
+    }
+
+    // Коммиты новее целевого, касающиеся файла: кандидаты на снос
+    QString droppedOut;
+    if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("--format=%H")
+                              << targetRev+QStringLiteral("..HEAD")
+                              << QStringLiteral("--") << file, &droppedOut)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot list file history");
+        return false;
+    }
+
+    const QStringList dropped=droppedOut.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
+
+    // Сносить нечего: целевая уже голова истории файла
+    if(dropped.isEmpty())
+        return true;
+
+    // Остальные коммиты диапазона (чужие файлы) сохраняются
+    // переигрыванием поверх целевого. Порядок от старых к новым
+    QString keptOut;
+    if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("--reverse")
+                              << QStringLiteral("--format=%H")
+                              << targetRev+QStringLiteral("..HEAD"), &keptOut)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot list journal");
+        return false;
+    }
+
+    const QSet<QString> droppedSet=dropped.toSet();
+    QStringList replay;
+
+    for(const QString &rev : keptOut.split(QStringLiteral("\n"), Qt::SkipEmptyParts))
+    {
+        if(!droppedSet.contains(rev.trimmed()))
+            replay << rev.trimmed();
+    }
+
+    // Точка отката: ветка и workdir встают на целевую.
+    // Чужих файлов это не касается: они вернутся переигрыванием
+    if(run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                              << targetRev)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot reset to target revision");
+        return false;
+    }
+
+    // Переигрывание чужих коммитов. Конфликтов быть не должно:
+    // переигрываемые коммиты файл не трогают по построению
+    for(const QString &rev : replay)
+    {
+        QString err;
+
+        if(run(dir, QStringList() << QStringLiteral("cherry-pick") << rev,
+               nullptr, &err)!=0)
+        {
+            run(dir, QStringList() << QStringLiteral("cherry-pick")
+                                   << QStringLiteral("--abort"));
+
+            // Откат отката: исходная голова восстанавливается целиком,
+            // рабочее дерево было чистым поэтому потерь нет
+            run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                   << origHead);
+
+            if(errorMessage)
+                *errorMessage=QStringLiteral("Cannot replay journal, restored: ")+err.trimmed();
+
+            return false;
+        }
+    }
+
+    return true;
 }

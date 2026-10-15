@@ -4,6 +4,7 @@
 #include <QListWidget>
 #include <QTextBrowser>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPushButton>
 
 #include "ChangeHistoryDialog.h"
@@ -89,6 +90,24 @@ void ChangeHistoryDialog::onVersionSelected(int row)
     Q_UNUSED(row);
 
     updateDiff();
+    updatePreview();
+}
+
+
+void ChangeHistoryDialog::updatePreview(void)
+{
+    const int row=versionsList->currentRow();
+
+    if(row<0 || row>=versionList.size())
+        return;
+
+    const QString content=ChangeHistory::contentAt(tetradir, recordId,
+                                                   versionList.at(row).rev);
+
+    if(content.isNull())
+        return;
+
+    emit previewRequested(content);
 }
 
 
@@ -106,6 +125,43 @@ void ChangeHistoryDialog::onRollback(void)
     {
         statusLabel->setText(tr("Can not read version"));
         return;
+    }
+
+    // Строка 0 это новейшая версия: уничтожать нечего,
+    // номер строки равен числу более новых версий
+    if(row>0)
+    {
+        QMessageBox destroyBox(QMessageBox::Warning,
+                               tr("Destroy newer versions?"),
+                               tr("Rollback to \"%1\" (%2) will permanently destroy %3 newer version(s).\n"
+                                  "The note text will be replaced by this version, no new commit will be created.\n"
+                                  "This cannot be undone.").arg(recordName,
+                                                                versionList.at(row).date,
+                                                                QString::number(row)),
+                               QMessageBox::NoButton, this);
+
+        QPushButton *destroyButton=destroyBox.addButton(tr("Destroy and rollback"),
+                                                        QMessageBox::DestructiveRole);
+        destroyButton->setObjectName(QStringLiteral("destroyButton"));
+        destroyBox.addButton(QMessageBox::Cancel);
+
+        // По умолчанию стоит отмена: мимо кнопки не промахнуться
+        destroyBox.setDefaultButton(QMessageBox::Cancel);
+        destroyBox.setEscapeButton(QMessageBox::Cancel);
+        destroyBox.exec();
+
+        if(destroyBox.clickedButton()!=destroyButton)
+            return;
+
+        QString resetError;
+
+        if(!ChangeHistory::resetToVersion(tetradir, recordId,
+                                          versionList.at(row).rev, &resetError))
+        {
+            QMessageBox::critical(this, tr("Rollback failed"),
+                                  tr("Can not destroy newer versions:\n%1").arg(resetError));
+            return;
+        }
     }
 
     accept();

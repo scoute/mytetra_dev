@@ -43,6 +43,13 @@ public:
     static QString diffToCurrent(const QString &tetradir, const QString &recordId,
                                  const QString &rev, const QString &currentHtml,
                                  const QString &title);
+
+    // Откат к версии с уничтожением всех более новых версий файла.
+    // Нового коммита не создается: файл встает на целевую ревизию.
+    // Истории других заметок сохраняются переигрыванием.
+    // Текст ошибки опционально
+    static bool resetToVersion(const QString &tetradir, const QString &recordId,
+                               const QString &rev, QString *errorMessage=nullptr);
 };
 
 #endif /* _CHANGEHISTORY_H_ */

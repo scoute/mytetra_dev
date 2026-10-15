@@ -6,6 +6,8 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QComboBox>
+#include <QRadioButton>
+#include <QButtonGroup>
 
 #include "AppConfigPage_History.h"
 #include "models/appConfig/AppConfig.h"
@@ -85,6 +87,10 @@ void AppConfigPage_History::setupSignals()
     connect(historyEnable, &QCheckBox::toggled, squashEnable, &QCheckBox::setEnabled);
     connect(historyEnable, &QCheckBox::toggled, squashKeep, &QComboBox::setEnabled);
     connect(historyEnable, &QCheckBox::toggled, squashKeepLabel, &QLabel::setEnabled);
+    connect(historyEnable, &QCheckBox::toggled, squashModeLabel, &QLabel::setEnabled);
+    connect(historyEnable, &QCheckBox::toggled, squashDeleteOldest, &QRadioButton::setEnabled);
+    connect(historyEnable, &QCheckBox::toggled, squashSmartMerge, &QRadioButton::setEnabled);
+    connect(historyEnable, &QCheckBox::toggled, squashBundle10, &QRadioButton::setEnabled);
 }
 
 
@@ -113,6 +119,30 @@ void AppConfigPage_History::assembly()
     squashLayout->addWidget(squashKeep);
     squashLayout->addStretch(1);
     noteHistoryLayout->addLayout(squashLayout);
+
+    // Стратегия превышения лимита: радиокнопки с id под SquashMode
+    squashModeLabel=new QLabel(tr("What to do on limit excess:"), this);
+    noteHistoryLayout->addWidget(squashModeLabel);
+
+    squashModeGroup=new QButtonGroup(this);
+    squashDeleteOldest=new QRadioButton(tr("Delete oldest entries"), this);
+    squashSmartMerge=new QRadioButton(tr("Merge similar neighbors"), this);
+    squashBundle10=new QRadioButton(tr("Compress every 10 entries into one except the latest 10"), this);
+    squashModeGroup->addButton(squashDeleteOldest, 0);
+    squashModeGroup->addButton(squashSmartMerge, 1);
+    squashModeGroup->addButton(squashBundle10, 2);
+    noteHistoryLayout->addWidget(squashDeleteOldest);
+    noteHistoryLayout->addWidget(squashSmartMerge);
+    noteHistoryLayout->addWidget(squashBundle10);
+
+    const int modeIndex=qBound(0, mytetraConfig.get_historySquashMode(), 2);
+    squashModeGroup->button(modeIndex)->setChecked(true);
+
+    const bool squashUiActive=mytetraConfig.get_historyEnable();
+    squashModeLabel->setEnabled(squashUiActive);
+    squashDeleteOldest->setEnabled(squashUiActive);
+    squashSmartMerge->setEnabled(squashUiActive);
+    squashBundle10->setEnabled(squashUiActive);
     noteHistoryBox->setLayout(noteHistoryLayout);
 
     // Собирается основной слой
@@ -135,6 +165,10 @@ void AppConfigPage_History::retranslateUi(void)
   historyEnable->setText(tr("Enable note history tracking"));
   squashEnable->setText(tr("Squash note history automatically"));
   squashKeepLabel->setText(tr("Keep versions:"));
+  squashModeLabel->setText(tr("What to do on limit excess:"));
+  squashDeleteOldest->setText(tr("Delete oldest entries"));
+  squashSmartMerge->setText(tr("Merge similar neighbors"));
+  squashBundle10->setText(tr("Compress every 10 entries into one except the latest 10"));
 }
 
 
@@ -169,6 +203,9 @@ int AppConfigPage_History::applyChanges()
 
     if(mytetraConfig.get_historySquashKeep()!=squashKeep->currentData().toInt())
       mytetraConfig.set_historySquashKeep(squashKeep->currentData().toInt());
+
+    if(mytetraConfig.get_historySquashMode()!=squashModeGroup->checkedId())
+      mytetraConfig.set_historySquashMode(qBound(0, squashModeGroup->checkedId(), 2));
 
     return result;
 }

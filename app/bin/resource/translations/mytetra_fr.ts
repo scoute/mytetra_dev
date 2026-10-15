@@ -675,6 +675,22 @@ MyTetra doit être en cours d&apos;exécution.</translation>
         <source>Enable note history tracking</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>What to do on limit excess:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete oldest entries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge similar neighbors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compress every 10 entries into one except the latest 10</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -6272,7 +6288,7 @@ Old versions are removed only above the limit; the first version is always kept.
     </message>
     <message>
         <source>Compact the history of "%1"?
-%2 old version(s) will be permanently destroyed, %3 will be kept (the first and the newest).
+%2 old version(s) will be permanently destroyed, at most %3 will be kept.
 This cannot be undone.</source>
         <translation type="unfinished"></translation>
     </message>

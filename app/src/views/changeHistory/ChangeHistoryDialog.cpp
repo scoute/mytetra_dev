@@ -156,12 +156,13 @@ void ChangeHistoryDialog::onCompact(void)
         return;
     }
 
-    // Пояснение до уничтожения: сколько снесется, сколько останется
+    // Пояснение до уничтожения: сколько снесется, сколько останется.
+    // Формулировка нейтральна к стратегии: хранится не более лимита
     QMessageBox confirmBox(QMessageBox::Question,
                            tr("Compact history"),
                            tr("Compact the history of \"%1\"?\n"
                               "%2 old version(s) will be permanently destroyed, "
-                              "%3 will be kept (the first and the newest).\n"
+                              "at most %3 will be kept.\n"
                               "This cannot be undone.").arg(recordName,
                                                             QString::number(count-keep),
                                                             QString::number(keep)),
@@ -176,7 +177,9 @@ void ChangeHistoryDialog::onCompact(void)
 
     QString squashError;
 
-    if(!ChangeHistory::squashOldVersions(tetradir, recordId, keep, &squashError))
+    if(!ChangeHistory::squashOldVersions(tetradir, recordId, keep,
+                                         qBound(0, mytetraConfig.get_historySquashMode(), 2),
+                                         &squashError))
     {
         QMessageBox::critical(this, tr("Compaction failed"),
                               tr("Can not squash old versions:\n%1").arg(squashError));

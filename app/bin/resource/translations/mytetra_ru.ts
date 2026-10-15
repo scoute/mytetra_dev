@@ -6901,6 +6901,14 @@ Enable it in Settings on the History page.</source>
         <source>Remove voice link and move file to trash</source>
         <translation>Убрать ссылку и переместить файл в корзину</translation>
     </message>
+    <message>
+        <source>Rename voice note</source>
+        <translation>Переименовать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Rename voice file under cursor</source>
+        <translation>Переименовать файл голосовой заметки под курсором</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -7550,6 +7558,34 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Delete voice note %1? Link text will be removed, file moved to trash.</source>
         <translation>Удалить голосовую заметку %1? Текст ссылки будет удалён, файл перемещён в корзину.</translation>
+    </message>
+    <message>
+        <source>Rename voice note</source>
+        <translation>Переименовать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>New file name:</source>
+        <translation>Новое имя файла:</translation>
+    </message>
+    <message>
+        <source>Not a voice link</source>
+        <translation>Не голосовая ссылка</translation>
+    </message>
+    <message>
+        <source>Empty file name</source>
+        <translation>Пустое имя файла</translation>
+    </message>
+    <message>
+        <source>File already exists: %1</source>
+        <translation>Файл уже существует: %1</translation>
+    </message>
+    <message>
+        <source>Can not rename voice file: %1</source>
+        <translation>Не удалось переименовать файл: %1</translation>
+    </message>
+    <message>
+        <source>Renamed to %1</source>
+        <translation>Переименовано в %1</translation>
     </message>
 </context>
 <context>

@@ -92,6 +92,20 @@ private:
         VoiceQualityHigh
     };
 
+    // Профиль качества: VBR-качество и частота дискретизации.
+    // Битрейта нет осознанно: в VBR он ничего не значит.
+    // Частоты Opus только из капсов opusenc (8/12/16/24/48 кГц):
+    // прежние 11025/22050/44100 роняли захват (баг fix/142)
+    struct VoiceQualityProfile
+    {
+        QMultimedia::EncodingQuality quality;
+        int sampleRate;
+    };
+
+    // Профиль low/middle/high для формата. Статика чтобы стенд
+    // проверял частоты без микрофона и бэкенда
+    static VoiceQualityProfile qualityProfile(VoiceFormat format, VoiceQuality quality);
+
     // Завершить запись и решить про вставку. Вызывается из стопа
     // и из смены состояния: идемпотентно
     void finishRecording(void);

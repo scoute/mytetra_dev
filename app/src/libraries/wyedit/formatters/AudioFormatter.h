@@ -61,6 +61,7 @@ public slots:
 
   // Контекстное меню на голосовой ссылке или бабле
   void onPlayVoiceClicked(void);
+  void onRenameVoiceClicked(void);
   void onShowVoiceInFolder(void);
   void onDeleteVoiceClicked(void);
 
@@ -70,6 +71,15 @@ private slots:
   void onVoiceStateChanged(QMediaPlayer::State state);
 
 private:
+
+  // Переименовать файл голосовой заметки: санитизация имени,
+  // коллизии, QFile::rename. Возвращает новый href, пусто при
+  // отказе (причина в error). То же имя не отказ: возвращается
+  // старый href. Статика чтобы стенд гонял без редактора
+  static QString renameVoiceFile(const QString &workDir,
+                                 const QString &oldHref,
+                                 const QString &stem,
+                                 QString *error);
 
   // Ссылка или бабл под курсором, пусто если курсор не на голосовой
   QString voiceHrefUnderCursor(void) const;

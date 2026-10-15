@@ -7618,29 +7618,14 @@ Please select single item for enabling edit operation.</source>
 <context>
     <name>VoiceRecorderDialog</name>
     <message>
-        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="134"/>
-        <source>Quality:</source>
-        <translation>Качество:</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="135"/>
-        <source>Low</source>
-        <translation>Низкое</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="136"/>
-        <source>High</source>
-        <translation>Высокое</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="435"/>
         <source>Opus, %1 Hz, %2 kbit/s</source>
         <translation>Opus, %1 Гц, %2 кбит/с</translation>
     </message>
     <message>
-        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="429"/>
-        <source>MP3, %1 Hz, %2 kbit/s</source>
-        <translation>MP3, %1 Гц, %2 кбит/с</translation>
+        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="402"/>
+        <source>MP3, %1 Hz</source>
+        <translation>MP3, %1 Гц</translation>
     </message>
     <message>
         <source>Voice note</source>
@@ -7721,23 +7706,6 @@ Please select single item for enabling edit operation.</source>
 </context>
 <context>
     <name>AppConfigPage_Voice</name>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Voice.cpp" line="108"/>
-        <source>Default quality</source>
-        <translation>Качество по умолчанию</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Voice.cpp" line="57"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Voice.cpp" line="109"/>
-        <source>Low</source>
-        <translation>Низкое</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Voice.cpp" line="60"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Voice.cpp" line="110"/>
-        <source>High</source>
-        <translation>Высокое</translation>
-    </message>
     <message>
         <source>Default format</source>
         <translation>Формат по умолчанию</translation>

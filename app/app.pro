@@ -326,6 +326,8 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
     src/libraries/GitHelper.h \
+    src/libraries/BranchDiffEngine.h \
+    src/libraries/BranchPublisher.h \
     src/libraries/UnifiedDiff.h \
     src/libraries/ChangeHistory.h \
     src/libraries/VoiceNoteHelper.h \
@@ -535,6 +537,8 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
     src/libraries/GitHelper.cpp \
+    src/libraries/BranchDiffEngine.cpp \
+    src/libraries/BranchPublisher.cpp \
     src/libraries/UnifiedDiff.cpp \
     src/libraries/ChangeHistory.cpp \
     src/libraries/VoiceNoteHelper.cpp \

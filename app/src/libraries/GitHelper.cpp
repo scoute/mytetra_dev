@@ -279,3 +279,79 @@ bool GitHelper::commitStaged(const QString &dir, const QString &message)
 
     return run(dir, args)==0;
 }
+
+
+bool GitHelper::setLocalIdentity(const QString &dir, const QString &name,
+                                 const QString &email)
+{
+    if(!name.isEmpty())
+    {
+        if(run(dir, QStringList() << QStringLiteral("config")
+                                  << QStringLiteral("user.name") << name)!=0)
+            return false;
+    }
+
+    if(!email.isEmpty())
+    {
+        if(run(dir, QStringList() << QStringLiteral("config")
+                                  << QStringLiteral("user.email") << email)!=0)
+            return false;
+    }
+
+    return true;
+}
+
+
+bool GitHelper::commitPathIfChanged(const QString &dir, const QString &message,
+                                    const QString &relPath, QString *hash)
+{
+    if(hash!=nullptr)
+        hash->clear();
+
+    QString out;
+    QStringList statusArgs;
+    statusArgs << QStringLiteral("status") << QStringLiteral("--porcelain");
+
+    if(!relPath.isEmpty())
+    {
+        statusArgs << QStringLiteral("--") << relPath;
+    }
+
+    if(run(dir, statusArgs, &out)!=0)
+        return false;
+
+    // Изменений нет: коммит не нужен
+    if(out.trimmed().isEmpty())
+    {
+        if(hash!=nullptr)
+            *hash=headRev(dir);
+
+        return true;
+    }
+
+    QStringList addArgs;
+    addArgs << QStringLiteral("add") << QStringLiteral("--");
+
+    if(!relPath.isEmpty())
+        addArgs << relPath;
+    else
+        addArgs << QStringLiteral("-A");
+
+    if(run(dir, addArgs)!=0)
+        return false;
+
+    if(!commitStaged(dir, message))
+        return false;
+
+    if(hash!=nullptr)
+        *hash=headRev(dir);
+
+    return true;
+}
+
+
+bool GitHelper::commitAllIfChanged(const QString &dir, const QString &message,
+                                   QString *hash)
+{
+    return commitPathIfChanged(dir, message, QString(), hash);
+}

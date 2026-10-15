@@ -70,6 +70,12 @@ bool TeamProfile::isTeamIdSet(void)
 }
 
 
+bool TeamProfile::isConfigured(void)
+{
+    return !this->getTeamName().isEmpty();
+}
+
+
 void TeamProfile::generateNewTeamId(void)
 {
     mytetraConfig.set_teamId(QStringLiteral("U")+getUniqueId());

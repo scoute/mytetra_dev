@@ -69,6 +69,19 @@ public:
 
     // Закоммитить индекс с сообщением
     static bool commitStaged(const QString &dir, const QString &message);
+
+    // Локальная подпись репозитория (не трогает глобальный конфит git)
+    static bool setLocalIdentity(const QString &dir, const QString &name,
+                                 const QString &email);
+
+    // Закоммитить путь если он менялся. Хеш в hash (пусто при неудаче).
+    // Без изменений коммит не делается, возвращается истина
+    static bool commitPathIfChanged(const QString &dir, const QString &message,
+                                    const QString &relPath, QString *hash=nullptr);
+
+    // Закоммитить всё если есть изменения. Без изменений истина
+    static bool commitAllIfChanged(const QString &dir, const QString &message,
+                                   QString *hash=nullptr);
 };
 
 #endif /* _GITHELPER_H_ */

@@ -452,7 +452,10 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
-   actionChangeHistory->setEnabled(true);
+
+   // История выключена мастер-тумблером: пункт серый сразу,
+   // а не вежливым отказом по клику
+   actionChangeHistory->setEnabled(mytetraConfig.get_historyEnable());
  }
 
  // Удаление записи

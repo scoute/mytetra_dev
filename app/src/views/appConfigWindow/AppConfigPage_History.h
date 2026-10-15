@@ -30,6 +30,9 @@ public:
 
     void onHistoryEnableToggled(bool checked);
 
+    // Единое состояние серости сквош-настроек
+    void updateSquashEnabled(void);
+
     // Объединяющая рамка
     QGroupBox *historyBox;
 

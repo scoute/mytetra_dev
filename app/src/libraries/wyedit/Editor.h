@@ -98,8 +98,19 @@ public:
 
  // Методы работы с textarea
  void setTextarea(QString text);
+
+ // Предпросмотр чужого html в этом документе: как setTextarea,
+ // но сохраняет URL документа, чтобы относительные картинки
+ // продолжали резолвиться. Коммитов и файлов не трогает
+ void previewTextarea(const QString &text);
+
  void setTextareaEditable(bool editable);
  QString getTextarea(void);
+
+ // Стабильный текст для сравнения и хранения: баблы голосовых
+ // отдаются ссылками (как при сохранении). Без баблов совпадает
+ // с getTextarea(). Сырой toHtml баблы не round-trip'ит
+ QString getTextareaStable(void);
  QTextDocument *getTextareaDocument(void);
 
  // Ссылка голосового бабла под курсором, пусто если курсор не на бабле

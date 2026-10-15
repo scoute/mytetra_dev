@@ -793,6 +793,10 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Keep versions:</source>
         <translation>Хранить версий:</translation>
     </message>
+    <message>
+        <source>Enable note history tracking</source>
+        <translation>Включить ведение истории заметок</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -5672,6 +5676,12 @@ Please report about this problem to the developers.</source>
 Linux: install the git package. Windows: https://git-scm.com.</source>
         <translation>Невозможно показать историю: git не установлен.
 Linux: поставьте пакет git. Windows: https://git-scm.com.</translation>
+    </message>
+    <message>
+        <source>Note history is disabled.
+Enable it in Settings on the History page.</source>
+        <translation>История заметок отключена.
+Включите её в настройках на странице История.</translation>
     </message>
 </context>
 <context>

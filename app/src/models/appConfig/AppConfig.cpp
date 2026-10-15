@@ -572,6 +572,18 @@ void AppConfig::set_historySquashKeep(int count)
 }
 
 
+bool AppConfig::get_historyEnable(void)
+{
+    return m_conf->value("historyEnable", true).toBool();
+}
+
+
+void AppConfig::set_historyEnable(bool flag)
+{
+    m_conf->setValue("historyEnable", flag);
+}
+
+
 bool AppConfig::get_runinminimizedwindow(void)
 {
     return m_conf->value("runinminimizedwindow").toBool();
@@ -2036,6 +2048,7 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     table << "autosaveInterval" << "int" << "10";
     table << "historySquashEnable" << "bool" << "true";
     table << "historySquashKeep" << "int" << "100";
+    table << "historyEnable" << "bool" << "true";
 
     if (withEndSignature)
         table << "0" << "0" << "0";

@@ -671,6 +671,10 @@ MyTetra doit être en cours d&apos;exécution.</translation>
         <source>Keep versions:</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Enable note history tracking</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -4466,6 +4470,11 @@ Veuillez signaler ce problème aux développeurs.</translation>
     <message>
         <source>Cannot show history: git is not installed.
 Linux: install the git package. Windows: https://git-scm.com.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note history is disabled.
+Enable it in Settings on the History page.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

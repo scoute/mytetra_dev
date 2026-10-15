@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QColor>
 #include <QXmlStreamWriter>
 
 #include "TreeItem.h"
@@ -46,6 +47,29 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
     if(role==Qt::ForegroundRole)
     {
      TreeItem *item = getItem(index);
+
+     // Кастомный цвет дерева: модельный Foreground перебивает
+     // stylesheet, поэтому без этого возврата custom красил бы
+     // только треугольники, а текст оставался бы палитровым
+     if(mytetraConfig.getInterfaceTheme()=="custom")
+     {
+       const QColor custom(mytetraConfig.get_themeCustomTreeText());
+
+       if(custom.isValid())
+       {
+         // Ветка с записями: чистый кастомный цвет
+         if(item->recordtableGetRowCount()>0)
+           return custom;
+
+         // Пустая ветка: тот же оттенок, но приглушен к серому
+         // темы (отдельной настройки нет осознанно). Смесь 50/50
+         // сохраняет hue на любом светлом/темном базисе
+         const QColor gray=QApplication::palette().color(QPalette::PlaceholderText);
+         return QColor((custom.red()+gray.red())/2,
+                       (custom.green()+gray.green())/2,
+                       (custom.blue()+gray.blue())/2);
+       }
+     }
 
      // Если узел содержит таблицу конечных записей
      if(item->recordtableGetRowCount()>0)

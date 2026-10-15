@@ -1,17 +1,71 @@
 #include <QFile>
 #include <QTemporaryDir>
 #include <QTextDocument>
+#include <QTextBlock>
+#include <QTextFragment>
+#include <QTextImageFormat>
 
 #include "UnifiedDiff.h"
 #include "libraries/GitHelper.h"
 
 
+// Построчное представление HTML: картинки подменяются читаемым
+// маркером [image: имя] (toPlainText давал невидимый U+FFFC),
+// stray-объекты без формата картинки - маркером [object]
 QStringList UnifiedDiff::htmlToLines(const QString &html)
 {
     QTextDocument document;
     document.setHtml(html);
 
-    return document.toPlainText().split(QStringLiteral("\n"));
+    QStringList lines;
+    QString current;
+
+    for(QTextBlock block=document.begin(); block!=document.end(); block=block.next())
+    {
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid())
+                continue;
+
+            if(fragment.charFormat().isImageFormat())
+            {
+                QString name=fragment.charFormat().toImageFormat().name();
+
+                if(name.isEmpty())
+                    name=QStringLiteral("image");
+
+                current+=QStringLiteral("[image: %1]").arg(name);
+                continue;
+            }
+
+            QString text=fragment.text();
+            text.replace(QChar::ObjectReplacementCharacter,
+                         QStringLiteral("[object]"));
+
+            // Явные разрывы внутри фрагмента режут строку
+            int start=0;
+
+            for(int i=0; i<text.size(); ++i)
+            {
+                if(text.at(i)==QLatin1Char('\n') || text.at(i)==QChar(0x2028))
+                {
+                    current+=text.mid(start, i-start);
+                    lines.append(current);
+                    current.clear();
+                    start=i+1;
+                }
+            }
+
+            current+=text.mid(start);
+        }
+
+        lines.append(current);
+        current.clear();
+    }
+
+    return lines;
 }
 
 

@@ -11,7 +11,8 @@ class UnifiedDiff
 {
 public:
 
-    // Компактное plain-превращение HTML заметки в строки
+    // Компактное plain-превращение HTML заметки в строки.
+    // Картинки - маркером [image: имя], прочие объекты - [object]
     static QStringList htmlToLines(const QString &html);
 
     // Unified diff двух наборов строк через git diff --no-index.

@@ -130,6 +130,14 @@ public:
     int  get_autosaveInterval(void);
     void set_autosaveInterval(int minutes);
 
+    // Сквош истории изменений: автосжатие снизу по лимиту.
+    // По умолчанию выключено, хранить 100 (genesis плюс свежие)
+    bool get_historySquashEnable(void);
+    void set_historySquashEnable(bool flag);
+
+    int  get_historySquashKeep(void);
+    void set_historySquashKeep(int count);
+
     int  get_autoClosePasswordDelay(void);
     void set_autoClosePasswordDelay(int delay);
 

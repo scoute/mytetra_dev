@@ -781,6 +781,18 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>History of visited notes</source>
         <translation>История просмотренных записей</translation>
     </message>
+    <message>
+        <source>Note change history</source>
+        <translation>История изменений заметки</translation>
+    </message>
+    <message>
+        <source>Squash old note versions automatically</source>
+        <translation>Сжимать старые версии заметок автоматически</translation>
+    </message>
+    <message>
+        <source>Keep versions:</source>
+        <translation>Хранить версий:</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -7727,6 +7739,20 @@ This cannot be undone.</source>
         <source>Can not destroy newer versions:
 %1</source>
         <translation>Не удается уничтожить более новые версии:
+%1</translation>
+    </message>
+    <message>
+        <source>Compact history</source>
+        <translation>Сжать историю</translation>
+    </message>
+    <message>
+        <source>Compaction failed</source>
+        <translation>Сжатие не удалось</translation>
+    </message>
+    <message>
+        <source>Can not squash old versions:
+%1</source>
+        <translation>Не удается сжать старые версии:
 %1</translation>
     </message>
 </context>

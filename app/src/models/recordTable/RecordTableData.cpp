@@ -230,10 +230,23 @@ void RecordTableData::editorSaveCallback(QObject *editor,
 
         // Снапшот в историю изменений: только при реальных
         // изменениях, шифрованные пропускаются выше
-        ChangeHistory::snapshot(mytetraConfig.get_tetradir(),
-                                currEditor->getMiscField("id"),
-                                currEditor->getMiscField("title"),
-                                saveText);
+        if(ChangeHistory::snapshot(mytetraConfig.get_tetradir(),
+                                   currEditor->getMiscField("id"),
+                                   currEditor->getMiscField("title"),
+                                   saveText) &&
+           mytetraConfig.get_historySquashEnable())
+        {
+            // Авточка по лимиту: genesis плюс свежие. Тихая:
+            // сохранение обязано проходить при любом исходе
+            QString squashError;
+            ChangeHistory::squashOldVersions(mytetraConfig.get_tetradir(),
+                                             currEditor->getMiscField("id"),
+                                             qMax(2, mytetraConfig.get_historySquashKeep()),
+                                             &squashError);
+
+            if(!squashError.isEmpty())
+                qDebug() << "ChangeHistory autosquash:" << squashError;
+        }
     }
     else
     {

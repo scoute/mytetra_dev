@@ -548,6 +548,30 @@ void AppConfig::set_autosaveInterval(int minutes)
 }
 
 
+bool AppConfig::get_historySquashEnable(void)
+{
+    return m_conf->value("historySquashEnable", false).toBool();
+}
+
+
+void AppConfig::set_historySquashEnable(bool flag)
+{
+    m_conf->setValue("historySquashEnable", flag);
+}
+
+
+int AppConfig::get_historySquashKeep(void)
+{
+    return m_conf->value("historySquashKeep", 100).toInt();
+}
+
+
+void AppConfig::set_historySquashKeep(int count)
+{
+    m_conf->setValue("historySquashKeep", count);
+}
+
+
 bool AppConfig::get_runinminimizedwindow(void)
 {
     return m_conf->value("runinminimizedwindow").toBool();
@@ -2010,6 +2034,8 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     table << "autoClosePasswordDelay" << "int" << "10";
     table << "autosaveEnable" << "bool" << "true";
     table << "autosaveInterval" << "int" << "10";
+    table << "historySquashEnable" << "bool" << "false";
+    table << "historySquashKeep" << "int" << "100";
 
     if (withEndSignature)
         table << "0" << "0" << "0";

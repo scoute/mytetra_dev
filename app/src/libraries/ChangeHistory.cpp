@@ -168,3 +168,34 @@ bool ChangeHistory::resetToVersion(const QString &tetradir, const QString &recor
     return GitHelper::truncateFileHistory(dir, recordFileName(recordId),
                                           rev, errorMessage);
 }
+
+
+bool ChangeHistory::squashOldVersions(const QString &tetradir, const QString &recordId,
+                                      int keepNewest, QString *errorMessage)
+{
+    if(tetradir.isEmpty() || recordId.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Empty path or note");
+        return false;
+    }
+
+    if(!GitHelper::isAvailable())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git is not available");
+        return false;
+    }
+
+    const QString dir=historyDir(tetradir);
+
+    if(!GitHelper::isRepo(dir))
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("History storage is not found");
+        return false;
+    }
+
+    return GitHelper::squashFileHistory(dir, recordFileName(recordId),
+                                        keepNewest, errorMessage);
+}

@@ -357,6 +357,12 @@ qint64 VoiceRecorderDialog::recordedDurationMs(void) const
 }
 
 
+QMultimedia::EncodingMode VoiceRecorderDialog::encodingMode(void)
+{
+    return QMultimedia::ConstantBitRateEncoding;
+}
+
+
 VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(VoiceFormat format,
                                                                               VoiceQuality quality)
 {
@@ -388,12 +394,9 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
     // голоса при том же размере. Битрейт-профиль идет таргетом
     const VoiceQualityProfile profile=qualityProfile(format, currentQuality);
 
-    audioSettings.setEncodingMode(QMultimedia::ConstantQualityEncoding);
+    audioSettings.setEncodingMode(encodingMode());
     audioSettings.setQuality(profile.quality);
-
-    if(profile.bitRate>0)
-        audioSettings.setBitRate(profile.bitRate);
-
+    audioSettings.setBitRate(profile.bitRate);
     audioSettings.setSampleRate(profile.sampleRate);
 
     if(format==VoiceFormatOpus)

@@ -6215,29 +6215,5 @@ This cannot be undone.</source>
 %1</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Compact history</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compaction failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Can not squash old versions:
-%1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing to squash: %1 version(s), the limit is %2.
-Old versions are removed only above the limit; the first version is always kept.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact the history of "%1"?
-%2 old version(s) will be permanently destroyed, at most %3 will be kept.
-This cannot be undone.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 </TS>

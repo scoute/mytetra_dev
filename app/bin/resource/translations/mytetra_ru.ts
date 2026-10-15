@@ -7775,33 +7775,5 @@ This cannot be undone.</source>
         <translation>Не удается уничтожить более новые версии:
 %1</translation>
     </message>
-    <message>
-        <source>Compact history</source>
-        <translation>Сжать историю</translation>
-    </message>
-    <message>
-        <source>Compaction failed</source>
-        <translation>Сжатие не удалось</translation>
-    </message>
-    <message>
-        <source>Can not squash old versions:
-%1</source>
-        <translation>Не удается сжать старые версии:
-%1</translation>
-    </message>
-    <message>
-        <source>Nothing to squash: %1 version(s), the limit is %2.
-Old versions are removed only above the limit; the first version is always kept.</source>
-        <translation>Сжимать нечего: версий %1, лимит %2.
-Старые версии удаляются только сверх лимита; первая версия хранится всегда.</translation>
-    </message>
-    <message>
-        <source>Compact the history of "%1"?
-%2 old version(s) will be permanently destroyed, at most %3 will be kept.
-This cannot be undone.</source>
-        <translation>Сжать историю "%1"?
-%2 старая версия(и) будут навсегда уничтожены, останется не более %3.
-Это нельзя отменить.</translation>
-    </message>
 </context>
 </TS>

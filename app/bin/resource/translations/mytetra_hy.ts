@@ -4432,6 +4432,19 @@ Please report about this problem to the developers.</source>
         <source>Delete</source>
         <translation>Ջնջել</translation>
     </message>
+    <message>
+        <source>Change history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change history is unavailable for encrypted notes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot show history: git is not installed.
+Linux: install the git package. Windows: https://git-scm.com.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecordTableModel</name>
@@ -4567,6 +4580,14 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="653"/>
         <source>&lt;b&gt;Path:&lt;/b&gt; </source>
         <translation>&lt;b&gt;Ուղի․&lt;/b&gt; </translation>
+    </message>
+    <message>
+        <source>Change history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show change history with diff and rollback</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6139,6 +6160,37 @@ Please select single item for enabling edit operation.</source>
     </message>
     <message>
         <source>High</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ChangeHistoryDialog</name>
+    <message>
+        <source>Change history: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rollback to selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No saved versions yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 versions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not read version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No differences from current text</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -1074,6 +1074,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Reset</source>
         <translation type="vanished">Сбросить</translation>
     </message>
+    <message>
+        <source>Autosave</source>
+        <translation>Автосохранение</translation>
+    </message>
+    <message>
+        <source>Enable autosave, min</source>
+        <translation>Включить автосохранение, мин</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

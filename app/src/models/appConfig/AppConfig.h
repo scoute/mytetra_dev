@@ -122,6 +122,14 @@ public:
     bool get_autoClosePasswordEnable(void);
     void set_autoClosePasswordEnable(bool flag);
 
+    // Умное автосохранение: только при реальных правках,
+    // без изменений ни файла ни коммита. По умолчанию вкл, 10 мин
+    bool get_autosaveEnable(void);
+    void set_autosaveEnable(bool flag);
+
+    int  get_autosaveInterval(void);
+    void set_autosaveInterval(int minutes);
+
     int  get_autoClosePasswordDelay(void);
     void set_autoClosePasswordDelay(int delay);
 

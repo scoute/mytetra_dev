@@ -126,6 +126,13 @@ MainWindow::MainWindow() : QMainWindow()
     // Применить сохранённый режим только чтения (если был включен)
     applyReadOnly();
 
+    // Умное автосохранение: single-shot цепочка с интервалом из конфига
+    autosaveTimer=new QTimer(this);
+    autosaveTimer->setObjectName(QStringLiteral("autosaveTimer"));
+    autosaveTimer->setSingleShot(true);
+    connect(autosaveTimer, &QTimer::timeout, this, &MainWindow::onAutosaveTimeout);
+    restartAutosaveTimer();
+
     // Закрывать ли по-настоящему окно при обнаружении сигнала closeEvent
     enableRealClose=false;
 
@@ -1756,6 +1763,38 @@ void MainWindow::updateMcpBanner(void)
         mcpBanner->setText(mcpBannerText());
         mcpBannerBar->show();
     }
+}
+
+
+// Перезапуск цепочки умного автосохранения с текущим конфигом
+void MainWindow::restartAutosaveTimer(void)
+{
+    if(autosaveTimer==nullptr)
+        return;
+
+    const int minutes=mytetraConfig.get_autosaveInterval();
+
+    if(!mytetraConfig.get_autosaveEnable() || minutes<1)
+    {
+        autosaveTimer->stop();
+        return;
+    }
+
+    autosaveTimer->start(minutes*60*1000);
+}
+
+
+// Срабатывание умного автосохранения: сохраняется только реально
+// правленная запись (флаг редактора), а снапшот истории дедуплицирует
+// по тексту. Без правок ни файла ни коммита. Открытый модальный диалог
+// круг пропускает: иначе сохранился бы промежуточный предпросмотр
+void MainWindow::onAutosaveTimeout(void)
+{
+    if(editorScreen!=nullptr && editorScreen->getTextareaModified() &&
+       QApplication::activeModalWidget()==nullptr)
+        saveTextarea();
+
+    restartAutosaveTimer();
 }
 
 

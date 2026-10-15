@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QToolBar>
+#include <QTimer>
 #include <QInputDialog>
 
 #include "TreeScreen.h"
@@ -42,6 +43,25 @@ extern AppConfig mytetraConfig;
 extern GlobalParameters globalParameters;
 extern ShortcutManager shortcutManager;
 extern InternalClipboard *internalClipboard;
+
+
+#include "libraries/BranchPublisher.h"
+#include "libraries/SubscriptionImportEngine.h"
+#include "libraries/SharedDirWatcher.h"
+#include "models/teamProfile/TeamProfile.h"
+#include "models/subscription/SubscriptionRegistry.h"
+#include "views/subscriptions/BranchSliceDialog.h"
+#include "views/subscriptions/ChangeViewDialog.h"
+#include "views/subscriptions/SubscriptionPanel.h"
+#include "views/tree/PublishedBadgeDelegate.h"
+#include "libraries/ActionLogger.h"
+#include "views/appConfigWindow/AppConfigDialog.h"
+
+extern TeamProfile teamProfile;
+extern SharedDirWatcher sharedDirWatcher;
+extern SubscriptionRegistry subscriptionRegistry;
+extern ActionLogger actionLogger;
+
 
 
 TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
@@ -170,6 +190,21 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::decryptBranch);
  actionList["decryptBranch"]=ac;
 
+ // Публикация ветки в общий каталог SyncTetra
+ ac = new QAction(this);
+ connect(ac, &QAction::triggered, this, &TreeScreen::publishBranch);
+ actionList["publishBranch"]=ac;
+
+ // Принудительное обновление публикации ветки
+ ac = new QAction(this);
+ connect(ac, &QAction::triggered, this, &TreeScreen::updatePublication);
+ actionList["updatePublication"]=ac;
+
+ // Отзыв публикации ветки
+ ac = new QAction(this);
+ connect(ac, &QAction::triggered, this, &TreeScreen::revokePublication);
+ actionList["revokePublication"]=ac;
+
  // Добавление иконки к ветке
  ac = new QAction(this);
  ac->setIcon(QIcon(":/resource/pic/set_icon.svg"));
@@ -215,6 +250,9 @@ void TreeScreen::setupShortcuts(void)
     shortcutManager.initAction("tree-pasteSubbranch", actionList["pasteSubbranch"] );
     shortcutManager.initAction("tree-encryptBranch", actionList["encryptBranch"] );
     shortcutManager.initAction("tree-decryptBranch", actionList["decryptBranch"] );
+    shortcutManager.initAction("tree-publishBranch", actionList["publishBranch"] );
+    shortcutManager.initAction("tree-updatePublication", actionList["updatePublication"] );
+    shortcutManager.initAction("tree-revokePublication", actionList["revokePublication"] );
     shortcutManager.initAction("tree-setIcon", actionList["setIcon"] );
 }
 
@@ -350,6 +388,10 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
   menu.addSeparator();
   menu.addAction(actionList["encryptBranch"]);
   menu.addAction(actionList["decryptBranch"]);
+  menu.addSeparator();
+  menu.addAction(actionList["publishBranch"]);
+  menu.addAction(actionList["updatePublication"]);
+  menu.addAction(actionList["revokePublication"]);
 
   // Получение индекса выделенной ветки
   QModelIndex index=getCurrentItemIndex();
@@ -420,6 +462,9 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
    }
 
   
+  // Состояние пунктов публикации/обновления/отзыва
+  updatePublicationActionsState();
+
   // Включение отображения меню на экране
   // menu.exec(event->globalPos());
   menu.exec(knowTreeView->viewport()->mapToGlobal(pos));
@@ -456,6 +501,14 @@ void TreeScreen::setupSignals(void)
  // используется для возможности ввести пароль, если в базе одна корневая ветка, и она зашифрована
  connect(knowTreeView, &KnowTreeView::pressed,
          this,         &TreeScreen::onKnowtreeClicked); // &TreeScreen::checkIfOneRootCryptItem
+
+ // Изменение каталога обмена: обновить панель и бейджи
+ connect(&sharedDirWatcher, &SharedDirWatcher::sharedDirChanged,
+         this,              &TreeScreen::onSharedDirChanged);
+
+ // Обновление при изменении профиля команды (поменяли shareddir/имя)
+ connect(&teamProfile, &TeamProfile::teamProfileChanged,
+         this,         &TreeScreen::onSharedDirChanged);
 
 
  // Сигнал чтобы открыть на редактирование параметры записи при двойном клике
@@ -500,6 +553,38 @@ void TreeScreen::assembly(void)
  // список наливается на выставленную высоту
  connect(favoritesSplitter, &QSplitter::splitterMoved,
          favoritesPanel, &FavoritesPanel::setUserResized);
+
+ // Панель подписок SyncTetra под деревом: свои, подписки, доступное
+ subscriptionPanel=new SubscriptionPanel(this);
+ favoritesSplitter->addWidget(subscriptionPanel);
+ favoritesSplitter->setStretchFactor(2, 0);
+ favoritesSplitter->setCollapsible(2, false);
+
+ connect(subscriptionPanel, &SubscriptionPanel::openSliceRequested,
+         this,              &TreeScreen::openSubscriptionSlice);
+ connect(subscriptionPanel, &SubscriptionPanel::showChangesRequested,
+         this,              &TreeScreen::showSubscriptionChanges);
+ connect(subscriptionPanel, &SubscriptionPanel::focusLocalBranchRequested,
+         this,              &TreeScreen::focusLocalBranchInTree);
+ connect(subscriptionPanel, &SubscriptionPanel::forceUpdatePublicationRequested,
+         this,              &TreeScreen::forceUpdateOwnPublication);
+ connect(subscriptionPanel, &SubscriptionPanel::revokePublicationRequested,
+         this,              &TreeScreen::revokeOwnPublication);
+
+ // Debounce отложенного автообновления публикаций: правки текста записей
+ // прилетают часто (каждое сохранение текстового поля), экспорт и сверка
+ // дайджестов на каждое сохранение — дорого, поэтому обновления копятся
+ publicationAutoUpdateTimer=new QTimer(this);
+ publicationAutoUpdateTimer->setSingleShot(true);
+ publicationAutoUpdateTimer->setInterval(5000);
+ connect(publicationAutoUpdateTimer, &QTimer::timeout,
+         this, &TreeScreen::onPublicationAutoUpdateTimeout);
+
+ // Делегат бейджей опубликованных веток (ставится видом)
+ publishedBadgeDelegate=qobject_cast<PublishedBadgeDelegate*>(knowTreeView->itemDelegate());
+
+ // Первичное построение панели подписок и бейджей публикаций
+ refreshPublicationState();
 
  treeScreenLayout->addWidget(favoritesSplitter, 1);
 
@@ -1963,4 +2048,904 @@ void TreeScreen::updateLastKnowTreeData(QFileInfo fileInfo, bool isFileInfoReal)
 void TreeScreen::setFocusToBaseWidget()
 {
     knowTreeView->setFocus();
+}
+
+
+void TreeScreen::publishBranch(void)
+{
+  publishCurrentBranch(false);
+}
+
+
+void TreeScreen::updatePublication(void)
+{
+  publishCurrentBranch(true);
+}
+
+
+void TreeScreen::publishCurrentBranch(bool isUpdate)
+{
+  QModelIndex index=getCurrentItemIndex();
+  if(!index.isValid())
+    return;
+
+  TreeItem *branchItem=knowTreeModel->getItem(index);
+  QString branchId=branchItem->getField("id");
+  QString branchName=branchItem->getField("name");
+
+  // Фактический каталог обмена
+  QString sharedDir=teamProfile.getSharedDir();
+  if(sharedDir.isEmpty())
+  {
+    QMessageBox::critical(this, tr("Publish branch"),
+                          tr("Shared directory is not defined. "
+                             "Set it in the settings."));
+    return;
+  }
+
+  // Каталог обмена создается, если его нет
+  QDir shared(sharedDir);
+  if(!shared.exists() && !shared.mkpath("."))
+  {
+    QMessageBox::critical(this, tr("Publish branch"),
+                          tr("Can't create shared directory:\n"));
+    return;
+  }
+
+  // Проверка: вложенная публикация (ветка не входит в опубликованную
+  // и не содержит опубликованных подветок). Собственный ключ ветки из набора
+  // исключается: иначе обновление уже опубликованной ветки всегда отклонялось
+  // бы как «вложенная публикация» по её же ключу
+  QSet<QString> publishedKeys=BranchPublisher::listPublishedBranchKeys(sharedDir);
+  publishedKeys.remove(branchId.section('_', 0, 0));
+  if(BranchPublisher::hasNestedPublication(branchItem, publishedKeys))
+  {
+    QMessageBox::warning(this, tr("Publish branch"),
+                         tr("The branch is nested in an already published branch "
+                            "or contains published sub-branches.\n"
+                            "Publishing nested branches is not supported."));
+    return;
+  }
+
+  // Проверка: зашифрованная ветка публикуется расшифрованной
+  if(knowTreeModel->isItemContainsCryptBranches(branchItem))
+  {
+    QMessageBox::StandardButton answer=QMessageBox::question(
+          this, tr("Publish branch"),
+          tr("The branch contains encrypted content.\n"
+             "Encrypted data is not stored in the common directory; "
+             "the publication will be in decrypted form.\n\n"
+             "Continue?"),
+          QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if(answer!=QMessageBox::Yes)
+      return;
+  }
+
+  // Определение операции и факт наличия существующей публикации
+  QString ownerDirName=BranchPublisher::buildOwnerDirName(teamProfile);
+  QString branchDirName=BranchPublisher::buildBranchDirName(branchId, branchName);
+
+  QString existingPublication=BranchPublisher::findPublicationDir(sharedDir,
+                                                                  ownerDirName,
+                                                                  branchDirName);
+  bool isAlreadyPublished=!existingPublication.isEmpty();
+
+  if(!isUpdate && isAlreadyPublished)
+  {
+    QMessageBox::StandardButton answer=QMessageBox::question(
+          this, tr("Publish branch"),
+          tr("The branch is already published at:\n%1\n\n"
+             "Update the publication?").arg(existingPublication),
+          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+    if(answer!=QMessageBox::Yes)
+      return;
+    isUpdate=true;
+  }
+
+  if(isUpdate && !isAlreadyPublished)
+  {
+    QMessageBox::warning(this, tr("Update publication"),
+                         tr("Publication of the branch was not found."));
+    return;
+  }
+
+  // Выполнение публикации/обновления
+  BranchPublisher::Operation operation=isUpdate ? BranchPublisher::Operation::Update
+                                                : BranchPublisher::Operation::Publish;
+
+  BranchPublisher::Result result=BranchPublisher::publishBranch(knowTreeModel,
+                                                                branchItem,
+                                                                teamProfile,
+                                                                operation);
+
+  if(!result.success)
+  {
+    QMessageBox::critical(this, tr("Publish branch"),
+                          tr("Publication failed:\n%1").arg(result.errorMessage));
+    return;
+  }
+
+  // Предупреждение о большом объёме (рост журнала при каждой публикации).
+  // Без git журнала нет — предупреждать не о чем
+  if(result.largeContent && !result.journalDisabled)
+  {
+    QMessageBox::warning(this, tr("Publish branch"),
+                         tr("The published content is large (more than 20 MB).\n"
+                            "The git-history in the common directory will grow "
+                            "with each publication."));
+  }
+
+  // Уведомление об успехе. Без git в PATH журнал/восстановление отключены —
+  // подсказка об этом добавляется к тексту (дифф/импорт/детект работают)
+  QString successText=tr("Branch \"%1\" successfully %2.\n"
+                         "Publication directory:\n%3\n"
+                         "Publish version: %4\n\n"
+                         "The update will travel to colleagues via Syncthing "
+                         "(shared folder = sync/).")
+                         .arg(branchName)
+                         .arg(isUpdate ? tr("updated") : tr("published"))
+                         .arg(result.publicationDir)
+                         .arg(result.publishVersion);
+  if(result.journalDisabled)
+    successText+=tr("\n\nJournal is unavailable (git not found in PATH):\n"
+                    "recovery from the journal is disabled.");
+
+  // Уведомление об успехе
+  QMessageBox box(this);
+  box.setIcon(QMessageBox::Information);
+  box.setWindowTitle(isUpdate ? tr("Update publication") : tr("Publish branch"));
+  box.setText(successText);
+  QPushButton *settingsButton=box.addButton(tr("Settings..."), QMessageBox::ActionRole);
+  box.addButton(tr("Close"), QMessageBox::RejectRole);
+  box.exec();
+
+  if(box.clickedButton()==settingsButton)
+  {
+    AppConfigDialog dialog("pageTeam", this);
+    dialog.exec();
+  }
+
+  // Запись действия в лог
+  QMap<QString, QString> logData;
+  logData["branchId"]=branchId;
+  logData["branchName"]=branchName;
+  logData["publicationPath"]=result.publicationDir;
+  logData["publishVersion"]=QString().number(result.publishVersion);
+  actionLogger.addAction(isUpdate ? "updatePublication" : "publishBranch", logData);
+
+  // Журнал сразу фиксирует новое легитимное состояние sync/ (без debounce),
+  // чтобы предложение восстановления не всплывало после собственной публикации
+  sharedDirWatcher.requestImmediateSnapshot();
+
+  // Публикация появилась/изменилась — обновляются бейджи и панель
+  refreshPublicationState();
+}
+
+
+void TreeScreen::revokePublication(void)
+{
+  QModelIndex index=getCurrentItemIndex();
+  if(!index.isValid())
+    return;
+
+  TreeItem *branchItem=knowTreeModel->getItem(index);
+  QString branchId=branchItem->getField("id");
+  QString branchName=branchItem->getField("name");
+
+  QString sharedDir=teamProfile.getSharedDir();
+  if(sharedDir.isEmpty())
+    return;
+
+  QString ownerDirName=BranchPublisher::buildOwnerDirName(teamProfile);
+  QString branchDirName=BranchPublisher::buildBranchDirName(branchId, branchName);
+
+  QString publicationDir=BranchPublisher::findPublicationDir(sharedDir, ownerDirName,
+                                                             branchDirName);
+  if(publicationDir.isEmpty())
+  {
+    QMessageBox::information(this, tr("Revoke publication"),
+                             tr("Publication of the branch was not found."));
+    return;
+  }
+
+  QMessageBox::StandardButton answer=QMessageBox::question(
+        this, tr("Revoke publication"),
+        tr("Revoke the publication at:\n%1\n\n"
+           "The publication directory will be moved to the trash.").arg(publicationDir),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+  if(answer!=QMessageBox::Yes)
+    return;
+
+  BranchPublisher::revokePublication(publicationDir);
+
+  QMessageBox::information(this, tr("Revoke publication"),
+                           tr("Publication revoked."));
+
+  QMap<QString, QString> logData;
+  logData["branchId"]=branchId;
+  logData["branchName"]=branchName;
+  logData["publicationPath"]=publicationDir;
+  actionLogger.addAction("revokePublication", logData);
+
+  // Журнал сразу фиксирует отзыв публикации: осознанное удаление не
+  // должно восприниматься как потеря данных («восстановить из журнала?»)
+  sharedDirWatcher.requestImmediateSnapshot();
+
+  // Публикация исчезла из общего каталога — обновляются бейджи и панель
+  refreshPublicationState();
+}
+
+
+void TreeScreen::updatePublicationActionsState(void)
+{
+  // По умолчанию пункты выключены
+  actionList["publishBranch"]->setEnabled(false);
+  actionList["updatePublication"]->setEnabled(false);
+  actionList["revokePublication"]->setEnabled(false);
+
+  QModelIndex index=getCurrentItemIndex();
+  if(!index.isValid())
+    return;
+
+  TreeItem *branchItem=knowTreeModel->getItem(index);
+
+  QString sharedDir=teamProfile.getSharedDir();
+  if(sharedDir.isEmpty())
+    return;
+
+  QString ownerDirName=BranchPublisher::buildOwnerDirName(teamProfile);
+  QString branchDirName=BranchPublisher::buildBranchDirName(branchItem->getField("id"),
+                                                            branchItem->getField("name"));
+
+  QString publicationDir=BranchPublisher::findPublicationDir(sharedDir, ownerDirName, branchDirName);
+  bool isPublished=!publicationDir.isEmpty();
+
+  actionList["publishBranch"]->setEnabled(!isPublished);
+  actionList["updatePublication"]->setEnabled(isPublished);
+  actionList["revokePublication"]->setEnabled(isPublished);
+}
+
+
+void TreeScreen::onSharedDirChanged(void)
+{
+  refreshPublicationState();
+}
+
+
+void TreeScreen::openSubscriptionSlice(const QString &branchId, const QString &publicationDir)
+{
+  if(publicationDir.isEmpty())
+    return;
+
+  QList<DiffChange> sliceChanges;
+
+  SubscriptionImportEngine sliceEngine;
+  sliceEngine.setPublicationDir(publicationDir);
+  if(sliceEngine.loadPublication() && sliceEngine.isPublicationComplete())
+  {
+    const QString baselineSnapshot=subscriptionRegistry.getSubscription(branchId).baselineSnapshot;
+    if(!baselineSnapshot.isEmpty())
+      sliceChanges=sliceEngine.pendingChanges(&subscriptionRegistry, knowTreeModel,
+                                              baselineSnapshot, nullptr);
+  }
+
+  BranchSliceDialog sliceDialog(publicationDir, this, sliceChanges);
+  sliceDialog.exec();
+}
+
+
+void TreeScreen::focusLocalBranchInTree(const QString &branchId)
+{
+  if(branchId.isEmpty())
+    return;
+
+  TreeItem *targetItem=knowTreeModel->getItemById(branchId);
+  if(!targetItem)
+  {
+    QMessageBox::warning(this, tr("Branch"),
+                         tr("Source branch is not found in the database."));
+    return;
+  }
+
+  const QModelIndex index=knowTreeModel->getIndexByItem(targetItem);
+
+  // Раскрываем всех предков, чтобы ветка стала видимой
+  QModelIndex parentIndex=index.parent();
+  while(parentIndex.isValid())
+  {
+    knowTreeView->expand(parentIndex);
+    parentIndex=parentIndex.parent();
+  }
+
+  knowTreeView->setCurrentIndex(index);
+  knowTreeView->selectionModel()->setCurrentIndex(
+      index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+  knowTreeView->scrollTo(index);
+  knowTreeView->setFocus();
+}
+
+
+void TreeScreen::forceUpdateOwnPublication(const QString &branchId)
+{
+  if(branchId.isEmpty())
+    return;
+
+  TreeItem *targetItem=knowTreeModel->getItemById(branchId);
+  if(!targetItem)
+  {
+    QMessageBox::warning(this, tr("Force branch update"),
+                         tr("Source branch is not found in the database."));
+    return;
+  }
+
+  const QModelIndex index=knowTreeModel->getIndexByItem(targetItem);
+
+  // Раскрываем всех предков, чтобы ветка стала видимой
+  QModelIndex parentIndex=index.parent();
+  while(parentIndex.isValid())
+  {
+    knowTreeView->expand(parentIndex);
+    parentIndex=parentIndex.parent();
+  }
+
+  knowTreeView->setCurrentIndex(index);
+  knowTreeView->selectionModel()->setCurrentIndex(
+      index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+  knowTreeView->scrollTo(index);
+
+  publishCurrentBranch(true);
+}
+
+
+void TreeScreen::revokeOwnPublication(const QString &branchId)
+{
+  if(branchId.isEmpty())
+    return;
+
+  TreeItem *targetItem=knowTreeModel->getItemById(branchId);
+  if(!targetItem)
+  {
+    QMessageBox::warning(this, tr("Revoke publication"),
+                         tr("Source branch is not found in the database."));
+    return;
+  }
+
+  const QModelIndex index=knowTreeModel->getIndexByItem(targetItem);
+
+  // Раскрываем всех предков, чтобы ветка стала видимой
+  QModelIndex parentIndex=index.parent();
+  while(parentIndex.isValid())
+  {
+    knowTreeView->expand(parentIndex);
+    parentIndex=parentIndex.parent();
+  }
+
+  knowTreeView->setCurrentIndex(index);
+  knowTreeView->selectionModel()->setCurrentIndex(
+      index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+  knowTreeView->scrollTo(index);
+
+  revokePublication();
+}
+
+
+void TreeScreen::showSubscriptionChanges(const QString &branchId, const QString &publicationDir)
+{
+  qDebug() << "showSubscriptionChanges: branchId" << branchId
+           << "publicationDir" << publicationDir;
+
+  if(publicationDir.isEmpty())
+    return;
+
+  // Движок загружает актуальный срез публикации и её метаданные
+  SubscriptionImportEngine engine;
+  engine.setPublicationDir(publicationDir);
+
+  // Дифф/импорт строятся только по целостной версии публикации.
+  // Если Syncthing доставил лишь часть обновления — показываем «ожидание
+  // данных» и даём повторную проверку (без полного прохода: готовность
+  // определяется по манифесту в момент чтения)
+  while(true)
+  {
+    QString loadError;
+    if(!engine.loadPublication(&loadError))
+    {
+      qDebug() << "showSubscriptionChanges: loadPublication FAILED:" << loadError;
+      QMessageBox::warning(this, tr("Import"), loadError);
+      return;
+    }
+
+    if(engine.isPublicationComplete())
+      break;
+
+    QMessageBox* box(new QMessageBox(QMessageBox::Information, tr("Changes"),
+                    tr("Update is still on the way: publication data has not fully arrived. Diff and import run only on a consistent version — retry after synchronization completes (check that Syncthing syncs the sync/ folder on both devices and has converged)."),
+                    QMessageBox::NoButton, this));
+    QPushButton* retryButton(box->addButton(tr("Check status"), QMessageBox::AcceptRole));
+    box->addButton(QMessageBox::Cancel);
+    box->exec();
+    bool retryClicked(box->clickedButton()==retryButton);
+    delete box;
+    if(!retryClicked)
+      return;
+  }
+  qDebug() << "showSubscriptionChanges: publication loaded and complete";
+
+  // Метаданные валидны только после успешной загрузки (до loadPublication
+  // getMeta() возвращает пустую структуру — брать раньше нельзя)
+  const PublicationMeta meta=engine.getMeta();
+
+  // Битый meta.json: без branchId нельзя ни сверить базовую точку, ни
+  // привязать импорт — иначе зацикливание на «первом импорте» с пустым именем
+  if(meta.branchId.isEmpty())
+  {
+    qDebug() << "showSubscriptionChanges: empty branchId in meta.json";
+    QMessageBox::warning(this, tr("Import"),
+                         tr("Publication metadata is broken (meta.json without branchId)."));
+    return;
+  }
+
+  // Первый импорт: полное поддерево создаётся в зону imported/<owner>/<title>.
+  // Пока у подписки нет локальной копии, изменения не просматриваются поштучно —
+  // создаётся вся структура (ветки + записи), после чего базовая точка выравнивается.
+  // Проверка идёт до вычисления диффа, чтобы первый импорт (в т.ч. сразу
+  // в момент подписки) не считал ненужные изменения
+  qDebug() << "showSubscriptionChanges: check local copy, branchId" << meta.branchId;
+  if(subscriptionRegistry.getSubscription(branchId).branchesMap.value(meta.branchId).isEmpty())
+  {
+    QString importError;
+    if(!engine.importFullSubtree(&subscriptionRegistry, knowTreeModel, &importError))
+    {
+      qDebug() << "showSubscriptionChanges: importFullSubtree FAILED:" << importError;
+      QMessageBox::warning(this, tr("Import"), importError);
+      return;
+    }
+
+    const QString copyId=engine.localTargetBranchId();
+    qDebug() << "showSubscriptionChanges: imported copy root" << copyId;
+
+    subscriptionRegistry.setBaselineState(branchId, engine.buildBaselineSnapshot(),
+                                          meta.publishVersion);
+    saveKnowTree();
+
+    TreeItem *copyItem=knowTreeModel->getItemById(copyId);
+    if(copyItem)
+    {
+      const QModelIndex copyIndex=knowTreeModel->getIndexByItem(copyItem);
+      knowTreeView->setCurrentIndex(copyIndex);
+      knowTreeView->selectionModel()->setCurrentIndex(
+          copyIndex, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+      knowTreeView->scrollTo(copyIndex);
+      updateBranchOnScreen(copyIndex);
+    }
+
+    QMap<QString, QString> importData;
+    importData["branchId"]=branchId;
+    importData["branchName"]=meta.title;
+    importData["publicationPath"]=publicationDir;
+    importData["mode"]="fullSubtree";
+    actionLogger.addAction("importSubscriptionFull", importData);
+
+    QMessageBox::information(this, tr("Import"),
+                             tr("Subtree \"%1\" is imported into section\n%2")
+                             .arg(meta.title)
+                             .arg(tr("imported/%1/%2").arg(meta.ownerName).arg(meta.title)));
+
+    refreshPublicationState();
+    return;
+  }
+
+  const SubscriptionRecord subscription=subscriptionRegistry.getSubscription(branchId);
+  const QString baselineSnapshot=subscription.baselineSnapshot;
+  qDebug() << "showSubscriptionChanges: baselineSnapshot present" << !baselineSnapshot.isEmpty();
+
+  // Целевая ветка — локальная копия поддерева (корень в зоне imported/…).
+  // Нужна заранее: корневая таблица копии — фолбэк маршрутизации
+  // и остаточного diff
+  QString targetBranchId=subscriptionRegistry.getSubscription(branchId)
+                         .branchesMap.value(meta.branchId);
+  qDebug() << "showSubscriptionChanges: targetBranchId" << targetBranchId;
+
+  if(targetBranchId.isEmpty())
+  {
+    QMessageBox::warning(this, tr("Import"),
+                         tr("Local copy of the publication is not found."));
+    return;
+  }
+
+  TreeItem *targetItem=knowTreeModel->getItemById(targetBranchId);
+  if(!targetItem)
+  {
+    QMessageBox::warning(this, tr("Import"),
+                         tr("Target branch is not found in the tree."));
+    return;
+  }
+
+  if(targetItem->getField("crypt")=="1" && globalParameters.getCryptKey().isEmpty())
+  {
+    QMessageBox::information(this, tr("Import"),
+                             tr("Target branch is encrypted. Open it with the password before import."));
+    return;
+  }
+
+  RecordTableData *table=targetItem->recordtableGetTableData();
+
+  // Остаточный diff: свежие изменения минус уже отражённые в локальной
+  // копии минус применённые удаления. После полного импорта список пуст,
+  // после частичного — только остаток
+  QList<DiffChange> changes=engine.pendingChanges(&subscriptionRegistry, knowTreeModel,
+                                                  baselineSnapshot, table);
+  qDebug() << "showSubscriptionChanges: pending changes count" << changes.size();
+
+  if(changes.isEmpty())
+  {
+    QMessageBox::information(this, tr("Changes"),
+                             tr("There are no new changes in the publication."));
+    return;
+  }
+
+  // Тексты для построчного diff: sharedRecordId -> (локальный, владельца).
+  // Только для изменённых текстов; картинки в тексте — плейсхолдерами,
+  // вложения — списками в диалоге (бинарное содержимое не сравнивается).
+  // Плюс базовые каталоги для рендера «Было / Стало» (картинки грузятся
+  // относительно каталогов записей)
+  QMap<QString, QPair<QString, QString>> recordTexts;
+  QMap<QString, QPair<QString, QString>> recordBaseDirs;
+  for(const DiffChange &change : changes)
+  {
+    if(change.type!=DiffChange::RecordUpdate || !change.textChanged)
+      continue;
+    const QString headText=engine.headRecordText(change.recordId);
+    if(headText.isEmpty())
+      continue;
+    const QString localText=engine.localRecordTextForChange(&subscriptionRegistry, knowTreeModel,
+                                                            change, table);
+    recordTexts.insert(change.recordId, QPair<QString, QString>(localText, headText));
+    recordBaseDirs.insert(change.recordId,
+                          engine.recordBaseDirsForChange(&subscriptionRegistry, knowTreeModel,
+                                                         change, table));
+  }
+
+  // Диалог со списком изменений и выбором действия (+ вкладка истории)
+  ChangeViewDialog dialog(meta.title, meta.ownerName, changes, this, publicationDir,
+                          recordTexts, recordBaseDirs);
+  dialog.setWindowTitle(tr("Changes: %1").arg(meta.title));
+
+  if(dialog.exec()!=QDialog::Accepted)
+  {
+    qDebug() << "showSubscriptionChanges: dialog rejected";
+    return;
+  }
+  qDebug() << "showSubscriptionChanges: dialog action"
+           << (int)dialog.action()
+           << "selected indices count" << dialog.selectedChangeIndices().size();
+
+  // «Отметить просмотренным» — только сдвигаем базовую точку
+  if(dialog.action()==ChangeViewDialog::Action::MarkViewed)
+  {
+    subscriptionRegistry.setBaselineState(branchId, engine.buildBaselineSnapshot(),
+                                          meta.publishVersion);
+    refreshPublicationState();
+    return;
+  }
+
+  // Таблица-приёмник резолвится движком на каждое изменение
+  // (SubscriptionImportEngine::resolveTable): где запись реально живёт
+  // либо таблица своей ветки-копии, корень — фолбэк
+
+  // Подсчитывается количество изменений, которые можно применить
+  // (записи + структура веток)
+  int applicableCount=0;
+  for(const DiffChange &change : changes)
+  {
+    if(change.type==DiffChange::RecordAdd
+       || change.type==DiffChange::RecordUpdate
+       || change.type==DiffChange::RecordDelete
+       || change.type==DiffChange::BranchAdd
+       || change.type==DiffChange::BranchRename
+       || change.type==DiffChange::BranchMove
+       || change.type==DiffChange::BranchDelete)
+      applicableCount++;
+  }
+
+  // Применение выбранных изменений
+  const QList<int> selectedIndices=dialog.selectedChangeIndices();
+  int appliedCount=0;
+
+  qDebug() << "showSubscriptionChanges: targetBranchId" << targetBranchId;
+
+  for(int idx : selectedIndices)
+  {
+    if(idx<0 || idx>=changes.size())
+      continue;
+const DiffChange &change=changes.at(idx);
+
+    // Защита от частичной доставки в момент импорта: добавляем/обновляем
+    // запись, только если её файлы совпадают с манифестом версии.
+    // Удаления под гард не попадают: удалённой записи в публикации нет
+    // по определению (isRecordComplete для неё всегда false — иначе удаление
+    // молча пропускалось бы вечно). Целостность версии уже проверена выше
+    if(change.type==DiffChange::RecordAdd
+       || change.type==DiffChange::RecordUpdate)
+    {
+      if(!engine.isRecordComplete(change.recordId))
+      {
+        qWarning() << "showSubscriptionChanges: record not complete (data still in transit), skip"
+                   << change.recordId;
+        continue;
+      }
+    }
+
+    qDebug() << "showSubscriptionChanges: applying change" << idx
+             << "type" << (int)change.type << "id" << change.recordId;
+
+    QString errorText;
+    QString localRecordId;
+
+    SubscriptionImportEngine::AppStatus status=
+        engine.applyChange(&subscriptionRegistry,
+                           engine.resolveTable(&subscriptionRegistry, knowTreeModel, change, table),
+                           change, &errorText, &localRecordId,
+                           knowTreeModel);
+
+    qDebug() << "showSubscriptionChanges: status" << (int)status
+             << "error" << errorText << "localRecordId" << localRecordId;
+
+    if(status==SubscriptionImportEngine::AppStatus::NeedsDecision)
+    {
+      // Конфликт: локальная правка против версии владельца
+      QMessageBox conflictBox(QMessageBox::Question, tr("Import conflict"),
+                              tr("Record \"%1\" was changed locally.\nImport the owner version?").arg(change.title),
+                              QMessageBox::NoButton, this);
+
+      QPushButton *replaceButton=conflictBox.addButton(tr("Replace with owner version"),
+                                                       QMessageBox::AcceptRole);
+      Q_UNUSED(replaceButton)
+      QPushButton *keepButton=conflictBox.addButton(tr("Keep both"),
+                                                    QMessageBox::ActionRole);
+      QPushButton *skipButton=conflictBox.addButton(tr("Skip"),
+                                                    QMessageBox::DestructiveRole);
+      conflictBox.exec();
+
+      QAbstractButton *clickedButton=conflictBox.clickedButton();
+      if(clickedButton==skipButton)
+        continue;
+
+      const SubscriptionImportEngine::ConflictDecision decision=
+          (clickedButton==keepButton)
+              ? SubscriptionImportEngine::ConflictDecision::DecisionKeepBoth
+              : SubscriptionImportEngine::ConflictDecision::DecisionReplace;
+
+      status=engine.applyChangeWithDecision(&subscriptionRegistry,
+                                            engine.resolveTable(&subscriptionRegistry, knowTreeModel,
+                                                                change, table),
+                                            change,
+                                            decision, &errorText, &localRecordId,
+                                            knowTreeModel);
+
+      QMap<QString, QString> conflictData;
+      conflictData["branchId"]=branchId;
+      conflictData["recordId"]=change.recordId;
+      conflictData["recordName"]=change.title;
+      conflictData["decision"]=(decision==SubscriptionImportEngine::ConflictDecision::DecisionKeepBoth)
+                                   ? "keepBoth" : "replace";
+      actionLogger.addAction("importConflictSolver", conflictData);
+    }
+
+    if(status==SubscriptionImportEngine::AppStatus::AppliedOk)
+    {
+      appliedCount++;
+    }
+    else if(status==SubscriptionImportEngine::AppStatus::Failed && !errorText.isEmpty())
+    {
+      QMessageBox::warning(this, tr("Import"), errorText);
+      break;
+    }
+  }
+
+  // Если что-то применилось — БД сохраняется и обновляется на экране
+  qDebug() << "showSubscriptionChanges: appliedCount" << appliedCount;
+  if(appliedCount>0)
+  {
+    saveKnowTree();
+
+    // Переименование веток идёт напрямую через setField без уведомлений
+    // модели — принудительно перерисовываем дерево
+    knowTreeView->viewport()->update();
+
+    const QModelIndex targetIndex=knowTreeModel->getIndexByItem(targetItem);
+    if(targetIndex.isValid())
+    {
+      knowTreeView->setCurrentIndex(targetIndex);
+      updateBranchOnScreen(targetIndex);
+    }
+  }
+
+  // Базовая точка продвигается только если применены ВСЕ применимые изменения
+  // (иначе непросмотренное остаётся видимым)
+  if(applicableCount>0 && appliedCount==applicableCount)
+    subscriptionRegistry.setBaselineState(branchId, engine.buildBaselineSnapshot(),
+                                          meta.publishVersion);
+
+  if(appliedCount>0)
+  {
+    QMap<QString, QString> importData;
+    importData["branchId"]=branchId;
+    importData["branchName"]=meta.title;
+    importData["publicationPath"]=publicationDir;
+    importData["mode"]=dialog.importModeName();
+    importData["appliedCount"]=QString::number(appliedCount);
+    importData["totalCount"]=QString::number(applicableCount);
+    actionLogger.addAction("importSubscriptionChanges", importData);
+
+    QMessageBox::information(this, tr("Import"),
+                             tr("Imported changes: %1 of %2.")
+                             .arg(appliedCount).arg(applicableCount));
+  }
+
+  refreshPublicationState();
+}
+
+
+void TreeScreen::refreshPublicationState(void)
+{
+  qDebug() << "TreeScreen::refreshPublicationState, shared dir:" << teamProfile.getSharedDir();
+  updatePublishedBadges();
+
+  if(subscriptionPanel)
+    subscriptionPanel->refresh();
+
+  this->checkJournalRecovery();
+  this->checkJournalSize();
+}
+
+
+void TreeScreen::checkJournalRecovery(void)
+{
+  if(recoveryPromptShown)
+    return;
+
+  // Первично — восстановление из local/ (без git)
+  if(sharedDirWatcher.isLocalRestoreAvailable())
+  {
+    recoveryPromptShown=true;
+
+    QMessageBox box(this);
+    box.setWindowTitle(tr("Restore from local"));
+    box.setIcon(QMessageBox::Warning);
+    box.setText(tr("The sync/ area is empty or contains incomplete data.\nThe local/ authority contains consistent owner publications.\n\nRestore the sync/ mirror from local/?"));
+
+    QPushButton *restoreButton=box.addButton(tr("Restore"), QMessageBox::YesRole);
+    box.addButton(tr("Later"), QMessageBox::RejectRole);
+    box.exec();
+
+    if(box.clickedButton()==restoreButton && subscriptionPanel)
+      subscriptionPanel->restoreFromLocal();
+
+    return;
+  }
+
+  if(!sharedDirWatcher.isRecoveryAvailable())
+    return;
+
+  recoveryPromptShown=true;
+
+  const int snapshotCount=sharedDirWatcher.journalSnapshotCount();
+
+  QMessageBox box(this);
+  box.setWindowTitle(tr("Restore from journal"));
+  box.setIcon(QMessageBox::Warning);
+  box.setText(tr("The sync/ area is empty or contains incomplete data.\nThe unified journal contains %1 snapshot(s) with the last known state of publications.\n\nRestore publications from the journal?")
+              .arg(snapshotCount));
+
+  QPushButton *restoreButton=box.addButton(tr("Restore"), QMessageBox::YesRole);
+  box.addButton(tr("Later"), QMessageBox::RejectRole);
+  box.exec();
+
+  if(box.clickedButton()==restoreButton && subscriptionPanel)
+  {
+    subscriptionPanel->restoreFromJournal(true, snapshotCount);
+  }
+}
+
+
+void TreeScreen::checkJournalSize(void)
+{
+  if(journalSizePromptShown)
+    return;
+
+  const int snapshotCount=sharedDirWatcher.journalSnapshotCount();
+  if(snapshotCount<JournalArchiveSuggestSnapshots)
+    return;
+
+  journalSizePromptShown=true;
+
+  const quint64 journalBytes=sharedDirWatcher.journalDirSizeBytes();
+  const double journalMb=static_cast<double>(journalBytes)/(1024.0*1024.0);
+
+  QMessageBox box(this);
+  box.setWindowTitle(tr("Journal size"));
+  box.setIcon(QMessageBox::Information);
+  box.setText(tr("Exchange journal has grown: %1 snapshots (%2 MB).\nOld snapshots are only needed to restore long-deleted data. Archiving will keep only the current state (irreversibly). Archive now?")
+              .arg(snapshotCount)
+              .arg(journalMb, 0, 'f', 1));
+
+  QPushButton *archiveButton=box.addButton(tr("Archive now"), QMessageBox::YesRole);
+  box.addButton(tr("Later"), QMessageBox::RejectRole);
+  box.exec();
+
+  if(box.clickedButton()==archiveButton && subscriptionPanel)
+    subscriptionPanel->archiveJournal(snapshotCount);
+}
+
+
+void TreeScreen::updatePublishedBadges(void)
+{
+  publishedBranchKeys.clear();
+
+  QString sharedDir=teamProfile.getSharedDir();
+  if(!sharedDir.isEmpty())
+    publishedBranchKeys=BranchPublisher::listPublishedBranchKeys(sharedDir);
+
+  if(publishedBadgeDelegate)
+    publishedBadgeDelegate->setPublishedKeys(publishedBranchKeys);
+
+  if(knowTreeView)
+    knowTreeView->viewport()->update();
+}
+
+
+void TreeScreen::autoUpdatePublishedBranches(void)
+{
+  const QString sharedDir=teamProfile.getSharedDir();
+  const QString teamId=teamProfile.getTeamId();
+
+  // Без настроенного профиля свои публикации не определить
+  if(sharedDir.isEmpty() || teamId.isEmpty())
+    return;
+
+  // Публикации обновляются только после того, как база хотя бы раз
+  // загрузилась (защита от срабатывания на этапе старта приложения)
+  if(lastKnowTreeModifyDateTime.isValid()==false)
+    return;
+
+  const QList<PublicationMeta> publications=BranchPublisher::listPublications(sharedDir);
+
+  for(const PublicationMeta &meta : publications)
+  {
+    // Только собственные публикации (по машинному ключу владельца)
+    if(meta.branchId.isEmpty() || meta.ownerId!=teamId)
+      continue;
+
+    TreeItem *item=knowTreeModel->getItemById(meta.branchId);
+    if(!item)
+      continue; // Ветка удалена из базы — публикация не трогается
+
+    const BranchPublisher::Result result=BranchPublisher::publishBranch(
+        knowTreeModel, item, teamProfile, BranchPublisher::Operation::Update);
+
+    qDebug() << "autoUpdatePublishedBranches: branchId" << meta.branchId
+             << "title" << meta.title
+             << "success" << result.success
+             << "unchanged" << result.unchanged
+             << "publishVersion" << result.publishVersion
+             << "error" << result.errorMessage;
+  }
+
+  // Собственные публикации приложением актуализированы — журнал фиксирует
+  // новое состояние немедленно (после авто-обновления восстановление не нужно)
+  sharedDirWatcher.requestImmediateSnapshot();
+}
+
+
+void TreeScreen::schedulePublicationsAutoUpdate(void)
+{
+  if(publicationAutoUpdateTimer)
+    publicationAutoUpdateTimer->start();
+}
+
+
+void TreeScreen::onPublicationAutoUpdateTimeout(void)
+{
+  autoUpdatePublishedBranches();
 }

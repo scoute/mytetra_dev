@@ -37,6 +37,9 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/PeriodicCheckBase.h"
 #include "libraries/PeriodicSyncro.h"
+#include "models/teamProfile/TeamProfile.h"
+#include "libraries/SharedDirWatcher.h"
+#include "models/subscription/SubscriptionRegistry.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -84,6 +87,15 @@ ShortcutManager shortcutManager;
 // Различные периодические проверки
 PeriodicCheckBase periodicCheckBase;
 PeriodicSyncro periodicSyncro;
+
+// Профиль участника команды SyncTetra (имя, почта, id, каталог обмена)
+TeamProfile teamProfile;
+
+// Наблюдатель каталога обмена SyncTetra
+SharedDirWatcher sharedDirWatcher;
+
+// Реестр подписок SyncTetra
+SubscriptionRegistry subscriptionRegistry;
 
 // Указатель на внутренний буфер обмена
 InternalClipboard *internalClipboard;
@@ -350,6 +362,15 @@ int main(int argc, char ** argv)
 
     // Инициализация указателя на внутренний буфер обмена
     internalClipboard = new InternalClipboard();
+
+    // Запуск слежения за каталогом обмена SyncTetra.
+    // При изменении настроек каталога наблюдатель перенастраивается
+    QObject::connect(&teamProfile, &TeamProfile::teamProfileChanged,
+                     &sharedDirWatcher, &SharedDirWatcher::updateWatchedPath);
+    sharedDirWatcher.start();
+
+    // Инициализация реестра подписок
+    subscriptionRegistry.init();
 
     // Создание объекта главного окна
     MainWindow win;

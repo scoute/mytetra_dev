@@ -2874,6 +2874,12 @@ void MainWindow::saveTextarea(void)
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr && !id.isEmpty())
       treeScreen->knowTreeModel->refreshRecordStats(id);
 
+    // Текст записей сохраняется без пересохранения дерева, поэтому
+    // публикации по нему обновляются отложенно (debounce): если владелец
+    // правил опубликованную ветку — shared актуализируется автоматически
+    if(treeScreen)
+      treeScreen->schedulePublicationsAutoUpdate();
+
     updateStats();
 }
 

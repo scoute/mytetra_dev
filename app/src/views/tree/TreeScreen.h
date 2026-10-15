@@ -5,7 +5,9 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMap>
+#include <QSet>
 #include <QModelIndex>
+#include <QTimer>
 
 
 class QItemSelectionModel;
@@ -45,6 +47,10 @@ public:
  void setCursorToId(QString nodeId);
  
  void updateBranchOnScreen(const QModelIndex &index);
+
+ // Отложенное автообновление собственных публикаций после сохранений
+ // (вызывается из MainWindow::saveTextarea)
+ void schedulePublicationsAutoUpdate(void);
 
  void setFocusToBaseWidget(void);
 
@@ -91,6 +97,24 @@ private slots:
 
  void encryptBranch(void);
  void decryptBranch(void);
+
+ void publishBranch(void);
+ void updatePublication(void);
+ void publishCurrentBranch(bool isUpdate);
+ void revokePublication(void);
+ void openSubscriptionSlice(const QString &branchId, const QString &publicationDir);
+ void showSubscriptionChanges(const QString &branchId, const QString &publicationDir);
+ void focusLocalBranchInTree(const QString &branchId);
+ void forceUpdateOwnPublication(const QString &branchId);
+ void revokeOwnPublication(const QString &branchId);
+ void refreshPublicationState(void);
+ void updatePublicationActionsState(void);
+ void onSharedDirChanged(void);
+ void updatePublishedBadges(void);
+ void autoUpdatePublishedBranches(void);
+ void onPublicationAutoUpdateTimeout(void);
+ void checkJournalRecovery(void);
+ void checkJournalSize(void);
 
  // Действия при клике на ветку дерева
  void onKnowtreeClicked(const QModelIndex &index);
@@ -139,6 +163,25 @@ private:
 
  // Избранное между тулбаром веток и деревом. Прячется когда пусто
  FavoritesPanel *favoritesPanel=nullptr;
+
+ // Панель подписок SyncTetra под деревом
+ class SubscriptionPanel *subscriptionPanel=nullptr;
+ class PublishedBadgeDelegate *publishedBadgeDelegate=nullptr;
+
+ // Ключи опубликованных веток для бейджей дерева
+ QSet<QString> publishedBranchKeys;
+
+ // Предложения восстановления/архива журнала — раз за сессию
+ bool recoveryPromptShown=false;
+ bool journalSizePromptShown=false;
+
+ // Debounce автообновления собственных публикаций после сохранений
+ QTimer *publicationAutoUpdateTimer=nullptr;
+
+// Порог снимков журнала, после которого предлагается архивирование истории.
+// Тихого автосжатия нет осознанно: удаление истории необратимо и убивает
+// глубину восстановления — решение всегда за пользователем
+static const int JournalArchiveSuggestSnapshots=1000;
 
  QVBoxLayout *treeScreenLayout;
 

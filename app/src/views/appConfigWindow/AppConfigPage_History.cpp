@@ -78,6 +78,26 @@ void AppConfigPage_History::setupUi()
     squashEnable->setEnabled(squashActive);
     squashKeep->setEnabled(squashActive);
     squashKeepLabel->setEnabled(squashActive);
+
+    // Стратегия превышения лимита: радиокнопки с id под SquashMode.
+    // Создание здесь, а не в assembly: setupSignals коннектит их
+    // сразу после setupUi
+    squashModeLabel=new QLabel(tr("What to do on limit excess:"), this);
+    squashModeGroup=new QButtonGroup(this);
+    squashDeleteOldest=new QRadioButton(tr("Delete oldest entries"), this);
+    squashSmartMerge=new QRadioButton(tr("Merge similar neighbors"), this);
+    squashBundle10=new QRadioButton(tr("Compress every 10 entries into one except the latest 10"), this);
+    squashModeGroup->addButton(squashDeleteOldest, 0);
+    squashModeGroup->addButton(squashSmartMerge, 1);
+    squashModeGroup->addButton(squashBundle10, 2);
+
+    const int modeIndex=qBound(0, mytetraConfig.get_historySquashMode(), 2);
+    squashModeGroup->button(modeIndex)->setChecked(true);
+
+    squashModeLabel->setEnabled(squashActive);
+    squashDeleteOldest->setEnabled(squashActive);
+    squashSmartMerge->setEnabled(squashActive);
+    squashBundle10->setEnabled(squashActive);
 }
 
 
@@ -120,29 +140,11 @@ void AppConfigPage_History::assembly()
     squashLayout->addStretch(1);
     noteHistoryLayout->addLayout(squashLayout);
 
-    // Стратегия превышения лимита: радиокнопки с id под SquashMode
-    squashModeLabel=new QLabel(tr("What to do on limit excess:"), this);
+    // Стратегия превышения лимита (виджеты созданы в setupUi)
     noteHistoryLayout->addWidget(squashModeLabel);
-
-    squashModeGroup=new QButtonGroup(this);
-    squashDeleteOldest=new QRadioButton(tr("Delete oldest entries"), this);
-    squashSmartMerge=new QRadioButton(tr("Merge similar neighbors"), this);
-    squashBundle10=new QRadioButton(tr("Compress every 10 entries into one except the latest 10"), this);
-    squashModeGroup->addButton(squashDeleteOldest, 0);
-    squashModeGroup->addButton(squashSmartMerge, 1);
-    squashModeGroup->addButton(squashBundle10, 2);
     noteHistoryLayout->addWidget(squashDeleteOldest);
     noteHistoryLayout->addWidget(squashSmartMerge);
     noteHistoryLayout->addWidget(squashBundle10);
-
-    const int modeIndex=qBound(0, mytetraConfig.get_historySquashMode(), 2);
-    squashModeGroup->button(modeIndex)->setChecked(true);
-
-    const bool squashUiActive=mytetraConfig.get_historyEnable();
-    squashModeLabel->setEnabled(squashUiActive);
-    squashDeleteOldest->setEnabled(squashUiActive);
-    squashSmartMerge->setEnabled(squashUiActive);
-    squashBundle10->setEnabled(squashUiActive);
     noteHistoryBox->setLayout(noteHistoryLayout);
 
     // Собирается основной слой

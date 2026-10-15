@@ -1375,6 +1375,11 @@ void MainWindow::runDirectPreferences(QAction *action)
     {
         dialog->setMenuListVisible(false);
         dialog->exec();
+
+        // Настройки могли поменять мастер-тумблеры (история и пр.):
+        // состояние пунктов перечитывается сразу, а не по следующему клику
+        if(recordTableScreen!=nullptr)
+            recordTableScreen->toolsUpdate();
     }
 
     delete dialog;

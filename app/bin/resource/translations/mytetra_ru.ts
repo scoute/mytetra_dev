@@ -794,8 +794,8 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Хранить версий:</translation>
     </message>
     <message>
-        <source>Enable note history tracking</source>
-        <translation>Включить ведение истории заметок</translation>
+        <source>Enable note history</source>
+        <translation>Включить историю заметок</translation>
     </message>
     <message>
         <source>What to do on limit excess:</source>

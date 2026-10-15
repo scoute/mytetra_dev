@@ -672,7 +672,7 @@ MyTetra が起動している必要があります。</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Enable note history tracking</source>
+        <source>Enable note history</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

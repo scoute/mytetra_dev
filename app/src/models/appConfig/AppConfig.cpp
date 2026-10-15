@@ -1579,19 +1579,20 @@ void AppConfig::set_voiceNoteFormat(QString format)
 }
 
 
-// Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high.
-// Середина если не задано или мусор
+// Качество голосовых заметок по умолчанию: 0 low, 1 high.
+// Low если не задано или мусор: файлы меньше, голоса хватает.
+// Старые medium (1) и high (2) едут в high
 int AppConfig::get_voiceNoteQuality(void)
 {
-    const int quality=m_conf->value("voiceNoteQuality", 1).toInt();
+    const int quality=m_conf->value("voiceNoteQuality", 0).toInt();
 
-    return qBound(0, quality, 2);
+    return qBound(0, quality, 1);
 }
 
 
 void AppConfig::set_voiceNoteQuality(int quality)
 {
-    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 2));
+    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 1));
 }
 
 

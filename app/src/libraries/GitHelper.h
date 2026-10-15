@@ -82,6 +82,10 @@ public:
     // Закоммитить всё если есть изменения. Без изменений истина
     static bool commitAllIfChanged(const QString &dir, const QString &message,
                                    QString *hash=nullptr);
+
+    // Корень репозитория вверх по дереву (по .git), пусто если нет.
+    // Для diff/детекта подписок: единый журнал shared/.git
+    static QString findRepositoryRoot(const QString &dir);
 };
 
 #endif /* _GITHELPER_H_ */

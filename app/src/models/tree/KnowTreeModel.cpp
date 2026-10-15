@@ -998,6 +998,19 @@ QModelIndex KnowTreeModel::moveUpDownBranch(const QModelIndex &index,int directi
 }
 
 
+// Перемещение ветки к новому родителю. Уже на месте — успех без действий
+bool KnowTreeModel::moveBranchToParent(TreeItem *item, TreeItem *newParent)
+{
+    if(item==nullptr || newParent==nullptr || item==newParent)
+        return false;
+
+    if(item->parent()==newParent)
+        return true; // Уже на месте — успех без действий
+
+    return moveBranch(item->getField("id"), newParent->getField("id"), true);
+}
+
+
 // Перемещение ветки к другой ветке с сохранением идентификатора.
 // В отличие от копирования со вставкой здесь не генерируются новые ID
 // и не копируются файлы записей, перемещается сам элемент дерева

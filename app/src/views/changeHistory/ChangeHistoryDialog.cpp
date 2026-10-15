@@ -137,7 +137,9 @@ void ChangeHistoryDialog::refreshVersionList(void)
 
 
 // Ручное сжатие истории по лимиту из настроек.
-// Работает независимо от тумблера авточки: раз нажали, значит надо
+// Работает независимо от тумблера автосжатия: раз нажали, значит надо.
+// Лимит берется из выпадашки при любом положении галочки:
+// ручное сжатие это "применить лимит прямо сейчас"
 void ChangeHistoryDialog::onCompact(void)
 {
     const int keep=qMax(2, mytetraConfig.get_historySquashKeep());

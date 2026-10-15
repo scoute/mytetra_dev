@@ -63,15 +63,15 @@ void AppConfigPage_History::setupUi()
 
     const int keepIndex=squashKeep->findData(mytetraConfig.get_historySquashKeep());
     squashKeep->setCurrentIndex(keepIndex>=0 ? keepIndex : squashKeep->findData(100));
-    squashKeep->setEnabled(mytetraConfig.get_historySquashEnable());
-    squashKeepLabel->setEnabled(mytetraConfig.get_historySquashEnable());
+
+    // Выпадашка всегда активна: лимит нужен и ручной кнопке
+    // "Сжать историю", галочка включает только автоматику
 }
 
 
 void AppConfigPage_History::setupSignals()
 {
-    connect(squashEnable, &QCheckBox::toggled, squashKeep, &QComboBox::setEnabled);
-    connect(squashEnable, &QCheckBox::toggled, squashKeepLabel, &QLabel::setEnabled);
+
 }
 
 

@@ -42,8 +42,13 @@ void AppConfigPage_History::setupUi()
     rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
     rememberAtOrdinarySelectionCheckBox->setChecked(mytetraConfig.getRememberCursorAtOrdinarySelection());
 
-    // Сквош истории изменений заметки: автосжатие снизу по лимиту.
-    // По умолчанию выключено
+    // Мастер-тумблер истории заметок: без него ни снапшотов,
+    // ни диалога. По умолчанию история ведется
+    historyEnable=new QCheckBox(this);
+    historyEnable->setText(tr("Enable note history tracking"));
+    historyEnable->setChecked(mytetraConfig.get_historyEnable());
+
+    // Сквош истории изменений заметки: автосжатие снизу по лимиту
     squashEnable=new QCheckBox(this);
     squashEnable->setText(tr("Squash note history automatically"));
     squashEnable->setChecked(mytetraConfig.get_historySquashEnable());
@@ -64,14 +69,22 @@ void AppConfigPage_History::setupUi()
     const int keepIndex=squashKeep->findData(mytetraConfig.get_historySquashKeep());
     squashKeep->setCurrentIndex(keepIndex>=0 ? keepIndex : squashKeep->findData(100));
 
-    // Выпадашка всегда активна: лимит нужен и ручной кнопке
-    // "Сжать историю", галочка включает только автоматику
+    // Выпадашка всегда активна при включенной истории: лимит нужен
+    // и ручной кнопке "Сжать историю". Без мастер-тумблера вся
+    // группа серая
+    const bool squashActive=mytetraConfig.get_historyEnable();
+    squashEnable->setEnabled(squashActive);
+    squashKeep->setEnabled(squashActive);
+    squashKeepLabel->setEnabled(squashActive);
 }
 
 
 void AppConfigPage_History::setupSignals()
 {
-
+    // Без мастер-тумблера сквош-настройки не при делах
+    connect(historyEnable, &QCheckBox::toggled, squashEnable, &QCheckBox::setEnabled);
+    connect(historyEnable, &QCheckBox::toggled, squashKeep, &QComboBox::setEnabled);
+    connect(historyEnable, &QCheckBox::toggled, squashKeepLabel, &QLabel::setEnabled);
 }
 
 
@@ -91,12 +104,16 @@ void AppConfigPage_History::assembly()
     noteHistoryBox=new QGroupBox(this);
     noteHistoryBox->setTitle(tr("Note change history"));
 
+    QVBoxLayout *noteHistoryLayout=new QVBoxLayout;
+    noteHistoryLayout->addWidget(historyEnable);
+
     QHBoxLayout *squashLayout=new QHBoxLayout;
     squashLayout->addWidget(squashEnable);
     squashLayout->addWidget(squashKeepLabel);
     squashLayout->addWidget(squashKeep);
     squashLayout->addStretch(1);
-    noteHistoryBox->setLayout(squashLayout);
+    noteHistoryLayout->addLayout(squashLayout);
+    noteHistoryBox->setLayout(noteHistoryLayout);
 
     // Собирается основной слой
     QVBoxLayout *centralLayout=new QVBoxLayout();
@@ -115,6 +132,7 @@ void AppConfigPage_History::retranslateUi(void)
   rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
   historyBox->setTitle(tr("History of visited notes"));
   noteHistoryBox->setTitle(tr("Note change history"));
+  historyEnable->setText(tr("Enable note history tracking"));
   squashEnable->setText(tr("Squash note history automatically"));
   squashKeepLabel->setText(tr("Keep versions:"));
 }
@@ -138,6 +156,11 @@ int AppConfigPage_History::applyChanges()
     // обычном выборе записи
     if(mytetraConfig.getRememberCursorAtOrdinarySelection()!=rememberAtOrdinarySelectionCheckBox->isChecked())
       mytetraConfig.setRememberCursorAtOrdinarySelection(rememberAtOrdinarySelectionCheckBox->isChecked());
+
+    // Мастер-тумблер истории: выключенная история не ведется,
+    // сквош-настройки при ней не при делах (серые в UI)
+    if(mytetraConfig.get_historyEnable()!=historyEnable->isChecked())
+      mytetraConfig.set_historyEnable(historyEnable->isChecked());
 
     // Сквош истории изменений: авточка и лимит. Лимит подхватится
     // сам при следующем снапшоте

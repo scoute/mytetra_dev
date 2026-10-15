@@ -242,6 +242,7 @@ void RecordTableData::editorSaveCallback(QObject *editor,
             ChangeHistory::squashOldVersions(mytetraConfig.get_tetradir(),
                                              currEditor->getMiscField("id"),
                                              qMax(2, mytetraConfig.get_historySquashKeep()),
+                                             qBound(0, mytetraConfig.get_historySquashMode(), 2),
                                              &squashError);
 
             if(!squashError.isEmpty())

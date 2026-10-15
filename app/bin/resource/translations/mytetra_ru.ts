@@ -786,10 +786,6 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>История изменений заметки</translation>
     </message>
     <message>
-        <source>Squash note history automatically</source>
-        <translation>Сжимать историю заметок автоматически</translation>
-    </message>
-    <message>
         <source>Keep versions:</source>
         <translation>Хранить версий:</translation>
     </message>

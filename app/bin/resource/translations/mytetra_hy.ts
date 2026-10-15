@@ -664,10 +664,6 @@ MyTetra-ն պետք է աշխատի։</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Squash note history automatically</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Keep versions:</source>
         <translation type="unfinished"></translation>
     </message>

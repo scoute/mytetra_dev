@@ -2,7 +2,7 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN" sourcelanguage="en">
 <context>
-    <name>ActionLogModel</name>
+        <name>ActionLogModel</name>
     <message>
         <location filename="../../../src/models/actionLog/ActionLogModel.cpp" line="113"/>
         <source>Time</source>
@@ -15,7 +15,7 @@
     </message>
 </context>
 <context>
-    <name>ActionLogScreen</name>
+        <name>ActionLogScreen</name>
     <message>
         <location filename="../../../src/views/actionLog/ActionLogScreen.cpp" line="24"/>
         <source>Action log</source>
@@ -28,7 +28,7 @@
     </message>
 </context>
 <context>
-    <name>ActionLogView</name>
+        <name>ActionLogView</name>
     <message>
         <location filename="../../../src/views/actionLog/ActionLogView.cpp" line="100"/>
         <source>Action log is empty
@@ -38,7 +38,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>ActionLogger</name>
+        <name>ActionLogger</name>
     <message>
         <location filename="../../../src/libraries/ActionLogger.cpp" line="228"/>
         <source>Program started</source>
@@ -151,7 +151,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>AddNewRecord</name>
+        <name>AddNewRecord</name>
     <message>
         <location filename="../../../src/views/record/AddNewRecord.cpp" line="49"/>
         <source>Enter a new note</source>
@@ -174,7 +174,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>AppConfig</name>
+        <name>AppConfig</name>
     <message>
         <location filename="../../../src/models/appConfig/AppConfig.cpp" line="102"/>
         <source>Can not create config backup copy to trash directory
@@ -207,7 +207,7 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Appearance</name>
+        <name>AppConfigPage_Appearance</name>
     <message>
         <source>Interface theme</source>
         <translation type="vanished">界面主题</translation>
@@ -260,7 +260,7 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Attach</name>
+        <name>AppConfigPage_Attach</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp" line="47"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp" line="171"/>
@@ -376,7 +376,7 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Clipper</name>
+        <name>AppConfigPage_Clipper</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="47"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="180"/>
@@ -492,7 +492,7 @@ MyTetra 必须正在运行。</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Crypt</name>
+        <name>AppConfigPage_Crypt</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="45"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="298"/>
@@ -601,7 +601,7 @@ MyTetra 必须正在运行。</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Favorites</name>
+        <name>AppConfigPage_Favorites</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="73"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="104"/>
@@ -640,7 +640,7 @@ MyTetra 必须正在运行。</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_History</name>
+        <name>AppConfigPage_History</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="35"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="74"/>
@@ -695,7 +695,7 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Keyboard</name>
+        <name>AppConfigPage_Keyboard</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Keyboard.cpp" line="36"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Keyboard.cpp" line="79"/>
@@ -715,7 +715,7 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Main</name>
+        <name>AppConfigPage_Main</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Main.cpp" line="48"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Main.cpp" line="347"/>
@@ -812,7 +812,7 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Mcp</name>
+        <name>AppConfigPage_Mcp</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="46"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="215"/>
@@ -875,7 +875,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Misc</name>
+        <name>AppConfigPage_Misc</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="38"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="100"/>
@@ -928,7 +928,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_RecordTable</name>
+        <name>AppConfigPage_RecordTable</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="42"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="160"/>
@@ -965,7 +965,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Search</name>
+        <name>AppConfigPage_Search</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="36"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="78"/>
@@ -986,7 +986,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Synchro</name>
+        <name>AppConfigPage_Synchro</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
@@ -1073,7 +1073,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Theme</name>
+        <name>AppConfigPage_Theme</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="160"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="166"/>
@@ -1301,7 +1301,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AttachTableController</name>
+        <name>AttachTableController</name>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp" line="102"/>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp" line="103"/>
@@ -1414,7 +1414,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>AttachTableModel</name>
+        <name>AttachTableModel</name>
     <message>
         <location filename="../../../src/models/attachTable/AttachTableModel.cpp" line="197"/>
         <source>File name</source>
@@ -1427,7 +1427,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>AttachTableView</name>
+        <name>AttachTableView</name>
     <message>
         <location filename="../../../src/views/attachTable/AttachTableView.cpp" line="126"/>
         <source>No attach files</source>
@@ -1435,7 +1435,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>BacklinksPanel</name>
+        <name>BacklinksPanel</name>
     <message>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="235"/>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="246"/>
@@ -1476,7 +1476,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>Clipper</name>
+        <name>Clipper</name>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="387"/>
         <source>X11 hotkey active: %1</source>
@@ -1586,7 +1586,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>ConfigDialog</name>
+        <name>ConfigDialog</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/ConfigDialog.cpp" line="169"/>
         <source>Warning</source>
@@ -1599,7 +1599,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>ConsoleEmulator</name>
+        <name>ConsoleEmulator</name>
     <message>
         <location filename="../../../src/views/consoleEmulator/ConsoleEmulator.cpp" line="45"/>
         <source>Cancel</source>
@@ -1612,7 +1612,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>ContentGallery</name>
+        <name>ContentGallery</name>
     <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="73"/>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="781"/>
@@ -1692,7 +1692,7 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
 </context>
 <context>
-    <name>DatabasesManagementController</name>
+        <name>DatabasesManagementController</name>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="128"/>
         <source>Select database</source>
@@ -1927,7 +1927,7 @@ MyTetra 将把更改笔记的文件副本和树副本放入此目录</translatio
     </message>
 </context>
 <context>
-    <name>DatabasesManagementModel</name>
+        <name>DatabasesManagementModel</name>
     <message>
         <location filename="../../../src/models/databasesManagement/DatabasesManagementModel.cpp" line="51"/>
         <source>Knowledge base in application executable binary file directory %1</source>
@@ -1972,7 +1972,7 @@ MyTetra 将把更改笔记的文件副本和树副本放入此目录</translatio
     </message>
 </context>
 <context>
-    <name>DatabasesManagementScreen</name>
+        <name>DatabasesManagementScreen</name>
     <message>
         <location filename="../../../src/views/databasesManagement/DatabasesManagementScreen.cpp" line="22"/>
         <source>Databases management</source>
@@ -2010,7 +2010,7 @@ MyTetra 将把更改笔记的文件副本和树副本放入此目录</translatio
     </message>
 </context>
 <context>
-    <name>DatabasesManagementTable</name>
+        <name>DatabasesManagementTable</name>
     <message>
         <location filename="../../../src/views/databasesManagement/DatabasesManagementTable.cpp" line="136"/>
         <source>Action log is empty
@@ -2020,7 +2020,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>Dialog</name>
+        <name>Dialog</name>
     <message>
         <location filename="../../../src/samples/buttonwidth.ui" line="14"/>
         <source>Dialog</source>
@@ -2033,7 +2033,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>Downloader</name>
+        <name>Downloader</name>
     <message>
         <location filename="../../../src/libraries/Downloader.cpp" line="38"/>
         <source>Url</source>
@@ -2056,7 +2056,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>Editor</name>
+        <name>Editor</name>
     <message>
         <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1521"/>
         <source>Edit HTML source</source>
@@ -2105,7 +2105,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorAddTableForm</name>
+        <name>EditorAddTableForm</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorAddTableForm.cpp" line="14"/>
         <source>Create a new table</source>
@@ -2143,7 +2143,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorConfigDialog</name>
+        <name>EditorConfigDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigDialog.cpp" line="17"/>
         <source>Editor settings</source>
@@ -2171,7 +2171,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorConfigFont</name>
+        <name>EditorConfigFont</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="35"/>
         <source>Default font</source>
@@ -2215,7 +2215,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorConfigMathExpression</name>
+        <name>EditorConfigMathExpression</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigMathExpression.cpp" line="35"/>
         <source>Formula update timer</source>
@@ -2228,7 +2228,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorConfigMisc</name>
+        <name>EditorConfigMisc</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp" line="35"/>
         <source>Indent step</source>
@@ -2261,7 +2261,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorConfigToolbars</name>
+        <name>EditorConfigToolbars</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigToolbars.cpp" line="29"/>
         <source>Edit tool buttons</source>
@@ -2274,7 +2274,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorContextMenu</name>
+        <name>EditorContextMenu</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="81"/>
         <source>Edit image properties</source>
@@ -2312,7 +2312,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorFindBar</name>
+        <name>EditorFindBar</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="31"/>
         <source>Find in note</source>
@@ -2390,7 +2390,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorFindDialog</name>
+        <name>EditorFindDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="36"/>
         <source>&amp;Case sensitive</source>
@@ -2448,7 +2448,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorImageOpenDialog</name>
+        <name>EditorImageOpenDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="33"/>
         <source>Open image with</source>
@@ -2486,7 +2486,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorImageProperties</name>
+        <name>EditorImageProperties</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="39"/>
         <source>Size (%): </source>
@@ -2529,7 +2529,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorMathExpressionDialog</name>
+        <name>EditorMathExpressionDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorMathExpressionDialog.cpp" line="153"/>
         <source>Formula image</source>
@@ -2567,7 +2567,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorShowTextContextMenu</name>
+        <name>EditorShowTextContextMenu</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorShowTextContextMenu.cpp" line="26"/>
         <source>Copy</source>
@@ -2585,7 +2585,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorSplitCellForm</name>
+        <name>EditorSplitCellForm</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorSplitCellForm.cpp" line="15"/>
         <source>Split cell</source>
@@ -2613,7 +2613,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorTablePropertiesForm</name>
+        <name>EditorTablePropertiesForm</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorTablePropertiesForm.cpp" line="27"/>
         <source>Table properties</source>
@@ -2691,7 +2691,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorToolBar</name>
+        <name>EditorToolBar</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="345"/>
         <source>Save (Ctrl+S)</source>
@@ -2727,7 +2727,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsAbstractModel</name>
+        <name>EditorToolbarSettingsAbstractModel</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAbstractModel.cpp" line="30"/>
         <source>Command</source>
@@ -2735,7 +2735,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsAvailableToolsModel</name>
+        <name>EditorToolbarSettingsAvailableToolsModel</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAvailableToolsModel.cpp" line="58"/>
         <source>&lt;Separator&gt;</source>
@@ -2743,7 +2743,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsScreen</name>
+        <name>EditorToolbarSettingsScreen</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/views/editorToolbarSettings/EditorToolbarSettingsScreen.cpp" line="17"/>
         <source>Toolbars settings</source>
@@ -2816,7 +2816,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsUsedToolsModel</name>
+        <name>EditorToolbarSettingsUsedToolsModel</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsUsedToolsModel.cpp" line="42"/>
         <source>&lt;Separator&gt;</source>
@@ -2824,7 +2824,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EditorToolbarUsedCommandsController</name>
+        <name>EditorToolbarUsedCommandsController</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/controllers/editorToolbarSettings/EditorToolbarUsedCommandsController.cpp" line="75"/>
         <source>Select the command from the toolbar commands list.</source>
@@ -2832,7 +2832,7 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
-    <name>EnterPassword</name>
+        <name>EnterPassword</name>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="44"/>
         <source>Enter a your password for access to encrypted data</source>
@@ -2929,7 +2929,7 @@ Enter your old password and new password.
     </message>
 </context>
 <context>
-    <name>FavoritesPanel</name>
+        <name>FavoritesPanel</name>
     <message>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="47"/>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="596"/>
@@ -2953,7 +2953,7 @@ Enter your old password and new password.
     </message>
 </context>
 <context>
-    <name>FindScreen</name>
+        <name>FindScreen</name>
     <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="82"/>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="219"/>
@@ -3110,7 +3110,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>FindTableWidget</name>
+        <name>FindTableWidget</name>
     <message>
         <location filename="../../../src/views/findInBaseScreen/FindTableWidget.cpp" line="127"/>
         <location filename="../../../src/views/findInBaseScreen/FindTableWidget.cpp" line="139"/>
@@ -3125,7 +3125,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>FixedParameters</name>
+        <name>FixedParameters</name>
     <message>
         <location filename="../../../src/libraries/FixedParameters.cpp" line="102"/>
         <source>ID</source>
@@ -3188,7 +3188,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>HistoryPanel</name>
+        <name>HistoryPanel</name>
     <message>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="82"/>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="340"/>
@@ -3306,7 +3306,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>IconSelectDialog</name>
+        <name>IconSelectDialog</name>
     <message>
         <location filename="../../../src/libraries/IconSelectDialog.cpp" line="122"/>
         <source>Select icon</source>
@@ -3354,7 +3354,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>ImageFormatter</name>
+        <name>ImageFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="105"/>
         <source>Real image size </source>
@@ -3456,7 +3456,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>InfoFieldEnter</name>
+        <name>InfoFieldEnter</name>
     <message>
         <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="58"/>
         <source>Title</source>
@@ -3489,7 +3489,7 @@ Try to search for entire database.</source>
     </message>
 </context>
 <context>
-    <name>InstallDialog</name>
+        <name>InstallDialog</name>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.ui" line="14"/>
         <source>Dialog</source>
@@ -3563,7 +3563,7 @@ in current directory &quot;%1&quot;.</source>
     </message>
 </context>
 <context>
-    <name>KnowTreeModel</name>
+        <name>KnowTreeModel</name>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
         <source>Unsupported version of the database format.
@@ -3608,7 +3608,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>KnowTreeView</name>
+        <name>KnowTreeView</name>
     <message>
         <location filename="../../../src/views/tree/KnowTreeView.cpp" line="260"/>
         <source>Warning!</source>
@@ -3621,7 +3621,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>KnownBasesConfig</name>
+        <name>KnownBasesConfig</name>
     <message>
         <location filename="../../../src/models/databasesManagement/KnownBasesConfig.cpp" line="305"/>
         <source>Incorrect parameter name:</source>
@@ -3629,7 +3629,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>MainWindow</name>
+        <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1876"/>
         <source>Statistics</source>
@@ -3971,7 +3971,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>MathExpressionFormatter</name>
+        <name>MathExpressionFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/MathExpressionFormatter.cpp" line="180"/>
         <source>Edit TeX math expression</source>
@@ -3989,7 +3989,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>McpHistoryDialog</name>
+        <name>McpHistoryDialog</name>
     <message>
         <location filename="../../../src/views/mcpHistory/McpHistoryDialog.cpp" line="14"/>
         <location filename="../../../src/views/mcpHistory/McpHistoryDialog.cpp" line="111"/>
@@ -4032,7 +4032,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>MetaEditor</name>
+        <name>MetaEditor</name>
     <message>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="117"/>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="693"/>
@@ -4057,7 +4057,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>NotePickerDialog</name>
+        <name>NotePickerDialog</name>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="29"/>
         <source>Select note</source>
@@ -4111,7 +4111,7 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
-    <name>Password</name>
+        <name>Password</name>
     <message>
         <location filename="../../../src/libraries/crypt/Password.cpp" line="167"/>
         <source>Wrong old password</source>
@@ -4185,7 +4185,7 @@ in application settings in Crypt section.</source>
     </message>
 </context>
 <context>
-    <name>PeriodicCheckBase</name>
+        <name>PeriodicCheckBase</name>
     <message>
         <location filename="../../../src/libraries/PeriodicCheckBase.cpp" line="65"/>
         <source>The database was changed by external application or services.
@@ -4195,7 +4195,7 @@ MyTetra 重载数据库树以保持数据一致。</translation>
     </message>
 </context>
 <context>
-    <name>PreviewFileDialog</name>
+        <name>PreviewFileDialog</name>
     <message>
         <location filename="../../../src/libraries/PreviewFileDialog.cpp" line="16"/>
         <source>Preview</source>
@@ -4203,7 +4203,7 @@ MyTetra 重载数据库树以保持数据一致。</translation>
     </message>
 </context>
 <context>
-    <name>PrintPreview</name>
+        <name>PrintPreview</name>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
         <source>MyTetra - Print Preview</source>
@@ -4236,7 +4236,7 @@ MyTetra 重载数据库树以保持数据一致。</translation>
     </message>
 </context>
 <context>
-    <name>QObject</name>
+        <name>QObject</name>
     <message>
         <location filename="../../../src/models/tree/TreeItem.cpp" line="104"/>
         <source>Closed</source>
@@ -4436,7 +4436,7 @@ Please report about this problem to the developers.</source>
     </message>
 </context>
 <context>
-    <name>RecordInfoFieldsEditor</name>
+        <name>RecordInfoFieldsEditor</name>
     <message>
         <location filename="../../../src/views/record/RecordInfoFieldsEditor.cpp" line="99"/>
         <source>Please enter the note&apos;s &lt;b&gt;title&lt;/b&gt;.</source>
@@ -4449,7 +4449,7 @@ Please report about this problem to the developers.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableController</name>
+        <name>RecordTableController</name>
     <message>
         <location filename="../../../src/controllers/recordTable/RecordTableController.cpp" line="752"/>
         <source>Unblock this note?</source>
@@ -4490,7 +4490,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableModel</name>
+        <name>RecordTableModel</name>
     <message>
         <location filename="../../../src/models/recordTable/RecordTableModel.cpp" line="78"/>
         <location filename="../../../src/models/recordTable/RecordTableModel.cpp" line="94"/>
@@ -4499,7 +4499,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTablePrint</name>
+        <name>RecordTablePrint</name>
     <message>
         <location filename="../../../src/views/recordTable/RecordTablePrint.cpp" line="51"/>
         <source>Print</source>
@@ -4537,7 +4537,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableScreen</name>
+        <name>RecordTableScreen</name>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="98"/>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="631"/>
@@ -4634,7 +4634,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableView</name>
+        <name>RecordTableView</name>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="341"/>
         <source>Block/Unblock note</source>
@@ -4682,7 +4682,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ReferenceFormatter</name>
+        <name>ReferenceFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp" line="53"/>
         <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp" line="59"/>
@@ -4721,7 +4721,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>SecretFormatter</name>
+        <name>SecretFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/SecretFormatter.cpp" line="62"/>
         <source>Select text to hide as secret</source>
@@ -4729,7 +4729,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ShortcutManager</name>
+        <name>ShortcutManager</name>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="81"/>
         <source>Add a new note</source>
@@ -5494,7 +5494,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ShortcutSettingsModel</name>
+        <name>ShortcutSettingsModel</name>
     <message>
         <location filename="../../../src/models/shortcutSettings/ShortcutSettingsModel.cpp" line="184"/>
         <source>Found duplicate key sequense &lt;b&gt;%3&lt;/b&gt; for action &lt;b&gt;%1&lt;/b&gt; and &lt;b&gt;%2&lt;/b&gt;</source>
@@ -5522,7 +5522,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ShortcutSettingsScreen</name>
+        <name>ShortcutSettingsScreen</name>
     <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="41"/>
         <source>Grab shortcut</source>
@@ -5590,7 +5590,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>TableFormatter</name>
+        <name>TableFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/TableFormatter.cpp" line="100"/>
         <source>Append rows to table</source>
@@ -5628,7 +5628,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>TagsPanel</name>
+        <name>TagsPanel</name>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="95"/>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="382"/>
@@ -5713,7 +5713,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>TreeScreen</name>
+        <name>TreeScreen</name>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="599"/>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="638"/>
@@ -5950,7 +5950,7 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>TypefaceFormatter</name>
+        <name>TypefaceFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="754"/>
         <source>Unreliable parsing of complexly formatted text. Expect formatting inconsistencies.</source>
@@ -5968,7 +5968,7 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>XmlTree</name>
+        <name>XmlTree</name>
     <message>
         <location filename="../../../src/models/tree/XmlTree.cpp" line="27"/>
         <source>Error</source>
@@ -5995,7 +5995,7 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>AudioFormatter</name>
+        <name>AudioFormatter</name>
     <message>
         <source>Voice note</source>
         <translation type="unfinished"></translation>
@@ -6038,7 +6038,7 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>VoicePlayerDialog</name>
+        <name>VoicePlayerDialog</name>
     <message>
         <source>Voice note</source>
         <translation type="unfinished"></translation>
@@ -6065,7 +6065,7 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>VoiceRecorderDialog</name>
+        <name>VoiceRecorderDialog</name>
     <message>
         <source>Voice note</source>
         <translation type="unfinished"></translation>
@@ -6088,22 +6088,6 @@ Please select single item for enabling edit operation.</source>
     </message>
     <message>
         <source>Format:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Quality:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>High</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6164,7 +6148,7 @@ Please select single item for enabling edit operation.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Voice</name>
+        <name>AppConfigPage_Voice</name>
     <message>
         <source>Default format</source>
         <translation type="unfinished"></translation>
@@ -6177,25 +6161,9 @@ Please select single item for enabling edit operation.</source>
         <source>MP3 (.mp3)</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Default quality</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>High</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
-    <name>ChangeHistoryDialog</name>
+        <name>ChangeHistoryDialog</name>
     <message>
         <source>Change history: %1</source>
         <translation type="unfinished"></translation>

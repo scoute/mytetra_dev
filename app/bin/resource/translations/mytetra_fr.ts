@@ -2,7 +2,7 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="fr_FR">
 <context>
-    <name>ActionLogModel</name>
+        <name>ActionLogModel</name>
     <message>
         <location filename="../../../src/models/actionLog/ActionLogModel.cpp" line="113"/>
         <source>Time</source>
@@ -15,7 +15,7 @@
     </message>
 </context>
 <context>
-    <name>ActionLogScreen</name>
+        <name>ActionLogScreen</name>
     <message>
         <location filename="../../../src/views/actionLog/ActionLogScreen.cpp" line="24"/>
         <source>Action log</source>
@@ -28,7 +28,7 @@
     </message>
 </context>
 <context>
-    <name>ActionLogView</name>
+        <name>ActionLogView</name>
     <message>
         <location filename="../../../src/views/actionLog/ActionLogView.cpp" line="100"/>
         <source>Action log is empty
@@ -38,7 +38,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>ActionLogger</name>
+        <name>ActionLogger</name>
     <message>
         <location filename="../../../src/libraries/ActionLogger.cpp" line="228"/>
         <source>Program started</source>
@@ -151,7 +151,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>AddNewRecord</name>
+        <name>AddNewRecord</name>
     <message>
         <location filename="../../../src/views/record/AddNewRecord.cpp" line="49"/>
         <source>Enter a new note</source>
@@ -174,7 +174,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>AppConfig</name>
+        <name>AppConfig</name>
     <message>
         <location filename="../../../src/models/appConfig/AppConfig.cpp" line="102"/>
         <source>Can not create config backup copy to trash directory
@@ -207,7 +207,7 @@ Cela peut arriver s&apos;il ne reste plus d&apos;espace libre sur le disque ou s
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Appearance</name>
+        <name>AppConfigPage_Appearance</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
@@ -260,7 +260,7 @@ Cela peut arriver s&apos;il ne reste plus d&apos;espace libre sur le disque ou s
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Attach</name>
+        <name>AppConfigPage_Attach</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp" line="47"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp" line="171"/>
@@ -376,7 +376,7 @@ Cela peut arriver s&apos;il ne reste plus d&apos;espace libre sur le disque ou s
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Clipper</name>
+        <name>AppConfigPage_Clipper</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="47"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="180"/>
@@ -492,7 +492,7 @@ MyTetra doit être en cours d&apos;exécution.</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Crypt</name>
+        <name>AppConfigPage_Crypt</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="45"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="298"/>
@@ -601,7 +601,7 @@ MyTetra doit être en cours d&apos;exécution.</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Favorites</name>
+        <name>AppConfigPage_Favorites</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="73"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Favorites.cpp" line="104"/>
@@ -640,7 +640,7 @@ MyTetra doit être en cours d&apos;exécution.</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_History</name>
+        <name>AppConfigPage_History</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="35"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_History.cpp" line="74"/>
@@ -695,7 +695,7 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Keyboard</name>
+        <name>AppConfigPage_Keyboard</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Keyboard.cpp" line="36"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Keyboard.cpp" line="79"/>
@@ -715,7 +715,7 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Main</name>
+        <name>AppConfigPage_Main</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Main.cpp" line="48"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Main.cpp" line="347"/>
@@ -812,7 +812,7 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Mcp</name>
+        <name>AppConfigPage_Mcp</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="46"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="215"/>
@@ -875,7 +875,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Misc</name>
+        <name>AppConfigPage_Misc</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="38"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="100"/>
@@ -928,7 +928,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_RecordTable</name>
+        <name>AppConfigPage_RecordTable</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="42"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="160"/>
@@ -965,7 +965,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Search</name>
+        <name>AppConfigPage_Search</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="36"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Search.cpp" line="78"/>
@@ -986,7 +986,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Synchro</name>
+        <name>AppConfigPage_Synchro</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
@@ -1073,7 +1073,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Theme</name>
+        <name>AppConfigPage_Theme</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="160"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Theme.cpp" line="166"/>
@@ -1301,7 +1301,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
     </message>
 </context>
 <context>
-    <name>AttachTableController</name>
+        <name>AttachTableController</name>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp" line="102"/>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp" line="103"/>
@@ -1414,7 +1414,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>AttachTableModel</name>
+        <name>AttachTableModel</name>
     <message>
         <location filename="../../../src/models/attachTable/AttachTableModel.cpp" line="197"/>
         <source>File name</source>
@@ -1427,7 +1427,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>AttachTableView</name>
+        <name>AttachTableView</name>
     <message>
         <location filename="../../../src/views/attachTable/AttachTableView.cpp" line="126"/>
         <source>No attach files</source>
@@ -1435,7 +1435,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>BacklinksPanel</name>
+        <name>BacklinksPanel</name>
     <message>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="235"/>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="246"/>
@@ -1476,7 +1476,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>Clipper</name>
+        <name>Clipper</name>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="387"/>
         <source>X11 hotkey active: %1</source>
@@ -1590,7 +1590,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>ConfigDialog</name>
+        <name>ConfigDialog</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/ConfigDialog.cpp" line="169"/>
         <source>Warning</source>
@@ -1603,7 +1603,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>ConsoleEmulator</name>
+        <name>ConsoleEmulator</name>
     <message>
         <location filename="../../../src/views/consoleEmulator/ConsoleEmulator.cpp" line="45"/>
         <source>Cancel</source>
@@ -1616,7 +1616,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>ContentGallery</name>
+        <name>ContentGallery</name>
     <message>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="73"/>
         <location filename="../../../src/views/contentGallery/ContentGallery.cpp" line="781"/>
@@ -1696,7 +1696,7 @@ activez l&apos;option « Déchiffrer dans un fichier temporaire » dans les para
     </message>
 </context>
 <context>
-    <name>DatabasesManagementController</name>
+        <name>DatabasesManagementController</name>
     <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="81"/>
         <source>Can&apos;t switch database</source>
@@ -1932,7 +1932,7 @@ MyTetra y déposera les copies des fichiers des notes modifiées et de l&apos;ar
     </message>
 </context>
 <context>
-    <name>DatabasesManagementModel</name>
+        <name>DatabasesManagementModel</name>
     <message>
         <location filename="../../../src/models/databasesManagement/DatabasesManagementModel.cpp" line="51"/>
         <source>Knowledge base in application executable binary file directory %1</source>
@@ -1977,7 +1977,7 @@ MyTetra y déposera les copies des fichiers des notes modifiées et de l&apos;ar
     </message>
 </context>
 <context>
-    <name>DatabasesManagementScreen</name>
+        <name>DatabasesManagementScreen</name>
     <message>
         <location filename="../../../src/views/databasesManagement/DatabasesManagementScreen.cpp" line="22"/>
         <source>Databases management</source>
@@ -2015,7 +2015,7 @@ MyTetra y déposera les copies des fichiers des notes modifiées et de l&apos;ar
     </message>
 </context>
 <context>
-    <name>DatabasesManagementTable</name>
+        <name>DatabasesManagementTable</name>
     <message>
         <location filename="../../../src/views/databasesManagement/DatabasesManagementTable.cpp" line="136"/>
         <source>Action log is empty
@@ -2025,7 +2025,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>Dialog</name>
+        <name>Dialog</name>
     <message>
         <location filename="../../../src/samples/buttonwidth.ui" line="14"/>
         <source>Dialog</source>
@@ -2038,7 +2038,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>Downloader</name>
+        <name>Downloader</name>
     <message>
         <location filename="../../../src/libraries/Downloader.cpp" line="38"/>
         <source>Url</source>
@@ -2061,7 +2061,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>Editor</name>
+        <name>Editor</name>
     <message>
         <location filename="../../../src/libraries/wyedit/Editor.cpp" line="1521"/>
         <source>Edit HTML source</source>
@@ -2110,7 +2110,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorAddTableForm</name>
+        <name>EditorAddTableForm</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorAddTableForm.cpp" line="14"/>
         <source>Create a new table</source>
@@ -2148,7 +2148,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorConfigDialog</name>
+        <name>EditorConfigDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigDialog.cpp" line="17"/>
         <source>Editor settings</source>
@@ -2176,7 +2176,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorConfigFont</name>
+        <name>EditorConfigFont</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="35"/>
         <source>Default font</source>
@@ -2220,7 +2220,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorConfigMathExpression</name>
+        <name>EditorConfigMathExpression</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigMathExpression.cpp" line="35"/>
         <source>Formula update timer</source>
@@ -2233,7 +2233,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorConfigMisc</name>
+        <name>EditorConfigMisc</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp" line="35"/>
         <source>Indent step</source>
@@ -2266,7 +2266,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorConfigToolbars</name>
+        <name>EditorConfigToolbars</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigToolbars.cpp" line="29"/>
         <source>Edit tool buttons</source>
@@ -2279,7 +2279,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorContextMenu</name>
+        <name>EditorContextMenu</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="81"/>
         <source>Edit image properties</source>
@@ -2317,7 +2317,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorFindBar</name>
+        <name>EditorFindBar</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindBar.cpp" line="31"/>
         <source>Find in note</source>
@@ -2395,7 +2395,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorFindDialog</name>
+        <name>EditorFindDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorFindDialog.cpp" line="36"/>
         <source>&amp;Case sensitive</source>
@@ -2453,7 +2453,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorImageOpenDialog</name>
+        <name>EditorImageOpenDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorImageOpenDialog.cpp" line="33"/>
         <source>Open image with</source>
@@ -2491,7 +2491,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorImageProperties</name>
+        <name>EditorImageProperties</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="39"/>
         <source>Size (%): </source>
@@ -2534,7 +2534,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorMathExpressionDialog</name>
+        <name>EditorMathExpressionDialog</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorMathExpressionDialog.cpp" line="153"/>
         <source>Formula image</source>
@@ -2572,7 +2572,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorShowTextContextMenu</name>
+        <name>EditorShowTextContextMenu</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorShowTextContextMenu.cpp" line="26"/>
         <source>Copy</source>
@@ -2590,7 +2590,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorSplitCellForm</name>
+        <name>EditorSplitCellForm</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorSplitCellForm.cpp" line="15"/>
         <source>Split cell</source>
@@ -2618,7 +2618,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorTablePropertiesForm</name>
+        <name>EditorTablePropertiesForm</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorTablePropertiesForm.cpp" line="27"/>
         <source>Table properties</source>
@@ -2696,7 +2696,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorToolBar</name>
+        <name>EditorToolBar</name>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="242"/>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="250"/>
@@ -2732,7 +2732,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsAbstractModel</name>
+        <name>EditorToolbarSettingsAbstractModel</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAbstractModel.cpp" line="30"/>
         <source>Command</source>
@@ -2740,7 +2740,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsAvailableToolsModel</name>
+        <name>EditorToolbarSettingsAvailableToolsModel</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAvailableToolsModel.cpp" line="58"/>
         <source>&lt;Separator&gt;</source>
@@ -2748,7 +2748,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsScreen</name>
+        <name>EditorToolbarSettingsScreen</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/views/editorToolbarSettings/EditorToolbarSettingsScreen.cpp" line="17"/>
         <source>Toolbars settings</source>
@@ -2821,7 +2821,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorToolbarSettingsUsedToolsModel</name>
+        <name>EditorToolbarSettingsUsedToolsModel</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsUsedToolsModel.cpp" line="42"/>
         <source>&lt;Separator&gt;</source>
@@ -2829,7 +2829,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EditorToolbarUsedCommandsController</name>
+        <name>EditorToolbarUsedCommandsController</name>
     <message>
         <location filename="../../../src/libraries/wyedit/mvc/controllers/editorToolbarSettings/EditorToolbarUsedCommandsController.cpp" line="75"/>
         <source>Select the command from the toolbar commands list.</source>
@@ -2837,7 +2837,7 @@ Veuillez activer le journal dans Outils -&gt; Préférences -&gt; Divers</transl
     </message>
 </context>
 <context>
-    <name>EnterPassword</name>
+        <name>EnterPassword</name>
     <message>
         <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="44"/>
         <source>Enter a your password for access to encrypted data</source>
@@ -2930,7 +2930,7 @@ Enter your old password and new password.
     </message>
 </context>
 <context>
-    <name>FavoritesPanel</name>
+        <name>FavoritesPanel</name>
     <message>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="47"/>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="596"/>
@@ -2954,7 +2954,7 @@ Enter your old password and new password.
     </message>
 </context>
 <context>
-    <name>FindScreen</name>
+        <name>FindScreen</name>
     <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="82"/>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="219"/>
@@ -3112,7 +3112,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>FindTableWidget</name>
+        <name>FindTableWidget</name>
     <message>
         <location filename="../../../src/views/findInBaseScreen/FindTableWidget.cpp" line="127"/>
         <location filename="../../../src/views/findInBaseScreen/FindTableWidget.cpp" line="139"/>
@@ -3127,7 +3127,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>FixedParameters</name>
+        <name>FixedParameters</name>
     <message>
         <location filename="../../../src/libraries/FixedParameters.cpp" line="102"/>
         <source>ID</source>
@@ -3190,7 +3190,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>HistoryPanel</name>
+        <name>HistoryPanel</name>
     <message>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="82"/>
         <location filename="../../../src/views/historyPanel/HistoryPanel.cpp" line="340"/>
@@ -3308,7 +3308,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>IconSelectDialog</name>
+        <name>IconSelectDialog</name>
     <message>
         <location filename="../../../src/libraries/IconSelectDialog.cpp" line="122"/>
         <source>Select icon</source>
@@ -3356,7 +3356,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>ImageFormatter</name>
+        <name>ImageFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="105"/>
         <source>Real image size </source>
@@ -3458,7 +3458,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>InfoFieldEnter</name>
+        <name>InfoFieldEnter</name>
     <message>
         <location filename="../../../src/views/record/InfoFieldEnter.cpp" line="58"/>
         <source>Title</source>
@@ -3491,7 +3491,7 @@ Essayez une recherche dans toute la base.</translation>
     </message>
 </context>
 <context>
-    <name>InstallDialog</name>
+        <name>InstallDialog</name>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.ui" line="14"/>
         <source>Dialog</source>
@@ -3567,7 +3567,7 @@ Impossible d&apos;écrire les données dans le répertoire du binaire MyTetra &q
     </message>
 </context>
 <context>
-    <name>KnowTreeModel</name>
+        <name>KnowTreeModel</name>
     <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
         <source>Unsupported version of the database format.
@@ -3612,7 +3612,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>KnowTreeView</name>
+        <name>KnowTreeView</name>
     <message>
         <location filename="../../../src/views/tree/KnowTreeView.cpp" line="260"/>
         <source>Warning!</source>
@@ -3625,7 +3625,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>KnownBasesConfig</name>
+        <name>KnownBasesConfig</name>
     <message>
         <location filename="../../../src/models/databasesManagement/KnownBasesConfig.cpp" line="305"/>
         <source>Incorrect parameter name:</source>
@@ -3633,7 +3633,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>MainWindow</name>
+        <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1876"/>
         <source>Statistics</source>
@@ -3975,7 +3975,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>MathExpressionFormatter</name>
+        <name>MathExpressionFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/MathExpressionFormatter.cpp" line="180"/>
         <source>Edit TeX math expression</source>
@@ -3993,7 +3993,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>McpHistoryDialog</name>
+        <name>McpHistoryDialog</name>
     <message>
         <location filename="../../../src/views/mcpHistory/McpHistoryDialog.cpp" line="14"/>
         <location filename="../../../src/views/mcpHistory/McpHistoryDialog.cpp" line="111"/>
@@ -4036,7 +4036,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>MetaEditor</name>
+        <name>MetaEditor</name>
     <message>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="117"/>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="693"/>
@@ -4061,7 +4061,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>NotePickerDialog</name>
+        <name>NotePickerDialog</name>
     <message>
         <location filename="../../../src/views/notePicker/NotePickerDialog.cpp" line="29"/>
         <source>Select note</source>
@@ -4115,7 +4115,7 @@ Veuillez mettre à jour MyTetra.</translation>
     </message>
 </context>
 <context>
-    <name>Password</name>
+        <name>Password</name>
     <message>
         <location filename="../../../src/libraries/crypt/Password.cpp" line="109"/>
         <source>Detect incorrect saved password</source>
@@ -4190,7 +4190,7 @@ dans les paramètres de l&apos;application, rubrique Chiffrement.</translation>
     </message>
 </context>
 <context>
-    <name>PeriodicCheckBase</name>
+        <name>PeriodicCheckBase</name>
     <message>
         <location filename="../../../src/libraries/PeriodicCheckBase.cpp" line="65"/>
         <source>The database was changed by external application or services.
@@ -4200,7 +4200,7 @@ MyTetra recharge l&apos;arbre pour continuer avec les nouvelles données.</trans
     </message>
 </context>
 <context>
-    <name>PreviewFileDialog</name>
+        <name>PreviewFileDialog</name>
     <message>
         <location filename="../../../src/libraries/PreviewFileDialog.cpp" line="16"/>
         <source>Preview</source>
@@ -4208,7 +4208,7 @@ MyTetra recharge l&apos;arbre pour continuer avec les nouvelles données.</trans
     </message>
 </context>
 <context>
-    <name>PrintPreview</name>
+        <name>PrintPreview</name>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
         <source>MyTetra - Print Preview</source>
@@ -4241,7 +4241,7 @@ MyTetra recharge l&apos;arbre pour continuer avec les nouvelles données.</trans
     </message>
 </context>
 <context>
-    <name>QObject</name>
+        <name>QObject</name>
     <message>
         <location filename="../../../src/libraries/helpers/ConfigEditorHelper.cpp" line="26"/>
         <source>Edit config file (Be careful!)</source>
@@ -4443,7 +4443,7 @@ Veuillez signaler ce problème aux développeurs.</translation>
     </message>
 </context>
 <context>
-    <name>RecordInfoFieldsEditor</name>
+        <name>RecordInfoFieldsEditor</name>
     <message>
         <location filename="../../../src/views/record/RecordInfoFieldsEditor.cpp" line="99"/>
         <source>Please enter the note&apos;s &lt;b&gt;title&lt;/b&gt;.</source>
@@ -4456,7 +4456,7 @@ Veuillez signaler ce problème aux développeurs.</translation>
     </message>
 </context>
 <context>
-    <name>RecordTableController</name>
+        <name>RecordTableController</name>
     <message>
         <location filename="../../../src/controllers/recordTable/RecordTableController.cpp" line="752"/>
         <source>Unblock this note?</source>
@@ -4497,7 +4497,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableModel</name>
+        <name>RecordTableModel</name>
     <message>
         <location filename="../../../src/models/recordTable/RecordTableModel.cpp" line="78"/>
         <location filename="../../../src/models/recordTable/RecordTableModel.cpp" line="94"/>
@@ -4506,7 +4506,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTablePrint</name>
+        <name>RecordTablePrint</name>
     <message>
         <location filename="../../../src/views/recordTable/RecordTablePrint.cpp" line="51"/>
         <source>Print</source>
@@ -4544,7 +4544,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableScreen</name>
+        <name>RecordTableScreen</name>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="97"/>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="630"/>
@@ -4641,7 +4641,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>RecordTableView</name>
+        <name>RecordTableView</name>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableView.cpp" line="341"/>
         <source>Block/Unblock note</source>
@@ -4689,7 +4689,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ReferenceFormatter</name>
+        <name>ReferenceFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp" line="53"/>
         <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp" line="59"/>
@@ -4728,7 +4728,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>SecretFormatter</name>
+        <name>SecretFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/SecretFormatter.cpp" line="62"/>
         <source>Select text to hide as secret</source>
@@ -4736,7 +4736,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ShortcutManager</name>
+        <name>ShortcutManager</name>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="81"/>
         <source>Add a new note</source>
@@ -5501,7 +5501,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ShortcutSettingsModel</name>
+        <name>ShortcutSettingsModel</name>
     <message>
         <location filename="../../../src/models/shortcutSettings/ShortcutSettingsModel.cpp" line="184"/>
         <source>Found duplicate key sequense &lt;b&gt;%3&lt;/b&gt; for action &lt;b&gt;%1&lt;/b&gt; and &lt;b&gt;%2&lt;/b&gt;</source>
@@ -5529,7 +5529,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>ShortcutSettingsScreen</name>
+        <name>ShortcutSettingsScreen</name>
     <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="41"/>
         <source>Grab shortcut</source>
@@ -5597,7 +5597,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>TableFormatter</name>
+        <name>TableFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/TableFormatter.cpp" line="100"/>
         <source>Append rows to table</source>
@@ -5635,7 +5635,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>TagsPanel</name>
+        <name>TagsPanel</name>
     <message>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="95"/>
         <location filename="../../../src/views/tagsPanel/TagsPanel.cpp" line="382"/>
@@ -5720,7 +5720,7 @@ Enable it in Settings on the History page.</source>
     </message>
 </context>
 <context>
-    <name>TreeScreen</name>
+        <name>TreeScreen</name>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="180"/>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="181"/>
@@ -5959,7 +5959,7 @@ Toutes les données importées seront chiffrées.</translation>
     </message>
 </context>
 <context>
-    <name>TypefaceFormatter</name>
+        <name>TypefaceFormatter</name>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="754"/>
         <source>Unreliable parsing of complexly formatted text. Expect formatting inconsistencies.</source>
@@ -5979,7 +5979,7 @@ La mise en forme peut être altérée.</translation>
     </message>
 </context>
 <context>
-    <name>XmlTree</name>
+        <name>XmlTree</name>
     <message>
         <location filename="../../../src/models/tree/XmlTree.cpp" line="27"/>
         <source>Error</source>
@@ -6006,7 +6006,7 @@ La mise en forme peut être altérée.</translation>
     </message>
 </context>
 <context>
-    <name>AudioFormatter</name>
+        <name>AudioFormatter</name>
     <message>
         <source>Voice note</source>
         <translation type="unfinished"></translation>
@@ -6049,7 +6049,7 @@ La mise en forme peut être altérée.</translation>
     </message>
 </context>
 <context>
-    <name>VoicePlayerDialog</name>
+        <name>VoicePlayerDialog</name>
     <message>
         <source>Voice note</source>
         <translation type="unfinished"></translation>
@@ -6076,7 +6076,7 @@ La mise en forme peut être altérée.</translation>
     </message>
 </context>
 <context>
-    <name>VoiceRecorderDialog</name>
+        <name>VoiceRecorderDialog</name>
     <message>
         <source>Voice note</source>
         <translation type="unfinished"></translation>
@@ -6099,22 +6099,6 @@ La mise en forme peut être altérée.</translation>
     </message>
     <message>
         <source>Format:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Quality:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>High</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6175,7 +6159,7 @@ La mise en forme peut être altérée.</translation>
     </message>
 </context>
 <context>
-    <name>AppConfigPage_Voice</name>
+        <name>AppConfigPage_Voice</name>
     <message>
         <source>Default format</source>
         <translation type="unfinished"></translation>
@@ -6188,25 +6172,9 @@ La mise en forme peut être altérée.</translation>
         <source>MP3 (.mp3)</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Default quality</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>High</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
-    <name>ChangeHistoryDialog</name>
+        <name>ChangeHistoryDialog</name>
     <message>
         <source>Change history: %1</source>
         <translation type="unfinished"></translation>

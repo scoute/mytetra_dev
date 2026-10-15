@@ -80,8 +80,7 @@ private:
     enum VoiceFormat
     {
         VoiceFormatOpus,
-        VoiceFormatMp3,
-        VoiceFormatWavFallback
+        VoiceFormatMp3
     };
 
     // Два уровня: low/high. Opus 48 кГц 16/32 кбит,
@@ -158,7 +157,6 @@ private:
     VoiceQuality currentQuality;
     bool opusAvailable;
     bool mp3Available;
-    bool wavAvailable;
 
     // Пользователь правил имя руками: расширение при смене
     // формата меняется, основа сохраняется

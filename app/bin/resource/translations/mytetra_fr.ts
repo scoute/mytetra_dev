@@ -6130,10 +6130,6 @@ La mise en forme peut être altérée.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Format: WAV (Opus and MP3 unsupported)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>

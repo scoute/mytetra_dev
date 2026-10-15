@@ -8,10 +8,13 @@
 #include <QComboBox>
 #include <QRadioButton>
 #include <QButtonGroup>
+#include <QMessageBox>
+#include <QSignalBlocker>
 
 #include "AppConfigPage_History.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/GitHelper.h"
 
 extern AppConfig mytetraConfig;
 extern GlobalParameters globalParameters;
@@ -47,7 +50,7 @@ void AppConfigPage_History::setupUi()
     // Мастер-тумблер истории заметок: без него ни снапшотов,
     // ни диалога. По умолчанию история ведется
     historyEnable=new QCheckBox(this);
-    historyEnable->setText(tr("Enable note history"));
+    historyEnable->setText(tr("Enable note history (git must be installed)"));
     historyEnable->setChecked(mytetraConfig.get_historyEnable());
 
     // Сквош истории изменений заметки: автосжатие снизу по лимиту
@@ -103,6 +106,10 @@ void AppConfigPage_History::setupUi()
 
 void AppConfigPage_History::setupSignals()
 {
+    // Включение истории только при наличии git: иначе предупреждение
+    // и возврат галочки. Проверка здесь, а не в apply: отказ виден сразу
+    connect(historyEnable, &QCheckBox::toggled, this, &AppConfigPage_History::onHistoryEnableToggled);
+
     // Без мастер-тумблера сквош-настройки не при делах
     connect(historyEnable, &QCheckBox::toggled, squashEnable, &QCheckBox::setEnabled);
     connect(historyEnable, &QCheckBox::toggled, squashKeep, &QComboBox::setEnabled);
@@ -111,6 +118,25 @@ void AppConfigPage_History::setupSignals()
     connect(historyEnable, &QCheckBox::toggled, squashDeleteOldest, &QRadioButton::setEnabled);
     connect(historyEnable, &QCheckBox::toggled, squashSmartMerge, &QRadioButton::setEnabled);
     connect(historyEnable, &QCheckBox::toggled, squashBundle10, &QRadioButton::setEnabled);
+}
+
+
+void AppConfigPage_History::onHistoryEnableToggled(bool checked)
+{
+    if(!checked)
+        return;
+
+    if(GitHelper::isAvailable())
+        return;
+
+    QMessageBox::warning(this, tr("Note change history"),
+                         tr("Cannot enable note history:\n"
+                            "git is not installed.\n"
+                            "Linux: install the git package. Windows: https://git-scm.com."));
+
+    // Возврат галочки без рекурсии сигнала
+    const QSignalBlocker blocker(historyEnable);
+    historyEnable->setChecked(false);
 }
 
 
@@ -164,7 +190,7 @@ void AppConfigPage_History::retranslateUi(void)
   rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
   historyBox->setTitle(tr("History of visited notes"));
   noteHistoryBox->setTitle(tr("Note change history"));
-  historyEnable->setText(tr("Enable note history"));
+  historyEnable->setText(tr("Enable note history (git must be installed)"));
   squashEnable->setText(tr("Squash note history automatically"));
   squashKeepLabel->setText(tr("Keep versions:"));
   squashModeLabel->setText(tr("What to do on limit excess:"));

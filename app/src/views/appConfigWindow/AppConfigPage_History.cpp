@@ -47,7 +47,7 @@ void AppConfigPage_History::setupUi()
     // Мастер-тумблер истории заметок: без него ни снапшотов,
     // ни диалога. По умолчанию история ведется
     historyEnable=new QCheckBox(this);
-    historyEnable->setText(tr("Enable note history tracking"));
+    historyEnable->setText(tr("Enable note history"));
     historyEnable->setChecked(mytetraConfig.get_historyEnable());
 
     // Сквош истории изменений заметки: автосжатие снизу по лимиту
@@ -164,7 +164,7 @@ void AppConfigPage_History::retranslateUi(void)
   rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
   historyBox->setTitle(tr("History of visited notes"));
   noteHistoryBox->setTitle(tr("Note change history"));
-  historyEnable->setText(tr("Enable note history tracking"));
+  historyEnable->setText(tr("Enable note history"));
   squashEnable->setText(tr("Squash note history automatically"));
   squashKeepLabel->setText(tr("Keep versions:"));
   squashModeLabel->setText(tr("What to do on limit excess:"));

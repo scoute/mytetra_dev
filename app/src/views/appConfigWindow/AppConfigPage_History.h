@@ -8,6 +8,8 @@ class QGroupBox;
 class QCheckBox;
 class QLabel;
 class QComboBox;
+class QRadioButton;
+class QButtonGroup;
 
 class AppConfigPage_History : public ConfigPage
 {
@@ -40,6 +42,12 @@ public:
     QCheckBox *squashEnable;   // Автосжатие старых версий по лимиту
     QLabel *squashKeepLabel;   // Подпись выпадашки лимита
     QComboBox *squashKeep;     // Сколько версий хранить (genesis плюс свежие)
+
+    QLabel *squashModeLabel;       // Подпись стратегий превышения лимита
+    QButtonGroup *squashModeGroup; // Группа стратегий, id совпадают с SquashMode
+    QRadioButton *squashDeleteOldest; // Удалить старые
+    QRadioButton *squashSmartMerge;   // Склеить похожие соседние
+    QRadioButton *squashBundle10;     // Паковать каждую 10-ю исключая свежие 10
 };
 
 #endif // APPCONFIGPAGE_HISTORY_H

@@ -6119,10 +6119,6 @@ Please select single item for enabling edit operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Format: WAV (Opus and MP3 unsupported)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>

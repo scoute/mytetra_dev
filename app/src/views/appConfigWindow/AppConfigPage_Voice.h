@@ -5,7 +5,6 @@
 
 class QGroupBox;
 class QRadioButton;
-class QComboBox;
 
 // Страница Voice notes: формат записи (Opus/MP3) по умолчанию.
 // Диалог записи предвыбирает его, переключать на ходу можно.
@@ -30,9 +29,6 @@ protected:
     QGroupBox *formatBox;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
-
-    QGroupBox *speedBox;
-    QComboBox *speedCombo;
 
 };
 

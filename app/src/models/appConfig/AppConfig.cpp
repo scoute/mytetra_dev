@@ -1596,20 +1596,6 @@ void AppConfig::set_voiceNoteQuality(int quality)
 }
 
 
-// Скорость проигрывания голосовых по умолчанию: 0.5..2.0.
-// 1.25 если не задано или мусор
-double AppConfig::get_voiceNoteSpeed(void)
-{
-    return qBound(0.5, m_conf->value("voiceNoteSpeed", 1.25).toDouble(), 2.0);
-}
-
-
-void AppConfig::set_voiceNoteSpeed(double speed)
-{
-    m_conf->setValue("voiceNoteSpeed", qBound(0.5, speed, 2.0));
-}
-
-
 QString AppConfig::getDockableWindowsState(void)
 {
     return this->get_parameter("dockableWindowsState");

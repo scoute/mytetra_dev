@@ -484,6 +484,9 @@ void Editor::setupSignals(void)
   connect(editorContextMenu,  &EditorContextMenu::contextMenuPlayVoice,
           audioFormatter,     &AudioFormatter::onPlayVoiceClicked,
           Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuRenameVoice,
+          audioFormatter,     &AudioFormatter::onRenameVoiceClicked,
+          Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuShowVoiceInFolder,
           audioFormatter,     &AudioFormatter::onShowVoiceInFolder,
           Qt::DirectConnection);

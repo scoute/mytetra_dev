@@ -6304,4 +6304,19 @@ La mise en forme peut être altérée.</translation>
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>SharedDirWatcher</name>
+    <message>
+        <source>Journal shared/.git is not found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>git is not available in PATH</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal is empty (no snapshots)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

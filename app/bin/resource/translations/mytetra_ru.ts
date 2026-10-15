@@ -7799,4 +7799,19 @@ Please select single item for enabling edit operation.</source>
         <translation>Не удаётся скопировать файл %1 в запись</translation>
     </message>
 </context>
+<context>
+    <name>SharedDirWatcher</name>
+    <message>
+        <source>Journal shared/.git is not found</source>
+        <translation>Журнал shared/.git не найден</translation>
+    </message>
+    <message>
+        <source>git is not available in PATH</source>
+        <translation>git недоступен в PATH</translation>
+    </message>
+    <message>
+        <source>Journal is empty (no snapshots)</source>
+        <translation>Журнал пуст (нет снимков)</translation>
+    </message>
+</context>
 </TS>

@@ -786,8 +786,8 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>История изменений заметки</translation>
     </message>
     <message>
-        <source>Squash old note versions automatically</source>
-        <translation>Сжимать старые версии заметок автоматически</translation>
+        <source>Squash note history automatically</source>
+        <translation>Сжимать историю заметок автоматически</translation>
     </message>
     <message>
         <source>Keep versions:</source>
@@ -7754,6 +7754,20 @@ This cannot be undone.</source>
 %1</source>
         <translation>Не удается сжать старые версии:
 %1</translation>
+    </message>
+    <message>
+        <source>Nothing to squash: %1 version(s), the limit is %2.
+Old versions are removed only above the limit; the first version is always kept.</source>
+        <translation>Сжимать нечего: версий %1, лимит %2.
+Старые версии удаляются только сверх лимита; первая версия хранится всегда.</translation>
+    </message>
+    <message>
+        <source>Compact the history of "%1"?
+%2 old version(s) will be permanently destroyed, %3 will be kept (the first and the newest).
+This cannot be undone.</source>
+        <translation>Сжать историю "%1"?
+%2 старая версия(и) будут навсегда уничтожены, %3 останутся (первая и новейшие).
+Это нельзя отменить.</translation>
     </message>
 </context>
 </TS>

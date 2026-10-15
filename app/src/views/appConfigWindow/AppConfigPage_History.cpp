@@ -45,7 +45,7 @@ void AppConfigPage_History::setupUi()
     // Сквош истории изменений заметки: автосжатие снизу по лимиту.
     // По умолчанию выключено
     squashEnable=new QCheckBox(this);
-    squashEnable->setText(tr("Squash old note versions automatically"));
+    squashEnable->setText(tr("Squash note history automatically"));
     squashEnable->setChecked(mytetraConfig.get_historySquashEnable());
 
     squashKeepLabel=new QLabel(tr("Keep versions:"), this);
@@ -115,7 +115,7 @@ void AppConfigPage_History::retranslateUi(void)
   rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
   historyBox->setTitle(tr("History of visited notes"));
   noteHistoryBox->setTitle(tr("Note change history"));
-  squashEnable->setText(tr("Squash old note versions automatically"));
+  squashEnable->setText(tr("Squash note history automatically"));
   squashKeepLabel->setText(tr("Keep versions:"));
 }
 

@@ -550,7 +550,7 @@ void AppConfig::set_autosaveInterval(int minutes)
 
 bool AppConfig::get_historySquashEnable(void)
 {
-    return m_conf->value("historySquashEnable", false).toBool();
+    return m_conf->value("historySquashEnable", true).toBool();
 }
 
 
@@ -2034,7 +2034,7 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     table << "autoClosePasswordDelay" << "int" << "10";
     table << "autosaveEnable" << "bool" << "true";
     table << "autosaveInterval" << "int" << "10";
-    table << "historySquashEnable" << "bool" << "false";
+    table << "historySquashEnable" << "bool" << "true";
     table << "historySquashKeep" << "int" << "100";
 
     if (withEndSignature)

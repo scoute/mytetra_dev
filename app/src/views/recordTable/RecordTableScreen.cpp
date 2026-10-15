@@ -142,6 +142,11 @@ void RecordTableScreen::setupActions(void)
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
  actionCopyRecordReference->setIcon(QIcon(":/resource/pic/note_reference.svg"));
 
+ // Кнопка истории изменений записи
+ actionChangeHistory = new QAction(tr("Change history"), this);
+ actionChangeHistory->setStatusTip(tr("Show change history with diff and rollback"));
+ actionChangeHistory->setIcon(QIcon(":/resource/pic/history.svg"));
+
  // Кнопка переключения режима одинарного выбора и мультивыбора (горячая кнопка не требуется)
  actionSwitchSelectionMode = new QAction(tr("Switch select/multiselect"), this);
  actionSwitchSelectionMode->setStatusTip(tr("Switch note selection mode (Notice: if multiselect is on, drag-and-drop is disabled)"));
@@ -323,6 +328,9 @@ void RecordTableScreen::setupSignals(void)
     // Кнопка вызова печати таблицы конечных записей
     connect(actionPrint, &QAction::triggered, recordTableController, &RecordTableController::onPrintClick);
 
+    // Кнопка истории изменений записи
+    connect(actionChangeHistory, &QAction::triggered, recordTableController, &RecordTableController::onChangeHistoryClick);
+
     // Кнопка копирования ссылки на запись
     connect(actionCopyRecordReference, &QAction::triggered, this, &RecordTableScreen::onCopyRecordReference);
 
@@ -383,6 +391,8 @@ void RecordTableScreen::disableAllActions(void)
 
  actionCopyRecordReference->setEnabled(false);
 
+ actionChangeHistory->setEnabled(false);
+
  actionSwitchSelectionMode->setEnabled(false);
 }
 
@@ -442,6 +452,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
+   actionChangeHistory->setEnabled(true);
  }
 
  // Удаление записи
@@ -646,6 +657,9 @@ void RecordTableScreen::retranslateUi(void)
 
   actionCopyRecordReference->setText(tr("Copy note reference"));
   actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
+
+  actionChangeHistory->setText(tr("Change history"));
+  actionChangeHistory->setStatusTip(tr("Show change history with diff and rollback"));
 
   actionSwitchSelectionMode->setText(tr("Switch select/multiselect"));
   actionSwitchSelectionMode->setStatusTip(tr("Switch note selection mode (Notice: if multiselect is on, drag-and-drop is disabled)"));

@@ -53,11 +53,6 @@ void AppConfigPage_History::setupUi()
     historyEnable->setText(tr("Enable note history (git must be installed)"));
     historyEnable->setChecked(mytetraConfig.get_historyEnable());
 
-    // Сквош истории изменений заметки: автосжатие снизу по лимиту
-    squashEnable=new QCheckBox(this);
-    squashEnable->setText(tr("Squash note history automatically"));
-    squashEnable->setChecked(mytetraConfig.get_historySquashEnable());
-
     squashKeepLabel=new QLabel(tr("Keep versions:"), this);
 
     // Выпадашка фиксированных лимитов: произвольные числа
@@ -74,11 +69,10 @@ void AppConfigPage_History::setupUi()
     const int keepIndex=squashKeep->findData(mytetraConfig.get_historySquashKeep());
     squashKeep->setCurrentIndex(keepIndex>=0 ? keepIndex : squashKeep->findData(100));
 
-    // Выпадашка всегда активна при включенной истории: лимит нужен
-    // и ручной кнопке "Сжать историю". Без мастер-тумблера вся
-    // группа серая
+    // Все сквош-виджеты серые без мастер-тумблера.
+    // Отдельной галочки автосжатия нет: раз лимит выставлен,
+    // ротация идет всегда (и авто после снапшота, и ручной кнопкой)
     const bool squashActive=mytetraConfig.get_historyEnable();
-    squashEnable->setEnabled(squashActive);
     squashKeep->setEnabled(squashActive);
     squashKeepLabel->setEnabled(squashActive);
 
@@ -113,29 +107,23 @@ void AppConfigPage_History::setupSignals()
     // и возврат галочки. Проверка здесь, а не в apply: отказ виден сразу
     connect(historyEnable, &QCheckBox::toggled, this, &AppConfigPage_History::onHistoryEnableToggled);
 
-    // Серость одним слотом: лимит живет при включенной истории
-    // (нужен и ручной кнопке), а блок стратегий только при
-    // включенном автосжатии
+    // Серость одним слотом: мастер-тумблер гасит всю группу
     connect(historyEnable, &QCheckBox::toggled, this, &AppConfigPage_History::updateSquashEnabled);
-    connect(squashEnable, &QCheckBox::toggled, this, &AppConfigPage_History::updateSquashEnabled);
 }
 
 
-// Единое состояние серости: чтобы два тумблера не дрались
-// за одни виджеты прямыми коннектами
+// Единое состояние серости: без мастер-тумблера серая вся группа
 void AppConfigPage_History::updateSquashEnabled(void)
 {
-    const bool masterOn=historyEnable->isChecked();
-    const bool autoOn=masterOn && squashEnable->isChecked();
+    const bool active=historyEnable->isChecked();
 
-    squashEnable->setEnabled(masterOn);
-    squashKeep->setEnabled(masterOn);
-    squashKeepLabel->setEnabled(masterOn);
+    squashKeep->setEnabled(active);
+    squashKeepLabel->setEnabled(active);
 
-    squashModeLabel->setEnabled(autoOn);
-    squashDeleteOldest->setEnabled(autoOn);
-    squashSmartMerge->setEnabled(autoOn);
-    squashBundle10->setEnabled(autoOn);
+    squashModeLabel->setEnabled(active);
+    squashDeleteOldest->setEnabled(active);
+    squashSmartMerge->setEnabled(active);
+    squashBundle10->setEnabled(active);
 }
 
 
@@ -184,11 +172,6 @@ void AppConfigPage_History::assembly()
     keepLayout->addStretch(1);
     noteHistoryLayout->addLayout(keepLayout);
 
-    QHBoxLayout *squashLayout=new QHBoxLayout;
-    squashLayout->addWidget(squashEnable);
-    squashLayout->addStretch(1);
-    noteHistoryLayout->addLayout(squashLayout);
-
     // Стратегия превышения лимита (виджеты созданы в setupUi)
     noteHistoryLayout->addWidget(squashModeLabel);
     noteHistoryLayout->addWidget(squashDeleteOldest);
@@ -214,7 +197,6 @@ void AppConfigPage_History::retranslateUi(void)
   historyBox->setTitle(tr("History of visited notes"));
   noteHistoryBox->setTitle(tr("Note change history"));
   historyEnable->setText(tr("Enable note history (git must be installed)"));
-  squashEnable->setText(tr("Squash note history automatically"));
   squashKeepLabel->setText(tr("Keep versions:"));
   squashModeLabel->setText(tr("What to do on limit excess:"));
   squashDeleteOldest->setText(tr("Delete oldest entries"));
@@ -247,11 +229,8 @@ int AppConfigPage_History::applyChanges()
     if(mytetraConfig.get_historyEnable()!=historyEnable->isChecked())
       mytetraConfig.set_historyEnable(historyEnable->isChecked());
 
-    // Сквош истории изменений: авточка и лимит. Лимит подхватится
-    // сам при следующем снапшоте
-    if(mytetraConfig.get_historySquashEnable()!=squashEnable->isChecked())
-      mytetraConfig.set_historySquashEnable(squashEnable->isChecked());
-
+    // Сквош-лимит и стратегия. Подхватятся сами при следующем
+    // снапшоте и ручной кнопке
     if(mytetraConfig.get_historySquashKeep()!=squashKeep->currentData().toInt())
       mytetraConfig.set_historySquashKeep(squashKeep->currentData().toInt());
 

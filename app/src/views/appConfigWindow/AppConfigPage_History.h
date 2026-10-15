@@ -44,7 +44,6 @@ public:
 
     QCheckBox *historyEnable;  // Мастер-тумблер ведения истории
 
-    QCheckBox *squashEnable;   // Автосжатие старых версий по лимиту
     QLabel *squashKeepLabel;   // Подпись выпадашки лимита
     QComboBox *squashKeep;     // Сколько версий хранить (genesis плюс свежие)
 

@@ -254,6 +254,8 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorShowText.h \
     src/views/recordTable/RecordTablePrint.h \
     src/models/recordTable/Record.h \
+    src/models/teamProfile/TeamProfile.h \
+    src/models/subscription/SubscriptionRegistry.h \
     src/models/attachTable/Attach.h \
     src/models/attachTable/AttachTableData.h \
     src/models/attachTable/AttachTableModel.h \
@@ -425,6 +427,8 @@ SOURCES = src/main.cpp \
     src/models/tree/TreeItem.cpp \
     src/models/tree/KnowTreeModel.cpp \
     src/models/recordTable/RecordTableData.cpp \
+    src/models/teamProfile/TeamProfile.cpp \
+    src/models/subscription/SubscriptionRegistry.cpp \
     src/models/recordTable/RecordTableModel.cpp \
     src/models/recordTable/RecordTableProxyModel.cpp \
     src/models/appConfig/AppConfig.cpp \

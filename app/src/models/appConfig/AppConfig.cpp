@@ -740,10 +740,24 @@ void AppConfig::setUglyQssReplaceHeightForTableView(int n)
 }
 
 
-// Перечень полей, отображаемых в таблице конечных записей
+// Перечень полей, отображаемых в таблице конечных записей.
+// Служебные поля без подписи (favorite) из старых конфигов
+// отрезаются здесь: колонками они не являются, пустой столбец
+// с пустым заголовком не нужен. При следующем apply список
+// перезапишется уже чистым
 QStringList AppConfig::getRecordTableShowFields(void)
 {
-    return (m_conf->value("recordTableShowFields", "name")).toString().split(",");
+    QStringList fields=(m_conf->value("recordTableShowFields", "name")).toString().split(",");
+    QStringList columns;
+
+    foreach(const QString &field, fields)
+      if(FixedParameters::isRecordFieldColumn(field))
+        columns << field;
+
+    if(columns.isEmpty())
+      columns << "name";
+
+    return columns;
 }
 
 

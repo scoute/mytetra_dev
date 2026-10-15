@@ -57,6 +57,12 @@ public:
   static bool isRecordFieldNatural(QString name);
   static bool isRecordFieldCalculable(QString name);
 
+  // Поле может быть колонкой таблицы записей: валидно и имеет
+  // подпись. Служебные поля без описания (favorite живёт только
+  // как флаг в модели для MCP) колонками не являются: иначе
+  // в настройках появлялся бы чекбокс-невидимка без текста
+  static bool isRecordFieldColumn(QString name);
+
   static QMap<QString, QString> recordFieldDescription(QStringList list);
 
 };

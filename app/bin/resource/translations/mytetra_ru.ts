@@ -5554,6 +5554,10 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation>Голосовые заметки</translation>
     </message>
     <message>
+        <source>Team</source>
+        <translation>Команда</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="79"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="133"/>
         <source>Misc</source>
@@ -6845,6 +6849,30 @@ Linux: поставьте пакет git. Windows: https://git-scm.com.</transla
         <source>Remove voice link and move file to trash</source>
         <translation>Убрать ссылку и переместить файл в корзину</translation>
     </message>
+    <message>
+        <source>Publish branch to shared directory</source>
+        <translation>Опубликовать ветку в общий каталог</translation>
+    </message>
+    <message>
+        <source>Publish branch to common directory (shared)</source>
+        <translation>Опубликовать ветку в общий каталог (shared)</translation>
+    </message>
+    <message>
+        <source>Update branch publication</source>
+        <translation>Обновить публикацию ветки</translation>
+    </message>
+    <message>
+        <source>Force update of branch publication</source>
+        <translation>Принудительно обновить публикацию ветки</translation>
+    </message>
+    <message>
+        <source>Revoke branch publication</source>
+        <translation>Отозвать публикацию ветки</translation>
+    </message>
+    <message>
+        <source>Revoke branch publication to trash</source>
+        <translation>Отозвать публикацию ветки в корзину</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -7405,6 +7433,236 @@ Please select single item for enabling edit operation.</source>
         <source>Rename me</source>
         <translation>Переименуй меня</translation>
     </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation>Отозвать публикацию...</translation>
+    </message>
+    <message>
+        <source>Publish branch</source>
+        <translation>Опубликовать ветку</translation>
+    </message>
+    <message>
+        <source>Shared directory is not defined. Set it in the settings.</source>
+        <translation>Общий каталог не задан. Задайте его в настройках.</translation>
+    </message>
+    <message>
+        <source>Can't create shared directory:\n</source>
+        <translation>Не удаётся создать общий каталог:
+</translation>
+    </message>
+    <message>
+        <source>The branch is nested in an already published branch or contains published sub-branches.\nPublishing nested branches is not supported.</source>
+        <translation>Ветка вложена в уже опубликованную ветку или содержит опубликованные подветки.
+Публикация вложенных веток не поддерживается.</translation>
+    </message>
+    <message>
+        <source>The branch contains encrypted content.\nEncrypted data is not stored in the common directory; the publication will be in decrypted form.\n\nContinue?</source>
+        <translation>Ветка содержит шифрованное содержимое.
+Шифрованные данные не хранятся в общем каталоге; публикация будет в расшифрованном виде.
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>The branch is already published at:\n%1\n\nUpdate the publication?</source>
+        <translation>Ветка уже опубликована здесь:
+%1
+
+Обновить публикацию?</translation>
+    </message>
+    <message>
+        <source>Update publication</source>
+        <translation>Обновить публикацию</translation>
+    </message>
+    <message>
+        <source>Publication of the branch was not found.</source>
+        <translation>Публикация ветки не найдена.</translation>
+    </message>
+    <message>
+        <source>Publication failed:\n%1</source>
+        <translation>Публикация не удалась:
+%1</translation>
+    </message>
+    <message>
+        <source>The published content is large (more than 20 MB).\nThe git-history in the common directory will grow with each publication.</source>
+        <translation>Публикуемый контент большой (больше 20 МБ).
+Git-история в общем каталоге будет расти с каждой публикацией.</translation>
+    </message>
+    <message>
+        <source>Branch \"%1\" successfully %2.\nPublication directory:\n%3\nPublish version: %4\n\nThe update will travel to colleagues via Syncthing (shared folder = sync/).</source>
+        <translation>Ветка "%1" успешно %2.
+Каталог публикации:
+%3
+Версия публикации: %4
+
+Обновление доедет до коллег через Syncthing (общая папка = sync/).</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <translation>обновлена</translation>
+    </message>
+    <message>
+        <source>published</source>
+        <translation>опубликована</translation>
+    </message>
+    <message>
+        <source>\n\nJournal is unavailable (git not found in PATH):\nrecovery from the journal is disabled.</source>
+        <translation>
+
+Журнал недоступен (git не найден в PATH):
+восстановление из журнала отключено.</translation>
+    </message>
+    <message>
+        <source>Settings...</source>
+        <translation>Настройки...</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Revoke publication</source>
+        <translation>Отозвать публикацию</translation>
+    </message>
+    <message>
+        <source>Revoke the publication at:\n%1\n\nThe publication directory will be moved to the trash.</source>
+        <translation>Отозвать публикацию здесь:
+%1
+
+Каталог публикации будет перемещён в корзину.</translation>
+    </message>
+    <message>
+        <source>Publication revoked.</source>
+        <translation>Публикация отозвана.</translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <source>Source branch is not found in the database.</source>
+        <translation>Исходная ветка не найдена в базе.</translation>
+    </message>
+    <message>
+        <source>Force branch update</source>
+        <translation>Принудительно обновить ветку</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Импорт</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Изменения</translation>
+    </message>
+    <message>
+        <source>Update is still on the way: publication data has not fully arrived. Diff and import run only on a consistent version — retry after synchronization completes (check that Syncthing syncs the sync/ folder on both devices and has converged).</source>
+        <translation>Обновление ещё в пути: данные публикации доехали не полностью. Diff и импорт выполняются только по целостной версии — попробуйте после завершения синхронизации (проверьте, что Syncthing синхронизирует папку sync/ и сошёлся).</translation>
+    </message>
+    <message>
+        <source>Check status</source>
+        <translation>Проверить статус</translation>
+    </message>
+    <message>
+        <source>Publication metadata is broken (meta.json without branchId).</source>
+        <translation>Метаданные публикации повреждены (meta.json без branchId).</translation>
+    </message>
+    <message>
+        <source>Subtree \"%1\" is imported into section\n%2</source>
+        <translation>Поддерево "%1" импортировано в раздел
+%2</translation>
+    </message>
+    <message>
+        <source>imported/%1/%2</source>
+        <translation>imported/%1/%2</translation>
+    </message>
+    <message>
+        <source>Local copy of the publication is not found.</source>
+        <translation>Локальная копия публикации не найдена.</translation>
+    </message>
+    <message>
+        <source>Target branch is not found in the tree.</source>
+        <translation>Ветка-приёмник не найдена в дереве.</translation>
+    </message>
+    <message>
+        <source>Target branch is encrypted. Open it with the password before import.</source>
+        <translation>Ветка-приёмник зашифрована. Откройте её паролем перед импортом.</translation>
+    </message>
+    <message>
+        <source>There are no new changes in the publication.</source>
+        <translation>Новых изменений в публикации нет.</translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation>Изменения: %1</translation>
+    </message>
+    <message>
+        <source>Import conflict</source>
+        <translation>Конфликт импорта</translation>
+    </message>
+    <message>
+        <source>Record \"%1\" was changed locally.\nImport the owner version?</source>
+        <translation>Запись "%1» была изменена локально.
+Импортировать версию владельца?</translation>
+    </message>
+    <message>
+        <source>Replace with owner version</source>
+        <translation>Заменить версией владельца</translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation>Сохранить обе</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Пропустить</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Восстановить</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Позже</translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation>Восстановление из local</translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe local/ authority contains consistent owner publications.\n\nRestore the sync/ mirror from local/?</source>
+        <translation>Область sync/ пуста или содержит неполные данные.
+Авторитет local/ содержит целостные публикации владельца.
+
+Восстановить зеркало sync/ из local/?</translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation>Восстановление из журнала</translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation>В журнале %1 снимков(а) области sync/.</translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe unified journal contains %1 snapshot(s) with the last known state of publications.\n\nRestore publications from the journal?</source>
+        <translation>Область sync/ пуста или содержит неполные данные.
+Единый журнал содержит %1 снимков(а) с последним известным состоянием публикаций.
+
+Восстановить публикации из журнала?</translation>
+    </message>
+    <message>
+        <source>Journal size</source>
+        <translation>Размер журнала</translation>
+    </message>
+    <message>
+        <source>Exchange journal has grown: %1 snapshots (%2 MB).\nOld snapshots are only needed to restore long-deleted data. Archiving will keep only the current state (irreversibly). Archive now?</source>
+        <translation>Журнал обмена разросся: %1 снимков (%2 МБ).
+Старые снимки нужны только для восстановления давно удалённого. Архивирование оставит только текущее состояние (необратимо). Архивировать сейчас?</translation>
+    </message>
+    <message>
+        <source>Archive now</source>
+        <translation>Архивировать сейчас</translation>
+    </message>
 </context>
 <context>
     <name>TypefaceFormatter</name>
@@ -7812,6 +8070,650 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Journal is empty (no snapshots)</source>
         <translation>Журнал пуст (нет снимков)</translation>
+    </message>
+</context>
+<context>
+    <name>SubscriptionPanel</name>
+    <message>
+        <source>Subscriptions</source>
+        <translation>Подписки</translation>
+    </message>
+    <message>
+        <source>My publications</source>
+        <translation>Мои публикации</translation>
+    </message>
+    <message>
+        <source>Available</source>
+        <translation>Доступно</translation>
+    </message>
+    <message>
+        <source>(shared directory is not set)</source>
+        <translation>(общий каталог не задан)</translation>
+    </message>
+    <message>
+        <source>(no publications — check that Syncthing syncs the sync/ folder)</source>
+        <translation>(публикаций нет — проверьте, что Syncthing синхронизирует папку sync/)</translation>
+    </message>
+    <message>
+        <source>On every device, share only the sync/ folder inside the shared directory. If publications do not appear, verify the Syncthing folder path and that the sync is complete.</source>
+        <translation>На каждом устройстве расшарьте только папку sync/ внутри общего каталога. Если публикации не появляются, проверьте путь папки Syncthing и завершённость синхронизации.</translation>
+    </message>
+    <message>
+        <source> — %1</source>
+        <translation> — %1</translation>
+    </message>
+    <message>
+        <source> *</source>
+        <translation> *</translation>
+    </message>
+    <message>
+        <source> (...</source>
+        <translation> (...</translation>
+    </message>
+    <message>
+        <source>\nUpdate is on the way — data has not fully arrived yet. Check that Syncthing syncs the sync/ folder and has converged.</source>
+        <translation>
+Обновление в пути — данные ещё не доехали полностью. Проверьте, что Syncthing синхронизирует папку sync/ и сошёлся.</translation>
+    </message>
+    <message>
+        <source>Unsubscribe</source>
+        <translation>Отписаться</translation>
+    </message>
+    <message>
+        <source>Mark as viewed</source>
+        <translation>Отметить просмотренным</translation>
+    </message>
+    <message>
+        <source>Open slice...</source>
+        <translation>Открыть срез...</translation>
+    </message>
+    <message>
+        <source>Show changes / Import...</source>
+        <translation>Показать изменения / Импорт...</translation>
+    </message>
+    <message>
+        <source>Force branch update / recovery...</source>
+        <translation>Принудительно обновить ветку / восстановление...</translation>
+    </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation>Отозвать публикацию...</translation>
+    </message>
+    <message>
+        <source>Subscribe</source>
+        <translation>Подписаться</translation>
+    </message>
+    <message>
+        <source>Refresh list</source>
+        <translation>Обновить список</translation>
+    </message>
+    <message>
+        <source>Restore sync/ from local...</source>
+        <translation>Восстановить sync/ из local/...</translation>
+    </message>
+    <message>
+        <source>Restore sync/ from journal... (%1)</source>
+        <translation>Восстановить sync/ из журнала... (%1)</translation>
+    </message>
+    <message>
+        <source>Archive journal history... (%1)</source>
+        <translation>Архивировать историю журнала... (%1)</translation>
+    </message>
+    <message>
+        <source>Journal unavailable: git not found in PATH</source>
+        <translation>Журнал недоступен: git не найден в PATH</translation>
+    </message>
+    <message>
+        <source>(journal is empty — nothing to restore)</source>
+        <translation>(журнал пуст — восстанавливать нечего)</translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation>Восстановление из local</translation>
+    </message>
+    <message>
+        <source>The sync/ mirror will be rebuilt from the local/ authority (only own publications, no git).\n\nContinue?</source>
+        <translation>Зеркало sync/ будет перестроено из авторитета local/ (только свои публикации владельца, без git).
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Publications restored: %1.</source>
+        <translation>Восстановлено публикаций: %1.</translation>
+    </message>
+    <message>
+        <source>Recovery is not required.</source>
+        <translation>Восстановление не требуется.</translation>
+    </message>
+    <message>
+        <source>Cannot restore from local/:\n%1</source>
+        <translation>Не удалось восстановить из local/:
+%1</translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation>Восстановление из журнала</translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation>В журнале %1 снимков(а) области sync/.</translation>
+    </message>
+    <message>
+        <source>\nThe sync/ area is empty or broken — recovery is required.</source>
+        <translation>
+Область sync/ пуста или повреждена — восстановление необходимо.</translation>
+    </message>
+    <message>
+        <source>\nThe sync/ area contains consistent publications.</source>
+        <translation>
+Область sync/ содержит целостные публикации.</translation>
+    </message>
+    <message>
+        <source>Restore from journal:\n  — only publications missing on disk;\n  — the whole sync/ area (replace current state).</source>
+        <translation>Восстановить из журнала:
+  — только недостающие на диске публикации;
+  — всю область sync/ (заменить текущее состояние).</translation>
+    </message>
+    <message>
+        <source>Only missing</source>
+        <translation>Только недостающие</translation>
+    </message>
+    <message>
+        <source>Whole sync/</source>
+        <translation>Весь sync/</translation>
+    </message>
+    <message>
+        <source>Recovery is complete.</source>
+        <translation>Восстановление завершено.</translation>
+    </message>
+    <message>
+        <source>Cannot restore from journal:\n%1</source>
+        <translation>Не удалось восстановить из журнала:
+%1</translation>
+    </message>
+    <message>
+        <source>Archive journal history</source>
+        <translation>Архивирование истории журнала</translation>
+    </message>
+    <message>
+        <source>Journal history contains %1 snapshot(s).\nAfter archiving, the current state will become the only snapshot, and the previous history will be deleted (irreversibly).\n\nContinue?</source>
+        <translation>История журнала содержит %1 снимков(а).
+После архивирования текущее состояние станет единственным снимком, а прежняя история будет удалена (необратимо).
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Journal history is archived.</source>
+        <translation>История журнала архивирована.</translation>
+    </message>
+    <message>
+        <source>Cannot archive history:\n%1</source>
+        <translation>Не удалось архивировать историю:
+%1</translation>
+    </message>
+    <message>
+        <source>This is your own publication. No need to subscribe to it.</source>
+        <translation>Это ваша собственная публикация. Подписываться на неё не нужно.</translation>
+    </message>
+    <message>
+        <source>Publication has not fully arrived yet. Subscription will become available after synchronization completes.</source>
+        <translation>Публикация ещё не доехала полностью. Подписка станет доступна после завершения синхронизации.</translation>
+    </message>
+    <message>
+        <source>Publication has not fully arrived yet. It can be marked as viewed after synchronization completes.</source>
+        <translation>Публикация ещё не доехала полностью. Отметить просмотренным можно после завершения синхронизации.</translation>
+    </message>
+</context>
+<context>
+    <name>BranchSliceDialog</name>
+    <message>
+        <source>Slice: publication is broken</source>
+        <translation>Срез: публикация повреждена</translation>
+    </message>
+    <message>
+        <source> — %1</source>
+        <translation> — %1</translation>
+    </message>
+    <message>
+        <source>Slice: %1</source>
+        <translation>Срез: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — version %2, published %3</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; — версия %2, опубликовано %3</translation>
+    </message>
+    <message>
+        <source>Slice</source>
+        <translation>Срез</translation>
+    </message>
+    <message>
+        <source> / </source>
+        <translation> / </translation>
+    </message>
+    <message>
+        <source>\nauthor: </source>
+        <translation>
+автор: </translation>
+    </message>
+    <message>
+        <source>\ntags: </source>
+        <translation>
+метки: </translation>
+    </message>
+    <message>
+        <source>\nctime: </source>
+        <translation>
+создано: </translation>
+    </message>
+    <message>
+        <source>Deleted by owner</source>
+        <translation>Удалено владельцем</translation>
+    </message>
+    <message>
+        <source>Branch: %1</source>
+        <translation>Ветка: %1</translation>
+    </message>
+    <message>
+        <source>Branch deleted by owner</source>
+        <translation>Ветка удалена владельцем</translation>
+    </message>
+    <message>
+        <source>Record: %1</source>
+        <translation>Запись: %1</translation>
+    </message>
+    <message>
+        <source>Record deleted by owner</source>
+        <translation>Запись удалена владельцем</translation>
+    </message>
+    <message>
+        <source>new records: %1</source>
+        <translation>новых записей: %1</translation>
+    </message>
+    <message>
+        <source>changed: %1</source>
+        <translation>изменено: %1</translation>
+    </message>
+    <message>
+        <source>structure changes: %1</source>
+        <translation>изменения структуры: %1</translation>
+    </message>
+    <message>
+        <source>Changes since last import: %1</source>
+        <translation>Изменений с последнего импорта: %1</translation>
+    </message>
+    <message>
+        <source>; </source>
+        <translation>; </translation>
+    </message>
+    <message>
+        <source>&lt;font color=\"red\"&gt;deleted by owner: %1 branches, %2 records&lt;/font&gt;</source>
+        <translation>&lt;font color="red"&gt;удалено владельцем: веток %1, записей %2&lt;/font&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;%1</source>
+        <translation>&lt;br&gt;%1</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;font color=\"red\"&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;i&gt;This object was deleted by the owner in the current publication version.&lt;br&gt;The previously imported local copy stays in your database; deleting it is only possible explicitly in the \"What changed\" dialog.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;font color="red"&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;i&gt;Этот объект удалён владельцем в текущей версии публикации.&lt;br&gt;Ранее импортированная локальная копия остаётся в вашей базе; её удаление — только явным действием в диалоге «Что изменилось».&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Select a record on the left to view.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Выберите запись слева для просмотра.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Record file is not found.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Файл записи не найден.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+</context>
+<context>
+    <name>ChangeViewDialog</name>
+    <message>
+        <source> — %1</source>
+        <translation> — %1</translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation>Изменения: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — publication changes.&lt;br&gt;Select what to import. Deletions are marked as dangerous.</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; — изменения публикации.&lt;br&gt;Выберите, что импортировать. Удаления отмечены как опасные.</translation>
+    </message>
+    <message>
+        <source>Custom (manually)</source>
+        <translation>Выборочно (вручную)</translation>
+    </message>
+    <message>
+        <source>New records only</source>
+        <translation>Только новые записи</translation>
+    </message>
+    <message>
+        <source>All except deletions</source>
+        <translation>Всё, кроме удалений</translation>
+    </message>
+    <message>
+        <source>All, including deletions</source>
+        <translation>Всё, включая удаления</translation>
+    </message>
+    <message>
+        <source>Import mode:</source>
+        <translation>Режим импорта:</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation>Изменение</translation>
+    </message>
+    <message>
+        <source>Diff</source>
+        <translation>Diff</translation>
+    </message>
+    <message>
+        <source>Object</source>
+        <translation>Объект</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Описание</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Изменения</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>История</translation>
+    </message>
+    <message>
+        <source>Apply selected</source>
+        <translation>Применить выбранное</translation>
+    </message>
+    <message>
+        <source>Mark as viewed</source>
+        <translation>Отметить просмотренным</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Diff in separate window…</source>
+        <translation>Diff в отдельном окне…</translation>
+    </message>
+    <message>
+        <source>diff</source>
+        <translation>diff</translation>
+    </message>
+    <message>
+        <source>Double click — open diff in separate window</source>
+        <translation>Двойной клик — открыть diff в отдельном окне</translation>
+    </message>
+    <message>
+        <source>History is unavailable.</source>
+        <translation>История недоступна.</translation>
+    </message>
+    <message>
+        <source>No version history (publication was created before the journal).</source>
+        <translation>История версий отсутствует (публикация создана до введения журнала).</translation>
+    </message>
+    <message>
+        <source>Version history is empty.</source>
+        <translation>История версий пуста.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;v%1&lt;/b&gt; — %2 (%3)&lt;br&gt;</source>
+        <translation>&lt;b&gt;v%1&lt;/b&gt; — %2 (%3)&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&amp;nbsp;&amp;nbsp;&lt;i&gt;first publication&lt;/i&gt;&lt;br&gt;</source>
+        <translation>&amp;nbsp;&amp;nbsp;&lt;i&gt;первая публикация&lt;/i&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&amp;nbsp;&amp;nbsp;• %1: %2&lt;br&gt;</source>
+        <translation>&amp;nbsp;&amp;nbsp;• %1: %2&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>New record</source>
+        <translation>Новая запись</translation>
+    </message>
+    <message>
+        <source>Record change</source>
+        <translation>Изменение записи</translation>
+    </message>
+    <message>
+        <source>Record delete</source>
+        <translation>Удаление записи</translation>
+    </message>
+    <message>
+        <source>Branch rename</source>
+        <translation>Переименование ветки</translation>
+    </message>
+    <message>
+        <source>Branch move</source>
+        <translation>Перемещение ветки</translation>
+    </message>
+    <message>
+        <source>New branch</source>
+        <translation>Новая ветка</translation>
+    </message>
+    <message>
+        <source>Branch delete</source>
+        <translation>Удаление ветки</translation>
+    </message>
+    <message>
+        <source>is added to the personal database</source>
+        <translation>добавляется в личную базу</translation>
+    </message>
+    <message>
+        <source>DANGER: local copy will be moved to trash</source>
+        <translation>ОПАСНО: локальная копия будет перенесена в корзину</translation>
+    </message>
+    <message>
+        <source>a local copy of the branch is created</source>
+        <translation>создаётся локальная копия ветки</translation>
+    </message>
+    <message>
+        <source>rename of the local branch copy</source>
+        <translation>переименование локальной копии ветки</translation>
+    </message>
+    <message>
+        <source>move of the local branch copy</source>
+        <translation>перемещение локальной копии ветки</translation>
+    </message>
+    <message>
+        <source>DANGER: branch with contents will go to trash</source>
+        <translation>ОПАСНО: ветка с содержимым уйдёт в корзину</translation>
+    </message>
+    <message>
+        <source>fields: %1</source>
+        <translation>поля: %1</translation>
+    </message>
+    <message>
+        <source>text</source>
+        <translation>текст</translation>
+    </message>
+    <message>
+        <source>+attachments: %1</source>
+        <translation>+вложения: %1</translation>
+    </message>
+    <message>
+        <source>-attachments: %1</source>
+        <translation>-вложения: %1</translation>
+    </message>
+    <message>
+        <source>tree structure (not imported)</source>
+        <translation>структура дерева (не импортируется)</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;New record&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Новая запись&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Record change&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Изменение записи&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;%1&lt;/b&gt;:&lt;br&gt;</source>
+        <translation>&lt;br&gt;&lt;b&gt;%1&lt;/b&gt;:&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;i&gt;Was:&lt;/i&gt; %1&lt;br&gt;</source>
+        <translation>&lt;i&gt;Было:&lt;/i&gt; %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;i&gt;Now:&lt;/i&gt; %1&lt;br&gt;</source>
+        <translation>&lt;i&gt;Стало:&lt;/i&gt; %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Record text&lt;/b&gt;:&lt;br&gt;%1</source>
+        <translation>&lt;br&gt;&lt;b&gt;Текст записи&lt;/b&gt;:&lt;br&gt;%1</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Record text&lt;/b&gt; changed by owner.</source>
+        <translation>&lt;br&gt;&lt;b&gt;Текст записи&lt;/b&gt; изменён владельцем.</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Attachments added&lt;/b&gt;: %1</source>
+        <translation>&lt;br&gt;&lt;b&gt;Добавлены вложения&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Attachments removed&lt;/b&gt;: %1</source>
+        <translation>&lt;br&gt;&lt;b&gt;Удалены вложения&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Record delete&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Удаление записи&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy will be moved to trash and removed from the tree.</source>
+        <translation>Локальная копия будет перенесена в корзину и убрана из дерева.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch move&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Перемещение ветки&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy of the branch will be moved to the owner parent branch.</source>
+        <translation>Локальная копия ветки будет перемещена к ветке-родителю владельца.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch delete&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Удаление ветки&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy of the branch with all records will be moved to trash.</source>
+        <translation>Локальная копия ветки со всеми записями будет перенесена в корзину.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;New branch&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Новая ветка&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>A local copy of the branch will be created; its records are imported separately.</source>
+        <translation>Будет создана локальная копия ветки; её записи импортируются отдельно.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch rename&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Переименование ветки&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy of the branch will be renamed.</source>
+        <translation>Локальная копия ветки будет переименована.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt;: %2&lt;br&gt;</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt;: %2&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>Nothing is selected.</source>
+        <translation>Ничего не выбрано.</translation>
+    </message>
+    <message>
+        <source>Dangerous changes selected: %1 (deletions).\nLocal copies will be moved to trash. Continue?</source>
+        <translation>Выбрано опасных изменений: %1 (удаления).
+Локальные копии будут перенесены в корзину. Продолжить?</translation>
+    </message>
+    <message>
+        <source>All changes will be marked as viewed without importing into the personal database. Continue?</source>
+        <translation>Все изменения будут помечены просмотренными без импорта в личную базу. Продолжить?</translation>
+    </message>
+</context>
+<context>
+    <name>TextDiffDialog</name>
+    <message>
+        <source>Diff: %1</source>
+        <translation>Diff: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — text comparison.&lt;br&gt;Red is before (local copy), green is after (owner version).</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; — сравнение текста.&lt;br&gt;Красное — было (локальная копия), зелёное — стало (версия владельца).</translation>
+    </message>
+    <message>
+        <source>Line diff</source>
+        <translation>Построчный diff</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;i&gt;No local copy to compare with.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;i&gt;Нет локальной копии для сравнения.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;i&gt;Owner version text is unavailable.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;i&gt;Текст версии владельца недоступен.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Was (local copy)</source>
+        <translation>Было (локальная копия)</translation>
+    </message>
+    <message>
+        <source>Now (owner version)</source>
+        <translation>Стало (версия владельца)</translation>
+    </message>
+    <message>
+        <source>diff and render side by side</source>
+        <translation>diff и рендер в одном ряду</translation>
+    </message>
+    <message>
+        <source>diff above render</source>
+        <translation>diff сверху рендера</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Team</name>
+    <message>
+        <source>For example: Ivan Petrov</source>
+        <translation>Например: Иван Петров</translation>
+    </message>
+    <message>
+        <source>For example: ivan@example.com</source>
+        <translation>Например: ivan@example.com</translation>
+    </message>
+    <message>
+        <source>Generate new ID</source>
+        <translation>Сгенерировать новый ID</translation>
+    </message>
+    <message>
+        <source>Directory for publishing branches, synchronized via Syncthing. Empty means the default directory near the program binary.</source>
+        <translation>Каталог для публикации веток, синхронизируется через Syncthing. Пусто — каталог по умолчанию рядом с бинарником программы.</translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
+    </message>
+    <message>
+        <source>These settings identify you as the owner of branches published to the shared directory. The name and email are shown to your colleagues when they view a shared branch.</source>
+        <translation>Эти настройки идентифицируют вас как владельца веток, публикуемых в общий каталог. Имя и почта показываются коллегам при просмотре общей ветки.</translation>
+    </message>
+    <message>
+        <source>Syncthing tip: share &lt;b&gt;only&lt;/b&gt; the &lt;i&gt;sync/&lt;/i&gt; folder inside the shared directory between devices. Your personal database, the local journal and owner copies are never synchronized — only published branches travel.</source>
+        <translation>Подсказка Syncthing: расшаривайте между устройствами &lt;b&gt;только&lt;/b&gt; папку &lt;i&gt;sync/&lt;/i&gt; внутри общего каталога. Ваша личная база, локальный журнал и копии владельца никогда не синхронизируются — путешествуют только опубликованные ветки.</translation>
+    </message>
+    <message>
+        <source>One Syncthing folder = shared/sync/. Do not share the whole shared/ directory, your database or trash.</source>
+        <translation>Одна папка Syncthing = shared/sync/. Не расшаривайте весь каталог shared/, вашу базу или корзину.</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
     </message>
 </context>
 </TS>

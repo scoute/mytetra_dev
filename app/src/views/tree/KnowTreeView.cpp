@@ -16,6 +16,7 @@
 
 #include "KnowTreeView.h"
 #include "KnowTreeDelegate.h"
+#include "PublishedBadgeDelegate.h"
 #include "TreeScreen.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/ClipboardRecords.h"
@@ -43,7 +44,7 @@ KnowTreeView::KnowTreeView(QWidget *parent) : QTreeView(parent)
 
     // Делегат подсвечивает вырезанную ветку желтой подложкой.
     // Видом владеет, удалится автоматически
-    setItemDelegate(new KnowTreeDelegate(this));
+    setItemDelegate(new PublishedBadgeDelegate(this));
 
     // Разрешение принимать жест QTapAndHoldGesture
     grabGesture(Qt::TapAndHoldGesture);

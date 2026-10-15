@@ -35,6 +35,10 @@ public:
     QString getSharedDirConfigValue(void);
     QString getSharedDir(void);
     void setSharedDir(const QString &path);
+
+signals:
+    // Данные профиля изменены: вотчер перенастраивает каталог
+    void teamProfileChanged(void);
 };
 
 #endif /* _TEAMPROFILE_H_ */

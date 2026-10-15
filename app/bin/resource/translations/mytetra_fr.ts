@@ -4360,6 +4360,10 @@ MyTetra va créer une note vide pour corriger cela.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Team</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Voice notes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5452,6 +5456,30 @@ Linux: install the git package. Windows: https://git-scm.com.</source>
         <source>Direct and backlinks panel</source>
         <translation>Panneau des liens directs et entrants</translation>
     </message>
+    <message>
+        <source>Publish branch to shared directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publish branch to common directory (shared)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update branch publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force update of branch publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke branch publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke branch publication to trash</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -5910,6 +5938,206 @@ Toutes les données importées seront chiffrées.</translation>
         <source>Rename me</source>
         <translation>Renommez-moi</translation>
     </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publish branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shared directory is not defined. Set it in the settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can't create shared directory:\n</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The branch is nested in an already published branch or contains published sub-branches.\nPublishing nested branches is not supported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The branch contains encrypted content.\nEncrypted data is not stored in the common directory; the publication will be in decrypted form.\n\nContinue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The branch is already published at:\n%1\n\nUpdate the publication?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication of the branch was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication failed:\n%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The published content is large (more than 20 MB).\nThe git-history in the common directory will grow with each publication.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch \"%1\" successfully %2.\nPublication directory:\n%3\nPublish version: %4\n\nThe update will travel to colleagues via Syncthing (shared folder = sync/).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>published</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\n\nJournal is unavailable (git not found in PATH):\nrecovery from the journal is disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke publication</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke the publication at:\n%1\n\nThe publication directory will be moved to the trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication revoked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source branch is not found in the database.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force branch update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update is still on the way: publication data has not fully arrived. Diff and import run only on a consistent version — retry after synchronization completes (check that Syncthing syncs the sync/ folder on both devices and has converged).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication metadata is broken (meta.json without branchId).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtree \"%1\" is imported into section\n%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>imported/%1/%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local copy of the publication is not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target branch is not found in the tree.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target branch is encrypted. Open it with the password before import.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no new changes in the publication.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import conflict</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record \"%1\" was changed locally.\nImport the owner version?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with owner version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe local/ authority contains consistent owner publications.\n\nRestore the sync/ mirror from local/?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe unified journal contains %1 snapshot(s) with the last known state of publications.\n\nRestore publications from the journal?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exchange journal has grown: %1 snapshots (%2 MB).\nOld snapshots are only needed to restore long-deleted data. Archiving will keep only the current state (irreversibly). Archive now?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archive now</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>TypefaceFormatter</name>
@@ -6316,6 +6544,633 @@ La mise en forme peut être altérée.</translation>
     </message>
     <message>
         <source>Journal is empty (no snapshots)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SubscriptionPanel</name>
+    <message>
+        <source>Subscriptions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My publications</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(shared directory is not set)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(no publications — check that Syncthing syncs the sync/ folder)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On every device, share only the sync/ folder inside the shared directory. If publications do not appear, verify the Syncthing folder path and that the sync is complete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> *</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\nUpdate is on the way — data has not fully arrived yet. Check that Syncthing syncs the sync/ folder and has converged.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unsubscribe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark as viewed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open slice...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show changes / Import...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force branch update / recovery...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subscribe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore sync/ from local...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore sync/ from journal... (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archive journal history... (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal unavailable: git not found in PATH</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(journal is empty — nothing to restore)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The sync/ mirror will be rebuilt from the local/ authority (only own publications, no git).\n\nContinue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publications restored: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recovery is not required.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot restore from local/:\n%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\nThe sync/ area is empty or broken — recovery is required.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\nThe sync/ area contains consistent publications.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore from journal:\n  — only publications missing on disk;\n  — the whole sync/ area (replace current state).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whole sync/</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recovery is complete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot restore from journal:\n%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archive journal history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal history contains %1 snapshot(s).\nAfter archiving, the current state will become the only snapshot, and the previous history will be deleted (irreversibly).\n\nContinue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Journal history is archived.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot archive history:\n%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is your own publication. No need to subscribe to it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication has not fully arrived yet. Subscription will become available after synchronization completes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Publication has not fully arrived yet. It can be marked as viewed after synchronization completes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BranchSliceDialog</name>
+    <message>
+        <source>Slice: publication is broken</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slice: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — version %2, published %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> / </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\nauthor: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\ntags: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\nctime: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted by owner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch deleted by owner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record deleted by owner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>new records: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>structure changes: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes since last import: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>; </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;font color=\"red\"&gt;deleted by owner: %1 branches, %2 records&lt;/font&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;font color=\"red\"&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;i&gt;This object was deleted by the owner in the current publication version.&lt;br&gt;The previously imported local copy stays in your database; deleting it is only possible explicitly in the \"What changed\" dialog.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Select a record on the left to view.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Record file is not found.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ChangeViewDialog</name>
+    <message>
+        <source> — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — publication changes.&lt;br&gt;Select what to import. Deletions are marked as dangerous.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom (manually)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New records only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All except deletions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All, including deletions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import mode:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Diff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark as viewed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Diff in separate window…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>diff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Double click — open diff in separate window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History is unavailable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No version history (publication was created before the journal).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version history is empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;v%1&lt;/b&gt; — %2 (%3)&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;nbsp;&amp;nbsp;&lt;i&gt;first publication&lt;/i&gt;&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;nbsp;&amp;nbsp;• %1: %2&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New branch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Branch delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>is added to the personal database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DANGER: local copy will be moved to trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a local copy of the branch is created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>rename of the local branch copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>move of the local branch copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DANGER: branch with contents will go to trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>fields: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+attachments: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>-attachments: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tree structure (not imported)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;New record&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Record change&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;%1&lt;/b&gt;:&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;i&gt;Was:&lt;/i&gt; %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;i&gt;Now:&lt;/i&gt; %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Record text&lt;/b&gt;:&lt;br&gt;%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Record text&lt;/b&gt; changed by owner.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Attachments added&lt;/b&gt;: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Attachments removed&lt;/b&gt;: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Record delete&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local copy will be moved to trash and removed from the tree.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch move&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local copy of the branch will be moved to the owner parent branch.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch delete&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local copy of the branch with all records will be moved to trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;New branch&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A local copy of the branch will be created; its records are imported separately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch rename&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The local copy of the branch will be renamed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt;: %2&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is selected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dangerous changes selected: %1 (deletions).\nLocal copies will be moved to trash. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All changes will be marked as viewed without importing into the personal database. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TextDiffDialog</name>
+    <message>
+        <source>Diff: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — text comparison.&lt;br&gt;Red is before (local copy), green is after (owner version).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line diff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;i&gt;No local copy to compare with.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;i&gt;Owner version text is unavailable.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Was (local copy)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now (owner version)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>diff and render side by side</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>diff above render</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Team</name>
+    <message>
+        <source>For example: Ivan Petrov</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For example: ivan@example.com</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate new ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Directory for publishing branches, synchronized via Syncthing. Empty means the default directory near the program binary.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These settings identify you as the owner of branches published to the shared directory. The name and email are shown to your colleagues when they view a shared branch.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syncthing tip: share &lt;b&gt;only&lt;/b&gt; the &lt;i&gt;sync/&lt;/i&gt; folder inside the shared directory between devices. Your personal database, the local journal and owner copies are never synchronized — only published branches travel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One Syncthing folder = shared/sync/. Do not share the whole shared/ directory, your database or trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

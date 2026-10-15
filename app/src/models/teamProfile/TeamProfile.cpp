@@ -33,6 +33,7 @@ void TeamProfile::setTeamName(const QString &name)
 {
     mytetraConfig.set_teamName(name);
     mytetraConfig.sync();
+    emit teamProfileChanged();
 }
 
 
@@ -46,6 +47,7 @@ void TeamProfile::setTeamEmail(const QString &email)
 {
     mytetraConfig.set_teamEmail(email);
     mytetraConfig.sync();
+    emit teamProfileChanged();
 }
 
 
@@ -80,6 +82,7 @@ void TeamProfile::generateNewTeamId(void)
 {
     mytetraConfig.set_teamId(QStringLiteral("U")+getUniqueId());
     mytetraConfig.sync();
+    emit teamProfileChanged();
 }
 
 
@@ -111,4 +114,5 @@ void TeamProfile::setSharedDir(const QString &path)
 {
     mytetraConfig.set_sharedDir(path);
     mytetraConfig.sync();
+    emit teamProfileChanged();
 }

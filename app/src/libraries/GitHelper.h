@@ -78,6 +78,15 @@ public:
     static bool truncateFileHistory(const QString &dir, const QString &file,
                                     const QString &targetRev,
                                     QString *errorMessage=nullptr);
+
+    // Сжать историю файла снизу: из коммитов файла keepNewest
+    // хранит genesis (самый старый, якорь отката) и newest-1 свежих,
+    // середина уничтожается. Снапшоты полные, сворачивать нечего.
+    // Чужие файлы переигрываются. keepNewest<2 отказ.
+    // Текст ошибки опционально
+    static bool squashFileHistory(const QString &dir, const QString &file,
+                                  int keepNewest,
+                                  QString *errorMessage=nullptr);
 };
 
 #endif /* _GITHELPER_H_ */

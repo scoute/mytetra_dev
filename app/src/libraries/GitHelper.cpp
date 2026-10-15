@@ -402,3 +402,224 @@ bool GitHelper::truncateFileHistory(const QString &dir, const QString &file,
 
     return true;
 }
+
+
+bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
+                                  int keepNewest, QString *errorMessage)
+{
+    if(!isRepo(dir))
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Not a git repository");
+        return false;
+    }
+
+    if(file.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Empty file");
+        return false;
+    }
+
+    // Хранится genesis плюс свежие: меньше двух хранить нечего
+    if(keepNewest<2)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Keep at least genesis and one version");
+        return false;
+    }
+
+    if(!statusPorcelain(dir).trimmed().isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Workdir has uncommitted changes");
+        return false;
+    }
+
+    const QString origHead=headRev(dir);
+
+    if(origHead.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Journal is empty");
+        return false;
+    }
+
+    // Коммиты файла от старых к новым
+    QString fileLog;
+    if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("--reverse")
+                              << QStringLiteral("--format=%H")
+                              << QStringLiteral("--") << file, &fileLog)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot list file history");
+        return false;
+    }
+
+    const QStringList fileCommits=fileLog.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
+
+    // Укладываемся в лимит: делать нечего
+    if(fileCommits.size()<=keepNewest)
+        return true;
+
+    // Genesis (якорь отката) плюс свежие, середина под снос
+    QSet<QString> keepSet;
+    keepSet.insert(fileCommits.first().trimmed());
+    for(int i=fileCommits.size()-(keepNewest-1); i<fileCommits.size(); ++i)
+        keepSet.insert(fileCommits.at(i).trimmed());
+
+    QSet<QString> dropSet;
+    for(const QString &rev : fileCommits)
+    {
+        const QString hash=rev.trimmed();
+
+        if(!keepSet.contains(hash))
+            dropSet.insert(hash);
+    }
+
+    if(dropSet.isEmpty())
+        return true;
+
+    // База переигрывания: родитель старейшего сносимого.
+    // Существует всегда: genesis хранится, сносится только середина
+    QString oldestDropped;
+    for(const QString &rev : fileCommits)
+    {
+        if(dropSet.contains(rev.trimmed()))
+        {
+            oldestDropped=rev.trimmed();
+            break;
+        }
+    }
+
+    QString baseOut;
+    if(run(dir, QStringList() << QStringLiteral("rev-parse")
+                              << oldestDropped+QStringLiteral("^"), &baseOut)!=0 ||
+       baseOut.trimmed().isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot find replay base");
+        return false;
+    }
+    const QString base=baseOut.trimmed();
+
+    // Диапазон переигрывания от старых к новым
+    QString rangeLog;
+    if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("--reverse")
+                              << QStringLiteral("--format=%H")
+                              << base+QStringLiteral("..HEAD"), &rangeLog)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot list journal");
+        return false;
+    }
+
+    if(run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                              << base)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot reset to replay base");
+        return false;
+    }
+
+    // Переигрывание: сносимые пропускаются, хранимые файловые
+    // переносятся checkout+commit с метаданными (diff на сдвинутой
+    // базе мог не лечь), чужие обычным cherry-pick
+    for(const QString &revRaw : rangeLog.split(QStringLiteral("\n"), Qt::SkipEmptyParts))
+    {
+        const QString rev=revRaw.trimmed();
+
+        if(dropSet.contains(rev))
+            continue;
+
+        if(keepSet.contains(rev))
+        {
+            // Метаданные оригинала: автор, почта, дата, тема, тело.
+            // Сепаратор \x1f: NUL (%x00) режется QString-конверсией
+            QString metaOut;
+            if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("-1")
+                                      << QStringLiteral("--format=%an%x1f%ae%x1f%aI%x1f%s%x1f%b")
+                                      << rev, &metaOut)!=0)
+            {
+                run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                       << origHead);
+
+                if(errorMessage)
+                    *errorMessage=QStringLiteral("Cannot read commit metadata, restored");
+                return false;
+            }
+
+            const QStringList meta=metaOut.split(QLatin1Char('\x1f'));
+            const QString author=(meta.size()>0 ? meta.at(0) : QStringLiteral("MyTetra")).trimmed();
+            const QString email=(meta.size()>1 ? meta.at(1) : QStringLiteral("mytetra@local")).trimmed();
+            const QString date=(meta.size()>2 ? meta.at(2) : QString()).trimmed();
+            QString message=(meta.size()>3 ? meta.at(3) : QString());
+
+            // Тело склеивается обратно: теоретический \x1f внутри
+            // тела при склейке восстанавливается
+            QString body;
+            for(int i=4; i<meta.size(); ++i)
+            {
+                if(i>4)
+                    body+=QLatin1Char('\x1f');
+                body+=meta.at(i);
+            }
+
+            if(!body.trimmed().isEmpty())
+                message+=QStringLiteral("\n\n")+body;
+
+            if(run(dir, QStringList() << QStringLiteral("checkout")
+                                      << rev << QStringLiteral("--") << file)!=0)
+            {
+                run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                       << origHead);
+
+                if(errorMessage)
+                    *errorMessage=QStringLiteral("Cannot restore file version, restored");
+                return false;
+            }
+
+            QStringList commitArgs;
+            commitArgs << QStringLiteral("-c") << QStringLiteral("user.name=MyTetra")
+                       << QStringLiteral("-c") << QStringLiteral("user.email=mytetra@local")
+                       << QStringLiteral("commit")
+                       << QStringLiteral("--author") << author+QStringLiteral(" <")+email+QStringLiteral(">");
+
+            if(!date.isEmpty())
+                commitArgs << QStringLiteral("--date") << date;
+
+            commitArgs << QStringLiteral("-m") << message;
+
+            QString commitErr;
+            if(run(dir, commitArgs, nullptr, &commitErr)!=0)
+            {
+                run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                       << origHead);
+
+                if(errorMessage)
+                    *errorMessage=QStringLiteral("Cannot replay file version, restored: ")+commitErr.trimmed();
+
+                return false;
+            }
+
+            continue;
+        }
+
+        QString err;
+        if(run(dir, QStringList() << QStringLiteral("cherry-pick") << rev,
+               nullptr, &err)!=0)
+        {
+            run(dir, QStringList() << QStringLiteral("cherry-pick")
+                                   << QStringLiteral("--abort"));
+            run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                   << origHead);
+
+            if(errorMessage)
+                *errorMessage=QStringLiteral("Cannot replay journal, restored: ")+err.trimmed();
+
+            return false;
+        }
+    }
+
+    return true;
+}

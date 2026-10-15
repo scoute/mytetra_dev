@@ -45,6 +45,7 @@ private slots:
 
     void onVersionSelected(int row);
     void onRollback(void);
+    void onCompact(void);
 
 private:
 
@@ -53,6 +54,9 @@ private:
 
     // Показать текст текущей строки вызывателю (предпросмотр)
     void updatePreview(void);
+
+    // Перечитать версии и перестроить список
+    void refreshVersionList(void);
 
     QString tetradir;
     QString recordId;
@@ -66,6 +70,7 @@ private:
     QTextBrowser *diffView;
     QLabel *statusLabel;
     QPushButton *rollbackButton;
+    QPushButton *compactButton;
     QPushButton *closeButton;
 };
 

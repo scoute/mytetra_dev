@@ -659,6 +659,18 @@ MyTetra 必须正在运行。</translation>
         <source>History of visited notes</source>
         <translation>已访问笔记历史</translation>
     </message>
+    <message>
+        <source>Note change history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Squash old note versions automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep versions:</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -6217,6 +6229,19 @@ This cannot be undone.</source>
     </message>
     <message>
         <source>Can not destroy newer versions:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compaction failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not squash old versions:
 %1</source>
         <translation type="unfinished"></translation>
     </message>

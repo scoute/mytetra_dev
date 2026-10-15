@@ -50,6 +50,11 @@ public:
     // Текст ошибки опционально
     static bool resetToVersion(const QString &tetradir, const QString &recordId,
                                const QString &rev, QString *errorMessage=nullptr);
+
+    // Сжать историю снизу: хранить genesis плюс keepNewest-1 свежих.
+    // Ручной вызов и авточка по лимиту. Текст ошибки опционально
+    static bool squashOldVersions(const QString &tetradir, const QString &recordId,
+                                  int keepNewest, QString *errorMessage=nullptr);
 };
 
 #endif /* _CHANGEHISTORY_H_ */

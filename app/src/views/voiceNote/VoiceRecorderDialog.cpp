@@ -101,7 +101,6 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     currentQuality(VoiceQualityLow),
     opusAvailable(false),
     mp3Available(false),
-    wavAvailable(false),
     fileNameEdited(false),
     elapsedRunning(false),
     durationMs(0),
@@ -215,29 +214,20 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
 
     bool opusCodecOk=false;
     bool opusContainerOk=false;
-    bool wavCodecOk=false;
-    bool wavContainerOk=false;
 
     for(const QString &codec : supportedCodecs)
     {
         if(codec.contains(QStringLiteral("opus")))
             opusCodecOk=true;
-
-        if(codec==QStringLiteral("audio/pcm") || codec.startsWith(QStringLiteral("audio/x-raw")))
-            wavCodecOk=true;
     }
 
     for(const QString &container : supportedContainers)
     {
         if(container.contains(QStringLiteral("ogg")))
             opusContainerOk=true;
-
-        if(container==QStringLiteral("audio/x-wav"))
-            wavContainerOk=true;
     }
 
     opusAvailable=opusCodecOk && opusContainerOk;
-    wavAvailable=wavCodecOk && wavContainerOk;
 
     mp3Available=
         (supportedContainers.contains(QStringLiteral("audio/mpeg, mpegversion=(int)1")) ||
@@ -270,15 +260,6 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     {
         mp3Radio->setChecked(true);
         currentFormat=VoiceFormatMp3;
-    }
-    else if(wavAvailable)
-    {
-        // Ни Opus ни MP3 бэкенд не умеет: запись возможна
-        // в WAV, формат фиксируется, выбор прячется
-        currentFormat=VoiceFormatWavFallback;
-        opusRadio->setVisible(false);
-        mp3Radio->setVisible(false);
-        formatLabel->setText(tr("Format: WAV (Opus and MP3 unsupported)"));
     }
 
     // Предложенное имя: метка времени плюс расширение формата
@@ -347,7 +328,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
             statusLabel->setText(tr("Audio backend unavailable"));
     }
 
-    if(!opusAvailable && !mp3Available && !wavAvailable &&
+    if(!opusAvailable && !mp3Available &&
        recorder->availability()==QMultimedia::Available && !devices.isEmpty())
     {
         recordButton->setEnabled(false);
@@ -389,15 +370,6 @@ VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(Voi
             return {QMultimedia::LowQuality, 24000, 32000};
 
         return {QMultimedia::HighQuality, 48000, 32000};
-    }
-
-    if(format==VoiceFormatWavFallback)
-    {
-        // PCM ест любую частоту, битрейт неприменим
-        if(low)
-            return {QMultimedia::LowQuality, 0, 11025};
-
-        return {QMultimedia::HighQuality, 0, 22050};
     }
 
     if(low)
@@ -452,19 +424,6 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
         else
             recorder->setContainerFormat(QStringLiteral("audio/mpeg"));
     }
-    else
-    {
-        // WAV-запасник: имя PCM разнится по бэкендам
-        // (audio/pcm против audio/x-raw)
-        for(const QString &codec : recorder->supportedAudioCodecs())
-            if(codec==QStringLiteral("audio/pcm") || codec.startsWith(QStringLiteral("audio/x-raw")))
-            {
-                audioSettings.setCodec(codec);
-                break;
-            }
-
-        recorder->setContainerFormat(QStringLiteral("audio/x-wav"));
-    }
 
     recorder->setAudioSettings(audioSettings);
 }
@@ -477,9 +436,6 @@ void VoiceRecorderDialog::updateFormatInfo(void)
     if(currentFormat==VoiceFormatMp3)
         formatInfoLabel->setText(
             tr("MP3, %1 Hz, %2 kbit/s").arg(profile.sampleRate).arg(profile.bitRate/1000));
-    else if(currentFormat==VoiceFormatWavFallback)
-        formatInfoLabel->setText(
-            tr("WAV, %1 Hz").arg(profile.sampleRate));
     else
         formatInfoLabel->setText(
             tr("Opus, %1 Hz, %2 kbit/s").arg(profile.sampleRate).arg(profile.bitRate/1000));
@@ -504,9 +460,6 @@ QString VoiceRecorderDialog::currentExtension(void) const
 {
     if(currentFormat==VoiceFormatMp3)
         return QStringLiteral(".mp3");
-
-    if(currentFormat==VoiceFormatWavFallback)
-        return QStringLiteral(".wav");
 
     return QStringLiteral(".opus");
 }
@@ -657,16 +610,19 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
     if(checked)
     {
         // Формат применяется на каждый старт: радиокнопки
-        // можно переключать между дублями
+        // можно переключать между дублями. Недоступный формат
+        // откатывается на второй, без обоих писать нечего
         VoiceFormat format=currentFormat;
 
         if(format==VoiceFormatOpus && !opusAvailable)
             format=VoiceFormatMp3;
+        else if(format==VoiceFormatMp3 && !mp3Available)
+            format=VoiceFormatOpus;
 
-        if(format==VoiceFormatMp3 && !mp3Available)
-            format=VoiceFormatWavFallback;
+        const bool formatOk=(format==VoiceFormatOpus && opusAvailable) ||
+                            (format==VoiceFormatMp3 && mp3Available);
 
-        if(format==VoiceFormatWavFallback && !wavAvailable)
+        if(!formatOk)
         {
             statusLabel->setText(tr("No supported audio format"));
             recordButton->setChecked(false);

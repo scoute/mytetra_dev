@@ -7643,11 +7643,6 @@ Please select single item for enabling edit operation.</source>
         <translation>MP3, %1 Гц, %2 кбит/с</translation>
     </message>
     <message>
-        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="432"/>
-        <source>WAV, %1 Hz</source>
-        <translation>WAV, %1 Гц</translation>
-    </message>
-    <message>
         <source>Voice note</source>
         <translation>Голосовая заметка</translation>
     </message>
@@ -7698,10 +7693,6 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>No supported audio format</source>
         <translation>Нет поддерживаемого аудиоформата</translation>
-    </message>
-    <message>
-        <source>Format: WAV (Opus and MP3 unsupported)</source>
-        <translation>Формат: WAV (Opus и MP3 не поддерживаются)</translation>
     </message>
     <message>
         <source>Stop</source>

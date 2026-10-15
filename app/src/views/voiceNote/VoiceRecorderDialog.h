@@ -64,7 +64,6 @@ public:
 private slots:
 
     void onFormatRadio(bool checked);
-    void onQualityRadio(bool checked);
     void onFileNameEdited(const QString &text);
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
@@ -84,27 +83,19 @@ private:
         VoiceFormatWavFallback
     };
 
-    // Качество записи low/middle/high, средний по умолчанию
-    enum VoiceQuality
-    {
-        VoiceQualityLow,
-        VoiceQualityMedium,
-        VoiceQualityHigh
-    };
-
-    // Профиль качества: VBR-качество и частота дискретизации.
-    // Битрейта нет осознанно: в VBR он ничего не значит.
-    // Частоты Opus только из капсов opusenc (8/12/16/24/48 кГц):
-    // прежние 11025/22050/44100 роняли захват (баг fix/142)
+    // Профиль лучшего качества: VBR-качество, целевой битрейт
+    // и частота. Выбор убран (один оптимум): Opus 16 кГц/24 кбит,
+    // MP3 22050 Гц/48 кбит. Частоты ниже режут голос слышимо
     struct VoiceQualityProfile
     {
         QMultimedia::EncodingQuality quality;
+        int bitRate;
         int sampleRate;
     };
 
-    // Профиль low/middle/high для формата. Статика чтобы стенд
-    // проверял частоты без микрофона и бэкенда
-    static VoiceQualityProfile qualityProfile(VoiceFormat format, VoiceQuality quality);
+    // Профиль формата. Статика чтобы стенд проверял параметры
+    // без микрофона и бэкенда
+    static VoiceQualityProfile qualityProfile(VoiceFormat format);
 
     // Завершить запись и решить про вставку. Вызывается из стопа
     // и из смены состояния: идемпотентно
@@ -114,8 +105,8 @@ private:
     // Вызывается перед стартом записи
     void applyFormat(VoiceFormat format);
 
-    // Обновить подсказку с параметрами выбранного качества
-    void updateQualityHint(void);
+    // Подпись фиксированных параметров записи
+    void updateFormatInfo(void);
 
     // Расширение текущего формата
     QString currentExtension(void) const;
@@ -141,10 +132,7 @@ private:
     QLabel *timeLabel;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
-    QRadioButton *qualityLowRadio;
-    QRadioButton *qualityMediumRadio;
-    QRadioButton *qualityHighRadio;
-    QLabel *qualityHintLabel;
+    QLabel *formatInfoLabel;
     QLineEdit *fileNameEdit;
     QComboBox *deviceCombo;
     QPushButton *recordButton;
@@ -156,7 +144,6 @@ private:
     QTimer *timer;
 
     VoiceFormat currentFormat;
-    VoiceQuality currentQuality;
     bool opusAvailable;
     bool mp3Available;
     bool wavAvailable;

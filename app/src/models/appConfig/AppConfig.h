@@ -428,9 +428,13 @@ public:
     QString get_voiceNoteFormat(void);
     void set_voiceNoteFormat(QString format);
 
-    // Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high
+    // Качество голосовых заметок по умолчанию: 0 low, 1 high
     int get_voiceNoteQuality(void);
     void set_voiceNoteQuality(int quality);
+
+    // Скорость проигрывания голосовых по умолчанию: 0.5..2.0
+    double get_voiceNoteSpeed(void);
+    void set_voiceNoteSpeed(double speed);
 
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);

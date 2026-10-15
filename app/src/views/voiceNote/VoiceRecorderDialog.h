@@ -64,7 +64,6 @@ public:
 private slots:
 
     void onFormatRadio(bool checked);
-    void onQualityRadio(bool checked);
     void onFileNameEdited(const QString &text);
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
@@ -83,18 +82,13 @@ private:
         VoiceFormatMp3
     };
 
-    // Два уровня: low/high. Opus 48 кГц 16/32 кбит,
-    // MP3 32 кГц 24/48 кбит
-    enum VoiceQuality
-    {
-        VoiceQualityLow,
-        VoiceQualityHigh
-    };
+    // Один профиль на формат: Opus 48 кГц/24 кбит,
+    // MP3 32 кГц фикс (битрейт lame бэкенд игнорит,
+    // upstream catch-22 Qt 5.15)
 
-    // Профиль уровня: VBR-качество, целевой битрейт
-    // и частота. Opus 48 кГц 16/32 кбит, MP3 32 кГц 24/48 кбит.
-    // Битрейт идет через CBR осознанно: в VBR-режиме бэкенд
-    // таргеты игнорирует (замер: полы 65к/78к вместо 16к/24к)
+    // Профиль формата: VBR-качество, целевой битрейт
+    // и частота. Opus CBR 24 кбит (лесенка держится, замер 2.1),
+    // MP3 битрейт 0 = не выставлять (все равно игнорит)
     struct VoiceQualityProfile
     {
         QMultimedia::EncodingQuality quality;
@@ -102,12 +96,12 @@ private:
         int sampleRate;
     };
 
-    // Режим кодирования общий: CBR держит лесенку битрейта
+    // Режим кодирования общий: CBR держит битрейт Opus
     static QMultimedia::EncodingMode encodingMode(void);
 
-    // Профиль формата и уровня. Статика чтобы стенд проверял
+    // Профиль формата. Статика чтобы стенд проверял
     // параметры без микрофона и бэкенда
-    static VoiceQualityProfile qualityProfile(VoiceFormat format, VoiceQuality quality);
+    static VoiceQualityProfile qualityProfile(VoiceFormat format);
 
     // Завершить запись и решить про вставку. Вызывается из стопа
     // и из смены состояния: идемпотентно
@@ -144,8 +138,6 @@ private:
     QLabel *timeLabel;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
-    QRadioButton *qualityLowRadio;
-    QRadioButton *qualityHighRadio;
     QLabel *formatInfoLabel;
     QLineEdit *fileNameEdit;
     QComboBox *deviceCombo;
@@ -158,7 +150,6 @@ private:
     QTimer *timer;
 
     VoiceFormat currentFormat;
-    VoiceQuality currentQuality;
     bool opusAvailable;
     bool mp3Available;
 

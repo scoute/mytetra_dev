@@ -1200,16 +1200,53 @@ void RecordTableController::onChangeHistoryClick(void)
 
   ChangeHistoryDialog historyDialog(tetradir, id, name, currentHtml, parentPointer);
 
+  // Предпросмотр отката: текст версии сразу показывается в редакторе,
+  // коммитов превью не создает. Только для открытой записи: иначе
+  // превью затерло бы буфер чужой заметки. При отмене исходный
+  // текст и флаг правок возвращаются
+  edView=find_object<MetaEditor>("editorScreen");
+
+  const bool previewLive=(edView!=nullptr && edView->getMiscField("id")==id);
+  const QString previewOriginal=previewLive ? edView->getTextarea() : QString();
+  const bool previewModified=previewLive ? edView->getTextareaModified() : false;
+
+  if(previewLive)
+  {
+    connect(&historyDialog, &ChangeHistoryDialog::previewRequested,
+            edView, [edView, previewOriginal, previewModified](const QString &html)
+            {
+              edView->setTextarea(html);
+              edView->setTextareaModified(html!=previewOriginal ? true : previewModified);
+            });
+  }
+
   if(historyDialog.exec()!=QDialog::Accepted)
+  {
+    if(previewLive)
+    {
+      edView->setTextarea(previewOriginal);
+      edView->setTextareaModified(previewModified);
+    }
+
     return;
+  }
 
   const QString rollback=historyDialog.rollbackContent();
 
   if(rollback.isNull())
-    return;
+  {
+    if(previewLive)
+    {
+      edView->setTextarea(previewOriginal);
+      edView->setTextareaModified(previewModified);
+    }
 
-  // Откат подставляется в редактор: запись открывается если надо.
-  // Дальше обычное сохранение, оно и станет новой версией
+    return;
+  }
+
+  // Откат уже показан превью (или подставляется: запись открывается
+  // если надо). История усечена диалогом, поэтому обычное сохранение
+  // нового коммита не создаст
   edView=find_object<MetaEditor>("editorScreen");
 
   if(edView==nullptr || edView->getMiscField("id")!=id)

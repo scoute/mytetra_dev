@@ -6189,5 +6189,28 @@ Please select single item for enabling edit operation.</source>
         <source>No differences from current text</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Destroy newer versions?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rollback to "%1" (%2) will permanently destroy %3 newer version(s).
+The note text will be replaced by this version, no new commit will be created.
+This cannot be undone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Destroy and rollback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rollback failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can not destroy newer versions:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

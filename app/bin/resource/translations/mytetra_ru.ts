@@ -7591,6 +7591,18 @@ Please select single item for enabling edit operation.</source>
 <context>
     <name>VoicePlayerDialog</name>
     <message>
+        <source>Speed:</source>
+        <translation>Скорость:</translation>
+    </message>
+    <message>
+        <source>Audio backend unavailable</source>
+        <translation>Аудио-бэкенд недоступен</translation>
+    </message>
+    <message>
+        <source>Playback error</source>
+        <translation>Ошибка проигрывания</translation>
+    </message>
+    <message>
         <source>Voice note</source>
         <translation>Голосовая заметка</translation>
     </message>
@@ -7706,6 +7718,10 @@ Please select single item for enabling edit operation.</source>
 </context>
 <context>
     <name>AppConfigPage_Voice</name>
+    <message>
+        <source>Default playback speed</source>
+        <translation>Скорость проигрывания по умолчанию</translation>
+    </message>
     <message>
         <source>Default format</source>
         <translation>Формат по умолчанию</translation>

@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
 
 #include "ChangeHistoryDialog.h"
 #include "libraries/UnifiedDiff.h"
@@ -52,7 +53,13 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
     versionList=ChangeHistory::versions(tetradir, recordId);
 
     for(const ChangeHistory::Version &version : versionList)
-        versionsList->addItem(version.date+QStringLiteral("  ")+version.subject);
+    {
+        // Штамп времени в хвосте темы ("Имя (2026-10-15 15:26:16)")
+        // дублирует дату слева: для показа срезается, в git остается
+        QString subject=version.subject;
+        subject.remove(QRegularExpression(QStringLiteral("\\s*\\(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\)$")));
+        versionsList->addItem(version.date+QStringLiteral("  ")+subject);
+    }
 
     if(versionList.isEmpty())
         statusLabel->setText(tr("No saved versions yet"));

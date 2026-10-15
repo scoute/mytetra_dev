@@ -107,20 +107,20 @@ QObject *pMainWindow;
 void printHelp()
 {
     printf("\n");
-    printf("MyTetra v.%d.%d.%d\n", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
-    printf("For use control mode, run by standard way MyTetra for show GUI interface, and next use command:\n");
-    printf("./mytetra --control --show - Show and activate MyTetra window\n");
-    printf("./mytetra --control --hide - Hide MyTetra window\n");
-    printf("./mytetra --control --quit - Quit from MyTetra\n");
-    printf("./mytetra --control --reload - Reload database\n");
-    printf("./mytetra --control --openNote <noteId> - Jump to note with <noteId>\n");
-    printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
-    printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
-    printf("./mytetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
-    printf("./mytetra --mcp - Run read-only MCP server (as --mcp-ro)\n");
-    printf("./mytetra --mcp-ro - Run read-only MCP server over stdio for AI clients\n");
-    printf("./mytetra --mcp-rw - Run read-write MCP server (create and update, no delete)\n");
-    printf("./mytetra --mcp-rw-with-delete - Run MCP server with delete tools, files go to trash\n");
+    printf("SyncTetra v.%d.%d.%d\n", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
+    printf("For use control mode, run by standard way SyncTetra for show GUI interface, and next use command:\n");
+    printf("./synctetra --control --show - Show and activate SyncTetra window\n");
+    printf("./synctetra --control --hide - Hide SyncTetra window\n");
+    printf("./synctetra --control --quit - Quit from SyncTetra\n");
+    printf("./synctetra --control --reload - Reload database\n");
+    printf("./synctetra --control --openNote <noteId> - Jump to note with <noteId>\n");
+    printf("./synctetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
+    printf("./synctetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
+    printf("./synctetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
+    printf("./synctetra --mcp - Run read-only MCP server (as --mcp-ro)\n");
+    printf("./synctetra --mcp-ro - Run read-only MCP server over stdio for AI clients\n");
+    printf("./synctetra --mcp-rw - Run read-write MCP server (create and update, no delete)\n");
+    printf("./synctetra --mcp-rw-with-delete - Run MCP server with delete tools, files go to trash\n");
     printf("MCP server requires Allow MCP enabled on the MCP settings page\n");
     printf("\n");
 }
@@ -136,7 +136,7 @@ void sendControlCommandAndExit(QtSingleApplication &app, const QString &command)
     if(app.sendMessage(command))
         exit(0);
 
-    QString message="Can not send command \""+command+"\" to the running MyTetra.\n";
+    QString message="Can not send command \""+command+"\" to the running SyncTetra.\n";
     printf("%s", message.toLocal8Bit().data());
     exit(5);
 }
@@ -162,7 +162,7 @@ void parseConsoleOption(QtSingleApplication &app)
     // Если MyTetra запущена в режиме управления, а другого экземпляра (которым надо управлять) нет
     if (app.arguments().contains("--control") && !app.isRunning())
     {
-        QString message="MyTetra exemplar for control is not running.\nPlease, run MyTetra before running your command.\n";
+        QString message="SyncTetra exemplar for control is not running.\nPlease, run SyncTetra before running your command.\n";
         printf("%s", message.toLocal8Bit().data());
         exit(2);
     }
@@ -170,7 +170,7 @@ void parseConsoleOption(QtSingleApplication &app)
     // Если MyTetra запущена в обычном режиме, но уже запущен другой экземпляр
     if ( !app.arguments().contains("--control") && app.isRunning())
     {
-        QString message="Another MyTetra exemplar is running.\n";
+        QString message="Another SyncTetra exemplar is running.\n";
 
         printf("%s", message.toLocal8Bit().data());
 
@@ -274,7 +274,7 @@ int main(int argc, char ** argv)
             return runMcpServer(argc, argv);
     }
 
-    printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
+    printf("\n\rStart SyncTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
 
     // Разрешение масштабирования в высоком DPI, вызывается перед подгрузкой ресурсов с графикой
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -382,7 +382,7 @@ int main(int argc, char ** argv)
     win.restoreAllWindowState();
 
     // Настройка объекта главного окна
-    win.setWindowTitle("MyTetra");
+    win.setWindowTitle("SyncTetra");
     if (globalParameters.getTargetOs()=="android")
         win.show(); // В Андроиде нет десктопа, на нем нельзя сворачивать окно
     else

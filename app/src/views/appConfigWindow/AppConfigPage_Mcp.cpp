@@ -174,19 +174,19 @@ void AppConfigPage_Mcp::retranslateExamples(void)
 
 void AppConfigPage_Mcp::onHelpButton(void)
 {
-  QString text=tr("MCP lets an AI client (opencode, Claude Code) read and search MyTetra notes.\n"
+  QString text=tr("MCP lets an AI client (opencode, Claude Code) read and search SyncTetra notes.\n"
                   "\n"
-                  "Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this MyTetra.\n"
+                  "Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this SyncTetra.\n"
                   "\n"
                   "Server modes:\n"
                   "--mcp-ro: read-only (recommended)\n"
                   "--mcp-rw: create and update notes, no delete\n"
                   "--mcp-rw-with-delete: full write, deletes go to trash\n"
                   "\n"
-                  "While the AI writes, MyTetra shows a banner. Keep read-only unless writes are needed.\n"
+                  "While the AI writes, SyncTetra shows a banner. Keep read-only unless writes are needed.\n"
                   "\n"
                   "Claude Code terminal way:\n"
-                  "claude mcp add --transport stdio mytetra -- BINARY --mcp-ro");
+                  "claude mcp add --transport stdio synctetra -- BINARY --mcp-ro");
 
   // Путь в подсказке терминала тоже реальный, а не плейсхолдер
   text.replace("BINARY", mcpBinaryPath());

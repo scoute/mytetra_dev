@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Гибридный портабл MyTetra: Windows и Linux в одной папке с общей базой.
+# Гибридный портабл SyncTetra: Windows и Linux в одной папке с общей базой.
 # Собирается из двух готовых портаблов (build_portable_linux.sh
 # и build_portable_windows.sh):
 #   бинари обеих систем лежат рядом в корне,
@@ -26,8 +26,8 @@ set -euo pipefail
 SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"
 SOURCE_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
 
-LINUX_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-lin-portable"
-WIN_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-win-portable"
+LINUX_DIR="$(dirname "${SOURCE_DIR}")/SyncTetra-lin-portable"
+WIN_DIR="$(dirname "${SOURCE_DIR}")/SyncTetra-win-portable"
 OUT_DIR=""
 OUT_DIR_EXPLICIT=0
 DO_SMOKE=0
@@ -50,10 +50,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "${OUT_DIR_EXPLICIT}" -eq 0 ]]; then
-    OUT_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-hybrid-portable"
+    OUT_DIR="$(dirname "${SOURCE_DIR}")/SyncTetra-hybrid-portable"
 fi
 
-for need in "${LINUX_DIR}/mytetra" "${LINUX_DIR}/lib" "${WIN_DIR}/mytetra.exe"; do
+for need in "${LINUX_DIR}/synctetra" "${LINUX_DIR}/lib" "${WIN_DIR}/synctetra.exe"; do
     if [[ ! -e "${need}" ]]; then
         echo "ОШИБКА: нет ${need}" >&2
         echo "Сначала соберите оба портабла обычными скриптами." >&2
@@ -70,9 +70,9 @@ rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}/lib" "${OUT_DIR}/plugins-linux" "${OUT_DIR}/translations"
 
 # Бинари обеих систем рядом в корне
-cp "${LINUX_DIR}/mytetra" "${LINUX_DIR}/mimetex" "${OUT_DIR}/"
-cp "${WIN_DIR}/mytetra.exe" "${WIN_DIR}/mimetex.exe" "${OUT_DIR}/"
-chmod +x "${OUT_DIR}/mytetra" "${OUT_DIR}/mimetex"
+cp "${LINUX_DIR}/synctetra" "${LINUX_DIR}/mimetex" "${OUT_DIR}/"
+cp "${WIN_DIR}/synctetra.exe" "${WIN_DIR}/mimetex.exe" "${OUT_DIR}/"
+chmod +x "${OUT_DIR}/synctetra" "${OUT_DIR}/mimetex"
 
 # Виндовые DLL рядом с exe: Windows резолвит их сам, ничего
 # настраивать не надо. Именно поэтому линуксовые убраны в lib/,
@@ -104,31 +104,31 @@ fi
 cp "${WIN_DIR}/qt.conf" "${OUT_DIR}/qt.conf" 2>/dev/null || true
 
 # Линукс-ланчер: свои lib и свои плагины. Аргументы пробрасываются
-# для mytetra --control (хоткей клиппера из ОС)
+# для synctetra --control (хоткей клиппера из ОС)
 cat > "${OUT_DIR}/start.sh" <<'LAUNCHER'
 #!/bin/sh
 PROGDIR=$(dirname $(readlink -e $0))
 export LD_LIBRARY_PATH=$PROGDIR/lib:${LD_LIBRARY_PATH}
 export QT_PLUGIN_PATH=$PROGDIR/plugins-linux
 export QT_QPA_PLATFORM_PLUGIN_PATH=$PROGDIR/plugins-linux/platforms
-exec "$PROGDIR/mytetra" "$@"
+exec "$PROGDIR/synctetra" "$@"
 LAUNCHER
 chmod +x "${OUT_DIR}/start.sh"
 
 GITREV="$(git -C "${SOURCE_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 cat > "${OUT_DIR}/PORTABLE.txt" <<EOF
-MyTetra portable гибрид: Linux + Windows с общей базой
+SyncTetra portable гибрид: Linux + Windows с общей базой
 =======================================================
 Linux:   ./start.sh
-Windows: mytetra.exe (двойной клик, DLL рядом подхватываются сами)
+Windows: synctetra.exe (двойной клик, DLL рядом подхватываются сами)
 
 База и настройки общие: conf.ini с относительными путями ./data
 работает на обеих системах. Первый запуск на любой из систем
 открывает диалог установки, дальше база переезжает между системами
 вместе с папкой. Конфигов и данных в поставке нет, все создается само.
 
-Глобальный хоткей клиппера вешается на mytetra --control --clipboard
+Глобальный хоткей клиппера вешается на synctetra --control --clipboard
 (через start.sh в Linux, напрямую через exe в Windows).
 
 Собрано из ревизии ${GITREV}.
@@ -143,7 +143,7 @@ ls "${OUT_DIR}"
 echo "Размер папки: $(du -sh "${OUT_DIR}" | awk '{print $1}')"
 echo
 echo "Linux:   ${OUT_DIR}/start.sh"
-echo "Windows: ${OUT_DIR}/mytetra.exe"
+echo "Windows: ${OUT_DIR}/synctetra.exe"
 
 smoke_one() {
     local label="$1"
@@ -179,5 +179,5 @@ if [[ "${DO_SMOKE}" -eq 1 ]]; then
 fi
 
 if [[ "${DO_SMOKE_WINE}" -eq 1 ]]; then
-    smoke_one "Windows/Wine" 45 env QT_QPA_PLATFORM=offscreen timeout 90 wine ./mytetra.exe
+    smoke_one "Windows/Wine" 45 env QT_QPA_PLATFORM=offscreen timeout 90 wine ./synctetra.exe
 fi

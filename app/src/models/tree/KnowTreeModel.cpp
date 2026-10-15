@@ -97,7 +97,7 @@ void KnowTreeModel::init(QDomDocument *domModel)
   // Проверка формата XML-файла
   if ( !checkFormat(domModel->documentElement().firstChildElement("format")) )
   {
-    criticalError(tr("Unsupported version of the database format.\nYou need to update MyTetra."));
+    criticalError(tr("Unsupported version of the database format.\nYou need to update SyncTetra."));
   }
 
 

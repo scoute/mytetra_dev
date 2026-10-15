@@ -37,11 +37,11 @@ void AppConfigPage_Synchro::setupUi(void)
     synchroCommand->setCursorPosition(0);
 
     synchroOnStartup=new QCheckBox(this);
-    synchroOnStartup->setText(tr("Synchronize at MyTetra startup"));
+    synchroOnStartup->setText(tr("Synchronize at SyncTetra startup"));
     synchroOnStartup->setChecked(mytetraConfig.get_synchroonstartup());
 
     synchroOnExit=new QCheckBox(this);
-    synchroOnExit->setText(tr("Synchronize when exit from MyTetra"));
+    synchroOnExit->setText(tr("Synchronize when exit from SyncTetra"));
     synchroOnExit->setChecked(mytetraConfig.get_synchroonexit());
 
     synchroOnPeriodic=new QCheckBox(this);
@@ -171,8 +171,8 @@ void AppConfigPage_Synchro::onEnablePeriodicSyncro(bool state)
 
 void AppConfigPage_Synchro::retranslateUi(void)
 {
-  synchroOnStartup->setText(tr("Synchronize at MyTetra startup"));
-  synchroOnExit->setText(tr("Synchronize when exit from MyTetra"));
+  synchroOnStartup->setText(tr("Synchronize at SyncTetra startup"));
+  synchroOnExit->setText(tr("Synchronize when exit from SyncTetra"));
   synchroOnPeriodic->setText(tr("Enable periodic background synchronize"));
 
   commandText->setText(tr("Synchronization command"));

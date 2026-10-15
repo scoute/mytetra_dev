@@ -37,7 +37,7 @@ static inline qreal mmToInches(double mm)
 PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
     : QDialog(parent), printer(QPrinter::HighResolution)
 {
-    setWindowTitle(tr("MyTetra - Print Preview"));
+    setWindowTitle(tr("SyncTetra - Print Preview"));
 
     printer.setFullPage(true);
     doc = document->clone();

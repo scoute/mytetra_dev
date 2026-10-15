@@ -672,7 +672,7 @@ MyTetra-ն պետք է աշխատի։</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Enable note history</source>
+        <source>Enable note history (git must be installed)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -689,6 +689,12 @@ MyTetra-ն պետք է աշխատի։</translation>
     </message>
     <message>
         <source>Compress every 10 entries into one except the latest 10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enable note history:
+git is not installed.
+Linux: install the git package. Windows: https://git-scm.com.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -586,7 +586,7 @@ void AppConfig::set_historySquashMode(int mode)
 
 bool AppConfig::get_historyEnable(void)
 {
-    return m_conf->value("historyEnable", true).toBool();
+    return m_conf->value("historyEnable", false).toBool();
 }
 
 
@@ -2061,7 +2061,7 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     table << "historySquashEnable" << "bool" << "true";
     table << "historySquashKeep" << "int" << "100";
     table << "historySquashMode" << "int" << "0";
-    table << "historyEnable" << "bool" << "true";
+    table << "historyEnable" << "bool" << "false";
 
     if (withEndSignature)
         table << "0" << "0" << "0";

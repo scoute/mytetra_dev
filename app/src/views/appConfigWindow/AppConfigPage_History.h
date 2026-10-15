@@ -28,6 +28,8 @@ public:
     void setupSignals(void);
     void assembly(void);
 
+    void onHistoryEnableToggled(bool checked);
+
     // Объединяющая рамка
     QGroupBox *historyBox;
 

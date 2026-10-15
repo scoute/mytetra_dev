@@ -106,6 +106,9 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("tree-pasteSubbranch",       Data{ QKeySequence("Ctrl+F5"), tr("Paste as sub item"), tr("Paste item as sub item for selected") });
     defaultKeyTable.insert("tree-encryptBranch",        Data{ QKeySequence("Ctrl+Shift+1"), tr("Encrypt item"), tr("Encrypt item and all subitem") });
     defaultKeyTable.insert("tree-decryptBranch",        Data{ QKeySequence("Ctrl+Shift+0"), tr("Decrypt item"), tr("Decrypt item and all subitem") });
+    defaultKeyTable.insert("tree-publishBranch",        Data{ QKeySequence(), tr("Publish branch to shared directory"), tr("Publish branch to common directory (shared)") });
+    defaultKeyTable.insert("tree-updatePublication",    Data{ QKeySequence(), tr("Update branch publication"), tr("Force update of branch publication") });
+    defaultKeyTable.insert("tree-revokePublication",    Data{ QKeySequence(), tr("Revoke branch publication"), tr("Revoke branch publication to trash") });
     defaultKeyTable.insert("tree-setIcon",              Data{ QKeySequence("Ctrl+Shift+O"), tr("Set icon"), tr("Set item icon") });
 
     defaultKeyTable.insert("editor-selectAll",           Data{ QKeySequence("Ctrl+A"), tr("Select all"), tr("") });

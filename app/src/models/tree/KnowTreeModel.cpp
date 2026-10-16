@@ -111,6 +111,11 @@ void KnowTreeModel::init(QDomDocument *domModel)
 
   beginResetModel();
 
+  // Полная перестройка дерева: кеш статистики сбрасывается.
+  // Без этого reload() после правок на диске (MCP mtime-refresh)
+  // отдавал бы старые цифры из getBaseStats
+  invalidateStats();
+
   // Создание корневого Item объекта
   if (rootItem!=nullptr)
     delete rootItem;

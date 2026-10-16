@@ -180,6 +180,7 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
   if(toolName=="list_branches" || toolName=="list_notes" ||
      toolName=="get_note" || toolName=="search" ||
      toolName=="find_duplicates" || toolName=="stats" ||
+     toolName=="debug_info" ||
      toolName=="list_tags" || toolName=="tag_notes" ||
      toolName=="untagged_notes" || toolName=="list_favorites" ||
      toolName=="list_attachments")
@@ -206,7 +207,7 @@ static bool isKnownTool(const QString &toolName)
 {
   static const char *names[]={
     "list_branches", "list_notes", "get_note", "search",
-    "find_duplicates", "stats", "list_tags", "tag_notes", "untagged_notes",
+    "find_duplicates", "stats", "debug_info", "list_tags", "tag_notes", "untagged_notes",
     "list_favorites", "list_attachments",
     "create_branch", "create_note", "update_note",
     "rename_branch", "move_branch", "move_note",
@@ -582,6 +583,14 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "stats",
       "Totals: branches, notes, tags, files, images, links.",
+      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    tools.append(toolDescription(
+      "debug_info",
+      "Server debug: app version and database path.",
       objectSchema(properties, QJsonArray())));
   }
 
@@ -1086,6 +1095,10 @@ public:
       else if(toolName=="stats")
       {
         result=m_tools.baseStats(arguments.value("detailed").toBool(false));
+      }
+      else if(toolName=="debug_info")
+      {
+        result=m_tools.debugInfo();
       }
       else if(toolName=="list_tags")
       {
@@ -2677,6 +2690,10 @@ int runMcpServer(int argc, char **argv)
   dataBaseConfig.init();
 
   QString xmlPath=mytetraConfig.get_tetradir()+"/mytetra.xml";
+
+  // Какая база обслужвается: при расхождении цифр с GUI первым делом
+  // сверить этот путь с tetradir в conf.ini запущенной программы
+  fprintf(stderr, "mcp: base %s\n", mytetraConfig.get_tetradir().toUtf8().constData());
 
   if(!validateDatabase(xmlPath))
     return 3;

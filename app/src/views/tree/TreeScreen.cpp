@@ -160,13 +160,15 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::cancelCutBranch);
  actionList["cancelCutBranch"]=ac;
 
- // Шифрование ветки (пока нет иконки)
+ // Шифрование ветки
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/branch_encrypt.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::encryptBranch);
  actionList["encryptBranch"]=ac;
 
- // Расшифровка ветки, т. е. снятие пароля (пока нет иконки)
+ // Расшифровка ветки, т. е. снятие пароля
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/branch_decrypt.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::decryptBranch);
  actionList["decryptBranch"]=ac;
 

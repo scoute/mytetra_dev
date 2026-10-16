@@ -1656,6 +1656,85 @@ QSharedPointer< QSet<QString> > KnowTreeModel::getAllRecordsIdList() const
 }
 
 
+QList<NoteIndexEntry> KnowTreeModel::getNoteIndex(void)
+{
+  QList<NoteIndexEntry> index;
+
+  const bool noKey=globalParameters.getCryptKey().length()==0;
+
+  struct Frame
+  {
+    TreeItem *item;
+    QString branch;
+    QString path;
+    bool locked;
+  };
+
+  // Нерекурсивно как в ensureStats: глубина непредсказуема,
+  // порядок как у рекурсии (родитель, затем дети по порядку)
+  QList<Frame> stack;
+  stack << Frame{rootItem, QString(), QString(), false};
+
+  while(!stack.isEmpty())
+  {
+    const Frame frame=stack.takeLast();
+    TreeItem *item=frame.item;
+
+    if(item==nullptr)
+      continue;
+
+    // Шифрованная ветка без пароля лочит себя и все подветки
+    const bool locked=frame.locked ||
+        (item!=rootItem && noKey &&
+         item->getField(QStringLiteral("crypt"))==QStringLiteral("1"));
+
+    QString branch=frame.branch;
+    QString path=frame.path;
+
+    if(item!=rootItem)
+    {
+      const QString itemName=item->getField(QStringLiteral("name"));
+
+      if(!itemName.isEmpty())
+      {
+        branch=itemName;
+        path=path.isEmpty() ? itemName : path+QStringLiteral(" / ")+itemName;
+      }
+    }
+
+    RecordTableData *table=item->recordtableGetTableData();
+
+    if(table!=nullptr)
+    {
+      for(unsigned i=0; i<table->size(); ++i)
+      {
+        Record *record=table->getRecord(i);
+
+        if(record==nullptr)
+          continue;
+
+        NoteIndexEntry entry;
+        entry.id=record->getField(QStringLiteral("id"));
+        entry.name=record->getField(QStringLiteral("name"));
+        entry.branch=branch;
+        entry.branchPath=path;
+        entry.tags=record->getField(QStringLiteral("tags"));
+        entry.nameLower=entry.name.toLower();
+        entry.branchLower=branch.toLower();
+        entry.tagsLower=entry.tags.toLower();
+        entry.locked=locked;
+        index << entry;
+      }
+    }
+
+    for(int i=item->childCount()-1; i>=0; --i)
+      stack << Frame{item->child(i), branch, path, locked};
+  }
+
+  return index;
+}
+
+
 void KnowTreeModel::getAllRecordsIdListRecurse(TreeItem *item, QSet<QString> *ids) const
 {
     // Множество идентификаторов записей текущей ветки добавляется в итоговое множество

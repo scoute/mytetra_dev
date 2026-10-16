@@ -1675,6 +1675,13 @@ QSharedPointer< QSet<QString> > KnowTreeModel::getAllRecordsIdList() const
 }
 
 
+void KnowTreeModel::refreshDisplayNames(void)
+{
+  emit layoutAboutToBeChanged();
+  emit layoutChanged();
+}
+
+
 void KnowTreeModel::recountSubtreeTotals(void)
 {
   if(rootItem==nullptr)

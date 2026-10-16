@@ -143,7 +143,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_49(true);
+        QStringList actualTable=get_parameter_table_50(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1557,6 +1557,19 @@ void AppConfig::set_mcpAllow(bool state)
 }
 
 
+// Показывать ли общий итог записей с учетом подветок.
+// По умолчанию выключено: только свои [n]
+bool AppConfig::get_showSubtreeCount(void)
+{
+    return m_conf->value("showSubtreeCount", false).toBool();
+}
+
+void AppConfig::set_showSubtreeCount(bool state)
+{
+    m_conf->setValue("showSubtreeCount", state);
+}
+
+
 // Формат голосовых заметок по умолчанию. Opus если не задано
 // или лежит мусор: диалог записи все равно проверяет поддержку
 QString AppConfig::get_voiceNoteFormat(void)
@@ -1849,6 +1862,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_47;
     parameterFunctions << &AppConfig::get_parameter_table_48;
     parameterFunctions << &AppConfig::get_parameter_table_49;
+    parameterFunctions << &AppConfig::get_parameter_table_50;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2853,6 +2867,25 @@ QStringList AppConfig::get_parameter_table_49(bool withEndSignature)
 
     // Разрешение доступа внешнего AI-клиента через MCP, по умолчанию закрыт
     table << "mcpAllow" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_50(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 49
+    table << get_parameter_table_49(false);
+
+    // Общий итог записей с учетом подветок, по умолчанию выключен
+    table << "showSubtreeCount" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

@@ -72,6 +72,11 @@ QJsonObject McpTools::noteObject(Record *record, const QString &branchId, const 
 
   note["tags"]=tags;
 
+  // Шифр виден только флагом: текст без ключа не отдаётся.
+  // Обычные записи ключа не несут, пейлоады не пухнут
+  if(record->getField("crypt")=="1")
+    note["encrypted"]=true;
+
   return note;
 }
 
@@ -94,6 +99,10 @@ void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId
     branch["id"]=id;
     branch["name"]=item->getField("name");
     branch["parent_id"]=parentId;
+
+    if(item->getField("crypt")=="1")
+      branch["encrypted"]=true;
+
     out.append(branch);
 
     appendBranches(index, id, out);

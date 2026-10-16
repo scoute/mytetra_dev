@@ -253,7 +253,7 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     tools.append(toolDescription(
       "list_branches",
-      "All branches in tree order.",
+      "All branches in tree order. Encrypted ones carry encrypted:true.",
       objectSchema(properties, QJsonArray())));
   }
   {
@@ -278,7 +278,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "list_notes",
-      "Notes in a branch.",
+      "Notes in a branch. Encrypted ones carry encrypted:true.",
       objectSchema(properties, required)));
   }
 
@@ -298,7 +298,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "get_note",
-      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty.",
+      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty. Encrypted notes carry encrypted:true.",
       objectSchema(properties, required)));
   }
 

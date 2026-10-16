@@ -113,6 +113,18 @@ class TreeItem
     // Взятие количества записей в таблице конечных записей, "промежуточный" метод
     int recordtableGetRowCount(void) const;
 
+    // Рекурсивный итог записей: свои плюс все подветки.
+    // Держится инкрементально (хуки в RecordTableData и moveBranch,
+    // полный пересчет в KnowTreeModel::init), display не пересчитывает
+    int subtreeRecordCount(void) const;
+
+    // Прибавить дельту к своему итогу и всем родителям вверх.
+    // Вызывается только из точек мутации записей/веток
+    void addSubtreeDelta(int delta);
+
+    // Прямая установка итога (только полный пересчет в init)
+    void setSubtreeTotal(int total);
+
     // Удаление всех элементов в таблице конечных записей, "промежуточный" метод
     void recordtableDeleteAllRecords(void);
     
@@ -142,6 +154,9 @@ private:
 
     // Каждая ветка может содержать таблицу конечных записей
     RecordTableData recordsTable;
+
+    // Кешированный рекурсивный итог записей подветки
+    int subtreeRecords=0;
 
     bool detachedState; // Флаг, влияющий на деструктор. Если detachedState=true, подчиненные элементы удаляться не будут
 

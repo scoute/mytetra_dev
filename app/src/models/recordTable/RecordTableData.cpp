@@ -551,6 +551,12 @@ int RecordTableData::insertNewRecord(int mode,
     // В историю перемещений по записям добавляется только что созданная запись
     walkHistory.add(record.getNaturalFieldSource("id"), 0, 0);
 
+    // Рекурсивный итог ветки: +1 себе и всем родителям.
+    // Единственная точка прихода записей (клиппер, MCP, вставка,
+    // дроп, импорт веток), insertPos<0 значит отказа
+    if(insertPos>=0 && treeItem!=nullptr)
+        treeItem->addSubtreeDelta(1);
+
     // Возвращается номера строки, на которую должна быть установлена засветка после выхода из данного метода
     return insertPos;
 }
@@ -636,6 +642,11 @@ void RecordTableData::deleteRecord(int i)
 
     // Удаляется элемент
     tableData.removeAt(i); // Было takeAt
+
+    // Рекурсивный итог ветки: -1 себе и всем родителям
+    if(treeItem!=nullptr)
+        treeItem->addSubtreeDelta(-1);
+
     qDebug() << "Delete record succesfull";
 
     // Удаление записи закончено
@@ -666,6 +677,14 @@ bool RecordTableData::moveRecordTo(QString id, RecordTableData *target)
     Record moving=tableData.at(pos);
     tableData.removeAt(pos);
     target->tableData.append(moving);
+
+    // Рекурсивные итоги обеих веток. Внутри одной таблицы метод
+    // не вызывается (guard выше), так что двойного счета нет
+    if(treeItem!=nullptr)
+        treeItem->addSubtreeDelta(-1);
+
+    if(target->treeItem!=nullptr)
+        target->treeItem->addSubtreeDelta(1);
 
     return true;
 }

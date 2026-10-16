@@ -222,6 +222,17 @@ static QJsonObject applyFavoriteNote(KnowTreeModel *model,
                                      bool starred,
                                      QString &error);
 
+  // Один шаг apply_batch: мутация модели БЕЗ save/flash и GUI-побочек
+  // (их делает вызывающая сторона пачкой в конце). Аргументы
+  // НОРМАЛИЗОВАННЫЕ: id сгенерирован вызывающим, html готов, флаги
+  // has_* выставлены. result по форме одиночных тулов. false = отказ.
+  // import/export не поддерживаются (свой сейв и файловые эффекты)
+  static bool applyBatchOp(KnowTreeModel *model,
+                           const QString &tool,
+                           const QJsonObject &args,
+                           QJsonObject &result,
+                           QString &error);
+
 QJsonObject favoriteNoteDirect(const QString &noteId, QString &error);
 QJsonObject unfavoriteNoteDirect(const QString &noteId, QString &error);
 

@@ -1120,6 +1120,27 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     </message>
 </context>
 <context>
+    <name>AppConfigPage_Tree</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="37"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="81"/>
+        <source>Only its own notes [n] (default)</source>
+        <translation>Только её заметки [n] (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="40"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="82"/>
+        <source>Its own and sub-branch notes [n][m]</source>
+        <translation>Её заметки и заметки подпапок [n][m]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="54"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="84"/>
+        <source>Show note count in branch</source>
+        <translation>Отображать количество заметок в ветке</translation>
+    </message>
+</context>
+<context>
     <name>AppConfigPage_RecordTable</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="42"/>
@@ -5568,6 +5589,12 @@ MyTetra will try to create a blank entry to fix it.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="125"/>
         <source>Notes area</source>
         <translation>Список записей</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="66"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="132"/>
+        <source>Branch tree</source>
+        <translation>Дерево веток</translation>
     </message>
     <message>
         <source>Note area</source>

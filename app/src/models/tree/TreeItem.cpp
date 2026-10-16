@@ -105,12 +105,24 @@ QString TreeItem::getField(QString name) const
             }
 
         // Своих записей и рекурсивный итог с подветками.
-        // Пустая подветка целиком: просто имя, как раньше
+        // Пустая подветка целиком: просто имя, как раньше.
+        // Расширенный вид [n][m] только при включенной галке
+        // на странице Branch tree, по умолчанию выключена
         int recordCount=this->recordtableGetRowCount();
         int totalCount=this->subtreeRecordCount();
 
         if(totalCount==0)
             return itemName;
+
+        if(mytetraConfig.get_showSubtreeCount()==false)
+        {
+            if(recordCount==0)
+                return itemName;
+
+            QString r,i;
+            r=itemName+" ["+i.setNum(recordCount)+"]";
+            return r;
+        }
         else
         {
             QString r,i,m;

@@ -4,6 +4,8 @@
         <file>resource/pic/add_subbranch.svg</file>
         <file>resource/pic/branch_copy.svg</file>
         <file>resource/pic/branch_cut.svg</file>
+        <file>resource/pic/branch_decrypt.svg</file>
+        <file>resource/pic/branch_encrypt.svg</file>
         <file>resource/pic/branch_paste.svg</file>
         <file>resource/pic/cb_copy.svg</file>
         <file>resource/pic/tag.svg</file>

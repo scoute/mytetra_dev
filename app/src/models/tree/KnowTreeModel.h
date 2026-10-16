@@ -188,6 +188,10 @@ public:
     //! приложение на тысячах заметок
     QList<NoteIndexEntry> getNoteIndex(void);
 
+    //! Полный пересчет рекурсивных итогов записей. Только init/reload:
+    //! в работе итоги держатся инкрементальными дельтами
+    void recountSubtreeTotals(void);
+
     void deleteItemsByModelIndexList(QModelIndexList &selectItems);
 
     //! Выгрузка ветки и всех подветок в директорию в виде отдельной базы MyTetra (экспорт)

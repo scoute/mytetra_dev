@@ -2416,10 +2416,10 @@ void MainWindow::onClickHelpAboutMyTetra(void)
     QString infoEmail;
     QString infoLicense;
 
-    infoProgramName="<b>SyncTetra</b> - smart manager<br/>for information collecting<br/><br/>";
+    infoProgramName="<b>SyncTetra</b> - fork MyTetra,<br/>smart manager<br/>for information collecting,<br/>с возможностью делиться базой знаний через syncthing/etc.<br/><br/>";
     infoVersion="v."+version+"<br/><br/>";
-    infoAuthor="Author: Sergey M. Stepanov<br/>";
-    infoEmail="Author Email:<i>xintrea@gmail.com</i><br/><br/>";
+    infoAuthor="Author MyTetra: Sergey M. Stepanov (xintrea@gmail.com)<br/>";
+    infoEmail="Author SyncTetra: Serg_St (scoute.me@gmail.com)<br/><br/>";
     infoLicense="GNU General Public License v.3.0<br/><br/>";
 
     QString info=infoProgramName+

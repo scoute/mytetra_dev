@@ -82,6 +82,8 @@ NotePickerDialog::NotePickerDialog(QWidget *parent,
           this,        &NotePickerDialog::onItemActivated);
 
   counterLabel->setText(tr("Type a name, branch or tag to search"));
+
+  buildIndex();
 }
 
 
@@ -147,32 +149,21 @@ void NotePickerDialog::onItemActivated(QTableWidgetItem *item)
 }
 
 
-bool NotePickerDialog::isRecordSkippable(const QString &recordId) const
+void NotePickerDialog::buildIndex(void)
 {
-  if(recordId==excludeRecordId)
-    return true;
+  noteIndex.clear();
 
   KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
   if(treeView==nullptr)
-    return true;
+    return;
 
   KnowTreeModel *treeModel=static_cast<KnowTreeModel *>(treeView->model());
 
-  // Зашифрованные ветки без пароля пропускаются как в поиске
-  const QStringList branchPath=treeModel->getRecordPath(recordId);
-  if(branchPath.isEmpty())
-    return true;
+  if(treeModel==nullptr)
+    return;
 
-  for(const QString &branchId : branchPath)
-  {
-    TreeItem *branchItem=treeModel->getItemById(branchId);
-    if(branchItem!=nullptr &&
-       branchItem->getField(QStringLiteral("crypt"))==QStringLiteral("1") &&
-       globalParameters.getCryptKey().length()==0)
-      return true;
-  }
-
-  return false;
+  noteIndex=treeModel->getNoteIndex();
 }
 
 
@@ -180,53 +171,30 @@ QList<NotePickerDialog::Hit> NotePickerDialog::searchHits(const QString &query) 
 {
   QList<Hit> hits;
 
-  if(query.isEmpty())
+  // Запрос lowerится один раз: на тысячах записей toLower
+  // на каждое сравнение заметно стоит
+  const QString q=query.trimmed().toLower();
+
+  if(q.isEmpty())
     return hits;
 
-  KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
-  if(treeView==nullptr)
-    return hits;
-
-  KnowTreeModel *treeModel=static_cast<KnowTreeModel *>(treeView->model());
-
-  QSharedPointer< QSet<QString> > allIds=treeModel->getAllRecordsIdList();
-  if(allIds.isNull())
-    return hits;
-
-  for(const QString &id : *allIds.data())
+  for(const NoteIndexEntry &entry : noteIndex)
   {
-    if(isRecordSkippable(id))
+    // Своя запись и закрытый шифр мимо выдачи
+    if(entry.id==excludeRecordId || entry.locked)
       continue;
 
-    Record *record=treeModel->getRecord(id);
-    if(record==nullptr)
-      continue;
-
-    const QString name=record->getField(QStringLiteral("name"));
-    const QString tags=record->getField(QStringLiteral("tags"));
-
-    QStringList branchNames;
-    for(const QString &branchId : treeModel->getRecordPath(id))
-    {
-      TreeItem *branchItem=treeModel->getItemById(branchId);
-      if(branchItem!=nullptr)
-        branchNames << branchItem->getField(QStringLiteral("name"));
-    }
-
-    // Поиск сразу по трём столбцам: имя, ветка, метки
-    const QString branch=branchNames.isEmpty() ? QString() : branchNames.last();
-
-    if(!name.contains(query, Qt::CaseInsensitive) &&
-       !branch.contains(query, Qt::CaseInsensitive) &&
-       !tags.contains(query, Qt::CaseInsensitive))
+    if(!entry.nameLower.contains(q) &&
+       !entry.branchLower.contains(q) &&
+       !entry.tagsLower.contains(q))
       continue;
 
     Hit hit;
-    hit.id=id;
-    hit.name=name;
-    hit.branch=branch;
-    hit.branchPath=branchNames.join(QStringLiteral(" / "));
-    hit.tags=tags;
+    hit.id=entry.id;
+    hit.name=entry.name;
+    hit.branch=entry.branch;
+    hit.branchPath=entry.branchPath;
+    hit.tags=entry.tags;
     hits << hit;
   }
 

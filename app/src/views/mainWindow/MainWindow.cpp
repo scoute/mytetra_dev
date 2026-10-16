@@ -1821,25 +1821,13 @@ QString MainWindow::mcpBannerText(void)
 
 
 // Баннер MCP-сессии: висит всё время пока жив хоть один пир.
-// Протухшие (kill -9 без Bye) вычищаются по TTL. Пусто — баннер
-// гаснет и UI разблокируется, есть пиры — баннер виден и UI
-// заблокирован на запись до конца сессии
+// TTL-килла нет осознанно: долгие нейронные сессии с паузами
+// убивались бы на ровном месте вместе с историей. Пир уходит
+// только по явному Bye; убитый -9 висит до перезапуска программы.
+// Пусто — баннер гаснет и UI разблокируется, есть пиры — баннер
+// виден и UI заблокирован на запись до конца сессии
 void MainWindow::updateMcpBanner(void)
 {
-    qint64 now=QDateTime::currentMSecsSinceEpoch();
-
-    QList<QString> stale;
-
-    for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
-        if(now-it.value()>180000)
-            stale.append(it.key());
-
-    foreach(const QString &pid, stale)
-    {
-        mcpPeers.remove(pid);
-        mcpPeerModes.remove(pid);
-    }
-
     if(mcpBannerBar==nullptr || mcpBanner==nullptr)
         return;
 

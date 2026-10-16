@@ -1,5 +1,8 @@
+#include <QBrush>
+#include <QColor>
 #include <QComboBox>
 #include <QListWidget>
+#include <QListWidgetItem>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -82,7 +85,12 @@ void McpHistoryDialog::render(void)
     if(m_filter!=QStringLiteral("all") && entry.kind!=m_filter)
       continue;
 
-    m_list->addItem(renderEntry(entry));
+    QListWidgetItem *item=new QListWidgetItem(renderEntry(entry), m_list);
+
+    if(entry.kind==QStringLiteral("read"))
+      item->setBackground(QBrush(QColor(212, 237, 218)));
+    else if(entry.kind==QStringLiteral("write"))
+      item->setBackground(QBrush(QColor(248, 215, 218)));
   }
 }
 

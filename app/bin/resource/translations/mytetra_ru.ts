@@ -6909,6 +6909,14 @@ Enable it in Settings on the History page.</source>
         <source>Rename voice file under cursor</source>
         <translation>Переименовать файл голосовой заметки под курсором</translation>
     </message>
+    <message>
+        <source>Move voice note to another note</source>
+        <translation>Переместить голосовую заметку в другую заметку</translation>
+    </message>
+    <message>
+        <source>Move voice file and link into another note</source>
+        <translation>Переместить файл и ссылку голосовой заметки в другую заметку</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -7586,6 +7594,54 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Renamed to %1</source>
         <translation>Переименовано в %1</translation>
+    </message>
+    <message>
+        <source>Move voice note</source>
+        <translation>Переместить голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Move voice note %1 to note "%2"? Link will be removed from current note.</source>
+        <translation>Переместить голосовую заметку %1 в заметку "%2"? Ссылка будет удалена из текущей заметки.</translation>
+    </message>
+    <message>
+        <source>Target note directory not found</source>
+        <translation>Каталог целевой заметки не найден</translation>
+    </message>
+    <message>
+        <source>No free file name in target note</source>
+        <translation>Нет свободного имени файла в целевой заметке</translation>
+    </message>
+    <message>
+        <source>Can not move voice file: %1</source>
+        <translation>Не удалось переместить файл: %1</translation>
+    </message>
+    <message>
+        <source>Target note text file unknown</source>
+        <translation>Файл текста целевой заметки неизвестен</translation>
+    </message>
+    <message>
+        <source>Can not read target note: %1</source>
+        <translation>Не удалось прочитать целевую заметку: %1</translation>
+    </message>
+    <message>
+        <source>Can not write target note: %1</source>
+        <translation>Не удалось записать целевую заметку: %1</translation>
+    </message>
+    <message>
+        <source>Notes tree unavailable</source>
+        <translation>Дерево заметок недоступно</translation>
+    </message>
+    <message>
+        <source>Target note not found</source>
+        <translation>Целевая заметка не найдена</translation>
+    </message>
+    <message>
+        <source>Can not move into encrypted note</source>
+        <translation>Нельзя переместить в зашифрованную заметку</translation>
+    </message>
+    <message>
+        <source>Moved to "%1"</source>
+        <translation>Перемещено в "%1"</translation>
     </message>
 </context>
 <context>

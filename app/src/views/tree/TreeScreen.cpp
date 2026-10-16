@@ -180,28 +180,33 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::cancelCutBranch);
  actionList["cancelCutBranch"]=ac;
 
- // Шифрование ветки (пока нет иконки)
+ // Шифрование ветки
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/branch_encrypt.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::encryptBranch);
  actionList["encryptBranch"]=ac;
 
- // Расшифровка ветки, т. е. снятие пароля (пока нет иконки)
+ // Расшифровка ветки, т. е. снятие пароля
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/branch_decrypt.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::decryptBranch);
  actionList["decryptBranch"]=ac;
 
  // Публикация ветки в общий каталог SyncTetra
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/branch_published.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::publishBranch);
  actionList["publishBranch"]=ac;
 
  // Принудительное обновление публикации ветки
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/synchronization.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::updatePublication);
  actionList["updatePublication"]=ac;
 
  // Отзыв публикации ветки
  ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/edit_undo.svg"));
  connect(ac, &QAction::triggered, this, &TreeScreen::revokePublication);
  actionList["revokePublication"]=ac;
 

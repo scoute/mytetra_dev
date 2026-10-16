@@ -4836,7 +4836,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Configure theme...</source>
         <translation>Настроить тему...</translation>
     </message>
-</context>
+
+    <message>
+        <source>; peers: %1</source>
+        <translation>; пиры: %1</translation>
+    </message></context>
 <context>
     <name>MathExpressionFormatter</name>
     <message>

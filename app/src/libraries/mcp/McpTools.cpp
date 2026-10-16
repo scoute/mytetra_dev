@@ -1007,11 +1007,9 @@ QJsonObject McpTools::applyDeleteBranch(KnowTreeModel *model,
   if(!trashReady(error))
     return result;
 
-  int notesCount=0;
-  QSharedPointer< QSet<QString> > ids=model->getRecordsIdList(item);
-
-  if(!ids.isNull())
-    notesCount=ids->size();
+  // Итог из кеша подветки: O(1) вместо рекурсивного
+  // построения QSet идентификаторов ради одного числа
+  const int notesCount=item->subtreeRecordCount();
 
   QModelIndexList indexList;
   indexList.append(model->getIndexByItem(item));
@@ -2141,26 +2139,6 @@ static bool subtreeHasLocked(TreeItem *item)
 }
 
 
-// Сколько записей в поддереве (для итога выгрузки)
-static int countSubtreeNotes(TreeItem *item)
-{
-  if(item==nullptr)
-    return 0;
-
-  int count=0;
-
-  RecordTableData *table=item->recordtableGetTableData();
-
-  if(table!=nullptr)
-    count+=static_cast<int>(table->size());
-
-  for(int i=0; i<item->childCount(); ++i)
-    count+=countSubtreeNotes(item->child(i));
-
-  return count;
-}
-
-
 QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
                                         const QString &branchId,
                                         const QString &path,
@@ -2204,7 +2182,7 @@ QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
     return result;
   }
 
-  const int notes=countSubtreeNotes(branch);
+  const int notes=branch->subtreeRecordCount();
 
   if(!model->exportBranchToDirectory(branch, path))
   {

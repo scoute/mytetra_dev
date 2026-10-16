@@ -5620,8 +5620,8 @@ SyncTetra will try to create a blank entry to fix it.</source>
         <translation>Голосовые заметки</translation>
     </message>
     <message>
-        <source>Team</source>
-        <translation>Команда</translation>
+        <source>Teamwork</source>
+        <translation>Работа в команде</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="79"/>

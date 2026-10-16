@@ -78,7 +78,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     pageMcp        =configDialog->addWidget(new AppConfigPage_Mcp( parent ),
                                             QObject::tr("MCP"));
     pageTeam       =configDialog->addWidget(new AppConfigPage_Team( parent ),
-                                            QObject::tr("Team"));
+                                            QObject::tr("Teamwork"));
     pageVoice      =configDialog->addWidget(new AppConfigPage_Voice( parent ),
                                             QObject::tr("Voice notes"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
@@ -136,7 +136,7 @@ void AppConfigDialog::retranslateUi(void)
     pageFavorites->setText(QObject::tr("Favorites"));
     pageClipper->setText(QObject::tr("Clipper"));
     pageMcp->setText(QObject::tr("MCP"));
-    pageTeam->setText(QObject::tr("Team"));
+    pageTeam->setText(QObject::tr("Teamwork"));
     pageVoice->setText(QObject::tr("Voice notes"));
     pageMisc->setText(QObject::tr("Misc"));
 

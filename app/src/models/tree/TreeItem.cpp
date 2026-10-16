@@ -104,18 +104,17 @@ QString TreeItem::getField(QString name) const
                     itemName=QString(QObject::tr("Closed"));
             }
 
-        // Выясняется, есть ли у текущего элемента конечные записи
+        // Своих записей и рекурсивный итог с подветками.
+        // Пустая подветка целиком: просто имя, как раньше
         int recordCount=this->recordtableGetRowCount();
+        int totalCount=this->subtreeRecordCount();
 
-        // Если конечных элементов нет, возвращатся просто имя
-        if(recordCount==0)
+        if(totalCount==0)
             return itemName;
         else
         {
-            // Иначе конечные элементы есть, возвращается имя записи
-            // и количество конечных элементов
-            QString r,i;
-            r=itemName+" ["+i.setNum(recordCount)+"]";
+            QString r,i,m;
+            r=itemName+" ["+i.setNum(recordCount)+"]["+m.setNum(totalCount)+"]";
             return r;
         }
     }
@@ -643,6 +642,37 @@ void TreeItem::recordtableInit(QDomElement domModel)
 int TreeItem::recordtableGetRowCount(void) const
 {
   return recordsTable.size();
+}
+
+
+int TreeItem::subtreeRecordCount(void) const
+{
+  return subtreeRecords;
+}
+
+
+void TreeItem::setSubtreeTotal(int total)
+{
+  subtreeRecords=(total>0) ? total : 0;
+}
+
+
+void TreeItem::addSubtreeDelta(int delta)
+{
+  TreeItem *item=this;
+
+  while(item!=nullptr)
+  {
+    item->subtreeRecords+=delta;
+
+    if(item->subtreeRecords<0)
+    {
+      qWarning() << "TreeItem::addSubtreeDelta: negative total, hook missed somewhere";
+      item->subtreeRecords=0;
+    }
+
+    item=item->parent();
+  }
 }
 
 

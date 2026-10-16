@@ -62,6 +62,7 @@ public slots:
   // Контекстное меню на голосовой ссылке или бабле
   void onPlayVoiceClicked(void);
   void onRenameVoiceClicked(void);
+  void onMoveVoiceClicked(void);
   void onShowVoiceInFolder(void);
   void onDeleteVoiceClicked(void);
 
@@ -80,6 +81,29 @@ private:
                                  const QString &oldHref,
                                  const QString &stem,
                                  QString *error);
+
+  // Переложить файл голосовой заметки в каталог другой записи.
+  // Имя сохраняется, при коллизии свободное (суффикс -2, -3...).
+  // Возвращает новый href, пусто при отказе (причина в error).
+  // Тот же каталог не отказ: возвращается старый href, файл
+  // не трогается. Статика чтобы стенд гонял без редактора
+  static QString moveVoiceFileToDir(const QString &srcDir,
+                                    const QString &oldHref,
+                                    const QString &dstDir,
+                                    QString *error);
+
+  // Дописать голосовую ссылку в конец чужого text.html (закрытая
+  // заметка правится напрямую, мимо редактора). Ложь при отказе
+  // (причина в error). Файла нет: создается минимальный каркас
+  static bool appendVoiceLinkToTextFile(const QString &textFileName,
+                                        const QString &href,
+                                        qint64 durationMs,
+                                        QString *error);
+
+  // Длительность голосовой ссылки из живого документа: у бабла
+  // из свойств, у сырой ссылки парсингом текста. 0 если не
+  // разобралась
+  qint64 voiceDurationUnderCursor(const QString &href) const;
 
   // Ссылка или бабл под курсором, пусто если курсор не на голосовой
   QString voiceHrefUnderCursor(void) const;

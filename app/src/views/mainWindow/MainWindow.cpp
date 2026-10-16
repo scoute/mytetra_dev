@@ -23,6 +23,13 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QTimer>
+
+#ifdef Q_OS_WIN32
+#include <windows.h>
+#else
+#include <signal.h>
+#include <errno.h>
+#endif
 #include <QTime>
 #include <QDateTime>
 #include <QJsonDocument>
@@ -417,9 +424,10 @@ void MainWindow::assembly(void)
     mcpHistoryDialog->hide();
     mcpBanner->installEventFilter(this);
 
-    // Сторож протухших пиров: убитый без Bye гаснет сам раз в минуту
+    // Минутный пинг пиров: мертвые процессы выкидываются,
+    // живые остаются независимо от пауз нейронки
     mcpBannerTimer=new QTimer(this);
-    connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::updateMcpBanner);
+    connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::onMcpPeerTick);
     mcpBannerTimer->start(60000);
 
     QWidget *centralContainer=new QWidget(this);
@@ -1816,7 +1824,21 @@ QString MainWindow::mcpBannerText(void)
     if(!modes.isEmpty())
         modesText=" ("+modes.join(", ")+")";
 
-    return tr("MCP session is active%1, MyTetra works in read-only mode").arg(modesText);
+    QStringList peers;
+
+    for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
+    {
+      const QString mode=mcpPeerModes.value(it.key());
+
+      peers.append(mode.isEmpty() ? it.key() : it.key()+QStringLiteral(" ")+mode);
+    }
+
+    QString text=tr("MCP session is active%1, MyTetra works in read-only mode").arg(modesText);
+
+    if(!peers.isEmpty())
+      text+=tr("; peers: %1").arg(peers.join(QStringLiteral(", ")));
+
+    return text;
 }
 
 
@@ -1826,6 +1848,53 @@ QString MainWindow::mcpBannerText(void)
 // только по явному Bye; убитый -9 висит до перезапуска программы.
 // Пусто — баннер гаснет и UI разблокируется, есть пиры — баннер
 // виден и UI заблокирован на запись до конца сессии
+// Жив ли пир: существует ли процесс с таким pid.
+// Переиспользование pid чужим процессом теоретически возможно,
+// цена ошибки — лишний висящий баннер до перезапуска, а не потеря данных
+static bool mcpPeerAlive(const QString &pid)
+{
+  const qint64 id=pid.toLongLong();
+
+  if(id<=0)
+    return false;
+
+#ifdef Q_OS_WIN32
+  HANDLE handle=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
+                            static_cast<DWORD>(id));
+
+  if(handle==nullptr)
+    return GetLastError()==ERROR_ACCESS_DENIED;
+
+  CloseHandle(handle);
+
+  return true;
+#else
+  if(::kill(static_cast<pid_t>(id), 0)==0)
+    return true;
+
+  return errno==EPERM;
+#endif
+}
+
+
+void MainWindow::onMcpPeerTick(void)
+{
+  QList<QString> dead;
+
+  for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
+    if(!mcpPeerAlive(it.key()))
+      dead.append(it.key());
+
+  foreach(const QString &pid, dead)
+  {
+    mcpPeers.remove(pid);
+    mcpPeerModes.remove(pid);
+  }
+
+  updateMcpBanner();
+}
+
+
 void MainWindow::updateMcpBanner(void)
 {
     if(mcpBannerBar==nullptr || mcpBanner==nullptr)

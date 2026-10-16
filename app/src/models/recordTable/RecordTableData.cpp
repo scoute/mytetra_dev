@@ -228,12 +228,26 @@ void RecordTableData::editorSaveCallback(QObject *editor,
         data["recordName"]=currEditor->getMiscField("title");
         actionLogger.addAction("editRecordText", data);
 
-        // Снапшот в историю изменений: только при реальных
-        // изменениях, шифрованные пропускаются выше
-        ChangeHistory::snapshot(mytetraConfig.get_tetradir(),
-                                currEditor->getMiscField("id"),
-                                currEditor->getMiscField("title"),
-                                saveText);
+        // Ротация по лимиту: раз лимит выставлен, сжатие идет
+        // всегда, авто после снапшота.
+        // Отдельной галочки нет осознанно
+        if(ChangeHistory::snapshot(mytetraConfig.get_tetradir(),
+                                   currEditor->getMiscField("id"),
+                                   currEditor->getMiscField("title"),
+                                   saveText))
+        {
+            // Авточка по лимиту. Тихая: сохранение обязано
+            // проходить при любом исходе
+            QString squashError;
+            ChangeHistory::squashOldVersions(mytetraConfig.get_tetradir(),
+                                             currEditor->getMiscField("id"),
+                                             qMax(2, mytetraConfig.get_historySquashKeep()),
+                                             qBound(0, mytetraConfig.get_historySquashMode(), 2),
+                                             &squashError);
+
+            if(!squashError.isEmpty())
+                qDebug() << "ChangeHistory autosquash:" << squashError;
+        }
     }
     else
     {

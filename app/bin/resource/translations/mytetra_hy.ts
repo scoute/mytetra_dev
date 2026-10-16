@@ -659,6 +659,40 @@ SyncTetra-ն պետք է աշխատի։</translation>
         <source>History of visited notes</source>
         <translation>Դիտված նշումների պատմություն</translation>
     </message>
+    <message>
+        <source>Note change history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep versions:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable note history (git must be installed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do on limit excess:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete oldest entries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge similar neighbors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compress every 10 entries into one except the latest 10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enable note history:
+git is not installed.
+Linux: install the git package. Windows: https://git-scm.com.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -4457,6 +4491,11 @@ Please report about this problem to the developers.</source>
 Linux: install the git package. Windows: https://git-scm.com.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Note history is disabled.
+Enable it in Settings on the History page.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecordTableModel</name>
@@ -6284,34 +6323,6 @@ Please select single item for enabling edit operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Quality:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>High</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Opus, %1 kbit/s, %2 Hz</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>MP3, %1 kbit/s, %2 Hz</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>WAV, %1 Hz</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>File name:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6337,10 +6348,6 @@ Please select single item for enabling edit operation.</source>
     </message>
     <message>
         <source>No supported audio format</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Format: WAV (Opus and MP3 unsupported)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6380,22 +6387,6 @@ Please select single item for enabling edit operation.</source>
     </message>
     <message>
         <source>MP3 (.mp3)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Default quality</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>High</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

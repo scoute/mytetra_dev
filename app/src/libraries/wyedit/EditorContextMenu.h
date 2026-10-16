@@ -19,6 +19,8 @@ public:
  void setEditMathExpression(bool flag); // Активирование добавочного пункта меню "Редактирование формулы")
  void setGotoReference(bool flag); // Активирование добавочного пункта меню "Перейти по ссылке")
  void setPlayVoice(bool flag); // Пункт "Слушать" на голосовой ссылке
+ void setRenameVoice(bool flag);
+ void setMoveVoice(bool flag); // Пункт "Переместить" на голосовой ссылке
  void setShowVoiceInFolder(bool flag); // Пункт "Показать файл" на голосовой ссылке
  void setDeleteVoice(bool flag); // Пункт "Удалить" на голосовой ссылке
  void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
@@ -48,6 +50,8 @@ signals:
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
   void contextMenuPlayVoice(void);
+  void contextMenuRenameVoice(void);
+  void contextMenuMoveVoice(void);
   void contextMenuShowVoiceInFolder(void);
   void contextMenuDeleteVoice(void);
   void contextMenuEditReference(void);
@@ -81,6 +85,8 @@ private:
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
   QAction *actionPlayVoice;
+  QAction *actionRenameVoice;
+  QAction *actionMoveVoice;
   QAction *actionShowVoiceInFolder;
   QAction *actionDeleteVoice;
   QAction *actionEditReference;
@@ -109,6 +115,8 @@ protected slots:
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
   void onActionContextMenuPlayVoice(void);
+  void onActionContextMenuRenameVoice(void);
+  void onActionContextMenuMoveVoice(void);
   void onActionContextMenuShowVoiceInFolder(void);
   void onActionContextMenuDeleteVoice(void);
   void onActionContextMenuEditReference(void);

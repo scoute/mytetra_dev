@@ -50,6 +50,8 @@ void EditorContextMenu::setupActions(void)
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
  actionPlayVoice=new QAction(this);
+ actionRenameVoice=new QAction(this);
+actionMoveVoice=new QAction(this);
  actionShowVoiceInFolder=new QAction(this);
  actionDeleteVoice=new QAction(this);
  actionEditReference=new QAction(this);
@@ -100,6 +102,8 @@ void EditorContextMenu::setupShortcuts(void)
     shortcutManager.initAction("editor-gotoReference", actionGotoReference );
 
     shortcutManager.initAction("editor-playVoice", actionPlayVoice );
+    shortcutManager.initAction("editor-renameVoice", actionRenameVoice );
+    shortcutManager.initAction("editor-moveVoice", actionMoveVoice );
     shortcutManager.initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
     shortcutManager.initAction("editor-deleteVoice", actionDeleteVoice );
 
@@ -156,6 +160,8 @@ void EditorContextMenu::update(void)
 
         setGotoReference( !voiceLink );
         setPlayVoice( voiceLink );
+        setRenameVoice( voiceLink );
+        setMoveVoice( voiceLink );
         setShowVoiceInFolder( voiceLink );
         setDeleteVoice( voiceLink );
         setEditReference( true );
@@ -166,6 +172,8 @@ void EditorContextMenu::update(void)
 
         setGotoReference( false );
         setPlayVoice( voiceBubble );
+        setRenameVoice( voiceBubble );
+        setMoveVoice( voiceBubble );
         setShowVoiceInFolder( voiceBubble );
         setDeleteVoice( voiceBubble );
         setEditReference( false );
@@ -254,6 +262,20 @@ void EditorContextMenu::setPlayVoice(bool flag)
 {
   actionPlayVoice->setVisible(flag);
   actionPlayVoice->setEnabled(flag);
+}
+
+
+void EditorContextMenu::setRenameVoice(bool flag)
+{
+  actionRenameVoice->setVisible(flag);
+  actionRenameVoice->setEnabled(flag);
+}
+
+
+void EditorContextMenu::setMoveVoice(bool flag)
+{
+  actionMoveVoice->setVisible(flag);
+  actionMoveVoice->setEnabled(flag);
 }
 
 
@@ -346,6 +368,8 @@ void EditorContextMenu::setupSignals(void)
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
     connect(actionPlayVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPlayVoice);
+    connect(actionRenameVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuRenameVoice);
+    connect(actionMoveVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveVoice);
     connect(actionShowVoiceInFolder,  &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowVoiceInFolder);
     connect(actionDeleteVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuDeleteVoice);
     connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
@@ -389,6 +413,8 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
     this->addAction(actionPlayVoice);
+    this->addAction(actionRenameVoice);
+    this->addAction(actionMoveVoice);
     this->addAction(actionShowVoiceInFolder);
     this->addAction(actionDeleteVoice);
     this->addAction(actionEditReference);
@@ -508,6 +534,22 @@ void EditorContextMenu::onActionContextMenuPlayVoice()
     update();
     if(actionPlayVoice->isEnabled()) {
         emit contextMenuPlayVoice();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuRenameVoice()
+{
+    update();
+    if(actionRenameVoice->isEnabled()) {
+        emit contextMenuRenameVoice();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuMoveVoice()
+{
+    update();
+    if(actionMoveVoice->isEnabled()) {
+        emit contextMenuMoveVoice();
     }
 }
 

@@ -1189,6 +1189,15 @@ void RecordTableController::onChangeHistoryClick(void)
   const QString id=table->getField("id", pos);
   const QString name=table->getField("name", pos);
 
+  if(!mytetraConfig.get_historyEnable())
+  {
+    QMessageBox::information(parentPointer,
+                             tr("Change history"),
+                             tr("Note history is disabled.\n"
+                                "Enable it in Settings on the History page."));
+    return;
+  }
+
   if(table->getField("crypt", pos)==QStringLiteral("1"))
   {
     QMessageBox::information(parentPointer,

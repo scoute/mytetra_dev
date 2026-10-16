@@ -1375,6 +1375,11 @@ void MainWindow::runDirectPreferences(QAction *action)
     {
         dialog->setMenuListVisible(false);
         dialog->exec();
+
+        // Настройки могли поменять мастер-тумблеры (история и пр.):
+        // состояние пунктов перечитывается сразу, а не по следующему клику
+        if(recordTableScreen!=nullptr)
+            recordTableScreen->toolsUpdate();
     }
 
     delete dialog;
@@ -1427,6 +1432,16 @@ void MainWindow::initThemesMenu(void)
         themesMenu->addAction(themeAction);
     }
 
+    themesMenu->addSeparator();
+
+    // Настройка своей темы: то же окно, что страница Themes
+    // в диалоге настроек. Вне эксклюзивной группы осознанно:
+    // это действие, а не выбор темы
+    themeConfigureAction=new QAction(tr("Configure theme..."), themesMenu);
+    themesMenu->addAction(themeConfigureAction);
+    connect(themeConfigureAction, &QAction::triggered,
+            this,                &MainWindow::onThemeConfigure);
+
     syncThemeMenu();
 
     connect(themeGroup, &QActionGroup::triggered,
@@ -1447,7 +1462,14 @@ void MainWindow::syncThemeMenu(void)
     QString currentTheme=mytetraConfig.getInterfaceTheme();
 
     for(QAction *themeAction : themesMenu->actions())
+    {
+        // Разделитель и «Настроить тему» — не выборы темы
+        if(themeAction==nullptr || themeAction->isSeparator() ||
+           themeAction->data().toString().isEmpty())
+            continue;
+
         themeAction->setChecked(themeAction->data().toString()==currentTheme);
+    }
 }
 
 
@@ -1653,6 +1675,16 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         if(editorScreen!=nullptr)
             editorScreen->applyNoteColors();
     }
+}
+
+
+// Пункт «Настроить тему»: то же окно, что страница Themes
+// в диалоге настроек. Пометка меню обновится при следующем
+// открытии через aboutToShow
+void MainWindow::onThemeConfigure(void)
+{
+    AppConfigDialog dialog("pageTheme", this);
+    dialog.exec();
 }
 
 
@@ -2039,7 +2071,16 @@ void MainWindow::retranslateUi(void)
         translateNames["custom"]=tr("Custom");
 
         for(QAction *themeAction : themesMenu->actions())
+        {
+            if(themeAction==nullptr || themeAction->isSeparator() ||
+               themeAction->data().toString().isEmpty())
+                continue;
+
             themeAction->setText(translateNames.value(themeAction->data().toString(), "Unknown"));
+        }
+
+        if(themeConfigureAction!=nullptr)
+            themeConfigureAction->setText(tr("Configure theme..."));
     }
 
     if(viewMenu!=nullptr)

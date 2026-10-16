@@ -6,6 +6,10 @@
 
 #include "ChangeHistory.h"
 #include "libraries/UnifiedDiff.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 static QString recordFileName(const QString &recordId)
@@ -25,6 +29,12 @@ bool ChangeHistory::snapshot(const QString &tetradir, const QString &recordId,
                              const QString &recordName, const QString &html)
 {
     if(tetradir.isEmpty() || recordId.isEmpty() || html.isEmpty())
+        return false;
+
+    // История выключена мастер-тумблером: тихо ничего не делаем.
+    // Гейт здесь, а не у вызывателей: безопасны все пути записи,
+    // включая будущие
+    if(!mytetraConfig.get_historyEnable())
         return false;
 
     if(!GitHelper::isAvailable())
@@ -167,4 +177,35 @@ bool ChangeHistory::resetToVersion(const QString &tetradir, const QString &recor
 
     return GitHelper::truncateFileHistory(dir, recordFileName(recordId),
                                           rev, errorMessage);
+}
+
+
+bool ChangeHistory::squashOldVersions(const QString &tetradir, const QString &recordId,
+                                      int keepNewest, int mode, QString *errorMessage)
+{
+    if(tetradir.isEmpty() || recordId.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Empty path or note");
+        return false;
+    }
+
+    if(!GitHelper::isAvailable())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("git is not available");
+        return false;
+    }
+
+    const QString dir=historyDir(tetradir);
+
+    if(!GitHelper::isRepo(dir))
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("History storage is not found");
+        return false;
+    }
+
+    return GitHelper::squashFileHistory(dir, recordFileName(recordId),
+                                        keepNewest, mode, errorMessage);
 }

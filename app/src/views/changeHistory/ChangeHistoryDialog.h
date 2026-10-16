@@ -54,6 +54,9 @@ private:
     // Показать текст текущей строки вызывателю (предпросмотр)
     void updatePreview(void);
 
+    // Перечитать версии и перестроить список
+    void refreshVersionList(void);
+
     QString tetradir;
     QString recordId;
     QString recordName;

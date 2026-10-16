@@ -50,32 +50,6 @@ void AppConfigPage_Voice::setupUi(void)
   else
     opusRadio->setChecked(true);
 
-  // Качество по умолчанию из конфига, среднее если мусор
-  qualityBox=new QGroupBox(this);
-
-  lowRadio=new QRadioButton(this);
-  lowRadio->setText(tr("Low"));
-
-  mediumRadio=new QRadioButton(this);
-  mediumRadio->setText(tr("Medium"));
-
-  highRadio=new QRadioButton(this);
-  highRadio->setText(tr("High"));
-
-  QButtonGroup *qualityGroup=new QButtonGroup(this);
-  qualityGroup->addButton(lowRadio);
-  qualityGroup->addButton(mediumRadio);
-  qualityGroup->addButton(highRadio);
-
-  const int quality=mytetraConfig.get_voiceNoteQuality();
-
-  if(quality==0)
-    lowRadio->setChecked(true);
-  else if(quality==2)
-    highRadio->setChecked(true);
-  else
-    mediumRadio->setChecked(true);
-
   retranslateUi();
 }
 
@@ -93,15 +67,8 @@ void AppConfigPage_Voice::assembly(void)
   formatLayout->addWidget(mp3Radio);
   formatBox->setLayout(formatLayout);
 
-  QVBoxLayout *qualityLayout=new QVBoxLayout();
-  qualityLayout->addWidget(lowRadio);
-  qualityLayout->addWidget(mediumRadio);
-  qualityLayout->addWidget(highRadio);
-  qualityBox->setLayout(qualityLayout);
-
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(formatBox);
-  centralLayout->addWidget(qualityBox);
   centralLayout->addStretch();
   setLayout(centralLayout);
 }
@@ -114,10 +81,6 @@ void AppConfigPage_Voice::retranslateUi(void)
   opusRadio->setText(tr("Opus (.opus)"));
   mp3Radio->setText(tr("MP3 (.mp3)"));
 
-  qualityBox->setTitle(tr("Default quality"));
-  lowRadio->setText(tr("Low"));
-  mediumRadio->setText(tr("Medium"));
-  highRadio->setText(tr("High"));
 }
 
 
@@ -132,15 +95,7 @@ int AppConfigPage_Voice::applyChanges(void)
   if(mytetraConfig.get_voiceNoteFormat()!=format)
     mytetraConfig.set_voiceNoteFormat(format);
 
-  int quality=1;
-
-  if(lowRadio->isChecked())
-    quality=0;
-  else if(highRadio->isChecked())
-    quality=2;
-
-  if(mytetraConfig.get_voiceNoteQuality()!=quality)
-    mytetraConfig.set_voiceNoteQuality(quality);
-
+  // Ключ качества оставлен для совместимости: выбора нет,
+  // профили фиксированы. Старые значения молча игнорируются
   return 0;
 }

@@ -250,8 +250,10 @@ fi
 # --------------------------------------------------------------------------
 
 # Модули Qt строго по нуждам программы (транзитивный ldd для PE-файлов
-# под Linux ненадежен, поэтому список явный; smoke-тест ловит недостачу)
-QT_DLLS="Qt5Core Qt5Gui Qt5Widgets Qt5Network Qt5Xml Qt5PrintSupport Qt5Svg"
+# под Linux ненадежен, поэтому список явный; smoke-тест ловит недостачу).
+# Qt5Multimedia здесь с голосовых заметок (список обязан повторять QT
+# в app/app.pro): без него exe не стартует вообще
+QT_DLLS="Qt5Core Qt5Gui Qt5Widgets Qt5Network Qt5Xml Qt5PrintSupport Qt5Svg Qt5Multimedia"
 MINGW_DLLS="libgcc_s_dw2-1 libstdc++-6 libwinpthread-1"
 
 for dll in ${QT_DLLS}; do
@@ -289,10 +291,11 @@ done
 # --------------------------------------------------------------------------
 
 # platforms обязателен (qwindows), imageformats для картинок и svg-иконок,
-# iconengines для svg-иконок. Как в Linux: без Qt5Svg рядом все падает,
-# он уже скопирован выше
+# iconengines для svg-иконок. mediaservice это бэкенд голосовых заметок,
+# audio это вывод звука: без них плеер и запись молча не работают.
+# Как в Linux: без Qt5Svg рядом все падает, он уже скопирован выше
 mkdir -p "${PORTABLE_DIR}/plugins"
-for plugin in platforms imageformats iconengines; do
+for plugin in platforms imageformats iconengines mediaservice audio; do
     if [[ -d "${QT_SDK}/plugins/${plugin}" ]]; then
         mkdir -p "${PORTABLE_DIR}/plugins/${plugin}"
         cp "${QT_SDK}/plugins/${plugin}/"*.dll "${PORTABLE_DIR}/plugins/${plugin}/" 2>/dev/null || true

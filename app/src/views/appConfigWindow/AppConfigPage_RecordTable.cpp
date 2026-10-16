@@ -24,10 +24,16 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   QMap<QString, QString> descriptionFields=FixedParameters::recordFieldDescription( allFieldNames );
   QStringList showFields=mytetraConfig.getRecordTableShowFields();
 
-  // Создаются чекбоксы для каждого поля, хранимого в записи
+  // Создаются чекбоксы для каждого поля, хранимого в записи.
+  // Без подписи (служебные вроде favorite) не создаются:
+  // пустой чекбокс-невидимка хуже отсутствия
   for(int i=0; i<allFieldNames.size(); i++)
   {
     QString name=allFieldNames[i];
+
+    if(!FixedParameters::isRecordFieldColumn(name))
+      continue;
+
     fields[ name ]=new QCheckBox(this);
 
     fields[ name ]->setText( descriptionFields.value(name) ); // Ранее было tr(descriptionFields.value(name).toLocal8Bit().data()), разобраться зачем

@@ -336,8 +336,11 @@ done
 # Без нее Qt падает при загрузке плагинов, и это выглядит как
 # аварийный старт без всякого сообщения
 # Qt-модули, которые нужны программе и ее плагинам. Перечислены явно,
-# а не все libQt5* из SDK: лишние модули весят сотни мегабайт
-QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus"
+# а не все libQt5* из SDK: лишние модули весят сотни мегабайт.
+# Multimedia здесь с голосовых заметок (QMediaPlayer/QMediaRecorder
+# в AudioFormatter и VoiceRecorderDialog): список обязан повторять
+# QT в app/app.pro, иначе портабл падает на старте без сообщений
+QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus Multimedia"
 
 for module in ${QT_MODULES}; do
     for qt_lib in "${QT_SDK}"/lib/libQt5"${module}".so.5.*; do
@@ -365,10 +368,14 @@ done
 
 # platforms обязателен: без него Qt не выберет графическую подсистему,
 # imageformats нужен для svg-иконок, iconengines для svg-иконок на файловой
-# системе. platforminputcontexts не копируется: его плагин ввода через
+# системе. mediaservice это бэкенд голосовых заметок (gstreamer-плеер
+# и запись), audio это вывод звука (alsa/pulse): без них QMediaPlayer
+# и QMediaRecorder молча не работают. GStreamer и ALSA при этом остаются
+# системными (как X11 и GL): тащить весь звуковой стек внутрь нельзя.
+# platforminputcontexts не копируется: его плагин ввода через
 # ibus падает при старте в окружении без DBus, а базовый ввод с клавиатуры
 # обеспечивается самой платформой
-for plugin in platforms imageformats iconengines; do
+for plugin in platforms imageformats iconengines mediaservice audio; do
     if [[ -d "${QT_SDK}/plugins/${plugin}" ]]; then
         mkdir -p "${PLUGINS_DIR}/${plugin}"
         # Отладочные символы *.debug не нужны и весят половину объема
@@ -430,6 +437,24 @@ for target in "${PORTABLE_DIR}/synctetra" "${PLUGINS_DIR}"/*/*.so; do
 done
 if [[ "${MIXED}" -ne 0 ]]; then
     echo "ОШИБКА: портабл тянет системный Qt, чинить зависимости" >&2
+    exit 5
+fi
+
+# Проверка на неразрешенные зависимости: забытый Qt-модуль (как было
+# с Multimedia) виден здесь, а не падением на чужой машине. Плагины
+# тоже проверяются: у них свои зависимости от Qt
+NOTFOUND=0
+for target in "${PORTABLE_DIR}/mytetra" "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
+    [[ -f "${target}" ]] || continue
+    MISSING="$(LD_LIBRARY_PATH="${LIB_DIR}" ldd "${target}" 2>/dev/null | grep "not found" || true)"
+    if [[ -n "${MISSING}" ]]; then
+        echo "ОШИБКА: неразрешенные зависимости в ${target}:" >&2
+        echo "${MISSING}" >&2
+        NOTFOUND=1
+    fi
+done
+if [[ "${NOTFOUND}" -ne 0 ]]; then
+    echo "ОШИБКА: в портабле не хватает библиотек, чинить зависимости" >&2
     exit 5
 fi
 

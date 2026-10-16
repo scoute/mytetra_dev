@@ -64,7 +64,6 @@ public:
 private slots:
 
     void onFormatRadio(bool checked);
-    void onQualityRadio(bool checked);
     void onFileNameEdited(const QString &text);
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
@@ -80,17 +79,29 @@ private:
     enum VoiceFormat
     {
         VoiceFormatOpus,
-        VoiceFormatMp3,
-        VoiceFormatWavFallback
+        VoiceFormatMp3
     };
 
-    // Качество записи low/middle/high, средний по умолчанию
-    enum VoiceQuality
+    // Один профиль на формат: Opus 48 кГц/24 кбит,
+    // MP3 32 кГц фикс (битрейт lame бэкенд игнорит,
+    // upstream catch-22 Qt 5.15)
+
+    // Профиль формата: VBR-качество, целевой битрейт
+    // и частота. Opus CBR 24 кбит (лесенка держится, замер 2.1),
+    // MP3 битрейт 0 = не выставлять (все равно игнорит)
+    struct VoiceQualityProfile
     {
-        VoiceQualityLow,
-        VoiceQualityMedium,
-        VoiceQualityHigh
+        QMultimedia::EncodingQuality quality;
+        int bitRate;
+        int sampleRate;
     };
+
+    // Режим кодирования общий: CBR держит битрейт Opus
+    static QMultimedia::EncodingMode encodingMode(void);
+
+    // Профиль формата. Статика чтобы стенд проверял
+    // параметры без микрофона и бэкенда
+    static VoiceQualityProfile qualityProfile(VoiceFormat format);
 
     // Завершить запись и решить про вставку. Вызывается из стопа
     // и из смены состояния: идемпотентно
@@ -100,8 +111,8 @@ private:
     // Вызывается перед стартом записи
     void applyFormat(VoiceFormat format);
 
-    // Обновить подсказку с параметрами выбранного качества
-    void updateQualityHint(void);
+    // Подпись фиксированных параметров записи
+    void updateFormatInfo(void);
 
     // Расширение текущего формата
     QString currentExtension(void) const;
@@ -127,10 +138,7 @@ private:
     QLabel *timeLabel;
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
-    QRadioButton *qualityLowRadio;
-    QRadioButton *qualityMediumRadio;
-    QRadioButton *qualityHighRadio;
-    QLabel *qualityHintLabel;
+    QLabel *formatInfoLabel;
     QLineEdit *fileNameEdit;
     QComboBox *deviceCombo;
     QPushButton *recordButton;
@@ -142,10 +150,8 @@ private:
     QTimer *timer;
 
     VoiceFormat currentFormat;
-    VoiceQuality currentQuality;
     bool opusAvailable;
     bool mp3Available;
-    bool wavAvailable;
 
     // Пользователь правил имя руками: расширение при смене
     // формата меняется, основа сохраняется

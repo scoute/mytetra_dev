@@ -548,6 +548,54 @@ void AppConfig::set_autosaveInterval(int minutes)
 }
 
 
+bool AppConfig::get_historySquashEnable(void)
+{
+    return m_conf->value("historySquashEnable", true).toBool();
+}
+
+
+void AppConfig::set_historySquashEnable(bool flag)
+{
+    m_conf->setValue("historySquashEnable", flag);
+}
+
+
+int AppConfig::get_historySquashKeep(void)
+{
+    return m_conf->value("historySquashKeep", 100).toInt();
+}
+
+
+void AppConfig::set_historySquashKeep(int count)
+{
+    m_conf->setValue("historySquashKeep", count);
+}
+
+
+int AppConfig::get_historySquashMode(void)
+{
+    return m_conf->value("historySquashMode", 0).toInt();
+}
+
+
+void AppConfig::set_historySquashMode(int mode)
+{
+    m_conf->setValue("historySquashMode", mode);
+}
+
+
+bool AppConfig::get_historyEnable(void)
+{
+    return m_conf->value("historyEnable", false).toBool();
+}
+
+
+void AppConfig::set_historyEnable(bool flag)
+{
+    m_conf->setValue("historyEnable", flag);
+}
+
+
 bool AppConfig::get_runinminimizedwindow(void)
 {
     return m_conf->value("runinminimizedwindow").toBool();
@@ -692,10 +740,24 @@ void AppConfig::setUglyQssReplaceHeightForTableView(int n)
 }
 
 
-// Перечень полей, отображаемых в таблице конечных записей
+// Перечень полей, отображаемых в таблице конечных записей.
+// Служебные поля без подписи (favorite) из старых конфигов
+// отрезаются здесь: колонками они не являются, пустой столбец
+// с пустым заголовком не нужен. При следующем apply список
+// перезапишется уже чистым
 QStringList AppConfig::getRecordTableShowFields(void)
 {
-    return (m_conf->value("recordTableShowFields", "name")).toString().split(",");
+    QStringList fields=(m_conf->value("recordTableShowFields", "name")).toString().split(",");
+    QStringList columns;
+
+    foreach(const QString &field, fields)
+      if(FixedParameters::isRecordFieldColumn(field))
+        columns << field;
+
+    if(columns.isEmpty())
+      columns << "name";
+
+    return columns;
 }
 
 
@@ -1517,19 +1579,20 @@ void AppConfig::set_voiceNoteFormat(QString format)
 }
 
 
-// Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high.
-// Середина если не задано или мусор
+// Качество голосовых заметок по умолчанию: 0 low, 1 high.
+// Low если не задано или мусор: файлы меньше, голоса хватает.
+// Старые medium (1) и high (2) едут в high
 int AppConfig::get_voiceNoteQuality(void)
 {
-    const int quality=m_conf->value("voiceNoteQuality", 1).toInt();
+    const int quality=m_conf->value("voiceNoteQuality", 0).toInt();
 
-    return qBound(0, quality, 2);
+    return qBound(0, quality, 1);
 }
 
 
 void AppConfig::set_voiceNoteQuality(int quality)
 {
-    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 2));
+    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 1));
 }
 
 
@@ -2059,6 +2122,10 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     table << "autoClosePasswordDelay" << "int" << "10";
     table << "autosaveEnable" << "bool" << "true";
     table << "autosaveInterval" << "int" << "10";
+    table << "historySquashEnable" << "bool" << "true";
+    table << "historySquashKeep" << "int" << "100";
+    table << "historySquashMode" << "int" << "0";
+    table << "historyEnable" << "bool" << "false";
 
     if (withEndSignature)
         table << "0" << "0" << "0";

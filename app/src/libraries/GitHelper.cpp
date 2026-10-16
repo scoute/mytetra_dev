@@ -55,7 +55,8 @@ QString GitHelper::version(void)
 
 
 int GitHelper::run(const QString &workDir, const QStringList &args,
-                   QString *stdoutText, QString *stderrText, int timeoutMs)
+                   QString *stdoutText, QString *stderrText, int timeoutMs,
+                   const QByteArray *stdinData)
 {
     if(!isAvailable())
         return -1;
@@ -66,6 +67,12 @@ int GitHelper::run(const QString &workDir, const QStringList &args,
 
     if(!git.waitForStarted(10000))
         return -1;
+
+    if(stdinData!=nullptr)
+    {
+        git.write(*stdinData);
+        git.closeWriteChannel();
+    }
 
     if(!git.waitForFinished(timeoutMs))
     {
@@ -618,4 +625,510 @@ bool GitHelper::truncateFileHistory(const QString &dir, const QString &file,
     }
 
     return true;
+}
+
+
+bool GitHelper::squashFileHistory(const QString &dir, const QString &file,
+                                  int keepNewest, int mode, QString *errorMessage)
+{
+    if(!isRepo(dir))
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Not a git repository");
+        return false;
+    }
+
+    if(file.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Empty file");
+        return false;
+    }
+
+    // Хранится genesis плюс свежие: меньше двух хранить нечего
+    if(keepNewest<2)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Keep at least genesis and one version");
+        return false;
+    }
+
+    if(!statusPorcelain(dir).trimmed().isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Workdir has uncommitted changes");
+        return false;
+    }
+
+    const QString origHead=headRev(dir);
+
+    if(origHead.isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Journal is empty");
+        return false;
+    }
+
+    // Коммиты файла от старых к новым
+    QString fileLog;
+    if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("--reverse")
+                              << QStringLiteral("--format=%H")
+                              << QStringLiteral("--") << file, &fileLog)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot list file history");
+        return false;
+    }
+
+    const QStringList fileCommits=fileLog.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
+
+    // Укладываемся в лимит: делать нечего
+    if(fileCommits.size()<=keepNewest)
+        return true;
+
+    const int count=fileCommits.size();
+
+    // Хранимые по стратегии. Genesis (индекс 0) якорь отката,
+    // хранится во всех стратегиях
+    QSet<QString> keepSet;
+    keepSet.insert(fileCommits.first().trimmed());
+
+    if(mode==0)
+    {
+        // Удалить старые: хранятся genesis плюс свежие.
+        // Дефолтная стратегия
+        for(int i=count-(keepNewest-1); i<count; ++i)
+            keepSet.insert(fileCommits.at(i).trimmed());
+    }
+    else if(mode==2)
+    {
+        // Паковать каждую 10-ю исключая свежие 10: свежие целиком,
+        // ниже каждая 10-я назад от границы свежей зоны.
+        // Перебор сверх бюджета сносится старейшими пакетами
+        const int freshCount=qMin(10, keepNewest-1);
+        const int boundary=count-freshCount;
+
+        for(int i=boundary; i<count; ++i)
+            keepSet.insert(fileCommits.at(i).trimmed());
+
+        QList<int> bundles;
+        for(int i=boundary-10; i>0; i-=10)
+            bundles.append(i);
+
+        // Сколько пакетов влезает сверх genesis и свежей зоны
+        int room=keepNewest-1-freshCount;
+
+        // Свежие пакеты с конца: старые пакеты уходят первыми
+        for(int b=bundles.size()-1; b>=0 && room>0; --b)
+        {
+            keepSet.insert(fileCommits.at(bundles.at(b)).trimmed());
+            --room;
+        }
+    }
+    else
+    {
+        // Склеить похожие соседние: умный отбор сносимых
+        // (точки разворота и свежая зона хранятся).
+        // При недоступности содержимого тупой отбор
+        const int freshSize=qMin(20, keepNewest-1);
+        const int firstFresh=count-freshSize;
+
+        QSet<QString> pinned=keepSet;
+        for(int i=firstFresh; i<count; ++i)
+            pinned.insert(fileCommits.at(i).trimmed());
+
+        const QSet<QString> smartDrop=smartDropSet(dir, file, fileCommits, pinned,
+                                                    keepNewest, freshSize);
+
+        for(const QString &rev : fileCommits)
+        {
+            const QString hash=rev.trimmed();
+
+            if(!smartDrop.contains(hash))
+                keepSet.insert(hash);
+        }
+    }
+
+    // Сносимые: все коммиты файла минус хранимые
+    QSet<QString> dropSet;
+    for(const QString &rev : fileCommits)
+    {
+        const QString hash=rev.trimmed();
+
+        if(!keepSet.contains(hash))
+            dropSet.insert(hash);
+    }
+
+    if(dropSet.isEmpty())
+        return true;
+
+    // База переигрывания: родитель старейшего сносимого.
+    // Существует всегда: genesis хранится, сносится только середина
+    QString oldestDropped;
+    for(const QString &rev : fileCommits)
+    {
+        if(dropSet.contains(rev.trimmed()))
+        {
+            oldestDropped=rev.trimmed();
+            break;
+        }
+    }
+
+    QString baseOut;
+    if(run(dir, QStringList() << QStringLiteral("rev-parse")
+                              << oldestDropped+QStringLiteral("^"), &baseOut)!=0 ||
+       baseOut.trimmed().isEmpty())
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot find replay base");
+        return false;
+    }
+    const QString base=baseOut.trimmed();
+
+    // Диапазон переигрывания от старых к новым
+    QString rangeLog;
+    if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("--reverse")
+                              << QStringLiteral("--format=%H")
+                              << base+QStringLiteral("..HEAD"), &rangeLog)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot list journal");
+        return false;
+    }
+
+    if(run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                              << base)!=0)
+    {
+        if(errorMessage)
+            *errorMessage=QStringLiteral("Cannot reset to replay base");
+        return false;
+    }
+
+    // Переигрывание: сносимые пропускаются, хранимые файловые
+    // переносятся checkout+commit с метаданными (diff на сдвинутой
+    // базе мог не лечь), чужие обычным cherry-pick
+    for(const QString &revRaw : rangeLog.split(QStringLiteral("\n"), Qt::SkipEmptyParts))
+    {
+        const QString rev=revRaw.trimmed();
+
+        if(dropSet.contains(rev))
+            continue;
+
+        if(keepSet.contains(rev))
+        {
+            // Метаданные оригинала: автор, почта, дата, тема, тело.
+            // Сепаратор \x1f: NUL (%x00) режется QString-конверсией
+            QString metaOut;
+            if(run(dir, QStringList() << QStringLiteral("log") << QStringLiteral("-1")
+                                      << QStringLiteral("--format=%an%x1f%ae%x1f%aI%x1f%s%x1f%b")
+                                      << rev, &metaOut)!=0)
+            {
+                run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                       << origHead);
+
+                if(errorMessage)
+                    *errorMessage=QStringLiteral("Cannot read commit metadata, restored");
+                return false;
+            }
+
+            const QStringList meta=metaOut.split(QLatin1Char('\x1f'));
+            const QString author=(meta.size()>0 ? meta.at(0) : QStringLiteral("MyTetra")).trimmed();
+            const QString email=(meta.size()>1 ? meta.at(1) : QStringLiteral("mytetra@local")).trimmed();
+            const QString date=(meta.size()>2 ? meta.at(2) : QString()).trimmed();
+            QString message=(meta.size()>3 ? meta.at(3) : QString());
+
+            // Тело склеивается обратно: теоретический \x1f внутри
+            // тела при склейке восстанавливается
+            QString body;
+            for(int i=4; i<meta.size(); ++i)
+            {
+                if(i>4)
+                    body+=QLatin1Char('\x1f');
+                body+=meta.at(i);
+            }
+
+            if(!body.trimmed().isEmpty())
+                message+=QStringLiteral("\n\n")+body;
+
+            if(run(dir, QStringList() << QStringLiteral("checkout")
+                                      << rev << QStringLiteral("--") << file)!=0)
+            {
+                run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                       << origHead);
+
+                if(errorMessage)
+                    *errorMessage=QStringLiteral("Cannot restore file version, restored");
+                return false;
+            }
+
+            // Пустой перенос: содержимое совпало с текущим деревом
+            // (дубликат через версию). Коммитить нечего, версия
+            // поглощается без ошибки
+            if(run(dir, QStringList() << QStringLiteral("diff") << QStringLiteral("--quiet")
+                                      << QStringLiteral("HEAD") << QStringLiteral("--")
+                                      << file)==0)
+                continue;
+
+            QStringList commitArgs;
+            commitArgs << QStringLiteral("-c") << QStringLiteral("user.name=MyTetra")
+                       << QStringLiteral("-c") << QStringLiteral("user.email=mytetra@local")
+                       << QStringLiteral("commit")
+                       << QStringLiteral("--author") << author+QStringLiteral(" <")+email+QStringLiteral(">");
+
+            if(!date.isEmpty())
+                commitArgs << QStringLiteral("--date") << date;
+
+            commitArgs << QStringLiteral("-m") << message;
+
+            QString commitErr;
+            if(run(dir, commitArgs, nullptr, &commitErr)!=0)
+            {
+                run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                       << origHead);
+
+                if(errorMessage)
+                    *errorMessage=QStringLiteral("Cannot replay file version, restored: ")+commitErr.trimmed();
+
+                return false;
+            }
+
+            continue;
+        }
+
+        QString err;
+        if(run(dir, QStringList() << QStringLiteral("cherry-pick") << rev,
+               nullptr, &err)!=0)
+        {
+            run(dir, QStringList() << QStringLiteral("cherry-pick")
+                                   << QStringLiteral("--abort"));
+            run(dir, QStringList() << QStringLiteral("reset") << QStringLiteral("--hard")
+                                   << origHead);
+
+            if(errorMessage)
+                *errorMessage=QStringLiteral("Cannot replay journal, restored: ")+err.trimmed();
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+QList<QByteArray> GitHelper::readBlobs(const QString &dir,
+                                       const QStringList &revs)
+{
+    QList<QByteArray> result;
+
+    if(!isAvailable() || revs.isEmpty())
+        return result;
+
+    QByteArray input;
+    for(const QString &rev : revs)
+        input+=rev.toLatin1()+QByteArrayLiteral("\n");
+
+    // Сырой QProcess: QString-конверсия run() режет NUL-байты,
+    // а содержимое обязано дойти побайтово
+    QProcess git;
+    git.setWorkingDirectory(dir);
+    git.start(QStringLiteral("git"),
+              QStringList() << QStringLiteral("cat-file") << QStringLiteral("--batch"));
+
+    if(!git.waitForStarted(10000))
+        return QList<QByteArray>();
+
+    git.write(input);
+    git.closeWriteChannel();
+
+    if(!git.waitForFinished(60000) || git.exitCode()!=0)
+        return QList<QByteArray>();
+
+    const QByteArray out=git.readAllStandardOutput();
+
+    // Разбор: "<blob-hash> blob <size>\n" + ровно size байт + "\n".
+    // Порядок гарантирован протоколом batch (строго по запросам),
+    // имя в заголовке это резолвленный хеш, а не строка запроса
+    int pos=0;
+    for(int n=0; n<revs.size(); ++n)
+    {
+        const int eol=out.indexOf('\n', pos);
+
+        if(eol<0)
+            return QList<QByteArray>();
+
+        const QList<QByteArray> header=out.mid(pos, eol-pos).split(' ');
+
+        if(header.size()<3 || header.at(1)!=QByteArrayLiteral("blob"))
+            return QList<QByteArray>();
+
+        bool ok=false;
+        const int size=header.at(2).toInt(&ok);
+
+        if(!ok || size<0 || eol+1+size>out.size())
+            return QList<QByteArray>();
+
+        result.append(out.mid(eol+1, size));
+        pos=eol+1+size;
+
+        // Завершающий перенос после содержимого
+        if(pos<out.size() && out.at(pos)=='\n')
+            ++pos;
+    }
+
+    if(result.size()!=revs.size())
+        return QList<QByteArray>();
+
+    return result;
+}
+
+
+GitHelper::StepDirection GitHelper::stepDirection(const QSet<QString> &before,
+                                                  const QSet<QString> &after)
+{
+    bool added=false;
+    bool removed=false;
+
+    for(const QString &line : after)
+    {
+        if(!before.contains(line))
+        {
+            added=true;
+            break;
+        }
+    }
+
+    for(const QString &line : before)
+    {
+        if(!after.contains(line))
+        {
+            removed=true;
+            break;
+        }
+    }
+
+    if(added && !removed)
+        return StepAdd;
+
+    if(!added && removed)
+        return StepDelete;
+
+    return StepMixed;
+}
+
+
+QSet<QString> GitHelper::smartDropSet(const QString &dir, const QString &file,
+                                      const QStringList &fileCommits,
+                                      const QSet<QString> &pinned,
+                                      int keepNewest, int freshSize)
+{
+    Q_UNUSED(freshSize)
+
+    const int count=fileCommits.size();
+
+    // Кандидаты: все кроме пинов (genesis, свежая зона)
+    QList<int> candidates;
+    for(int i=0; i<count; ++i)
+    {
+        if(!pinned.contains(fileCommits.at(i).trimmed()))
+            candidates.append(i);
+    }
+
+    if(candidates.isEmpty())
+        return QSet<QString>();
+
+    // Направления шагов по содержимому одним процессом.
+    // Облом в любом месте: тупой отбор (все кандидаты под снос)
+    QSet<QString> dropSet;
+    QStringList blobRevs;
+    for(int i=0; i<count; ++i)
+        blobRevs << fileCommits.at(i).trimmed()+QStringLiteral(":")+file;
+
+    const QList<QByteArray> blobs=readBlobs(dir, blobRevs);
+
+    if(blobs.size()!=count)
+    {
+        for(int i : candidates)
+            dropSet.insert(fileCommits.at(i).trimmed());
+
+        return dropSet;
+    }
+
+    QList<QSet<QString>> lineSets;
+    for(const QByteArray &blob : blobs)
+    {
+        QSet<QString> lines;
+        for(const QByteArray &line : blob.split('\n'))
+            lines.insert(QString::fromUtf8(line));
+
+        lineSets.append(lines);
+    }
+
+    // Класс каждого шага между соседними версиями
+    QList<StepDirection> stepClass;
+    for(int i=0; i+1<count; ++i)
+        stepClass.append(stepDirection(lineSets.at(i), lineSets.at(i+1)));
+
+    // Границы серий: версии на стыке направлений хранятся
+    // (точки разворота информативнее середины серий)
+    QSet<int> protectedIdx;
+    for(int i=1; i+1<count; ++i)
+    {
+        if(stepClass.at(i-1)!=stepClass.at(i))
+            protectedIdx.insert(i);
+    }
+
+    // Фаза A: длинные серии (10+ шагов) прореживаются:
+    // внутри хранится каждая 10-я версия
+    {
+        int runStart=0;
+
+        for(int s=1; s<=stepClass.size(); ++s)
+        {
+            if(s<stepClass.size() && stepClass.at(s)==stepClass.at(runStart))
+                continue;
+
+            // Серия шагов [runStart..s): версии [runStart..s].
+            // Внутри длинной хранится каждая 10-я, остальные сносимы
+            if(s-runStart>=10)
+            {
+                for(int j=runStart+1; j<s; ++j)
+                {
+                    if((j-runStart)%10==0)
+                        protectedIdx.insert(j);
+                }
+            }
+
+            runStart=s;
+        }
+    }
+
+    // Фаза B: сколько надо снести до бюджета, старейшими
+    // внутренними (не границы, не пины)
+    int need=count-keepNewest;
+
+    for(int i=0; i<count && need>0; ++i)
+    {
+        if(pinned.contains(fileCommits.at(i).trimmed()))
+            continue;
+
+        if(protectedIdx.contains(i))
+            continue;
+
+        dropSet.insert(fileCommits.at(i).trimmed());
+        --need;
+    }
+
+    // Последний рубеж: склеивать нечего (все точки разворота),
+    // а бюджет превышен. Сносится старейшее кроме genesis,
+    // иначе лимит недостижим в принципе
+    if(dropSet.isEmpty() && need>0)
+    {
+        for(int i=1; i<count && need>0; ++i)
+        {
+            dropSet.insert(fileCommits.at(i).trimmed());
+            --need;
+        }
+    }
+
+    return dropSet;
 }

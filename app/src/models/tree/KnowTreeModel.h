@@ -20,6 +20,23 @@ class ClipboardBranch;
 class Record;
 class QXmlStreamWriter;
 
+// Легкий снимок для выбора заметки: имя, ветка, метки.
+// Один проход по дереву, только поля из памяти, без чтения файлов.
+// locked = ветка под закрытым шифром (в выбор не попадает).
+// Нижние регистры предподсчитаны чтобы фильтр не lower()ил на кейстрок
+struct NoteIndexEntry
+{
+  QString id;
+  QString name;
+  QString branch;
+  QString branchPath;
+  QString tags;
+  QString nameLower;
+  QString branchLower;
+  QString tagsLower;
+  bool locked=false;
+};
+
 // Одна строка детализации статистики: откуда что посчиталось
 struct BaseStatRow
 {
@@ -168,6 +185,13 @@ public:
 
     //! Получение списка всех идентификаторов записей в базе
     QSharedPointer< QSet<QString> > getAllRecordsIdList() const;
+
+    //! Плоский снимок всех записей для быстрого фильтра (выбор
+    //! заметки,go to). Один проход, без чтения файлов и повторных
+    //! поисков по дереву: тормозной вариант "список id + getRecord
+    //! + getRecordPath на каждую запись на каждый кейстрок" вешал
+    //! приложение на тысячах заметок
+    QList<NoteIndexEntry> getNoteIndex(void);
 
     void deleteItemsByModelIndexList(QModelIndexList &selectItems);
 

@@ -781,6 +781,42 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>History of visited notes</source>
         <translation>История просмотренных записей</translation>
     </message>
+    <message>
+        <source>Note change history</source>
+        <translation>История изменений заметки</translation>
+    </message>
+    <message>
+        <source>Keep versions:</source>
+        <translation>Хранить версий:</translation>
+    </message>
+    <message>
+        <source>Enable note history (git must be installed)</source>
+        <translation>Включить историю заметок (нужен установленный git)</translation>
+    </message>
+    <message>
+        <source>What to do on limit excess:</source>
+        <translation>Что делать при превышении лимита:</translation>
+    </message>
+    <message>
+        <source>Delete oldest entries</source>
+        <translation>Удалять самые старые записи</translation>
+    </message>
+    <message>
+        <source>Merge similar neighbors</source>
+        <translation>Объединять похожие записи рядом</translation>
+    </message>
+    <message>
+        <source>Compress every 10 entries into one except the latest 10</source>
+        <translation>Сжимать каждые 10 записей в одну, исключая последние 10</translation>
+    </message>
+    <message>
+        <source>Cannot enable note history:
+git is not installed.
+Linux: install the git package. Windows: https://git-scm.com.</source>
+        <translation>Невозможно включить историю заметок:
+git не установлен.
+Linux: поставьте пакет git. Windows: https://git-scm.com.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Keyboard</name>
@@ -4794,6 +4830,12 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Change note background color...</source>
         <translation>Изменить цвет фона заметки...</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1440"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2083"/>
+        <source>Configure theme...</source>
+        <translation>Настроить тему...</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -5664,6 +5706,12 @@ Please report about this problem to the developers.</source>
 Linux: install the git package. Windows: https://git-scm.com.</source>
         <translation>Невозможно показать историю: git не установлен.
 Linux: поставьте пакет git. Windows: https://git-scm.com.</translation>
+    </message>
+    <message>
+        <source>Note history is disabled.
+Enable it in Settings on the History page.</source>
+        <translation>История заметок отключена.
+Включите её в настройках на странице История.</translation>
     </message>
 </context>
 <context>
@@ -6881,6 +6929,22 @@ Linux: поставьте пакет git. Windows: https://git-scm.com.</transla
         <source>Revoke branch publication to trash</source>
         <translation>Отозвать публикацию ветки в корзину</translation>
     </message>
+    <message>
+        <source>Rename voice note</source>
+        <translation>Переименовать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Rename voice file under cursor</source>
+        <translation>Переименовать файл голосовой заметки под курсором</translation>
+    </message>
+    <message>
+        <source>Move voice note to another note</source>
+        <translation>Переместить голосовую заметку в другую заметку</translation>
+    </message>
+    <message>
+        <source>Move voice file and link into another note</source>
+        <translation>Переместить файл и ссылку голосовой заметки в другую заметку</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -7761,6 +7825,82 @@ Git-история в общем каталоге будет расти с ка�
         <source>Delete voice note %1? Link text will be removed, file moved to trash.</source>
         <translation>Удалить голосовую заметку %1? Текст ссылки будет удалён, файл перемещён в корзину.</translation>
     </message>
+    <message>
+        <source>Rename voice note</source>
+        <translation>Переименовать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>New file name:</source>
+        <translation>Новое имя файла:</translation>
+    </message>
+    <message>
+        <source>Not a voice link</source>
+        <translation>Не голосовая ссылка</translation>
+    </message>
+    <message>
+        <source>Empty file name</source>
+        <translation>Пустое имя файла</translation>
+    </message>
+    <message>
+        <source>File already exists: %1</source>
+        <translation>Файл уже существует: %1</translation>
+    </message>
+    <message>
+        <source>Can not rename voice file: %1</source>
+        <translation>Не удалось переименовать файл: %1</translation>
+    </message>
+    <message>
+        <source>Renamed to %1</source>
+        <translation>Переименовано в %1</translation>
+    </message>
+    <message>
+        <source>Move voice note</source>
+        <translation>Переместить голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Move voice note %1 to note "%2"? Link will be removed from current note.</source>
+        <translation>Переместить голосовую заметку %1 в заметку "%2"? Ссылка будет удалена из текущей заметки.</translation>
+    </message>
+    <message>
+        <source>Target note directory not found</source>
+        <translation>Каталог целевой заметки не найден</translation>
+    </message>
+    <message>
+        <source>No free file name in target note</source>
+        <translation>Нет свободного имени файла в целевой заметке</translation>
+    </message>
+    <message>
+        <source>Can not move voice file: %1</source>
+        <translation>Не удалось переместить файл: %1</translation>
+    </message>
+    <message>
+        <source>Target note text file unknown</source>
+        <translation>Файл текста целевой заметки неизвестен</translation>
+    </message>
+    <message>
+        <source>Can not read target note: %1</source>
+        <translation>Не удалось прочитать целевую заметку: %1</translation>
+    </message>
+    <message>
+        <source>Can not write target note: %1</source>
+        <translation>Не удалось записать целевую заметку: %1</translation>
+    </message>
+    <message>
+        <source>Notes tree unavailable</source>
+        <translation>Дерево заметок недоступно</translation>
+    </message>
+    <message>
+        <source>Target note not found</source>
+        <translation>Целевая заметка не найдена</translation>
+    </message>
+    <message>
+        <source>Can not move into encrypted note</source>
+        <translation>Нельзя переместить в зашифрованную заметку</translation>
+    </message>
+    <message>
+        <source>Moved to "%1"</source>
+        <translation>Перемещено в "%1"</translation>
+    </message>
 </context>
 <context>
     <name>VoicePlayerDialog</name>
@@ -7792,6 +7932,16 @@ Git-история в общем каталоге будет расти с ка�
 <context>
     <name>VoiceRecorderDialog</name>
     <message>
+        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="435"/>
+        <source>Opus, %1 Hz, %2 kbit/s</source>
+        <translation>Opus, %1 Гц, %2 кбит/с</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/voiceNote/VoiceRecorderDialog.cpp" line="402"/>
+        <source>MP3, %1 Hz</source>
+        <translation>MP3, %1 Гц</translation>
+    </message>
+    <message>
         <source>Voice note</source>
         <translation>Голосовая заметка</translation>
     </message>
@@ -7814,34 +7964,6 @@ Git-история в общем каталоге будет расти с ка�
     <message>
         <source>Format:</source>
         <translation>Формат:</translation>
-    </message>
-    <message>
-        <source>Quality:</source>
-        <translation>Качество:</translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation>Низкое</translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation>Среднее</translation>
-    </message>
-    <message>
-        <source>High</source>
-        <translation>Высокое</translation>
-    </message>
-    <message>
-        <source>Opus, %1 kbit/s, %2 Hz</source>
-        <translation>Opus, %1 кбит/с, %2 Гц</translation>
-    </message>
-    <message>
-        <source>MP3, %1 kbit/s, %2 Hz</source>
-        <translation>MP3, %1 кбит/с, %2 Гц</translation>
-    </message>
-    <message>
-        <source>WAV, %1 Hz</source>
-        <translation>WAV, %1 Гц</translation>
     </message>
     <message>
         <source>File name:</source>
@@ -7870,10 +7992,6 @@ Git-история в общем каталоге будет расти с ка�
     <message>
         <source>No supported audio format</source>
         <translation>Нет поддерживаемого аудиоформата</translation>
-    </message>
-    <message>
-        <source>Format: WAV (Opus and MP3 unsupported)</source>
-        <translation>Формат: WAV (Opus и MP3 не поддерживаются)</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -7913,22 +8031,6 @@ Git-история в общем каталоге будет расти с ка�
     <message>
         <source>MP3 (.mp3)</source>
         <translation>MP3 (.mp3)</translation>
-    </message>
-    <message>
-        <source>Default quality</source>
-        <translation>Качество по умолчанию</translation>
-    </message>
-    <message>
-        <source>Low</source>
-        <translation>Низкое</translation>
-    </message>
-    <message>
-        <source>Medium</source>
-        <translation>Среднее</translation>
-    </message>
-    <message>
-        <source>High</source>
-        <translation>Высокое</translation>
     </message>
 </context>
 <context>

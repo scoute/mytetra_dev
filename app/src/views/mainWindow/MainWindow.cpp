@@ -952,6 +952,72 @@ void MainWindow::messageHandler(QString message)
         flashMcpWrite();
     }
 
+    // Пакетное применение от внешнего AI: те же applyXxx что
+    // одиночки (через общий диспетчер), но сейв и вспышка один раз
+    // на весь пакет. Побочки одиночек повторяются: clearAll редактора
+    // перед каждым moveNote, закрытие открепленных окон собирается
+    // и шлется разово. Стоп на первой ошибке: пакет неатомарен,
+    // примененное сохраняется. import/export в пакет не входят
+    else if(command=="mcpApplyBatch")
+    {
+        if(mytetraConfig.isGlobalReadOnly())
+            return;
+
+        QJsonObject args=parseMcpCommandArgs(message);
+
+        if(args.isEmpty())
+            return;
+
+        QJsonArray operations=args.value("operations").toArray();
+
+        if(operations.isEmpty())
+            return;
+
+        QSet<QString> closeWindows;
+        bool needSave=false;
+
+        for(const QJsonValue &opValue : operations)
+        {
+            const QJsonObject op=opValue.toObject();
+            const QString tool=op.value("tool").toString();
+            const QJsonObject opArgs=op.value("arguments").toObject();
+
+            if(tool==QStringLiteral("import_branch") ||
+               tool==QStringLiteral("export_branch"))
+                break;
+
+            // Как в одиночке: редактор может держать указатель внутрь
+            // таблицы-источника, его состояние сбрасывается до переноса
+            if(tool==QStringLiteral("move_note"))
+                find_object<MetaEditor>("editorScreen")->clearAll();
+
+            // Как в одиночке: открепленные окна удаляемой записи
+            if(tool==QStringLiteral("delete_note"))
+                closeWindows.insert(opArgs.value("note_id").toString());
+
+            QString error;
+            QJsonObject dummy;
+
+            if(!McpTools::applyBatchOp(treeScreen->knowTreeModel,
+                                       tool, opArgs, dummy, error))
+                break;
+
+            // Избранное сохраняет само (синглетон/сайдкар), остальное
+            // требует сейва модели
+            if(tool!=QStringLiteral("favorite_note") &&
+               tool!=QStringLiteral("unfavorite_note"))
+                needSave=true;
+        }
+
+        if(!closeWindows.isEmpty())
+            emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(closeWindows);
+
+        if(needSave)
+            treeScreen->knowTreeModel->save();
+
+        flashMcpWrite();
+    }
+
     // Присутствие MCP: не правки, только Hello/Bye. В read-only тоже
     // работает — баннер предупреждает, ничего не меняя
     else if(command=="mcpHello")

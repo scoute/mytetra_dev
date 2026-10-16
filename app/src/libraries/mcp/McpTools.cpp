@@ -2359,6 +2359,166 @@ QJsonObject McpTools::importBranchDirect(const QString &parentId,
 }
 
 
+bool McpTools::applyBatchOp(KnowTreeModel *model,
+                                const QString &tool,
+                                const QJsonObject &args,
+                                QJsonObject &result,
+                                QString &error)
+{
+  result=QJsonObject();
+
+  if(tool==QStringLiteral("create_branch"))
+  {
+    result=applyCreateBranch(model,
+                             args.value("parent_id").toString(),
+                             args.value("id").toString(),
+                             args.value("name").toString(),
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("create_note"))
+  {
+    result=applyCreateNote(model,
+                           args.value("branch_id").toString(),
+                           args.value("id").toString(),
+                           args.value("name").toString(),
+                           args.value("html").toString(),
+                           args.value("tags").toString(),
+                           error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("update_note"))
+  {
+    QStringList updatedFields;
+
+    if(!applyUpdateNote(model,
+                        args.value("note_id").toString(),
+                        args.value("has_name").toBool(false),
+                        args.value("name").toString(),
+                        args.value("has_html").toBool(false),
+                        args.value("html").toString(),
+                        args.value("has_tags").toBool(false),
+                        args.value("tags").toString(),
+                        error,
+                        updatedFields))
+      return false;
+
+    result["id"]=args.value("note_id").toString();
+    result["updated_fields"]=QJsonArray::fromStringList(updatedFields);
+
+    return true;
+  }
+
+  if(tool==QStringLiteral("delete_note"))
+  {
+    if(!applyDeleteNote(model,
+                        args.value("note_id").toString(),
+                        error))
+      return false;
+
+    result["id"]=args.value("note_id").toString();
+    result["deleted"]=true;
+
+    return true;
+  }
+
+  if(tool==QStringLiteral("delete_branch"))
+  {
+    result=applyDeleteBranch(model,
+                             args.value("branch_id").toString(),
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("rename_branch"))
+  {
+    result=applyRenameBranch(model,
+                             args.value("branch_id").toString(),
+                             args.value("name").toString(),
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("move_branch"))
+  {
+    result=applyMoveBranch(model,
+                           args.value("branch_id").toString(),
+                           args.value("target_id").toString(),
+                           args.value("as_child").toBool(true),
+                           error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("move_note"))
+  {
+    result=applyMoveNote(model,
+                         args.value("note_id").toString(),
+                         args.value("branch_id").toString(),
+                         error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("favorite_note"))
+  {
+    result=applyFavoriteNote(model,
+                             args.value("note_id").toString(),
+                             true,
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("unfavorite_note"))
+  {
+    result=applyFavoriteNote(model,
+                             args.value("note_id").toString(),
+                             false,
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("rename_tag"))
+  {
+    int renamed=0;
+    int skipped=0;
+
+    if(!applyRenameTag(model,
+                       args.value("old").toString(),
+                       args.value("new").toString(),
+                       error, renamed, skipped))
+      return false;
+
+    result["renamed_tag"]=args.value("old").toString().trimmed();
+    result["renamed"]=renamed;
+    result["skipped"]=skipped;
+
+    return true;
+  }
+
+  if(tool==QStringLiteral("delete_tag"))
+  {
+    int cleared=0;
+    int skipped=0;
+
+    if(!applyDeleteTag(model,
+                       args.value("tag").toString(),
+                       error, cleared, skipped))
+      return false;
+
+    result["deleted_tag"]=args.value("tag").toString().trimmed();
+    result["cleared"]=cleared;
+    result["skipped"]=skipped;
+
+    return true;
+  }
+
+  error="Unsupported in batch: "+tool;
+
+  return false;
+}
+
+
 QJsonObject McpTools::debugInfo(void)
 {
   QJsonObject result;

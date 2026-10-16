@@ -86,7 +86,7 @@ cp -r "${WIN_DIR}/plugins" "${OUT_DIR}/"
 # перемешаться с виндовыми. Имена частично совпадают по смыслу
 # (platforms есть у обоих), поэтому plugins-linux отдельно
 cp -r "${LINUX_DIR}/lib/." "${OUT_DIR}/lib/"
-for plugdir in platforms imageformats iconengines xcbglintegrations; do
+for plugdir in platforms imageformats iconengines mediaservice audio xcbglintegrations; do
     if [[ -d "${LINUX_DIR}/${plugdir}" ]]; then
         cp -r "${LINUX_DIR}/${plugdir}" "${OUT_DIR}/plugins-linux/"
     elif [[ -d "${LINUX_DIR}/plugins/${plugdir}" ]]; then

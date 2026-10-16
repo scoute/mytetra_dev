@@ -186,6 +186,9 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
      toolName=="list_attachments")
     return true;
 
+  if(toolName=="apply_batch")
+    return mode==McpMode::ReadWrite || mode==McpMode::ReadWriteDelete;
+
   if(toolName=="create_branch" || toolName=="create_note" ||
      toolName=="update_note" ||
      toolName=="rename_branch" || toolName=="move_branch" ||
@@ -213,6 +216,7 @@ static bool isKnownTool(const QString &toolName)
     "rename_branch", "move_branch", "move_note",
     "favorite_note", "unfavorite_note",
     "export_branch", "import_branch",
+    "apply_batch",
     "rename_tag", "delete_tag",
     "delete_note", "delete_branch"
   };
@@ -235,6 +239,7 @@ static bool isWriteTool(const QString &toolName)
          toolName=="move_note" ||
          toolName=="favorite_note" || toolName=="unfavorite_note" ||
          toolName=="export_branch" || toolName=="import_branch" ||
+         toolName=="apply_batch" ||
          toolName=="rename_tag" || toolName=="delete_tag" ||
          toolName=="delete_note" || toolName=="delete_branch";
 }
@@ -428,6 +433,26 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "delete_branch",
       "Delete a branch subtree to trash. No confirmation beyond this call.",
+      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject operations;
+    operations["type"]="array";
+    operations["description"]="Operations in order: {tool, arguments}. "
+      "Same argument shapes as single tools; creates get server ids. "
+      "No intra-batch references: later ops can not use ids created "
+      "earlier in the same batch. import/export unsupported.";
+    operations["maxItems"]=200;
+    properties["operations"]=operations;
+    QJsonArray required;
+    required.append("operations");
+    tools.append(toolDescription(
+      "apply_batch",
+      "Apply many writes at once: one GUI roundtrip, one save. "
+      "Not atomic: stops at first error, applied prefix persists. "
+      "Per-operation results in order.",
       objectSchema(properties, required)));
   }
 
@@ -1256,6 +1281,10 @@ public:
       {
         result=writeDeleteBranch(arguments.value("branch_id").toString(), toolError);
       }
+      else if(toolName=="apply_batch")
+      {
+        result=writeApplyBatch(arguments.value("operations").toArray(), toolError);
+      }
       else
       {
         known=false;
@@ -1341,6 +1370,7 @@ private:
                               QString &toolError);
   QJsonObject writeDeleteNote(const QString &id, QString &toolError);
   QJsonObject writeDeleteBranch(const QString &id, QString &toolError);
+  QJsonObject writeApplyBatch(const QJsonArray &operations, QString &toolError);
   QJsonObject writeRenameBranch(const QString &id, const QString &name,
                                 QString &toolError);
   QJsonObject writeMoveBranch(const QString &id, const QString &targetId,
@@ -2608,6 +2638,418 @@ QJsonObject McpSession::writeDeleteBranch(const QString &id, QString &toolError)
 
   result=deleted;
   result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+// Проверка одной пакетной операции по свежему состоянию модели.
+// Семантика по состоянию, а не по факту исполнения: ok значит
+// конечное состояние совпало с желаемым
+static bool verifyBatchOp(KnowTreeModel &model,
+                          const QString &tool,
+                          const QJsonObject &args,
+                          QJsonObject &detail)
+{
+  detail=QJsonObject();
+
+  if(tool==QStringLiteral("create_branch"))
+  {
+    TreeItem *item=model.getItemById(args.value("id").toString());
+    const bool ok=(item!=nullptr &&
+                   item->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok)
+      detail["id"]=args.value("id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("create_note"))
+  {
+    Record *record=model.isRecordIdExists(args.value("id").toString()) ?
+                   model.getRecord(args.value("id").toString()) : nullptr;
+    const bool ok=(record!=nullptr &&
+                   record->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok)
+      detail["id"]=args.value("id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("update_note"))
+  {
+    Record *record=model.isRecordIdExists(args.value("note_id").toString()) ?
+                   model.getRecord(args.value("note_id").toString()) : nullptr;
+    bool ok=(record!=nullptr);
+
+    if(ok && args.value("has_name").toBool(false))
+      ok=(record->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok && args.value("has_tags").toBool(false))
+      ok=(record->getField("tags")==args.value("tags").toString());
+
+    if(ok)
+      detail["id"]=args.value("note_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("delete_note"))
+  {
+    const bool ok=!model.isRecordIdExists(args.value("note_id").toString());
+
+    if(ok)
+      detail["id"]=args.value("note_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("delete_branch"))
+  {
+    const bool ok=(model.getItemById(args.value("branch_id").toString())==nullptr);
+
+    if(ok)
+      detail["id"]=args.value("branch_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("rename_branch"))
+  {
+    TreeItem *item=model.getItemById(args.value("branch_id").toString());
+    const bool ok=(item!=nullptr &&
+                   item->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok)
+      detail["id"]=args.value("branch_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("move_branch"))
+  {
+    TreeItem *item=model.getItemById(args.value("branch_id").toString());
+
+    if(item==nullptr)
+      return false;
+
+    QStringList path=item->getPath();
+    const QString actual=(path.size()>=2) ? path.at(path.size()-2) : QString();
+    const QString expect=expectedMoveParent(model,
+                                            args.value("target_id").toString(),
+                                            args.value("as_child").toBool(true));
+    const bool ok=(actual==expect);
+
+    if(ok)
+      detail["id"]=args.value("branch_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("move_note"))
+  {
+    QStringList path=model.getRecordPath(args.value("note_id").toString());
+    const QString actual=path.isEmpty() ? QString() : path.last();
+    const bool ok=(!path.isEmpty() && actual==args.value("branch_id").toString());
+
+    if(ok)
+      detail["id"]=args.value("note_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("favorite_note") || tool==QStringLiteral("unfavorite_note"))
+  {
+    const bool starred=(tool==QStringLiteral("favorite_note"));
+    const QString id=args.value("note_id").toString();
+    bool ok=false;
+
+    if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+    {
+      Record *record=model.isRecordIdExists(id) ? model.getRecord(id) : nullptr;
+      ok=(record!=nullptr && (record->getField("favorite")=="1")==starred);
+    }
+    else
+      ok=(McpTools::sidecarFavoriteIds().contains(id)==starred);
+
+    if(ok)
+      detail["id"]=id;
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("rename_tag"))
+  {
+    const bool ok=(McpTools::countTagNotes(&model,
+        args.value("old").toString().trimmed().toLower())==0);
+
+    if(ok)
+      detail["renamed_tag"]=args.value("old").toString().trimmed();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("delete_tag"))
+  {
+    const bool ok=(McpTools::countTagNotes(&model,
+        args.value("tag").toString().trimmed().toLower())==0);
+
+    if(ok)
+      detail["deleted_tag"]=args.value("tag").toString().trimmed();
+
+    return ok;
+  }
+
+  return false;
+}
+
+
+static const int MCP_BATCH_MAX_OPS=200;
+
+static const QSet<QString> &mcpBatchableTools(void)
+{
+  static const QSet<QString> batchable=QSet<QString>()
+      << QStringLiteral("create_branch") << QStringLiteral("create_note")
+      << QStringLiteral("update_note")
+      << QStringLiteral("delete_note") << QStringLiteral("delete_branch")
+      << QStringLiteral("rename_branch") << QStringLiteral("move_branch")
+      << QStringLiteral("move_note")
+      << QStringLiteral("favorite_note") << QStringLiteral("unfavorite_note")
+      << QStringLiteral("rename_tag") << QStringLiteral("delete_tag");
+
+  return batchable;
+}
+
+
+QJsonObject McpSession::writeApplyBatch(const QJsonArray &operations,
+                                        QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(operations.isEmpty())
+  {
+    toolError="Empty operations";
+
+    return result;
+  }
+
+  if(operations.size()>MCP_BATCH_MAX_OPS)
+  {
+    toolError="Too many operations (max 200)";
+
+    return result;
+  }
+
+  struct BatchOp
+  {
+    QString tool;
+    QJsonObject args;
+  };
+
+  QList<BatchOp> normalized;
+  QSet<QString> batchIds;
+
+  // Нормализация без касания модели: свежие id, html из text/format,
+  // флаги has_*. Структурные отказы валят весь пакет до исполнения
+  for(const QJsonValue &opValue : operations)
+  {
+    if(!opValue.isObject())
+    {
+      toolError="Each operation must be {tool, arguments}";
+
+      return result;
+    }
+
+    const QJsonObject op=opValue.toObject();
+    const QString tool=op.value("tool").toString();
+    const QJsonObject opArgs=op.value("arguments").toObject();
+
+    if(!mcpBatchableTools().contains(tool))
+    {
+      toolError="Unsupported in batch: "+tool;
+
+      return result;
+    }
+
+    if((tool==QStringLiteral("delete_note") ||
+        tool==QStringLiteral("delete_branch") ||
+        tool==QStringLiteral("delete_tag")) &&
+       m_mode!=McpMode::ReadWriteDelete)
+    {
+      toolError="Batch contains delete, need delete mode";
+
+      return result;
+    }
+
+    QJsonObject args=opArgs;
+
+    if(tool==QStringLiteral("create_branch") || tool==QStringLiteral("create_note"))
+    {
+      QString id;
+
+      if(tool==QStringLiteral("create_branch"))
+        do { id=freshBranchId(); } while(batchIds.contains(id));
+      else
+        do { id=freshNoteId(); } while(batchIds.contains(id));
+
+      batchIds.insert(id);
+      args["id"]=id;
+    }
+
+    if(tool==QStringLiteral("create_note") || tool==QStringLiteral("update_note"))
+    {
+      const bool hasText=args.contains("text");
+      QString format=args.value("format").toString();
+
+      if(format.isEmpty())
+        format="text";
+
+      if(hasText && format!="text" && format!="html")
+      {
+        toolError="Bad format, use text or html";
+
+        return result;
+      }
+
+      if(tool==QStringLiteral("create_note"))
+      {
+        const QString text=args.value("text").toString();
+        args["html"]=(format=="html") ? text : McpTools::plainToHtml(text);
+      }
+      else
+      {
+        args["has_name"]=args.contains("name");
+        args["has_html"]=hasText;
+        args["has_tags"]=args.contains("tags");
+
+        const QString text=args.value("text").toString();
+        args["html"]=(format=="html") ? text : McpTools::plainToHtml(text);
+      }
+    }
+
+    normalized.append({tool, args});
+  }
+
+  // Применение: один вызов GUI либо прямой цикл, сейв один раз.
+  // Проверяются эффективные аргументы: headless-вставка записей
+  // заменяет id на свежий, фактический возвращается в результате
+  // Эффективные аргументы примененных операций (по индексу
+  // в normalized): фактические id после headless-замен
+  QList<QJsonObject> effectiveArgs;
+  bool needSave=false;
+  bool delivered=false;
+
+  {
+    QJsonObject payload;
+    QJsonArray normOps;
+
+    for(const BatchOp &op : normalized)
+    {
+      QJsonObject item;
+      item["tool"]=op.tool;
+      item["arguments"]=op.args;
+      normOps.append(item);
+    }
+
+    payload["operations"]=normOps;
+
+    QString sendError;
+    GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpApplyBatch", payload, sendError);
+
+    if(state==GUI_FAILED)
+    {
+      toolError=sendError;
+
+      return result;
+    }
+
+    if(state==GUI_DELIVERED)
+    {
+      delivered=true;
+      waitGuiSave(5000);
+      resyncModel();
+    }
+  }
+
+  if(delivered)
+  {
+    for(const BatchOp &op : normalized)
+      effectiveArgs.append(op.args);
+  }
+  else
+  {
+    for(const BatchOp &op : normalized)
+    {
+      QString error;
+      QJsonObject applyResult;
+
+      if(!McpTools::applyBatchOp(&m_model, op.tool, op.args, applyResult, error))
+        break;
+
+      QJsonObject effArgs=op.args;
+
+      if(applyResult.contains("id"))
+        effArgs["id"]=applyResult.value("id").toString();
+
+      effectiveArgs.append(effArgs);
+      needSave=true;
+    }
+
+    if(needSave)
+      m_model.save();
+  }
+
+  // Проверка по состоянию на свежей модели, по порядку, со стопом
+  // на первой несверенной: дальше не исполнялось
+  QJsonArray opResults;
+  int applied=0;
+  bool stopped=false;
+
+  for(int i=0; i<normalized.size(); ++i)
+  {
+    const BatchOp &op=normalized.at(i);
+    QJsonObject entry;
+    entry["tool"]=op.tool;
+
+    if(stopped)
+    {
+      entry["ok"]=false;
+      entry["skipped"]=true;
+      opResults.append(entry);
+      continue;
+    }
+
+    QJsonObject detail;
+    const bool ok=(i<effectiveArgs.size()) &&
+                  verifyBatchOp(m_model, op.tool, effectiveArgs.at(i), detail);
+
+    entry["ok"]=ok;
+
+    for(auto it=detail.begin(); it!=detail.end(); ++it)
+      entry[it.key()]=it.value();
+
+    if(ok)
+      ++applied;
+    else
+      stopped=true;
+
+    opResults.append(entry);
+  }
+
+  result["operations"]=opResults;
+  result["applied"]=applied;
+  result["total"]=operations.size();
+  result["applied_via"]=delivered ? QStringLiteral("gui") : QStringLiteral("direct");
   result["verified"]=true;
 
   return result;

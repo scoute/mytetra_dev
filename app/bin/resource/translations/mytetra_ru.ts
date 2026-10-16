@@ -4836,6 +4836,22 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Configure theme...</source>
         <translation>Настроить тему...</translation>
     </message>
+    <message>
+        <source>&lt;b&gt;SyncTetra&lt;/b&gt; - fork MyTetra,&lt;br/&gt;smart manager for information collecting,&lt;br/&gt;с возможностью делиться базой знаний через syncthing/etc.&lt;br/&gt;&lt;br/&gt;</source>
+        <translation>&lt;b&gt;SyncTetra&lt;/b&gt; — форк MyTetra,&lt;br/&gt;умный менеджер для сбора информации,&lt;br/&gt;с возможностью делиться базой знаний через syncthing/etc.&lt;br/&gt;&lt;br/&gt;</translation>
+    </message>
+    <message>
+        <source>Author MyTetra: Sergey M. Stepanov (xintrea@gmail.com)&lt;br/&gt;</source>
+        <translation>Автор MyTetra: Sergey M. Stepanov (xintrea@gmail.com)&lt;br/&gt;</translation>
+    </message>
+    <message>
+        <source>Author SyncTetra: Serg_St (scoute.me@gmail.com)&lt;br/&gt;&lt;br/&gt;</source>
+        <translation>Автор SyncTetra: Serg_St (scoute.me@gmail.com)&lt;br/&gt;&lt;br/&gt;</translation>
+    </message>
+    <message>
+        <source>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</source>
+        <translation>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

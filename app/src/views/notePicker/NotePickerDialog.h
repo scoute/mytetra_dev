@@ -5,6 +5,8 @@
 #include <QList>
 #include <QString>
 
+#include "models/tree/KnowTreeModel.h"
+
 class QLineEdit;
 class QTableWidget;
 class QTableWidgetItem;
@@ -14,6 +16,9 @@ class QTimer;
 
 // Быстрый выбор заметки для вставки ссылки.
 // Живой фильтр по именам, веткам и тегам (мгновенно, без чтения файлов).
+// В конструкторе один проход модели в плоский снимок, дальше фильтр
+// только по памяти: вариант "поиск по дереву на каждый кейстрок"
+// вешал приложение на тысячах заметок. Снимок на момент открытия.
 // Выдача ужата до 50 строк со счетчиком "Показано 50 из 55".
 // Текущая запись исключается: ссылка на себя бессмысленна.
 
@@ -54,7 +59,7 @@ private:
   };
 
   QList<Hit> searchHits(const QString &query) const;
-  bool isRecordSkippable(const QString &recordId) const;
+  void buildIndex(void);
 
   // Столбцы выдачи: имя заметки, ветка, метки
   enum Columns
@@ -71,6 +76,9 @@ private:
   QTimer *filterTimer;
 
   QString excludeRecordId;
+
+  // Снимок на момент открытия: дальше фильтр без модели вообще
+  QList<NoteIndexEntry> noteIndex;
 
   static const int DISPLAY_LIMIT=50;
 };

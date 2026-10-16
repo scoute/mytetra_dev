@@ -2359,6 +2359,30 @@ QJsonObject McpTools::importBranchDirect(const QString &parentId,
 }
 
 
+QJsonObject McpTools::debugInfo(void)
+{
+  QJsonObject result;
+
+  result["app"]=GlobalParameters::getApplicationName();
+  result["version"]=QString::number(APPLICATION_RELEASE_VERSION)+"."+
+                    QString::number(APPLICATION_RELEASE_SUBVERSION)+"."+
+                    QString::number(APPLICATION_RELEASE_MICROVERSION);
+
+  const QString tetradir=mytetraConfig.get_tetradir();
+  const QString xmlPath=tetradir+"/mytetra.xml";
+  const QFileInfo xmlInfo(xmlPath);
+
+  result["tetradir"]=tetradir;
+  result["xml"]=xmlPath;
+  result["xml_exists"]=xmlInfo.isFile();
+
+  if(xmlInfo.exists())
+    result["xml_mtime"]=xmlInfo.lastModified().toString(Qt::ISODate);
+
+  return result;
+}
+
+
 QJsonObject McpTools::baseStats(bool detailed)
 {
   QJsonObject result;

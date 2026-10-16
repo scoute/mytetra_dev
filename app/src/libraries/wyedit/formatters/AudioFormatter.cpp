@@ -21,9 +21,16 @@
 #include "views/voiceNote/VoicePlayerDialog.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "libraries/helpers/DiskHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
+#include "models/recordTable/Record.h"
+#include "models/tree/KnowTreeModel.h"
+#include "views/notePicker/NotePickerDialog.h"
+#include "views/tree/KnowTreeView.h"
 
 extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 AudioFormatter::AudioFormatter()
@@ -622,6 +629,355 @@ void AudioFormatter::onRenameVoiceClicked(void)
     if(globalParameters.getStatusBar()!=nullptr)
         globalParameters.getStatusBar()->showMessage(
             tr("Renamed to %1").arg(newName), 3000);
+}
+
+
+QString AudioFormatter::moveVoiceFileToDir(const QString &srcDir,
+                                                  const QString &oldHref,
+                                                  const QString &dstDir,
+                                                  QString *error)
+{
+    const QString done=QString();
+
+    if(!VoiceNoteHelper::isVoiceHref(oldHref))
+    {
+        if(error!=nullptr)
+            *error=tr("Not a voice link");
+
+        return done;
+    }
+
+    const QString fileName=VoiceNoteHelper::fileNameFromHref(oldHref);
+    const QString srcPath=VoiceNoteHelper::resolveFilePath(srcDir, oldHref);
+
+    if(fileName.isEmpty() || !QFileInfo(srcPath).isFile())
+    {
+        if(error!=nullptr)
+            *error=tr("Voice file not found");
+
+        return done;
+    }
+
+    if(dstDir.isEmpty() || !QDir(dstDir).exists())
+    {
+        if(error!=nullptr)
+            *error=tr("Target note directory not found");
+
+        return done;
+    }
+
+    // Тот же каталог: переносить нечего, ссылка прежняя
+    if(QDir(srcDir).absolutePath()==QDir(dstDir).absolutePath())
+        return oldHref;
+
+    // Свободное имя в цели: занято значит суффикс -2, -3...
+    QString finalName=fileName;
+
+    if(QFileInfo(QDir(dstDir).absoluteFilePath(finalName)).exists())
+    {
+        const int dotPos=fileName.lastIndexOf(QLatin1Char('.'));
+        const QString stem=(dotPos>0) ? fileName.left(dotPos) : fileName;
+        const QString ext=(dotPos>0) ? fileName.mid(dotPos) : QString();
+        finalName.clear();
+
+        for(int attempt=2; attempt<1000; ++attempt)
+        {
+            const QString candidate=stem+QStringLiteral("-")+
+                                    QString::number(attempt)+ext;
+
+            if(!QFileInfo(QDir(dstDir).absoluteFilePath(candidate)).exists())
+            {
+                finalName=candidate;
+                break;
+            }
+        }
+
+        if(finalName.isEmpty())
+        {
+            if(error!=nullptr)
+                *error=tr("No free file name in target note");
+
+            return done;
+        }
+    }
+
+    const QString dstPath=QDir(dstDir).absoluteFilePath(finalName);
+
+    // Переезд одним переименованием; не вышло (разные ФС) значит
+    // копия плюс удаление источника
+    if(!QFile::rename(srcPath, dstPath))
+    {
+        if(!QFile::copy(srcPath, dstPath))
+        {
+            if(error!=nullptr)
+                *error=tr("Can not move voice file: %1").arg(fileName);
+
+            return done;
+        }
+
+        QFile::remove(srcPath);
+    }
+
+    return VoiceNoteHelper::makeHref(finalName);
+}
+
+
+bool AudioFormatter::appendVoiceLinkToTextFile(const QString &textFileName,
+                                              const QString &href,
+                                              qint64 durationMs,
+                                              QString *error)
+{
+    if(!VoiceNoteHelper::isVoiceHref(href))
+    {
+        if(error!=nullptr)
+            *error=tr("Not a voice link");
+
+        return false;
+    }
+
+    if(textFileName.isEmpty())
+    {
+        if(error!=nullptr)
+            *error=tr("Target note text file unknown");
+
+        return false;
+    }
+
+    const QString paragraph=QStringLiteral("<p><a href=\"")+
+        href.toHtmlEscaped()+QStringLiteral("\">")+
+        VoiceNoteHelper::linkText(durationMs).toHtmlEscaped()+
+        QStringLiteral("</a></p>");
+
+    // Файла еще нет (новая заметка): минимальный каркас со ссылкой
+    if(!QFileInfo(textFileName).isFile())
+    {
+        QFile out(textFileName);
+
+        if(!out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            if(error!=nullptr)
+                *error=tr("Can not write target note: %1").arg(textFileName);
+
+            return false;
+        }
+
+        out.write((QStringLiteral("<html><body>")+paragraph+
+                   QStringLiteral("</body></html>")).toUtf8());
+
+        return true;
+    }
+
+    QFile in(textFileName);
+
+    if(!in.open(QIODevice::ReadOnly))
+    {
+        if(error!=nullptr)
+            *error=tr("Can not read target note: %1").arg(textFileName);
+
+        return false;
+    }
+
+    QString html=QString::fromUtf8(in.readAll());
+    in.close();
+    html.remove(QChar('\0'));
+
+    int pos=html.lastIndexOf(QStringLiteral("</body>"), -1, Qt::CaseInsensitive);
+
+    if(pos<0)
+        pos=html.lastIndexOf(QStringLiteral("</html>"), -1, Qt::CaseInsensitive);
+
+    if(pos>=0)
+        html.insert(pos, paragraph);
+    else
+        html+=paragraph;
+
+    QFile out(textFileName);
+
+    if(!out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        if(error!=nullptr)
+            *error=tr("Can not write target note: %1").arg(textFileName);
+
+        return false;
+    }
+
+    out.write(html.toUtf8());
+
+    return true;
+}
+
+
+qint64 AudioFormatter::voiceDurationUnderCursor(const QString &href) const
+{
+    if(href.isEmpty())
+        return 0;
+
+    QTextDocument *doc=textArea->document();
+
+    // Бабл: длительность лежит в свойствах формата
+    const int bubblePos=findBubblePos(href);
+
+    if(bubblePos>=0)
+    {
+        QTextCursor probe(doc);
+        probe.setPosition(bubblePos+1);
+        const qint64 duration=probe.charFormat().property(
+            VoiceNoteHelper::BubblePropDurationMs).toLongLong();
+
+        return qMax<qint64>(0, duration);
+    }
+
+    // Сырая ссылка: парсинг видимого текста [voice M:SS]
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid())
+                continue;
+
+            if(fragment.charFormat().anchorHref()!=href)
+                continue;
+
+            const qint64 duration=VoiceNoteHelper::parseDuration(fragment.text());
+
+            if(duration>=0)
+                return duration;
+        }
+
+    return 0;
+}
+
+
+void AudioFormatter::onMoveVoiceClicked(void)
+{
+    const QString href=voiceHrefUnderCursor();
+
+    if(href.isEmpty())
+        return;
+
+    const QString srcDir=editor->getWorkDirectory();
+    const QString srcPath=VoiceNoteHelper::resolveFilePath(srcDir, href);
+
+    if(!QFileInfo(srcPath).isFile())
+    {
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 tr("Voice file not found"));
+        return;
+    }
+
+    const qint64 durationMs=voiceDurationUnderCursor(href);
+    const QString currentId=editor->getMiscField(QStringLiteral("id"));
+
+    // Своя запись из выдачи исключена самим пикером
+    NotePickerDialog picker(editor, currentId);
+
+    if(picker.exec()!=QDialog::Accepted)
+        return;
+
+    const QString pickedId=picker.selectedRecordId();
+
+    if(pickedId.isEmpty())
+        return;
+
+    KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+    if(treeView==nullptr)
+    {
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 tr("Notes tree unavailable"));
+        return;
+    }
+
+    Record *target=static_cast<KnowTreeModel *>(treeView->model())->getRecord(pickedId);
+
+    if(target==nullptr)
+    {
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 tr("Target note not found"));
+        return;
+    }
+
+    // Шифрованная цель правится только через редактор с ключом:
+    // прямая дописка в файл сломала бы шифротекст
+    if(target->getField(QStringLiteral("crypt"))==QStringLiteral("1"))
+    {
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 tr("Can not move into encrypted note"));
+        return;
+    }
+
+    const QString targetName=target->getField(QStringLiteral("name"));
+    const QString fileName=VoiceNoteHelper::fileNameFromHref(href);
+
+    if(QMessageBox::question(editor,
+                             tr("Move voice note"),
+                             tr("Move voice note %1 to note \"%2\"? Link will be removed from current note.").arg(fileName).arg(targetName),
+                             QMessageBox::Yes | QMessageBox::No,
+                             QMessageBox::No)!=QMessageBox::Yes)
+        return;
+
+    // Пути собираются из полей как в RecordTableController:
+    // прямые геттеры Record защищены
+    if(target->getField(QStringLiteral("dir")).isEmpty() ||
+       target->getField(QStringLiteral("file")).isEmpty())
+    {
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 tr("Target note text file unknown"));
+        return;
+    }
+
+    const QString dstDir=mytetraConfig.get_tetradir()+
+        QStringLiteral("/base/")+
+        target->getField(QStringLiteral("dir"));
+    const QString dstTextFile=dstDir+
+        QStringLiteral("/")+target->getField(QStringLiteral("file"));
+
+    QString error;
+    const QString newHref=moveVoiceFileToDir(srcDir, href, dstDir, &error);
+
+    if(newHref.isEmpty())
+    {
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 error);
+        return;
+    }
+
+    // Ссылка дописывается в закрытую заметку напрямую.
+    // Не влезла: файл возвращается назад, текст источника не тронут
+    if(!appendVoiceLinkToTextFile(dstTextFile,
+                                  newHref, durationMs, &error))
+    {
+        QString backError;
+        moveVoiceFileToDir(dstDir, newHref, srcDir, &backError);
+
+        QMessageBox::information(editor,
+                                 tr("Move voice note"),
+                                 error);
+        return;
+    }
+
+    // Играющий бабл перед вырезанием останавливается:
+    // медиа-источник сменил каталог
+    if(activeHref==href)
+        stopVoicePlayback();
+
+    if(findBubblePos(href)>=0)
+        selectVoiceBubbleRange(href);
+    else
+        selectVoiceLinkRange(href);
+
+    textArea->textCursor().removeSelectedText();
+
+    if(globalParameters.getStatusBar()!=nullptr)
+        globalParameters.getStatusBar()->showMessage(
+            tr("Moved to \"%1\"").arg(targetName), 3000);
 }
 
 

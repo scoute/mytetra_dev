@@ -1848,9 +1848,18 @@ QString MainWindow::mcpBannerText(void)
 // только по явному Bye; убитый -9 висит до перезапуска программы.
 // Пусто — баннер гаснет и UI разблокируется, есть пиры — баннер
 // виден и UI заблокирован на запись до конца сессии
-// Жив ли пир: существует ли процесс с таким pid.
-// Переиспользование pid чужим процессом теоретически возможно,
-// цена ошибки — лишний висящий баннер до перезапуска, а не потеря данных
+// Имя своего бинаря: MCP-сервер это та же программа, так что
+// чужой процесс под recycled pid опознается по имени
+static QString mcpOwnAppName(void)
+{
+  return QFileInfo(QCoreApplication::applicationFilePath()).baseName();
+}
+
+
+// Жив ли пир: процесс с таким pid существует И это наша программа.
+// Имя сверяется чтобы переиспользованный pid чужого процесса не
+// держал висящий баннер. Не прочиталось имя — считаем живым:
+// лучше лишний баннер, чем выкинутый живой пир
 static bool mcpPeerAlive(const QString &pid)
 {
   const qint64 id=pid.toLongLong();
@@ -1865,9 +1874,30 @@ static bool mcpPeerAlive(const QString &pid)
   if(handle==nullptr)
     return GetLastError()==ERROR_ACCESS_DENIED;
 
+  char imagePath[MAX_PATH];
+  DWORD imageSize=sizeof(imagePath);
+  const bool nameRead=(QueryFullProcessImageNameA(handle, 0,
+                                                  imagePath, &imageSize)!=0);
   CloseHandle(handle);
 
-  return true;
+  if(!nameRead)
+    return true;
+
+  return QFileInfo(QString::fromLocal8Bit(imagePath)).baseName()
+         .compare(mcpOwnAppName(), Qt::CaseInsensitive)==0;
+#elif defined(Q_OS_LINUX)
+  if(::kill(static_cast<pid_t>(id), 0)!=0)
+    return errno==EPERM;
+
+  QFile commFile(QStringLiteral("/proc/%1/comm").arg(id));
+
+  if(!commFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    return true;
+
+  // comm режется ядром до 15 символов: сравнивается столько же
+  const QString comm=QString::fromLocal8Bit(commFile.readAll()).trimmed();
+
+  return comm==mcpOwnAppName().left(15);
 #else
   if(::kill(static_cast<pid_t>(id), 0)==0)
     return true;

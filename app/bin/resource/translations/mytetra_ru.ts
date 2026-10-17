@@ -8043,18 +8043,18 @@ This cannot be undone.</source>
     </message>
     <message>
         <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="81"/>
-        <source>Select Telegram Desktop export file (result.json).</source>
-        <translation>Выбери файл экспорта Telegram Desktop (result.json).</translation>
+        <source>Select Telegram Desktop export file (result.json or messages.html).</source>
+        <translation>Выбери файл экспорта Telegram Desktop (result.json или messages.html).</translation>
     </message>
     <message>
         <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="94"/>
-        <source>Telegram export (result.json)</source>
-        <translation>Экспорт Telegram (result.json)</translation>
+        <source>Telegram export (result.json, messages.html)</source>
+        <translation>Экспорт Telegram (result.json, messages.html)</translation>
     </message>
     <message>
         <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="95"/>
-        <source>Select result.json</source>
-        <translation>Выбери result.json</translation>
+        <source>Select Telegram export file</source>
+        <translation>Выбери файл экспорта Telegram</translation>
     </message>
     <message>
         <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="112"/>

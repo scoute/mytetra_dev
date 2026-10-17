@@ -61,6 +61,16 @@ bool parseTelegramJson(const QString &fileName,
                        TelegramChat &chat,
                        QString &error);
 
+// Разбор HTML-экспорта (messages.html). Та же структура чата
+bool parseTelegramHtml(const QString &fileName,
+                       TelegramChat &chat,
+                       QString &error);
+
+// По расширению: .html -> HTML, иначе JSON
+bool parseTelegramExport(const QString &fileName,
+                         TelegramChat &chat,
+                         QString &error);
+
 // Сущности text_entities (или строка) в HTML. Неизвестные типы
 // отдаются плейнтекстом: данные не теряются при любом формате
 QString telegramTextToHtml(const class QJsonValue &textValue);

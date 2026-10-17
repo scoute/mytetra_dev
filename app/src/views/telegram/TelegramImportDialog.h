@@ -42,6 +42,7 @@ private:
   // Раскладка заметок: месяц, день или сообщение.
   // Как в настройках: выбор сразу пишется в конфиг
   QGroupBox *layoutBox;
+  QRadioButton *yearNote;
   QRadioButton *monthNote;
   QRadioButton *dayNote;
   QRadioButton *messageNote;

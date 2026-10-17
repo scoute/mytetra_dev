@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QRadioButton>
+#include <QGroupBox>
 #include <QApplication>
 
 #include "views/telegram/TelegramImportDialog.h"
@@ -40,7 +42,21 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
   closeButton=new QPushButton(this);
   closeButton->setDefault(true);
 
+  // Раскладка заметок в самом диалоге: выбор сразу в конфиг,
+  // импорт читает его при старте
+  layoutBox=new QGroupBox(this);
+
+  monthNote=new QRadioButton(this);
+  dayNote=new QRadioButton(this);
+  messageNote=new QRadioButton(this);
+
   retranslateUi();
+
+  const QString savedMode=mytetraConfig.get_telegramImportMode();
+  monthNote->setChecked(savedMode!=QStringLiteral("message") &&
+                        savedMode!=QStringLiteral("day"));
+  dayNote->setChecked(savedMode==QStringLiteral("day"));
+  messageNote->setChecked(savedMode==QStringLiteral("message"));
 
   connect(fileButton, &QToolButton::clicked,
           this, &TelegramImportDialog::onSelectFile);
@@ -50,6 +66,12 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
           this, &TelegramImportDialog::onImport);
   connect(closeButton, &QPushButton::clicked,
           this, &TelegramImportDialog::accept);
+  connect(monthNote, &QRadioButton::toggled,
+          this, &TelegramImportDialog::onLayoutToggle);
+  connect(dayNote, &QRadioButton::toggled,
+          this, &TelegramImportDialog::onLayoutToggle);
+  connect(messageNote, &QRadioButton::toggled,
+          this, &TelegramImportDialog::onLayoutToggle);
 
   QHBoxLayout *fileLayout=new QHBoxLayout();
   fileLayout->addWidget(fileInput);
@@ -60,14 +82,21 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
   buttonLayout->addWidget(importButton);
   buttonLayout->addWidget(closeButton);
 
+  QVBoxLayout *layoutLayout=new QVBoxLayout;
+  layoutLayout->addWidget(monthNote);
+  layoutLayout->addWidget(dayNote);
+  layoutLayout->addWidget(messageNote);
+  layoutBox->setLayout(layoutLayout);
+
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(fileLayout);
   centralLayout->addWidget(infoLabel);
+  centralLayout->addWidget(layoutBox);
   centralLayout->addWidget(progressBar);
   centralLayout->addLayout(buttonLayout);
   setLayout(centralLayout);
 
-  resize(520, 220);
+  resize(520, 300);
   importButton->setEnabled(false);
 }
 
@@ -83,6 +112,26 @@ void TelegramImportDialog::retranslateUi(void)
   importButton->setText(tr("Import"));
   closeButton->setText(tr("Close"));
   infoLabel->setText(tr("Select Telegram Desktop export file (result.json or messages.html)."));
+
+  monthNote->setText(tr("One note per month: chat - year (default)"));
+  dayNote->setText(tr("One note per day: chat - year - month"));
+  messageNote->setText(tr("One note per message: chat - year - month - day"));
+
+  layoutBox->setTitle(tr("Notes layout"));
+}
+
+
+void TelegramImportDialog::onLayoutToggle(void)
+{
+  QString mode=QStringLiteral("month");
+
+  if(messageNote->isChecked())
+    mode=QStringLiteral("message");
+  else if(dayNote->isChecked())
+    mode=QStringLiteral("day");
+
+  if(mytetraConfig.get_telegramImportMode()!=mode)
+    mytetraConfig.set_telegramImportMode(mode);
 }
 
 

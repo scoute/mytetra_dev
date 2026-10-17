@@ -5626,7 +5626,7 @@ MyTetra will try to create a blank entry to fix it.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="136"/>
         <source>Telegram</source>
-        <translation>Telegram</translation>
+        <translation type="vanished">Telegram</translation>
     </message>
     <message>
         <source>Note area</source>
@@ -8092,30 +8092,23 @@ This cannot be undone.</source>
         <source>Done. Branches: %1, notes: %2, attached files: %3, missing: %4.</source>
         <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
     </message>
-</context>
-<context>
-    <name>AppConfigPage_Telegram</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="35"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="83"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="116"/>
         <source>One note per month: chat - year (default)</source>
         <translation>Одна заметка на месяц: чат — год (по умолчанию)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="38"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="84"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="117"/>
         <source>One note per day: chat - year - month</source>
         <translation>Одна заметка на день: чат — год — месяц</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="41"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="85"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="118"/>
         <source>One note per message: chat - year - month - day</source>
         <translation>Заметка на каждое сообщение: чат — год — месяц — день</translation>
     </message>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="55"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="87"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="120"/>
         <source>Notes layout</source>
         <translation>Раскладка заметок</translation>
     </message>

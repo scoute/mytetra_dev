@@ -379,10 +379,24 @@ bool importTelegramChat(KnowTreeModel *model,
       return false;
     }
 
-    // Одна заметка на месяц: шапка + абзацы сообщений
+    // Одна заметка на месяц: шапка + пузырьки сообщений.
+    // Пузырьки таблицами: фон ячейки и отступы QTextDocument умеет,
+    // скругление углов нет — повторяется суть дизайна Telegram
     QString html=QStringLiteral("<p><b>")+chat.name.toHtmlEscaped()+
                 QStringLiteral(" — ")+monthKey+
                 QStringLiteral("</b></p>");
+
+    // Пилюля дня как в Telegram
+    static const QStringList genitiveMonths={
+      QStringLiteral("января"), QStringLiteral("февраля"),
+      QStringLiteral("марта"), QStringLiteral("апреля"),
+      QStringLiteral("мая"), QStringLiteral("июня"),
+      QStringLiteral("июля"), QStringLiteral("августа"),
+      QStringLiteral("сентября"), QStringLiteral("октября"),
+      QStringLiteral("ноября"), QStringLiteral("декабря")
+    };
+
+    QDate lastDay;
 
     // Файлы месяца: картинки и голосовые инлайном в каталог заметки
     // (как нативные), остальные документы аттачами
@@ -398,14 +412,30 @@ bool importTelegramChat(KnowTreeModel *model,
     foreach(const TelegramMessage &message, months.value(monthKey))
     {
       const QDateTime dt=QDateTime::fromSecsSinceEpoch(message.unixtime);
-      QString line=QStringLiteral("<p><b>")+
-                   dt.toString(QStringLiteral("dd.MM.yyyy hh:mm"))+
-                   QStringLiteral(" ")+message.from.toHtmlEscaped()+
-                   QStringLiteral("</b>");
+      QString line;
+
+      // Пилюля дня при смене даты, как в Telegram
+      if(dt.date()!=lastDay)
+      {
+        lastDay=dt.date();
+        line+=QStringLiteral("<p align=\"center\"><span style=\"background-color:#8ab48a;\">")+
+              QStringLiteral("<font color=\"#ffffff\">&nbsp;&nbsp;")+
+              QString::number(lastDay.day())+
+              QStringLiteral(" ")+
+              genitiveMonths[lastDay.month()-1]+
+              QStringLiteral("&nbsp;&nbsp;</font></span></p>");
+      }
+
+      // Пузырек сообщения: фон и отступы нативно держит QTextDocument
+      line+=QStringLiteral("<div style=\"background-color:#eeffde;margin-top:6px;margin-bottom:6px;\">")+
+            QStringLiteral("<font color=\"#8a8a8a\">")+
+            dt.toString(QStringLiteral("dd.MM hh:mm"))+
+            QStringLiteral("</font> <b>")+message.from.toHtmlEscaped()+
+            QStringLiteral("</b>");
 
       if(message.forwarded && !message.fwdFrom.isEmpty())
-        line+=QStringLiteral(" [переслано от ")+message.fwdFrom.toHtmlEscaped()+
-              QStringLiteral("]");
+        line+=QStringLiteral(" <i><font color=\"#2e7d32\">[переслано от ")+message.fwdFrom.toHtmlEscaped()+
+              QStringLiteral("]</font></i>");
 
       if(message.replyTo!=0 && snippets.contains(message.replyTo))
       {
@@ -474,7 +504,7 @@ bool importTelegramChat(KnowTreeModel *model,
         }
       }
 
-      line+=QStringLiteral("</p>");
+      line+=QStringLiteral("</div>");
       html+=line;
 
       ++done;

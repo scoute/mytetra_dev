@@ -890,7 +890,7 @@ static QString telegramMessageBubble(const TelegramMessage &message,
       // Карточка файла как в Telegram: скрепка, имя-ссылка, размер.
       // Открывается внешней программой через относительную ссылку
       // (резолвится относительно каталога заметки)
-      line+=QStringLiteral("<br/><div style=\"background-color:#f1f1f1;\">&#128206; <a href=\"")+
+      line+=QStringLiteral("<br/><div style=\"background-color:#f1f1f1;\">Файл: <a href=\"")+
             probeAttach.getInnerFileName().toHtmlEscaped()+
             QStringLiteral("\">")+disk.toHtmlEscaped()+
             QStringLiteral("</a>");

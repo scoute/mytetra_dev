@@ -22,6 +22,7 @@ struct TelegramMedia
   QString fileName; // имя файла в каталоге заметки
   QString mime; // mime файла-документа, пусто для photo/voice
   QString extra; // длительность голосового
+  QString sizeText; // размер для карточки файла ("21.4 KB")
 };
 
 

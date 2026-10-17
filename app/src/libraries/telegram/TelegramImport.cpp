@@ -7,6 +7,9 @@
 #include <QJsonValue>
 #include <QMap>
 #include <QModelIndex>
+#include <QImage>
+#include <QImageReader>
+#include <QSize>
 #include <QDebug>
 
 #include "libraries/telegram/TelegramImport.h"
@@ -22,6 +25,25 @@
 
 
 extern AppConfig mytetraConfig;
+
+
+// Длинная сторона картинки в заметке: больше 600 не держим.
+// Редактор ничего не растягивает за окно, база не пухнет
+static const int telegramMaxSide=600;
+
+// Габариты для <img>: исходные, ужатые по длинной стороне
+static QSize telegramDisplaySize(const QString &srcPath)
+{
+  QSize size=QImageReader(srcPath).size();
+
+  if(!size.isValid())
+    return QSize();
+
+  if(size.width()>telegramMaxSide || size.height()>telegramMaxSide)
+    size.scale(telegramMaxSide, telegramMaxSide, Qt::KeepAspectRatio);
+
+  return size;
+}
 
 
 // Одна сущность в HTML. text заранее экранирован вызывателем
@@ -95,6 +117,10 @@ QString telegramTextToHtml(const QJsonValue &textValue)
   // Переносы строк экспорта в HTML-абзацы редактора
   html.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
 
+  // Неразрывные пробелы Telegram слипают текст в одну строку:
+  // QTextEdit не переносит по ним. Меняются на обычные
+  html.replace(QChar::Nbsp, QLatin1Char(' '));
+
   return html;
 }
 
@@ -102,7 +128,7 @@ QString telegramTextToHtml(const QJsonValue &textValue)
 static QString telegramPlainText(const QJsonValue &textValue)
 {
   if(textValue.isString())
-    return textValue.toString();
+    return textValue.toString().replace(QChar::Nbsp, QLatin1Char(' '));
 
   if(!textValue.isArray())
     return QString();
@@ -116,6 +142,8 @@ static QString telegramPlainText(const QJsonValue &textValue)
     else if(value.isObject())
       plain+=value.toObject().value(QStringLiteral("text")).toString();
   }
+
+  plain.replace(QChar::Nbsp, QLatin1Char(' '));
 
   return plain;
 }
@@ -143,7 +171,7 @@ bool parseTelegramJson(const QString &fileName,
   }
 
   const QJsonObject root=doc.object();
-  chat.name=root.value(QStringLiteral("name")).toString().trimmed();
+  chat.name=root.value(QStringLiteral("name")).toString().trimmed().replace(QChar::Nbsp, QLatin1Char(' '));
 
   if(chat.name.isEmpty())
   {
@@ -167,12 +195,12 @@ bool parseTelegramJson(const QString &fileName,
     TelegramMessage message;
     message.id=msg.value(QStringLiteral("id")).toVariant().toLongLong();
     message.unixtime=msg.value(QStringLiteral("date_unixtime")).toVariant().toLongLong();
-    message.from=msg.value(QStringLiteral("from")).toString();
+    message.from=msg.value(QStringLiteral("from")).toString().replace(QChar::Nbsp, QLatin1Char(' '));
 
     if(msg.contains(QStringLiteral("forwarded_from")))
     {
       message.forwarded=true;
-      message.fwdFrom=msg.value(QStringLiteral("forwarded_from")).toString();
+      message.fwdFrom=msg.value(QStringLiteral("forwarded_from")).toString().replace(QChar::Nbsp, QLatin1Char(' '));
     }
 
     if(msg.contains(QStringLiteral("reply_to_message_id")))
@@ -362,6 +390,7 @@ bool importTelegramChat(KnowTreeModel *model,
     struct PendingFile
     {
       QString kind; // "inline" или "attach"
+      QString mediaKind; // "photo", "voice", "file"
       QString srcPath;
       QString fileName;
     };
@@ -397,11 +426,22 @@ bool importTelegramChat(KnowTreeModel *model,
 
         if(media.kind==QStringLiteral("photo"))
         {
-          line+=QStringLiteral("<br/><img src=\"")+targetName.toHtmlEscaped()+
-                QStringLiteral("\"/>");
+          // Габариты заранее по исходнику: после даунскейла файл
+          // им соответствует, редактор ничего не растягивает
+          const QSize displaySize=telegramDisplaySize(media.srcPath);
+
+          if(displaySize.isValid())
+            line+=QStringLiteral("<br/><img src=\"")+targetName.toHtmlEscaped()+
+                  QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
+                  QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
+                  QStringLiteral("\"/>");
+          else
+            line+=QStringLiteral("<br/><img src=\"")+targetName.toHtmlEscaped()+
+                  QStringLiteral("\"/>");
 
           PendingFile pf;
           pf.kind=QStringLiteral("inline");
+          pf.mediaKind=media.kind;
           pf.srcPath=media.srcPath;
           pf.fileName=targetName;
           pending.append(pf);
@@ -416,6 +456,7 @@ bool importTelegramChat(KnowTreeModel *model,
 
           PendingFile pf;
           pf.kind=QStringLiteral("inline");
+          pf.mediaKind=media.kind;
           pf.srcPath=media.srcPath;
           pf.fileName=targetName;
           pending.append(pf);
@@ -427,6 +468,7 @@ bool importTelegramChat(KnowTreeModel *model,
 
           PendingFile pf;
           pf.kind=QStringLiteral("attach");
+          pf.mediaKind=media.kind;
           pf.srcPath=media.srcPath;
           pf.fileName=media.fileName;
           pending.append(pf);
@@ -514,7 +556,26 @@ bool importTelegramChat(KnowTreeModel *model,
           }
 
           if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(target)))
+          {
+            // Картинки больше 1280 по длинной стороне ужимаются
+            // на месте: в окне заметки помещаются целиком,
+            // место в базе не пухнет
+            if(pf.mediaKind==QStringLiteral("photo"))
+            {
+              QImage img(QDir(recordDir).absoluteFilePath(target));
+
+              if(!img.isNull() && (img.width()>telegramMaxSide ||
+                                     img.height()>telegramMaxSide))
+              {
+                img=img.scaled(telegramMaxSide, telegramMaxSide,
+                               Qt::KeepAspectRatio,
+                               Qt::SmoothTransformation);
+                img.save(QDir(recordDir).absoluteFilePath(target), 0, 85);
+              }
+            }
+
             ++result.attaches;
+          }
           else
             ++result.skippedMedia;
         }

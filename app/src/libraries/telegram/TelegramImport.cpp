@@ -339,10 +339,12 @@ bool importTelegramChat(KnowTreeModel *model,
   foreach(const QString &monthKey, months.keys())
   {
     const int year=monthKey.left(4).toInt();
+
+    // Заметка месяца лежит прямо в ветке года: папка-месяц
+    // ради одной заметки только плодит уровень
     TreeItem *yearBranch=ensureBranch(model, chatBranch,
                                       QString::number(year), result);
-    TreeItem *monthBranch=ensureBranch(model, yearBranch, monthKey, result);
-    RecordTableData *table=monthBranch->recordtableGetTableData();
+    RecordTableData *table=yearBranch->recordtableGetTableData();
 
     if(table==nullptr)
     {

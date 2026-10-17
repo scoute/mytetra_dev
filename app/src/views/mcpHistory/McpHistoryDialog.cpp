@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -78,6 +79,13 @@ void McpHistoryDialog::render(void)
   if(m_list==nullptr)
     return;
 
+  // Если ползунок стоял внизу (или список был пуст), после
+  // перерисовки остаемся внизу — свежие записи видны сразу.
+  // Ушедшего наверх читать старые записи не дергаем
+  QScrollBar *vbar=m_list->verticalScrollBar();
+  const bool stickToBottom=(vbar==nullptr) ||
+                           (vbar->value()>=vbar->maximum());
+
   m_list->clear();
 
   for(const McpHistoryEntry &entry : m_entries)
@@ -92,6 +100,9 @@ void McpHistoryDialog::render(void)
     else if(entry.kind==QStringLiteral("write"))
       item->setBackground(QBrush(QColor(248, 215, 218)));
   }
+
+  if(stickToBottom)
+    m_list->scrollToBottom();
 }
 
 

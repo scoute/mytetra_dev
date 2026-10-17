@@ -973,6 +973,21 @@ static bool writeTelegramNote(TreeItem *branch,
 }
 
 
+TelegramLayout telegramLayoutForMode(const QString &mode)
+{
+  if(mode==QStringLiteral("message"))
+    return TelegramLayout::Message;
+
+  if(mode==QStringLiteral("day"))
+    return TelegramLayout::Day;
+
+  if(mode==QStringLiteral("year"))
+    return TelegramLayout::Year;
+
+  return TelegramLayout::Month;
+}
+
+
 bool importTelegramChat(KnowTreeModel *model,
                         const TelegramChat &chat,
                         TelegramImportResult &result,

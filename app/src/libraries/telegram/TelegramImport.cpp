@@ -7,6 +7,8 @@
 #include <QJsonValue>
 #include <QMap>
 #include <QModelIndex>
+#include <QSet>
+#include <QImage>
 #include <QImageReader>
 #include <QSize>
 #include <QRegularExpression>
@@ -29,7 +31,7 @@ extern AppConfig mytetraConfig;
 
 // Длинная сторона картинки в заметке: больше 600 не держим.
 // Редактор ничего не растягивает за окно, база не пухнет
-static const int telegramMaxSide=600;
+static const int telegramMaxSide=640;
 
 // Габариты для <img>: исходные, ужатые по длинной стороне
 static QSize telegramDisplaySize(const QString &srcPath)
@@ -775,8 +777,40 @@ bool importTelegramChat(KnowTreeModel *model,
   const int total=chat.messages.size();
   int done=0;
 
+  // Каталог месячной заметки известен заранее: имена файлов
+  // резолвятся до построения HTML, ссылка и файл не разъедутся
+  const QString baseDir=mytetraConfig.get_tetradir()+QStringLiteral("/base/");
+
   foreach(const QString &monthKey, months.keys())
   {
+    QSet<QString> usedNames;
+
+    auto takeName=[&](const QString &wanted) -> QString {
+      QString target=wanted;
+
+      if(target.isEmpty())
+        target=QStringLiteral("file");
+
+      const int dotPos=target.lastIndexOf(QLatin1Char('.'));
+      const QString stem=(dotPos>0) ? target.left(dotPos) : target;
+      const QString ext=(dotPos>0) ? target.mid(dotPos) : QString();
+      int attempt=2;
+
+      // Каталог записи свежак: занятость только внутри месяца
+      while(usedNames.contains(target))
+      {
+        target=stem+QStringLiteral("-")+QString::number(attempt)+ext;
+        ++attempt;
+
+        if(attempt>1000)
+          return QString();
+      }
+
+      usedNames.insert(target);
+
+      return target;
+    };
+
     const int year=monthKey.left(4).toInt();
 
     // Заметка месяца лежит прямо в ветке года: папка-месяц
@@ -814,10 +848,11 @@ bool importTelegramChat(KnowTreeModel *model,
     // (как нативные), остальные документы аттачами
     struct PendingFile
     {
-      QString kind; // "inline" или "attach"
+      QString kind; // "inline", "preview" или "attach"
       QString mediaKind; // "photo", "voice", "file"
       QString srcPath;
-      QString fileName;
+      QString fileName; // имя файла в каталоге заметки
+      QString origName; // для превью: имя оригинала
     };
     QList<PendingFile> pending;
 
@@ -862,36 +897,104 @@ bool importTelegramChat(KnowTreeModel *model,
 
       foreach(const TelegramMedia &media, message.media)
       {
-        // Имя в каталоге заметки: исходное, при клаше с суффиксом -2
-        QString targetName=media.fileName;
-
         if(media.kind==QStringLiteral("photo"))
         {
-          // Габариты заранее по исходнику: после даунскейла файл
-          // им соответствует, редактор ничего не растягивает
-          const QSize displaySize=telegramDisplaySize(media.srcPath);
+          // Габариты заранее по исходнику: превью им соответствует,
+          // редактор ничего не растягивает. Большая картинка: показ
+          // идет с гладкого превью, оригинал лежит рядом аттачем
+          const QSize naturalSize=QImageReader(media.srcPath).size();
+          const bool needPreview=naturalSize.isValid() &&
+                                 (naturalSize.width()>telegramMaxSide ||
+                                  naturalSize.height()>telegramMaxSide);
+          const QSize displaySize=needPreview ?
+                                  telegramDisplaySize(media.srcPath) :
+                                  naturalSize;
 
-          if(displaySize.isValid())
-            line+=QStringLiteral("<br/><img src=\"")+targetName.toHtmlEscaped()+
-                  QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
-                  QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
-                  QStringLiteral("\"/>");
+          if(needPreview)
+          {
+            const QString origDisk=takeName(media.fileName);
+
+            if(origDisk.isEmpty())
+            {
+              ++result.skippedMedia;
+              continue;
+            }
+
+            const int dotPos=origDisk.lastIndexOf(QLatin1Char('.'));
+            const QString previewDisk=takeName(origDisk.left(dotPos)+
+                                               QStringLiteral("_preview")+
+                                               origDisk.mid(dotPos));
+
+            if(previewDisk.isEmpty())
+            {
+              ++result.skippedMedia;
+              continue;
+            }
+
+            if(displaySize.isValid())
+              line+=QStringLiteral("<br/><img src=\"")+previewDisk.toHtmlEscaped()+
+                    QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
+                    QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
+                    QStringLiteral("\"/>");
+            else
+              line+=QStringLiteral("<br/><img src=\"")+previewDisk.toHtmlEscaped()+
+                    QStringLiteral("\"/>");
+
+            PendingFile pf;
+            pf.kind=QStringLiteral("preview");
+            pf.mediaKind=media.kind;
+            pf.srcPath=media.srcPath;
+            pf.fileName=previewDisk;
+            pf.origName=origDisk;
+            pending.append(pf);
+
+            PendingFile pa;
+            pa.kind=QStringLiteral("attach");
+            pa.mediaKind=media.kind;
+            pa.srcPath=media.srcPath;
+            pa.fileName=origDisk;
+            pending.append(pa);
+          }
           else
-            line+=QStringLiteral("<br/><img src=\"")+targetName.toHtmlEscaped()+
-                  QStringLiteral("\"/>");
+          {
+            const QString disk=takeName(media.fileName);
 
-          PendingFile pf;
-          pf.kind=QStringLiteral("inline");
-          pf.mediaKind=media.kind;
-          pf.srcPath=media.srcPath;
-          pf.fileName=targetName;
-          pending.append(pf);
+            if(disk.isEmpty())
+            {
+              ++result.skippedMedia;
+              continue;
+            }
+
+            if(displaySize.isValid())
+              line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
+                    QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
+                    QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
+                    QStringLiteral("\"/>");
+            else
+              line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
+                    QStringLiteral("\"/>");
+
+            PendingFile pf;
+            pf.kind=QStringLiteral("inline");
+            pf.mediaKind=media.kind;
+            pf.srcPath=media.srcPath;
+            pf.fileName=disk;
+            pending.append(pf);
+          }
         }
         else if(media.kind==QStringLiteral("voice"))
         {
           // Ссылка voicenote:// при открытии материализуется
           // в штатный плеер-пузырь
-          line+=QStringLiteral("<br/><a href=\"voicenote://")+targetName.toHtmlEscaped()+
+          const QString disk=takeName(media.fileName);
+
+          if(disk.isEmpty())
+          {
+            ++result.skippedMedia;
+            continue;
+          }
+
+          line+=QStringLiteral("<br/><a href=\"voicenote://")+disk.toHtmlEscaped()+
                 QStringLiteral("\">[voice ")+media.extra+
                 QStringLiteral("]</a>");
 
@@ -899,7 +1002,7 @@ bool importTelegramChat(KnowTreeModel *model,
           pf.kind=QStringLiteral("inline");
           pf.mediaKind=media.kind;
           pf.srcPath=media.srcPath;
-          pf.fileName=targetName;
+          pf.fileName=disk;
           pending.append(pf);
         }
         else
@@ -915,7 +1018,6 @@ bool importTelegramChat(KnowTreeModel *model,
           pending.append(pf);
         }
       }
-
       line+=QStringLiteral("</div>");
       html+=line;
 
@@ -958,47 +1060,40 @@ bool importTelegramChat(KnowTreeModel *model,
 
     if(stored!=nullptr)
     {
-      const QString recordDir=mytetraConfig.get_tetradir()+
-                             QStringLiteral("/base/")+
-                             stored->getField(QStringLiteral("dir"));
+      // Каталог берется у вставленной записи: insert может
+      // перегенерировать dir, предвычисленному верить нельзя
+      const QString recordDir=baseDir+stored->getField(QStringLiteral("dir"));
       AttachTableData *attachTable=stored->getAttachTablePointer();
 
       foreach(const PendingFile &pf, pending)
       {
-        if(pf.kind==QStringLiteral("inline"))
+        // Имена уже зарезервированы через takeName: прямая запись
+        if(pf.kind==QStringLiteral("preview"))
         {
-          QString target=pf.fileName;
+          // Гладкое превью для показа: сглаживание при генерации,
+          // а не при рисовании редактором (там в лоб и угловато)
+          QImage img(pf.srcPath);
 
-          if(QFileInfo(QDir(recordDir).absoluteFilePath(target)).isFile())
+
+          if(img.isNull())
           {
-            const int dotPos=target.lastIndexOf(QLatin1Char('.'));
-            const QString stem=(dotPos>0) ? target.left(dotPos) : target;
-            const QString ext=(dotPos>0) ? target.mid(dotPos) : QString();
-            bool placed=false;
-
-            for(int attempt=2; attempt<1000; ++attempt)
-            {
-              const QString candidate=stem+QStringLiteral("-")+
-                                      QString::number(attempt)+ext;
-
-              if(!QFileInfo(QDir(recordDir).absoluteFilePath(candidate)).isFile())
-              {
-                target=candidate;
-                placed=true;
-                break;
-              }
-            }
-
-            if(!placed)
-            {
-              ++result.skippedMedia;
-              continue;
-            }
+            ++result.skippedMedia;
+            continue;
           }
 
+          img=img.scaled(telegramMaxSide, telegramMaxSide,
+                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+          if(img.save(QDir(recordDir).absoluteFilePath(pf.fileName), 0, 88))
+            ++result.previews;
+          else
+            ++result.skippedMedia;
+        }
+        else if(pf.kind==QStringLiteral("inline"))
+        {
           // Копия байт в байт: оригинал не трогается, качество 1:1.
           // Размер показа ограничен width/height в <img>
-          if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(target)))
+          if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(pf.fileName)))
             ++result.attaches;
           else
             ++result.skippedMedia;
@@ -1017,6 +1112,8 @@ bool importTelegramChat(KnowTreeModel *model,
           else
             ++result.skippedMedia;
         }
+        else
+          ++result.skippedMedia;
       }
     }
 

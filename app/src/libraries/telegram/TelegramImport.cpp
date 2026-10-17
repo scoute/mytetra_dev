@@ -18,6 +18,10 @@
 #include "models/attachTable/AttachTableData.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 // Одна сущность в HTML. text заранее экранирован вызывателем
@@ -198,6 +202,13 @@ bool parseTelegramJson(const QString &fileName,
       if(media.fileName.isEmpty())
         media.fileName=QFileInfo(media.srcPath).fileName();
 
+      media.mime=msg.value(QStringLiteral("mime_type")).toString();
+
+      // Картинка, присланная документом: показывается в теле,
+      // как обычное фото
+      if(media.kind==QStringLiteral("file") && media.mime.startsWith(QStringLiteral("image/")))
+        media.kind=QStringLiteral("photo");
+
       if(media.kind==QStringLiteral("voice"))
       {
         const int secs=msg.value(QStringLiteral("duration_seconds")).toInt();
@@ -344,9 +355,15 @@ bool importTelegramChat(KnowTreeModel *model,
                 QStringLiteral(" — ")+monthKey+
                 QStringLiteral("</b></p>");
 
-    // Медиа месяца аттачами к той же заметке, файлы рядом с текстом
-    struct PendingAttach { QString srcPath; QString fileName; };
-    QList<PendingAttach> pending;
+    // Файлы месяца: картинки и голосовые инлайном в каталог заметки
+    // (как нативные), остальные документы аттачами
+    struct PendingFile
+    {
+      QString kind; // "inline" или "attach"
+      QString srcPath;
+      QString fileName;
+    };
+    QList<PendingFile> pending;
 
     foreach(const TelegramMessage &message, months.value(monthKey))
     {
@@ -373,19 +390,45 @@ bool importTelegramChat(KnowTreeModel *model,
 
       foreach(const TelegramMedia &media, message.media)
       {
-        if(media.kind==QStringLiteral("voice"))
-          line+=QStringLiteral("<br/>[Голосовое сообщение")+
-                (media.extra.isEmpty() ? QString() : QStringLiteral(" ")+media.extra)+
-                QStringLiteral(": ")+media.fileName.toHtmlEscaped()+
-                QStringLiteral("]");
+        // Имя в каталоге заметки: исходное, при клаше с суффиксом -2
+        QString targetName=media.fileName;
+
+        if(media.kind==QStringLiteral("photo"))
+        {
+          line+=QStringLiteral("<br/><img src=\"")+targetName.toHtmlEscaped()+
+                QStringLiteral("\"/>");
+
+          PendingFile pf;
+          pf.kind=QStringLiteral("inline");
+          pf.srcPath=media.srcPath;
+          pf.fileName=targetName;
+          pending.append(pf);
+        }
+        else if(media.kind==QStringLiteral("voice"))
+        {
+          // Ссылка voicenote:// при открытии материализуется
+          // в штатный плеер-пузырь
+          line+=QStringLiteral("<br/><a href=\"voicenote://")+targetName.toHtmlEscaped()+
+                QStringLiteral("\">[voice ")+media.extra+
+                QStringLiteral("]</a>");
+
+          PendingFile pf;
+          pf.kind=QStringLiteral("inline");
+          pf.srcPath=media.srcPath;
+          pf.fileName=targetName;
+          pending.append(pf);
+        }
         else
+        {
           line+=QStringLiteral("<br/>[Файл: ")+media.fileName.toHtmlEscaped()+
                 QStringLiteral("]");
 
-        PendingAttach pa;
-        pa.srcPath=media.srcPath;
-        pa.fileName=media.fileName;
-        pending.append(pa);
+          PendingFile pf;
+          pf.kind=QStringLiteral("attach");
+          pf.srcPath=media.srcPath;
+          pf.fileName=media.fileName;
+          pending.append(pf);
+        }
       }
 
       line+=QStringLiteral("</p>");
@@ -422,22 +465,64 @@ bool importTelegramChat(KnowTreeModel *model,
       return false;
     }
 
-    // Аттачи месяца к заметке. Нет файла на диске: метка в тексте
-    // уже есть, импорт продолжается
+    // Файлы месяца. Инлайн: копия под исходным именем в каталог
+    // заметки (картинки резолвятся через DocumentUrl, голосовые
+    // через voicenote://). Аттачи: штатным механизмом.
+    // Нет файла на диске: метка в тексте уже есть, импорт продолжается
     Record *stored=table->getRecord(pos);
 
     if(stored!=nullptr)
     {
+      const QString recordDir=mytetraConfig.get_tetradir()+
+                             QStringLiteral("/base/")+
+                             stored->getField(QStringLiteral("dir"));
       AttachTableData *attachTable=stored->getAttachTablePointer();
 
-      if(attachTable!=nullptr)
-        foreach(const PendingAttach &pa, pending)
+      foreach(const PendingFile &pf, pending)
+      {
+        if(pf.kind==QStringLiteral("inline"))
+        {
+          QString target=pf.fileName;
+
+          if(QFileInfo(QDir(recordDir).absoluteFilePath(target)).isFile())
+          {
+            const int dotPos=target.lastIndexOf(QLatin1Char('.'));
+            const QString stem=(dotPos>0) ? target.left(dotPos) : target;
+            const QString ext=(dotPos>0) ? target.mid(dotPos) : QString();
+            bool placed=false;
+
+            for(int attempt=2; attempt<1000; ++attempt)
+            {
+              const QString candidate=stem+QStringLiteral("-")+
+                                      QString::number(attempt)+ext;
+
+              if(!QFileInfo(QDir(recordDir).absoluteFilePath(candidate)).isFile())
+              {
+                target=candidate;
+                placed=true;
+                break;
+              }
+            }
+
+            if(!placed)
+            {
+              ++result.skippedMedia;
+              continue;
+            }
+          }
+
+          if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(target)))
+            ++result.attaches;
+          else
+            ++result.skippedMedia;
+        }
+        else if(attachTable!=nullptr)
         {
           Attach attach(QStringLiteral("file"), attachTable);
           attach.setField(QStringLiteral("id"), getUniqueId());
-          attach.setField(QStringLiteral("fileName"), pa.fileName);
+          attach.setField(QStringLiteral("fileName"), pf.fileName);
 
-          if(attach.copyFileToBase(pa.srcPath))
+          if(attach.copyFileToBase(pf.srcPath))
           {
             attachTable->addAttach(attach);
             ++result.attaches;
@@ -445,6 +530,7 @@ bool importTelegramChat(KnowTreeModel *model,
           else
             ++result.skippedMedia;
         }
+      }
     }
 
     ++result.notes;

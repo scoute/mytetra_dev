@@ -5623,6 +5623,12 @@ MyTetra will try to create a blank entry to fix it.</source>
         <translation>Дерево веток</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="136"/>
+        <source>Telegram</source>
+        <translation>Telegram</translation>
+    </message>
+    <message>
         <source>Note area</source>
         <translation type="vanished">Список записей</translation>
     </message>
@@ -8085,6 +8091,33 @@ This cannot be undone.</source>
         <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="183"/>
         <source>Done. Branches: %1, notes: %2, attached files: %3, missing: %4.</source>
         <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Telegram</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="35"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="83"/>
+        <source>One note per month: chat - year (default)</source>
+        <translation>Одна заметка на месяц: чат — год (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="38"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="84"/>
+        <source>One note per day: chat - year - month</source>
+        <translation>Одна заметка на день: чат — год — месяц</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="85"/>
+        <source>One note per message: chat - year - month - day</source>
+        <translation>Заметка на каждое сообщение: чат — год — месяц — день</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="55"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Telegram.cpp" line="87"/>
+        <source>Notes layout</source>
+        <translation>Раскладка заметок</translation>
     </message>
 </context>
 </TS>

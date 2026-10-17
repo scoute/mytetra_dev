@@ -14,6 +14,7 @@
 #include "AppConfigPage_Synchro.h"
 #include "AppConfigPage_RecordTable.h"
 #include "AppConfigPage_Tree.h"
+#include "AppConfigPage_Telegram.h"
 #include "AppConfigPage_Attach.h"
 #include "AppConfigPage_Keyboard.h"
 #include "AppConfigPage_History.h"
@@ -65,6 +66,8 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Notes area"));
     pageTree=configDialog->addWidget(new AppConfigPage_Tree( parent ),
                                             QObject::tr("Branch tree"));
+    pageTelegram=configDialog->addWidget(new AppConfigPage_Telegram( parent ),
+                                            QObject::tr("Telegram"));
     pageAttach     =configDialog->addWidget(new AppConfigPage_Attach( parent ),
                                             QObject::tr("Attaches"));
     pageKeyboard   =configDialog->addWidget(new AppConfigPage_Keyboard( parent ),
@@ -130,6 +133,7 @@ void AppConfigDialog::retranslateUi(void)
     pageSynchro->setText(QObject::tr("Synchro"));
     pageRecordTable->setText(QObject::tr("Notes area"));
     pageTree->setText(QObject::tr("Branch tree"));
+    pageTelegram->setText(QObject::tr("Telegram"));
     pageAttach->setText(QObject::tr("Attaches"));
     pageKeyboard->setText(QObject::tr("Keyboard"));
     pageHistory->setText(QObject::tr("History"));
@@ -160,6 +164,7 @@ void AppConfigDialog::changePage(QString name)
     if(name=="pageSynchro") item=pageSynchro;
     if(name=="pageRecordTable") item=pageRecordTable;
     if(name=="pageTree") item=pageTree;
+    if(name=="pageTelegram") item=pageTelegram;
     if(name=="pageAttach") item=pageAttach;
     if(name=="pageKeyboard") item=pageKeyboard;
     if(name=="pageHistory") item=pageHistory;

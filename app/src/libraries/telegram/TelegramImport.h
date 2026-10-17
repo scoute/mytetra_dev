@@ -19,8 +19,9 @@ struct TelegramMedia
 {
   QString kind; // "photo", "file", "voice"
   QString srcPath; // абсолютный путь в каталоге экспорта
-  QString fileName; // короткое имя для аттача
-  QString extra; // длительность голосового или размер файла
+  QString fileName; // имя файла в каталоге заметки
+  QString mime; // mime файла-документа, пусто для photo/voice
+  QString extra; // длительность голосового
 };
 
 

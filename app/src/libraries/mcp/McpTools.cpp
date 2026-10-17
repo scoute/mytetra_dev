@@ -138,10 +138,39 @@ void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId
 }
 
 
-QJsonObject McpTools::listBranches(void)
+QJsonObject McpTools::listBranches(bool recursive)
 {
   QJsonArray branches;
-  appendBranches(QModelIndex(), QString(), branches);
+
+  if(!recursive)
+  {
+    // Только верхний уровень: без рекурсии вглубь
+    const int rows=m_model->rowCount(QModelIndex());
+
+    for(int r=0; r<rows; ++r)
+    {
+      TreeItem *item=m_model->getItem(m_model->index(r, 0, QModelIndex()));
+
+      if(item==nullptr)
+        continue;
+
+      QJsonObject branch;
+      branch["id"]=item->getField("id");
+      branch["name"]=item->getField("name");
+      branch["parent_id"]=QString();
+
+      if(item->getField("crypt")=="1")
+        branch["encrypted"]=true;
+
+      // Свои и общие с подветками: оба из инкрементального кеша, O(1)
+      branch["notes_count"]=item->recordtableGetRowCount();
+      branch["notes_total"]=item->subtreeRecordCount();
+
+      branches.append(branch);
+    }
+  }
+  else
+    appendBranches(QModelIndex(), QString(), branches); // рекурсивно, по требованию
 
   QJsonObject result;
   result["branches"]=branches;

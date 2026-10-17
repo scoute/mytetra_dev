@@ -1576,7 +1576,8 @@ QString AppConfig::get_telegramImportMode(void)
 {
     const QString mode=m_conf->value("telegramImportMode", QStringLiteral("month")).toString();
 
-    if(mode==QStringLiteral("message") || mode==QStringLiteral("day"))
+    if(mode==QStringLiteral("message") || mode==QStringLiteral("day") ||
+       mode==QStringLiteral("year"))
         return mode;
 
     return QStringLiteral("month");
@@ -1584,7 +1585,8 @@ QString AppConfig::get_telegramImportMode(void)
 
 void AppConfig::set_telegramImportMode(const QString &mode)
 {
-    if(mode==QStringLiteral("message") || mode==QStringLiteral("day"))
+    if(mode==QStringLiteral("message") || mode==QStringLiteral("day") ||
+       mode==QStringLiteral("year"))
         m_conf->setValue("telegramImportMode", mode);
     else
         m_conf->setValue("telegramImportMode", QStringLiteral("month"));

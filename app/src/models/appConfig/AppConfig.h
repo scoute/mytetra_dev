@@ -428,9 +428,9 @@ public:
     void set_showSubtreeCount(bool state);
 
     // Раскладка импорта Telegram: "month" (заметка на месяц,
-    // по умолчанию), "day" (заметка на день, ветки чат-год-месяц)
-    // или "message" (заметка на сообщение, ветки чат-год-месяц-день).
-    // Страница Telegram
+    // по умолчанию), "year" (заметка на год, прямо в чате),
+    // "day" (заметка на день, ветки чат-год-месяц)
+    // или "message" (заметка на сообщение, ветки чат-год-месяц-день)
     QString get_telegramImportMode(void);
     void set_telegramImportMode(const QString &mode);
 

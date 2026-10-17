@@ -1030,12 +1030,14 @@ bool importTelegramChat(KnowTreeModel *model,
     QStringLiteral("ноября"), QStringLiteral("декабря")
   };
 
-  if(layout==TelegramLayout::Month || layout==TelegramLayout::Day)
+  if(layout==TelegramLayout::Month || layout==TelegramLayout::Day ||
+     layout==TelegramLayout::Year)
   {
-    // Склеенные заметки: одна на месяц (ветки чат-год)
-    // или одна на день (ветки чат-год-месяц).
+    // Склеенные заметки: одна на месяц (ветки чат-год), на год
+    // (прямо в чате) или на день (ветки чат-год-месяц).
     // Шапка, пилюли дней, пузырьки
     const bool byDay=(layout==TelegramLayout::Day);
+    const bool byYear=(layout==TelegramLayout::Year);
     QMap<QString, QList<TelegramMessage>> groups;
 
     foreach(const TelegramMessage &message, chat.messages)
@@ -1047,6 +1049,8 @@ bool importTelegramChat(KnowTreeModel *model,
 
       if(byDay)
         groups[date.toString(QStringLiteral("yyyy-MM-dd"))].append(message);
+      else if(byYear)
+        groups[QString::number(date.year())].append(message);
       else
         groups[QStringLiteral("%1-%2").arg(date.year()).arg(date.month(), 2, 10, QChar('0'))].append(message);
     }
@@ -1061,13 +1065,16 @@ bool importTelegramChat(KnowTreeModel *model,
     {
       const int year=groupKey.left(4).toInt();
 
-      TreeItem *parentBranch=ensureBranch(model, chatBranch,
-                                          QString::number(year), result);
+      TreeItem *parentBranch=chatBranch;
+
+      if(!byYear)
+        parentBranch=ensureBranch(model, parentBranch,
+                                  QString::number(year), result);
 
       if(byDay)
       {
-        // Ветки чат-год-месяц: заметки дней лежат прямо в папке
-        // месяца, лишний уровень дня не плодится
+        // Заметки дней лежат прямо в папке месяца,
+        // лишний уровень дня не плодится
         parentBranch=ensureBranch(model, parentBranch,
                                  groupKey.left(7), result);
       }
@@ -1103,7 +1110,12 @@ bool importTelegramChat(KnowTreeModel *model,
           progress(done, total);
       }
 
-      if(!writeTelegramNote(parentBranch, groupKey+QStringLiteral(" — ")+chat.name,
+      // Заметка года зовется просто годом: она и так лежит
+      // в папке чата, суффикс с именем чата тут лишний
+      const QString noteName=byYear ? groupKey :
+                             groupKey+QStringLiteral(" — ")+chat.name;
+
+      if(!writeTelegramNote(parentBranch, noteName,
                             html, groups.value(groupKey).first().unixtime,
                             chat.name, pending, result, error))
         return false;

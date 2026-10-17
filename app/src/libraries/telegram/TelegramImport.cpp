@@ -1066,11 +1066,10 @@ bool importTelegramChat(KnowTreeModel *model,
 
       if(byDay)
       {
-        // Ветки чат-год-месяц-день: месяц и день
+        // Ветки чат-год-месяц: заметки дней лежат прямо в папке
+        // месяца, лишний уровень дня не плодится
         parentBranch=ensureBranch(model, parentBranch,
                                  groupKey.left(7), result);
-        parentBranch=ensureBranch(model, parentBranch,
-                                 groupKey, result);
       }
 
       QSet<QString> usedNames;

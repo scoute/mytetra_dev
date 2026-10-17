@@ -1029,6 +1029,26 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>MCP help</source>
         <translation>Справка MCP</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="188"/>
+        <source>Available tools</source>
+        <translation>Доступные инструменты</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="190"/>
+        <source>Read-only (ro) — %1 tools</source>
+        <translation>Только чтение (ro): %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="191"/>
+        <source>Read-write (rw) — %1 tools</source>
+        <translation>Чтение и запись (rw): %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="192"/>
+        <source>Delete — %1 tools</source>
+        <translation>Удаление: %1</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Misc</name>

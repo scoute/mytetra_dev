@@ -78,7 +78,7 @@ void TelegramImportDialog::retranslateUi(void)
   setWindowTitle(tr("Import Telegram chat"));
   importButton->setText(tr("Import"));
   closeButton->setText(tr("Close"));
-  infoLabel->setText(tr("Select Telegram Desktop export file (result.json)."));
+  infoLabel->setText(tr("Select Telegram Desktop export file (result.json or messages.html)."));
 }
 
 
@@ -91,8 +91,8 @@ void TelegramImportDialog::onSelectFile(void)
   {
     QFileDialog fileDialog(this);
     fileDialog.setFileMode(QFileDialog::ExistingFile);
-    fileDialog.setNameFilter(tr("Telegram export (result.json)"));
-    fileDialog.setWindowTitle(tr("Select result.json"));
+    fileDialog.setNameFilter(tr("Telegram export (result.json, messages.html)"));
+    fileDialog.setWindowTitle(tr("Select Telegram export file"));
 
     if(!fileDialog.exec())
       return;
@@ -107,7 +107,7 @@ void TelegramImportDialog::onSelectFile(void)
   TelegramChat parsed;
   QString error;
 
-  if(!parseTelegramJson(fileName, parsed, error))
+  if(!parseTelegramExport(fileName, parsed, error))
   {
     infoLabel->setText(tr("Parse error: ")+error);
     importButton->setEnabled(false);

@@ -9,6 +9,7 @@
 #include <QModelIndex>
 #include <QImageReader>
 #include <QSize>
+#include <QRegularExpression>
 #include <QDebug>
 
 #include "libraries/telegram/TelegramImport.h"
@@ -145,6 +146,417 @@ static QString telegramPlainText(const QJsonValue &textValue)
   plain.replace(QChar::Nbsp, QLatin1Char(' '));
 
   return plain;
+}
+
+
+// Сущности плейнтекста HTML-экспорта: имена чатов и авторов.
+// Порядок важен: &amp; последним, иначе двойное декодирование
+static QString decodeTelegramEntities(QString text)
+{
+  text.replace(QStringLiteral("&quot;"), QStringLiteral("\""));
+  text.replace(QStringLiteral("&apos;"), QStringLiteral("'"));
+  text.replace(QStringLiteral("&#39;"), QStringLiteral("'"));
+  text.replace(QStringLiteral("&lt;"), QStringLiteral("<"));
+  text.replace(QStringLiteral("&gt;"), QStringLiteral(">"));
+
+  static QRegularExpression numericEntity("&#(\\d+);");
+  QRegularExpressionMatchIterator it=numericEntity.globalMatch(text);
+
+  // С конца чтобы позиции не съезжали
+  QList<QPair<int, int>> spans;
+  QStringList chars;
+
+  while(it.hasNext())
+  {
+    const QRegularExpressionMatch match=it.next();
+    spans.prepend(qMakePair(match.capturedStart(), match.capturedLength()));
+    chars.prepend(QString(QChar(match.captured(1).toInt())));
+  }
+
+  for(int i=0; i<spans.size(); ++i)
+    text.replace(spans.at(i).first, spans.at(i).second, chars.at(i));
+
+  text.replace(QStringLiteral("&amp;"), QStringLiteral("&"));
+  text.replace(QStringLiteral("&nbsp;"), QStringLiteral(" "));
+  text.replace(QChar::Nbsp, QLatin1Char(' '));
+
+  return text;
+}
+
+
+// Внутренний HTML текста сообщения в HTML-экспорте уже экранирован.
+// Оставляются ссылки и простая разметка, остальное вычищается.
+// &nbsp; меняется на пробел: иначе QTextEdit не переносит
+static QString sanitizeTelegramHtmlFragment(const QString &inner)
+{
+  static QRegularExpression tagRe("<(/?)([A-Za-z0-9]+)((?:\"[^\"]*\"|'[^']*'|[^\"'>])*)>");
+
+  QString result;
+  int pos=0;
+  QRegularExpressionMatchIterator it=tagRe.globalMatch(inner);
+
+  while(it.hasNext())
+  {
+    const QRegularExpressionMatch match=it.next();
+    result+=inner.mid(pos, match.capturedStart()-pos);
+    pos=match.capturedEnd();
+
+    const bool closing=!match.captured(1).isEmpty();
+    const QString tag=match.captured(2).toLower();
+
+    if(tag==QStringLiteral("br"))
+    {
+      if(!closing)
+        result+=QStringLiteral("<br/>");
+
+      continue;
+    }
+
+    if(tag==QStringLiteral("a"))
+    {
+      if(closing)
+      {
+        result+=QStringLiteral("</a>");
+        continue;
+      }
+
+      static QRegularExpression hrefRe("href\\s*=\\s*\"([^\"]*)\"");
+      const QRegularExpressionMatch hrefMatch=hrefRe.match(match.captured(3));
+
+      if(hrefMatch.hasMatch())
+        result+=QStringLiteral("<a href=\"")+
+                hrefMatch.captured(1).toHtmlEscaped()+
+                QStringLiteral("\">");
+
+      continue;
+    }
+
+    if(tag==QStringLiteral("b") || tag==QStringLiteral("strong") ||
+       tag==QStringLiteral("i") || tag==QStringLiteral("em") ||
+       tag==QStringLiteral("u") || tag==QStringLiteral("s") ||
+       tag==QStringLiteral("strike") || tag==QStringLiteral("code") ||
+       tag==QStringLiteral("pre") || tag==QStringLiteral("blockquote"))
+    {
+      result+=closing ? QStringLiteral("</")+tag+QStringLiteral(">") :
+                        QStringLiteral("<")+tag+QStringLiteral(">");
+      continue;
+    }
+
+    // Прочее (span, div, img превью) выкидывается, текст остается
+  }
+
+  result+=inner.mid(pos);
+  result.replace(QStringLiteral("&nbsp;"), QStringLiteral(" "));
+
+  return result;
+}
+
+
+// Извлечение сбалансированного <div>...</div> с позиции открывающего.
+// Возвращает внутренность (без внешних тегов), endPos за закрывающим
+static QString extractBalancedDiv(const QString &html, int openPos, int &endPos)
+{
+  endPos=-1;
+
+  int depth=0;
+  int i=openPos;
+
+  while(i<html.size())
+  {
+    const int openIdx=html.indexOf(QStringLiteral("<div"), i);
+    const int closeIdx=html.indexOf(QStringLiteral("</div>"), i);
+
+    if(closeIdx<0)
+      return QString();
+
+    if(openIdx>=0 && openIdx<closeIdx)
+    {
+      ++depth;
+      i=openIdx+4;
+    }
+    else
+    {
+      --depth;
+      i=closeIdx+6;
+
+      if(depth==0)
+      {
+        // Конец открывающего тега (первый '>' после openPos)
+        const int innerStart=html.indexOf(QLatin1Char('>'), openPos)+1;
+        endPos=i;
+        return html.mid(innerStart, closeIdx-innerStart);
+      }
+    }
+  }
+
+  return QString();
+}
+
+
+// Дата заголовка сообщения: "17.10.2026 20:34:48 GMT+04:00".
+// Смещение вычитается: unixtime всегда UTC
+static qint64 parseTelegramHtmlDate(const QString &title)
+{
+  static QRegularExpression dateRe("(\\d\\d)\\.(\\d\\d)\\.(\\d\\d\\d\\d) "
+                                   "(\\d\\d):(\\d\\d):(\\d\\d) GMT([+-])(\\d\\d):(\\d\\d)");
+  const QRegularExpressionMatch match=dateRe.match(title);
+
+  if(!match.hasMatch())
+    return -1;
+
+  const QDateTime utc(QDate(match.captured(3).toInt(),
+                            match.captured(2).toInt(),
+                            match.captured(1).toInt()),
+                      QTime(match.captured(4).toInt(),
+                            match.captured(5).toInt(),
+                            match.captured(6).toInt()),
+                      Qt::UTC);
+
+  if(!utc.isValid())
+    return -1;
+
+  const int offsetSecs=(match.captured(8).toInt()*60+match.captured(9).toInt())*60;
+
+  return utc.toSecsSinceEpoch()-(match.captured(7)==QStringLiteral("+") ? offsetSecs : -offsetSecs);
+}
+
+
+static QString imageMimeByExtension(const QString &fileName)
+{
+  const QString ext=QFileInfo(fileName).suffix().toLower();
+
+  if(ext==QStringLiteral("png"))
+    return QStringLiteral("image/png");
+
+  if(ext==QStringLiteral("jpg") || ext==QStringLiteral("jpeg"))
+    return QStringLiteral("image/jpeg");
+
+  if(ext==QStringLiteral("gif"))
+    return QStringLiteral("image/gif");
+
+  if(ext==QStringLiteral("webp"))
+    return QStringLiteral("image/webp");
+
+  if(ext==QStringLiteral("bmp"))
+    return QStringLiteral("image/bmp");
+
+  return QString();
+}
+
+
+bool parseTelegramHtml(const QString &fileName,
+                       TelegramChat &chat,
+                       QString &error)
+{
+  QFile file(fileName);
+
+  if(!file.open(QIODevice::ReadOnly))
+  {
+    error="Can not open file: "+fileName;
+    return false;
+  }
+
+  const QString html=QString::fromUtf8(file.readAll());
+  const QDir exportDir(QFileInfo(fileName).absolutePath());
+
+  static QRegularExpression chatRe("<div class=\"page_header\">.*?"
+                                   "<div class=\"text bold\">\\s*(.*?)\\s*</div>",
+                                   QRegularExpression::DotMatchesEverythingOption);
+  const QRegularExpressionMatch chatMatch=chatRe.match(html);
+
+  if(!chatMatch.hasMatch())
+  {
+    error="No chat header in HTML export";
+    return false;
+  }
+
+  chat.name=decodeTelegramEntities(chatMatch.captured(1).trimmed());
+
+  if(chat.name.isEmpty())
+  {
+    error="HTML export has no chat name";
+    return false;
+  }
+
+  QString lastFrom;
+  const QStringList chunks=html.split(QStringLiteral("<div class=\"message "));
+
+  for(int ci=1; ci<chunks.size(); ++ci)
+  {
+    const QString &chunk=chunks.at(ci);
+
+    // Служебные (разделители дат, звонки) пропускаются
+    if(chunk.startsWith(QStringLiteral("service")))
+      continue;
+
+    static QRegularExpression idRe("id=\"message(-?\\d+)\"");
+    const QRegularExpressionMatch idMatch=idRe.match(chunk);
+
+    if(!idMatch.hasMatch())
+      continue;
+
+    TelegramMessage message;
+    message.id=idMatch.captured(1).toLongLong();
+
+    // Дата из заголовка; без нее сообщение бесполезно
+    static QRegularExpression dateRe("title=\"(\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d GMT[+-]\\d\\d:\\d\\d)\"");
+    const QRegularExpressionMatch dateMatch=dateRe.match(chunk);
+    message.unixtime=parseTelegramHtmlDate(dateMatch.hasMatch() ? dateMatch.captured(1) : QString());
+
+    if(message.unixtime<0)
+      continue;
+
+    QString rest=chunk;
+
+    // Пересланное вынимается первым: внутри свой from_name
+    const int fwdIdx=rest.indexOf(QStringLiteral("<div class=\"forwarded body\">"));
+
+    if(fwdIdx>=0)
+    {
+      const int divPos=rest.lastIndexOf(QStringLiteral("<div"), fwdIdx);
+      int fwdEnd=-1;
+      const QString fwdInner=extractBalancedDiv(rest, divPos, fwdEnd);
+
+      if(fwdEnd>0)
+      {
+        static QRegularExpression fwdFromRe("<div class=\"from_name\">\\s*(.*?)\\s*(?:<span.*?</span>)?\\s*</div>",
+                                            QRegularExpression::DotMatchesEverythingOption);
+        const QRegularExpressionMatch fwdFromMatch=fwdFromRe.match(fwdInner);
+
+        if(fwdFromMatch.hasMatch())
+        {
+          message.forwarded=true;
+          message.fwdFrom=decodeTelegramEntities(
+            fwdFromMatch.captured(1).remove(QRegularExpression("<[^>]*>")).trimmed());
+        }
+
+        static QRegularExpression fwdTextRe("<div class=\"text\">([\\s\\S]*?)</div>");
+        const QRegularExpressionMatch fwdTextMatch=fwdTextRe.match(fwdInner);
+
+        if(fwdTextMatch.hasMatch())
+        {
+          message.plain=decodeTelegramEntities(
+            fwdTextMatch.captured(1).remove(QRegularExpression("<[^>]*>")));
+          message.html=sanitizeTelegramHtmlFragment(fwdTextMatch.captured(1));
+        }
+
+        rest=rest.left(divPos)+rest.mid(fwdEnd);
+      }
+    }
+
+    // Ответ: ссылка на исходное сообщение
+    static QRegularExpression replyRe("href=\"#go_to_message(-?\\d+)\"");
+    const QRegularExpressionMatch replyMatch=replyRe.match(rest);
+
+    if(replyMatch.hasMatch())
+      message.replyTo=replyMatch.captured(1).toLongLong();
+
+    // Автор: в склейках отсутствует, наследуется от предыдущего
+    static QRegularExpression fromRe("<div class=\"from_name\">\\s*(.*?)\\s*</div>",
+                                     QRegularExpression::DotMatchesEverythingOption);
+    const QRegularExpressionMatch fromMatch=fromRe.match(rest);
+
+    if(fromMatch.hasMatch())
+    {
+      message.from=decodeTelegramEntities(
+        fromMatch.captured(1).remove(QRegularExpression("<[^>]*>")).trimmed());
+      lastFrom=message.from;
+    }
+    else
+      message.from=lastFrom;
+
+    // Текст сообщения (у пересланного уже взят из пересланного блока)
+    if(message.html.isEmpty())
+    {
+      static QRegularExpression textRe("<div class=\"text\">([\\s\\S]*?)</div>");
+      const QRegularExpressionMatch textMatch=textRe.match(rest);
+
+      if(textMatch.hasMatch())
+      {
+        message.plain=decodeTelegramEntities(
+          textMatch.captured(1).remove(QRegularExpression("<[^>]*>")));
+        message.html=sanitizeTelegramHtmlFragment(textMatch.captured(1));
+      }
+    }
+
+    // Медиа: якоря без вложенных ссылок, нежадный захват работает
+    static QRegularExpression anchorRe("<a class=\"([^\"]*)\" href=\"([^\"]*)\"([\\s\\S]*?)</a>");
+    QRegularExpressionMatchIterator ait=anchorRe.globalMatch(rest);
+
+    while(ait.hasNext())
+    {
+      const QRegularExpressionMatch anchor=ait.next();
+      const QString anchorClass=anchor.captured(1);
+      const QString href=anchor.captured(2);
+      const QString anchorInner=anchor.captured(3);
+
+      // Ссылки "this message" у ответов и стикеры-эмодзи в тексте пропускаются:
+      // первые служебные, вторые ведут на несуществующий файл
+      if(href.startsWith(QLatin1Char('#')) || anchorClass.contains(QStringLiteral("sticker")))
+        continue;
+
+      TelegramMedia media;
+      media.srcPath=exportDir.absoluteFilePath(href);
+      media.fileName=QFileInfo(href).fileName();
+
+      if(anchorClass.contains(QStringLiteral("photo")))
+      {
+        media.kind=QStringLiteral("photo");
+      }
+      else if(anchorClass.contains(QStringLiteral("voice")))
+      {
+        media.kind=QStringLiteral("voice");
+
+        static QRegularExpression durRe("<div class=\"status details\">\\s*(\\d+:\\d\\d)\\s*</div>");
+        const QRegularExpressionMatch durMatch=durRe.match(anchorInner);
+        media.extra=durMatch.hasMatch() ? durMatch.captured(1) : QString();
+      }
+      else
+      {
+        media.kind=QStringLiteral("file");
+
+        static QRegularExpression titleRe("<div class=\"title bold\">\\s*(.*?)\\s*</div>",
+                                          QRegularExpression::DotMatchesEverythingOption);
+        const QRegularExpressionMatch titleMatch=titleRe.match(anchorInner);
+
+        if(titleMatch.hasMatch())
+          media.fileName=decodeTelegramEntities(titleMatch.captured(1).trimmed());
+
+        media.mime=imageMimeByExtension(media.fileName);
+
+        if(media.mime.startsWith(QStringLiteral("image/")))
+          media.kind=QStringLiteral("photo");
+      }
+
+      message.media.append(media);
+    }
+
+    // Пустые остатки без текста и медиа не тащим
+    if(message.plain.isEmpty() && message.media.isEmpty())
+      continue;
+
+    chat.messages.append(message);
+  }
+
+  if(chat.messages.isEmpty())
+  {
+    error="No messages in HTML export";
+    return false;
+  }
+
+  return true;
+}
+
+
+bool parseTelegramExport(const QString &fileName,
+                         TelegramChat &chat,
+                         QString &error)
+{
+  if(fileName.endsWith(QStringLiteral(".html"), Qt::CaseInsensitive) ||
+     fileName.endsWith(QStringLiteral(".htm"), Qt::CaseInsensitive))
+    return parseTelegramHtml(fileName, chat, error);
+
+  return parseTelegramJson(fileName, chat, error);
 }
 
 

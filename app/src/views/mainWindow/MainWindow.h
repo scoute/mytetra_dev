@@ -205,6 +205,7 @@ private slots:
     void fileDatabasesManagement(void);
     void fileExportBranch(void);
     void fileImportBranch(void);
+    void fileImportTelegram(void);
 
     void filePrint(void);
     void filePrintPreview(void);
@@ -290,6 +291,7 @@ private:
     QAction *actionFileMenuDatabasesManagement;
     QAction *actionFileMenuExportTreeItem;
     QAction *actionFileMenuImportTreeItem;
+    QAction *actionFileMenuImportTelegram;
     QAction *actionFileMenuPrint;
     QAction *actionFileMenuPrintPreview;
     QAction *actionFileMenuExportPdf;

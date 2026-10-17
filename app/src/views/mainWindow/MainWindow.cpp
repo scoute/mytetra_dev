@@ -59,6 +59,7 @@ public:
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
 #include "views/tree/TreeScreen.h"
+#include "views/telegram/TelegramImportDialog.h"
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
@@ -261,6 +262,7 @@ void MainWindow::setupSignals(void)
     connect(actionFileMenuDatabasesManagement, &QAction::triggered, this, &MainWindow::fileDatabasesManagement);
     connect(actionFileMenuExportTreeItem, &QAction::triggered, this, &MainWindow::fileExportBranch);
     connect(actionFileMenuImportTreeItem, &QAction::triggered, this, &MainWindow::fileImportBranch);
+    connect(actionFileMenuImportTelegram, &QAction::triggered, this, &MainWindow::fileImportTelegram);
     connect(actionFileMenuPrint, &QAction::triggered, this, &MainWindow::filePrint);
     connect(actionFileMenuPrintPreview, &QAction::triggered, this, &MainWindow::filePrintPreview);
     connect(actionFileMenuExportPdf, &QAction::triggered, this, &MainWindow::filePrintPdf);
@@ -1318,6 +1320,8 @@ void MainWindow::initFileMenu(void)
 
     actionFileMenuImportTreeItem = new QAction(tr("Import tree item"), this);
     fileMenu->addAction(actionFileMenuImportTreeItem);
+    actionFileMenuImportTelegram = new QAction(tr("Import Telegram chat..."), this);
+    fileMenu->addAction(actionFileMenuImportTelegram);
 
     fileMenu->addSeparator();
 
@@ -1665,6 +1669,9 @@ void MainWindow::applyReadOnly(void)
     // Импорт ветки и управление базами меняют данные
     if(actionFileMenuImportTreeItem!=nullptr)
         actionFileMenuImportTreeItem->setEnabled(!readOnly);
+
+    if(actionFileMenuImportTelegram!=nullptr)
+        actionFileMenuImportTelegram->setEnabled(!readOnly);
 
     if(actionFileMenuDatabasesManagement!=nullptr)
         actionFileMenuDatabasesManagement->setEnabled(!readOnly);
@@ -2167,6 +2174,7 @@ void MainWindow::retranslateUi(void)
         actionFileMenuDatabasesManagement->setText(tr("Databases management"));
         actionFileMenuExportTreeItem->setText(tr("Export tree item"));
         actionFileMenuImportTreeItem->setText(tr("Import tree item"));
+        actionFileMenuImportTelegram->setText(tr("Import Telegram chat..."));
         actionFileMenuPrintPreview->setText(tr("Print Preview..."));
     }
 
@@ -2400,6 +2408,17 @@ void MainWindow::fileExportBranch(void)
     if( directorySelectDialog.exec() )
         if( !directorySelectDialog.directory().absolutePath().isEmpty() ) // Если была выбрана директория (а не нажат Cancel)
             treeScreen->exportBranchToDirectory( directorySelectDialog.directory().absolutePath() );
+}
+
+
+void MainWindow::fileImportTelegram(void)
+{
+    // Глобальный режим только чтения: импорт меняет базу
+    if(mytetraConfig.get_readOnly())
+        return;
+
+    TelegramImportDialog dialog(this);
+    dialog.exec();
 }
 
 

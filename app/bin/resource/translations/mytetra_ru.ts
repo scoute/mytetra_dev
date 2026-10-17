@@ -4544,6 +4544,12 @@ You need to update MyTetra.</source>
         <translation>Импорт ветки</translation>
     </message>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1323"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2177"/>
+        <source>Import Telegram chat...</source>
+        <translation>Импорт чата Telegram...</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1250"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2034"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2566"/>
@@ -8016,6 +8022,69 @@ This cannot be undone.</source>
 %1</source>
         <translation>Не удается уничтожить более новые версии:
 %1</translation>
+    </message>
+</context>
+<context>
+    <name>TelegramImportDialog</name>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="78"/>
+        <source>Import Telegram chat</source>
+        <translation>Импорт чата Telegram</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="79"/>
+        <source>Import</source>
+        <translation>Импортировать</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="80"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="81"/>
+        <source>Select Telegram Desktop export file (result.json).</source>
+        <translation>Выбери файл экспорта Telegram Desktop (result.json).</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="94"/>
+        <source>Telegram export (result.json)</source>
+        <translation>Экспорт Telegram (result.json)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="95"/>
+        <source>Select result.json</source>
+        <translation>Выбери result.json</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="112"/>
+        <source>Parse error: </source>
+        <translation>Ошибка разбора: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="136"/>
+        <source>Chat: %1. Messages: %2, months: %3, media files: %4.</source>
+        <translation>Чат: %1. Сообщений: %2, месяцев: %3, медиафайлов: %4.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="151"/>
+        <source>Warning</source>
+        <translation>Предупреждение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="152"/>
+        <source>Database tree is unavailable.</source>
+        <translation>Дерево базы недоступно.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="174"/>
+        <source>Import failed: </source>
+        <translation>Импорт не удался: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="183"/>
+        <source>Done. Branches: %1, notes: %2, attached files: %3, missing: %4.</source>
+        <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
     </message>
 </context>
 </TS>

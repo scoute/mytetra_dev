@@ -90,6 +90,9 @@ enum class TelegramLayout
   Year=3
 };
 
+// Строка конфига в раскладку. Мусор -> месяц (дефолт)
+TelegramLayout telegramLayoutForMode(const QString &mode);
+
 bool importTelegramChat(KnowTreeModel *model,
                         const TelegramChat &chat,
                         TelegramImportResult &result,

@@ -31,13 +31,16 @@ public:
   // Плоский список веток в порядке дерева: {branches: [{id, name, parent_id}]}
   QJsonObject listBranches(void);
 
-  // Записи ветки: {notes, truncated}. error если ветка не найдена
+  // Записи ветки: {notes, truncated}. error если ветка не найдена.
+  // fields пустой = весь объект, иначе только перечисленные ключи
   QJsonObject listNotes(const QString &branchId, bool recursive, int limit,
-                        QString &error);
+                        QString &error, const QStringList &fields=QStringList());
 
   // Одна запись с плейнтекстом (до maxChars): {note: {...}}.
+  // fields пустой = весь объект, иначе только перечисленные ключи.
   // error если запись не найдена
-  QJsonObject getNote(const QString &noteId, int maxChars, QString &error);
+  QJsonObject getNote(const QString &noteId, int maxChars, QString &error,
+                      const QStringList &fields=QStringList());
 
   // Подстрока без учета регистра по имени, меткам и тексту:
   // {results: [{id, name, branch_path, snippet}]}.

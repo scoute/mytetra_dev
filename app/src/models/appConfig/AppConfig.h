@@ -427,6 +427,13 @@ public:
     bool get_showSubtreeCount(void);
     void set_showSubtreeCount(bool state);
 
+    // Раскладка импорта Telegram: "month" (заметка на месяц,
+    // по умолчанию), "day" (заметка на день, ветки чат-год-месяц)
+    // или "message" (заметка на сообщение, ветки чат-год-месяц-день).
+    // Страница Telegram
+    QString get_telegramImportMode(void);
+    void set_telegramImportMode(const QString &mode);
+
     // Формат голосовых заметок по умолчанию: opus или mp3.
     // Выбирается радио на странице Voice notes, в диалоге
     // записи переключается. Неподдержанный бэкендом сбрасывается
@@ -518,6 +525,7 @@ private:
     QStringList get_parameter_table_48(bool withEndSignature=true);
     QStringList get_parameter_table_49(bool withEndSignature=true);
     QStringList get_parameter_table_50(bool withEndSignature=true);
+    QStringList get_parameter_table_51(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

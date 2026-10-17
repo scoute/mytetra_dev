@@ -78,10 +78,21 @@ QString telegramTextToHtml(const class QJsonValue &textValue);
 // Импорт в модель (без сейва: вызыватель зовет saveKnowTree/save).
 // progress(done, total) опционален, вызывается по сообщениям.
 // Повторный импорт того же чата отклоняется: сначала удалить ветку
+// Раскладка импорта: заметка на месяц или заметка на сообщение.
+// Вторая кладет ветки чат-год-месяц-день: MCP не умеет резать
+// большие заметки, сортировка потом пойдет по мелким
+enum class TelegramLayout
+{
+  Month=0,
+  Day=1,
+  Message=2
+};
+
 bool importTelegramChat(KnowTreeModel *model,
                         const TelegramChat &chat,
                         TelegramImportResult &result,
                         QString &error,
+                        TelegramLayout layout=TelegramLayout::Month,
                         std::function<void(int, int)> progress={});
 
 #endif // TELEGRAMIMPORT_H

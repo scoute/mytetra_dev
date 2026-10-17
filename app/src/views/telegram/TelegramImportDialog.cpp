@@ -13,9 +13,13 @@
 #include <QApplication>
 
 #include "views/telegram/TelegramImportDialog.h"
+#include "models/appConfig/AppConfig.h"
 #include "models/tree/KnowTreeModel.h"
 #include "views/tree/TreeScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
@@ -160,8 +164,13 @@ void TelegramImportDialog::onImport(void)
   TelegramImportResult result;
   QString error;
 
+  const QString modeName=mytetraConfig.get_telegramImportMode();
+  const TelegramLayout layout=(modeName==QStringLiteral("message")) ? TelegramLayout::Message :
+                               (modeName==QStringLiteral("day")) ? TelegramLayout::Day :
+                               TelegramLayout::Month;
+
   const bool ok=importTelegramChat(treeScreen->knowTreeModel, chat,
-                                   result, error,
+                                   result, error, layout,
                                    [&](int done, int total) {
     Q_UNUSED(total);
     progressBar->setValue(done);

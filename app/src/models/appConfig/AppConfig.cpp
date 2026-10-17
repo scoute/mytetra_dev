@@ -143,7 +143,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_50(true);
+        QStringList actualTable=get_parameter_table_51(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1570,6 +1570,27 @@ void AppConfig::set_showSubtreeCount(bool state)
 }
 
 
+// Раскладка импорта Telegram. Неизвестное значение лечится
+// в дефолт: импорт всегда рабочий
+QString AppConfig::get_telegramImportMode(void)
+{
+    const QString mode=m_conf->value("telegramImportMode", QStringLiteral("month")).toString();
+
+    if(mode==QStringLiteral("message") || mode==QStringLiteral("day"))
+        return mode;
+
+    return QStringLiteral("month");
+}
+
+void AppConfig::set_telegramImportMode(const QString &mode)
+{
+    if(mode==QStringLiteral("message") || mode==QStringLiteral("day"))
+        m_conf->setValue("telegramImportMode", mode);
+    else
+        m_conf->setValue("telegramImportMode", QStringLiteral("month"));
+}
+
+
 // Формат голосовых заметок по умолчанию. Opus если не задано
 // или лежит мусор: диалог записи все равно проверяет поддержку
 QString AppConfig::get_voiceNoteFormat(void)
@@ -1863,6 +1884,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_48;
     parameterFunctions << &AppConfig::get_parameter_table_49;
     parameterFunctions << &AppConfig::get_parameter_table_50;
+    parameterFunctions << &AppConfig::get_parameter_table_51;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2886,6 +2908,25 @@ QStringList AppConfig::get_parameter_table_50(bool withEndSignature)
 
     // Общий итог записей с учетом подветок, по умолчанию выключен
     table << "showSubtreeCount" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_51(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 50
+    table << get_parameter_table_50(false);
+
+    // Раскладка импорта Telegram, по умолчанию заметка на месяц
+    table << "telegramImportMode" << "QString" << "month";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

@@ -271,9 +271,10 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     tools.append(toolDescription(
       "list_branches",
+      QObject::tr(
       "All branches in tree order, with notes_count (own) and "
-      "notes_total (with subbranches). Encrypted ones carry encrypted:true.",
-      objectSchema(properties, QJsonArray())));
+      "notes_total (with subbranches). Encrypted ones carry encrypted:true."
+      ),      objectSchema(properties, QJsonArray())));
   }
   {
     QJsonObject properties;
@@ -304,8 +305,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "list_notes",
-      "Notes in a branch. Encrypted ones carry encrypted:true.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Notes in a branch. Encrypted ones carry encrypted:true."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -331,8 +333,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "get_note",
-      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty. Encrypted notes carry encrypted:true.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty. Encrypted notes carry encrypted:true."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -352,8 +355,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("query");
     tools.append(toolDescription(
       "search",
-      "Substring search over names, tags, texts.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Substring search over names, tags, texts."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -370,8 +374,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_branch",
-      "Create a branch. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Create a branch. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -405,8 +410,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_note",
-      "Create a note. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Create a note. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -437,8 +443,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "update_note",
-      "Update note fields. Only provided fields change; open GUI editor keeps its buffer. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Update note fields. Only provided fields change; open GUI editor keeps its buffer. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -451,8 +458,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "delete_note",
-      "Delete a note to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Delete a note to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -465,8 +473,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "delete_branch",
-      "Delete a branch subtree to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Delete a branch subtree to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -483,11 +492,12 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("operations");
     tools.append(toolDescription(
       "apply_batch",
+      QObject::tr(
       "PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. "
       "Do not call single-write tools in a loop. "
       "Not atomic: stops at first error, applied prefix persists. "
-      "Per-operation results in order.",
-      objectSchema(properties, required)));
+      "Per-operation results in order."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -505,8 +515,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "rename_branch",
-      "Rename a branch. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Rename a branch. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -529,8 +540,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("target_id");
     tools.append(toolDescription(
       "move_branch",
-      "Move a branch. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Move a branch. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -548,8 +560,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "move_note",
-      "Move a note, id and links kept. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Move a note, id and links kept. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -562,8 +575,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "favorite_note",
-      "Star a note. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Star a note. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -576,8 +590,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "unfavorite_note",
-      "Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -595,8 +610,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("path");
     tools.append(toolDescription(
       "export_branch",
-      "Export a branch subtree to a directory in MyTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Export a branch subtree to a directory in MyTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -613,8 +629,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("path");
     tools.append(toolDescription(
       "import_branch",
-      "Import a branch subtree from a MyTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Import a branch subtree from a MyTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -628,8 +645,9 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["limit"]=limit;
     tools.append(toolDescription(
       "find_duplicates",
-      "Same-name or same-text note groups.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Same-name or same-text note groups."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
@@ -641,24 +659,27 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["detailed"]=detailed;
     tools.append(toolDescription(
       "stats",
-      "Totals: branches, notes, tags, files, images, links.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Totals: branches, notes, tags, files, images, links."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
     QJsonObject properties;
     tools.append(toolDescription(
       "debug_info",
-      "Server debug: app version and database path.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Server debug: app version and database path."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
     QJsonObject properties;
     tools.append(toolDescription(
       "list_tags",
-      "Tags with counts.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Tags with counts."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
@@ -678,8 +699,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("tag");
     tools.append(toolDescription(
       "tag_notes",
-      "Notes with exactly this tag.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Notes with exactly this tag."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -693,16 +715,18 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["limit"]=limit;
     tools.append(toolDescription(
       "untagged_notes",
-      "Notes without tags.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Notes without tags."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
     QJsonObject properties;
     tools.append(toolDescription(
       "list_favorites",
-      "Starred notes with branch context.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Starred notes with branch context."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
@@ -715,8 +739,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "list_attachments",
-      "Attachments of a note: file names with sizes.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Attachments of a note: file names with sizes."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -734,8 +759,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("new");
     tools.append(toolDescription(
       "rename_tag",
-      "Rename a tag everywhere. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Rename a tag everywhere. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -748,8 +774,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("tag");
     tools.append(toolDescription(
       "delete_tag",
-      "Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   // Режимы младше полного видят не все: фильтр по toolAllowed

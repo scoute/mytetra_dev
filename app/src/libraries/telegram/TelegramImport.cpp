@@ -713,10 +713,271 @@ static TreeItem *ensureBranch(KnowTreeModel *model, TreeItem *parent,
 }
 
 
+// Один файл медиа в заметке: инлайн, ужатый или аттач.
+// Имена резолвятся до построения HTML: takeUniqueName вызывается
+// при сборке строки, ссылка и файл не разъедутся
+struct TelegramPendingFile
+{
+  QString kind; // "inline", "scaled" или "attach"
+  QString mediaKind; // "photo", "voice", "file"
+  QString srcPath;
+  QString fileName; // дисковое имя в каталоге заметки
+};
+
+
+// Уникальное имя в пределах набора. Каталог записи свежак,
+// занятость только внутри заметки (месяца или дня)
+static QString takeUniqueName(QSet<QString> &used, const QString &wanted)
+{
+  QString target=wanted;
+
+  if(target.isEmpty())
+    target=QStringLiteral("file");
+
+  const int dotPos=target.lastIndexOf(QLatin1Char('.'));
+  const QString stem=(dotPos>0) ? target.left(dotPos) : target;
+  const QString ext=(dotPos>0) ? target.mid(dotPos) : QString();
+  int attempt=2;
+
+  while(used.contains(target))
+  {
+    target=stem+QStringLiteral("-")+QString::number(attempt)+ext;
+    ++attempt;
+
+    if(attempt>1000)
+      return QString();
+  }
+
+  used.insert(target);
+
+  return target;
+}
+
+
+// Пузырек одного сообщения: шапка, пересланное, ответ, текст, медиа.
+// Без пилюли дня и заголовка месяца: их добавляет вызыватель
+static QString telegramMessageBubble(const TelegramMessage &message,
+                                     const QMap<qint64, QPair<QString, QString>> &snippets,
+                                     QList<TelegramPendingFile> &pending,
+                                     QSet<QString> &usedNames)
+{
+  const QDateTime dt=QDateTime::fromSecsSinceEpoch(message.unixtime);
+  QString line=QStringLiteral("<div style=\"background-color:#eeffde;margin-top:6px;margin-bottom:6px;\">")+
+               QStringLiteral("<font color=\"#8a8a8a\">")+
+               dt.toString(QStringLiteral("dd.MM hh:mm"))+
+               QStringLiteral("</font> <b>")+message.from.toHtmlEscaped()+
+               QStringLiteral("</b>");
+
+  if(message.forwarded && !message.fwdFrom.isEmpty())
+    line+=QStringLiteral(" <i><font color=\"#2e7d32\">[переслано от ")+message.fwdFrom.toHtmlEscaped()+
+          QStringLiteral("]</font></i>");
+
+  if(message.replyTo!=0 && snippets.contains(message.replyTo))
+  {
+    const QPair<QString, QString> &quoted=snippets.value(message.replyTo);
+    line+=QStringLiteral("<br/>&#8617; ответ ")+quoted.first.toHtmlEscaped()+
+          QStringLiteral(": &laquo;")+quoted.second.toHtmlEscaped()+
+          QStringLiteral("&raquo;");
+  }
+
+  if(!message.html.isEmpty())
+    line+=QStringLiteral("<br/>")+message.html;
+
+  foreach(const TelegramMedia &media, message.media)
+  {
+    if(media.kind==QStringLiteral("photo"))
+    {
+      // Один файл без дублей. Габариты заранее по исходнику:
+      // редактор ничего не растягивает. Сверх лимита файл
+      // гладко ужимается на месте
+      const QSize naturalSize=QImageReader(media.srcPath).size();
+      const bool needScale=naturalSize.isValid() &&
+                           (naturalSize.width()>telegramMaxSide ||
+                            naturalSize.height()>telegramMaxSide);
+      const QSize displaySize=needScale ?
+                              telegramDisplaySize(media.srcPath) :
+                              naturalSize;
+      const QString disk=takeUniqueName(usedNames, media.fileName);
+
+      if(disk.isEmpty())
+        continue;
+
+      if(displaySize.isValid())
+        line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
+              QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
+              QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
+              QStringLiteral("\"/>");
+      else
+        line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
+              QStringLiteral("\"/>");
+
+      TelegramPendingFile pf;
+      pf.kind=needScale ? QStringLiteral("scaled") : QStringLiteral("inline");
+      pf.mediaKind=media.kind;
+      pf.srcPath=media.srcPath;
+      pf.fileName=disk;
+      pending.append(pf);
+    }
+    else if(media.kind==QStringLiteral("voice"))
+    {
+      // Ссылка voicenote:// при открытии материализуется
+      // в штатный плеер-пузырь
+      const QString disk=takeUniqueName(usedNames, media.fileName);
+
+      if(disk.isEmpty())
+        continue;
+
+      line+=QStringLiteral("<br/><a href=\"voicenote://")+disk.toHtmlEscaped()+
+            QStringLiteral("\">[voice ")+media.extra+
+            QStringLiteral("]</a>");
+
+      TelegramPendingFile pf;
+      pf.kind=QStringLiteral("inline");
+      pf.mediaKind=media.kind;
+      pf.srcPath=media.srcPath;
+      pf.fileName=disk;
+      pending.append(pf);
+    }
+    else
+    {
+      const QString disk=takeUniqueName(usedNames, media.fileName);
+
+      if(disk.isEmpty())
+        continue;
+
+      line+=QStringLiteral("<br/>[Файл: ")+disk.toHtmlEscaped()+
+            QStringLiteral("]");
+
+      TelegramPendingFile pf;
+      pf.kind=QStringLiteral("attach");
+      pf.mediaKind=media.kind;
+      pf.srcPath=media.srcPath;
+      pf.fileName=disk;
+      pending.append(pf);
+    }
+  }
+
+  line+=QStringLiteral("</div>");
+
+  return line;
+}
+
+
+// Запись заметки в ветку: текст, ctime, автор, файлы.
+// Каталог берется у вставленной записи: insert может
+// перегенерировать dir, предвычисленному верить нельзя
+static bool writeTelegramNote(TreeItem *branch,
+                              const QString &noteName,
+                              const QString &html,
+                              qint64 unixtime,
+                              const QString &author,
+                              QList<TelegramPendingFile> &pending,
+                              TelegramImportResult &result,
+                              QString &error)
+{
+  RecordTableData *table=branch->recordtableGetTableData();
+
+  if(table==nullptr)
+  {
+    error="Branch has no record table: "+branch->getField(QStringLiteral("name"));
+    return false;
+  }
+
+  // Тот же набор полей что McpTools::applyCreateNote при ручном создании
+  Record record;
+  record.switchToFat();
+  record.setText(html);
+  record.setField(QStringLiteral("id"), getUniqueId());
+  record.setField(QStringLiteral("dir"), getUniqueId());
+  record.setField(QStringLiteral("file"), QStringLiteral("text.html"));
+  record.setField(QStringLiteral("name"), noteName);
+  record.setField(QStringLiteral("author"), author);
+  record.setField(QStringLiteral("url"), QString());
+  record.setField(QStringLiteral("tags"), QStringLiteral("telegram"));
+  record.setField(QStringLiteral("ctime"),
+                  QDateTime::fromSecsSinceEpoch(unixtime).toString(QStringLiteral("yyyyMMddhhmmss")));
+
+  const int pos=table->insertNewRecord(GlobalParameters::AddNewRecordBehavior::ADD_TO_END,
+                                      0, record);
+
+  if(pos<0)
+  {
+    error="Can not insert note: "+noteName;
+    return false;
+  }
+
+  Record *stored=table->getRecord(pos);
+
+  if(stored==nullptr)
+  {
+    error="Inserted note not found: "+noteName;
+    return false;
+  }
+
+  const QString recordDir=mytetraConfig.get_tetradir()+QStringLiteral("/base/")+
+                          stored->getField(QStringLiteral("dir"));
+  AttachTableData *attachTable=stored->getAttachTablePointer();
+
+  foreach(const TelegramPendingFile &pf, pending)
+  {
+    if(pf.kind==QStringLiteral("scaled"))
+    {
+      // Один файл: гладкое ужатие на месте. Оригинал сверх лимита
+      // не храним: у Telegram почти все и так в 1280
+      QImage img(pf.srcPath);
+
+      if(img.isNull())
+      {
+        ++result.skippedMedia;
+        continue;
+      }
+
+      img=img.scaled(telegramMaxSide, telegramMaxSide,
+                     Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+      if(img.save(QDir(recordDir).absoluteFilePath(pf.fileName), 0, 88))
+        ++result.attaches;
+      else
+        ++result.skippedMedia;
+    }
+    else if(pf.kind==QStringLiteral("inline"))
+    {
+      // Копия байт в байт: оригинал не трогается, качество 1:1.
+      // Размер показа ограничен width/height в <img>
+      if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(pf.fileName)))
+        ++result.attaches;
+      else
+        ++result.skippedMedia;
+    }
+    else if(attachTable!=nullptr)
+    {
+      Attach attach(QStringLiteral("file"), attachTable);
+      attach.setField(QStringLiteral("id"), getUniqueId());
+      attach.setField(QStringLiteral("fileName"), pf.fileName);
+
+      if(attach.copyFileToBase(pf.srcPath))
+      {
+        attachTable->addAttach(attach);
+        ++result.attaches;
+      }
+      else
+        ++result.skippedMedia;
+    }
+    else
+      ++result.skippedMedia;
+  }
+
+  ++result.notes;
+
+  return true;
+}
+
+
 bool importTelegramChat(KnowTreeModel *model,
                         const TelegramChat &chat,
                         TelegramImportResult &result,
                         QString &error,
+                        TelegramLayout layout,
                         std::function<void(int, int)> progress)
 {
   if(model==nullptr)
@@ -734,7 +995,7 @@ bool importTelegramChat(KnowTreeModel *model,
   }
 
   // Повторный импорт отклоняется: сначала удалить ветку чата.
-  // Молчаливое слияние дало бы дубли месяцев
+  // Молчаливое слияние дало бы дубли
   TreeItem *top=findChildBranch(root, QStringLiteral("Telegram"));
 
   if(top!=nullptr &&
@@ -751,25 +1012,6 @@ bool importTelegramChat(KnowTreeModel *model,
     snippets[message.id]=qMakePair(message.from,
                                    message.plain.left(80));
 
-  // Группировка по месяцам, порядок хронологический
-  QMap<QString, QList<TelegramMessage>> months;
-
-  foreach(const TelegramMessage &message, chat.messages)
-  {
-    const QDate date=QDateTime::fromSecsSinceEpoch(message.unixtime).date();
-
-    if(!date.isValid())
-      continue;
-
-    months[QStringLiteral("%1-%2").arg(date.year()).arg(date.month(), 2, 10, QChar('0'))].append(message);
-  }
-
-  if(months.isEmpty())
-  {
-    error="No dated messages";
-    return false;
-  }
-
   if(top==nullptr)
     top=ensureBranch(model, root, QStringLiteral("Telegram"), result);
 
@@ -778,297 +1020,157 @@ bool importTelegramChat(KnowTreeModel *model,
   const int total=chat.messages.size();
   int done=0;
 
-  // Каталог месячной заметки известен заранее: имена файлов
-  // резолвятся до построения HTML, ссылка и файл не разъедутся
-  const QString baseDir=mytetraConfig.get_tetradir()+QStringLiteral("/base/");
+  // Пилюля дня как в Telegram
+  static const QStringList genitiveMonths={
+    QStringLiteral("января"), QStringLiteral("февраля"),
+    QStringLiteral("марта"), QStringLiteral("апреля"),
+    QStringLiteral("мая"), QStringLiteral("июня"),
+    QStringLiteral("июля"), QStringLiteral("августа"),
+    QStringLiteral("сентября"), QStringLiteral("октября"),
+    QStringLiteral("ноября"), QStringLiteral("декабря")
+  };
 
-  foreach(const QString &monthKey, months.keys())
+  if(layout==TelegramLayout::Month || layout==TelegramLayout::Day)
   {
-    QSet<QString> usedNames;
+    // Склеенные заметки: одна на месяц (ветки чат-год)
+    // или одна на день (ветки чат-год-месяц).
+    // Шапка, пилюли дней, пузырьки
+    const bool byDay=(layout==TelegramLayout::Day);
+    QMap<QString, QList<TelegramMessage>> groups;
 
-    auto takeName=[&](const QString &wanted) -> QString {
-      QString target=wanted;
-
-      if(target.isEmpty())
-        target=QStringLiteral("file");
-
-      const int dotPos=target.lastIndexOf(QLatin1Char('.'));
-      const QString stem=(dotPos>0) ? target.left(dotPos) : target;
-      const QString ext=(dotPos>0) ? target.mid(dotPos) : QString();
-      int attempt=2;
-
-      // Каталог записи свежак: занятость только внутри месяца
-      while(usedNames.contains(target))
-      {
-        target=stem+QStringLiteral("-")+QString::number(attempt)+ext;
-        ++attempt;
-
-        if(attempt>1000)
-          return QString();
-      }
-
-      usedNames.insert(target);
-
-      return target;
-    };
-
-    const int year=monthKey.left(4).toInt();
-
-    // Заметка месяца лежит прямо в ветке года: папка-месяц
-    // ради одной заметки только плодит уровень
-    TreeItem *yearBranch=ensureBranch(model, chatBranch,
-                                      QString::number(year), result);
-    RecordTableData *table=yearBranch->recordtableGetTableData();
-
-    if(table==nullptr)
+    foreach(const TelegramMessage &message, chat.messages)
     {
-      error="Branch has no record table: "+monthKey;
+      const QDate date=QDateTime::fromSecsSinceEpoch(message.unixtime).date();
+
+      if(!date.isValid())
+        continue;
+
+      if(byDay)
+        groups[date.toString(QStringLiteral("yyyy-MM-dd"))].append(message);
+      else
+        groups[QStringLiteral("%1-%2").arg(date.year()).arg(date.month(), 2, 10, QChar('0'))].append(message);
+    }
+
+    if(groups.isEmpty())
+    {
+      error="No dated messages";
       return false;
     }
 
-    // Одна заметка на месяц: шапка + пузырьки сообщений.
-    // Пузырьки таблицами: фон ячейки и отступы QTextDocument умеет,
-    // скругление углов нет — повторяется суть дизайна Telegram
-    QString html=QStringLiteral("<p><b>")+chat.name.toHtmlEscaped()+
-                QStringLiteral(" — ")+monthKey+
-                QStringLiteral("</b></p>");
-
-    // Пилюля дня как в Telegram
-    static const QStringList genitiveMonths={
-      QStringLiteral("января"), QStringLiteral("февраля"),
-      QStringLiteral("марта"), QStringLiteral("апреля"),
-      QStringLiteral("мая"), QStringLiteral("июня"),
-      QStringLiteral("июля"), QStringLiteral("августа"),
-      QStringLiteral("сентября"), QStringLiteral("октября"),
-      QStringLiteral("ноября"), QStringLiteral("декабря")
-    };
-
-    QDate lastDay;
-
-    // Файлы месяца: картинки и голосовые инлайном в каталог заметки
-    // (как нативные), остальные документы аттачами
-    struct PendingFile
+    foreach(const QString &groupKey, groups.keys())
     {
-      QString kind; // "inline", "scaled" или "attach"
-      QString mediaKind; // "photo", "voice", "file"
-      QString srcPath;
-      QString fileName; // дисковое имя в каталоге заметки
-    };
-    QList<PendingFile> pending;
+      const int year=groupKey.left(4).toInt();
 
-    foreach(const TelegramMessage &message, months.value(monthKey))
+      TreeItem *parentBranch=ensureBranch(model, chatBranch,
+                                          QString::number(year), result);
+
+      if(byDay)
+      {
+        // Ветки чат-год-месяц-день: месяц и день
+        parentBranch=ensureBranch(model, parentBranch,
+                                 groupKey.left(7), result);
+        parentBranch=ensureBranch(model, parentBranch,
+                                 groupKey, result);
+      }
+
+      QSet<QString> usedNames;
+      QList<TelegramPendingFile> pending;
+      QString html=QStringLiteral("<p><b>")+chat.name.toHtmlEscaped()+
+                    QStringLiteral(" — ")+groupKey+
+                    QStringLiteral("</b></p>");
+
+      QDate lastDay;
+
+      foreach(const TelegramMessage &message, groups.value(groupKey))
+      {
+        const QDate date=QDateTime::fromSecsSinceEpoch(message.unixtime).date();
+
+        if(date!=lastDay)
+        {
+          lastDay=date;
+          html+=QStringLiteral("<p align=\"center\"><span style=\"background-color:#8ab48a;\">")+
+                QStringLiteral("<font color=\"#ffffff\">&nbsp;&nbsp;")+
+                QString::number(lastDay.day())+
+                QStringLiteral(" ")+
+                genitiveMonths[lastDay.month()-1]+
+                QStringLiteral("&nbsp;&nbsp;</font></span></p>");
+        }
+
+        html+=telegramMessageBubble(message, snippets, pending, usedNames);
+
+        ++done;
+
+        if(progress)
+          progress(done, total);
+      }
+
+      if(!writeTelegramNote(parentBranch, groupKey+QStringLiteral(" — ")+chat.name,
+                            html, groups.value(groupKey).first().unixtime,
+                            chat.name, pending, result, error))
+        return false;
+    }
+
+    return true;
+  }
+
+  // Одна заметка на сообщение: ветки чат-год-месяц-день.
+  // Имя: время-автор (сортировка), ctime и автор свои у каждой
+  QMap<QString, QList<TelegramMessage>> days;
+
+  foreach(const TelegramMessage &message, chat.messages)
+  {
+    const QDate date=QDateTime::fromSecsSinceEpoch(message.unixtime).date();
+
+    if(!date.isValid())
+      continue;
+
+    days[date.toString(QStringLiteral("yyyy-MM-dd"))].append(message);
+  }
+
+  if(days.isEmpty())
+  {
+    error="No dated messages";
+    return false;
+  }
+
+  foreach(const QString &dayKey, days.keys())
+  {
+    const int year=dayKey.left(4).toInt();
+    TreeItem *yearBranch=ensureBranch(model, chatBranch,
+                                      QString::number(year), result);
+    TreeItem *monthBranch=ensureBranch(model, yearBranch,
+                                       dayKey.left(7), result);
+    TreeItem *dayBranch=ensureBranch(model, monthBranch,
+                                     dayKey, result);
+
+    QSet<QString> usedNames;
+
+    foreach(const TelegramMessage &message, days.value(dayKey))
     {
+      QList<TelegramPendingFile> pending;
+      QSet<QString> fileNames;
+      const QString html=telegramMessageBubble(message, snippets,
+                                               pending, fileNames);
       const QDateTime dt=QDateTime::fromSecsSinceEpoch(message.unixtime);
-      QString line;
+      const QString author=message.from.isEmpty() ? chat.name : message.from;
+      const QString noteName=takeUniqueName(usedNames,
+          dt.toString(QStringLiteral("hh:mm"))+QStringLiteral(" — ")+author);
 
-      // Пилюля дня при смене даты, как в Telegram
-      if(dt.date()!=lastDay)
+      if(noteName.isEmpty())
       {
-        lastDay=dt.date();
-        line+=QStringLiteral("<p align=\"center\"><span style=\"background-color:#8ab48a;\">")+
-              QStringLiteral("<font color=\"#ffffff\">&nbsp;&nbsp;")+
-              QString::number(lastDay.day())+
-              QStringLiteral(" ")+
-              genitiveMonths[lastDay.month()-1]+
-              QStringLiteral("&nbsp;&nbsp;</font></span></p>");
+        error="Can not name note";
+        return false;
       }
 
-      // Пузырек сообщения: фон и отступы нативно держит QTextDocument
-      line+=QStringLiteral("<div style=\"background-color:#eeffde;margin-top:6px;margin-bottom:6px;\">")+
-            QStringLiteral("<font color=\"#8a8a8a\">")+
-            dt.toString(QStringLiteral("dd.MM hh:mm"))+
-            QStringLiteral("</font> <b>")+message.from.toHtmlEscaped()+
-            QStringLiteral("</b>");
-
-      if(message.forwarded && !message.fwdFrom.isEmpty())
-        line+=QStringLiteral(" <i><font color=\"#2e7d32\">[переслано от ")+message.fwdFrom.toHtmlEscaped()+
-              QStringLiteral("]</font></i>");
-
-      if(message.replyTo!=0 && snippets.contains(message.replyTo))
-      {
-        const QPair<QString, QString> &quoted=snippets.value(message.replyTo);
-        line+=QStringLiteral("<br/>&#8617; ответ ")+quoted.first.toHtmlEscaped()+
-              QStringLiteral(": &laquo;")+quoted.second.toHtmlEscaped()+
-              QStringLiteral("&raquo;");
-      }
-
-      if(!message.html.isEmpty())
-        line+=QStringLiteral("<br/>")+message.html;
-
-      foreach(const TelegramMedia &media, message.media)
-      {
-        if(media.kind==QStringLiteral("photo"))
-        {
-          // Один файл без дублей. Габариты заранее по исходнику:
-          // редактор ничего не растягивает. Сверх лимита файл
-          // гладко ужимается на месте
-          const QSize naturalSize=QImageReader(media.srcPath).size();
-          const bool needScale=naturalSize.isValid() &&
-                               (naturalSize.width()>telegramMaxSide ||
-                                naturalSize.height()>telegramMaxSide);
-          const QSize displaySize=needScale ?
-                                  telegramDisplaySize(media.srcPath) :
-                                  naturalSize;
-
-          const QString disk=takeName(media.fileName);
-
-          if(disk.isEmpty())
-          {
-            ++result.skippedMedia;
-            continue;
-          }
-
-          if(displaySize.isValid())
-            line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
-                  QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
-                  QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
-                  QStringLiteral("\"/>");
-          else
-            line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
-                  QStringLiteral("\"/>");
-
-          PendingFile pf;
-          pf.kind=needScale ? QStringLiteral("scaled") : QStringLiteral("inline");
-          pf.mediaKind=media.kind;
-          pf.srcPath=media.srcPath;
-          pf.fileName=disk;
-          pending.append(pf);
-        }
-        else if(media.kind==QStringLiteral("voice"))
-        {
-          // Ссылка voicenote:// при открытии материализуется
-          // в штатный плеер-пузырь
-          const QString disk=takeName(media.fileName);
-
-          if(disk.isEmpty())
-          {
-            ++result.skippedMedia;
-            continue;
-          }
-
-          line+=QStringLiteral("<br/><a href=\"voicenote://")+disk.toHtmlEscaped()+
-                QStringLiteral("\">[voice ")+media.extra+
-                QStringLiteral("]</a>");
-
-          PendingFile pf;
-          pf.kind=QStringLiteral("inline");
-          pf.mediaKind=media.kind;
-          pf.srcPath=media.srcPath;
-          pf.fileName=disk;
-          pending.append(pf);
-        }
-        else
-        {
-          line+=QStringLiteral("<br/>[Файл: ")+media.fileName.toHtmlEscaped()+
-                QStringLiteral("]");
-
-          PendingFile pf;
-          pf.kind=QStringLiteral("attach");
-          pf.mediaKind=media.kind;
-          pf.srcPath=media.srcPath;
-          pf.fileName=media.fileName;
-          pending.append(pf);
-        }
-      }
-      line+=QStringLiteral("</div>");
-      html+=line;
+      if(!writeTelegramNote(dayBranch, noteName, html, message.unixtime,
+                            author, pending, result, error))
+        return false;
 
       ++done;
 
       if(progress)
         progress(done, total);
     }
-
-    // Тот же набор полей что McpTools::applyCreateNote при ручном создании
-    Record record;
-    record.switchToFat();
-    record.setText(html);
-    record.setField(QStringLiteral("id"), getUniqueId());
-    record.setField(QStringLiteral("dir"), getUniqueId());
-    record.setField(QStringLiteral("file"), QStringLiteral("text.html"));
-    record.setField(QStringLiteral("name"), monthKey+QStringLiteral(" — ")+chat.name);
-    record.setField(QStringLiteral("author"), chat.name);
-    record.setField(QStringLiteral("url"), QString());
-    record.setField(QStringLiteral("tags"), QStringLiteral("telegram"));
-
-    if(!months.value(monthKey).isEmpty())
-      record.setField(QStringLiteral("ctime"),
-                      QDateTime::fromSecsSinceEpoch(months.value(monthKey).first().unixtime).toString(QStringLiteral("yyyyMMddhhmmss")));
-
-    const int pos=table->insertNewRecord(GlobalParameters::AddNewRecordBehavior::ADD_TO_END,
-                                        0, record);
-
-    if(pos<0)
-    {
-      error="Can not insert note: "+monthKey;
-      return false;
-    }
-
-    // Файлы месяца. Инлайн: копия под исходным именем в каталог
-    // заметки (картинки резолвятся через DocumentUrl, голосовые
-    // через voicenote://). Аттачи: штатным механизмом.
-    // Нет файла на диске: метка в тексте уже есть, импорт продолжается
-    Record *stored=table->getRecord(pos);
-
-    if(stored!=nullptr)
-    {
-      // Каталог берется у вставленной записи: insert может
-      // перегенерировать dir, предвычисленному верить нельзя
-      const QString recordDir=baseDir+stored->getField(QStringLiteral("dir"));
-      AttachTableData *attachTable=stored->getAttachTablePointer();
-
-      foreach(const PendingFile &pf, pending)
-      {
-        // Имена уже зарезервированы через takeName: прямая запись
-        if(pf.kind==QStringLiteral("scaled"))
-        {
-          // Один файл: гладкое ужатие на месте. Оригинал сверх лимита
-          // не храним: у Telegram почти все и так в 1280
-          QImage img(pf.srcPath);
-
-          if(img.isNull())
-          {
-            ++result.skippedMedia;
-            continue;
-          }
-
-          img=img.scaled(telegramMaxSide, telegramMaxSide,
-                         Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-          if(img.save(QDir(recordDir).absoluteFilePath(pf.fileName), 0, 88))
-            ++result.attaches;
-          else
-            ++result.skippedMedia;
-        }
-        else if(pf.kind==QStringLiteral("inline"))
-        {
-          // Копия байт в байт: оригинал не трогается, качество 1:1.
-          // Размер показа ограничен width/height в <img>
-          if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(pf.fileName)))
-            ++result.attaches;
-          else
-            ++result.skippedMedia;
-        }
-        else if(attachTable!=nullptr)
-        {
-          Attach attach(QStringLiteral("file"), attachTable);
-          attach.setField(QStringLiteral("id"), getUniqueId());
-          attach.setField(QStringLiteral("fileName"), pf.fileName);
-
-          if(attach.copyFileToBase(pf.srcPath))
-          {
-            attachTable->addAttach(attach);
-            ++result.attaches;
-          }
-          else
-            ++result.skippedMedia;
-        }
-        else
-          ++result.skippedMedia;
-      }
-    }
-
-    ++result.notes;
   }
 
   return true;

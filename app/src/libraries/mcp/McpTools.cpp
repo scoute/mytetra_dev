@@ -345,18 +345,44 @@ static QString makeSnippet(const QString &plain, int matchPos, int matchLength)
 }
 
 
-void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit, QJsonArray &out)
+void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit,
+                               QJsonArray &noteOut, QJsonArray &branchOut)
 {
-  if(out.size()>=limit)
-    return;
-
   QString branchId=item->getField("id");
+  QString branchName=item->getField("name");
   QString path=branchPathOf(item);
+
+  // Ветка подходит по имени: отдельным списком, чтобы нейронка
+  // не перебирала все ветки ради поиска нужной.
+  // Корневые ветки несут пустой parent_id, как в list_branches
+  if(branchOut.size()<limit && branchName.toLower().contains(queryLower))
+  {
+    TreeItem *parentItem=item->parent();
+    const bool isRootLevel=(parentItem==nullptr ||
+                            parentItem->parent()==nullptr);
+
+    QJsonObject found;
+    found["id"]=branchId;
+    found["name"]=branchName;
+    found["parent_id"]=isRootLevel ? QString() : parentItem->getField("id");
+    found["branch_path"]=path;
+    branchOut.append(found);
+  }
+
+  if(noteOut.size()>=limit)
+  {
+    // Заметки набраны, но подветки по именам все равно проходятся:
+    // ветки дешевые, тексты записей уже не читаются
+    for(int i=0; i<item->childCount() && branchOut.size()<limit; ++i)
+      searchBranch(item->child(i), queryLower, limit, noteOut, branchOut);
+
+    return;
+  }
 
   RecordTableData *table=item->recordtableGetTableData();
 
   if(table!=nullptr)
-    for(unsigned i=0; i<table->size() && out.size()<limit; ++i)
+    for(unsigned i=0; i<table->size() && noteOut.size()<limit; ++i)
     {
       Record *record=table->getRecord(i);
 
@@ -408,20 +434,21 @@ void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit
         // branch_id здесь - ветка где реально лежит запись
         hit["branch_id"]=branchId;
 
-        out.append(hit);
+        noteOut.append(hit);
       }
     }
 
-  for(int i=0; i<item->childCount() && out.size()<limit; ++i)
-    searchBranch(item->child(i), queryLower, limit, out);
+  for(int i=0; i<item->childCount() && (noteOut.size()<limit || branchOut.size()<limit); ++i)
+    searchBranch(item->child(i), queryLower, limit, noteOut, branchOut);
 }
 
 
-void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower, int limit, QJsonArray &out)
+void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower, int limit,
+                       QJsonArray &noteOut, QJsonArray &branchOut)
 {
   int rows=m_model->rowCount(parent);
 
-  for(int r=0; r<rows && out.size()<limit; ++r)
+  for(int r=0; r<rows && (noteOut.size()<limit || branchOut.size()<limit); ++r)
   {
     QModelIndex index=m_model->index(r, 0, parent);
     TreeItem *item=m_model->getItem(index);
@@ -429,7 +456,7 @@ void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower,
     if(item==nullptr)
       continue;
 
-    searchBranch(item, queryLower, limit, out);
+    searchBranch(item, queryLower, limit, noteOut, branchOut);
   }
 }
 
@@ -454,8 +481,10 @@ QJsonObject McpTools::searchNotes(const QString &query, int limit, QString &erro
     limit=100;
 
   QJsonArray hits;
-  searchModel(QModelIndex(), trimmed.toLower(), limit, hits);
+  QJsonArray branchHits;
+  searchModel(QModelIndex(), trimmed.toLower(), limit, hits, branchHits);
   result["results"]=hits;
+  result["branches"]=branchHits;
 
   return result;
 }

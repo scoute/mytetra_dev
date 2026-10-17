@@ -8,6 +8,9 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
 #include <QApplication>
 #include <QClipboard>
 
@@ -443,6 +446,19 @@ void ReferenceFormatter::onClickedGotoReference(QString href)
     // Метка живет в том же anchor-канале что ссылки
     if(href==SecretFormatter::secretHref())
       return;
+
+    // Относительная ссылка без схемы: файл рядом с текстом записи
+    // (картинки, аттачи из импорта). Раскрывается относительно
+    // каталога записи и открывается внешней программой
+    {
+      const QString absolutePath=LinkHelper::resolveRelativeLink(editor->getWorkDirectory(), href);
+
+      if(!absolutePath.isEmpty())
+      {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(absolutePath));
+        return;
+      }
+    }
 
     LinkHelper::gotoReference(href);
 }

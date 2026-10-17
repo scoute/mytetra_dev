@@ -449,7 +449,7 @@ bool importTelegramChat(KnowTreeModel *model,
     record.setField(QStringLiteral("id"), getUniqueId());
     record.setField(QStringLiteral("dir"), getUniqueId());
     record.setField(QStringLiteral("file"), QStringLiteral("text.html"));
-    record.setField(QStringLiteral("name"), monthKey);
+    record.setField(QStringLiteral("name"), monthKey+QStringLiteral(" — ")+chat.name);
     record.setField(QStringLiteral("author"), chat.name);
     record.setField(QStringLiteral("url"), QString());
     record.setField(QStringLiteral("tags"), QStringLiteral("telegram"));

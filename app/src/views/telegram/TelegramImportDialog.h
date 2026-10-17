@@ -8,6 +8,8 @@ class QToolButton;
 class QLabel;
 class QProgressBar;
 class QPushButton;
+class QRadioButton;
+class QGroupBox;
 
 #include "libraries/telegram/TelegramImport.h"
 
@@ -25,6 +27,7 @@ public:
 private slots:
   void onSelectFile(void);
   void onImport(void);
+  void onLayoutToggle(void);
 
 private:
   void retranslateUi(void);
@@ -35,6 +38,13 @@ private:
   QProgressBar *progressBar;
   QPushButton *importButton;
   QPushButton *closeButton;
+
+  // Раскладка заметок: месяц, день или сообщение.
+  // Как в настройках: выбор сразу пишется в конфиг
+  QGroupBox *layoutBox;
+  QRadioButton *monthNote;
+  QRadioButton *dayNote;
+  QRadioButton *messageNote;
 
   TelegramChat chat;
   bool chatLoaded=false;

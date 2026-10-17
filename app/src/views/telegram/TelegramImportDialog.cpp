@@ -46,6 +46,7 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
   // импорт читает его при старте
   layoutBox=new QGroupBox(this);
 
+  yearNote=new QRadioButton(this);
   monthNote=new QRadioButton(this);
   dayNote=new QRadioButton(this);
   messageNote=new QRadioButton(this);
@@ -53,8 +54,10 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
   retranslateUi();
 
   const QString savedMode=mytetraConfig.get_telegramImportMode();
+  yearNote->setChecked(savedMode==QStringLiteral("year"));
   monthNote->setChecked(savedMode!=QStringLiteral("message") &&
-                        savedMode!=QStringLiteral("day"));
+                        savedMode!=QStringLiteral("day") &&
+                        savedMode!=QStringLiteral("year"));
   dayNote->setChecked(savedMode==QStringLiteral("day"));
   messageNote->setChecked(savedMode==QStringLiteral("message"));
 
@@ -66,6 +69,8 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
           this, &TelegramImportDialog::onImport);
   connect(closeButton, &QPushButton::clicked,
           this, &TelegramImportDialog::accept);
+  connect(yearNote, &QRadioButton::toggled,
+          this, &TelegramImportDialog::onLayoutToggle);
   connect(monthNote, &QRadioButton::toggled,
           this, &TelegramImportDialog::onLayoutToggle);
   connect(dayNote, &QRadioButton::toggled,
@@ -83,6 +88,7 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
   buttonLayout->addWidget(closeButton);
 
   QVBoxLayout *layoutLayout=new QVBoxLayout;
+  layoutLayout->addWidget(yearNote);
   layoutLayout->addWidget(monthNote);
   layoutLayout->addWidget(dayNote);
   layoutLayout->addWidget(messageNote);
@@ -114,6 +120,7 @@ void TelegramImportDialog::retranslateUi(void)
   infoLabel->setText(tr("Select Telegram Desktop export file (result.json or messages.html)."));
 
   monthNote->setText(tr("One note per month: chat - year (default)"));
+  yearNote->setText(tr("One note per year: chat"));
   dayNote->setText(tr("One note per day: chat - year - month"));
   messageNote->setText(tr("One note per message: chat - year - month - day"));
 
@@ -129,6 +136,8 @@ void TelegramImportDialog::onLayoutToggle(void)
     mode=QStringLiteral("message");
   else if(dayNote->isChecked())
     mode=QStringLiteral("day");
+  else if(yearNote->isChecked())
+    mode=QStringLiteral("year");
 
   if(mytetraConfig.get_telegramImportMode()!=mode)
     mytetraConfig.set_telegramImportMode(mode);

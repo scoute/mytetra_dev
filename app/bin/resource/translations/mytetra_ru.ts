@@ -8093,22 +8093,27 @@ This cannot be undone.</source>
         <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="116"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="123"/>
+        <source>One note per year: chat</source>
+        <translation>Одна заметка на год: чат</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="122"/>
         <source>One note per month: chat - year (default)</source>
         <translation>Одна заметка на месяц: чат — год (по умолчанию)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="117"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="124"/>
         <source>One note per day: chat - year - month</source>
         <translation>Одна заметка на день: чат — год — месяц</translation>
     </message>
     <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="118"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="125"/>
         <source>One note per message: chat - year - month - day</source>
         <translation>Заметка на каждое сообщение: чат — год — месяц — день</translation>
     </message>
     <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="120"/>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="127"/>
         <source>Notes layout</source>
         <translation>Раскладка заметок</translation>
     </message>

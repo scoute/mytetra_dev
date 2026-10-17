@@ -5700,6 +5700,141 @@ Please report about this problem to the developers.</source>
         <source>Unable to rename the file %1 to %2 from disk.</source>
         <translation>Не могу переименовать файл %1 в %2 на диске.</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="274"/>
+        <source>All branches in tree order, with notes_count (own) and notes_total (with subbranches). Encrypted ones carry encrypted:true.</source>
+        <translation>Все ветки в порядке дерева, с notes_count (свои) и notes_total (с подветками). Шифрованные помечены encrypted:true.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="308"/>
+        <source>Notes in a branch. Encrypted ones carry encrypted:true.</source>
+        <translation>Заметки ветки. Шифрованные помечены encrypted:true.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="336"/>
+        <source>One note as plain text. Unsaved GUI edits invisible, locked notes read empty. Encrypted notes carry encrypted:true.</source>
+        <translation>Одна заметка плейнтекстом. Несохранённые правки GUI не видны, закрытые читаются пустыми. Шифрованные помечены encrypted:true.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="358"/>
+        <source>Substring search over names, tags, texts.</source>
+        <translation>Поиск подстроки по именам, тегам, текстам.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="377"/>
+        <source>Create a branch. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Создать ветку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="413"/>
+        <source>Create a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Создать заметку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="446"/>
+        <source>Update note fields. Only provided fields change; open GUI editor keeps its buffer. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Обновить поля заметки. Меняются только переданные поля; открытый редактор GUI хранит свой буфер. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="461"/>
+        <source>Delete a note to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Удалить заметку в корзину. Без дополнительных подтверждений. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="476"/>
+        <source>Delete a branch subtree to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Удалить поддерево ветки в корзину. Без дополнительных подтверждений. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="495"/>
+        <source>PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. Do not call single-write tools in a loop. Not atomic: stops at first error, applied prefix persists. Per-operation results in order.</source>
+        <translation>ПРЕДПОЧТИТЕЛЬНО для любых 2+ записей: один вызов, один проход через GUI, один сейв. Не вызывай одиночные тулы в цикле. Не атомарно: остановка на первой ошибке, применённый префикс сохраняется. Результаты по операциям по порядку.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="518"/>
+        <source>Rename a branch. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переименовать ветку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="543"/>
+        <source>Move a branch. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переместить ветку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="563"/>
+        <source>Move a note, id and links kept. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переместить заметку, id и ссылки сохраняются. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="578"/>
+        <source>Star a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Пометить заметку звездой. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="593"/>
+        <source>Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Снять звезду с заметки. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="613"/>
+        <source>Export a branch subtree to a directory in MyTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Выгрузить поддерево ветки в каталог в обменном формате MyTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="632"/>
+        <source>Import a branch subtree from a MyTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Вгрузить поддерево ветки из обменного каталога MyTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="648"/>
+        <source>Same-name or same-text note groups.</source>
+        <translation>Группы заметок с одинаковым именем или текстом.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="662"/>
+        <source>Totals: branches, notes, tags, files, images, links.</source>
+        <translation>Итоги: ветки, заметки, теги, файлы, картинки, ссылки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="671"/>
+        <source>Server debug: app version and database path.</source>
+        <translation>Отладка сервера: версия программы и путь к базе.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="680"/>
+        <source>Tags with counts.</source>
+        <translation>Теги с количеством.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="702"/>
+        <source>Notes with exactly this tag.</source>
+        <translation>Заметки ровно с этим тегом.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="718"/>
+        <source>Notes without tags.</source>
+        <translation>Заметки без тегов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="727"/>
+        <source>Starred notes with branch context.</source>
+        <translation>Заметки со звездой и контекстом ветки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="742"/>
+        <source>Attachments of a note: file names with sizes.</source>
+        <translation>Прикрепления заметки: имена файлов с размерами.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="762"/>
+        <source>Rename a tag everywhere. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переименовать тег везде. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="777"/>
+        <source>Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Удалить тег везде. Необратимо. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
 </context>
 <context>
     <name>RecordInfoFieldsEditor</name>

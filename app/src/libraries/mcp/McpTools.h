@@ -28,8 +28,11 @@ public:
   static const int DEFAULT_NOTE_CHARS=20000;
   static const int MAX_TEXT_LENGTH=200000;
 
-  // Плоский список веток в порядке дерева: {branches: [{id, name, parent_id}]}
-  QJsonObject listBranches(void);
+  // Плоский список веток: по умолчанию только корневой уровень
+  // (защита от дурака: агент не тянет все дерево почем зря).
+  // recursive=true: все ветки в порядке дерева.
+  // {branches: [{id, name, parent_id}]}
+  QJsonObject listBranches(bool recursive=false);
 
   // Записи ветки: {notes, truncated}. error если ветка не найдена.
   // fields пустой = весь объект, иначе только перечисленные ключи

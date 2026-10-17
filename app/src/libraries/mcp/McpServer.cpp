@@ -269,11 +269,17 @@ static QJsonArray buildToolsList(McpMode mode)
 
   {
     QJsonObject properties;
+    QJsonObject recursive;
+    recursive["type"]="boolean";
+    recursive["description"]="Full subtree walk (default false: top level only)";
+    recursive["default"]=false;
+    properties["recursive"]=recursive;
     tools.append(toolDescription(
       "list_branches",
       QObject::tr(
-      "All branches in tree order, with notes_count (own) and "
-      "notes_total (with subbranches). Encrypted ones carry encrypted:true."
+      "Top-level branches with notes_count (own) and "
+      "notes_total (with subbranches). Encrypted ones carry encrypted:true. "
+      "Pass recursive:true for the full tree."
       ),      objectSchema(properties, QJsonArray())));
   }
   {
@@ -1133,7 +1139,7 @@ public:
 
       if(known && toolName=="list_branches")
       {
-        result=m_tools.listBranches();
+        result=m_tools.listBranches(arguments.value("recursive").toBool(false));
       }
       else if(toolName=="list_notes")
       {

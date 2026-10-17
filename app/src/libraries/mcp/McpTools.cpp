@@ -72,12 +72,36 @@ QJsonObject McpTools::noteObject(Record *record, const QString &branchId, const 
 
   note["tags"]=tags;
 
+  // Автор, ссылка, время создания и число аттачей.
+  // У шифрованных без ключа getField сам вернет пусто:
+  // шифротекст наружу не уходит
+  note["author"]=record->getField("author");
+  note["url"]=record->getField("url");
+  note["ctime"]=record->getField("ctime");
+  note["attach_count"]=record->getField("attachCount").toInt();
+
   // Шифр виден только флагом: текст без ключа не отдаётся.
   // Обычные записи ключа не несут, пейлоады не пухнут
   if(record->getField("crypt")=="1")
     note["encrypted"]=true;
 
   return note;
+}
+
+
+// Оставить только запрошенные ключи. Пустой список = весь объект
+static QJsonObject filterNoteFields(const QJsonObject &note, const QStringList &fields)
+{
+  if(fields.isEmpty())
+    return note;
+
+  QJsonObject result;
+
+  foreach(const QString &key, fields)
+    if(note.contains(key))
+      result[key]=note.value(key);
+
+  return result;
 }
 
 
@@ -99,6 +123,10 @@ void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId
     branch["id"]=id;
     branch["name"]=item->getField("name");
     branch["parent_id"]=parentId;
+
+    // Свои и общие с подветками: оба из инкрементального кеша, O(1)
+    branch["notes_count"]=item->recordtableGetRowCount();
+    branch["notes_total"]=item->subtreeRecordCount();
 
     if(item->getField("crypt")=="1")
       branch["encrypted"]=true;
@@ -147,7 +175,8 @@ void McpTools::collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &ou
 
 
 QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
-                                int limit, QString &error)
+                                int limit, QString &error,
+                                const QStringList &fields)
 {
   QJsonObject result;
 
@@ -174,7 +203,7 @@ QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
   QJsonArray notes;
 
   for(int i=0; i<collected.size() && i<limit; ++i)
-    notes.append(collected.at(i));
+    notes.append(filterNoteFields(collected.at(i).toObject(), fields));
 
   result["notes"]=notes;
 
@@ -211,7 +240,8 @@ QString McpTools::readTextWithRetry(Record *record)
 }
 
 
-QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &error)
+QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &error,
+                               const QStringList &fields)
 {
   QJsonObject result;
 
@@ -263,7 +293,7 @@ QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &erro
   note["text"]=plain;
   note["truncated"]=truncated;
 
-  result["note"]=note;
+  result["note"]=filterNoteFields(note, fields);
 
   return result;
 }

@@ -362,7 +362,8 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "search",
       QObject::tr(
-      "Substring search over names, tags, texts."
+      "Substring search over note names, tags, texts. "
+      "Matching branches go in a separate branches list, no need to list all branches."
       ),      objectSchema(properties, required)));
   }
 

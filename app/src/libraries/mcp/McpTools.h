@@ -31,8 +31,11 @@ public:
   // Плоский список веток: по умолчанию только корневой уровень
   // (защита от дурака: агент не тянет все дерево почем зря).
   // recursive=true: все ветки в порядке дерева.
+  // parent_id: дети указанной ветки вместо корня (один уровень
+  // без recursive, поддерево с recursive).
   // {branches: [{id, name, parent_id}]}
-  QJsonObject listBranches(bool recursive=false);
+  QJsonObject listBranches(bool recursive, const QString &parentId,
+                           QString &error);
 
   // Записи ветки: {notes, truncated}. error если ветка не найдена.
   // fields пустой = весь объект, иначе только перечисленные ключи

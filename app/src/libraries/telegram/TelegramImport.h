@@ -50,7 +50,8 @@ struct TelegramImportResult
 {
   int branches=0;
   int notes=0;
-  int attaches=0;
+  int attaches=0; // строк аттачей (оригиналы картинок, документы)
+  int previews=0; // сглаженных превью для показа
   int skippedMedia=0;
 };
 

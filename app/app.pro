@@ -239,6 +239,8 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Synchro.h \
     src/views/appConfigWindow/AppConfigPage_RecordTable.h \
     src/views/appConfigWindow/AppConfigPage_Tree.h \
+    src/libraries/telegram/TelegramImport.h \
+    src/views/telegram/TelegramImportDialog.h \
     src/models/appConfig/AppConfigUpdater.h \
     src/libraries/TrashMonitoring.h \
     src/libraries/wyedit/EditorContextMenu.h \
@@ -443,6 +445,8 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Synchro.cpp \
     src/views/appConfigWindow/AppConfigPage_RecordTable.cpp \
     src/views/appConfigWindow/AppConfigPage_Tree.cpp \
+    src/libraries/telegram/TelegramImport.cpp \
+    src/views/telegram/TelegramImportDialog.cpp \
     src/models/appConfig/AppConfigUpdater.cpp \
     src/libraries/TrashMonitoring.cpp \
     src/libraries/wyedit/EditorContextMenu.cpp \

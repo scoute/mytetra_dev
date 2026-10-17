@@ -285,8 +285,10 @@ private:
   void collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &out);
   void collectFromModel(QMap<QString, QList<QJsonObject>> &byName,
                         QMap<QString, QList<QJsonObject>> &byText);
-  void searchBranch(TreeItem *item, const QString &queryLower, int limit, QJsonArray &out);
-  void searchModel(const QModelIndex &parent, const QString &queryLower, int limit, QJsonArray &out);
+  void searchBranch(TreeItem *item, const QString &queryLower, int limit,
+                  QJsonArray &noteOut, QJsonArray &branchOut);
+  void searchModel(const QModelIndex &parent, const QString &queryLower, int limit,
+                   QJsonArray &noteOut, QJsonArray &branchOut);
 
   // Тихое чтение текста с однократным повтором если файл
   // перезаписали прямо во время чтения (смена mtime)

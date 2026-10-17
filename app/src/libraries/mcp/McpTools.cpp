@@ -105,6 +105,11 @@ static QJsonObject filterNoteFields(const QJsonObject &note, const QStringList &
 }
 
 
+// Одна ветка плоским объектом: id, имя, родитель, итоги из кеша.
+// Определение ниже, перед listBranches
+static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId);
+
+
 void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId, QJsonArray &out)
 {
   int rows=m_model->rowCount(parent);
@@ -119,58 +124,73 @@ void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId
 
     QString id=item->getField("id");
 
-    QJsonObject branch;
-    branch["id"]=id;
-    branch["name"]=item->getField("name");
-    branch["parent_id"]=parentId;
-
-    // Свои и общие с подветками: оба из инкрементального кеша, O(1)
-    branch["notes_count"]=item->recordtableGetRowCount();
-    branch["notes_total"]=item->subtreeRecordCount();
-
-    if(item->getField("crypt")=="1")
-      branch["encrypted"]=true;
-
-    out.append(branch);
+    out.append(flatBranchObject(item, parentId));
 
     appendBranches(index, id, out);
   }
 }
 
 
-QJsonObject McpTools::listBranches(bool recursive)
+// Одна ветка плоским объектом: id, имя, родитель, итоги из кеша
+static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId)
+{
+  QJsonObject branch;
+  branch["id"]=item->getField("id");
+  branch["name"]=item->getField("name");
+  branch["parent_id"]=parentId;
+
+  if(item->getField("crypt")=="1")
+    branch["encrypted"]=true;
+
+  // Свои и общие с подветками: оба из инкрементального кеша, O(1)
+  branch["notes_count"]=item->recordtableGetRowCount();
+  branch["notes_total"]=item->subtreeRecordCount();
+
+  return branch;
+}
+
+
+QJsonObject McpTools::listBranches(bool recursive, const QString &parentId,
+                                   QString &error)
 {
   QJsonArray branches;
 
+  // Старт: корень или указанная ветка. Пустой parent_id = корень
+  QModelIndex start;
+  QString startParentId;
+
+  if(!parentId.isEmpty())
+  {
+    TreeItem *parentItem=m_model->getItemById(parentId);
+
+    if(parentItem==nullptr)
+    {
+      error="Unknown branch_id: "+parentId;
+
+      return QJsonObject();
+    }
+
+    start=m_model->getIndexByItem(parentItem);
+    startParentId=parentId;
+  }
+
   if(!recursive)
   {
-    // Только верхний уровень: без рекурсии вглубь
-    const int rows=m_model->rowCount(QModelIndex());
+    // Только прямой уровень под стартом: без рекурсии вглубь
+    const int rows=m_model->rowCount(start);
 
     for(int r=0; r<rows; ++r)
     {
-      TreeItem *item=m_model->getItem(m_model->index(r, 0, QModelIndex()));
+      TreeItem *item=m_model->getItem(m_model->index(r, 0, start));
 
       if(item==nullptr)
         continue;
 
-      QJsonObject branch;
-      branch["id"]=item->getField("id");
-      branch["name"]=item->getField("name");
-      branch["parent_id"]=QString();
-
-      if(item->getField("crypt")=="1")
-        branch["encrypted"]=true;
-
-      // Свои и общие с подветками: оба из инкрементального кеша, O(1)
-      branch["notes_count"]=item->recordtableGetRowCount();
-      branch["notes_total"]=item->subtreeRecordCount();
-
-      branches.append(branch);
+      branches.append(flatBranchObject(item, startParentId));
     }
   }
   else
-    appendBranches(QModelIndex(), QString(), branches); // рекурсивно, по требованию
+    appendBranches(start, startParentId, branches); // рекурсивно, по требованию
 
   QJsonObject result;
   result["branches"]=branches;

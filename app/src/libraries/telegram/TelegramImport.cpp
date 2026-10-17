@@ -7,7 +7,6 @@
 #include <QJsonValue>
 #include <QMap>
 #include <QModelIndex>
-#include <QImage>
 #include <QImageReader>
 #include <QSize>
 #include <QDebug>
@@ -555,27 +554,10 @@ bool importTelegramChat(KnowTreeModel *model,
             }
           }
 
+          // Копия байт в байт: оригинал не трогается, качество 1:1.
+          // Размер показа ограничен width/height в <img>
           if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(target)))
-          {
-            // Картинки больше 1280 по длинной стороне ужимаются
-            // на месте: в окне заметки помещаются целиком,
-            // место в базе не пухнет
-            if(pf.mediaKind==QStringLiteral("photo"))
-            {
-              QImage img(QDir(recordDir).absoluteFilePath(target));
-
-              if(!img.isNull() && (img.width()>telegramMaxSide ||
-                                     img.height()>telegramMaxSide))
-              {
-                img=img.scaled(telegramMaxSide, telegramMaxSide,
-                               Qt::KeepAspectRatio,
-                               Qt::SmoothTransformation);
-                img.save(QDir(recordDir).absoluteFilePath(target), 0, 85);
-              }
-            }
-
             ++result.attaches;
-          }
           else
             ++result.skippedMedia;
         }

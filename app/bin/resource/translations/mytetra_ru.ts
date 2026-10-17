@@ -5728,9 +5728,9 @@ Please report about this problem to the developers.</source>
         <translation>Одна заметка плейнтекстом. Несохранённые правки GUI не видны, закрытые читаются пустыми. Шифрованные помечены encrypted:true.</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="358"/>
-        <source>Substring search over names, tags, texts.</source>
-        <translation>Поиск подстроки по именам, тегам, текстам.</translation>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="365"/>
+        <source>Substring search over note names, tags, texts. Matching branches go in a separate branches list, no need to list all branches.</source>
+        <translation>Поиск подстроки по именам, тегам, текстам заметок. Подходящие ветки — отдельным списком branches, перечислять все ветки не нужно.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="377"/>

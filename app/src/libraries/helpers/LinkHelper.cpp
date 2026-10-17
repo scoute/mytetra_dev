@@ -2,6 +2,7 @@
 #include <QString>
 #include <QStringList>
 #include <QFileInfo>
+#include <QDir>
 #include <QDesktopServices>
 #include <QDebug>
 
@@ -89,6 +90,29 @@ bool LinkHelper::openLinkWithDesktopServices(const QString &link)
     }
 
     return false; // Неизвестная схема, ничего не открываем
+}
+
+
+QString LinkHelper::resolveRelativeLink(const QString &workDir,
+                                            const QString &href)
+{
+  if(workDir.isEmpty() || href.isEmpty() ||
+     href.contains(QStringLiteral("://")) ||
+     href.startsWith(QLatin1Char('#')) ||
+     href.startsWith(QStringLiteral("mytetra:")))
+    return QString();
+
+  const QString cleanWorkDir=QDir::cleanPath(QDir(workDir).absolutePath());
+  const QString absolutePath=QDir::cleanPath(QDir(workDir).absoluteFilePath(href));
+
+  // Только внутрь каталога записи, без выхода наверх
+  if(!absolutePath.startsWith(cleanWorkDir+QLatin1Char('/')))
+    return QString();
+
+  if(!QFileInfo(absolutePath).isFile())
+    return QString();
+
+  return absolutePath;
 }
 
 

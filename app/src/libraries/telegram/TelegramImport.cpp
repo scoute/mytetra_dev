@@ -324,6 +324,24 @@ static qint64 parseTelegramHtmlDate(const QString &title)
 }
 
 
+// Размер для карточки файла в стиле Telegram: "21.4 KB"
+static QString formatTelegramSize(qint64 bytes)
+{
+  if(bytes<0)
+    return QString();
+
+  if(bytes<1024)
+    return QString::number(bytes)+QStringLiteral(" B");
+
+  const double kb=bytes/1024.0;
+
+  if(kb<1024.0)
+    return QString::number(kb, 'f', 1)+QStringLiteral(" KB");
+
+  return QString::number(kb/1024.0, 'f', 1)+QStringLiteral(" MB");
+}
+
+
 static QString imageMimeByExtension(const QString &fileName)
 {
   const QString ext=QFileInfo(fileName).suffix().toLower();
@@ -525,6 +543,13 @@ bool parseTelegramHtml(const QString &fileName,
         if(titleMatch.hasMatch())
           media.fileName=decodeTelegramEntities(titleMatch.captured(1).trimmed());
 
+        static QRegularExpression statusRe("<div class=\"status details\">\\s*(.*?)\\s*</div>",
+                                           QRegularExpression::DotMatchesEverythingOption);
+        const QRegularExpressionMatch statusMatch=statusRe.match(anchorInner);
+
+        if(statusMatch.hasMatch() && media.kind==QStringLiteral("file"))
+          media.sizeText=decodeTelegramEntities(statusMatch.captured(1).trimmed());
+
         media.mime=imageMimeByExtension(media.fileName);
 
         if(media.mime.startsWith(QStringLiteral("image/")))
@@ -657,6 +682,9 @@ bool parseTelegramJson(const QString &fileName,
         media.extra=QStringLiteral("%1:%2").arg(secs/60).arg(secs%60, 2, 10, QChar('0'));
       }
 
+      if(media.kind==QStringLiteral("file") && msg.contains(QStringLiteral("file_size")))
+        media.sizeText=formatTelegramSize(msg.value(QStringLiteral("file_size")).toVariant().toLongLong());
+
       message.media.append(media);
     }
 
@@ -722,6 +750,7 @@ struct TelegramPendingFile
   QString mediaKind; // "photo", "voice", "file"
   QString srcPath;
   QString fileName; // дисковое имя в каталоге заметки
+  QString attachId; // id аттача для kind=attach (inner-имя от него)
 };
 
 
@@ -759,7 +788,9 @@ static QString takeUniqueName(QSet<QString> &used, const QString &wanted)
 static QString telegramMessageBubble(const TelegramMessage &message,
                                      const QMap<qint64, QPair<QString, QString>> &snippets,
                                      QList<TelegramPendingFile> &pending,
-                                     QSet<QString> &usedNames)
+                                     QSet<QString> &usedNames,
+                                     AttachTableData *attachTable,
+                                     TelegramImportResult &result)
 {
   const QDateTime dt=QDateTime::fromSecsSinceEpoch(message.unixtime);
   QString line=QStringLiteral("<div style=\"background-color:#eeffde;margin-top:6px;margin-bottom:6px;\">")+
@@ -842,17 +873,39 @@ static QString telegramMessageBubble(const TelegramMessage &message,
     {
       const QString disk=takeUniqueName(usedNames, media.fileName);
 
-      if(disk.isEmpty())
+      if(disk.isEmpty() || !QFileInfo(media.srcPath).isFile())
+      {
+        ++result.skippedMedia;
         continue;
+      }
 
-      line+=QStringLiteral("<br/>[Файл: ")+disk.toHtmlEscaped()+
-            QStringLiteral("]");
+      // Inner-имя детерминировано от id и видимого имени:
+      // пробный Attach вычисляет его заранее для ссылки.
+      // id запоминается: вставка использует тот же, иначе
+      // ссылка и файл разъедутся
+      Attach probeAttach(QStringLiteral("file"), attachTable);
+      probeAttach.setField(QStringLiteral("id"), getUniqueId());
+      probeAttach.setField(QStringLiteral("fileName"), disk);
+
+      // Карточка файла как в Telegram: скрепка, имя-ссылка, размер.
+      // Открывается внешней программой через относительную ссылку
+      // (резолвится относительно каталога заметки)
+      line+=QStringLiteral("<br/><div style=\"background-color:#f1f1f1;\">&#128206; <a href=\"")+
+            probeAttach.getInnerFileName().toHtmlEscaped()+
+            QStringLiteral("\">")+disk.toHtmlEscaped()+
+            QStringLiteral("</a>");
+
+      if(!media.sizeText.isEmpty())
+        line+=QStringLiteral(" ")+media.sizeText.toHtmlEscaped();
+
+      line+=QStringLiteral("</div>");
 
       TelegramPendingFile pf;
       pf.kind=QStringLiteral("attach");
       pf.mediaKind=media.kind;
       pf.srcPath=media.srcPath;
       pf.fileName=disk;
+      pf.attachId=probeAttach.getField(QStringLiteral("id"));
       pending.append(pf);
     }
   }
@@ -952,7 +1005,7 @@ static bool writeTelegramNote(TreeItem *branch,
     else if(attachTable!=nullptr)
     {
       Attach attach(QStringLiteral("file"), attachTable);
-      attach.setField(QStringLiteral("id"), getUniqueId());
+      attach.setField(QStringLiteral("id"), pf.attachId);
       attach.setField(QStringLiteral("fileName"), pf.fileName);
 
       if(attach.copyFileToBase(pf.srcPath))
@@ -1117,7 +1170,10 @@ bool importTelegramChat(KnowTreeModel *model,
                 QStringLiteral("&nbsp;&nbsp;</font></span></p>");
         }
 
-        html+=telegramMessageBubble(message, snippets, pending, usedNames);
+        // Таблицы еще нет (запись не вставлена): пробному аттачу
+        // она не нужна, inner-имя считается только из id и имени
+        html+=telegramMessageBubble(message, snippets, pending, usedNames,
+                                     nullptr, result);
 
         ++done;
 
@@ -1176,7 +1232,8 @@ bool importTelegramChat(KnowTreeModel *model,
       QList<TelegramPendingFile> pending;
       QSet<QString> fileNames;
       const QString html=telegramMessageBubble(message, snippets,
-                                               pending, fileNames);
+                                               pending, fileNames,
+                                               nullptr, result);
       const QDateTime dt=QDateTime::fromSecsSinceEpoch(message.unixtime);
       const QString author=message.from.isEmpty() ? chat.name : message.from;
       const QString noteName=takeUniqueName(usedNames,

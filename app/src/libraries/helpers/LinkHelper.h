@@ -16,6 +16,12 @@ public:
     static bool isHrefInternal(QString href);
     static QString getIdFromInternalHref(QString href);
 
+    // Относительная ссылка без схемы (картинка, аттач из импорта):
+    // раскрывается относительно каталога записи и проверяется.
+    // Пусто если схема есть, выход за каталог или файла нет
+    static QString resolveRelativeLink(const QString &workDir,
+                                       const QString &href);
+
 private:
 
     static bool openLinkWithDesktopServices(const QString &link);

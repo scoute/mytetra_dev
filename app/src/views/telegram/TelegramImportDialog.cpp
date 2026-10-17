@@ -222,10 +222,7 @@ void TelegramImportDialog::onImport(void)
   TelegramImportResult result;
   QString error;
 
-  const QString modeName=mytetraConfig.get_telegramImportMode();
-  const TelegramLayout layout=(modeName==QStringLiteral("message")) ? TelegramLayout::Message :
-                               (modeName==QStringLiteral("day")) ? TelegramLayout::Day :
-                               TelegramLayout::Month;
+  const TelegramLayout layout=telegramLayoutForMode(mytetraConfig.get_telegramImportMode());
 
   const bool ok=importTelegramChat(treeScreen->knowTreeModel, chat,
                                    result, error, layout,

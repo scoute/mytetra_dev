@@ -5714,8 +5714,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="274"/>
-        <source>All branches in tree order, with notes_count (own) and notes_total (with subbranches). Encrypted ones carry encrypted:true.</source>
-        <translation>Все ветки в порядке дерева, с notes_count (свои) и notes_total (с подветками). Шифрованные помечены encrypted:true.</translation>
+        <source>Top-level branches with notes_count (own) and notes_total (with subbranches). Encrypted ones carry encrypted:true. Pass recursive:true for the full tree.</source>
+        <translation>Ветки верхнего уровня со счётчиками notes_count (свои) и notes_total (с подветками). Шифрованные помечены encrypted:true. Передай recursive:true для всего дерева.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="308"/>

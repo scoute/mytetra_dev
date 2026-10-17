@@ -16,6 +16,7 @@
 #include "AppConfigPage_Mcp.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/mcp/McpServer.h"
 
 
 extern AppConfig mytetraConfig;
@@ -75,6 +76,27 @@ void AppConfigPage_Mcp::setupUi(void)
   claudeCopy->setText(tr("Copy"));
 
   retranslateExamples();
+
+  // Список тулов из единого каталога: имя жирным, описание как есть.
+  // Категории отвечают режимам --mcp-ro / --mcp-rw / --mcp-rw-with-delete
+  toolsBox=new QGroupBox(this);
+
+  roHeader=new QLabel(this);
+  roBody=new QLabel(toolsSectionText(QStringLiteral("ro")), this);
+  roBody->setWordWrap(true);
+  roBody->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+  rwHeader=new QLabel(this);
+  rwBody=new QLabel(toolsSectionText(QStringLiteral("rw")), this);
+  rwBody->setWordWrap(true);
+  rwBody->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+  deleteHeader=new QLabel(this);
+  deleteBody=new QLabel(toolsSectionText(QStringLiteral("delete")), this);
+  deleteBody->setWordWrap(true);
+  deleteBody->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+  retranslateTools();
 }
 
 
@@ -113,13 +135,65 @@ void AppConfigPage_Mcp::assembly(void)
   clientLayout->addLayout(claudeCopyLayout);
   clientBox->setLayout(clientLayout);
 
+  // Секции каталога тулов
+  QVBoxLayout *toolsLayout=new QVBoxLayout();
+  toolsLayout->addWidget(roHeader);
+  toolsLayout->addWidget(roBody);
+  toolsLayout->addWidget(rwHeader);
+  toolsLayout->addWidget(rwBody);
+  toolsLayout->addWidget(deleteHeader);
+  toolsLayout->addWidget(deleteBody);
+  toolsBox->setLayout(toolsLayout);
+
   // Основной слой страницы
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(allowLayout);
   centralLayout->addWidget(clientBox);
+  centralLayout->addWidget(toolsBox);
   centralLayout->addStretch();
 
   setLayout(centralLayout);
+}
+
+
+// Текст секции каталога: по строке на тул. Вызывается и при
+// построении, и при смене языка (заголовки со счетчиками)
+QString AppConfigPage_Mcp::toolsSectionText(const QString &category)
+{
+  QStringList lines;
+
+  foreach(const McpToolInfo &tool, mcpToolCatalog())
+    if(tool.category==category)
+      lines << QStringLiteral("<b>") + tool.name.toHtmlEscaped() +
+               QStringLiteral("</b> &mdash; ") + tool.description.toHtmlEscaped();
+
+  return lines.join(QStringLiteral("<br/>"));
+}
+
+
+int AppConfigPage_Mcp::toolsSectionCount(const QString &category)
+{
+  int count=0;
+
+  foreach(const McpToolInfo &tool, mcpToolCatalog())
+    if(tool.category==category)
+      ++count;
+
+  return count;
+}
+
+
+void AppConfigPage_Mcp::retranslateTools(void)
+{
+  toolsBox->setTitle(tr("Available tools"));
+
+  roHeader->setText(tr("Read-only (ro) — %1 tools").arg(toolsSectionCount(QStringLiteral("ro"))));
+  rwHeader->setText(tr("Read-write (rw) — %1 tools").arg(toolsSectionCount(QStringLiteral("rw"))));
+  deleteHeader->setText(tr("Delete — %1 tools").arg(toolsSectionCount(QStringLiteral("delete"))));
+
+  roBody->setText(toolsSectionText(QStringLiteral("ro")));
+  rwBody->setText(toolsSectionText(QStringLiteral("rw")));
+  deleteBody->setText(toolsSectionText(QStringLiteral("delete")));
 }
 
 
@@ -222,6 +296,7 @@ void AppConfigPage_Mcp::retranslateUi(void)
   claudeCopy->setText(tr("Copy"));
 
   retranslateExamples();
+  retranslateTools();
 }
 
 

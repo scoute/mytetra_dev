@@ -3134,6 +3134,38 @@ static bool validateDatabase(const QString &xmlPath)
 }
 
 
+// Каталог тулов для страницы настроек. Категории отвечают режимам:
+// ro виден в --mcp-ro, rw добавляется в --mcp-rw,
+// delete только в --mcp-rw-with-delete
+QList<McpToolInfo> mcpToolCatalog(void)
+{
+  QList<McpToolInfo> catalog;
+
+  const QJsonArray tools=buildToolsList(McpMode::ReadWriteDelete);
+
+  foreach(const QJsonValue &value, tools)
+  {
+    const QJsonObject tool=value.toObject();
+    const QString name=tool.value("name").toString();
+
+    McpToolInfo info;
+    info.name=name;
+    info.description=tool.value("description").toString();
+
+    if(toolAllowed(McpMode::ReadOnly, name))
+      info.category=QStringLiteral("ro");
+    else if(toolAllowed(McpMode::ReadWrite, name))
+      info.category=QStringLiteral("rw");
+    else
+      info.category=QStringLiteral("delete");
+
+    catalog.append(info);
+  }
+
+  return catalog;
+}
+
+
 int runMcpServer(int argc, char **argv)
 {
   QCoreApplication app(argc, argv);

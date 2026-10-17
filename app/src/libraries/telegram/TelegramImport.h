@@ -86,7 +86,8 @@ enum class TelegramLayout
 {
   Month=0,
   Day=1,
-  Message=2
+  Message=2,
+  Year=3
 };
 
 bool importTelegramChat(KnowTreeModel *model,

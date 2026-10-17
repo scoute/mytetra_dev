@@ -29,9 +29,10 @@
 extern AppConfig mytetraConfig;
 
 
-// Длинная сторона картинки в заметке: больше 600 не держим.
-// Редактор ничего не растягивает за окно, база не пухнет
-static const int telegramMaxSide=640;
+// Длинная сторона картинки в заметке: больше 1280 не держим
+// (у Telegram почти все в 1280 и меньше). Один файл без дублей:
+// в пределах лимита байт в байт, сверх лимита гладко ужимается
+static const int telegramMaxSide=1280;
 
 // Габариты для <img>: исходные, ужатые по длинной стороне
 static QSize telegramDisplaySize(const QString &srcPath)
@@ -848,11 +849,10 @@ bool importTelegramChat(KnowTreeModel *model,
     // (как нативные), остальные документы аттачами
     struct PendingFile
     {
-      QString kind; // "inline", "preview" или "attach"
+      QString kind; // "inline", "scaled" или "attach"
       QString mediaKind; // "photo", "voice", "file"
       QString srcPath;
-      QString fileName; // имя файла в каталоге заметки
-      QString origName; // для превью: имя оригинала
+      QString fileName; // дисковое имя в каталоге заметки
     };
     QList<PendingFile> pending;
 
@@ -899,88 +899,40 @@ bool importTelegramChat(KnowTreeModel *model,
       {
         if(media.kind==QStringLiteral("photo"))
         {
-          // Габариты заранее по исходнику: превью им соответствует,
-          // редактор ничего не растягивает. Большая картинка: показ
-          // идет с гладкого превью, оригинал лежит рядом аттачем
+          // Один файл без дублей. Габариты заранее по исходнику:
+          // редактор ничего не растягивает. Сверх лимита файл
+          // гладко ужимается на месте
           const QSize naturalSize=QImageReader(media.srcPath).size();
-          const bool needPreview=naturalSize.isValid() &&
-                                 (naturalSize.width()>telegramMaxSide ||
-                                  naturalSize.height()>telegramMaxSide);
-          const QSize displaySize=needPreview ?
+          const bool needScale=naturalSize.isValid() &&
+                               (naturalSize.width()>telegramMaxSide ||
+                                naturalSize.height()>telegramMaxSide);
+          const QSize displaySize=needScale ?
                                   telegramDisplaySize(media.srcPath) :
                                   naturalSize;
 
-          if(needPreview)
+          const QString disk=takeName(media.fileName);
+
+          if(disk.isEmpty())
           {
-            const QString origDisk=takeName(media.fileName);
-
-            if(origDisk.isEmpty())
-            {
-              ++result.skippedMedia;
-              continue;
-            }
-
-            const int dotPos=origDisk.lastIndexOf(QLatin1Char('.'));
-            const QString previewDisk=takeName(origDisk.left(dotPos)+
-                                               QStringLiteral("_preview")+
-                                               origDisk.mid(dotPos));
-
-            if(previewDisk.isEmpty())
-            {
-              ++result.skippedMedia;
-              continue;
-            }
-
-            if(displaySize.isValid())
-              line+=QStringLiteral("<br/><img src=\"")+previewDisk.toHtmlEscaped()+
-                    QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
-                    QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
-                    QStringLiteral("\"/>");
-            else
-              line+=QStringLiteral("<br/><img src=\"")+previewDisk.toHtmlEscaped()+
-                    QStringLiteral("\"/>");
-
-            PendingFile pf;
-            pf.kind=QStringLiteral("preview");
-            pf.mediaKind=media.kind;
-            pf.srcPath=media.srcPath;
-            pf.fileName=previewDisk;
-            pf.origName=origDisk;
-            pending.append(pf);
-
-            PendingFile pa;
-            pa.kind=QStringLiteral("attach");
-            pa.mediaKind=media.kind;
-            pa.srcPath=media.srcPath;
-            pa.fileName=origDisk;
-            pending.append(pa);
+            ++result.skippedMedia;
+            continue;
           }
+
+          if(displaySize.isValid())
+            line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
+                  QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
+                  QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
+                  QStringLiteral("\"/>");
           else
-          {
-            const QString disk=takeName(media.fileName);
+            line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
+                  QStringLiteral("\"/>");
 
-            if(disk.isEmpty())
-            {
-              ++result.skippedMedia;
-              continue;
-            }
-
-            if(displaySize.isValid())
-              line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
-                    QStringLiteral("\" width=\"")+QString::number(displaySize.width())+
-                    QStringLiteral("\" height=\"")+QString::number(displaySize.height())+
-                    QStringLiteral("\"/>");
-            else
-              line+=QStringLiteral("<br/><img src=\"")+disk.toHtmlEscaped()+
-                    QStringLiteral("\"/>");
-
-            PendingFile pf;
-            pf.kind=QStringLiteral("inline");
-            pf.mediaKind=media.kind;
-            pf.srcPath=media.srcPath;
-            pf.fileName=disk;
-            pending.append(pf);
-          }
+          PendingFile pf;
+          pf.kind=needScale ? QStringLiteral("scaled") : QStringLiteral("inline");
+          pf.mediaKind=media.kind;
+          pf.srcPath=media.srcPath;
+          pf.fileName=disk;
+          pending.append(pf);
         }
         else if(media.kind==QStringLiteral("voice"))
         {
@@ -1068,12 +1020,11 @@ bool importTelegramChat(KnowTreeModel *model,
       foreach(const PendingFile &pf, pending)
       {
         // Имена уже зарезервированы через takeName: прямая запись
-        if(pf.kind==QStringLiteral("preview"))
+        if(pf.kind==QStringLiteral("scaled"))
         {
-          // Гладкое превью для показа: сглаживание при генерации,
-          // а не при рисовании редактором (там в лоб и угловато)
+          // Один файл: гладкое ужатие на месте. Оригинал сверх лимита
+          // не храним: у Telegram почти все и так в 1280
           QImage img(pf.srcPath);
-
 
           if(img.isNull())
           {
@@ -1085,7 +1036,7 @@ bool importTelegramChat(KnowTreeModel *model,
                          Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
           if(img.save(QDir(recordDir).absoluteFilePath(pf.fileName), 0, 88))
-            ++result.previews;
+            ++result.attaches;
           else
             ++result.skippedMedia;
         }

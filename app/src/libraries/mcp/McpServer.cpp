@@ -206,6 +206,24 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
 }
 
 
+// Опциональный список ключей выдачи (get_note, list_notes).
+// Пусто или нет поля = весь объект целиком
+static QStringList readFields(const QJsonObject &arguments)
+{
+  QStringList fields;
+
+  foreach(const QJsonValue &value, arguments.value("fields").toArray())
+  {
+    QString key=value.toString().trimmed();
+
+    if(!key.isEmpty() && !fields.contains(key))
+      fields.append(key);
+  }
+
+  return fields;
+}
+
+
 static bool isKnownTool(const QString &toolName)
 {
   static const char *names[]={
@@ -253,7 +271,8 @@ static QJsonArray buildToolsList(McpMode mode)
     QJsonObject properties;
     tools.append(toolDescription(
       "list_branches",
-      "All branches in tree order. Encrypted ones carry encrypted:true.",
+      "All branches in tree order, with notes_count (own) and "
+      "notes_total (with subbranches). Encrypted ones carry encrypted:true.",
       objectSchema(properties, QJsonArray())));
   }
   {
@@ -274,6 +293,13 @@ static QJsonArray buildToolsList(McpMode mode)
     limit["maximum"]=200;
     limit["default"]=50;
     properties["limit"]=limit;
+    QJsonObject fields;
+    fields["type"]="array";
+    fields["description"]="Note keys to return (default all): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count";
+    QJsonObject fieldItems;
+    fieldItems["type"]="string";
+    fields["items"]=fieldItems;
+    properties["fields"]=fields;
     QJsonArray required;
     required.append("branch_id");
     tools.append(toolDescription(
@@ -294,6 +320,13 @@ static QJsonArray buildToolsList(McpMode mode)
     maxChars["minimum"]=1;
     maxChars["default"]=20000;
     properties["max_chars"]=maxChars;
+    QJsonObject fields;
+    fields["type"]="array";
+    fields["description"]="Note keys to return (default all): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count, format, text, truncated";
+    QJsonObject fieldItems;
+    fieldItems["type"]="string";
+    fields["items"]=fieldItems;
+    properties["fields"]=fields;
     QJsonArray required;
     required.append("note_id");
     tools.append(toolDescription(
@@ -337,7 +370,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_branch",
-      "Create a branch.",
+      "Create a branch. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -372,7 +405,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_note",
-      "Create a note.",
+      "Create a note. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -404,7 +437,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "update_note",
-      "Update note fields. Only provided fields change; open GUI editor keeps its buffer.",
+      "Update note fields. Only provided fields change; open GUI editor keeps its buffer. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -418,7 +451,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "delete_note",
-      "Delete a note to trash. No confirmation beyond this call.",
+      "Delete a note to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -432,7 +465,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "delete_branch",
-      "Delete a branch subtree to trash. No confirmation beyond this call.",
+      "Delete a branch subtree to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -450,7 +483,8 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("operations");
     tools.append(toolDescription(
       "apply_batch",
-      "Apply many writes at once: one GUI roundtrip, one save. "
+      "PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. "
+      "Do not call single-write tools in a loop. "
       "Not atomic: stops at first error, applied prefix persists. "
       "Per-operation results in order.",
       objectSchema(properties, required)));
@@ -471,7 +505,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "rename_branch",
-      "Rename a branch.",
+      "Rename a branch. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -495,7 +529,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("target_id");
     tools.append(toolDescription(
       "move_branch",
-      "Move a branch.",
+      "Move a branch. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -514,7 +548,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "move_note",
-      "Move a note, id and links kept.",
+      "Move a note, id and links kept. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -528,7 +562,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "favorite_note",
-      "Star a note.",
+      "Star a note. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -542,7 +576,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "unfavorite_note",
-      "Unstar a note.",
+      "Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -561,7 +595,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("path");
     tools.append(toolDescription(
       "export_branch",
-      "Export a branch subtree to a directory in MyTetra exchange format.",
+      "Export a branch subtree to a directory in MyTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -579,7 +613,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("path");
     tools.append(toolDescription(
       "import_branch",
-      "Import a branch subtree from a MyTetra exchange directory.",
+      "Import a branch subtree from a MyTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -700,7 +734,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("new");
     tools.append(toolDescription(
       "rename_tag",
-      "Rename a tag everywhere.",
+      "Rename a tag everywhere. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -714,7 +748,7 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("tag");
     tools.append(toolDescription(
       "delete_tag",
-      "Remove a tag everywhere. Irreversible.",
+      "Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.",
       objectSchema(properties, required)));
   }
 
@@ -1087,7 +1121,7 @@ public:
           limit=arguments.value("limit").toInt(McpTools::DEFAULT_LIST_LIMIT);
 
         result=m_tools.listNotes(arguments.value("branch_id").toString(),
-                                 recursive, limit, toolError);
+                                 recursive, limit, toolError, readFields(arguments));
       }
       else if(toolName=="get_note")
       {
@@ -1097,7 +1131,7 @@ public:
           maxChars=arguments.value("max_chars").toInt(McpTools::DEFAULT_NOTE_CHARS);
 
         result=m_tools.getNote(arguments.value("note_id").toString(),
-                               maxChars, toolError);
+                               maxChars, toolError, readFields(arguments));
       }
       else if(toolName=="search")
       {

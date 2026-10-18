@@ -5719,8 +5719,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="308"/>
-        <source>Notes in a branch. Encrypted ones carry encrypted:true.</source>
-        <translation>Заметки ветки. Шифрованные помечены encrypted:true.</translation>
+        <source>Notes in a branch WITHOUT texts (id, name, tags, ...). To read a note text call get_note with its note_id. Encrypted ones carry encrypted:true.</source>
+        <translation>Заметки ветки БЕЗ текстов (id, имя, теги, ...). Чтобы прочитать текст, вызови get_note с note_id. Шифрованные помечены encrypted:true.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="336"/>
@@ -5729,8 +5729,8 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="365"/>
-        <source>Substring search over note names, tags, texts. Matching branches go in a separate branches list, no need to list all branches.</source>
-        <translation>Поиск подстроки по именам, тегам, текстам заметок. Подходящие ветки — отдельным списком branches, перечислять все ветки не нужно.</translation>
+        <source>Substring search over note names, tags, texts. Matching branches go in a separate branches list, no need to list all branches. Hits carry snippets only, call get_note with note_id to read the full text.</source>
+        <translation>Поиск подстроки по именам, тегам, текстам заметок. Подходящие ветки — отдельным списком branches, перечислять все ветки не нужно. Хиты несут только сниппеты, полный текст читай через get_note с note_id.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="377"/>

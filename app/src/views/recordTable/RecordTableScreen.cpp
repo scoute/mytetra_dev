@@ -106,10 +106,6 @@ void RecordTableScreen::setupActions(void)
  actionMoveDn=new QAction(this);
  actionMoveDn->setIcon(QIcon(":/resource/pic/move_dn.svg"));
 
- // Синхронизация
- actionSyncro=new QAction(this);
- actionSyncro->setIcon(QIcon(":/resource/pic/synchronization.svg"));
-
  // Поиск по базе (клик связывается с действием в MainWindow)
  actionFindInBase=new QAction(shortcutManager.getDescriptionWithShortcut("misc-findInBase"), this);
  actionFindInBase->setIcon(QIcon(":/resource/pic/find_in_base.svg"));
@@ -206,7 +202,6 @@ void RecordTableScreen::setupUI(void)
 
  if(mytetraConfig.getInterfaceMode()=="desktop")
  {
-   insertActionAsButton(extraToolsLine, actionSyncro);
    insertActionAsButton(extraToolsLine, actionWalkHistoryPrevious);
    insertActionAsButton(extraToolsLine, actionWalkHistoryNext);
  }
@@ -265,9 +260,6 @@ void RecordTableScreen::setupShortcuts(void)
     shortcutManager.initAction("note-moveDn", actionMoveDn);
 
 
-    // Синхронизация
-    shortcutManager.initAction("misc-syncro", actionSyncro);
-
     // Переход на предыдущую запись в истории
     shortcutManager.initAction("note-previousNote", actionWalkHistoryPrevious);
 
@@ -322,9 +314,6 @@ void RecordTableScreen::setupSignals(void)
 
     // Предпросмотр печати текущей записи (действие живет в MainWindow)
     connect(actionPrintPreview, &QAction::triggered, find_object<MainWindow>("mainwindow"), &MainWindow::filePrintPreview);
-
-    // Синхронизация
-    connect(actionSyncro, &QAction::triggered, this, &RecordTableScreen::onSyncroClick);
 
     // Перемещение по истории посещаемых записей назад
     connect(actionWalkHistoryPrevious, &QAction::triggered, this, &RecordTableScreen::onWalkHistoryPreviousClick);
@@ -596,20 +585,6 @@ void RecordTableScreen::setSelectionToId(QString id)
   recordTableController->setSelectionToId(id);
 }
 
-
-
-// Действия при нажатии кнопки синхронизации
-void RecordTableScreen::onSyncroClick(void)
-{
-  find_object<MainWindow>("mainwindow")->synchronization();
-}
-
-
-void RecordTableScreen::onSyncroCommandFinishWork(void)
-{
-  // Разблокируется кнопка синхронизации
-  actionSyncro->setEnabled(true);
-}
 
 
 void RecordTableScreen::onWalkHistoryPreviousClick(void)

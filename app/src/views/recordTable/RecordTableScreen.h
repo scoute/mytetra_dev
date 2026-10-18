@@ -36,6 +36,20 @@ public:
 
  void setFocusToBaseWidget();
 
+ // Порядок кнопок тулбаров по умолчанию и режимы кнопок.
+ // Нужно диалогу настройки порядка кнопок
+ static QStringList defaultToolbarOrder(void);
+ static QStringList defaultExtraToolbarOrder(void);
+ static QString toolbarItemMode(const QString &command);
+ static QSet<QString> hiddenToolbarItems(void);
+
+ // Действие тулбаров по имени. Нужно диалогу настройки порядка кнопок
+ QAction *toolAction(const QString &command);
+
+ // Перестроение обоих тулбаров из списков конфига (или дефолта).
+ // Вызывается при старте и вживую из диалога настроек
+ void rebuildToolbars(void);
+
  // Переприменить read-only редактора (для глобального режима без смены засветки)
  void refreshEditorReadOnly(void);
 
@@ -114,24 +128,6 @@ private:
  void setupSignals(void);
  void setupActions(void);
  void assembly(void);
-
- // Порядок кнопок тулбаров по умолчанию (объединение десктопного
- // и мобильного наборов; лишнее режется режимом в rebuildToolbars)
- static QStringList defaultToolbarOrder(void);
- static QStringList defaultExtraToolbarOrder(void);
-
- // Режим кнопки: desktop, mobile или обе (пусто - обе).
- // Скрытые shortcut-only кнопки в списки не входят, регистрируются
- // всегда. Неизвестные имена из конфига пропускаются с предупреждением
- static QString toolbarItemMode(const QString &command);
- static QSet<QString> hiddenToolbarItems(void);
-
- // Перестроение обоих тулбаров из списков конфига (или дефолта).
- // Вызывается при старте и вживую из диалога настроек
- void rebuildToolbars(void);
-
- // Действие тулбаров по имени для построения из списков
- QAction *toolActionByName(const QString &command);
 
  // Построение одной линии тулбара из списка
  void buildToolbarLine(QToolBar *line,

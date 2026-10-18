@@ -197,6 +197,23 @@ void QtLocalPeer::receiveConnection()
         return;
     }
     QString message(QString::fromUtf8(uMsg));
+
+    // Синхронный ответ на mcp-команду: респондер выполняет применение
+    // (тот же поток, вызов синхронный) и возвращает итог, который
+    // фреймом уходит обратно запросившему. Ack и сигнал messageReceived
+    // для таких сообщений не используются
+    if(message.startsWith(QStringLiteral("mcp")) && mcpResponder)
+    {
+      QByteArray response=mcpResponder(message);
+
+      QDataStream responseStream(socket);
+      responseStream.writeBytes(response.constData(), response.size());
+      socket->waitForBytesWritten(5000);
+
+      delete socket;
+      return;
+    }
+
     socket->write(ack, qstrlen(ack));
     socket->waitForBytesWritten(1000);
     delete socket;

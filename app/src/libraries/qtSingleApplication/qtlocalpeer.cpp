@@ -47,6 +47,7 @@
 
 #include "qtlocalpeer.h"
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDataStream>
 #include <QtCore/QTime>
 
 #if defined(Q_OS_WIN)
@@ -197,6 +198,20 @@ void QtLocalPeer::receiveConnection()
         return;
     }
     QString message(QString::fromUtf8(uMsg));
+
+    // Синхронный ответ на mcp-команду (см. копию qtSingleApplication5)
+    if(message.startsWith(QStringLiteral("mcp")) && mcpResponder)
+    {
+      QByteArray response=mcpResponder(message);
+
+      QDataStream responseStream(socket);
+      responseStream.writeBytes(response.constData(), response.size());
+      socket->waitForBytesWritten(5000);
+
+      delete socket;
+      return;
+    }
+
     socket->write(ack, qstrlen(ack));
     socket->waitForBytesWritten(1000);
     delete socket;

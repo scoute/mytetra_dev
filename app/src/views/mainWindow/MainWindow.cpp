@@ -613,91 +613,33 @@ void MainWindow::messageHandler(QString message)
 
     // MCP-команды записи от внешнего AI-клиента: применяются к живой
     // модели (со всем несохраненным состоянием GUI) и сохраняются.
-    // Ответного канала нет: MCP проверяет применение сам, перечитывая
-    // базу по mtime. При коллизии id вставка не делается чтобы MCP
-    // не вернул чужой id (проверка сама перегенерирует и повторит)
+    // Основной путь - синхронный респондер (handleMcpMessage ->
+    // handleMcpCommand с возвратом итога). Ниже легаси-путь на случай
+    // незаданного респондера: тот же обработчик, итог игнорируется.
+    // При коллизии id вставка не делается чтобы MCP не вернул чужой id
+    // (проверка сама перегенерирует и повторит)
     else if(command=="mcpCreateBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject created=McpTools::applyCreateBranch(treeScreen->knowTreeModel,
-                                                        args.value("parent_id").toString(),
-                                                        args.value("id").toString(),
-                                                        args.value("name").toString(),
-                                                        error);
-
-        if(!error.isEmpty() || created.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpCreateNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject created=McpTools::applyCreateNote(treeScreen->knowTreeModel,
-                                                      args.value("branch_id").toString(),
-                                                      args.value("id").toString(),
-                                                      args.value("name").toString(),
-                                                      args.value("html").toString(),
-                                                      args.value("tags").toString(),
-                                                      error);
-
-        if(!error.isEmpty() || created.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpUpdateNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QStringList updatedFields;
-
-        // Открытый в редакторе текст не трогается: редактор держит свой
-        // буфер до перевыбора (last writer wins), как при любом
-        // стороннем изменении файла
-        bool ok=McpTools::applyUpdateNote(treeScreen->knowTreeModel,
-                                          args.value("id").toString(),
-                                          args.value("has_name").toBool(false),
-                                          args.value("name").toString(),
-                                          args.value("has_html").toBool(false),
-                                          args.value("html").toString(),
-                                          args.value("has_tags").toBool(false),
-                                          args.value("tags").toString(),
-                                          error,
-                                          updatedFields);
-
-        if(!ok)
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Удаление из-под AI: тот же состав что ручное удаление записи,
@@ -706,128 +648,42 @@ void MainWindow::messageHandler(QString message)
     // как при любом стороннем изменении файла
     else if(command=="mcpDeleteNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString id=args.value("id").toString();
-
-        if(id.isEmpty())
-            return;
-
-        QString error;
-
-        if(!McpTools::applyDeleteNote(treeScreen->knowTreeModel, id, error))
-            return;
-
-        emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpDeleteBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString id=args.value("id").toString();
-
-        if(id.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject deleted=McpTools::applyDeleteBranch(treeScreen->knowTreeModel,
-                                                        id, error);
-
-        if(!error.isEmpty() || deleted.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpRenameBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject renamed=McpTools::applyRenameBranch(treeScreen->knowTreeModel,
-                                                        args.value("id").toString(),
-                                                        args.value("name").toString(),
-                                                        error);
-
-        if(!error.isEmpty() || renamed.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpMoveBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject moved=McpTools::applyMoveBranch(treeScreen->knowTreeModel,
-                                                    args.value("id").toString(),
-                                                    args.value("target_id").toString(),
-                                                    args.value("as_child").toBool(true),
-                                                    error);
-
-        if(!error.isEmpty() || moved.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpMoveNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        // Как при удалении: редактор может держать указатель внутрь
-        // таблицы-источника, его состояние сбрасывается до переноса
-        find_object<MetaEditor>("editorScreen")->clearAll();
-
-        QString error;
-        QJsonObject moved=McpTools::applyMoveNote(treeScreen->knowTreeModel,
-                                                  args.value("id").toString(),
-                                                  args.value("branch_id").toString(),
-                                                  error);
-
-        if(!error.isEmpty() || moved.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Звездочка от внешнего AI: тот же состав что клик по звезде,
@@ -835,53 +691,18 @@ void MainWindow::messageHandler(QString message)
     // (сайдкар или XML) и дёргает сигнал для панели избранного
     else if(command=="mcpFavoriteNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        const QString id=args.value("id").toString();
-
-        if(!treeScreen->knowTreeModel->isRecordIdExists(id))
-            return;
-
-        Record *record=treeScreen->knowTreeModel->getRecord(id);
-
-        if(record==nullptr || record->getField("crypt")=="1")
-            return;
-
-        Favorites::instance().setFavorite(id, true);
-
-        if(!Favorites::instance().isFavorite(id))
-            return;
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpUnfavoriteNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        const QString id=args.value("id").toString();
-
-        if(!treeScreen->knowTreeModel->isRecordIdExists(id))
-            return;
-
-        Favorites::instance().setFavorite(id, false);
-
-        if(Favorites::instance().isFavorite(id))
-            return;
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Ввоз ветки из обменника от внешнего AI: проверки те же что
@@ -889,83 +710,26 @@ void MainWindow::messageHandler(QString message)
     // тихий отказ). Ввоз сам сохраняет дерево в конце
     else if(command=="mcpImportBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        const QString parentId=args.value("parent_id").toString();
-        const QString path=args.value("path").toString();
-
-        if(!parentId.isEmpty())
-        {
-            TreeItem *parentItem=treeScreen->knowTreeModel->getItemById(parentId);
-
-            if(parentItem==nullptr || parentItem->getField("crypt")=="1")
-                return;
-        }
-
-        if(!McpTools::checkImportDir(path).isEmpty())
-            return;
-
-        QString error;
-        QJsonObject imported=McpTools::applyImportBranch(treeScreen->knowTreeModel,
-                                                         parentId, path, error);
-
-        if(!error.isEmpty() || imported.isEmpty())
-            return;
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpRenameTag")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        int renamed=0;
-        int skipped=0;
-
-        if(!McpTools::applyRenameTag(treeScreen->knowTreeModel,
-                                     args.value("old").toString(),
-                                     args.value("new").toString(),
-                                     error, renamed, skipped))
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpDeleteTag")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        int cleared=0;
-        int skipped=0;
-
-        if(!McpTools::applyDeleteTag(treeScreen->knowTreeModel,
-                                     args.value("tag").toString(),
-                                     error, cleared, skipped))
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Пакетное применение от внешнего AI: те же applyXxx что
@@ -976,120 +740,756 @@ void MainWindow::messageHandler(QString message)
     // примененное сохраняется. import/export в пакет не входят
     else if(command=="mcpApplyBatch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QJsonArray operations=args.value("operations").toArray();
-
-        if(operations.isEmpty())
-            return;
-
-        QSet<QString> closeWindows;
-        bool needSave=false;
-
-        for(const QJsonValue &opValue : operations)
-        {
-            const QJsonObject op=opValue.toObject();
-            const QString tool=op.value("tool").toString();
-            const QJsonObject opArgs=op.value("arguments").toObject();
-
-            if(tool==QStringLiteral("import_branch") ||
-               tool==QStringLiteral("export_branch"))
-                break;
-
-            // Как в одиночке: редактор может держать указатель внутрь
-            // таблицы-источника, его состояние сбрасывается до переноса
-            if(tool==QStringLiteral("move_note"))
-                find_object<MetaEditor>("editorScreen")->clearAll();
-
-            // Как в одиночке: открепленные окна удаляемой записи
-            if(tool==QStringLiteral("delete_note"))
-                closeWindows.insert(opArgs.value("note_id").toString());
-
-            QString error;
-            QJsonObject dummy;
-
-            if(!McpTools::applyBatchOp(treeScreen->knowTreeModel,
-                                       tool, opArgs, dummy, error))
-                break;
-
-            // Избранное сохраняет само (синглетон/сайдкар), остальное
-            // требует сейва модели
-            if(tool!=QStringLiteral("favorite_note") &&
-               tool!=QStringLiteral("unfavorite_note"))
-                needSave=true;
-        }
-
-        if(!closeWindows.isEmpty())
-            emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(closeWindows);
-
-        if(needSave)
-            treeScreen->knowTreeModel->save();
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Присутствие MCP: не правки, только Hello/Bye. В read-only тоже
     // работает — баннер предупреждает, ничего не меняя
     else if(command=="mcpHello")
     {
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString pid=args.value("pid").toString();
-
-        if(pid.isEmpty())
-            return;
-
-        // Старт сессии с нуля: история чистая, окно появляется само
-        const bool sessionStarts=mcpPeers.isEmpty();
-
-        mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
-        mcpPeerModes[pid]=args.value("mode").toString();
-        updateMcpBanner();
-
-        if(sessionStarts)
-        {
-            mcpHistory.clear();
-            updateMcpHistoryDialog();
-
-            if(mcpHistoryDialog!=nullptr)
-                mcpHistoryDialog->show();
-        }
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpBye")
     {
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        mcpPeers.remove(args.value("pid").toString());
-        mcpPeerModes.remove(args.value("pid").toString());
-        updateMcpBanner();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Строка истории действий MCP: только накопление в памяти,
     // на диск ничего не пишется
     else if(command=="mcpHistory")
     {
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        addMcpHistoryEntry(args.value("kind").toString(),
-                           args.value("tool").toString(),
-                           args.value("summary").toString());
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
+}
+
+
+// Синхронный ответ на mcp-команду для протокола запрос-ответ.
+// Упаковка итога handleMcpCommand в компактный JSON
+QByteArray MainWindow::handleMcpMessage(const QString &message)
+{
+  QStringList messageParts=message.split(" ");
+
+  if(messageParts.isEmpty())
+    return QJsonDocument(QJsonObject{{"ok", false},
+                                     {"error", "Empty message"}}).toJson(QJsonDocument::Compact);
+
+  const QString command=messageParts.at(0);
+
+  if(!mytetraConfig.get_mcpAllow())
+    return QJsonDocument(QJsonObject{{"ok", false},
+                                     {"error", "MCP is disabled in settings"}}).toJson(QJsonDocument::Compact);
+
+  QJsonObject args=parseMcpCommandArgs(message);
+  QJsonObject result;
+  QString error;
+
+  if(!handleMcpCommand(command, args, result, error))
+    return QJsonDocument(QJsonObject{{"ok", false},
+                                     {"error", error.isEmpty() ? "Command failed" : error}})
+      .toJson(QJsonDocument::Compact);
+
+  result["ok"]=true;
+
+  return QJsonDocument(result).toJson(QJsonDocument::Compact);
+}
+
+
+// Применение одной mcp-команды к живой модели с возвратом итога.
+// Тела веток - те же applyXxx что были в messageHandler, но тихие
+// return заменены на текст ошибки: сервер отдаёт её агенту как есть,
+// вместо гадания "did not apply... retry"
+bool MainWindow::handleMcpCommand(const QString &command,
+                                  const QJsonObject &args,
+                                  QJsonObject &result,
+                                  QString &error)
+{
+  result=QJsonObject();
+  error=QString();
+
+  if(command=="mcpCreateBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject created=McpTools::applyCreateBranch(treeScreen->knowTreeModel,
+                                                    args.value("parent_id").toString(),
+                                                    args.value("id").toString(),
+                                                    args.value("name").toString(),
+                                                    error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(created.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=created;
+    return true;
+  }
+
+  else if(command=="mcpCreateNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject created=McpTools::applyCreateNote(treeScreen->knowTreeModel,
+                                                  args.value("branch_id").toString(),
+                                                  args.value("id").toString(),
+                                                  args.value("name").toString(),
+                                                  args.value("html").toString(),
+                                                  args.value("tags").toString(),
+                                                  error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(created.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=created;
+    return true;
+  }
+
+  else if(command=="mcpUpdateNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QStringList updatedFields;
+
+    // Открытый в редакторе текст не трогается: редактор держит свой
+    // буфер до перевыбора (last writer wins), как при любом
+    // стороннем изменении файла
+    const bool ok=McpTools::applyUpdateNote(treeScreen->knowTreeModel,
+                                            args.value("id").toString(),
+                                            args.value("has_name").toBool(false),
+                                            args.value("name").toString(),
+                                            args.value("has_html").toBool(false),
+                                            args.value("html").toString(),
+                                            args.value("has_tags").toBool(false),
+                                            args.value("tags").toString(),
+                                            error,
+                                            updatedFields);
+
+    if(!ok)
+    {
+      if(error.isEmpty())
+        error="Note was not updated";
+
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["id"]=args.value("id").toString();
+
+    QJsonArray fields;
+    foreach(const QString &field, updatedFields)
+      fields.append(field);
+    result["updated_fields"]=fields;
+
+    return true;
+  }
+
+  else if(command=="mcpDeleteNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(id.isEmpty())
+    {
+      error="Empty id";
+      return false;
+    }
+
+    if(!McpTools::applyDeleteNote(treeScreen->knowTreeModel, id, error))
+    {
+      if(error.isEmpty())
+        error="Note was not deleted";
+
+      return false;
+    }
+
+    emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["id"]=id;
+    return true;
+  }
+
+  else if(command=="mcpDeleteBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(id.isEmpty())
+    {
+      error="Empty id";
+      return false;
+    }
+
+    QJsonObject deleted=McpTools::applyDeleteBranch(treeScreen->knowTreeModel,
+                                                    id, error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(deleted.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=deleted;
+    return true;
+  }
+
+  else if(command=="mcpRenameBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject renamed=McpTools::applyRenameBranch(treeScreen->knowTreeModel,
+                                                    args.value("id").toString(),
+                                                    args.value("name").toString(),
+                                                    error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(renamed.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=renamed;
+    return true;
+  }
+
+  else if(command=="mcpMoveBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject moved=McpTools::applyMoveBranch(treeScreen->knowTreeModel,
+                                                args.value("id").toString(),
+                                                args.value("target_id").toString(),
+                                                args.value("as_child").toBool(true),
+                                                error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(moved.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=moved;
+    return true;
+  }
+
+  else if(command=="mcpMoveNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    // Как при удалении: редактор может держать указатель внутрь
+    // таблицы-источника, его состояние сбрасывается до переноса
+    find_object<MetaEditor>("editorScreen")->clearAll();
+
+    QJsonObject moved=McpTools::applyMoveNote(treeScreen->knowTreeModel,
+                                              args.value("id").toString(),
+                                              args.value("branch_id").toString(),
+                                              error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(moved.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=moved;
+    return true;
+  }
+
+  else if(command=="mcpFavoriteNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(!treeScreen->knowTreeModel->isRecordIdExists(id))
+    {
+      error="Unknown note_id: "+id;
+      return false;
+    }
+
+    Record *record=treeScreen->knowTreeModel->getRecord(id);
+
+    if(record==nullptr || record->getField("crypt")=="1")
+    {
+      error="Note is not available";
+      return false;
+    }
+
+    Favorites::instance().setFavorite(id, true);
+
+    if(!Favorites::instance().isFavorite(id))
+    {
+      error="Note was not starred";
+      return false;
+    }
+
+    flashMcpWrite();
+
+    result["id"]=id;
+    result["favorite"]=true;
+    return true;
+  }
+
+  else if(command=="mcpUnfavoriteNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(!treeScreen->knowTreeModel->isRecordIdExists(id))
+    {
+      error="Unknown note_id: "+id;
+      return false;
+    }
+
+    Favorites::instance().setFavorite(id, false);
+
+    if(Favorites::instance().isFavorite(id))
+    {
+      error="Note is still starred";
+      return false;
+    }
+
+    flashMcpWrite();
+
+    result["id"]=id;
+    result["favorite"]=false;
+    return true;
+  }
+
+  else if(command=="mcpImportBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString parentId=args.value("parent_id").toString();
+    const QString path=args.value("path").toString();
+
+    if(!parentId.isEmpty())
+    {
+      TreeItem *parentItem=treeScreen->knowTreeModel->getItemById(parentId);
+
+      if(parentItem==nullptr || parentItem->getField("crypt")=="1")
+      {
+        error="Parent branch is not available";
+        return false;
+      }
+    }
+
+    // Плохой обменник вместо модального диалога - отказ с причиной
+    const QString dirError=McpTools::checkImportDir(path);
+
+    if(!dirError.isEmpty())
+    {
+      error=dirError;
+      return false;
+    }
+
+    QJsonObject imported=McpTools::applyImportBranch(treeScreen->knowTreeModel,
+                                                     parentId, path, error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(imported.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    flashMcpWrite();
+
+    result=imported;
+    return true;
+  }
+
+  else if(command=="mcpRenameTag")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    int renamed=0;
+    int skipped=0;
+
+    if(!McpTools::applyRenameTag(treeScreen->knowTreeModel,
+                                 args.value("old").toString(),
+                                 args.value("new").toString(),
+                                 error, renamed, skipped))
+    {
+      if(error.isEmpty())
+        error="Tag was not renamed";
+
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["renamed"]=renamed;
+    result["skipped"]=skipped;
+    return true;
+  }
+
+  else if(command=="mcpDeleteTag")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    int cleared=0;
+    int skipped=0;
+
+    if(!McpTools::applyDeleteTag(treeScreen->knowTreeModel,
+                                 args.value("tag").toString(),
+                                 error, cleared, skipped))
+    {
+      if(error.isEmpty())
+        error="Tag was not deleted";
+
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["cleared"]=cleared;
+    result["skipped"]=skipped;
+    return true;
+  }
+
+  else if(command=="mcpApplyBatch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonArray operations=args.value("operations").toArray();
+
+    if(operations.isEmpty())
+    {
+      error="Empty operations list";
+      return false;
+    }
+
+    QSet<QString> closeWindows;
+    bool needSave=false;
+    QJsonArray opResults;
+
+    for(const QJsonValue &opValue : operations)
+    {
+      const QJsonObject op=opValue.toObject();
+      const QString tool=op.value("tool").toString();
+      const QJsonObject opArgs=op.value("arguments").toObject();
+
+      // import/export в пакет не входят
+      if(tool==QStringLiteral("import_branch") ||
+         tool==QStringLiteral("export_branch"))
+      {
+        error="Unsupported in batch: "+tool;
+        break;
+      }
+
+      // Как в одиночке: редактор может держать указатель внутрь
+      // таблицы-источника, его состояние сбрасывается до переноса
+      if(tool==QStringLiteral("move_note"))
+        find_object<MetaEditor>("editorScreen")->clearAll();
+
+      // Как в одиночке: открепленные окна удаляемой записи
+      if(tool==QStringLiteral("delete_note"))
+        closeWindows.insert(opArgs.value("note_id").toString());
+
+      QJsonObject dummy;
+
+      if(!McpTools::applyBatchOp(treeScreen->knowTreeModel,
+                                 tool, opArgs, dummy, error))
+        break;
+
+      QJsonObject opResult;
+      opResult["tool"]=tool;
+      opResult["ok"]=true;
+      opResults.append(opResult);
+
+      // Избранное сохраняет само (синглетон/сайдкар), остальное
+      // требует сейва модели
+      if(tool!=QStringLiteral("favorite_note") &&
+         tool!=QStringLiteral("unfavorite_note"))
+        needSave=true;
+    }
+
+    if(!closeWindows.isEmpty())
+      emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(closeWindows);
+
+    if(needSave)
+      treeScreen->knowTreeModel->save();
+
+    flashMcpWrite();
+
+    // Стоп на первой ошибке: пакет неатомарен, примененное сохраняется
+    result["applied"]=opResults.size();
+    result["total"]=operations.size();
+    result["operations"]=opResults;
+
+    if(!error.isEmpty() || opResults.size()!=operations.size())
+    {
+      if(error.isEmpty())
+        error="Batch stopped before all operations";
+
+      return false;
+    }
+
+    return true;
+  }
+
+  else if(command=="mcpHello")
+  {
+    const QString pid=args.value("pid").toString();
+
+    if(pid.isEmpty())
+    {
+      error="Empty pid";
+      return false;
+    }
+
+    // Старт сессии с нуля: история чистая, окно появляется само
+    const bool sessionStarts=mcpPeers.isEmpty();
+
+    mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
+    mcpPeerModes[pid]=args.value("mode").toString();
+    updateMcpBanner();
+
+    if(sessionStarts)
+    {
+      mcpHistory.clear();
+      updateMcpHistoryDialog();
+
+      if(mcpHistoryDialog!=nullptr)
+        mcpHistoryDialog->show();
+    }
+
+    return true;
+  }
+
+  else if(command=="mcpBye")
+  {
+    const QString pid=args.value("pid").toString();
+
+    if(pid.isEmpty())
+    {
+      error="Empty pid";
+      return false;
+    }
+
+    mcpPeers.remove(pid);
+    mcpPeerModes.remove(pid);
+    updateMcpBanner();
+
+    return true;
+  }
+
+  else if(command=="mcpHistory")
+  {
+    addMcpHistoryEntry(args.value("kind").toString(),
+                       args.value("tool").toString(),
+                       args.value("summary").toString());
+
+    return true;
+  }
+
+  error="Unknown command: "+command;
+  return false;
 }
 
 

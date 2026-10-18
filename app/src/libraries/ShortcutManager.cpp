@@ -201,7 +201,8 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("misc-imagesGallery", Data{ QKeySequence("Ctrl+Shift+G"), tr("Images gallery"), tr("") });
     defaultKeyTable.insert("misc-syncro",      Data{ QKeySequence("F9"), tr("Synchronization"), tr("Run synchronization") });
     defaultKeyTable.insert("misc-editConfirm", Data{ QKeySequence(Qt::CTRL + Qt::Key_Return), tr("Ok"), tr("") });
-    defaultKeyTable.insert("misc-print",       Data{ QKeySequence("Ctrl+P"), tr("Print"), tr("") });
+    defaultKeyTable.insert("misc-print",       Data{ QKeySequence("Ctrl+P"), tr("Print preview"), tr("") });
+    defaultKeyTable.insert("misc-printDirect", Data{ QKeySequence("Ctrl+Alt+P"), tr("Direct print"), tr("") });
     defaultKeyTable.insert("misc-exportPdf",   Data{ QKeySequence("Ctrl+Shift+D"), tr("Export PDF"), tr("") });
     defaultKeyTable.insert("misc-quit",        Data{ QKeySequence("Ctrl+Q"), tr("Quit"), tr("") });
 }

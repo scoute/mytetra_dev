@@ -84,6 +84,11 @@ public:
     QList<int> get_findsplitter_size_list(void);
     void set_findsplitter_size_list(QList<int> list);
 
+    // Размеры левой колонки (дерево над списком записей), когда список
+    // записей перенесён под дерево. Остальные сплиттеры - выше
+    QList<int> get_leftspl_size_list(void);
+    void set_leftspl_size_list(QList<int> list);
+
     QList<int> get_splitter_size_list(QString name);
     void set_splitter_size_list(QString name, QList<int> list);
 
@@ -353,6 +358,11 @@ public:
     // По умолчанию показана
     bool get_recordHeaderVisible(void);
     void set_recordHeaderVisible(bool state);
+
+    // Положение списка записей: false - справа от дерева (по умолчанию),
+    // true - под деревом в левой колонке. Страница Notes area
+    bool get_recordTableUnderTree(void);
+    void set_recordTableUnderTree(bool state);
 
     // Глобальный режим только чтения: запрещены любые изменения базы,
     // разрешены навигация и просмотр. По умолчанию выключен

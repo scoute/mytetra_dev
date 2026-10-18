@@ -3,6 +3,7 @@
 #include <QStringList>
 #include <QMessageBox>
 #include <QCheckBox>
+#include <QRadioButton>
 #include <QGroupBox>
 
 #include "AppConfigPage_RecordTable.h"
@@ -11,6 +12,7 @@
 #include "controllers/recordTable/RecordTableController.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/record/MetaEditor.h"
+#include "views/mainWindow/MainWindow.h"
 
 
 extern AppConfig mytetraConfig;
@@ -76,6 +78,27 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   groupBoxNoteHeader->setLayout(vboxNoteHeader);
 
 
+  // Положение списка записей: справа от дерева либо под деревом
+  // в левой колонке. Радио стоит первым на странице по просьбе пользователей
+  positionRight=new QRadioButton(this);
+  positionRight->setText(tr("To the right of the tree (default)"));
+
+  positionUnder=new QRadioButton(this);
+  positionUnder->setText(tr("Under the tree"));
+
+  if(mytetraConfig.get_recordTableUnderTree())
+    positionUnder->setChecked(true);
+  else
+    positionRight->setChecked(true);
+
+  QVBoxLayout *vboxPosition = new QVBoxLayout;
+  vboxPosition->addWidget(positionRight);
+  vboxPosition->addWidget(positionUnder);
+
+  groupBoxPosition = new QGroupBox(tr("Notes list position"));
+  groupBoxPosition->setLayout(vboxPosition);
+
+
   // Область настройки видимости столбцов
   QVBoxLayout *vboxVisibleColumns = new QVBoxLayout;
   foreach(QCheckBox *currentCheckBox, fields)
@@ -88,6 +111,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   // Собирается основной слой
   QVBoxLayout *central_layout=new QVBoxLayout();
 
+  central_layout->addWidget(groupBoxPosition);
   central_layout->addWidget(groupBoxNoteHeader);
   central_layout->addWidget(groupBoxVisibleHeaders);
   central_layout->addWidget(groupBoxVisibleColumns);
@@ -166,6 +190,10 @@ void AppConfigPage_RecordTable::retranslateUi(void)
   showHorizontalHeader->setText(tr("Show horisontal header"));
   showVerticalHeader->setText(tr("Show row number"));
 
+  positionRight->setText(tr("To the right of the tree (default)"));
+  positionUnder->setText(tr("Under the tree"));
+
+  groupBoxPosition->setTitle(tr("Notes list position"));
   groupBoxVisibleHeaders->setTitle(tr("Headers and numbers visible"));
   groupBoxVisibleColumns->setTitle(tr("Columns visible"));
 }
@@ -204,6 +232,19 @@ int AppConfigPage_RecordTable::applyChanges(void)
    MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
    if(metaEditor!=nullptr)
      metaEditor->updateRecordHeaderVisibility();
+ }
+
+
+ // Положение списка записей: пишется в конфиг и применяется живьем
+ // перестановкой виджетов без перезапуска
+ if(mytetraConfig.get_recordTableUnderTree()!=positionUnder->isChecked())
+ {
+   mytetraConfig.set_recordTableUnderTree(positionUnder->isChecked());
+
+   MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+   if(mainWindow!=nullptr)
+     mainWindow->applyRecordTablePosition();
  }
 
 

@@ -412,13 +412,11 @@ void TreeScreen::setupModels(void)
 }
 
 
-// Контекстное меню тулбара веток: показывается только на пустом месте,
-// единственный пункт открывает диалог настройки кнопок
+// Контекстное меню тулбара веток: единственный пункт открывает
+// диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
+// у кнопок своего меню нет, конфликтов нет
 void TreeScreen::onToolbarContextMenu(const QPoint &pos)
 {
- if(toolsLine->actionAt(pos)!=nullptr)
-  return;
-
  QMenu menu(this);
  QAction *setupAction=menu.addAction(tr("Customize toolbar..."));
 

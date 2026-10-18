@@ -297,6 +297,9 @@ private:
     void createTrayIcon(void);
     void setIcon(void);
 
+    // Отложенное применение размеров левой колонки после её показа
+    void applyRecordTableSizes(void);
+
     void saveWindowGeometry(void);
     void saveTreePosition(void);
     void saveRecordTablePosition(void);
@@ -394,6 +397,9 @@ private:
     // Левая колонка (дерево над списком записей), существует только
     // в режиме recordTableUnderTree; иначе список в правой колонке
     QSplitter *leftColumnSplitter=nullptr;
+
+    // Счётчик повторов отложенного выставления размеров левой колонки
+    int recordTableSizesRetry=0;
 
     CommandRunner *syncroCommandRun=nullptr;
 

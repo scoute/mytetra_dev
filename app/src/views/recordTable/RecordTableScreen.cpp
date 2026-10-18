@@ -137,6 +137,14 @@ void RecordTableScreen::setupActions(void)
  actionPrint->setStatusTip(tr("Print current notes table"));
  actionPrint->setIcon(QIcon(":/resource/pic/print_table.svg"));
 
+ // Кнопка предпросмотра печати текущей записи (клик связывается
+ // с действием в MainWindow). Иконка-глаз общая с предпросмотром
+ // вложений: отдельную не рисовали, смысл один - "предпросмотр",
+ // тулбары разные, путаницы нет
+ actionPrintPreview = new QAction(tr("Print preview"), this);
+ actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
+ actionPrintPreview->setIcon(QIcon(":/resource/pic/attach_preview.svg"));
+
  // Кнопка копирования ссылки на запись
  actionCopyRecordReference = new QAction(tr("Copy note reference"), this);
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
@@ -190,6 +198,9 @@ void RecordTableScreen::setupUI(void)
  toolsLine->addSeparator();
  insertActionAsButton(toolsLine, actionMoveUp);
  insertActionAsButton(toolsLine, actionMoveDn);
+
+ toolsLine->addSeparator();
+ insertActionAsButton(toolsLine, actionPrintPreview);
 
 
  extraToolsLine=new QToolBar(this);
@@ -310,6 +321,9 @@ void RecordTableScreen::setupSignals(void)
     // Поиск по базе (клик связывается с действием в MainWindow)
     connect(actionFindInBase, &QAction::triggered, find_object<MainWindow>("mainwindow"), &MainWindow::toolsFindInBase);
 
+    // Предпросмотр печати текущей записи (действие живет в MainWindow)
+    connect(actionPrintPreview, &QAction::triggered, find_object<MainWindow>("mainwindow"), &MainWindow::filePrintPreview);
+
     // Синхронизация
     connect(actionSyncro, &QAction::triggered, this, &RecordTableScreen::onSyncroClick);
 
@@ -391,6 +405,9 @@ void RecordTableScreen::disableAllActions(void)
 
  actionCopyRecordReference->setEnabled(false);
 
+ // Предпросмотр печати возможен только для одной выбранной записи
+ actionPrintPreview->setEnabled(false);
+
  actionChangeHistory->setEnabled(false);
 
  actionSwitchSelectionMode->setEnabled(false);
@@ -452,6 +469,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
+   actionPrintPreview->setEnabled(true);
 
    // История выключена мастер-тумблером: пункт серый сразу,
    // а не вежливым отказом по клику
@@ -657,6 +675,9 @@ void RecordTableScreen::retranslateUi(void)
 
   actionPrint->setText(tr("Print table"));
   actionPrint->setStatusTip(tr("Print current notes table"));
+
+  actionPrintPreview->setText(tr("Print preview"));
+  actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
 
   actionCopyRecordReference->setText(tr("Copy note reference"));
   actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));

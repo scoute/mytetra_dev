@@ -9,6 +9,7 @@ class QWidget;
 class QCheckBox;
 class QGroupBox;
 class QRadioButton;
+class QPushButton;
 
 class AppConfigPage_RecordTable : public ConfigPage
 {
@@ -40,6 +41,11 @@ protected:
   QRadioButton *positionUnder;
 
   QGroupBox *groupBoxPosition;
+
+  // Кнопка открытия диалога настройки кнопок панелей
+  QPushButton *editToolbarButtons;
+
+  void onClickedEditToolbarButtons(void);
 
   QGroupBox *groupBoxVisibleHeaders;
   QGroupBox *groupBoxVisibleColumns;

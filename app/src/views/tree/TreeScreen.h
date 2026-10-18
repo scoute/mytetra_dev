@@ -52,10 +52,22 @@ public:
  // Копирование ветки, сворачивание и поиск разрешены
  void setReadOnly(bool state);
 
+ // Порядок кнопок тулбара по умолчанию и режимы кнопок.
+ // Нужно диалогу настройки порядка кнопок
+ static QStringList defaultToolbarOrder(void);
+ static QString toolbarItemMode(const QString &command);
+
  // Кнопка синхронизации: блокировка на время команды и чтение состояния.
  // MainWindow дёргает напрямую, как раньше дёргал кнопку записей
  void setSyncroEnabled(bool state);
  bool isSyncroEnabled(void) const;
+
+ // Действие тулбара по имени. Нужно диалогу настройки порядка кнопок
+ QAction *toolAction(const QString &command);
+
+ // Перестроение тулбара из списка конфига (или дефолта).
+ // Вызывается при старте и вживую из диалога настроек
+ void rebuildToolbar(void);
 
 signals:
 
@@ -141,19 +153,6 @@ private:
 
  // Реальные действия при клике на ветку дерева
  void processKnowtreeClicked(const QModelIndex &index);
-
- // Порядок кнопок тулбара по умолчанию (объединение десктопного
- // и мобильного наборов; лишнее режется режимом в rebuildToolbar).
- // Пружина spring - невидимый распор, separator - разделитель
- static QStringList defaultToolbarOrder(void);
-
- // Режим кнопки: desktop, mobile или обе (пусто - обе).
- // Неизвестные имена из конфига пропускаются с предупреждением
- static QString toolbarItemMode(const QString &command);
-
- // Перестроение тулбара из списка конфига (или дефолта).
- // Вызывается при старте и вживую из диалога настроек
- void rebuildToolbar(void);
 
  QMap<QString, QAction *> actionList;
 

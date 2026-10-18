@@ -213,7 +213,7 @@ QSet<QString> RecordTableScreen::hiddenToolbarItems(void)
 
 
 // Действие тулбаров по имени для построения из списков
-QAction *RecordTableScreen::toolActionByName(const QString &command)
+QAction *RecordTableScreen::toolAction(const QString &command)
 {
  if(command=="addNewToEnd") return actionAddNewToEnd;
  if(command=="addNewBefore") return actionAddNewBefore;
@@ -274,7 +274,7 @@ void RecordTableScreen::buildToolbarLine(QToolBar *line,
      continue;
     }
 
-   QAction *action=toolActionByName(command);
+   QAction *action=toolAction(command);
 
    if(action==nullptr)
     {
@@ -321,7 +321,7 @@ void RecordTableScreen::rebuildToolbars(void)
  // не важен, поэтому пачкой в конец
  foreach(const QString &command, hiddenToolbarItems())
   {
-   QAction *action=toolActionByName(command);
+   QAction *action=toolAction(command);
 
    if(action!=nullptr)
     insertActionAsButton(toolsLine, action, false);

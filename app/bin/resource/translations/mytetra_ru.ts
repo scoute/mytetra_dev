@@ -1192,6 +1192,21 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <translation>Шапка заметки</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="86"/>
+        <source>To the right of the tree (default)</source>
+        <translation>Справа от дерева (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="89"/>
+        <source>Under the tree</source>
+        <translation>Под деревом</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="97"/>
+        <source>Notes list position</source>
+        <translation>Положение списка записей</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="62"/>
         <source>Show note header (name and author)</source>
         <translation>Показывать шапку заметки (название и автор)</translation>

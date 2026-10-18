@@ -360,6 +360,18 @@ void AppConfig::set_findsplitter_size_list(QList<int> list)
 }
 
 
+QList<int> AppConfig::get_leftspl_size_list(void)
+{
+    return get_splitter_size_list("leftspl");
+}
+
+
+void AppConfig::set_leftspl_size_list(QList<int> list)
+{
+    set_splitter_size_list("leftspl", list);
+}
+
+
 QList<int> AppConfig::get_splitter_size_list(QString name)
 {
     QStringList line_list;
@@ -1332,6 +1344,18 @@ bool AppConfig::get_recordHeaderVisible(void)
 void AppConfig::set_recordHeaderVisible(bool state)
 {
     m_conf->setValue("recordHeaderVisible", state);
+}
+
+
+bool AppConfig::get_recordTableUnderTree(void)
+{
+    return m_conf->value("recordTableUnderTree", false).toBool();
+}
+
+
+void AppConfig::set_recordTableUnderTree(bool state)
+{
+    m_conf->setValue("recordTableUnderTree", state);
 }
 
 

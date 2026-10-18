@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QWidget>
 #include <QString>
+#include <QMap>
+#include <QSet>
 
 
 class QHBoxLayout;
@@ -87,6 +89,14 @@ private:
  QToolBar *toolsLine;
  QToolBar *extraToolsLine;
 
+ // Внешние кнопки второй линии (переключатели панелей из MainWindow).
+ // Хранятся чтобы переживать перестроение тулбара из настроек
+ QList<QAction *> extraToolActions;
+
+ // Пружины-распоры прошлого построения: QToolBar::clear() виджеты
+ // не удаляет, чистятся вручную
+ QList<QWidget *> toolbarSprings;
+
  QLabel *treePathLabel;
  QString treePath;
  
@@ -104,6 +114,29 @@ private:
  void setupSignals(void);
  void setupActions(void);
  void assembly(void);
+
+ // Порядок кнопок тулбаров по умолчанию (объединение десктопного
+ // и мобильного наборов; лишнее режется режимом в rebuildToolbars)
+ static QStringList defaultToolbarOrder(void);
+ static QStringList defaultExtraToolbarOrder(void);
+
+ // Режим кнопки: desktop, mobile или обе (пусто - обе).
+ // Скрытые shortcut-only кнопки в списки не входят, регистрируются
+ // всегда. Неизвестные имена из конфига пропускаются с предупреждением
+ static QString toolbarItemMode(const QString &command);
+ static QSet<QString> hiddenToolbarItems(void);
+
+ // Перестроение обоих тулбаров из списков конфига (или дефолта).
+ // Вызывается при старте и вживую из диалога настроек
+ void rebuildToolbars(void);
+
+ // Действие тулбаров по имени для построения из списков
+ QAction *toolActionByName(const QString &command);
+
+ // Построение одной линии тулбара из списка
+ void buildToolbarLine(QToolBar *line,
+                       const QStringList &order,
+                       bool isMobile);
 
  void toolsWidgetsUpdate();
  void editorModesUpdate();

@@ -307,7 +307,7 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["limit"]=limit;
     QJsonObject fields;
     fields["type"]="array";
-    fields["description"]="Note keys to return (default all): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count";
+    fields["description"]="Note keys to return (default all, unknown keys are an error): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count. No text here, use get_note for it.";
     QJsonObject fieldItems;
     fieldItems["type"]="string";
     fields["items"]=fieldItems;
@@ -317,7 +317,9 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "list_notes",
       QObject::tr(
-      "Notes in a branch. Encrypted ones carry encrypted:true."
+      "Notes in a branch WITHOUT texts (id, name, tags, ...). "
+      "To read a note text call get_note with its note_id. "
+      "Encrypted ones carry encrypted:true."
       ),      objectSchema(properties, required)));
   }
 
@@ -335,7 +337,7 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["max_chars"]=maxChars;
     QJsonObject fields;
     fields["type"]="array";
-    fields["description"]="Note keys to return (default all): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count, format, text, truncated";
+    fields["description"]="Note keys to return (default all, unknown keys are an error): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count, format, text, truncated";
     QJsonObject fieldItems;
     fieldItems["type"]="string";
     fields["items"]=fieldItems;
@@ -368,7 +370,8 @@ static QJsonArray buildToolsList(McpMode mode)
       "search",
       QObject::tr(
       "Substring search over note names, tags, texts. "
-      "Matching branches go in a separate branches list, no need to list all branches."
+      "Matching branches go in a separate branches list, no need to list all branches. "
+      "Hits carry snippets only, call get_note with note_id to read the full text."
       ),      objectSchema(properties, required)));
   }
 
@@ -1084,6 +1087,13 @@ public:
     {
       QJsonObject result;
       result["tools"]=buildToolsList(m_mode);
+
+      // Сколько тулов реально ушло клиенту и в каком режиме:
+      // если нейронка клянется что чего-то нет, сверять сюда,
+      // а не гадать. Урезание списка дальше - уже дело клиента
+      fprintf(stderr, "mcp: tools/list served %d tools in %s mode\n",
+              result["tools"].toArray().size(),
+              qPrintable(mcpModeName(m_mode)));
 
       response=makeResponse(id, result, QJsonValue());
       return true;

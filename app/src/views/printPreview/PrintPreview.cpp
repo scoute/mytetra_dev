@@ -35,17 +35,17 @@ static inline qreal mmToInches(double mm)
 
 
 PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
-    : QDialog(parent), printer(QPrinter::HighResolution)
+    : QWidget(nullptr), printer(QPrinter::HighResolution)
 {
+    Q_UNUSED(parent);
+
     setWindowTitle(tr("MyTetra - Print Preview"));
 
-    // На Windows у QDialog по умолчанию нет кнопок свернуть/развернуть,
-    // окно предпросмотра нельзя было максимизировать (репорт пользователей).
-    // Простое добавление хинтов к дефолтным флагам на практике не дало
-    // кнопок (проверено на 1.117.2), поэтому флаги задаются явно полным
-    // набором через CustomizeWindowHint: заголовок, системное меню,
-    // свернуть, развернуть, закрыть
-    setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint |
+    // Отдельное окно верхнего уровня: transient-диалог с родителем
+    // оконный менеджер лишает кнопок свернуть/развернуть
+    // (см. комментарий в PrintPreview.h). Модальность выставляется
+    // вызывающим кодом через setWindowModality
+    setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowTitleHint |
                    Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint |
                    Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 

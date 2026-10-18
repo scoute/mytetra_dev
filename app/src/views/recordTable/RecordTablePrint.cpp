@@ -162,7 +162,7 @@ void RecordTablePrint::print(void)
 
   PrintPreview *preview = new PrintPreview(&doc, this);
 
-  preview->setModal(true);
+  preview->setWindowModality(Qt::WindowModal);
   preview->setAttribute(Qt::WA_DeleteOnClose);
   preview->show();
 }

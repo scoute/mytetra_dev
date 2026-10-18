@@ -897,16 +897,23 @@ static QStringList controlSocketCandidates(const QString &argvPath)
 }
 
 
-enum GuiWriteState { GUI_NOT_RUNNING, GUI_DELIVERED, GUI_FAILED };
+enum GuiWriteState { GUI_NOT_RUNNING, GUI_DELIVERED, GUI_APPLIED, GUI_REFUSED, GUI_FAILED };
 
 
-// Отправка команды живому GUI по control-каналу. Ack подтверждает
-// доставку (обработчик GUI срабатывает сразу после), не применение:
-// применение проверяется отдельно по mtime базы
+// Отправка команды живому GUI по control-каналу. Два протокола ответа:
+// - новый GUI: фрейм с JSON {"ok":true,...} или {"ok":false,"error":"..."}.
+//   Итог применения известен сразу: APPLIED (применено и сохранено) или
+//   REFUSED (GUI отказал с причиной, повтор бессмысленен);
+// - старый GUI: голые 3 байта "ack". Только доставка без итога: DELIVERED,
+//   дальше старый путь ожидания сейва по mtime с перепроверкой.
+// Таймаут ответа покрывает применение с сейвом большой базы. Его истечение
+// означает что нить GUI заблокирована (модальный диалог, синхронизация):
+// изменение НЕ применено, повторять тот же вызов можно, дубли не грозят
 static GuiWriteState sendGuiCommand(const QString &binaryPath,
                                     const QString &command,
                                     const QJsonObject &payload,
-                                    QString &error)
+                                    QString &error,
+                                    QJsonObject *reply=nullptr)
 {
   QLocalSocket socket;
 
@@ -940,21 +947,79 @@ static GuiWriteState sendGuiCommand(const QString &binaryPath,
     return GUI_FAILED;
   }
 
-  if(!socket.waitForReadyRead(8000))
+  // Ждём именно итог применения, а не эхо доставки
+  QByteArray answer;
+  QElapsedTimer timer;
+  timer.start();
+
+  const int totalMs=30000;
+  bool frameComplete=false;
+  bool legacyAck=false;
+
+  while(timer.elapsed()<totalMs && !frameComplete && !legacyAck)
   {
-    error="GUI is running but did not acknowledge the command";
+    const int remainMs=totalMs-static_cast<int>(timer.elapsed());
+
+    if(remainMs<=0 || !socket.waitForReadyRead(remainMs))
+      break;
+
+    answer.append(socket.readAll());
+
+    if(answer==QByteArray("ack"))
+    {
+      legacyAck=true;
+      break;
+    }
+
+    if(answer.size()>=4)
+    {
+      QDataStream frame(answer);
+      quint32 frameLen=0;
+      frame >> frameLen;
+
+      if(answer.size()>=4+static_cast<int>(frameLen))
+        frameComplete=true;
+    }
+  }
+
+  if(legacyAck)
+    return GUI_DELIVERED;
+
+  if(!frameComplete)
+  {
+    error="GUI is running but did not respond in time (modal dialog open? sync in progress?). "
+          "The change was NOT applied, safe to retry the same call later";
     return GUI_FAILED;
   }
 
-  static const char *ack="ack";
+  QDataStream frame(answer);
+  quint32 frameLen=0;
+  frame >> frameLen;
+  const QByteArray body=answer.mid(4, frameLen);
 
-  if(socket.read(qstrlen(ack))!=QByteArray(ack))
+  QJsonParseError parseError;
+  QJsonDocument doc=QJsonDocument::fromJson(body, &parseError);
+
+  if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
   {
-    error="GUI is running but sent a broken acknowledgement";
+    error="GUI sent a broken reply";
     return GUI_FAILED;
   }
 
-  return GUI_DELIVERED;
+  const QJsonObject response=doc.object();
+
+  if(reply!=nullptr)
+    *reply=response;
+
+  if(response.value("ok").toBool(false))
+    return GUI_APPLIED;
+
+  error=response.value("error").toString();
+
+  if(error.isEmpty())
+    error="GUI refused the change";
+
+  return GUI_REFUSED;
 }
 
 
@@ -1621,16 +1686,33 @@ QJsonObject McpSession::writeRenameBranch(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     TreeItem *item=m_model.getItemById(id);
 
     if(item==nullptr || item->getField("name")!=name.trimmed())
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1703,11 +1785,27 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
   {
     QString expect=expectedMoveParent(m_model, targetId, asChild);
 
-    waitGuiSave(5000);
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     TreeItem *moved=m_model.getItemById(id);
@@ -1723,7 +1821,8 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
 
     if(moved==nullptr || actual!=expect)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1795,9 +1894,25 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     QStringList path=m_model.getRecordPath(id);
@@ -1805,7 +1920,8 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
 
     if(actual!=branchId)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1911,11 +2027,27 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
   {
     if(xmlStorage)
     {
-      waitGuiSave(5000);
+      if(!synced)
+        waitGuiSave(5000);
       resyncModel();
 
       Record *record=m_model.isRecordIdExists(id) ? m_model.getRecord(id) : nullptr;
@@ -1924,7 +2056,8 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
 
       if(!applied)
       {
-        toolError="GUI did not apply the change in time, retry";
+        toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
         return result;
       }
@@ -1933,7 +2066,8 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
     {
       if(!waitSidecarFavorite(id, starred, 5000))
       {
-        toolError="GUI did not apply the change in time, retry";
+        toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
         return result;
       }
@@ -2031,13 +2165,29 @@ QJsonObject McpSession::writeImportBranch(const QString &parentId,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    // Ввоз сам сохраняет дерево: ждётся сейв GUI, модель
-    // перечитывается, новая ветка ищется по diff детей
-    if(!waitGuiSave(5000))
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    // Ввоз сам сохраняет дерево: у старого GUI сейв ждётся по mtime,
+    // у нового (synced) он уже случился, модель просто перечитывается
+    if(!synced && !waitGuiSave(5000))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2057,7 +2207,8 @@ QJsonObject McpSession::writeImportBranch(const QString &parentId,
 
     if(fresh.isEmpty())
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2126,14 +2277,31 @@ QJsonObject McpSession::writeRenameTag(const QString &oldTag,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(McpTools::countTagNotes(&m_model, oldTag.trimmed().toLower())!=0)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2194,14 +2362,31 @@ QJsonObject McpSession::writeDeleteTag(const QString &tag, QString &toolError)
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(McpTools::countTagNotes(&m_model, tag.trimmed().toLower())!=0)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2332,14 +2517,31 @@ QJsonObject McpSession::writeBranch(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(!m_model.isItemIdExists(id))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2427,14 +2629,31 @@ QJsonObject McpSession::writeNote(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(!m_model.isRecordIdExists(id))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2537,9 +2756,25 @@ QJsonObject McpSession::writeNoteUpdate(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     Record *record=m_model.isRecordIdExists(id) ? m_model.getRecord(id) : nullptr;
@@ -2554,7 +2789,8 @@ QJsonObject McpSession::writeNoteUpdate(const QString &id,
 
     if(!ok)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2628,14 +2864,31 @@ QJsonObject McpSession::writeDeleteNote(const QString &id, QString &toolError)
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(m_model.isRecordIdExists(id))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2697,14 +2950,31 @@ QJsonObject McpSession::writeDeleteBranch(const QString &id, QString &toolError)
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(m_model.getItemById(id)!=nullptr)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -3064,10 +3334,21 @@ QJsonObject McpSession::writeApplyBatch(const QJsonArray &operations,
       return result;
     }
 
-    if(state==GUI_DELIVERED)
+    if(state==GUI_REFUSED)
+    {
+      toolError=sendError;
+
+      return result;
+    }
+
+    if(state==GUI_DELIVERED || state==GUI_APPLIED)
     {
       delivered=true;
-      waitGuiSave(5000);
+
+      // APPLIED: GUI уже применил и сохранил, сейв по mtime не ждём
+      if(state==GUI_DELIVERED)
+        waitGuiSave(5000);
+
       resyncModel();
     }
   }

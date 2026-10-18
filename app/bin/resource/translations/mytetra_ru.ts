@@ -5758,9 +5758,9 @@ Please report about this problem to the developers.</source>
         <translation>Удалить поддерево ветки в корзину. Без дополнительных подтверждений. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="495"/>
-        <source>PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. Do not call single-write tools in a loop. Not atomic: stops at first error, applied prefix persists. Per-operation results in order.</source>
-        <translation>ПРЕДПОЧТИТЕЛЬНО для любых 2+ записей: один вызов, один проход через GUI, один сейв. Не вызывай одиночные тулы в цикле. Не атомарно: остановка на первой ошибке, применённый префикс сохраняется. Результаты по операциям по порядку.</translation>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="509"/>
+        <source>PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. Do not call single-write tools in a loop. Example: {"operations": [{"tool": "create_note", "arguments": {"branch_id": "abc123", "name": "Shopping", "text": "milk, bread"}}, {"tool": "rename_tag", "arguments": {"old": "todo", "new": "done"}}]}. Batchable: create/update/delete/move/favorite note, create/rename/move/delete branch, rename/delete tag (no export/import). Creates get server ids, later ops can not reference them. Deletes need delete mode. Not atomic: stops at first error, applied prefix persists. Per-operation results in order.</source>
+        <translation>ПРЕДПОЧТИТЕЛЬНО для любых 2+ записей: один вызов, один проход через GUI, один сейв. Не вызывай одиночные тулы в цикле. Пример: {"operations": [{"tool": "create_note", "arguments": {"branch_id": "abc123", "name": "Shopping", "text": "milk, bread"}}, {"tool": "rename_tag", "arguments": {"old": "todo", "new": "done"}}]}. Можно пакетировать: создание/правка/удаление/перемещение/звёздочка заметки, создание/переименование/перемещение/удаление ветки, переименование/удаление тега (без экспорта/импорта). Созданное получает серверные id, поздние операции на них ссылаться не могут. Удалениям нужен режим удаления. Не атомарно: остановка на первой ошибке, применённый префикс сохраняется. Результаты по операциям по порядку.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="518"/>

@@ -510,6 +510,12 @@ static QJsonArray buildToolsList(McpMode mode)
       QObject::tr(
       "PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. "
       "Do not call single-write tools in a loop. "
+      "Example: {\"operations\": [{\"tool\": \"create_note\", \"arguments\": "
+      "{\"branch_id\": \"abc123\", \"name\": \"Shopping\", \"text\": \"milk, bread\"}}, "
+      "{\"tool\": \"rename_tag\", \"arguments\": {\"old\": \"todo\", \"new\": \"done\"}}]}. "
+      "Batchable: create/update/delete/move/favorite note, create/rename/move/delete branch, "
+      "rename/delete tag (no export/import). "
+      "Creates get server ids, later ops can not reference them. Deletes need delete mode. "
       "Not atomic: stops at first error, applied prefix persists. "
       "Per-operation results in order."
       ),      objectSchema(properties, required)));

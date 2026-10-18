@@ -402,7 +402,8 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["branch_id"]=branchId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="Title";
+    name["description"]="Title, free-form, no length cap (80+ chars is fine; "
+      "a narrow desktop column may visually clip it, the stored name stays intact)";
     properties["name"]=name;
     QJsonObject text;
     text["type"]="string";
@@ -438,7 +439,8 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["note_id"]=noteId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="New title";
+    name["description"]="New title, free-form, no length cap (80+ chars is fine; "
+      "a narrow desktop column may visually clip it, the stored name stays intact)";
     properties["name"]=name;
     QJsonObject text;
     text["type"]="string";

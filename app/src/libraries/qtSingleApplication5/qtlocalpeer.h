@@ -44,7 +44,15 @@
 #include <QLocalSocket>
 #include <QDir>
 
+#include <functional>
+
 #include "qtlockedfile.h"
+
+// Ответчик на mcp-команды для синхронного протокола запрос-ответ:
+// вызывается прямо в receiveConnection (тот же поток GUI),
+// возвращает компактный JSON {"ok":true,...} или {"ok":false,"error":"..."}.
+// Не-MCP сообщения идут старым путём (ack + сигнал messageReceived)
+using McpResponder = std::function<QByteArray(const QString &message)>;
 
 class QtLocalPeer : public QObject
 {
@@ -54,6 +62,8 @@ public:
     QtLocalPeer(QObject *parent = nullptr, const QString &appId = QString());
     bool isClient();
     bool sendMessage(const QString &message, int timeout);
+    void setMcpResponder(const McpResponder &responder)
+        { mcpResponder=responder; }
     QString applicationId() const
         { return id; }
 
@@ -71,6 +81,7 @@ protected:
 
 private:
     static const char* ack;
+    McpResponder mcpResponder;
 };
 
 #endif // QTLOCALPEER_H

@@ -336,9 +336,18 @@ void RecordTableScreen::rebuildToolbars(void)
 
  buildToolbarLine(extraToolsLine, extraOrder, isMobile);
 
- // Внешние кнопки (переключатели панелей) всегда в конце второй линии
- foreach(QAction *action, extraToolActions)
-  insertActionAsButton(extraToolsLine, action);
+ // Внешние кнопки (переключатели панелей) всегда в конце второй линии,
+ // отделённые разделителем своей группой: их в диалоге настройки нет,
+ // и без разделителя непонятно откуда они взялись
+ if(!extraToolActions.isEmpty())
+  {
+   // Разделитель не задваивается с пользовательским в конце списка
+   if(extraOrder.isEmpty() || extraOrder.last()!="separator")
+    extraToolsLine->addSeparator();
+
+   foreach(QAction *action, extraToolActions)
+    insertActionAsButton(extraToolsLine, action);
+  }
 }
 
 
@@ -779,13 +788,15 @@ void RecordTableScreen::onCopyRecordReference()
 }
 
 
-// Контекстное меню тулбаров записей: показывается только на пустом месте,
-// единственный пункт открывает диалог настройки кнопок
+// Контекстное меню тулбаров записей: единственный пункт открывает
+// диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
+// у кнопок своего меню нет, а пустого места на ужатых по кнопкам
+// линиях может не быть вовсе
 void RecordTableScreen::onToolbarContextMenu(const QPoint &pos)
 {
  QToolBar *line=qobject_cast<QToolBar *>(sender());
 
- if(line==nullptr || line->actionAt(pos)!=nullptr)
+ if(line==nullptr)
   return;
 
  QMenu menu(this);

@@ -2768,7 +2768,7 @@ void MainWindow::filePrintPreview(void)
 {
     PrintPreview *preview = new PrintPreview(editorScreen->getTextareaDocument(), this);
 
-    preview->setModal(true);
+    preview->setWindowModality(Qt::WindowModal);
     preview->setAttribute(Qt::WA_DeleteOnClose);
     preview->show();
 }

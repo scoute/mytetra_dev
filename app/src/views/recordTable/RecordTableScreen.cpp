@@ -356,6 +356,11 @@ void RecordTableScreen::setupUI(void)
  toolsLine=new QToolBar(this);
  extraToolsLine=new QToolBar(this);
 
+ // Первая линия тянется на всю свободную ширину ряда (вторая ужата
+ // по кнопкам справа): пустого места лейаута не остаётся, и ПКМ
+ // для настройки панели работает в любой точке ряда
+ toolsLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
  /*
  QSize toolBarIconSize(16,16);
  toolsLine->setIconSize(toolBarIconSize);
@@ -519,8 +524,7 @@ void RecordTableScreen::setupSignals(void)
 void RecordTableScreen::assembly(void)
 {
  recordTableToolsLayout=new QHBoxLayout();
- recordTableToolsLayout->addWidget(toolsLine);
- recordTableToolsLayout->addStretch();
+ recordTableToolsLayout->addWidget(toolsLine, 1);
  recordTableToolsLayout->addWidget(extraToolsLine);
  
  recordTableScreenLayout=new QVBoxLayout();

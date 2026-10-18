@@ -138,12 +138,11 @@ void RecordTableScreen::setupActions(void)
  actionPrint->setIcon(QIcon(":/resource/pic/print_table.svg"));
 
  // Кнопка предпросмотра печати текущей записи (клик связывается
- // с действием в MainWindow). Иконка-глаз общая с предпросмотром
- // вложений: отдельную не рисовали, смысл один - "предпросмотр",
- // тулбары разные, путаницы нет
+ // с действием в MainWindow). Своя иконка-принтер: глаз предпросмотра
+ // вложений здесь смотрелся неуместно
  actionPrintPreview = new QAction(tr("Print preview"), this);
  actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
- actionPrintPreview->setIcon(QIcon(":/resource/pic/attach_preview.svg"));
+ actionPrintPreview->setIcon(QIcon(":/resource/pic/print_preview.svg"));
 
  // Кнопка копирования ссылки на запись
  actionCopyRecordReference = new QAction(tr("Copy note reference"), this);

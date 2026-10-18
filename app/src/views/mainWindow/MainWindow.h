@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QMap>
+#include <QJsonObject>
+#include <QByteArray>
 #include <QtXml>
 #include <QtGui>
 #include <QDebug>
@@ -125,6 +127,18 @@ public slots:
     void applicationFastExit(void);
     void commitData(QSessionManager& manager);
     void messageHandler(QString message);
+
+    // Синхронный ответ на mcp-команду для протокола запрос-ответ:
+    // компактный JSON {"ok":true,...} или {"ok":false,"error":"..."}.
+    // Вызывается из сокетного респондера (тот же поток GUI)
+    QByteArray handleMcpMessage(const QString &message);
+
+    // Применение одной mcp-команды к живой модели с возвратом итога.
+    // Используется и респондером, и легаси-путём messageHandler
+    bool handleMcpCommand(const QString &command,
+                          const QJsonObject &args,
+                          QJsonObject &result,
+                          QString &error);
 
     void toolsFindInBase(void);
 

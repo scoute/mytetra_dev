@@ -42,6 +42,8 @@
 
 #include <QApplication>
 
+#include "qtlocalpeer.h"
+
 class QtLocalPeer;
 
 #if defined(Q_WS_WIN) || defined(Q_OS_WIN32)
@@ -91,6 +93,8 @@ public:
 public Q_SLOTS:
     bool sendMessage(const QString &message, int timeout = 5000);
     void activateWindow();
+    void setMcpResponder(const McpResponder &responder)
+        { peer->setMcpResponder(responder); }
 
 
 Q_SIGNALS:

@@ -1359,6 +1359,57 @@ void AppConfig::set_recordTableUnderTree(bool state)
 }
 
 
+QStringList AppConfig::getTreeToolbarOrder(void)
+{
+    QString raw=m_conf->value("treeToolbarOrder", "").toString();
+
+    if(raw.isEmpty())
+        return QStringList();
+
+    return raw.split(",");
+}
+
+
+void AppConfig::setTreeToolbarOrder(QStringList order)
+{
+    m_conf->setValue("treeToolbarOrder", order.join(","));
+}
+
+
+QStringList AppConfig::getRecordToolbarOrder(void)
+{
+    QString raw=m_conf->value("recordToolbarOrder", "").toString();
+
+    if(raw.isEmpty())
+        return QStringList();
+
+    return raw.split(",");
+}
+
+
+void AppConfig::setRecordToolbarOrder(QStringList order)
+{
+    m_conf->setValue("recordToolbarOrder", order.join(","));
+}
+
+
+QStringList AppConfig::getRecordExtraToolbarOrder(void)
+{
+    QString raw=m_conf->value("recordExtraToolbarOrder", "").toString();
+
+    if(raw.isEmpty())
+        return QStringList();
+
+    return raw.split(",");
+}
+
+
+void AppConfig::setRecordExtraToolbarOrder(QStringList order)
+{
+    m_conf->setValue("recordExtraToolbarOrder", order.join(","));
+}
+
+
 bool AppConfig::get_readOnly(void)
 {
     return m_conf->value("readOnly", false).toBool() || m_mcpUiLock;

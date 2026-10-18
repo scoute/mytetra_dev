@@ -364,6 +364,19 @@ public:
     bool get_recordTableUnderTree(void);
     void set_recordTableUnderTree(bool state);
 
+    // Порядок кнопок тулбаров в виде списков через запятую.
+    // Пусто - не настраивалось, экраны строят порядок по умолчанию.
+    // (Пустой настроенный список невозможен: в задействованных
+    // обязана остаться хотя бы одна команда, как в редакторе)
+    QStringList getTreeToolbarOrder(void);
+    void setTreeToolbarOrder(QStringList order);
+
+    QStringList getRecordToolbarOrder(void);
+    void setRecordToolbarOrder(QStringList order);
+
+    QStringList getRecordExtraToolbarOrder(void);
+    void setRecordExtraToolbarOrder(QStringList order);
+
     // Глобальный режим только чтения: запрещены любые изменения базы,
     // разрешены навигация и просмотр. По умолчанию выключен
     bool get_readOnly(void);

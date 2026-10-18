@@ -160,52 +160,199 @@ void RecordTableScreen::setupActions(void)
 }
 
 
+// Порядок кнопок первой линии по умолчанию. Объединение десктопного
+// и мобильного наборов: лишнее режется режимом в rebuildToolbars.
+// Скрытые shortcut-only кнопки (addNewBefore, addNewAfter, block)
+// в список не входят: регистрируются всегда отдельно
+QStringList RecordTableScreen::defaultToolbarOrder(void)
+{
+ return QStringList()
+  << "back" << "separator"
+  << "addNewToEnd"
+  << "editField" << "delete"
+  << "separator"
+  << "cut" << "copy" << "paste"
+  << "separator"
+  << "moveUp" << "moveDn"
+  << "separator"
+  << "printPreview";
+}
+
+
+// Порядок кнопок второй линии по умолчанию.
+// Внешние кнопки (переключатели панелей) сюда не входят:
+// их докладывает addExtraToolAction() всегда в конец
+QStringList RecordTableScreen::defaultExtraToolbarOrder(void)
+{
+ return QStringList()
+  << "walkHistoryPrevious" << "walkHistoryNext"
+  << "findInBase";
+}
+
+
+// Режим кнопки: desktop, mobile или обе (пусто - обе)
+QString RecordTableScreen::toolbarItemMode(const QString &command)
+{
+ if(command=="back")
+  return QString("mobile");
+
+ if(command=="editField" || command=="delete" ||
+    command=="walkHistoryPrevious" || command=="walkHistoryNext")
+  return QString("desktop");
+
+ return QString();
+}
+
+
+// Скрытые shortcut-only кнопки первой линии: регистрируются всегда
+// нулевыми кнопками, как раньше, в диалог настройки не выносятся
+QSet<QString> RecordTableScreen::hiddenToolbarItems(void)
+{
+ return QSet<QString>() << "addNewBefore" << "addNewAfter" << "block";
+}
+
+
+// Действие тулбаров по имени для построения из списков
+QAction *RecordTableScreen::toolActionByName(const QString &command)
+{
+ if(command=="addNewToEnd") return actionAddNewToEnd;
+ if(command=="addNewBefore") return actionAddNewBefore;
+ if(command=="addNewAfter") return actionAddNewAfter;
+ if(command=="editField") return actionEditField;
+ if(command=="block") return actionBlock;
+ if(command=="delete") return actionDelete;
+ if(command=="cut") return actionCut;
+ if(command=="copy") return actionCopy;
+ if(command=="paste") return actionPaste;
+ if(command=="settings") return actionSettings;
+ if(command=="back") return actionBack;
+ if(command=="findInBase") return actionFindInBase;
+ if(command=="sort") return actionSort;
+ if(command=="print") return actionPrint;
+ if(command=="printPreview") return actionPrintPreview;
+ if(command=="copyRecordReference") return actionCopyRecordReference;
+ if(command=="changeHistory") return actionChangeHistory;
+ if(command=="switchSelectionMode") return actionSwitchSelectionMode;
+ if(command=="moveUp") return actionMoveUp;
+ if(command=="moveDn") return actionMoveDn;
+ if(command=="walkHistoryPrevious") return actionWalkHistoryPrevious;
+ if(command=="walkHistoryNext") return actionWalkHistoryNext;
+
+ return nullptr;
+}
+
+
+// Построение одной линии тулбара из списка. Ведущие и задвоенные
+// разделители давятся; неизвестные имена пропускаются с предупреждением
+void RecordTableScreen::buildToolbarLine(QToolBar *line,
+                                         const QStringList &order,
+                                         bool isMobile)
+{
+ bool lastSeparator=true; // Ведущие разделители давятся
+
+ foreach(const QString &command, order)
+  {
+   if(command=="separator")
+    {
+     if(!lastSeparator)
+      {
+       line->addSeparator();
+       lastSeparator=true;
+      }
+
+     continue;
+    }
+
+   if(command=="spring")
+    {
+     QWidget *empty=new QWidget(this);
+     empty->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+     line->addWidget(empty);
+     toolbarSprings.append(empty);
+     lastSeparator=false;
+
+     continue;
+    }
+
+   QAction *action=toolActionByName(command);
+
+   if(action==nullptr)
+    {
+     qWarning() << "RecordTableScreen: skip unknown toolbar command" << command;
+     continue;
+    }
+
+   const QString mode=toolbarItemMode(command);
+
+   if(mode=="desktop" && isMobile)
+    continue;
+
+   if(mode=="mobile" && !isMobile)
+    continue;
+
+   insertActionAsButton(line, action, !hiddenToolbarItems().contains(command));
+   lastSeparator=false;
+  }
+}
+
+
+// Перестроение обоих тулбаров из списков конфига (или дефолта).
+// Вызывается при старте и вживую из диалога настроек
+void RecordTableScreen::rebuildToolbars(void)
+{
+ // Пружины прошлого построения: QToolBar::clear() виджеты не удаляет
+ qDeleteAll(toolbarSprings);
+ toolbarSprings.clear();
+
+ toolsLine->clear();
+ extraToolsLine->clear();
+
+ const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+
+ QStringList order=mytetraConfig.getRecordToolbarOrder();
+
+ if(order.isEmpty())
+  order=defaultToolbarOrder();
+
+ buildToolbarLine(toolsLine, order, isMobile);
+
+ // Скрытые shortcut-only кнопки регистрируются всегда нулевым размером
+ // (в списки не входят, в диалог не выносятся). Порядок среди невидимых
+ // не важен, поэтому пачкой в конец
+ foreach(const QString &command, hiddenToolbarItems())
+  {
+   QAction *action=toolActionByName(command);
+
+   if(action!=nullptr)
+    insertActionAsButton(toolsLine, action, false);
+  }
+
+ QStringList extraOrder=mytetraConfig.getRecordExtraToolbarOrder();
+
+ if(extraOrder.isEmpty())
+  extraOrder=defaultExtraToolbarOrder();
+
+ buildToolbarLine(extraToolsLine, extraOrder, isMobile);
+
+ // Внешние кнопки (переключатели панелей) всегда в конце второй линии
+ foreach(QAction *action, extraToolActions)
+  insertActionAsButton(extraToolsLine, action);
+}
+
+
 void RecordTableScreen::setupUI(void)
 {
  toolsLine=new QToolBar(this);
+ extraToolsLine=new QToolBar(this);
 
  /*
  QSize toolBarIconSize(16,16);
  toolsLine->setIconSize(toolBarIconSize);
  */
 
- if(mytetraConfig.getInterfaceMode()=="mobile")
- {
-   insertActionAsButton(toolsLine, actionBack);
-   toolsLine->addSeparator();
- }
-
- insertActionAsButton(toolsLine, actionAddNewToEnd);
- insertActionAsButton(toolsLine, actionAddNewBefore, false); // Действие без видимой кнопки
- insertActionAsButton(toolsLine, actionAddNewAfter, false); // Действие без видимой кнопки
-
- if(mytetraConfig.getInterfaceMode()=="desktop")
- {
-   insertActionAsButton(toolsLine, actionEditField);
-   insertActionAsButton(toolsLine, actionBlock, false);
-   insertActionAsButton(toolsLine, actionDelete);
- }
-
- toolsLine->addSeparator();
- insertActionAsButton(toolsLine, actionCut);
- insertActionAsButton(toolsLine, actionCopy);
- insertActionAsButton(toolsLine, actionPaste);
- toolsLine->addSeparator();
- insertActionAsButton(toolsLine, actionMoveUp);
- insertActionAsButton(toolsLine, actionMoveDn);
-
- toolsLine->addSeparator();
- insertActionAsButton(toolsLine, actionPrintPreview);
-
-
- extraToolsLine=new QToolBar(this);
-
- if(mytetraConfig.getInterfaceMode()=="desktop")
- {
-   insertActionAsButton(extraToolsLine, actionWalkHistoryPrevious);
-   insertActionAsButton(extraToolsLine, actionWalkHistoryNext);
- }
- insertActionAsButton(extraToolsLine, actionFindInBase);
+ // Порядок кнопок берётся из конфига (диалог настроек) либо дефолт.
+ // Перестроение на лету - через rebuildToolbars()
+ rebuildToolbars();
 
  treePathLabel=new QLabel(this);
  treePathLabel->setWordWrap(true);
@@ -215,9 +362,13 @@ void RecordTableScreen::setupUI(void)
 
 
 // Добавить кнопку во вторую линию инструментов (для внешних действий
-// вроде переключателя панели тегов)
+// вроде переключателя панели тегов). Кнопки запоминаются чтобы пережить
+// перестроение тулбара из настроек: rebuildToolbars() докладывает их в конец
 void RecordTableScreen::addExtraToolAction(QAction *action)
 {
+ if(!extraToolActions.contains(action))
+  extraToolActions.append(action);
+
  insertActionAsButton(extraToolsLine, action);
 }
 

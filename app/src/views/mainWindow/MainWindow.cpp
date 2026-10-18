@@ -2550,7 +2550,10 @@ void MainWindow::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->objectName();
 
-    shortcutManager.initAction("misc-print", actionFileMenuPrint );
+    // Ctrl+P открывает предпросмотр печати (там же кнопка прямой печати).
+    // Прямая печать без предпросмотра висит на misc-printDirect
+    shortcutManager.initAction("misc-print", actionFileMenuPrintPreview );
+    shortcutManager.initAction("misc-printDirect", actionFileMenuPrint );
     shortcutManager.initAction("misc-exportPdf", actionFileMenuExportPdf );
     shortcutManager.initAction("misc-quit", actionFileMenuQuit );
 

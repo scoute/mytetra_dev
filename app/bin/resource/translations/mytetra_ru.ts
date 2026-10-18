@@ -7164,6 +7164,11 @@ Enable it in Settings on the History page.</source>
         <translation>Захват горячей клавиши</translation>
     </message>
     <message>
+        <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="64"/>
+        <source>Search command</source>
+        <translation>Поиск команды</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="42"/>
         <source>Reset shortcut to default</source>
         <translation>Установить стандартное сочетание клавиш</translation>

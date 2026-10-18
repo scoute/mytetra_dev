@@ -33,6 +33,7 @@ protected slots:
     void onInfoClick();
     void onResetShortcutToDefaultClick();
     void onResetAllShortcutsToDefaultClick();
+    void onFilterTextChange(const QString &text);
 
 protected:
 
@@ -51,6 +52,7 @@ protected:
     QLabel *desctiptionValueLabel;
     QLabel *shortcutLabel;
     QLineEdit *shortcutValueLineEdit;
+    QLineEdit *filterEdit;
     QHBoxLayout *shortcutLineLayout; // Слой с полем сочетания клавиш, кнопками Grab и Reset to default
     QToolButton *buttonInfo;
     QGridLayout *shortcutLayout; // Слой внутри объединяющего прямоугольника настройки шортката

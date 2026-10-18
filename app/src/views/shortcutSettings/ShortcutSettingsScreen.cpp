@@ -11,6 +11,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QTreeView>
 
 #include "ShortcutSettingsScreen.h"
 #include "views/shortcutSettings/ShortcutSettingsView.h"
@@ -60,6 +61,11 @@ void ShortcutSettingsScreen::setupUI()
     QCommonStyle styleHelp;
     buttonInfo->setIcon( styleHelp.standardIcon(QStyle::SP_MessageBoxQuestion) );
 
+    // Строка поиска по командам, описаниям и сочетаниям
+    filterEdit=new QLineEdit(this);
+    filterEdit->setPlaceholderText(tr("Search command"));
+    filterEdit->setClearButtonEnabled(true);
+
     // Создание набора диалоговых кнопок
     dialogButtonBox=new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
 }
@@ -96,6 +102,10 @@ void ShortcutSettingsScreen::setupSignals()
             this, &ShortcutSettingsScreen::onResetAllShortcutsToDefaultClick);
 
 
+    // Изменение строки поиска: фильтрация дерева
+    connect(filterEdit, &QLineEdit::textChanged,
+            this, &ShortcutSettingsScreen::onFilterTextChange);
+
     // Обработка кнопки OK
     connect(dialogButtonBox, &QDialogButtonBox::accepted,
             shortcutSettingsController, &ShortcutSettingsController::applyChanges); // Применение изменений
@@ -125,6 +135,7 @@ void ShortcutSettingsScreen::assembly()
     shortcutBox->setLayout(shortcutLayout);
 
     screenLayout=new QVBoxLayout();
+    screenLayout->addWidget(filterEdit);
     screenLayout->addWidget(shortcutSettingsController->getView());
     screenLayout->addWidget(shortcutBox);
     screenLayout->addWidget(buttonResetAllShortcutsToDefault);
@@ -206,6 +217,42 @@ void ShortcutSettingsScreen::onResetAllShortcutsToDefaultClick()
         shortcutData=shortcutSettingsController->getShortcutData(index);
         shortcutValueLineEdit->setText( shortcutData.keys ); // Клавиатурная комбинация
     }
+}
+
+
+// Фильтрация дерева по подстроке в команде, описании или сочетании.
+// Строки именно скрываются (а не выкидываются прокси-моделью):
+// контроллер работает с индексами исходной модели напрямую,
+// прокси бы сломал getShortcutData/setShortcut
+void ShortcutSettingsScreen::onFilterTextChange(const QString &text)
+{
+    QTreeView *view=shortcutSettingsController->getView();
+    QAbstractItemModel *model=view->model();
+    const QString pattern=text.trimmed();
+
+    for(int i=0; i<model->rowCount(); ++i)
+    {
+        QModelIndex sectionIndex=model->index(i, 0);
+        bool sectionVisible=pattern.isEmpty();
+
+        for(int j=0; j<model->rowCount(sectionIndex); ++j)
+        {
+            const bool match=pattern.isEmpty() ||
+                model->data(model->index(j, 0, sectionIndex)).toString().contains(pattern, Qt::CaseInsensitive) ||
+                model->data(model->index(j, 1, sectionIndex)).toString().contains(pattern, Qt::CaseInsensitive) ||
+                model->data(model->index(j, 2, sectionIndex)).toString().contains(pattern, Qt::CaseInsensitive);
+
+            view->setRowHidden(j, sectionIndex, !match);
+
+            if(match)
+                sectionVisible=true;
+        }
+
+        view->setRowHidden(i, QModelIndex(), !sectionVisible);
+    }
+
+    if(!pattern.isEmpty())
+        view->expandAll();
 }
 
 

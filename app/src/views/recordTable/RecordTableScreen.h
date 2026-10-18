@@ -61,9 +61,6 @@ public:
  QAction *actionChangeHistory;
  QAction *actionSwitchSelectionMode;
 
- // Действие, которое может быть вызвано из MainWindows
- QAction *actionSyncro;
-
 public slots:
 
  // Обновление состояния экранных элементов согласно состоянию записи и положении зиписи в таблице
@@ -73,8 +70,6 @@ public slots:
  // вроде переключателя панели тегов)
  void addExtraToolAction(QAction *action);
 
- void onSyncroCommandFinishWork(void);
-
  void setupShortcuts(void);
 
  // Обновить прямые тексты новым языком. Тексты на шорткатах
@@ -83,7 +78,6 @@ public slots:
 
 private slots:
  
- void onSyncroClick(void);
  void onWalkHistoryPreviousClick(void);
  void onWalkHistoryNextClick(void);
  void onBackClick(void);

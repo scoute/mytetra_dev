@@ -1529,37 +1529,51 @@ void MainWindow::applyRecordTablePosition(void)
     if(under)
     {
         // Список записей переезжает из правой колонки под дерево.
-        // vSplitter остаётся с одним редактором
+        // vSplitter остаётся с одним редактором.
+        // Важно: только addWidget/insertWidget, никакого replaceWidget -
+        // после него сплиттер навсегда игнорирует setSizes (стенд).
+        // addWidget сам вытаскивает виджет из старого сплиттера
         leftColumnSplitter=new QSplitter(Qt::Vertical, this);
         leftColumnSplitter->setObjectName("leftColumnSplitter");
+
+        leftColumnSplitter->addWidget(treeScreen);
+        leftColumnSplitter->addWidget(recordTableScreen);
+        hSplitter->insertWidget(0, leftColumnSplitter);
+
         leftColumnSplitter->setCollapsible(0, false);
         leftColumnSplitter->setCollapsible(1, false);
 
-        hSplitter->replaceWidget(hSplitter->indexOf(treeScreen), leftColumnSplitter);
-        leftColumnSplitter->addWidget(treeScreen);
-        leftColumnSplitter->addWidget(recordTableScreen);
-
-        // Сохранённые размеры левой колонки, иначе текущие высоты
-        const QList<int> saved=mytetraConfig.get_leftspl_size_list();
-
-        if(saved.size()==leftColumnSplitter->count())
-            leftColumnSplitter->setSizes(saved);
+        // Размеры - после показа: до show() раздавать некому.
+        // Живьём окно уже показано - ставим сразу, на холодном старте
+        // ждём показа через синглшот-цепочку со сходимостью
+        if(isVisible())
+            applyRecordTableSizes();
         else
-            leftColumnSplitter->setSizes(QList<int>() << treeScreen->height() << recordTableScreen->height());
+        {
+            recordTableSizesRetry=0;
+            QTimer::singleShot(0, this, &MainWindow::applyRecordTableSizes);
+        }
     }
     else
     {
-        // Список записей возвращается в правую колонку над редактором
-        hSplitter->replaceWidget(hSplitter->indexOf(leftColumnSplitter), treeScreen);
+        // Список записей возвращается в правую колонку над редактором.
+        // Порядок важен: сначала записи в vSplitter, потом дерево в
+        // начало hSplitter. Без replaceWidget, по той же причине
         vSplitter->insertWidget(0, recordTableScreen);
+        hSplitter->insertWidget(0, treeScreen);
         vSplitter->setCollapsible(0, false);
         vSplitter->setCollapsible(1, false);
 
-        leftColumnSplitter->deleteLater();
+        // Синхронное удаление: виджеты уже переехали, детей нет.
+        // deleteLater оставлял бы пустой сплиттер болтаться до
+        // следующего прохода событийной петли
+        delete leftColumnSplitter;
         leftColumnSplitter=nullptr;
 
         // vSplitter c одним редактором хранил одно число: вернуть
-        // обе панели к осмысленным долям текущей высоты
+        // обе панели к осмысленным долям текущей высоты.
+        // Назад переключаются только живьём (окно показано),
+        // поэтому immediate setSizes здесь работает
         const int total=vSplitter->height();
 
         if(total>0)
@@ -1567,6 +1581,64 @@ void MainWindow::applyRecordTablePosition(void)
     }
 
     recordTableScreen->toolsUpdate();
+}
+
+
+// Отложенное применение размеров после перестановки списка записей.
+// Вызывается через singleShot(0): setSizes сразу после replaceWidget
+// сплиттер игнорирует, а до show() раздавать некому. К моменту вызова
+// окно уже показано, размеры живые. Идемпотентно: при повторных
+// вызовах и смене режима туда-сюда пересчитывает текущее состояние,
+// сохранённые списки имеют приоритет
+void MainWindow::applyRecordTableSizes(void)
+{
+    if(leftColumnSplitter==nullptr)
+        return;
+
+    // Ширина левой колонки: сохранённая, иначе треть окна
+    int leftW=-1;
+    const QList<int> hs=hSplitter->sizes();
+
+    if(hs.size()>0 && hs.at(0)>0)
+        leftW=hs.at(0);
+
+    if(leftW<=0)
+    {
+        int total=hSplitter->width();
+
+        if(total<=0)
+            total=900;
+
+        leftW=total/3;
+    }
+
+    hSplitter->setSizes(QList<int>() << leftW << (hSplitter->width()-leftW>0 ? hSplitter->width()-leftW : leftW*2));
+
+    // Высота дерева и списка внутри колонки: сохранённые, иначе поровну
+    const QList<int> saved=mytetraConfig.get_leftspl_size_list();
+
+    if(saved.size()==leftColumnSplitter->count())
+        leftColumnSplitter->setSizes(saved);
+    else
+    {
+        const int total=leftColumnSplitter->height();
+        const int each=(total>0) ? total/2 : -1;
+
+        if(each>0)
+            leftColumnSplitter->setSizes(QList<int>() << each << (total-each));
+    }
+
+    // Сходимость: если окно ещё не разложено (холодный старт без
+    // сохранённой геометрии), выставленные размеры может снести
+    // первый проход раскладки. Проверяем видимый итог и повторяем,
+    // но не бесконечно
+    if(leftColumnSplitter->width()<=0 && recordTableSizesRetry<20)
+    {
+        recordTableSizesRetry++;
+        QTimer::singleShot(100, this, &MainWindow::applyRecordTableSizes);
+    }
+    else
+        recordTableSizesRetry=0;
 }
 
 

@@ -6,7 +6,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
-#include <QListView>
+#include <QTreeView>
 #include <QStackedWidget>
 #include <QAction>
 #include <QStandardItemModel>
@@ -95,6 +95,7 @@ void MainToolbarSettingsScreen::setupUI()
 {
     // Выбор настраиваемой панели
     selectPanelListWidget=new QListWidget(this);
+    selectPanelListWidget->setObjectName(QStringLiteral("selectPanelListWidget"));
     selectPanelListWidget->setAutoFillBackground(true);
     selectPanelListWidget->addItem(tr("Branches"));
     selectPanelListWidget->addItem(tr("Notes"));
@@ -130,21 +131,33 @@ void MainToolbarSettingsScreen::setupUI()
     notesExtraUsedModel=new QStandardItemModel(this);
 
     // Виды списков
-    availableView=new QListView(this);
+    availableView=new QTreeView(this);
+    availableView->setObjectName(QStringLiteral("availableView"));
     availableView->setModel(availableModel);
     availableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    availableView->setHeaderHidden(true);
+    availableView->setRootIsDecorated(false);
 
-    treeUsedView=new QListView(this);
+    treeUsedView=new QTreeView(this);
+    treeUsedView->setObjectName(QStringLiteral("treeUsedView"));
     treeUsedView->setModel(treeUsedModel);
     treeUsedView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    treeUsedView->setHeaderHidden(true);
+    treeUsedView->setRootIsDecorated(false);
 
-    notesUsedView=new QListView(this);
+    notesUsedView=new QTreeView(this);
+    notesUsedView->setObjectName(QStringLiteral("notesUsedView"));
     notesUsedView->setModel(notesUsedModel);
     notesUsedView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    notesUsedView->setHeaderHidden(true);
+    notesUsedView->setRootIsDecorated(false);
 
-    notesExtraUsedView=new QListView(this);
+    notesExtraUsedView=new QTreeView(this);
+    notesExtraUsedView->setObjectName(QStringLiteral("notesExtraUsedView"));
     notesExtraUsedView->setModel(notesExtraUsedModel);
     notesExtraUsedView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    notesExtraUsedView->setHeaderHidden(true);
+    notesExtraUsedView->setRootIsDecorated(false);
 
     // Создание информационной кнопки
     QCommonStyle styleHelp;
@@ -281,6 +294,55 @@ void MainToolbarSettingsScreen::loadPanel(int panel)
         item->setIcon(commandIcon(panel, command));
         model->appendRow(item);
     }
+
+    // Строки, неприменимые к текущему режиму интерфейса (десктоп/мобила),
+    // прячутся из обоих списков, но из моделей не удаляются: конфиг
+    // хранит полный список, сборщик тулбара всё равно фильтрует по режиму.
+    // Так мобильные "Пружина" и "Найти в базе" не смущают на десктопе
+    applyModeVisibility(panel);
+}
+
+
+bool MainToolbarSettingsScreen::isCommandVisibleForMode(int panel, const QString &command) const
+{
+    if(command=="separator")
+        return true;
+
+    QString mode;
+
+    if(panel==TreePanel)
+        mode=TreeScreen::toolbarItemMode(command);
+    else
+        mode=RecordTableScreen::toolbarItemMode(command);
+
+    if(mode.isEmpty())
+        return true;
+
+    const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+
+    if(mode=="mobile")
+        return isMobile;
+
+    return !isMobile;
+}
+
+
+void MainToolbarSettingsScreen::applyModeVisibility(int panel)
+{
+    for(int row=0; row<availableModel->rowCount(); ++row)
+    {
+        const QString command=availableModel->index(row, 0).data(Qt::UserRole).toString();
+        availableView->setRowHidden(row, QModelIndex(), !isCommandVisibleForMode(panel, command));
+    }
+
+    QStandardItemModel *model=usedModel();
+    QTreeView *view=currentUsedView();
+
+    for(int row=0; row<model->rowCount(); ++row)
+    {
+        const QString command=model->index(row, 0).data(Qt::UserRole).toString();
+        view->setRowHidden(row, QModelIndex(), !isCommandVisibleForMode(panel, command));
+    }
 }
 
 
@@ -413,7 +475,8 @@ void MainToolbarSettingsScreen::onMoveAvailableToUsed()
 {
     QModelIndex selectedAvailableIndex=availableView->selectionModel()->currentIndex();
 
-    if(!selectedAvailableIndex.isValid())
+    if(!selectedAvailableIndex.isValid() ||
+       availableView->isRowHidden(selectedAvailableIndex.row(), QModelIndex()))
         return;
 
     const QString command=selectedAvailableIndex.data(Qt::UserRole).toString();
@@ -449,7 +512,7 @@ void MainToolbarSettingsScreen::onMoveAvailableToUsed()
 }
 
 
-QListView *MainToolbarSettingsScreen::currentUsedView(void) const
+QTreeView *MainToolbarSettingsScreen::currentUsedView(void) const
 {
     const int row=selectPanelListWidget->currentRow();
 
@@ -465,7 +528,7 @@ QListView *MainToolbarSettingsScreen::currentUsedView(void) const
 
 void MainToolbarSettingsScreen::onMoveUsedToAvailable()
 {
-    QListView *view=currentUsedView();
+    QTreeView *view=currentUsedView();
     QModelIndex selectedIndex=view->selectionModel()->currentIndex();
 
     if(!selectedIndex.isValid())
@@ -498,33 +561,60 @@ void MainToolbarSettingsScreen::onMoveUsedToAvailable()
 
 void MainToolbarSettingsScreen::onMoveSelectedUp()
 {
-    QListView *view=currentUsedView();
+    QTreeView *view=currentUsedView();
     QStandardItemModel *model=usedModel();
     QModelIndex selectedIndex=view->selectionModel()->currentIndex();
 
-    if(!selectedIndex.isValid() || selectedIndex.row()==0)
+    if(!selectedIndex.isValid() || view->isRowHidden(selectedIndex.row(), QModelIndex()))
+        return;
+
+    // Ближайшая видимая строка выше (скрытые по режиму перепрыгиваются)
+    int target=-1;
+
+    for(int row=selectedIndex.row()-1; row>=0; --row)
+        if(!view->isRowHidden(row, QModelIndex()))
+        {
+            target=row;
+            break;
+        }
+
+    if(target<0)
         return;
 
     const int row=selectedIndex.row();
     QList<QStandardItem *> items=model->takeRow(row);
-    model->insertRow(row-1, items);
-    view->setCurrentIndex(model->index(row-1, 0));
+    model->insertRow(target, items);
+    view->setCurrentIndex(model->index(target, 0));
 }
 
 
 void MainToolbarSettingsScreen::onMoveSelectedDown()
 {
-    QListView *view=currentUsedView();
+    QTreeView *view=currentUsedView();
     QStandardItemModel *model=usedModel();
     QModelIndex selectedIndex=view->selectionModel()->currentIndex();
 
-    if(!selectedIndex.isValid() || selectedIndex.row()>=model->rowCount()-1)
+    if(!selectedIndex.isValid() || view->isRowHidden(selectedIndex.row(), QModelIndex()))
+        return;
+
+    // Ближайшая видимая строка ниже (скрытые по режиму перепрыгиваются)
+    int target=-1;
+
+    for(int row=selectedIndex.row()+1; row<model->rowCount(); ++row)
+        if(!view->isRowHidden(row, QModelIndex()))
+        {
+            target=row;
+            break;
+        }
+
+    if(target<0 || target>=model->rowCount())
         return;
 
     const int row=selectedIndex.row();
     QList<QStandardItem *> items=model->takeRow(row);
-    model->insertRow(row+1, items);
-    view->setCurrentIndex(model->index(row+1, 0));
+    // После takeRow индексы ниже съехали на один вверх
+    model->insertRow(target, items);
+    view->setCurrentIndex(model->index(target, 0));
 }
 
 

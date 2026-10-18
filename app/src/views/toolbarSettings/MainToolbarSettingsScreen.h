@@ -12,7 +12,7 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QLabel;
 class QListWidget;
-class QListView;
+class QTreeView;
 class QStackedWidget;
 class QStandardItemModel;
 
@@ -57,7 +57,13 @@ protected:
     QStringList usedCommandsFor(int panel) const;
 
     // Вид задействованных команд выбранной панели
-    class QListView *currentUsedView(void) const;
+    class QTreeView *currentUsedView(void) const;
+
+    // Видимость команды в текущем режиме интерфейса (десктоп/мобила)
+    bool isCommandVisibleForMode(int panel, const QString &command) const;
+
+    // Спрятать в обоих списках строки, неприменимые к текущему режиму
+    void applyModeVisibility(int panel);
 
     // Видимые имя и иконка команды для списков
     QString commandText(int panel, const QString &command) const;
@@ -89,10 +95,10 @@ protected:
     QStandardItemModel *notesExtraUsedModel;
     QStackedWidget *usedStackedWidget;
 
-    QListView *availableView;
-    QListView *treeUsedView;
-    QListView *notesUsedView;
-    QListView *notesExtraUsedView;
+    QTreeView *availableView;
+    QTreeView *treeUsedView;
+    QTreeView *notesUsedView;
+    QTreeView *notesExtraUsedView;
 
     QVBoxLayout *screenLayout;
     QVBoxLayout *availableLayout;

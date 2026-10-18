@@ -6995,9 +6995,14 @@ Enable it in Settings on the History page.</source>
         <translation>ОК</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/ShortcutManager.cpp" line="198"/>
-        <source>Print</source>
-        <translation>Печать</translation>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="204"/>
+        <source>Print preview</source>
+        <translation>Предпросмотр печати</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="205"/>
+        <source>Direct print</source>
+        <translation>Прямая печать</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="199"/>

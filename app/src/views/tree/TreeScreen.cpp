@@ -239,44 +239,114 @@ void TreeScreen::retranslateUi(void)
 }
 
 
+// Порядок кнопок тулбара веток по умолчанию. Объединение десктопного
+// и мобильного наборов: лишнее режется режимом в rebuildToolbar.
+// spring - невидимый распор (в дефолте стоит под мобильный),
+// separator - разделитель, остальные - имена из actionList
+QStringList TreeScreen::defaultToolbarOrder(void)
+{
+ return QStringList()
+  << "insSubbranch" << "insBranch"
+  << "editBranch" << "delBranch"
+  << "separator"
+  << "expandAllSubbranch" << "collapseAllSubbranch"
+  << "separator"
+  << "moveUpBranch" << "moveDownBranch"
+  << "separator"
+  << "syncro"
+  << "spring" << "findInBase";
+}
+
+
+// Режим кнопки: desktop, mobile или обе (пусто - обе)
+QString TreeScreen::toolbarItemMode(const QString &command)
+{
+ if(command=="editBranch" || command=="delBranch")
+  return QString("desktop");
+
+ if(command=="spring" || command=="findInBase")
+  return QString("mobile");
+
+ return QString();
+}
+
+
+// Перестроение тулбара из списка конфига (или дефолта).
+// Вызывается при старте и вживую из диалога настроек.
+// Ведущие и задвоенные разделители давятся; неизвестные имена
+// из конфига пропускаются с предупреждением а не падением:
+// в конфиге может лежать имя из более новой версии (откат бинарника)
+void TreeScreen::rebuildToolbar(void)
+{
+ // Пружины прошлого построения: QToolBar::clear() виджеты не удаляет
+ qDeleteAll(toolbarSprings);
+ toolbarSprings.clear();
+
+ toolsLine->clear();
+
+ QStringList order=mytetraConfig.getTreeToolbarOrder();
+
+ if(order.isEmpty())
+  order=defaultToolbarOrder();
+
+ const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+ bool lastSeparator=true; // Ведущие разделители давятся
+
+ foreach(const QString &command, order)
+  {
+   if(command=="separator")
+    {
+     if(!lastSeparator)
+      {
+       toolsLine->addSeparator();
+       lastSeparator=true;
+      }
+
+     continue;
+    }
+
+   if(command=="spring")
+    {
+     if(toolbarItemMode(command)=="mobile" && !isMobile)
+      continue;
+
+     QWidget *empty=new QWidget(this);
+     empty->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+     toolsLine->addWidget(empty);
+     toolbarSprings.append(empty);
+     lastSeparator=false;
+
+     continue;
+    }
+
+   if(!actionList.contains(command))
+    {
+     qWarning() << "TreeScreen: skip unknown toolbar command" << command;
+     continue;
+    }
+
+   const QString mode=toolbarItemMode(command);
+
+   if(mode=="desktop" && isMobile)
+    continue;
+
+   if(mode=="mobile" && !isMobile)
+    continue;
+
+   insertActionAsButton(toolsLine, actionList[command]);
+   lastSeparator=false;
+  }
+}
+
+
 void TreeScreen::setupUI(void)
 {
  // Наполнение панели инструментов
  toolsLine=new QToolBar(this);
 
- insertActionAsButton(toolsLine, actionList["insSubbranch"]);
- insertActionAsButton(toolsLine, actionList["insBranch"]);
-
- if(mytetraConfig.getInterfaceMode()=="desktop")
- {
-   insertActionAsButton(toolsLine, actionList["editBranch"]);
-   insertActionAsButton(toolsLine, actionList["delBranch"]);
- }
-
- toolsLine->addSeparator();
-
- insertActionAsButton(toolsLine, actionList["expandAllSubbranch"]);
- insertActionAsButton(toolsLine, actionList["collapseAllSubbranch"]);
-
- toolsLine->addSeparator();
-
- insertActionAsButton(toolsLine, actionList["moveUpBranch"]);
- insertActionAsButton(toolsLine, actionList["moveDownBranch"]);
-
- toolsLine->addSeparator();
-
- // Синхронизация базы - в конце тулбара веток
- insertActionAsButton(toolsLine, actionList["syncro"]);
-
- if(mytetraConfig.getInterfaceMode()=="mobile")
- {
-     // Вставка невидимого автоматически расталкивающего виджета
-     QWidget* empty = new QWidget(this);
-     empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
-     toolsLine->addWidget(empty);
-
-     insertActionAsButton(toolsLine, actionList["findInBase"]); // Клик по этой кнопке связывается с действием в MainWindow
- }
+ // Порядок кнопок берётся из конфига (диалог настроек) либо дефолт.
+ // Перестроение на лету - через rebuildToolbar()
+ rebuildToolbar();
 
  // Действия буфера обмена, шифрования и иконки ветки на тулбар не
  // выносятся (там только самые важные кнопки), они доступны из

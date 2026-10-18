@@ -142,9 +142,26 @@ private:
  // Реальные действия при клике на ветку дерева
  void processKnowtreeClicked(const QModelIndex &index);
 
+ // Порядок кнопок тулбара по умолчанию (объединение десктопного
+ // и мобильного наборов; лишнее режется режимом в rebuildToolbar).
+ // Пружина spring - невидимый распор, separator - разделитель
+ static QStringList defaultToolbarOrder(void);
+
+ // Режим кнопки: desktop, mobile или обе (пусто - обе).
+ // Неизвестные имена из конфига пропускаются с предупреждением
+ static QString toolbarItemMode(const QString &command);
+
+ // Перестроение тулбара из списка конфига (или дефолта).
+ // Вызывается при старте и вживую из диалога настроек
+ void rebuildToolbar(void);
+
  QMap<QString, QAction *> actionList;
 
  QToolBar *toolsLine;
+
+ // Пружины-распоры прошлого построения: QToolBar::clear() виджеты
+ // не удаляет, чистятся вручную
+ QList<QWidget *> toolbarSprings;
 
  KnowTreeView  *knowTreeView;
 

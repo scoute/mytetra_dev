@@ -89,11 +89,32 @@ QJsonObject McpTools::noteObject(Record *record, const QString &branchId, const 
 }
 
 
-// Оставить только запрошенные ключи. Пустой список = весь объект
-static QJsonObject filterNoteFields(const QJsonObject &note, const QStringList &fields)
+// Оставить только запрошенные ключи. Пустой список = весь объект.
+// Неизвестные ключи - явная ошибка, а не молчаливое dropping:
+// иначе нейронка просит text у list_notes, не получает его
+// и решает что текст прочитать нечем. Текст живет в get_note
+static QJsonObject filterNoteFields(const QJsonObject &note, const QStringList &fields, QString &error)
 {
   if(fields.isEmpty())
     return note;
+
+  static const QSet<QString> knownKeys=QSet<QString>()
+    << "id" << "name" << "branch_id" << "branch_path" << "tags"
+    << "encrypted" << "author" << "url" << "ctime" << "attach_count"
+    << "format" << "text" << "truncated";
+
+  QStringList unknown;
+
+  foreach(const QString &key, fields)
+    if(!knownKeys.contains(key))
+      unknown.append(key);
+
+  if(!unknown.isEmpty())
+  {
+    error="Unknown note fields: "+unknown.join(", ")+
+          ". Note text lives in get_note, call it with note_id.";
+    return QJsonObject();
+  }
 
   QJsonObject result;
 
@@ -252,7 +273,14 @@ QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
   QJsonArray notes;
 
   for(int i=0; i<collected.size() && i<limit; ++i)
-    notes.append(filterNoteFields(collected.at(i).toObject(), fields));
+  {
+    QJsonObject item=filterNoteFields(collected.at(i).toObject(), fields, error);
+
+    if(!error.isEmpty())
+      return QJsonObject();
+
+    notes.append(item);
+  }
 
   result["notes"]=notes;
 
@@ -342,7 +370,10 @@ QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &erro
   note["text"]=plain;
   note["truncated"]=truncated;
 
-  result["note"]=filterNoteFields(note, fields);
+  result["note"]=filterNoteFields(note, fields, error);
+
+  if(!error.isEmpty())
+    return QJsonObject();
 
   return result;
 }

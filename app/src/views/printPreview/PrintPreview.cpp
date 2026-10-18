@@ -39,6 +39,12 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
 {
     setWindowTitle(tr("MyTetra - Print Preview"));
 
+    // На Windows у QDialog по умолчанию нет кнопок свернуть/развернуть,
+    // окно предпросмотра нельзя было максимизировать (репорт пользователей).
+    // Явно разрешаем обе кнопки; на остальных платформах это no-op
+    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint |
+                   Qt::WindowMinimizeButtonHint);
+
     printer.setFullPage(true);
     doc = document->clone();
 

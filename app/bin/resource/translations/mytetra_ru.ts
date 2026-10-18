@@ -1167,6 +1167,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     </message>
 </context>
 <context>
+    <name>TreeScreen</name>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
+        <source>Customize toolbar...</source>
+        <translation>Настроить панель...</translation>
+    </message>
+</context>
+<context>
     <name>AppConfigPage_RecordTable</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="42"/>
@@ -1222,6 +1230,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="62"/>
         <source>Show note header (name and author)</source>
         <translation>Показывать шапку заметки (название и автор)</translation>
+    </message>
+</context>
+<context>
+    <name>RecordTableScreen</name>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="795"/>
+        <source>Customize toolbar...</source>
+        <translation>Настроить панель...</translation>
     </message>
 </context>
 <context>

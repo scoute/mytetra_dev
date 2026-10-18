@@ -4,12 +4,14 @@
 #include <QVBoxLayout>
 #include <QToolBar>
 #include <QApplication>
+#include <QMenu>
 
 #include "RecordTableScreen.h"
 #include "RecordTableView.h"
 
 #include "views/mainWindow/MainWindow.h"
 #include "views/record/MetaEditor.h"
+#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/WindowSwitcher.h"
 #include "libraries/GlobalParameters.h"
@@ -421,6 +423,16 @@ void RecordTableScreen::setupShortcuts(void)
 
 void RecordTableScreen::setupSignals(void)
 {
+    // Контекстные меню тулбаров: только на пустом месте, там единственный
+    // пункт настройки порядка и видимости кнопок
+    toolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(toolsLine, &QToolBar::customContextMenuRequested,
+            this, &RecordTableScreen::onToolbarContextMenu);
+
+    extraToolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(extraToolsLine, &QToolBar::customContextMenuRequested,
+            this, &RecordTableScreen::onToolbarContextMenu);
+
     // Добавление записи
     connect(actionAddNewToEnd, &QAction::triggered, recordTableController, &RecordTableController::addNewToEndContext);
 
@@ -764,6 +776,26 @@ void RecordTableScreen::onCopyRecordReference()
 
   QClipboard *clipboard = QApplication::clipboard();
   clipboard->setText(reference);
+}
+
+
+// Контекстное меню тулбаров записей: показывается только на пустом месте,
+// единственный пункт открывает диалог настройки кнопок
+void RecordTableScreen::onToolbarContextMenu(const QPoint &pos)
+{
+ QToolBar *line=qobject_cast<QToolBar *>(sender());
+
+ if(line==nullptr || line->actionAt(pos)!=nullptr)
+  return;
+
+ QMenu menu(this);
+ QAction *setupAction=menu.addAction(tr("Customize toolbar..."));
+
+ if(menu.exec(line->mapToGlobal(pos))==setupAction)
+  {
+   MainToolbarSettingsScreen settingsScreen(this);
+   settingsScreen.exec();
+  }
 }
 
 

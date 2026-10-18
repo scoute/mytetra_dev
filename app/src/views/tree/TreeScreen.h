@@ -91,6 +91,10 @@ public slots:
 
 private slots:
 
+ // Контекстное меню тулбара на пустом месте: единственный пункт -
+ // настройка порядка и видимости кнопок
+ void onToolbarContextMenu(const QPoint &pos);
+
  void expandAllSubbranch(void);
  void collapseAllSubbranch(void);
  void expandOrCollapseRecurse(QModelIndex modelIndex, bool mode);

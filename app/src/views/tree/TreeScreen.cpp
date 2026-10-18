@@ -18,6 +18,7 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "models/appConfig/AppConfig.h"
 #include "views/mainWindow/MainWindow.h"
+#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "models/tree/TreeItem.h"
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/ClipboardBranch.h"
@@ -411,6 +412,24 @@ void TreeScreen::setupModels(void)
 }
 
 
+// Контекстное меню тулбара веток: показывается только на пустом месте,
+// единственный пункт открывает диалог настройки кнопок
+void TreeScreen::onToolbarContextMenu(const QPoint &pos)
+{
+ if(toolsLine->actionAt(pos)!=nullptr)
+  return;
+
+ QMenu menu(this);
+ QAction *setupAction=menu.addAction(tr("Customize toolbar..."));
+
+ if(menu.exec(toolsLine->mapToGlobal(pos))==setupAction)
+  {
+   MainToolbarSettingsScreen settingsScreen(this);
+   settingsScreen.exec();
+  }
+}
+
+
 // Открытие контекстного меню в дереве разделов
 void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
 {
@@ -518,6 +537,12 @@ void TreeScreen::setupSignals(void)
  // Соединение сигнал-слот чтобы показать контекстное меню по правому клику на ветке
  connect(knowTreeView, &KnowTreeView::customContextMenuRequested,
          this,         &TreeScreen::onCustomContextMenuRequested);
+
+ // Контекстное меню тулбара: только на пустом месте, там единственный
+ // пункт настройки порядка и видимости кнопок
+ toolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
+ connect(toolsLine, &QToolBar::customContextMenuRequested,
+         this,      &TreeScreen::onToolbarContextMenu);
 
  // Соединение сигнал-слот чтобы показать контекстное меню по долгому нажатию
  connect(knowTreeView, &KnowTreeView::tapAndHoldGestureFinished,

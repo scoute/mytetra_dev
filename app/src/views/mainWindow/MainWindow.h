@@ -128,6 +128,8 @@ public slots:
 
     void toolsFindInBase(void);
 
+    void filePrintPreview(void);
+
     void toolsFindInBaseWithText(const QString &text);
 
     void toolsImagesGallery(void);
@@ -208,7 +210,6 @@ private slots:
     void fileImportTelegram(void);
 
     void filePrint(void);
-    void filePrintPreview(void);
     void filePrintPdf(void);
 
     void toolsPreferences(void);

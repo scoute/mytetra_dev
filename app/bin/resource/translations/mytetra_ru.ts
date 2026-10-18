@@ -6120,6 +6120,18 @@ Enable it in Settings on the History page.</source>
         <translation>Печать таблицы</translation>
     </message>
     <message>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="146"/>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="657"/>
+        <source>Print preview</source>
+        <translation>Предпросмотр печати</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="147"/>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="658"/>
+        <source>Preview current note before printing</source>
+        <translation>Предпросмотр текущей записи перед печатью</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="137"/>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="645"/>
         <source>Print current notes table</source>

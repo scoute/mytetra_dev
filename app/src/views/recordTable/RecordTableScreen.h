@@ -56,6 +56,7 @@ public:
  QAction *actionFindInBase;
  QAction *actionSort;
  QAction *actionPrint;
+ QAction *actionPrintPreview;
  QAction *actionCopyRecordReference;
  QAction *actionChangeHistory;
  QAction *actionSwitchSelectionMode;

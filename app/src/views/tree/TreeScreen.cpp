@@ -185,6 +185,13 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::treeScreenFindInBaseClicked);
  actionList["findInBase"]=ac;
 
+ // Синхронизация базы. Переехала сюда с тулбара записей: операция
+ // уровня всей базы, а не отдельной записи. Клик дёргает MainWindow
+ ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/synchronization.svg"));
+ connect(ac, &QAction::triggered, this, &TreeScreen::onSyncroClick);
+ actionList["syncro"]=ac;
+
  // Панель избранного между кнопками веток и деревом. Создается здесь,
  // а не в MainWindow, чтобы лежать ровно под тулбаром. Скрыта пока
  // пусто или фича выключена: дизайн не ломается
@@ -218,6 +225,9 @@ void TreeScreen::setupShortcuts(void)
     shortcutManager.initAction("tree-encryptBranch", actionList["encryptBranch"] );
     shortcutManager.initAction("tree-decryptBranch", actionList["decryptBranch"] );
     shortcutManager.initAction("tree-setIcon", actionList["setIcon"] );
+
+    // Синхронизация базы с тулбара веток
+    shortcutManager.initAction("misc-syncro", actionList["syncro"] );
 }
 
 
@@ -252,6 +262,11 @@ void TreeScreen::setupUI(void)
 
  insertActionAsButton(toolsLine, actionList["moveUpBranch"]);
  insertActionAsButton(toolsLine, actionList["moveDownBranch"]);
+
+ toolsLine->addSeparator();
+
+ // Синхронизация базы - в конце тулбара веток
+ insertActionAsButton(toolsLine, actionList["syncro"]);
 
  if(mytetraConfig.getInterfaceMode()=="mobile")
  {
@@ -1880,7 +1895,7 @@ void TreeScreen::setReadOnly(bool state)
   << "editBranch" << "delBranch"
   << "cutBranch" << "pasteBranch" << "pasteSubbranch"
   << "encryptBranch" << "decryptBranch"
-  << "setIcon";
+  << "setIcon" << "syncro";
 
  for(const QString &name : mutatingActions)
   if(actionList.contains(name))
@@ -1892,6 +1907,34 @@ void TreeScreen::setReadOnly(bool state)
    knowTreeView->setDragEnabled(!state);
    knowTreeView->setAcceptDrops(!state);
   }
+}
+
+
+// Клик по кнопке синхронизации: та же MainWindow::synchronization(),
+// что раньше дёргалась с тулбара записей
+void TreeScreen::onSyncroClick(void)
+{
+ find_object<MainWindow>("mainwindow")->synchronization();
+}
+
+
+// Разблокировка кнопки синхронизации по окончании команды.
+// Подключено в MainWindow к завершению синхрокоманды
+void TreeScreen::onSyncroCommandFinishWork(void)
+{
+ actionList["syncro"]->setEnabled(true);
+}
+
+
+void TreeScreen::setSyncroEnabled(bool state)
+{
+ actionList["syncro"]->setEnabled(state);
+}
+
+
+bool TreeScreen::isSyncroEnabled(void) const
+{
+ return actionList["syncro"]->isEnabled();
 }
 
 

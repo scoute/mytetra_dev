@@ -144,6 +144,10 @@ public slots:
 
     void filePrintPreview(void);
 
+    // Перестановка списка записей: справа от дерева либо под деревом
+    // в левой колонке. Вызывается при старте и вживую из настроек
+    void applyRecordTablePosition(void);
+
     void toolsFindInBaseWithText(const QString &text);
 
     void toolsImagesGallery(void);
@@ -386,6 +390,10 @@ private:
     QSplitter *vSplitter;
     QSplitter *hSplitter;
     QSplitter *findSplitter;
+
+    // Левая колонка (дерево над списком записей), существует только
+    // в режиме recordTableUnderTree; иначе список в правой колонке
+    QSplitter *leftColumnSplitter=nullptr;
 
     CommandRunner *syncroCommandRun=nullptr;
 

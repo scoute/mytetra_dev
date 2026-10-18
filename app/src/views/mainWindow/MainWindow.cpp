@@ -1501,9 +1501,72 @@ void MainWindow::restoreWindowGeometry(void)
     else
         restoreGeometry( mytetraConfig.get_mainwingeometry() );
 
-    vSplitter->setSizes(mytetraConfig.get_vspl_size_list());
-    hSplitter->setSizes(mytetraConfig.get_hspl_size_list());
+    // Размеры применяются только при совпадении числа виджетов:
+    // в режиме "список под деревом" у vSplitter один виджет, списки
+    // из другого режима сюда не подходят
+    if(mytetraConfig.get_vspl_size_list().size()==vSplitter->count())
+        vSplitter->setSizes(mytetraConfig.get_vspl_size_list());
+
+    if(mytetraConfig.get_hspl_size_list().size()==hSplitter->count())
+        hSplitter->setSizes(mytetraConfig.get_hspl_size_list());
+
     findSplitter->setSizes(mytetraConfig.get_findsplitter_size_list());
+}
+
+
+// Перестановка списка записей: справа от дерева (дефолт) либо под
+// деревом в левой колонке. Вызывается при старте после восстановления
+// геометрии и вживую из настроек. Существующие высоты виджетов
+// сохраняются как есть, поэтому переключение туда-обратно не прыгает
+void MainWindow::applyRecordTablePosition(void)
+{
+    const bool under=mytetraConfig.get_recordTableUnderTree();
+    const bool isUnder=(leftColumnSplitter!=nullptr);
+
+    if(under==isUnder)
+        return;
+
+    if(under)
+    {
+        // Список записей переезжает из правой колонки под дерево.
+        // vSplitter остаётся с одним редактором
+        leftColumnSplitter=new QSplitter(Qt::Vertical, this);
+        leftColumnSplitter->setObjectName("leftColumnSplitter");
+        leftColumnSplitter->setCollapsible(0, false);
+        leftColumnSplitter->setCollapsible(1, false);
+
+        hSplitter->replaceWidget(hSplitter->indexOf(treeScreen), leftColumnSplitter);
+        leftColumnSplitter->addWidget(treeScreen);
+        leftColumnSplitter->addWidget(recordTableScreen);
+
+        // Сохранённые размеры левой колонки, иначе текущие высоты
+        const QList<int> saved=mytetraConfig.get_leftspl_size_list();
+
+        if(saved.size()==leftColumnSplitter->count())
+            leftColumnSplitter->setSizes(saved);
+        else
+            leftColumnSplitter->setSizes(QList<int>() << treeScreen->height() << recordTableScreen->height());
+    }
+    else
+    {
+        // Список записей возвращается в правую колонку над редактором
+        hSplitter->replaceWidget(hSplitter->indexOf(leftColumnSplitter), treeScreen);
+        vSplitter->insertWidget(0, recordTableScreen);
+        vSplitter->setCollapsible(0, false);
+        vSplitter->setCollapsible(1, false);
+
+        leftColumnSplitter->deleteLater();
+        leftColumnSplitter=nullptr;
+
+        // vSplitter c одним редактором хранил одно число: вернуть
+        // обе панели к осмысленным долям текущей высоты
+        const int total=vSplitter->height();
+
+        if(total>0)
+            vSplitter->setSizes(QList<int>() << total/3 << total-total/3);
+    }
+
+    recordTableScreen->toolsUpdate();
 }
 
 
@@ -1514,8 +1577,16 @@ void MainWindow::saveWindowGeometry(void)
 
     mytetraConfig.set_mainwingeometry( saveGeometry() );
 
-    mytetraConfig.set_vspl_size_list(vSplitter->sizes());
+    // Размеры vSplitter осмысленны только с двумя виджетами
+    // (в режиме "список под деревом" там один редактор)
+    if(vSplitter->count()==2)
+        mytetraConfig.set_vspl_size_list(vSplitter->sizes());
+
     mytetraConfig.set_hspl_size_list(hSplitter->sizes());
+
+    // Размеры левой колонки (дерево над списком) - только в этом режиме
+    if(leftColumnSplitter!=nullptr)
+        mytetraConfig.set_leftspl_size_list(leftColumnSplitter->sizes());
 
 
     // Запоминается размер сплиттера только при видимом виджете поиска,
@@ -1684,6 +1755,9 @@ void MainWindow::restoreAllWindowState(void)
     restoreFindOnBaseVisible();
     restoreWindowGeometry();
 
+    // Раскладка списка записей применяется после геометрии:
+    // ей нужны живые размеры виджетов
+    applyRecordTablePosition();
 
     restoreTreePosition();
 

@@ -8,6 +8,7 @@
 class QWidget;
 class QCheckBox;
 class QGroupBox;
+class QRadioButton;
 
 class AppConfigPage_RecordTable : public ConfigPage
 {
@@ -33,6 +34,12 @@ protected:
   QCheckBox *showHorizontalHeader;
   QCheckBox *showVerticalHeader;
   QCheckBox *showRecordHeader;
+
+  // Положение списка записей: справа от дерева либо под деревом
+  QRadioButton *positionRight;
+  QRadioButton *positionUnder;
+
+  QGroupBox *groupBoxPosition;
 
   QGroupBox *groupBoxVisibleHeaders;
   QGroupBox *groupBoxVisibleColumns;

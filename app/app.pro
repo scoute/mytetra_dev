@@ -217,6 +217,7 @@ HEADERS = src/main.h \
     src/views/mainWindow/MainWindow.h \
     src/views/printPreview/PrintPreview.h \
     src/views/printPreview/PreviewView.h \
+    src/views/toolbarSettings/MainToolbarSettingsScreen.h \
     src/models/tree/XmlTree.h \
     src/models/tree/TreeModel.h \
     src/models/tree/TreeItem.h \
@@ -423,6 +424,7 @@ SOURCES = src/main.cpp \
     src/views/mainWindow/MainWindow.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \
+    src/views/toolbarSettings/MainToolbarSettingsScreen.cpp \
     src/models/tree/XmlTree.cpp \
     src/models/tree/TreeModel.cpp \
     src/models/tree/TreeItem.cpp \

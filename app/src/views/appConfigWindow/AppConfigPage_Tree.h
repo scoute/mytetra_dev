@@ -6,6 +6,7 @@
 class QWidget;
 class QRadioButton;
 class QGroupBox;
+class QPushButton;
 
 // Страница настроек дерева веток: живет после Notes area.
 // Выбор вида счетчика записей: только свои [n] или общий [n][m]
@@ -31,6 +32,11 @@ protected:
   QRadioButton *subtreeCount;
 
   QGroupBox *countsBox;
+
+  // Кнопка открытия диалога настройки кнопок панелей
+  QPushButton *editToolbarButtons;
+
+  void onClickedEditToolbarButtons(void);
 };
 
 

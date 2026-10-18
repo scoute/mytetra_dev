@@ -1980,6 +1980,15 @@ void TreeScreen::setReadOnly(bool state)
 }
 
 
+QAction *TreeScreen::toolAction(const QString &command)
+{
+ if(!actionList.contains(command))
+  return nullptr;
+
+ return actionList[command];
+}
+
+
 // Клик по кнопке синхронизации: та же MainWindow::synchronization(),
 // что раньше дёргалась с тулбара записей
 void TreeScreen::onSyncroClick(void)

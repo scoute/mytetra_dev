@@ -1159,6 +1159,12 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Show note count in branch</source>
         <translation>Отображать количество заметок в ветке</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="60"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="100"/>
+        <source>Edit toolbar buttons</source>
+        <translation>Настроить кнопки панелей</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -1205,6 +1211,12 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="97"/>
         <source>Notes list position</source>
         <translation>Положение списка записей</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="128"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="248"/>
+        <source>Edit toolbar buttons</source>
+        <translation>Настроить кнопки панелей</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="62"/>
@@ -8153,6 +8165,79 @@ This cannot be undone.</source>
         <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="127"/>
         <source>Notes layout</source>
         <translation>Раскладка заметок</translation>
+    </message>
+</context>
+<context>
+    <name>MainToolbarSettingsScreen</name>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="29"/>
+        <source>Toolbar settings</source>
+        <translation>Настройка панелей инструментов</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="62"/>
+        <source>Branches</source>
+        <translation>Ветки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="63"/>
+        <source>Notes</source>
+        <translation>Записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="64"/>
+        <source>Notes second line</source>
+        <translation>Записи, вторая линия</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="56"/>
+        <source>Available buttons</source>
+        <translation>Доступные кнопки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="83"/>
+        <source>Current buttons</source>
+        <translation>Задействованные кнопки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="234"/>
+        <source>&lt;Separator&gt;</source>
+        <translation>&lt;Разделитель&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="248"/>
+        <source>&lt;Spring&gt;</source>
+        <translation>&lt;Пружина&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="330"/>
+        <source>&lt;b&gt;%1&lt;/b&gt; is already on this toolbar.</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; уже есть на этой панели.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="533"/>
+        <source>&lt;b&gt;Information&lt;/b&gt; for toolbar buttons setup:</source>
+        <translation>&lt;b&gt;Информация&lt;/b&gt; по настройке кнопок панелей:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="536"/>
+        <source>The command is inserted &lt;b&gt;above the cursor&lt;/b&gt; in the used commands list.</source>
+        <translation>Команда вставляется &lt;b&gt;над курсором&lt;/b&gt; в списке задействованных команд.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="538"/>
+        <source>Panel toggle buttons (tags, history, backlinks) always stay at the end of the second notes line and are not listed here. Hidden shortcut-only buttons stay active too.</source>
+        <translation>Кнопки-переключатели панелей (метки, история, обратные ссылки) всегда остаются в конце второй линии записей и здесь не показываются. Скрытые кнопки только для горячих клавиш тоже продолжают работать.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="541"/>
+        <source>&lt;b&gt;Shortcuts:&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Горячие клавиши:&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="548"/>
+        <source>Information</source>
+        <translation>Информация</translation>
     </message>
 </context>
 </TS>

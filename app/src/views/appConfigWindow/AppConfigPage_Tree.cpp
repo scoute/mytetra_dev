@@ -2,12 +2,14 @@
 #include <QVBoxLayout>
 #include <QRadioButton>
 #include <QGroupBox>
+#include <QPushButton>
 
 #include "AppConfigPage_Tree.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/tree/TreeScreen.h"
+#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 
 
 extern AppConfig mytetraConfig;
@@ -52,12 +54,25 @@ void AppConfigPage_Tree::setupUi(void)
 
   countsBox=new QGroupBox(this);
   countsBox->setTitle(tr("Show note count in branch"));
+
+  // Кнопка открытия диалога настройки кнопок основных тулбаров
+  editToolbarButtons=new QPushButton(this);
+  editToolbarButtons->setText(tr("Edit toolbar buttons"));
+  editToolbarButtons->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
 }
 
 
 void AppConfigPage_Tree::setupSignals(void)
 {
+  connect(editToolbarButtons, &QPushButton::clicked,
+          this,              &AppConfigPage_Tree::onClickedEditToolbarButtons);
+}
 
+
+void AppConfigPage_Tree::onClickedEditToolbarButtons(void)
+{
+  MainToolbarSettingsScreen toolbuttonsScreen(this);
+  toolbuttonsScreen.exec();
 }
 
 
@@ -70,6 +85,7 @@ void AppConfigPage_Tree::assembly(void)
 
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(countsBox);
+  centralLayout->addWidget(editToolbarButtons);
   centralLayout->addStretch();
 
   setLayout(centralLayout);
@@ -82,6 +98,8 @@ void AppConfigPage_Tree::retranslateUi(void)
   subtreeCount->setText(tr("Its own and sub-branch notes [n][m]"));
 
   countsBox->setTitle(tr("Show note count in branch"));
+
+  editToolbarButtons->setText(tr("Edit toolbar buttons"));
 }
 
 

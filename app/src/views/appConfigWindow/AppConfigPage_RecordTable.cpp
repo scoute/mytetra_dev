@@ -5,6 +5,7 @@
 #include <QCheckBox>
 #include <QRadioButton>
 #include <QGroupBox>
+#include <QPushButton>
 
 #include "AppConfigPage_RecordTable.h"
 #include "models/appConfig/AppConfig.h"
@@ -13,6 +14,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/record/MetaEditor.h"
 #include "views/mainWindow/MainWindow.h"
+#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 
 
 extern AppConfig mytetraConfig;
@@ -115,6 +117,13 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   central_layout->addWidget(groupBoxNoteHeader);
   central_layout->addWidget(groupBoxVisibleHeaders);
   central_layout->addWidget(groupBoxVisibleColumns);
+
+  // Кнопка открытия диалога настройки кнопок основных тулбаров
+  editToolbarButtons=new QPushButton(this);
+  editToolbarButtons->setText(tr("Edit toolbar buttons"));
+  editToolbarButtons->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
+  central_layout->addWidget(editToolbarButtons);
+
   central_layout->addStretch();
 
   // Устанавливается основной слой
@@ -141,6 +150,16 @@ void AppConfigPage_RecordTable::setupSignals(void)
   // При изменении настроек отображения таблицы конечных записей должен вызываться соответствующий слот контроллера (чтобы перечиталась ширина столбцов)
   connect(this,                  &AppConfigPage_RecordTable::recordTableConfigChange,
           recordTableController, &RecordTableController::onRecordTableConfigChange);
+
+  connect(editToolbarButtons, &QPushButton::clicked,
+          this,              &AppConfigPage_RecordTable::onClickedEditToolbarButtons);
+}
+
+
+void AppConfigPage_RecordTable::onClickedEditToolbarButtons(void)
+{
+  MainToolbarSettingsScreen toolbuttonsScreen(this);
+  toolbuttonsScreen.exec();
 }
 
 
@@ -196,6 +215,8 @@ void AppConfigPage_RecordTable::retranslateUi(void)
   groupBoxPosition->setTitle(tr("Notes list position"));
   groupBoxVisibleHeaders->setTitle(tr("Headers and numbers visible"));
   groupBoxVisibleColumns->setTitle(tr("Columns visible"));
+
+  editToolbarButtons->setText(tr("Edit toolbar buttons"));
 }
 
 

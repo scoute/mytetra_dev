@@ -25,6 +25,12 @@
 #include <QTimer>
 
 #ifdef Q_OS_WIN32
+// QueryFullProcessImageNameA из mcpPeerAlive() требует Vista+ API.
+// MinGW по умолчанию целится в более старый Windows и тогда
+// объявления нет — поднимаем цель до Vista до windows.h
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
 #include <windows.h>
 #else
 #include <signal.h>

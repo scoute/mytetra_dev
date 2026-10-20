@@ -10,7 +10,9 @@
 
 #define ATTACHTABLE_COLUMN_FILENAME 0
 #define ATTACHTABLE_COLUMN_FILESIZE 1
-#define ATTACHTABLE_COLUMNS 2
+#define ATTACHTABLE_COLUMN_DESCRIPTION 2
+#define ATTACHTABLE_COLUMN_LINK 3
+#define ATTACHTABLE_COLUMNS 4
 
 #define ATTACHTABLE_ROLE_TABLE_DATA           Qt::UserRole+50 // Установка/получение ссылки на таблицу с данными
 #define ATTACHTABLE_ROLE_TABLE_DATA_ONLY      Qt::UserRole+51 // Установка ссылки на таблицу с данными без вызова прописывания перекрестной ссылки
@@ -42,6 +44,7 @@ public:
   QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
   bool setData(const QModelIndex &index, const QVariant &value, int role);
   QVariant headerData ( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
+  Qt::ItemFlags flags(const QModelIndex &index) const;
 
   /*
   void addAttach(Attach& newAttach);

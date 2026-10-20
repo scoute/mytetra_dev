@@ -156,7 +156,7 @@ void AttachTableController::onAddAttachFromUrl(void)
     QUrl url(reference);
     QString displayName=url.fileName();
 
-    if( addAttach("file", fullFileName, displayName) )
+    if( addAttach("file", fullFileName, displayName, reference) )
       sucessLoadCount++;
 
     // Исходный файл в директории закачки удаляется
@@ -220,8 +220,15 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
     // Текущее короткое имя файла (имя файла без пути но с расширением или несколькими расширениями если их несколько)
     QString currShortFileName=currFileInfo.fileName();
 
+    // Добавляется файл аттача. Происхождение: цель симлинка, иначе
+    // полный исходный путь (потом видно в колонке "Ссылка")
+    QString currSourceFileName=currFileInfo.absoluteFilePath();
+
+    if(currFileInfo.isSymLink() && !currFileInfo.symLinkTarget().isEmpty())
+      currSourceFileName=currFileInfo.symLinkTarget();
+
     // Добавляется файл аттача
-    if( addAttach(attachType, currFullFileName, currShortFileName) )
+    if( addAttach(attachType, currFullFileName, currShortFileName, currSourceFileName) )
       sucessLoadCount++;
     else
       break;
@@ -235,7 +242,7 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
 }
 
 
-bool AttachTableController::addAttach(QString attachType, QString currFullFileName, QString currShortFileName)
+bool AttachTableController::addAttach(QString attachType, QString currFullFileName, QString currShortFileName, const QString &source)
 {
   // Выясняется указатель на данные таблицы приаттаченных файлов
   AttachTableData *attachTableData=getAttachTableData();
@@ -246,6 +253,11 @@ bool AttachTableController::addAttach(QString attachType, QString currFullFileNa
   Attach attach(attachType, attachTableData);
   attach.setField("id", getUniqueId());
   attach.setField("fileName", currShortFileName);
+
+  // Происхождение файла (URL загрузки, цель симлинка, исходный путь):
+  // показывается в колонке "Ссылка". У линка источником служит он сам
+  if(!source.isEmpty())
+    attach.setField("source", source);
 
   bool result=false;
   if(attachType=="file")

@@ -97,6 +97,18 @@ public:
     bool get_allowTrueImageResize(void);
     void set_allowTrueImageResize(bool allow);
 
+    // Последние выбранные пользователем цвета текста и фона:
+    // клик по кнопке красит в них без пикера (как в LibreOffice)
+    QString get_lastFontColor(void);
+    void set_lastFontColor(const QString &color);
+    QString get_lastBackgroundColor(void);
+    void set_lastBackgroundColor(const QString &color);
+
+    // Клик по кнопке цвета применяет последний цвет (иначе как раньше:
+    // клик ничего не делает, цвет на кнопке — под курсором)
+    bool get_applyLastColorOnClick(void);
+    void set_applyLastColorOnClick(bool apply);
+
     // Ужать картинку до лимита длинной стороны из настройки.
     // Возвращает исходник если ужатие не нужно или лимит выключен
     QImage limitImageSize(const QImage &image);
@@ -141,6 +153,7 @@ private:
     static QStringList get_parameter_table_27(bool withEndSignature=true);
     static QStringList get_parameter_table_28(bool withEndSignature=true);
     static QStringList get_parameter_table_29(bool withEndSignature=true);
+    static QStringList get_parameter_table_30(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

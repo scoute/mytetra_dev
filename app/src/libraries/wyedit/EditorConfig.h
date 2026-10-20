@@ -88,6 +88,14 @@ public:
     // с прозрачностью всегда PNG (у JPG нет альфа-канала)
     QString imageExtensionFor(const QImage &image);
 
+    // Лимит длинной стороны новой картинки в пикселях, 0 — без ограничения
+    int get_imageMaxSize(void);
+    void set_imageMaxSize(int size);
+
+    // Ужать картинку до лимита длинной стороны из настройки.
+    // Возвращает исходник если ужатие не нужно или лимит выключен
+    QImage limitImageSize(const QImage &image);
+
 private:
 
     QSettings *conf;
@@ -126,6 +134,7 @@ private:
     static QStringList get_parameter_table_25(bool withEndSignature=true);
     static QStringList get_parameter_table_26(bool withEndSignature=true);
     static QStringList get_parameter_table_27(bool withEndSignature=true);
+    static QStringList get_parameter_table_28(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

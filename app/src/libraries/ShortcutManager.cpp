@@ -171,6 +171,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-showVoiceInFolder",  Data{ QKeySequence(""), tr("Show voice file in folder"), tr("Open record directory in file manager") });
     defaultKeyTable.insert("editor-deleteVoice",        Data{ QKeySequence(""), tr("Delete voice note"), tr("Remove voice link and move file to trash") });
     defaultKeyTable.insert("editor-insertHorizontalLine",Data{ QKeySequence("Ctrl+H"), tr("Insert horizontal line"), tr("Insert a horizontal line into the empty paragraph from cursor") });
+    defaultKeyTable.insert("editor-specialChar",         Data{ QKeySequence(), tr("Insert special character"), tr("Insert a special character from the symbol table") });
     defaultKeyTable.insert("editor-mathExpression",      Data{ QKeySequence("Ctrl+Shift+M"), tr("Insert/edit math expression"), tr("") });
     defaultKeyTable.insert("editor-expandEditArea",      Data{ QKeySequence("Ctrl+Shift+E"), tr("Expand edit area"), tr("") });
     defaultKeyTable.insert("editor-expandToolsLines",    Data{ QKeySequence("Ctrl+Shift+L"), tr("Expand tools"), tr("") });

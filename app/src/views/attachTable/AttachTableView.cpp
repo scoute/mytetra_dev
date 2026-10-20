@@ -5,6 +5,10 @@
 #include <QWidget>
 #include <QMimeData>
 #include <QUrl>
+#include <QToolTip>
+#include <QHelpEvent>
+#include <QImageReader>
+#include <QImage>
 #include <QDropEvent>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -15,6 +19,8 @@
 #include "AttachTableView.h"
 #include "AttachTableScreen.h"
 #include "controllers/attachTable/AttachTableController.h"
+#include "models/attachTable/AttachTableModel.h"
+#include "models/attachTable/Attach.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/GestureHelper.h"
 
@@ -105,7 +111,73 @@ bool AttachTableView::event(QEvent *event)
     return gestureEvent(static_cast<QGestureEvent*>(event));
   }
 
+  // Миниатюра картинки-вложения при наведении мыши
+  if(event->type()==QEvent::ToolTip)
+  {
+    QHelpEvent *helpEvent=static_cast<QHelpEvent *>(event);
+    const QString html=attachImageTooltip(indexAt(helpEvent->pos()));
+
+    if(html.isEmpty())
+      QToolTip::hideText();
+    else
+      QToolTip::showText(helpEvent->globalPos(), html, this);
+
+    return true;
+  }
+
   return QTableView::event(event);
+}
+
+
+// HTML миниатюры картинки-вложения для тултипа: пусто если строка
+// не картинка. Размер читается из заголовка файла, вписывается
+// в квадрат maxSide с сохранением пропорций
+QString AttachTableView::attachImageTooltip(const QModelIndex &index) const
+{
+  if(!index.isValid())
+    return QString();
+
+  AttachTableModel *attachModel=qobject_cast<AttachTableModel *>(model());
+
+  if(attachModel==nullptr)
+    return QString();
+
+  const Attach attach=attachModel->getAttach(index);
+
+  if(attach.getField("type")!=QStringLiteral("file"))
+    return QString();
+
+  const QString absoluteFileName=attach.getAbsoluteInnerFileName();
+
+  QImageReader reader(absoluteFileName);
+
+  if(!reader.canRead())
+    return QString();
+
+  QSize realSize=reader.size();
+
+  if(!realSize.isValid())
+  {
+    // Формат не отдал размер из заголовка — грузим целиком
+    const QImage full(absoluteFileName);
+
+    if(full.isNull())
+      return QString();
+
+    realSize=full.size();
+  }
+
+  const int maxSide=256;
+  QSize showSize=realSize;
+
+  if(qMax(realSize.width(), realSize.height())>maxSide)
+    showSize=realSize.scaled(maxSide, maxSide, Qt::KeepAspectRatio);
+
+  return QStringLiteral("<img src=\"")+
+         QUrl::fromLocalFile(absoluteFileName).toString()+
+         QStringLiteral("\" width=\"")+QString::number(showSize.width())+
+         QStringLiteral("\" height=\"")+QString::number(showSize.height())+
+         QStringLiteral("\">");
 }
 
 

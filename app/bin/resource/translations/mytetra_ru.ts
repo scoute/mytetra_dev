@@ -2828,6 +2828,15 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Без ограничения</translation>
     </message>
     <message>
+        <source>Allow changing true image file size</source>
+        <translation>Разрешить изменение истинного размера файлов картинок</translation>
+    </message>
+    <message>
+        <source>Shows a button in Image properties that rewrites the image file. The original is moved to trash. Off by default.</source>
+        <translation>Показывает кнопку в свойствах картинки, перезаписывающую файл. Оригинал перемещается в корзину. По умолчанию выключено.</translation>
+    </message>
+
+    <message>
         <source>Formula update timer</source>
         <translation type="vanished">Период обновления формулы</translation>
     </message>
@@ -3152,6 +3161,58 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="114"/>
         <source>Image info</source>
         <translation>Информация об изображении</translation>
+    </message>
+    <message>
+        <source>Apply size to file</source>
+        <translation>Применить размер к файлу</translation>
+    </message>
+    <message>
+        <source>Rewrite the image file to the size above. The original is moved to trash.</source>
+        <translation>Перезаписать файл картинки под заданный выше размер. Оригинал перемещается в корзину.</translation>
+    </message>
+    <message>
+        <source>Rewrite the image to %1?</source>
+        <translation>Перезаписать картинку в размере %1?</translation>
+    </message>
+    <message>
+        <source>Current: %1</source>
+        <translation>Сейчас: %1</translation>
+    </message>
+    <message>
+        <source>Quality loss is irreversible!</source>
+        <translation>Потеря качества необратима!</translation>
+    </message>
+    <message>
+        <source>The original file will be moved to trash.</source>
+        <translation>Оригинал файла будет перемещен в корзину.</translation>
+    </message>
+    <message>
+        <source>The file is not saved yet, only the image in the note will change.</source>
+        <translation>Файл еще не сохранен, изменится только картинка в записи.</translation>
+    </message>
+    <message>
+        <source>Change true image size</source>
+        <translation>Изменение истинного размера</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Применить</translation>
+    </message>
+    <message>
+        <source>Can not scale image.</source>
+        <translation>Не удалось масштабировать картинку.</translation>
+    </message>
+    <message>
+        <source>Can not move original to trash, nothing changed.</source>
+        <translation>Не удалось переместить оригинал в корзину, ничего не изменено.</translation>
+    </message>
+    <message>
+        <source>Can not write resized file. The original stays in trash.</source>
+        <translation>Не удалось записать ужатый файл. Оригинал остался в корзине.</translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>байт</translation>
     </message>
 </context>
 <context>

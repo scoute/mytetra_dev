@@ -92,6 +92,11 @@ public:
     int get_imageMaxSize(void);
     void set_imageMaxSize(int size);
 
+    // Мастер-тумблер деструктивной операции: разрешить менять истинный
+    // размер файла картинки из диалога свойств. Выключено по умолчанию
+    bool get_allowTrueImageResize(void);
+    void set_allowTrueImageResize(bool allow);
+
     // Ужать картинку до лимита длинной стороны из настройки.
     // Возвращает исходник если ужатие не нужно или лимит выключен
     QImage limitImageSize(const QImage &image);
@@ -135,6 +140,7 @@ private:
     static QStringList get_parameter_table_26(bool withEndSignature=true);
     static QStringList get_parameter_table_27(bool withEndSignature=true);
     static QStringList get_parameter_table_28(bool withEndSignature=true);
+    static QStringList get_parameter_table_29(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

@@ -111,6 +111,13 @@ void ImageFormatter::editImageProperties(void)
     dialog.set_real_width(realImageWidth);
     dialog.set_real_height(realImageHeight);
 
+    // Контекст истинного ресайза: путь к файлу и его наличие,
+    // исходные пиксели. Кнопка видна только при мастер-тумблере
+    const QString fullImageFileName=QFileInfo(editor->getWorkDirectory()+QStringLiteral("/")+imageName).absoluteFilePath();
+    dialog.setTrueResizeAllowed(editorConfig->get_allowTrueImageResize());
+    dialog.setTrueResizeFile(fullImageFileName, QFile::exists(fullImageFileName));
+    dialog.setSourceImage(image);
+
     // Если в форматировании картинки не задан размер картинки
     if(imageFormat.width()==0 && imageFormat.height()==0)
     {
@@ -131,6 +138,16 @@ void ImageFormatter::editImageProperties(void)
     // Запуск диалога на выполнение
     if(dialog.exec()!=QDialog::Accepted)
         return;
+
+    // Истинный ресайз из диалога: подмена ресурса пережатыми пикселями.
+    // Файл уже переписан самим диалогом, документ помечается измененным
+    if(dialog.trueResizeDone())
+    {
+        textArea->document()->addResource(QTextDocument::ImageResource,
+                                          QUrl(imageName),
+                                          QVariant(dialog.trueResizedImage()));
+        textArea->document()->setModified(true);
+    }
 
     imageFormat.setWidth(dialog.get_width());
     imageFormat.setHeight(dialog.get_height());

@@ -357,6 +357,10 @@ void EditorToolBar::setupToolBarTools(void)
     expandToolsLines->setIcon(QIcon(":/resource/pic/edit_expand_tools_lines.svg"));
     expandToolsLines->setObjectName("editor_tb_expandToolsLines");
 
+    toggleTools=new QAction(this);
+    toggleTools->setIcon(QIcon(":/resource/pic/edit_toggle_tools.svg"));
+    toggleTools->setObjectName("editor_tb_toggleTools");
+
     save=new QAction(this);
     save->setStatusTip(tr("Save (Ctrl+S)"));
     save->setIcon(QIcon(":/resource/pic/edit_save.svg"));
@@ -465,6 +469,7 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-mathExpression", mathExpression);
     shortcutManager.initAction("editor-expandEditArea", expandEditArea);
     shortcutManager.initAction("editor-expandToolsLines", expandToolsLines);
+    shortcutManager.initAction("editor-toggleTools", toggleTools);
     shortcutManager.initAction("editor-save", save);
     shortcutManager.initAction("editor-showText", showText);
     shortcutManager.initAction("editor-toAttach", toAttach);
@@ -560,6 +565,7 @@ void EditorToolBar::setEnableModifyTextButton(bool state)
                    << "showFormatting" \
                    << "expandEditArea" \
                    << "expandToolsLines" \
+                   << "toggleTools" \
                    << "back" \
                    << "findInBase"
                    << "showText" \

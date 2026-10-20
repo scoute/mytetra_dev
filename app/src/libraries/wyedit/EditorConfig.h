@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QWidget>
 #include <QSettings>
+#include <QImage>
 
 
 class EditorConfig : public QWidget
@@ -78,6 +79,15 @@ public:
     bool get_hide_tools_lines(void);
     void set_hide_tools_lines(bool i);
 
+    // Формат сохранения новых картинок: "png" или "jpg".
+    // Действует только на вновь вставляемые картинки
+    QString get_imageSaveFormat(void);
+    void set_imageSaveFormat(const QString &format);
+
+    // Расширение для новой картинки: формат из настройки, но картинки
+    // с прозрачностью всегда PNG (у JPG нет альфа-канала)
+    QString imageExtensionFor(const QImage &image);
+
 private:
 
     QSettings *conf;
@@ -115,6 +125,7 @@ private:
     static QStringList get_parameter_table_24(bool withEndSignature=true);
     static QStringList get_parameter_table_25(bool withEndSignature=true);
     static QStringList get_parameter_table_26(bool withEndSignature=true);
+    static QStringList get_parameter_table_27(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

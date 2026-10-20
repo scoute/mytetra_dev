@@ -37,6 +37,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/wyedit/EditorConfig.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/recordTable/Record.h"
 #include "models/recordTable/RecordTableData.h"
@@ -57,6 +58,20 @@ static const qint64 defaultClipMaxImageSizeBytes=5*1024*1024;
 
 static int clipMaxImages=defaultClipMaxImages;
 static qint64 clipMaxImageBytes=defaultClipMaxImageSizeBytes;
+
+
+// Расширение новой картинки в клипере: настройка формата редактора,
+// картинки с прозрачностью всегда PNG (у JPG нет альфа-канала).
+// Конфига может не быть в тестах — тогда png
+static QString clipImageExtension(const QImage &image)
+{
+    EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+    if(editorConfig==nullptr)
+        return QStringLiteral("png");
+
+    return editorConfig->imageExtensionFor(image);
+}
 
 
 #if defined(Q_OS_WIN)
@@ -428,7 +443,7 @@ QByteArray Clipper::contentHash(const QString &normalizedHtml)
     // фиксированным токеном, иначе хеши одного и того же содержимого
     // не сойдутся ни у новой, ни у уже лежащей записи
     QString canonical=normalizedHtml;
-    static QRegularExpression internalNameRe("image\\d{10}[a-z0-9]+\\.png");
+    static QRegularExpression internalNameRe("image\\d{10}[a-z0-9]+\\.(png|jpg)");
     canonical.replace(internalNameRe, "image.png");
 
     return QCryptographicHash::hash(canonical.toUtf8(), QCryptographicHash::Sha256);
@@ -579,7 +594,7 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
             clipData.errorMessage=tr("Clipboard image is not readable.");
             return false;
         }
-        const QString internalName=getUniqueImageName();
+        const QString internalName=getUniqueImageName(clipImageExtension(image));
         directImages.insert(internalName, image);
         html=QString("<img src=\"%1\" />").arg(internalName);
     }
@@ -624,7 +639,7 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
 {
     // Замена внешних картинок на внутренние с докачкой (логика ImageFormatter:
     // имя вида image<10 цифр><символы>.png считается уже внутренним)
-    QRegularExpression internalRe("^image\\d{10}[a-z0-9]+\\.png$");
+    QRegularExpression internalRe("^image\\d{10}[a-z0-9]+\\.(png|jpg)$");
     QMap<QString, QString> refToInternal;
     QMap<QString, QImage> fetchedImages;
 
@@ -680,7 +695,7 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
                         continue;
                     }
 
-                    internalName=getUniqueImageName();
+                    internalName=getUniqueImageName(clipImageExtension(dataImage));
                     refToInternal.insert(refName, internalName);
                     fetchedImages.insert(internalName, dataImage);
                 }
@@ -702,7 +717,7 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
                         continue;
                     }
 
-                    internalName=getUniqueImageName();
+                    internalName=getUniqueImageName(clipImageExtension(image));
                     refToInternal.insert(refName, internalName);
                     fetchedImages.insert(internalName, image);
                 }

@@ -25,6 +25,8 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "EditorConfig.h"
 
 
 extern GlobalParameters globalParameters;
@@ -896,11 +898,12 @@ void EditorTextArea::insertFromMimeData(const QMimeData *source)
     {
         QImage image=qvariant_cast<QImage>(source->imageData());
 
-        // Картинка будет хранится в ресурсах во внутреннем формате
-        // без потери качества, поэтому затем при записи
-        // легко сохраняется в PNG формат. Чтобы избежать путаницы,
-        // сразу имя ресурса картинки задается как PNG файл
-        QString imageName=getUniqueImageName();
+        // Имя ресурса по настройке формата; картинки с прозрачностью
+        // всегда PNG (у JPG нет альфа-канала)
+        EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+        const QString imageExt=(editorConfig!=nullptr) ? editorConfig->imageExtensionFor(image)
+                                                       : QStringLiteral("png");
+        QString imageName=getUniqueImageName(imageExt);
 
         document->addResource(QTextDocument::ImageResource, QUrl(imageName), image);
         cursor.insertImage(imageName);
@@ -947,6 +950,8 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
                                                  const QMap<QString, QByteArray> referencesAndMemoryFiles,
                                                  const QMap<QString, QString> referencesAndInternalNames)
 {
+    QString fixedHtml=html;
+
     // К документу добавляются скачанные картинки в виде ресурсов
     foreach (QString imageReference, referencesAndMemoryFiles.keys())
     {
@@ -956,15 +961,29 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
         // Если данные с картинкой правильные, и с ней может работать Qt
         if(result)
         {
+            QString internalName=referencesAndInternalNames.value(imageReference);
+
+            // Скачанная картинка с прозрачностью под jpg-именем:
+            // имя меняется на png прямо в HTML, иначе прозрачность
+            // потерялась бы при сохранении
+            if(!internalName.endsWith(QStringLiteral(".png")) &&
+               !image.isNull() && image.hasAlphaChannel())
+            {
+                const QString pngName=internalName.section('.', 0, -2)+QStringLiteral(".png");
+
+                fixedHtml.replace(internalName, pngName);
+                internalName=pngName;
+            }
+
             // Картинка добавляется в ресурсы документа со внутренним именем
             this->document()->addResource(QTextDocument::ImageResource,
-                                          QUrl( referencesAndInternalNames.value(imageReference) ),
+                                          QUrl( internalName ),
                                           QVariant(image));
         }
     }
 
     // Вставляется HTML-код
-    qDebug() << "Insert source HTML text: " << html;
+    qDebug() << "Insert source HTML text: " << fixedHtml;
 
     // Код вставляется не напрямую, а пропускается через временный документ,
     // чтобы вставить более понятный для QTextEdit HTML-код.
@@ -973,7 +992,7 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
     // вставляемого фрагмента (баг: вставка меняла шрифт на системный)
     QTextDocument htmlFilterDoc;
     htmlFilterDoc.setDefaultFont(document()->defaultFont());
-    htmlFilterDoc.setHtml(html);
+    htmlFilterDoc.setHtml(fixedHtml);
 
     qDebug() << "Insert filtered HTML text: " << htmlFilterDoc.toHtml();
 

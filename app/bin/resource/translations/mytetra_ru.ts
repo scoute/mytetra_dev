@@ -1614,6 +1614,10 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <translation>Скачивание файла</translation>
     </message>
     <message>
+        <source>Save the note first</source>
+        <translation>Сначала сохраните заметку</translation>
+    </message>
+    <message>
         <source>Can&apos;t add directory. Please, select files.</source>
         <translation type="obsolete">Невозможно добавить директорию. Пожалуйста, выберите файлы.</translation>
     </message>

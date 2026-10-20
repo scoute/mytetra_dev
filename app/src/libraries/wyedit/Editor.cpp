@@ -666,6 +666,9 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->fixBreakSymbol, &QAction::triggered,
             typefaceFormatter,                      &TypefaceFormatter::onFixBreakSymbolClicked);
 
+    connect(editorToolBarAssistant->tabsToSpaces, &QAction::triggered,
+            typefaceFormatter,                    &TypefaceFormatter::onTabsToSpacesClicked);
+
     connect(editorToolBarAssistant->fontSelect, &EditorFontFamilyComboBox::currentFontChanged,
             typefaceFormatter,                  &TypefaceFormatter::onFontselectChanged);
 

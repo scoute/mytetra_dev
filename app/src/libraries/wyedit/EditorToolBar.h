@@ -44,6 +44,7 @@ public:
     QAction *clear; // Очистка начертания текста
     QAction *textOnly; // Полная очистка текста (оставить один текст)
     QAction *fixBreakSymbol;
+    QAction *tabsToSpaces;
 
     QAction *undo;
     QAction *redo;

@@ -20,6 +20,9 @@
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/ActionHelper.h"
+#include "views/tree/KnowTreeView.h"
+#include "models/tree/KnowTreeModel.h"
+#include "models/recordTable/Record.h"
 #include "controllers/recordTable/RecordTableController.h"
 
 
@@ -146,6 +149,12 @@ void RecordTableScreen::setupActions(void)
  actionCopyRecordReference = new QAction(tr("Copy note reference"), this);
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
  actionCopyRecordReference->setIcon(QIcon(":/resource/pic/note_reference.svg"));
+
+ // Кнопка копирования готовой ссылки с заголовком: в буфер кладётся
+ // HTML-якорь, вставка в другую запись даёт сразу именованную ссылку
+ actionCopyRecordLink = new QAction(tr("Copy link with title"), this);
+ actionCopyRecordLink->setStatusTip(tr("Copy titled link to clipboard for pasting into another note"));
+ actionCopyRecordLink->setIcon(QIcon(":/resource/pic/note_reference.svg"));
 
  // Кнопка истории изменений записи
  actionChangeHistory = new QAction(tr("Change history"), this);
@@ -513,6 +522,9 @@ void RecordTableScreen::setupSignals(void)
     // Кнопка копирования ссылки на запись
     connect(actionCopyRecordReference, &QAction::triggered, this, &RecordTableScreen::onCopyRecordReference);
 
+    // Кнопка копирования готовой ссылки с заголовком
+    connect(actionCopyRecordLink, &QAction::triggered, this, &RecordTableScreen::onCopyRecordLink);
+
     // Кнопка переключения режима одинарного выбора и мультивыбора
     connect(actionSwitchSelectionMode, &QAction::triggered, recordTableController, &RecordTableController::onSwitchSelectionMode);
 
@@ -568,6 +580,7 @@ void RecordTableScreen::disableAllActions(void)
  actionMoveDn->setEnabled(false);
 
  actionCopyRecordReference->setEnabled(false);
+ actionCopyRecordLink->setEnabled(false);
 
  // Предпросмотр печати возможен только для одной выбранной записи
  actionPrintPreview->setEnabled(false);
@@ -633,6 +646,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
+   actionCopyRecordLink->setEnabled(true);
    actionPrintPreview->setEnabled(true);
 
    // История выключена мастер-тумблером: пункт серый сразу,
@@ -792,6 +806,39 @@ void RecordTableScreen::onCopyRecordReference()
 }
 
 
+// Готовая ссылка с заголовком: HTML-якорь для вставки в другую запись
+// (там сразу именованная ссылка) плюс голый href как plain-текст.
+// Имя берётся из модели дерева тем же путём что ReferenceFormatter,
+// пустое имя — голый href как раньше
+void RecordTableScreen::onCopyRecordLink()
+{
+  const QString id=getFirstSelectionId();
+  const QString reference=FixedParameters::appTextId+"://note/"+id;
+
+  QString title;
+  KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+  if(treeView!=nullptr)
+  {
+    Record *record=static_cast<KnowTreeModel *>(treeView->model())->getRecord(id);
+
+    if(record!=nullptr)
+      title=record->getField(QStringLiteral("name"));
+  }
+
+  if(title.isEmpty())
+    title=reference;
+
+  QMimeData *mime=new QMimeData();
+  mime->setHtml(QStringLiteral("<a href=\"")+reference+
+                QStringLiteral("\">")+title.toHtmlEscaped()+
+                QStringLiteral("</a>"));
+  mime->setText(reference);
+
+  QApplication::clipboard()->setMimeData(mime);
+}
+
+
 // Контекстное меню тулбаров записей: единственный пункт открывает
 // диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
 // у кнопок своего меню нет, а пустого места на ужатых по кнопкам
@@ -853,6 +900,9 @@ void RecordTableScreen::retranslateUi(void)
 
   actionCopyRecordReference->setText(tr("Copy note reference"));
   actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
+
+  actionCopyRecordLink->setText(tr("Copy link with title"));
+  actionCopyRecordLink->setStatusTip(tr("Copy titled link to clipboard for pasting into another note"));
 
   actionChangeHistory->setText(tr("Change history"));
   actionChangeHistory->setStatusTip(tr("Show change history with diff and rollback"));

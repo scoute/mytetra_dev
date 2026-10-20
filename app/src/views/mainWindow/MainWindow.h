@@ -128,6 +128,10 @@ public slots:
     void commitData(QSessionManager& manager);
     void messageHandler(QString message);
 
+    // Синхронизация пометок меню Вид: слот чтобы дергать
+    // из проб и внешних мест (aboutToShow зовет сам)
+    void syncViewMenu(void);
+
     // Синхронный ответ на mcp-команду для протокола запрос-ответ:
     // компактный JSON {"ok":true,...} или {"ok":false,"error":"..."}.
     // Вызывается из сокетного респондера (тот же поток GUI)
@@ -242,6 +246,7 @@ private slots:
     // Меню Вид: дубли быстрых переключателей отображения
     void onViewHeaderToggled(bool checked);
     void onViewFavoritesToggled(bool checked);
+    void onViewToolsToggled(bool checked);
     void onViewSecretColor(void);
     void onViewPaperColor(void);
 
@@ -287,9 +292,9 @@ private:
 
     // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
     // Пометка обновляется при каждом открытии, так как все меняется
-    // и из других мест (диалог настроек, контекстное меню)
+    // и из других мест (диалог настроек, контекстное меню).
+    // Слот чтобы дергать из проб и внешних мест
     void initViewMenu(void);
-    void syncViewMenu(void);
 
     void initRecordTableActions(void);
 
@@ -359,6 +364,7 @@ private:
     QMenu *viewMenu=nullptr;
     QAction *viewHeaderAction=nullptr;
     QAction *viewFavoritesAction=nullptr;
+    QAction *viewToolsAction=nullptr;
     QAction *viewReadOnlyAction=nullptr;
     QAction *viewSecretColorAction=nullptr;
     QAction *viewPaperColorAction=nullptr;

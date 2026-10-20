@@ -3,6 +3,11 @@
 #include <QHeaderView>
 #include <QPainter>
 #include <QWidget>
+#include <QMimeData>
+#include <QUrl>
+#include <QDropEvent>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
 #include <QGestureEvent>
 #include <QTapAndHoldGesture>
 #include <QApplication>
@@ -27,6 +32,10 @@ AttachTableView::AttachTableView(QWidget *parent) : QTableView(parent)
 
   // Разрешение принимать жест QTapAndHoldGesture
   grabGesture(Qt::TapAndHoldGesture);
+
+  // Прием файлов перетаскиванием: dropEvent отдает их контроллеру
+  // тем же движком что file picker
+  setAcceptDrops(true);
 }
 
 
@@ -158,6 +167,55 @@ void AttachTableView::onCustomContextMenuRequested(const QPoint &pos)
 {
   // Включение отображения меню на экране
   contextMenu->exec( viewport()->mapToGlobal(pos) );
+}
+
+
+// Принимаются только перетаскивания с локальными файлами:
+// такой mime дают файловые менеджеры
+void AttachTableView::dragEnterEvent(QDragEnterEvent *event)
+{
+  if(event->mimeData()!=nullptr && event->mimeData()->hasUrls())
+    event->acceptProposedAction();
+  else
+    event->ignore();
+}
+
+
+void AttachTableView::dragMoveEvent(QDragMoveEvent *event)
+{
+  if(event->mimeData()!=nullptr && event->mimeData()->hasUrls())
+    event->acceptProposedAction();
+  else
+    event->ignore();
+}
+
+
+// Бросок файлов: локальные пути уходят в контроллер,
+// нелокальные ссылки молча пропускаются
+void AttachTableView::dropEvent(QDropEvent *event)
+{
+  if(event->mimeData()==nullptr || !event->mimeData()->hasUrls())
+  {
+    event->ignore();
+    return;
+  }
+
+  QStringList files;
+
+  foreach(const QUrl &url, event->mimeData()->urls())
+    if(url.isLocalFile() && !url.toLocalFile().isEmpty())
+      files.append(url.toLocalFile());
+
+  if(files.isEmpty())
+  {
+    event->ignore();
+    return;
+  }
+
+  event->acceptProposedAction();
+
+  if(controller!=nullptr)
+    controller->addDroppedFiles(files);
 }
 
 

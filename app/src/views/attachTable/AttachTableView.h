@@ -12,6 +12,9 @@ class QWidget;
 class QMenu;
 class QGestureEvent;
 class QTapAndHoldGesture;
+class QDragEnterEvent;
+class QDragMoveEvent;
+class QDropEvent;
 
 class AttachTableView : public QTableView
 {
@@ -48,6 +51,12 @@ protected:
   virtual void paintEvent(QPaintEvent *event);
   bool gestureEvent(QGestureEvent *event);
   void tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture);
+
+  // Drag'n'drop файлов: вход/движение подсвечивают прием,
+  // бросок уходит в контроллер списком локальных путей
+  virtual void dragEnterEvent(QDragEnterEvent *event);
+  virtual void dragMoveEvent(QDragMoveEvent *event);
+  virtual void dropEvent(QDropEvent *event);
 
   AttachTableController *controller;
 

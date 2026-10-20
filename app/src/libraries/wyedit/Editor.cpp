@@ -1625,9 +1625,21 @@ void Editor::onFindtextClicked(void)
     return;
   }
 
-  // Новая панель по запомненному режиму: по умолчанию полоска
+  // Новая панель по запомненному режиму: по умолчанию полоска.
+  // Сид из выделения (как в Notepad++): если в тексте что-то выделено,
+  // оно становится запросом вместо прошлого. Только при открытии —
+  // повторный вызов при видимой панели по-прежнему ищет дальше.
+  // Берётся первая строка выделения (поле поиска однострочное),
+  // U+2029 — разделитель абзацев в selectedText()
+  const QString seed=textArea->textCursor().selectedText()
+                     .replace(QChar::ParagraphSeparator, '\n')
+                     .section('\n', 0, 0).trimmed().left(256);
+
   if(mytetraConfig.get_editorFindEmbedded())
   {
+    if(!seed.isEmpty())
+      findBar->setSearchText(seed);
+
     findBar->showBar();
 
     if(!findBar->searchText().isEmpty())
@@ -1635,6 +1647,9 @@ void Editor::onFindtextClicked(void)
   }
   else
   {
+    if(!seed.isEmpty())
+      findDialog->setFindRequest(seed, findDialog->findRequestFlags());
+
     findDialog->show();
     findDialog->activateWindow();
   }

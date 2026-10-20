@@ -38,10 +38,13 @@ public slots:
 
   void onSwitchToEditor(void);
 
+  // Файлы из drag'n'drop (вид дергает напрямую, без диалога)
+  void addDroppedFiles(const QStringList &files);
 
 protected:
 
   void addSmart(QString attachType);
+  void addFileList(QString attachType, const QStringList &files);
   bool addAttach(QString attachType, QString currFullFileName, QString currShortFileName);
   void saveState();
   QStringList selectFilesForAdding(QString attachType);

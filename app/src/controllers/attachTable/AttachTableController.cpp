@@ -175,7 +175,31 @@ void AttachTableController::addSmart(QString attachType)
   if(files.size()==0)
     return; // Если ни один файл не выбран
 
-  // Перебираются выбранные в диалоге файлы
+  addFileList(attachType, files);
+}
+
+
+// Файлы из drag'n'drop: тот же движок что у пикера, но без диалога.
+// Несохраненная запись (нет данных таблицы) — вежливый отказ вместо
+// критической ошибки: бросать файл некуда
+void AttachTableController::addDroppedFiles(const QStringList &files)
+{
+  if(files.size()==0)
+    return;
+
+  if(getAttachTableData()==NULL)
+  {
+    showMessageBox(tr("Save the note first"));
+    return;
+  }
+
+  addFileList("file", files);
+}
+
+
+void AttachTableController::addFileList(QString attachType, const QStringList &files)
+{
+  // Перебираются файлы (из диалога или из drag'n'drop)
   int sucessLoadCount=0;
   for(int i=0; i<files.size(); ++i)
   {

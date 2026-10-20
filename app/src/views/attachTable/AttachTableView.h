@@ -15,6 +15,7 @@ class QTapAndHoldGesture;
 class QDragEnterEvent;
 class QDragMoveEvent;
 class QDropEvent;
+class QAbstractItemModel;
 
 class AttachTableView : public QTableView
 {
@@ -33,6 +34,10 @@ public:
   // HTML миниатюры картинки-вложения для тултипа (пусто если не картинка).
   // Публичный чтобы вызывать из проб и внешних мест
   QString attachImageTooltip(const QModelIndex &index) const;
+
+  // Режимы колонок ставятся здесь, а не в конструкторе: на пустом
+  // хедере без модели setSectionResizeMode роняет Qt
+  virtual void setModel(QAbstractItemModel *model);
 
 
 signals:

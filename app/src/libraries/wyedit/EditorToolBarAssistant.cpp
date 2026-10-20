@@ -50,6 +50,12 @@ EditorToolBarAssistant::EditorToolBarAssistant(QWidget *parent,
     switchExpandToolsLines(1);
   else
     switchExpandToolsLines(-1);
+
+  // Устанавливается сохраненная видимость панели целиком
+  if(m_editor->editorConfig->get_hide_tools_lines())
+    switchToolsVisibility(-1);
+  else
+    switchToolsVisibility(1);
 }
 
 
@@ -127,6 +133,7 @@ void EditorToolBarAssistant::reload()
 void EditorToolBarAssistant::setupSignals()
 {
   connect(expandToolsLines, &QAction::triggered, this, &EditorToolBarAssistant::onExpandToolsLinesClicked);
+  connect(toggleTools, &QAction::triggered, this, &EditorToolBarAssistant::onToggleToolsClicked);
 }
 
 
@@ -567,6 +574,34 @@ void EditorToolBarAssistant::onExpandToolsLinesClicked(void)
     // TRACELOG
 
     switchExpandToolsLines();
+}
+
+
+// Скрытие или показ панели инструментов целиком по команде toggleTools.
+// В отличие от switchExpandToolsLines прячутся обе линии сразу:
+// виджет ассистента целиком убирается из сетки MetaEditor
+void EditorToolBarAssistant::onToggleToolsClicked(void)
+{
+    switchToolsVisibility();
+}
+
+
+// Переключение видимости панели инструментов целиком.
+// Параметр 1 - показать панель, -1 - спрятать, 0 - переключить.
+// Состояние запоминается в конфиге и восстанавливается при старте
+void EditorToolBarAssistant::switchToolsVisibility(int flag)
+{
+    bool setHidden;
+
+    if(flag==0)
+        setHidden=!m_editor->editorConfig->get_hide_tools_lines();
+    else if(flag==1)
+        setHidden=false;
+    else
+        setHidden=true;
+
+    this->setVisible(!setHidden);
+    m_editor->editorConfig->set_hide_tools_lines(setHidden);
 }
 
 

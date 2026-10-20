@@ -99,6 +99,7 @@ public:
     QAction *mathExpression;
     QAction *expandEditArea;
     QAction *expandToolsLines;
+    QAction *toggleTools;
     QAction *save;
 
     QAction *mobileBack;

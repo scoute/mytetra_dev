@@ -6868,6 +6868,22 @@ Enable it in Settings on the History page.</source>
         <translation>Перейти к предыдущему совпадению в текущей записи</translation>
     </message>
     <message>
+        <source>Scroll up</source>
+        <translation>Прокрутить вверх</translation>
+    </message>
+    <message>
+        <source>Scroll text up without moving cursor</source>
+        <translation>Прокрутить текст вверх без перемещения курсора</translation>
+    </message>
+    <message>
+        <source>Scroll down</source>
+        <translation>Прокрутить вниз</translation>
+    </message>
+    <message>
+        <source>Scroll text down without moving cursor</source>
+        <translation>Прокрутить текст вниз без перемещения курсора</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
         <source>Editor settings</source>
         <translation>Настройки редактора</translation>

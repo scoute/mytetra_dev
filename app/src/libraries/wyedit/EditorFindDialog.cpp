@@ -132,6 +132,20 @@ void EditorFindDialog::find_next_clicked(void)
 }
 
 
+// Шаг из хоткея: то же что стрелка вперёд в окне
+void EditorFindDialog::goToNextMatch(void)
+{
+  find_next_clicked();
+}
+
+
+// Шаг из хоткея: то же что стрелка назад в окне
+void EditorFindDialog::goToPrevMatch(void)
+{
+  find_prev_clicked();
+}
+
+
 // Действия при нажатии стрелки назад
 void EditorFindDialog::find_prev_clicked(void)
 {

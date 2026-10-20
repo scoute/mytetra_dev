@@ -165,6 +165,18 @@ void EditorToolBar::setupToolBarTools(void)
     code->setIcon(QIcon(":/resource/pic/edit_code.svg"));
     code->setObjectName("editor_tb_code");
 
+    // Кнопки заголовков H1/H2: checkable — подсветка актуального
+    // уровня идёт из onUpdateOutlineButtonHiglight
+    heading1=new QAction(this);
+    heading1->setCheckable(true);
+    heading1->setIcon(QIcon(":/resource/pic/edit_heading1.svg"));
+    heading1->setObjectName("editor_tb_heading1");
+
+    heading2=new QAction(this);
+    heading2->setCheckable(true);
+    heading2->setIcon(QIcon(":/resource/pic/edit_heading2.svg"));
+    heading2->setObjectName("editor_tb_heading2");
+
     // Кнопка Clear
     clear=new QAction(this);
     clear->setIcon(QIcon(":/resource/pic/edit_clear.svg"));
@@ -393,6 +405,8 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-subscript", subscript);
     shortcutManager.initAction("editor-monospace", monospace);
     shortcutManager.initAction("editor-code", code);
+    shortcutManager.initAction("editor-heading1", heading1);
+    shortcutManager.initAction("editor-heading2", heading2);
     shortcutManager.initAction("editor-clear", clear);
     shortcutManager.initAction("editor-textOnly", textOnly);
     shortcutManager.initAction("editor-fixBreakSymbol", fixBreakSymbol);

@@ -488,7 +488,7 @@ QStringList EditorConfig::get_parameter_table_3(bool withEndSignature)
     table << get_parameter_table_2(false);
 
     // Добавляются новые параметры
-    table << "tools_line_1" << "QString" << "clear,separator,bold,italic,underline,separator,monospace,code,alignleft,aligncenter,alignright,alignwidth,fontselect,fontsize";
+    table << "tools_line_1" << "QString" << "clear,separator,bold,italic,underline,separator,monospace,code,heading1,heading2,alignleft,aligncenter,alignright,alignwidth,fontselect,fontsize";
     table << "tools_line_2" << "QString" << " ";
 
     if(withEndSignature)

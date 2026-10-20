@@ -643,6 +643,12 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->code, &QAction::triggered,
             typefaceFormatter,            &TypefaceFormatter::onCodeClicked);
 
+    connect(editorToolBarAssistant->heading1, &QAction::triggered,
+            typefaceFormatter,                &TypefaceFormatter::onHeading1Clicked);
+
+    connect(editorToolBarAssistant->heading2, &QAction::triggered,
+            typefaceFormatter,                &TypefaceFormatter::onHeading2Clicked);
+
     connect(editorToolBarAssistant->clear, &QAction::triggered,
             typefaceFormatter,             &TypefaceFormatter::onClearClicked);
 

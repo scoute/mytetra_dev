@@ -6,9 +6,14 @@
 #include <QPushButton>
 #include <QDialogButtonBox>
 #include <QWidget>
+#include <QMessageBox>
+#include <QFile>
+#include <QFileInfo>
 
 
 #include "EditorImageProperties.h"
+
+#include "libraries/helpers/DiskHelper.h"
 
 
 EditorImageProperties::EditorImageProperties(QWidget *parent) : QDialog(parent)
@@ -19,6 +24,12 @@ EditorImageProperties::EditorImageProperties(QWidget *parent) : QDialog(parent)
  // Флаг, используемый для запрещения цикличного взаимного изменения
  // высоты и ширины
  isRelateSizeSetted=false;
+
+ // Истинный ресайз по умолчанию запрещен: кнопка скрыта.
+ // Разрешается мастер-тумблером из настроек редактора
+ trueResizeAllowed=false;
+ trueResizeFileExists=false;
+ trueResizeApplied=false;
 
  setup_ui();
  setup_signals();
@@ -60,6 +71,11 @@ void EditorImageProperties::setup_ui()
  resetSizeButton=new QPushButton(tr("Reset to real image size"));
  resetSizeButton->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed, QSizePolicy::ToolButton));
 
+ trueResizeButton=new QPushButton(tr("Apply size to file"));
+ trueResizeButton->setObjectName(QStringLiteral("trueResizeButton"));
+ trueResizeButton->setToolTip(tr("Rewrite the image file to the size above. The original is moved to trash."));
+ trueResizeButton->setVisible(false);
+
 
  buttonBox=new QDialogButtonBox(Qt::Horizontal);
  buttonBox->addButton(tr("OK"),QDialogButtonBox::AcceptRole);
@@ -80,6 +96,8 @@ void EditorImageProperties::setup_signals()
          this,            &EditorImageProperties::on_changed_height);
 
  connect(resetSizeButton, &QPushButton::pressed, this, &EditorImageProperties::on_click_reset_size);
+
+ connect(trueResizeButton, &QPushButton::pressed, this, &EditorImageProperties::on_click_true_resize);
 
  connect(buttonBox, &QDialogButtonBox::accepted, this, &EditorImageProperties::accept);
  connect(buttonBox, &QDialogButtonBox::rejected, this, &EditorImageProperties::reject);
@@ -105,6 +123,10 @@ void EditorImageProperties::assembly()
 
  // Кнопка сбора размера к настоящему размеру картинки
  gridLayout->addWidget(resetSizeButton, 3, 1);
+
+ // Кнопка перезаписи файла под заданный выше размер.
+ // Видна только при разрешении из настроек
+ gridLayout->addWidget(trueResizeButton, 4, 1);
 
  // Добавляется область запроса размеров картинки на основной слой
  mainLayout->addLayout(gridLayout);
@@ -251,4 +273,159 @@ void EditorImageProperties::on_click_reset_size()
  set_width(imageRealWidth);
  set_height(imageRealHeight);
  update_percent();
+}
+
+
+void EditorImageProperties::setTrueResizeAllowed(bool allowed)
+{
+ trueResizeAllowed=allowed;
+ trueResizeButton->setVisible(allowed);
+}
+
+
+void EditorImageProperties::setTrueResizeFile(const QString &fileName, bool fileExists)
+{
+ trueResizeFileName=fileName;
+ trueResizeFileExists=fileExists;
+}
+
+
+void EditorImageProperties::setSourceImage(const QImage &image)
+{
+ trueResizeSource=image;
+ trueResizeApplied=false;
+}
+
+
+bool EditorImageProperties::trueResizeDone(void) const
+{
+ return trueResizeApplied;
+}
+
+
+QImage EditorImageProperties::trueResizedImage(void) const
+{
+ return trueResizeResult;
+}
+
+
+// Чистая операция: ужать файл-картинку до размера с сохранением пропорций.
+// Формат берется по расширению файла. Возвращает успех записи
+bool EditorImageProperties::resizeImageFile(const QString &fileName, int width, int height)
+{
+ if(width<=0 || height<=0)
+  return false;
+
+ QImage source(fileName);
+
+ if(source.isNull())
+  return false;
+
+ QImage scaled=source.scaled(width, height,
+                             Qt::KeepAspectRatio,
+                             Qt::SmoothTransformation);
+
+ if(scaled.isNull())
+  return false;
+
+ const char *format=fileName.endsWith(QStringLiteral(".jpg"), Qt::CaseInsensitive) ? "JPG" : "PNG";
+
+ return scaled.save(fileName, format);
+}
+
+
+void EditorImageProperties::on_click_true_resize()
+{
+ if(!trueResizeAllowed)
+  return;
+
+ const int targetWidth=widthSpin->value();
+ const int targetHeight=heightSpin->value();
+
+ if(targetWidth<=0 || targetHeight<=0 || trueResizeSource.isNull())
+  return;
+
+ // Страшное предупреждение с цифрами: размеры и вес файла,
+ // судьба оригинала, отказ по умолчанию
+ QString fromText=QString::number(imageRealWidth)+QStringLiteral("x")+
+                  QString::number(imageRealHeight);
+ QString toText=QString::number(targetWidth)+QStringLiteral("x")+
+                QString::number(targetHeight);
+
+ if(trueResizeFileExists)
+  {
+   const qint64 fileBytes=QFileInfo(trueResizeFileName).size();
+   fromText+=(QStringLiteral(" (")+QString::number(fileBytes)+QStringLiteral(" ")+tr("bytes")+")");
+  }
+
+ QString question=tr("Rewrite the image to %1?").arg(toText)+QStringLiteral("\n")+
+                  tr("Current: %1").arg(fromText)+QStringLiteral("\n")+
+                  tr("Quality loss is irreversible!")+QStringLiteral(" ");
+
+ if(trueResizeFileExists)
+  question+=tr("The original file will be moved to trash.");
+ else
+  question+=tr("The file is not saved yet, only the image in the note will change.");
+
+ QMessageBox askBox(QMessageBox::Warning,
+                    tr("Change true image size"),
+                    question,
+                    QMessageBox::NoButton,
+                    this);
+ QPushButton *applyButton=askBox.addButton(tr("Apply"), QMessageBox::AcceptRole);
+ QPushButton *cancelButton=askBox.addButton(QMessageBox::Cancel);
+ askBox.setDefaultButton(cancelButton);
+ askBox.exec();
+
+ if(askBox.clickedButton()!=applyButton)
+  return;
+
+ // Пересчет пикселей из исходника диалога
+ QImage scaled=trueResizeSource.scaled(targetWidth, targetHeight,
+                                       Qt::KeepAspectRatio,
+                                       Qt::SmoothTransformation);
+
+ if(scaled.isNull())
+  {
+   QMessageBox::warning(this,
+                        tr("Change true image size"),
+                        tr("Can not scale image."));
+   return;
+  }
+
+ // Оригинал файла — в корзину, затем запись нового файла.
+ // Без файла на диске меняется только картинка в памяти
+ if(trueResizeFileExists)
+  {
+   if(!DiskHelper::removeFileToTrash(trueResizeFileName, false))
+    {
+     QMessageBox::warning(this,
+                          tr("Change true image size"),
+                          tr("Can not move original to trash, nothing changed."));
+     return;
+    }
+
+   const char *format=trueResizeFileName.endsWith(QStringLiteral(".jpg"), Qt::CaseInsensitive) ? "JPG" : "PNG";
+
+   if(!scaled.save(trueResizeFileName, format))
+    {
+     QMessageBox::warning(this,
+                          tr("Change true image size"),
+                          tr("Can not write resized file. The original stays in trash."));
+     return;
+    }
+  }
+
+ // Реальный размер стал заданным: проценты сходятся в 100,
+ // источник для форматера обновлен
+ trueResizeResult=scaled;
+ trueResizeApplied=true;
+
+ set_real_width(scaled.width());
+ set_real_height(scaled.height());
+ update_percent();
+ set_info(tr("Real image size ")+
+          QString::number(scaled.width())+QStringLiteral(" x ")+
+          QString::number(scaled.height())+QStringLiteral(" ")+
+          tr("pixels"));
 }

@@ -520,6 +520,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_26;
     parameterFunctions << get_parameter_table_27;
     parameterFunctions << get_parameter_table_28;
+    parameterFunctions << get_parameter_table_29;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1080,6 +1081,45 @@ QStringList EditorConfig::get_parameter_table_28(bool withEndSignature)
         table << "0" << "0" << "0";
 
     return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_29(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 28
+    table << get_parameter_table_28(false);
+
+    // Мастер-тумблер изменения истинного размера файла картинки.
+    // Выключено: кнопка в диалоге свойств не показывается вообще
+
+    table << "allowTrueImageResize" << "bool" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+bool EditorConfig::get_allowTrueImageResize(void)
+{
+    if(get_parameter("allowTrueImageResize").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_allowTrueImageResize(bool allow)
+{
+    if(allow==true)
+        conf->setValue("allowTrueImageResize", 1);
+    else
+        conf->setValue("allowTrueImageResize", 0);
 }
 
 

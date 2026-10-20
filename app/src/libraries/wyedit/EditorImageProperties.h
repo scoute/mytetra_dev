@@ -2,6 +2,7 @@
 #define	_EDITORIMAGEPROPERTIES_H_
 
 #include <QDialog>
+#include <QImage>
 
 
 class QLabel;
@@ -30,6 +31,25 @@ public:
 
  void update_percent(void);
 
+ // Разрешение кнопки истинного размера (мастер-тумблер из настроек,
+ // по умолчанию выключен — кнопки нет вообще)
+ void setTrueResizeAllowed(bool allowed);
+
+ // Файл картинки и его наличие на диске; исходные пиксели для пересчета.
+ // Без файла меняется только картинка в записи (документ пометится
+ // измененным при записи). С файлом оригинал уходит в корзину
+ void setTrueResizeFile(const QString &fileName, bool fileExists);
+ void setSourceImage(const QImage &image);
+
+ // Итог кнопки: была ли применена перезапись и чем
+ bool trueResizeDone(void) const;
+ QImage trueResizedImage(void) const;
+
+ // Чистая операция для пробы: ужать файл-картинку до размера.
+ // Формат берется по расширению файла, пропорции не ломаются:
+ // вписывается в прямоугольник width x height
+ static bool resizeImageFile(const QString &fileName, int width, int height);
+
 private slots:
 
  void on_changed_percent(int n);
@@ -37,6 +57,10 @@ private slots:
  void on_changed_height(int n);
 
  void on_click_reset_size();
+
+ // Кнопка "Применить размер к файлу": страшное предупреждение,
+ // бэкап оригинала в корзину, пересчет, обновление реальных размеров
+ void on_click_true_resize();
 
 private:
 
@@ -54,6 +78,8 @@ private:
 
  QPushButton *resetSizeButton;
 
+ QPushButton *trueResizeButton;
+
  QDialogButtonBox *buttonBox;
 
  void setup_ui(void);
@@ -64,6 +90,15 @@ private:
  int imageRealHeight;
 
  bool isRelateSizeSetted;
+
+ // Состояние истинного ресайза: разрешен ли кнопкой, файл и его наличие,
+ // исходные пиксели, итог применения
+ bool trueResizeAllowed;
+ QString trueResizeFileName;
+ bool trueResizeFileExists;
+ QImage trueResizeSource;
+ bool trueResizeApplied;
+ QImage trueResizeResult;
 };
 
 #endif	/* _EDITORIMAGEPROPERTIES_H_ */

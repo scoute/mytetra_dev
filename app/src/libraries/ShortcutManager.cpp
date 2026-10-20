@@ -173,6 +173,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-mathExpression",      Data{ QKeySequence("Ctrl+Shift+M"), tr("Insert/edit math expression"), tr("") });
     defaultKeyTable.insert("editor-expandEditArea",      Data{ QKeySequence("Ctrl+Shift+E"), tr("Expand edit area"), tr("") });
     defaultKeyTable.insert("editor-expandToolsLines",    Data{ QKeySequence("Ctrl+Shift+L"), tr("Expand tools"), tr("") });
+    defaultKeyTable.insert("editor-toggleTools",         Data{ QKeySequence("Ctrl+Shift+T"), tr("Toggle tools"), tr("Show or hide the editor toolbar") });
     defaultKeyTable.insert("editor-save",                Data{ QKeySequence("Ctrl+S"), tr("Forse save note"), tr("") });
     defaultKeyTable.insert("editor-showText",            Data{ QKeySequence("Ctrl+Shift+W"), tr("Show detached window"), tr("") });
     defaultKeyTable.insert("editor-toAttach",            Data{ QKeySequence("Ctrl+Shift+A"), tr("Attach files"), tr("") });

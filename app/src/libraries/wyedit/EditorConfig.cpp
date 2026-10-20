@@ -385,6 +385,44 @@ void EditorConfig::set_hide_tools_lines(bool i)
 }
 
 
+QString EditorConfig::get_imageSaveFormat(void)
+{
+    QString format=get_parameter("imageSaveFormat").toLower();
+
+    if(format!="jpg" && format!="jpeg" && format!="png")
+        format="png";
+
+    return format;
+}
+
+
+void EditorConfig::set_imageSaveFormat(const QString &format)
+{
+    QString normalized=format.toLower();
+
+    if(normalized!="jpg" && normalized!="jpeg" && normalized!="png")
+        normalized="png";
+
+    conf->setValue("imageSaveFormat", normalized);
+}
+
+
+QString EditorConfig::imageExtensionFor(const QImage &image)
+{
+    // У JPG нет альфа-канала: прозрачная картинка в JPG получила бы
+    // черный фон, поэтому такие всегда идут в PNG
+    if(!image.isNull() && image.hasAlphaChannel())
+        return QStringLiteral("png");
+
+    QString format=get_parameter("imageSaveFormat").toLower();
+
+    if(format=="jpg" || format=="jpeg")
+        return QStringLiteral("jpg");
+
+    return QStringLiteral("png");
+}
+
+
 // --------------------
 // Номер версии конфига
 // --------------------
@@ -441,6 +479,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_24;
     parameterFunctions << get_parameter_table_25;
     parameterFunctions << get_parameter_table_26;
+    parameterFunctions << get_parameter_table_27;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -953,6 +992,28 @@ QStringList EditorConfig::get_parameter_table_26(bool withEndSignature)
     // в update_version_change_value()
 
     table << get_parameter_table_25(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_27(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 26
+    table << get_parameter_table_26(false);
+
+    // Формат сохранения новых картинок. Дефолт png: существующие базы
+    // без ключа продолжают как раньше; новые профили получают jpg
+    // из шаблонного editorconf.ini
+
+    table << "imageSaveFormat" << "QString" << "png";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

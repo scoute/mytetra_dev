@@ -2803,6 +2803,23 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>симв.</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp"/>
+        <source>Image format</source>
+        <translation>Формат картинок</translation>
+    </message>
+    <message>
+        <source>PNG (lossless)</source>
+        <translation>PNG (без потерь)</translation>
+    </message>
+    <message>
+        <source>JPG (compact)</source>
+        <translation>JPG (компактный)</translation>
+    </message>
+    <message>
+        <source>Applies to newly inserted images</source>
+        <translation>Действует только на вновь вставляемые картинки</translation>
+    </message>
+    <message>
         <source>Formula update timer</source>
         <translation type="vanished">Период обновления формулы</translation>
     </message>

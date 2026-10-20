@@ -7,6 +7,7 @@
 #include <QtDebug>
 #include <QLabel>
 #include <QGroupBox>
+#include <QRadioButton>
 
 #include "EditorConfigMisc.h"
 #include "EditorConfig.h"
@@ -54,6 +55,25 @@ void EditorConfigMisc::setupUi(void)
  tabStopDistanceSpinBox->setMaximum(50);
  tabStopDistanceSpinBox->setValue(conf->get_tab_size());
 
+ // Формат сохранения новых картинок
+ imageFormatLabel=new QLabel(this);
+ imageFormatLabel->setText(tr("Image format"));
+
+ imagePngButton=new QRadioButton(tr("PNG (lossless)"), this);
+ imageJpgButton=new QRadioButton(tr("JPG (compact)"), this);
+
+ const QString imageFormat=conf->get_imageSaveFormat();
+
+ if(imageFormat==QStringLiteral("jpg"))
+   imageJpgButton->setChecked(true);
+ else
+   imagePngButton->setChecked(true);
+
+ const QString imageFormatHint=tr("Applies to newly inserted images");
+ imageFormatLabel->setToolTip(imageFormatHint);
+ imagePngButton->setToolTip(imageFormatHint);
+ imageJpgButton->setToolTip(imageFormatHint);
+
  // Кнопка редактирования файла конфигурации WyEdit
  editWyEditConfigFile=new QPushButton(this);
  editWyEditConfigFile->setText(tr("Edit config file"));
@@ -80,6 +100,11 @@ void EditorConfigMisc::assembly(void)
   configLayout->addWidget(tabStopDistanceLabel,         1, 0);
   configLayout->addWidget(tabStopDistanceSpinBox,       1, 1);
   configLayout->addWidget(tabStopDistanceFlexionLabel,  1, 2);
+
+ // Формат картинок: подпись и две радиокнопки в своей строке
+ configLayout->addWidget(imageFormatLabel, 2, 0);
+ configLayout->addWidget(imagePngButton,   2, 1);
+ configLayout->addWidget(imageJpgButton,   2, 2);
 
   // Группировщик виджетов для опасной зоны
   QGroupBox *dangerBox=new QGroupBox(this);
@@ -126,6 +151,14 @@ int EditorConfigMisc::applyChanges(void)
  // Если был изменен размер табуляции для клавиши Tab
  if(conf->get_tab_size()!=tabStopDistanceSpinBox->value()) {
    conf->set_tab_size(tabStopDistanceSpinBox->value());
+ }
+
+ // Если был изменен формат сохранения картинок
+ const QString newImageFormat=imageJpgButton->isChecked() ? QStringLiteral("jpg")
+                                                          : QStringLiteral("png");
+
+ if(conf->get_imageSaveFormat()!=newImageFormat) {
+   conf->set_imageSaveFormat(newImageFormat);
  }
  
  return difficultChanges;

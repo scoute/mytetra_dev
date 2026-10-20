@@ -899,8 +899,13 @@ void EditorTextArea::insertFromMimeData(const QMimeData *source)
         QImage image=qvariant_cast<QImage>(source->imageData());
 
         // Имя ресурса по настройке формата; картинки с прозрачностью
-        // всегда PNG (у JPG нет альфа-канала)
+        // всегда PNG (у JPG нет альфа-канала). Большие картинки
+        // ужимаются до лимита длинной стороны
         EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+        if(editorConfig!=nullptr)
+            image=editorConfig->limitImageSize(image);
+
         const QString imageExt=(editorConfig!=nullptr) ? editorConfig->imageExtensionFor(image)
                                                        : QStringLiteral("png");
         QString imageName=getUniqueImageName(imageExt);
@@ -961,6 +966,12 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
         // Если данные с картинкой правильные, и с ней может работать Qt
         if(result)
         {
+            // Большие скачанные картинки ужимаются до лимита длинной стороны
+            EditorConfig *sinkConfig=find_object<EditorConfig>("editorconfig");
+
+            if(sinkConfig!=nullptr)
+                image=sinkConfig->limitImageSize(image);
+
             QString internalName=referencesAndInternalNames.value(imageReference);
 
             // Скачанная картинка с прозрачностью под jpg-именем:

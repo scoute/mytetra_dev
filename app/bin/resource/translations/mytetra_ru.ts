@@ -2820,6 +2820,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Действует только на вновь вставляемые картинки</translation>
     </message>
     <message>
+        <source>Max image size</source>
+        <translation>Макс. размер картинки</translation>
+    </message>
+    <message>
+        <source>No limit</source>
+        <translation>Без ограничения</translation>
+    </message>
+    <message>
         <source>Formula update timer</source>
         <translation type="vanished">Период обновления формулы</translation>
     </message>

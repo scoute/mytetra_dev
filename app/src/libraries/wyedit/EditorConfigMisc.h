@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QRadioButton>
+#include <QComboBox>
 
 #include "views/appConfigWindow/ConfigPage.h"
 
@@ -42,6 +43,10 @@ private:
   QLabel *imageFormatLabel;
   QRadioButton *imagePngButton;
   QRadioButton *imageJpgButton;
+
+  // Лимит длинной стороны новых картинок: большие ужимаются при вставке
+  QLabel *imageMaxSizeLabel;
+  QComboBox *imageMaxSizeCombo;
 
   QPushButton *editWyEditConfigFile;
   

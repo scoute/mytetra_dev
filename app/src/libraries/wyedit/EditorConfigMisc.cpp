@@ -96,6 +96,12 @@ void EditorConfigMisc::setupUi(void)
  imageMaxSizeLabel->setToolTip(imageFormatHint);
  imageMaxSizeCombo->setToolTip(imageFormatHint);
 
+ // Мастер-тумблер изменения истинного размера файла картинки
+ allowTrueImageResizeCheckBox=new QCheckBox(this);
+ allowTrueImageResizeCheckBox->setText(tr("Allow changing true image file size"));
+ allowTrueImageResizeCheckBox->setToolTip(tr("Shows a button in Image properties that rewrites the image file. The original is moved to trash. Off by default."));
+ allowTrueImageResizeCheckBox->setChecked(conf->get_allowTrueImageResize());
+
  // Кнопка редактирования файла конфигурации WyEdit
  editWyEditConfigFile=new QPushButton(this);
  editWyEditConfigFile->setText(tr("Edit config file"));
@@ -139,6 +145,7 @@ void EditorConfigMisc::assembly(void)
   // Виджеты вставляются в группировщик опасной зоны
   QVBoxLayout *dangerLayout = new QVBoxLayout();
   dangerLayout->addWidget(editWyEditConfigFile);
+  dangerLayout->addWidget(allowTrueImageResizeCheckBox);
   dangerBox->setLayout(dangerLayout);
 
 
@@ -192,6 +199,11 @@ int EditorConfigMisc::applyChanges(void)
 
  if(conf->get_imageMaxSize()!=newImageMaxSize) {
    conf->set_imageMaxSize(newImageMaxSize);
+ }
+
+ // Мастер-тумблер истинного размера
+ if(conf->get_allowTrueImageResize()!=allowTrueImageResizeCheckBox->isChecked()) {
+   conf->set_allowTrueImageResize(allowTrueImageResizeCheckBox->isChecked());
  }
  
  return difficultChanges;

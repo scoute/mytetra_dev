@@ -17,6 +17,11 @@ public:
 
     void setIsProgrammChanged(bool flag);
 
+    // Перестройка группы недавних шрифтов сверху списка (после ""-маркера):
+    // новые сверху, разделитель, пропуски отсутствующих в системе.
+    // Текущий шрифт currentFamily выставляется обратно без сигналов
+    void reloadRecentFonts(const QStringList &recent, const QString &currentFamily);
+
     EditorToolPseudoButton toolPseudoButton;
 
 protected slots:
@@ -29,6 +34,10 @@ protected:
     bool isProgrammChanged;
 
     int previousIndex;
+
+    // Сколько строк занимает MRU-группа (шрифты без разделителя):
+    // сносится перед перестройкой
+    int recentRows;
 };
 
 #endif // EDITORFONTFAMILYCOMBOBOX_H

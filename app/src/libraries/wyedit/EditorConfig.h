@@ -109,6 +109,12 @@ public:
     bool get_applyLastColorOnClick(void);
     void set_applyLastColorOnClick(bool apply);
 
+    // Недавние шрифты (примененные через список), новые сверху, максимум 5.
+    // Хранение одной строкой через ";" как списки инструментов
+    QStringList get_recentFonts(void);
+    void add_recentFont(const QString &family);
+    void set_recentFonts(const QStringList &families);
+
     // Ужать картинку до лимита длинной стороны из настройки.
     // Возвращает исходник если ужатие не нужно или лимит выключен
     QImage limitImageSize(const QImage &image);
@@ -154,6 +160,7 @@ private:
     static QStringList get_parameter_table_28(bool withEndSignature=true);
     static QStringList get_parameter_table_29(bool withEndSignature=true);
     static QStringList get_parameter_table_30(bool withEndSignature=true);
+    static QStringList get_parameter_table_31(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

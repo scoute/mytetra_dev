@@ -30,7 +30,12 @@ extern GlobalParameters globalParameters;
 
 AttachTableView::AttachTableView(QWidget *parent) : QTableView(parent)
 {
-  this->horizontalHeader()->setStretchLastSection( true );
+  // Имя файла тянется на свободное место, остальные колонки —
+  // фиксированные регулируемые вручную. Раньше первый столбец
+  // принудительно занимал 80% при любом ресайзе и выдавливал
+  // остальные за правый край, а ручная регулировка тут же сбрасывалась.
+  // Режимы ставятся в setModel(): на пустом хедере без модели
+  // setSectionResizeMode роняет Qt
   this->setSelectionBehavior(QAbstractItemView::SelectRows); // Выделяется вся строка
 
   // Настройка области виджета для кинетической прокрутки
@@ -183,12 +188,8 @@ QString AttachTableView::attachImageTooltip(const QModelIndex &index) const
 
 void AttachTableView::resizeEvent(QResizeEvent *event)
 {
-  // Первый столбец должен занимать 80% ширины при любом размере таблицы
-  QRect viewRect = this->rect();
-  float columnWidth = (float) viewRect.width() * 0.8;
-  this->setColumnWidth( 0, columnWidth );
-
-  // Отрисовка родительского класса
+  // Ширины колонок больше не трогаются: имя тянется режимом Stretch,
+  // остальные регулируются вручную и переживают ресайзы
   QTableView::resizeEvent(event);
 }
 
@@ -235,6 +236,19 @@ void AttachTableView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
 
 
 // Открытие контекстного меню в таблице приаттаченных файлов
+void AttachTableView::setModel(QAbstractItemModel *model)
+{
+  QTableView::setModel(model);
+
+  // Имя файла тянется на свободное место, остальные колонки —
+  // фиксированные регулируемые вручную
+  this->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
+  this->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Interactive );
+  this->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Interactive );
+  this->horizontalHeader()->setSectionResizeMode( 3, QHeaderView::Interactive );
+}
+
+
 void AttachTableView::onCustomContextMenuRequested(const QPoint &pos)
 {
   // Включение отображения меню на экране

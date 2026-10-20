@@ -6727,6 +6727,22 @@ Enable it in Settings on the History page.</source>
         <translation>Требуется целиком выделить абзац(ы) для полного форматирования в код</translation>
     </message>
     <message>
+        <source>Heading 1</source>
+        <translation>Заголовок 1</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as first-level heading</source>
+        <translation>Оформить абзацы как заголовок первого уровня</translation>
+    </message>
+    <message>
+        <source>Heading 2</source>
+        <translation>Заголовок 2</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as second-level heading</source>
+        <translation>Оформить абзацы как заголовок второго уровня</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="127"/>
         <source>Lowercase</source>
         <translation>Нижний регистр</translation>

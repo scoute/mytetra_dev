@@ -251,10 +251,15 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
       // Картинка загружается из файла
       QImage image = QImageReader(currFileName).read();
 
-      // Внутреннее имя по настройке формата; с прозрачностью — PNG
-      EditorConfig *imageFormatConfig=find_object<EditorConfig>("editorconfig");
-      const QString imageExt=(imageFormatConfig!=nullptr) ? imageFormatConfig->imageExtensionFor(image)
-                                                          : QStringLiteral("png");
+      // Большие файлы ужимаются до лимита длинной стороны, имя —
+      // по настройке формата (с прозрачностью всегда PNG)
+      EditorConfig *imageFileConfig=find_object<EditorConfig>("editorconfig");
+
+      if(imageFileConfig!=nullptr)
+        image=imageFileConfig->limitImageSize(image);
+
+      const QString imageExt=(imageFileConfig!=nullptr) ? imageFileConfig->imageExtensionFor(image)
+                                                        : QStringLiteral("png");
       QString imageName=getUniqueImageName(imageExt);
 
       // Картинка добавляется в хранилище документа

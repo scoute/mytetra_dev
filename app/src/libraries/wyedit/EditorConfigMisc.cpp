@@ -74,6 +74,28 @@ void EditorConfigMisc::setupUi(void)
  imagePngButton->setToolTip(imageFormatHint);
  imageJpgButton->setToolTip(imageFormatHint);
 
+ // Лимит длинной стороны новых картинок, 0 — без ограничения
+ imageMaxSizeLabel=new QLabel(this);
+ imageMaxSizeLabel->setText(tr("Max image size"));
+
+ imageMaxSizeCombo=new QComboBox(this);
+ imageMaxSizeCombo->addItem(QStringLiteral("640"), 640);
+ imageMaxSizeCombo->addItem(QStringLiteral("800"), 800);
+ imageMaxSizeCombo->addItem(QStringLiteral("1024"), 1024);
+ imageMaxSizeCombo->addItem(QStringLiteral("1280"), 1280);
+ imageMaxSizeCombo->addItem(QStringLiteral("1600"), 1600);
+ imageMaxSizeCombo->addItem(tr("No limit"), 0);
+
+ const int maxSizeIndex=imageMaxSizeCombo->findData(conf->get_imageMaxSize());
+
+ if(maxSizeIndex>=0)
+   imageMaxSizeCombo->setCurrentIndex(maxSizeIndex);
+ else
+   imageMaxSizeCombo->setCurrentIndex(imageMaxSizeCombo->findData(1280));
+
+ imageMaxSizeLabel->setToolTip(imageFormatHint);
+ imageMaxSizeCombo->setToolTip(imageFormatHint);
+
  // Кнопка редактирования файла конфигурации WyEdit
  editWyEditConfigFile=new QPushButton(this);
  editWyEditConfigFile->setText(tr("Edit config file"));
@@ -105,6 +127,10 @@ void EditorConfigMisc::assembly(void)
  configLayout->addWidget(imageFormatLabel, 2, 0);
  configLayout->addWidget(imagePngButton,   2, 1);
  configLayout->addWidget(imageJpgButton,   2, 2);
+
+ // Лимит размера: подпись и комбобокс в своей строке
+ configLayout->addWidget(imageMaxSizeLabel, 3, 0);
+ configLayout->addWidget(imageMaxSizeCombo, 3, 1);
 
   // Группировщик виджетов для опасной зоны
   QGroupBox *dangerBox=new QGroupBox(this);
@@ -159,6 +185,13 @@ int EditorConfigMisc::applyChanges(void)
 
  if(conf->get_imageSaveFormat()!=newImageFormat) {
    conf->set_imageSaveFormat(newImageFormat);
+ }
+
+ // Если был изменен лимит размера картинок
+ const int newImageMaxSize=imageMaxSizeCombo->currentData().toInt();
+
+ if(conf->get_imageMaxSize()!=newImageMaxSize) {
+   conf->set_imageMaxSize(newImageMaxSize);
  }
  
  return difficultChanges;

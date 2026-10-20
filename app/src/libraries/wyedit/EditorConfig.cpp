@@ -423,6 +423,45 @@ QString EditorConfig::imageExtensionFor(const QImage &image)
 }
 
 
+int EditorConfig::get_imageMaxSize(void)
+{
+    int size=get_parameter("imageMaxSize").toInt();
+
+    if(size<0)
+        size=0;
+
+    return size;
+}
+
+
+void EditorConfig::set_imageMaxSize(int size)
+{
+    if(size<0)
+        size=0;
+
+    conf->setValue("imageMaxSize", size);
+}
+
+
+QImage EditorConfig::limitImageSize(const QImage &image)
+{
+    if(image.isNull())
+        return image;
+
+    const int limit=get_imageMaxSize();
+
+    if(limit<=0)
+        return image;
+
+    if(qMax(image.width(), image.height())<=limit)
+        return image;
+
+    return image.scaled(limit, limit,
+                        Qt::KeepAspectRatio,
+                        Qt::SmoothTransformation);
+}
+
+
 // --------------------
 // Номер версии конфига
 // --------------------
@@ -480,6 +519,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_25;
     parameterFunctions << get_parameter_table_26;
     parameterFunctions << get_parameter_table_27;
+    parameterFunctions << get_parameter_table_28;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1014,6 +1054,27 @@ QStringList EditorConfig::get_parameter_table_27(bool withEndSignature)
     // из шаблонного editorconf.ini
 
     table << "imageSaveFormat" << "QString" << "png";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_28(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 27
+    table << get_parameter_table_27(false);
+
+    // Лимит длинной стороны новых картинок в пикселях, 0 — без ограничения.
+    // Большие фото ужимаются при вставке (как в телегра-импорте)
+
+    table << "imageMaxSize" << "int" << "1280";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

@@ -74,6 +74,19 @@ static QString clipImageExtension(const QImage &image)
 }
 
 
+// Ужатие картинки клипера до лимита длинной стороны из настройки.
+// Без конфига возвращается исходник
+static QImage clipLimitImageSize(const QImage &image)
+{
+    EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+    if(editorConfig==nullptr)
+        return image;
+
+    return editorConfig->limitImageSize(image);
+}
+
+
 #if defined(Q_OS_WIN)
 namespace {
 
@@ -595,7 +608,7 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
             return false;
         }
         const QString internalName=getUniqueImageName(clipImageExtension(image));
-        directImages.insert(internalName, image);
+        directImages.insert(internalName, clipLimitImageSize(image));
         html=QString("<img src=\"%1\" />").arg(internalName);
     }
     else if(mimeData->hasText())
@@ -697,7 +710,7 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
 
                     internalName=getUniqueImageName(clipImageExtension(dataImage));
                     refToInternal.insert(refName, internalName);
-                    fetchedImages.insert(internalName, dataImage);
+                    fetchedImages.insert(internalName, clipLimitImageSize(dataImage));
                 }
                 else
                 {
@@ -719,7 +732,7 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
 
                     internalName=getUniqueImageName(clipImageExtension(image));
                     refToInternal.insert(refName, internalName);
-                    fetchedImages.insert(internalName, image);
+                    fetchedImages.insert(internalName, clipLimitImageSize(image));
                 }
 
                 if(internalName==refName)

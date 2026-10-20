@@ -12,6 +12,7 @@
 #include "../EditorConfig.h"
 #include "../EditorTextArea.h"
 #include "../EditorToolBarAssistant.h"
+#include "../EditorFontFamilyComboBox.h"
 #include "../EditorCursorPositionDetector.h"
 #include "../EditorFontSizeComboBox.h"
 #include "../../TraceLogger.h"
@@ -1384,6 +1385,12 @@ void TypefaceFormatter::onFontselectChanged(const QFont &font)
     // textArea->setFontFamily(font.family()); // Устанавливается выбранный шрифт в области редактирования
     // editor->currentFontFamily=font.family();
     this->doChangeFontFamily( font.family() );
+
+    // Примененный шрифт — наверх списка недавних (без дублей, максимум 5).
+    // Комбобокс перестраивается и возвращается на текущий шрифт
+    editorConfig->add_recentFont(font.family());
+    editor->editorToolBarAssistant->fontSelect->reloadRecentFonts(editorConfig->get_recentFonts(),
+                                                                  font.family());
 
     // Курсор после выбора возвращается в область редактирования
     textArea->setFocus();

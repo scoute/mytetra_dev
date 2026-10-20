@@ -6825,6 +6825,26 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
+        <source>Find next</source>
+        <translation>Найти далее</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
+        <source>Go to next match in current note</source>
+        <translation>Перейти к следующему совпадению в текущей записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="146"/>
+        <source>Find previous</source>
+        <translation>Найти ранее</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="146"/>
+        <source>Go to previous match in current note</source>
+        <translation>Перейти к предыдущему совпадению в текущей записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
         <source>Editor settings</source>
         <translation>Настройки редактора</translation>
     </message>

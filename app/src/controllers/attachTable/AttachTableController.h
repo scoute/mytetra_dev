@@ -45,7 +45,7 @@ protected:
 
   void addSmart(QString attachType);
   void addFileList(QString attachType, const QStringList &files);
-  bool addAttach(QString attachType, QString currFullFileName, QString currShortFileName);
+  bool addAttach(QString attachType, QString currFullFileName, QString currShortFileName, const QString &source=QString());
   void saveState();
   QStringList selectFilesForAdding(QString attachType);
   void saveAttachToUserPlace(QString fromFullFileName, QString toFullFileName, QString attachType, bool isAttachCrypt);

@@ -62,14 +62,16 @@ void Attach::setParentTable(AttachTableData *iParentTable)
 // Допустимые имена полей
 QStringList Attach::fieldAvailableList(void)
 {
-  return QStringList() << "id" << "fileName" << "link" << "type" << "crypt";
+  return QStringList() << "id" << "fileName" << "link" << "type" << "crypt"
+                       << "description" << "source";
 }
 
 
-// Имена полей, которые шифруются
+// Имена полей, которые шифруются. Описание и происхождение файла
+// чувствительны так же как имя и ссылка, шифруются вместе с ними
 QStringList Attach::fieldCryptedList(void)
 {
-  return QStringList() << "fileName" << "link";
+  return QStringList() << "fileName" << "link" << "description" << "source";
 }
 
 

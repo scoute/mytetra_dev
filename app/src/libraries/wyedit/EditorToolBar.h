@@ -39,6 +39,8 @@ public:
     QAction *superscript;
     QAction *subscript;
     QAction *code;
+    QAction *heading1;
+    QAction *heading2;
     QAction *clear; // Очистка начертания текста
     QAction *textOnly; // Полная очистка текста (оставить один текст)
     QAction *fixBreakSymbol;

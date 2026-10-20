@@ -794,6 +794,9 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->insertHorizontalLine, &QAction::triggered,
             typefaceFormatter,                            &TypefaceFormatter::onInsertHorizontalLineClicked);
 
+    connect(editorToolBarAssistant->specialChar, &QAction::triggered,
+            typefaceFormatter,                   &TypefaceFormatter::onSpecialCharClicked);
+
     connect(editorToolBarAssistant->mathExpression, &QAction::triggered,
             mathExpressionFormatter,                &MathExpressionFormatter::onMathExpressionClicked);
 

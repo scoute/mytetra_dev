@@ -97,6 +97,7 @@ public:
     QAction *openImage;
     QAction *micRecord;
     QAction *insertHorizontalLine;
+    QAction *specialChar;
     QAction *mathExpression;
     QAction *expandEditArea;
     QAction *expandToolsLines;

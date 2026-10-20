@@ -74,6 +74,7 @@ public:
  QAction *actionPrint;
  QAction *actionPrintPreview;
  QAction *actionCopyRecordReference;
+ QAction *actionCopyRecordLink;
  QAction *actionChangeHistory;
  QAction *actionSwitchSelectionMode;
 
@@ -98,6 +99,7 @@ private slots:
  void onWalkHistoryNextClick(void);
  void onBackClick(void);
  void onCopyRecordReference(void);
+ void onCopyRecordLink(void);
 
  // Контекстное меню тулбара на пустом месте: единственный пункт -
  // настройка порядка и видимости кнопок

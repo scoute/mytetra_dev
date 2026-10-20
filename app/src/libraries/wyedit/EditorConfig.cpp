@@ -522,6 +522,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_28;
     parameterFunctions << get_parameter_table_29;
     parameterFunctions << get_parameter_table_30;
+    parameterFunctions << get_parameter_table_31;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1126,6 +1127,61 @@ QStringList EditorConfig::get_parameter_table_30(bool withEndSignature)
         table << "0" << "0" << "0";
 
     return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_31(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 30
+    table << get_parameter_table_30(false);
+
+    // Недавние шрифты одной строкой через ";".
+    // Пусто — шрифты из списка еще не применяли
+
+    table << "recentFonts" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_recentFonts(void)
+{
+    // Пустая строка — легальное "пусто", чтения напрямую:
+    // get_parameter() считает пустоту ошибкой
+    return conf->value("recentFonts").toString().split(";", Qt::SkipEmptyParts);
+}
+
+
+void EditorConfig::add_recentFont(const QString &family)
+{
+    if(family.isEmpty())
+        return;
+
+    QStringList list=get_recentFonts();
+    list.removeAll(family);
+    list.prepend(family);
+
+    set_recentFonts(list);
+}
+
+
+void EditorConfig::set_recentFonts(const QStringList &families)
+{
+    QStringList list=families;
+
+    list.removeAll(QString());
+
+    while(list.size()>5)
+        list.removeLast();
+
+    conf->setValue("recentFonts", list.join(";"));
 }
 
 

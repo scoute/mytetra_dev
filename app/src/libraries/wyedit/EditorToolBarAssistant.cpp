@@ -56,6 +56,11 @@ EditorToolBarAssistant::EditorToolBarAssistant(QWidget *parent,
     switchToolsVisibility(-1);
   else
     switchToolsVisibility(1);
+
+  // Недавние шрифты из конфига наверх списка (текущего еще нет —
+  // пустой маркер остается выбранным)
+  fontSelect->reloadRecentFonts(m_editor->editorConfig->get_recentFonts(),
+                                QString());
 }
 
 

@@ -4,6 +4,8 @@
 #include "AttachTableModel.h"
 #include "Attach.h"
 #include "AttachTableData.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/tree/TreeScreen.h"
 
 
 AttachTableModel::AttachTableModel(QObject *parent) : QAbstractTableModel(parent)
@@ -89,6 +91,19 @@ QVariant AttachTableModel::getCell(int row, int column) const
       return QVariant(table->getFileName(row));
     case ATTACHTABLE_COLUMN_FILESIZE:
       return QVariant(table->getFileSize(row));
+    case ATTACHTABLE_COLUMN_DESCRIPTION:
+      return QVariant(table->getAttach(table->getIdByRow(row)).getField("description"));
+    case ATTACHTABLE_COLUMN_LINK:
+    {
+      Attach attach=table->getAttach(table->getIdByRow(row));
+
+      // Линк показывает свой адрес, файл — откуда он взят
+      // (URL загрузки, цель симлинка или исходный путь)
+      if(attach.getField("type")=="link")
+        return QVariant(attach.getField("link"));
+      else
+        return QVariant(attach.getField("source"));
+    }
     default:
       return QVariant();
   }
@@ -170,14 +185,27 @@ bool AttachTableModel::setData(const QModelIndex &index, const QVariant &value, 
   if(table->size()==0)
     return false;
 
-  // Если происходит редактирование
+  // Если происходит редактирование описания: пишется в поле аттача,
+  // дерево сохраняется, вид обновляется. Остальные колонки не правятся
   if(role==Qt::EditRole)
   {
-    // todo: Дописать эту часть
+    if(index.column()==ATTACHTABLE_COLUMN_DESCRIPTION)
+    {
+      const QString id=table->getIdByRow(index.row());
+      Attach attach=table->getAttach(id);
+      attach.setField("description", value.toString());
+      table->modifyAttach(id, attach);
 
-    emit dataChanged(index,index); // Посылается сигнал что данные были изменены
+      TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
 
-    return true;
+      if(treeScreen!=nullptr)
+        treeScreen->saveKnowTree();
+
+      emit dataChanged(index,index);
+      return true;
+    }
+
+    return false;
   }
 
   // Во всех остальных случаях
@@ -197,10 +225,27 @@ QVariant AttachTableModel::headerData(int section, Qt::Orientation orientation, 
         return QVariant(tr("File name"));
       case 1:
         return QVariant(tr("File size"));
+      case 2:
+        return QVariant(tr("Description"));
+      case 3:
+        return QVariant(tr("Link"));
 
       default:
         return QVariant();
     }
+}
+
+
+// Редактируется только описание: ссылка — это происхождение файла,
+// правится не руками а самим фактом прикрепления
+Qt::ItemFlags AttachTableModel::flags(const QModelIndex &index) const
+{
+  Qt::ItemFlags defaultFlags=QAbstractTableModel::flags(index);
+
+  if(index.isValid() && index.column()==ATTACHTABLE_COLUMN_DESCRIPTION)
+    return defaultFlags | Qt::ItemIsEditable;
+
+  return defaultFlags;
 }
 
 

@@ -1733,6 +1733,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <source>File size</source>
         <translation>Размер файла</translation>
     </message>
+    <message>
+        <source>Description</source>
+        <translation>Описание</translation>
+    </message>
+    <message>
+        <source>Link</source>
+        <translation>Ссылка</translation>
+    </message>
 </context>
 <context>
     <name>AttachTableScreen</name>

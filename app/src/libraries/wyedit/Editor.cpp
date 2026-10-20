@@ -1093,7 +1093,11 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
 
             QImage picture=imageData.value<QImage>();
 
-            picture.save(imageFileName, "png");
+            // Формат по расширению внутреннего имени: png и jpg
+            // переживают смену настройки задним числом
+            const char *imageFormat=imageName.endsWith(QStringLiteral(".jpg")) ? "JPG" : "PNG";
+
+            picture.save(imageFileName, imageFormat);
           }
         }
       }
@@ -1111,7 +1115,7 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
 
     // Перебираются файлы в директории
     foreach(QString fileName, imageInDirectory)
-      if( fileName.contains(QRegExp("\\.png$")) ) // Обрабатыватся только *.png файлы
+      if( fileName.contains(QRegExp("\\.(png|jpg)$")) ) // Обрабатываются только внутренние картинки
         if( !imagesNames.contains(fileName) ) // Только картинки, не встречающиеся в тексте записи
           if( !miscFields["attachFileNameList"].contains(fileName) ) // Только имена файлов, не содержащиеся в прикрепленных файлах
           {

@@ -521,6 +521,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_27;
     parameterFunctions << get_parameter_table_28;
     parameterFunctions << get_parameter_table_29;
+    parameterFunctions << get_parameter_table_30;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1105,6 +1106,29 @@ QStringList EditorConfig::get_parameter_table_29(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_30(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 29
+    table << get_parameter_table_29(false);
+
+    // Последние цвета текста и фона + применение их по клику.
+    // Пусто — цвет еще ни разу не выбирали
+
+    table << "lastFontColor" << "QString" << "";
+    table << "lastBackgroundColor" << "QString" << "";
+    table << "applyLastColorOnClick" << "bool" << "1";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 bool EditorConfig::get_allowTrueImageResize(void)
 {
     if(get_parameter("allowTrueImageResize").toInt()==1)
@@ -1120,6 +1144,52 @@ void EditorConfig::set_allowTrueImageResize(bool allow)
         conf->setValue("allowTrueImageResize", 1);
     else
         conf->setValue("allowTrueImageResize", 0);
+}
+
+
+QString EditorConfig::get_lastFontColor(void)
+{
+    // Пустая строка — легальное "цвета еще нет", поэтому чтения
+    // напрямую из конфига: get_parameter() считает пустоту ошибкой
+    return conf->value("lastFontColor").toString();
+}
+
+
+void EditorConfig::set_lastFontColor(const QString &color)
+{
+    conf->setValue("lastFontColor", color);
+}
+
+
+QString EditorConfig::get_lastBackgroundColor(void)
+{
+    // Пустая строка — легальное "цвета еще нет", поэтому чтения
+    // напрямую из конфига: get_parameter() считает пустоту ошибкой
+    return conf->value("lastBackgroundColor").toString();
+}
+
+
+void EditorConfig::set_lastBackgroundColor(const QString &color)
+{
+    conf->setValue("lastBackgroundColor", color);
+}
+
+
+bool EditorConfig::get_applyLastColorOnClick(void)
+{
+    if(get_parameter("applyLastColorOnClick").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_applyLastColorOnClick(bool apply)
+{
+    if(apply==true)
+        conf->setValue("applyLastColorOnClick", 1);
+    else
+        conf->setValue("applyLastColorOnClick", 0);
 }
 
 

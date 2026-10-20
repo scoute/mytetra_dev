@@ -56,6 +56,9 @@ private:
   QToolButton   *codeSelectColorButton;
   QColor        *codeColor;
 
+  // Клик по кнопке цвета красит в последний цвет без пикера
+  QCheckBox     *applyLastColorCheckBox;
+
   EditorConfig *conf;
  
 };

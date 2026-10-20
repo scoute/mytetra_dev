@@ -1453,6 +1453,10 @@ void TypefaceFormatter::onFontcolorClicked(int n)
         // Если цвет выбран, и он правильный
         if(selectedColor.isValid())
         {
+            // Запоминается как последний: клик по кнопке красит в него
+            // без пикера (если включено в настройках)
+            editorConfig->set_lastFontColor(selectedColor.name(QColor::HexArgb));
+
             // Меняется цвет кнопки и устанавливается цвет текста
             this->doChangeFontcolor( selectedColor );
         }
@@ -1465,6 +1469,26 @@ void TypefaceFormatter::onFontcolorClicked(int n)
         // Меняется цвет кнопки и устанавливается цвет текста
         this->doChangeFontcolor( selectedColor );
     }
+}
+
+
+// Клик по самой кнопке цвета: красит выделение в последний выбранный
+// цвет без вызова пикера. Выключено настройкой — ничего не делает.
+// Цвета еще нет (ни разу не выбирали) — открывается пикер
+void TypefaceFormatter::onFontcolorApplyLast(void)
+{
+    if(editorConfig->get_applyLastColorOnClick()==false)
+        return;
+
+    const QColor lastColor(editorConfig->get_lastFontColor());
+
+    if(lastColor.isValid())
+    {
+        this->doChangeFontcolor(lastColor);
+        return;
+    }
+
+    onFontcolorClicked(0);
 }
 
 
@@ -2013,10 +2037,34 @@ void TypefaceFormatter::onBackgroundcolorClicked(int n)
     // Если цвет выбран, и он правильный
     if(selectedColor.isValid())
     {
+        // Запоминается как последний: клик по кнопке красит в него
+        // без пикера (если включено в настройках)
+        editorConfig->set_lastBackgroundColor(selectedColor.name(QColor::HexArgb));
+
         // Установка цвета фона текста и изменение цвета кнопки
         this->doChangeBackgroundColor( selectedColor );
     }
 
+}
+
+
+// Клик по самой кнопке фона: красит выделение в последний выбранный
+// цвет без вызова пикера. Выключено настройкой — ничего не делает.
+// Цвета еще нет (ни разу не выбирали) — открывается пикер
+void TypefaceFormatter::onBackgroundcolorApplyLast(void)
+{
+    if(editorConfig->get_applyLastColorOnClick()==false)
+        return;
+
+    const QColor lastColor(editorConfig->get_lastBackgroundColor());
+
+    if(lastColor.isValid())
+    {
+        this->doChangeBackgroundColor(lastColor);
+        return;
+    }
+
+    onBackgroundcolorClicked(0);
 }
 
 

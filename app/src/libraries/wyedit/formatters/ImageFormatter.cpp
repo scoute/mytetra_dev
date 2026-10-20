@@ -26,6 +26,7 @@
 #include "main.h"
 #include "libraries//Downloader.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 
 extern GlobalParameters globalParameters;
@@ -250,8 +251,11 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
       // Картинка загружается из файла
       QImage image = QImageReader(currFileName).read();
 
-      // Внутреннее имя картинки
-      QString imageName=getUniqueImageName();
+      // Внутреннее имя по настройке формата; с прозрачностью — PNG
+      EditorConfig *imageFormatConfig=find_object<EditorConfig>("editorconfig");
+      const QString imageExt=(imageFormatConfig!=nullptr) ? imageFormatConfig->imageExtensionFor(image)
+                                                          : QStringLiteral("png");
+      QString imageName=getUniqueImageName(imageExt);
 
       // Картинка добавляется в хранилище документа
       textArea->document()->addResource(QTextDocument::ImageResource, QUrl(imageName), image );
@@ -518,7 +522,7 @@ void ImageFormatter::onDownloadImages(const QString html)
       if(preFragment.isValid() && preFragment.charFormat().isImageFormat())
       {
         QString preImageName=preFragment.charFormat().toImageFormat().name();
-        if(!preImageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")) &&
+        if(!preImageName.contains(QRegExp("^image\\d{10}[a-z0-9]+\\.(png|jpg)$")) &&
            isDownloadableImageReference(preImageName) &&
            !externalHttpReferences.contains(preImageName))
           externalHttpReferences << preImageName;
@@ -576,7 +580,7 @@ void ImageFormatter::onDownloadImages(const QString html)
           // В очередь скачивания попадают только http(s)-ссылки, остальные
           // внешние имена (file, data и прочие) остаются в документе как есть
           // и никогда не уходят в сетевой запрос
-          if(!imageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")) &&
+          if(!imageName.contains(QRegExp("^image\\d{10}[a-z0-9]+\\.(png|jpg)$")) &&
              isDownloadableImageReference(imageName))
           {
             if(msgBox.text().length()==0)
@@ -598,8 +602,15 @@ void ImageFormatter::onDownloadImages(const QString html)
               // Ссылка на картинку добавляется в массив скачиваемых файлов
               downloadReferences << imageName;
 
-              // Ссылке ставится в соответствие уникальное внутреннее имя картинки
-              internalImageName=getUniqueImageName();
+              // Ссылке ставится в соответствие уникальное внутреннее имя
+              // картинки в настроенном формате. Прозрачность тут еще
+              // неизвестна: если скачается картинка с альфой под jpg-именем,
+              // имя поправится на png в onDownloadImagesSuccessfull
+              EditorConfig *downloadFormatConfig=find_object<EditorConfig>("editorconfig");
+              const QString downloadExt=(downloadFormatConfig!=nullptr)
+                                          ? downloadFormatConfig->get_imageSaveFormat()
+                                          : QStringLiteral("png");
+              internalImageName=getUniqueImageName(downloadExt);
               referencesAndInternalNames[imageName]=internalImageName;
             }
             else

@@ -7,6 +7,7 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QLabel>
+#include <QRadioButton>
 
 #include "views/appConfigWindow/ConfigPage.h"
 
@@ -35,6 +36,12 @@ private:
   QLabel *tabStopDistanceLabel;
   QLabel *tabStopDistanceFlexionLabel;
   QSpinBox *tabStopDistanceSpinBox;
+
+  // Формат сохранения новых картинок: PNG без потерь или компактный JPG.
+  // Действует только на вновь вставляемые картинки
+  QLabel *imageFormatLabel;
+  QRadioButton *imagePngButton;
+  QRadioButton *imageJpgButton;
 
   QPushButton *editWyEditConfigFile;
   

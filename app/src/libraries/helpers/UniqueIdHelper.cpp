@@ -40,3 +40,20 @@ QString getUniqueImageName(void)
     return "image"+getUniqueId()+".png"; // "image"+QString::number(rand())+".png";
 }
 
+
+// Имя картинки с заданным расширением. Расширение без точки:
+// "png" или "jpg". Неизвестное приводится к png
+QString getUniqueImageName(const QString &extension)
+{
+    QString ext=extension.toLower();
+
+    if(ext!="jpg" && ext!="jpeg" && ext!="png")
+        ext="png";
+
+    // Внутри всегда короткое "jpg", "jpeg" только читается снаружи
+    if(ext=="jpeg")
+        ext="jpg";
+
+    return "image"+getUniqueId()+"."+ext;
+}
+

@@ -4892,6 +4892,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Показывать панель избранного</translation>
     </message>
     <message>
+        <source>Show editor toolbar</source>
+        <translation>Показывать панель инструментов редактора</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="212"/>
         <source>Backlinks</source>
         <translation>Обратные ссылки</translation>

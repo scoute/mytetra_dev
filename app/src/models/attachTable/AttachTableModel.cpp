@@ -218,10 +218,10 @@ void AttachTableModel::delAttach(const QModelIndex & index) {
    attachList->removeAt(index.row());
    endRemoveRows();
 }
-
-
-Attach& AttachTableModel::getAttach(const QModelIndex & index) const
-{
-  return (*attachList)[index.row()];
-}
 */
+
+
+Attach AttachTableModel::getAttach(const QModelIndex & index) const
+{
+  return table->getAttach(table->getIdByRow(index.row()));
+}

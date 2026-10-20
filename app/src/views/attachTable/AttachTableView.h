@@ -30,6 +30,10 @@ public:
 
   int getFirstSelectionPos(void);
 
+  // HTML миниатюры картинки-вложения для тултипа (пусто если не картинка).
+  // Публичный чтобы вызывать из проб и внешних мест
+  QString attachImageTooltip(const QModelIndex &index) const;
+
 
 signals:
 

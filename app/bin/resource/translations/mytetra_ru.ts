@@ -6193,6 +6193,14 @@ Enable it in Settings on the History page.</source>
         <translation>Копировать ссылку на запись в буфер обмена</translation>
     </message>
     <message>
+        <source>Copy link with title</source>
+        <translation>Копировать ссылку с заголовком</translation>
+    </message>
+    <message>
+        <source>Copy titled link to clipboard for pasting into another note</source>
+        <translation>Копировать ссылку с заголовком в буфер обмена для вставки в другую запись</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="146"/>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="650"/>
         <source>Switch select/multiselect</source>

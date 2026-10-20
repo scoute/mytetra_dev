@@ -71,6 +71,8 @@ public:
 #include "views/tree/TreeScreen.h"
 #include "views/telegram/TelegramImportDialog.h"
 #include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorToolBarAssistant.h"
+#include "libraries/wyedit/EditorConfig.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
 #include "views/favoritesPanel/FavoritesPanel.h"
@@ -2123,6 +2125,11 @@ void MainWindow::initViewMenu(void)
     viewFavoritesAction->setCheckable(true);
     viewMenu->addAction(viewFavoritesAction);
 
+    viewToolsAction=new QAction(tr("Show editor toolbar"), this);
+    viewToolsAction->setCheckable(true);
+    viewToolsAction->setObjectName(QStringLiteral("viewToolsAction"));
+    viewMenu->addAction(viewToolsAction);
+
     viewReadOnlyAction=new QAction(this);
     viewReadOnlyAction->setCheckable(true);
     viewMenu->addAction(viewReadOnlyAction);
@@ -2145,6 +2152,8 @@ void MainWindow::initViewMenu(void)
             this,              &MainWindow::onViewHeaderToggled);
     connect(viewFavoritesAction, &QAction::toggled,
             this,                &MainWindow::onViewFavoritesToggled);
+    connect(viewToolsAction, &QAction::toggled,
+            this,            &MainWindow::onViewToolsToggled);
     connect(viewReadOnlyAction, &QAction::toggled,
             this,               &MainWindow::onViewReadOnlyToggled);
     connect(secretColorAction, &QAction::triggered,
@@ -2166,6 +2175,12 @@ void MainWindow::syncViewMenu(void)
 
     if(viewFavoritesAction!=nullptr)
         viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
+
+    // Панель может прятаться мимо меню (кнопка toggleTools, хоткей):
+    // пометка подтягивается при каждом открытии
+    if(viewToolsAction!=nullptr && editorScreen!=nullptr &&
+       editorScreen->editorToolBarAssistant!=nullptr)
+        viewToolsAction->setChecked(!editorScreen->editorConfig->get_hide_tools_lines());
 
     if(viewReadOnlyAction!=nullptr)
         viewReadOnlyAction->setChecked(mytetraConfig.isGlobalReadOnly());
@@ -2189,6 +2204,17 @@ void MainWindow::onViewFavoritesToggled(bool checked)
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
     if(favoritesPanel!=nullptr)
         favoritesPanel->refreshFavorites();
+}
+
+
+// Возврат спрятанной панели инструментов: чекбокс Вид всегда доступен,
+// в отличие от кнопки toggleTools, которая уезжает вместе с панелью
+void MainWindow::onViewToolsToggled(bool checked)
+{
+    if(editorScreen==nullptr || editorScreen->editorToolBarAssistant==nullptr)
+        return;
+
+    editorScreen->editorToolBarAssistant->switchToolsVisibility(checked ? 1 : -1);
 }
 
 

@@ -46,6 +46,8 @@ public slots:
     void onSubScriptClicked(void);
     void onMonospaceClicked(void);
     void onCodeClicked(void);
+    void onHeading1Clicked(void);
+    void onHeading2Clicked(void);
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);
@@ -62,6 +64,10 @@ public slots:
     void onUpperCase(); // "ПРОПИСНЫЕ"
 
 private:
+
+    // Общий движок заголовков H1/H2: выставить уровень абзацам
+    // в выделении (повторный клик снимает в обычный текст)
+    void applyHeadingLevel(int level);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

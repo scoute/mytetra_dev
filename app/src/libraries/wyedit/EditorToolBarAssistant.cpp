@@ -469,6 +469,8 @@ void EditorToolBarAssistant::onUpdateOutlineButtonHiglight(void)
     strikeout->setChecked(false);
     superscript->setChecked(false);
     subscript->setChecked(false);
+    heading1->setChecked(false);
+    heading2->setChecked(false);
 
     if(m_textArea->fontWeight()==QFont::Bold) bold->setChecked(true);
     if(m_textArea->fontItalic()==true)        italic->setChecked(true);
@@ -481,6 +483,14 @@ void EditorToolBarAssistant::onUpdateOutlineButtonHiglight(void)
     } else if(charFormat.verticalAlignment() == QTextCharFormat::AlignSubScript) {
         subscript->setChecked(true);
     }
+
+    // Подсветка актуального уровня заголовка под курсором
+    const int headingLevel=m_textArea->textCursor().blockFormat().headingLevel();
+
+    if(headingLevel==1)
+        heading1->setChecked(true);
+    else if(headingLevel==2)
+        heading2->setChecked(true);
 }
 
 

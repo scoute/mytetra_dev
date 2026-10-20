@@ -362,6 +362,63 @@ void TypefaceFormatter::onCodeClicked(void)
 }
 
 
+// Установка уровня заголовка для абзацев в выделении (или текущего
+// абзаца без выделения). Повторный клик по своему уровню снимает
+// его в обычный текст. Символьное форматирование не трогается:
+// уровень заголовка живёт в блочном формате и в HTML едет как <h1>
+void TypefaceFormatter::applyHeadingLevel(int level)
+{
+    QTextCursor cursor=textArea->textCursor();
+
+    // Границы прохода по абзацам: без выделения — текущий абзац
+    const int from=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+    const int to=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
+
+    // Тумблер: все затронутые абзацы уже этого уровня — снять в обычный
+    bool allSame=true;
+
+    for(QTextBlock block=textArea->document()->findBlock(from);
+        block.isValid() && block.position()<=to;
+        block=block.next())
+    {
+        if(block.blockFormat().headingLevel()!=level)
+        {
+            allSame=false;
+            break;
+        }
+    }
+
+    const int target=allSame ? 0 : level;
+
+    cursor.beginEditBlock();
+
+    for(QTextBlock block=textArea->document()->findBlock(from);
+        block.isValid() && block.position()<=to;
+        block=block.next())
+    {
+        QTextBlockFormat format=block.blockFormat();
+        format.setHeadingLevel(target);
+
+        QTextCursor edit(block);
+        edit.setBlockFormat(format);
+    }
+
+    cursor.endEditBlock();
+}
+
+
+void TypefaceFormatter::onHeading1Clicked(void)
+{
+    applyHeadingLevel(1);
+}
+
+
+void TypefaceFormatter::onHeading2Clicked(void)
+{
+    applyHeadingLevel(2);
+}
+
+
 // Очистка форматирования, т.е. установка стандартного шрифта,
 // размера и убирание утолщения, наклона, подчеркивания
 // Картинки и таблицы не удаляются

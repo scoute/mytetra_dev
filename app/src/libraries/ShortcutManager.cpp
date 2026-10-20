@@ -142,6 +142,8 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-fontSelect",          Data{ QKeySequence("Alt+F"), tr("Select font"), tr("") });
     defaultKeyTable.insert("editor-fontSize",            Data{ QKeySequence("Alt+S"), tr("Select font size"), tr("") });
     defaultKeyTable.insert("editor-findText",            Data{ QKeySequence("Ctrl+F"), tr("Find text"), tr("Find text in current note") });
+    defaultKeyTable.insert("editor-findNext",            Data{ QKeySequence("F3"), tr("Find next"), tr("Go to next match in current note") });
+    defaultKeyTable.insert("editor-findPrevious",       Data{ QKeySequence("Shift+F3"), tr("Find previous"), tr("Go to previous match in current note") });
     defaultKeyTable.insert("editor-settings",            Data{ QKeySequence("Ctrl+Alt+G"), tr("Editor settings"), tr("") });
     defaultKeyTable.insert("editor-reference",           Data{ QKeySequence("Ctrl+Shift+U"), tr("Edit reference URL"), tr("") });
     defaultKeyTable.insert("editor-secret",              Data{ QKeySequence("Ctrl+Shift+J"), tr("Hide as secret"), tr("Paint selected text as secret") });

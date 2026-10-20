@@ -221,14 +221,14 @@ QVariant AttachTableModel::headerData(int section, Qt::Orientation orientation, 
     return QVariant(section + 1);
   else
     switch (section) {
-      case 0:
+      case ATTACHTABLE_COLUMN_FILENAME:
         return QVariant(tr("File name"));
-      case 1:
-        return QVariant(tr("File size"));
-      case 2:
-        return QVariant(tr("Description"));
-      case 3:
+      case ATTACHTABLE_COLUMN_LINK:
         return QVariant(tr("Link"));
+      case ATTACHTABLE_COLUMN_FILESIZE:
+        return QVariant(tr("File size"));
+      case ATTACHTABLE_COLUMN_DESCRIPTION:
+        return QVariant(tr("Description"));
 
       default:
         return QVariant();

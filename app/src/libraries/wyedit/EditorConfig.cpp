@@ -367,6 +367,24 @@ void EditorConfig::set_expand_tools_lines(bool i)
 }
 
 
+bool EditorConfig::get_hide_tools_lines(void)
+{
+    if(get_parameter("hide_tools_lines").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_hide_tools_lines(bool i)
+{
+    if(i==true)
+        conf->setValue("hide_tools_lines", 1);
+    else
+        conf->setValue("hide_tools_lines", 0);
+}
+
+
 // --------------------
 // Номер версии конфига
 // --------------------
@@ -421,6 +439,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_22;
     parameterFunctions << get_parameter_table_23;
     parameterFunctions << get_parameter_table_24;
+    parameterFunctions << get_parameter_table_25;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -901,6 +920,27 @@ QStringList EditorConfig::get_parameter_table_24(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_25(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 24
+    table << get_parameter_table_24(false);
+
+    // Новый параметр: панель инструментов редактора скрыта целиком.
+    // Кнопка toggleTools докатывается в update_version_change_value()
+
+    table << "hide_tools_lines" << "bool" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 // Метод разрешения конфликтов если исходные и конечные типы не совпадают
 // Должен включать в себя логику обработки только тех параметров
 // и только для тех версий конфигов, которые действительно
@@ -1181,6 +1221,21 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result.replace("insertImageFromFile", "insertImageFromFile,micRecord");
                 else
                     result=result+",micRecord";
+            }
+        }
+
+    if(versionFrom==24 && versionTo==25)
+        if(name=="tools_line_1")
+        {
+            // Кнопка скрытия панели после распахивания линеек.
+            // Имена уже camelCase, вставляется сразу camel.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("toggleTools"))
+            {
+                if(result.contains("expandToolsLines"))
+                    result.replace("expandToolsLines", "expandToolsLines,toggleTools");
+                else
+                    result=result+",toggleTools";
             }
         }
 

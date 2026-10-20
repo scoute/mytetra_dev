@@ -32,6 +32,12 @@ public:
   // Параметр -1 - выключить полную видимость
   void switchExpandToolsLines(int flag=0);
 
+  // Метод, переключающий видимость панели инструментов целиком
+  // (обе линии сразу, в отличие от switchExpandToolsLines).
+  // Если вызывается без параметра, метод сам переключает
+  // Параметр 1 - показать панель, -1 - спрятать панель
+  void switchToolsVisibility(int flag=0);
+
   void updateToActualFormat(void);
   void setOutlineButtonHiglight(int button, bool active);
   void setShowFormattingButtonHiglight(bool active);
@@ -67,6 +73,7 @@ signals:
 public slots:
 
   void onExpandToolsLinesClicked(void);
+  void onToggleToolsClicked(void);
   void onUpdateAlignButtonHiglight(bool activate);
   void onUpdateOutlineButtonHiglight(void);
   void onChangeFontselectOnDisplay(QString fontName);

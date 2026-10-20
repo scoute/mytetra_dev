@@ -6884,6 +6884,14 @@ Enable it in Settings on the History page.</source>
         <translation>Прокрутить текст вниз без перемещения курсора</translation>
     </message>
     <message>
+        <source>Toggle tools</source>
+        <translation>Показать/спрятать панель</translation>
+    </message>
+    <message>
+        <source>Show or hide the editor toolbar</source>
+        <translation>Показать или спрятать панель инструментов редактора</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
         <source>Editor settings</source>
         <translation>Настройки редактора</translation>

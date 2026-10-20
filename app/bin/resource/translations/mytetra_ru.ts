@@ -6892,6 +6892,14 @@ Enable it in Settings on the History page.</source>
         <translation>Показать или спрятать панель инструментов редактора</translation>
     </message>
     <message>
+        <source>Tabs to spaces</source>
+        <translation>Табы в пробелы</translation>
+    </message>
+    <message>
+        <source>Replace tab characters with spaces in selection or whole note</source>
+        <translation>Заменить символы табуляции пробелами в выделении или во всей записи</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
         <source>Editor settings</source>
         <translation>Настройки редактора</translation>

@@ -51,6 +51,7 @@ public slots:
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);
+    void onTabsToSpacesClicked(void);
 
     void onFontselectChanged(const QFont &font);
     void onFontsizeChanged(int n);

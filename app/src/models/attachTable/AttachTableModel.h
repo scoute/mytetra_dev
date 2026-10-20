@@ -46,8 +46,9 @@ public:
   /*
   void addAttach(Attach& newAttach);
   void delAttach(const QModelIndex & index);
-  Attach& getAttach(const QModelIndex & index) const;
   */
+  Attach getAttach(const QModelIndex & index) const;
+
 
 private:
   AttachTableData *table; // С какими данными работает модель

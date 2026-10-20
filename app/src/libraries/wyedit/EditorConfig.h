@@ -115,6 +115,12 @@ public:
     void add_recentFont(const QString &family);
     void set_recentFonts(const QStringList &families);
 
+    // Недавние спецсимволы, новые сверху, максимум 12.
+    // Хранение одной строкой через "\n" (символы могут содержать ";" и ",")
+    QStringList get_recentSymbols(void);
+    void add_recentSymbol(const QString &symbol);
+    void set_recentSymbols(const QStringList &symbols);
+
     // Ужать картинку до лимита длинной стороны из настройки.
     // Возвращает исходник если ужатие не нужно или лимит выключен
     QImage limitImageSize(const QImage &image);
@@ -161,6 +167,7 @@ private:
     static QStringList get_parameter_table_29(bool withEndSignature=true);
     static QStringList get_parameter_table_30(bool withEndSignature=true);
     static QStringList get_parameter_table_31(bool withEndSignature=true);
+    static QStringList get_parameter_table_32(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

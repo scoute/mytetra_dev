@@ -3224,6 +3224,25 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
 </context>
 <context>
+    <name>EditorSpecialCharDialog</name>
+    <message>
+        <source>Special character</source>
+        <translation>Спецсимвол</translation>
+    </message>
+    <message>
+        <source>Recent:</source>
+        <translation>Недавние:</translation>
+    </message>
+    <message>
+        <source>All symbols:</source>
+        <translation>Все символы:</translation>
+    </message>
+    <message>
+        <source>Insert %1</source>
+        <translation>Вставить %1</translation>
+    </message>
+</context>
+<context>
     <name>EditorMathExpressionDialog</name>
     <message>
         <source>Picture formula</source>
@@ -7078,6 +7097,14 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="160"/>
+        <source>Insert special character</source>
+        <translation>Вставить спецсимвол</translation>
+    </message>
+    <message>
+        <source>Insert a special character from the symbol table</source>
+        <translation>Вставить спецсимвол из таблицы символов</translation>
+    </message>
+    <message>
         <source>Insert a horizontal line into the empty paragraph from cursor</source>
         <translation>Вставка горизонтальной линии для разграничения параграфов</translation>
     </message>

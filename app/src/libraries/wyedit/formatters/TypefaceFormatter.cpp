@@ -13,6 +13,7 @@
 #include "../EditorTextArea.h"
 #include "../EditorToolBarAssistant.h"
 #include "../EditorFontFamilyComboBox.h"
+#include "../EditorSpecialCharDialog.h"
 #include "../EditorCursorPositionDetector.h"
 #include "../EditorFontSizeComboBox.h"
 #include "../../TraceLogger.h"
@@ -2072,6 +2073,30 @@ void TypefaceFormatter::onBackgroundcolorApplyLast(void)
     }
 
     onBackgroundcolorClicked(0);
+}
+
+
+// Вставка спецсимвола из диалога с таблицей и недавними.
+// Символ вставляется в курсор (выделение заменяется), выбор
+// запоминается в недавние
+void TypefaceFormatter::onSpecialCharClicked(void)
+{
+    EditorSpecialCharDialog dialog(editor);
+
+    if(dialog.exec()!=QDialog::Accepted)
+        return;
+
+    const QString symbol=dialog.selectedSymbol();
+
+    if(symbol.isEmpty())
+        return;
+
+    textArea->textCursor().beginEditBlock();
+    textArea->textCursor().removeSelectedText();
+    textArea->textCursor().insertText(symbol);
+    textArea->textCursor().endEditBlock();
+
+    editorConfig->add_recentSymbol(symbol);
 }
 
 

@@ -59,6 +59,7 @@ public slots:
     void onBackgroundcolorClicked(int n);
     void onFontcolorApplyLast(void);
     void onBackgroundcolorApplyLast(void);
+    void onSpecialCharClicked(void);
 
     // Вставка горизонтальной линии в "пустой" абзац, где расположен курсор (пустой абзац заменяется на горизонтальную линию)
     void onInsertHorizontalLineClicked();

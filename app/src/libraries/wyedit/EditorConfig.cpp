@@ -523,6 +523,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_29;
     parameterFunctions << get_parameter_table_30;
     parameterFunctions << get_parameter_table_31;
+    parameterFunctions << get_parameter_table_32;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1151,6 +1152,61 @@ QStringList EditorConfig::get_parameter_table_31(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_32(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 31
+    table << get_parameter_table_31(false);
+
+    // Недавние спецсимволы одной строкой через перевод строки.
+    // Пусто — символы еще не вставляли
+
+    table << "recentSymbols" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_recentSymbols(void)
+{
+    // Пустая строка — легальное "пусто", чтения напрямую:
+    // get_parameter() считает пустоту ошибкой
+    return conf->value("recentSymbols").toString().split("\n", Qt::SkipEmptyParts);
+}
+
+
+void EditorConfig::add_recentSymbol(const QString &symbol)
+{
+    if(symbol.isEmpty())
+        return;
+
+    QStringList list=get_recentSymbols();
+    list.removeAll(symbol);
+    list.prepend(symbol);
+
+    set_recentSymbols(list);
+}
+
+
+void EditorConfig::set_recentSymbols(const QStringList &symbols)
+{
+    QStringList list=symbols;
+
+    list.removeAll(QString());
+
+    while(list.size()>12)
+        list.removeLast();
+
+    conf->setValue("recentSymbols", list.join("\n"));
+}
+
+
 QStringList EditorConfig::get_recentFonts(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1559,6 +1615,21 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result.replace("fixBreakSymbol", "fixBreakSymbol,tabsToSpaces");
                 else
                     result=result+",tabsToSpaces";
+            }
+        }
+
+    if(versionFrom==31 && versionTo==32)
+        if(name=="tools_line_1")
+        {
+            // Кнопка спецсимвола после горизонтальной линии:
+            // обе команды вставляют готовое в курсор.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("specialChar"))
+            {
+                if(result.contains("insertHorizontalLine"))
+                    result.replace("insertHorizontalLine", "insertHorizontalLine,specialChar");
+                else
+                    result=result+",specialChar";
             }
         }
 

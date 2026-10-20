@@ -687,9 +687,17 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->fontColor, &EditorDropDownButton::menuItemClicked,
             typefaceFormatter,                 &TypefaceFormatter::onFontcolorClicked);
 
+    // Клик по самой кнопке цвета: красит в последний цвет без пикера
+    connect(editorToolBarAssistant->fontColor, &EditorDropDownButton::buttonClicked,
+            typefaceFormatter,                 &TypefaceFormatter::onFontcolorApplyLast);
+
     // Цвет фона текста
     connect(editorToolBarAssistant->backgroundColor, &EditorDropDownButton::menuItemClicked,
             typefaceFormatter,                       &TypefaceFormatter::onBackgroundcolorClicked);
+
+    // Клик по самой кнопке фона: красит в последний цвет без пикера
+    connect(editorToolBarAssistant->backgroundColor, &EditorDropDownButton::buttonClicked,
+            typefaceFormatter,                       &TypefaceFormatter::onBackgroundcolorApplyLast);
 
     connect(editorToolBarAssistant->indentPlus, &QAction::triggered,
             placementFormatter,                 &PlacementFormatter::onIndentplusClicked);

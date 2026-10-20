@@ -113,6 +113,11 @@ void EditorConfigFont::setup_ui(void)
  QPixmap pix(16, 16);
  pix.fill(codeColor->rgb());
  codeSelectColorButton->setIcon(pix);
+
+ // Клик по кнопке цвета применяет последний выбранный цвет без пикера
+ applyLastColorCheckBox=new QCheckBox(tr("Apply last color on button click"), this);
+ applyLastColorCheckBox->setToolTip(tr("Clicking the text or background color button paints in the last used color without opening the picker"));
+ applyLastColorCheckBox->setChecked(conf->get_applyLastColorOnClick());
 }
 
 
@@ -185,6 +190,7 @@ void EditorConfigFont::assembly(void)
  centralLayout->addLayout(defaultFontLayout);
  centralLayout->addWidget(monospaceGroupBox);
  centralLayout->addWidget(codeGroupBox);
+ centralLayout->addWidget(applyLastColorCheckBox);
  centralLayout->addStretch();
  
  setLayout(centralLayout);
@@ -302,6 +308,11 @@ int EditorConfigFont::applyChanges(void)
  // Если был изменен цвет начертания кода
  if(conf->get_code_font_color()!=codeColor->name())
   conf->set_code_font_color(codeColor->name());
+
+ // Клик по кнопке цвета: последний цвет без пикера
+ if(conf->get_applyLastColorOnClick()!=applyLastColorCheckBox->isChecked()) {
+  conf->set_applyLastColorOnClick(applyLastColorCheckBox->isChecked());
+ }
 
  return difficultChanges;
 }

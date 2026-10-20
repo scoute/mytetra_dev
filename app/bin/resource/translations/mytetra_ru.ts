@@ -2748,6 +2748,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="107"/>
+        <source>Apply last color on button click</source>
+        <translation>Применять последний цвет по клику на кнопку</translation>
+    </message>
+    <message>
+        <source>Clicking the text or background color button paints in the last used color without opening the picker</source>
+        <translation>Клик по кнопке цвета текста или фона красит в последний использованный цвет без открытия палитры</translation>
+    </message>
+    <message>
         <source>Code color</source>
         <translation>Цвет кода</translation>
     </message>

@@ -22,6 +22,9 @@
 
 #include "Editor.h"
 #include "EditorConfig.h"
+#include "libraries/ShortcutManager.h"
+
+extern ShortcutManager shortcutManager;
 #include "EditorConfigDialog.h"
 #include "EditorContextMenu.h"
 #include "EditorTextArea.h"
@@ -162,6 +165,15 @@ void Editor::init(int mode)
   // ее в свою сетку над текстом, иначе она останется без геометрии
   findBar=new EditorFindBar(this);
   findBar->hide();
+
+  // Скрытые экшены перехода между совпадениями: кнопок нет, только хоткеи.
+  // addAction обязателен, иначе shortcut без виджета не сработает
+  findNextAction=new QAction(this);
+  findPrevAction=new QAction(this);
+  shortcutManager.initAction("editor-findNext", findNextAction);
+  shortcutManager.initAction("editor-findPrevious", findPrevAction);
+  addAction(findNextAction);
+  addAction(findPrevAction);
 
   // Создаётся контекстное меню
   editorContextMenu=new EditorContextMenu(this);
@@ -715,6 +727,14 @@ void Editor::setupToolsSignals(void)
 
     connect(editorToolBarAssistant->findText, &QAction::triggered,
             this,                             &Editor::onFindtextClicked);
+
+    connect(findNextAction, &QAction::triggered,
+            this,           &Editor::onFindNextHotkey,
+            Qt::DirectConnection);
+
+    connect(findPrevAction, &QAction::triggered,
+            this,           &Editor::onFindPrevHotkey,
+            Qt::DirectConnection);
 
     connect(editorToolBarAssistant->settings, &QAction::triggered,
             this,                             &Editor::onSettingsClicked);
@@ -1653,6 +1673,50 @@ void Editor::onFindtextClicked(void)
     findDialog->show();
     findDialog->activateWindow();
   }
+}
+
+
+// Хоткей F3: шаг вперёд по активному запросу. Активен запрос видимой
+// панели с непустым текстом; иначе открывается панель поиска (с сидом
+// из выделения по A1), следующий вызов уже шагает
+void Editor::onFindNextHotkey(void)
+{
+  if(findBar->isVisible() && !findBar->searchText().isEmpty())
+  {
+    onFindBarNext();
+
+    return;
+  }
+
+  if(findDialog->isVisible() && !findDialog->findRequestText().isEmpty())
+  {
+    findDialog->goToNextMatch();
+
+    return;
+  }
+
+  onFindtextClicked();
+}
+
+
+// Хоткей Shift+F3: симметрично вперёд, шаг назад
+void Editor::onFindPrevHotkey(void)
+{
+  if(findBar->isVisible() && !findBar->searchText().isEmpty())
+  {
+    onFindBarPrevious();
+
+    return;
+  }
+
+  if(findDialog->isVisible() && !findDialog->findRequestText().isEmpty())
+  {
+    findDialog->goToPrevMatch();
+
+    return;
+  }
+
+  onFindtextClicked();
 }
 
 

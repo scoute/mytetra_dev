@@ -1271,6 +1271,100 @@ void TypefaceFormatter::onFixBreakSymbolClicked()
 }
 
 
+// Преобразование табуляций в пробелы в выделении (или во всей записи
+// без выделения). Ширина таба — из настроек редактора. Табы ищутся
+// поиском по документу и меняются с конца к началу, поэтому картинки,
+// таблицы и прочее нетекстовое содержимое не затрагивается
+void TypefaceFormatter::onTabsToSpacesClicked(void)
+{
+    const int tabSpaces=editorConfig->get_tab_size()>0 ? editorConfig->get_tab_size() : 4;
+    const QString spaces=QString(tabSpaces, QChar(' '));
+
+    QTextDocument *doc=textArea->document();
+    QTextCursor cursor=textArea->textCursor();
+
+    int from;
+    int to;
+    int anchor;
+    int curPos=cursor.position();
+
+    if(cursor.hasSelection())
+    {
+        from=cursor.selectionStart();
+        to=cursor.selectionEnd();
+        anchor=cursor.anchor()<=cursor.position() ? -1 : 1;
+    }
+    else
+    {
+        from=0;
+        to=doc->characterCount()-1;
+        anchor=0;
+    }
+
+    if(to<=from)
+        return;
+
+    // Позиции табов прямым проходом, замена обратным
+    QList<int> tabs;
+    int pos=from;
+
+    while(true)
+    {
+        QTextCursor found=doc->find(QStringLiteral("\t"), pos);
+
+        if(found.isNull() || found.selectionStart()>=to)
+            break;
+
+        tabs.append(found.selectionStart());
+        pos=found.selectionEnd();
+    }
+
+    if(tabs.isEmpty())
+        return;
+
+    cursor.beginEditBlock();
+
+    for(int i=tabs.size()-1; i>=0; --i)
+    {
+        const int tabPos=tabs.at(i);
+        QTextCursor edit(doc);
+        edit.setPosition(tabPos);
+        edit.setPosition(tabPos+1, QTextCursor::KeepAnchor);
+        edit.insertText(spaces);
+    }
+
+    cursor.endEditBlock();
+
+    // Выделение натягивается поверх того же текста
+    const int grown=tabs.size()*(tabSpaces-1);
+
+    if(anchor==0)
+    {
+        int before=0;
+
+        foreach(int tabPos, tabs)
+            if(tabPos<curPos)
+                before++;
+
+        QTextCursor restore(doc);
+        restore.setPosition(curPos+before*(tabSpaces-1));
+        textArea->setTextCursor(restore);
+    }
+    else if(anchor<0)
+    {
+        cursor.setPosition(from);
+        cursor.setPosition(to+grown, QTextCursor::KeepAnchor);
+        textArea->setTextCursor(cursor);
+    }
+    else
+    {
+        cursor.setPosition(to+grown);
+        cursor.setPosition(from, QTextCursor::KeepAnchor);
+        textArea->setTextCursor(cursor);
+    }
+}
+
+
 // Слот, срабатывающий при изменении шрифта в списке шрифтов
 void TypefaceFormatter::onFontselectChanged(const QFont &font)
 {

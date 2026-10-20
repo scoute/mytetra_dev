@@ -440,6 +440,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_23;
     parameterFunctions << get_parameter_table_24;
     parameterFunctions << get_parameter_table_25;
+    parameterFunctions << get_parameter_table_26;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -941,6 +942,25 @@ QStringList EditorConfig::get_parameter_table_25(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_26(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 25.
+    // Новых параметров нет, только докатка кнопки табов в пробелы
+    // в update_version_change_value()
+
+    table << get_parameter_table_25(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 // Метод разрешения конфликтов если исходные и конечные типы не совпадают
 // Должен включать в себя логику обработки только тех параметров
 // и только для тех версий конфигов, которые действительно
@@ -1236,6 +1256,21 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result.replace("expandToolsLines", "expandToolsLines,toggleTools");
                 else
                     result=result+",toggleTools";
+            }
+        }
+
+    if(versionFrom==25 && versionTo==26)
+        if(name=="tools_line_2")
+        {
+            // Кнопка табов в пробелы после замены мягких переносов:
+            // обе команды — построчные преобразования текста.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("tabsToSpaces"))
+            {
+                if(result.contains("fixBreakSymbol"))
+                    result.replace("fixBreakSymbol", "fixBreakSymbol,tabsToSpaces");
+                else
+                    result=result+",tabsToSpaces";
             }
         }
 

@@ -35,6 +35,10 @@ void EditorDropDownButton::setupUi()
     // Собирается виджет
     layout->addWidget(m_button);
 
+    // Клик по кнопке (стрелка меню его не дает): applying last color
+    connect(m_button, &QToolButton::clicked,
+            this,     &EditorDropDownButton::buttonClicked);
+
     // Обнуляются отступы контента
     // layout->setContentsMargins(0, 0, 0, 0);
     this->setDividingMargin(); // Попробовать регулировать через стиль темы

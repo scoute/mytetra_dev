@@ -257,6 +257,18 @@ void EditorToolBarAssistant::onChangeFontcolor(const QColor &color)
 {
     // TRACELOG
 
+    // Режим последнего цвета: кнопка показывает его, а не цвет под курсором
+    if(m_editor->editorConfig->get_applyLastColorOnClick())
+    {
+        const QColor lastColor(m_editor->editorConfig->get_lastFontColor());
+
+        if(lastColor.isValid())
+        {
+            fontColor->setIcon( drawIconOverColor(lastColor, QIcon(":/resource/pic/edit_fontcolor.svg")) );
+            return;
+        }
+    }
+
     // Формат символов под курсором
     QTextCharFormat textAreaFormat = m_textArea->currentCharFormat();
 
@@ -371,35 +383,53 @@ void EditorToolBarAssistant::onChangeBackgroundColor(const QColor &color)
 {
     // TRACELOG
 
-    // Формат символов под курсором
-    QTextCharFormat textAreaFormat = m_textArea->currentCharFormat();
-
-    // Есть ли BackgroundBrush в тексте под курсором
-    bool hasTextBackgroundBrush = textAreaFormat.hasProperty(QTextFormat::BackgroundBrush);
-
-    QPixmap pixMap( getIconSize() );
     QColor fillColor;
 
-    // Есть ли BackgroundBrush в тексте под курсором, и это не прозрачный цвет
-    if(hasTextBackgroundBrush && color.isValid() && color!=Qt::transparent)
-    {
-        // Если есть BackgroundBrush под курсором, то
-        // кнопку красим в цвет заливки текста
-        fillColor=color;
-    }
-    else
-    {
-        // Иначе, в самом тексте BackgroundBrush не выставлен
-        // но на цвет фона может влиять цвет фона ячейки и цвет фона таблицы,
-        // если текст находится внутри ячейки таблицы.
-        // На цвет фона может так же влиять цвет фона параграфа
+    // Режим последнего цвета: кнопка показывает его, а не цвет под курсором
+    bool useLastColor=false;
 
-        fillColor = this->findNonTransparentBackground();
+    if(m_editor->editorConfig->get_applyLastColorOnClick())
+    {
+        const QColor lastColor(m_editor->editorConfig->get_lastBackgroundColor());
 
-        // Если цвет не найден нигде по иерархии, значит он не должен отображаться
-        if ( !fillColor.isValid() )
+        if(lastColor.isValid())
         {
-            fillColor = Qt::transparent;
+            fillColor=lastColor;
+            useLastColor=true;
+        }
+    }
+
+    if(!useLastColor)
+    {
+        // Формат символов под курсором
+        QTextCharFormat textAreaFormat = m_textArea->currentCharFormat();
+
+        // Есть ли BackgroundBrush в тексте под курсором
+        bool hasTextBackgroundBrush = textAreaFormat.hasProperty(QTextFormat::BackgroundBrush);
+
+        QPixmap pixMap( getIconSize() );
+
+        // Есть ли BackgroundBrush в тексте под курсором, и это не прозрачный цвет
+        if(hasTextBackgroundBrush && color.isValid() && color!=Qt::transparent)
+        {
+            // Если есть BackgroundBrush под курсором, то
+            // кнопку красим в цвет заливки текста
+            fillColor=color;
+        }
+        else
+        {
+            // Иначе, в самом тексте BackgroundBrush не выставлен
+            // но на цвет фона может влиять цвет фона ячейки и цвет фона таблицы,
+            // если текст находится внутри ячейки таблицы.
+            // На цвет фона может так же влиять цвет фона параграфа
+
+            fillColor = this->findNonTransparentBackground();
+
+            // Если цвет не найден нигде по иерархии, значит он не должен отображаться
+            if ( !fillColor.isValid() )
+            {
+                fillColor = Qt::transparent;
+            }
         }
     }
 

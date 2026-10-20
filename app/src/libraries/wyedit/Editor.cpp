@@ -614,6 +614,14 @@ void Editor::setupSignals(void)
 
 void Editor::setupToolsSignals(void)
 {
+    // Хоткеи скрытия/распахивания панели обязаны переживать скрытие
+    // самих панелей: QAction-шорткат гаснет вместе с тулбаром, на котором
+    // лежит действие. Поэтому действия висят и на самом редакторе
+    // (видим всегда). Один QAction — один триггер, дублирования нет:
+    // то же действие уже делят меню и тулбары по всему Qt
+    addAction(editorToolBarAssistant->toggleTools);
+    addAction(editorToolBarAssistant->expandToolsLines);
+
     // Создание сигналов, генерируемых кнопками Undo / Redo
     connect(textArea->document(), &QTextDocument::undoAvailable,
             editorToolBarAssistant->undo, &QAction::setEnabled);

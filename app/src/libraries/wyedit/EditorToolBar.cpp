@@ -192,6 +192,11 @@ void EditorToolBar::setupToolBarTools(void)
     fixBreakSymbol->setIcon(QIcon(":/resource/pic/edit_fixBreakSymbol.svg"));
     fixBreakSymbol->setObjectName("editor_tb_fixBreakSymbol");
 
+    // Кнопка преобразования табуляций в пробелы
+    tabsToSpaces=new QAction(this);
+    tabsToSpaces->setIcon(QIcon(":/resource/pic/edit_tabs_to_spaces.svg"));
+    tabsToSpaces->setObjectName("editor_tb_tabsToSpaces");
+
     // Кнопка нумерованного списка
     numericList=new QAction(this);
     numericList->setIcon(QIcon(":/resource/pic/edit_listnumeric.svg"));
@@ -414,6 +419,7 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-clear", clear);
     shortcutManager.initAction("editor-textOnly", textOnly);
     shortcutManager.initAction("editor-fixBreakSymbol", fixBreakSymbol);
+    shortcutManager.initAction("editor-tabsToSpaces", tabsToSpaces);
     shortcutManager.initAction("editor-undo", undo );
     shortcutManager.initAction("editor-redo", redo );
     shortcutManager.initAction("editor-numericList", numericList);

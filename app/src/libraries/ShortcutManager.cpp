@@ -131,6 +131,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-clear",               Data{ QKeySequence("Ctrl+K"), tr("Clear format"), tr("When selected whole paragraph both text and paragraph format is reset to default or just text format in other case") });
     defaultKeyTable.insert("editor-textOnly",            Data{ QKeySequence("Ctrl+Shift+K"), tr("Text only"), tr("") });
     defaultKeyTable.insert("editor-fixBreakSymbol",      Data{ QKeySequence("Ctrl+Shift+R"), tr("Return type replace"), tr("Replace soft carriage return to standard carriage return") });
+    defaultKeyTable.insert("editor-tabsToSpaces",        Data{ QKeySequence(), tr("Tabs to spaces"), tr("Replace tab characters with spaces in selection or whole note") });
     defaultKeyTable.insert("editor-numericList",         Data{ QKeySequence("F12"), tr("Numeric list"), tr("") });
     defaultKeyTable.insert("editor-dotList",             Data{ QKeySequence("Shift+F12"), tr("Marked list"), tr("") });
     defaultKeyTable.insert("editor-indentPlus",          Data{ QKeySequence("Ctrl+Alt+I"), tr("Increase indent"), tr("") });

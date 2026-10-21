@@ -25,6 +25,8 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "EditorConfig.h"
 
 
 extern GlobalParameters globalParameters;
@@ -131,8 +133,29 @@ void EditorTextArea::keyPressEvent(QKeyEvent *event)
 
         QTextEdit::keyPressEvent(event);
     }
+    else if( event->key() == Qt::Key_Tab && !(event->modifiers() & Qt::ShiftModifier) )
+    {
+        // Tab с многострочным выделением упирает весь блок,
+        // иначе штатная вставка табуляции (в таблице — переход по ячейкам)
+        if(!isReadOnly() && indentSelectedLines(true))
+            return;
+
+        QTextEdit::keyPressEvent(event);
+    }
     else if( event->key() == Qt::Key_Backtab )
     {
+        // Shift+Tab с многострочным выделением снимает отступ блока,
+        // иначе прежний построчный unindent. В read-only правит
+        // только штатный путь (то есть ничего)
+        if(isReadOnly())
+        {
+            QTextEdit::keyPressEvent(event);
+            return;
+        }
+
+        if(indentSelectedLines(false))
+            return;
+
         unindentCurrentLine();
     }
     else
@@ -196,6 +219,130 @@ void EditorTextArea::unindentCurrentLine(void)
         }
     }
     setTextCursor(cursor);
+}
+
+
+// Tab/Shift+Tab с многострочным выделением: отступ всего блока.
+// Каждая затронутая строка получает (или лишается) один таб в начале.
+// Выделение сохраняется поверх того же текста. Одна строка или нет
+// выделения — возвращается false, вызывающий идёт штатным путём
+bool EditorTextArea::indentSelectedLines(bool indent)
+{
+    QTextCursor cursor=textCursor();
+
+    if(!cursor.hasSelection())
+        return false;
+
+    QTextDocument *doc=document();
+    const int selStart=cursor.selectionStart();
+    const int selEnd=cursor.selectionEnd();
+
+    QTextBlock first=doc->findBlock(selStart);
+    QTextBlock last=doc->findBlock(selEnd);
+
+    // Конец ровно на начале строки: эта строка не тронута выделением
+    if(last.position()==selEnd && selEnd>selStart)
+        last=last.previous();
+
+    if(!last.isValid() || first==last)
+        return false;
+
+    // Затронутые блоки от последнего к первому: позиции ранних строк
+    // не съезжают при правке поздних
+    QList<QTextBlock> blocks;
+
+    for(QTextBlock block=last; block.isValid() && block.position()>=first.position(); block=block.previous())
+        blocks.append(block);
+
+    // Размер таба в пробелах — как в unindentCurrentLine
+    #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+    qreal tabDistance=tabStopDistance();
+    #else
+    qreal tabDistance=tabStopWidth();
+    #endif
+    int spaceWidth=QFontMetrics(currentCharFormat().font()).averageCharWidth();
+    int tabSpaces=(spaceWidth>0) ? qMax(1, qRound(tabDistance/spaceWidth)) : 4;
+
+    cursor.beginEditBlock();
+
+    // Сдвиги границ выделения: начало едет только от первой строки
+    // (остальные начинаются позже), конец — от всех затронутых
+    int deltaStart=0;
+    int deltaEnd=0;
+
+    foreach(const QTextBlock &block, blocks)
+    {
+        QTextCursor line(block);
+        int removed=0;
+
+        if(indent)
+        {
+            line.insertText(QStringLiteral("\t"));
+            removed=-1;
+        }
+        else
+        {
+            line.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+
+            if(line.selectedText().startsWith('\t'))
+            {
+                line.removeSelectedText();
+                removed=1;
+            }
+            else
+            {
+                line.clearSelection();
+
+                int spaces=0;
+
+                while(spaces<tabSpaces)
+                {
+                    line.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+
+                    if(line.selectedText().endsWith(' '))
+                        spaces++;
+                    else
+                        break;
+                }
+
+                if(spaces>0)
+                {
+                    line.removeSelectedText();
+                    removed=spaces;
+                }
+            }
+        }
+
+        if(removed==0)
+            continue;
+
+        // Вставка: каждая строка двигает конец вправо. Начало едет
+        // только если вставка строго до него (первая строка, курсор
+        // в начале строки — вставка до якоря, якорь едет)
+        // Снятие: симметрично, но удаление ровно на якоре якорь не двигает
+        if(indent)
+        {
+            if(block.position()<=selStart)
+                deltaStart+=1;
+
+            deltaEnd+=1;
+        }
+        else
+        {
+            if(block.position()<selStart)
+                deltaStart-=removed;
+
+            deltaEnd-=removed;
+        }
+    }
+
+    cursor.endEditBlock();
+
+    cursor.setPosition(selStart+deltaStart);
+    cursor.setPosition(selEnd+deltaEnd, QTextCursor::KeepAnchor);
+    setTextCursor(cursor);
+
+    return true;
 }
 
 
@@ -751,11 +898,17 @@ void EditorTextArea::insertFromMimeData(const QMimeData *source)
     {
         QImage image=qvariant_cast<QImage>(source->imageData());
 
-        // Картинка будет хранится в ресурсах во внутреннем формате
-        // без потери качества, поэтому затем при записи
-        // легко сохраняется в PNG формат. Чтобы избежать путаницы,
-        // сразу имя ресурса картинки задается как PNG файл
-        QString imageName=getUniqueImageName();
+        // Имя ресурса по настройке формата; картинки с прозрачностью
+        // всегда PNG (у JPG нет альфа-канала). Большие картинки
+        // ужимаются до лимита длинной стороны
+        EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+        if(editorConfig!=nullptr)
+            image=editorConfig->limitImageSize(image);
+
+        const QString imageExt=(editorConfig!=nullptr) ? editorConfig->imageExtensionFor(image)
+                                                       : QStringLiteral("png");
+        QString imageName=getUniqueImageName(imageExt);
 
         document->addResource(QTextDocument::ImageResource, QUrl(imageName), image);
         cursor.insertImage(imageName);
@@ -802,6 +955,8 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
                                                  const QMap<QString, QByteArray> referencesAndMemoryFiles,
                                                  const QMap<QString, QString> referencesAndInternalNames)
 {
+    QString fixedHtml=html;
+
     // К документу добавляются скачанные картинки в виде ресурсов
     foreach (QString imageReference, referencesAndMemoryFiles.keys())
     {
@@ -811,15 +966,35 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
         // Если данные с картинкой правильные, и с ней может работать Qt
         if(result)
         {
+            // Большие скачанные картинки ужимаются до лимита длинной стороны
+            EditorConfig *sinkConfig=find_object<EditorConfig>("editorconfig");
+
+            if(sinkConfig!=nullptr)
+                image=sinkConfig->limitImageSize(image);
+
+            QString internalName=referencesAndInternalNames.value(imageReference);
+
+            // Скачанная картинка с прозрачностью под jpg-именем:
+            // имя меняется на png прямо в HTML, иначе прозрачность
+            // потерялась бы при сохранении
+            if(!internalName.endsWith(QStringLiteral(".png")) &&
+               !image.isNull() && image.hasAlphaChannel())
+            {
+                const QString pngName=internalName.section('.', 0, -2)+QStringLiteral(".png");
+
+                fixedHtml.replace(internalName, pngName);
+                internalName=pngName;
+            }
+
             // Картинка добавляется в ресурсы документа со внутренним именем
             this->document()->addResource(QTextDocument::ImageResource,
-                                          QUrl( referencesAndInternalNames.value(imageReference) ),
+                                          QUrl( internalName ),
                                           QVariant(image));
         }
     }
 
     // Вставляется HTML-код
-    qDebug() << "Insert source HTML text: " << html;
+    qDebug() << "Insert source HTML text: " << fixedHtml;
 
     // Код вставляется не напрямую, а пропускается через временный документ,
     // чтобы вставить более понятный для QTextEdit HTML-код.
@@ -828,7 +1003,7 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
     // вставляемого фрагмента (баг: вставка меняла шрифт на системный)
     QTextDocument htmlFilterDoc;
     htmlFilterDoc.setDefaultFont(document()->defaultFont());
-    htmlFilterDoc.setHtml(html);
+    htmlFilterDoc.setHtml(fixedHtml);
 
     qDebug() << "Insert filtered HTML text: " << htmlFilterDoc.toHtml();
 

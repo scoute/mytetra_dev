@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QWidget>
 #include <QString>
+#include <QMap>
+#include <QSet>
 
 
 class QHBoxLayout;
@@ -34,6 +36,20 @@ public:
 
  void setFocusToBaseWidget();
 
+ // Порядок кнопок тулбаров по умолчанию и режимы кнопок.
+ // Нужно диалогу настройки порядка кнопок
+ static QStringList defaultToolbarOrder(void);
+ static QStringList defaultExtraToolbarOrder(void);
+ static QString toolbarItemMode(const QString &command);
+ static QSet<QString> hiddenToolbarItems(void);
+
+ // Действие тулбаров по имени. Нужно диалогу настройки порядка кнопок
+ QAction *toolAction(const QString &command);
+
+ // Перестроение обоих тулбаров из списков конфига (или дефолта).
+ // Вызывается при старте и вживую из диалога настроек
+ void rebuildToolbars(void);
+
  // Переприменить read-only редактора (для глобального режима без смены засветки)
  void refreshEditorReadOnly(void);
 
@@ -56,12 +72,11 @@ public:
  QAction *actionFindInBase;
  QAction *actionSort;
  QAction *actionPrint;
+ QAction *actionPrintPreview;
  QAction *actionCopyRecordReference;
+ QAction *actionCopyRecordLink;
  QAction *actionChangeHistory;
  QAction *actionSwitchSelectionMode;
-
- // Действие, которое может быть вызвано из MainWindows
- QAction *actionSyncro;
 
 public slots:
 
@@ -72,8 +87,6 @@ public slots:
  // вроде переключателя панели тегов)
  void addExtraToolAction(QAction *action);
 
- void onSyncroCommandFinishWork(void);
-
  void setupShortcuts(void);
 
  // Обновить прямые тексты новым языком. Тексты на шорткатах
@@ -82,15 +95,27 @@ public slots:
 
 private slots:
  
- void onSyncroClick(void);
  void onWalkHistoryPreviousClick(void);
  void onWalkHistoryNextClick(void);
  void onBackClick(void);
  void onCopyRecordReference(void);
+ void onCopyRecordLink(void);
+
+ // Контекстное меню тулбара на пустом месте: единственный пункт -
+ // настройка порядка и видимости кнопок
+ void onToolbarContextMenu(const QPoint &pos);
 
 private:
  QToolBar *toolsLine;
  QToolBar *extraToolsLine;
+
+ // Внешние кнопки второй линии (переключатели панелей из MainWindow).
+ // Хранятся чтобы переживать перестроение тулбара из настроек
+ QList<QAction *> extraToolActions;
+
+ // Пружины-распоры прошлого построения: QToolBar::clear() виджеты
+ // не удаляет, чистятся вручную
+ QList<QWidget *> toolbarSprings;
 
  QLabel *treePathLabel;
  QString treePath;
@@ -109,6 +134,11 @@ private:
  void setupSignals(void);
  void setupActions(void);
  void assembly(void);
+
+ // Построение одной линии тулбара из списка
+ void buildToolbarLine(QToolBar *line,
+                       const QStringList &order,
+                       bool isMobile);
 
  void toolsWidgetsUpdate();
  void editorModesUpdate();

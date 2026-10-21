@@ -39,9 +39,12 @@ public:
     QAction *superscript;
     QAction *subscript;
     QAction *code;
+    QAction *heading1;
+    QAction *heading2;
     QAction *clear; // Очистка начертания текста
     QAction *textOnly; // Полная очистка текста (оставить один текст)
     QAction *fixBreakSymbol;
+    QAction *tabsToSpaces;
 
     QAction *undo;
     QAction *redo;
@@ -94,9 +97,11 @@ public:
     QAction *openImage;
     QAction *micRecord;
     QAction *insertHorizontalLine;
+    QAction *specialChar;
     QAction *mathExpression;
     QAction *expandEditArea;
     QAction *expandToolsLines;
+    QAction *toggleTools;
     QAction *save;
 
     QAction *mobileBack;

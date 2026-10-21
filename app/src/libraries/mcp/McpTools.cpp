@@ -72,8 +72,63 @@ QJsonObject McpTools::noteObject(Record *record, const QString &branchId, const 
 
   note["tags"]=tags;
 
+  // Автор, ссылка, время создания и число аттачей.
+  // У шифрованных без ключа getField сам вернет пусто:
+  // шифротекст наружу не уходит
+  note["author"]=record->getField("author");
+  note["url"]=record->getField("url");
+  note["ctime"]=record->getField("ctime");
+  note["attach_count"]=record->getField("attachCount").toInt();
+
+  // Шифр виден только флагом: текст без ключа не отдаётся.
+  // Обычные записи ключа не несут, пейлоады не пухнут
+  if(record->getField("crypt")=="1")
+    note["encrypted"]=true;
+
   return note;
 }
+
+
+// Оставить только запрошенные ключи. Пустой список = весь объект.
+// Неизвестные ключи - явная ошибка, а не молчаливое dropping:
+// иначе нейронка просит text у list_notes, не получает его
+// и решает что текст прочитать нечем. Текст живет в get_note
+static QJsonObject filterNoteFields(const QJsonObject &note, const QStringList &fields, QString &error)
+{
+  if(fields.isEmpty())
+    return note;
+
+  static const QSet<QString> knownKeys=QSet<QString>()
+    << "id" << "name" << "branch_id" << "branch_path" << "tags"
+    << "encrypted" << "author" << "url" << "ctime" << "attach_count"
+    << "format" << "text" << "truncated";
+
+  QStringList unknown;
+
+  foreach(const QString &key, fields)
+    if(!knownKeys.contains(key))
+      unknown.append(key);
+
+  if(!unknown.isEmpty())
+  {
+    error="Unknown note fields: "+unknown.join(", ")+
+          ". Note text lives in get_note, call it with note_id.";
+    return QJsonObject();
+  }
+
+  QJsonObject result;
+
+  foreach(const QString &key, fields)
+    if(note.contains(key))
+      result[key]=note.value(key);
+
+  return result;
+}
+
+
+// Одна ветка плоским объектом: id, имя, родитель, итоги из кеша.
+// Определение ниже, перед listBranches
+static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId);
 
 
 void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId, QJsonArray &out)
@@ -90,21 +145,73 @@ void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId
 
     QString id=item->getField("id");
 
-    QJsonObject branch;
-    branch["id"]=id;
-    branch["name"]=item->getField("name");
-    branch["parent_id"]=parentId;
-    out.append(branch);
+    out.append(flatBranchObject(item, parentId));
 
     appendBranches(index, id, out);
   }
 }
 
 
-QJsonObject McpTools::listBranches(void)
+// Одна ветка плоским объектом: id, имя, родитель, итоги из кеша
+static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId)
+{
+  QJsonObject branch;
+  branch["id"]=item->getField("id");
+  branch["name"]=item->getField("name");
+  branch["parent_id"]=parentId;
+
+  if(item->getField("crypt")=="1")
+    branch["encrypted"]=true;
+
+  // Свои и общие с подветками: оба из инкрементального кеша, O(1)
+  branch["notes_count"]=item->recordtableGetRowCount();
+  branch["notes_total"]=item->subtreeRecordCount();
+
+  return branch;
+}
+
+
+QJsonObject McpTools::listBranches(bool recursive, const QString &parentId,
+                                   QString &error)
 {
   QJsonArray branches;
-  appendBranches(QModelIndex(), QString(), branches);
+
+  // Старт: корень или указанная ветка. Пустой parent_id = корень
+  QModelIndex start;
+  QString startParentId;
+
+  if(!parentId.isEmpty())
+  {
+    TreeItem *parentItem=m_model->getItemById(parentId);
+
+    if(parentItem==nullptr)
+    {
+      error="Unknown branch_id: "+parentId;
+
+      return QJsonObject();
+    }
+
+    start=m_model->getIndexByItem(parentItem);
+    startParentId=parentId;
+  }
+
+  if(!recursive)
+  {
+    // Только прямой уровень под стартом: без рекурсии вглубь
+    const int rows=m_model->rowCount(start);
+
+    for(int r=0; r<rows; ++r)
+    {
+      TreeItem *item=m_model->getItem(m_model->index(r, 0, start));
+
+      if(item==nullptr)
+        continue;
+
+      branches.append(flatBranchObject(item, startParentId));
+    }
+  }
+  else
+    appendBranches(start, startParentId, branches); // рекурсивно, по требованию
 
   QJsonObject result;
   result["branches"]=branches;
@@ -138,7 +245,8 @@ void McpTools::collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &ou
 
 
 QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
-                                int limit, QString &error)
+                                int limit, QString &error,
+                                const QStringList &fields)
 {
   QJsonObject result;
 
@@ -165,7 +273,14 @@ QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
   QJsonArray notes;
 
   for(int i=0; i<collected.size() && i<limit; ++i)
-    notes.append(collected.at(i));
+  {
+    QJsonObject item=filterNoteFields(collected.at(i).toObject(), fields, error);
+
+    if(!error.isEmpty())
+      return QJsonObject();
+
+    notes.append(item);
+  }
 
   result["notes"]=notes;
 
@@ -202,7 +317,8 @@ QString McpTools::readTextWithRetry(Record *record)
 }
 
 
-QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &error)
+QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &error,
+                               const QStringList &fields)
 {
   QJsonObject result;
 
@@ -254,7 +370,10 @@ QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &erro
   note["text"]=plain;
   note["truncated"]=truncated;
 
-  result["note"]=note;
+  result["note"]=filterNoteFields(note, fields, error);
+
+  if(!error.isEmpty())
+    return QJsonObject();
 
   return result;
 }
@@ -277,18 +396,44 @@ static QString makeSnippet(const QString &plain, int matchPos, int matchLength)
 }
 
 
-void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit, QJsonArray &out)
+void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit,
+                               QJsonArray &noteOut, QJsonArray &branchOut)
 {
-  if(out.size()>=limit)
-    return;
-
   QString branchId=item->getField("id");
+  QString branchName=item->getField("name");
   QString path=branchPathOf(item);
+
+  // Ветка подходит по имени: отдельным списком, чтобы нейронка
+  // не перебирала все ветки ради поиска нужной.
+  // Корневые ветки несут пустой parent_id, как в list_branches
+  if(branchOut.size()<limit && branchName.toLower().contains(queryLower))
+  {
+    TreeItem *parentItem=item->parent();
+    const bool isRootLevel=(parentItem==nullptr ||
+                            parentItem->parent()==nullptr);
+
+    QJsonObject found;
+    found["id"]=branchId;
+    found["name"]=branchName;
+    found["parent_id"]=isRootLevel ? QString() : parentItem->getField("id");
+    found["branch_path"]=path;
+    branchOut.append(found);
+  }
+
+  if(noteOut.size()>=limit)
+  {
+    // Заметки набраны, но подветки по именам все равно проходятся:
+    // ветки дешевые, тексты записей уже не читаются
+    for(int i=0; i<item->childCount() && branchOut.size()<limit; ++i)
+      searchBranch(item->child(i), queryLower, limit, noteOut, branchOut);
+
+    return;
+  }
 
   RecordTableData *table=item->recordtableGetTableData();
 
   if(table!=nullptr)
-    for(unsigned i=0; i<table->size() && out.size()<limit; ++i)
+    for(unsigned i=0; i<table->size() && noteOut.size()<limit; ++i)
     {
       Record *record=table->getRecord(i);
 
@@ -340,20 +485,21 @@ void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit
         // branch_id здесь - ветка где реально лежит запись
         hit["branch_id"]=branchId;
 
-        out.append(hit);
+        noteOut.append(hit);
       }
     }
 
-  for(int i=0; i<item->childCount() && out.size()<limit; ++i)
-    searchBranch(item->child(i), queryLower, limit, out);
+  for(int i=0; i<item->childCount() && (noteOut.size()<limit || branchOut.size()<limit); ++i)
+    searchBranch(item->child(i), queryLower, limit, noteOut, branchOut);
 }
 
 
-void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower, int limit, QJsonArray &out)
+void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower, int limit,
+                       QJsonArray &noteOut, QJsonArray &branchOut)
 {
   int rows=m_model->rowCount(parent);
 
-  for(int r=0; r<rows && out.size()<limit; ++r)
+  for(int r=0; r<rows && (noteOut.size()<limit || branchOut.size()<limit); ++r)
   {
     QModelIndex index=m_model->index(r, 0, parent);
     TreeItem *item=m_model->getItem(index);
@@ -361,7 +507,7 @@ void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower,
     if(item==nullptr)
       continue;
 
-    searchBranch(item, queryLower, limit, out);
+    searchBranch(item, queryLower, limit, noteOut, branchOut);
   }
 }
 
@@ -386,8 +532,10 @@ QJsonObject McpTools::searchNotes(const QString &query, int limit, QString &erro
     limit=100;
 
   QJsonArray hits;
-  searchModel(QModelIndex(), trimmed.toLower(), limit, hits);
+  QJsonArray branchHits;
+  searchModel(QModelIndex(), trimmed.toLower(), limit, hits, branchHits);
   result["results"]=hits;
+  result["branches"]=branchHits;
 
   return result;
 }
@@ -998,11 +1146,9 @@ QJsonObject McpTools::applyDeleteBranch(KnowTreeModel *model,
   if(!trashReady(error))
     return result;
 
-  int notesCount=0;
-  QSharedPointer< QSet<QString> > ids=model->getRecordsIdList(item);
-
-  if(!ids.isNull())
-    notesCount=ids->size();
+  // Итог из кеша подветки: O(1) вместо рекурсивного
+  // построения QSet идентификаторов ради одного числа
+  const int notesCount=item->subtreeRecordCount();
 
   QModelIndexList indexList;
   indexList.append(model->getIndexByItem(item));
@@ -2132,26 +2278,6 @@ static bool subtreeHasLocked(TreeItem *item)
 }
 
 
-// Сколько записей в поддереве (для итога выгрузки)
-static int countSubtreeNotes(TreeItem *item)
-{
-  if(item==nullptr)
-    return 0;
-
-  int count=0;
-
-  RecordTableData *table=item->recordtableGetTableData();
-
-  if(table!=nullptr)
-    count+=static_cast<int>(table->size());
-
-  for(int i=0; i<item->childCount(); ++i)
-    count+=countSubtreeNotes(item->child(i));
-
-  return count;
-}
-
-
 QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
                                         const QString &branchId,
                                         const QString &path,
@@ -2195,7 +2321,7 @@ QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
     return result;
   }
 
-  const int notes=countSubtreeNotes(branch);
+  const int notes=branch->subtreeRecordCount();
 
   if(!model->exportBranchToDirectory(branch, path))
   {
@@ -2356,6 +2482,190 @@ QJsonObject McpTools::importBranchDirect(const QString &parentId,
 {
   // importBranchFromDirectory сохраняет сам, повторный save не нужен
   return applyImportBranch(m_model, parentId, path, error);
+}
+
+
+bool McpTools::applyBatchOp(KnowTreeModel *model,
+                                const QString &tool,
+                                const QJsonObject &args,
+                                QJsonObject &result,
+                                QString &error)
+{
+  result=QJsonObject();
+
+  if(tool==QStringLiteral("create_branch"))
+  {
+    result=applyCreateBranch(model,
+                             args.value("parent_id").toString(),
+                             args.value("id").toString(),
+                             args.value("name").toString(),
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("create_note"))
+  {
+    result=applyCreateNote(model,
+                           args.value("branch_id").toString(),
+                           args.value("id").toString(),
+                           args.value("name").toString(),
+                           args.value("html").toString(),
+                           args.value("tags").toString(),
+                           error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("update_note"))
+  {
+    QStringList updatedFields;
+
+    if(!applyUpdateNote(model,
+                        args.value("note_id").toString(),
+                        args.value("has_name").toBool(false),
+                        args.value("name").toString(),
+                        args.value("has_html").toBool(false),
+                        args.value("html").toString(),
+                        args.value("has_tags").toBool(false),
+                        args.value("tags").toString(),
+                        error,
+                        updatedFields))
+      return false;
+
+    result["id"]=args.value("note_id").toString();
+    result["updated_fields"]=QJsonArray::fromStringList(updatedFields);
+
+    return true;
+  }
+
+  if(tool==QStringLiteral("delete_note"))
+  {
+    if(!applyDeleteNote(model,
+                        args.value("note_id").toString(),
+                        error))
+      return false;
+
+    result["id"]=args.value("note_id").toString();
+    result["deleted"]=true;
+
+    return true;
+  }
+
+  if(tool==QStringLiteral("delete_branch"))
+  {
+    result=applyDeleteBranch(model,
+                             args.value("branch_id").toString(),
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("rename_branch"))
+  {
+    result=applyRenameBranch(model,
+                             args.value("branch_id").toString(),
+                             args.value("name").toString(),
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("move_branch"))
+  {
+    result=applyMoveBranch(model,
+                           args.value("branch_id").toString(),
+                           args.value("target_id").toString(),
+                           args.value("as_child").toBool(true),
+                           error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("move_note"))
+  {
+    result=applyMoveNote(model,
+                         args.value("note_id").toString(),
+                         args.value("branch_id").toString(),
+                         error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("favorite_note"))
+  {
+    result=applyFavoriteNote(model,
+                             args.value("note_id").toString(),
+                             true,
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("unfavorite_note"))
+  {
+    result=applyFavoriteNote(model,
+                             args.value("note_id").toString(),
+                             false,
+                             error);
+    return error.isEmpty() && !result.isEmpty();
+  }
+
+  if(tool==QStringLiteral("rename_tag"))
+  {
+    int renamed=0;
+    int skipped=0;
+
+    if(!applyRenameTag(model,
+                       args.value("old").toString(),
+                       args.value("new").toString(),
+                       error, renamed, skipped))
+      return false;
+
+    result["renamed_tag"]=args.value("old").toString().trimmed();
+    result["renamed"]=renamed;
+    result["skipped"]=skipped;
+
+    return true;
+  }
+
+  if(tool==QStringLiteral("delete_tag"))
+  {
+    int cleared=0;
+    int skipped=0;
+
+    if(!applyDeleteTag(model,
+                       args.value("tag").toString(),
+                       error, cleared, skipped))
+      return false;
+
+    result["deleted_tag"]=args.value("tag").toString().trimmed();
+    result["cleared"]=cleared;
+    result["skipped"]=skipped;
+
+    return true;
+  }
+
+  error="Unsupported in batch: "+tool;
+
+  return false;
+}
+
+
+QJsonObject McpTools::debugInfo(void)
+{
+  QJsonObject result;
+
+  result["app"]=GlobalParameters::getApplicationName();
+  result["version"]=QString::number(APPLICATION_RELEASE_VERSION)+"."+
+                    QString::number(APPLICATION_RELEASE_SUBVERSION)+"."+
+                    QString::number(APPLICATION_RELEASE_MICROVERSION);
+
+  const QString tetradir=mytetraConfig.get_tetradir();
+  const QString xmlPath=tetradir+"/mytetra.xml";
+  const QFileInfo xmlInfo(xmlPath);
+
+  result["tetradir"]=tetradir;
+  result["xml"]=xmlPath;
+  result["xml_exists"]=xmlInfo.isFile();
+
+  if(xmlInfo.exists())
+    result["xml_mtime"]=xmlInfo.lastModified().toString(Qt::ISODate);
+
+  return result;
 }
 
 

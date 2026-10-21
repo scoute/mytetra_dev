@@ -46,14 +46,20 @@ public slots:
     void onSubScriptClicked(void);
     void onMonospaceClicked(void);
     void onCodeClicked(void);
+    void onHeading1Clicked(void);
+    void onHeading2Clicked(void);
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);
+    void onTabsToSpacesClicked(void);
 
     void onFontselectChanged(const QFont &font);
     void onFontsizeChanged(int n);
     void onFontcolorClicked(int n);
     void onBackgroundcolorClicked(int n);
+    void onFontcolorApplyLast(void);
+    void onBackgroundcolorApplyLast(void);
+    void onSpecialCharClicked(void);
 
     // Вставка горизонтальной линии в "пустой" абзац, где расположен курсор (пустой абзац заменяется на горизонтальную линию)
     void onInsertHorizontalLineClicked();
@@ -62,6 +68,10 @@ public slots:
     void onUpperCase(); // "ПРОПИСНЫЕ"
 
 private:
+
+    // Общий движок заголовков H1/H2: выставить уровень абзацам
+    // в выделении (повторный клик снимает в обычный текст)
+    void applyHeadingLevel(int level);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

@@ -4,7 +4,6 @@
 #include <sys/timeb.h>
 #endif
 
-
 #include <QTranslator>
 #include "libraries/helpers/LanguageHelper.h"
 #include <QToolButton>
@@ -481,6 +480,14 @@ int main(int argc, char ** argv)
 
     // Прием сообщений, испускаемых другим экземпляром MyTetra с помощью консольных команд "--control"
     app.connect(&app, &QtSingleApplication::messageReceived,  &win, &MainWindow::messageHandler);
+
+    // Синхронный протокол запрос-ответ для mcp-команд: GUI применяет
+    // команду и возвращает итог сразу в сокет, сервер не гадает по mtime.
+    // Не-MCP сообщения идут старым путём (ack + messageReceived выше)
+    app.setMcpResponder([&win](const QString &message) -> QByteArray
+    {
+      return win.handleMcpMessage(message);
+    });
 
     // Окно сплеш-скрина скрывается
     if (mytetraConfig.getShowSplashScreen())

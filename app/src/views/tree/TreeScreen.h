@@ -58,6 +58,23 @@ public:
  // Копирование ветки, сворачивание и поиск разрешены
  void setReadOnly(bool state);
 
+ // Порядок кнопок тулбара по умолчанию и режимы кнопок.
+ // Нужно диалогу настройки порядка кнопок
+ static QStringList defaultToolbarOrder(void);
+ static QString toolbarItemMode(const QString &command);
+
+ // Кнопка синхронизации: блокировка на время команды и чтение состояния.
+ // MainWindow дёргает напрямую, как раньше дёргал кнопку записей
+ void setSyncroEnabled(bool state);
+ bool isSyncroEnabled(void) const;
+
+ // Действие тулбара по имени. Нужно диалогу настройки порядка кнопок
+ QAction *toolAction(const QString &command);
+
+ // Перестроение тулбара из списка конфига (или дефолта).
+ // Вызывается при старте и вживую из диалога настроек
+ void rebuildToolbar(void);
+
 signals:
 
     void treeScreenFindInBaseClicked();
@@ -71,11 +88,18 @@ public slots:
 
     void setupShortcuts(void);
 
+    // Разблокировка кнопки синхронизации по окончании команды
+    void onSyncroCommandFinishWork(void);
+
     // Обновить прямые тексты новым языком. Тексты на шорткатах
     // освежает setupShortcuts по сигналу updateWidgetShortcut
     void retranslateUi(void);
 
 private slots:
+
+ // Контекстное меню тулбара на пустом месте: единственный пункт -
+ // настройка порядка и видимости кнопок
+ void onToolbarContextMenu(const QPoint &pos);
 
  void expandAllSubbranch(void);
  void collapseAllSubbranch(void);
@@ -115,6 +139,8 @@ private slots:
  void onPublicationAutoUpdateTimeout(void);
  void checkJournalRecovery(void);
  void checkJournalSize(void);
+ // Синхронизация базы (кнопка переехала с тулбара записей)
+ void onSyncroClick(void);
 
  // Действия при клике на ветку дерева
  void onKnowtreeClicked(const QModelIndex &index);
@@ -158,6 +184,10 @@ private:
  QMap<QString, QAction *> actionList;
 
  QToolBar *toolsLine;
+
+ // Пружины-распоры прошлого построения: QToolBar::clear() виджеты
+ // не удаляет, чистятся вручную
+ QList<QWidget *> toolbarSprings;
 
  KnowTreeView  *knowTreeView;
 

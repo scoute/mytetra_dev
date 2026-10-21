@@ -223,6 +223,7 @@ HEADERS = src/main.h \
     src/views/mainWindow/MainWindow.h \
     src/views/printPreview/PrintPreview.h \
     src/views/printPreview/PreviewView.h \
+    src/views/toolbarSettings/MainToolbarSettingsScreen.h \
     src/models/tree/XmlTree.h \
     src/models/tree/TreeModel.h \
     src/models/tree/TreeItem.h \
@@ -244,6 +245,9 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Crypt.h \
     src/views/appConfigWindow/AppConfigPage_Synchro.h \
     src/views/appConfigWindow/AppConfigPage_RecordTable.h \
+    src/views/appConfigWindow/AppConfigPage_Tree.h \
+    src/libraries/telegram/TelegramImport.h \
+    src/views/telegram/TelegramImportDialog.h \
     src/models/appConfig/AppConfigUpdater.h \
     src/libraries/TrashMonitoring.h \
     src/libraries/wyedit/EditorContextMenu.h \
@@ -254,6 +258,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorAbsTable.h \
     src/libraries/wyedit/EditorAddTableForm.h \
     src/libraries/wyedit/EditorImageProperties.h \
+    src/libraries/wyedit/EditorSpecialCharDialog.h \
     src/libraries/wyedit/EditorMultiLineInputDialog.h \
     src/libraries/FixedParameters.h \
     src/libraries/WindowSwitcher.h \
@@ -439,6 +444,7 @@ SOURCES = src/main.cpp \
     src/views/mainWindow/MainWindow.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \
+    src/views/toolbarSettings/MainToolbarSettingsScreen.cpp \
     src/models/tree/XmlTree.cpp \
     src/models/tree/TreeModel.cpp \
     src/models/tree/TreeItem.cpp \
@@ -462,6 +468,9 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Crypt.cpp \
     src/views/appConfigWindow/AppConfigPage_Synchro.cpp \
     src/views/appConfigWindow/AppConfigPage_RecordTable.cpp \
+    src/views/appConfigWindow/AppConfigPage_Tree.cpp \
+    src/libraries/telegram/TelegramImport.cpp \
+    src/views/telegram/TelegramImportDialog.cpp \
     src/models/appConfig/AppConfigUpdater.cpp \
     src/libraries/TrashMonitoring.cpp \
     src/libraries/wyedit/EditorContextMenu.cpp \
@@ -472,6 +481,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorAbsTable.cpp \
     src/libraries/wyedit/EditorAddTableForm.cpp \
     src/libraries/wyedit/EditorImageProperties.cpp \
+    src/libraries/wyedit/EditorSpecialCharDialog.cpp \
     src/libraries/wyedit/EditorMultiLineInputDialog.cpp \
     src/libraries/FixedParameters.cpp \
     src/libraries/WindowSwitcher.cpp \

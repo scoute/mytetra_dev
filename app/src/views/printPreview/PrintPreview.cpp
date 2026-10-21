@@ -35,9 +35,19 @@ static inline qreal mmToInches(double mm)
 
 
 PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
-    : QDialog(parent), printer(QPrinter::HighResolution)
+    : QWidget(nullptr), printer(QPrinter::HighResolution)
 {
+    Q_UNUSED(parent);
+
     setWindowTitle(tr("SyncTetra - Print Preview"));
+
+    // Отдельное окно верхнего уровня: transient-диалог с родителем
+    // оконный менеджер лишает кнопок свернуть/развернуть
+    // (см. комментарий в PrintPreview.h). Модальность выставляется
+    // вызывающим кодом через setWindowModality
+    setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowTitleHint |
+                   Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint |
+                   Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 
     printer.setFullPage(true);
     doc = document->clone();

@@ -50,6 +50,17 @@ EditorToolBarAssistant::EditorToolBarAssistant(QWidget *parent,
     switchExpandToolsLines(1);
   else
     switchExpandToolsLines(-1);
+
+  // Устанавливается сохраненная видимость панели целиком
+  if(m_editor->editorConfig->get_hide_tools_lines())
+    switchToolsVisibility(-1);
+  else
+    switchToolsVisibility(1);
+
+  // Недавние шрифты из конфига наверх списка (текущего еще нет —
+  // пустой маркер остается выбранным)
+  fontSelect->reloadRecentFonts(m_editor->editorConfig->get_recentFonts(),
+                                QString());
 }
 
 
@@ -127,6 +138,7 @@ void EditorToolBarAssistant::reload()
 void EditorToolBarAssistant::setupSignals()
 {
   connect(expandToolsLines, &QAction::triggered, this, &EditorToolBarAssistant::onExpandToolsLinesClicked);
+  connect(toggleTools, &QAction::triggered, this, &EditorToolBarAssistant::onToggleToolsClicked);
 }
 
 
@@ -250,6 +262,18 @@ void EditorToolBarAssistant::onChangeFontcolor(const QColor &color)
 {
     // TRACELOG
 
+    // Режим последнего цвета: кнопка показывает его, а не цвет под курсором
+    if(m_editor->editorConfig->get_applyLastColorOnClick())
+    {
+        const QColor lastColor(m_editor->editorConfig->get_lastFontColor());
+
+        if(lastColor.isValid())
+        {
+            fontColor->setIcon( drawIconOverColor(lastColor, QIcon(":/resource/pic/edit_fontcolor.svg")) );
+            return;
+        }
+    }
+
     // Формат символов под курсором
     QTextCharFormat textAreaFormat = m_textArea->currentCharFormat();
 
@@ -364,35 +388,53 @@ void EditorToolBarAssistant::onChangeBackgroundColor(const QColor &color)
 {
     // TRACELOG
 
-    // Формат символов под курсором
-    QTextCharFormat textAreaFormat = m_textArea->currentCharFormat();
-
-    // Есть ли BackgroundBrush в тексте под курсором
-    bool hasTextBackgroundBrush = textAreaFormat.hasProperty(QTextFormat::BackgroundBrush);
-
-    QPixmap pixMap( getIconSize() );
     QColor fillColor;
 
-    // Есть ли BackgroundBrush в тексте под курсором, и это не прозрачный цвет
-    if(hasTextBackgroundBrush && color.isValid() && color!=Qt::transparent)
-    {
-        // Если есть BackgroundBrush под курсором, то
-        // кнопку красим в цвет заливки текста
-        fillColor=color;
-    }
-    else
-    {
-        // Иначе, в самом тексте BackgroundBrush не выставлен
-        // но на цвет фона может влиять цвет фона ячейки и цвет фона таблицы,
-        // если текст находится внутри ячейки таблицы.
-        // На цвет фона может так же влиять цвет фона параграфа
+    // Режим последнего цвета: кнопка показывает его, а не цвет под курсором
+    bool useLastColor=false;
 
-        fillColor = this->findNonTransparentBackground();
+    if(m_editor->editorConfig->get_applyLastColorOnClick())
+    {
+        const QColor lastColor(m_editor->editorConfig->get_lastBackgroundColor());
 
-        // Если цвет не найден нигде по иерархии, значит он не должен отображаться
-        if ( !fillColor.isValid() )
+        if(lastColor.isValid())
         {
-            fillColor = Qt::transparent;
+            fillColor=lastColor;
+            useLastColor=true;
+        }
+    }
+
+    if(!useLastColor)
+    {
+        // Формат символов под курсором
+        QTextCharFormat textAreaFormat = m_textArea->currentCharFormat();
+
+        // Есть ли BackgroundBrush в тексте под курсором
+        bool hasTextBackgroundBrush = textAreaFormat.hasProperty(QTextFormat::BackgroundBrush);
+
+        QPixmap pixMap( getIconSize() );
+
+        // Есть ли BackgroundBrush в тексте под курсором, и это не прозрачный цвет
+        if(hasTextBackgroundBrush && color.isValid() && color!=Qt::transparent)
+        {
+            // Если есть BackgroundBrush под курсором, то
+            // кнопку красим в цвет заливки текста
+            fillColor=color;
+        }
+        else
+        {
+            // Иначе, в самом тексте BackgroundBrush не выставлен
+            // но на цвет фона может влиять цвет фона ячейки и цвет фона таблицы,
+            // если текст находится внутри ячейки таблицы.
+            // На цвет фона может так же влиять цвет фона параграфа
+
+            fillColor = this->findNonTransparentBackground();
+
+            // Если цвет не найден нигде по иерархии, значит он не должен отображаться
+            if ( !fillColor.isValid() )
+            {
+                fillColor = Qt::transparent;
+            }
         }
     }
 
@@ -469,6 +511,8 @@ void EditorToolBarAssistant::onUpdateOutlineButtonHiglight(void)
     strikeout->setChecked(false);
     superscript->setChecked(false);
     subscript->setChecked(false);
+    heading1->setChecked(false);
+    heading2->setChecked(false);
 
     if(m_textArea->fontWeight()==QFont::Bold) bold->setChecked(true);
     if(m_textArea->fontItalic()==true)        italic->setChecked(true);
@@ -481,6 +525,14 @@ void EditorToolBarAssistant::onUpdateOutlineButtonHiglight(void)
     } else if(charFormat.verticalAlignment() == QTextCharFormat::AlignSubScript) {
         subscript->setChecked(true);
     }
+
+    // Подсветка актуального уровня заголовка под курсором
+    const int headingLevel=m_textArea->textCursor().blockFormat().headingLevel();
+
+    if(headingLevel==1)
+        heading1->setChecked(true);
+    else if(headingLevel==2)
+        heading2->setChecked(true);
 }
 
 
@@ -557,6 +609,34 @@ void EditorToolBarAssistant::onExpandToolsLinesClicked(void)
     // TRACELOG
 
     switchExpandToolsLines();
+}
+
+
+// Скрытие или показ панели инструментов целиком по команде toggleTools.
+// В отличие от switchExpandToolsLines прячутся обе линии сразу:
+// виджет ассистента целиком убирается из сетки MetaEditor
+void EditorToolBarAssistant::onToggleToolsClicked(void)
+{
+    switchToolsVisibility();
+}
+
+
+// Переключение видимости панели инструментов целиком.
+// Параметр 1 - показать панель, -1 - спрятать, 0 - переключить.
+// Состояние запоминается в конфиге и восстанавливается при старте
+void EditorToolBarAssistant::switchToolsVisibility(int flag)
+{
+    bool setHidden;
+
+    if(flag==0)
+        setHidden=!m_editor->editorConfig->get_hide_tools_lines();
+    else if(flag==1)
+        setHidden=false;
+    else
+        setHidden=true;
+
+    this->setVisible(!setHidden);
+    m_editor->editorConfig->set_hide_tools_lines(setHidden);
 }
 
 

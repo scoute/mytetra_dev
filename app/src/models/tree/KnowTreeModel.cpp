@@ -111,6 +111,11 @@ void KnowTreeModel::init(QDomDocument *domModel)
 
   beginResetModel();
 
+  // Полная перестройка дерева: кеш статистики сбрасывается.
+  // Без этого reload() после правок на диске (MCP mtime-refresh)
+  // отдавал бы старые цифры из getBaseStats
+  invalidateStats();
+
   // Создание корневого Item объекта
   if (rootItem!=nullptr)
     delete rootItem;
@@ -118,6 +123,10 @@ void KnowTreeModel::init(QDomDocument *domModel)
 
   // Динамическое создание дерева из Item объектов на основе DOM модели
   setupModelData(domModel, rootItem);
+
+  // Рекурсивные итоги с нуля: единственный полный проход,
+  // дальше только инкрементальные дельты
+  recountSubtreeTotals();
 
   endResetModel();
 }
@@ -1064,6 +1073,16 @@ bool KnowTreeModel::moveBranch(const QString &sourceId, const QString &targetId,
     bool moveok=oldParent->moveChildTo(oldRow, newParent, insertRow);
     emit layoutChanged();
 
+    if(moveok)
+    {
+        // Итог переехавшей подветки не меняется, а цепочки
+        // старого и нового родителей пересчитываются. Внутри
+        // одного родителя -k и +k схлопываются в ноль
+        const int moved=source->subtreeRecordCount();
+        oldParent->addSubtreeDelta(-moved);
+        newParent->addSubtreeDelta(moved);
+    }
+
     return moveok;
 }
 
@@ -1666,6 +1685,51 @@ QSharedPointer< QSet<QString> > KnowTreeModel::getAllRecordsIdList() const
     this->getAllRecordsIdListRecurse(rootItem, idListPointer.data() );
 
     return idListPointer;
+}
+
+
+void KnowTreeModel::refreshDisplayNames(void)
+{
+  emit layoutAboutToBeChanged();
+  emit layoutChanged();
+}
+
+
+void KnowTreeModel::recountSubtreeTotals(void)
+{
+  if(rootItem==nullptr)
+    return;
+
+  // Нерекурсивный прямой порядок, затем с конца: дети раньше
+  // родителей. Глубина дерева непредсказуема, рекурсия исключена
+  QList<TreeItem *> order;
+  QList<TreeItem *> stack;
+  stack << rootItem;
+
+  while(!stack.isEmpty())
+  {
+    TreeItem *item=stack.takeLast();
+    order << item;
+
+    for(int i=item->childCount()-1; i>=0; --i)
+      stack << item->child(i);
+  }
+
+  for(int i=order.size()-1; i>=0; --i)
+  {
+    TreeItem *item=order.at(i);
+    int total=0;
+
+    RecordTableData *table=item->recordtableGetTableData();
+
+    if(table!=nullptr)
+      total=static_cast<int>(table->size());
+
+    for(int c=0; c<item->childCount(); ++c)
+      total+=item->child(c)->subtreeRecordCount();
+
+    item->setSubtreeTotal(total);
+  }
 }
 
 

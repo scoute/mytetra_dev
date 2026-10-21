@@ -7,6 +7,7 @@
 #include <QtDebug>
 #include <QLabel>
 #include <QGroupBox>
+#include <QRadioButton>
 
 #include "EditorConfigMisc.h"
 #include "EditorConfig.h"
@@ -54,6 +55,53 @@ void EditorConfigMisc::setupUi(void)
  tabStopDistanceSpinBox->setMaximum(50);
  tabStopDistanceSpinBox->setValue(conf->get_tab_size());
 
+ // Формат сохранения новых картинок
+ imageFormatLabel=new QLabel(this);
+ imageFormatLabel->setText(tr("Image format"));
+
+ imagePngButton=new QRadioButton(tr("PNG (lossless)"), this);
+ imageJpgButton=new QRadioButton(tr("JPG (compact)"), this);
+
+ const QString imageFormat=conf->get_imageSaveFormat();
+
+ if(imageFormat==QStringLiteral("jpg"))
+   imageJpgButton->setChecked(true);
+ else
+   imagePngButton->setChecked(true);
+
+ const QString imageFormatHint=tr("Applies to newly inserted images");
+ imageFormatLabel->setToolTip(imageFormatHint);
+ imagePngButton->setToolTip(imageFormatHint);
+ imageJpgButton->setToolTip(imageFormatHint);
+
+ // Лимит длинной стороны новых картинок, 0 — без ограничения
+ imageMaxSizeLabel=new QLabel(this);
+ imageMaxSizeLabel->setText(tr("Max image size"));
+
+ imageMaxSizeCombo=new QComboBox(this);
+ imageMaxSizeCombo->addItem(QStringLiteral("640"), 640);
+ imageMaxSizeCombo->addItem(QStringLiteral("800"), 800);
+ imageMaxSizeCombo->addItem(QStringLiteral("1024"), 1024);
+ imageMaxSizeCombo->addItem(QStringLiteral("1280"), 1280);
+ imageMaxSizeCombo->addItem(QStringLiteral("1600"), 1600);
+ imageMaxSizeCombo->addItem(tr("No limit"), 0);
+
+ const int maxSizeIndex=imageMaxSizeCombo->findData(conf->get_imageMaxSize());
+
+ if(maxSizeIndex>=0)
+   imageMaxSizeCombo->setCurrentIndex(maxSizeIndex);
+ else
+   imageMaxSizeCombo->setCurrentIndex(imageMaxSizeCombo->findData(1280));
+
+ imageMaxSizeLabel->setToolTip(imageFormatHint);
+ imageMaxSizeCombo->setToolTip(imageFormatHint);
+
+ // Мастер-тумблер изменения истинного размера файла картинки
+ allowTrueImageResizeCheckBox=new QCheckBox(this);
+ allowTrueImageResizeCheckBox->setText(tr("Allow changing true image file size"));
+ allowTrueImageResizeCheckBox->setToolTip(tr("Shows a button in Image properties that rewrites the image file. The original is moved to trash. Off by default."));
+ allowTrueImageResizeCheckBox->setChecked(conf->get_allowTrueImageResize());
+
  // Кнопка редактирования файла конфигурации WyEdit
  editWyEditConfigFile=new QPushButton(this);
  editWyEditConfigFile->setText(tr("Edit config file"));
@@ -81,6 +129,15 @@ void EditorConfigMisc::assembly(void)
   configLayout->addWidget(tabStopDistanceSpinBox,       1, 1);
   configLayout->addWidget(tabStopDistanceFlexionLabel,  1, 2);
 
+ // Формат картинок: подпись и две радиокнопки в своей строке
+ configLayout->addWidget(imageFormatLabel, 2, 0);
+ configLayout->addWidget(imagePngButton,   2, 1);
+ configLayout->addWidget(imageJpgButton,   2, 2);
+
+ // Лимит размера: подпись и комбобокс в своей строке
+ configLayout->addWidget(imageMaxSizeLabel, 3, 0);
+ configLayout->addWidget(imageMaxSizeCombo, 3, 1);
+
   // Группировщик виджетов для опасной зоны
   QGroupBox *dangerBox=new QGroupBox(this);
   dangerBox->setTitle(tr("Danger actions (Attention!)"));
@@ -88,6 +145,7 @@ void EditorConfigMisc::assembly(void)
   // Виджеты вставляются в группировщик опасной зоны
   QVBoxLayout *dangerLayout = new QVBoxLayout();
   dangerLayout->addWidget(editWyEditConfigFile);
+  dangerLayout->addWidget(allowTrueImageResizeCheckBox);
   dangerBox->setLayout(dangerLayout);
 
 
@@ -126,6 +184,26 @@ int EditorConfigMisc::applyChanges(void)
  // Если был изменен размер табуляции для клавиши Tab
  if(conf->get_tab_size()!=tabStopDistanceSpinBox->value()) {
    conf->set_tab_size(tabStopDistanceSpinBox->value());
+ }
+
+ // Если был изменен формат сохранения картинок
+ const QString newImageFormat=imageJpgButton->isChecked() ? QStringLiteral("jpg")
+                                                          : QStringLiteral("png");
+
+ if(conf->get_imageSaveFormat()!=newImageFormat) {
+   conf->set_imageSaveFormat(newImageFormat);
+ }
+
+ // Если был изменен лимит размера картинок
+ const int newImageMaxSize=imageMaxSizeCombo->currentData().toInt();
+
+ if(conf->get_imageMaxSize()!=newImageMaxSize) {
+   conf->set_imageMaxSize(newImageMaxSize);
+ }
+
+ // Мастер-тумблер истинного размера
+ if(conf->get_allowTrueImageResize()!=allowTrueImageResizeCheckBox->isChecked()) {
+   conf->set_allowTrueImageResize(allowTrueImageResizeCheckBox->isChecked());
  }
  
  return difficultChanges;

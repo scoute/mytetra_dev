@@ -165,6 +165,18 @@ void EditorToolBar::setupToolBarTools(void)
     code->setIcon(QIcon(":/resource/pic/edit_code.svg"));
     code->setObjectName("editor_tb_code");
 
+    // Кнопки заголовков H1/H2: checkable — подсветка актуального
+    // уровня идёт из onUpdateOutlineButtonHiglight
+    heading1=new QAction(this);
+    heading1->setCheckable(true);
+    heading1->setIcon(QIcon(":/resource/pic/edit_heading1.svg"));
+    heading1->setObjectName("editor_tb_heading1");
+
+    heading2=new QAction(this);
+    heading2->setCheckable(true);
+    heading2->setIcon(QIcon(":/resource/pic/edit_heading2.svg"));
+    heading2->setObjectName("editor_tb_heading2");
+
     // Кнопка Clear
     clear=new QAction(this);
     clear->setIcon(QIcon(":/resource/pic/edit_clear.svg"));
@@ -179,6 +191,11 @@ void EditorToolBar::setupToolBarTools(void)
     fixBreakSymbol=new QAction(this);
     fixBreakSymbol->setIcon(QIcon(":/resource/pic/edit_fixBreakSymbol.svg"));
     fixBreakSymbol->setObjectName("editor_tb_fixBreakSymbol");
+
+    // Кнопка преобразования табуляций в пробелы
+    tabsToSpaces=new QAction(this);
+    tabsToSpaces->setIcon(QIcon(":/resource/pic/edit_tabs_to_spaces.svg"));
+    tabsToSpaces->setObjectName("editor_tb_tabsToSpaces");
 
     // Кнопка нумерованного списка
     numericList=new QAction(this);
@@ -333,6 +350,10 @@ void EditorToolBar::setupToolBarTools(void)
     insertHorizontalLine->setIcon(QIcon(":/resource/pic/edit_insert_horizontal_line.svg"));
     insertHorizontalLine->setObjectName("editor_tb_insertHorizontalLine");
 
+    specialChar=new QAction(this);
+    specialChar->setIcon(QIcon(":/resource/pic/edit_special_char.svg"));
+    specialChar->setObjectName("editor_tb_specialChar");
+
     mathExpression=new QAction(this);
     mathExpression->setIcon(QIcon(":/resource/pic/edit_math_expression.svg"));
     mathExpression->setObjectName("editor_tb_mathExpression");
@@ -344,6 +365,10 @@ void EditorToolBar::setupToolBarTools(void)
     expandToolsLines=new QAction(this);
     expandToolsLines->setIcon(QIcon(":/resource/pic/edit_expand_tools_lines.svg"));
     expandToolsLines->setObjectName("editor_tb_expandToolsLines");
+
+    toggleTools=new QAction(this);
+    toggleTools->setIcon(QIcon(":/resource/pic/edit_toggle_tools.svg"));
+    toggleTools->setObjectName("editor_tb_toggleTools");
 
     save=new QAction(this);
     save->setStatusTip(tr("Save (Ctrl+S)"));
@@ -393,9 +418,12 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-subscript", subscript);
     shortcutManager.initAction("editor-monospace", monospace);
     shortcutManager.initAction("editor-code", code);
+    shortcutManager.initAction("editor-heading1", heading1);
+    shortcutManager.initAction("editor-heading2", heading2);
     shortcutManager.initAction("editor-clear", clear);
     shortcutManager.initAction("editor-textOnly", textOnly);
     shortcutManager.initAction("editor-fixBreakSymbol", fixBreakSymbol);
+    shortcutManager.initAction("editor-tabsToSpaces", tabsToSpaces);
     shortcutManager.initAction("editor-undo", undo );
     shortcutManager.initAction("editor-redo", redo );
     shortcutManager.initAction("editor-numericList", numericList);
@@ -448,9 +476,11 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-openImage", openImage);
     shortcutManager.initAction("editor-micRecord", micRecord);
     shortcutManager.initAction("editor-insertHorizontalLine", insertHorizontalLine);
+    shortcutManager.initAction("editor-specialChar", specialChar);
     shortcutManager.initAction("editor-mathExpression", mathExpression);
     shortcutManager.initAction("editor-expandEditArea", expandEditArea);
     shortcutManager.initAction("editor-expandToolsLines", expandToolsLines);
+    shortcutManager.initAction("editor-toggleTools", toggleTools);
     shortcutManager.initAction("editor-save", save);
     shortcutManager.initAction("editor-showText", showText);
     shortcutManager.initAction("editor-toAttach", toAttach);
@@ -546,6 +576,7 @@ void EditorToolBar::setEnableModifyTextButton(bool state)
                    << "showFormatting" \
                    << "expandEditArea" \
                    << "expandToolsLines" \
+                   << "toggleTools" \
                    << "back" \
                    << "findInBase"
                    << "showText" \

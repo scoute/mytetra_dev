@@ -27,6 +27,12 @@ signals:
  // Прикрепить поиск полоской: запрос переезжает в полоску, окно прячется
  void attach_to_bar(void);
 
+public:
+ // Шаг к следующему/предыдущему совпадению текущего запроса.
+ // Для хоткеев editor-findNext / editor-findPrevious
+ void goToNextMatch(void);
+ void goToPrevMatch(void);
+
 private slots:
  void find_clicked(void);
  void find_prev_clicked(void);

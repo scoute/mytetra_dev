@@ -214,6 +214,10 @@ private slots:
 
  void onShowhtmlClicked(void);
  void onFindtextClicked(void);
+ void onFindNextHotkey(void);
+ void onFindPrevHotkey(void);
+ void onScrollUpHotkey(void);
+ void onScrollDownHotkey(void);
  void onSettingsClicked(void);
  void onShowformattingClicked(bool);
 
@@ -324,6 +328,16 @@ private:
 
  EditorFindDialog *findDialog; // Виджет поиска
  EditorFindBar *findBar; // Встраиваемая полоска поиска, тот же движок
+
+ // Скрытые экшены перехода между совпадениями: кнопок на панели нет,
+ // срабатывают только по хоткеям editor-findNext / editor-findPrevious
+ QAction *findNextAction=nullptr;
+ QAction *findPrevAction=nullptr;
+
+ // Скрытые экшены прокрутки без курсора: только хоткеи
+ // editor-scrollUp / editor-scrollDown
+ QAction *scrollUpAction=nullptr;
+ QAction *scrollDownAction=nullptr;
 
  // Состояние движка поиска: запрос, флаги, совпадения, текущий индекс.
  // findCurrentIndex=-1 означает отсутствие текущего (после набора текста)

@@ -367,6 +367,101 @@ void EditorConfig::set_expand_tools_lines(bool i)
 }
 
 
+bool EditorConfig::get_hide_tools_lines(void)
+{
+    if(get_parameter("hide_tools_lines").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_hide_tools_lines(bool i)
+{
+    if(i==true)
+        conf->setValue("hide_tools_lines", 1);
+    else
+        conf->setValue("hide_tools_lines", 0);
+}
+
+
+QString EditorConfig::get_imageSaveFormat(void)
+{
+    QString format=get_parameter("imageSaveFormat").toLower();
+
+    if(format!="jpg" && format!="jpeg" && format!="png")
+        format="png";
+
+    return format;
+}
+
+
+void EditorConfig::set_imageSaveFormat(const QString &format)
+{
+    QString normalized=format.toLower();
+
+    if(normalized!="jpg" && normalized!="jpeg" && normalized!="png")
+        normalized="png";
+
+    conf->setValue("imageSaveFormat", normalized);
+}
+
+
+QString EditorConfig::imageExtensionFor(const QImage &image)
+{
+    // У JPG нет альфа-канала: прозрачная картинка в JPG получила бы
+    // черный фон, поэтому такие всегда идут в PNG
+    if(!image.isNull() && image.hasAlphaChannel())
+        return QStringLiteral("png");
+
+    QString format=get_parameter("imageSaveFormat").toLower();
+
+    if(format=="jpg" || format=="jpeg")
+        return QStringLiteral("jpg");
+
+    return QStringLiteral("png");
+}
+
+
+int EditorConfig::get_imageMaxSize(void)
+{
+    int size=get_parameter("imageMaxSize").toInt();
+
+    if(size<0)
+        size=0;
+
+    return size;
+}
+
+
+void EditorConfig::set_imageMaxSize(int size)
+{
+    if(size<0)
+        size=0;
+
+    conf->setValue("imageMaxSize", size);
+}
+
+
+QImage EditorConfig::limitImageSize(const QImage &image)
+{
+    if(image.isNull())
+        return image;
+
+    const int limit=get_imageMaxSize();
+
+    if(limit<=0)
+        return image;
+
+    if(qMax(image.width(), image.height())<=limit)
+        return image;
+
+    return image.scaled(limit, limit,
+                        Qt::KeepAspectRatio,
+                        Qt::SmoothTransformation);
+}
+
+
 // --------------------
 // Номер версии конфига
 // --------------------
@@ -421,6 +516,14 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_22;
     parameterFunctions << get_parameter_table_23;
     parameterFunctions << get_parameter_table_24;
+    parameterFunctions << get_parameter_table_25;
+    parameterFunctions << get_parameter_table_26;
+    parameterFunctions << get_parameter_table_27;
+    parameterFunctions << get_parameter_table_28;
+    parameterFunctions << get_parameter_table_29;
+    parameterFunctions << get_parameter_table_30;
+    parameterFunctions << get_parameter_table_31;
+    parameterFunctions << get_parameter_table_32;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -488,7 +591,7 @@ QStringList EditorConfig::get_parameter_table_3(bool withEndSignature)
     table << get_parameter_table_2(false);
 
     // Добавляются новые параметры
-    table << "tools_line_1" << "QString" << "clear,separator,bold,italic,underline,separator,monospace,code,alignleft,aligncenter,alignright,alignwidth,fontselect,fontsize";
+    table << "tools_line_1" << "QString" << "clear,separator,bold,italic,underline,separator,monospace,code,heading1,heading2,alignleft,aligncenter,alignright,alignwidth,fontselect,fontsize";
     table << "tools_line_2" << "QString" << " ";
 
     if(withEndSignature)
@@ -901,6 +1004,307 @@ QStringList EditorConfig::get_parameter_table_24(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_25(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 24
+    table << get_parameter_table_24(false);
+
+    // Новый параметр: панель инструментов редактора скрыта целиком.
+    // Кнопка toggleTools докатывается в update_version_change_value()
+
+    table << "hide_tools_lines" << "bool" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_26(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 25.
+    // Новых параметров нет, только докатка кнопки табов в пробелы
+    // в update_version_change_value()
+
+    table << get_parameter_table_25(false);
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_27(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 26
+    table << get_parameter_table_26(false);
+
+    // Формат сохранения новых картинок. Дефолт png: существующие базы
+    // без ключа продолжают как раньше; новые профили получают jpg
+    // из шаблонного editorconf.ini
+
+    table << "imageSaveFormat" << "QString" << "png";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_28(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 27
+    table << get_parameter_table_27(false);
+
+    // Лимит длинной стороны новых картинок в пикселях, 0 — без ограничения.
+    // Большие фото ужимаются при вставке (как в телегра-импорте)
+
+    table << "imageMaxSize" << "int" << "1280";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_29(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 28
+    table << get_parameter_table_28(false);
+
+    // Мастер-тумблер изменения истинного размера файла картинки.
+    // Выключено: кнопка в диалоге свойств не показывается вообще
+
+    table << "allowTrueImageResize" << "bool" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_30(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 29
+    table << get_parameter_table_29(false);
+
+    // Последние цвета текста и фона + применение их по клику.
+    // Пусто — цвет еще ни разу не выбирали
+
+    table << "lastFontColor" << "QString" << "";
+    table << "lastBackgroundColor" << "QString" << "";
+    table << "applyLastColorOnClick" << "bool" << "1";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_31(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 30
+    table << get_parameter_table_30(false);
+
+    // Недавние шрифты одной строкой через ";".
+    // Пусто — шрифты из списка еще не применяли
+
+    table << "recentFonts" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_32(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 31
+    table << get_parameter_table_31(false);
+
+    // Недавние спецсимволы одной строкой через перевод строки.
+    // Пусто — символы еще не вставляли
+
+    table << "recentSymbols" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_recentSymbols(void)
+{
+    // Пустая строка — легальное "пусто", чтения напрямую:
+    // get_parameter() считает пустоту ошибкой
+    return conf->value("recentSymbols").toString().split("\n", Qt::SkipEmptyParts);
+}
+
+
+void EditorConfig::add_recentSymbol(const QString &symbol)
+{
+    if(symbol.isEmpty())
+        return;
+
+    QStringList list=get_recentSymbols();
+    list.removeAll(symbol);
+    list.prepend(symbol);
+
+    set_recentSymbols(list);
+}
+
+
+void EditorConfig::set_recentSymbols(const QStringList &symbols)
+{
+    QStringList list=symbols;
+
+    list.removeAll(QString());
+
+    while(list.size()>12)
+        list.removeLast();
+
+    conf->setValue("recentSymbols", list.join("\n"));
+}
+
+
+QStringList EditorConfig::get_recentFonts(void)
+{
+    // Пустая строка — легальное "пусто", чтения напрямую:
+    // get_parameter() считает пустоту ошибкой
+    return conf->value("recentFonts").toString().split(";", Qt::SkipEmptyParts);
+}
+
+
+void EditorConfig::add_recentFont(const QString &family)
+{
+    if(family.isEmpty())
+        return;
+
+    QStringList list=get_recentFonts();
+    list.removeAll(family);
+    list.prepend(family);
+
+    set_recentFonts(list);
+}
+
+
+void EditorConfig::set_recentFonts(const QStringList &families)
+{
+    QStringList list=families;
+
+    list.removeAll(QString());
+
+    while(list.size()>5)
+        list.removeLast();
+
+    conf->setValue("recentFonts", list.join(";"));
+}
+
+
+bool EditorConfig::get_allowTrueImageResize(void)
+{
+    if(get_parameter("allowTrueImageResize").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_allowTrueImageResize(bool allow)
+{
+    if(allow==true)
+        conf->setValue("allowTrueImageResize", 1);
+    else
+        conf->setValue("allowTrueImageResize", 0);
+}
+
+
+QString EditorConfig::get_lastFontColor(void)
+{
+    // Пустая строка — легальное "цвета еще нет", поэтому чтения
+    // напрямую из конфига: get_parameter() считает пустоту ошибкой
+    return conf->value("lastFontColor").toString();
+}
+
+
+void EditorConfig::set_lastFontColor(const QString &color)
+{
+    conf->setValue("lastFontColor", color);
+}
+
+
+QString EditorConfig::get_lastBackgroundColor(void)
+{
+    // Пустая строка — легальное "цвета еще нет", поэтому чтения
+    // напрямую из конфига: get_parameter() считает пустоту ошибкой
+    return conf->value("lastBackgroundColor").toString();
+}
+
+
+void EditorConfig::set_lastBackgroundColor(const QString &color)
+{
+    conf->setValue("lastBackgroundColor", color);
+}
+
+
+bool EditorConfig::get_applyLastColorOnClick(void)
+{
+    if(get_parameter("applyLastColorOnClick").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_applyLastColorOnClick(bool apply)
+{
+    if(apply==true)
+        conf->setValue("applyLastColorOnClick", 1);
+    else
+        conf->setValue("applyLastColorOnClick", 0);
+}
+
+
 // Метод разрешения конфликтов если исходные и конечные типы не совпадают
 // Должен включать в себя логику обработки только тех параметров
 // и только для тех версий конфигов, которые действительно
@@ -1181,6 +1585,51 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result.replace("insertImageFromFile", "insertImageFromFile,micRecord");
                 else
                     result=result+",micRecord";
+            }
+        }
+
+    if(versionFrom==24 && versionTo==25)
+        if(name=="tools_line_1")
+        {
+            // Кнопка скрытия панели после распахивания линеек.
+            // Имена уже camelCase, вставляется сразу camel.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("toggleTools"))
+            {
+                if(result.contains("expandToolsLines"))
+                    result.replace("expandToolsLines", "expandToolsLines,toggleTools");
+                else
+                    result=result+",toggleTools";
+            }
+        }
+
+    if(versionFrom==25 && versionTo==26)
+        if(name=="tools_line_2")
+        {
+            // Кнопка табов в пробелы после замены мягких переносов:
+            // обе команды — построчные преобразования текста.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("tabsToSpaces"))
+            {
+                if(result.contains("fixBreakSymbol"))
+                    result.replace("fixBreakSymbol", "fixBreakSymbol,tabsToSpaces");
+                else
+                    result=result+",tabsToSpaces";
+            }
+        }
+
+    if(versionFrom==31 && versionTo==32)
+        if(name=="tools_line_1")
+        {
+            // Кнопка спецсимвола после горизонтальной линии:
+            // обе команды вставляют готовое в курсор.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("specialChar"))
+            {
+                if(result.contains("insertHorizontalLine"))
+                    result.replace("insertHorizontalLine", "insertHorizontalLine,specialChar");
+                else
+                    result=result+",specialChar";
             }
         }
 

@@ -7,6 +7,9 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QLabel>
+#include <QRadioButton>
+#include <QComboBox>
+#include <QCheckBox>
 
 #include "views/appConfigWindow/ConfigPage.h"
 
@@ -35,6 +38,20 @@ private:
   QLabel *tabStopDistanceLabel;
   QLabel *tabStopDistanceFlexionLabel;
   QSpinBox *tabStopDistanceSpinBox;
+
+  // Формат сохранения новых картинок: PNG без потерь или компактный JPG.
+  // Действует только на вновь вставляемые картинки
+  QLabel *imageFormatLabel;
+  QRadioButton *imagePngButton;
+  QRadioButton *imageJpgButton;
+
+  // Лимит длинной стороны новых картинок: большие ужимаются при вставке
+  QLabel *imageMaxSizeLabel;
+  QComboBox *imageMaxSizeCombo;
+
+  // Мастер-тумблер изменения истинного размера файла картинки
+  // (опасная зона: действие необратимо, оригинал уходит в корзину)
+  QCheckBox *allowTrueImageResizeCheckBox;
 
   QPushButton *editWyEditConfigFile;
   

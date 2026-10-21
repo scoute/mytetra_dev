@@ -28,16 +28,25 @@ public:
   static const int DEFAULT_NOTE_CHARS=20000;
   static const int MAX_TEXT_LENGTH=200000;
 
-  // Плоский список веток в порядке дерева: {branches: [{id, name, parent_id}]}
-  QJsonObject listBranches(void);
+  // Плоский список веток: по умолчанию только корневой уровень
+  // (защита от дурака: агент не тянет все дерево почем зря).
+  // recursive=true: все ветки в порядке дерева.
+  // parent_id: дети указанной ветки вместо корня (один уровень
+  // без recursive, поддерево с recursive).
+  // {branches: [{id, name, parent_id}]}
+  QJsonObject listBranches(bool recursive, const QString &parentId,
+                           QString &error);
 
-  // Записи ветки: {notes, truncated}. error если ветка не найдена
+  // Записи ветки: {notes, truncated}. error если ветка не найдена.
+  // fields пустой = весь объект, иначе только перечисленные ключи
   QJsonObject listNotes(const QString &branchId, bool recursive, int limit,
-                        QString &error);
+                        QString &error, const QStringList &fields=QStringList());
 
   // Одна запись с плейнтекстом (до maxChars): {note: {...}}.
+  // fields пустой = весь объект, иначе только перечисленные ключи.
   // error если запись не найдена
-  QJsonObject getNote(const QString &noteId, int maxChars, QString &error);
+  QJsonObject getNote(const QString &noteId, int maxChars, QString &error,
+                      const QStringList &fields=QStringList());
 
   // Подстрока без учета регистра по имени, меткам и тексту:
   // {results: [{id, name, branch_path, snippet}]}.
@@ -166,6 +175,10 @@ public:
   // Итоги базы как в статусбаре + построчная детализация при detailed
   QJsonObject baseStats(bool detailed);
 
+  // Дебаг сервера: версия программы и путь к обслуживаемой базе.
+  // Первый вопрос при расхождении цифр с GUI: тот ли mytetra.xml читается
+  QJsonObject debugInfo(void);
+
   // --- Метки ---
 
   // Все метки с количеством заметок, по убыванию популярности
@@ -218,6 +231,17 @@ static QJsonObject applyFavoriteNote(KnowTreeModel *model,
                                      bool starred,
                                      QString &error);
 
+  // Один шаг apply_batch: мутация модели БЕЗ save/flash и GUI-побочек
+  // (их делает вызывающая сторона пачкой в конце). Аргументы
+  // НОРМАЛИЗОВАННЫЕ: id сгенерирован вызывающим, html готов, флаги
+  // has_* выставлены. result по форме одиночных тулов. false = отказ.
+  // import/export не поддерживаются (свой сейв и файловые эффекты)
+  static bool applyBatchOp(KnowTreeModel *model,
+                           const QString &tool,
+                           const QJsonObject &args,
+                           QJsonObject &result,
+                           QString &error);
+
 QJsonObject favoriteNoteDirect(const QString &noteId, QString &error);
 QJsonObject unfavoriteNoteDirect(const QString &noteId, QString &error);
 
@@ -264,8 +288,10 @@ private:
   void collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &out);
   void collectFromModel(QMap<QString, QList<QJsonObject>> &byName,
                         QMap<QString, QList<QJsonObject>> &byText);
-  void searchBranch(TreeItem *item, const QString &queryLower, int limit, QJsonArray &out);
-  void searchModel(const QModelIndex &parent, const QString &queryLower, int limit, QJsonArray &out);
+  void searchBranch(TreeItem *item, const QString &queryLower, int limit,
+                  QJsonArray &noteOut, QJsonArray &branchOut);
+  void searchModel(const QModelIndex &parent, const QString &queryLower, int limit,
+                   QJsonArray &noteOut, QJsonArray &branchOut);
 
   // Тихое чтение текста с однократным повтором если файл
   // перезаписали прямо во время чтения (смена mtime)

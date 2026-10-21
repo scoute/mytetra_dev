@@ -127,11 +127,14 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-subscript",           Data{ QKeySequence("Ctrl+Shift+B"), tr("Subscript"), tr("") });
     defaultKeyTable.insert("editor-monospace",           Data{ QKeySequence("Ctrl+T"), tr("Monospace"), tr("") });
     defaultKeyTable.insert("editor-code",                Data{ QKeySequence("Ctrl+M"), tr("Code"), tr("Select a whole paragraphs to format text as code") });
+    defaultKeyTable.insert("editor-heading1",           Data{ QKeySequence("Ctrl+1"), tr("Heading 1"), tr("Format paragraphs as first-level heading") });
+    defaultKeyTable.insert("editor-heading2",           Data{ QKeySequence("Ctrl+2"), tr("Heading 2"), tr("Format paragraphs as second-level heading") });
     defaultKeyTable.insert("editor-lowercase",           Data{ QKeySequence(""), tr("Lowercase"), tr("") });
     defaultKeyTable.insert("editor-uppercase",           Data{ QKeySequence(""), tr("Uppercase"), tr("") });
     defaultKeyTable.insert("editor-clear",               Data{ QKeySequence("Ctrl+K"), tr("Clear format"), tr("When selected whole paragraph both text and paragraph format is reset to default or just text format in other case") });
     defaultKeyTable.insert("editor-textOnly",            Data{ QKeySequence("Ctrl+Shift+K"), tr("Text only"), tr("") });
     defaultKeyTable.insert("editor-fixBreakSymbol",      Data{ QKeySequence("Ctrl+Shift+R"), tr("Return type replace"), tr("Replace soft carriage return to standard carriage return") });
+    defaultKeyTable.insert("editor-tabsToSpaces",        Data{ QKeySequence(), tr("Tabs to spaces"), tr("Replace tab characters with spaces in selection or whole note") });
     defaultKeyTable.insert("editor-numericList",         Data{ QKeySequence("F12"), tr("Numeric list"), tr("") });
     defaultKeyTable.insert("editor-dotList",             Data{ QKeySequence("Shift+F12"), tr("Marked list"), tr("") });
     defaultKeyTable.insert("editor-indentPlus",          Data{ QKeySequence("Ctrl+Alt+I"), tr("Increase indent"), tr("") });
@@ -145,6 +148,10 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-fontSelect",          Data{ QKeySequence("Alt+F"), tr("Select font"), tr("") });
     defaultKeyTable.insert("editor-fontSize",            Data{ QKeySequence("Alt+S"), tr("Select font size"), tr("") });
     defaultKeyTable.insert("editor-findText",            Data{ QKeySequence("Ctrl+F"), tr("Find text"), tr("Find text in current note") });
+    defaultKeyTable.insert("editor-findNext",            Data{ QKeySequence("F3"), tr("Find next"), tr("Go to next match in current note") });
+    defaultKeyTable.insert("editor-findPrevious",       Data{ QKeySequence("Shift+F3"), tr("Find previous"), tr("Go to previous match in current note") });
+    defaultKeyTable.insert("editor-scrollUp",            Data{ QKeySequence("Ctrl+Up"), tr("Scroll up"), tr("Scroll text up without moving cursor") });
+    defaultKeyTable.insert("editor-scrollDown",          Data{ QKeySequence("Ctrl+Down"), tr("Scroll down"), tr("Scroll text down without moving cursor") });
     defaultKeyTable.insert("editor-settings",            Data{ QKeySequence("Ctrl+Alt+G"), tr("Editor settings"), tr("") });
     defaultKeyTable.insert("editor-reference",           Data{ QKeySequence("Ctrl+Shift+U"), tr("Edit reference URL"), tr("") });
     defaultKeyTable.insert("editor-secret",              Data{ QKeySequence("Ctrl+Shift+J"), tr("Hide as secret"), tr("Paint selected text as secret") });
@@ -167,9 +174,11 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-showVoiceInFolder",  Data{ QKeySequence(""), tr("Show voice file in folder"), tr("Open record directory in file manager") });
     defaultKeyTable.insert("editor-deleteVoice",        Data{ QKeySequence(""), tr("Delete voice note"), tr("Remove voice link and move file to trash") });
     defaultKeyTable.insert("editor-insertHorizontalLine",Data{ QKeySequence("Ctrl+H"), tr("Insert horizontal line"), tr("Insert a horizontal line into the empty paragraph from cursor") });
+    defaultKeyTable.insert("editor-specialChar",         Data{ QKeySequence(), tr("Insert special character"), tr("Insert a special character from the symbol table") });
     defaultKeyTable.insert("editor-mathExpression",      Data{ QKeySequence("Ctrl+Shift+M"), tr("Insert/edit math expression"), tr("") });
     defaultKeyTable.insert("editor-expandEditArea",      Data{ QKeySequence("Ctrl+Shift+E"), tr("Expand edit area"), tr("") });
     defaultKeyTable.insert("editor-expandToolsLines",    Data{ QKeySequence("Ctrl+Shift+L"), tr("Expand tools"), tr("") });
+    defaultKeyTable.insert("editor-toggleTools",         Data{ QKeySequence("Ctrl+Shift+T"), tr("Toggle tools"), tr("Show or hide the editor toolbar") });
     defaultKeyTable.insert("editor-save",                Data{ QKeySequence("Ctrl+S"), tr("Forse save note"), tr("") });
     defaultKeyTable.insert("editor-showText",            Data{ QKeySequence("Ctrl+Shift+W"), tr("Show detached window"), tr("") });
     defaultKeyTable.insert("editor-toAttach",            Data{ QKeySequence("Ctrl+Shift+A"), tr("Attach files"), tr("") });
@@ -204,7 +213,8 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("misc-imagesGallery", Data{ QKeySequence("Ctrl+Shift+G"), tr("Images gallery"), tr("") });
     defaultKeyTable.insert("misc-syncro",      Data{ QKeySequence("F9"), tr("Synchronization"), tr("Run synchronization") });
     defaultKeyTable.insert("misc-editConfirm", Data{ QKeySequence(Qt::CTRL + Qt::Key_Return), tr("Ok"), tr("") });
-    defaultKeyTable.insert("misc-print",       Data{ QKeySequence("Ctrl+P"), tr("Print"), tr("") });
+    defaultKeyTable.insert("misc-print",       Data{ QKeySequence("Ctrl+P"), tr("Print preview"), tr("") });
+    defaultKeyTable.insert("misc-printDirect", Data{ QKeySequence("Ctrl+Alt+P"), tr("Direct print"), tr("") });
     defaultKeyTable.insert("misc-exportPdf",   Data{ QKeySequence("Ctrl+Shift+D"), tr("Export PDF"), tr("") });
     defaultKeyTable.insert("misc-quit",        Data{ QKeySequence("Ctrl+Q"), tr("Quit"), tr("") });
 }

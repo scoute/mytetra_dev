@@ -156,7 +156,7 @@ void AttachTableController::onAddAttachFromUrl(void)
     QUrl url(reference);
     QString displayName=url.fileName();
 
-    if( addAttach("file", fullFileName, displayName) )
+    if( addAttach("file", fullFileName, displayName, reference) )
       sucessLoadCount++;
 
     // Исходный файл в директории закачки удаляется
@@ -175,7 +175,31 @@ void AttachTableController::addSmart(QString attachType)
   if(files.size()==0)
     return; // Если ни один файл не выбран
 
-  // Перебираются выбранные в диалоге файлы
+  addFileList(attachType, files);
+}
+
+
+// Файлы из drag'n'drop: тот же движок что у пикера, но без диалога.
+// Несохраненная запись (нет данных таблицы) — вежливый отказ вместо
+// критической ошибки: бросать файл некуда
+void AttachTableController::addDroppedFiles(const QStringList &files)
+{
+  if(files.size()==0)
+    return;
+
+  if(getAttachTableData()==NULL)
+  {
+    showMessageBox(tr("Save the note first"));
+    return;
+  }
+
+  addFileList("file", files);
+}
+
+
+void AttachTableController::addFileList(QString attachType, const QStringList &files)
+{
+  // Перебираются файлы (из диалога или из drag'n'drop)
   int sucessLoadCount=0;
   for(int i=0; i<files.size(); ++i)
   {
@@ -196,8 +220,15 @@ void AttachTableController::addSmart(QString attachType)
     // Текущее короткое имя файла (имя файла без пути но с расширением или несколькими расширениями если их несколько)
     QString currShortFileName=currFileInfo.fileName();
 
+    // Добавляется файл аттача. Происхождение: цель симлинка, иначе
+    // полный исходный путь (потом видно в колонке "Ссылка")
+    QString currSourceFileName=currFileInfo.absoluteFilePath();
+
+    if(currFileInfo.isSymLink() && !currFileInfo.symLinkTarget().isEmpty())
+      currSourceFileName=currFileInfo.symLinkTarget();
+
     // Добавляется файл аттача
-    if( addAttach(attachType, currFullFileName, currShortFileName) )
+    if( addAttach(attachType, currFullFileName, currShortFileName, currSourceFileName) )
       sucessLoadCount++;
     else
       break;
@@ -211,7 +242,7 @@ void AttachTableController::addSmart(QString attachType)
 }
 
 
-bool AttachTableController::addAttach(QString attachType, QString currFullFileName, QString currShortFileName)
+bool AttachTableController::addAttach(QString attachType, QString currFullFileName, QString currShortFileName, const QString &source)
 {
   // Выясняется указатель на данные таблицы приаттаченных файлов
   AttachTableData *attachTableData=getAttachTableData();
@@ -222,6 +253,11 @@ bool AttachTableController::addAttach(QString attachType, QString currFullFileNa
   Attach attach(attachType, attachTableData);
   attach.setField("id", getUniqueId());
   attach.setField("fileName", currShortFileName);
+
+  // Происхождение файла (URL загрузки, цель симлинка, исходный путь):
+  // показывается в колонке "Ссылка". У линка источником служит он сам
+  if(!source.isEmpty())
+    attach.setField("source", source);
 
   bool result=false;
   if(attachType=="file")

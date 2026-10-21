@@ -180,10 +180,14 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
   if(toolName=="list_branches" || toolName=="list_notes" ||
      toolName=="get_note" || toolName=="search" ||
      toolName=="find_duplicates" || toolName=="stats" ||
+     toolName=="debug_info" ||
      toolName=="list_tags" || toolName=="tag_notes" ||
      toolName=="untagged_notes" || toolName=="list_favorites" ||
      toolName=="list_attachments")
     return true;
+
+  if(toolName=="apply_batch")
+    return mode==McpMode::ReadWrite || mode==McpMode::ReadWriteDelete;
 
   if(toolName=="create_branch" || toolName=="create_note" ||
      toolName=="update_note" ||
@@ -202,16 +206,35 @@ static bool toolAllowed(McpMode mode, const QString &toolName)
 }
 
 
+// Опциональный список ключей выдачи (get_note, list_notes).
+// Пусто или нет поля = весь объект целиком
+static QStringList readFields(const QJsonObject &arguments)
+{
+  QStringList fields;
+
+  foreach(const QJsonValue &value, arguments.value("fields").toArray())
+  {
+    QString key=value.toString().trimmed();
+
+    if(!key.isEmpty() && !fields.contains(key))
+      fields.append(key);
+  }
+
+  return fields;
+}
+
+
 static bool isKnownTool(const QString &toolName)
 {
   static const char *names[]={
     "list_branches", "list_notes", "get_note", "search",
-    "find_duplicates", "stats", "list_tags", "tag_notes", "untagged_notes",
+    "find_duplicates", "stats", "debug_info", "list_tags", "tag_notes", "untagged_notes",
     "list_favorites", "list_attachments",
     "create_branch", "create_note", "update_note",
     "rename_branch", "move_branch", "move_note",
     "favorite_note", "unfavorite_note",
     "export_branch", "import_branch",
+    "apply_batch",
     "rename_tag", "delete_tag",
     "delete_note", "delete_branch"
   };
@@ -234,6 +257,7 @@ static bool isWriteTool(const QString &toolName)
          toolName=="move_note" ||
          toolName=="favorite_note" || toolName=="unfavorite_note" ||
          toolName=="export_branch" || toolName=="import_branch" ||
+         toolName=="apply_batch" ||
          toolName=="rename_tag" || toolName=="delete_tag" ||
          toolName=="delete_note" || toolName=="delete_branch";
 }
@@ -245,10 +269,23 @@ static QJsonArray buildToolsList(McpMode mode)
 
   {
     QJsonObject properties;
+    QJsonObject branchId;
+    branchId["type"]="string";
+    branchId["description"]="Parent id: direct children of this branch (default: top level)";
+    properties["branch_id"]=branchId;
+    QJsonObject recursive;
+    recursive["type"]="boolean";
+    recursive["description"]="Full subtree walk (default false: one level only)";
+    recursive["default"]=false;
+    properties["recursive"]=recursive;
     tools.append(toolDescription(
       "list_branches",
-      "All branches in tree order.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Top-level branches with notes_count (own) and "
+      "notes_total (with subbranches). Encrypted ones carry encrypted:true. "
+      "Pass recursive:true for the full tree, "
+      "branch_id for children of one branch."
+      ),      objectSchema(properties, QJsonArray())));
   }
   {
     QJsonObject properties;
@@ -268,12 +305,22 @@ static QJsonArray buildToolsList(McpMode mode)
     limit["maximum"]=200;
     limit["default"]=50;
     properties["limit"]=limit;
+    QJsonObject fields;
+    fields["type"]="array";
+    fields["description"]="Note keys to return (default all, unknown keys are an error): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count. No text here, use get_note for it.";
+    QJsonObject fieldItems;
+    fieldItems["type"]="string";
+    fields["items"]=fieldItems;
+    properties["fields"]=fields;
     QJsonArray required;
     required.append("branch_id");
     tools.append(toolDescription(
       "list_notes",
-      "Notes in a branch.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Notes in a branch WITHOUT texts (id, name, tags, ...). "
+      "To read a note text call get_note with its note_id. "
+      "Encrypted ones carry encrypted:true."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -288,12 +335,20 @@ static QJsonArray buildToolsList(McpMode mode)
     maxChars["minimum"]=1;
     maxChars["default"]=20000;
     properties["max_chars"]=maxChars;
+    QJsonObject fields;
+    fields["type"]="array";
+    fields["description"]="Note keys to return (default all, unknown keys are an error): id, name, branch_id, branch_path, tags, encrypted, author, url, ctime, attach_count, format, text, truncated";
+    QJsonObject fieldItems;
+    fieldItems["type"]="string";
+    fields["items"]=fieldItems;
+    properties["fields"]=fields;
     QJsonArray required;
     required.append("note_id");
     tools.append(toolDescription(
       "get_note",
-      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "One note as plain text. Unsaved GUI edits invisible, locked notes read empty. Encrypted notes carry encrypted:true."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -313,8 +368,11 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("query");
     tools.append(toolDescription(
       "search",
-      "Substring search over names, tags, texts.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Substring search over note names, tags, texts. "
+      "Matching branches go in a separate branches list, no need to list all branches. "
+      "Hits carry snippets only, call get_note with note_id to read the full text."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -331,8 +389,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_branch",
-      "Create a branch.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Create a branch. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -343,7 +402,8 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["branch_id"]=branchId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="Title";
+    name["description"]="Title, free-form, no length cap (80+ chars is fine; "
+      "a narrow desktop column may visually clip it, the stored name stays intact)";
     properties["name"]=name;
     QJsonObject text;
     text["type"]="string";
@@ -366,8 +426,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "create_note",
-      "Create a note.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Create a note. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -378,7 +439,8 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["note_id"]=noteId;
     QJsonObject name;
     name["type"]="string";
-    name["description"]="New title";
+    name["description"]="New title, free-form, no length cap (80+ chars is fine; "
+      "a narrow desktop column may visually clip it, the stored name stays intact)";
     properties["name"]=name;
     QJsonObject text;
     text["type"]="string";
@@ -398,8 +460,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "update_note",
-      "Update note fields. Only provided fields change; open GUI editor keeps its buffer.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Update note fields. Only provided fields change; open GUI editor keeps its buffer. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -412,8 +475,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "delete_note",
-      "Delete a note to trash. No confirmation beyond this call.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Delete a note to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -426,8 +490,37 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "delete_branch",
-      "Delete a branch subtree to trash. No confirmation beyond this call.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Delete a branch subtree to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
+  }
+
+  {
+    QJsonObject properties;
+    QJsonObject operations;
+    operations["type"]="array";
+    operations["description"]="Operations in order: {tool, arguments}. "
+      "Same argument shapes as single tools; creates get server ids. "
+      "No intra-batch references: later ops can not use ids created "
+      "earlier in the same batch. import/export unsupported.";
+    operations["maxItems"]=200;
+    properties["operations"]=operations;
+    QJsonArray required;
+    required.append("operations");
+    tools.append(toolDescription(
+      "apply_batch",
+      QObject::tr(
+      "PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. "
+      "Do not call single-write tools in a loop. "
+      "Example: {\"operations\": [{\"tool\": \"create_note\", \"arguments\": "
+      "{\"branch_id\": \"abc123\", \"name\": \"Shopping\", \"text\": \"milk, bread\"}}, "
+      "{\"tool\": \"rename_tag\", \"arguments\": {\"old\": \"todo\", \"new\": \"done\"}}]}. "
+      "Batchable: create/update/delete/move/favorite note, create/rename/move/delete branch, "
+      "rename/delete tag (no export/import). "
+      "Creates get server ids, later ops can not reference them. Deletes need delete mode. "
+      "Not atomic: stops at first error, applied prefix persists. "
+      "Per-operation results in order."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -445,8 +538,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("name");
     tools.append(toolDescription(
       "rename_branch",
-      "Rename a branch.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Rename a branch. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -469,8 +563,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("target_id");
     tools.append(toolDescription(
       "move_branch",
-      "Move a branch.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Move a branch. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -488,8 +583,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("branch_id");
     tools.append(toolDescription(
       "move_note",
-      "Move a note, id and links kept.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Move a note, id and links kept. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -502,8 +598,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "favorite_note",
-      "Star a note.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Star a note. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -516,8 +613,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "unfavorite_note",
-      "Unstar a note.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -535,8 +633,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("path");
     tools.append(toolDescription(
       "export_branch",
-      "Export a branch subtree to a directory in SyncTetra exchange format.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Export a branch subtree to a directory in SyncTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -553,8 +652,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("path");
     tools.append(toolDescription(
       "import_branch",
-      "Import a branch subtree from a SyncTetra exchange directory.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Import a branch subtree from a SyncTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -568,8 +668,9 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["limit"]=limit;
     tools.append(toolDescription(
       "find_duplicates",
-      "Same-name or same-text note groups.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Same-name or same-text note groups."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
@@ -581,16 +682,27 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["detailed"]=detailed;
     tools.append(toolDescription(
       "stats",
-      "Totals: branches, notes, tags, files, images, links.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Totals: branches, notes, tags, files, images, links."
+      ),      objectSchema(properties, QJsonArray())));
+  }
+
+  {
+    QJsonObject properties;
+    tools.append(toolDescription(
+      "debug_info",
+      QObject::tr(
+      "Server debug: app version and database path."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
     QJsonObject properties;
     tools.append(toolDescription(
       "list_tags",
-      "Tags with counts.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Tags with counts."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
@@ -610,8 +722,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("tag");
     tools.append(toolDescription(
       "tag_notes",
-      "Notes with exactly this tag.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Notes with exactly this tag."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -625,16 +738,18 @@ static QJsonArray buildToolsList(McpMode mode)
     properties["limit"]=limit;
     tools.append(toolDescription(
       "untagged_notes",
-      "Notes without tags.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Notes without tags."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
     QJsonObject properties;
     tools.append(toolDescription(
       "list_favorites",
-      "Starred notes with branch context.",
-      objectSchema(properties, QJsonArray())));
+      QObject::tr(
+      "Starred notes with branch context."
+      ),      objectSchema(properties, QJsonArray())));
   }
 
   {
@@ -647,8 +762,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("note_id");
     tools.append(toolDescription(
       "list_attachments",
-      "Attachments of a note: file names with sizes.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Attachments of a note: file names with sizes."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -666,8 +782,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("new");
     tools.append(toolDescription(
       "rename_tag",
-      "Rename a tag everywhere.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Rename a tag everywhere. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   {
@@ -680,8 +797,9 @@ static QJsonArray buildToolsList(McpMode mode)
     required.append("tag");
     tools.append(toolDescription(
       "delete_tag",
-      "Remove a tag everywhere. Irreversible.",
-      objectSchema(properties, required)));
+      QObject::tr(
+      "Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls."
+      ),      objectSchema(properties, required)));
   }
 
   // Режимы младше полного видят не все: фильтр по toolAllowed
@@ -781,16 +899,23 @@ static QStringList controlSocketCandidates(const QString &argvPath)
 }
 
 
-enum GuiWriteState { GUI_NOT_RUNNING, GUI_DELIVERED, GUI_FAILED };
+enum GuiWriteState { GUI_NOT_RUNNING, GUI_DELIVERED, GUI_APPLIED, GUI_REFUSED, GUI_FAILED };
 
 
-// Отправка команды живому GUI по control-каналу. Ack подтверждает
-// доставку (обработчик GUI срабатывает сразу после), не применение:
-// применение проверяется отдельно по mtime базы
+// Отправка команды живому GUI по control-каналу. Два протокола ответа:
+// - новый GUI: фрейм с JSON {"ok":true,...} или {"ok":false,"error":"..."}.
+//   Итог применения известен сразу: APPLIED (применено и сохранено) или
+//   REFUSED (GUI отказал с причиной, повтор бессмысленен);
+// - старый GUI: голые 3 байта "ack". Только доставка без итога: DELIVERED,
+//   дальше старый путь ожидания сейва по mtime с перепроверкой.
+// Таймаут ответа покрывает применение с сейвом большой базы. Его истечение
+// означает что нить GUI заблокирована (модальный диалог, синхронизация):
+// изменение НЕ применено, повторять тот же вызов можно, дубли не грозят
 static GuiWriteState sendGuiCommand(const QString &binaryPath,
                                     const QString &command,
                                     const QJsonObject &payload,
-                                    QString &error)
+                                    QString &error,
+                                    QJsonObject *reply=nullptr)
 {
   QLocalSocket socket;
 
@@ -824,21 +949,79 @@ static GuiWriteState sendGuiCommand(const QString &binaryPath,
     return GUI_FAILED;
   }
 
-  if(!socket.waitForReadyRead(8000))
+  // Ждём именно итог применения, а не эхо доставки
+  QByteArray answer;
+  QElapsedTimer timer;
+  timer.start();
+
+  const int totalMs=30000;
+  bool frameComplete=false;
+  bool legacyAck=false;
+
+  while(timer.elapsed()<totalMs && !frameComplete && !legacyAck)
   {
-    error="GUI is running but did not acknowledge the command";
+    const int remainMs=totalMs-static_cast<int>(timer.elapsed());
+
+    if(remainMs<=0 || !socket.waitForReadyRead(remainMs))
+      break;
+
+    answer.append(socket.readAll());
+
+    if(answer==QByteArray("ack"))
+    {
+      legacyAck=true;
+      break;
+    }
+
+    if(answer.size()>=4)
+    {
+      QDataStream frame(answer);
+      quint32 frameLen=0;
+      frame >> frameLen;
+
+      if(answer.size()>=4+static_cast<int>(frameLen))
+        frameComplete=true;
+    }
+  }
+
+  if(legacyAck)
+    return GUI_DELIVERED;
+
+  if(!frameComplete)
+  {
+    error="GUI is running but did not respond in time (modal dialog open? sync in progress?). "
+          "The change was NOT applied, safe to retry the same call later";
     return GUI_FAILED;
   }
 
-  static const char *ack="ack";
+  QDataStream frame(answer);
+  quint32 frameLen=0;
+  frame >> frameLen;
+  const QByteArray body=answer.mid(4, frameLen);
 
-  if(socket.read(qstrlen(ack))!=QByteArray(ack))
+  QJsonParseError parseError;
+  QJsonDocument doc=QJsonDocument::fromJson(body, &parseError);
+
+  if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
   {
-    error="GUI is running but sent a broken acknowledgement";
+    error="GUI sent a broken reply";
     return GUI_FAILED;
   }
 
-  return GUI_DELIVERED;
+  const QJsonObject response=doc.object();
+
+  if(reply!=nullptr)
+    *reply=response;
+
+  if(response.value("ok").toBool(false))
+    return GUI_APPLIED;
+
+  error=response.value("error").toString();
+
+  if(error.isEmpty())
+    error="GUI refused the change";
+
+  return GUI_REFUSED;
 }
 
 
@@ -978,6 +1161,13 @@ public:
       QJsonObject result;
       result["tools"]=buildToolsList(m_mode);
 
+      // Сколько тулов реально ушло клиенту и в каком режиме:
+      // если нейронка клянется что чего-то нет, сверять сюда,
+      // а не гадать. Урезание списка дальше - уже дело клиента
+      fprintf(stderr, "mcp: tools/list served %d tools in %s mode\n",
+              result["tools"].toArray().size(),
+              qPrintable(mcpModeName(m_mode)));
+
       response=makeResponse(id, result, QJsonValue());
       return true;
     }
@@ -1038,7 +1228,9 @@ public:
 
       if(known && toolName=="list_branches")
       {
-        result=m_tools.listBranches();
+        result=m_tools.listBranches(arguments.value("recursive").toBool(false),
+                                    arguments.value("branch_id").toString(),
+                                    toolError);
       }
       else if(toolName=="list_notes")
       {
@@ -1053,7 +1245,7 @@ public:
           limit=arguments.value("limit").toInt(McpTools::DEFAULT_LIST_LIMIT);
 
         result=m_tools.listNotes(arguments.value("branch_id").toString(),
-                                 recursive, limit, toolError);
+                                 recursive, limit, toolError, readFields(arguments));
       }
       else if(toolName=="get_note")
       {
@@ -1063,7 +1255,7 @@ public:
           maxChars=arguments.value("max_chars").toInt(McpTools::DEFAULT_NOTE_CHARS);
 
         result=m_tools.getNote(arguments.value("note_id").toString(),
-                               maxChars, toolError);
+                               maxChars, toolError, readFields(arguments));
       }
       else if(toolName=="search")
       {
@@ -1086,6 +1278,10 @@ public:
       else if(toolName=="stats")
       {
         result=m_tools.baseStats(arguments.value("detailed").toBool(false));
+      }
+      else if(toolName=="debug_info")
+      {
+        result=m_tools.debugInfo();
       }
       else if(toolName=="list_tags")
       {
@@ -1243,6 +1439,10 @@ public:
       {
         result=writeDeleteBranch(arguments.value("branch_id").toString(), toolError);
       }
+      else if(toolName=="apply_batch")
+      {
+        result=writeApplyBatch(arguments.value("operations").toArray(), toolError);
+      }
       else
       {
         known=false;
@@ -1328,6 +1528,7 @@ private:
                               QString &toolError);
   QJsonObject writeDeleteNote(const QString &id, QString &toolError);
   QJsonObject writeDeleteBranch(const QString &id, QString &toolError);
+  QJsonObject writeApplyBatch(const QJsonArray &operations, QString &toolError);
   QJsonObject writeRenameBranch(const QString &id, const QString &name,
                                 QString &toolError);
   QJsonObject writeMoveBranch(const QString &id, const QString &targetId,
@@ -1487,16 +1688,33 @@ QJsonObject McpSession::writeRenameBranch(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     TreeItem *item=m_model.getItemById(id);
 
     if(item==nullptr || item->getField("name")!=name.trimmed())
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1569,11 +1787,27 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
   {
     QString expect=expectedMoveParent(m_model, targetId, asChild);
 
-    waitGuiSave(5000);
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     TreeItem *moved=m_model.getItemById(id);
@@ -1589,7 +1823,8 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
 
     if(moved==nullptr || actual!=expect)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1661,9 +1896,25 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     QStringList path=m_model.getRecordPath(id);
@@ -1671,7 +1922,8 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
 
     if(actual!=branchId)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1777,11 +2029,27 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
+  {
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
   {
     if(xmlStorage)
     {
-      waitGuiSave(5000);
+      if(!synced)
+        waitGuiSave(5000);
       resyncModel();
 
       Record *record=m_model.isRecordIdExists(id) ? m_model.getRecord(id) : nullptr;
@@ -1790,7 +2058,8 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
 
       if(!applied)
       {
-        toolError="GUI did not apply the change in time, retry";
+        toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
         return result;
       }
@@ -1799,7 +2068,8 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
     {
       if(!waitSidecarFavorite(id, starred, 5000))
       {
-        toolError="GUI did not apply the change in time, retry";
+        toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
         return result;
       }
@@ -1897,13 +2167,29 @@ QJsonObject McpSession::writeImportBranch(const QString &parentId,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    // Ввоз сам сохраняет дерево: ждётся сейв GUI, модель
-    // перечитывается, новая ветка ищется по diff детей
-    if(!waitGuiSave(5000))
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    // Ввоз сам сохраняет дерево: у старого GUI сейв ждётся по mtime,
+    // у нового (synced) он уже случился, модель просто перечитывается
+    if(!synced && !waitGuiSave(5000))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1923,7 +2209,8 @@ QJsonObject McpSession::writeImportBranch(const QString &parentId,
 
     if(fresh.isEmpty())
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -1992,14 +2279,31 @@ QJsonObject McpSession::writeRenameTag(const QString &oldTag,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(McpTools::countTagNotes(&m_model, oldTag.trimmed().toLower())!=0)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2060,14 +2364,31 @@ QJsonObject McpSession::writeDeleteTag(const QString &tag, QString &toolError)
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(McpTools::countTagNotes(&m_model, tag.trimmed().toLower())!=0)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2198,14 +2519,31 @@ QJsonObject McpSession::writeBranch(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(!m_model.isItemIdExists(id))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2293,14 +2631,31 @@ QJsonObject McpSession::writeNote(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(!m_model.isRecordIdExists(id))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2403,9 +2758,25 @@ QJsonObject McpSession::writeNoteUpdate(const QString &id,
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     Record *record=m_model.isRecordIdExists(id) ? m_model.getRecord(id) : nullptr;
@@ -2420,7 +2791,8 @@ QJsonObject McpSession::writeNoteUpdate(const QString &id,
 
     if(!ok)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2494,14 +2866,31 @@ QJsonObject McpSession::writeDeleteNote(const QString &id, QString &toolError)
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(m_model.isRecordIdExists(id))
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2563,14 +2952,31 @@ QJsonObject McpSession::writeDeleteBranch(const QString &id, QString &toolError)
     return result;
   }
 
-  if(state==GUI_DELIVERED)
+  // GUI отказал с причиной (валидация, read-only): текст отказа уходит
+  // агенту как есть, повтор того же вызова бессмысленен
+  if(state==GUI_REFUSED)
   {
-    waitGuiSave(5000);
+    toolError=sendError;
+
+    return result;
+  }
+
+  // APPLIED: GUI уже применил и сохранил, модель перечитывается
+  // и сверяется (несоответствие здесь - внутренняя ошибка,
+  // а не повод для ретрая). DELIVERED: старый GUI без ответа-итога,
+  // сейв ждётся по mtime как раньше
+  const bool synced=(state==GUI_APPLIED);
+
+  if(state==GUI_DELIVERED || synced)
+  {
+    if(!synced)
+      waitGuiSave(5000);
     resyncModel();
 
     if(m_model.getItemById(id)!=nullptr)
     {
-      toolError="GUI did not apply the change in time, retry";
+      toolError=synced ? "GUI reported success but the change is not visible after resync, internal error"
+                       : "GUI did not apply the change in time, retry";
 
       return result;
     }
@@ -2595,6 +3001,429 @@ QJsonObject McpSession::writeDeleteBranch(const QString &id, QString &toolError)
 
   result=deleted;
   result["applied_via"]="direct";
+  result["verified"]=true;
+
+  return result;
+}
+
+
+// Проверка одной пакетной операции по свежему состоянию модели.
+// Семантика по состоянию, а не по факту исполнения: ok значит
+// конечное состояние совпало с желаемым
+static bool verifyBatchOp(KnowTreeModel &model,
+                          const QString &tool,
+                          const QJsonObject &args,
+                          QJsonObject &detail)
+{
+  detail=QJsonObject();
+
+  if(tool==QStringLiteral("create_branch"))
+  {
+    TreeItem *item=model.getItemById(args.value("id").toString());
+    const bool ok=(item!=nullptr &&
+                   item->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok)
+      detail["id"]=args.value("id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("create_note"))
+  {
+    Record *record=model.isRecordIdExists(args.value("id").toString()) ?
+                   model.getRecord(args.value("id").toString()) : nullptr;
+    const bool ok=(record!=nullptr &&
+                   record->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok)
+      detail["id"]=args.value("id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("update_note"))
+  {
+    Record *record=model.isRecordIdExists(args.value("note_id").toString()) ?
+                   model.getRecord(args.value("note_id").toString()) : nullptr;
+    bool ok=(record!=nullptr);
+
+    if(ok && args.value("has_name").toBool(false))
+      ok=(record->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok && args.value("has_tags").toBool(false))
+      ok=(record->getField("tags")==args.value("tags").toString());
+
+    if(ok)
+      detail["id"]=args.value("note_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("delete_note"))
+  {
+    const bool ok=!model.isRecordIdExists(args.value("note_id").toString());
+
+    if(ok)
+      detail["id"]=args.value("note_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("delete_branch"))
+  {
+    const bool ok=(model.getItemById(args.value("branch_id").toString())==nullptr);
+
+    if(ok)
+      detail["id"]=args.value("branch_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("rename_branch"))
+  {
+    TreeItem *item=model.getItemById(args.value("branch_id").toString());
+    const bool ok=(item!=nullptr &&
+                   item->getField("name")==args.value("name").toString().trimmed());
+
+    if(ok)
+      detail["id"]=args.value("branch_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("move_branch"))
+  {
+    TreeItem *item=model.getItemById(args.value("branch_id").toString());
+
+    if(item==nullptr)
+      return false;
+
+    QStringList path=item->getPath();
+    const QString actual=(path.size()>=2) ? path.at(path.size()-2) : QString();
+    const QString expect=expectedMoveParent(model,
+                                            args.value("target_id").toString(),
+                                            args.value("as_child").toBool(true));
+    const bool ok=(actual==expect);
+
+    if(ok)
+      detail["id"]=args.value("branch_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("move_note"))
+  {
+    QStringList path=model.getRecordPath(args.value("note_id").toString());
+    const QString actual=path.isEmpty() ? QString() : path.last();
+    const bool ok=(!path.isEmpty() && actual==args.value("branch_id").toString());
+
+    if(ok)
+      detail["id"]=args.value("note_id").toString();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("favorite_note") || tool==QStringLiteral("unfavorite_note"))
+  {
+    const bool starred=(tool==QStringLiteral("favorite_note"));
+    const QString id=args.value("note_id").toString();
+    bool ok=false;
+
+    if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+    {
+      Record *record=model.isRecordIdExists(id) ? model.getRecord(id) : nullptr;
+      ok=(record!=nullptr && (record->getField("favorite")=="1")==starred);
+    }
+    else
+      ok=(McpTools::sidecarFavoriteIds().contains(id)==starred);
+
+    if(ok)
+      detail["id"]=id;
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("rename_tag"))
+  {
+    const bool ok=(McpTools::countTagNotes(&model,
+        args.value("old").toString().trimmed().toLower())==0);
+
+    if(ok)
+      detail["renamed_tag"]=args.value("old").toString().trimmed();
+
+    return ok;
+  }
+
+  if(tool==QStringLiteral("delete_tag"))
+  {
+    const bool ok=(McpTools::countTagNotes(&model,
+        args.value("tag").toString().trimmed().toLower())==0);
+
+    if(ok)
+      detail["deleted_tag"]=args.value("tag").toString().trimmed();
+
+    return ok;
+  }
+
+  return false;
+}
+
+
+static const int MCP_BATCH_MAX_OPS=200;
+
+static const QSet<QString> &mcpBatchableTools(void)
+{
+  static const QSet<QString> batchable=QSet<QString>()
+      << QStringLiteral("create_branch") << QStringLiteral("create_note")
+      << QStringLiteral("update_note")
+      << QStringLiteral("delete_note") << QStringLiteral("delete_branch")
+      << QStringLiteral("rename_branch") << QStringLiteral("move_branch")
+      << QStringLiteral("move_note")
+      << QStringLiteral("favorite_note") << QStringLiteral("unfavorite_note")
+      << QStringLiteral("rename_tag") << QStringLiteral("delete_tag");
+
+  return batchable;
+}
+
+
+QJsonObject McpSession::writeApplyBatch(const QJsonArray &operations,
+                                        QString &toolError)
+{
+  QJsonObject result;
+
+  if(mytetraConfig.get_readOnly())
+  {
+    toolError="Database is in global read-only mode, writes refused";
+
+    return result;
+  }
+
+  if(operations.isEmpty())
+  {
+    toolError="Empty operations";
+
+    return result;
+  }
+
+  if(operations.size()>MCP_BATCH_MAX_OPS)
+  {
+    toolError="Too many operations (max 200)";
+
+    return result;
+  }
+
+  struct BatchOp
+  {
+    QString tool;
+    QJsonObject args;
+  };
+
+  QList<BatchOp> normalized;
+  QSet<QString> batchIds;
+
+  // Нормализация без касания модели: свежие id, html из text/format,
+  // флаги has_*. Структурные отказы валят весь пакет до исполнения
+  for(const QJsonValue &opValue : operations)
+  {
+    if(!opValue.isObject())
+    {
+      toolError="Each operation must be {tool, arguments}";
+
+      return result;
+    }
+
+    const QJsonObject op=opValue.toObject();
+    const QString tool=op.value("tool").toString();
+    const QJsonObject opArgs=op.value("arguments").toObject();
+
+    if(!mcpBatchableTools().contains(tool))
+    {
+      toolError="Unsupported in batch: "+tool;
+
+      return result;
+    }
+
+    if((tool==QStringLiteral("delete_note") ||
+        tool==QStringLiteral("delete_branch") ||
+        tool==QStringLiteral("delete_tag")) &&
+       m_mode!=McpMode::ReadWriteDelete)
+    {
+      toolError="Batch contains delete, need delete mode";
+
+      return result;
+    }
+
+    QJsonObject args=opArgs;
+
+    if(tool==QStringLiteral("create_branch") || tool==QStringLiteral("create_note"))
+    {
+      QString id;
+
+      if(tool==QStringLiteral("create_branch"))
+        do { id=freshBranchId(); } while(batchIds.contains(id));
+      else
+        do { id=freshNoteId(); } while(batchIds.contains(id));
+
+      batchIds.insert(id);
+      args["id"]=id;
+    }
+
+    if(tool==QStringLiteral("create_note") || tool==QStringLiteral("update_note"))
+    {
+      const bool hasText=args.contains("text");
+      QString format=args.value("format").toString();
+
+      if(format.isEmpty())
+        format="text";
+
+      if(hasText && format!="text" && format!="html")
+      {
+        toolError="Bad format, use text or html";
+
+        return result;
+      }
+
+      if(tool==QStringLiteral("create_note"))
+      {
+        const QString text=args.value("text").toString();
+        args["html"]=(format=="html") ? text : McpTools::plainToHtml(text);
+      }
+      else
+      {
+        args["has_name"]=args.contains("name");
+        args["has_html"]=hasText;
+        args["has_tags"]=args.contains("tags");
+
+        const QString text=args.value("text").toString();
+        args["html"]=(format=="html") ? text : McpTools::plainToHtml(text);
+      }
+    }
+
+    normalized.append({tool, args});
+  }
+
+  // Применение: один вызов GUI либо прямой цикл, сейв один раз.
+  // Проверяются эффективные аргументы: headless-вставка записей
+  // заменяет id на свежий, фактический возвращается в результате
+  // Эффективные аргументы примененных операций (по индексу
+  // в normalized): фактические id после headless-замен
+  QList<QJsonObject> effectiveArgs;
+  bool needSave=false;
+  bool delivered=false;
+
+  {
+    QJsonObject payload;
+    QJsonArray normOps;
+
+    for(const BatchOp &op : normalized)
+    {
+      QJsonObject item;
+      item["tool"]=op.tool;
+      item["arguments"]=op.args;
+      normOps.append(item);
+    }
+
+    payload["operations"]=normOps;
+
+    QString sendError;
+    GuiWriteState state=sendGuiCommand(m_binaryPath, "mcpApplyBatch", payload, sendError);
+
+    if(state==GUI_FAILED)
+    {
+      toolError=sendError;
+
+      return result;
+    }
+
+    if(state==GUI_REFUSED)
+    {
+      toolError=sendError;
+
+      return result;
+    }
+
+    if(state==GUI_DELIVERED || state==GUI_APPLIED)
+    {
+      delivered=true;
+
+      // APPLIED: GUI уже применил и сохранил, сейв по mtime не ждём
+      if(state==GUI_DELIVERED)
+        waitGuiSave(5000);
+
+      resyncModel();
+    }
+  }
+
+  if(delivered)
+  {
+    for(const BatchOp &op : normalized)
+      effectiveArgs.append(op.args);
+  }
+  else
+  {
+    for(const BatchOp &op : normalized)
+    {
+      QString error;
+      QJsonObject applyResult;
+
+      if(!McpTools::applyBatchOp(&m_model, op.tool, op.args, applyResult, error))
+        break;
+
+      QJsonObject effArgs=op.args;
+
+      if(applyResult.contains("id"))
+        effArgs["id"]=applyResult.value("id").toString();
+
+      effectiveArgs.append(effArgs);
+      needSave=true;
+    }
+
+    if(needSave)
+      m_model.save();
+  }
+
+  // Проверка по состоянию на свежей модели, по порядку, со стопом
+  // на первой несверенной: дальше не исполнялось
+  QJsonArray opResults;
+  int applied=0;
+  bool stopped=false;
+
+  for(int i=0; i<normalized.size(); ++i)
+  {
+    const BatchOp &op=normalized.at(i);
+    QJsonObject entry;
+    entry["tool"]=op.tool;
+
+    if(stopped)
+    {
+      entry["ok"]=false;
+      entry["skipped"]=true;
+      opResults.append(entry);
+      continue;
+    }
+
+    QJsonObject detail;
+    const bool ok=(i<effectiveArgs.size()) &&
+                  verifyBatchOp(m_model, op.tool, effectiveArgs.at(i), detail);
+
+    entry["ok"]=ok;
+
+    for(auto it=detail.begin(); it!=detail.end(); ++it)
+      entry[it.key()]=it.value();
+
+    if(ok)
+      ++applied;
+    else
+      stopped=true;
+
+    opResults.append(entry);
+  }
+
+  result["operations"]=opResults;
+  result["applied"]=applied;
+  result["total"]=operations.size();
+  result["applied_via"]=delivered ? QStringLiteral("gui") : QStringLiteral("direct");
   result["verified"]=true;
 
   return result;
@@ -2645,6 +3474,38 @@ static bool validateDatabase(const QString &xmlPath)
 }
 
 
+// Каталог тулов для страницы настроек. Категории отвечают режимам:
+// ro виден в --mcp-ro, rw добавляется в --mcp-rw,
+// delete только в --mcp-rw-with-delete
+QList<McpToolInfo> mcpToolCatalog(void)
+{
+  QList<McpToolInfo> catalog;
+
+  const QJsonArray tools=buildToolsList(McpMode::ReadWriteDelete);
+
+  foreach(const QJsonValue &value, tools)
+  {
+    const QJsonObject tool=value.toObject();
+    const QString name=tool.value("name").toString();
+
+    McpToolInfo info;
+    info.name=name;
+    info.description=tool.value("description").toString();
+
+    if(toolAllowed(McpMode::ReadOnly, name))
+      info.category=QStringLiteral("ro");
+    else if(toolAllowed(McpMode::ReadWrite, name))
+      info.category=QStringLiteral("rw");
+    else
+      info.category=QStringLiteral("delete");
+
+    catalog.append(info);
+  }
+
+  return catalog;
+}
+
+
 int runMcpServer(int argc, char **argv)
 {
   QCoreApplication app(argc, argv);
@@ -2677,6 +3538,10 @@ int runMcpServer(int argc, char **argv)
   dataBaseConfig.init();
 
   QString xmlPath=mytetraConfig.get_tetradir()+"/mytetra.xml";
+
+  // Какая база обслужвается: при расхождении цифр с GUI первым делом
+  // сверить этот путь с tetradir в conf.ini запущенной программы
+  fprintf(stderr, "mcp: base %s\n", mytetraConfig.get_tetradir().toUtf8().constData());
 
   if(!validateDatabase(xmlPath))
     return 3;

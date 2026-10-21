@@ -84,6 +84,11 @@ public:
     QList<int> get_findsplitter_size_list(void);
     void set_findsplitter_size_list(QList<int> list);
 
+    // Размеры левой колонки (дерево над списком записей), когда список
+    // записей перенесён под дерево. Остальные сплиттеры - выше
+    QList<int> get_leftspl_size_list(void);
+    void set_leftspl_size_list(QList<int> list);
+
     QList<int> get_splitter_size_list(QString name);
     void set_splitter_size_list(QString name, QList<int> list);
 
@@ -354,6 +359,24 @@ public:
     bool get_recordHeaderVisible(void);
     void set_recordHeaderVisible(bool state);
 
+    // Положение списка записей: false - справа от дерева (по умолчанию),
+    // true - под деревом в левой колонке. Страница Notes area
+    bool get_recordTableUnderTree(void);
+    void set_recordTableUnderTree(bool state);
+
+    // Порядок кнопок тулбаров в виде списков через запятую.
+    // Пусто - не настраивалось, экраны строят порядок по умолчанию.
+    // (Пустой настроенный список невозможен: в задействованных
+    // обязана остаться хотя бы одна команда, как в редакторе)
+    QStringList getTreeToolbarOrder(void);
+    void setTreeToolbarOrder(QStringList order);
+
+    QStringList getRecordToolbarOrder(void);
+    void setRecordToolbarOrder(QStringList order);
+
+    QStringList getRecordExtraToolbarOrder(void);
+    void setRecordExtraToolbarOrder(QStringList order);
+
     // Глобальный режим только чтения: запрещены любые изменения базы,
     // разрешены навигация и просмотр. По умолчанию выключен
     bool get_readOnly(void);
@@ -421,6 +444,18 @@ public:
     // Разрешен ли запуск MCP-сервера внешним AI-клиентом
     bool get_mcpAllow(void);
     void set_mcpAllow(bool state);
+
+    // Показывать ли в дереве общий итог записей с учетом подветок.
+    // По умолчанию выключено: только свои [n]. Страница Branch tree
+    bool get_showSubtreeCount(void);
+    void set_showSubtreeCount(bool state);
+
+    // Раскладка импорта Telegram: "month" (заметка на месяц,
+    // по умолчанию), "year" (заметка на год, прямо в чате),
+    // "day" (заметка на день, ветки чат-год-месяц)
+    // или "message" (заметка на сообщение, ветки чат-год-месяц-день)
+    QString get_telegramImportMode(void);
+    void set_telegramImportMode(const QString &mode);
 
     // Формат голосовых заметок по умолчанию: opus или mp3.
     // Выбирается радио на странице Voice notes, в диалоге
@@ -523,6 +558,8 @@ private:
     QStringList get_parameter_table_47(bool withEndSignature=true);
     QStringList get_parameter_table_48(bool withEndSignature=true);
     QStringList get_parameter_table_49(bool withEndSignature=true);
+    QStringList get_parameter_table_50(bool withEndSignature=true);
+    QStringList get_parameter_table_51(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QMap>
+#include <QJsonObject>
+#include <QByteArray>
 #include <QtXml>
 #include <QtGui>
 #include <QDebug>
@@ -126,7 +128,29 @@ public slots:
     void commitData(QSessionManager& manager);
     void messageHandler(QString message);
 
+    // Синхронизация пометок меню Вид: слот чтобы дергать
+    // из проб и внешних мест (aboutToShow зовет сам)
+    void syncViewMenu(void);
+
+    // Синхронный ответ на mcp-команду для протокола запрос-ответ:
+    // компактный JSON {"ok":true,...} или {"ok":false,"error":"..."}.
+    // Вызывается из сокетного респондера (тот же поток GUI)
+    QByteArray handleMcpMessage(const QString &message);
+
+    // Применение одной mcp-команды к живой модели с возвратом итога.
+    // Используется и респондером, и легаси-путём messageHandler
+    bool handleMcpCommand(const QString &command,
+                          const QJsonObject &args,
+                          QJsonObject &result,
+                          QString &error);
+
     void toolsFindInBase(void);
+
+    void filePrintPreview(void);
+
+    // Перестановка списка записей: справа от дерева либо под деревом
+    // в левой колонке. Вызывается при старте и вживую из настроек
+    void applyRecordTablePosition(void);
 
     void toolsFindInBaseWithText(const QString &text);
 
@@ -156,9 +180,13 @@ public slots:
     // Текст баннера: сессия активна + режимы пиров
     QString mcpBannerText(void);
 
-    // Пересчитать баннер и блокировку по пирам (с TTL-чисткой):
+    // Пересчитать баннер и блокировку по пирам:
     // пиры есть — баннер виден и UI заблокирован, нет — всё снято
     void updateMcpBanner(void);
+
+    // Минутный пинг пиров: мертвые процессы выкидываются, живые
+    // остаются независимо от пауз
+    void onMcpPeerTick(void);
 
     // Срабатывание умного автосохранения
     void onAutosaveTimeout(void);
@@ -201,9 +229,9 @@ private slots:
     void fileDatabasesManagement(void);
     void fileExportBranch(void);
     void fileImportBranch(void);
+    void fileImportTelegram(void);
 
     void filePrint(void);
-    void filePrintPreview(void);
     void filePrintPdf(void);
 
     void toolsPreferences(void);
@@ -218,6 +246,7 @@ private slots:
     // Меню Вид: дубли быстрых переключателей отображения
     void onViewHeaderToggled(bool checked);
     void onViewFavoritesToggled(bool checked);
+    void onViewToolsToggled(bool checked);
     void onViewSecretColor(void);
     void onViewPaperColor(void);
 
@@ -263,15 +292,18 @@ private:
 
     // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
     // Пометка обновляется при каждом открытии, так как все меняется
-    // и из других мест (диалог настроек, контекстное меню)
+    // и из других мест (диалог настроек, контекстное меню).
+    // Слот чтобы дергать из проб и внешних мест
     void initViewMenu(void);
-    void syncViewMenu(void);
 
     void initRecordTableActions(void);
 
     void setupIconActions(void);
     void createTrayIcon(void);
     void setIcon(void);
+
+    // Отложенное применение размеров левой колонки после её показа
+    void applyRecordTableSizes(void);
 
     void saveWindowGeometry(void);
     void saveTreePosition(void);
@@ -286,6 +318,7 @@ private:
     QAction *actionFileMenuDatabasesManagement;
     QAction *actionFileMenuExportTreeItem;
     QAction *actionFileMenuImportTreeItem;
+    QAction *actionFileMenuImportTelegram;
     QAction *actionFileMenuPrint;
     QAction *actionFileMenuPrintPreview;
     QAction *actionFileMenuExportPdf;
@@ -331,6 +364,7 @@ private:
     QMenu *viewMenu=nullptr;
     QAction *viewHeaderAction=nullptr;
     QAction *viewFavoritesAction=nullptr;
+    QAction *viewToolsAction=nullptr;
     QAction *viewReadOnlyAction=nullptr;
     QAction *viewSecretColorAction=nullptr;
     QAction *viewPaperColorAction=nullptr;
@@ -365,6 +399,13 @@ private:
     QSplitter *vSplitter;
     QSplitter *hSplitter;
     QSplitter *findSplitter;
+
+    // Левая колонка (дерево над списком записей), существует только
+    // в режиме recordTableUnderTree; иначе список в правой колонке
+    QSplitter *leftColumnSplitter=nullptr;
+
+    // Счётчик повторов отложенного выставления размеров левой колонки
+    int recordTableSizesRetry=0;
 
     CommandRunner *syncroCommandRun=nullptr;
 

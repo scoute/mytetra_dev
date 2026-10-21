@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QWidget>
 #include <QSettings>
+#include <QImage>
 
 
 class EditorConfig : public QWidget
@@ -75,6 +76,54 @@ public:
     // Раскрыты или сомкнуты панели инструментов
     bool get_expand_tools_lines(void);
     void set_expand_tools_lines(bool i);
+    bool get_hide_tools_lines(void);
+    void set_hide_tools_lines(bool i);
+
+    // Формат сохранения новых картинок: "png" или "jpg".
+    // Действует только на вновь вставляемые картинки
+    QString get_imageSaveFormat(void);
+    void set_imageSaveFormat(const QString &format);
+
+    // Расширение для новой картинки: формат из настройки, но картинки
+    // с прозрачностью всегда PNG (у JPG нет альфа-канала)
+    QString imageExtensionFor(const QImage &image);
+
+    // Лимит длинной стороны новой картинки в пикселях, 0 — без ограничения
+    int get_imageMaxSize(void);
+    void set_imageMaxSize(int size);
+
+    // Мастер-тумблер деструктивной операции: разрешить менять истинный
+    // размер файла картинки из диалога свойств. Выключено по умолчанию
+    bool get_allowTrueImageResize(void);
+    void set_allowTrueImageResize(bool allow);
+
+    // Последние выбранные пользователем цвета текста и фона:
+    // клик по кнопке красит в них без пикера (как в LibreOffice)
+    QString get_lastFontColor(void);
+    void set_lastFontColor(const QString &color);
+    QString get_lastBackgroundColor(void);
+    void set_lastBackgroundColor(const QString &color);
+
+    // Клик по кнопке цвета применяет последний цвет (иначе как раньше:
+    // клик ничего не делает, цвет на кнопке — под курсором)
+    bool get_applyLastColorOnClick(void);
+    void set_applyLastColorOnClick(bool apply);
+
+    // Недавние шрифты (примененные через список), новые сверху, максимум 5.
+    // Хранение одной строкой через ";" как списки инструментов
+    QStringList get_recentFonts(void);
+    void add_recentFont(const QString &family);
+    void set_recentFonts(const QStringList &families);
+
+    // Недавние спецсимволы, новые сверху, максимум 12.
+    // Хранение одной строкой через "\n" (символы могут содержать ";" и ",")
+    QStringList get_recentSymbols(void);
+    void add_recentSymbol(const QString &symbol);
+    void set_recentSymbols(const QStringList &symbols);
+
+    // Ужать картинку до лимита длинной стороны из настройки.
+    // Возвращает исходник если ужатие не нужно или лимит выключен
+    QImage limitImageSize(const QImage &image);
 
 private:
 
@@ -111,6 +160,14 @@ private:
     static QStringList get_parameter_table_22(bool withEndSignature=true);
     static QStringList get_parameter_table_23(bool withEndSignature=true);
     static QStringList get_parameter_table_24(bool withEndSignature=true);
+    static QStringList get_parameter_table_25(bool withEndSignature=true);
+    static QStringList get_parameter_table_26(bool withEndSignature=true);
+    static QStringList get_parameter_table_27(bool withEndSignature=true);
+    static QStringList get_parameter_table_28(bool withEndSignature=true);
+    static QStringList get_parameter_table_29(bool withEndSignature=true);
+    static QStringList get_parameter_table_30(bool withEndSignature=true);
+    static QStringList get_parameter_table_31(bool withEndSignature=true);
+    static QStringList get_parameter_table_32(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

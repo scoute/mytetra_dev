@@ -19,6 +19,7 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "models/appConfig/AppConfig.h"
 #include "views/mainWindow/MainWindow.h"
+#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "models/tree/TreeItem.h"
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/ClipboardBranch.h"
@@ -223,6 +224,13 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::treeScreenFindInBaseClicked);
  actionList["findInBase"]=ac;
 
+ // Синхронизация базы. Переехала сюда с тулбара записей: операция
+ // уровня всей базы, а не отдельной записи. Клик дёргает MainWindow
+ ac = new QAction(this);
+ ac->setIcon(QIcon(":/resource/pic/synchronization.svg"));
+ connect(ac, &QAction::triggered, this, &TreeScreen::onSyncroClick);
+ actionList["syncro"]=ac;
+
  // Панель избранного между кнопками веток и деревом. Создается здесь,
  // а не в MainWindow, чтобы лежать ровно под тулбаром. Скрыта пока
  // пусто или фича выключена: дизайн не ломается
@@ -259,6 +267,9 @@ void TreeScreen::setupShortcuts(void)
     shortcutManager.initAction("tree-updatePublication", actionList["updatePublication"] );
     shortcutManager.initAction("tree-revokePublication", actionList["revokePublication"] );
     shortcutManager.initAction("tree-setIcon", actionList["setIcon"] );
+
+    // Синхронизация базы с тулбара веток
+    shortcutManager.initAction("misc-syncro", actionList["syncro"] );
 }
 
 
@@ -270,39 +281,114 @@ void TreeScreen::retranslateUi(void)
 }
 
 
+// Порядок кнопок тулбара веток по умолчанию. Объединение десктопного
+// и мобильного наборов: лишнее режется режимом в rebuildToolbar.
+// spring - невидимый распор (в дефолте стоит под мобильный),
+// separator - разделитель, остальные - имена из actionList
+QStringList TreeScreen::defaultToolbarOrder(void)
+{
+ return QStringList()
+  << "insSubbranch" << "insBranch"
+  << "editBranch" << "delBranch"
+  << "separator"
+  << "expandAllSubbranch" << "collapseAllSubbranch"
+  << "separator"
+  << "moveUpBranch" << "moveDownBranch"
+  << "separator"
+  << "syncro"
+  << "spring" << "findInBase";
+}
+
+
+// Режим кнопки: desktop, mobile или обе (пусто - обе)
+QString TreeScreen::toolbarItemMode(const QString &command)
+{
+ if(command=="editBranch" || command=="delBranch")
+  return QString("desktop");
+
+ if(command=="spring" || command=="findInBase")
+  return QString("mobile");
+
+ return QString();
+}
+
+
+// Перестроение тулбара из списка конфига (или дефолта).
+// Вызывается при старте и вживую из диалога настроек.
+// Ведущие и задвоенные разделители давятся; неизвестные имена
+// из конфига пропускаются с предупреждением а не падением:
+// в конфиге может лежать имя из более новой версии (откат бинарника)
+void TreeScreen::rebuildToolbar(void)
+{
+ // Пружины прошлого построения: QToolBar::clear() виджеты не удаляет
+ qDeleteAll(toolbarSprings);
+ toolbarSprings.clear();
+
+ toolsLine->clear();
+
+ QStringList order=mytetraConfig.getTreeToolbarOrder();
+
+ if(order.isEmpty())
+  order=defaultToolbarOrder();
+
+ const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+ bool lastSeparator=true; // Ведущие разделители давятся
+
+ foreach(const QString &command, order)
+  {
+   if(command=="separator")
+    {
+     if(!lastSeparator)
+      {
+       toolsLine->addSeparator();
+       lastSeparator=true;
+      }
+
+     continue;
+    }
+
+   if(command=="spring")
+    {
+     if(toolbarItemMode(command)=="mobile" && !isMobile)
+      continue;
+
+     QWidget *empty=new QWidget(this);
+     empty->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+     toolsLine->addWidget(empty);
+     toolbarSprings.append(empty);
+     lastSeparator=false;
+
+     continue;
+    }
+
+   if(!actionList.contains(command))
+    {
+     qWarning() << "TreeScreen: skip unknown toolbar command" << command;
+     continue;
+    }
+
+   const QString mode=toolbarItemMode(command);
+
+   if(mode=="desktop" && isMobile)
+    continue;
+
+   if(mode=="mobile" && !isMobile)
+    continue;
+
+   insertActionAsButton(toolsLine, actionList[command]);
+   lastSeparator=false;
+  }
+}
+
+
 void TreeScreen::setupUI(void)
 {
  // Наполнение панели инструментов
  toolsLine=new QToolBar(this);
 
- insertActionAsButton(toolsLine, actionList["insSubbranch"]);
- insertActionAsButton(toolsLine, actionList["insBranch"]);
-
- if(mytetraConfig.getInterfaceMode()=="desktop")
- {
-   insertActionAsButton(toolsLine, actionList["editBranch"]);
-   insertActionAsButton(toolsLine, actionList["delBranch"]);
- }
-
- toolsLine->addSeparator();
-
- insertActionAsButton(toolsLine, actionList["expandAllSubbranch"]);
- insertActionAsButton(toolsLine, actionList["collapseAllSubbranch"]);
-
- toolsLine->addSeparator();
-
- insertActionAsButton(toolsLine, actionList["moveUpBranch"]);
- insertActionAsButton(toolsLine, actionList["moveDownBranch"]);
-
- if(mytetraConfig.getInterfaceMode()=="mobile")
- {
-     // Вставка невидимого автоматически расталкивающего виджета
-     QWidget* empty = new QWidget(this);
-     empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
-     toolsLine->addWidget(empty);
-
-     insertActionAsButton(toolsLine, actionList["findInBase"]); // Клик по этой кнопке связывается с действием в MainWindow
- }
+ // Порядок кнопок берётся из конфига (диалог настроек) либо дефолт.
+ // Перестроение на лету - через rebuildToolbar()
+ rebuildToolbar();
 
  // Действия буфера обмена, шифрования и иконки ветки на тулбар не
  // выносятся (там только самые важные кнопки), они доступны из
@@ -364,6 +450,22 @@ void TreeScreen::setupModels(void)
  // покажет панель если в базе уже есть звездочки
  if(favoritesPanel!=nullptr)
    favoritesPanel->refreshFavorites();
+}
+
+
+// Контекстное меню тулбара веток: единственный пункт открывает
+// диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
+// у кнопок своего меню нет, конфликтов нет
+void TreeScreen::onToolbarContextMenu(const QPoint &pos)
+{
+ QMenu menu(this);
+ QAction *setupAction=menu.addAction(tr("Customize toolbar..."));
+
+ if(menu.exec(toolsLine->mapToGlobal(pos))==setupAction)
+  {
+   MainToolbarSettingsScreen settingsScreen(this);
+   settingsScreen.exec();
+  }
 }
 
 
@@ -481,6 +583,12 @@ void TreeScreen::setupSignals(void)
  // Соединение сигнал-слот чтобы показать контекстное меню по правому клику на ветке
  connect(knowTreeView, &KnowTreeView::customContextMenuRequested,
          this,         &TreeScreen::onCustomContextMenuRequested);
+
+ // Контекстное меню тулбара: только на пустом месте, там единственный
+ // пункт настройки порядка и видимости кнопок
+ toolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
+ connect(toolsLine, &QToolBar::customContextMenuRequested,
+         this,      &TreeScreen::onToolbarContextMenu);
 
  // Соединение сигнал-слот чтобы показать контекстное меню по долгому нажатию
  connect(knowTreeView, &KnowTreeView::tapAndHoldGestureFinished,
@@ -1968,7 +2076,7 @@ void TreeScreen::setReadOnly(bool state)
   << "editBranch" << "delBranch"
   << "cutBranch" << "pasteBranch" << "pasteSubbranch"
   << "encryptBranch" << "decryptBranch"
-  << "setIcon";
+  << "setIcon" << "syncro";
 
  for(const QString &name : mutatingActions)
   if(actionList.contains(name))
@@ -1980,6 +2088,43 @@ void TreeScreen::setReadOnly(bool state)
    knowTreeView->setDragEnabled(!state);
    knowTreeView->setAcceptDrops(!state);
   }
+}
+
+
+QAction *TreeScreen::toolAction(const QString &command)
+{
+ if(!actionList.contains(command))
+  return nullptr;
+
+ return actionList[command];
+}
+
+
+// Клик по кнопке синхронизации: та же MainWindow::synchronization(),
+// что раньше дёргалась с тулбара записей
+void TreeScreen::onSyncroClick(void)
+{
+ find_object<MainWindow>("mainwindow")->synchronization();
+}
+
+
+// Разблокировка кнопки синхронизации по окончании команды.
+// Подключено в MainWindow к завершению синхрокоманды
+void TreeScreen::onSyncroCommandFinishWork(void)
+{
+ actionList["syncro"]->setEnabled(true);
+}
+
+
+void TreeScreen::setSyncroEnabled(bool state)
+{
+ actionList["syncro"]->setEnabled(state);
+}
+
+
+bool TreeScreen::isSyncroEnabled(void) const
+{
+ return actionList["syncro"]->isEnabled();
 }
 
 

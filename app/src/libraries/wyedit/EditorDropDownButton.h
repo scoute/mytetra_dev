@@ -31,6 +31,10 @@ public:
 signals:
     void menuItemClicked(int num);
 
+    // Клик по самой кнопке (не по стрелке меню). В режиме
+    // MenuButtonPopup стрелка открывает меню и clicked не дергает
+    void buttonClicked();
+
 private slots:
     void onMenuItemClick(int num);
 

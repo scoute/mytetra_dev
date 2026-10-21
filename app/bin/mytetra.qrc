@@ -27,6 +27,8 @@
         <file>resource/pic/edit_sup.svg</file>
         <file>resource/pic/edit_clear.svg</file>
         <file>resource/pic/edit_code.svg</file>
+        <file>resource/pic/edit_heading1.svg</file>
+        <file>resource/pic/edit_heading2.svg</file>
         <file>resource/pic/edit_createtable.svg</file>
         <file>resource/pic/edit_findtext.svg</file>
         <file>resource/pic/edit_font_many.svg</file>
@@ -56,6 +58,7 @@
         <file>resource/pic/edit_save.svg</file>
         <file>resource/pic/expand_all_subbranch.svg</file>
         <file>resource/pic/edit_expand_tools_lines.svg</file>
+        <file>resource/pic/edit_toggle_tools.svg</file>
         <file>resource/pic/find_in_base_all.svg</file>
         <file>resource/pic/find_in_base_any.svg</file>
         <file>resource/pic/find_in_base_separate.svg</file>
@@ -126,11 +129,13 @@
         <file>resource/pic/note_block.svg</file>
         <file>resource/pic/note_favorite.svg</file>
         <file>resource/pic/print_table.svg</file>
+        <file>resource/pic/print_preview.svg</file>
         <file>resource/pic/switch_note_selection_mode.svg</file>
         <file>resource/pic/note_reference.svg</file>
         <file>resource/pic/branch_published.svg</file>
         <file>resource/pic/set_icon.svg</file>
         <file>resource/pic/edit_fixBreakSymbol.svg</file>
+        <file>resource/pic/edit_tabs_to_spaces.svg</file>
         <file>resource/pic/attach_add_from_url.svg</file>
         <file>resource/pic/edit_text_only.svg</file>
         <file>resource/pic/edit_mic_record.svg</file>
@@ -143,6 +148,7 @@
         <file>resource/pic/countryFlags/Armenia.png</file>
         <file>resource/pic/edit_math_expression.svg</file>
         <file>resource/pic/edit_insert_horizontal_line.svg</file>
+        <file>resource/pic/edit_special_char.svg</file>
         <file>resource/pic/edit_strikeout.svg</file>
         <file>resource/pic/move_left.svg</file>
         <file>resource/pic/move_right.svg</file>

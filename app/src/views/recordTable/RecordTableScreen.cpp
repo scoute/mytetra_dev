@@ -4,12 +4,14 @@
 #include <QVBoxLayout>
 #include <QToolBar>
 #include <QApplication>
+#include <QMenu>
 
 #include "RecordTableScreen.h"
 #include "RecordTableView.h"
 
 #include "views/mainWindow/MainWindow.h"
 #include "views/record/MetaEditor.h"
+#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/WindowSwitcher.h"
 #include "libraries/GlobalParameters.h"
@@ -18,6 +20,9 @@
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/ActionHelper.h"
+#include "views/tree/KnowTreeView.h"
+#include "models/tree/KnowTreeModel.h"
+#include "models/recordTable/Record.h"
 #include "controllers/recordTable/RecordTableController.h"
 
 
@@ -106,10 +111,6 @@ void RecordTableScreen::setupActions(void)
  actionMoveDn=new QAction(this);
  actionMoveDn->setIcon(QIcon(":/resource/pic/move_dn.svg"));
 
- // Синхронизация
- actionSyncro=new QAction(this);
- actionSyncro->setIcon(QIcon(":/resource/pic/synchronization.svg"));
-
  // Поиск по базе (клик связывается с действием в MainWindow)
  actionFindInBase=new QAction(shortcutManager.getDescriptionWithShortcut("misc-findInBase"), this);
  actionFindInBase->setIcon(QIcon(":/resource/pic/find_in_base.svg"));
@@ -137,10 +138,23 @@ void RecordTableScreen::setupActions(void)
  actionPrint->setStatusTip(tr("Print current notes table"));
  actionPrint->setIcon(QIcon(":/resource/pic/print_table.svg"));
 
+ // Кнопка предпросмотра печати текущей записи (клик связывается
+ // с действием в MainWindow). Своя иконка-принтер: глаз предпросмотра
+ // вложений здесь смотрелся неуместно
+ actionPrintPreview = new QAction(tr("Print preview"), this);
+ actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
+ actionPrintPreview->setIcon(QIcon(":/resource/pic/print_preview.svg"));
+
  // Кнопка копирования ссылки на запись
  actionCopyRecordReference = new QAction(tr("Copy note reference"), this);
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
  actionCopyRecordReference->setIcon(QIcon(":/resource/pic/note_reference.svg"));
+
+ // Кнопка копирования готовой ссылки с заголовком: в буфер кладётся
+ // HTML-якорь, вставка в другую запись даёт сразу именованную ссылку
+ actionCopyRecordLink = new QAction(tr("Copy link with title"), this);
+ actionCopyRecordLink->setStatusTip(tr("Copy titled link to clipboard for pasting into another note"));
+ actionCopyRecordLink->setIcon(QIcon(":/resource/pic/note_reference.svg"));
 
  // Кнопка истории изменений записи
  actionChangeHistory = new QAction(tr("Change history"), this);
@@ -157,50 +171,213 @@ void RecordTableScreen::setupActions(void)
 }
 
 
+// Порядок кнопок первой линии по умолчанию. Объединение десктопного
+// и мобильного наборов: лишнее режется режимом в rebuildToolbars.
+// Скрытые shortcut-only кнопки (addNewBefore, addNewAfter, block)
+// в список не входят: регистрируются всегда отдельно
+QStringList RecordTableScreen::defaultToolbarOrder(void)
+{
+ return QStringList()
+  << "back" << "separator"
+  << "addNewToEnd"
+  << "editField" << "delete"
+  << "separator"
+  << "cut" << "copy" << "paste"
+  << "separator"
+  << "moveUp" << "moveDn"
+  << "separator"
+  << "printPreview";
+}
+
+
+// Порядок кнопок второй линии по умолчанию.
+// Внешние кнопки (переключатели панелей) сюда не входят:
+// их докладывает addExtraToolAction() всегда в конец
+QStringList RecordTableScreen::defaultExtraToolbarOrder(void)
+{
+ return QStringList()
+  << "walkHistoryPrevious" << "walkHistoryNext"
+  << "findInBase";
+}
+
+
+// Режим кнопки: desktop, mobile или обе (пусто - обе)
+QString RecordTableScreen::toolbarItemMode(const QString &command)
+{
+ if(command=="back")
+  return QString("mobile");
+
+ if(command=="editField" || command=="delete" ||
+    command=="walkHistoryPrevious" || command=="walkHistoryNext")
+  return QString("desktop");
+
+ return QString();
+}
+
+
+// Скрытые shortcut-only кнопки первой линии: регистрируются всегда
+// нулевыми кнопками, как раньше, в диалог настройки не выносятся
+QSet<QString> RecordTableScreen::hiddenToolbarItems(void)
+{
+ return QSet<QString>() << "addNewBefore" << "addNewAfter" << "block";
+}
+
+
+// Действие тулбаров по имени для построения из списков
+QAction *RecordTableScreen::toolAction(const QString &command)
+{
+ if(command=="addNewToEnd") return actionAddNewToEnd;
+ if(command=="addNewBefore") return actionAddNewBefore;
+ if(command=="addNewAfter") return actionAddNewAfter;
+ if(command=="editField") return actionEditField;
+ if(command=="block") return actionBlock;
+ if(command=="delete") return actionDelete;
+ if(command=="cut") return actionCut;
+ if(command=="copy") return actionCopy;
+ if(command=="paste") return actionPaste;
+ if(command=="settings") return actionSettings;
+ if(command=="back") return actionBack;
+ if(command=="findInBase") return actionFindInBase;
+ if(command=="sort") return actionSort;
+ if(command=="print") return actionPrint;
+ if(command=="printPreview") return actionPrintPreview;
+ if(command=="copyRecordReference") return actionCopyRecordReference;
+ if(command=="changeHistory") return actionChangeHistory;
+ if(command=="switchSelectionMode") return actionSwitchSelectionMode;
+ if(command=="moveUp") return actionMoveUp;
+ if(command=="moveDn") return actionMoveDn;
+ if(command=="walkHistoryPrevious") return actionWalkHistoryPrevious;
+ if(command=="walkHistoryNext") return actionWalkHistoryNext;
+
+ return nullptr;
+}
+
+
+// Построение одной линии тулбара из списка. Ведущие и задвоенные
+// разделители давятся; неизвестные имена пропускаются с предупреждением
+void RecordTableScreen::buildToolbarLine(QToolBar *line,
+                                         const QStringList &order,
+                                         bool isMobile)
+{
+ bool lastSeparator=true; // Ведущие разделители давятся
+
+ foreach(const QString &command, order)
+  {
+   if(command=="separator")
+    {
+     if(!lastSeparator)
+      {
+       line->addSeparator();
+       lastSeparator=true;
+      }
+
+     continue;
+    }
+
+   if(command=="spring")
+    {
+     QWidget *empty=new QWidget(this);
+     empty->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+     line->addWidget(empty);
+     toolbarSprings.append(empty);
+     lastSeparator=false;
+
+     continue;
+    }
+
+   QAction *action=toolAction(command);
+
+   if(action==nullptr)
+    {
+     qWarning() << "RecordTableScreen: skip unknown toolbar command" << command;
+     continue;
+    }
+
+   const QString mode=toolbarItemMode(command);
+
+   if(mode=="desktop" && isMobile)
+    continue;
+
+   if(mode=="mobile" && !isMobile)
+    continue;
+
+   insertActionAsButton(line, action, !hiddenToolbarItems().contains(command));
+   lastSeparator=false;
+  }
+}
+
+
+// Перестроение обоих тулбаров из списков конфига (или дефолта).
+// Вызывается при старте и вживую из диалога настроек
+void RecordTableScreen::rebuildToolbars(void)
+{
+ // Пружины прошлого построения: QToolBar::clear() виджеты не удаляет
+ qDeleteAll(toolbarSprings);
+ toolbarSprings.clear();
+
+ toolsLine->clear();
+ extraToolsLine->clear();
+
+ const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+
+ QStringList order=mytetraConfig.getRecordToolbarOrder();
+
+ if(order.isEmpty())
+  order=defaultToolbarOrder();
+
+ buildToolbarLine(toolsLine, order, isMobile);
+
+ // Скрытые shortcut-only кнопки регистрируются всегда нулевым размером
+ // (в списки не входят, в диалог не выносятся). Порядок среди невидимых
+ // не важен, поэтому пачкой в конец
+ foreach(const QString &command, hiddenToolbarItems())
+  {
+   QAction *action=toolAction(command);
+
+   if(action!=nullptr)
+    insertActionAsButton(toolsLine, action, false);
+  }
+
+ QStringList extraOrder=mytetraConfig.getRecordExtraToolbarOrder();
+
+ if(extraOrder.isEmpty())
+  extraOrder=defaultExtraToolbarOrder();
+
+ buildToolbarLine(extraToolsLine, extraOrder, isMobile);
+
+ // Внешние кнопки (переключатели панелей) всегда в конце второй линии,
+ // отделённые разделителем своей группой: их в диалоге настройки нет,
+ // и без разделителя непонятно откуда они взялись
+ if(!extraToolActions.isEmpty())
+  {
+   // Разделитель не задваивается с пользовательским в конце списка
+   if(extraOrder.isEmpty() || extraOrder.last()!="separator")
+    extraToolsLine->addSeparator();
+
+   foreach(QAction *action, extraToolActions)
+    insertActionAsButton(extraToolsLine, action);
+  }
+}
+
+
 void RecordTableScreen::setupUI(void)
 {
  toolsLine=new QToolBar(this);
+ extraToolsLine=new QToolBar(this);
+
+ // Первая линия тянется на всю свободную ширину ряда (вторая ужата
+ // по кнопкам справа): пустого места лейаута не остаётся, и ПКМ
+ // для настройки панели работает в любой точке ряда
+ toolsLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
  /*
  QSize toolBarIconSize(16,16);
  toolsLine->setIconSize(toolBarIconSize);
  */
 
- if(mytetraConfig.getInterfaceMode()=="mobile")
- {
-   insertActionAsButton(toolsLine, actionBack);
-   toolsLine->addSeparator();
- }
-
- insertActionAsButton(toolsLine, actionAddNewToEnd);
- insertActionAsButton(toolsLine, actionAddNewBefore, false); // Действие без видимой кнопки
- insertActionAsButton(toolsLine, actionAddNewAfter, false); // Действие без видимой кнопки
-
- if(mytetraConfig.getInterfaceMode()=="desktop")
- {
-   insertActionAsButton(toolsLine, actionEditField);
-   insertActionAsButton(toolsLine, actionBlock, false);
-   insertActionAsButton(toolsLine, actionDelete);
- }
-
- toolsLine->addSeparator();
- insertActionAsButton(toolsLine, actionCut);
- insertActionAsButton(toolsLine, actionCopy);
- insertActionAsButton(toolsLine, actionPaste);
- toolsLine->addSeparator();
- insertActionAsButton(toolsLine, actionMoveUp);
- insertActionAsButton(toolsLine, actionMoveDn);
-
-
- extraToolsLine=new QToolBar(this);
-
- if(mytetraConfig.getInterfaceMode()=="desktop")
- {
-   insertActionAsButton(extraToolsLine, actionSyncro);
-   insertActionAsButton(extraToolsLine, actionWalkHistoryPrevious);
-   insertActionAsButton(extraToolsLine, actionWalkHistoryNext);
- }
- insertActionAsButton(extraToolsLine, actionFindInBase);
+ // Порядок кнопок берётся из конфига (диалог настроек) либо дефолт.
+ // Перестроение на лету - через rebuildToolbars()
+ rebuildToolbars();
 
  treePathLabel=new QLabel(this);
  treePathLabel->setWordWrap(true);
@@ -210,9 +387,13 @@ void RecordTableScreen::setupUI(void)
 
 
 // Добавить кнопку во вторую линию инструментов (для внешних действий
-// вроде переключателя панели тегов)
+// вроде переключателя панели тегов). Кнопки запоминаются чтобы пережить
+// перестроение тулбара из настроек: rebuildToolbars() докладывает их в конец
 void RecordTableScreen::addExtraToolAction(QAction *action)
 {
+ if(!extraToolActions.contains(action))
+  extraToolActions.append(action);
+
  insertActionAsButton(extraToolsLine, action);
 }
 
@@ -255,9 +436,6 @@ void RecordTableScreen::setupShortcuts(void)
     shortcutManager.initAction("note-moveDn", actionMoveDn);
 
 
-    // Синхронизация
-    shortcutManager.initAction("misc-syncro", actionSyncro);
-
     // Переход на предыдущую запись в истории
     shortcutManager.initAction("note-previousNote", actionWalkHistoryPrevious);
 
@@ -268,6 +446,16 @@ void RecordTableScreen::setupShortcuts(void)
 
 void RecordTableScreen::setupSignals(void)
 {
+    // Контекстные меню тулбаров: только на пустом месте, там единственный
+    // пункт настройки порядка и видимости кнопок
+    toolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(toolsLine, &QToolBar::customContextMenuRequested,
+            this, &RecordTableScreen::onToolbarContextMenu);
+
+    extraToolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(extraToolsLine, &QToolBar::customContextMenuRequested,
+            this, &RecordTableScreen::onToolbarContextMenu);
+
     // Добавление записи
     connect(actionAddNewToEnd, &QAction::triggered, recordTableController, &RecordTableController::addNewToEndContext);
 
@@ -310,8 +498,8 @@ void RecordTableScreen::setupSignals(void)
     // Поиск по базе (клик связывается с действием в MainWindow)
     connect(actionFindInBase, &QAction::triggered, find_object<MainWindow>("mainwindow"), &MainWindow::toolsFindInBase);
 
-    // Синхронизация
-    connect(actionSyncro, &QAction::triggered, this, &RecordTableScreen::onSyncroClick);
+    // Предпросмотр печати текущей записи (действие живет в MainWindow)
+    connect(actionPrintPreview, &QAction::triggered, find_object<MainWindow>("mainwindow"), &MainWindow::filePrintPreview);
 
     // Перемещение по истории посещаемых записей назад
     connect(actionWalkHistoryPrevious, &QAction::triggered, this, &RecordTableScreen::onWalkHistoryPreviousClick);
@@ -334,6 +522,9 @@ void RecordTableScreen::setupSignals(void)
     // Кнопка копирования ссылки на запись
     connect(actionCopyRecordReference, &QAction::triggered, this, &RecordTableScreen::onCopyRecordReference);
 
+    // Кнопка копирования готовой ссылки с заголовком
+    connect(actionCopyRecordLink, &QAction::triggered, this, &RecordTableScreen::onCopyRecordLink);
+
     // Кнопка переключения режима одинарного выбора и мультивыбора
     connect(actionSwitchSelectionMode, &QAction::triggered, recordTableController, &RecordTableController::onSwitchSelectionMode);
 
@@ -345,8 +536,7 @@ void RecordTableScreen::setupSignals(void)
 void RecordTableScreen::assembly(void)
 {
  recordTableToolsLayout=new QHBoxLayout();
- recordTableToolsLayout->addWidget(toolsLine);
- recordTableToolsLayout->addStretch();
+ recordTableToolsLayout->addWidget(toolsLine, 1);
  recordTableToolsLayout->addWidget(extraToolsLine);
  
  recordTableScreenLayout=new QVBoxLayout();
@@ -390,6 +580,10 @@ void RecordTableScreen::disableAllActions(void)
  actionMoveDn->setEnabled(false);
 
  actionCopyRecordReference->setEnabled(false);
+ actionCopyRecordLink->setEnabled(false);
+
+ // Предпросмотр печати возможен только для одной выбранной записи
+ actionPrintPreview->setEnabled(false);
 
  actionChangeHistory->setEnabled(false);
 
@@ -452,6 +646,8 @@ void RecordTableScreen::toolsWidgetsUpdate()
    actionEditField->setEnabled(true);
    actionBlock->setEnabled(true);
    actionCopyRecordReference->setEnabled(true);
+   actionCopyRecordLink->setEnabled(true);
+   actionPrintPreview->setEnabled(true);
 
    // История выключена мастер-тумблером: пункт серый сразу,
    // а не вежливым отказом по клику
@@ -581,20 +777,6 @@ void RecordTableScreen::setSelectionToId(QString id)
 
 
 
-// Действия при нажатии кнопки синхронизации
-void RecordTableScreen::onSyncroClick(void)
-{
-  find_object<MainWindow>("mainwindow")->synchronization();
-}
-
-
-void RecordTableScreen::onSyncroCommandFinishWork(void)
-{
-  // Разблокируется кнопка синхронизации
-  actionSyncro->setEnabled(true);
-}
-
-
 void RecordTableScreen::onWalkHistoryPreviousClick(void)
 {
   find_object<MainWindow>("mainwindow")->goWalkHistoryPrevious();
@@ -621,6 +803,61 @@ void RecordTableScreen::onCopyRecordReference()
 
   QClipboard *clipboard = QApplication::clipboard();
   clipboard->setText(reference);
+}
+
+
+// Готовая ссылка с заголовком: HTML-якорь для вставки в другую запись
+// (там сразу именованная ссылка) плюс голый href как plain-текст.
+// Имя берётся из модели дерева тем же путём что ReferenceFormatter,
+// пустое имя — голый href как раньше
+void RecordTableScreen::onCopyRecordLink()
+{
+  const QString id=getFirstSelectionId();
+  const QString reference=FixedParameters::appTextId+"://note/"+id;
+
+  QString title;
+  KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+  if(treeView!=nullptr)
+  {
+    Record *record=static_cast<KnowTreeModel *>(treeView->model())->getRecord(id);
+
+    if(record!=nullptr)
+      title=record->getField(QStringLiteral("name"));
+  }
+
+  if(title.isEmpty())
+    title=reference;
+
+  QMimeData *mime=new QMimeData();
+  mime->setHtml(QStringLiteral("<a href=\"")+reference+
+                QStringLiteral("\">")+title.toHtmlEscaped()+
+                QStringLiteral("</a>"));
+  mime->setText(reference);
+
+  QApplication::clipboard()->setMimeData(mime);
+}
+
+
+// Контекстное меню тулбаров записей: единственный пункт открывает
+// диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
+// у кнопок своего меню нет, а пустого места на ужатых по кнопкам
+// линиях может не быть вовсе
+void RecordTableScreen::onToolbarContextMenu(const QPoint &pos)
+{
+ QToolBar *line=qobject_cast<QToolBar *>(sender());
+
+ if(line==nullptr)
+  return;
+
+ QMenu menu(this);
+ QAction *setupAction=menu.addAction(tr("Customize toolbar..."));
+
+ if(menu.exec(line->mapToGlobal(pos))==setupAction)
+  {
+   MainToolbarSettingsScreen settingsScreen(this);
+   settingsScreen.exec();
+  }
 }
 
 
@@ -658,8 +895,14 @@ void RecordTableScreen::retranslateUi(void)
   actionPrint->setText(tr("Print table"));
   actionPrint->setStatusTip(tr("Print current notes table"));
 
+  actionPrintPreview->setText(tr("Print preview"));
+  actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
+
   actionCopyRecordReference->setText(tr("Copy note reference"));
   actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
+
+  actionCopyRecordLink->setText(tr("Copy link with title"));
+  actionCopyRecordLink->setStatusTip(tr("Copy titled link to clipboard for pasting into another note"));
 
   actionChangeHistory->setText(tr("Change history"));
   actionChangeHistory->setStatusTip(tr("Show change history with diff and rollback"));

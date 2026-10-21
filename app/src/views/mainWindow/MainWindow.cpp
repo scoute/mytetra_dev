@@ -1,3 +1,13 @@
+// Цель Windows — до ЛЮБЫХ инклудов: Qt-заголовки сами тянут windows.h,
+// и поздний _WIN32_WINNT уже ничего не даёт (QueryFullProcessImageNameA
+// из mcpPeerAlive() тогда не объявлена, MinGW32 падает)
+#if defined(_WIN32_WINNT) && (_WIN32_WINNT < 0x0600)
+#undef _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+
 #include <QDialog>
 #include <QMap>
 #include <QString>
@@ -23,6 +33,13 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QTimer>
+
+#ifdef Q_OS_WIN32
+#include <windows.h>
+#else
+#include <signal.h>
+#include <errno.h>
+#endif
 #include <QTime>
 #include <QDateTime>
 #include <QJsonDocument>
@@ -52,7 +69,10 @@ public:
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
 #include "views/tree/TreeScreen.h"
+#include "views/telegram/TelegramImportDialog.h"
 #include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorToolBarAssistant.h"
+#include "libraries/wyedit/EditorConfig.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
 #include "views/favoritesPanel/FavoritesPanel.h"
@@ -254,6 +274,7 @@ void MainWindow::setupSignals(void)
     connect(actionFileMenuDatabasesManagement, &QAction::triggered, this, &MainWindow::fileDatabasesManagement);
     connect(actionFileMenuExportTreeItem, &QAction::triggered, this, &MainWindow::fileExportBranch);
     connect(actionFileMenuImportTreeItem, &QAction::triggered, this, &MainWindow::fileImportBranch);
+    connect(actionFileMenuImportTelegram, &QAction::triggered, this, &MainWindow::fileImportTelegram);
     connect(actionFileMenuPrint, &QAction::triggered, this, &MainWindow::filePrint);
     connect(actionFileMenuPrintPreview, &QAction::triggered, this, &MainWindow::filePrintPreview);
     connect(actionFileMenuExportPdf, &QAction::triggered, this, &MainWindow::filePrintPdf);
@@ -328,7 +349,7 @@ void MainWindow::setupSignals(void)
 
     // Связывание сигнала окончания выполнения команды синхронизации со слотом, срабатывающем при завершении выполнения команды
     connect(syncroCommandRun, &CommandRunner::finishWork,
-            recordTableScreen, &RecordTableScreen::onSyncroCommandFinishWork);
+            treeScreen, &TreeScreen::onSyncroCommandFinishWork);
     connect(syncroCommandRun, &CommandRunner::finishWork,
             this, &MainWindow::onSyncroCommandFinishWork);
 
@@ -417,9 +438,10 @@ void MainWindow::assembly(void)
     mcpHistoryDialog->hide();
     mcpBanner->installEventFilter(this);
 
-    // Сторож протухших пиров: убитый без Bye гаснет сам раз в минуту
+    // Минутный пинг пиров: мертвые процессы выкидываются,
+    // живые остаются независимо от пауз нейронки
     mcpBannerTimer=new QTimer(this);
-    connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::updateMcpBanner);
+    connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::onMcpPeerTick);
     mcpBannerTimer->start(60000);
 
     QWidget *centralContainer=new QWidget(this);
@@ -597,91 +619,33 @@ void MainWindow::messageHandler(QString message)
 
     // MCP-команды записи от внешнего AI-клиента: применяются к живой
     // модели (со всем несохраненным состоянием GUI) и сохраняются.
-    // Ответного канала нет: MCP проверяет применение сам, перечитывая
-    // базу по mtime. При коллизии id вставка не делается чтобы MCP
-    // не вернул чужой id (проверка сама перегенерирует и повторит)
+    // Основной путь - синхронный респондер (handleMcpMessage ->
+    // handleMcpCommand с возвратом итога). Ниже легаси-путь на случай
+    // незаданного респондера: тот же обработчик, итог игнорируется.
+    // При коллизии id вставка не делается чтобы MCP не вернул чужой id
+    // (проверка сама перегенерирует и повторит)
     else if(command=="mcpCreateBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject created=McpTools::applyCreateBranch(treeScreen->knowTreeModel,
-                                                        args.value("parent_id").toString(),
-                                                        args.value("id").toString(),
-                                                        args.value("name").toString(),
-                                                        error);
-
-        if(!error.isEmpty() || created.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpCreateNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject created=McpTools::applyCreateNote(treeScreen->knowTreeModel,
-                                                      args.value("branch_id").toString(),
-                                                      args.value("id").toString(),
-                                                      args.value("name").toString(),
-                                                      args.value("html").toString(),
-                                                      args.value("tags").toString(),
-                                                      error);
-
-        if(!error.isEmpty() || created.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpUpdateNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QStringList updatedFields;
-
-        // Открытый в редакторе текст не трогается: редактор держит свой
-        // буфер до перевыбора (last writer wins), как при любом
-        // стороннем изменении файла
-        bool ok=McpTools::applyUpdateNote(treeScreen->knowTreeModel,
-                                          args.value("id").toString(),
-                                          args.value("has_name").toBool(false),
-                                          args.value("name").toString(),
-                                          args.value("has_html").toBool(false),
-                                          args.value("html").toString(),
-                                          args.value("has_tags").toBool(false),
-                                          args.value("tags").toString(),
-                                          error,
-                                          updatedFields);
-
-        if(!ok)
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Удаление из-под AI: тот же состав что ручное удаление записи,
@@ -690,128 +654,42 @@ void MainWindow::messageHandler(QString message)
     // как при любом стороннем изменении файла
     else if(command=="mcpDeleteNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString id=args.value("id").toString();
-
-        if(id.isEmpty())
-            return;
-
-        QString error;
-
-        if(!McpTools::applyDeleteNote(treeScreen->knowTreeModel, id, error))
-            return;
-
-        emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpDeleteBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString id=args.value("id").toString();
-
-        if(id.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject deleted=McpTools::applyDeleteBranch(treeScreen->knowTreeModel,
-                                                        id, error);
-
-        if(!error.isEmpty() || deleted.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpRenameBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject renamed=McpTools::applyRenameBranch(treeScreen->knowTreeModel,
-                                                        args.value("id").toString(),
-                                                        args.value("name").toString(),
-                                                        error);
-
-        if(!error.isEmpty() || renamed.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpMoveBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        QJsonObject moved=McpTools::applyMoveBranch(treeScreen->knowTreeModel,
-                                                    args.value("id").toString(),
-                                                    args.value("target_id").toString(),
-                                                    args.value("as_child").toBool(true),
-                                                    error);
-
-        if(!error.isEmpty() || moved.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpMoveNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        // Как при удалении: редактор может держать указатель внутрь
-        // таблицы-источника, его состояние сбрасывается до переноса
-        find_object<MetaEditor>("editorScreen")->clearAll();
-
-        QString error;
-        QJsonObject moved=McpTools::applyMoveNote(treeScreen->knowTreeModel,
-                                                  args.value("id").toString(),
-                                                  args.value("branch_id").toString(),
-                                                  error);
-
-        if(!error.isEmpty() || moved.isEmpty())
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Звездочка от внешнего AI: тот же состав что клик по звезде,
@@ -819,53 +697,18 @@ void MainWindow::messageHandler(QString message)
     // (сайдкар или XML) и дёргает сигнал для панели избранного
     else if(command=="mcpFavoriteNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        const QString id=args.value("id").toString();
-
-        if(!treeScreen->knowTreeModel->isRecordIdExists(id))
-            return;
-
-        Record *record=treeScreen->knowTreeModel->getRecord(id);
-
-        if(record==nullptr || record->getField("crypt")=="1")
-            return;
-
-        Favorites::instance().setFavorite(id, true);
-
-        if(!Favorites::instance().isFavorite(id))
-            return;
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpUnfavoriteNote")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        const QString id=args.value("id").toString();
-
-        if(!treeScreen->knowTreeModel->isRecordIdExists(id))
-            return;
-
-        Favorites::instance().setFavorite(id, false);
-
-        if(Favorites::instance().isFavorite(id))
-            return;
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Ввоз ветки из обменника от внешнего AI: проверки те же что
@@ -873,141 +716,786 @@ void MainWindow::messageHandler(QString message)
     // тихий отказ). Ввоз сам сохраняет дерево в конце
     else if(command=="mcpImportBranch")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        const QString parentId=args.value("parent_id").toString();
-        const QString path=args.value("path").toString();
-
-        if(!parentId.isEmpty())
-        {
-            TreeItem *parentItem=treeScreen->knowTreeModel->getItemById(parentId);
-
-            if(parentItem==nullptr || parentItem->getField("crypt")=="1")
-                return;
-        }
-
-        if(!McpTools::checkImportDir(path).isEmpty())
-            return;
-
-        QString error;
-        QJsonObject imported=McpTools::applyImportBranch(treeScreen->knowTreeModel,
-                                                         parentId, path, error);
-
-        if(!error.isEmpty() || imported.isEmpty())
-            return;
-
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpRenameTag")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
-
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        int renamed=0;
-        int skipped=0;
-
-        if(!McpTools::applyRenameTag(treeScreen->knowTreeModel,
-                                     args.value("old").toString(),
-                                     args.value("new").toString(),
-                                     error, renamed, skipped))
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpDeleteTag")
     {
-        if(mytetraConfig.isGlobalReadOnly())
-            return;
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+    }
 
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString error;
-        int cleared=0;
-        int skipped=0;
-
-        if(!McpTools::applyDeleteTag(treeScreen->knowTreeModel,
-                                     args.value("tag").toString(),
-                                     error, cleared, skipped))
-            return;
-
-        treeScreen->knowTreeModel->save();
-        flashMcpWrite();
+    // Пакетное применение от внешнего AI: те же applyXxx что
+    // одиночки (через общий диспетчер), но сейв и вспышка один раз
+    // на весь пакет. Побочки одиночек повторяются: clearAll редактора
+    // перед каждым moveNote, закрытие открепленных окон собирается
+    // и шлется разово. Стоп на первой ошибке: пакет неатомарен,
+    // примененное сохраняется. import/export в пакет не входят
+    else if(command=="mcpApplyBatch")
+    {
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Присутствие MCP: не правки, только Hello/Bye. В read-only тоже
     // работает — баннер предупреждает, ничего не меняя
     else if(command=="mcpHello")
     {
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        QString pid=args.value("pid").toString();
-
-        if(pid.isEmpty())
-            return;
-
-        // Старт сессии с нуля: история чистая, окно появляется само
-        const bool sessionStarts=mcpPeers.isEmpty();
-
-        mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
-        mcpPeerModes[pid]=args.value("mode").toString();
-        updateMcpBanner();
-
-        if(sessionStarts)
-        {
-            mcpHistory.clear();
-            updateMcpHistoryDialog();
-
-            if(mcpHistoryDialog!=nullptr)
-                mcpHistoryDialog->show();
-        }
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpBye")
     {
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        mcpPeers.remove(args.value("pid").toString());
-        mcpPeerModes.remove(args.value("pid").toString());
-        updateMcpBanner();
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Строка истории действий MCP: только накопление в памяти,
     // на диск ничего не пишется
     else if(command=="mcpHistory")
     {
-        QJsonObject args=parseMcpCommandArgs(message);
-
-        if(args.isEmpty())
-            return;
-
-        addMcpHistoryEntry(args.value("kind").toString(),
-                           args.value("tool").toString(),
-                           args.value("summary").toString());
+        // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
+        QJsonObject dummyResult;
+        QString dummyError;
+        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
     }
+}
+
+
+// Синхронный ответ на mcp-команду для протокола запрос-ответ.
+// Упаковка итога handleMcpCommand в компактный JSON
+QByteArray MainWindow::handleMcpMessage(const QString &message)
+{
+  QStringList messageParts=message.split(" ");
+
+  if(messageParts.isEmpty())
+    return QJsonDocument(QJsonObject{{"ok", false},
+                                     {"error", "Empty message"}}).toJson(QJsonDocument::Compact);
+
+  const QString command=messageParts.at(0);
+
+  if(!mytetraConfig.get_mcpAllow())
+    return QJsonDocument(QJsonObject{{"ok", false},
+                                     {"error", "MCP is disabled in settings"}}).toJson(QJsonDocument::Compact);
+
+  QJsonObject args=parseMcpCommandArgs(message);
+  QJsonObject result;
+  QString error;
+
+  if(!handleMcpCommand(command, args, result, error))
+    return QJsonDocument(QJsonObject{{"ok", false},
+                                     {"error", error.isEmpty() ? "Command failed" : error}})
+      .toJson(QJsonDocument::Compact);
+
+  result["ok"]=true;
+
+  return QJsonDocument(result).toJson(QJsonDocument::Compact);
+}
+
+
+// Применение одной mcp-команды к живой модели с возвратом итога.
+// Тела веток - те же applyXxx что были в messageHandler, но тихие
+// return заменены на текст ошибки: сервер отдаёт её агенту как есть,
+// вместо гадания "did not apply... retry"
+bool MainWindow::handleMcpCommand(const QString &command,
+                                  const QJsonObject &args,
+                                  QJsonObject &result,
+                                  QString &error)
+{
+  result=QJsonObject();
+  error=QString();
+
+  if(command=="mcpCreateBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject created=McpTools::applyCreateBranch(treeScreen->knowTreeModel,
+                                                    args.value("parent_id").toString(),
+                                                    args.value("id").toString(),
+                                                    args.value("name").toString(),
+                                                    error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(created.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=created;
+    return true;
+  }
+
+  else if(command=="mcpCreateNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject created=McpTools::applyCreateNote(treeScreen->knowTreeModel,
+                                                  args.value("branch_id").toString(),
+                                                  args.value("id").toString(),
+                                                  args.value("name").toString(),
+                                                  args.value("html").toString(),
+                                                  args.value("tags").toString(),
+                                                  error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(created.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=created;
+    return true;
+  }
+
+  else if(command=="mcpUpdateNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QStringList updatedFields;
+
+    // Открытый в редакторе текст не трогается: редактор держит свой
+    // буфер до перевыбора (last writer wins), как при любом
+    // стороннем изменении файла
+    const bool ok=McpTools::applyUpdateNote(treeScreen->knowTreeModel,
+                                            args.value("id").toString(),
+                                            args.value("has_name").toBool(false),
+                                            args.value("name").toString(),
+                                            args.value("has_html").toBool(false),
+                                            args.value("html").toString(),
+                                            args.value("has_tags").toBool(false),
+                                            args.value("tags").toString(),
+                                            error,
+                                            updatedFields);
+
+    if(!ok)
+    {
+      if(error.isEmpty())
+        error="Note was not updated";
+
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["id"]=args.value("id").toString();
+
+    QJsonArray fields;
+    foreach(const QString &field, updatedFields)
+      fields.append(field);
+    result["updated_fields"]=fields;
+
+    return true;
+  }
+
+  else if(command=="mcpDeleteNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(id.isEmpty())
+    {
+      error="Empty id";
+      return false;
+    }
+
+    if(!McpTools::applyDeleteNote(treeScreen->knowTreeModel, id, error))
+    {
+      if(error.isEmpty())
+        error="Note was not deleted";
+
+      return false;
+    }
+
+    emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["id"]=id;
+    return true;
+  }
+
+  else if(command=="mcpDeleteBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(id.isEmpty())
+    {
+      error="Empty id";
+      return false;
+    }
+
+    QJsonObject deleted=McpTools::applyDeleteBranch(treeScreen->knowTreeModel,
+                                                    id, error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(deleted.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=deleted;
+    return true;
+  }
+
+  else if(command=="mcpRenameBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject renamed=McpTools::applyRenameBranch(treeScreen->knowTreeModel,
+                                                    args.value("id").toString(),
+                                                    args.value("name").toString(),
+                                                    error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(renamed.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=renamed;
+    return true;
+  }
+
+  else if(command=="mcpMoveBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonObject moved=McpTools::applyMoveBranch(treeScreen->knowTreeModel,
+                                                args.value("id").toString(),
+                                                args.value("target_id").toString(),
+                                                args.value("as_child").toBool(true),
+                                                error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(moved.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=moved;
+    return true;
+  }
+
+  else if(command=="mcpMoveNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    // Как при удалении: редактор может держать указатель внутрь
+    // таблицы-источника, его состояние сбрасывается до переноса
+    find_object<MetaEditor>("editorScreen")->clearAll();
+
+    QJsonObject moved=McpTools::applyMoveNote(treeScreen->knowTreeModel,
+                                              args.value("id").toString(),
+                                              args.value("branch_id").toString(),
+                                              error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(moved.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result=moved;
+    return true;
+  }
+
+  else if(command=="mcpFavoriteNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(!treeScreen->knowTreeModel->isRecordIdExists(id))
+    {
+      error="Unknown note_id: "+id;
+      return false;
+    }
+
+    Record *record=treeScreen->knowTreeModel->getRecord(id);
+
+    if(record==nullptr || record->getField("crypt")=="1")
+    {
+      error="Note is not available";
+      return false;
+    }
+
+    Favorites::instance().setFavorite(id, true);
+
+    if(!Favorites::instance().isFavorite(id))
+    {
+      error="Note was not starred";
+      return false;
+    }
+
+    flashMcpWrite();
+
+    result["id"]=id;
+    result["favorite"]=true;
+    return true;
+  }
+
+  else if(command=="mcpUnfavoriteNote")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString id=args.value("id").toString();
+
+    if(!treeScreen->knowTreeModel->isRecordIdExists(id))
+    {
+      error="Unknown note_id: "+id;
+      return false;
+    }
+
+    Favorites::instance().setFavorite(id, false);
+
+    if(Favorites::instance().isFavorite(id))
+    {
+      error="Note is still starred";
+      return false;
+    }
+
+    flashMcpWrite();
+
+    result["id"]=id;
+    result["favorite"]=false;
+    return true;
+  }
+
+  else if(command=="mcpImportBranch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    const QString parentId=args.value("parent_id").toString();
+    const QString path=args.value("path").toString();
+
+    if(!parentId.isEmpty())
+    {
+      TreeItem *parentItem=treeScreen->knowTreeModel->getItemById(parentId);
+
+      if(parentItem==nullptr || parentItem->getField("crypt")=="1")
+      {
+        error="Parent branch is not available";
+        return false;
+      }
+    }
+
+    // Плохой обменник вместо модального диалога - отказ с причиной
+    const QString dirError=McpTools::checkImportDir(path);
+
+    if(!dirError.isEmpty())
+    {
+      error=dirError;
+      return false;
+    }
+
+    QJsonObject imported=McpTools::applyImportBranch(treeScreen->knowTreeModel,
+                                                     parentId, path, error);
+
+    if(!error.isEmpty())
+      return false;
+
+    if(imported.isEmpty())
+    {
+      error="Internal error: empty result";
+      return false;
+    }
+
+    flashMcpWrite();
+
+    result=imported;
+    return true;
+  }
+
+  else if(command=="mcpRenameTag")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    int renamed=0;
+    int skipped=0;
+
+    if(!McpTools::applyRenameTag(treeScreen->knowTreeModel,
+                                 args.value("old").toString(),
+                                 args.value("new").toString(),
+                                 error, renamed, skipped))
+    {
+      if(error.isEmpty())
+        error="Tag was not renamed";
+
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["renamed"]=renamed;
+    result["skipped"]=skipped;
+    return true;
+  }
+
+  else if(command=="mcpDeleteTag")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    int cleared=0;
+    int skipped=0;
+
+    if(!McpTools::applyDeleteTag(treeScreen->knowTreeModel,
+                                 args.value("tag").toString(),
+                                 error, cleared, skipped))
+    {
+      if(error.isEmpty())
+        error="Tag was not deleted";
+
+      return false;
+    }
+
+    treeScreen->knowTreeModel->save();
+    flashMcpWrite();
+
+    result["cleared"]=cleared;
+    result["skipped"]=skipped;
+    return true;
+  }
+
+  else if(command=="mcpApplyBatch")
+  {
+    if(mytetraConfig.isGlobalReadOnly())
+    {
+      error="Database is in global read-only mode";
+      return false;
+    }
+
+    if(args.isEmpty())
+    {
+      error="Broken command arguments";
+      return false;
+    }
+
+    QJsonArray operations=args.value("operations").toArray();
+
+    if(operations.isEmpty())
+    {
+      error="Empty operations list";
+      return false;
+    }
+
+    QSet<QString> closeWindows;
+    bool needSave=false;
+    QJsonArray opResults;
+
+    for(const QJsonValue &opValue : operations)
+    {
+      const QJsonObject op=opValue.toObject();
+      const QString tool=op.value("tool").toString();
+      const QJsonObject opArgs=op.value("arguments").toObject();
+
+      // import/export в пакет не входят
+      if(tool==QStringLiteral("import_branch") ||
+         tool==QStringLiteral("export_branch"))
+      {
+        error="Unsupported in batch: "+tool;
+        break;
+      }
+
+      // Как в одиночке: редактор может держать указатель внутрь
+      // таблицы-источника, его состояние сбрасывается до переноса
+      if(tool==QStringLiteral("move_note"))
+        find_object<MetaEditor>("editorScreen")->clearAll();
+
+      // Как в одиночке: открепленные окна удаляемой записи
+      if(tool==QStringLiteral("delete_note"))
+        closeWindows.insert(opArgs.value("note_id").toString());
+
+      QJsonObject dummy;
+
+      if(!McpTools::applyBatchOp(treeScreen->knowTreeModel,
+                                 tool, opArgs, dummy, error))
+        break;
+
+      QJsonObject opResult;
+      opResult["tool"]=tool;
+      opResult["ok"]=true;
+      opResults.append(opResult);
+
+      // Избранное сохраняет само (синглетон/сайдкар), остальное
+      // требует сейва модели
+      if(tool!=QStringLiteral("favorite_note") &&
+         tool!=QStringLiteral("unfavorite_note"))
+        needSave=true;
+    }
+
+    if(!closeWindows.isEmpty())
+      emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(closeWindows);
+
+    if(needSave)
+      treeScreen->knowTreeModel->save();
+
+    flashMcpWrite();
+
+    // Стоп на первой ошибке: пакет неатомарен, примененное сохраняется
+    result["applied"]=opResults.size();
+    result["total"]=operations.size();
+    result["operations"]=opResults;
+
+    if(!error.isEmpty() || opResults.size()!=operations.size())
+    {
+      if(error.isEmpty())
+        error="Batch stopped before all operations";
+
+      return false;
+    }
+
+    return true;
+  }
+
+  else if(command=="mcpHello")
+  {
+    const QString pid=args.value("pid").toString();
+
+    if(pid.isEmpty())
+    {
+      error="Empty pid";
+      return false;
+    }
+
+    // Старт сессии с нуля: история чистая, окно появляется само
+    const bool sessionStarts=mcpPeers.isEmpty();
+
+    mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
+    mcpPeerModes[pid]=args.value("mode").toString();
+    updateMcpBanner();
+
+    if(sessionStarts)
+    {
+      mcpHistory.clear();
+      updateMcpHistoryDialog();
+
+      if(mcpHistoryDialog!=nullptr)
+        mcpHistoryDialog->show();
+    }
+
+    return true;
+  }
+
+  else if(command=="mcpBye")
+  {
+    const QString pid=args.value("pid").toString();
+
+    if(pid.isEmpty())
+    {
+      error="Empty pid";
+      return false;
+    }
+
+    mcpPeers.remove(pid);
+    mcpPeerModes.remove(pid);
+    updateMcpBanner();
+
+    return true;
+  }
+
+  else if(command=="mcpHistory")
+  {
+    addMcpHistoryEntry(args.value("kind").toString(),
+                       args.value("tool").toString(),
+                       args.value("summary").toString());
+
+    return true;
+  }
+
+  error="Unknown command: "+command;
+  return false;
 }
 
 
@@ -1019,9 +1507,144 @@ void MainWindow::restoreWindowGeometry(void)
     else
         restoreGeometry( mytetraConfig.get_mainwingeometry() );
 
-    vSplitter->setSizes(mytetraConfig.get_vspl_size_list());
-    hSplitter->setSizes(mytetraConfig.get_hspl_size_list());
+    // Размеры применяются только при совпадении числа виджетов:
+    // в режиме "список под деревом" у vSplitter один виджет, списки
+    // из другого режима сюда не подходят
+    if(mytetraConfig.get_vspl_size_list().size()==vSplitter->count())
+        vSplitter->setSizes(mytetraConfig.get_vspl_size_list());
+
+    if(mytetraConfig.get_hspl_size_list().size()==hSplitter->count())
+        hSplitter->setSizes(mytetraConfig.get_hspl_size_list());
+
     findSplitter->setSizes(mytetraConfig.get_findsplitter_size_list());
+}
+
+
+// Перестановка списка записей: справа от дерева (дефолт) либо под
+// деревом в левой колонке. Вызывается при старте после восстановления
+// геометрии и вживую из настроек. Существующие высоты виджетов
+// сохраняются как есть, поэтому переключение туда-обратно не прыгает
+void MainWindow::applyRecordTablePosition(void)
+{
+    const bool under=mytetraConfig.get_recordTableUnderTree();
+    const bool isUnder=(leftColumnSplitter!=nullptr);
+
+    if(under==isUnder)
+        return;
+
+    if(under)
+    {
+        // Список записей переезжает из правой колонки под дерево.
+        // vSplitter остаётся с одним редактором.
+        // Важно: только addWidget/insertWidget, никакого replaceWidget -
+        // после него сплиттер навсегда игнорирует setSizes (стенд).
+        // addWidget сам вытаскивает виджет из старого сплиттера
+        leftColumnSplitter=new QSplitter(Qt::Vertical, this);
+        leftColumnSplitter->setObjectName("leftColumnSplitter");
+
+        leftColumnSplitter->addWidget(treeScreen);
+        leftColumnSplitter->addWidget(recordTableScreen);
+        hSplitter->insertWidget(0, leftColumnSplitter);
+
+        leftColumnSplitter->setCollapsible(0, false);
+        leftColumnSplitter->setCollapsible(1, false);
+
+        // Размеры - после показа: до show() раздавать некому.
+        // Живьём окно уже показано - ставим сразу, на холодном старте
+        // ждём показа через синглшот-цепочку со сходимостью
+        if(isVisible())
+            applyRecordTableSizes();
+        else
+        {
+            recordTableSizesRetry=0;
+            QTimer::singleShot(0, this, &MainWindow::applyRecordTableSizes);
+        }
+    }
+    else
+    {
+        // Список записей возвращается в правую колонку над редактором.
+        // Порядок важен: сначала записи в vSplitter, потом дерево в
+        // начало hSplitter. Без replaceWidget, по той же причине
+        vSplitter->insertWidget(0, recordTableScreen);
+        hSplitter->insertWidget(0, treeScreen);
+        vSplitter->setCollapsible(0, false);
+        vSplitter->setCollapsible(1, false);
+
+        // Синхронное удаление: виджеты уже переехали, детей нет.
+        // deleteLater оставлял бы пустой сплиттер болтаться до
+        // следующего прохода событийной петли
+        delete leftColumnSplitter;
+        leftColumnSplitter=nullptr;
+
+        // vSplitter c одним редактором хранил одно число: вернуть
+        // обе панели к осмысленным долям текущей высоты.
+        // Назад переключаются только живьём (окно показано),
+        // поэтому immediate setSizes здесь работает
+        const int total=vSplitter->height();
+
+        if(total>0)
+            vSplitter->setSizes(QList<int>() << total/3 << total-total/3);
+    }
+
+    recordTableScreen->toolsUpdate();
+}
+
+
+// Отложенное применение размеров после перестановки списка записей.
+// Вызывается через singleShot(0): setSizes сразу после replaceWidget
+// сплиттер игнорирует, а до show() раздавать некому. К моменту вызова
+// окно уже показано, размеры живые. Идемпотентно: при повторных
+// вызовах и смене режима туда-сюда пересчитывает текущее состояние,
+// сохранённые списки имеют приоритет
+void MainWindow::applyRecordTableSizes(void)
+{
+    if(leftColumnSplitter==nullptr)
+        return;
+
+    // Ширина левой колонки: сохранённая, иначе треть окна
+    int leftW=-1;
+    const QList<int> hs=hSplitter->sizes();
+
+    if(hs.size()>0 && hs.at(0)>0)
+        leftW=hs.at(0);
+
+    if(leftW<=0)
+    {
+        int total=hSplitter->width();
+
+        if(total<=0)
+            total=900;
+
+        leftW=total/3;
+    }
+
+    hSplitter->setSizes(QList<int>() << leftW << (hSplitter->width()-leftW>0 ? hSplitter->width()-leftW : leftW*2));
+
+    // Высота дерева и списка внутри колонки: сохранённые, иначе поровну
+    const QList<int> saved=mytetraConfig.get_leftspl_size_list();
+
+    if(saved.size()==leftColumnSplitter->count())
+        leftColumnSplitter->setSizes(saved);
+    else
+    {
+        const int total=leftColumnSplitter->height();
+        const int each=(total>0) ? total/2 : -1;
+
+        if(each>0)
+            leftColumnSplitter->setSizes(QList<int>() << each << (total-each));
+    }
+
+    // Сходимость: если окно ещё не разложено (холодный старт без
+    // сохранённой геометрии), выставленные размеры может снести
+    // первый проход раскладки. Проверяем видимый итог и повторяем,
+    // но не бесконечно
+    if(leftColumnSplitter->width()<=0 && recordTableSizesRetry<20)
+    {
+        recordTableSizesRetry++;
+        QTimer::singleShot(100, this, &MainWindow::applyRecordTableSizes);
+    }
+    else
+        recordTableSizesRetry=0;
 }
 
 
@@ -1032,8 +1655,16 @@ void MainWindow::saveWindowGeometry(void)
 
     mytetraConfig.set_mainwingeometry( saveGeometry() );
 
-    mytetraConfig.set_vspl_size_list(vSplitter->sizes());
+    // Размеры vSplitter осмысленны только с двумя виджетами
+    // (в режиме "список под деревом" там один редактор)
+    if(vSplitter->count()==2)
+        mytetraConfig.set_vspl_size_list(vSplitter->sizes());
+
     mytetraConfig.set_hspl_size_list(hSplitter->sizes());
+
+    // Размеры левой колонки (дерево над списком) - только в этом режиме
+    if(leftColumnSplitter!=nullptr)
+        mytetraConfig.set_leftspl_size_list(leftColumnSplitter->sizes());
 
 
     // Запоминается размер сплиттера только при видимом виджете поиска,
@@ -1202,6 +1833,9 @@ void MainWindow::restoreAllWindowState(void)
     restoreFindOnBaseVisible();
     restoreWindowGeometry();
 
+    // Раскладка списка записей применяется после геометрии:
+    // ей нужны живые размеры виджетов
+    applyRecordTablePosition();
 
     restoreTreePosition();
 
@@ -1244,6 +1878,8 @@ void MainWindow::initFileMenu(void)
 
     actionFileMenuImportTreeItem = new QAction(tr("Import tree item"), this);
     fileMenu->addAction(actionFileMenuImportTreeItem);
+    actionFileMenuImportTelegram = new QAction(tr("Import Telegram chat..."), this);
+    fileMenu->addAction(actionFileMenuImportTelegram);
 
     fileMenu->addSeparator();
 
@@ -1489,6 +2125,11 @@ void MainWindow::initViewMenu(void)
     viewFavoritesAction->setCheckable(true);
     viewMenu->addAction(viewFavoritesAction);
 
+    viewToolsAction=new QAction(tr("Show editor toolbar"), this);
+    viewToolsAction->setCheckable(true);
+    viewToolsAction->setObjectName(QStringLiteral("viewToolsAction"));
+    viewMenu->addAction(viewToolsAction);
+
     viewReadOnlyAction=new QAction(this);
     viewReadOnlyAction->setCheckable(true);
     viewMenu->addAction(viewReadOnlyAction);
@@ -1511,6 +2152,8 @@ void MainWindow::initViewMenu(void)
             this,              &MainWindow::onViewHeaderToggled);
     connect(viewFavoritesAction, &QAction::toggled,
             this,                &MainWindow::onViewFavoritesToggled);
+    connect(viewToolsAction, &QAction::toggled,
+            this,            &MainWindow::onViewToolsToggled);
     connect(viewReadOnlyAction, &QAction::toggled,
             this,               &MainWindow::onViewReadOnlyToggled);
     connect(secretColorAction, &QAction::triggered,
@@ -1532,6 +2175,12 @@ void MainWindow::syncViewMenu(void)
 
     if(viewFavoritesAction!=nullptr)
         viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
+
+    // Панель может прятаться мимо меню (кнопка toggleTools, хоткей):
+    // пометка подтягивается при каждом открытии
+    if(viewToolsAction!=nullptr && editorScreen!=nullptr &&
+       editorScreen->editorToolBarAssistant!=nullptr)
+        viewToolsAction->setChecked(!editorScreen->editorConfig->get_hide_tools_lines());
 
     if(viewReadOnlyAction!=nullptr)
         viewReadOnlyAction->setChecked(mytetraConfig.isGlobalReadOnly());
@@ -1555,6 +2204,17 @@ void MainWindow::onViewFavoritesToggled(bool checked)
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
     if(favoritesPanel!=nullptr)
         favoritesPanel->refreshFavorites();
+}
+
+
+// Возврат спрятанной панели инструментов: чекбокс Вид всегда доступен,
+// в отличие от кнопки toggleTools, которая уезжает вместе с панелью
+void MainWindow::onViewToolsToggled(bool checked)
+{
+    if(editorScreen==nullptr || editorScreen->editorToolBarAssistant==nullptr)
+        return;
+
+    editorScreen->editorToolBarAssistant->switchToolsVisibility(checked ? 1 : -1);
 }
 
 
@@ -1585,12 +2245,15 @@ void MainWindow::applyReadOnly(void)
          recordTableScreen->refreshEditorReadOnly();
 
          // Кнопка синхронизации меняет базу (и дёргает её же автосинхронизация)
-         recordTableScreen->actionSyncro->setEnabled(!readOnly);
+         treeScreen->setSyncroEnabled(!readOnly);
         }
 
     // Импорт ветки и управление базами меняют данные
     if(actionFileMenuImportTreeItem!=nullptr)
         actionFileMenuImportTreeItem->setEnabled(!readOnly);
+
+    if(actionFileMenuImportTelegram!=nullptr)
+        actionFileMenuImportTelegram->setEnabled(!readOnly);
 
     if(actionFileMenuDatabasesManagement!=nullptr)
         actionFileMenuDatabasesManagement->setEnabled(!readOnly);
@@ -1750,30 +2413,109 @@ QString MainWindow::mcpBannerText(void)
     if(!modes.isEmpty())
         modesText=" ("+modes.join(", ")+")";
 
-    return tr("MCP session is active%1, SyncTetra works in read-only mode").arg(modesText);
+    QStringList peers;
+
+    for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
+    {
+      const QString mode=mcpPeerModes.value(it.key());
+
+      peers.append(mode.isEmpty() ? it.key() : it.key()+QStringLiteral(" ")+mode);
+    }
+
+    QString text=tr("MCP session is active%1, SyncTetra works in read-only mode").arg(modesText);
+
+    if(!peers.isEmpty())
+      text+=tr("; peers: %1").arg(peers.join(QStringLiteral(", ")));
+
+    return text;
 }
 
 
 // Баннер MCP-сессии: висит всё время пока жив хоть один пир.
-// Протухшие (kill -9 без Bye) вычищаются по TTL. Пусто — баннер
-// гаснет и UI разблокируется, есть пиры — баннер виден и UI
-// заблокирован на запись до конца сессии
+// TTL-килла нет осознанно: долгие нейронные сессии с паузами
+// убивались бы на ровном месте вместе с историей. Пир уходит
+// только по явному Bye; убитый -9 висит до перезапуска программы.
+// Пусто — баннер гаснет и UI разблокируется, есть пиры — баннер
+// виден и UI заблокирован на запись до конца сессии
+// Имя своего бинаря: MCP-сервер это та же программа, так что
+// чужой процесс под recycled pid опознается по имени
+static QString mcpOwnAppName(void)
+{
+  return QFileInfo(QCoreApplication::applicationFilePath()).baseName();
+}
+
+
+// Жив ли пир: процесс с таким pid существует И это наша программа.
+// Имя сверяется чтобы переиспользованный pid чужого процесса не
+// держал висящий баннер. Не прочиталось имя — считаем живым:
+// лучше лишний баннер, чем выкинутый живой пир
+static bool mcpPeerAlive(const QString &pid)
+{
+  const qint64 id=pid.toLongLong();
+
+  if(id<=0)
+    return false;
+
+#ifdef Q_OS_WIN32
+  HANDLE handle=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
+                            static_cast<DWORD>(id));
+
+  if(handle==nullptr)
+    return GetLastError()==ERROR_ACCESS_DENIED;
+
+  char imagePath[MAX_PATH];
+  DWORD imageSize=sizeof(imagePath);
+  const bool nameRead=(QueryFullProcessImageNameA(handle, 0,
+                                                  imagePath, &imageSize)!=0);
+  CloseHandle(handle);
+
+  if(!nameRead)
+    return true;
+
+  return QFileInfo(QString::fromLocal8Bit(imagePath)).baseName()
+         .compare(mcpOwnAppName(), Qt::CaseInsensitive)==0;
+#elif defined(Q_OS_LINUX)
+  if(::kill(static_cast<pid_t>(id), 0)!=0)
+    return errno==EPERM;
+
+  QFile commFile(QStringLiteral("/proc/%1/comm").arg(id));
+
+  if(!commFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    return true;
+
+  // comm режется ядром до 15 символов: сравнивается столько же
+  const QString comm=QString::fromLocal8Bit(commFile.readAll()).trimmed();
+
+  return comm==mcpOwnAppName().left(15);
+#else
+  if(::kill(static_cast<pid_t>(id), 0)==0)
+    return true;
+
+  return errno==EPERM;
+#endif
+}
+
+
+void MainWindow::onMcpPeerTick(void)
+{
+  QList<QString> dead;
+
+  for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
+    if(!mcpPeerAlive(it.key()))
+      dead.append(it.key());
+
+  foreach(const QString &pid, dead)
+  {
+    mcpPeers.remove(pid);
+    mcpPeerModes.remove(pid);
+  }
+
+  updateMcpBanner();
+}
+
+
 void MainWindow::updateMcpBanner(void)
 {
-    qint64 now=QDateTime::currentMSecsSinceEpoch();
-
-    QList<QString> stale;
-
-    for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
-        if(now-it.value()>180000)
-            stale.append(it.key());
-
-    foreach(const QString &pid, stale)
-    {
-        mcpPeers.remove(pid);
-        mcpPeerModes.remove(pid);
-    }
-
     if(mcpBannerBar==nullptr || mcpBanner==nullptr)
         return;
 
@@ -1984,7 +2726,10 @@ void MainWindow::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->objectName();
 
-    shortcutManager.initAction("misc-print", actionFileMenuPrint );
+    // Ctrl+P открывает предпросмотр печати (там же кнопка прямой печати).
+    // Прямая печать без предпросмотра висит на misc-printDirect
+    shortcutManager.initAction("misc-print", actionFileMenuPrintPreview );
+    shortcutManager.initAction("misc-printDirect", actionFileMenuPrint );
     shortcutManager.initAction("misc-exportPdf", actionFileMenuExportPdf );
     shortcutManager.initAction("misc-quit", actionFileMenuQuit );
 
@@ -2014,6 +2759,7 @@ void MainWindow::retranslateUi(void)
         actionFileMenuDatabasesManagement->setText(tr("Databases management"));
         actionFileMenuExportTreeItem->setText(tr("Export tree item"));
         actionFileMenuImportTreeItem->setText(tr("Import tree item"));
+        actionFileMenuImportTelegram->setText(tr("Import Telegram chat..."));
         actionFileMenuPrintPreview->setText(tr("Print Preview..."));
     }
 
@@ -2201,7 +2947,7 @@ void MainWindow::filePrintPreview(void)
 {
     PrintPreview *preview = new PrintPreview(editorScreen->getTextareaDocument(), this);
 
-    preview->setModal(true);
+    preview->setWindowModality(Qt::WindowModal);
     preview->setAttribute(Qt::WA_DeleteOnClose);
     preview->show();
 }
@@ -2247,6 +2993,17 @@ void MainWindow::fileExportBranch(void)
     if( directorySelectDialog.exec() )
         if( !directorySelectDialog.directory().absolutePath().isEmpty() ) // Если была выбрана директория (а не нажат Cancel)
             treeScreen->exportBranchToDirectory( directorySelectDialog.directory().absolutePath() );
+}
+
+
+void MainWindow::fileImportTelegram(void)
+{
+    // Глобальный режим только чтения: импорт меняет базу
+    if(mytetraConfig.get_readOnly())
+        return;
+
+    TelegramImportDialog dialog(this);
+    dialog.exec();
 }
 
 
@@ -2565,11 +3322,11 @@ void MainWindow::synchronization(bool visible)
         return;
 
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
-    if(!recordTableScreen->actionSyncro->isEnabled())
+    if(!treeScreen->isSyncroEnabled())
         return;
 
     // Блокируется кнопка синхронизации, чтобы два раза случайно не нажать синхронизацию (окно синхронизации не модально)
-    recordTableScreen->actionSyncro->setEnabled(false);
+    treeScreen->setSyncroEnabled(false);
 
     actionLogger.addAction("startSyncro");
 
@@ -2587,7 +3344,7 @@ void MainWindow::synchronization(bool visible)
                              QMessageBox::Close);
 
         // Кнопка синхронизации разблокируется, чтобы ее можно было снова нажать
-        recordTableScreen->actionSyncro->setEnabled(true);
+        treeScreen->setSyncroEnabled(true);
 
         return;
     }

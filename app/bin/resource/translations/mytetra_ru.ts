@@ -1029,6 +1029,26 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <source>MCP help</source>
         <translation>Справка MCP</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="188"/>
+        <source>Available tools</source>
+        <translation>Доступные инструменты</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="190"/>
+        <source>Read-only (ro) — %1 tools</source>
+        <translation>Только чтение (ro): %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="191"/>
+        <source>Read-write (rw) — %1 tools</source>
+        <translation>Чтение и запись (rw): %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="192"/>
+        <source>Delete — %1 tools</source>
+        <translation>Удаление: %1</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Misc</name>
@@ -1120,6 +1140,41 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
     </message>
 </context>
 <context>
+    <name>AppConfigPage_Tree</name>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="37"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="81"/>
+        <source>Only its own notes [n] (default)</source>
+        <translation>Только её заметки [n] (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="40"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="82"/>
+        <source>Its own and sub-branch notes [n][m]</source>
+        <translation>Её заметки и заметки подпапок [n][m]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="54"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="84"/>
+        <source>Show note count in branch</source>
+        <translation>Отображать количество заметок в ветке</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="60"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Tree.cpp" line="100"/>
+        <source>Edit toolbar buttons</source>
+        <translation>Настроить кнопки панелей</translation>
+    </message>
+</context>
+<context>
+    <name>TreeScreen</name>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
+        <source>Customize toolbar...</source>
+        <translation>Настроить панель...</translation>
+    </message>
+</context>
+<context>
     <name>AppConfigPage_RecordTable</name>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="42"/>
@@ -1151,9 +1206,38 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <translation>Шапка заметки</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="86"/>
+        <source>To the right of the tree (default)</source>
+        <translation>Справа от дерева (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="89"/>
+        <source>Under the tree</source>
+        <translation>Под деревом</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="97"/>
+        <source>Notes list position</source>
+        <translation>Положение списка записей</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="128"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="248"/>
+        <source>Edit toolbar buttons</source>
+        <translation>Настроить кнопки панелей</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_RecordTable.cpp" line="62"/>
         <source>Show note header (name and author)</source>
         <translation>Показывать шапку заметки (название и автор)</translation>
+    </message>
+</context>
+<context>
+    <name>RecordTableScreen</name>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="795"/>
+        <source>Customize toolbar...</source>
+        <translation>Настроить панель...</translation>
     </message>
 </context>
 <context>
@@ -1530,6 +1614,10 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <translation>Скачивание файла</translation>
     </message>
     <message>
+        <source>Save the note first</source>
+        <translation>Сначала сохраните заметку</translation>
+    </message>
+    <message>
         <source>Can&apos;t add directory. Please, select files.</source>
         <translation type="obsolete">Невозможно добавить директорию. Пожалуйста, выберите файлы.</translation>
     </message>
@@ -1644,6 +1732,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/models/attachTable/AttachTableModel.cpp" line="199"/>
         <source>File size</source>
         <translation>Размер файла</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Описание</translation>
+    </message>
+    <message>
+        <source>Link</source>
+        <translation>Ссылка</translation>
     </message>
 </context>
 <context>
@@ -2664,6 +2760,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="107"/>
+        <source>Apply last color on button click</source>
+        <translation>Применять последний цвет по клику на кнопку</translation>
+    </message>
+    <message>
+        <source>Clicking the text or background color button paints in the last used color without opening the picker</source>
+        <translation>Клик по кнопке цвета текста или фона красит в последний использованный цвет без открытия палитры</translation>
+    </message>
+    <message>
         <source>Code color</source>
         <translation>Цвет кода</translation>
     </message>
@@ -2718,6 +2822,40 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>letters</source>
         <translation>симв.</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp"/>
+        <source>Image format</source>
+        <translation>Формат картинок</translation>
+    </message>
+    <message>
+        <source>PNG (lossless)</source>
+        <translation>PNG (без потерь)</translation>
+    </message>
+    <message>
+        <source>JPG (compact)</source>
+        <translation>JPG (компактный)</translation>
+    </message>
+    <message>
+        <source>Applies to newly inserted images</source>
+        <translation>Действует только на вновь вставляемые картинки</translation>
+    </message>
+    <message>
+        <source>Max image size</source>
+        <translation>Макс. размер картинки</translation>
+    </message>
+    <message>
+        <source>No limit</source>
+        <translation>Без ограничения</translation>
+    </message>
+    <message>
+        <source>Allow changing true image file size</source>
+        <translation>Разрешить изменение истинного размера файлов картинок</translation>
+    </message>
+    <message>
+        <source>Shows a button in Image properties that rewrites the image file. The original is moved to trash. Off by default.</source>
+        <translation>Показывает кнопку в свойствах картинки, перезаписывающую файл. Оригинал перемещается в корзину. По умолчанию выключено.</translation>
+    </message>
+
     <message>
         <source>Formula update timer</source>
         <translation type="vanished">Период обновления формулы</translation>
@@ -3043,6 +3181,77 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorImageProperties.cpp" line="114"/>
         <source>Image info</source>
         <translation>Информация об изображении</translation>
+    </message>
+    <message>
+        <source>Apply size to file</source>
+        <translation>Применить размер к файлу</translation>
+    </message>
+    <message>
+        <source>Rewrite the image file to the size above. The original is moved to trash.</source>
+        <translation>Перезаписать файл картинки под заданный выше размер. Оригинал перемещается в корзину.</translation>
+    </message>
+    <message>
+        <source>Rewrite the image to %1?</source>
+        <translation>Перезаписать картинку в размере %1?</translation>
+    </message>
+    <message>
+        <source>Current: %1</source>
+        <translation>Сейчас: %1</translation>
+    </message>
+    <message>
+        <source>Quality loss is irreversible!</source>
+        <translation>Потеря качества необратима!</translation>
+    </message>
+    <message>
+        <source>The original file will be moved to trash.</source>
+        <translation>Оригинал файла будет перемещен в корзину.</translation>
+    </message>
+    <message>
+        <source>The file is not saved yet, only the image in the note will change.</source>
+        <translation>Файл еще не сохранен, изменится только картинка в записи.</translation>
+    </message>
+    <message>
+        <source>Change true image size</source>
+        <translation>Изменение истинного размера</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Применить</translation>
+    </message>
+    <message>
+        <source>Can not scale image.</source>
+        <translation>Не удалось масштабировать картинку.</translation>
+    </message>
+    <message>
+        <source>Can not move original to trash, nothing changed.</source>
+        <translation>Не удалось переместить оригинал в корзину, ничего не изменено.</translation>
+    </message>
+    <message>
+        <source>Can not write resized file. The original stays in trash.</source>
+        <translation>Не удалось записать ужатый файл. Оригинал остался в корзине.</translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>байт</translation>
+    </message>
+</context>
+<context>
+    <name>EditorSpecialCharDialog</name>
+    <message>
+        <source>Special character</source>
+        <translation>Спецсимвол</translation>
+    </message>
+    <message>
+        <source>Recent:</source>
+        <translation>Недавние:</translation>
+    </message>
+    <message>
+        <source>All symbols:</source>
+        <translation>Все символы:</translation>
+    </message>
+    <message>
+        <source>Insert %1</source>
+        <translation>Вставить %1</translation>
     </message>
 </context>
 <context>
@@ -4503,6 +4712,12 @@ You need to update SyncTetra.</source>
         <translation>Импорт ветки</translation>
     </message>
     <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1323"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2177"/>
+        <source>Import Telegram chat...</source>
+        <translation>Импорт чата Telegram...</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1250"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2034"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2566"/>
@@ -4802,6 +5017,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Показывать панель избранного</translation>
     </message>
     <message>
+        <source>Show editor toolbar</source>
+        <translation>Показывать панель инструментов редактора</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="212"/>
         <source>Backlinks</source>
         <translation>Обратные ссылки</translation>
@@ -4852,7 +5071,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</source>
         <translation>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</translation>
     </message>
-</context>
+
+    <message>
+        <source>; peers: %1</source>
+        <translation>; пиры: %1</translation>
+    </message></context>
 <context>
     <name>MathExpressionFormatter</name>
     <message>
@@ -5582,6 +5805,18 @@ SyncTetra will try to create a blank entry to fix it.</source>
         <translation>Список записей</translation>
     </message>
     <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="66"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="132"/>
+        <source>Branch tree</source>
+        <translation>Дерево веток</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="70"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="136"/>
+        <source>Telegram</source>
+        <translation type="vanished">Telegram</translation>
+    </message>
+    <message>
         <source>Note area</source>
         <translation type="vanished">Список записей</translation>
     </message>
@@ -5668,6 +5903,141 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/models/attachTable/Attach.cpp" line="878"/>
         <source>Unable to rename the file %1 to %2 from disk.</source>
         <translation>Не могу переименовать файл %1 в %2 на диске.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="274"/>
+        <source>Top-level branches with notes_count (own) and notes_total (with subbranches). Encrypted ones carry encrypted:true. Pass recursive:true for the full tree, branch_id for children of one branch.</source>
+        <translation>Ветки верхнего уровня со счётчиками notes_count (свои) и notes_total (с подветками). Шифрованные помечены encrypted:true. Передай recursive:true для всего дерева, branch_id — для детей одной ветки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="308"/>
+        <source>Notes in a branch WITHOUT texts (id, name, tags, ...). To read a note text call get_note with its note_id. Encrypted ones carry encrypted:true.</source>
+        <translation>Заметки ветки БЕЗ текстов (id, имя, теги, ...). Чтобы прочитать текст, вызови get_note с note_id. Шифрованные помечены encrypted:true.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="336"/>
+        <source>One note as plain text. Unsaved GUI edits invisible, locked notes read empty. Encrypted notes carry encrypted:true.</source>
+        <translation>Одна заметка плейнтекстом. Несохранённые правки GUI не видны, закрытые читаются пустыми. Шифрованные помечены encrypted:true.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="365"/>
+        <source>Substring search over note names, tags, texts. Matching branches go in a separate branches list, no need to list all branches. Hits carry snippets only, call get_note with note_id to read the full text.</source>
+        <translation>Поиск подстроки по именам, тегам, текстам заметок. Подходящие ветки — отдельным списком branches, перечислять все ветки не нужно. Хиты несут только сниппеты, полный текст читай через get_note с note_id.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="377"/>
+        <source>Create a branch. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Создать ветку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="413"/>
+        <source>Create a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Создать заметку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="446"/>
+        <source>Update note fields. Only provided fields change; open GUI editor keeps its buffer. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Обновить поля заметки. Меняются только переданные поля; открытый редактор GUI хранит свой буфер. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="461"/>
+        <source>Delete a note to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Удалить заметку в корзину. Без дополнительных подтверждений. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="476"/>
+        <source>Delete a branch subtree to trash. No confirmation beyond this call. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Удалить поддерево ветки в корзину. Без дополнительных подтверждений. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="509"/>
+        <source>PREFERRED for any 2+ writes: one call, one GUI roundtrip, one save. Do not call single-write tools in a loop. Example: {"operations": [{"tool": "create_note", "arguments": {"branch_id": "abc123", "name": "Shopping", "text": "milk, bread"}}, {"tool": "rename_tag", "arguments": {"old": "todo", "new": "done"}}]}. Batchable: create/update/delete/move/favorite note, create/rename/move/delete branch, rename/delete tag (no export/import). Creates get server ids, later ops can not reference them. Deletes need delete mode. Not atomic: stops at first error, applied prefix persists. Per-operation results in order.</source>
+        <translation>ПРЕДПОЧТИТЕЛЬНО для любых 2+ записей: один вызов, один проход через GUI, один сейв. Не вызывай одиночные тулы в цикле. Пример: {"operations": [{"tool": "create_note", "arguments": {"branch_id": "abc123", "name": "Shopping", "text": "milk, bread"}}, {"tool": "rename_tag", "arguments": {"old": "todo", "new": "done"}}]}. Можно пакетировать: создание/правка/удаление/перемещение/звёздочка заметки, создание/переименование/перемещение/удаление ветки, переименование/удаление тега (без экспорта/импорта). Созданное получает серверные id, поздние операции на них ссылаться не могут. Удалениям нужен режим удаления. Не атомарно: остановка на первой ошибке, применённый префикс сохраняется. Результаты по операциям по порядку.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="518"/>
+        <source>Rename a branch. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переименовать ветку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="543"/>
+        <source>Move a branch. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переместить ветку. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="563"/>
+        <source>Move a note, id and links kept. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переместить заметку, id и ссылки сохраняются. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="578"/>
+        <source>Star a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Пометить заметку звездой. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="593"/>
+        <source>Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Снять звезду с заметки. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="613"/>
+        <source>Export a branch subtree to a directory in SyncTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Выгрузить поддерево ветки в каталог в обменном формате SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="632"/>
+        <source>Import a branch subtree from a SyncTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Вгрузить поддерево ветки из обменного каталога SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="648"/>
+        <source>Same-name or same-text note groups.</source>
+        <translation>Группы заметок с одинаковым именем или текстом.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="662"/>
+        <source>Totals: branches, notes, tags, files, images, links.</source>
+        <translation>Итоги: ветки, заметки, теги, файлы, картинки, ссылки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="671"/>
+        <source>Server debug: app version and database path.</source>
+        <translation>Отладка сервера: версия программы и путь к базе.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="680"/>
+        <source>Tags with counts.</source>
+        <translation>Теги с количеством.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="702"/>
+        <source>Notes with exactly this tag.</source>
+        <translation>Заметки ровно с этим тегом.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="718"/>
+        <source>Notes without tags.</source>
+        <translation>Заметки без тегов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="727"/>
+        <source>Starred notes with branch context.</source>
+        <translation>Заметки со звездой и контекстом ветки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="742"/>
+        <source>Attachments of a note: file names with sizes.</source>
+        <translation>Прикрепления заметки: имена файлов с размерами.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="762"/>
+        <source>Rename a tag everywhere. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Переименовать тег везде. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="777"/>
+        <source>Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Удалить тег везде. Необратимо. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
     </message>
 </context>
 <context>
@@ -5942,6 +6312,18 @@ Enable it in Settings on the History page.</source>
         <translation>Печать таблицы</translation>
     </message>
     <message>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="146"/>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="657"/>
+        <source>Print preview</source>
+        <translation>Предпросмотр печати</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="147"/>
+        <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="658"/>
+        <source>Preview current note before printing</source>
+        <translation>Предпросмотр текущей записи перед печатью</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="137"/>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="645"/>
         <source>Print current notes table</source>
@@ -5958,6 +6340,14 @@ Enable it in Settings on the History page.</source>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="648"/>
         <source>Copy note reference to clipboard</source>
         <translation>Копировать ссылку на запись в буфер обмена</translation>
+    </message>
+    <message>
+        <source>Copy link with title</source>
+        <translation>Копировать ссылку с заголовком</translation>
+    </message>
+    <message>
+        <source>Copy titled link to clipboard for pasting into another note</source>
+        <translation>Копировать ссылку с заголовком в буфер обмена для вставки в другую запись</translation>
     </message>
     <message>
         <location filename="../../../src/views/recordTable/RecordTableScreen.cpp" line="146"/>
@@ -6486,6 +6876,22 @@ Enable it in Settings on the History page.</source>
         <translation>Требуется целиком выделить абзац(ы) для полного форматирования в код</translation>
     </message>
     <message>
+        <source>Heading 1</source>
+        <translation>Заголовок 1</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as first-level heading</source>
+        <translation>Оформить абзацы как заголовок первого уровня</translation>
+    </message>
+    <message>
+        <source>Heading 2</source>
+        <translation>Заголовок 2</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as second-level heading</source>
+        <translation>Оформить абзацы как заголовок второго уровня</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="127"/>
         <source>Lowercase</source>
         <translation>Нижний регистр</translation>
@@ -6592,6 +6998,58 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
+        <source>Find next</source>
+        <translation>Найти далее</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
+        <source>Go to next match in current note</source>
+        <translation>Перейти к следующему совпадению в текущей записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="146"/>
+        <source>Find previous</source>
+        <translation>Найти ранее</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="146"/>
+        <source>Go to previous match in current note</source>
+        <translation>Перейти к предыдущему совпадению в текущей записи</translation>
+    </message>
+    <message>
+        <source>Scroll up</source>
+        <translation>Прокрутить вверх</translation>
+    </message>
+    <message>
+        <source>Scroll text up without moving cursor</source>
+        <translation>Прокрутить текст вверх без перемещения курсора</translation>
+    </message>
+    <message>
+        <source>Scroll down</source>
+        <translation>Прокрутить вниз</translation>
+    </message>
+    <message>
+        <source>Scroll text down without moving cursor</source>
+        <translation>Прокрутить текст вниз без перемещения курсора</translation>
+    </message>
+    <message>
+        <source>Toggle tools</source>
+        <translation>Показать/спрятать панель</translation>
+    </message>
+    <message>
+        <source>Show or hide the editor toolbar</source>
+        <translation>Показать или спрятать панель инструментов редактора</translation>
+    </message>
+    <message>
+        <source>Tabs to spaces</source>
+        <translation>Табы в пробелы</translation>
+    </message>
+    <message>
+        <source>Replace tab characters with spaces in selection or whole note</source>
+        <translation>Заменить символы табуляции пробелами в выделении или во всей записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="145"/>
         <source>Editor settings</source>
         <translation>Настройки редактора</translation>
     </message>
@@ -6671,6 +7129,14 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="160"/>
+        <source>Insert special character</source>
+        <translation>Вставить спецсимвол</translation>
+    </message>
+    <message>
+        <source>Insert a special character from the symbol table</source>
+        <translation>Вставить спецсимвол из таблицы символов</translation>
+    </message>
+    <message>
         <source>Insert a horizontal line into the empty paragraph from cursor</source>
         <translation>Вставка горизонтальной линии для разграничения параграфов</translation>
     </message>
@@ -6805,9 +7271,14 @@ Enable it in Settings on the History page.</source>
         <translation>ОК</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/ShortcutManager.cpp" line="198"/>
-        <source>Print</source>
-        <translation>Печать</translation>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="204"/>
+        <source>Print preview</source>
+        <translation>Предпросмотр печати</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="205"/>
+        <source>Direct print</source>
+        <translation>Прямая печать</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="199"/>
@@ -6996,6 +7467,11 @@ Enable it in Settings on the History page.</source>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="41"/>
         <source>Grab shortcut</source>
         <translation>Захват горячей клавиши</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="64"/>
+        <source>Search command</source>
+        <translation>Поиск команды</translation>
     </message>
     <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="42"/>
@@ -8866,6 +9342,167 @@ This cannot be undone.</source>
     <message>
         <source>Profile</source>
         <translation>Профиль</translation>
+    </message>
+</context>
+<context>
+    <name>TelegramImportDialog</name>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="78"/>
+        <source>Import Telegram chat</source>
+        <translation>Импорт чата Telegram</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="79"/>
+        <source>Import</source>
+        <translation>Импортировать</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="80"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="81"/>
+        <source>Select Telegram Desktop export file (result.json or messages.html).</source>
+        <translation>Выбери файл экспорта Telegram Desktop (result.json или messages.html).</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="94"/>
+        <source>Telegram export (result.json, messages.html)</source>
+        <translation>Экспорт Telegram (result.json, messages.html)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="95"/>
+        <source>Select Telegram export file</source>
+        <translation>Выбери файл экспорта Telegram</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="112"/>
+        <source>Parse error: </source>
+        <translation>Ошибка разбора: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="136"/>
+        <source>Chat: %1. Messages: %2, months: %3, media files: %4.</source>
+        <translation>Чат: %1. Сообщений: %2, месяцев: %3, медиафайлов: %4.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="151"/>
+        <source>Warning</source>
+        <translation>Предупреждение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="152"/>
+        <source>Database tree is unavailable.</source>
+        <translation>Дерево базы недоступно.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="174"/>
+        <source>Import failed: </source>
+        <translation>Импорт не удался: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="183"/>
+        <source>Done. Branches: %1, notes: %2, attached files: %3, missing: %4.</source>
+        <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="123"/>
+        <source>One note per year: chat</source>
+        <translation>Одна заметка на год: чат</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="122"/>
+        <source>One note per month: chat - year (default)</source>
+        <translation>Одна заметка на месяц: чат — год (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="124"/>
+        <source>One note per day: chat - year - month</source>
+        <translation>Одна заметка на день: чат — год — месяц</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="125"/>
+        <source>One note per message: chat - year - month - day</source>
+        <translation>Заметка на каждое сообщение: чат — год — месяц — день</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="127"/>
+        <source>Notes layout</source>
+        <translation>Раскладка заметок</translation>
+    </message>
+</context>
+<context>
+    <name>MainToolbarSettingsScreen</name>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="29"/>
+        <source>Toolbar settings</source>
+        <translation>Настройка панелей инструментов</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="62"/>
+        <source>Branches</source>
+        <translation>Ветки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="63"/>
+        <source>Notes</source>
+        <translation>Записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="64"/>
+        <source>Notes second line</source>
+        <translation>Записи, вторая линия</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="56"/>
+        <source>Available buttons</source>
+        <translation>Доступные кнопки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="83"/>
+        <source>Current buttons</source>
+        <translation>Задействованные кнопки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="234"/>
+        <source>&lt;Separator&gt;</source>
+        <translation>&lt;Разделитель&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="248"/>
+        <source>&lt;Spring&gt;</source>
+        <translation>&lt;Пружина&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="330"/>
+        <source>&lt;b&gt;%1&lt;/b&gt; is already on this toolbar.</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; уже есть на этой панели.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="533"/>
+        <source>&lt;b&gt;Information&lt;/b&gt; for toolbar buttons setup:</source>
+        <translation>&lt;b&gt;Информация&lt;/b&gt; по настройке кнопок панелей:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="536"/>
+        <source>The command is inserted &lt;b&gt;above the cursor&lt;/b&gt; in the used commands list.</source>
+        <translation>Команда вставляется &lt;b&gt;над курсором&lt;/b&gt; в списке задействованных команд.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="538"/>
+        <source>Panel toggle buttons (tags, history, backlinks) always stay at the end of the second notes line and are not listed here. Hidden shortcut-only buttons stay active too.</source>
+        <translation>Кнопки-переключатели панелей (метки, история, обратные ссылки) всегда остаются в конце второй линии записей и здесь не показываются. Скрытые кнопки только для горячих клавиш тоже продолжают работать.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="541"/>
+        <source>&lt;b&gt;Shortcuts:&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Горячие клавиши:&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="548"/>
+        <source>Information</source>
+        <translation>Информация</translation>
     </message>
 </context>
 </TS>

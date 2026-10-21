@@ -26,6 +26,7 @@
 #include "main.h"
 #include "libraries//Downloader.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 
 extern GlobalParameters globalParameters;
@@ -110,6 +111,13 @@ void ImageFormatter::editImageProperties(void)
     dialog.set_real_width(realImageWidth);
     dialog.set_real_height(realImageHeight);
 
+    // Контекст истинного ресайза: путь к файлу и его наличие,
+    // исходные пиксели. Кнопка видна только при мастер-тумблере
+    const QString fullImageFileName=QFileInfo(editor->getWorkDirectory()+QStringLiteral("/")+imageName).absoluteFilePath();
+    dialog.setTrueResizeAllowed(editorConfig->get_allowTrueImageResize());
+    dialog.setTrueResizeFile(fullImageFileName, QFile::exists(fullImageFileName));
+    dialog.setSourceImage(image);
+
     // Если в форматировании картинки не задан размер картинки
     if(imageFormat.width()==0 && imageFormat.height()==0)
     {
@@ -130,6 +138,16 @@ void ImageFormatter::editImageProperties(void)
     // Запуск диалога на выполнение
     if(dialog.exec()!=QDialog::Accepted)
         return;
+
+    // Истинный ресайз из диалога: подмена ресурса пережатыми пикселями.
+    // Файл уже переписан самим диалогом, документ помечается измененным
+    if(dialog.trueResizeDone())
+    {
+        textArea->document()->addResource(QTextDocument::ImageResource,
+                                          QUrl(imageName),
+                                          QVariant(dialog.trueResizedImage()));
+        textArea->document()->setModified(true);
+    }
 
     imageFormat.setWidth(dialog.get_width());
     imageFormat.setHeight(dialog.get_height());
@@ -250,8 +268,16 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
       // Картинка загружается из файла
       QImage image = QImageReader(currFileName).read();
 
-      // Внутреннее имя картинки
-      QString imageName=getUniqueImageName();
+      // Большие файлы ужимаются до лимита длинной стороны, имя —
+      // по настройке формата (с прозрачностью всегда PNG)
+      EditorConfig *imageFileConfig=find_object<EditorConfig>("editorconfig");
+
+      if(imageFileConfig!=nullptr)
+        image=imageFileConfig->limitImageSize(image);
+
+      const QString imageExt=(imageFileConfig!=nullptr) ? imageFileConfig->imageExtensionFor(image)
+                                                        : QStringLiteral("png");
+      QString imageName=getUniqueImageName(imageExt);
 
       // Картинка добавляется в хранилище документа
       textArea->document()->addResource(QTextDocument::ImageResource, QUrl(imageName), image );
@@ -518,7 +544,7 @@ void ImageFormatter::onDownloadImages(const QString html)
       if(preFragment.isValid() && preFragment.charFormat().isImageFormat())
       {
         QString preImageName=preFragment.charFormat().toImageFormat().name();
-        if(!preImageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")) &&
+        if(!preImageName.contains(QRegExp("^image\\d{10}[a-z0-9]+\\.(png|jpg)$")) &&
            isDownloadableImageReference(preImageName) &&
            !externalHttpReferences.contains(preImageName))
           externalHttpReferences << preImageName;
@@ -576,7 +602,7 @@ void ImageFormatter::onDownloadImages(const QString html)
           // В очередь скачивания попадают только http(s)-ссылки, остальные
           // внешние имена (file, data и прочие) остаются в документе как есть
           // и никогда не уходят в сетевой запрос
-          if(!imageName.contains(QRegExp("^image\\d{10}[a-z0-9]+.png$")) &&
+          if(!imageName.contains(QRegExp("^image\\d{10}[a-z0-9]+\\.(png|jpg)$")) &&
              isDownloadableImageReference(imageName))
           {
             if(msgBox.text().length()==0)
@@ -598,8 +624,15 @@ void ImageFormatter::onDownloadImages(const QString html)
               // Ссылка на картинку добавляется в массив скачиваемых файлов
               downloadReferences << imageName;
 
-              // Ссылке ставится в соответствие уникальное внутреннее имя картинки
-              internalImageName=getUniqueImageName();
+              // Ссылке ставится в соответствие уникальное внутреннее имя
+              // картинки в настроенном формате. Прозрачность тут еще
+              // неизвестна: если скачается картинка с альфой под jpg-именем,
+              // имя поправится на png в onDownloadImagesSuccessfull
+              EditorConfig *downloadFormatConfig=find_object<EditorConfig>("editorconfig");
+              const QString downloadExt=(downloadFormatConfig!=nullptr)
+                                          ? downloadFormatConfig->get_imageSaveFormat()
+                                          : QStringLiteral("png");
+              internalImageName=getUniqueImageName(downloadExt);
               referencesAndInternalNames[imageName]=internalImageName;
             }
             else

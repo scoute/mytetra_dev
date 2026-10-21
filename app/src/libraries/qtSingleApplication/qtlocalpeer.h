@@ -51,6 +51,11 @@
 
 namespace QtLP_Private {
 #include "qtlockedfile.h"
+
+#include <functional>
+
+// Ответчик на mcp-команды для синхронного протокола запрос-ответ (см. копию qtSingleApplication5)
+using McpResponder = std::function<QByteArray(const QString &message)>;
 }
 
 class QtLocalPeer : public QObject
@@ -61,6 +66,8 @@ public:
     QtLocalPeer(QObject *parent = nullptr, const QString &appId = QString());
     bool isClient();
     bool sendMessage(const QString &message, int timeout);
+    void setMcpResponder(const McpResponder &responder)
+        { mcpResponder=responder; }
     QString applicationId() const
         { return id; }
 
@@ -78,4 +85,5 @@ protected:
 
 private:
     static const char* ack;
+    McpResponder mcpResponder;
 };

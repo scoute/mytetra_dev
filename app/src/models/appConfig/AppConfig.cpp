@@ -143,7 +143,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_49(true);
+        QStringList actualTable=get_parameter_table_51(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -357,6 +357,18 @@ void AppConfig::set_findsplitter_size_list(QList<int> list)
 {
     // qDebug() << "Config set find splitter list to " << list;
     set_splitter_size_list("findsplitter", list);
+}
+
+
+QList<int> AppConfig::get_leftspl_size_list(void)
+{
+    return get_splitter_size_list("leftspl");
+}
+
+
+void AppConfig::set_leftspl_size_list(QList<int> list)
+{
+    set_splitter_size_list("leftspl", list);
 }
 
 
@@ -1335,6 +1347,69 @@ void AppConfig::set_recordHeaderVisible(bool state)
 }
 
 
+bool AppConfig::get_recordTableUnderTree(void)
+{
+    return m_conf->value("recordTableUnderTree", false).toBool();
+}
+
+
+void AppConfig::set_recordTableUnderTree(bool state)
+{
+    m_conf->setValue("recordTableUnderTree", state);
+}
+
+
+QStringList AppConfig::getTreeToolbarOrder(void)
+{
+    QString raw=m_conf->value("treeToolbarOrder", "").toString();
+
+    if(raw.isEmpty())
+        return QStringList();
+
+    return raw.split(",");
+}
+
+
+void AppConfig::setTreeToolbarOrder(QStringList order)
+{
+    m_conf->setValue("treeToolbarOrder", order.join(","));
+}
+
+
+QStringList AppConfig::getRecordToolbarOrder(void)
+{
+    QString raw=m_conf->value("recordToolbarOrder", "").toString();
+
+    if(raw.isEmpty())
+        return QStringList();
+
+    return raw.split(",");
+}
+
+
+void AppConfig::setRecordToolbarOrder(QStringList order)
+{
+    m_conf->setValue("recordToolbarOrder", order.join(","));
+}
+
+
+QStringList AppConfig::getRecordExtraToolbarOrder(void)
+{
+    QString raw=m_conf->value("recordExtraToolbarOrder", "").toString();
+
+    if(raw.isEmpty())
+        return QStringList();
+
+    return raw.split(",");
+}
+
+
+void AppConfig::setRecordExtraToolbarOrder(QStringList order)
+{
+    m_conf->setValue("recordExtraToolbarOrder", order.join(","));
+}
+
+
 bool AppConfig::get_readOnly(void)
 {
     return m_conf->value("readOnly", false).toBool() || m_mcpUiLock;
@@ -1554,6 +1629,42 @@ bool AppConfig::get_mcpAllow(void)
 void AppConfig::set_mcpAllow(bool state)
 {
     m_conf->setValue("mcpAllow", state);
+}
+
+
+// Показывать ли общий итог записей с учетом подветок.
+// По умолчанию выключено: только свои [n]
+bool AppConfig::get_showSubtreeCount(void)
+{
+    return m_conf->value("showSubtreeCount", false).toBool();
+}
+
+void AppConfig::set_showSubtreeCount(bool state)
+{
+    m_conf->setValue("showSubtreeCount", state);
+}
+
+
+// Раскладка импорта Telegram. Неизвестное значение лечится
+// в дефолт: импорт всегда рабочий
+QString AppConfig::get_telegramImportMode(void)
+{
+    const QString mode=m_conf->value("telegramImportMode", QStringLiteral("month")).toString();
+
+    if(mode==QStringLiteral("message") || mode==QStringLiteral("day") ||
+       mode==QStringLiteral("year"))
+        return mode;
+
+    return QStringLiteral("month");
+}
+
+void AppConfig::set_telegramImportMode(const QString &mode)
+{
+    if(mode==QStringLiteral("message") || mode==QStringLiteral("day") ||
+       mode==QStringLiteral("year"))
+        m_conf->setValue("telegramImportMode", mode);
+    else
+        m_conf->setValue("telegramImportMode", QStringLiteral("month"));
 }
 
 
@@ -1898,6 +2009,8 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_47;
     parameterFunctions << &AppConfig::get_parameter_table_48;
     parameterFunctions << &AppConfig::get_parameter_table_49;
+    parameterFunctions << &AppConfig::get_parameter_table_50;
+    parameterFunctions << &AppConfig::get_parameter_table_51;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2902,6 +3015,44 @@ QStringList AppConfig::get_parameter_table_49(bool withEndSignature)
 
     // Разрешение доступа внешнего AI-клиента через MCP, по умолчанию закрыт
     table << "mcpAllow" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_50(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 49
+    table << get_parameter_table_49(false);
+
+    // Общий итог записей с учетом подветок, по умолчанию выключен
+    table << "showSubtreeCount" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_51(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 50
+    table << get_parameter_table_50(false);
+
+    // Раскладка импорта Telegram, по умолчанию заметка на месяц
+    table << "telegramImportMode" << "QString" << "month";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

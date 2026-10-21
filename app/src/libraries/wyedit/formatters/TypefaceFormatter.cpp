@@ -12,6 +12,8 @@
 #include "../EditorConfig.h"
 #include "../EditorTextArea.h"
 #include "../EditorToolBarAssistant.h"
+#include "../EditorFontFamilyComboBox.h"
+#include "../EditorSpecialCharDialog.h"
 #include "../EditorCursorPositionDetector.h"
 #include "../EditorFontSizeComboBox.h"
 #include "../../TraceLogger.h"
@@ -359,6 +361,63 @@ void TypefaceFormatter::onCodeClicked(void)
     }
 
     textArea->textCursor().endEditBlock();
+}
+
+
+// Установка уровня заголовка для абзацев в выделении (или текущего
+// абзаца без выделения). Повторный клик по своему уровню снимает
+// его в обычный текст. Символьное форматирование не трогается:
+// уровень заголовка живёт в блочном формате и в HTML едет как <h1>
+void TypefaceFormatter::applyHeadingLevel(int level)
+{
+    QTextCursor cursor=textArea->textCursor();
+
+    // Границы прохода по абзацам: без выделения — текущий абзац
+    const int from=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+    const int to=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
+
+    // Тумблер: все затронутые абзацы уже этого уровня — снять в обычный
+    bool allSame=true;
+
+    for(QTextBlock block=textArea->document()->findBlock(from);
+        block.isValid() && block.position()<=to;
+        block=block.next())
+    {
+        if(block.blockFormat().headingLevel()!=level)
+        {
+            allSame=false;
+            break;
+        }
+    }
+
+    const int target=allSame ? 0 : level;
+
+    cursor.beginEditBlock();
+
+    for(QTextBlock block=textArea->document()->findBlock(from);
+        block.isValid() && block.position()<=to;
+        block=block.next())
+    {
+        QTextBlockFormat format=block.blockFormat();
+        format.setHeadingLevel(target);
+
+        QTextCursor edit(block);
+        edit.setBlockFormat(format);
+    }
+
+    cursor.endEditBlock();
+}
+
+
+void TypefaceFormatter::onHeading1Clicked(void)
+{
+    applyHeadingLevel(1);
+}
+
+
+void TypefaceFormatter::onHeading2Clicked(void)
+{
+    applyHeadingLevel(2);
 }
 
 
@@ -1214,6 +1273,100 @@ void TypefaceFormatter::onFixBreakSymbolClicked()
 }
 
 
+// Преобразование табуляций в пробелы в выделении (или во всей записи
+// без выделения). Ширина таба — из настроек редактора. Табы ищутся
+// поиском по документу и меняются с конца к началу, поэтому картинки,
+// таблицы и прочее нетекстовое содержимое не затрагивается
+void TypefaceFormatter::onTabsToSpacesClicked(void)
+{
+    const int tabSpaces=editorConfig->get_tab_size()>0 ? editorConfig->get_tab_size() : 4;
+    const QString spaces=QString(tabSpaces, QChar(' '));
+
+    QTextDocument *doc=textArea->document();
+    QTextCursor cursor=textArea->textCursor();
+
+    int from;
+    int to;
+    int anchor;
+    int curPos=cursor.position();
+
+    if(cursor.hasSelection())
+    {
+        from=cursor.selectionStart();
+        to=cursor.selectionEnd();
+        anchor=cursor.anchor()<=cursor.position() ? -1 : 1;
+    }
+    else
+    {
+        from=0;
+        to=doc->characterCount()-1;
+        anchor=0;
+    }
+
+    if(to<=from)
+        return;
+
+    // Позиции табов прямым проходом, замена обратным
+    QList<int> tabs;
+    int pos=from;
+
+    while(true)
+    {
+        QTextCursor found=doc->find(QStringLiteral("\t"), pos);
+
+        if(found.isNull() || found.selectionStart()>=to)
+            break;
+
+        tabs.append(found.selectionStart());
+        pos=found.selectionEnd();
+    }
+
+    if(tabs.isEmpty())
+        return;
+
+    cursor.beginEditBlock();
+
+    for(int i=tabs.size()-1; i>=0; --i)
+    {
+        const int tabPos=tabs.at(i);
+        QTextCursor edit(doc);
+        edit.setPosition(tabPos);
+        edit.setPosition(tabPos+1, QTextCursor::KeepAnchor);
+        edit.insertText(spaces);
+    }
+
+    cursor.endEditBlock();
+
+    // Выделение натягивается поверх того же текста
+    const int grown=tabs.size()*(tabSpaces-1);
+
+    if(anchor==0)
+    {
+        int before=0;
+
+        foreach(int tabPos, tabs)
+            if(tabPos<curPos)
+                before++;
+
+        QTextCursor restore(doc);
+        restore.setPosition(curPos+before*(tabSpaces-1));
+        textArea->setTextCursor(restore);
+    }
+    else if(anchor<0)
+    {
+        cursor.setPosition(from);
+        cursor.setPosition(to+grown, QTextCursor::KeepAnchor);
+        textArea->setTextCursor(cursor);
+    }
+    else
+    {
+        cursor.setPosition(to+grown);
+        cursor.setPosition(from, QTextCursor::KeepAnchor);
+        textArea->setTextCursor(cursor);
+    }
+}
+
+
 // Слот, срабатывающий при изменении шрифта в списке шрифтов
 void TypefaceFormatter::onFontselectChanged(const QFont &font)
 {
@@ -1233,6 +1386,12 @@ void TypefaceFormatter::onFontselectChanged(const QFont &font)
     // textArea->setFontFamily(font.family()); // Устанавливается выбранный шрифт в области редактирования
     // editor->currentFontFamily=font.family();
     this->doChangeFontFamily( font.family() );
+
+    // Примененный шрифт — наверх списка недавних (без дублей, максимум 5).
+    // Комбобокс перестраивается и возвращается на текущий шрифт
+    editorConfig->add_recentFont(font.family());
+    editor->editorToolBarAssistant->fontSelect->reloadRecentFonts(editorConfig->get_recentFonts(),
+                                                                  font.family());
 
     // Курсор после выбора возвращается в область редактирования
     textArea->setFocus();
@@ -1302,6 +1461,10 @@ void TypefaceFormatter::onFontcolorClicked(int n)
         // Если цвет выбран, и он правильный
         if(selectedColor.isValid())
         {
+            // Запоминается как последний: клик по кнопке красит в него
+            // без пикера (если включено в настройках)
+            editorConfig->set_lastFontColor(selectedColor.name(QColor::HexArgb));
+
             // Меняется цвет кнопки и устанавливается цвет текста
             this->doChangeFontcolor( selectedColor );
         }
@@ -1314,6 +1477,26 @@ void TypefaceFormatter::onFontcolorClicked(int n)
         // Меняется цвет кнопки и устанавливается цвет текста
         this->doChangeFontcolor( selectedColor );
     }
+}
+
+
+// Клик по самой кнопке цвета: красит выделение в последний выбранный
+// цвет без вызова пикера. Выключено настройкой — ничего не делает.
+// Цвета еще нет (ни разу не выбирали) — открывается пикер
+void TypefaceFormatter::onFontcolorApplyLast(void)
+{
+    if(editorConfig->get_applyLastColorOnClick()==false)
+        return;
+
+    const QColor lastColor(editorConfig->get_lastFontColor());
+
+    if(lastColor.isValid())
+    {
+        this->doChangeFontcolor(lastColor);
+        return;
+    }
+
+    onFontcolorClicked(0);
 }
 
 
@@ -1862,10 +2045,58 @@ void TypefaceFormatter::onBackgroundcolorClicked(int n)
     // Если цвет выбран, и он правильный
     if(selectedColor.isValid())
     {
+        // Запоминается как последний: клик по кнопке красит в него
+        // без пикера (если включено в настройках)
+        editorConfig->set_lastBackgroundColor(selectedColor.name(QColor::HexArgb));
+
         // Установка цвета фона текста и изменение цвета кнопки
         this->doChangeBackgroundColor( selectedColor );
     }
 
+}
+
+
+// Клик по самой кнопке фона: красит выделение в последний выбранный
+// цвет без вызова пикера. Выключено настройкой — ничего не делает.
+// Цвета еще нет (ни разу не выбирали) — открывается пикер
+void TypefaceFormatter::onBackgroundcolorApplyLast(void)
+{
+    if(editorConfig->get_applyLastColorOnClick()==false)
+        return;
+
+    const QColor lastColor(editorConfig->get_lastBackgroundColor());
+
+    if(lastColor.isValid())
+    {
+        this->doChangeBackgroundColor(lastColor);
+        return;
+    }
+
+    onBackgroundcolorClicked(0);
+}
+
+
+// Вставка спецсимвола из диалога с таблицей и недавними.
+// Символ вставляется в курсор (выделение заменяется), выбор
+// запоминается в недавние
+void TypefaceFormatter::onSpecialCharClicked(void)
+{
+    EditorSpecialCharDialog dialog(editor);
+
+    if(dialog.exec()!=QDialog::Accepted)
+        return;
+
+    const QString symbol=dialog.selectedSymbol();
+
+    if(symbol.isEmpty())
+        return;
+
+    textArea->textCursor().beginEditBlock();
+    textArea->textCursor().removeSelectedText();
+    textArea->textCursor().insertText(symbol);
+    textArea->textCursor().endEditBlock();
+
+    editorConfig->add_recentSymbol(symbol);
 }
 
 

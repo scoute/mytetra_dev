@@ -9,13 +9,17 @@
 #include <QMediaPlayer>
 #include <QMediaContent>
 
+#include "libraries/OpusPlayer.h"
+
 #include "VoicePlayerDialog.h"
 #include "libraries/VoiceNoteHelper.h"
 
 
 VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &title,
                                      QWidget *parent) : QDialog(parent),
-    totalMs(0)
+    totalMs(0),
+    opusPlayer(nullptr),
+    useOpusPlayer(false)
 {
     setWindowTitle(tr("Voice note"));
     setModal(true);
@@ -40,20 +44,39 @@ VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &tit
     centralLayout->addWidget(closeButton);
     setLayout(centralLayout);
 
+    // .opus играет собственный декодер: бэкенд Qt его нигде,
+    // кроме Linux, не умеет. Остальное играет бэкенд как раньше
+    useOpusPlayer=filePath.endsWith(QStringLiteral(".opus"), Qt::CaseInsensitive);
+
     player=new QMediaPlayer(this);
 
     connect(playButton, &QPushButton::toggled,
             this,        &VoicePlayerDialog::onPlayToggled);
-    connect(player, &QMediaPlayer::positionChanged,
-            this,   &VoicePlayerDialog::onPositionChanged);
-    connect(player, &QMediaPlayer::durationChanged,
-            this,   &VoicePlayerDialog::onDurationChanged);
-    connect(player, QOverload<QMediaPlayer::State>::of(&QMediaPlayer::stateChanged),
-            this,   &VoicePlayerDialog::onStateChanged);
-    connect(player, &QMediaPlayer::mediaStatusChanged,
-            this,   &VoicePlayerDialog::onMediaStatusChanged);
-    connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error),
-            this,   &VoicePlayerDialog::onPlayerError);
+
+    if(useOpusPlayer)
+    {
+        opusPlayer=new OpusPlayer(this);
+
+        connect(opusPlayer, &OpusPlayer::positionChanged,
+                this,       &VoicePlayerDialog::onPositionChanged);
+        connect(opusPlayer, &OpusPlayer::durationChanged,
+                this,       &VoicePlayerDialog::onDurationChanged);
+        connect(opusPlayer, &OpusPlayer::finished,
+                this,       &VoicePlayerDialog::onOpusFinished);
+    }
+    else
+    {
+        connect(player, &QMediaPlayer::positionChanged,
+                this,   &VoicePlayerDialog::onPositionChanged);
+        connect(player, &QMediaPlayer::durationChanged,
+                this,   &VoicePlayerDialog::onDurationChanged);
+        connect(player, QOverload<QMediaPlayer::State>::of(&QMediaPlayer::stateChanged),
+                this,   &VoicePlayerDialog::onStateChanged);
+        connect(player, &QMediaPlayer::mediaStatusChanged,
+                this,   &VoicePlayerDialog::onMediaStatusChanged);
+        connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error),
+                this,   &VoicePlayerDialog::onPlayerError);
+    }
     connect(positionSlider, &QSlider::sliderMoved,
             this,           &VoicePlayerDialog::onSliderMoved);
     connect(closeButton, &QPushButton::clicked,
@@ -75,7 +98,18 @@ VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &tit
         return;
     }
 
-    player->setMedia(QUrl::fromLocalFile(absolutePath));
+    if(useOpusPlayer)
+    {
+        if(!opusPlayer->setFile(absolutePath))
+        {
+            timeLabel->setText(tr("Can not open file"));
+            playButton->setEnabled(false);
+            positionSlider->setEnabled(false);
+            return;
+        }
+    }
+    else
+        player->setMedia(QUrl::fromLocalFile(absolutePath));
 }
 
 
@@ -89,6 +123,27 @@ QString VoicePlayerDialog::formatTime(qint64 ms, qint64 totalMs)
 
 void VoicePlayerDialog::onPlayToggled(bool checked)
 {
+    if(useOpusPlayer)
+    {
+        if(checked)
+        {
+            playButton->setText(tr("Pause"));
+
+            // Повтор после конца: явная перемотка в начало перед play
+            if(totalMs>0 && opusPlayer->positionMs()>=totalMs-200)
+                opusPlayer->setPosition(0);
+
+            opusPlayer->play();
+        }
+        else
+        {
+            playButton->setText(tr("Play"));
+            opusPlayer->pause();
+        }
+
+        return;
+    }
+
     qDebug() << "VoicePlayer play toggled" << checked
              << "pos" << player->position() << "total" << totalMs
              << "state" << player->state() << "mediaStatus" << player->mediaStatus();
@@ -109,6 +164,22 @@ void VoicePlayerDialog::onPlayToggled(bool checked)
         playButton->setText(tr("Play"));
         player->pause();
     }
+}
+
+
+void VoicePlayerDialog::onOpusFinished(void)
+{
+    // Доиграло до конца: кнопка снова Play, ползунок в начало.
+    // Зеркало ветки StoppedState ниже, только через свой плеер
+    playButton->blockSignals(true);
+    playButton->setChecked(false);
+    playButton->blockSignals(false);
+    playButton->setText(tr("Play"));
+
+    positionSlider->blockSignals(true);
+    positionSlider->setValue(0);
+    positionSlider->blockSignals(false);
+    timeLabel->setText(formatTime(0, totalMs));
 }
 
 
@@ -195,5 +266,8 @@ void VoicePlayerDialog::onPlayerError(QMediaPlayer::Error error)
 
 void VoicePlayerDialog::onSliderMoved(int positionMs)
 {
-    player->setPosition(positionMs);
+    if(useOpusPlayer)
+        opusPlayer->setPosition(positionMs);
+    else
+        player->setPosition(positionMs);
 }

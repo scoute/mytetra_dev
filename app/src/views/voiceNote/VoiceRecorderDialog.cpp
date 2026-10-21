@@ -18,6 +18,7 @@
 #include <QAudioFormat>
 #include <QAudioEncoderSettings>
 #include <QAudioDeviceInfo>
+#include <QAudioInput>
 #include <QtMath>
 #include <QElapsedTimer>
 #include <QRegularExpression>
@@ -97,6 +98,8 @@ void WaveformWidget::paintEvent(QPaintEvent *event)
 
 VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent) : QDialog(parent),
     workDir(workDir),
+    audioInput(nullptr),
+    opusDevice(nullptr),
     currentFormat(VoiceFormatOpus),
     opusAvailable(false),
     mp3Available(false),
@@ -198,7 +201,11 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
             opusContainerOk=true;
     }
 
-    opusAvailable=opusCodecOk && opusContainerOk;
+    // Собственный Opus-энкодер доступен всегда, бэкенд не нужен.
+    // Переменные opusCodecOk/opusContainerOk оставлены для диагностики выше
+    opusAvailable=true;
+    Q_UNUSED(opusCodecOk);
+    Q_UNUSED(opusContainerOk);
 
     mp3Available=
         (supportedContainers.contains(QStringLiteral("audio/mpeg, mpegversion=(int)1")) ||
@@ -591,16 +598,28 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
             return;
         }
 
-        applyFormat(format);
-
         filePath=QDir(workDir).absoluteFilePath(name);
-        recorder->setOutputLocation(QUrl::fromLocalFile(filePath));
 
         waveform->clearLevels();
         durationMs=0;
         timeLabel->setText(VoiceNoteHelper::formatDuration(0));
 
-        recorder->record();
+        // MP3 пишет бэкенд, Opus пишет наш энкодер
+        if(format==VoiceFormatMp3)
+        {
+            applyFormat(format);
+            recorder->setOutputLocation(QUrl::fromLocalFile(filePath));
+            recorder->record();
+        }
+        else
+        {
+            if(!startOpusCapture(filePath))
+            {
+                recordButton->setChecked(false);
+                return;
+            }
+        }
+
         timer->start();
 
         // Устройство, формат, качество и имя не переключают на ходу
@@ -615,12 +634,26 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
     }
     else
     {
-        recorder->stop();
+        // MP3 пишет бэкенд, Opus пишет наш энкодер
+        if(currentFormat==VoiceFormatMp3)
+        {
+            recorder->stop();
 
-        // Финал придет из смены состояния. Если бэкенд состояние
-        // не сменил (тихо ничего не писал), завершаем сами
-        if(recorder->state()!=QMediaRecorder::RecordingState)
+            // Финал придет из смены состояния. Если бэкенд состояние
+            // не сменил (тихо ничего не писал), завершаем сами
+            if(recorder->state()!=QMediaRecorder::RecordingState)
+                finishRecording();
+        }
+        else
+        {
+            stopOpusCapture();
+
+            // Точная длительность из писателя, а не из секундомера
+            durationMs=opusWriter.durationMs();
+            timeLabel->setText(VoiceNoteHelper::formatDuration(durationMs));
+
             finishRecording();
+        }
     }
 }
 
@@ -677,6 +710,165 @@ void VoiceRecorderDialog::onDeviceChanged(int index)
     // Выбранное устройство пишет. Имя пустое пока список пуст
     if(!deviceCombo->currentText().isEmpty())
         recorder->setAudioInput(deviceCombo->currentText());
+}
+
+
+QAudioDeviceInfo VoiceRecorderDialog::currentInputDevice(void) const
+{
+    const QString name=deviceCombo->currentText();
+
+    if(!name.isEmpty())
+        for(const QAudioDeviceInfo &device :
+            QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+            if(device.deviceName()==name)
+                return device;
+
+    return QAudioDeviceInfo::defaultInputDevice();
+}
+
+
+bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
+{
+    stopOpusCapture();
+
+    QAudioDeviceInfo device=currentInputDevice();
+
+    if(device.isNull())
+    {
+        statusLabel->setText(tr("Microphone not found"));
+        return false;
+    }
+
+    // Энкодер понимает 8/12/16/24/48 кГц, моно 16 бит.
+    // Берется лучшее из поддерживаемого микрофоном
+    static const int rates[]={48000, 24000, 16000, 12000, 8000};
+
+    QAudioFormat format;
+    format.setChannelCount(1);
+    format.setSampleSize(16);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::SignedInt);
+
+    bool formatOk=false;
+
+    for(int rate : rates)
+    {
+        format.setSampleRate(rate);
+
+        if(device.isFormatSupported(format))
+        {
+            formatOk=true;
+            break;
+        }
+    }
+
+    if(!formatOk)
+    {
+        statusLabel->setText(tr("No supported audio format"));
+        return false;
+    }
+
+    opusFormat=format;
+
+    if(!opusWriter.open(filePath, format.sampleRate()))
+    {
+        statusLabel->setText(opusWriter.errorString());
+        return false;
+    }
+
+    audioInput=new QAudioInput(device, opusFormat, this);
+    opusDevice=audioInput->start();
+
+    connect(opusDevice, &QIODevice::readyRead,
+            this,        &VoiceRecorderDialog::onOpusAudioData);
+    connect(audioInput, &QAudioInput::stateChanged,
+            this,       &VoiceRecorderDialog::onOpusStateChanged);
+
+    return true;
+}
+
+
+void VoiceRecorderDialog::stopOpusCapture(void)
+{
+    if(audioInput!=nullptr)
+    {
+        audioInput->stop();
+        audioInput->deleteLater();
+        audioInput=nullptr;
+    }
+
+    opusDevice=nullptr;
+
+    if(opusWriter.isOpen())
+        opusWriter.close();
+}
+
+
+void VoiceRecorderDialog::onOpusAudioData(void)
+{
+    if(opusDevice==nullptr)
+        return;
+
+    const QByteArray data=opusDevice->readAll();
+
+    if(data.isEmpty())
+        return;
+
+    const int samples=data.size()/static_cast<int>(sizeof(short));
+    const short *pcm=reinterpret_cast<const short *>(data.constData());
+
+    // Пик для волны из того же потока, масштаб как у пробы
+    qreal peak=0.0;
+
+    for(int i=0; i<samples; ++i)
+        peak=qMax(peak, qAbs(static_cast<qreal>(pcm[i]))/32768.0);
+
+    waveform->pushLevel(peak*4.0);
+
+    if(!opusWriter.writePcm(pcm, samples))
+    {
+        statusLabel->setText(opusWriter.errorString());
+        recordButton->setChecked(false);
+        return;
+    }
+
+    durationMs=opusWriter.durationMs();
+    timeLabel->setText(VoiceNoteHelper::formatDuration(durationMs));
+}
+
+
+void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
+{
+    Q_UNUSED(state);
+
+    // У QAudioInput нет errorString, только код: любая ошибка
+    // захвата завершает запись тем же текстом, что отказ старта
+    if(audioInput==nullptr || audioInput->error()==QAudio::NoError)
+        return;
+
+    stopOpusCapture();
+
+    timer->stop();
+    elapsedRunning=false;
+
+    statusLabel->setText(tr("Can not record here"));
+
+    deviceCombo->setEnabled(true);
+    opusRadio->setEnabled(opusAvailable);
+    mp3Radio->setEnabled(mp3Available);
+    fileNameEdit->setEnabled(true);
+    recordButton->setText(tr("Record"));
+
+    if(recordButton->isChecked())
+    {
+        recordButton->blockSignals(true);
+        recordButton->setChecked(false);
+        recordButton->blockSignals(false);
+    }
+
+    hasRecording=false;
+    insertButton->setEnabled(false);
 }
 
 

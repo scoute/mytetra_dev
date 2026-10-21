@@ -4,7 +4,12 @@
 #include <QDialog>
 #include <QWidget>
 #include <QElapsedTimer>
+#include <QAudio>
+
+#include "libraries/OpusFileWriter.h"
 #include <QMediaRecorder>
+#include <QAudioFormat>
+#include <QAudioDeviceInfo>
 
 class QLabel;
 class QPushButton;
@@ -15,6 +20,8 @@ class QTimer;
 class QAudioRecorder;
 class QAudioProbe;
 class QAudioBuffer;
+class QAudioInput;
+class QIODevice;
 
 // Полоса звуковой волны с микрофона. Хранит последние пики,
 // рисует столбики от центра. Для теста видны счетчик и максимум
@@ -70,6 +77,11 @@ private slots:
     void onStateChanged(QMediaRecorder::State state);
     void onRecorderError(QMediaRecorder::Error error);
     void onProbeBuffer(const QAudioBuffer &buffer);
+
+    // Данные собственного Opus-захвата: тянутся из QAudioInput,
+    // волна рисуется из того же потока, проба не нужна
+    void onOpusAudioData(void);
+    void onOpusStateChanged(QAudio::State state);
     void onTick(void);
     void onInsert(void);
 
@@ -131,6 +143,14 @@ private:
     // Пик первого канала буфера 0..1
     static qreal bufferPeak(const QAudioBuffer &buffer);
 
+    // Выбранное в комбобоксе устройство входа (пустое если список пуст)
+    QAudioDeviceInfo currentInputDevice(void) const;
+
+    // Старт/стоп собственного Opus-захвата. Старт возвращает false
+    // и пишет причину в statusLabel, файл уже должен быть выбран
+    bool startOpusCapture(const QString &filePath);
+    void stopOpusCapture(void);
+
     QString workDir;
 
     QLabel *statusLabel;
@@ -147,6 +167,15 @@ private:
 
     QAudioRecorder *recorder;
     QAudioProbe *probe;
+
+    // Собственный Opus-трек: доступен всегда, бэкенду Qt здесь делать
+    // нечего, поэтому работает и под Wine. MP3-радиокнопка по-прежнему
+    // идет через бэкенд (где он умеет)
+    QAudioInput *audioInput;
+    QIODevice *opusDevice;
+    QAudioFormat opusFormat;
+    OpusFileWriter opusWriter;
+
     QTimer *timer;
 
     VoiceFormat currentFormat;

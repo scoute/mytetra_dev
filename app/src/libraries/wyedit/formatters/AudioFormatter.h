@@ -3,6 +3,8 @@
 
 #include <QMediaPlayer>
 
+class OpusPlayer;
+
 #include "Formatter.h"
 #include "VoiceBubbleObject.h"
 
@@ -71,6 +73,9 @@ private slots:
   void onVoiceTick(void);
   void onVoiceStateChanged(QMediaPlayer::State state);
 
+  // Финал собственного Opus-проигрывателя бабла
+  void onOpusVoiceFinished(void);
+
 private:
 
   // Переименовать файл голосовой заметки: санитизация имени,
@@ -126,6 +131,10 @@ private:
   VoiceBubbleObject *bubbleObject;
 
   QMediaPlayer *voicePlayer=nullptr;
+
+  // Собственный Opus-проигрыватель для .opus: бэкенд Qt opus
+  // на Windows/Wine не умеет, здесь декодер свой
+  OpusPlayer *opusVoicePlayer=nullptr;
   QTimer *voiceTick=nullptr;
   QString activeHref;
   bool wasPlaying=false;

@@ -12,6 +12,8 @@
 #include <QTimer>
 #include <QAudioDeviceInfo>
 
+#include "libraries/OpusPlayer.h"
+
 #include "AudioFormatter.h"
 
 #include "../Editor.h"
@@ -52,16 +54,35 @@ void AudioFormatter::bubblePlaybackState(const QString &href, bool &playing,
 
   if(voicePlayer!=nullptr && activeHref==href)
   {
-    if(voicePlayer->state()==QMediaPlayer::PlayingState)
+    // .opus играет свой декодер, остальное бэкенд
+    const bool opus=activeHref.endsWith(QStringLiteral(".opus"), Qt::CaseInsensitive);
+
+    if(opus && opusVoicePlayer!=nullptr)
     {
-      playing=true;
-      posMs=voicePlayer->position();
+      if(opusVoicePlayer->isPlaying())
+      {
+        playing=true;
+        posMs=opusVoicePlayer->positionMs();
+      }
+
+      const qint64 duration=opusVoicePlayer->durationMs();
+
+      if(duration>0)
+        totalMs=duration;
     }
+    else
+    {
+      if(voicePlayer->state()==QMediaPlayer::PlayingState)
+      {
+        playing=true;
+        posMs=voicePlayer->position();
+      }
 
-    const qint64 duration=voicePlayer->duration();
+      const qint64 duration=voicePlayer->duration();
 
-    if(duration>0)
-      totalMs=duration;
+      if(duration>0)
+        totalMs=duration;
+    }
   }
 }
 
@@ -206,6 +227,9 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
     return;
   }
 
+  // .opus играет свой декодер: бэкенд Qt его вне Linux не умеет
+  const bool useOpus=filePath.endsWith(QStringLiteral(".opus"), Qt::CaseInsensitive);
+
   if(voicePlayer==nullptr)
   {
     voicePlayer=new QMediaPlayer(this);
@@ -220,6 +244,14 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
             this,        &AudioFormatter::onVoiceTick);
 
     voiceTick->start();
+  }
+
+  if(useOpus && opusVoicePlayer==nullptr)
+  {
+    opusVoicePlayer=new OpusPlayer(this);
+
+    connect(opusVoicePlayer, &OpusPlayer::finished,
+            this,            &AudioFormatter::onOpusVoiceFinished);
   }
 
   // Клик правее кружка мотает: доля позиции клика в ширине бабла
@@ -250,9 +282,16 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
   // по стоявшему на паузе продолжает
   if(!seekClicked)
   {
-    if(activeHref==href && voicePlayer->state()==QMediaPlayer::PlayingState)
+    const bool playingNow=useOpus ? (opusVoicePlayer!=nullptr && opusVoicePlayer->isPlaying())
+                                  : voicePlayer->state()==QMediaPlayer::PlayingState;
+
+    if(activeHref==href && playingNow)
     {
-      voicePlayer->pause();
+      if(useOpus)
+        opusVoicePlayer->pause();
+      else
+        voicePlayer->pause();
+
       return;
     }
   }
@@ -260,8 +299,30 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
   if(activeHref!=href)
   {
     voicePlayer->stop();
-    voicePlayer->setMedia(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath()));
+
+    if(opusVoicePlayer!=nullptr)
+      opusVoicePlayer->stop();
+
+    if(useOpus)
+    {
+      if(!opusVoicePlayer->setFile(QFileInfo(filePath).absoluteFilePath()))
+      {
+        if(globalParameters.getStatusBar()!=nullptr)
+          globalParameters.getStatusBar()->showMessage(tr("Voice file not found"), 3000);
+
+        return;
+      }
+    }
+    else
+      voicePlayer->setMedia(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath()));
+
     activeHref=href;
+  }
+  else if(useOpus)
+  {
+    // Доиграло до конца: повтор с начала
+    if(opusVoicePlayer->positionMs()>=opusVoicePlayer->durationMs()-200)
+      opusVoicePlayer->setPosition(0);
   }
   else if(voicePlayer->state()==QMediaPlayer::StoppedState)
   {
@@ -271,25 +332,53 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
 
   // Мотание по клику: позиция от доли, длительность известна
   // только после загрузки медиа. Без длительности просто играет
-  if(seekClicked && voicePlayer->duration()>0)
-    voicePlayer->setPosition(static_cast<qint64>(seekFraction*voicePlayer->duration()));
+  const qint64 totalDuration=useOpus ? opusVoicePlayer->durationMs()
+                                    : voicePlayer->duration();
+
+  if(seekClicked && totalDuration>0)
+  {
+    if(useOpus)
+      opusVoicePlayer->setPosition(static_cast<qint64>(seekFraction*totalDuration));
+    else
+      voicePlayer->setPosition(static_cast<qint64>(seekFraction*totalDuration));
+  }
 
   // На паузе клик по полосе только двигает позицию
-  if(seekClicked && voicePlayer->state()==QMediaPlayer::PausedState)
+  const bool pausedNow=useOpus ? (opusVoicePlayer!=nullptr && opusVoicePlayer->isPaused())
+                              : voicePlayer->state()==QMediaPlayer::PausedState;
+
+  if(seekClicked && pausedNow)
   {
-    if(voicePlayer->duration()>0)
+    if(totalDuration>0)
       textArea->document()->markContentsDirty(bubblePos, 1);
 
     return;
   }
 
-  voicePlayer->play();
+  if(useOpus)
+    opusVoicePlayer->play();
+  else
+    voicePlayer->play();
+}
+
+
+void AudioFormatter::onOpusVoiceFinished(void)
+{
+  // Доиграло до конца: то же, что ветка StoppedState выше
+  wasPlaying=false;
+
+  const int pos=findBubblePos(activeHref);
+
+  activeHref.clear();
+
+  if(pos>=0)
+    textArea->document()->markContentsDirty(pos, 1);
 }
 
 
 void AudioFormatter::onVoiceTick(void)
 {
-  if(voicePlayer==nullptr || activeHref.isEmpty())
+  if((voicePlayer==nullptr && opusVoicePlayer==nullptr) || activeHref.isEmpty())
     return;
 
   // Бабл удалили из текста во время игры: стоп
@@ -378,6 +467,9 @@ void AudioFormatter::stopVoicePlayback(void)
 {
   if(voicePlayer!=nullptr)
     voicePlayer->stop();
+
+  if(opusVoicePlayer!=nullptr)
+    opusVoicePlayer->stop();
 
   wasPlaying=false;
 

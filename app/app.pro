@@ -165,6 +165,9 @@ HEADERS = src/main.h \
     src/libraries/helpers/UniqueIdHelper.h \
     src/libraries/mcp/McpServer.h \
     src/libraries/mcp/McpTools.h \
+    src/libraries/OpusFileWriter.h \
+    src/libraries/OpusFileReader.h \
+    src/libraries/OpusPlayer.h \
     src/libraries/wyedit/EditorConfigMathExpression.h \
     src/libraries/wyedit/EditorDropDownButton.h \
     src/libraries/wyedit/EditorShowTextContextMenu.h \
@@ -373,6 +376,9 @@ SOURCES = src/main.cpp \
     src/libraries/helpers/UniqueIdHelper.cpp \
     src/libraries/mcp/McpServer.cpp \
     src/libraries/mcp/McpTools.cpp \
+    src/libraries/OpusFileWriter.cpp \
+    src/libraries/OpusFileReader.cpp \
+    src/libraries/OpusPlayer.cpp \
     src/libraries/wyedit/EditorConfigMathExpression.cpp \
     src/libraries/wyedit/EditorDropDownButton.cpp \
     src/libraries/wyedit/EditorShowTextContextMenu.cpp \

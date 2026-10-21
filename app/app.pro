@@ -563,6 +563,25 @@ SOURCES+=\
     src/views/tree/KnowTreeDelegate.cpp \
     src/libraries/MtStyledItemDelegate.cpp
 
+# Вендоренные статические библиотеки для голосовых заметок:
+# Opus-кодек + Ogg-контейнер. Собираются своими .pro в thirdParty
+# (как mimetex): внутренние заголовки opus неуникальны (main.h и др.),
+# держать их в общем INCLUDEPATH приложения нельзя.
+OPUS_LIB_DIR = $${_PRO_FILE_PWD_}/../thirdParty/opus/build/lib
+OGG_LIB_DIR = $${_PRO_FILE_PWD_}/../thirdParty/ogg/build/lib
+INCLUDEPATH += $${_PRO_FILE_PWD_}/../thirdParty/opus/include \
+               $${_PRO_FILE_PWD_}/../thirdParty/ogg/include
+LIBS += -L$$OPUS_LIB_DIR -lopus \
+        -L$$OGG_LIB_DIR -logg
+unix: LIBS += -lm
+win32-msvc* {
+  PRE_TARGETDEPS += $$OPUS_LIB_DIR/opus.lib \
+                    $$OGG_LIB_DIR/ogg.lib
+} else {
+  PRE_TARGETDEPS += $$OPUS_LIB_DIR/libopus.a \
+                    $$OGG_LIB_DIR/libogg.a
+}
+
 wince* {
     CONFIG(debug, release|debug):addPlugins.sources = $$QT_BUILD_TREE/plugins/imageformats/qsvgd4.dll
     CONFIG(release, release|debug):addPlugins.sources = $$QT_BUILD_TREE/plugins/imageformats/qsvg4.dll

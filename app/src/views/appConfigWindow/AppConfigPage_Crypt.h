@@ -10,6 +10,7 @@ class QRadioButton;
 class QPushButton;
 class QCheckBox;
 class QSpinBox;
+class QComboBox;
 
 class AppConfigPage_Crypt : public ConfigPage
 {
@@ -27,6 +28,7 @@ private slots:
   void onPassRetrieveButtonClicked(void);
   void onAutoClosePasswordEnableToggle(bool checked);
   void onPasswordSaveEnableToggle(bool checked);
+  void onCryptMethodChanged(int index);
 
 protected:
 
@@ -60,6 +62,9 @@ protected:
 
   QGroupBox *decryptFileToTrashDirectoryBox;
   QCheckBox *decryptFileToTrashDirectoryEnable;
+
+  QGroupBox *cryptMethodBox;
+  QComboBox *cryptMethodCombo;
 
 };
 

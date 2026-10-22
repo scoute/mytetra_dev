@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QCheckBox>
 #include <QSpinBox>
+#include <QComboBox>
 
 #include "AppConfigPage_Crypt.h"
 #include "models/appConfig/AppConfig.h"
@@ -148,6 +149,22 @@ void AppConfigPage_Crypt::setupUi(void)
   QHBoxLayout *decryptFileToTrashDirectoryLayout=new QHBoxLayout;
   decryptFileToTrashDirectoryLayout->addWidget(decryptFileToTrashDirectoryEnable);
   decryptFileToTrashDirectoryBox->setLayout(decryptFileToTrashDirectoryLayout);
+
+
+  // Группировщик выбора шифра новых данных.
+  // Старые данные читаются всегда: расшифровка отличает шифры
+  // по магии блоба, настройка влияет только на шифрование
+  cryptMethodBox=new QGroupBox(this);
+  cryptMethodBox->setTitle(tr("Encryption method"));
+
+  cryptMethodCombo=new QComboBox(this);
+  cryptMethodCombo->addItem(tr("RC5 (compatible)"), QStringLiteral("rc5"));
+  cryptMethodCombo->addItem(tr("XChaCha20-Poly1305 (modern)"), QStringLiteral("xchacha"));
+
+  QHBoxLayout *cryptMethodLayout=new QHBoxLayout;
+  cryptMethodLayout->addWidget(cryptMethodCombo);
+  cryptMethodLayout->addStretch();
+  cryptMethodBox->setLayout(cryptMethodLayout);
 }
 
 
@@ -162,6 +179,12 @@ void AppConfigPage_Crypt::updateUi(void)
   // Строка с аннотацией
   passRetrieveAnnotation->setText(getRetrieveAnnotationText());
 
+  // Выбранный шифр из конфига
+  const int methodIndex=cryptMethodCombo->findData(mytetraConfig.get_cryptMethod());
+
+  cryptMethodCombo->blockSignals(true);
+  cryptMethodCombo->setCurrentIndex(methodIndex>=0 ? methodIndex : 0);
+  cryptMethodCombo->blockSignals(false);
 }
 
 
@@ -177,6 +200,10 @@ void AppConfigPage_Crypt::setupSignals(void)
 
  connect(passwordSaveEnable, &QCheckBox::toggled,
          this, &AppConfigPage_Crypt::onPasswordSaveEnableToggle);
+
+ // Смена шифра применяется сразу, действует на новые шифрования
+ connect(cryptMethodCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+         this, &AppConfigPage_Crypt::onCryptMethodChanged);
 }
 
 
@@ -189,6 +216,7 @@ void AppConfigPage_Crypt::assembly(void)
   central_layout->addWidget(storePassRequestBox);
   central_layout->addWidget(autoClosePasswordBox);
   central_layout->addWidget(decryptFileToTrashDirectoryBox);
+  central_layout->addWidget(cryptMethodBox);
   central_layout->addStretch();
 
   // Основной слой устанавливается
@@ -293,6 +321,15 @@ void AppConfigPage_Crypt::onAutoClosePasswordEnableToggle(bool checked)
 }
 
 
+void AppConfigPage_Crypt::onCryptMethodChanged(int index)
+{
+  const QString method=cryptMethodCombo->itemData(index).toString();
+
+  if(!method.isEmpty())
+    mytetraConfig.set_cryptMethod(method);
+}
+
+
 void AppConfigPage_Crypt::retranslateUi(void)
 {
   passRetrieveBox->setTitle(tr("Password settings"));
@@ -310,6 +347,10 @@ void AppConfigPage_Crypt::retranslateUi(void)
 
   decryptFileToTrashDirectoryBox->setTitle(tr("File decrypt method for attach preview"));
   decryptFileToTrashDirectoryEnable->setText(tr("Enable temporary decrypt attach file to trash directory"));
+
+  cryptMethodBox->setTitle(tr("Encryption method"));
+  cryptMethodCombo->setItemText(0, tr("RC5 (compatible)"));
+  cryptMethodCombo->setItemText(1, tr("XChaCha20-Poly1305 (modern)"));
 
   // Динамическая строка состояния перечитывается текущим языком
   updateUi();

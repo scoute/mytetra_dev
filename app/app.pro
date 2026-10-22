@@ -281,6 +281,7 @@ HEADERS = src/main.h \
     src/libraries/crypt/CryptService.h \
     src/libraries/crypt/CipherBackend.h \
     src/libraries/crypt/RC5CipherBackend.h \
+    src/libraries/crypt/XChaChaCipherBackend.h \
     src/libraries/wyedit/EditorToolBar.h \
     src/libraries/wyedit/formatters/TypefaceFormatter.h \
     src/libraries/wyedit/formatters/Formatter.h \
@@ -493,6 +494,7 @@ SOURCES = src/main.cpp \
     src/views/dialog/OverTextToolButton.cpp \
     src/libraries/crypt/CryptService.cpp \
     src/libraries/crypt/RC5CipherBackend.cpp \
+    src/libraries/crypt/XChaChaCipherBackend.cpp \
     src/libraries/wyedit/EditorToolBar.cpp \
     src/libraries/wyedit/formatters/TypefaceFormatter.cpp \
     src/libraries/wyedit/formatters/Formatter.cpp \

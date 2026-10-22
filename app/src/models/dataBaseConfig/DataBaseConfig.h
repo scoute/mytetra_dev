@@ -40,6 +40,14 @@ public:
     QString get_middle_hash_check_data(void);
     void set_middle_hash_check_data(QString hash);
 
+    // Мастер-соль KDF нового шифра (Base64, 16 байт). Пусто пока
+    // новый шифр не использовался. Не секретна, но потеря после
+    // шифрования = потеря данных, поэтому запись сразу синкается
+    QString get_cryptSalt(void);
+    void set_cryptSalt(QString salt);
+
+    void sync(void);
+
 private:
 
     QSettings *conf;

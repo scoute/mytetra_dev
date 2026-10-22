@@ -7,8 +7,16 @@ Qt 5.15 / qmake C++ knowledge base app. Git workdir is `mytetra-dev/` (`git` els
 - Lines: `develop-v1-mytetra` (MyTetra, current), `develop-v2-synctetra` (team sync). Old lines live in `backup-*` — don't touch.
 - Unit branches `fix/NNN_*`, `feat/NNN_*` (shared 001… numbering). One branch = one commit + one `--no-ff` merge.
 - No cherry-picks: shared fixes are ported manually, oldest line first (v1 → merge to v2).
-- Commit format `[fix|feat|merge|chore][layer=>module] text`; fix→micro, feat→minor version bump.
-- Version bumps only as separate `[chore][version=>X]` commits touching `app/src/main.h`; never touch `main.h` in feat/fix commits.
+- Commit format `[fix|feat|merge|chore][layer=>module] text`.
+- Semver bumps are mandatory after every merged unit, no exceptions:
+  `fix` → micro (`1.142.0` → `1.142.1`), `feat` → minor (`1.142.1` → `1.143.0`).
+  `merge`/`chore` bump nothing.
+- Version bumps only as separate `[chore][version=>X]` commits touching
+  `app/src/main.h` and nothing else; never touch `main.h` in feat/fix commits.
+- Order: bump right after the unit's `--no-ff` merge, before starting the
+  next unit. If several units merged without bumps, add one chore commit
+  per unit in merge order (oldest first), not a single jump.
+  Example: `[chore][version=>1.143.0] Bump for feat/245_symbol_bigger`.
 - Never `git add -A`; add files explicitly. `ChatExport_*` dirs are untracked test data — never commit.
 - Push / merge to shared lines only on explicit user order.
 

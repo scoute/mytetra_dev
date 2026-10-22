@@ -58,6 +58,7 @@ OpusPlayer::OpusPlayer(QObject *parent) : QObject(parent)
     reader=new OpusFileReader();
     audioOutput=nullptr;
     feedDevice=nullptr;
+    outRate=48000;
     totalMs=0;
     lastPosition=0;
     playing=false;
@@ -72,16 +73,23 @@ OpusPlayer::~OpusPlayer(void)
 }
 
 
-bool OpusPlayer::setFile(const QString &filePath)
+bool OpusPlayer::setFile(const QString &path)
 {
     stop();
 
-    if(!reader->open(filePath))
+    if(!reader->open(path))
         return false;
 
     totalMs=reader->durationMs();
+    outRate=reader->outputRate();
     lastPosition=0;
     endReached=false;
+
+    // Длительность снята — файл сразу закрываем, иначе на Windows/Wine
+    // висящий хэндл блокирует удаление записи в корзину
+    reader->close();
+
+    filePath=path;
 
     emit durationChanged(totalMs);
 
@@ -91,8 +99,20 @@ bool OpusPlayer::setFile(const QString &filePath)
 
 void OpusPlayer::play(void)
 {
-    if(reader==nullptr || !reader->isOpen())
+    if(filePath.isEmpty())
         return;
+
+    // После stop()/финала файл закрыт — открываем заново с той же частотой
+    if(!reader->isOpen())
+    {
+        if(!reader->open(filePath, outRate))
+        {
+            emit error(QStringLiteral("Can not open file"));
+            return;
+        }
+
+        reader->seekMs(lastPosition);
+    }
 
     if(audioOutput==nullptr)
     {
@@ -164,12 +184,21 @@ void OpusPlayer::stop(void)
         delete feedDevice;
         feedDevice=nullptr;
     }
+
+    // Хэндл файла отпускаем: на Windows/Wine открытый файл
+    // нельзя переименовать (удаление записи в корзину падало)
+    if(reader!=nullptr && reader->isOpen())
+        reader->close();
 }
 
 
 void OpusPlayer::setPosition(qint64 ms)
 {
-    if(reader==nullptr || !reader->isOpen())
+    if(reader==nullptr || filePath.isEmpty())
+        return;
+
+    // Позицию могут двигать на паузе/стопе, когда файл уже закрыт
+    if(!reader->isOpen() && !reader->open(filePath, outRate))
         return;
 
     const bool wasPlaying=playing;
@@ -185,6 +214,12 @@ void OpusPlayer::setPosition(qint64 ms)
 
     if(wasPlaying && audioOutput!=nullptr)
         audioOutput->start(feedDevice);
+    else if(reader->isOpen())
+    {
+        // Не играет (пауза/стоп/простой сдвиг ползунка): хэндл не держим,
+        // play() потом сам переоткроет и встанет на lastPosition
+        reader->close();
+    }
 }
 
 
@@ -215,7 +250,7 @@ bool OpusPlayer::isPaused(void) const
 
 void OpusPlayer::onNotify(void)
 {
-    if(reader==nullptr)
+    if(reader==nullptr || !reader->isOpen())
         return;
 
     lastPosition=reader->positionMs();
@@ -239,6 +274,9 @@ void OpusPlayer::onStateChanged(QAudio::State state)
 
         emit positionChanged(lastPosition);
         emit finished();
+
+        // Хэндл отпускаем сразу: иначе блокируется удаление в корзину
+        reader->close();
     }
 }
 

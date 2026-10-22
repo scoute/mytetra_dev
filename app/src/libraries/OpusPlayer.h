@@ -61,6 +61,14 @@ private:
     QAudioOutput *audioOutput;
     QIODevice *feedDevice;
 
+    // Файл открыт только на время реального проигрывания.
+    // На Windows/Wine переименование открытого файла запрещено,
+    // и удаление записи с голосом в корзину падало с criticalError.
+    // Поэтому: setFile дергает длительность и сразу закрывает,
+    // play открывает, stop/финал закрывают. Путь и частота кэшируются
+    QString filePath;
+    int outRate;
+
     qint64 totalMs;
     qint64 lastPosition;
 

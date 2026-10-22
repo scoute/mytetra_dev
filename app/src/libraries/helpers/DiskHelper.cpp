@@ -222,26 +222,77 @@ bool DiskHelper::removeDirectory(const QString &dirName)
 // Возвращает false, если хотя бы один файл скопировать не удалось.
 // Раньше результат QFile::copy() игнорировался, и метод возвращал true
 // при частично скопированных данных
+// Копирование файлов из одной директории в другую (без подкаталогов).
+// Каталоги импорта/экспорта недоверенные: симлинки не копируются,
+// иначе файл вида base/<dir>/passwd -> /etc/passwd утащил бы чужие
+// данные в базу или из базы наружу. Канонический путь источника
+// дополнительно проверяется: родительская директория тоже может быть
+// симлинком. Копии получают приватные права 0600.
 bool DiskHelper::copyDirectory(const QString &fromName, const QString &toName)
 {
-    QDir fromDir(fromName);
-    QDir toDir(toName);
+    const QFileInfo fromInfo(fromName);
+    const QFileInfo toInfo(toName);
 
-    if(fromDir.exists() && toDir.exists())
+    if(!fromInfo.exists() || !toInfo.exists())
     {
-        Q_FOREACH(QFileInfo info, fromDir.entryInfoList(QDir::Files))
-        {
-            if(!QFile::copy(info.absoluteFilePath(), toName+"/"+info.fileName()))
-            {
-                qWarning() << "Cant copy file " << info.absoluteFilePath() << " to " << toName+"/"+info.fileName();
-                return false;
-            }
-        }
-
-        return true;
+        return false;
     }
 
-    return false;
+    if(fromInfo.isSymLink() || toInfo.isSymLink())
+    {
+        qWarning() << "DiskHelper::copyDirectory: symlink refused" << fromName << toName;
+        return false;
+    }
+
+    const QString fromRoot=fromInfo.canonicalFilePath();
+    const QString toRoot=toInfo.canonicalFilePath();
+
+    if(fromRoot.isEmpty() || toRoot.isEmpty())
+    {
+        return false;
+    }
+
+    QDir fromDir(fromInfo.absoluteFilePath());
+    QDir toDir(toInfo.absoluteFilePath());
+
+    Q_FOREACH(QFileInfo info, fromDir.entryInfoList(QDir::Files | QDir::NoSymLinks))
+    {
+        const QString srcCanonical=info.canonicalFilePath();
+
+        // Файл внутри каталога-симлинка или сам симлинк: не копируется
+        if(srcCanonical.isEmpty() ||
+           !srcCanonical.startsWith(fromRoot+QLatin1Char('/')))
+        {
+            qWarning() << "DiskHelper::copyDirectory: source escaped" << info.absoluteFilePath();
+            return false;
+        }
+
+        const QString dstPath=toDir.filePath(info.fileName());
+        const QString dstCanonical=QDir::cleanPath(dstPath);
+
+        if(!dstCanonical.startsWith(toRoot+QLatin1Char('/')) &&
+           dstCanonical!=toRoot)
+        {
+            qWarning() << "DiskHelper::copyDirectory: destination escaped" << dstPath;
+            return false;
+        }
+
+        if(QFile::exists(dstPath))
+        {
+            qWarning() << "DiskHelper::copyDirectory: destination exists" << dstPath;
+            return false;
+        }
+
+        if(!QFile::copy(srcCanonical, dstPath))
+        {
+            qWarning() << "Cant copy file " << srcCanonical << " to " << dstPath;
+            return false;
+        }
+
+        QFile::setPermissions(dstPath, QFile::ReadUser | QFile::WriteUser);
+    }
+
+    return true;
 }
 
 

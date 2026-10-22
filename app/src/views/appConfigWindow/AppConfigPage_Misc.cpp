@@ -60,6 +60,25 @@ void AppConfigPage_Misc::setupUi(void)
   autosaveInterval->setRange(1, 999);
   autosaveInterval->setEnabled(mytetraConfig.get_autosaveEnable());
 
+  // Сетевые загрузки: ослабление проверки TLS только по явному согласию.
+  // По умолчанию невалидный/самоподписанный сертификат отклоняется
+  networkBox=new QGroupBox(this);
+  networkBox->setTitle(tr("Network and certificates"));
+  tlsIgnoreInvalidCertificates=new QCheckBox(this);
+  tlsIgnoreInvalidCertificates->setText(
+    tr("Allow loading with invalid or self-signed TLS certificates"));
+  tlsIgnoreInvalidCertificates->setChecked(
+    mytetraConfig.get_tlsIgnoreInvalidCertificates());
+  tlsIgnoreInvalidCertificates->setToolTip(
+    tr("Disables certificate verification for images and files downloaded "
+       "from the network. This reduces protection against traffic "
+       "substitution. Enable only if you understand the risk."));
+  tlsIgnoreInvalidCertificates->setWhatsThis(
+    tr("Normally a site with an expired, self-signed or otherwise invalid "
+       "TLS certificate is refused. This option allows downloading images "
+       "and files from such sites anyway, but an attacker on the network "
+       "could substitute the content. Default: off."));
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -92,6 +111,11 @@ void AppConfigPage_Misc::assembly(void)
   autosaveLayout->addStretch(1);
   autosaveBox->setLayout(autosaveLayout);
 
+  // Сетевая группа: одна галочка с явным предупреждением
+  QVBoxLayout *networkLayout=new QVBoxLayout;
+  networkLayout->addWidget(tlsIgnoreInvalidCertificates);
+  networkBox->setLayout(networkLayout);
+
 
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
@@ -99,6 +123,7 @@ void AppConfigPage_Misc::assembly(void)
   centralLayout->addWidget(enableActionLog);
   centralLayout->addWidget(enableCreateEmptyRecord);
   centralLayout->addWidget(autosaveBox);
+  centralLayout->addWidget(networkBox);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
@@ -123,6 +148,19 @@ void AppConfigPage_Misc::retranslateUi(void)
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   autosaveBox->setTitle(tr("Autosave"));
   autosaveEnable->setText(tr("Enable autosave, min"));
+
+  networkBox->setTitle(tr("Network and certificates"));
+  tlsIgnoreInvalidCertificates->setText(
+    tr("Allow loading with invalid or self-signed TLS certificates"));
+  tlsIgnoreInvalidCertificates->setToolTip(
+    tr("Disables certificate verification for images and files downloaded "
+       "from the network. This reduces protection against traffic "
+       "substitution. Enable only if you understand the risk."));
+  tlsIgnoreInvalidCertificates->setWhatsThis(
+    tr("Normally a site with an expired, self-signed or otherwise invalid "
+       "TLS certificate is refused. This option allows downloading images "
+       "and files from such sites anyway, but an attacker on the network "
+       "could substitute the content. Default: off."));
 
   editMyTetraConfigFile->setText(tr("Edit config file"));
   dangerBox->setTitle(tr("Danger actions (Attention!)"));
@@ -160,6 +198,11 @@ int AppConfigPage_Misc::applyChanges(void)
 
   if(mytetraConfig.get_autosaveInterval()!=autosaveInterval->value())
     mytetraConfig.set_autosaveInterval(autosaveInterval->value());
+
+  // Сетевые загрузки: значение читается при каждом запросе,
+  // перезапуск не нужен
+  if(mytetraConfig.get_tlsIgnoreInvalidCertificates()!=tlsIgnoreInvalidCertificates->isChecked())
+    mytetraConfig.set_tlsIgnoreInvalidCertificates(tlsIgnoreInvalidCertificates->isChecked());
 
   return result;
 }

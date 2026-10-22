@@ -9,8 +9,6 @@
 
 extern DataBaseConfig dataBaseConfig;
 
-extern DataBaseConfig dataBaseConfig;
-
 
 // Параметры KDF продакшена: 64 МБ памяти, 3 прохода, 1 поток.
 // Разовый лаг секунды на ввод пароля, перебору больно
@@ -53,13 +51,19 @@ static QByteArray randomBytes(int size)
 
 
 // Мастер-соль базы: генерируется один раз при первом шифровании,
-// сразу синкается (потеря после шифрования = потеря данных)
-static QByteArray masterSalt(void)
+// сразу синкается (потеря после шифрования = потеря данных).
+// При расшифровке соль НЕ создается: иначе потерянная соль молча
+// подменялась бы новой, а старые блобы становились нечитаемыми.
+// createIfMissing=false -> пустой результат, вызывающий код обязан отказать.
+static QByteArray masterSalt(bool createIfMissing)
 {
     QByteArray salt=QByteArray::fromBase64(dataBaseConfig.get_cryptSalt().toLatin1());
 
     if(salt.size()!=16)
     {
+        if(!createIfMissing)
+            return QByteArray();
+
         salt=randomBytes(16);
         dataBaseConfig.set_cryptSalt(QString::fromLatin1(salt.toBase64()));
     }
@@ -68,14 +72,26 @@ static QByteArray masterSalt(void)
 }
 
 
-static QByteArray sessionKek(const QByteArray &key)
+// KEK сессии: Argon2id считается раз на пару (ключ, соль).
+// Пустой ключ или отсутствующая соль при расшифровке - отказ,
+// а не KDF от пустого пароля.
+static QByteArray sessionKek(const QByteArray &key, bool createSalt)
 {
-    const QByteArray salt=masterSalt();
+    if(key.isEmpty())
+        return QByteArray();
+
+    const QByteArray salt=masterSalt(createSalt);
+
+    if(salt.size()!=16)
+        return QByteArray();
 
     if(sessionKekValid && sessionKekKey==key && sessionKekSalt==salt)
         return QByteArray(reinterpret_cast<char *>(sessionKekBuf), 32);
 
     crypto_wipe(sessionKekBuf, sizeof(sessionKekBuf));
+    sessionKekValid=false;
+    sessionKekKey.clear();
+    sessionKekSalt.clear();
 
     void *workArea=malloc(kdfMemKb*1024);
 
@@ -91,6 +107,8 @@ static QByteArray sessionKek(const QByteArray &key)
     crypto_argon2(sessionKekBuf, sizeof(sessionKekBuf), workArea,
                   config, inputs, crypto_argon2_no_extras);
 
+    // Рабочая область содержит производные ключа: затирается до free
+    crypto_wipe(workArea, kdfMemKb*1024);
     free(workArea);
 
     sessionKekKey=key;
@@ -113,7 +131,7 @@ QByteArray XChaChaCipherBackend::encryptBytes(const QByteArray &key,
     if(data.size()==0)
         return QByteArray();
 
-    const QByteArray kek=sessionKek(key);
+    const QByteArray kek=sessionKek(key, true);
 
     // Тихий пустой результат на шифровании недопустим: вызыватель
     // запишет пустоту поверх данных. Падаем громко
@@ -216,7 +234,7 @@ QByteArray XChaChaCipherBackend::decryptBytes(const QByteArray &key,
     if(ctLen<0)
         return QByteArray();
 
-    const QByteArray kek=sessionKek(key);
+    const QByteArray kek=sessionKek(key, false);
 
     if(kek.size()!=32)
         return QByteArray();

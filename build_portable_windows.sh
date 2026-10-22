@@ -20,7 +20,7 @@
 #                                          4 обычно только хуже)
 #   ./build_portable_windows.sh --portable-dir /путь/к/папке
 #   ./build_portable_windows.sh --qt /путь/к/Qt-mingw81_32
-#   ./build_portable_windows.sh --mingw /путь/к/mingw730_32
+#   ./build_portable_windows.sh --mingw /путь/к/mingw810_32
 #   ./build_portable_windows.sh --src /путь/к/исходникам
 #   ./build_portable_windows.sh --build-dir /путь/к/сборке
 #   ./build_portable_windows.sh --no-build  только упаковать готовое
@@ -36,17 +36,18 @@ set -euo pipefail
 # --------------------------------------------------------------------------
 
 # Qt для Windows: предсобранный mingw81_32
-QT_SDK="/media/user/big_data/soft/windows/QT_installed/5.15.2/5.15.2/mingw81_32"
+QT_SDK="/media/user/big_data/soft/windows/Qt_installed/5.15.2/mingw81_32"
 
 # Тулчейн MinGW: разрядность обязана совпадать с Qt (32 бита).
-# Несовпадение версий gcc (7.3 против 8.1 у Qt) на практике линкуется,
-# libstdc++ обратно совместима. Строго по науке нужен mingw810_32
-###MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/Tools/mingw730_32"
-MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/5.15/Tools/mingw810_32"
+# mingw810_32 это ровно тот gcc 8.1 (posix-seh), которым собран сам Qt
+MINGW_DIR="/media/user/big_data/soft/windows/Qt_installed/Tools/mingw810_32"
 
 # OpenSSL 1.1 32 бита для Qt 5.15 (https-качалки). Лежит в QtCreator:
-# отдельный OpenSSL Toolkit в эту установку не ставился
-SSL_DIR="/media/user/big_data/soft/windows/QT_installed/Tools/QtCreator/bin"
+# отдельный OpenSSL Toolkit в эту установку не ставился.
+# Внимание: сейчас 32-битного OpenSSL в SDK нет (в mingw1310_64/opt
+# только 64-битный, он не подходит) — будет предупреждение, https
+# работать не будет, пока DLL не подложат в этот каталог
+SSL_DIR="/media/user/big_data/soft/windows/Qt_installed/Tools/QtCreator/bin"
 
 # Исходники: корень репозитория от места скрипта
 SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"

@@ -4,6 +4,7 @@
 #include <QRandomGenerator>
 
 #include "monocypher.h"
+#include "libraries/helpers/DebugHelper.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 
 extern DataBaseConfig dataBaseConfig;
@@ -114,8 +115,10 @@ QByteArray XChaChaCipherBackend::encryptBytes(const QByteArray &key,
 
     const QByteArray kek=sessionKek(key);
 
+    // Тихий пустой результат на шифровании недопустим: вызыватель
+    // запишет пустоту поверх данных. Падаем громко
     if(kek.size()!=32)
-        return QByteArray();
+        criticalError("XChaChaCipherBackend::encryptBytes() : Can not derive KEK.");
 
     const QByteArray dek=randomBytes(32);
     const QByteArray wrapNonce=randomBytes(wrapNonceSize);
@@ -164,8 +167,14 @@ QByteArray XChaChaCipherBackend::encryptBytes(const QByteArray &key,
     blob.append(reinterpret_cast<char *>(dataTag), tagSize);
 
     crypto_wipe(wrapped, sizeof(wrapped));
+    crypto_wipe(wrapTag, sizeof(wrapTag));
+    crypto_wipe(dataTag, sizeof(dataTag));
 
-    return blob;
+    QByteArray result=blob;
+    crypto_wipe(const_cast<char *>(dek.constData()), dek.size());
+    crypto_wipe(const_cast<char *>(kek.constData()), kek.size());
+
+    return result;
 }
 
 
@@ -241,7 +250,10 @@ QByteArray XChaChaCipherBackend::decryptBytes(const QByteArray &key,
     crypto_wipe(dek, sizeof(dek));
 
     if(ok!=0)
+    {
+        crypto_wipe(plain.data(), plain.size());
         return QByteArray();
+    }
 
     return plain;
 }

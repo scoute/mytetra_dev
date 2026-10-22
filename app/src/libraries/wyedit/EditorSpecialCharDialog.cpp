@@ -139,7 +139,10 @@ void EditorSpecialCharDialog::on_symbol_button_clicked(void)
   return;
 
  pickedSymbol=button->text();
- accept();
+
+ // Диалог не закрывается: каждый клик сразу вставляет символ
+ // в редактор через сигнал, можно набирать несколько подряд
+ emit symbolPicked(pickedSymbol);
 }
 
 

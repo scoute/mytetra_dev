@@ -206,7 +206,12 @@ AudioFormatter::BubbleClickAction AudioFormatter::bubbleClickAction(qreal bubble
   if(bubbleWidth<=0.0 || offsetX<VoiceBubbleObject::toggleZoneWidth())
     return BubbleClickToggle;
 
-  seekFraction=qBound(0.0, offsetX/bubbleWidth, 1.0);
+  // Доля от полосы прогресса, а не от нуля бабла: иначе клик
+  // в начало полосы давал смещение на ширину кружка (~0.9 с)
+  qreal trackLeft, trackWidth;
+  VoiceBubbleObject::progressTrack(bubbleWidth, trackLeft, trackWidth);
+
+  seekFraction=qBound(0.0, (offsetX-trackLeft)/trackWidth, 1.0);
 
   return BubbleClickSeek;
 }

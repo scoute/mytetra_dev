@@ -762,7 +762,9 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
 
 
 // Скачивание по URL: http(s) через QNetworkAccessManager с таймаутом,
-// file:// напрямую с диска. Без модальных диалогов (фоновая работа)
+// file:// — локальный файл по явному действию пользователя (клиппер
+// запускается вручную; вставка своей картинки — штатный сценарий).
+// Без модальных диалогов (фоновая работа)
 QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
 {
     if(ok)
@@ -773,9 +775,21 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
         QFile file(QUrl(url).toLocalFile());
         if(!file.open(QIODevice::ReadOnly))
             return QByteArray();
+
+        // Тот же лимит, что для сетевых картинок: локальный файл
+        // не должен раздувать память заметки. Размер проверяется
+        // до readAll(), чтобы не тянуть гигабайты в память
+        if(file.size()>clipMaxImageBytes)
+            return QByteArray();
+
         const QByteArray data=file.readAll();
+
+        if(data.size()>clipMaxImageBytes)
+            return QByteArray();
+
         if(ok)
             *ok=!data.isEmpty();
+
         return data;
     }
 
@@ -789,10 +803,49 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
 
     QNetworkReply *reply=manager.get(request);
 
-    // Как ручная докачка картинок (Downloader::onSslErrors): не ронять
-    // загрузку из-за сертификата, иначе остаются битые фреймы
+    // NoPeerCertificate при возобновлении TLS-сессии — не ошибка цепочки:
+    // сертификат уже проверялся в полном handshake. Остальные ошибки
+    // фатальны, отключать проверку целиком нельзя
     QObject::connect(&manager, &QNetworkAccessManager::sslErrors,
-                     [](QNetworkReply *r, const QList<QSslError> &){ r->ignoreSslErrors(); });
+                     [](QNetworkReply *r, const QList<QSslError> &errors)
+                     {
+                         // Явно разрешенный небезопасный режим из настроек
+                         if(mytetraConfig.get_tlsIgnoreInvalidCertificates())
+                         {
+                             QStringList details;
+
+                             foreach(const QSslError &error, errors)
+                                 details.append(error.errorString());
+
+                             qWarning() << "Clipper: TLS errors ignored by setting:"
+                                        << details.join("; ");
+
+                             r->ignoreSslErrors();
+                             return;
+                         }
+
+                         bool onlyMissing=true;
+
+                         foreach(const QSslError &error, errors)
+                             if(error.error()!=QSslError::NoPeerCertificate)
+                                 onlyMissing=false;
+
+                         if(onlyMissing)
+                         {
+                             r->ignoreSslErrors(errors);
+                             return;
+                         }
+
+                         QStringList details;
+
+                         foreach(const QSslError &error, errors)
+                             details.append(error.errorString());
+
+                         qWarning() << "Clipper: TLS certificate verification failed:"
+                                    << details.join("; ");
+
+                         r->abort();
+                     });
 
     QEventLoop loop;
     QTimer timer;

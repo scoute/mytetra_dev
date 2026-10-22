@@ -15,6 +15,8 @@ Volgodonsk, 2011-2013
 
 #include "RC5Simple.h"
 
+#include <QRandomGenerator>
+
 
 // 1.15 - Первая публичная версия
 
@@ -569,6 +571,24 @@ void RC5Simple::RC5_Decrypt(vector<unsigned char> &in, vector<unsigned char> &ou
   }
 
 
+  // Формат не распознан: дальше смещения были бы нулевыми,
+  // а разбор - за границей данных
+  if(blockWithDataSize==0)
+   {
+    errorCode=RC5_ERROR_CODE_7;
+    return;
+   }
+
+  // Минимум: заголовок, IV, блок размера и хотя бы один блок данных.
+  // Без этой проверки чтение IV и блока размера уходит за границу
+  // вектора на обрезанном или чужом блобе
+  if(in.size() < (blockWithDataSize+1)*RC5_BLOCK_LEN)
+   {
+    errorCode=RC5_ERROR_CODE_7;
+    return;
+   }
+
+
  // Get IV
  unsigned char iv[RC5_BLOCK_LEN];
  for(int i=0; i<RC5_BLOCK_LEN; i++)
@@ -636,8 +656,15 @@ void RC5Simple::RC5_Decrypt(vector<unsigned char> &in, vector<unsigned char> &ou
 
      RC5_LOG(( "Decrypt data size: %d\n", data_size ));
 
-     // Uncorrect decrypt data size
-     if((unsigned int)data_size>(unsigned int)in.size()) 
+     // Uncorrect decrypt data size. Сверяется с емкостью открытых
+     // данных: out содержит firstDataBlock технических блоков впереди
+     // и removeBlocksFromOutput в начале, которые будут удалены.
+     // Сравнение с in.size() пропускало data_size больше out.size()
+     // и уводило erase за конец
+     const unsigned int plainCapacity=
+       in.size()-(firstDataBlock+removeBlocksFromOutput)*RC5_BLOCK_LEN;
+
+     if((unsigned int)data_size > plainCapacity)
       {
        // RC5_LOG(( "Incorrect data size. Decrypt data size: %d, estimate data size: ~%d\n", data_size,  in.size() ));
        errorCode=RC5_ERROR_CODE_7;
@@ -673,6 +700,12 @@ void RC5Simple::RC5_Decrypt(vector<unsigned char> &in, vector<unsigned char> &ou
 
  // Отвлекли: Пошли за ребенком
  // Remove from output a blocks with technical data (random blocks, size, etc...)
+ if(out.size()<removeBlocksFromOutput*RC5_BLOCK_LEN)
+  {
+   errorCode=RC5_ERROR_CODE_7;
+   return;
+  }
+
  out.erase(out.begin(), out.begin()+removeBlocksFromOutput*RC5_BLOCK_LEN);
 
  // Remove from output a last byte with random byte for aligning
@@ -845,12 +878,17 @@ inline RC5_TWORD RC5Simple::RC5_GET_WORD_FROM_BYTE(unsigned char b0,
 */
 
 
-// Random generator, from - to inclusive
+// Random generator, from - to inclusive.
+// Системный CSPRNG вместо rand(): IV и добивка в CBC не должны
+// быть предсказуемыми (srand(time) перебором угадывается)
 unsigned int RC5Simple::RC5_Rand(unsigned int from, unsigned int to)
 {
  unsigned int len=to-from+1;
 
- return (rand()%len)+from;
+ if(len==0)
+  return from;
+
+ return from + QRandomGenerator::system()->bounded(len);
 }
 
 

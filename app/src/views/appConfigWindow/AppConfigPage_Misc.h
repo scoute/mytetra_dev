@@ -38,6 +38,9 @@ protected:
   QCheckBox *autosaveEnable;   // Включено ли автосохранение
   QSpinBox *autosaveInterval;  // Интервал автосохранения, минут
 
+  QGroupBox *networkBox;                  // Рамка сетевых настроек
+  QCheckBox *tlsIgnoreInvalidCertificates; // Игнорировать ошибки TLS при загрузке
+
   // Цвета заметки и секрета переехали на страницу Themes.
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла
   QGroupBox *dangerBox;

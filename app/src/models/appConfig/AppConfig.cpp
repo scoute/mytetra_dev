@@ -143,7 +143,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_52(true);
+        QStringList actualTable=get_parameter_table_53(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1632,6 +1632,20 @@ void AppConfig::set_mcpAllow(bool state)
 }
 
 
+// Игнорировать ошибки проверки TLS при сетевой загрузке.
+// По умолчанию false: самоподписанный/просроченный сертификат
+// отклоняется, иначе MITM может подменить картинку или файл
+bool AppConfig::get_tlsIgnoreInvalidCertificates(void)
+{
+    return m_conf->value("tlsIgnoreInvalidCertificates", false).toBool();
+}
+
+void AppConfig::set_tlsIgnoreInvalidCertificates(bool state)
+{
+    m_conf->setValue("tlsIgnoreInvalidCertificates", state);
+}
+
+
 // Показывать ли общий итог записей с учетом подветок.
 // По умолчанию выключено: только свои [n]
 bool AppConfig::get_showSubtreeCount(void)
@@ -1985,6 +1999,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_50;
     parameterFunctions << &AppConfig::get_parameter_table_51;
     parameterFunctions << &AppConfig::get_parameter_table_52;
+    parameterFunctions << &AppConfig::get_parameter_table_53;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3049,6 +3064,26 @@ QStringList AppConfig::get_parameter_table_52(bool withEndSignature)
     // расшифровка отличает шифры по магии блоба
 
     table << "cryptMethod" << "QString" << "rc5";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_53(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 52
+    table << get_parameter_table_52(false);
+
+    // Игнорировать ошибки проверки TLS при загрузке картинок/файлов.
+    // По умолчанию false: небезопасный режим только по явному согласию
+    table << "tlsIgnoreInvalidCertificates" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

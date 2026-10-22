@@ -1,5 +1,6 @@
 #include <QMessageBox>
 #include <QCryptographicHash>
+#include <QRandomGenerator>
 #include <QtGlobal>
 #include <QByteArray>
 #include <QString>
@@ -346,8 +347,12 @@ void Password::saveCheckPasswordKey(QString password)
     QByteArray hash;
     QByteArray salt;
 
+    // Соль проверочного хеша - из системного CSPRNG. rand() с
+    // предсказуемым seed позволяет перебирать пароль быстрее
+    salt.resize(32);
+
     for(int i=0; i<32; i++)
-        salt.append(rand()%0xFF);
+        salt[i]=static_cast<char>(QRandomGenerator::system()->bounded(256));
 
     Pbkdf2Qt hashAlgorythm;
     hash=hashAlgorythm.Pbkdf2(password.toUtf8(),
@@ -360,6 +365,12 @@ void Password::saveCheckPasswordKey(QString password)
     dataBaseConfig.set_crypt_mode(1);
 
     smartSaveMiddleHash(password);
+
+    // Пароль/соль/режим должны лежать на диске до первого шифрования.
+    // Иначе сбой после установки пароля оставляет базу без проверочных
+    // данных, и корректный пароль уже нечем подтвердить
+    dataBaseConfig.sync();
+    mytetraConfig.sync();
 }
 
 
@@ -438,9 +449,11 @@ void Password::resetPassword(void)
         dataBaseConfig.set_crypt_mode(0);
         dataBaseConfig.set_crypt_check_salt("");
         dataBaseConfig.set_crypt_check_hash("");
+        dataBaseConfig.set_middle_hash_check_data("");
 
         mytetraConfig.setPasswordMiddleHash("");
-        dataBaseConfig.set_middle_hash_check_data("");
+        mytetraConfig.sync();
+        dataBaseConfig.sync();
 
         // Ключ в памяти удаляется
         globalParameters.setCryptKey(QByteArray());

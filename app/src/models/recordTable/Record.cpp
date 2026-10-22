@@ -763,6 +763,9 @@ void Record::switchToDecryptFields(void)
   if(fieldList.value("crypt")!="1")
     return;
 
+  if(globalParameters.getCryptKey().isEmpty())
+    criticalError("Record::switchToDecryptFields() : Password not setted.");
+
   // Выбираются поля, разрешенные для шифрования
   foreach(QString fieldName, FixedParameters::recordFieldCryptedList)
   {
@@ -771,7 +774,18 @@ void Record::switchToDecryptFields(void)
     // Поле расшифровывается
     if(fieldList.contains(fieldName))
       if(fieldList[fieldName].length()>0)
-        setNaturalFieldSource(fieldName, getField(fieldName) );
+      {
+        const QString cipherText=fieldList.value(fieldName);
+        const QString plainText=getField(fieldName);
+
+        // Непустой аутентифицированный блоб без открытого текста -
+        // неверный ключ/порча. Записывать пустоту поверх нельзя
+        if(plainText.isEmpty() &&
+           QByteArray::fromBase64(cipherText.toLatin1()).startsWith(MTENC1_MAGIC))
+          criticalError("Record::switchToDecryptFields() : Can not decrypt field "+fieldName+". Wrong password or corrupted data.");
+
+        setNaturalFieldSource(fieldName, plainText);
+      }
   }
 
   // Устанавливается поле (флаг) что запись не зашифрована
@@ -870,7 +884,16 @@ void Record::switchToDecryptAndSaveFat(void)
     criticalError("Cant call switchToDecryptAndSaveFat() for non crypt record object "+getIdAndNameAsString());
 
   // Расшифровывается текст записи в памяти
-  text=CryptService::decryptByteArray(globalParameters.getCryptKey(), text);
+  if(!text.isEmpty())
+  {
+    const QByteArray cipherText=text;
+    const QByteArray plainText=CryptService::decryptByteArray(globalParameters.getCryptKey(), cipherText);
+
+    if(plainText.isEmpty() && cipherText.startsWith(MTENC1_MAGIC))
+      criticalError("Record::switchToDecryptAndSaveFat() : Can not decrypt text. Wrong password or corrupted data.");
+
+    text=plainText;
+  }
 
   // Расшифровываются аттачи в памяти
   attachTableData.decrypt(Attach::areaMemory);

@@ -34,6 +34,14 @@ public:
     // переключает play/pause, правее мотает
     static int toggleZoneWidth(void);
 
+    // Геометрия полосы прогресса в координатах от левого края бабла:
+    // начало после кружка с полем, ширина до правого поля.
+    // Единый источник истины для отрисовки и маппинга кликов:
+    // доля позиции считается от полосы, а не от нуля бабла
+    static void progressTrack(qreal bubbleWidth,
+                              qreal &trackLeft,
+                              qreal &trackWidth);
+
 private:
 
     AudioFormatter *formatter;

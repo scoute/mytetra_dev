@@ -733,6 +733,38 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>If you change your password all encrypted item will be re-encrypted with a new password.</source>
         <translation>При смене пароля все зашифрованные ветки будут заново зашифрованы с новым паролем.</translation>
     </message>
+    <message>
+        <source>Re-encrypt data with selected method</source>
+        <translation>Перешифровать данные выбранным методом</translation>
+    </message>
+    <message>
+        <source>Re-encrypt data</source>
+        <translation>Перешифровка данных</translation>
+    </message>
+    <message>
+        <source>Crypt is locked. Enter the password first.</source>
+        <translation>Крипта закрыта. Сначала введите пароль.</translation>
+    </message>
+    <message>
+        <source>All encrypted data will be re-encrypted with the selected method "%1". Back up your database directory first. Continue?</source>
+        <translation>Все зашифрованные данные будут перешифрованы выбранным методом "%1". Сначала сделайте резервную копию каталога базы. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Re-encrypting...</source>
+        <translation>Перешифровка...</translation>
+    </message>
+    <message>
+        <source>Database tree is unavailable.</source>
+        <translation>Дерево базы недоступно.</translation>
+    </message>
+    <message>
+        <source>Re-encryption canceled, converted branches: %1.</source>
+        <translation>Перешифровка отменена, преобразовано веток: %1.</translation>
+    </message>
+    <message>
+        <source>Done. Re-encrypted branches: %1.</source>
+        <translation>Готово. Перешифровано веток: %1.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Favorites</name>

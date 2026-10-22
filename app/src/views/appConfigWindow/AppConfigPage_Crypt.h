@@ -11,6 +11,7 @@ class QPushButton;
 class QCheckBox;
 class QSpinBox;
 class QComboBox;
+class QPushButton;
 
 class AppConfigPage_Crypt : public ConfigPage
 {
@@ -29,6 +30,7 @@ private slots:
   void onAutoClosePasswordEnableToggle(bool checked);
   void onPasswordSaveEnableToggle(bool checked);
   void onCryptMethodChanged(int index);
+  void onReencryptButtonClicked(void);
 
 protected:
 
@@ -65,6 +67,7 @@ protected:
 
   QGroupBox *cryptMethodBox;
   QComboBox *cryptMethodCombo;
+  QPushButton *reencryptButton;
 
 };
 

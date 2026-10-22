@@ -1,5 +1,6 @@
 #include <QGridLayout>
 #include <QScrollArea>
+#include <QScreen>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -140,10 +141,12 @@ void EditorSpecialCharDialog::assembly(void)
   }
 
  // Вся таблица — в прокрутке: три сотни кнопок в экран не влезают.
- // Видно 8 рядов кнопок 36px, остальное крутится колесом
+ // Минимум 8 рядов кнопок 36px, дальше растет вместе с окном:
+ // у прокрутки вертикально Expanding, кнопка Cancel прижата к низу
  QScrollArea *scroll=new QScrollArea(this);
  scroll->setWidgetResizable(true);
- scroll->setFixedHeight(360);
+ scroll->setMinimumHeight(360);
+ scroll->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
  QWidget *gridHost=new QWidget(scroll);
  QGridLayout *gridLayout=new QGridLayout(gridHost);
@@ -161,6 +164,17 @@ void EditorSpecialCharDialog::assembly(void)
  QDialogButtonBox *buttonBox=new QDialogButtonBox(QDialogButtonBox::Cancel, this);
  connect(buttonBox, &QDialogButtonBox::rejected, this, &EditorSpecialCharDialog::reject);
  centralLayout->addWidget(buttonBox);
+
+ // Стартовый размер: ширина по содержимому, высота ужата чтобы
+ // диалог открывался компактным (а не во всю таблицу) и рос за
+ // счет прокрутки при растягивании. Без ужимки sizeHint прокрутки
+ // с widgetResizable равен полной высоте таблицы
+ adjustSize();
+
+ const int maxH=QGuiApplication::primaryScreen()->availableGeometry().height()*2/3;
+
+ if(height()>maxH)
+  resize(width(), qMax(maxH, minimumHeight()));
 }
 
 

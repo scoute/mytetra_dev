@@ -1,6 +1,7 @@
 #include "CryptService.h"
 #include "CipherBackend.h"
 #include "RC5CipherBackend.h"
+#include "XChaChaCipherBackend.h"
 
 #include <QFile>
 #include <QApplication>
@@ -69,12 +70,15 @@ QString CryptService::detectMethod(const QByteArray &data)
 
 CipherBackend *CryptService::backend(const QString &method)
 {
-    // Бэкенды без состояния, один экземпляр на программу.
-    // XChaCha добавится следующим юнитом
+    // Бэкенды без состояния, один экземпляр на программу
     static RC5CipherBackend rc5;
+    static XChaChaCipherBackend xchacha;
 
     if(method==QString::fromLatin1(CIPHER_RC5))
         return &rc5;
+
+    if(method==QString::fromLatin1(CIPHER_XCHACHA))
+        return &xchacha;
 
     return nullptr;
 }

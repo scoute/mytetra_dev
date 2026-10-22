@@ -138,6 +138,25 @@ void DataBaseConfig::set_middle_hash_check_data(QString hash)
 }
 
 
+QString DataBaseConfig::get_cryptSalt(void)
+{
+ return conf->value("cryptSalt", "").toString();
+}
+
+
+void DataBaseConfig::set_cryptSalt(QString salt)
+{
+ conf->setValue("cryptSalt", salt);
+ conf->sync();
+}
+
+
+void DataBaseConfig::sync(void)
+{
+ conf->sync();
+}
+
+
 // --------------------
 // Номер версии конфига
 // --------------------

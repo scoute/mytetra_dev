@@ -585,17 +585,22 @@ SOURCES+=\
 # держать их в общем INCLUDEPATH приложения нельзя.
 OPUS_LIB_DIR = $${_PRO_FILE_PWD_}/../thirdParty/opus/build/lib
 OGG_LIB_DIR = $${_PRO_FILE_PWD_}/../thirdParty/ogg/build/lib
+MONOCYPHER_LIB_DIR = $${_PRO_FILE_PWD_}/../thirdParty/monocypher/build/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../thirdParty/opus/include \
-               $${_PRO_FILE_PWD_}/../thirdParty/ogg/include
+               $${_PRO_FILE_PWD_}/../thirdParty/ogg/include \
+               $${_PRO_FILE_PWD_}/../thirdParty/monocypher
 LIBS += -L$$OPUS_LIB_DIR -lopus \
-        -L$$OGG_LIB_DIR -logg
+        -L$$OGG_LIB_DIR -logg \
+        -L$$MONOCYPHER_LIB_DIR -lmonocypher
 unix: LIBS += -lm
 win32-msvc* {
   PRE_TARGETDEPS += $$OPUS_LIB_DIR/opus.lib \
-                    $$OGG_LIB_DIR/ogg.lib
+                    $$OGG_LIB_DIR/ogg.lib \
+                    $$MONOCYPHER_LIB_DIR/monocypher.lib
 } else {
   PRE_TARGETDEPS += $$OPUS_LIB_DIR/libopus.a \
-                    $$OGG_LIB_DIR/libogg.a
+                    $$OGG_LIB_DIR/libogg.a \
+                    $$MONOCYPHER_LIB_DIR/libmonocypher.a
 }
 
 wince* {

@@ -25,6 +25,8 @@
 #   ./build_portable_windows.sh --build-dir /путь/к/сборке
 #   ./build_portable_windows.sh --no-build  только упаковать готовое
 #   ./build_portable_windows.sh --strip / --no-strip
+#   ./build_portable_windows.sh --map      link map рядом с бинарем
+#                                          (по адресу падения найти функцию)
 #   ./build_portable_windows.sh --smoke    тестовый запуск в offscreen под Wine
 #
 # WINEPREFIX пробрасывается как есть (по умолчанию ~/.wine).
@@ -66,6 +68,7 @@ JOBS="4"
 CLEAN_BUILD=0
 DO_BUILD=1
 DO_STRIP=1
+DO_MAP=0
 DO_SMOKE=0
 
 # --------------------------------------------------------------------------
@@ -93,6 +96,7 @@ while [[ $# -gt 0 ]]; do
         --no-build) DO_BUILD=0; shift;;
         --strip) DO_STRIP=1; shift;;
         --no-strip) DO_STRIP=0; shift;;
+        --map) DO_MAP=1; shift;;
         --smoke) DO_SMOKE=1; shift;;
         --help) sed -n '2,32p' "$0"; exit 0;;
         *) echo "Неизвестный аргумент: $1" >&2; exit 4;;
@@ -193,8 +197,13 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
     export WINEPATH="${MINGW_DIR}/bin"
 
     # qmake под Wine: пути в windows-виде через winepath.
-    # shadow-сборка вне исходников, как в Linux
-    wine "${QMAKE}" "$(to_winpath "${SOURCE_DIR}/mytetra.pro")"
+    # shadow-сборка вне исходников, как в Linux.
+    # --map: link map для разбора адресов падения (nm/addr2line).
+    QMAKE_ARGS=()
+    if [[ "${DO_MAP}" -eq 1 ]]; then
+        QMAKE_ARGS+=("QMAKE_LFLAGS+=-Wl,-Map -Wl,link.map")
+    fi
+    wine "${QMAKE}" "$(to_winpath "${SOURCE_DIR}/mytetra.pro")" "${QMAKE_ARGS[@]}"
 
     # make с тулчейном в WINEPATH: так windows-процессы находят g++
     wine "${MINGW_MAKE}" -j"${JOBS}"
@@ -219,6 +228,17 @@ if [[ -z "${BUILT_DIR}" ]]; then
 fi
 
 echo "Бинари из: ${BUILT_DIR}"
+
+# link.map кладется линкером рядом с местом линковки
+if [[ "${DO_MAP}" -eq 1 ]]; then
+    MAP_FILE="$(find "${BUILD_DIR}/app" -maxdepth 2 -name link.map 2>/dev/null | head -1)"
+    if [[ -n "${MAP_FILE}" ]]; then
+        echo "Link map: ${MAP_FILE}"
+        cp "${MAP_FILE}" "${PORTABLE_DIR}/link.map"
+    else
+        echo "ПРЕДУПРЕЖДЕНИЕ: link.map не создан" >&2
+    fi
+fi
 
 # mimetex обязателен: без него молча не рисуются формулы в заметках
 if [[ ! -f "${BUILT_DIR}/mimetex.exe" ]]; then

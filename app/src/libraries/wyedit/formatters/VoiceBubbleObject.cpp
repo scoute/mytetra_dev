@@ -36,6 +36,20 @@ int VoiceBubbleObject::toggleZoneWidth(void)
 }
 
 
+void VoiceBubbleObject::progressTrack(qreal bubbleWidth,
+                                       qreal &trackLeft,
+                                       qreal &trackWidth)
+{
+    // Та же арифметика что в отрисовке текстов и полосы:
+    // тексты и трек начинаются сразу за зоной кружка
+    trackLeft=toggleZoneWidth();
+    trackWidth=bubbleWidth-bubblePad-trackLeft;
+
+    if(trackWidth<1.0)
+        trackWidth=1.0;
+}
+
+
 qreal VoiceBubbleObject::bubbleLeftEdge(QTextDocument *doc, int bubblePos)
 {
     if(doc==nullptr || bubblePos<0 || bubblePos>=doc->characterCount())
@@ -150,9 +164,12 @@ void VoiceBubbleObject::drawObject(QPainter *painter, const QRectF &rect, QTextD
         painter->drawPolygon(triangle);
     }
 
-    // Тексты: имя сверху, время снизу приглушенным
-    const qreal textX=circle.right()+bubblePad;
-    const qreal textW=body.right()-bubblePad-textX;
+    // Тексты: имя сверху, время снизу приглушенным.
+    // Координаты из progressTrack чтобы совпадать с маппингом кликов
+    qreal textXrel, textW;
+    progressTrack(body.width(), textXrel, textW);
+
+    const qreal textX=body.left()+textXrel;
 
     QFont nameFont=painter->font();
     painter->setPen(palette.color(QPalette::WindowText));

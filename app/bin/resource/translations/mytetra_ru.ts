@@ -674,6 +674,18 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Разрешить расшифровку во временный файл в директории корзины</translation>
     </message>
     <message>
+        <source>Encryption method</source>
+        <translation>Метод шифрования</translation>
+    </message>
+    <message>
+        <source>RC5 (compatible)</source>
+        <translation>RC5 (совместимый)</translation>
+    </message>
+    <message>
+        <source>XChaCha20-Poly1305 (modern)</source>
+        <translation>XChaCha20-Poly1305 (современный)</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="201"/>
         <source>&lt;b&gt;Status:&lt;/b&gt; </source>
         <translation>&lt;b&gt;Статус:&lt;/b&gt; </translation>

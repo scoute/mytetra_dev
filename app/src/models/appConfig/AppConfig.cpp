@@ -143,7 +143,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_51(true);
+        QStringList actualTable=get_parameter_table_52(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1668,6 +1668,28 @@ void AppConfig::set_telegramImportMode(const QString &mode)
 }
 
 
+// Метод шифрования. rc5 если не задано или лежит мусор:
+// неизвестное значение никогда не должно молча ронять данные
+QString AppConfig::get_cryptMethod(void)
+{
+    const QString method=m_conf->value("cryptMethod", QStringLiteral("rc5")).toString();
+
+    if(method==QStringLiteral("xchacha"))
+        return method;
+
+    return QStringLiteral("rc5");
+}
+
+
+void AppConfig::set_cryptMethod(const QString &method)
+{
+    if(method==QStringLiteral("xchacha"))
+        m_conf->setValue("cryptMethod", method);
+    else
+        m_conf->setValue("cryptMethod", QStringLiteral("rc5"));
+}
+
+
 // Формат голосовых заметок по умолчанию. Opus если не задано
 // или лежит мусор: диалог записи все равно проверяет поддержку
 QString AppConfig::get_voiceNoteFormat(void)
@@ -1962,6 +1984,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_49;
     parameterFunctions << &AppConfig::get_parameter_table_50;
     parameterFunctions << &AppConfig::get_parameter_table_51;
+    parameterFunctions << &AppConfig::get_parameter_table_52;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3004,6 +3027,28 @@ QStringList AppConfig::get_parameter_table_51(bool withEndSignature)
 
     // Раскладка импорта Telegram, по умолчанию заметка на месяц
     table << "telegramImportMode" << "QString" << "month";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_52(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 51
+    table << get_parameter_table_51(false);
+
+    // Метод шифрования, по умолчанию RC5 ради совместимости.
+    // Новое значение применяется только к новым шифрованиям,
+    // расшифровка отличает шифры по магии блоба
+
+    table << "cryptMethod" << "QString" << "rc5";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

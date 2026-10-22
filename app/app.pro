@@ -279,6 +279,8 @@ HEADERS = src/main.h \
     src/views/dialog/ReduceMessageBox.h \
     src/views/dialog/OverTextToolButton.h \
     src/libraries/crypt/CryptService.h \
+    src/libraries/crypt/CipherBackend.h \
+    src/libraries/crypt/RC5CipherBackend.h \
     src/libraries/wyedit/EditorToolBar.h \
     src/libraries/wyedit/formatters/TypefaceFormatter.h \
     src/libraries/wyedit/formatters/Formatter.h \
@@ -490,6 +492,7 @@ SOURCES = src/main.cpp \
     src/views/dialog/ReduceMessageBox.cpp \
     src/views/dialog/OverTextToolButton.cpp \
     src/libraries/crypt/CryptService.cpp \
+    src/libraries/crypt/RC5CipherBackend.cpp \
     src/libraries/wyedit/EditorToolBar.cpp \
     src/libraries/wyedit/formatters/TypefaceFormatter.cpp \
     src/libraries/wyedit/formatters/Formatter.cpp \

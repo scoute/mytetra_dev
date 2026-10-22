@@ -780,6 +780,27 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
     audioInput=new QAudioInput(device, opusFormat, this);
     opusDevice=audioInput->start();
 
+    // Старт может не состояться: устройство еще не отпущено прошлым
+    // дублем (deleteLater + асинхронное освобождение в бэкенде) или
+    // занято другим приложением. Без проверки дальше тихая мертвая
+    // запись (readyRead не придет, файл пустой, вставка неактивна),
+    // а stop() по нестартовавшему входу роняет часть бэкендов.
+    // Поэтому неуспех сразу превращается в чистую ошибку
+    if(opusDevice==nullptr || audioInput->error()!=QAudio::NoError)
+    {
+        statusLabel->setText(tr("Can not record here"));
+
+        // Здесь не из сигнала входа, удаляем сразу, не deleteLater
+        delete audioInput;
+        audioInput=nullptr;
+        opusDevice=nullptr;
+
+        if(opusWriter.isOpen())
+            opusWriter.close();
+
+        return false;
+    }
+
     connect(opusDevice, &QIODevice::readyRead,
             this,        &VoiceRecorderDialog::onOpusAudioData);
     connect(audioInput, &QAudioInput::stateChanged,
@@ -793,7 +814,11 @@ void VoiceRecorderDialog::stopOpusCapture(void)
 {
     if(audioInput!=nullptr)
     {
-        audioInput->stop();
+        // Нестартовавший вход (остаток неуспешного старта) stop()
+        // не дергаем: часть бэкендов на этом падает. Только удаляем
+        if(audioInput->state()!=QAudio::StoppedState)
+            audioInput->stop();
+
         audioInput->deleteLater();
         audioInput=nullptr;
     }

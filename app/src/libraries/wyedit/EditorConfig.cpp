@@ -524,6 +524,8 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_30;
     parameterFunctions << get_parameter_table_31;
     parameterFunctions << get_parameter_table_32;
+    parameterFunctions << get_parameter_table_33;
+    parameterFunctions << get_parameter_table_34;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1173,6 +1175,49 @@ QStringList EditorConfig::get_parameter_table_32(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_33(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 32
+    table << get_parameter_table_32(false);
+
+    // Новых ключей нет. Версия нужна чтобы переставить кнопки тулбара:
+    // secret между code и textOnly, micRecord после textOnly,
+    // specialChar после mathExpression. toggleTools и tabsToSpaces
+    // на этом шаге только убираются со своих мест, расставляются
+    // они на версии 34. См. метод update_version_change_value()
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_34(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 33
+    table << get_parameter_table_33(false);
+
+    // Новых ключей нет. Версия расставляет убранные на версии 33
+    // кнопки по новым местам: tabsToSpaces перед bold (линейка 1),
+    // toggleTools после fixBreakSymbol (линейка 2).
+    // См. метод update_version_change_value()
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1632,6 +1677,87 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result=result+",specialChar";
             }
         }
+
+
+    // Перестановка кнопок тулбара по новому порядку.
+    // Движки только перечисленные кнопки, остальной порядок
+    // пользователя (включая свои кнопки и разделители) сохраняется.
+    // Точные совпадения имен: работа через список, а не подстроки
+    if(versionFrom==32 && versionTo==33)
+    {
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+
+            // secret между code и textOnly
+            parts.removeAll("secret");
+            if(parts.contains("code"))
+                parts.insert(parts.indexOf("code")+1, "secret");
+            else
+                parts.append("secret");
+
+            // micRecord (запись голосовой) после textOnly
+            parts.removeAll("micRecord");
+            if(parts.contains("textOnly"))
+                parts.insert(parts.indexOf("textOnly")+1, "micRecord");
+            else
+                parts.append("micRecord");
+
+            // specialChar (таблица символов) сразу после mathExpression
+            parts.removeAll("specialChar");
+            if(parts.contains("mathExpression"))
+                parts.insert(parts.indexOf("mathExpression")+1, "specialChar");
+            else
+                parts.append("specialChar");
+
+            // toggleTools с линейки 1 убирается, на линейку 2
+            // встанет следующим шагом (версия 34)
+            parts.removeAll("toggleTools");
+
+            result=parts.join(",");
+        }
+
+        if(name=="tools_line_2")
+        {
+            // tabsToSpaces с линейки 2 убирается, на линейку 1
+            // перед bold встанет следующим шагом (версия 34)
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("tabsToSpaces");
+            result=parts.join(",");
+        }
+    }
+
+
+    if(versionFrom==33 && versionTo==34)
+    {
+        if(name=="tools_line_1")
+        {
+            // tabsToSpaces (табы в пробелы) перед bold
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("tabsToSpaces");
+            if(parts.contains("bold"))
+                parts.insert(parts.indexOf("bold"), "tabsToSpaces");
+            else
+                parts.append("tabsToSpaces");
+            result=parts.join(",");
+        }
+
+        if(name=="tools_line_2")
+        {
+            // toggleTools (показать/спрятать панель) после fixBreakSymbol
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("toggleTools");
+            if(parts.contains("fixBreakSymbol"))
+                parts.insert(parts.indexOf("fixBreakSymbol")+1, "toggleTools");
+            else
+                parts.append("toggleTools");
+            result=parts.join(",");
+        }
+    }
 
 
     return result;

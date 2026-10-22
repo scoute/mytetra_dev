@@ -279,6 +279,7 @@ HEADERS = src/main.h \
     src/views/dialog/ReduceMessageBox.h \
     src/views/dialog/OverTextToolButton.h \
     src/libraries/crypt/CryptService.h \
+    src/libraries/crypt/CryptMigrate.h \
     src/libraries/crypt/CipherBackend.h \
     src/libraries/crypt/RC5CipherBackend.h \
     src/libraries/crypt/XChaChaCipherBackend.h \
@@ -493,6 +494,7 @@ SOURCES = src/main.cpp \
     src/views/dialog/ReduceMessageBox.cpp \
     src/views/dialog/OverTextToolButton.cpp \
     src/libraries/crypt/CryptService.cpp \
+    src/libraries/crypt/CryptMigrate.cpp \
     src/libraries/crypt/RC5CipherBackend.cpp \
     src/libraries/crypt/XChaChaCipherBackend.cpp \
     src/libraries/wyedit/EditorToolBar.cpp \

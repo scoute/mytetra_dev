@@ -9,6 +9,12 @@
 #include <QCheckBox>
 #include <QSpinBox>
 #include <QComboBox>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QProgressDialog>
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/tree/TreeScreen.h"
+#include "libraries/crypt/CryptMigrate.h"
 
 #include "AppConfigPage_Crypt.h"
 #include "models/appConfig/AppConfig.h"
@@ -161,8 +167,12 @@ void AppConfigPage_Crypt::setupUi(void)
   cryptMethodCombo->addItem(tr("RC5 (compatible)"), QStringLiteral("rc5"));
   cryptMethodCombo->addItem(tr("XChaCha20-Poly1305 (modern)"), QStringLiteral("xchacha"));
 
+  reencryptButton=new QPushButton(this);
+  reencryptButton->setText(tr("Re-encrypt data with selected method"));
+
   QHBoxLayout *cryptMethodLayout=new QHBoxLayout;
   cryptMethodLayout->addWidget(cryptMethodCombo);
+  cryptMethodLayout->addWidget(reencryptButton);
   cryptMethodLayout->addStretch();
   cryptMethodBox->setLayout(cryptMethodLayout);
 }
@@ -204,6 +214,9 @@ void AppConfigPage_Crypt::setupSignals(void)
  // Смена шифра применяется сразу, действует на новые шифрования
  connect(cryptMethodCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
          this, &AppConfigPage_Crypt::onCryptMethodChanged);
+
+ connect(reencryptButton, &QPushButton::clicked,
+         this, &AppConfigPage_Crypt::onReencryptButtonClicked);
 }
 
 
@@ -330,6 +343,57 @@ void AppConfigPage_Crypt::onCryptMethodChanged(int index)
 }
 
 
+void AppConfigPage_Crypt::onReencryptButtonClicked(void)
+{
+  if(globalParameters.getCryptKey().isEmpty())
+  {
+    QMessageBox::information(this,
+                             tr("Re-encrypt data"),
+                             tr("Crypt is locked. Enter the password first."));
+    return;
+  }
+
+  QMessageBox::StandardButton answer=QMessageBox::question(
+    this,
+    tr("Re-encrypt data"),
+    tr("All encrypted data will be re-encrypted with the selected method \"%1\". Back up your database directory first. Continue?").arg(cryptMethodCombo->currentText()),
+    QMessageBox::Yes | QMessageBox::No,
+    QMessageBox::No);
+
+  if(answer!=QMessageBox::Yes)
+    return;
+
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+  if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+  {
+    QMessageBox::warning(this,
+                         tr("Re-encrypt data"),
+                         tr("Database tree is unavailable."));
+    return;
+  }
+
+  QProgressDialog progress(tr("Re-encrypting..."),
+                           tr("Cancel"), 0, 0, this);
+  progress.setWindowModality(Qt::WindowModal);
+  progress.setMinimumDuration(0);
+
+  CryptMigrateResult result=CryptMigrate::reencryptAll(treeScreen->knowTreeModel,
+                                                      &progress);
+
+  progress.close();
+
+  if(result.canceled)
+    QMessageBox::information(this,
+                             tr("Re-encrypt data"),
+                             tr("Re-encryption canceled, converted branches: %1. Remaining data keeps working.").arg(result.branches));
+  else
+    QMessageBox::information(this,
+                             tr("Re-encrypt data"),
+                             tr("Done. Re-encrypted branches: %1.").arg(result.branches));
+}
+
+
 void AppConfigPage_Crypt::retranslateUi(void)
 {
   passRetrieveBox->setTitle(tr("Password settings"));
@@ -351,6 +415,7 @@ void AppConfigPage_Crypt::retranslateUi(void)
   cryptMethodBox->setTitle(tr("Encryption method"));
   cryptMethodCombo->setItemText(0, tr("RC5 (compatible)"));
   cryptMethodCombo->setItemText(1, tr("XChaCha20-Poly1305 (modern)"));
+  reencryptButton->setText(tr("Re-encrypt data with selected method"));
 
   // Динамическая строка состояния перечитывается текущим языком
   updateUi();

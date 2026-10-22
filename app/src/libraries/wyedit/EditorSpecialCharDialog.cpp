@@ -1,4 +1,5 @@
 #include <QGridLayout>
+#include <QScrollArea>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -23,29 +24,87 @@ EditorSpecialCharDialog::~EditorSpecialCharDialog()
 }
 
 
-// Весь набор: типографика, стрелки, математика, валюты, фигуры
+// Весь набор: типографика, латиница с диакритикой, греческий,
+// стрелки, математика, валюты, фигуры, бокс-рисование
 QStringList EditorSpecialCharDialog::allSymbols(void)
 {
  return QStringList()
+  // Кавычки, тире, типографика
   << QStringLiteral("«") << QStringLiteral("»") << QStringLiteral("„") << QStringLiteral("“") << QStringLiteral("”")
-  << QStringLiteral("‘") << QStringLiteral("’") << QStringLiteral("‚") << QStringLiteral("–") << QStringLiteral("—")
-  << QStringLiteral("−") << QStringLiteral("…") << QStringLiteral("•") << QStringLiteral("·") << QStringLiteral("°")
-  << QStringLiteral("§") << QStringLiteral("¶") << QStringLiteral("©") << QStringLiteral("®") << QStringLiteral("™")
-  << QStringLiteral("№") << QStringLiteral("‰") << QStringLiteral("′") << QStringLiteral("″") << QStringLiteral("¿")
-  << QStringLiteral("¡") << QStringLiteral("×") << QStringLiteral("÷") << QStringLiteral("±") << QStringLiteral("≠")
-  << QStringLiteral("≈") << QStringLiteral("∞") << QStringLiteral("√") << QStringLiteral("∑") << QStringLiteral("∏")
-  << QStringLiteral("∫") << QStringLiteral("∂") << QStringLiteral("∆") << QStringLiteral("π") << QStringLiteral("µ")
-  << QStringLiteral("Ω") << QStringLiteral("α") << QStringLiteral("β") << QStringLiteral("γ") << QStringLiteral("λ")
-  << QStringLiteral("Δ") << QStringLiteral("Σ") << QStringLiteral("≤") << QStringLiteral("≥") << QStringLiteral("∈")
-  << QStringLiteral("∪") << QStringLiteral("∩") << QStringLiteral("∧") << QStringLiteral("∨") << QStringLiteral("¬")
-  << QStringLiteral("∅") << QStringLiteral("∀") << QStringLiteral("∃") << QStringLiteral("←") << QStringLiteral("↑")
-  << QStringLiteral("→") << QStringLiteral("↓") << QStringLiteral("↔") << QStringLiteral("↕") << QStringLiteral("⇒")
-  << QStringLiteral("⇐") << QStringLiteral("⇔") << QStringLiteral("▲") << QStringLiteral("▼") << QStringLiteral("►")
-  << QStringLiteral("◄") << QStringLiteral("★") << QStringLiteral("☆") << QStringLiteral("♦") << QStringLiteral("♥")
-  << QStringLiteral("♣") << QStringLiteral("♠") << QStringLiteral("●") << QStringLiteral("○") << QStringLiteral("◆")
-  << QStringLiteral("◇") << QStringLiteral("■") << QStringLiteral("□") << QStringLiteral("✓") << QStringLiteral("✗")
+  << QStringLiteral("‘") << QStringLiteral("’") << QStringLiteral("‚") << QStringLiteral("‛") << QStringLiteral("–")
+  << QStringLiteral("—") << QStringLiteral("―") << QStringLiteral("…") << QStringLiteral("•") << QStringLiteral("·")
+  << QStringLiteral("°") << QStringLiteral("§") << QStringLiteral("¶") << QStringLiteral("†") << QStringLiteral("‡")
+  << QStringLiteral("‹") << QStringLiteral("›") << QStringLiteral("❝") << QStringLiteral("❞") << QStringLiteral("‣")
+  << QStringLiteral("◦") << QStringLiteral("¦") << QStringLiteral("¨") << QStringLiteral("´") << QStringLiteral("ˆ")
+  << QStringLiteral("˜") << QStringLiteral("¯") << QStringLiteral("˘") << QStringLiteral("˙") << QStringLiteral("˚")
+  << QStringLiteral("¸") << QStringLiteral("˛") << QStringLiteral("ˇ")
+  // Латиница с диакритикой, нижний регистр
+  << QStringLiteral("à") << QStringLiteral("á") << QStringLiteral("â") << QStringLiteral("ã") << QStringLiteral("ä")
+  << QStringLiteral("å") << QStringLiteral("æ") << QStringLiteral("ç") << QStringLiteral("è") << QStringLiteral("é")
+  << QStringLiteral("ê") << QStringLiteral("ë") << QStringLiteral("ì") << QStringLiteral("í") << QStringLiteral("î")
+  << QStringLiteral("ï") << QStringLiteral("ð") << QStringLiteral("ñ") << QStringLiteral("ò") << QStringLiteral("ó")
+  << QStringLiteral("ô") << QStringLiteral("õ") << QStringLiteral("ö") << QStringLiteral("ø") << QStringLiteral("ù")
+  << QStringLiteral("ú") << QStringLiteral("û") << QStringLiteral("ü") << QStringLiteral("ý") << QStringLiteral("þ")
+  << QStringLiteral("ÿ")
+  // Латиница с диакритикой, верхний регистр
+  << QStringLiteral("À") << QStringLiteral("Á") << QStringLiteral("Â") << QStringLiteral("Ã") << QStringLiteral("Ä")
+  << QStringLiteral("Å") << QStringLiteral("Æ") << QStringLiteral("Ç") << QStringLiteral("È") << QStringLiteral("É")
+  << QStringLiteral("Ê") << QStringLiteral("Ë") << QStringLiteral("Ì") << QStringLiteral("Í") << QStringLiteral("Î")
+  << QStringLiteral("Ï") << QStringLiteral("Ð") << QStringLiteral("Ñ") << QStringLiteral("Ò") << QStringLiteral("Ó")
+  << QStringLiteral("Ô") << QStringLiteral("Õ") << QStringLiteral("Ö") << QStringLiteral("Ø") << QStringLiteral("Ù")
+  << QStringLiteral("Ú") << QStringLiteral("Û") << QStringLiteral("Ü") << QStringLiteral("Ý") << QStringLiteral("Þ")
+  // Дроби и степени
+  << QStringLiteral("½") << QStringLiteral("¼") << QStringLiteral("¾") << QStringLiteral("⅓") << QStringLiteral("⅔")
+  << QStringLiteral("⅛") << QStringLiteral("⅜") << QStringLiteral("⅝") << QStringLiteral("⅞") << QStringLiteral("¹")
+  << QStringLiteral("²") << QStringLiteral("³")
+  // Греческий, нижний регистр
+  << QStringLiteral("α") << QStringLiteral("β") << QStringLiteral("γ") << QStringLiteral("δ") << QStringLiteral("ε")
+  << QStringLiteral("ζ") << QStringLiteral("η") << QStringLiteral("θ") << QStringLiteral("ι") << QStringLiteral("κ")
+  << QStringLiteral("λ") << QStringLiteral("μ") << QStringLiteral("ν") << QStringLiteral("ξ") << QStringLiteral("ο")
+  << QStringLiteral("π") << QStringLiteral("ρ") << QStringLiteral("ς") << QStringLiteral("σ") << QStringLiteral("τ")
+  << QStringLiteral("υ") << QStringLiteral("φ") << QStringLiteral("χ") << QStringLiteral("ψ") << QStringLiteral("ω")
+  // Греческий, верхний регистр
+  << QStringLiteral("Α") << QStringLiteral("Β") << QStringLiteral("Γ") << QStringLiteral("Δ") << QStringLiteral("Ε")
+  << QStringLiteral("Ζ") << QStringLiteral("Η") << QStringLiteral("Θ") << QStringLiteral("Ι") << QStringLiteral("Κ")
+  << QStringLiteral("Λ") << QStringLiteral("Μ") << QStringLiteral("Ν") << QStringLiteral("Ξ") << QStringLiteral("Ο")
+  << QStringLiteral("Π") << QStringLiteral("Ρ") << QStringLiteral("Σ") << QStringLiteral("Τ") << QStringLiteral("Υ")
+  << QStringLiteral("Φ") << QStringLiteral("Χ") << QStringLiteral("Ψ") << QStringLiteral("Ω")
+  // Математика
+  << QStringLiteral("×") << QStringLiteral("÷") << QStringLiteral("±") << QStringLiteral("∓") << QStringLiteral("−")
+  << QStringLiteral("≠") << QStringLiteral("≈") << QStringLiteral("∼") << QStringLiteral("≃") << QStringLiteral("≅")
+  << QStringLiteral("≡") << QStringLiteral("≢") << QStringLiteral("≤") << QStringLiteral("≥") << QStringLiteral("≪")
+  << QStringLiteral("≫") << QStringLiteral("∝") << QStringLiteral("∞") << QStringLiteral("√") << QStringLiteral("∛")
+  << QStringLiteral("∑") << QStringLiteral("∏") << QStringLiteral("∐") << QStringLiteral("∫") << QStringLiteral("∬")
+  << QStringLiteral("∂") << QStringLiteral("∆") << QStringLiteral("∇") << QStringLiteral("∈") << QStringLiteral("∋")
+  << QStringLiteral("∉") << QStringLiteral("∅") << QStringLiteral("∪") << QStringLiteral("∩") << QStringLiteral("⊂")
+  << QStringLiteral("⊃") << QStringLiteral("⊆") << QStringLiteral("⊇") << QStringLiteral("∧") << QStringLiteral("∨")
+  << QStringLiteral("¬") << QStringLiteral("∀") << QStringLiteral("∃") << QStringLiteral("∴") << QStringLiteral("∵")
+  << QStringLiteral("⊥") << QStringLiteral("∠") << QStringLiteral("⊙") << QStringLiteral("⊗") << QStringLiteral("⊕")
+  << QStringLiteral("⊖")
+  // Стрелки
+  << QStringLiteral("←") << QStringLiteral("↑") << QStringLiteral("→") << QStringLiteral("↓") << QStringLiteral("↔")
+  << QStringLiteral("↕") << QStringLiteral("↦") << QStringLiteral("↩") << QStringLiteral("↪") << QStringLiteral("⇒")
+  << QStringLiteral("⇐") << QStringLiteral("⇑") << QStringLiteral("⇓") << QStringLiteral("⇔") << QStringLiteral("⤴")
+  << QStringLiteral("➔") << QStringLiteral("⇧") << QStringLiteral("⇩")
+  // Фигуры, метки
+  << QStringLiteral("▲") << QStringLiteral("△") << QStringLiteral("▼") << QStringLiteral("►") << QStringLiteral("▷")
+  << QStringLiteral("◄") << QStringLiteral("◁") << QStringLiteral("★") << QStringLiteral("☆") << QStringLiteral("✦")
+  << QStringLiteral("✧") << QStringLiteral("♦") << QStringLiteral("♥") << QStringLiteral("♣") << QStringLiteral("♠")
+  << QStringLiteral("●") << QStringLiteral("○") << QStringLiteral("◉") << QStringLiteral("◎") << QStringLiteral("◆")
+  << QStringLiteral("◇") << QStringLiteral("■") << QStringLiteral("□") << QStringLiteral("✓") << QStringLiteral("✔")
+  << QStringLiteral("✗") << QStringLiteral("✘") << QStringLiteral("☀") << QStringLiteral("☁") << QStringLiteral("☂")
+  << QStringLiteral("☾")
+  // Бокс-рисование
+  << QStringLiteral("─") << QStringLiteral("│") << QStringLiteral("┌") << QStringLiteral("┐") << QStringLiteral("└")
+  << QStringLiteral("┘") << QStringLiteral("├") << QStringLiteral("┤") << QStringLiteral("┬") << QStringLiteral("┴")
+  << QStringLiteral("┼") << QStringLiteral("═") << QStringLiteral("║") << QStringLiteral("╔") << QStringLiteral("╗")
+  << QStringLiteral("╚") << QStringLiteral("╝")
+  // Валюты
   << QStringLiteral("$") << QStringLiteral("€") << QStringLiteral("£") << QStringLiteral("¥") << QStringLiteral("₽")
-  << QStringLiteral("¢");
+  << QStringLiteral("¢") << QStringLiteral("¤") << QStringLiteral("₹") << QStringLiteral("₩") << QStringLiteral("₴")
+  << QStringLiteral("₸") << QStringLiteral("₺") << QStringLiteral("₪") << QStringLiteral("₫") << QStringLiteral("‰")
+  << QStringLiteral("′") << QStringLiteral("″") << QStringLiteral("¿") << QStringLiteral("¡") << QStringLiteral("№")
+  << QStringLiteral("©") << QStringLiteral("®") << QStringLiteral("™");
 }
 
 
@@ -80,14 +139,19 @@ void EditorSpecialCharDialog::assembly(void)
    centralLayout->addLayout(recentLayout);
   }
 
- // Вся таблица
- QLabel *allLabel=new QLabel(tr("All symbols:"), this);
- centralLayout->addWidget(allLabel);
+ // Вся таблица — в прокрутке: три сотни кнопок в экран не влезают.
+ // Видно 8 рядов кнопок 36px, остальное крутится колесом
+ QScrollArea *scroll=new QScrollArea(this);
+ scroll->setWidgetResizable(true);
+ scroll->setFixedHeight(360);
 
- QGridLayout *gridLayout=new QGridLayout();
+ QWidget *gridHost=new QWidget(scroll);
+ QGridLayout *gridLayout=new QGridLayout(gridHost);
  int row=0;
  fillGrid(gridLayout, allSymbols(), columns, row);
- centralLayout->addLayout(gridLayout);
+
+ scroll->setWidget(gridHost);
+ centralLayout->addWidget(scroll);
 
  // Кнопки шрифта покрупнее чтобы символы читались
  foreach(QPushButton *button, symbolButtons)

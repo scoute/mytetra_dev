@@ -6,6 +6,8 @@
 #include <QString>
 #include <QByteArray>
 
+#include "CipherBackend.h"
+
 // Класс с функциями-помощниками, используемыми при шифрации/дешифровки
 
 
@@ -33,6 +35,14 @@ public:
   static void decryptFile(QByteArray key, QString fileName);
   static void encDecFileSmart(QByteArray key, QString fileName, int mode);
 
+  // Выбор бэкенда: шифрование по настройке cryptMethod,
+  // расшифровка по магии блоба (MTENC1 -> новый, иначе RC5).
+  // Пустой результат расшифровки = неуспех (чужой тег/пароль)
+  static QString detectMethod(const QByteArray &data);
+
+private:
+
+  static CipherBackend *backend(const QString &method);
 };
 
 #endif // __CRYPTSERVICE_H__

@@ -9,8 +9,8 @@ Qt 5.15 / qmake C++ knowledge base app. Git workdir is `mytetra-dev/` (`git` els
 - No cherry-picks: shared fixes are ported manually, oldest line first (v1 → merge to v2).
 - Commit format `[fix|feat|merge|chore][layer=>module] text`.
 - Semver bumps are mandatory after every merged unit, no exceptions:
-  `fix` → micro (`1.142.0` → `1.142.1`), `feat` → minor (`1.142.1` → `1.143.0`).
-  `merge`/`chore` bump nothing.
+  `fix` → micro (`1.142.0` → `1.142.1`), `feat` → minor with micro reset
+  (`1.142.1` → `1.143.0`). `merge`/`chore` bump nothing.
 - Version bumps only as separate `[chore][version=>X]` commits touching
   `app/src/main.h` and nothing else; never touch `main.h` in feat/fix commits.
 - Order: bump right after the unit's `--no-ff` merge, before starting the

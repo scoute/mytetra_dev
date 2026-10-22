@@ -61,6 +61,10 @@ public slots:
     void onBackgroundcolorApplyLast(void);
     void onSpecialCharClicked(void);
 
+    // Вставка одного символа из таблицы спецсимволов
+    // (диалог присылает по сигналу, сам остается открытым)
+    void insertSpecialChar(const QString &symbol);
+
     // Вставка горизонтальной линии в "пустой" абзац, где расположен курсор (пустой абзац заменяется на горизонтальную линию)
     void onInsertHorizontalLineClicked();
 

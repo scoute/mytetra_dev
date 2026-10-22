@@ -2076,18 +2076,25 @@ void TypefaceFormatter::onBackgroundcolorApplyLast(void)
 }
 
 
-// Вставка спецсимвола из диалога с таблицей и недавними.
-// Символ вставляется в курсор (выделение заменяется), выбор
-// запоминается в недавние
+// Вставка спецсимволов из диалога с таблицей и недавними.
+// Диалог не закрывается на каждый клик: каждый символ прилетает
+// сигналом symbolPicked и вставляется сразу, так можно набрать
+// несколько подряд. Закрытие диалога — Cancel, Esc или крестик
 void TypefaceFormatter::onSpecialCharClicked(void)
 {
     EditorSpecialCharDialog dialog(editor);
 
-    if(dialog.exec()!=QDialog::Accepted)
-        return;
+    connect(&dialog, &EditorSpecialCharDialog::symbolPicked,
+            this,    &TypefaceFormatter::insertSpecialChar);
 
-    const QString symbol=dialog.selectedSymbol();
+    dialog.exec();
+}
 
+
+// Вставка одного символа в курсор (выделение заменяется),
+// символ запоминается в недавние
+void TypefaceFormatter::insertSpecialChar(const QString &symbol)
+{
     if(symbol.isEmpty())
         return;
 

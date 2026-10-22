@@ -1,10 +1,14 @@
 #include "CryptService.h"
-#include "RC5Simple.h"
+#include "CipherBackend.h"
+#include "RC5CipherBackend.h"
 
 #include <QFile>
 #include <QApplication>
 
 #include "libraries/helpers/DebugHelper.h"
+#include "models/appConfig/AppConfig.h"
+
+extern AppConfig mytetraConfig;
 
 
 using std::vector;
@@ -52,6 +56,30 @@ void CryptService::convertVectorToByteArray(const std::vector<unsigned char> &ve
 }
 
 
+// Выбор бэкенда: шифрование по настройке cryptMethod,
+// расшифровка по магии блоба (MTENC1 -> новый, иначе RC5)
+QString CryptService::detectMethod(const QByteArray &data)
+{
+    if(data.startsWith(MTENC1_MAGIC))
+        return QString::fromLatin1(CIPHER_XCHACHA);
+
+    return QString::fromLatin1(CIPHER_RC5);
+}
+
+
+CipherBackend *CryptService::backend(const QString &method)
+{
+    // Бэкенды без состояния, один экземпляр на программу.
+    // XChaCha добавится следующим юнитом
+    static RC5CipherBackend rc5;
+
+    if(method==QString::fromLatin1(CIPHER_RC5))
+        return &rc5;
+
+    return nullptr;
+}
+
+
 // Шифрация строки
 // Результирующая зашифрованная строка - это набор шифрованных байт,
 // представленный в кодировке Base64
@@ -59,28 +87,9 @@ QString CryptService::encryptString(QByteArray key, QString line)
 {
  if(line=="") return QString();
 
- // qDebug() << "Encrypt source" << line;
+ QByteArray encrypted=encryptByteArray(key, line.toUtf8());
 
- vector<unsigned char> vectorKey;
- convertByteArrayToVector(key, vectorKey);
-
- vector<unsigned char> vectorLineIn;
- convertByteArrayToVector(line.toUtf8(), vectorLineIn);
-
- vector<unsigned char> vectorLineOut;
-
- // Шифрация
- RC5Simple rc5;
- rc5.RC5_SetKey(vectorKey);
- rc5.RC5_Encrypt(vectorLineIn, vectorLineOut);
-
-
- QByteArray result;
- convertVectorToByteArray(vectorLineOut, result);
-
- QString resultLine( result.toBase64().data() );
-
- // qDebug() << "Encrypt result" << resultLine;
+ QString resultLine=QString::fromLatin1(encrypted.toBase64());
 
  return resultLine;
 }
@@ -93,49 +102,13 @@ QString CryptService::decryptString(QByteArray key, QString line)
 {
  if(line=="") return QString();
 
- /*
- qDebug() << "Decrypt source" << line;
- qDebug() << "Decrypt source HEX" << QByteArray::fromBase64( line.toAscii() ).toHex();
- qDebug() << "Decrypt key" << key.toHex();
- */
-
- vector<unsigned char> vectorKey;
- convertByteArrayToVector(key, vectorKey);
-
- /*
- printf("Decrypt vector key ");
- for(int i=0; i<vectorKey.size(); i++)
-  printf("%.2X", vectorKey[i]);
- printf("\n");
- */
-
- vector<unsigned char> vectorLineIn;
-
  // Заменен вызов line.toAscii на line.toLatin1 чтобы шла компиляция в Qt 5.2.
  // Эта замена допустима, так как в Base64 используются только символы латиницы и ограниченный набор прочих символов
- convertByteArrayToVector(QByteArray::fromBase64( line.toLatin1() ), vectorLineIn);
+ QByteArray encrypted=QByteArray::fromBase64( line.toLatin1() );
 
- /*
- printf("Decrypt vector source HEX ");
- for(int i=0; i<vectorLineIn.size(); i++)
-  printf("%.2X", vectorLineIn[i]);
- printf("\n");
- */
-
- vector<unsigned char> vectorLineOut;
-
- // Дешифрация
- RC5Simple rc5;
- rc5.RC5_SetKey(vectorKey);
- rc5.RC5_Decrypt(vectorLineIn, vectorLineOut);
-
-
- QByteArray result;
- convertVectorToByteArray(vectorLineOut, result);
+ QByteArray result=decryptByteArray(key, encrypted);
 
  QString resultLine=QString::fromUtf8( result.data() );
-
- // qDebug() << "Decrypt result" << resultLine;
 
  return resultLine;
 }
@@ -146,23 +119,12 @@ QByteArray CryptService::encryptByteArray(QByteArray key, QByteArray data)
   if(data.size()==0)
     return QByteArray();
 
-  vector<unsigned char> vectorKey;
-  convertByteArrayToVector(key, vectorKey);
+  CipherBackend *cipher=backend(mytetraConfig.get_cryptMethod());
 
-  vector<unsigned char> vectorDataIn;
-  convertByteArrayToVector(data, vectorDataIn);
+  if(cipher==nullptr)
+    criticalError("CryptService::encryptByteArray() : Unknown cipher method.");
 
-  vector<unsigned char> vectorDataOut;
-
-  // Шифрация
-  RC5Simple rc5;
-  rc5.RC5_SetKey(vectorKey);
-  rc5.RC5_Encrypt(vectorDataIn, vectorDataOut);
-
-  QByteArray result;
-  convertVectorToByteArray(vectorDataOut, result);
-
-  return result;
+  return cipher->encryptBytes(key, data);
 }
 
 
@@ -171,23 +133,12 @@ QByteArray CryptService::decryptByteArray(QByteArray key, QByteArray data)
   if(data.size()==0)
     return QByteArray();
 
-  vector<unsigned char> vectorKey;
-  convertByteArrayToVector(key, vectorKey);
+  CipherBackend *cipher=backend(detectMethod(data));
 
-  vector<unsigned char> vectorDataIn;
-  convertByteArrayToVector(data, vectorDataIn);
+  if(cipher==nullptr)
+    return QByteArray();
 
-  vector<unsigned char> vectorDataOut;
-
-  // Дешифрация
-  RC5Simple rc5;
-  rc5.RC5_SetKey(vectorKey);
-  rc5.RC5_Decrypt(vectorDataIn, vectorDataOut);
-
-  QByteArray result;
-  convertVectorToByteArray(vectorDataOut, result);
-
-  return result;
+  return cipher->decryptBytes(key, data);
 }
 
 
@@ -196,23 +147,7 @@ QByteArray CryptService::encryptStringToByteArray(QByteArray key, QString line)
  if(line=="")
    return QByteArray();
 
- vector<unsigned char> vectorKey;
- convertByteArrayToVector(key, vectorKey);
-
- vector<unsigned char> vectorLineIn;
- convertByteArrayToVector(line.toUtf8(), vectorLineIn);
-
- vector<unsigned char> vectorLineOut;
-
- // Шифрация
- RC5Simple rc5;
- rc5.RC5_SetKey(vectorKey);
- rc5.RC5_Encrypt(vectorLineIn, vectorLineOut);
-
- QByteArray result;
- convertVectorToByteArray(vectorLineOut, result);
-
- return result;
+ return encryptByteArray(key, line.toUtf8());
 }
 
 
@@ -221,22 +156,7 @@ QString CryptService::decryptStringFromByteArray(QByteArray key, QByteArray data
  if(data.length()==0)
    return QString();
 
- vector<unsigned char> vectorKey;
- convertByteArrayToVector(key, vectorKey);
-
- vector<unsigned char> vectorDataIn;
- convertByteArrayToVector(data, vectorDataIn);
-
- vector<unsigned char> vectorDataOut;
-
- // Дешифрация
- RC5Simple rc5;
- rc5.RC5_SetKey(vectorKey);
- rc5.RC5_Decrypt(vectorDataIn, vectorDataOut);
-
-
- QByteArray result;
- convertVectorToByteArray(vectorDataOut, result);
+ QByteArray result=decryptByteArray(key, data);
 
  // Расшифровка с явным размером и вычищением 0x00, иначе fromUtf8()
  // обрежет текст по первому нулевому байту (баг #134)
@@ -273,28 +193,14 @@ void CryptService::encDecFileSmart(QByteArray key, QString fileName, int mode)
  if(!file.open(QIODevice::ReadOnly))
   criticalError("encDecFileSmart() : Cant open binary file "+fileName+" for reading.");
 
- vector<unsigned char> vectorKey;
- convertByteArrayToVector(key, vectorKey);
+ QByteArray result;
 
- vector<unsigned char> vectorDataIn;
- convertByteArrayToVector(file.readAll(), vectorDataIn);
-
- vector<unsigned char> vectorDataOut;
+ if(mode==0)
+  result=encryptByteArray(key, file.readAll());
+ else
+  result=decryptByteArray(key, file.readAll());
 
  file.close();
-
-
- // Шифрация / дешифрация
- RC5Simple rc5;
- rc5.RC5_SetKey(vectorKey);
- if(mode==0)
-  rc5.RC5_Encrypt(vectorDataIn, vectorDataOut);
- else
-  rc5.RC5_Decrypt(vectorDataIn, vectorDataOut);
-
-
- QByteArray result;
- convertVectorToByteArray(vectorDataOut, result);
 
  if(!file.open(QIODevice::WriteOnly))
   criticalError("encryptFile() : Cant open binary file "+fileName+" for write.");

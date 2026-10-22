@@ -457,6 +457,10 @@ public:
     QString get_telegramImportMode(void);
     void set_telegramImportMode(const QString &mode);
 
+    // Метод шифрования: rc5 (совместимый) или xchacha (современный)
+    QString get_cryptMethod(void);
+    void set_cryptMethod(const QString &method);
+
     // Формат голосовых заметок по умолчанию: opus или mp3.
     // Выбирается радио на странице Voice notes, в диалоге
     // записи переключается. Неподдержанный бэкендом сбрасывается
@@ -549,6 +553,7 @@ private:
     QStringList get_parameter_table_49(bool withEndSignature=true);
     QStringList get_parameter_table_50(bool withEndSignature=true);
     QStringList get_parameter_table_51(bool withEndSignature=true);
+    QStringList get_parameter_table_52(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

@@ -526,6 +526,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_32;
     parameterFunctions << get_parameter_table_33;
     parameterFunctions << get_parameter_table_34;
+    parameterFunctions << get_parameter_table_35;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1218,6 +1219,27 @@ QStringList EditorConfig::get_parameter_table_34(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_35(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 34
+    table << get_parameter_table_34(false);
+
+    // Новых ключей нет. Версия доделывает расстановку: secret за
+    // backgroundColor, а settings, expandEditArea и toAttach —
+    // между fixBreakSymbol и toggleTools (все на линейке 2).
+    // См. метод update_version_change_value()
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1755,6 +1777,59 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                 parts.insert(parts.indexOf("fixBreakSymbol")+1, "toggleTools");
             else
                 parts.append("toggleTools");
+            result=parts.join(",");
+        }
+    }
+
+
+    // Доделка расстановки версии 247: secret уезжает за backgroundColor,
+    // а settings, expandEditArea и toAttach встают между fixBreakSymbol
+    // и toggleTools. Движки только перечисленные кнопки, остальное
+    // (включая свои кнопки пользователя) сохраняется
+    if(versionFrom==34 && versionTo==35)
+    {
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("secret");
+            parts.removeAll("settings");
+            parts.removeAll("expandEditArea");
+            parts.removeAll("toAttach");
+            result=parts.join(",");
+        }
+
+        if(name=="tools_line_2")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("secret");
+            parts.removeAll("settings");
+            parts.removeAll("expandEditArea");
+            parts.removeAll("toAttach");
+
+            // secret (скрыть секретом) за backgroundColor (цвет фона)
+            if(parts.contains("backgroundColor"))
+                parts.insert(parts.indexOf("backgroundColor")+1, "secret");
+            else
+                parts.append("secret");
+
+            // Настройки, распахивание и прикрепить файл — между
+            // заменой переносов и показом/прятаньем панели
+            if(parts.contains("fixBreakSymbol"))
+            {
+                int pos=parts.indexOf("fixBreakSymbol")+1;
+                parts.insert(pos, "settings");
+                parts.insert(pos+1, "expandEditArea");
+                parts.insert(pos+2, "toAttach");
+            }
+            else
+            {
+                parts.append("settings");
+                parts.append("expandEditArea");
+                parts.append("toAttach");
+            }
+
             result=parts.join(",");
         }
     }

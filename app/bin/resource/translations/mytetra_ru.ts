@@ -8172,6 +8172,14 @@ Please select single item for enabling edit operation.</source>
         <translation>Запись</translation>
     </message>
     <message>
+        <source>Re-record</source>
+        <translation>Перезаписать</translation>
+    </message>
+    <message>
+        <source>Old recording will be overwritten</source>
+        <translation>Старая запись будет перезаписана</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>Вставить</translation>
     </message>

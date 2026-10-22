@@ -313,8 +313,17 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
 
 VoiceRecorderDialog::~VoiceRecorderDialog(void)
 {
-    // Отмена после записи стирает файл, вставка оставляет
-    if(hasRecording && result()!=QDialog::Accepted && QFileInfo(filePath).isFile())
+    // Остановка незавершенной записи: иначе вход продолжает писать
+    // в файл который ниже удаляется, а на Windows открытый файл
+    // вообще не удалить
+    stopOpusCapture();
+
+    if(recorder->state()==QMediaRecorder::RecordingState)
+        recorder->stop();
+
+    // Не вставленное не храним: файл диалога это мусор.
+    // При вставке (Accepted) файл забирает заметка, не трогаем
+    if(result()!=QDialog::Accepted && QFileInfo(filePath).isFile())
         QFile::remove(filePath);
 }
 
@@ -598,6 +607,12 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
             return;
         }
 
+        // Повторный дубль: прошлый файл стирается сразу, мусора не копим.
+        // Имя могли и поменять, поэтому трется предыдущий путь,
+        // а не свежевычисленный
+        if(!filePath.isEmpty() && QFileInfo(filePath).isFile())
+            QFile::remove(filePath);
+
         filePath=QDir(workDir).absoluteFilePath(name);
 
         waveform->clearLevels();
@@ -658,6 +673,24 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
 }
 
 
+// Текст кнопки записи зависит от наличия файла: повторный дубль
+// перезатирает предыдущий (прошлый файл уже стерт на старте),
+// кнопка так и говорит
+void VoiceRecorderDialog::updateRecordButton(void)
+{
+    if(QFileInfo(filePath).isFile())
+    {
+        recordButton->setText(tr("Re-record"));
+        recordButton->setToolTip(tr("Old recording will be overwritten"));
+    }
+    else
+    {
+        recordButton->setText(tr("Record"));
+        recordButton->setToolTip(QString());
+    }
+}
+
+
 // Завершить запись и решить про вставку. Идемпотентно: зовут
 // и стоп кнопкой, и смена состояния рекордера
 void VoiceRecorderDialog::finishRecording(void)
@@ -678,7 +711,7 @@ void VoiceRecorderDialog::finishRecording(void)
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
     fileNameEdit->setEnabled(true);
-    recordButton->setText(tr("Record"));
+    updateRecordButton();
 
     if(recordButton->isChecked())
     {
@@ -883,7 +916,7 @@ void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
     fileNameEdit->setEnabled(true);
-    recordButton->setText(tr("Record"));
+    updateRecordButton();
 
     if(recordButton->isChecked())
     {
@@ -924,7 +957,7 @@ void VoiceRecorderDialog::onRecorderError(QMediaRecorder::Error error)
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
     fileNameEdit->setEnabled(true);
-    recordButton->setText(tr("Record"));
+    updateRecordButton();
 
     if(recordButton->isChecked())
     {

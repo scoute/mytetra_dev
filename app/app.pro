@@ -95,6 +95,12 @@ CODECFORSRC  = utf8
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/src
 
+# Прекомпилированный заголовок: Qt-модули и STL компилируются один раз.
+# Состав в src/stable.h, только стабильное (см. комментарий в файле).
+# CONFIG нужен явно: без precompile_header qmake игнорирует переменную
+CONFIG += precompile_header
+PRECOMPILED_HEADER = src/stable.h
+
 contains(TARGET_OS, ANY_OS) {
   message(Building the any OS version...)
   SYSTEM_PROGRAM_NAME=mytetra
@@ -144,6 +150,7 @@ INSTALLS+=icon_48_file
 
 
 HEADERS = src/main.h \
+    src/stable.h \
     src/controllers/databasesManagement/DatabasesManagementController.h \
     src/libraries/InternalClipboard.h \
     src/libraries/OrderedMap.h \

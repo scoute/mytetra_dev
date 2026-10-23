@@ -9,6 +9,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSslError>
 #include <QHeaderView>
 #include <QLabel>
 #include <QUrl>
@@ -19,6 +20,10 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
+#include "models/appConfig/AppConfig.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 Downloader::Downloader()
@@ -431,11 +436,63 @@ QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
 }
 
 
+// Некоторые серверы при возобновлении TLS-сессии не присылают
+// сертификат повторно, и Qt сообщает NoPeerCertificate, хотя сессия
+// уже была проверена при полном handshake. Это не подмена сертификата:
+// остальные ошибки (срок, имя хоста, цепочка, самоподписанный) по-прежнему
+// фатальны. Раньше здесь игнорировались ВСЕ ошибки, включая реальные
+static bool isOnlyMissingPeerCertificate(const QList<QSslError> &errors)
+{
+  if(errors.isEmpty())
+    return false;
+
+  foreach(const QSslError &error, errors)
+    if(error.error()!=QSslError::NoPeerCertificate)
+      return false;
+
+  return true;
+}
+
+
 void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
-  Q_UNUSED( errors );
+  QStringList details;
 
-  reply->ignoreSslErrors();
+  foreach(const QSslError &error, errors)
+    details.append(error.errorString());
+
+  // Явно разрешенный небезопасный режим из настроек: принимаем
+  // невалидные/самоподписанные сертификаты, но громко предупреждаем
+  if(mytetraConfig.get_tlsIgnoreInvalidCertificates())
+  {
+    qWarning() << "Downloader: TLS errors ignored by setting:"
+               << details.join("; ");
+
+    reply->ignoreSslErrors();
+    return;
+  }
+
+  // Возобновленная сессия: сертификат не прислан повторно, проверять нечего
+  if(isOnlyMissingPeerCertificate(errors))
+  {
+    qDebug() << "Downloader: NoPeerCertificate on resumed TLS session, continue:"
+             << details.join("; ");
+
+    reply->ignoreSslErrors(errors);
+    return;
+  }
+
+  // Остальное - реальная ошибка проверки. Не подменять ее: иначе HTTPS
+  // превращается в канал, открытый для MITM, а в заметку попадет
+  // подмененный файл
+  qWarning() << "Downloader: TLS certificate verification failed:"
+             << details.join("; ");
+
+  addErrorLog("TLS certificate verification failed: "+details.join("; "));
+  downloadHasErrors=true;
+  isSuccessFlag=false;
+
+  reply->abort();
 }
 
 

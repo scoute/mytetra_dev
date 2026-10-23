@@ -52,6 +52,11 @@ static bool isSafeImportFileName(const QString &name)
     if(name.contains('/') || name.contains('\\') || name.contains(':'))
         return false;
 
+    // NUL режет путь на уровне ОС, а очень длинное имя не влезает
+    // в типичный лимит файловой системы
+    if(name.contains(QChar('\0')) || name.size()>255)
+        return false;
+
     return true;
 }
 
@@ -334,7 +339,11 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
   // Выгрузка всех связанных данных с расшифровкой (если это необходимо)
   // и одновременная расшифровка всех атрибутов (если это необходимо)
   if(!exportRelatedDataAndDecryptIfNeed(doc, exportDir))
+  {
+    tempRootItem->setDetached(true);
+    delete tempRootItem;
     return false;
+  }
 
 
   // Запись DOM данных в файл
@@ -342,6 +351,8 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
   if (!wfile.open(QIODevice::WriteOnly | QIODevice::Text))
   {
     showMessageBox(tr("The exporting file %1 is not writable.").arg(mytetraXmlFile));
+    tempRootItem->setDetached(true);
+    delete tempRootItem;
     return false;
   }
   QTextStream out(&wfile);
@@ -388,21 +399,53 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
   foreach(QString cryptFieldName, cryptFieldNames)
     if(element.attribute("crypt")=="1")
       if(element.hasAttribute(cryptFieldName))
-        element.setAttribute(cryptFieldName, CryptService::decryptString(globalParameters.getCryptKey(), element.attribute(cryptFieldName)));
+      {
+        const QString cipherText=element.attribute(cryptFieldName);
+        const QString plainText=CryptService::decryptString(globalParameters.getCryptKey(), cipherText);
+
+        // Аутентифицированный блоб без открытого текста: неверный
+        // ключ или порча. В обменник нельзя писать пустоту
+        if(plainText.isEmpty() &&
+           QByteArray::fromBase64(cipherText.toLatin1()).startsWith(MTENC1_MAGIC))
+        {
+          showMessageBox(tr("Export error: unable to decrypt field %1.").arg(cryptFieldName));
+          return false;
+        }
+
+        element.setAttribute(cryptFieldName, plainText);
+      }
 
 
    // Если это запись, надо скопировать связанные данные (с расшифровкой, если это необходимо)
    if(element.nodeName()=="record")
    {
-     if( element.attribute("dir").length()==0 )
-       criticalError("Bad data structure. For record with ID "+element.attribute("id")+" not setted attribute \"dir\"");
+     const QString recordDirName=element.attribute("dir");
+     const QString recordFileName=element.attribute("file");
 
-     QString fromDir=mytetraConfig.get_tetradir()+"/base/"+element.attribute("dir");
-     QString toDir=exportDir+"/base/"+element.attribute("dir");
+     // dir/file приходят из XML базы. Даже если база когда-то была
+     // импортирована старым кодом, путь не должен выводить за base:
+     // иначе выгрузка скопирует в обменник произвольные файлы
+     if(!isSafeImportFileName(recordDirName))
+     {
+       showMessageBox(tr("Export error: incorrect record directory name \"%1\".").arg(recordDirName));
+       return false;
+     }
+
+     if(!isSafeImportFileName(recordFileName))
+     {
+       showMessageBox(tr("Export error: incorrect record file name \"%1\".").arg(recordFileName));
+       return false;
+     }
+
+     QString fromDir=mytetraConfig.get_tetradir()+"/base/"+recordDirName;
+     QString toDir=exportDir+"/base/"+recordDirName;
 
      // Создание директории
      if( !QDir().mkpath(toDir) )
-       criticalError("Cant create directory "+toDir);
+     {
+       showMessageBox(tr("Export error: unable to create directory %1.").arg(toDir));
+       return false;
+     }
 
      // Копирование всех файлов из директории записи в директорию экспортируемой записи.
       // Результат проверяется: молчаливый пропуск копирования приводил к экспорту
@@ -417,7 +460,7 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
      if(element.attribute("crypt")=="1")
      {
        // Расшифровка текста записи
-       CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+element.attribute("file"));
+       CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+recordFileName);
 
        // Расшифровка приаттаченных файлов
        QDomNodeList list=element.elementsByTagName("file");
@@ -442,7 +485,8 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
 
              // Файл на диске расшифровывается
              foreach(QString candidateFileName, candidateNames)
-               if(QFile::exists(toDir+"/"+candidateFileName))
+               if(isSafeImportFileName(candidateFileName) &&
+                  QFile::exists(toDir+"/"+candidateFileName))
                {
                  CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+candidateFileName);
                  break;
@@ -576,21 +620,47 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
       QString fullFromDir=importDir+"/base/"+shortFromDir;
       QString fullToDir=mytetraConfig.get_tetradir()+"/base/"+shortToDir;
 
+      // Каталог-источник может быть симлинком на /etc или на домашний
+      // каталог: копирование утащило бы чужие файлы в базу. Проверяется
+      // канонический путь, а не только имя из XML
+      const QString importBase=QFileInfo(importDir).canonicalFilePath();
+      const QString fromCanonical=QFileInfo(fullFromDir).canonicalFilePath();
+
+      if(importBase.isEmpty() || fromCanonical.isEmpty() ||
+         !fromCanonical.startsWith(importBase+QLatin1Char('/')))
+      {
+        showMessageBox(tr("Import error: record directory \"%1\" escapes the exchange directory.").arg(shortFromDir));
+        return false;
+      }
+
+      // Приемник тоже обязан остаться внутри base текущей базы
+      const QString targetBase=QDir::cleanPath(mytetraConfig.get_tetradir()+"/base");
+      const QString targetDir=QDir::cleanPath(fullToDir);
+
+      if(!targetDir.startsWith(targetBase+QLatin1Char('/')))
+      {
+        showMessageBox(tr("Import error: destination directory escapes the database."));
+        return false;
+      }
+
       // Создание директории в основной базе
-      if( !QDir().mkpath(fullToDir) )
-        criticalError("Cant create directory "+fullToDir);
+      if( !QDir().mkpath(targetDir) )
+      {
+        showMessageBox(tr("Import error: unable to create directory %1.").arg(targetDir));
+        return false;
+      }
 
       // Копирование всех файлов из директории импортируемой записи в директорию записи основной базы.
       // Результат проверяется, иначе импорт фиксировался бы в базе со ссылками
       // на нескопированные тексты, картинки и аттачи
-      if(!DiskHelper::copyDirectory(fullFromDir, fullToDir))
+      if(!DiskHelper::copyDirectory(fullFromDir, targetDir))
       {
-        showMessageBox(tr("Import error: unable to copy record data from %1 to %2.").arg(fullFromDir).arg(fullToDir));
+        showMessageBox(tr("Import error: unable to copy record data from %1 to %2.").arg(fullFromDir).arg(targetDir));
         return false;
       }
 
       // В файле записи меняются внутренние ссылки формата "mytetra:" в случае, если импортируемые записи получили новые идентификаторы
-      QString recordFileName=fullToDir+"/"+shortFileName;
+      QString recordFileName=targetDir+"/"+shortFileName;
       Record::replaceInternalReferenceByTranslateTable(recordFileName, idRecordTranslate);
     }
     else

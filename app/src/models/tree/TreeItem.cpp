@@ -631,9 +631,24 @@ void TreeItem::switchToDecrypt(void)
   // Устанавливается поле, что ветка не зашифрована
   fieldsTable["crypt"]="0";
 
+  // Без ключа расшифровка даст пустоту, и сохранение затрет данные.
+  // Современный шифр аутентифицирован: непустой блоб, из которого
+  // не получилось текста, - это неверный ключ или порча
+  if(globalParameters.getCryptKey().isEmpty())
+    criticalError("TreeItem::switchToDecrypt() : Password not setted.");
+
   // Расшифровка полей ветки, подлежащих шифрованию
   foreach(QString fieldName, FixedParameters::itemFieldCryptedList)
-    fieldsTable[fieldName]=CryptService::decryptString(globalParameters.getCryptKey(), fieldsTable[fieldName]);
+  {
+    const QString cipherText=fieldsTable.value(fieldName);
+    const QString plainText=CryptService::decryptString(globalParameters.getCryptKey(), cipherText);
+
+    if(plainText.isEmpty() && !cipherText.isEmpty() &&
+       QByteArray::fromBase64(cipherText.toLatin1()).startsWith(MTENC1_MAGIC))
+      criticalError("TreeItem::switchToDecrypt() : Can not decrypt branch field. Wrong password or corrupted data.");
+
+    fieldsTable[fieldName]=plainText;
+  }
 
   // Дешифрация конечных записей для этой ветки
   recordsTable.switchToDecrypt();

@@ -43,6 +43,7 @@ cd mytetra-dev/build/Desktop_Qt_5_15_2_GCC_64bit/app && make -j12
 - `QHeaderView::setSectionResizeMode` on an empty header (no model yet) segfaults. Set modes in overridden `setModel`, not the constructor.
 - `QTextDocument` renders scaled images with fast (jaggy) filtering — store/display images at 1:1 instead.
 - `QAction` shortcuts die with their widget: a hotkey for a hideable panel must also be `addAction`ed to a permanently visible parent (one QAction = one trigger, no double-fire).
+- Plain `QComboBox` popup shows empty squares before items under QSS (dark theme): always use `MtComboBox` (QComboBox + `QStyledItemDelegate`) for new combos.
 - `QTextCursor::selectedText()` separates lines with U+2029.
 - Headless probes segfault at teardown — verify via output text, never via exit code.
 

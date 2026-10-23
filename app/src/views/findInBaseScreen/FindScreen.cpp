@@ -9,6 +9,7 @@
 #include <QProgressDialog>
 #include <QLabel>
 #include <QCheckBox>
+#include <QFrame>
 #include <QMessageBox>
 #include <QTextDocument>
 #include <QApplication>
@@ -236,6 +237,8 @@ void FindScreen::retranslateUi(void)
     findInText->setText(tr("Text"));
     findInNameItem->setText(tr("Name tree item"));
     findInAttach->setText(tr("Attach files"));
+    jumpToNote->setText(tr("Jump to note text"));
+    jumpFirstWord->setText(tr("Jump by first word only"));
 
     findTable->retranslateUi();
 }
@@ -265,6 +268,13 @@ void FindScreen::setupWhereFindLine(void)
 
     findInAttach=new QCheckBox(tr("Attach files"));
     findInAttach->setChecked(mytetraConfig.get_findscreen_find_in_field("attach"));
+
+    jumpToNote=new QCheckBox(tr("Jump to note text"));
+    jumpToNote->setChecked(mytetraConfig.get_findscreen_find_in_field("jumpToNote"));
+
+    jumpFirstWord=new QCheckBox(tr("Jump by first word only"));
+    jumpFirstWord->setChecked(mytetraConfig.get_findscreen_find_in_field("jumpFirstWord"));
+    jumpFirstWord->setEnabled(jumpToNote->isChecked());
 }
 
 
@@ -285,6 +295,14 @@ void FindScreen::assemblyWhereFindLine(void)
     whereFindLine->addWidget(findInText);
     whereFindLine->addWidget(findInNameItem);
     whereFindLine->addWidget(findInAttach);
+
+    QFrame *jumpSeparator=new QFrame(this);
+    jumpSeparator->setFrameShape(QFrame::VLine);
+    jumpSeparator->setFrameShadow(QFrame::Sunken);
+    whereFindLine->addWidget(jumpSeparator);
+
+    whereFindLine->addWidget(jumpToNote);
+    whereFindLine->addWidget(jumpFirstWord);
 
     whereFindLine->addStretch();
 
@@ -355,6 +373,12 @@ void FindScreen::setupSignals(void)
 
     connect(findInAttach, &QCheckBox::stateChanged,
             this,         &FindScreen::changedFindInAttach);
+
+    connect(jumpToNote, &QCheckBox::stateChanged,
+            this,       &FindScreen::changedJumpToNote);
+
+    connect(jumpFirstWord, &QCheckBox::stateChanged,
+            this,         &FindScreen::changedJumpFirstWord);
 }
 
 
@@ -552,6 +576,34 @@ bool FindScreen::recordHasTag(const QString &tagsField, const QString &exactTag)
 }
 
 
+// Слова запроса текущего поиска для моста в редактор
+QStringList FindScreen::getSearchWordList(void) const
+{
+    return searchWordList;
+}
+
+
+// Включен ли поиск по тексту записей для моста в редактор
+bool FindScreen::isTextSearchEnabled(void) const
+{
+    return searchArea.value("text", false);
+}
+
+
+// Включен ли прыжок в текст заметки для моста в редактор
+bool FindScreen::isJumpToNoteEnabled(void) const
+{
+    return jumpToNote->isChecked();
+}
+
+
+// Прыгать только по первому слову для моста в редактор
+bool FindScreen::isJumpFirstWordOnly(void) const
+{
+    return jumpFirstWord->isChecked();
+}
+
+
 // Слот, срабатывающий при нажатии на кнопку начала поиска
 void FindScreen::findClicked(void)
 {
@@ -738,7 +790,8 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                               tr("[Tree item]"),
                               "",
                               branchPath,
-                              curritem->getField("id"));
+                              curritem->getField("id"),
+                              true);
         }
     }
 
@@ -995,6 +1048,21 @@ void FindScreen::changedFindInNameItem(int state)
 void FindScreen::changedFindInAttach(int state)
 {
     changedFindInField("attach",state);
+}
+
+
+void FindScreen::changedJumpToNote(int state)
+{
+    changedFindInField("jumpToNote",state);
+
+    // Зависимая галка активна только при включенном прыжке
+    jumpFirstWord->setEnabled(jumpToNote->isChecked());
+}
+
+
+void FindScreen::changedJumpFirstWord(int state)
+{
+    changedFindInField("jumpFirstWord",state);
 }
 
 

@@ -2160,6 +2160,60 @@ void Editor::onFindBarInBase(const QString &text)
   emit wyeditFindInBaseWithText(text);
 }
 
+// Мост из глобального поиска по тексту: панель или окно по запомненному
+// режиму, запросом самое раннее из слов либо только первое слово,
+// прыжок к первому совпадению. Нет совпадений - false, вызыватель
+// открывает заметку с начала
+bool Editor::jumpToFirstMatch(const QStringList &words, bool firstWordOnly)
+{
+  QString best;
+  int bestPos=-1;
+
+  foreach (const QString &word, words)
+  {
+    if(word.isEmpty())
+      continue;
+
+    if(firstWordOnly)
+    {
+      if(textArea->document()->find(word, 0).isNull())
+        return false;
+
+      best=word;
+      break;
+    }
+
+    QTextCursor cursor=textArea->document()->find(word, 0);
+
+    if(!cursor.isNull() && (bestPos<0 || cursor.selectionStart()<bestPos))
+    {
+      bestPos=cursor.selectionStart();
+      best=word;
+    }
+  }
+
+  if(best.isEmpty())
+    return false;
+
+  QTextDocument::FindFlags flags;
+
+  if(mytetraConfig.get_editorFindEmbedded())
+  {
+    findBar->setSearchText(best);
+    findBar->showBar();
+    onFindBarFind(best, flags);
+  }
+  else
+  {
+    findDialog->setFindRequest(best, flags);
+    findDialog->show();
+    findDialog->activateWindow();
+    findDialog->goToNextMatch();
+  }
+
+  return true;
+}
+
 
 // Окно просит прикрепиться полоской: запрос переезжает, режим запоминается
 void Editor::onAttachToBar(void)

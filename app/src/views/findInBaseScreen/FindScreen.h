@@ -59,10 +59,9 @@ public slots:
     // без аллокаций QStringList на каждую запись
     static bool recordHasTag(const QString &tagsField, const QString &exactTag);
 
-    // Слова запроса текущего поиска и включен ли поиск по тексту:
-    // нужны мосту в редактор для прыжка к первому совпадению
+    // Слова запроса текущего поиска: нужны мосту в редактор
+    // для прыжка к первому совпадению
     QStringList getSearchWordList(void) const;
-    bool isTextSearchEnabled(void) const;
 
     // Галка прыжка в текст заметки и зависимая галка прыжка только
     // по первому слову: нужны мосту в редактор в selectCell

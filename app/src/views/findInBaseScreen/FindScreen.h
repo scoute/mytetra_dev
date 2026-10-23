@@ -59,6 +59,16 @@ public slots:
     // без аллокаций QStringList на каждую запись
     static bool recordHasTag(const QString &tagsField, const QString &exactTag);
 
+    // Слова запроса текущего поиска и включен ли поиск по тексту:
+    // нужны мосту в редактор для прыжка к первому совпадению
+    QStringList getSearchWordList(void) const;
+    bool isTextSearchEnabled(void) const;
+
+    // Галка прыжка в текст заметки и зависимая галка прыжка только
+    // по первому слову: нужны мосту в редактор в selectCell
+    bool isJumpToNoteEnabled(void) const;
+    bool isJumpFirstWordOnly(void) const;
+
     // Рекурсивный сбор значений полей ветки и всех подветок в словари.
     // Ключи словарей совпадают с именами полей поиска. Зашифрованные
     // ветки без пароля пропускаются как и в самом поиске
@@ -101,6 +111,9 @@ private slots:
     void changedFindInNameItem(int state);
     void changedFindInAttach(int state);
 
+    void changedJumpToNote(int state);
+    void changedJumpFirstWord(int state);
+
     void onFindTextEdited(const QString &text);
     void onFieldCompletion(const QString &completion);
     void refreshFieldCompleter(void);
@@ -140,6 +153,8 @@ private:
     QCheckBox *findInText;
     QCheckBox *findInNameItem;
     QCheckBox *findInAttach;
+    QCheckBox *jumpToNote;
+    QCheckBox *jumpFirstWord;
 
     QHBoxLayout *toolsLine;
     QGridLayout *toolsGrid;

@@ -8,7 +8,7 @@
 #include <QPushButton>
 #include <QCheckBox>
 #include <QSpinBox>
-#include <QComboBox>
+#include "libraries/MtComboBox.h"
 #include <QPushButton>
 #include <QMessageBox>
 #include <QProgressDialog>
@@ -163,7 +163,10 @@ void AppConfigPage_Crypt::setupUi(void)
   cryptMethodBox=new QGroupBox(this);
   cryptMethodBox->setTitle(tr("Encryption method"));
 
-  cryptMethodCombo=new QComboBox(this);
+  // MtComboBox вместо QComboBox: в тёмной теме у обычного комбо
+  // перед пунктами рисуется пустой квадрат (QSS попапа без
+  // QStyledItemDelegate, лечилось тем же классом в поиске)
+  cryptMethodCombo=new MtComboBox(this);
   cryptMethodCombo->addItem(tr("RC5 (compatible)"), QStringLiteral("rc5"));
   cryptMethodCombo->addItem(tr("XChaCha20-Poly1305 (modern)"), QStringLiteral("xchacha"));
 

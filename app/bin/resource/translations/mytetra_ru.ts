@@ -7289,17 +7289,17 @@ Enable it in Settings on the History page.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
         <source>Set focus to items tree</source>
-        <translation>Устновить фокус на дереве</translation>
+        <translation>Установить фокус на дереве</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
         <source>Set focus to notes table</source>
-        <translation>Устновить фокус на списке записей</translation>
+        <translation>Установить фокус на списке записей</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="186"/>
         <source>Set focus to editor</source>
-        <translation>Устновить фокус на редакторе</translation>
+        <translation>Установить фокус на редакторе</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="187"/>

@@ -491,10 +491,14 @@ void FindScreen::setFindTag(QString tag)
 
 
 // Разбить поле тегов записи на отдельные теги: разделители запятая
-// и точка с запятой, пробелы по краям отбрасываются
+// и точка с запятой, пробелы по краям отбрасываются.
+// Регулярка статическая: иначе компиляция паттерна на каждую
+// из тысяч записей (поиск, панель тегов, комплитер)
 QStringList FindScreen::splitRecordTags(const QString &tagsField)
 {
-    QStringList tags=tagsField.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
+    static const QRegularExpression tagSeparator(QStringLiteral("[,;]+"));
+
+    QStringList tags=tagsField.split(tagSeparator, Qt::SkipEmptyParts);
 
     for(int i=0; i<tags.size(); ++i)
         tags[i]=tags[i].trimmed();
@@ -502,6 +506,49 @@ QStringList FindScreen::splitRecordTags(const QString &tagsField)
     tags.removeAll(QString(""));
 
     return tags;
+}
+
+
+// Точное совпадение тега без выделения списка: проход по полю
+// без аллокаций QStringList на каждую запись. Нужен только факт
+// наличия, сам список в строгом режиме нигде не используется
+bool FindScreen::recordHasTag(const QString &tagsField, const QString &exactTag)
+{
+    if(tagsField.isEmpty() || exactTag.isEmpty())
+        return false;
+
+    int start=0;
+    const int len=tagsField.length();
+
+    while(start<len)
+    {
+        int end=start;
+
+        while(end<len && tagsField.at(end)!=',' && tagsField.at(end)!=';')
+            ++end;
+
+        int left=start;
+        int right=end;
+
+        while(left<right && tagsField.at(left).isSpace())
+            ++left;
+
+        while(right>left && tagsField.at(right-1).isSpace())
+            --right;
+
+        if(right>left)
+        {
+            const int tokenLen=right-left;
+
+            if(tokenLen==exactTag.length() &&
+               tagsField.midRef(left, tokenLen).compare(exactTag, Qt::CaseInsensitive)==0)
+                return true;
+        }
+
+        start=end+1;
+    }
+
+    return false;
 }
 
 
@@ -716,12 +763,11 @@ void FindScreen::findRecurse(const TreeItem* curritem)
             iteration_search_result["attach"]=false;
 
             // Строгий режим тега: тег целиком без учета регистра.
-            // Обычный цикл по полям пропускается
+            // Обычный цикл по полям пропускается. Список не выделяется:
+            // нужен только факт наличия, проход без аллокаций
             if(exactTagMode)
             {
-                QStringList recordTags=splitRecordTags(searchRecordTable->getField("tags", i));
-
-                if(recordTags.contains(exactTag, Qt::CaseInsensitive))
+                if(recordHasTag(searchRecordTable->getField("tags", i), exactTag))
                     iteration_search_result["tags"]=true;
             }
             else

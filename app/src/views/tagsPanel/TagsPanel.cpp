@@ -247,8 +247,11 @@ void TagsPanel::refreshTags(void)
     ordered.sort(Qt::CaseInsensitive);
 
     // Сортировка на время заполнения выключается: иначе каждая
-    // вставка пересортировывала бы таблицу, а итог тот же
+    // вставка пересортировывала бы таблицу, а итог тот же.
+    // Обновления вида тоже гасятся: иначе 800 строк перерисовывались
+    // бы на каждую вставку
     tagsTable->setSortingEnabled(false);
+    tagsTable->setUpdatesEnabled(false);
 
     tagsTable->setRowCount(0);
     tagsTable->setRowCount(ordered.size());
@@ -272,24 +275,59 @@ void TagsPanel::refreshTags(void)
 
     resizingProgrammatically=true;
 
-    tagsTable->resizeColumnsToContents();
+    // Ширина колонок считается по fontMetrics, а не resizeColumnsToContents:
+    // тот меряет каждую из 800 строк через стиль и делегат (секунды),
+    // здесь один проход по строкам без создания лишних объектов
+    {
+        const QFontMetrics &metrics=tagsTable->fontMetrics();
+        const int digitWidth=metrics.horizontalAdvance('0');
+        const int maxTagTextWidth=digitWidth*40;
+        const int cellPadding=12;
 
-    // Ручная ширина колонки тегов переживает пересборку.
-    // Автоширина ограничена потолком в сорок цифр чтобы длинное имя
-    // не раздувало док: дальше колонка и док растягиваются только вручную
-    int autoWidth=qMin(tagsTable->columnWidth(0),
-                       tagsTable->fontMetrics().horizontalAdvance('0')*40);
+        int tagTextWidth=metrics.horizontalAdvance(tagsTable->horizontalHeaderItem(0)->text());
+        int countTextWidth=metrics.horizontalAdvance(tagsTable->horizontalHeaderItem(1)->text());
 
-    if(tagColumnWidth<0)
-        tagsTable->setColumnWidth(0, autoWidth);
-    else
-        tagsTable->setColumnWidth(0, tagColumnWidth);
+        for(int i=0; i<ordered.size(); i++)
+        {
+            const int w=metrics.horizontalAdvance(display.value(ordered.at(i)));
+
+            if(w>tagTextWidth)
+                tagTextWidth=w;
+
+            if(tagTextWidth>=maxTagTextWidth)
+            {
+                tagTextWidth=maxTagTextWidth;
+                break;
+            }
+        }
+
+        for(auto it=counts.cbegin(); it!=counts.cend(); ++it)
+        {
+            const int w=metrics.horizontalAdvance(QString::number(it.value()));
+
+            if(w>countTextWidth)
+                countTextWidth=w;
+        }
+
+        const int headerSortExtra=metrics.horizontalAdvance(QStringLiteral("   "));
+        const int autoTagWidth=qMin(tagTextWidth, maxTagTextWidth)+cellPadding+headerSortExtra;
+        const int autoCountWidth=countTextWidth+cellPadding+headerSortExtra;
+
+        tagsTable->setColumnWidth(1, autoCountWidth);
+
+        if(tagColumnWidth<0)
+            tagsTable->setColumnWidth(0, autoTagWidth);
+        else
+            tagsTable->setColumnWidth(0, tagColumnWidth);
+    }
 
     tagsTable->setMaxContentWidth(tagsTable->columnWidth(0)
                                   +tagsTable->columnWidth(1)
                                   +2*tagsTable->frameWidth());
 
     resizingProgrammatically=false;
+
+    tagsTable->setUpdatesEnabled(true);
 
     restoreTagSelection(selectedRow, selectedTag);
 
@@ -433,10 +471,10 @@ void TagsPanel::collectTagCounts(const TreeItem *curritem,
 
             for(int t=0; t<recordTags.size(); t++)
             {
-                QString lowered=recordTags.at(t).toLower();
+                const QString lowered=recordTags.at(t).toLower();
 
-                if(!display.contains(lowered))
-                    display[lowered]=recordTags.at(t);
+                if(display.find(lowered)==display.end())
+                    display.insert(lowered, recordTags.at(t));
 
                 counts[lowered]++;
             }
@@ -721,16 +759,8 @@ void TagsPanel::collectTagTargets(TreeItem *curritem,
 
         for(int i=0; i<static_cast<int>(recordTable->size()); i++)
         {
-            QStringList recordTags=FindScreen::splitRecordTags(recordTable->getField("tags", i));
-
-            for(int t=0; t<recordTags.size(); t++)
-            {
-                if(recordTags.at(t).toLower()==tagLower)
-                {
-                    targets.append(qMakePair(curritem, i));
-                    break;
-                }
-            }
+            if(FindScreen::recordHasTag(recordTable->getField("tags", i), tagLower))
+                targets.append(qMakePair(curritem, i));
         }
     }
 
@@ -740,7 +770,8 @@ void TagsPanel::collectTagTargets(TreeItem *curritem,
 
 
 // Заменить тег в списке целиком без учета регистра.
-// Возвращает новый список, в changed было ли изменение
+// Возвращает новый список, в changed было ли изменение.
+// Сравнение без toLower: иначе аллокация на каждый тег
 QStringList TagsPanel::replaceTagInList(const QStringList &tags,
                                         const QString &oldLower,
                                         const QString &newSpelling,
@@ -751,7 +782,7 @@ QStringList TagsPanel::replaceTagInList(const QStringList &tags,
 
     for(int i=0; i<tags.size(); i++)
     {
-        if(tags.at(i).toLower()==oldLower)
+        if(tags.at(i).compare(oldLower, Qt::CaseInsensitive)==0)
         {
             result.append(newSpelling);
             changed=true;
@@ -765,7 +796,8 @@ QStringList TagsPanel::replaceTagInList(const QStringList &tags,
 
 
 // Убрать тег из списка целиком без учета регистра.
-// Возвращает новый список, в changed было ли изменение
+// Возвращает новый список, в changed было ли изменение.
+// Сравнение без toLower: иначе аллокация на каждый тег
 QStringList TagsPanel::removeTagFromList(const QStringList &tags,
                                          const QString &oldLower,
                                          bool &changed)
@@ -775,7 +807,7 @@ QStringList TagsPanel::removeTagFromList(const QStringList &tags,
 
     for(int i=0; i<tags.size(); i++)
     {
-        if(tags.at(i).toLower()==oldLower)
+        if(tags.at(i).compare(oldLower, Qt::CaseInsensitive)==0)
             changed=true;
         else
             result.append(tags.at(i));

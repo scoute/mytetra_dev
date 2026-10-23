@@ -15,6 +15,7 @@
 #include <QApplication>
 
 #include "FindTableWidget.h"
+#include "views/findInBaseScreen/FindScreen.h"
 #include "views/mainWindow/MainWindow.h"
 #include "views/record/MetaEditor.h"
 #include "models/appConfig/AppConfig.h"
@@ -24,6 +25,7 @@
 
 #define USER_ROLE_PATH      Qt::UserRole
 #define USER_ROLE_RECORD_ID Qt::UserRole+1
+#define USER_ROLE_IS_BRANCH Qt::UserRole+2
 
 extern AppConfig mytetraConfig;
 
@@ -141,7 +143,7 @@ void FindTableWidget::retranslateUi(void)
 }
 
 
-void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId)
+void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, bool isBranch)
 {
     int i=findTableModel->rowCount();
 
@@ -160,6 +162,7 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
     // и номере записи в таблице конечных записей
     item_title->setData(QVariant(path), USER_ROLE_PATH);
     item_title->setData(QVariant(recordId), USER_ROLE_RECORD_ID);
+    item_title->setData(QVariant(isBranch), USER_ROLE_IS_BRANCH);
 
     // Информация о записи
     QStandardItem *item_info=new QStandardItem();
@@ -225,5 +228,24 @@ void FindTableWidget::selectCell(const QModelIndex & index)
     edView->switchToEditorLayout();
 
     find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, recordId);
+
+    // Поиск шел по тексту заметок, прыжок включен и строка это запись
+    // (а не ветка): открыть поиск внутри заметки и прыгнуть к первому
+    // совпадению. Совпадений нет - заметка просто открывается с начала
+    if(item->data(USER_ROLE_IS_BRANCH).toBool()==false)
+    {
+        FindScreen *findScreen=find_object<FindScreen>("findScreenDisp");
+
+        if(findScreen!=nullptr &&
+           findScreen->isTextSearchEnabled() &&
+           findScreen->isJumpToNoteEnabled())
+        {
+            QStringList words=findScreen->getSearchWordList();
+
+            if(!words.isEmpty() &&
+               !edView->jumpToFirstMatch(words, findScreen->isJumpFirstWordOnly()))
+                edView->setCursorPosition(0);
+        }
+    }
 }
 

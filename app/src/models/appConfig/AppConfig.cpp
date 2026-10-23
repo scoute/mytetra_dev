@@ -144,7 +144,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_53(true);
+        QStringList actualTable=get_parameter_table_54(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -2003,6 +2003,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_51;
     parameterFunctions << &AppConfig::get_parameter_table_52;
     parameterFunctions << &AppConfig::get_parameter_table_53;
+    parameterFunctions << &AppConfig::get_parameter_table_54;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3087,6 +3088,29 @@ QStringList AppConfig::get_parameter_table_53(bool withEndSignature)
     // Игнорировать ошибки проверки TLS при загрузке картинок/файлов.
     // По умолчанию false: небезопасный режим только по явному согласию
     table << "tlsIgnoreInvalidCertificates" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_54(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 53
+    table << get_parameter_table_53(false);
+
+    // Прыжок в текст заметки из глобального поиска: двойной клик
+    // по строке открывает поиск внутри заметки с переходом к совпадению.
+    // По умолчанию включен. Зависимая галка прыжка только по первому
+    // слову по умолчанию выключена (ищется раннее из всех слов)
+    table << "findscreen_find_injumpToNote"   << "bool" << "true";
+    table << "findscreen_find_injumpFirstWord" << "bool" << "false";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

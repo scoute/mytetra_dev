@@ -229,16 +229,16 @@ void FindTableWidget::selectCell(const QModelIndex & index)
 
     find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, recordId);
 
-    // Поиск шел по тексту заметок, прыжок включен и строка это запись
-    // (а не ветка): открыть поиск внутри заметки и прыгнуть к первому
-    // совпадению. Совпадений нет - заметка просто открывается с начала
+    // Прыжок включен и строка это запись (а не ветка): открыть поиск
+    // внутри заметки и прыгнуть к первому совпадению. Галка поиска
+    // по тексту не проверяется: слова запроса ищутся в тексте в любом
+    // случае. Совпадений нет - заметка просто открывается с начала.
+    // Повторный клик шагает дальше: прыжок всегда идет от курсора
     if(item->data(USER_ROLE_IS_BRANCH).toBool()==false)
     {
         FindScreen *findScreen=find_object<FindScreen>("findScreenDisp");
 
-        if(findScreen!=nullptr &&
-           findScreen->isTextSearchEnabled() &&
-           findScreen->isJumpToNoteEnabled())
+        if(findScreen!=nullptr && findScreen->isJumpToNoteEnabled())
         {
             QStringList words=findScreen->getSearchWordList();
 

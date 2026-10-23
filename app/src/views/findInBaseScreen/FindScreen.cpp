@@ -583,12 +583,6 @@ QStringList FindScreen::getSearchWordList(void) const
 }
 
 
-// Включен ли поиск по тексту записей для моста в редактор
-bool FindScreen::isTextSearchEnabled(void) const
-{
-    return searchArea.value("text", false);
-}
-
 
 // Включен ли прыжок в текст заметки для моста в редактор
 bool FindScreen::isJumpToNoteEnabled(void) const

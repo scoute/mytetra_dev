@@ -713,20 +713,31 @@ void FindScreen::findRecurse(const TreeItem* curritem)
     }
 
 
+    // Имя ветки и путь одни на всю ветку: кэшируются здесь для
+    // проверки имени ветки и ниже для строк результатов, чтобы не
+    // дергать getField/getPath (с расшифровкой) на каждом хите
+    QString branchName;
+    bool branchNameReady=false;
+    QStringList branchPath;
+    bool branchPathReady=false;
+
     // Проверка имени ветки
-    if(searchArea["nameItem"]==true)
+    if(searchArea.value("nameItem", false))
     {
-        QString itemName = curritem->getField("name");
-        bool findItem = findInTextProcess(itemName);
+        branchName=curritem->getField("name");
+        branchNameReady=true;
+        bool findItem = findInTextProcess(branchName);
         if(findItem)
         {
             // QString path = curritem->getPathAsNameWithDelimeter(" ");
             // qDebug() << "Find branch succesfull " << path;
             // В таблицу результатов добавляется запись о найденой ветке
-            findTable->addRow(itemName,
+            branchPath=curritem->getPath();
+            branchPathReady=true;
+            findTable->addRow(branchName,
                               tr("[Tree item]"),
                               "",
-                              curritem->getPath(),
+                              branchPath,
                               curritem->getField("id"));
         }
     }
@@ -743,110 +754,128 @@ void FindScreen::findRecurse(const TreeItem* curritem)
         // Перебираются записи таблицы
         for(int i=0; i<static_cast<int>( searchRecordTable->size() ); i++)
         {
-            // Обновляется линейка наполняемости
-            progress->setValue(++totalProgressCounter);
-            qApp->processEvents();
-            if(progress->wasCanceled())
+            ++totalProgressCounter;
+
+            // Линейка и события обновляются пачкой: processEvents()
+            // на каждой из тысяч записей дороже самого сравнения строк.
+            // Отмена проверяется там же, задержка реакции доли секунды
+            if((totalProgressCounter & 15)==0)
             {
-                cancelFlag=1;
-                return;
+                progress->setValue(totalProgressCounter);
+                qApp->processEvents();
+
+                if(progress->wasCanceled())
+                {
+                    cancelFlag=1;
+                    return;
+                }
             }
 
-            // Результаты поиска в полях
-            QMap<QString, bool> iteration_search_result;
+            // Совпадение хоть в одном поле: ранний выход, остальные поля
+            // (включая чтение файла текста) не трогаются.
+            // Имя и теги кэшируются: addRow ниже переиспользует их
+            // вместо повторного getField с расшифровкой
+            bool found=false;
 
-            iteration_search_result["name"]  =false;
-            iteration_search_result["author"]=false;
-            iteration_search_result["url"]   =false;
-            iteration_search_result["tags"]  =false;
-            iteration_search_result["text"]  =false;
-            iteration_search_result["attach"]=false;
+            QString cachedName;
+            QString cachedTags;
+            bool cachedNameReady=false;
+            bool cachedTagsReady=false;
 
             // Строгий режим тега: тег целиком без учета регистра.
-            // Обычный цикл по полям пропускается. Список не выделяется:
-            // нужен только факт наличия, проход без аллокаций
+            // Список не выделяется: нужен только факт наличия
             if(exactTagMode)
             {
-                if(recordHasTag(searchRecordTable->getField("tags", i), exactTag))
-                    iteration_search_result["tags"]=true;
+                cachedTags=searchRecordTable->getField("tags", i);
+                cachedTagsReady=true;
+                found=recordHasTag(cachedTags, exactTag);
             }
             else
             {
-            // Текст в котором будет проводиться поиск
-            QString inspectText;
-
-            // Цикл поиска в отмеченных пользователем полях записи
-            QMapIterator<QString, bool> j(iteration_search_result);
-            while(j.hasNext())
-            {
-                j.next();
-                QString key=j.key();
-
-                // Если в данном поле нужно проводить поиск
-                if(searchArea[key]==true)
+                // Дешевые поля первыми: совпадение в имени избавляет
+                // от чтения файла текста и имен аттачей
+                if(searchArea.value("name", false))
                 {
-                    if(key=="nameItem") // Здесь поиск по имени ветки не производится
-                        continue;
+                    cachedName=searchRecordTable->getField("name", i);
+                    cachedNameReady=true;
+                    found=findInTextProcess(cachedName);
+                }
 
-                    if(key!="text" && key!="attach")
+                if(!found && searchArea.value("author", false))
+                    found=findInTextProcess(searchRecordTable->getField("author", i));
+
+                if(!found && searchArea.value("url", false))
+                    found=findInTextProcess(searchRecordTable->getField("url", i));
+
+                if(!found && searchArea.value("tags", false))
+                {
+                    cachedTags=searchRecordTable->getField("tags", i);
+                    cachedTagsReady=true;
+                    found=findInTextProcess(cachedTags);
+                }
+
+                if(!found && searchArea.value("attach", false))
+                {
+                    // Поиск по именам прикрепленных файлов записи.
+                    // Таблица берется указателем: копирование AttachTableData
+                    // по значению оставляет висячие ссылки.
+                    // Константность снимается: имена только читаются
+                    Record *record=const_cast<RecordTableData *>(searchRecordTable)->getRecord(i);
+
+                    if(record!=nullptr)
                     {
-                        // Поиск в обычном поле
-                        inspectText=searchRecordTable->getField(key,i);
-                        iteration_search_result[key]=findInTextProcess(inspectText);
-                    }
-                    else if(key=="attach")
-                    {
-                        // Поиск по именам прикрепленных файлов записи.
-                        // Таблица берется указателем: копирование AttachTableData
-                        // по значению оставляет висячие ссылки.
-                        // Константность снимается: имена только читаются
-                        Record *record=const_cast<RecordTableData *>(searchRecordTable)->getRecord(i);
+                        AttachTableData *attachTable=record->getAttachTablePointer();
 
-                        if(record!=nullptr)
-                        {
-                            AttachTableData *attachTable=record->getAttachTablePointer();
+                        QStringList attachNames;
 
-                            QStringList attachNames;
+                        for(int a=0; a<attachTable->size(); ++a)
+                            attachNames << attachTable->getFileName(a);
 
-                            for(int a=0; a<attachTable->size(); ++a)
-                                attachNames << attachTable->getFileName(a);
-
-                            iteration_search_result[key]=findInTextProcess(attachNames.join(" "));
-                        }
-                    }
-                    else
-                    {
-                        // Поиск в тексте записи
-                        inspectText=searchRecordTable->getText(i);
-                        QTextDocument textdoc;
-                        textdoc.setHtml(inspectText);
-                        iteration_search_result[key]=findInTextProcess(textdoc.toPlainText());
+                        found=findInTextProcess(attachNames.join(" "));
                     }
                 }
-            } // Закрылся цикл поиска в полях
-            } // Закрылся обычный поиск, строгий режим тега идет своей веткой
 
-
-            // Проверяется, есть ли поле, в котором поиск был успешен
-            int findFlag=0;
-            foreach (bool value, iteration_search_result)
-                if(value==true)findFlag=1;
+                if(!found && searchArea.value("text", false))
+                {
+                    // Поиск в тексте записи
+                    QString inspectText=searchRecordTable->getText(i);
+                    QTextDocument textdoc;
+                    textdoc.setHtml(inspectText);
+                    found=findInTextProcess(textdoc.toPlainText());
+                }
+            }
 
             // Если запись найдена
-            if(findFlag==1)
+            if(found)
             {
-                qDebug() << "Find succesfull in " << searchRecordTable->getField("name",i);
-
                 // В таблицу результатов поиска добавляются данные
                 // Имя записи
                 // Имя ветки
                 // Теги
                 // Путь к ветке
                 // ID записи в таблице конечных записей
-                findTable->addRow(searchRecordTable->getField("name", i),
-                                  curritem->getField("name"),
-                                  searchRecordTable->getField("tags", i),
-                                  curritem->getPath(),
+                if(!cachedNameReady)
+                    cachedName=searchRecordTable->getField("name", i);
+
+                if(!cachedTagsReady)
+                    cachedTags=searchRecordTable->getField("tags", i);
+
+                if(!branchNameReady)
+                {
+                    branchName=curritem->getField("name");
+                    branchNameReady=true;
+                }
+
+                if(!branchPathReady)
+                {
+                    branchPath=curritem->getPath();
+                    branchPathReady=true;
+                }
+
+                findTable->addRow(cachedName,
+                                  branchName,
+                                  cachedTags,
+                                  branchPath,
                                   searchRecordTable->getField("id", i));
             }
 

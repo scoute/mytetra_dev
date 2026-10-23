@@ -158,7 +158,6 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
 
     // В ячейке заголовка также хранится информация о пути к ветке
     // и номере записи в таблице конечных записей
-    qDebug() << "Path to record" << path;
     item_title->setData(QVariant(path), USER_ROLE_PATH);
     item_title->setData(QVariant(recordId), USER_ROLE_RECORD_ID);
 
@@ -173,8 +172,6 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
 
     findTableModel->setItem(i, 0, item_title);
     findTableModel->setItem(i, 1, item_info);
-
-    qDebug() << "In findtablewidget add_row() row count " << findTableModel->rowCount();
 }
 
 

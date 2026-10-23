@@ -10,7 +10,7 @@ class QRadioButton;
 class QPushButton;
 class QCheckBox;
 class QSpinBox;
-class QComboBox;
+class MtComboBox;
 class QPushButton;
 
 class AppConfigPage_Crypt : public ConfigPage
@@ -66,7 +66,7 @@ protected:
   QCheckBox *decryptFileToTrashDirectoryEnable;
 
   QGroupBox *cryptMethodBox;
-  QComboBox *cryptMethodCombo;
+  MtComboBox *cryptMethodCombo;
   QPushButton *reencryptButton;
 
 };

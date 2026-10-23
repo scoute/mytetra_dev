@@ -1299,6 +1299,14 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
     </message>
+    <message>
+        <source>Synchronization</source>
+        <translation>Синхронизация</translation>
+    </message>
+    <message>
+        <source>Run synchronization</source>
+        <translation>Запустить синхронизацию</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Search</name>

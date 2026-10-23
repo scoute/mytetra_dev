@@ -349,7 +349,7 @@ void MainWindow::setupSignals(void)
 
     // Связывание сигнала окончания выполнения команды синхронизации со слотом, срабатывающем при завершении выполнения команды
     connect(syncroCommandRun, &CommandRunner::finishWork,
-            treeScreen, &TreeScreen::onSyncroCommandFinishWork);
+            recordTableScreen, &RecordTableScreen::onSyncroCommandFinishWork);
     connect(syncroCommandRun, &CommandRunner::finishWork,
             this, &MainWindow::onSyncroCommandFinishWork);
 
@@ -2245,7 +2245,7 @@ void MainWindow::applyReadOnly(void)
          recordTableScreen->refreshEditorReadOnly();
 
          // Кнопка синхронизации меняет базу (и дёргает её же автосинхронизация)
-         treeScreen->setSyncroEnabled(!readOnly);
+         recordTableScreen->setSyncroEnabled(!readOnly);
         }
 
     // Импорт ветки и управление базами меняют данные
@@ -3322,11 +3322,11 @@ void MainWindow::synchronization(bool visible)
         return;
 
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
-    if(!treeScreen->isSyncroEnabled())
+    if(!recordTableScreen->isSyncroEnabled())
         return;
 
     // Блокируется кнопка синхронизации, чтобы два раза случайно не нажать синхронизацию (окно синхронизации не модально)
-    treeScreen->setSyncroEnabled(false);
+    recordTableScreen->setSyncroEnabled(false);
 
     actionLogger.addAction("startSyncro");
 
@@ -3344,7 +3344,7 @@ void MainWindow::synchronization(bool visible)
                              QMessageBox::Close);
 
         // Кнопка синхронизации разблокируется, чтобы ее можно было снова нажать
-        treeScreen->setSyncroEnabled(true);
+        recordTableScreen->setSyncroEnabled(true);
 
         return;
     }

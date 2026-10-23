@@ -73,6 +73,7 @@ public:
  QAction *actionSort;
  QAction *actionPrint;
  QAction *actionPrintPreview;
+ QAction *actionSyncro;
  QAction *actionCopyRecordReference;
  QAction *actionCopyRecordLink;
  QAction *actionChangeHistory;
@@ -87,6 +88,13 @@ public slots:
  // вроде переключателя панели тегов)
  void addExtraToolAction(QAction *action);
 
+ // Синхронизация базы: блокировка на время команды и чтение состояния
+ void setSyncroEnabled(bool state);
+ bool isSyncroEnabled(void) const;
+
+ // Разблокировка кнопки синхронизации по окончании команды
+ void onSyncroCommandFinishWork(void);
+
  void setupShortcuts(void);
 
  // Обновить прямые тексты новым языком. Тексты на шорткатах
@@ -100,6 +108,7 @@ private slots:
  void onBackClick(void);
  void onCopyRecordReference(void);
  void onCopyRecordLink(void);
+ void onSyncroClick(void);
 
  // Контекстное меню тулбара на пустом месте: единственный пункт -
  // настройка порядка и видимости кнопок

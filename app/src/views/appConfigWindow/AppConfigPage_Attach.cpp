@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <QToolButton>
 #include <QPushButton>
-#include <QComboBox>
+#include "libraries/MtComboBox.h"
 #include <QFile>
 #include <QDir>
 #include <QMessageBox>
@@ -67,7 +67,7 @@ void AppConfigPage_Attach::setupUi(void)
     attachNameModeLabel=new QLabel(this);
     attachNameModeLabel->setText( tr("Name new attachments: ") );
 
-    attachNameModeCombo=new QComboBox(this);
+    attachNameModeCombo=new MtComboBox(this);
     attachNameModeCombo->addItem( tr("System names (id.extension)"), AppConfig::AttachNameSystem );
     attachNameModeCombo->addItem( tr("System + original names (id_name.extension)"), AppConfig::AttachNameHybrid );
     attachNameModeCombo->addItem( tr("Original names (as uploaded)"), AppConfig::AttachNameOriginal );

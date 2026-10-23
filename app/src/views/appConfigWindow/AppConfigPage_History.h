@@ -7,7 +7,7 @@ class QWidget;
 class QGroupBox;
 class QCheckBox;
 class QLabel;
-class QComboBox;
+class MtComboBox;
 class QRadioButton;
 class QButtonGroup;
 
@@ -45,7 +45,7 @@ public:
     QCheckBox *historyEnable;  // Мастер-тумблер ведения истории
 
     QLabel *squashKeepLabel;   // Подпись выпадашки лимита
-    QComboBox *squashKeep;     // Сколько версий хранить (genesis плюс свежие)
+    MtComboBox *squashKeep;     // Сколько версий хранить (genesis плюс свежие)
 
     QLabel *squashModeLabel;       // Подпись стратегий превышения лимита
     QButtonGroup *squashModeGroup; // Группа стратегий, id совпадают с SquashMode

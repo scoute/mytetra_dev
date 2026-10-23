@@ -55,6 +55,10 @@ public slots:
     // и точка с запятой, пробелы по краям отбрасываются
     static QStringList splitRecordTags(const QString &tagsField);
 
+    // Точное совпадение тега без выделения списка: проход по полю
+    // без аллокаций QStringList на каждую запись
+    static bool recordHasTag(const QString &tagsField, const QString &exactTag);
+
     // Рекурсивный сбор значений полей ветки и всех подветок в словари.
     // Ключи словарей совпадают с именами полей поиска. Зашифрованные
     // ветки без пароля пропускаются как и в самом поиске

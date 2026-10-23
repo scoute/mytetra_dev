@@ -19,7 +19,9 @@ public:
   virtual ~FindTableWidget(void);
 
   void clearAll(void);
-  void addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId);
+  // Строка результата. Ветки помечаются флагом: двойной клик по ним
+  // только открывает ветку, прыжок к совпадению им не нужен
+  void addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, bool isBranch=false);
   int  getRowCount();
   void updateColumnsWidth(void);
   void setOverdrawMessage(const QString iOverdrawMessage); // Установка надписи, которая появляется поверх виджета

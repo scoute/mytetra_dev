@@ -4128,6 +4128,14 @@ Enter your old password and new password.
         <translation>Файлы</translation>
     </message>
     <message>
+        <source>Jump to note text</source>
+        <translation>Прыжок в текст заметки</translation>
+    </message>
+    <message>
+        <source>Jump by first word only</source>
+        <translation>Прыжок только по первому слову</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="529"/>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="603"/>
         <source>Cannot start find process</source>

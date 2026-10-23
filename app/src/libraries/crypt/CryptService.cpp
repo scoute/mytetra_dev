@@ -4,6 +4,7 @@
 #include "XChaChaCipherBackend.h"
 
 #include <QFile>
+#include <QSaveFile>
 #include <QApplication>
 
 #include "libraries/helpers/DebugHelper.h"
@@ -29,6 +30,13 @@ CryptService::~CryptService()
 
 void CryptService::convertByteArrayToVector(const QByteArray &qba, std::vector<unsigned char> &vec)
 {
+  // Пустой массив: &vec[0] для пустого вектора - неопределенное поведение
+  if(qba.isEmpty())
+  {
+    vec.clear();
+    return;
+  }
+
   unsigned int size=qba.size();
   vec.resize(size, 0);
   memcpy(&vec[0], qba.constData(), size*sizeof(unsigned char));
@@ -39,6 +47,11 @@ void CryptService::convertVectorToByteArray(const std::vector<unsigned char> &ve
 {
   unsigned int size=vec.size();
   qba.clear();
+
+  // Пустой вектор: не берем адрес несуществующего элемента
+  if(size==0)
+    return;
+
   qba.append( (const char *)&vec[0], size*sizeof(unsigned char) );
 
   /*
@@ -112,7 +125,10 @@ QString CryptService::decryptString(QByteArray key, QString line)
 
  QByteArray result=decryptByteArray(key, encrypted);
 
- QString resultLine=QString::fromUtf8( result.data() );
+ // Размер передается явно: fromUtf8(result.data()) обрезал бы поле
+ // по первому нулевому байту (та же причина, что в decryptStringFromByteArray)
+ QString resultLine=QString::fromUtf8( result.constData(), result.size() );
+ resultLine.remove(QChar('\0'));
 
  return resultLine;
 }
@@ -197,18 +213,40 @@ void CryptService::encDecFileSmart(QByteArray key, QString fileName, int mode)
  if(!file.open(QIODevice::ReadOnly))
   criticalError("encDecFileSmart() : Cant open binary file "+fileName+" for reading.");
 
+ const QByteArray source=file.readAll();
+ file.close();
+
  QByteArray result;
 
  if(mode==0)
-  result=encryptByteArray(key, file.readAll());
+  result=encryptByteArray(key, source);
  else
-  result=decryptByteArray(key, file.readAll());
+  result=decryptByteArray(key, source);
 
- file.close();
+ // Непустой шифротекст, из которого не получилось открытого текста -
+ // это не «пустой файл», а неверный ключ или повреждение. Записывать
+ // пустоту поверх базы нельзя: потеря данных необратима
+ if(mode==1 && !source.isEmpty() && result.isEmpty())
+  criticalError("encDecFileSmart() : Can not decrypt file "+fileName+". Wrong password or corrupted data.");
 
- if(!file.open(QIODevice::WriteOnly))
-  criticalError("encryptFile() : Cant open binary file "+fileName+" for write.");
- file.write(result);
+ if(mode==0 && !source.isEmpty() && result.isEmpty())
+  criticalError("encDecFileSmart() : Can not encrypt file "+fileName+".");
+
+ // Атомарная запись: при обрыве/ошибке старый файл остается целым.
+ // Прямая запись в тот же файл могла оставить его обрезанным
+ QSaveFile out(fileName);
+
+ if(!out.open(QIODevice::WriteOnly))
+  criticalError("encDecFileSmart() : Cant open binary file "+fileName+" for write.");
+
+ if(out.write(result)!=result.size())
+ {
+  out.cancelWriting();
+  criticalError("encDecFileSmart() : Cant write binary file "+fileName);
+ }
+
+ if(!out.commit())
+  criticalError("encDecFileSmart() : Cant commit binary file "+fileName);
 
  if(qobject_cast<QApplication *>(QCoreApplication::instance())!=nullptr)
    QApplication::restoreOverrideCursor();

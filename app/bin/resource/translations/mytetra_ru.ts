@@ -1182,6 +1182,22 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Enable autosave, min</source>
         <translation>Включить автосохранение, мин</translation>
     </message>
+    <message>
+        <source>Network and certificates</source>
+        <translation>Сеть и сертификаты</translation>
+    </message>
+    <message>
+        <source>Allow loading with invalid or self-signed TLS certificates</source>
+        <translation>Разрешать загрузку с невалидными или самоподписанными TLS-сертификатами</translation>
+    </message>
+    <message>
+        <source>Disables certificate verification for images and files downloaded from the network. This reduces protection against traffic substitution. Enable only if you understand the risk.</source>
+        <translation>Отключает проверку сертификата для картинок и файлов, загружаемых из сети. Это снижает защиту от подмены трафика. Включайте только если понимаете риск.</translation>
+    </message>
+    <message>
+        <source>Normally a site with an expired, self-signed or otherwise invalid TLS certificate is refused. This option allows downloading images and files from such sites anyway, but an attacker on the network could substitute the content. Default: off.</source>
+        <translation>Обычно сайт с просроченным, самоподписанным или иным невалидным TLS-сертификатом отклоняется. Эта опция разрешает всё равно скачивать с него картинки и файлы, но злоумышленник в сети может подменить содержимое. По умолчанию выключено.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Tree</name>

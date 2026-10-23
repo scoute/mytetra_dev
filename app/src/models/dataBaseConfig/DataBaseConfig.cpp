@@ -61,6 +61,11 @@ void DataBaseConfig::init(void)
    tempConf.setValue("middle_hash_check_data", "");
 
    tempConf.sync();
+
+   // database.ini содержит соль и проверочный хеш пароля: это материал
+   // для офлайн-перебора, файл не должен быть доступен другим пользователям
+   QFile::setPermissions(configFileName,
+                         QFile::ReadUser | QFile::WriteUser);
   }
 
  // Создается указатель на объект хранилища конфигурации

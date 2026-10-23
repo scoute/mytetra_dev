@@ -1,6 +1,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
+#include <QUrl>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -49,6 +50,112 @@ static QSize telegramDisplaySize(const QString &srcPath)
 }
 
 
+// Лексическая проверка: путь остался внутри каталога.
+// Для целей, которых еще нет на диске (canonicalFilePath пуст)
+static bool isPathInside(const QString &root, const QString &path)
+{
+  const QString cleanRoot=QDir::cleanPath(root);
+  const QString cleanPath=QDir::cleanPath(path);
+
+  return cleanPath!=cleanRoot &&
+         cleanPath.startsWith(cleanRoot+QLatin1Char('/'));
+}
+
+
+// Медиа из чужого экспорта: href относительный и обязан остаться
+// внутри каталога экспорта. Иначе messages.html с href="../../.ssh/id_rsa"
+// затащил бы произвольный локальный файл в заметку. Схемы (file:, http:)
+// и абсолютные пути отклоняются, симлинк наружу ловится каноническим путем.
+static QString safeExportMediaPath(const QDir &exportDir, const QString &href)
+{
+  const QString trimmed=href.trimmed();
+
+  if(trimmed.isEmpty() || trimmed.startsWith(QLatin1Char('#')))
+    return QString();
+
+  const QUrl url(trimmed);
+
+  if(url.isValid() && !url.scheme().isEmpty())
+    return QString();
+
+  if(QDir::isAbsolutePath(trimmed))
+    return QString();
+
+  // В HTML экспорта пробелы и национальные символы обычно percent-encoded
+  const QString decoded=QUrl::fromPercentEncoding(trimmed.toUtf8());
+
+  if(decoded.isEmpty() || decoded.contains(QChar('\0')))
+    return QString();
+
+  const QString root=QDir::cleanPath(exportDir.absolutePath());
+  const QString candidate=QDir::cleanPath(exportDir.absoluteFilePath(decoded));
+
+  if(!isPathInside(root, candidate))
+    return QString();
+
+  const QFileInfo info(candidate);
+
+  if(!info.isFile() || !info.isReadable())
+    return QString();
+
+  const QString canonicalRoot=QFileInfo(root).canonicalFilePath();
+  const QString canonicalFile=info.canonicalFilePath();
+
+  if(canonicalRoot.isEmpty() || canonicalFile.isEmpty() ||
+     !isPathInside(canonicalRoot, canonicalFile))
+    return QString();
+
+  return canonicalFile;
+}
+
+
+// Имя файла внутри каталога заметки: только базовое имя, без
+// разделителей и управляющих символов. Имя из <div class="title">
+// или поля file_name недоверенное и иначе увело бы запись за пределы
+// каталога записи (../../.bashrc)
+static QString safeMediaFileName(const QString &source)
+{
+  QString name=source;
+  name.replace(QLatin1Char('\\'), QLatin1Char('/'));
+  name=QFileInfo(name).fileName();
+  name.remove(QChar('\0'));
+  name.remove(QRegularExpression(QStringLiteral("[\\x01-\\x1f\\x7f]")));
+
+  if(name.isEmpty() || name==QStringLiteral(".") || name==QStringLiteral(".."))
+    return QString();
+
+  if(name.size()>180)
+  {
+    const int dotPos=name.lastIndexOf(QLatin1Char('.'));
+
+    if(dotPos>0 && name.size()-dotPos<=16)
+      name=name.left(180-(name.size()-dotPos))+name.mid(dotPos);
+    else
+      name=name.left(180);
+  }
+
+  return name;
+}
+
+
+// Ссылка в тексте заметки: только явно безопасные схемы.
+// javascript:, data:, file: из чужого экспорта не должны стать
+// кликабельными действиями в редакторе
+static bool isSafeTelegramHref(const QString &href)
+{
+  const QString lower=href.trimmed().toLower();
+
+  if(lower.startsWith(QLatin1Char('#')))
+    return true;
+
+  return lower.startsWith(QStringLiteral("http://")) ||
+         lower.startsWith(QStringLiteral("https://")) ||
+         lower.startsWith(QStringLiteral("mailto:")) ||
+         lower.startsWith(QStringLiteral("tel:")) ||
+         lower.startsWith(QStringLiteral("tg://"));
+}
+
+
 // Одна сущность в HTML. text заранее экранирован вызывателем
 static QString entityToHtml(const QString &type, const QString &text,
                             const QJsonObject &entity)
@@ -75,15 +182,30 @@ static QString entityToHtml(const QString &type, const QString &text,
   {
     const QString href=entity.value(QStringLiteral("href")).toString();
 
-    if(!href.isEmpty())
+    if(!href.isEmpty() && isSafeTelegramHref(href))
       return QStringLiteral("<a href=\"")+href.toHtmlEscaped()+
              QStringLiteral("\">")+text+QStringLiteral("</a>");
+
+    return text;
   }
 
   if(type==QStringLiteral("link") || type==QStringLiteral("email") ||
      type==QStringLiteral("phone") || type==QStringLiteral("mention") ||
      type==QStringLiteral("hashtag") || type==QStringLiteral("bot_command"))
-    return QStringLiteral("<a href=\"")+text+QStringLiteral("\">")+text+QStringLiteral("</a>");
+  {
+    QString href=text;
+
+    if(type==QStringLiteral("email") && !href.startsWith(QStringLiteral("mailto:")))
+      href=QStringLiteral("mailto:")+href;
+    else if(type==QStringLiteral("phone") && !href.startsWith(QStringLiteral("tel:")))
+      href=QStringLiteral("tel:")+href;
+
+    if(isSafeTelegramHref(href))
+      return QStringLiteral("<a href=\"")+href.toHtmlEscaped()+
+             QStringLiteral("\">")+text+QStringLiteral("</a>");
+
+    return text;
+  }
 
   // mention_name, custom_emoji, blockquote и будущие типы:
   // текст сохраняется, разметка опускается
@@ -195,6 +317,7 @@ static QString sanitizeTelegramHtmlFragment(const QString &inner)
   static QRegularExpression tagRe("<(/?)([A-Za-z0-9]+)((?:\"[^\"]*\"|'[^']*'|[^\"'>])*)>");
 
   QString result;
+  QList<bool> linkStack;
   int pos=0;
   QRegularExpressionMatchIterator it=tagRe.globalMatch(inner);
 
@@ -219,18 +342,24 @@ static QString sanitizeTelegramHtmlFragment(const QString &inner)
     {
       if(closing)
       {
-        result+=QStringLiteral("</a>");
+        const bool safeLink=linkStack.isEmpty() ? false : linkStack.takeLast();
+        result+=safeLink ? QStringLiteral("</a>") : QStringLiteral("</span>");
         continue;
       }
 
       static QRegularExpression hrefRe("href\\s*=\\s*\"([^\"]*)\"");
       const QRegularExpressionMatch hrefMatch=hrefRe.match(match.captured(3));
+      const bool safeLink=hrefMatch.hasMatch() &&
+                          isSafeTelegramHref(hrefMatch.captured(1));
 
-      if(hrefMatch.hasMatch())
+      if(safeLink)
         result+=QStringLiteral("<a href=\"")+
                 hrefMatch.captured(1).toHtmlEscaped()+
                 QStringLiteral("\">");
+      else
+        result+=QStringLiteral("<span>");
 
+      linkStack.append(safeLink);
       continue;
     }
 
@@ -517,8 +646,18 @@ bool parseTelegramHtml(const QString &fileName,
         continue;
 
       TelegramMedia media;
-      media.srcPath=exportDir.absoluteFilePath(href);
-      media.fileName=QFileInfo(href).fileName();
+      media.srcPath=safeExportMediaPath(exportDir, href);
+
+      // Битая/внешняя ссылка: пропускаем медиа, а не тащим
+      // произвольный локальный путь в заметку
+      if(media.srcPath.isEmpty())
+        continue;
+
+      media.fileName=safeMediaFileName(
+        QFileInfo(QUrl::fromPercentEncoding(href.toUtf8())).fileName());
+
+      if(media.fileName.isEmpty())
+        continue;
 
       if(anchorClass.contains(QStringLiteral("photo")))
       {
@@ -541,7 +680,13 @@ bool parseTelegramHtml(const QString &fileName,
         const QRegularExpressionMatch titleMatch=titleRe.match(anchorInner);
 
         if(titleMatch.hasMatch())
-          media.fileName=decodeTelegramEntities(titleMatch.captured(1).trimmed());
+        {
+          const QString titleName=safeMediaFileName(
+            decodeTelegramEntities(titleMatch.captured(1).trimmed()));
+
+          if(!titleName.isEmpty())
+            media.fileName=titleName;
+        }
 
         static QRegularExpression statusRe("<div class=\"status details\">\\s*(.*?)\\s*</div>",
                                            QRegularExpression::DotMatchesEverythingOption);
@@ -651,41 +796,56 @@ bool parseTelegramJson(const QString &fileName,
     // Фото: photos/..., документ: files/..., голосовое: voice_messages/...
     if(msg.contains(QStringLiteral("photo")))
     {
-      TelegramMedia media;
-      media.kind=QStringLiteral("photo");
-      media.srcPath=exportDir.absoluteFilePath(msg.value(QStringLiteral("photo")).toString());
-      media.fileName=QFileInfo(media.srcPath).fileName();
-      message.media.append(media);
+      const QString src=safeExportMediaPath(
+        exportDir, msg.value(QStringLiteral("photo")).toString());
+
+      if(!src.isEmpty())
+      {
+        TelegramMedia media;
+        media.kind=QStringLiteral("photo");
+        media.srcPath=src;
+        media.fileName=safeMediaFileName(QFileInfo(src).fileName());
+
+        if(!media.fileName.isEmpty())
+          message.media.append(media);
+      }
     }
 
     if(msg.contains(QStringLiteral("file")))
     {
-      TelegramMedia media;
-      media.kind=(msg.value(QStringLiteral("media_type")).toString()==QStringLiteral("voice_message"))
-                 ? QStringLiteral("voice") : QStringLiteral("file");
-      media.srcPath=exportDir.absoluteFilePath(msg.value(QStringLiteral("file")).toString());
-      media.fileName=msg.value(QStringLiteral("file_name")).toString();
+      const QString src=safeExportMediaPath(
+        exportDir, msg.value(QStringLiteral("file")).toString());
 
-      if(media.fileName.isEmpty())
-        media.fileName=QFileInfo(media.srcPath).fileName();
-
-      media.mime=msg.value(QStringLiteral("mime_type")).toString();
-
-      // Картинка, присланная документом: показывается в теле,
-      // как обычное фото
-      if(media.kind==QStringLiteral("file") && media.mime.startsWith(QStringLiteral("image/")))
-        media.kind=QStringLiteral("photo");
-
-      if(media.kind==QStringLiteral("voice"))
+      if(!src.isEmpty())
       {
-        const int secs=msg.value(QStringLiteral("duration_seconds")).toInt();
-        media.extra=QStringLiteral("%1:%2").arg(secs/60).arg(secs%60, 2, 10, QChar('0'));
+        TelegramMedia media;
+        media.kind=(msg.value(QStringLiteral("media_type")).toString()==QStringLiteral("voice_message"))
+                   ? QStringLiteral("voice") : QStringLiteral("file");
+        media.srcPath=src;
+        media.fileName=safeMediaFileName(msg.value(QStringLiteral("file_name")).toString());
+
+        if(media.fileName.isEmpty())
+          media.fileName=safeMediaFileName(QFileInfo(src).fileName());
+
+        media.mime=msg.value(QStringLiteral("mime_type")).toString();
+
+        // Картинка, присланная документом: показывается в теле,
+        // как обычное фото
+        if(media.kind==QStringLiteral("file") && media.mime.startsWith(QStringLiteral("image/")))
+          media.kind=QStringLiteral("photo");
+
+        if(media.kind==QStringLiteral("voice"))
+        {
+          const int secs=msg.value(QStringLiteral("duration_seconds")).toInt();
+          media.extra=QStringLiteral("%1:%2").arg(secs/60).arg(secs%60, 2, 10, QChar('0'));
+        }
+
+        if(media.kind==QStringLiteral("file") && msg.contains(QStringLiteral("file_size")))
+          media.sizeText=formatTelegramSize(msg.value(QStringLiteral("file_size")).toVariant().toLongLong());
+
+        if(!media.fileName.isEmpty())
+          message.media.append(media);
       }
-
-      if(media.kind==QStringLiteral("file") && msg.contains(QStringLiteral("file_size")))
-        media.sizeText=formatTelegramSize(msg.value(QStringLiteral("file_size")).toVariant().toLongLong());
-
-      message.media.append(media);
     }
 
     // Пустые служебные остатки без текста и медиа не тащим
@@ -758,7 +918,7 @@ struct TelegramPendingFile
 // занятость только внутри заметки (месяца или дня)
 static QString takeUniqueName(QSet<QString> &used, const QString &wanted)
 {
-  QString target=wanted;
+  QString target=safeMediaFileName(wanted);
 
   if(target.isEmpty())
     target=QStringLiteral("file");
@@ -973,6 +1133,17 @@ static bool writeTelegramNote(TreeItem *branch,
 
   foreach(const TelegramPendingFile &pf, pending)
   {
+    // Имя уже очищено при разборе и в takeUniqueName; повторная
+    // проверка перед записью - защита от будущих правок выше по коду
+    const QString recordRoot=QDir(recordDir).absolutePath();
+    const QString targetPath=QDir(recordRoot).absoluteFilePath(pf.fileName);
+
+    if(!isPathInside(recordRoot, targetPath))
+    {
+      ++result.skippedMedia;
+      continue;
+    }
+
     if(pf.kind==QStringLiteral("scaled"))
     {
       // Один файл: гладкое ужатие на месте. Оригинал сверх лимита
@@ -988,7 +1159,7 @@ static bool writeTelegramNote(TreeItem *branch,
       img=img.scaled(telegramMaxSide, telegramMaxSide,
                      Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-      if(img.save(QDir(recordDir).absoluteFilePath(pf.fileName), 0, 88))
+      if(img.save(targetPath, 0, 88))
         ++result.attaches;
       else
         ++result.skippedMedia;
@@ -997,7 +1168,7 @@ static bool writeTelegramNote(TreeItem *branch,
     {
       // Копия байт в байт: оригинал не трогается, качество 1:1.
       // Размер показа ограничен width/height в <img>
-      if(QFile::copy(pf.srcPath, QDir(recordDir).absoluteFilePath(pf.fileName)))
+      if(QFile::copy(pf.srcPath, targetPath))
         ++result.attaches;
       else
         ++result.skippedMedia;

@@ -445,6 +445,12 @@ public:
     bool get_mcpAllow(void);
     void set_mcpAllow(bool state);
 
+    // Игнорировать ошибки проверки TLS при загрузке картинок/файлов.
+    // По умолчанию выключено: невалидный/самоподписанный сертификат
+    // отклоняется. Включение снижает защиту от MITM
+    bool get_tlsIgnoreInvalidCertificates(void);
+    void set_tlsIgnoreInvalidCertificates(bool state);
+
     // Показывать ли в дереве общий итог записей с учетом подветок.
     // По умолчанию выключено: только свои [n]. Страница Branch tree
     bool get_showSubtreeCount(void);
@@ -554,6 +560,7 @@ private:
     QStringList get_parameter_table_50(bool withEndSignature=true);
     QStringList get_parameter_table_51(bool withEndSignature=true);
     QStringList get_parameter_table_52(bool withEndSignature=true);
+    QStringList get_parameter_table_53(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

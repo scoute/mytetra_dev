@@ -84,6 +84,10 @@ void ActionLogger::openLogFileForWrite()
   bool result=logFile.open(QIODevice::Append | QIODevice::Text);
   if(!result)
     criticalError("Cant open log file "+logFileName+" for write data");
+
+  // В журнале встречаются имена заметок: файл не должен быть
+  // читаемым другим пользователям системы
+  QFile::setPermissions(logFileName, QFile::ReadUser | QFile::WriteUser);
 }
 
 

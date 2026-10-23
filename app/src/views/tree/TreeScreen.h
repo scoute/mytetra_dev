@@ -57,11 +57,6 @@ public:
  static QStringList defaultToolbarOrder(void);
  static QString toolbarItemMode(const QString &command);
 
- // Кнопка синхронизации: блокировка на время команды и чтение состояния.
- // MainWindow дёргает напрямую, как раньше дёргал кнопку записей
- void setSyncroEnabled(bool state);
- bool isSyncroEnabled(void) const;
-
  // Действие тулбара по имени. Нужно диалогу настройки порядка кнопок
  QAction *toolAction(const QString &command);
 
@@ -81,9 +76,6 @@ signals:
 public slots:
 
     void setupShortcuts(void);
-
-    // Разблокировка кнопки синхронизации по окончании команды
-    void onSyncroCommandFinishWork(void);
 
     // Обновить прямые тексты новым языком. Тексты на шорткатах
     // освежает setupShortcuts по сигналу updateWidgetShortcut
@@ -115,9 +107,6 @@ private slots:
 
  void encryptBranch(void);
  void decryptBranch(void);
-
- // Синхронизация базы (кнопка переехала с тулбара записей)
- void onSyncroClick(void);
 
  // Действия при клике на ветку дерева
  void onKnowtreeClicked(const QModelIndex &index);

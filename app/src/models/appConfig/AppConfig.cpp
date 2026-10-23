@@ -1,6 +1,7 @@
 #include <functional>
 #include <QtGlobal>
 #include <QRect>
+#include <QVariant>
 #include <QTextCodec>
 
 #include "AppConfig.h"
@@ -1359,14 +1360,26 @@ void AppConfig::set_recordTableUnderTree(bool state)
 }
 
 
+// QSettings хранит строку с запятыми как QStringList, поэтому
+// value.toString() для такого ключа дает пустоту. Разбираются оба
+// варианта: и список, и одиночная строка. Заодно срезаются пробелы
+// после запятых, которые мог оставить ручной редактор conf.ini
+static QStringList readToolbarOrder(const QVariant &value)
+{
+    QStringList result;
+
+    foreach(const QString &part, value.toStringList())
+        foreach(const QString &item, part.split(","))
+            if(!item.trimmed().isEmpty())
+                result.append(item.trimmed());
+
+    return result;
+}
+
+
 QStringList AppConfig::getTreeToolbarOrder(void)
 {
-    QString raw=m_conf->value("treeToolbarOrder", "").toString();
-
-    if(raw.isEmpty())
-        return QStringList();
-
-    return raw.split(",");
+    return readToolbarOrder(m_conf->value("treeToolbarOrder", ""));
 }
 
 
@@ -1378,12 +1391,7 @@ void AppConfig::setTreeToolbarOrder(QStringList order)
 
 QStringList AppConfig::getRecordToolbarOrder(void)
 {
-    QString raw=m_conf->value("recordToolbarOrder", "").toString();
-
-    if(raw.isEmpty())
-        return QStringList();
-
-    return raw.split(",");
+    return readToolbarOrder(m_conf->value("recordToolbarOrder", ""));
 }
 
 
@@ -1395,12 +1403,7 @@ void AppConfig::setRecordToolbarOrder(QStringList order)
 
 QStringList AppConfig::getRecordExtraToolbarOrder(void)
 {
-    QString raw=m_conf->value("recordExtraToolbarOrder", "").toString();
-
-    if(raw.isEmpty())
-        return QStringList();
-
-    return raw.split(",");
+    return readToolbarOrder(m_conf->value("recordExtraToolbarOrder", ""));
 }
 
 

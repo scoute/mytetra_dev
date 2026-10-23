@@ -145,6 +145,12 @@ void RecordTableScreen::setupActions(void)
  actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
  actionPrintPreview->setIcon(QIcon(":/resource/pic/print_preview.svg"));
 
+ // Синхронизация базы. Операция уровня всей базы, поэтому стоит
+ // в конце первой линии тулбара записей, сразу после предпросмотра
+ actionSyncro = new QAction(tr("Synchronization"), this);
+ actionSyncro->setStatusTip(tr("Run synchronization"));
+ actionSyncro->setIcon(QIcon(":/resource/pic/synchronization.svg"));
+
  // Кнопка копирования ссылки на запись
  actionCopyRecordReference = new QAction(tr("Copy note reference"), this);
  actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));
@@ -186,7 +192,9 @@ QStringList RecordTableScreen::defaultToolbarOrder(void)
   << "separator"
   << "moveUp" << "moveDn"
   << "separator"
-  << "printPreview";
+  << "printPreview"
+  << "separator"
+  << "syncro";
 }
 
 
@@ -241,6 +249,7 @@ QAction *RecordTableScreen::toolAction(const QString &command)
  if(command=="sort") return actionSort;
  if(command=="print") return actionPrint;
  if(command=="printPreview") return actionPrintPreview;
+ if(command=="syncro") return actionSyncro;
  if(command=="copyRecordReference") return actionCopyRecordReference;
  if(command=="changeHistory") return actionChangeHistory;
  if(command=="switchSelectionMode") return actionSwitchSelectionMode;
@@ -441,6 +450,9 @@ void RecordTableScreen::setupShortcuts(void)
 
     // Переход на следующую запись в истории
     shortcutManager.initAction("note-nextNote", actionWalkHistoryNext);
+
+    // Синхронизация базы (кнопка на первой линии, после предпросмотра)
+    shortcutManager.initAction("misc-syncro", actionSyncro);
 }
 
 
@@ -500,6 +512,9 @@ void RecordTableScreen::setupSignals(void)
 
     // Предпросмотр печати текущей записи (действие живет в MainWindow)
     connect(actionPrintPreview, &QAction::triggered, find_object<MainWindow>("mainwindow"), &MainWindow::filePrintPreview);
+
+    // Синхронизация базы (действие переехало с тулбара веток)
+    connect(actionSyncro, &QAction::triggered, this, &RecordTableScreen::onSyncroClick);
 
     // Перемещение по истории посещаемых записей назад
     connect(actionWalkHistoryPrevious, &QAction::triggered, this, &RecordTableScreen::onWalkHistoryPreviousClick);
@@ -839,6 +854,37 @@ void RecordTableScreen::onCopyRecordLink()
 }
 
 
+// Клик по кнопке синхронизации: операция уровня базы, выполняется
+// главным окном
+void RecordTableScreen::onSyncroClick(void)
+{
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->synchronization();
+}
+
+
+// Разблокировка кнопки синхронизации по окончании команды.
+// Подключено в MainWindow к завершению синхрокоманды
+void RecordTableScreen::onSyncroCommandFinishWork(void)
+{
+  actionSyncro->setEnabled(true);
+}
+
+
+void RecordTableScreen::setSyncroEnabled(bool state)
+{
+  actionSyncro->setEnabled(state);
+}
+
+
+bool RecordTableScreen::isSyncroEnabled(void) const
+{
+  return actionSyncro->isEnabled();
+}
+
+
 // Контекстное меню тулбаров записей: единственный пункт открывает
 // диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
 // у кнопок своего меню нет, а пустого места на ужатых по кнопкам
@@ -897,6 +943,9 @@ void RecordTableScreen::retranslateUi(void)
 
   actionPrintPreview->setText(tr("Print preview"));
   actionPrintPreview->setStatusTip(tr("Preview current note before printing"));
+
+  actionSyncro->setText(tr("Synchronization"));
+  actionSyncro->setStatusTip(tr("Run synchronization"));
 
   actionCopyRecordReference->setText(tr("Copy note reference"));
   actionCopyRecordReference->setStatusTip(tr("Copy note reference to clipboard"));

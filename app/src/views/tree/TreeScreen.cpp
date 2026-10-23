@@ -186,12 +186,8 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::treeScreenFindInBaseClicked);
  actionList["findInBase"]=ac;
 
- // Синхронизация базы. Переехала сюда с тулбара записей: операция
- // уровня всей базы, а не отдельной записи. Клик дёргает MainWindow
- ac = new QAction(this);
- ac->setIcon(QIcon(":/resource/pic/synchronization.svg"));
- connect(ac, &QAction::triggered, this, &TreeScreen::onSyncroClick);
- actionList["syncro"]=ac;
+ // Кнопка синхронизации переехала на тулбар записей (после предпросмотра
+ // печати): действие создается и живет в RecordTableScreen
 
  // Панель избранного между кнопками веток и деревом. Создается здесь,
  // а не в MainWindow, чтобы лежать ровно под тулбаром. Скрыта пока
@@ -226,9 +222,6 @@ void TreeScreen::setupShortcuts(void)
     shortcutManager.initAction("tree-encryptBranch", actionList["encryptBranch"] );
     shortcutManager.initAction("tree-decryptBranch", actionList["decryptBranch"] );
     shortcutManager.initAction("tree-setIcon", actionList["setIcon"] );
-
-    // Синхронизация базы с тулбара веток
-    shortcutManager.initAction("misc-syncro", actionList["syncro"] );
 }
 
 
@@ -253,8 +246,6 @@ QStringList TreeScreen::defaultToolbarOrder(void)
   << "expandAllSubbranch" << "collapseAllSubbranch"
   << "separator"
   << "moveUpBranch" << "moveDownBranch"
-  << "separator"
-  << "syncro"
   << "spring" << "findInBase";
 }
 
@@ -286,6 +277,63 @@ void TreeScreen::rebuildToolbar(void)
  toolsLine->clear();
 
  QStringList order=mytetraConfig.getTreeToolbarOrder();
+
+ // Разовая миграция: кнопка синхронизации переехала с тулбара веток
+ // на тулбар записей вместе со своим разделителем. Старый сохраненный
+ // порядок еще содержит "syncro" - убираем его и разделитель перед ним,
+ // затем один раз дописываем пару "separator, syncro" в порядок записей
+ // после предпросмотра печати. Пустой порядок означает дефолт.
+ const int syncroPos=order.indexOf("syncro");
+
+ if(!order.isEmpty() && syncroPos>=0)
+  {
+   if(syncroPos>0 && order.at(syncroPos-1)=="separator")
+    order.removeAt(syncroPos-1);
+
+   order.removeAll("syncro");
+
+   // После переноса не должно остаться двойных и хвостовых разделителей
+   for(int i=order.size()-1; i>0; --i)
+    if(order.at(i)=="separator" && order.at(i-1)=="separator")
+     order.removeAt(i);
+
+   if(!order.isEmpty() && order.last()=="separator")
+    order.removeLast();
+
+   mytetraConfig.setTreeToolbarOrder(order);
+
+   QStringList recordOrder=mytetraConfig.getRecordToolbarOrder();
+
+   if(!recordOrder.isEmpty() && !recordOrder.contains("syncro"))
+    {
+     const int previewPos=recordOrder.indexOf("printPreview");
+
+     if(previewPos>=0)
+      {
+       int insertPos=previewPos+1;
+
+       // Разделитель уже стоит сразу после предпросмотра - не задваиваем
+       if(insertPos<recordOrder.size() && recordOrder.at(insertPos)=="separator")
+        insertPos++;
+       else
+        recordOrder.insert(insertPos++, "separator");
+
+       recordOrder.insert(insertPos, "syncro");
+      }
+     else
+      {
+       if(!recordOrder.isEmpty() && recordOrder.last()!="separator")
+        recordOrder.append("separator");
+
+       recordOrder.append("syncro");
+      }
+
+     mytetraConfig.setRecordToolbarOrder(recordOrder);
+    }
+
+   // Миграция должна пережить даже аварийное завершение сразу после старта
+   mytetraConfig.sync();
+  }
 
  if(order.isEmpty())
   order=defaultToolbarOrder();
@@ -1988,7 +2036,7 @@ void TreeScreen::setReadOnly(bool state)
   << "editBranch" << "delBranch"
   << "cutBranch" << "pasteBranch" << "pasteSubbranch"
   << "encryptBranch" << "decryptBranch"
-  << "setIcon" << "syncro";
+  << "setIcon";
 
  for(const QString &name : mutatingActions)
   if(actionList.contains(name))
@@ -2009,34 +2057,6 @@ QAction *TreeScreen::toolAction(const QString &command)
   return nullptr;
 
  return actionList[command];
-}
-
-
-// Клик по кнопке синхронизации: та же MainWindow::synchronization(),
-// что раньше дёргалась с тулбара записей
-void TreeScreen::onSyncroClick(void)
-{
- find_object<MainWindow>("mainwindow")->synchronization();
-}
-
-
-// Разблокировка кнопки синхронизации по окончании команды.
-// Подключено в MainWindow к завершению синхрокоманды
-void TreeScreen::onSyncroCommandFinishWork(void)
-{
- actionList["syncro"]->setEnabled(true);
-}
-
-
-void TreeScreen::setSyncroEnabled(bool state)
-{
- actionList["syncro"]->setEnabled(state);
-}
-
-
-bool TreeScreen::isSyncroEnabled(void) const
-{
- return actionList["syncro"]->isEnabled();
 }
 
 

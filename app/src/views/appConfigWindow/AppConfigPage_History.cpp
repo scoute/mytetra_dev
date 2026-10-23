@@ -5,7 +5,7 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QLabel>
-#include <QComboBox>
+#include "libraries/MtComboBox.h"
 #include <QRadioButton>
 #include <QButtonGroup>
 #include <QMessageBox>
@@ -57,7 +57,7 @@ void AppConfigPage_History::setupUi()
 
     // Выпадашка фиксированных лимитов: произвольные числа
     // не нужны, лимит это грубый порог
-    squashKeep=new QComboBox(this);
+    squashKeep=new MtComboBox(this);
     squashKeep->addItem(QStringLiteral("10"), 10);
     squashKeep->addItem(QStringLiteral("20"), 20);
     squashKeep->addItem(QStringLiteral("50"), 50);

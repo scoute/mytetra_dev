@@ -1285,6 +1285,22 @@ bool Editor::loadTextarea()
   // посчитает текст правленным и погонит полный пересчет
   setTextareaModified(false);
 
+  // Открыта другая заметка с активным поиском от прошлой: чужой запрос
+  // здесь не ищется - сбросить панели, иначе висит текст без совпадений.
+  // Совпадения есть - ничего не трогать, штатная переподсветка докрасит.
+  // Печать текста сюда не ходит, только полная загрузка документа
+  if(!findQuery.isEmpty())
+  {
+    collectFindMatches(findQuery, findFlags);
+
+    if(findMatches.isEmpty())
+    {
+      findBar->setSearchText(QString());
+      findDialog->setFindRequest(QString(), findDialog->findRequestFlags());
+      clearFindMatches();
+    }
+  }
+
   return true;
 }
 

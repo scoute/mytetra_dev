@@ -9,7 +9,7 @@ class QGroupBox;
 class QLabel;
 class QToolButton;
 class QPushButton;
-class QComboBox;
+class MtComboBox;
 
 class AppConfigPage_Attach : public ConfigPage
 {
@@ -57,7 +57,7 @@ protected:
   QGroupBox *fileNamesBox;
   QLabel *fileNamesInfo;
   QLabel *attachNameModeLabel;
-  QComboBox *attachNameModeCombo;
+  MtComboBox *attachNameModeCombo;
   QPushButton *convertAttachesButton;
   QLabel *fileNamesWarning;
 };

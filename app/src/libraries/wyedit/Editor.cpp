@@ -2193,7 +2193,36 @@ bool Editor::jumpToFirstMatch(const QStringList &words, bool firstWordOnly)
   }
 
   if(best.isEmpty())
+  {
+    // Совпадений нет: честно показать это, а не оставлять запрос
+    // от прошлой заметки (движок переподсветил бы его здесь при смене
+    // документа). Полоска умеет счетчик "No matches", у окна счетчика
+    // нет - там просто пустой запрос без попапов. Видимость панелей
+    // не трогается, только содержимое
+    if(mytetraConfig.get_editorFindEmbedded())
+    {
+      QString first;
+
+      foreach (const QString &word, words)
+      {
+        if(!word.isEmpty())
+        {
+          first=word;
+          break;
+        }
+      }
+
+      findBar->setSearchText(first);
+      collectFindMatches(first, QTextDocument::FindFlags());
+    }
+    else
+    {
+      findDialog->setFindRequest(QString(), findDialog->findRequestFlags());
+      clearFindMatches();
+    }
+
     return false;
+  }
 
   QTextDocument::FindFlags flags;
 

@@ -105,15 +105,16 @@ void TagsPanel::setupUi(void)
     // растянуть колонку тегов и увидеть длинное имя целиком.
     // Клик по заголовку сортирует по метке или по количеству
     // (количество сортируется численно через CountTableWidgetItem).
-    // Горизонтальной прокрутки нет, при широком содержимом
-    // растягивается сам док
+    // Прокрутка по мере нужды: обычно док сам растягивается под
+    // содержимое, но у края окна или при вручную растянутой колонке
+    // тегов колонка количества уходила за край без скролла
     tagsTable=new TagsTable(this);
     tagsTable->setColumnCount(2);
     tagsTable->setHorizontalHeaderLabels(QStringList() << tr("Tag") << tr("Count"));
     tagsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
     tagsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
     tagsTable->verticalHeader()->setVisible(false);
-    tagsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    tagsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     // Дефолтный минимум секции необоснованно раздувает колонку цифр:
     // минимумом ставится ширина одной цифры, дальше колонка растет

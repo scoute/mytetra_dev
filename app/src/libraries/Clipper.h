@@ -151,7 +151,8 @@ private:
     // Заполняет clipData.html/images/skippedImages
     bool processDocument(QTextDocument &document, ClipData &clipData, int alreadyHave=0);
     QByteArray fetchUrl(const QString &url, bool *ok);
-    bool ensureBranch(TreeItem* &branchItem, QString *errorMessage=nullptr);
+    bool ensureBranch(TreeItem* &branchItem, QString *errorMessage=nullptr,
+                      const QString &forcedId=QString());
     bool isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash);
     bool storeRecord(TreeItem *branchItem, const QString &recordId, const QString &title,
                      const QString &url, const QString &html,

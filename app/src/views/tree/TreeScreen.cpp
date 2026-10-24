@@ -14,6 +14,7 @@
 
 #include "TreeScreen.h"
 #include "KnowTreeView.h"
+#include "KnowTreeDelegate.h"
 
 #include "models/recordTable/RecordTableData.h"
 #include "views/recordTable/RecordTableScreen.h"
@@ -257,6 +258,9 @@ void TreeScreen::applyTreeFilter(const QString &text)
 {
   if(knowTreeModel==nullptr)
     return;
+
+  if(KnowTreeDelegate *delegate=qobject_cast<KnowTreeDelegate *>(knowTreeView->itemDelegate()))
+    delegate->setFilterText(text);
 
   if(text.isEmpty())
   {

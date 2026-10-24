@@ -272,15 +272,85 @@ QString Clipper::extractUrl(const QString &text)
 }
 
 
-QString Clipper::resolveUrl(const QString &urlHint, const QString &plainText)
+QString Clipper::resolveUrl(const QString &urlHint, const QString &sourceUrl,
+                              const QString &plainText)
 {
     if(looksLikeUrl(urlHint))
         return urlHint.trimmed();
+
+    if(looksLikeUrl(sourceUrl))
+        return sourceUrl.trimmed();
 
     if(looksLikeUrl(plainText.trimmed()))
         return plainText.trimmed();
 
     return QString();
+}
+
+
+// Адрес страницы из сырого Windows HTML Format: строка SourceURL
+// в заголовке (Version/StartHTML/.../SourceURL). Возвращается как есть,
+// годность проверяет looksLikeUrl у вызывателя
+QString Clipper::parseHtmlFormatSourceUrl(const QByteArray &raw)
+{
+    const QList<QByteArray> lines=raw.split('\n');
+
+    for(QByteArray line : lines)
+    {
+        line=line.trimmed();
+
+        if(line.size()>10 && line.left(10).compare("SourceURL:", Qt::CaseInsensitive)==0)
+            return QString::fromLatin1(line.mid(10).trimmed());
+    }
+
+    return QString();
+}
+
+
+// Название страницы из <title> сырого или фрагмента HTML.
+// Сущности декодируются, длина как у makeTitle
+QString Clipper::extractHtmlTitle(const QString &html)
+{
+    static const QRegularExpression titleRe("<title[^>]*>(.*?)</title>",
+                                            QRegularExpression::CaseInsensitiveOption |
+                                            QRegularExpression::DotMatchesEverythingOption);
+
+    const QRegularExpressionMatch match=titleRe.match(html);
+
+    if(!match.hasMatch())
+        return QString();
+
+    QTextDocument document;
+    document.setHtml(match.captured(1));
+
+    QString title=document.toPlainText().trimmed().simplified();
+
+    if(title.length()<=80)
+        return title;
+
+    return title.left(77)+"...";
+}
+
+
+// Название самой веб-страницы из заголовка окна: отрезается суффикс
+// вида " - Google Chrome". Не браузер — заголовок как есть
+QString Clipper::cleanWindowCaption(const QString &caption)
+{
+    // Дефис, en dash, em dash и пара браузеров кириллицей — файл UTF-8,
+    // поэтому литералами, а не hex-последовательностями
+    static const QRegularExpression browserRe("\\s+[—–-]\\s*"
+                                              "(Google Chrome|Chromium|Mozilla Firefox|Firefox|"
+                                              "Microsoft Edge|Opera|Vivaldi|Brave|"
+                                              "Яндекс Браузер|Yandex)"
+                                              "\\s*$",
+                                              QRegularExpression::CaseInsensitiveOption);
+
+    const QString cleaned=caption.trimmed().remove(browserRe).trimmed();
+
+    if(!cleaned.isEmpty())
+        return cleaned;
+
+    return caption.trimmed();
 }
 
 
@@ -518,13 +588,55 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
         return;
     }
 
+    if(finishClip(clipData))
+        emit clipFinished(true, clipData.errorMessage);
+    else
+        emit clipFinished(false, clipData.errorMessage);
+}
+
+
+// Заметка из заголовка окна без выделения (хоткей в браузере):
+// название страницы, ссылка пустая — взять её неоткуда
+void Clipper::clipWindowTitle(const QString &caption)
+{
+    qDebug() << "Clipper: clip window title";
+
+    if(mytetraConfig.get_readOnly())
+    {
+        const QString message=tr("Read-only mode is enabled.");
+        notify(tr("Web Clipper"), message);
+        emit clipFinished(false, message);
+        return;
+    }
+
+    reloadLimits();
+
+    m_urlHint.clear();
+
+    ClipData clipData;
+    clipData.title=makeTitle(caption);
+    clipData.url=QString();
+    clipData.html=QString("<p>%1</p>").arg(caption.toHtmlEscaped());
+    clipData.valid=true;
+
+    if(finishClip(clipData))
+        emit clipFinished(true, clipData.errorMessage);
+    else
+        emit clipFinished(false, clipData.errorMessage);
+}
+
+
+// Общий хвост вставки готового ClipData: ветка, дедуп, запись, трей.
+// Итоговое сообщение складывается в clipData.errorMessage
+bool Clipper::finishClip(ClipData &clipData)
+{
     TreeItem *branchItem=nullptr;
     QString branchError;
     if(!ensureBranch(branchItem, &branchError))
     {
         notify(tr("Web Clipper"), branchError);
-        emit clipFinished(false, branchError);
-        return;
+        clipData.errorMessage=branchError;
+        return false;
     }
 
     const QByteArray newHash=contentHash(clipData.html);
@@ -533,16 +645,16 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
     {
         const QString message=tr("Already clipped, skipped.");
         notify(tr("Web Clipper"), message);
-        emit clipFinished(false, message);
-        return;
+        clipData.errorMessage=message;
+        return false;
     }
 
     QString storeError;
     if(!storeRecord(branchItem, recordId, clipData.title, clipData.url, clipData.html, clipData.images, &storeError))
     {
         notify(tr("Web Clipper"), storeError);
-        emit clipFinished(false, storeError);
-        return;
+        clipData.errorMessage=storeError;
+        return false;
     }
 
     QString message=tr("Saved to unsorted_notes: %1").arg(clipData.title);
@@ -556,7 +668,8 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
     }
 
     notify(tr("Web Clipper"), message);
-    emit clipFinished(true, message);
+    clipData.errorMessage=message;
+    return true;
 }
 
 
@@ -571,6 +684,61 @@ void Clipper::notify(const QString &title, const QString &text)
     else
         qDebug() << "Clipper notify:" << title << text;
 }
+
+
+#if defined(Q_OS_WIN)
+// Чтение сырого Windows HTML Format напрямую: Qt отдает только фрагмент,
+// а адрес страницы (SourceURL) живет в заголовке формата
+QByteArray Clipper::readNativeHtmlFormat(void)
+{
+    static UINT cfHtmlFormat=0;
+
+    if(cfHtmlFormat==0)
+        cfHtmlFormat=RegisterClipboardFormatA("HTML Format");
+
+    if(cfHtmlFormat==0)
+        return QByteArray();
+
+    if(!OpenClipboard(nullptr))
+        return QByteArray();
+
+    QByteArray raw;
+
+    if(HANDLE handle=GetClipboardData(cfHtmlFormat))
+    {
+        if(const char *data=static_cast<const char *>(GlobalLock(handle)))
+        {
+            const SIZE_T bytes=GlobalSize(handle);
+
+            if(bytes>0 && bytes<=INT_MAX)
+                raw=QByteArray(data, static_cast<int>(bytes));
+
+            GlobalUnlock(handle);
+        }
+    }
+
+    CloseClipboard();
+
+    return raw;
+}
+
+
+// Заголовок окна по хендлу для хоткея без выделения
+QString Clipper::windowCaption(void *hwnd)
+{
+    wchar_t buffer[512]={0};
+
+    if(!IsWindow(static_cast<HWND>(hwnd)))
+        return QString();
+
+    const int length=GetWindowTextW(static_cast<HWND>(hwnd), buffer, 512);
+
+    if(length<=0)
+        return QString();
+
+    return QString::fromWCharArray(buffer, length);
+}
+#endif // defined(Q_OS_WIN)
 
 
 // Сбор материала из буфера обмена тем же движком, что ручная вставка:
@@ -635,13 +803,40 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
     for(auto it=directImages.constBegin(); it!=directImages.constEnd(); ++it)
         clipData.images.insert(it.key(), it.value());
 
-    QString plainText=document.toPlainText();
-    clipData.title=makeTitle(plainText);
+    // Адрес и название страницы-источника (как CintaNotes).
+    // Qt отдает только фрагмент HTML, заголовок с SourceURL отрезается,
+    // поэтому на Windows формат читается напрямую через WinAPI
+    QString pageUrl;
+    QString pageTitle=extractHtmlTitle(html);
 
-    // Ссылка на источник: только явная из --url или одинокий URL в буфере.
-    // Первую ссылку из текста не берём: в скопированной странице это
-    // обычно чужой URL, а не адрес самой страницы
-    clipData.url=resolveUrl(m_urlHint, plainText);
+#if defined(Q_OS_WIN)
+    if(mimeData->hasHtml())
+    {
+        const QByteArray rawHtml=readNativeHtmlFormat();
+
+        if(!rawHtml.isEmpty())
+        {
+            pageUrl=parseHtmlFormatSourceUrl(rawHtml);
+
+            const QString nativeTitle=extractHtmlTitle(QString::fromUtf8(rawHtml));
+
+            if(!nativeTitle.isEmpty())
+                pageTitle=nativeTitle;
+        }
+    }
+#endif
+
+    QString plainText=document.toPlainText();
+
+    if(!pageTitle.isEmpty())
+        clipData.title=pageTitle;
+    else
+        clipData.title=makeTitle(plainText);
+
+    // Ссылка на источник: явная из --url, затем SourceURL страницы,
+    // затем одинокий URL в буфере. Первая ссылка из текста не берётся:
+    // в скопированной странице обычно чужой URL, а не адрес самой страницы
+    clipData.url=resolveUrl(m_urlHint, pageUrl, plainText);
 
     clipData.valid=true;
     return true;
@@ -1360,9 +1555,33 @@ void Clipper::onWinHotkey(void)
 {
     qDebug() << "Clipper: global hotkey pressed";
 
+    // Счетчик буфера и окно под фокусом запоминаются до эмуляции:
+    // если выделения не было, буфер не изменится и заметка соберется
+    // из заголовка окна (название страницы), а не из чужого содержимого
+    m_hotkeyClipSeq=GetClipboardSequenceNumber();
+    m_hotkeyWindow=GetForegroundWindow();
+    m_hotkeyTitle=cleanWindowCaption(windowCaption(m_hotkeyWindow));
+
     // Один хоткей на всё: сначала скопировать выделение в буфер,
     // затем забрать буфер в unsorted_notes
     sendCopyKeys();
-    QTimer::singleShot(300, this, &Clipper::clipNow);
+    QTimer::singleShot(300, this, &Clipper::clipNowAfterHotkey);
+}
+
+
+void Clipper::clipNowAfterHotkey(void)
+{
+    // Ненулевой счетчик и тот же номер: буфер не тронут — выделения
+    // не было. Живое окно с названием есть — клип из заголовка
+    if(m_hotkeyClipSeq!=0 &&
+       GetClipboardSequenceNumber()==m_hotkeyClipSeq &&
+       !m_hotkeyTitle.isEmpty() &&
+       IsWindow(static_cast<HWND>(m_hotkeyWindow)))
+    {
+        clipWindowTitle(m_hotkeyTitle);
+        return;
+    }
+
+    clipNow();
 }
 #endif

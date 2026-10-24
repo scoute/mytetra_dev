@@ -167,9 +167,21 @@ void AppConfigPage_Clipper::assembly(void)
   clipperFormLayout->addRow(QString(), clipperTestButton);
   clipperFormLayout->addRow(clipperMaxImagesLabel, clipperMaxImages);
   clipperFormLayout->addRow(clipperMaxImageSizeLabel, clipperMaxImageSizeMb);
-  clipperFormLayout->addRow(tr("Target branch:"), clipperBranchDefault);
-  clipperFormLayout->addRow(clipperBranchCustom, clipperBranchCombo);
-  clipperFormLayout->addRow(QString(), clipperBranchAsk);
+
+  // Все три варианта ветки — одной колонкой справа от подписи:
+  // выбор с комбо в середине ряда
+  clipperBranchLabel=new QLabel(tr("Target branch:"), this);
+
+  QHBoxLayout *branchCustomLayout=new QHBoxLayout;
+  branchCustomLayout->addWidget(clipperBranchCustom);
+  branchCustomLayout->addWidget(clipperBranchCombo);
+
+  QVBoxLayout *branchLayout=new QVBoxLayout;
+  branchLayout->addWidget(clipperBranchDefault);
+  branchLayout->addLayout(branchCustomLayout);
+  branchLayout->addWidget(clipperBranchAsk);
+
+  clipperFormLayout->addRow(clipperBranchLabel, branchLayout);
   clipperLayout->addLayout(clipperFormLayout);
 
   clipperBox->setLayout(clipperLayout);
@@ -290,7 +302,8 @@ void AppConfigPage_Clipper::retranslateUi(void)
 
   setRowLabel(clipperHotkeyEdit, tr("Hotkey:"));
   setRowLabel(clipperStatusLabel, tr("Status:"));
-  setRowLabel(clipperBranchDefault, tr("Target branch:"));
+
+  clipperBranchLabel->setText(tr("Target branch:"));
 
   clipperBranchDefault->setText(tr("To default branch (unsorted_notes)"));
   clipperBranchCustom->setText(tr("To selected branch:"));

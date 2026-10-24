@@ -7,6 +7,7 @@
 #include <QPair>
 #include <QString>
 
+class QMimeData;
 class QSocketNotifier;
 class QTextDocument;
 class KnowTreeModel;
@@ -96,6 +97,10 @@ public:
     // Картинка из data: URL. Пустая если разобрать не удалось. Чистая функция
     static QImage imageFromDataUrl(const QString &url);
 
+    // Глубокая копия содержимого буфера (все форматы). Владелец — вызыватель.
+    // Чистая функция — покрыта тестами
+    static QMimeData *cloneMimeData(const QMimeData *src);
+
     // Лимиты картинок из настроек. Сеттеры для тестов
     static void reloadLimits(void);
     static void setMaxImages(int count);
@@ -122,8 +127,12 @@ private slots:
 
 #if defined(Q_OS_WIN)
     // Забор после эмуляции Ctrl+C: буфер не изменился — выделения не было,
-    // заметка из заголовка окна; иначе обычный забор скопированного
+    // страница забирается целиком (Ctrl+A); иначе обычный забор скопированного
     void clipNowAfterHotkey(void);
+
+    // Второй шаг без выделения: забрать всё через Ctrl+A+C. Буфер чужой —
+    // сначала сохраняется, после забора восстанавливается
+    void clipFullWindowGrab(void);
 #endif
 
 private:
@@ -177,11 +186,15 @@ private:
 
     // Заголовок окна по хендлу. void* чтобы не тащить windows.h в заголовок
     static QString windowCaption(void *hwnd);
+#endif
 
+    // Состояние хоткея без выделения (типы переносимые, используются
+    // и общим кодом collectFromClipboard, поэтому без ifdef)
     void *m_hotkeyWindow=nullptr; // Окно под фокусом в момент хоткея
     QString m_hotkeyTitle;         // Его заголовок (название страницы)
     quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
-#endif
+    QMimeData *m_savedClipboard=nullptr; // Чужой буфер на время Ctrl+A
+    bool m_fullWindowFlow=false;  // Забор всей страницы: титул из окна
 
     bool hotkeyActive=false;
     QString hotkeyActiveSequence;

@@ -77,6 +77,16 @@ void EditorDropDownButton::setIcon(const QIcon &icon)
 }
 
 
+// Переключение кнопки в режим "нажал - открылось меню"
+void EditorDropDownButton::setInstantPopup(bool enable)
+{
+    if(enable)
+        m_button->setPopupMode(QToolButton::InstantPopup);
+    else
+        m_button->setPopupMode(QToolButton::MenuButtonPopup);
+}
+
+
 void EditorDropDownButton::showMenu()
 {
     m_button->showMenu();

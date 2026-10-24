@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="default_style.xml">resources/default_style.xml</file>
+        <file alias="languages/bash.xml">resources/languages/bash.xml</file>
+        <file alias="languages/c.xml">resources/languages/c.xml</file>
+        <file alias="languages/cpp.xml">resources/languages/cpp.xml</file>
+        <file alias="languages/csharp.xml">resources/languages/csharp.xml</file>
+        <file alias="languages/glsl.xml">resources/languages/glsl.xml</file>
+        <file alias="languages/go.xml">resources/languages/go.xml</file>
+        <file alias="languages/java.xml">resources/languages/java.xml</file>
+        <file alias="languages/js.xml">resources/languages/js.xml</file>
+        <file alias="languages/lua.xml">resources/languages/lua.xml</file>
+        <file alias="languages/python.xml">resources/languages/python.xml</file>
+        <file alias="languages/rust.xml">resources/languages/rust.xml</file>
+    </qresource>
+</RCC>

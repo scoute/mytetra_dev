@@ -1680,8 +1680,138 @@ void Clipper::onX11Activity(void)
             continue;
 
         qDebug() << "Clipper: global hotkey pressed";
-        clipNow();
+
+        // Выделение само в буфер не попадает: сначала эмулировать Ctrl+C,
+        // иначе заберется предыдущее содержимое (протухший буфер).
+        // Дальше как в Windows: изменился — забрать, нет — подождать
+        m_x11BeforeSig=x11ClipSignature();
+        sendCopyKeysX11(x11Lib, xDisplay);
+        m_x11Tries=0;
+        QTimer::singleShot(300, this, &Clipper::clipX11AfterCopy);
     }
+#endif
+}
+
+
+// Слепок буфера: форматы+текст+html+флаг картинки. Сырые данные всех
+// форматов не годятся: метки времени меняются при каждом чтении
+// и "изменение" было бы всегда
+QString Clipper::x11ClipSignature(void)
+{
+#if !defined(Q_OS_LINUX)
+    return QString();
+#else
+    const QMimeData *mime=(QApplication::clipboard()!=nullptr)
+        ? QApplication::clipboard()->mimeData() : nullptr;
+    if(!mime)
+        return QStringLiteral("null");
+
+    return mime->formats().join(QChar(',')) + QChar('|')
+         + mime->text() + QChar('|') + mime->html() + QChar('|')
+         + (mime->hasImage() ? QChar('I') : QChar('-'));
+#endif
+}
+
+
+// Эмуляция Ctrl+C через XTest (Display* и libXtst — opaque void*,
+// Xlib-заголовки не тянутся). Нет библиотеки или символов —
+// тихо ничего не делаем, дальше отработает забор как есть
+void Clipper::sendCopyKeysX11(void *x11Lib, void *xDisplay)
+{
+#if !defined(Q_OS_LINUX)
+    Q_UNUSED(x11Lib)
+    Q_UNUSED(xDisplay)
+#else
+    if(!x11Lib || !xDisplay)
+        return;
+
+    static void *xtstLib=nullptr;
+    static bool xtstTried=false;
+    if(!xtstTried)
+    {
+        xtstTried=true;
+        xtstLib=dlopen("libXtst.so.6", RTLD_NOW);
+        if(!xtstLib)
+            xtstLib=dlopen("libXtst.so", RTLD_NOW);
+    }
+    if(!xtstLib)
+    {
+        qDebug() << "Clipper: libXtst missing, no X11 copy emulation";
+        return;
+    }
+
+    typedef int (*FakeKeyFunc)(void *, unsigned int, int, unsigned long);
+    FakeKeyFunc pFake=(FakeKeyFunc)dlsym(xtstLib, "XTestFakeKeyEvent");
+    XStringToKeysymFunc pStringToKeysym=(XStringToKeysymFunc)dlsym(x11Lib, "XStringToKeysym");
+    XKeysymToKeycodeFunc pKeysymToKeycode=(XKeysymToKeycodeFunc)dlsym(x11Lib, "XKeysymToKeycode");
+    XFlushFunc pFlush=(XFlushFunc)dlsym(x11Lib, "XFlush");
+    if(!pFake || !pStringToKeysym || !pKeysymToKeycode || !pFlush)
+    {
+        qDebug() << "Clipper: XTest symbols missing";
+        return;
+    }
+
+    const unsigned int ctrlCode=pKeysymToKeycode(xDisplay, pStringToKeysym("Control_L"));
+    const unsigned int cCode=pKeysymToKeycode(xDisplay, pStringToKeysym("c"));
+    if(ctrlCode==0 || cCode==0)
+    {
+        qDebug() << "Clipper: no X11 keycodes for Ctrl+C";
+        return;
+    }
+
+    pFake(xDisplay, ctrlCode, 1, 0);
+    pFake(xDisplay, cCode, 1, 0);
+    pFake(xDisplay, cCode, 0, 0);
+    pFake(xDisplay, ctrlCode, 0, 0);
+    pFlush(xDisplay);
+    qDebug() << "Clipper: X11 Ctrl+C sent";
+#endif
+}
+
+
+void Clipper::clipX11AfterCopy(void)
+{
+#if defined(Q_OS_LINUX)
+    const QString nowSig=x11ClipSignature();
+    qDebug() << "Clipper: after hotkey copy changed" << (nowSig!=m_x11BeforeSig);
+
+    if(nowSig!=m_x11BeforeSig)
+    {
+        clipNow();
+        return;
+    }
+
+    m_x11Tries=0;
+    QTimer::singleShot(250, this, &Clipper::clipX11WaitRetry);
+#endif
+}
+
+
+void Clipper::clipX11WaitRetry(void)
+{
+#if defined(Q_OS_LINUX)
+    // Медленная копия: перепослать Ctrl+C и подождать ещё.
+    // Всего ~2 секунды, затем забор как есть (дедуп отсечет
+    // полное совпадение, мусорной вставки не будет)
+    const QString nowSig=x11ClipSignature();
+    qDebug() << "Clipper: wait copy, try" << m_x11Tries
+             << "changed" << (nowSig!=m_x11BeforeSig);
+
+    if(nowSig!=m_x11BeforeSig)
+    {
+        clipNow();
+        return;
+    }
+
+    if(m_x11Tries<8)
+    {
+        m_x11Tries++;
+        sendCopyKeysX11(x11Lib, xDisplay);
+        QTimer::singleShot(250, this, &Clipper::clipX11WaitRetry);
+        return;
+    }
+
+    clipNow();
 #endif
 }
 

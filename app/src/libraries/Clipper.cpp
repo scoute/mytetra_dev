@@ -44,6 +44,8 @@
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "views/tree/TreeScreen.h"
+#include "views/recordTable/RecordTableScreen.h"
+#include "controllers/recordTable/RecordTableController.h"
 
 
 extern AppConfig mytetraConfig;
@@ -701,6 +703,24 @@ bool Clipper::finishClip(ClipData &clipData)
     {
         message+=tr(" (skipped %1 image(s), see limits in settings)").arg(clipData.skippedImages);
         qWarning() << "Clipper: skipped" << clipData.skippedImages << "image(s)";
+    }
+
+    // Новая запись вставлена мимо модели: вид о ней не узнает сам.
+    // Если открыта та же ветка — обновить список и засветить запись
+    if(TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen"))
+    {
+        TreeItem *currentItem=(treeScreen->knowTreeModel!=nullptr)
+            ? treeScreen->knowTreeModel->getItem(treeScreen->getCurrentItemIndex())
+            : nullptr;
+
+        if(currentItem==branchItem)
+        {
+            if(RecordTableController *rtc=find_object<RecordTableController>("recordTableController"))
+                rtc->setTableData(branchItem->recordtableGetTableData());
+
+            if(RecordTableScreen *rtScreen=find_object<RecordTableScreen>("recordTableScreen"))
+                rtScreen->setSelectionToId(recordId);
+        }
     }
 
     notify(tr("Web Clipper"), message);

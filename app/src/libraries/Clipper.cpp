@@ -1,3 +1,14 @@
+// QueryFullProcessImageNameW требует _WIN32_WINNT >= 0x0600.
+ // Определять до любых Qt-заголоков: Qt тянет windows.h первым,
+ // и поздний _WIN32_WINNT уже ничего не даёт (тот же приём в main.cpp)
+#if defined(_WIN32_WINNT) && (_WIN32_WINNT < 0x0600)
+#undef _WIN32_WINNT
+#endif
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+
 #include <QApplication>
 #include <QClipboard>
 #include <QCryptographicHash>

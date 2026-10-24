@@ -1694,6 +1694,28 @@ void Clipper::onWinHotkey(void)
     const WinProcInfo self=processInfo(GetCurrentProcessId());
     qDebug() << "Clipper: hotkey window" << m_hotkeyWindow << fgPid << fg.exe
              << "elevated:" << fg.elevated << "self elevated:" << self.elevated;
+
+    // Какой именно контрол в фокусе: Ctrl+A бьёт в него. Если это не
+    // контент (адресная строка, хром, диалог), выделять нечего —
+    // и это видно сразу, а не гадается по тишине буфера
+    DWORD fgTid=GetWindowThreadProcessId(static_cast<HWND>(m_hotkeyWindow), &fgPid);
+    HWND focusedChild=nullptr;
+    wchar_t childClass[128]={0};
+
+    if(fgTid!=0)
+    {
+        GUITHREADINFO threadInfo={0};
+        threadInfo.cbSize=sizeof(threadInfo);
+
+        if(GetGUIThreadInfo(fgTid, &threadInfo) && threadInfo.hwndFocus!=nullptr)
+        {
+            focusedChild=threadInfo.hwndFocus;
+            RealGetWindowClassW(focusedChild, childClass, 128);
+        }
+    }
+
+    qDebug() << "Clipper: hotkey focus child" << focusedChild
+             << QString::fromWCharArray(childClass);
     delete m_savedClipboard;
     m_savedClipboard=nullptr;
     m_fullWindowFlow=false;

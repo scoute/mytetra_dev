@@ -622,6 +622,10 @@ MyTetra должна быть запущена.</translation>
         <translation>Частые 16</translation>
     </message>
     <message>
+        <source>Open original note on duplicate clip</source>
+        <translation>Открывать оригинал при дубле клипа</translation>
+    </message>
+    <message>
         <source>Ask every time (popup window)</source>
         <translation>Спрашивать каждый раз (всплывающее окно)</translation>
     </message>
@@ -2000,9 +2004,12 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Веб-клиппер</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/Clipper.cpp" line="506"/>
         <source>Already clipped, skipped.</source>
         <translation>Уже вставлено, пропущено.</translation>
+    </message>
+    <message>
+        <source>Already clipped, opened existing note.</source>
+        <translation>Уже вставлено, открыта существующая заметка.</translation>
     </message>
     <message>
         <source>Saved to %1: %2</source>

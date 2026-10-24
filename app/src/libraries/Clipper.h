@@ -253,10 +253,6 @@ private:
     // Общий хвост вставки готового ClipData: ветка, дедуп, запись, трей.
     // Возвращает успех для сигнала clipFinished
     bool finishClip(ClipData &clipData);
-
-    // Заметка из заголовка окна без выделения (хоткей в браузере):
-    // название страницы, ссылка пустая — взять её неоткуда
-    void clipWindowTitle(const QString &caption);
 };
 
 #endif // _CLIPPER_H_

@@ -5,10 +5,12 @@
 #include <QList>
 #include <QPair>
 #include <QString>
+#include <QSortFilterProxyModel>
 
 class KnowTreeModel;
 class QGridLayout;
 class QRadioButton;
+class QLineEdit;
 class QScrollArea;
 class QStackedWidget;
 class QTreeView;
@@ -16,9 +18,27 @@ class QDialogButtonBox;
 class QModelIndex;
 
 
+// Фильтр дерева: совпадение по имени оставляет ветку, рекурсивный
+// режим Qt сам показывает всю цепочку предков (полная глубина видна)
+class ClipBranchFilter : public QSortFilterProxyModel
+{
+ public:
+  explicit ClipBranchFilter(QObject *parent=nullptr);
+
+  void setFilterText(const QString &text);
+
+ protected:
+  bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+
+ private:
+  QString m_text;
+};
+
+
 // Модальный вопрос клиппера "куда вставить": два вида на выбор —
-// плитка кнопок и живое дерево. Плитка — корневые ветки с двумя
-// уровнями вложений, дерево — вся иерархия на той же модели.
+// плитка недавних веток и живое дерево. Плитка — недавние по истории
+// вставок (пусто — полный список как раньше), дерево — вся иерархия
+// на той же модели. Фильтр режет оба вида, глубину дерева не трогает.
 // Клик по плитке или двойной клик в дереве сразу вставляет.
 // Отмена — пустая строка
 
@@ -43,6 +63,7 @@ class ClipBranchDialog : public QDialog
  private slots:
   void onTileClicked(void);
   void onViewModeChanged(void);
+  void onFilterChanged(const QString &text);
   void onTreeDoubleClicked(const QModelIndex &index);
   void onTreeSelectionChanged(void);
   void onOkClicked(void);
@@ -56,9 +77,11 @@ class ClipBranchDialog : public QDialog
   QGridLayout *m_grid;
   QRadioButton *m_tilesRadio;
   QRadioButton *m_treeRadio;
+  QLineEdit *m_searchEdit;
   QStackedWidget *m_stack;
   QScrollArea *m_tilesScroll;
   QTreeView *m_treeView;
+  ClipBranchFilter *m_treeFilter;
   QDialogButtonBox *m_buttonBox;
 };
 

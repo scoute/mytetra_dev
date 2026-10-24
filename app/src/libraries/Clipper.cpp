@@ -354,25 +354,48 @@ QString Clipper::extractHtmlTitle(const QString &html)
 }
 
 
-// Название самой веб-страницы из заголовка окна: отрезается суффикс
-// вида " - Google Chrome". Не браузер — заголовок как есть
-QString Clipper::cleanWindowCaption(const QString &caption)
+// Суффикс браузера в шапке окна (" - Google Chrome" и т.п.).
+// Дефис, en dash, em dash и пара браузеров кириллицей — файл UTF-8,
+// поэтому литералами, а не hex-последовательностями
+static const QRegularExpression &browserCaptionSuffix(void)
 {
-    // Дефис, en dash, em dash и пара браузеров кириллицей — файл UTF-8,
-    // поэтому литералами, а не hex-последовательностями
     static const QRegularExpression browserRe("\\s+[—–-]\\s*"
                                               "(Google Chrome|Chromium|Mozilla Firefox|Firefox|"
                                               "Microsoft Edge|Opera|Vivaldi|Brave|"
                                               "Яндекс Браузер|Yandex)"
                                               "\\s*$",
                                               QRegularExpression::CaseInsensitiveOption);
+    return browserRe;
+}
 
-    const QString cleaned=caption.trimmed().remove(browserRe).trimmed();
+
+// Название самой веб-страницы из заголовка окна: отрезается суффикс
+// вида " - Google Chrome". Не браузер — заголовок как есть
+QString Clipper::cleanWindowCaption(const QString &caption)
+{
+    const QString cleaned=caption.trimmed().remove(browserCaptionSuffix()).trimmed();
 
     if(!cleaned.isEmpty())
         return cleaned;
 
     return caption.trimmed();
+}
+
+
+// Заголовок окна именно браузера: название страницы без суффикса.
+// Пусто если суффикса известного браузера нет (терминал, редактор) —
+// тогда честнее первая строка, а не шапка чужого окна
+QString Clipper::browserTitleFromCaption(const QString &caption)
+{
+    const QString trimmed=caption.trimmed();
+    if(trimmed.isEmpty())
+        return QString();
+
+    const QRegularExpressionMatch match=browserCaptionSuffix().match(trimmed);
+    if(!match.hasMatch())
+        return QString();
+
+    return trimmed.left(match.capturedStart()).trimmed();
 }
 
 
@@ -964,13 +987,22 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
 
     QString plainText=document.toPlainText();
 
+    // Название: <title> (во фрагменте его почти никогда нет),
+    // затем шапка окна браузера из момента хоткея, затем первая строка.
+    // Шапка забирается и очищается здесь: прямой забор без хоткея
+    // не должен подхватывать чужой заголовок
+    const QString browserTitle=browserTitleFromCaption(m_hotkeyCaption);
+    m_hotkeyCaption.clear();
+
     if(!pageTitle.isEmpty())
         clipData.title=pageTitle;
+    else if(!browserTitle.isEmpty())
+        clipData.title=browserTitle;
     else
         clipData.title=makeTitle(plainText);
 
     qDebug() << "Clipper: collect url" << (pageUrl.isEmpty() ? QStringLiteral("-") : pageUrl)
-             << "titleSrc" << (!pageTitle.isEmpty() ? "page" : "text")
+             << "titleSrc" << (!pageTitle.isEmpty() ? "page" : (!browserTitle.isEmpty() ? "window" : "text"))
              << "htmlBytes" << clipData.html.size();
 
     // Ссылка на источник: явная из --url, затем SourceURL страницы,
@@ -1792,6 +1824,7 @@ void Clipper::onX11Activity(void)
         // иначе заберется предыдущее содержимое (протухший буфер).
         // Дальше как в Windows: изменился — забрать, нет — подождать
         m_x11BeforeSig=x11ClipSignature();
+        m_hotkeyCaption=x11ActiveWindowCaption(x11Lib, xDisplay);
         sendCopyKeysX11(x11Lib, xDisplay);
         m_x11Tries=0;
         QTimer::singleShot(300, this, &Clipper::clipX11AfterCopy);
@@ -1876,6 +1909,113 @@ void Clipper::sendCopyKeysX11(void *x11Lib, void *xDisplay)
 }
 
 
+// Заголовок активного окна: _NET_WM_NAME (UTF-8), запасной XFetchName.
+// Вверх по родителям не выше двух колен (фокус бывает на дочернем)
+QString Clipper::x11ActiveWindowCaption(void *x11Lib, void *xDisplay)
+{
+#if !defined(Q_OS_LINUX)
+    Q_UNUSED(x11Lib)
+    Q_UNUSED(xDisplay)
+    return QString();
+#else
+    if(!x11Lib || !xDisplay)
+        return QString();
+
+    typedef int (*GetInputFocusFunc)(void *, unsigned long *, int *);
+    typedef unsigned long (*InternAtomFunc)(void *, const char *, int);
+    typedef int (*GetPropertyFunc)(void *, unsigned long, unsigned long, long, long, int,
+                                   unsigned long, unsigned long *, int *, unsigned long *,
+                                   unsigned long *, unsigned char **);
+    typedef int (*FetchNameFunc)(void *, unsigned long, char **);
+    typedef int (*QueryTreeFunc)(void *, unsigned long, unsigned long *,
+                                 unsigned long *, unsigned long **, unsigned int *);
+    typedef int (*FreeFunc)(void *);
+
+    GetInputFocusFunc pGetFocus=(GetInputFocusFunc)dlsym(x11Lib, "XGetInputFocus");
+    InternAtomFunc pInternAtom=(InternAtomFunc)dlsym(x11Lib, "XInternAtom");
+    GetPropertyFunc pGetProperty=(GetPropertyFunc)dlsym(x11Lib, "XGetWindowProperty");
+    FetchNameFunc pFetchName=(FetchNameFunc)dlsym(x11Lib, "XFetchName");
+    QueryTreeFunc pQueryTree=(QueryTreeFunc)dlsym(x11Lib, "XQueryTree");
+    FreeFunc pFree=(FreeFunc)dlsym(x11Lib, "XFree");
+    if(!pGetFocus || !pInternAtom || !pGetProperty || !pFetchName || !pFree)
+    {
+        qDebug() << "Clipper: X11 title symbols missing";
+        return QString();
+    }
+
+    const unsigned long utf8Atom=pInternAtom(xDisplay, "UTF8_STRING", 0);
+    const unsigned long nameAtom=pInternAtom(xDisplay, "_NET_WM_NAME", 0);
+
+    unsigned long window=0;
+    int revert=0;
+    pGetFocus(xDisplay, &window, &revert);
+
+    // Фокус бывает на дочернем окне без имени: подняться к родителям
+    for(int level=0; level<3 && window!=0 && window!=1; ++level)
+    {
+        unsigned long actualType=0;
+        int actualFormat=0;
+        unsigned long itemCount=0;
+        unsigned long bytesAfter=0;
+        unsigned char *prop=nullptr;
+
+        if(pGetProperty(xDisplay, window, nameAtom, 0, 1024, 0,
+                        utf8Atom, &actualType, &actualFormat,
+                        &itemCount, &bytesAfter, &prop)==0 &&
+           prop!=nullptr && itemCount>0)
+        {
+            const QString title=QString::fromUtf8(reinterpret_cast<const char *>(prop),
+                                                  static_cast<int>(itemCount));
+            pFree(prop);
+            if(!title.trimmed().isEmpty())
+            {
+                qDebug() << "Clipper: X11 window title:" << title;
+                return title;
+            }
+        }
+        else if(prop!=nullptr)
+            pFree(prop);
+
+        if(pQueryTree==nullptr)
+            break;
+
+        unsigned long root=0;
+        unsigned long parent=0;
+        unsigned long *children=nullptr;
+        unsigned int childCount=0;
+        if(pQueryTree(xDisplay, window, &root, &parent, &children, &childCount)==0)
+            break;
+
+        if(children!=nullptr)
+            pFree(children);
+
+        if(parent==0 || parent==root)
+            break;
+
+        window=parent;
+    }
+
+    // Запасной вариант: старый XA_STRING через XFetchName
+    if(window!=0 && window!=1)
+    {
+        char *name=nullptr;
+        if(pFetchName(xDisplay, window, &name)!=0 && name!=nullptr)
+        {
+            const QString title=QString::fromLocal8Bit(name);
+            pFree(name);
+            if(!title.trimmed().isEmpty())
+            {
+                qDebug() << "Clipper: X11 window title (legacy):" << title;
+                return title;
+            }
+        }
+    }
+
+    return QString();
+#endif
+}
+
+
 void Clipper::clipX11AfterCopy(void)
 {
 #if defined(Q_OS_LINUX)
@@ -1933,7 +2073,8 @@ void Clipper::onWinHotkey(void)
     // из заголовка окна (название страницы), а не из чужого содержимого
     m_hotkeyClipSeq=GetClipboardSequenceNumber();
     m_hotkeyWindow=GetForegroundWindow();
-    m_hotkeyTitle=cleanWindowCaption(windowCaption(m_hotkeyWindow));
+    m_hotkeyCaption=windowCaption(m_hotkeyWindow);
+    m_hotkeyTitle=cleanWindowCaption(m_hotkeyCaption);
 
     DWORD fgPid=0;
     GetWindowThreadProcessId(static_cast<HWND>(m_hotkeyWindow), &fgPid);
@@ -1992,6 +2133,10 @@ void Clipper::clipNowAfterHotkey(void)
         if(fgPid==GetCurrentProcessId())
         {
             qDebug() << "Clipper: hotkey in own window without selection, skipped";
+
+            // Шапка чужого окна нам не нужна: следующий прямой забор
+            // не должен подхватить протухший заголовок
+            m_hotkeyCaption.clear();
             return;
         }
     }

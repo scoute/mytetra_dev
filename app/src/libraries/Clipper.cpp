@@ -759,6 +759,59 @@ QByteArray Clipper::readNativeHtmlFormat(void)
 }
 
 
+// Сведения о процессе для диагностики UIPI: ввод из менее
+// привилегированного процесса в более привилегированный режется молча
+struct WinProcInfo
+{
+    QString exe;
+    bool elevated=false;
+    bool known=false;
+};
+
+static WinProcInfo processInfo(DWORD pid)
+{
+    WinProcInfo info;
+
+    if(pid==0)
+        return info;
+
+    HANDLE process=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+
+    if(process==nullptr)
+        return info;
+
+    wchar_t path[1024]={0};
+    DWORD pathSize=1024;
+
+    if(QueryFullProcessImageNameW(process, 0, path, &pathSize) && pathSize>0)
+    {
+        info.exe=QString::fromWCharArray(path, pathSize);
+        info.exe=info.exe.section(QLatin1Char('\\'), -1).section(QLatin1Char('/'), -1);
+    }
+
+    HANDLE token=nullptr;
+
+    if(OpenProcessToken(process, TOKEN_QUERY, &token))
+    {
+        TOKEN_ELEVATION elevation={0};
+        DWORD returned=0;
+
+        if(GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &returned) &&
+           returned==sizeof(elevation))
+        {
+            info.elevated=(elevation.TokenIsElevated!=0);
+            info.known=true;
+        }
+
+        CloseHandle(token);
+    }
+
+    CloseHandle(process);
+
+    return info;
+}
+
+
 // Заголовок окна по хендлу для хоткея без выделения
 QString Clipper::windowCaption(void *hwnd)
 {
@@ -1599,6 +1652,13 @@ void Clipper::onWinHotkey(void)
     m_hotkeyClipSeq=GetClipboardSequenceNumber();
     m_hotkeyWindow=GetForegroundWindow();
     m_hotkeyTitle=cleanWindowCaption(windowCaption(m_hotkeyWindow));
+
+    DWORD fgPid=0;
+    GetWindowThreadProcessId(static_cast<HWND>(m_hotkeyWindow), &fgPid);
+    const WinProcInfo fg=processInfo(fgPid);
+    const WinProcInfo self=processInfo(GetCurrentProcessId());
+    qDebug() << "Clipper: hotkey window" << m_hotkeyWindow << fgPid << fg.exe
+             << "elevated:" << fg.elevated << "self elevated:" << self.elevated;
     delete m_savedClipboard;
     m_savedClipboard=nullptr;
     m_fullWindowFlow=false;

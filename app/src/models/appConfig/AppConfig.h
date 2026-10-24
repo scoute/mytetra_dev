@@ -418,6 +418,11 @@ public:
     int get_clipperaskview(void);
     void set_clipperaskview(int mode);
 
+    // Недавние ветки клипов: id через ";", свежие впереди, лимит 12.
+    // Плитка опроса показывает их вместо полного списка
+    QString get_clipperrecent(void);
+    void set_clipperrecent(const QString &ids);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -573,6 +578,7 @@ private:
     QStringList get_parameter_table_54(bool withEndSignature=true);
     QStringList get_parameter_table_55(bool withEndSignature=true);
     QStringList get_parameter_table_56(bool withEndSignature=true);
+    QStringList get_parameter_table_57(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

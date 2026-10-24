@@ -144,7 +144,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_56(true);
+        QStringList actualTable=get_parameter_table_57(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1552,6 +1552,19 @@ void AppConfig::set_clipperaskview(int mode)
 }
 
 
+// Недавние ветки клипов: id через ";", свежие впереди
+QString AppConfig::get_clipperrecent(void)
+{
+    return this->get_parameter("clipperrecent");
+}
+
+
+void AppConfig::set_clipperrecent(const QString &ids)
+{
+    m_conf->setValue("clipperrecent", ids);
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -2034,6 +2047,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_54;
     parameterFunctions << &AppConfig::get_parameter_table_55;
     parameterFunctions << &AppConfig::get_parameter_table_56;
+    parameterFunctions << &AppConfig::get_parameter_table_57;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3182,6 +3196,31 @@ QStringList AppConfig::get_parameter_table_56(bool withEndSignature)
     // Клиппер: вид опроса "куда вставить" (0 — плитка, 1 — дерево).
     // Дефолт 0 — прежний вид на старых конфигах
     table << "clipperaskview" << "int" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_57(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 56, кроме вида опроса:
+    // дефолтом становится дерево
+    table << removeParameterFromTable("clipperaskview", get_parameter_table_56(false));
+
+    // Клиппер: вид опроса "куда вставить" (0 — плитка, 1 — дерево).
+    // Дефолт 1 — дерево. Сохраненный выбор не трогается: апдейтер
+    // хранит имеющееся значение, дефолт только для новых конфигов
+    table << "clipperaskview" << "int" << "1";
+
+    // Клиппер: недавние ветки вставок, id через ";", свежие впереди
+    table << "clipperrecent" << "QString" << "";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

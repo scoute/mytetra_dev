@@ -637,6 +637,10 @@ MyTetra должна быть запущена.</translation>
         <source>Tree</source>
         <translation>Дерево</translation>
     </message>
+    <message>
+        <source>Filter branches...</source>
+        <translation>Фильтр веток...</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Crypt</name>

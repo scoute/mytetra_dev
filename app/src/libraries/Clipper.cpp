@@ -692,6 +692,9 @@ bool Clipper::finishClip(ClipData &clipData)
         return false;
     }
 
+    // Ветка в недавние: плитка опроса показывает их вместо полного списка
+    rememberRecentBranch(branchItem->getField(QStringLiteral("id")));
+
     QString message=tr("Saved to %1: %2").arg(branchItem->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
                                                      clipData.title);
 
@@ -1258,6 +1261,23 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
     mytetraConfig.set_clipperbranchid(branchItem->getField("id"));
     saveTree();
     return true;
+}
+
+
+// Недавняя ветка в начало списка clipperrecent (лимит 12).
+// Плитка опроса показывает их вместо полного списка
+void Clipper::rememberRecentBranch(const QString &branchId)
+{
+    if(branchId.isEmpty())
+        return;
+
+    QStringList ids=mytetraConfig.get_clipperrecent().split(QChar(';'), Qt::SkipEmptyParts);
+    ids.removeAll(branchId);
+    ids.prepend(branchId);
+    while(ids.size()>12)
+        ids.removeLast();
+
+    mytetraConfig.set_clipperrecent(ids.join(QChar(';')));
 }
 
 

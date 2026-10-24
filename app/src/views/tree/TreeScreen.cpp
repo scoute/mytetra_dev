@@ -200,6 +200,7 @@ void TreeScreen::setupActions(void)
 
  // Строка фильтра над деревом: тот же приём что в опросе клипа
  treeFilterEdit=new QLineEdit(this);
+ treeFilterEdit->setObjectName(QStringLiteral("treeFilterEdit"));
  treeFilterEdit->setPlaceholderText(tr("Filter branches..."));
  treeFilterEdit->setClearButtonEnabled(true);
  treeFilterEdit->setVisible(mytetraConfig.get_treeFilterVisible());
@@ -259,7 +260,9 @@ void TreeScreen::applyTreeFilter(const QString &text)
   if(knowTreeModel==nullptr)
     return;
 
-  if(KnowTreeDelegate *delegate=qobject_cast<KnowTreeDelegate *>(knowTreeView->itemDelegate()))
+  QAbstractItemDelegate *rawDelegate=knowTreeView->itemDelegate();
+  qDebug() << "DBG delegate ptr" << rawDelegate << "view" << knowTreeView;
+  if(KnowTreeDelegate *delegate=qobject_cast<KnowTreeDelegate *>(rawDelegate))
     delegate->setFilterText(text);
 
   if(text.isEmpty())
@@ -314,6 +317,29 @@ void TreeScreen::showAllBranches(const QModelIndex &parent)
     knowTreeView->setRowHidden(row, parent, false);
     showAllBranches(model->index(row, 0, parent));
   }
+}
+
+
+// Прыжок извне при активном фильтре: цель может быть скрыта.
+// Скрыта — фильтр сбросить (строка при этом остается на месте),
+// видна — ничего не трогать. Невалидный путь — тоже не трогать:
+// дальше setTreePosition сам разберется
+void TreeScreen::ensurePathVisible(const QStringList &path)
+{
+  if(treeFilterEdit->text().isEmpty() || knowTreeModel==nullptr)
+    return;
+
+  TreeItem *item=knowTreeModel->getItem(path);
+  if(item==nullptr)
+    return;
+
+  const QModelIndex index=knowTreeModel->getIndexByItem(item);
+  for(QModelIndex current=index; current.isValid(); current=current.parent())
+    if(knowTreeView->isRowHidden(current.row(), current.parent()))
+    {
+      treeFilterEdit->clear();
+      return;
+    }
 }
 
 

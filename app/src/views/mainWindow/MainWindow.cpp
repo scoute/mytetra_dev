@@ -1763,6 +1763,11 @@ void MainWindow::setRecordtablePositionById(QString id)
 
 void MainWindow::setTreeAndRecordtablePositions(QStringList treePath, QString recordId)
 {
+    // Прыжок извне при активном фильтре дерева: цель может быть скрыта,
+    // тогда фильтр сбрасывается здесь, до позиционирования
+    if(treeScreen!=nullptr)
+        treeScreen->ensurePathVisible(treePath);
+
     // В дереве выставляется ветка с заданным путем
     // При этом автоматически вызовется слот TreeScreen::onKnowtreeClicked(),
     // так как происходит выбор в selection-модели

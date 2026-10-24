@@ -45,6 +45,11 @@ public:
  void setCursorToIndex(QModelIndex index);
  void setCursorToId(QString nodeId);
 
+ // Прыжок извне (поиск, избранное, история, дубль клипа) в скрытую
+ // фильтром ветку: фильтр сбрасывается, иначе прыжок в невидимое.
+ // Видимой цели фильтр не трогается
+ void ensurePathVisible(const QStringList &path);
+
  // Строка фильтра над деревом: показать/скрыть (тумблер в меню Вид).
  // Скрытие сбрасывает текст и возвращает все ветки
  void setTreeFilterVisible(bool visible);

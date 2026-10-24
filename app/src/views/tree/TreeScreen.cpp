@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QToolBar>
+#include <QLineEdit>
 #include <QInputDialog>
 
 #include "TreeScreen.h"
@@ -195,6 +196,12 @@ void TreeScreen::setupActions(void)
  favoritesPanel=new FavoritesPanel(this);
  favoritesPanel->setObjectName("favoritesPanel");
  favoritesPanel->hide();
+
+ // Строка фильтра над деревом: тот же приём что в опросе клипа
+ treeFilterEdit=new QLineEdit(this);
+ treeFilterEdit->setPlaceholderText(tr("Filter branches..."));
+ treeFilterEdit->setClearButtonEnabled(true);
+ treeFilterEdit->setVisible(mytetraConfig.get_treeFilterVisible());
 }
 
 
@@ -230,6 +237,79 @@ void TreeScreen::setupShortcuts(void)
 void TreeScreen::retranslateUi(void)
 {
     setupShortcuts();
+
+    treeFilterEdit->setPlaceholderText(tr("Filter branches..."));
+}
+
+
+// Строка фильтра над деревом: показать/скрыть (тумблер в меню Вид).
+// Скрытие сбрасывает текст и возвращает все ветки
+void TreeScreen::setTreeFilterVisible(bool visible)
+{
+  treeFilterEdit->setVisible(visible);
+
+  if(!visible)
+    treeFilterEdit->clear();
+}
+
+
+void TreeScreen::applyTreeFilter(const QString &text)
+{
+  if(knowTreeModel==nullptr)
+    return;
+
+  if(text.isEmpty())
+  {
+    showAllBranches(QModelIndex());
+    return;
+  }
+
+  filterBranches(QModelIndex(), text);
+}
+
+
+// Совпадение или видимый потомок — показать, предков совпадений
+// раскрыть (иначе находки не видно). Индексы исходной модели целы:
+// фильтр режет скрытием строк, а не прокси-моделью
+bool TreeScreen::filterBranches(const QModelIndex &parent, const QString &text)
+{
+  KnowTreeModel *model=knowTreeModel;
+  bool anyVisible=false;
+
+  for(int row=0; row<model->rowCount(parent); ++row)
+  {
+    const QModelIndex index=model->index(row, 0, parent);
+    TreeItem *item=model->getItem(index);
+
+    const bool selfMatch=item!=nullptr &&
+        item->getField(QStringLiteral("name")).contains(text, Qt::CaseInsensitive);
+    const bool childVisible=filterBranches(index, text);
+    const bool visible=selfMatch || childVisible;
+
+    knowTreeView->setRowHidden(row, parent, !visible);
+
+    if(childVisible)
+      knowTreeView->setExpanded(index, true);
+
+    if(visible)
+      anyVisible=true;
+  }
+
+  return anyVisible;
+}
+
+
+void TreeScreen::showAllBranches(const QModelIndex &parent)
+{
+  KnowTreeModel *model=knowTreeModel;
+  if(model==nullptr)
+    return;
+
+  for(int row=0; row<model->rowCount(parent); ++row)
+  {
+    knowTreeView->setRowHidden(row, parent, false);
+    showAllBranches(model->index(row, 0, parent));
+  }
 }
 
 
@@ -584,6 +664,10 @@ void TreeScreen::setupSignals(void)
  connect(knowTreeView, &KnowTreeView::customContextMenuRequested,
          this,         &TreeScreen::onCustomContextMenuRequested);
 
+ // Фильтр дерева: живой поиск по подстроке имени
+ connect(treeFilterEdit, &QLineEdit::textChanged,
+         this,            &TreeScreen::applyTreeFilter);
+
  // Контекстное меню тулбара: только на пустом месте, там единственный
  // пункт настройки порядка и видимости кнопок
  toolsLine->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -644,11 +728,20 @@ void TreeScreen::assembly(void)
 
  // Избранное и дерево в двигаемом разделителе: долю панели
  // выбирает пользователь. Панель не схлопывается в ноль чтобы
- // ее нельзя было потерять drag-ом, дерево забирает остаток
+ // ее нельзя было потерять drag-ом, дерево забирает остаток.
+ // Дерево в контейнере со строкой фильтра сверху
  QSplitter *favoritesSplitter=new QSplitter(Qt::Vertical, this);
  favoritesSplitter->setObjectName("favoritesSplitter");
  favoritesSplitter->addWidget(favoritesPanel);
- favoritesSplitter->addWidget(knowTreeView);
+
+ QWidget *treeContainer=new QWidget(this);
+ QVBoxLayout *treeContainerLayout=new QVBoxLayout(treeContainer);
+ treeContainerLayout->setContentsMargins(0, 0, 0, 0);
+ treeContainerLayout->setSpacing(0);
+ treeContainerLayout->addWidget(treeFilterEdit);
+ treeContainerLayout->addWidget(knowTreeView);
+
+ favoritesSplitter->addWidget(treeContainer);
  favoritesSplitter->setStretchFactor(0, 0);
  favoritesSplitter->setStretchFactor(1, 1);
  favoritesSplitter->setCollapsible(0, false);

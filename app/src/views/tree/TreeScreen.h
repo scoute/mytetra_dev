@@ -11,6 +11,7 @@
 class QItemSelectionModel;
 class QVBoxLayout;
 class QToolBar;
+class QLineEdit;
 
 class KnowTreeModel;
 class KnowTreeView;
@@ -43,6 +44,10 @@ public:
  // Установка курсора на указанный элемент
  void setCursorToIndex(QModelIndex index);
  void setCursorToId(QString nodeId);
+
+ // Строка фильтра над деревом: показать/скрыть (тумблер в меню Вид).
+ // Скрытие сбрасывает текст и возвращает все ветки
+ void setTreeFilterVisible(bool visible);
  
  void updateBranchOnScreen(const QModelIndex &index);
 
@@ -83,6 +88,10 @@ public slots:
 
 private slots:
 
+ // Фильтрация дерева по подстроке имени: совпадения и их цепочки
+ // предков видны, остальное прячется. Пустая строка — вернуть все
+ void applyTreeFilter(const QString &text);
+
  // Контекстное меню тулбара на пустом месте: единственный пункт -
  // настройка порядка и видимости кнопок
  void onToolbarContextMenu(const QPoint &pos);
@@ -122,7 +131,14 @@ private:
  void setupSignals(void);
  void setupActions(void);
  void assembly(void);
- 
+
+ // Рекурсия фильтра: совпадение или видимый потомок — показать,
+ // предков совпадений раскрыть. Возвращает есть ли видимое в поддереве
+ bool filterBranches(const QModelIndex &parent, const QString &text);
+
+ // Снять все скрытия строк (фильтр очищен)
+ void showAllBranches(const QModelIndex &parent);
+
  void moveUpDownBranch(int direction);
  bool moveCheckEnable(void);
 
@@ -156,6 +172,11 @@ private:
  QList<QWidget *> toolbarSprings;
 
  KnowTreeView  *knowTreeView;
+
+ // Строка фильтра над деревом. Фильтр режет скрытием строк
+ // (setRowHidden), а не прокси-моделью: индексы исходной модели
+ // остаются целыми и весь остальной код дерева не трогается
+ QLineEdit *treeFilterEdit;
 
  // Избранное между тулбаром веток и деревом. Прячется когда пусто
  FavoritesPanel *favoritesPanel=nullptr;

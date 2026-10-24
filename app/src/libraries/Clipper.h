@@ -132,7 +132,8 @@ private slots:
     // иначе Windows-сборка падает "no declaration matches"
     void clipX11AfterCopy(void);
 
-    // Ожидание медленной копии: перепосыл Ctrl+C, затем забор как есть
+    // Ожидание медленной копии: перепосыл Ctrl+C, затем пропуск
+    // (буфер не изменился — выделения не было)
     void clipX11WaitRetry(void);
 
 #if defined(Q_OS_WIN)

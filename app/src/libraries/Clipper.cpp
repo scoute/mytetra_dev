@@ -2076,8 +2076,10 @@ void Clipper::clipX11WaitRetry(void)
 {
 #if defined(Q_OS_LINUX)
     // Медленная копия: перепослать Ctrl+C и подождать ещё.
-    // Всего ~2 секунды, затем забор как есть (дедуп отсечет
-    // полное совпадение, мусорной вставки не будет)
+    // Всего ~2 секунды. Буфер так и не изменился — выделения не было
+    // (медленная копия успела бы): молча пропускаем, чтобы не вставить
+    // протухшее содержимое чужого буфера. Шапка окна тоже сбрасывается,
+    // чтобы прямой забор не подхватил чужой заголовок
     const QString nowSig=x11ClipSignature();
     qDebug() << "Clipper: wait copy, try" << m_x11Tries
              << "changed" << (nowSig!=m_x11BeforeSig);
@@ -2096,7 +2098,8 @@ void Clipper::clipX11WaitRetry(void)
         return;
     }
 
-    clipNow();
+    m_hotkeyCaption.clear();
+    notify(tr("Web Clipper"), tr("No selection to clip."));
 #endif
 }
 

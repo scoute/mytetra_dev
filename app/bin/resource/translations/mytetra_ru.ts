@@ -2016,6 +2016,10 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Уже вставлено, открыта существующая заметка.</translation>
     </message>
     <message>
+        <source>No selection to clip.</source>
+        <translation>Нет выделения для вставки.</translation>
+    </message>
+    <message>
         <source>Saved to %1: %2</source>
         <translation>Сохранено в %1: %2</translation>
     </message>

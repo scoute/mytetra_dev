@@ -69,10 +69,11 @@ protected:
   QSpinBox *clipperMaxImages;
   QSpinBox *clipperMaxImageSizeMb;
 
-  // Целевая ветка: радиокнопки "по умолчанию" / "выбранная" и список
-  // корневых веток с двумя уровнями вложений
+  // Целевая ветка: радиокнопки "по умолчанию" / "выбранная" / "спросить"
+  // и список корневых веток с двумя уровнями вложений
   QRadioButton *clipperBranchDefault;
   QRadioButton *clipperBranchCustom;
+  QRadioButton *clipperBranchAsk;
   MtComboBox *clipperBranchCombo;
 
   // Подписи формы и сама форма: нужны для перевода на лету

@@ -211,6 +211,7 @@ HEADERS = src/main.h \
     src/views/favoritesPanel/FavoritesPanel.h \
     src/views/backlinksPanel/BacklinksPanel.h \
     src/views/notePicker/NotePickerDialog.h \
+    src/views/clipBranchDialog/ClipBranchDialog.h \
     src/views/contentGallery/ContentGallery.h \
     src/views/contentGallery/GalleryTileDelegate.h \
     src/views/changeHistory/ChangeHistoryDialog.h \
@@ -426,6 +427,7 @@ SOURCES = src/main.cpp \
     src/views/favoritesPanel/FavoritesPanel.cpp \
     src/views/backlinksPanel/BacklinksPanel.cpp \
     src/views/notePicker/NotePickerDialog.cpp \
+    src/views/clipBranchDialog/ClipBranchDialog.cpp \
     src/views/contentGallery/ContentGallery.cpp \
     src/views/contentGallery/GalleryTileDelegate.cpp \
     src/views/changeHistory/ChangeHistoryDialog.cpp \

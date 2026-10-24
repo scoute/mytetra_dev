@@ -128,6 +128,10 @@ void AppConfigPage_Clipper::setupUi(void)
   else
     clipperTilesRecent->setChecked(true);
 
+  // Начальное состояние зависимости применяется сразу: сигналы
+  // toggled при начальной установке еще не подключены
+  onBranchModeChanged();
+
   // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
   // показывает подсказку без задержки наведения
   clipperHelpButton=new QToolButton(this);
@@ -196,7 +200,7 @@ void AppConfigPage_Clipper::assembly(void)
 
   clipperFormLayout->addRow(clipperBranchLabel, branchLayout);
 
-  clipperTilesLabel=new QLabel(tr("Tiles in prompt:"), this);
+  clipperTilesLabel=new QLabel(tr("Tiles:"), this);
 
   QHBoxLayout *tilesLayout=new QHBoxLayout;
   tilesLayout->addWidget(clipperTilesRecent);
@@ -243,6 +247,12 @@ void AppConfigPage_Clipper::updateClipperStatus(void)
 void AppConfigPage_Clipper::onBranchModeChanged(void)
 {
   clipperBranchCombo->setEnabled(clipperBranchCustom->isChecked());
+
+  // Плитки живут только в опросе: в остальных режимах строка серая
+  const bool askMode=clipperBranchAsk->isChecked();
+  clipperTilesLabel->setEnabled(askMode);
+  clipperTilesRecent->setEnabled(askMode);
+  clipperTilesFrequent->setEnabled(askMode);
 }
 
 
@@ -327,7 +337,7 @@ void AppConfigPage_Clipper::retranslateUi(void)
 
   clipperBranchLabel->setText(tr("Target branch:"));
 
-  clipperTilesLabel->setText(tr("Tiles in prompt:"));
+  clipperTilesLabel->setText(tr("Tiles:"));
   clipperTilesRecent->setText(tr("Last 16"));
   clipperTilesFrequent->setText(tr("Most frequent 16"));
 

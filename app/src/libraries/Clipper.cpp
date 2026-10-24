@@ -184,7 +184,14 @@ void sendCopyKeys(void)
     input[2].ki.dwFlags=KEYEVENTF_KEYUP;
     input[3].ki.wVk=VK_CONTROL;
     input[3].ki.dwFlags=KEYEVENTF_KEYUP;
-    SendInput(4, input, sizeof(INPUT));
+    logSendInput("Ctrl+C", SendInput(4, input, sizeof(INPUT)));
+}
+
+void logSendInput(const char *what, UINT sent)
+{
+    if(sent!=4)
+        qDebug() << "Clipper: SendInput" << what << "inserted" << sent
+                 << "of 4, error" << GetLastError();
 }
 
 } // namespace
@@ -1632,7 +1639,7 @@ void Clipper::sendSelectAllKeys(void)
     input[2].ki.dwFlags=KEYEVENTF_KEYUP;
     input[3].ki.wVk=VK_CONTROL;
     input[3].ki.dwFlags=KEYEVENTF_KEYUP;
-    SendInput(4, input, sizeof(INPUT));
+    logSendInput("Ctrl+A", SendInput(4, input, sizeof(INPUT)));
 }
 
 
@@ -1682,10 +1689,11 @@ void Clipper::clipFullWindowCopy(void)
     }
 
     m_hotkeyClipSeq=GetClipboardSequenceNumber();
+    m_fullWindowTries=0;
     qDebug() << "Clipper: full window copy, seq" << m_hotkeyClipSeq;
 
     sendCopyKeys();
-    QTimer::singleShot(300, this, &Clipper::clipFullWindowGrab);
+    QTimer::singleShot(250, this, &Clipper::clipFullWindowGrab);
 }
 
 
@@ -1695,15 +1703,31 @@ void Clipper::clipFullWindowGrab(void)
     m_savedClipboard=nullptr;
     m_fullWindowFlow=false;
 
-    // Опять ничего нового (защищенное поле, пустое окно) —
-    // только заголовок
+    // Опять ничего нового (защищенное поле, пустое окно, медленная
+    // страница) — подождать ещё или откатиться на заголовок
     const DWORD nowSeq=GetClipboardSequenceNumber();
-    qDebug() << "Clipper: full window grab, seq" << m_hotkeyClipSeq << "->" << nowSeq;
+    qDebug() << "Clipper: full window grab, seq" << m_hotkeyClipSeq << "->" << nowSeq
+             << "try" << m_fullWindowTries;
+
+    if(m_hotkeyClipSeq!=0 &&
+       nowSeq==m_hotkeyClipSeq &&
+       IsWindow(static_cast<HWND>(m_hotkeyWindow)) &&
+       m_fullWindowTries<8)
+    {
+        m_fullWindowTries++;
+        QTimer::singleShot(250, this, &Clipper::clipFullWindowGrab);
+        return;
+    }
 
     if(m_hotkeyClipSeq==0 ||
        nowSeq==m_hotkeyClipSeq ||
        !IsWindow(static_cast<HWND>(m_hotkeyWindow)))
     {
+        if(const QMimeData *mime=QApplication::clipboard()->mimeData())
+            qDebug() << "Clipper: fallback clipboard formats" << mime->formats()
+                     << "hasText" << mime->hasText() << "len"
+                     << (mime->hasText() ? mime->text().size() : -1)
+                     << "hasHtml" << mime->hasHtml();
         if(saved!=nullptr)
         {
             if(QApplication::clipboard()!=nullptr)

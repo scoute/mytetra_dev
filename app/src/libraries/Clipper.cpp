@@ -1264,20 +1264,51 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
 }
 
 
-// Недавняя ветка в начало списка clipperrecent (лимит 12).
-// Плитка опроса показывает их вместо полного списка
+// Ветка в историю clipperrecent: пары id:count через ";", свежие впереди.
+// Один список кормит оба режима плиток: последние — как есть,
+// частые — сортировкой по счетчику. Лимит 32 с запасом под оба вида
 void Clipper::rememberRecentBranch(const QString &branchId)
 {
     if(branchId.isEmpty())
         return;
 
-    QStringList ids=mytetraConfig.get_clipperrecent().split(QChar(';'), Qt::SkipEmptyParts);
-    ids.removeAll(branchId);
-    ids.prepend(branchId);
-    while(ids.size()>12)
-        ids.removeLast();
+    QMap<QString, int> counts;
+    QStringList order;
+    const QStringList pairs=mytetraConfig.get_clipperrecent()
+                             .split(QChar(';'), Qt::SkipEmptyParts);
+    for(const QString &pair : pairs)
+    {
+        const int colon=pair.lastIndexOf(QChar(':'));
+        QString id;
+        int count=1;
+        if(colon>0)
+        {
+            id=pair.left(colon);
+            count=pair.mid(colon+1).toInt();
+            if(count<1)
+                count=1;
+        }
+        else
+            id=pair;
 
-    mytetraConfig.set_clipperrecent(ids.join(QChar(';')));
+        if(id.isEmpty() || counts.contains(id))
+            continue;
+
+        counts[id]=count;
+        order << id;
+    }
+
+    counts[branchId]=counts.value(branchId, 0)+1;
+    order.removeAll(branchId);
+    order.prepend(branchId);
+    while(order.size()>32)
+        order.removeLast();
+
+    QStringList result;
+    for(const QString &id : order)
+        result << id+QChar(':')+QString::number(counts.value(id, 1));
+
+    mytetraConfig.set_clipperrecent(result.join(QChar(';')));
 }
 
 

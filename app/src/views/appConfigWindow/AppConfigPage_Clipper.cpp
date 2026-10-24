@@ -115,6 +115,19 @@ void AppConfigPage_Clipper::setupUi(void)
 
   clipperBranchCombo->setEnabled(clipperBranchCustom->isChecked());
 
+  // Нижние плитки опроса: последние 16 или частые 16 (история одна,
+  // с счетчиками — вид выбирается здесь, а не в диалоге)
+  clipperTilesRecent=new QRadioButton(this);
+  clipperTilesRecent->setText(tr("Last 16"));
+
+  clipperTilesFrequent=new QRadioButton(this);
+  clipperTilesFrequent->setText(tr("Most frequent 16"));
+
+  if(mytetraConfig.get_clippertilemode()==1)
+    clipperTilesFrequent->setChecked(true);
+  else
+    clipperTilesRecent->setChecked(true);
+
   // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
   // показывает подсказку без задержки наведения
   clipperHelpButton=new QToolButton(this);
@@ -182,6 +195,15 @@ void AppConfigPage_Clipper::assembly(void)
   branchLayout->addWidget(clipperBranchAsk);
 
   clipperFormLayout->addRow(clipperBranchLabel, branchLayout);
+
+  clipperTilesLabel=new QLabel(tr("Tiles in prompt:"), this);
+
+  QHBoxLayout *tilesLayout=new QHBoxLayout;
+  tilesLayout->addWidget(clipperTilesRecent);
+  tilesLayout->addWidget(clipperTilesFrequent);
+  tilesLayout->addStretch();
+
+  clipperFormLayout->addRow(clipperTilesLabel, tilesLayout);
   clipperLayout->addLayout(clipperFormLayout);
 
   clipperBox->setLayout(clipperLayout);
@@ -305,6 +327,10 @@ void AppConfigPage_Clipper::retranslateUi(void)
 
   clipperBranchLabel->setText(tr("Target branch:"));
 
+  clipperTilesLabel->setText(tr("Tiles in prompt:"));
+  clipperTilesRecent->setText(tr("Last 16"));
+  clipperTilesFrequent->setText(tr("Most frequent 16"));
+
   clipperBranchDefault->setText(tr("To default branch (unsorted_notes)"));
   clipperBranchCustom->setText(tr("To selected branch:"));
   clipperBranchAsk->setText(tr("Ask every time (popup window)"));
@@ -357,6 +383,9 @@ int AppConfigPage_Clipper::applyChanges(void)
     if(!selectedId.isEmpty() && mytetraConfig.get_clipperbranchid()!=selectedId)
       mytetraConfig.set_clipperbranchid(selectedId);
   }
+
+  // Нижние плитки опроса: последние или частые 16
+  mytetraConfig.set_clippertilemode(clipperTilesFrequent->isChecked() ? 1 : 0);
 
   return result;
 }

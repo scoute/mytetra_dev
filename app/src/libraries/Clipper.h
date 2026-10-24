@@ -93,6 +93,12 @@ public:
     // Чистая функция — покрыта тестами
     static QString cleanWindowCaption(const QString &caption);
 
+    // Заголовок окна именно браузера: название страницы без суффикса.
+    // Пусто если суффикса известного браузера нет (терминал, редактор) —
+    // тогда честнее первая строка, а не шапка чужого окна.
+    // Чистая функция — покрыта тестами
+    static QString browserTitleFromCaption(const QString &caption);
+
     // Картинка из data: URL. Пустая если разобрать не удалось. Чистая функция
     static QImage imageFromDataUrl(const QString &url);
 
@@ -193,6 +199,11 @@ private:
     // Эмуляция Ctrl+C через XTest. Нет libXtst — тихо ничего не делает
     static void sendCopyKeysX11(void *x11Lib, void *xDisplay);
 
+    // Заголовок активного окна: _NET_WM_NAME (UTF-8), запасной XFetchName.
+    // Вверх по родителям не выше двух колен (фокус бывает на дочернем).
+    // Пусто если дисплея нет или имени не нашлось — дальше забор как есть
+    static QString x11ActiveWindowCaption(void *x11Lib, void *xDisplay);
+
     void *x11Lib=nullptr;         // handle dlopen("libX11.so.1")
     void *xDisplay=nullptr;       // Display* (opaque, без Xlib-заголовков)
     unsigned long xRootWindow=0;
@@ -215,6 +226,8 @@ private:
     // и общим кодом collectFromClipboard, поэтому без ifdef)
     void *m_hotkeyWindow=nullptr; // Окно под фокусом в момент хоткея
     QString m_hotkeyTitle;         // Его заголовок (название страницы)
+    QString m_hotkeyCaption;       // Сырая шапка окна: из нее берется
+                                  // название страницы если это браузер
     quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
     int m_copyWaitTries=0;         // Попытки дождаться медленной копии
     QString m_x11BeforeSig;        // Слепок буфера до эмуляции Ctrl+C

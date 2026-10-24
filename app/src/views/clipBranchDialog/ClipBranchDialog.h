@@ -8,6 +8,7 @@
 #include <QSortFilterProxyModel>
 
 class KnowTreeModel;
+class TreeItem;
 class QGridLayout;
 class QLineEdit;
 class QScrollArea;
@@ -48,8 +49,14 @@ class ClipBranchDialog : public QDialog
   virtual ~ClipBranchDialog(void);
 
   // Общий листинг для настроек: пары (id ветки, путь " / ").
-  // Корневые + два уровня вложений. Пустой список — дерево не готово
+  // Корневые + два уровня вложений. Пустой список — дерево не готово.
+  // Зашифрованные без введенного пароля выкинуты: вставить туда нельзя
   static QList< QPair<QString, QString> > collectBranches(KnowTreeModel *model);
+
+  // Ветка закрыта: шифрована сама или любой предок, а пароль не введен.
+  // Проверка только для показа (списки, плитки), хранение не трогает:
+  // пароль введут — ветка снова доступна
+  static bool isLocked(const TreeItem *item);
 
   // Сколько плиток внизу опроса: 4 строки по 4
   static const int maxTiles=16;

@@ -300,12 +300,14 @@ void AppConfigPage_Clipper::rebuildBranchList(void)
     clipperBranchCombo->addItem(branches.at(n).second, branches.at(n).first);
 
   // Сохраненная ветка глубже третьего уровня: дописать отдельно,
-  // иначе выбор молча сбросится на значение по умолчанию
+  // иначе выбор молча сбросится на значение по умолчанию.
+  // Закрытая (шифр без пароля) не дописывается: вставить туда нельзя
   const QString savedId=mytetraConfig.get_clipperbranchid();
   if(!savedId.isEmpty() && clipperBranchCombo->findData(savedId)<0 && model!=nullptr)
     if(TreeItem *savedItem=model->getItemById(savedId))
-      clipperBranchCombo->addItem(savedItem->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
-                                 savedItem->getField(QStringLiteral("id")));
+      if(!ClipBranchDialog::isLocked(savedItem))
+        clipperBranchCombo->addItem(savedItem->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
+                                   savedItem->getField(QStringLiteral("id")));
 }
 
 

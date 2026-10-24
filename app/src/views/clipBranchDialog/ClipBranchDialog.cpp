@@ -60,8 +60,28 @@ ClipBranchDialog::~ClipBranchDialog(void)
 }
 
 
+// Ветка закрыта: шифрована сама или любой предок, а пароль не введен.
+// Путь наверх обязателен: дети зашифрованной ветки сами флага
+// могут не нести, но недоступны вместе с ней
+bool ClipBranchDialog::isLocked(const TreeItem *item)
+{
+  if(item==nullptr)
+    return true;
+
+  if(!globalParameters.getCryptKey().isEmpty())
+    return false;
+
+  for(const TreeItem *it=item; it!=nullptr; it=it->parent())
+    if(it->getField(QStringLiteral("crypt"))==QStringLiteral("1"))
+      return true;
+
+  return false;
+}
+
+
 // Корневые + два уровня вложений. Три плоских цикла вместо рекурсии:
-// глубина фиксирована, читать проще, ошибиться негде
+// глубина фиксирована, читать проще, ошибиться негде.
+// Закрытая ветка режется вместе с поддеревом: ниже все равно не пройти
 QList< QPair<QString, QString> > ClipBranchDialog::collectBranches(KnowTreeModel *model)
 {
   QList< QPair<QString, QString> > result;
@@ -76,18 +96,27 @@ QList< QPair<QString, QString> > ClipBranchDialog::collectBranches(KnowTreeModel
   for(int i=0; i<rootItem->childCount(); ++i)
   {
     TreeItem *level1=rootItem->child(i);
+    if(isLocked(level1))
+      continue;
+
     result << qMakePair(level1->getField(QStringLiteral("id")),
                         level1->getPathAsNameWithDelimeter(QStringLiteral(" / ")));
 
     for(int j=0; j<level1->childCount(); ++j)
     {
       TreeItem *level2=level1->child(j);
+      if(isLocked(level2))
+        continue;
+
       result << qMakePair(level2->getField(QStringLiteral("id")),
                           level2->getPathAsNameWithDelimeter(QStringLiteral(" / ")));
 
       for(int k=0; k<level2->childCount(); ++k)
       {
         TreeItem *level3=level2->child(k);
+        if(isLocked(level3))
+          continue;
+
         result << qMakePair(level3->getField(QStringLiteral("id")),
                             level3->getPathAsNameWithDelimeter(QStringLiteral(" / ")));
       }
@@ -286,9 +315,15 @@ void ClipBranchDialog::setupTiles(void)
       if(branches.size()>=maxTiles)
         break;
 
+      // Закрытые (шифр без пароля) показываются только после расшифровки
       if(TreeItem *item=model->getItemById(id))
+      {
+        if(isLocked(item))
+          continue;
+
         branches << qMakePair(item->getField(QStringLiteral("id")),
                               item->getPathAsNameWithDelimeter(QStringLiteral(" / ")));
+      }
     }
 
   if(branches.isEmpty())

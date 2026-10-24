@@ -414,6 +414,10 @@ public:
     int get_clipperbranchmode(void);
     void set_clipperbranchmode(int mode);
 
+    // Вид опроса "куда вставить": 0 — плитка, 1 — дерево
+    int get_clipperaskview(void);
+    void set_clipperaskview(int mode);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -568,6 +572,7 @@ private:
     QStringList get_parameter_table_53(bool withEndSignature=true);
     QStringList get_parameter_table_54(bool withEndSignature=true);
     QStringList get_parameter_table_55(bool withEndSignature=true);
+    QStringList get_parameter_table_56(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

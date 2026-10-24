@@ -186,6 +186,12 @@ private:
 
     // Заголовок окна по хендлу. void* чтобы не тащить windows.h в заголовок
     static QString windowCaption(void *hwnd);
+
+    // Эмуляция Ctrl+A для забора всей страницы
+    static void sendSelectAllKeys(void);
+
+    // Без выделения: выделить всё, скопировать, забрать
+    void clipFullWindow(void);
 #endif
 
     // Состояние хоткея без выделения (типы переносимые, используются

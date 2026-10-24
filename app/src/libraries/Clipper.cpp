@@ -1604,8 +1604,11 @@ void Clipper::clipNowAfterHotkey(void)
     // Ненулевой счетчик и тот же номер: буфер не тронут — выделения
     // не было. Живое окно с названием есть — страница забирается
     // целиком через Ctrl+A; иначе обычный забор скопированного
+    const DWORD nowSeq=GetClipboardSequenceNumber();
+    qDebug() << "Clipper: after hotkey copy seq" << m_hotkeyClipSeq << "->" << nowSeq;
+
     if(m_hotkeyClipSeq!=0 &&
-       GetClipboardSequenceNumber()==m_hotkeyClipSeq &&
+       nowSeq==m_hotkeyClipSeq &&
        !m_hotkeyTitle.isEmpty() &&
        IsWindow(static_cast<HWND>(m_hotkeyWindow)))
     {
@@ -1635,10 +1638,15 @@ void Clipper::sendSelectAllKeys(void)
 
 // Без выделения: выделить всё, скопировать, забрать. Чужой буфер
 // сохраняется и восстанавливается, фокус проверяется — Ctrl+A
-// в чужое окно бить нельзя
+// в чужое окно бить нельзя. Пауза между Ctrl+A и Ctrl+C: медленной
+// странице нужно время на выделение, иначе копируется пустота
 void Clipper::clipFullWindow(void)
 {
-    if(GetForegroundWindow()!=static_cast<HWND>(m_hotkeyWindow))
+    HWND foreground=GetForegroundWindow();
+    qDebug() << "Clipper: full window grab, focus" << foreground
+             << "expected" << m_hotkeyWindow;
+
+    if(foreground!=static_cast<HWND>(m_hotkeyWindow))
     {
         clipWindowTitle(m_hotkeyTitle);
         return;
@@ -1647,9 +1655,36 @@ void Clipper::clipFullWindow(void)
     delete m_savedClipboard;
     m_savedClipboard=cloneMimeData(QApplication::clipboard()->mimeData());
 
-    m_hotkeyClipSeq=GetClipboardSequenceNumber();
-
     sendSelectAllKeys();
+    QTimer::singleShot(300, this, &Clipper::clipFullWindowCopy);
+}
+
+
+// Вторая фаза: выделение уже должно стоять, копировать
+void Clipper::clipFullWindowCopy(void)
+{
+    if(!IsWindow(static_cast<HWND>(m_hotkeyWindow)))
+    {
+        QMimeData *saved=m_savedClipboard;
+        m_savedClipboard=nullptr;
+        m_fullWindowFlow=false;
+
+        if(saved!=nullptr)
+        {
+            if(QApplication::clipboard()!=nullptr)
+                QApplication::clipboard()->setMimeData(saved);
+            else
+                delete saved;
+        }
+
+        clipWindowTitle(m_hotkeyTitle);
+        return;
+    }
+
+    m_hotkeyClipSeq=GetClipboardSequenceNumber();
+    qDebug() << "Clipper: full window copy, seq" << m_hotkeyClipSeq;
+
+    sendCopyKeys();
     QTimer::singleShot(300, this, &Clipper::clipFullWindowGrab);
 }
 
@@ -1662,8 +1697,11 @@ void Clipper::clipFullWindowGrab(void)
 
     // Опять ничего нового (защищенное поле, пустое окно) —
     // только заголовок
+    const DWORD nowSeq=GetClipboardSequenceNumber();
+    qDebug() << "Clipper: full window grab, seq" << m_hotkeyClipSeq << "->" << nowSeq;
+
     if(m_hotkeyClipSeq==0 ||
-       GetClipboardSequenceNumber()==m_hotkeyClipSeq ||
+       nowSeq==m_hotkeyClipSeq ||
        !IsWindow(static_cast<HWND>(m_hotkeyWindow)))
     {
         if(saved!=nullptr)

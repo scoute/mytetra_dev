@@ -11,6 +11,11 @@
 #include <QCheckBox>
 #include <QKeySequenceEdit>
 #include <QPushButton>
+#include <QRadioButton>
+#include "libraries/MtComboBox.h"
+#include "models/tree/KnowTreeModel.h"
+#include "models/tree/TreeItem.h"
+#include "views/tree/TreeScreen.h"
 
 #include "AppConfigPage_Clipper.h"
 #include "models/appConfig/AppConfig.h"
@@ -77,6 +82,34 @@ void AppConfigPage_Clipper::setupUi(void)
   clipperMaxImageSizeMb->setWhatsThis(tr("Images larger than this stay as external links instead of files."));
   clipperMaxImageSizeMb->setToolTip(tr("Larger images stay as links, not files"));
 
+  // Целевая ветка клипа: либо ветка по умолчанию (unsorted_notes),
+  // либо явно выбранная из корневых с двумя уровнями вложений.
+  // Глубже третьего уровня не лезем: список бы распух на больших базах.
+  // Пустой clipperbranchid означает режим "по умолчанию"
+  clipperBranchDefault=new QRadioButton(this);
+  clipperBranchDefault->setText(tr("To default branch (unsorted_notes)"));
+
+  clipperBranchCustom=new QRadioButton(this);
+  clipperBranchCustom->setText(tr("To selected branch:"));
+
+  // MtComboBox вместо QComboBox: в тёмной теме у обычного комбо
+  // пустые квадраты в попапе (общий грабель, см. AGENTS.md)
+  clipperBranchCombo=new MtComboBox(this);
+  clipperBranchCombo->setToolTip(tr("Root branches with two nesting levels"));
+  rebuildBranchList();
+
+  const QString savedId=mytetraConfig.get_clipperbranchid();
+  int savedIndex=!savedId.isEmpty() ? clipperBranchCombo->findData(savedId) : -1;
+  if(savedIndex>=0)
+  {
+    clipperBranchCombo->setCurrentIndex(savedIndex);
+    clipperBranchCustom->setChecked(true);
+  }
+  else
+    clipperBranchDefault->setChecked(true);
+
+  clipperBranchCombo->setEnabled(clipperBranchCustom->isChecked());
+
   // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
   // показывает подсказку без задержки наведения
   clipperHelpButton=new QToolButton(this);
@@ -97,6 +130,8 @@ void AppConfigPage_Clipper::setupSignals(void)
 {
   connect(clipperHelpButton, &QToolButton::clicked, this, &AppConfigPage_Clipper::onClipperHelpButton);
   connect(clipperTestButton, &QPushButton::clicked, this, &AppConfigPage_Clipper::onClickedClipperTest);
+  connect(clipperBranchDefault, &QRadioButton::toggled, this, &AppConfigPage_Clipper::onBranchModeChanged);
+  connect(clipperBranchCustom, &QRadioButton::toggled, this, &AppConfigPage_Clipper::onBranchModeChanged);
 }
 
 
@@ -126,6 +161,8 @@ void AppConfigPage_Clipper::assembly(void)
   clipperFormLayout->addRow(QString(), clipperTestButton);
   clipperFormLayout->addRow(clipperMaxImagesLabel, clipperMaxImages);
   clipperFormLayout->addRow(clipperMaxImageSizeLabel, clipperMaxImageSizeMb);
+  clipperFormLayout->addRow(tr("Target branch:"), clipperBranchDefault);
+  clipperFormLayout->addRow(clipperBranchCustom, clipperBranchCombo);
   clipperLayout->addLayout(clipperFormLayout);
 
   clipperBox->setLayout(clipperLayout);
@@ -159,6 +196,63 @@ void AppConfigPage_Clipper::updateClipperStatus(void)
     clipperStatusLabel->setText(mainWindow->getClipper()->backendStatus());
   else
     clipperStatusLabel->setText(tr("Clipper status is unavailable."));
+}
+
+
+void AppConfigPage_Clipper::onBranchModeChanged(void)
+{
+  clipperBranchCombo->setEnabled(clipperBranchCustom->isChecked());
+}
+
+
+// Листинг веток для комбо: корневые + два уровня вложений.
+// Путь собирается через getPathAsNameWithDelimeter, он уже выкидывает
+// пустое имя невидимого корня
+void AppConfigPage_Clipper::rebuildBranchList(void)
+{
+  clipperBranchCombo->clear();
+
+  KnowTreeModel *model=nullptr;
+  if(TreeScreen *treeScreen=globalParameters.getTreeScreen())
+    model=treeScreen->knowTreeModel;
+
+  if(!model)
+    return;
+
+  TreeItem *rootItem=model->getItem(QModelIndex());
+  if(!rootItem)
+    return;
+
+  // Три вложенных цикла вместо рекурсии: глубина фиксирована,
+  // читать проще, ошибиться негде
+  for(int i=0; i<rootItem->childCount(); ++i)
+  {
+    TreeItem *level1=rootItem->child(i);
+    clipperBranchCombo->addItem(level1->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
+                               level1->getField(QStringLiteral("id")));
+
+    for(int j=0; j<level1->childCount(); ++j)
+    {
+      TreeItem *level2=level1->child(j);
+      clipperBranchCombo->addItem(level2->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
+                                 level2->getField(QStringLiteral("id")));
+
+      for(int k=0; k<level2->childCount(); ++k)
+      {
+        TreeItem *level3=level2->child(k);
+        clipperBranchCombo->addItem(level3->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
+                                   level3->getField(QStringLiteral("id")));
+      }
+    }
+  }
+
+  // Сохраненная ветка глубже третьего уровня: дописать отдельно,
+  // иначе выбор молча сбросится на значение по умолчанию
+  const QString savedId=mytetraConfig.get_clipperbranchid();
+  if(!savedId.isEmpty() && clipperBranchCombo->findData(savedId)<0)
+    if(TreeItem *savedItem=model->getItemById(savedId))
+      clipperBranchCombo->addItem(savedItem->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
+                                 savedItem->getField(QStringLiteral("id")));
 }
 
 
@@ -215,6 +309,11 @@ void AppConfigPage_Clipper::retranslateUi(void)
 
   setRowLabel(clipperHotkeyEdit, tr("Hotkey:"));
   setRowLabel(clipperStatusLabel, tr("Status:"));
+  setRowLabel(clipperBranchDefault, tr("Target branch:"));
+
+  clipperBranchDefault->setText(tr("To default branch (unsorted_notes)"));
+  clipperBranchCustom->setText(tr("To selected branch:"));
+  clipperBranchCombo->setToolTip(tr("Root branches with two nesting levels"));
 
   // Динамический статус перечитывается текущим языком
   updateClipperStatus();
@@ -244,6 +343,21 @@ int AppConfigPage_Clipper::applyChanges(void)
 
   if(mytetraConfig.get_clipperhotkey()!=clipperHotkeyEdit->keySequence().toString())
     mytetraConfig.set_clipperhotkey(clipperHotkeyEdit->keySequence().toString());
+
+  // Целевая ветка: "по умолчанию" хранится пустым clipperbranchid
+  // (ensureBranch сам найдет или создаст unsorted_notes),
+  // выбранная — своим id
+  if(clipperBranchDefault->isChecked())
+  {
+    if(!mytetraConfig.get_clipperbranchid().isEmpty())
+      mytetraConfig.set_clipperbranchid(QString());
+  }
+  else
+  {
+    const QString selectedId=clipperBranchCombo->currentData().toString();
+    if(!selectedId.isEmpty() && mytetraConfig.get_clipperbranchid()!=selectedId)
+      mytetraConfig.set_clipperbranchid(selectedId);
+  }
 
   return result;
 }

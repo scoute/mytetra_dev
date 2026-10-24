@@ -652,6 +652,25 @@ void Clipper::clipWindowTitle(const QString &caption)
 // Итоговое сообщение складывается в clipData.errorMessage
 bool Clipper::finishClip(ClipData &clipData)
 {
+    // Хеш и id считаются до всего: глобальный дедуп ветки не требует
+    const QByteArray newHash=contentHash(clipData.html);
+    const QString recordId=recordIdForHash(newHash);
+
+    // Дубль отсекается до опроса: зачем выбирать куда,
+    // если вставлять нечего. Здесь только глобальный быстрый путь
+    // (запись с id хеша уже есть в дереве); медленное сравнение
+    // текстов свежих записей ветки останется после ее выбора
+    if(KnowTreeModel *model=treeModel())
+    {
+        if(!recordId.isEmpty() && model->isRecordIdExists(recordId))
+        {
+            const QString message=tr("Already clipped, skipped.");
+            notify(tr("Web Clipper"), message);
+            clipData.errorMessage=message;
+            return false;
+        }
+    }
+
     // Режим "спрашивать каждый раз": модальная плитка веток поверх
     // браузера. Отмена — тихий выход без записи и без мусора в базе
     QString askId;
@@ -674,8 +693,6 @@ bool Clipper::finishClip(ClipData &clipData)
         return false;
     }
 
-    const QByteArray newHash=contentHash(clipData.html);
-    const QString recordId=recordIdForHash(newHash);
     if(isDuplicate(branchItem, recordId, newHash))
     {
         const QString message=tr("Already clipped, skipped.");

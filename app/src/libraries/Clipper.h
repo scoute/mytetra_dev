@@ -162,7 +162,13 @@ private:
     QByteArray fetchUrl(const QString &url, bool *ok);
     bool ensureBranch(TreeItem* &branchItem, QString *errorMessage=nullptr,
                       const QString &forcedId=QString());
-    bool isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash);
+    bool isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash,
+                       QString *matchedId=nullptr);
+
+    // Прыжок к уже вставленной заметке: путь резолвится вживую,
+    // окно поверх не тянем (пользователь в браузере). Тихо ничего
+    // не делает если ветку/запись не найти (удалена, шифр закрыт)
+    void openExistingRecord(const QString &recordId);
     bool storeRecord(TreeItem *branchItem, const QString &recordId, const QString &title,
                      const QString &url, const QString &html,
                      const QMap<QString, QImage> &images,

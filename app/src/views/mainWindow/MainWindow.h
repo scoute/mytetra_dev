@@ -102,6 +102,8 @@ public:
 
     //! Вспомогательный метод, который комплексно устанавливает
     //! путь в дереве и запись в таблице записей
+    //! (в слотах чтобы клиппер мог прыгать к дублям через invokeMethod
+    //! без линка MainWindow)
     void setTreeAndRecordtablePositions(QStringList treePath, QString recordId);
 
     void synchronization(bool visible=true);

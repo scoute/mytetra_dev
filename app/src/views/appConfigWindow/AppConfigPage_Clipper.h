@@ -81,6 +81,9 @@ protected:
   QRadioButton *clipperTilesRecent;
   QRadioButton *clipperTilesFrequent;
 
+  // Дубль: открыть оригинал заметки
+  QCheckBox *clipperOpenDup;
+
   // Группы эксклюзива: ветка и плитки выбираются независимо
   QButtonGroup *branchGroup;
   QButtonGroup *tilesGroup;

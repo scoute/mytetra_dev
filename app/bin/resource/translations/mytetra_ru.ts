@@ -3799,6 +3799,108 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Найти в базе</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="170"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="539"/>
+        <source>Plain code</source>
+        <translation>Обычный код</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="171"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="540"/>
+        <source>Angular</source>
+        <translation>Angular</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="172"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="541"/>
+        <source>Bash</source>
+        <translation>Bash</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="173"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="542"/>
+        <source>C</source>
+        <translation>C</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="174"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="543"/>
+        <source>C++</source>
+        <translation>C++</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="175"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="544"/>
+        <source>C#</source>
+        <translation>C#</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="176"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="545"/>
+        <source>GLSL</source>
+        <translation>GLSL</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="177"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="546"/>
+        <source>Go</source>
+        <translation>Go</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="178"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="547"/>
+        <source>HTML</source>
+        <translation>HTML</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="179"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="548"/>
+        <source>Java</source>
+        <translation>Java</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="180"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="549"/>
+        <source>JavaScript</source>
+        <translation>JavaScript</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="181"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="550"/>
+        <source>JSON</source>
+        <translation>JSON</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="182"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="551"/>
+        <source>Lua</source>
+        <translation>Lua</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="183"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="552"/>
+        <source>Python</source>
+        <translation>Python</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="184"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="553"/>
+        <source>React</source>
+        <translation>React</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="185"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="554"/>
+        <source>Rust</source>
+        <translation>Rust</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="186"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="555"/>
+        <source>XML</source>
+        <translation>XML</translation>
+    </message>
+    <message>
         <source>Show text in detached window</source>
         <translation type="vanished">Показать текст в открепляемом окне</translation>
     </message>
@@ -7012,8 +7114,8 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="126"/>
-        <source>Select a whole paragraphs to format text as code</source>
-        <translation>Требуется целиком выделить абзац(ы) для полного форматирования в код</translation>
+        <source>Format text as code with a choice of highlighting language</source>
+        <translation>Форматировать текст как код с выбором языка подсветки</translation>
     </message>
     <message>
         <source>Heading 1</source>

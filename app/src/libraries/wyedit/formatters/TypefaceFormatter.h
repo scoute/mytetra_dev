@@ -24,6 +24,15 @@ public:
 
     enum EasyFormatType {Bold, Italic, Underline, StrikeOut, SuperScript, SubScript};
 
+    // Язык подсветки блока кода. Порядок совпадает с пунктами меню
+    // кнопки кода в EditorToolBar (пункт 0 - старый обычный код,
+    // дальше языки по алфавиту)
+    enum CodeLanguage {CodePlain=0,
+                       CodeAngular, CodeBash, CodeC, CodeCxx, CodeCSharp,
+                       CodeGlsl, CodeGo, CodeHtml, CodeJava, CodeJs,
+                       CodeJson, CodeLua, CodePython, CodeReact, CodeRust,
+                       CodeXml};
+
 signals:
 
     void updateOutlineButtonHiglight();
@@ -45,7 +54,7 @@ public slots:
     void onSuperScriptClicked(void);
     void onSubScriptClicked(void);
     void onMonospaceClicked(void);
-    void onCodeClicked(void);
+    void onCodeLanguageClicked(int language);
     void onHeading1Clicked(void);
     void onHeading2Clicked(void);
     void onClearClicked(void);
@@ -76,6 +85,16 @@ private:
     // Общий движок заголовков H1/H2: выставить уровень абзацам
     // в выделении (повторный клик снимает в обычный текст)
     void applyHeadingLevel(int level);
+
+    // Форматирование выделения как блока кода с подсветкой выбранного языка
+    // (CodePlain - старое поведение без подсветки)
+    void formatCodeWithLanguage(int language);
+
+    // Одноразовая подсветка синтаксиса в текущем выделении через
+    // хайлайтеры QCodeEditor на временном документе. Цвета запекаются
+    // в HTML заметки, поэтому переживают сохранение и не требуют
+    // живого QSyntaxHighlighter на документе редактора
+    void applyCodeHighlight(int language);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

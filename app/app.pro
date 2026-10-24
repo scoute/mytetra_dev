@@ -83,7 +83,8 @@ contains(TARGET_OS, ANY_OS) {
 TARGET = mytetra
 RESOURCES = bin/mytetra.qrc \
             bin/icons.qrc \ 
-            bin/themes.qrc 
+            bin/themes.qrc \
+            ../thirdParty/qcodeeditor/qcodeeditor_resources.qrc
 TRANSLATIONS = bin/resource/translations/mytetra_ru.ts \ 
                bin/resource/translations/mytetra_fr.ts \
                bin/resource/translations/mytetra_de.ts \
@@ -94,6 +95,7 @@ CODECFORSRC  = utf8
 
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/src
+INCLUDEPATH += $${_PRO_FILE_PWD_}/../thirdParty/qcodeeditor/include
 
 # Прекомпилированный заголовок: Qt-модули и STL компилируются один раз.
 # Состав в src/stable.h, только стабильное (см. комментарий в файле).
@@ -296,6 +298,19 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorIndentSliderAssistant.h \
     src/libraries/wyedit/EditorToolBarAssistant.h \
     src/libraries/TraceLogger.h \
+    ../thirdParty/qcodeeditor/include/internal/QBashHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QCLikeHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QCXXHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QGLSLHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QHighlightBlockRule.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QHighlightRule.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QJSONHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QLanguage.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QLuaHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QPythonHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QStyleSyntaxHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QSyntaxStyle.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QXMLHighlighter.hpp \
     src/libraries/wyedit/formatters/ReferenceFormatter.h \
     src/libraries/wyedit/formatters/SecretFormatter.h \
     src/libraries/wyedit/EditorCursorPositionDetector.h \
@@ -511,6 +526,17 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorIndentSliderAssistant.cpp \
     src/libraries/wyedit/EditorToolBarAssistant.cpp \
     src/libraries/TraceLogger.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QBashHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QCLikeHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QCXXHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QGLSLHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QJSONHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QLanguage.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QLuaHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QPythonHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QStyleSyntaxHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QSyntaxStyle.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QXMLHighlighter.cpp \
     src/libraries/wyedit/formatters/ReferenceFormatter.cpp \
     src/libraries/wyedit/formatters/SecretFormatter.cpp \
     src/libraries/wyedit/EditorCursorPositionDetector.cpp \

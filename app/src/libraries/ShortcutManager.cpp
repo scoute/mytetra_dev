@@ -123,7 +123,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-superscript",         Data{ QKeySequence("Ctrl+Shift+P"), tr("Superscript"), tr("") });
     defaultKeyTable.insert("editor-subscript",           Data{ QKeySequence("Ctrl+Shift+B"), tr("Subscript"), tr("") });
     defaultKeyTable.insert("editor-monospace",           Data{ QKeySequence("Ctrl+T"), tr("Monospace"), tr("") });
-    defaultKeyTable.insert("editor-code",                Data{ QKeySequence("Ctrl+M"), tr("Code"), tr("Select a whole paragraphs to format text as code") });
+    defaultKeyTable.insert("editor-code",                Data{ QKeySequence("Ctrl+M"), tr("Code"), tr("Format text as code with a choice of highlighting language") });
     defaultKeyTable.insert("editor-heading1",           Data{ QKeySequence("Ctrl+1"), tr("Heading 1"), tr("Format paragraphs as first-level heading") });
     defaultKeyTable.insert("editor-heading2",           Data{ QKeySequence("Ctrl+2"), tr("Heading 2"), tr("Format paragraphs as second-level heading") });
     defaultKeyTable.insert("editor-lowercase",           Data{ QKeySequence(""), tr("Lowercase"), tr("") });

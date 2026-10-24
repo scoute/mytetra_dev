@@ -640,37 +640,6 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
 }
 
 
-// Заметка из заголовка окна без выделения (хоткей в браузере):
-// название страницы, ссылка пустая — взять её неоткуда
-void Clipper::clipWindowTitle(const QString &caption)
-{
-    qDebug() << "Clipper: clip window title";
-
-    if(mytetraConfig.get_readOnly())
-    {
-        const QString message=tr("Read-only mode is enabled.");
-        notify(tr("Web Clipper"), message);
-        emit clipFinished(false, message);
-        return;
-    }
-
-    reloadLimits();
-
-    m_urlHint.clear();
-
-    ClipData clipData;
-    clipData.title=makeTitle(caption);
-    clipData.url=QString();
-    clipData.html=QString("<p>%1</p>").arg(caption.toHtmlEscaped());
-    clipData.valid=true;
-
-    if(finishClip(clipData))
-        emit clipFinished(true, clipData.errorMessage);
-    else
-        emit clipFinished(false, clipData.errorMessage);
-}
-
-
 // Общий хвост вставки готового ClipData: ветка, дедуп, запись, трей.
 // Итоговое сообщение складывается в clipData.errorMessage
 bool Clipper::finishClip(ClipData &clipData)
@@ -2192,7 +2161,10 @@ void Clipper::clipNowAfterHotkey(void)
 void Clipper::clipWaitCopyRetry(void)
 {
     // Медленная копия большого выделения: перепослать Ctrl+C и подождать
-    // ещё. Всего до ~2 секунд, затем заголовок окна
+    // ещё. Всего до ~2 секунд. Буфер так и не изменился — выделения
+    // не было: молча пропускаем как в Linux, а не лепим заметку
+    // из одного заголовка. Шапка окна сбрасывается, чтобы прямой
+    // забор не подхватил чужой заголовок
     const DWORD nowSeq=GetClipboardSequenceNumber();
     qDebug() << "Clipper: wait copy, seq" << m_hotkeyClipSeq << "->" << nowSeq
              << "try" << m_copyWaitTries;
@@ -2219,7 +2191,8 @@ void Clipper::clipWaitCopyRetry(void)
                      << "hasHtml" << mime->hasHtml()
                      << "htmlLen" << (mime->hasHtml() ? mime->html().size() : -1);
 
-        clipWindowTitle(m_hotkeyTitle);
+        m_hotkeyCaption.clear();
+        notify(tr("Web Clipper"), tr("No selection to clip."));
         return;
     }
 

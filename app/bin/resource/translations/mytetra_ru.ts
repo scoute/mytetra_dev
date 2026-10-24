@@ -610,9 +610,24 @@ MyTetra должна быть запущена.</translation>
         <translation>Корневые ветки с двумя уровнями вложений</translation>
     </message>
     <message>
+        <source>Ask every time (popup window)</source>
+        <translation>Спрашивать каждый раз (всплывающее окно)</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="161"/>
         <source>Clipper status is unavailable.</source>
         <translation>Статус клиппера недоступен.</translation>
+    </message>
+</context>
+<context>
+    <name>ClipBranchDialog</name>
+    <message>
+        <source>Where to save the clip?</source>
+        <translation>Куда сохранить вырезку?</translation>
+    </message>
+    <message>
+        <source>Where do you want to paste?</source>
+        <translation>Куда хотите вставить?</translation>
     </message>
 </context>
 <context>
@@ -1968,6 +1983,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     <message>
         <source>Saved to %1: %2</source>
         <translation>Сохранено в %1: %2</translation>
+    </message>
+    <message>
+        <source>Selected branch is gone.</source>
+        <translation>Выбранная ветка исчезла.</translation>
+    </message>
+    <message>
+        <source>Cancelled, nothing saved.</source>
+        <translation>Отменено, ничего не сохранено.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="526"/>

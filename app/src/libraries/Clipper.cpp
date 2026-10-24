@@ -24,6 +24,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSslError>
+#include <QSslSocket>
 #include <QRegularExpression>
 #include <QSocketNotifier>
 #include <QTextCursor>
@@ -523,23 +524,34 @@ bool Clipper::isHotkeyAvailable(void) const
 
 QString Clipper::backendStatus(void) const
 {
+    // Состояние TLS всегда в строке статуса: без бэкенда докачка
+    // картинок по https молча не работает и это иначе не увидеть
+    const QString sslInfo=QSslSocket::supportsSsl()
+        ? QStringLiteral("SSL: ")+QSslSocket::sslLibraryVersionString()
+        : tr("SSL unavailable");
+
     if(hotkeyActive)
 #if defined(Q_OS_WIN)
-        return tr("Windows hotkey active: %1").arg(hotkeyActiveSequence);
+        return tr("Windows hotkey active: %1").arg(hotkeyActiveSequence)
+               + QStringLiteral(" ")+sslInfo;
 #else
-        return tr("X11 hotkey active: %1").arg(hotkeyActiveSequence);
+        return tr("X11 hotkey active: %1").arg(hotkeyActiveSequence)
+               + QStringLiteral(" ")+sslInfo;
 #endif
 
 #if defined(Q_OS_LINUX)
     if(QGuiApplication::platformName()!="xcb")
         return tr("Global hotkey works only on X11 (current: %1). Use the Clip Now button.")
-               .arg(QGuiApplication::platformName());
+               .arg(QGuiApplication::platformName())
+               + QStringLiteral(" ")+sslInfo;
 #endif
 
     if(!mytetraConfig.get_clipperenable())
-        return tr("Clipper disabled in settings.");
+        return tr("Clipper disabled in settings.")
+               + QStringLiteral(" ")+sslInfo;
 
-    return tr("Global hotkey unavailable.");
+    return tr("Global hotkey unavailable.")
+           + QStringLiteral(" ")+sslInfo;
 }
 
 

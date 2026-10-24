@@ -80,6 +80,7 @@ protected:
   QLabel *clipperMaxImagesLabel;
   QLabel *clipperMaxImageSizeLabel;
   QLabel *clipperTitleLabel;
+  QLabel *clipperBranchLabel;
   QFormLayout *clipperFormLayout;
 };
 

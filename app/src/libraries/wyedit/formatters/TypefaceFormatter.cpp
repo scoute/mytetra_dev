@@ -2,6 +2,7 @@
 #include <QTextDocument>
 #include <QTextLayout>
 #include <QFont>
+#include <QRegularExpression>
 #include <QDebug>
 #include <QColorDialog>
 #include <QColor>
@@ -346,6 +347,14 @@ void TypefaceFormatter::formatCodeWithLanguage(int language)
     // и вставлял его чистым текстом, поэтому форматирование в Code убивало
     // предыдущее форматирование (баг #94)
 
+    // Маркер языка: заменить/вставить строку вида // {lang = C++}
+    // в начале выделения (для Plain и JSON - наоборот убрать наш маркер)
+    if(!normalizeCodeMarker(language))
+    {
+        textArea->textCursor().endEditBlock();
+        return;
+    }
+
     // Устанавливается шрифт
     QFont font;
     font.fromString(editorConfig->get_code_font());
@@ -507,6 +516,243 @@ void TypefaceFormatter::applyCodeHighlight(int language)
     }
 
     delete highlighter;
+}
+
+
+// Каноническое имя языка для маркера блока кода. Без перевода:
+// маркер в тексте заметки всегда на английском. Пусто для Plain и JSON
+// (у JSON нет комментариев, маркер вставлять не во что)
+QString TypefaceFormatter::codeMarkerName(int language)
+{
+    switch(language)
+    {
+    case CodeAngular: return QStringLiteral("Angular");
+    case CodeBash:    return QStringLiteral("Bash");
+    case CodeC:       return QStringLiteral("C");
+    case CodeCxx:     return QStringLiteral("C++");
+    case CodeCSharp:  return QStringLiteral("C#");
+    case CodeGlsl:    return QStringLiteral("GLSL");
+    case CodeGo:      return QStringLiteral("Go");
+    case CodeHtml:    return QStringLiteral("HTML");
+    case CodeJava:    return QStringLiteral("Java");
+    case CodeJs:      return QStringLiteral("JavaScript");
+    case CodeLua:     return QStringLiteral("Lua");
+    case CodePython:  return QStringLiteral("Python");
+    case CodeReact:   return QStringLiteral("React");
+    case CodeRust:    return QStringLiteral("Rust");
+    case CodeXml:     return QStringLiteral("XML");
+    default:          return QString();
+    }
+}
+
+
+// Строка-маркер языка для вставки в текст. Пусто - у языка нет маркера
+QString TypefaceFormatter::codeMarkerLine(int language)
+{
+    QString name=codeMarkerName(language);
+    if(name.isEmpty())
+        return QString();
+
+    switch(language)
+    {
+    case CodePython:
+    case CodeBash:
+        return QStringLiteral("# {lang = ")+name+QStringLiteral("}");
+    case CodeLua:
+        return QStringLiteral("-- {lang = ")+name+QStringLiteral("}");
+    case CodeHtml:
+    case CodeXml:
+    case CodeAngular:
+        return QStringLiteral("<!-- {lang = ")+name+QStringLiteral("} -->");
+    default:
+        return QStringLiteral("// {lang = ")+name+QStringLiteral("}");
+    }
+}
+
+
+// Распознать наш маркер в строке, вернуть язык или -1.
+// Совпадение строгое: вся строка - только маркер
+int TypefaceFormatter::codeMarkerLanguage(const QString &line)
+{
+    QString trimmed=line.trimmed();
+
+    static const QRegularExpression lineMarker(
+        QStringLiteral("^(?://|#|--)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*$"));
+    static const QRegularExpression htmlMarker(
+        QStringLiteral("^<!--\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*-->\\s*$"));
+
+    QString name;
+    QRegularExpressionMatch match=lineMarker.match(trimmed);
+    if(match.hasMatch())
+        name=match.captured(1);
+    else
+    {
+        match=htmlMarker.match(trimmed);
+        if(match.hasMatch())
+            name=match.captured(1);
+    }
+
+    if(name.isEmpty())
+        return -1;
+
+    // JSON маркеров не имеет, его имя здесь не опознается
+    for(int lang=CodeAngular; lang<=CodeXml; ++lang)
+    {
+        if(lang==CodeJson)
+            continue;
+        if(codeMarkerName(lang)==name)
+            return lang;
+    }
+
+    return -1;
+}
+
+
+// Обеспечить маркер языка в начале выделения: заменить наш маркер
+// (в выделении или строкой выше) на новый, вставить новый сверху
+// или убрать маркер для языка без маркера (Plain, JSON).
+// Вызывается внутри edit-блока formatCodeWithLanguage.
+// Возвращает false, если после обработки выделять нечего
+bool TypefaceFormatter::normalizeCodeMarker(int language)
+{
+    QTextCursor cursor=textArea->textCursor();
+    if(!cursor.hasSelection())
+        return false;
+
+    int selectStart=cursor.selectionStart();
+    int selectEnd=cursor.selectionEnd();
+
+    QTextDocument *doc=textArea->document();
+    QTextBlock firstBlock=doc->findBlock(selectStart);
+
+    // Наш маркер либо первая строка выделения, либо строка прямо над ним
+    QTextBlock markerBlock;
+    bool markerAbove=false;
+    if(codeMarkerLanguage(firstBlock.text())!=-1)
+        markerBlock=firstBlock;
+    else
+    {
+        QTextBlock prevBlock=firstBlock.previous();
+        if(prevBlock.isValid() &&
+           codeMarkerLanguage(prevBlock.text())!=-1 &&
+           prevBlock.position()+prevBlock.length()==firstBlock.position())
+        {
+            markerBlock=prevBlock;
+            markerAbove=true;
+        }
+    }
+
+    QString newMarker=codeMarkerLine(language);
+
+    int newStart=selectStart;
+    int newEnd=selectEnd;
+
+    QTextCursor edit(doc);
+
+    // Язык без маркера: просто убрать найденный маркер
+    if(newMarker.isEmpty())
+    {
+        if(!markerBlock.isValid())
+            return true;
+
+        int markerPos=markerBlock.position();
+        int markerLen=markerBlock.text().length();
+
+        if(markerAbove)
+        {
+            // Маркер строкой выше: удалить его вместе с переводом строки
+            edit.setPosition(markerPos);
+            edit.setPosition(firstBlock.position(), QTextCursor::KeepAnchor);
+            edit.removeSelectedText();
+
+            newStart=selectStart-(markerLen+1);
+            newEnd=selectEnd-(markerLen+1);
+        }
+        else
+        {
+            QTextBlock nextBlock=markerBlock.next();
+            bool onlyMarker=(selectEnd<=markerPos+markerLen);
+
+            if(onlyMarker && nextBlock.isValid())
+            {
+                // Выделен только маркер: удалить его вместе с переводом строки
+                edit.setPosition(markerPos);
+                edit.setPosition(nextBlock.position(), QTextCursor::KeepAnchor);
+            }
+            else if(onlyMarker)
+            {
+                // Выделен только маркер в последнем блоке: удалить его текст
+                edit.setPosition(markerPos);
+                edit.setPosition(markerPos+markerLen, QTextCursor::KeepAnchor);
+            }
+            else
+            {
+                // Маркер первый в выделении, дальше код: удалить текст маркера
+                // и его перевод строки (следующий блок заведомо есть,
+                // раз выделение уходит дальше маркера)
+                edit.setPosition(markerPos);
+                edit.setPosition(markerPos+markerLen+1, QTextCursor::KeepAnchor);
+            }
+            edit.removeSelectedText();
+
+            newStart=markerPos;
+            newEnd=onlyMarker ? markerPos : selectEnd-(markerLen+1);
+        }
+
+        if(newEnd<=newStart)
+        {
+            QTextCursor empty(doc);
+            empty.setPosition(newStart);
+            textArea->setTextCursor(empty);
+            return false;
+        }
+
+        QTextCursor newCursor(doc);
+        newCursor.setPosition(newStart);
+        newCursor.setPosition(newEnd, QTextCursor::KeepAnchor);
+        textArea->setTextCursor(newCursor);
+        return true;
+    }
+
+    // Язык с маркером: заменить найденный или вставить новый сверху
+    if(markerBlock.isValid())
+    {
+        int markerPos=markerBlock.position();
+        int markerLen=markerBlock.text().length();
+
+        edit.setPosition(markerPos);
+        edit.setPosition(markerPos+markerLen, QTextCursor::KeepAnchor);
+        edit.insertText(newMarker);
+
+        int delta=newMarker.length()-markerLen;
+        if(markerAbove)
+        {
+            newStart=selectStart+delta;
+            newEnd=selectEnd+delta;
+        }
+        else
+        {
+            newStart=markerPos;
+            newEnd=selectEnd+delta;
+        }
+    }
+    else
+    {
+        int insertPos=firstBlock.position();
+
+        edit.setPosition(insertPos);
+        edit.insertText(newMarker+QStringLiteral("\n"));
+
+        int inserted=newMarker.length()+1;
+        newStart=selectStart+inserted;
+        newEnd=selectEnd+inserted;
+    }
+
+    QTextCursor newCursor(doc);
+    newCursor.setPosition(newStart);
+    newCursor.setPosition(newEnd, QTextCursor::KeepAnchor);
+    textArea->setTextCursor(newCursor);
+    return newEnd>newStart;
 }
 
 

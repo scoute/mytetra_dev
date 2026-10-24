@@ -272,6 +272,31 @@ QString Clipper::extractUrl(const QString &text)
 }
 
 
+// Глубокая копия содержимого буфера (все форматы). Владелец — вызыватель:
+// сохранить чужой буфер на время Ctrl+A и вернуть как был
+QMimeData *Clipper::cloneMimeData(const QMimeData *src)
+{
+    if(src==nullptr)
+        return nullptr;
+
+    QMimeData *copy=new QMimeData();
+
+    foreach(const QString &format, src->formats())
+        copy->setData(format, src->data(format));
+
+    if(src->hasImage())
+        copy->setImageData(src->imageData());
+
+    if(src->hasUrls())
+        copy->setUrls(src->urls());
+
+    if(src->hasColor())
+        copy->setColorData(src->colorData());
+
+    return copy;
+}
+
+
 QString Clipper::resolveUrl(const QString &urlHint, const QString &sourceUrl,
                               const QString &plainText)
 {
@@ -828,7 +853,9 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
 
     QString plainText=document.toPlainText();
 
-    if(!pageTitle.isEmpty())
+    if(m_fullWindowFlow && !m_hotkeyTitle.isEmpty())
+        clipData.title=m_hotkeyTitle;
+    else if(!pageTitle.isEmpty())
         clipData.title=pageTitle;
     else
         clipData.title=makeTitle(plainText);
@@ -1561,6 +1588,9 @@ void Clipper::onWinHotkey(void)
     m_hotkeyClipSeq=GetClipboardSequenceNumber();
     m_hotkeyWindow=GetForegroundWindow();
     m_hotkeyTitle=cleanWindowCaption(windowCaption(m_hotkeyWindow));
+    delete m_savedClipboard;
+    m_savedClipboard=nullptr;
+    m_fullWindowFlow=false;
 
     // Один хоткей на всё: сначала скопировать выделение в буфер,
     // затем забрать буфер в unsorted_notes
@@ -1572,16 +1602,94 @@ void Clipper::onWinHotkey(void)
 void Clipper::clipNowAfterHotkey(void)
 {
     // Ненулевой счетчик и тот же номер: буфер не тронут — выделения
-    // не было. Живое окно с названием есть — клип из заголовка
+    // не было. Живое окно с названием есть — страница забирается
+    // целиком через Ctrl+A; иначе обычный забор скопированного
     if(m_hotkeyClipSeq!=0 &&
        GetClipboardSequenceNumber()==m_hotkeyClipSeq &&
        !m_hotkeyTitle.isEmpty() &&
        IsWindow(static_cast<HWND>(m_hotkeyWindow)))
     {
-        clipWindowTitle(m_hotkeyTitle);
+        clipFullWindow();
         return;
     }
 
     clipNow();
+}
+
+
+// Эмуляция Ctrl+A для забора всей страницы без выделения
+void Clipper::sendSelectAllKeys(void)
+{
+    INPUT input[4]={};
+    for(int i=0; i<4; ++i)
+        input[i].type=INPUT_KEYBOARD;
+    input[0].ki.wVk=VK_CONTROL;
+    input[1].ki.wVk='A';
+    input[2].ki.wVk='A';
+    input[2].ki.dwFlags=KEYEVENTF_KEYUP;
+    input[3].ki.wVk=VK_CONTROL;
+    input[3].ki.dwFlags=KEYEVENTF_KEYUP;
+    SendInput(4, input, sizeof(INPUT));
+}
+
+
+// Без выделения: выделить всё, скопировать, забрать. Чужой буфер
+// сохраняется и восстанавливается, фокус проверяется — Ctrl+A
+// в чужое окно бить нельзя
+void Clipper::clipFullWindow(void)
+{
+    if(GetForegroundWindow()!=static_cast<HWND>(m_hotkeyWindow))
+    {
+        clipWindowTitle(m_hotkeyTitle);
+        return;
+    }
+
+    delete m_savedClipboard;
+    m_savedClipboard=cloneMimeData(QApplication::clipboard()->mimeData());
+
+    m_hotkeyClipSeq=GetClipboardSequenceNumber();
+
+    sendSelectAllKeys();
+    QTimer::singleShot(300, this, &Clipper::clipFullWindowGrab);
+}
+
+
+void Clipper::clipFullWindowGrab(void)
+{
+    QMimeData *saved=m_savedClipboard;
+    m_savedClipboard=nullptr;
+    m_fullWindowFlow=false;
+
+    // Опять ничего нового (защищенное поле, пустое окно) —
+    // только заголовок
+    if(m_hotkeyClipSeq==0 ||
+       GetClipboardSequenceNumber()==m_hotkeyClipSeq ||
+       !IsWindow(static_cast<HWND>(m_hotkeyWindow)))
+    {
+        if(saved!=nullptr)
+        {
+            if(QApplication::clipboard()!=nullptr)
+                QApplication::clipboard()->setMimeData(saved);
+            else
+                delete saved;
+        }
+
+        clipWindowTitle(m_hotkeyTitle);
+        return;
+    }
+
+    // Заголовок окна авторитетнее первой строки: он точно название
+    // страницы, а не начало текста
+    m_fullWindowFlow=true;
+    clipNow();
+    m_fullWindowFlow=false;
+
+    if(saved!=nullptr)
+    {
+        if(QApplication::clipboard()!=nullptr)
+            QApplication::clipboard()->setMimeData(saved);
+        else
+            delete saved;
+    }
 }
 #endif

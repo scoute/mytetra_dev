@@ -414,14 +414,14 @@ public:
     int get_clipperbranchmode(void);
     void set_clipperbranchmode(int mode);
 
-    // Вид опроса "куда вставить": 0 — плитка, 1 — дерево
-    int get_clipperaskview(void);
-    void set_clipperaskview(int mode);
-
-    // Недавние ветки клипов: id через ";", свежие впереди, лимит 12.
-    // Плитка опроса показывает их вместо полного списка
+    // Частые ветки клипов: пары id:count через ";", частые впереди,
+    // лимит 16. Нижние плитки опроса показывают их вместо полного списка
     QString get_clipperrecent(void);
     void set_clipperrecent(const QString &ids);
+
+    // Какие 16 плиток внизу опроса: 0 — последние, 1 — частые
+    int get_clippertilemode(void);
+    void set_clippertilemode(int mode);
 
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
@@ -579,6 +579,7 @@ private:
     QStringList get_parameter_table_55(bool withEndSignature=true);
     QStringList get_parameter_table_56(bool withEndSignature=true);
     QStringList get_parameter_table_57(bool withEndSignature=true);
+    QStringList get_parameter_table_58(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

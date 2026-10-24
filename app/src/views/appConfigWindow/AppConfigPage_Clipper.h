@@ -76,11 +76,16 @@ protected:
   QRadioButton *clipperBranchAsk;
   MtComboBox *clipperBranchCombo;
 
+  // Нижние плитки опроса: последние 16 или частые 16
+  QRadioButton *clipperTilesRecent;
+  QRadioButton *clipperTilesFrequent;
+
   // Подписи формы и сама форма: нужны для перевода на лету
   QLabel *clipperMaxImagesLabel;
   QLabel *clipperMaxImageSizeLabel;
   QLabel *clipperTitleLabel;
   QLabel *clipperBranchLabel;
+  QLabel *clipperTilesLabel;
   QFormLayout *clipperFormLayout;
 };
 

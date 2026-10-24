@@ -201,6 +201,13 @@ void AppConfigPage_Clipper::assembly(void)
   clipperFormLayout->addRow(clipperMaxImagesLabel, clipperMaxImages);
   clipperFormLayout->addRow(clipperMaxImageSizeLabel, clipperMaxImageSizeMb);
 
+  // Дубль: молча пропустить или открыть оригинал.
+  // Строка выше целевой ветки: выбор ветки уже не нужен при дубле
+  clipperOpenDup=new QCheckBox(this);
+  clipperOpenDup->setText(tr("Open original note on duplicate clip"));
+  clipperOpenDup->setChecked(mytetraConfig.get_clipperopendup());
+  clipperFormLayout->addRow(clipperOpenDup);
+
   // Все три варианта ветки — одной колонкой справа от подписи:
   // выбор с комбо в середине ряда
   clipperBranchLabel=new QLabel(tr("Target branch:"), this);
@@ -224,12 +231,6 @@ void AppConfigPage_Clipper::assembly(void)
   tilesLayout->addStretch();
 
   clipperFormLayout->addRow(clipperTilesLabel, tilesLayout);
-
-  // Дубль: молча пропустить или открыть оригинал
-  clipperOpenDup=new QCheckBox(this);
-  clipperOpenDup->setText(tr("Open original note on duplicate clip"));
-  clipperOpenDup->setChecked(mytetraConfig.get_clipperopendup());
-  clipperFormLayout->addRow(clipperOpenDup);
   clipperLayout->addLayout(clipperFormLayout);
 
   clipperBox->setLayout(clipperLayout);

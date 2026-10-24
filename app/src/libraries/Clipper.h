@@ -73,10 +73,25 @@ public:
     // Первая http(s) ссылка в тексте. Чистая функция
     static QString extractUrl(const QString &text);
 
-    // Ссылка на источник для поля url: только явный --url или одинокий
+    // Ссылка на источник для поля url: явный --url, затем SourceURL
+    // из нативного HTML Format (Windows, как CintaNotes), затем одинокий
     // URL в буфере. Первая ссылка из текста не берётся: в скопированной
     // странице это обычно чужой URL. Чистая функция — покрыта тестами
-    static QString resolveUrl(const QString &urlHint, const QString &plainText);
+    static QString resolveUrl(const QString &urlHint, const QString &sourceUrl,
+                              const QString &plainText);
+
+    // Адрес страницы из сырого Windows HTML Format (заголовок SourceURL).
+    // Чистая функция — покрыта тестами без винды
+    static QString parseHtmlFormatSourceUrl(const QByteArray &raw);
+
+    // Название страницы из <title> сырого или фрагмента HTML.
+    // Пусто если тега нет. Чистая функция — покрыта тестами
+    static QString extractHtmlTitle(const QString &html);
+
+    // Название самой веб-страницы из заголовка окна: суффикс браузера
+    // (" - Google Chrome" и т.п.) отрезается. Не браузер — как есть.
+    // Чистая функция — покрыта тестами
+    static QString cleanWindowCaption(const QString &caption);
 
     // Картинка из data: URL. Пустая если разобрать не удалось. Чистая функция
     static QImage imageFromDataUrl(const QString &url);
@@ -97,6 +112,17 @@ public slots:
 #if defined(Q_OS_WIN)
     // Нажатие глобального хоткея Windows: скопировать выделение и забрать
     void onWinHotkey(void);
+
+    // Чтение сырого Windows HTML Format из буфера (там SourceURL).
+    // Qt отдает только фрагмент, заголовок отрезается
+    static QByteArray readNativeHtmlFormat(void);
+
+    // Заголовок окна по хендлу. void* чтобы не тащить windows.h в заголовок
+    static QString windowCaption(void *hwnd);
+
+    void *m_hotkeyWindow=nullptr; // Окно под фокусом в момент хоткея
+    QString m_hotkeyTitle;         // Его заголовок (название страницы)
+    quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
 #endif
 
 signals:
@@ -104,6 +130,12 @@ signals:
 
 private slots:
     void onX11Activity(void);
+
+#if defined(Q_OS_WIN)
+    // Забор после эмуляции Ctrl+C: буфер не изменился — выделения не было,
+    // заметка из заголовка окна; иначе обычный забор скопированного
+    void clipNowAfterHotkey(void);
+#endif
 
 private:
     // Собранный для вставки материал
@@ -161,6 +193,14 @@ private:
 
     // Ссылка на источник для текущего клипа (из --url). Пусто для хоткея
     QString m_urlHint;
+
+    // Общий хвост вставки готового ClipData: ветка, дедуп, запись, трей.
+    // Возвращает успех для сигнала clipFinished
+    bool finishClip(ClipData &clipData);
+
+    // Заметка из заголовка окна без выделения (хоткей в браузере):
+    // название страницы, ссылка пустая — взять её неоткуда
+    void clipWindowTitle(const QString &caption);
 };
 
 #endif // _CLIPPER_H_

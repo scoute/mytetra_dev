@@ -548,11 +548,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
-        <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
+        <source>Web Clipper: in the browser, select all or part of the page text, then press the global hotkey. The clip is saved to the target branch note.
 Run: mytetra --control --clipboard [--url]
 Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
 MyTetra must be running.</source>
-        <translation>Клиппер сохраняет буфер обмена ОС в заметку ветки unsorted_notes.
+        <translation>Веб-клиппер: выделите в браузере весь текст страницы или его часть, затем нажмите глобальный хоткей. Вырезка сохраняется в заметку целевой ветки.
 Запуск: mytetra --control --clipboard [--url]
 Назначьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
 MyTetra должна быть запущена.</translation>

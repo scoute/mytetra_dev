@@ -678,7 +678,8 @@ bool Clipper::finishClip(ClipData &clipData)
         return false;
     }
 
-    QString message=tr("Saved to unsorted_notes: %1").arg(clipData.title);
+    QString message=tr("Saved to %1: %2").arg(branchItem->getPathAsNameWithDelimeter(QStringLiteral(" / ")),
+                                                     clipData.title);
 
     // О пропущенных картинках сообщается сразу, а не когда их недосчитаются.
     // Лимиты меняются в Tools - Preferences - Misc

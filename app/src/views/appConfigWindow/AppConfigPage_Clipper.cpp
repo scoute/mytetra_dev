@@ -224,6 +224,12 @@ void AppConfigPage_Clipper::assembly(void)
   tilesLayout->addStretch();
 
   clipperFormLayout->addRow(clipperTilesLabel, tilesLayout);
+
+  // Дубль: молча пропустить или открыть оригинал
+  clipperOpenDup=new QCheckBox(this);
+  clipperOpenDup->setText(tr("Open original note on duplicate clip"));
+  clipperOpenDup->setChecked(mytetraConfig.get_clipperopendup());
+  clipperFormLayout->addRow(clipperOpenDup);
   clipperLayout->addLayout(clipperFormLayout);
 
   clipperBox->setLayout(clipperLayout);
@@ -361,6 +367,7 @@ void AppConfigPage_Clipper::retranslateUi(void)
   clipperTilesLabel->setText(tr("Tiles:"));
   clipperTilesRecent->setText(tr("Last 16"));
   clipperTilesFrequent->setText(tr("Most frequent 16"));
+  clipperOpenDup->setText(tr("Open original note on duplicate clip"));
 
   clipperBranchDefault->setText(tr("To default branch (unsorted_notes)"));
   clipperBranchCustom->setText(tr("To selected branch:"));
@@ -417,6 +424,10 @@ int AppConfigPage_Clipper::applyChanges(void)
 
   // Нижние плитки опроса: последние или частые 16
   mytetraConfig.set_clippertilemode(clipperTilesFrequent->isChecked() ? 1 : 0);
+
+  // Дубль: открыть оригинал или молча пропустить
+  if(mytetraConfig.get_clipperopendup()!=clipperOpenDup->isChecked())
+    mytetraConfig.set_clipperopendup(clipperOpenDup->isChecked());
 
   return result;
 }

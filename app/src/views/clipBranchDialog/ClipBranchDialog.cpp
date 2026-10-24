@@ -1,15 +1,13 @@
+#include <algorithm>
+
 #include <QLabel>
 #include <QPushButton>
-#include <QRadioButton>
-#include <QLineEdit>
-#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QVBoxLayout>
+#include <QLineEdit>
 #include <QScrollArea>
-#include <QStackedWidget>
 #include <QTreeView>
 #include <QDialogButtonBox>
-#include <QPushButton>
 #include <QModelIndex>
 #include <QItemSelectionModel>
 
@@ -135,24 +133,6 @@ void ClipBranchDialog::onTileClicked(void)
 }
 
 
-// Переключалка вида. Выбор пишется в конфиг сразу: диалог модальный,
-// кнопки "Применить" у него нет, а вид хочется помнить между клипами
-void ClipBranchDialog::onViewModeChanged(void)
-{
-  const bool treeMode=m_treeRadio->isChecked();
-
-  mytetraConfig.set_clipperaskview(treeMode ? 1 : 0);
-  m_stack->setCurrentIndex(treeMode ? 1 : 0);
-
-  if(QPushButton *okButton=m_buttonBox->button(QDialogButtonBox::Ok))
-  {
-    okButton->setVisible(treeMode);
-    if(treeMode)
-      onTreeSelectionChanged();
-  }
-}
-
-
 // Фильтр режет оба вида: плитки прячутся по подстроке пути,
 // дерево — через прокси (предки совпадений остаются на месте)
 void ClipBranchDialog::onFilterChanged(const QString &text)
@@ -218,19 +198,6 @@ void ClipBranchDialog::setupUi(void)
   questionFont.setBold(true);
   questionLabel->setFont(questionFont);
 
-  // Переключалка вида вверху: плитка для быстрого клипа,
-  // дерево когда связь веток по путям не читается
-  m_tilesRadio=new QRadioButton(tr("Tiles"), this);
-  m_treeRadio=new QRadioButton(tr("Tree"), this);
-
-  connect(m_tilesRadio, &QRadioButton::toggled, this, &ClipBranchDialog::onViewModeChanged);
-
-  QHBoxLayout *topLayout=new QHBoxLayout;
-  topLayout->addWidget(questionLabel);
-  topLayout->addStretch();
-  topLayout->addWidget(m_tilesRadio);
-  topLayout->addWidget(m_treeRadio);
-
   m_searchEdit=new QLineEdit(this);
   m_searchEdit->setPlaceholderText(tr("Filter branches..."));
   m_searchEdit->setClearButtonEnabled(true);
@@ -240,37 +207,36 @@ void ClipBranchDialog::setupUi(void)
   if(TreeScreen *treeScreen=globalParameters.getTreeScreen())
     model=treeScreen->knowTreeModel;
 
-  setupTiles();
   setupTree(model);
+  setupTiles();
 
-  m_stack=new QStackedWidget(this);
-  m_stack->addWidget(m_tilesScroll);
-  m_stack->addWidget(m_treeView);
+  m_tilesLabel=new QLabel(this);
+  if(mytetraConfig.get_clippertilemode()==1)
+    m_tilesLabel->setText(tr("Frequent branches:"));
+  else
+    m_tilesLabel->setText(tr("Recent branches:"));
 
   m_buttonBox=new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
   connect(m_buttonBox, &QDialogButtonBox::accepted, this, &ClipBranchDialog::onOkClicked);
   connect(m_buttonBox, &QDialogButtonBox::rejected, this, &ClipBranchDialog::reject);
 
   QVBoxLayout *centralLayout=new QVBoxLayout;
-  centralLayout->addLayout(topLayout);
+  centralLayout->addWidget(questionLabel);
   centralLayout->addWidget(m_searchEdit);
-  centralLayout->addWidget(m_stack);
+  centralLayout->addWidget(m_treeView, 1);
+  centralLayout->addWidget(m_tilesLabel);
+  centralLayout->addWidget(m_tilesScroll);
   centralLayout->addWidget(m_buttonBox);
   setLayout(centralLayout);
 
-  // Вид из конфига, дефолт — дерево. Ok видна только в дереве:
-  // у плитки клик сам по себе вставка, кнопка там бессмысленна
-  const bool treeMode=(mytetraConfig.get_clipperaskview()!=0);
-  m_treeRadio->setChecked(treeMode);
-  m_tilesRadio->setChecked(!treeMode);
-  onViewModeChanged();
+  onTreeSelectionChanged();
 
-  resize(640, 480);
+  resize(640, 620);
 }
 
 
-// Плитки — недавние ветки по истории вставок (свежие впереди).
-// История пуста или ветки удалены — полный список как раньше
+// Внизу — 16 плиток: последние или частые по настройке (история одна,
+// с счетчиками). Пусто или ветки удалены — полный список как раньше
 void ClipBranchDialog::setupTiles(void)
 {
   KnowTreeModel *model=nullptr;
@@ -280,28 +246,63 @@ void ClipBranchDialog::setupTiles(void)
   m_grid=new QGridLayout;
   m_grid->setSpacing(8);
 
-  QList< QPair<QString, QString> > branches;
+  // История: пары id:count, порядок — свежесть. Частым нужен
+  // обратный порядок по счетчику, связи рвутся стабильной сортировкой
+  QMap<QString, int> counts;
+  QStringList order;
+  const QStringList pairs=mytetraConfig.get_clipperrecent()
+                           .split(QChar(';'), Qt::SkipEmptyParts);
+  for(const QString &pair : pairs)
+  {
+    const int colon=pair.lastIndexOf(QChar(':'));
+    QString id;
+    int count=1;
+    if(colon>0)
+    {
+      id=pair.left(colon);
+      count=pair.mid(colon+1).toInt();
+      if(count<1)
+        count=1;
+    }
+    else
+      id=pair;
 
-  const QStringList recentIds=mytetraConfig.get_clipperrecent()
-                              .split(QChar(';'), Qt::SkipEmptyParts);
+    if(id.isEmpty() || counts.contains(id))
+      continue;
+
+    counts[id]=count;
+    order << id;
+  }
+
+  if(mytetraConfig.get_clippertilemode()==1)
+    std::stable_sort(order.begin(), order.end(),
+                     [&](const QString &first, const QString &second)
+                     { return counts.value(first, 0)>counts.value(second, 0); });
+
+  QList< QPair<QString, QString> > branches;
   if(model!=nullptr)
-    for(const QString &recentId : recentIds)
-      if(TreeItem *item=model->getItemById(recentId))
+    for(const QString &id : order)
+    {
+      if(branches.size()>=maxTiles)
+        break;
+
+      if(TreeItem *item=model->getItemById(id))
         branches << qMakePair(item->getField(QStringLiteral("id")),
                               item->getPathAsNameWithDelimeter(QStringLiteral(" / ")));
+    }
 
   if(branches.isEmpty())
     branches=collectBranches(model);
 
-  // Плитки: три колонки, текст — путь ветки, id и путь — в свойствах
-  // кнопки (путь нужен фильтру)
-  const int columns=3;
-  for(int n=0; n<branches.size(); ++n)
+  // Плитки 4x4: текст — путь ветки, id и путь — в свойствах кнопки
+  // (путь нужен фильтру)
+  const int columns=4;
+  for(int n=0; n<branches.size() && n<maxTiles; ++n)
   {
     QPushButton *tile=new QPushButton(branches.at(n).second, this);
     tile->setProperty("branchId", branches.at(n).first);
     tile->setProperty("branchPath", branches.at(n).second);
-    tile->setMinimumSize(QSize(180, 48));
+    tile->setMinimumSize(QSize(140, 44));
     connect(tile, &QPushButton::clicked, this, &ClipBranchDialog::onTileClicked);
     m_grid->addWidget(tile, n/columns, n%columns);
   }
@@ -316,8 +317,7 @@ void ClipBranchDialog::setupTiles(void)
 
 
 // Дерево на живой модели: иерархия видна как есть, глубина любая.
-// Раскрыто на два уровня — то же содержимое что в плитке, дальнее
-// раскрывается руками
+// Раскрыто на два уровня — дальнее раскрывается руками
 void ClipBranchDialog::setupTree(KnowTreeModel *model)
 {
   m_treeView=new QTreeView(this);

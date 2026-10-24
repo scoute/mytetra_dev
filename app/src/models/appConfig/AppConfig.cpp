@@ -144,7 +144,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_57(true);
+        QStringList actualTable=get_parameter_table_58(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1538,21 +1538,7 @@ void AppConfig::set_clipperbranchmode(int mode)
 }
 
 
-// Вид опроса "куда вставить" в режиме "спрашивать каждый раз":
-// 0 — плитка, 1 — дерево
-int AppConfig::get_clipperaskview(void)
-{
-    return this->get_parameter("clipperaskview").toInt();
-}
-
-
-void AppConfig::set_clipperaskview(int mode)
-{
-    m_conf->setValue("clipperaskview", mode);
-}
-
-
-// Недавние ветки клипов: id через ";", свежие впереди
+// Частые ветки клипов: пары id:count через ";", частые впереди
 QString AppConfig::get_clipperrecent(void)
 {
     return this->get_parameter("clipperrecent");
@@ -1562,6 +1548,19 @@ QString AppConfig::get_clipperrecent(void)
 void AppConfig::set_clipperrecent(const QString &ids)
 {
     m_conf->setValue("clipperrecent", ids);
+}
+
+
+// Какие 16 плиток внизу опроса: 0 — последние, 1 — частые
+int AppConfig::get_clippertilemode(void)
+{
+    return this->get_parameter("clippertilemode").toInt();
+}
+
+
+void AppConfig::set_clippertilemode(int mode)
+{
+    m_conf->setValue("clippertilemode", mode);
 }
 
 
@@ -2048,6 +2047,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_55;
     parameterFunctions << &AppConfig::get_parameter_table_56;
     parameterFunctions << &AppConfig::get_parameter_table_57;
+    parameterFunctions << &AppConfig::get_parameter_table_58;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3221,6 +3221,28 @@ QStringList AppConfig::get_parameter_table_57(bool withEndSignature)
 
     // Клиппер: недавние ветки вставок, id через ";", свежие впереди
     table << "clipperrecent" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_58(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 57, кроме вида опроса:
+    // переключалка плитка/дерево убрана (единый экран: дерево с
+    // фильтром сверху, частые плитки снизу). Апдейтер сам выкинет
+    // ключ из конфигов: пишет только ключи финальной таблицы
+    table << removeParameterFromTable("clipperaskview", get_parameter_table_57(false));
+
+    // Клиппер: какие 16 плиток внизу опроса (0 — последние, 1 — частые)
+    table << "clippertilemode" << "int" << "0";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

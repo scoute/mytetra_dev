@@ -610,6 +610,18 @@ MyTetra должна быть запущена.</translation>
         <translation>Корневые ветки с двумя уровнями вложений</translation>
     </message>
     <message>
+        <source>Tiles in prompt:</source>
+        <translation>Плитки в опросе:</translation>
+    </message>
+    <message>
+        <source>Last 16</source>
+        <translation>Последние 16</translation>
+    </message>
+    <message>
+        <source>Most frequent 16</source>
+        <translation>Частые 16</translation>
+    </message>
+    <message>
         <source>Ask every time (popup window)</source>
         <translation>Спрашивать каждый раз (всплывающее окно)</translation>
     </message>
@@ -630,16 +642,16 @@ MyTetra должна быть запущена.</translation>
         <translation>Куда хотите вставить?</translation>
     </message>
     <message>
-        <source>Tiles</source>
-        <translation>Плитка</translation>
-    </message>
-    <message>
-        <source>Tree</source>
-        <translation>Дерево</translation>
-    </message>
-    <message>
         <source>Filter branches...</source>
         <translation>Фильтр веток...</translation>
+    </message>
+    <message>
+        <source>Recent branches:</source>
+        <translation>Недавние ветки:</translation>
+    </message>
+    <message>
+        <source>Frequent branches:</source>
+        <translation>Частые ветки:</translation>
     </message>
 </context>
 <context>

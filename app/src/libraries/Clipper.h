@@ -169,8 +169,8 @@ private:
                      QString *errorMessage);
     void notify(const QString &title, const QString &text);
 
-    // Недавняя ветка в начало списка clipperrecent (лимит 12).
-    // Плитка опроса показывает их вместо полного списка
+    // Ветка в историю clipperrecent (пары id:count, свежие впереди).
+    // Нижние плитки опроса показывают последние или частые 16
     static void rememberRecentBranch(const QString &branchId);
 
     // --- Глобальный хоткей (X11, dlopen) ---

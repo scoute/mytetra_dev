@@ -170,6 +170,10 @@ bool parseWinHotkey(const QString &sequence, UINT &modifiers, UINT &vkCode)
     return false;
 }
 
+// Диагностика SendInput: сколько событий реально вставлено.
+// Объявление вперёд: определение ниже, после обеих эмуляций
+static void logSendInput(const char *what, UINT sent);
+
 // Эмуляция Ctrl+C чтобы забрать текущее выделение (как CintaNotes).
 // Копирование чужое выделение не портит, повторная вставка того же
 // отсекается дедупом по хешу

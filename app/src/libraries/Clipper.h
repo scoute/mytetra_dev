@@ -120,6 +120,15 @@ signals:
 private slots:
     void onX11Activity(void);
 
+#if defined(Q_OS_LINUX)
+    // Забор после эмуляции Ctrl+C: буфер изменился — обычный забор.
+    // Нет — дотягиваем медленную копию перепосылом, затем забор как есть
+    void clipX11AfterCopy(void);
+
+    // Ожидание медленной копии: перепосыл Ctrl+C, затем забор как есть
+    void clipX11WaitRetry(void);
+#endif
+
 #if defined(Q_OS_WIN)
     // Забор после эмуляции Ctrl+C: буфер изменился — обычный забор
     // скопированного. Нет — выделение догоняется ожиданием (медленная
@@ -166,6 +175,15 @@ private:
     static unsigned int qtModsToX11(int qtModifiers);
     static unsigned long qtKeyToKeysym(int qtKey);
 
+#if defined(Q_OS_LINUX)
+    // Слепок буфера до эмуляции Ctrl+C. Форматы+текст+html+флаг картинки:
+    // меток времени в сигнатуре нет, они меняются при каждом чтении
+    static QString x11ClipSignature(void);
+
+    // Эмуляция Ctrl+C через XTest. Нет libXtst — тихо ничего не делает
+    static void sendCopyKeysX11(void *x11Lib, void *xDisplay);
+#endif
+
     void *x11Lib=nullptr;         // handle dlopen("libX11.so.1")
     void *xDisplay=nullptr;       // Display* (opaque, без Xlib-заголовков)
     unsigned long xRootWindow=0;
@@ -190,6 +208,8 @@ private:
     QString m_hotkeyTitle;         // Его заголовок (название страницы)
     quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
     int m_copyWaitTries=0;         // Попытки дождаться медленной копии
+    QString m_x11BeforeSig;        // Слепок буфера до эмуляции Ctrl+C
+    int m_x11Tries=0;              // Попытки дождаться медленной копии
 
     bool hotkeyActive=false;
     QString hotkeyActiveSequence;

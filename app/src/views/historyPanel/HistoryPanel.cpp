@@ -86,8 +86,8 @@ void HistoryPanel::setupUi(void)
     // картинки, файлы и размер как числа через HistorySortItem
     historyTable=new QTableWidget(this);
     historyTable->setColumnCount(7);
-    historyTable->setHorizontalHeaderLabels(QStringList() << tr("Note") << tr("Branch")
-                                            << tr("Last visit") << tr("Visits")
+    historyTable->setHorizontalHeaderLabels(QStringList() << tr("Last visit") << tr("Note") << tr("Branch")
+                                            << tr("Visits")
                                             << tr("Images") << tr("Files") << tr("Size"));
     // Границы тянутся мышью как у тегов: автоширина выставляется
     // программно при пересборке, режимы Stretch/ResizeToContents
@@ -208,7 +208,7 @@ void HistoryPanel::onNoteDoubleClicked(int row, int column)
 {
     Q_UNUSED(column);
 
-    QTableWidgetItem *noteItem=historyTable->item(row, 0);
+    QTableWidgetItem *noteItem=historyTable->item(row, 1);
     if(noteItem==nullptr)
         return;
 
@@ -227,11 +227,11 @@ void HistoryPanel::onHistoryContextMenu(const QPoint &pos)
     if(noteItem==nullptr)
         return;
 
-    QTableWidgetItem *firstColumnItem=historyTable->item(noteItem->row(), 0);
-    if(firstColumnItem==nullptr)
+    QTableWidgetItem *noteColumnItem=historyTable->item(noteItem->row(), 1);
+    if(noteColumnItem==nullptr)
         return;
 
-    const QString id=firstColumnItem->data(Qt::UserRole).toString();
+    const QString id=noteColumnItem->data(Qt::UserRole).toString();
     if(id.isEmpty())
         return;
 
@@ -338,8 +338,8 @@ qint64 HistoryPanel::recordDirSize(const QString &recordDir)
 void HistoryPanel::retranslateUi(void)
 {
     filterEdit->setPlaceholderText(tr("Filter by note title"));
-    historyTable->setHorizontalHeaderLabels(QStringList() << tr("Note") << tr("Branch")
-                                            << tr("Last visit") << tr("Visits")
+    historyTable->setHorizontalHeaderLabels(QStringList() << tr("Last visit") << tr("Note") << tr("Branch")
+                                            << tr("Visits")
                                             << tr("Images") << tr("Files") << tr("Size"));
     clearButton->setText(tr("Clear"));
     clearButton->setToolTip(tr("Forget all visit history"));
@@ -513,13 +513,14 @@ void HistoryPanel::refreshHistory(void)
         noteItem->setToolTip(QDateTime::fromMSecsSinceEpoch(visitStat.lastMsecs)
                              .toString(Qt::DefaultLocaleShortDate)
                              +QStringLiteral("\n")+tr("Visits: %1").arg(visitStat.count));
-        historyTable->setItem(row, 0, noteItem);
-
-        historyTable->setItem(row, 1, new QTableWidgetItem(branchPath));
 
         HistorySortItem *lastItem=new HistorySortItem(formatVisitTime(visitStat.lastMsecs),
                                                       visitStat.lastMsecs);
-        historyTable->setItem(row, 2, lastItem);
+        historyTable->setItem(row, 0, lastItem);
+
+        historyTable->setItem(row, 1, noteItem);
+
+        historyTable->setItem(row, 2, new QTableWidgetItem(branchPath));
 
         HistorySortItem *visitsItem=new HistorySortItem(QString::number(visitStat.count),
                                                         visitStat.count);
@@ -547,7 +548,7 @@ void HistoryPanel::refreshHistory(void)
     // Автоширина текстовых колонок ограничена потолком чтобы длинное
     // название не раздувало док: дальше только вручную
     const int digitWidth=historyTable->fontMetrics().horizontalAdvance('0');
-    for(int column=0; column<2; ++column)
+    for(int column=1; column<3; ++column)
     {
         const int autoWidth=qMin(historyTable->columnWidth(column),
                                  digitWidth*40);
@@ -561,7 +562,7 @@ void HistoryPanel::refreshHistory(void)
     resizingProgrammatically=false;
 
     if(!historyTable->horizontalHeader()->isSortIndicatorShown())
-        historyTable->sortByColumn(2, Qt::DescendingOrder);
+        historyTable->sortByColumn(0, Qt::DescendingOrder);
 
     historyTable->setSortingEnabled(true);
 }

@@ -133,6 +133,9 @@ private slots:
     // Второй шаг без выделения: забрать всё через Ctrl+A+C. Буфер чужой —
     // сначала сохраняется, после забора восстанавливается
     void clipFullWindowGrab(void);
+
+    // Промежуток между Ctrl+A и Ctrl+C для медленных страниц
+    void clipFullWindowCopy(void);
 #endif
 
 private:

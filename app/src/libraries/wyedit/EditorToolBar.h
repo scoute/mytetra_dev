@@ -38,7 +38,7 @@ public:
     QAction *monospace;
     QAction *superscript;
     QAction *subscript;
-    QAction *code;
+    EditorDropDownButton *code; // Кнопка кода: меню выбора языка подсветки
     QAction *heading1;
     QAction *heading2;
     QAction *clear; // Очистка начертания текста
@@ -74,6 +74,26 @@ public:
     QAction *fontColorNoColorAction;
     QAction *backgroundColorSelectAction;
     QAction *backgroundColorNoColorAction;
+
+    // Пункты выпадашки кода: порядок совпадает с TypefaceFormatter::CodeLanguage
+    // (пункт 0 - обычный код без подсветки, дальше языки по алфавиту)
+    QAction *codePlainAction;
+    QAction *codeAngularAction;
+    QAction *codeBashAction;
+    QAction *codeCAction;
+    QAction *codeCxxAction;
+    QAction *codeCSharpAction;
+    QAction *codeGlslAction;
+    QAction *codeGoAction;
+    QAction *codeHtmlAction;
+    QAction *codeJavaAction;
+    QAction *codeJsAction;
+    QAction *codeJsonAction;
+    QAction *codeLuaAction;
+    QAction *codePythonAction;
+    QAction *codeReactAction;
+    QAction *codeRustAction;
+    QAction *codeXmlAction;
 
     QAction *reference;
     QAction *secret;

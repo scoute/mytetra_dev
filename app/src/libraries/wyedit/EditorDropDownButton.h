@@ -24,6 +24,11 @@ public:
     void addAction(QAction *action);
     void setIcon(const QIcon &icon);
 
+    // Переключение кнопки в режим "нажал - открылось меню".
+    // Нужно для кнопки выбора языка кода: и клик по иконке, и хоткей
+    // должны сразу показывать меню, а не применять действие по умолчанию
+    void setInstantPopup(bool enable=true);
+
     EditorToolPseudoButton toolPseudoButton;
 
     void showMenu();

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <section name="Keyword">
+        <name>break</name>
+        <name>case</name>
+        <name>chan</name>
+        <name>const</name>
+        <name>continue</name>
+        <name>default</name>
+        <name>defer</name>
+        <name>else</name>
+        <name>fallthrough</name>
+        <name>false</name>
+        <name>for</name>
+        <name>func</name>
+        <name>go</name>
+        <name>if</name>
+        <name>import</name>
+        <name>interface</name>
+        <name>iota</name>
+        <name>nil</name>
+        <name>package</name>
+        <name>range</name>
+        <name>return</name>
+        <name>select</name>
+        <name>struct</name>
+        <name>switch</name>
+        <name>to</name>
+        <name>true</name>
+        <name>type</name>
+    </section>
+    <section name="PrimitiveType">
+        <name>bool</name>
+        <name>byte</name>
+        <name>complex128</name>
+        <name>complex64</name>
+        <name>float32</name>
+        <name>float64</name>
+        <name>int</name>
+        <name>int16</name>
+        <name>int32</name>
+        <name>int64</name>
+        <name>int8</name>
+        <name>map</name>
+        <name>rune</name>
+        <name>string</name>
+        <name>struct</name>
+        <name>uint</name>
+        <name>uint16</name>
+        <name>uint32</name>
+        <name>uint64</name>
+        <name>uint8</name>
+        <name>uintptr</name>
+        <name>var</name>
+    </section>
+    <section name="Function">
+        <name>append</name>
+        <name>cap</name>
+        <name>close</name>
+        <name>complex</name>
+        <name>copy</name>
+        <name>delete</name>
+        <name>imag</name>
+        <name>len</name>
+        <name>make</name>
+        <name>new</name>
+        <name>panic</name>
+        <name>print</name>
+        <name>println</name>
+        <name>real</name>
+        <name>recover</name>
+    </section>
+</root>

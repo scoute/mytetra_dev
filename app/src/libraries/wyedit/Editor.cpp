@@ -656,8 +656,8 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->monospace, &QAction::triggered,
             typefaceFormatter,                 &TypefaceFormatter::onMonospaceClicked);
 
-    connect(editorToolBarAssistant->code, &QAction::triggered,
-            typefaceFormatter,            &TypefaceFormatter::onCodeClicked);
+    connect(editorToolBarAssistant->code, &EditorDropDownButton::menuItemClicked,
+            typefaceFormatter,            &TypefaceFormatter::onCodeLanguageClicked);
 
     connect(editorToolBarAssistant->heading1, &QAction::triggered,
             typefaceFormatter,                &TypefaceFormatter::onHeading1Clicked);

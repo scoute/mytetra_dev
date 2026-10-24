@@ -160,10 +160,47 @@ void EditorToolBar::setupToolBarTools(void)
     monospace->setIcon(QIcon(":/resource/pic/edit_monospace.svg"));
     monospace->setObjectName("editor_tb_monospace");
 
-    // Кнопка Code
-    code=new QAction(this);
-    code->setIcon(QIcon(":/resource/pic/edit_code.svg"));
+    // Кнопка Code: выпадашка с выбором языка подсветки.
+    // Клик по иконке и хоткей сразу открывают меню (InstantPopup),
+    // пункт 0 - старый обычный код без подсветки
+    code=new EditorDropDownButton(this);
     code->setObjectName("editor_tb_code");
+    code->setIcon(QIcon(":/resource/pic/edit_code.svg"));
+    code->setInstantPopup(true);
+    codePlainAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Plain code"), this);
+    codeAngularAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Angular"), this);
+    codeBashAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Bash"), this);
+    codeCAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("C"), this);
+    codeCxxAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("C++"), this);
+    codeCSharpAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("C#"), this);
+    codeGlslAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("GLSL"), this);
+    codeGoAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Go"), this);
+    codeHtmlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("HTML"), this);
+    codeJavaAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Java"), this);
+    codeJsAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("JavaScript"), this);
+    codeJsonAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("JSON"), this);
+    codeLuaAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Lua"), this);
+    codePythonAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Python"), this);
+    codeReactAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("React"), this);
+    codeRustAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Rust"), this);
+    codeXmlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("XML"), this);
+    code->addAction(codePlainAction);
+    code->addAction(codeAngularAction);
+    code->addAction(codeBashAction);
+    code->addAction(codeCAction);
+    code->addAction(codeCxxAction);
+    code->addAction(codeCSharpAction);
+    code->addAction(codeGlslAction);
+    code->addAction(codeGoAction);
+    code->addAction(codeHtmlAction);
+    code->addAction(codeJavaAction);
+    code->addAction(codeJsAction);
+    code->addAction(codeJsonAction);
+    code->addAction(codeLuaAction);
+    code->addAction(codePythonAction);
+    code->addAction(codeReactAction);
+    code->addAction(codeRustAction);
+    code->addAction(codeXmlAction);
 
     // Кнопки заголовков H1/H2: checkable — подсветка актуального
     // уровня идёт из onUpdateOutlineButtonHiglight
@@ -417,7 +454,9 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-superscript", superscript);
     shortcutManager.initAction("editor-subscript", subscript);
     shortcutManager.initAction("editor-monospace", monospace);
-    shortcutManager.initAction("editor-code", code);
+    shortcutManager.initAction("editor-code", code->toolPseudoButton.getSelectAction() );
+    code->setStatusTip( shortcutManager.getFullDescription("editor-code") );
+    code->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-code") );
     shortcutManager.initAction("editor-heading1", heading1);
     shortcutManager.initAction("editor-heading2", heading2);
     shortcutManager.initAction("editor-clear", clear);
@@ -496,6 +535,24 @@ void EditorToolBar::retranslateUi(void)
 
     backgroundColorSelectAction->setText(tr("Select color"));
     backgroundColorNoColorAction->setText(tr("No color"));
+
+    codePlainAction->setText(tr("Plain code"));
+    codeAngularAction->setText(tr("Angular"));
+    codeBashAction->setText(tr("Bash"));
+    codeCAction->setText(tr("C"));
+    codeCxxAction->setText(tr("C++"));
+    codeCSharpAction->setText(tr("C#"));
+    codeGlslAction->setText(tr("GLSL"));
+    codeGoAction->setText(tr("Go"));
+    codeHtmlAction->setText(tr("HTML"));
+    codeJavaAction->setText(tr("Java"));
+    codeJsAction->setText(tr("JavaScript"));
+    codeJsonAction->setText(tr("JSON"));
+    codeLuaAction->setText(tr("Lua"));
+    codePythonAction->setText(tr("Python"));
+    codeReactAction->setText(tr("React"));
+    codeRustAction->setText(tr("Rust"));
+    codeXmlAction->setText(tr("XML"));
 
     // save покрыт шорткатом editor-save через setupShortcuts, здесь
     // только подсказки кнопок без горячих клавиш (мобильные)

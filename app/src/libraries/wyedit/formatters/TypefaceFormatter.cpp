@@ -1,10 +1,24 @@
 #include <QTextBlock>
+#include <QTextDocument>
+#include <QTextLayout>
+#include <QFont>
 #include <QDebug>
 #include <QColorDialog>
 #include <QColor>
 #include <QDomNode>
 #include <QTextTable>
 #include <QApplication>
+
+#include <QCXXHighlighter>
+#include <QBashHighlighter>
+#include <QCLikeHighlighter>
+#include <QGLSLHighlighter>
+#include <QJSONHighlighter>
+#include <QLuaHighlighter>
+#include <QPythonHighlighter>
+#include <QStyleSyntaxHighlighter>
+#include <QSyntaxStyle>
+#include <QXMLHighlighter>
 
 #include "TypefaceFormatter.h"
 
@@ -264,8 +278,18 @@ void TypefaceFormatter::onMonospaceClicked(void)
 }
 
 
+// Выбор пункта меню кнопки кода: форматирование с подсветкой выбранного языка
+void TypefaceFormatter::onCodeLanguageClicked(int language)
+{
+    if(language<CodePlain || language>CodeXml)
+        return;
+
+    formatCodeWithLanguage(language);
+}
+
+
 // Форматирование в качестве кода
-void TypefaceFormatter::onCodeClicked(void)
+void TypefaceFormatter::formatCodeWithLanguage(int language)
 {
     // TRACELOG
 
@@ -360,7 +384,129 @@ void TypefaceFormatter::onCodeClicked(void)
         editor->updateIndentsliderToActualFormat();
     }
 
+    // Подсветка синтаксиса выбранного языка поверх базового оформления кода
+    if(language!=CodePlain)
+        applyCodeHighlight(language);
+
     textArea->textCursor().endEditBlock();
+}
+
+
+// Одноразовая подсветка синтаксиса в текущем выделении через хайлайтеры
+// QCodeEditor на временном документе. Вызывается внутри edit-блокa
+// formatCodeWithLanguage, свое begin/end не делает
+void TypefaceFormatter::applyCodeHighlight(int language)
+{
+    QTextCursor cursor=textArea->textCursor();
+    if(!cursor.hasSelection())
+        return;
+
+    int selectStart=cursor.selectionStart();
+    int selectEnd=cursor.selectionEnd();
+
+    QTextDocument *doc=textArea->document();
+
+    // Собираются блоки документа, покрытые выделением, и смещения
+    // выделенных подстрок внутри текста каждого блока
+    QList<QTextBlock> realBlocks;
+    QList<int> blockSelStart;
+    QList<int> blockSelLength;
+
+    for(QTextBlock block=doc->findBlock(selectStart);
+        block.isValid() && block.position()<selectEnd;
+        block=block.next())
+    {
+        int blockTextLen=block.length()-1; // Без символа конца абзаца
+        if(blockTextLen<0)
+            blockTextLen=0;
+
+        int from=qMax(selectStart, block.position())-block.position();
+        int to=qMin(selectEnd, block.position()+blockTextLen)-block.position();
+
+        if(to>from)
+        {
+            realBlocks.append(block);
+            blockSelStart.append(from);
+            blockSelLength.append(to-from);
+        }
+    }
+
+    if(realBlocks.isEmpty())
+        return;
+
+    // Выделенный текст переносится во временный документ построчно,
+    // чтобы штатные хайлайтеры отработали многострочные конструкции
+    // (комментарии /* */, строки ''' и т.п.) через состояния блоков
+    QStringList lines;
+    for(int i=0; i<realBlocks.size(); ++i)
+        lines.append( realBlocks.at(i).text().mid(blockSelStart.at(i), blockSelLength.at(i)) );
+
+    QTextDocument tempDoc;
+    tempDoc.setPlainText( lines.join("\n") );
+
+    // Защита от рассинхрона блоков временного и настоящего документов
+    if(tempDoc.blockCount()!=realBlocks.size())
+        return;
+
+    QStyleSyntaxHighlighter *highlighter=nullptr;
+    switch(language)
+    {
+    case CodeCxx:    highlighter=new QCXXHighlighter(&tempDoc); break;
+    case CodeGlsl:   highlighter=new QGLSLHighlighter(&tempDoc); break;
+    case CodeJson:   highlighter=new QJSONHighlighter(&tempDoc); break;
+    case CodeLua:    highlighter=new QLuaHighlighter(&tempDoc); break;
+    case CodePython: highlighter=new QPythonHighlighter(&tempDoc); break;
+    case CodeAngular:
+    case CodeHtml:   highlighter=new QXMLHighlighter(&tempDoc); break;
+    case CodeBash:   highlighter=new QBashHighlighter(&tempDoc); break;
+    case CodeC:      highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/c.xml"), &tempDoc); break;
+    case CodeCSharp: highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/csharp.xml"), &tempDoc); break;
+    case CodeGo:     highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/go.xml"), &tempDoc); break;
+    case CodeJava:   highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/java.xml"), &tempDoc); break;
+    case CodeJs:
+    case CodeReact:  highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/js.xml"), &tempDoc); break;
+    case CodeRust:   highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/rust.xml"), &tempDoc); break;
+    default:
+        return;
+    }
+
+    highlighter->setSyntaxStyle(QSyntaxStyle::defaultStyle());
+    highlighter->rehighlight();
+
+    // Форматы из временного документа переносятся в выделение.
+    // Из стиля берутся только цвет текста, жирность и курсив.
+    // Фон осознанно не переносится: в стиле по умолчанию у части
+    // форматов белый фон, который ломал бы темные темы
+    for(int i=0; i<realBlocks.size(); ++i)
+    {
+        QTextBlock tempBlock=tempDoc.findBlockByNumber(i);
+        if(!tempBlock.isValid() || tempBlock.layout()==nullptr)
+            continue;
+
+        int basePos=realBlocks.at(i).position()+blockSelStart.at(i);
+
+        QVector<QTextLayout::FormatRange> ranges=tempBlock.layout()->formats();
+        for(int r=0; r<ranges.size(); ++r)
+        {
+            QTextCharFormat source=ranges.at(r).format;
+            if(!source.foreground().color().isValid())
+                continue;
+
+            QTextCharFormat target;
+            target.setForeground(source.foreground());
+            if(source.fontWeight()!=QFont::Normal)
+                target.setFontWeight(source.fontWeight());
+            if(source.fontItalic())
+                target.setFontItalic(true);
+
+            QTextCursor applyCursor=textArea->textCursor();
+            applyCursor.setPosition(basePos+ranges.at(r).start);
+            applyCursor.setPosition(basePos+ranges.at(r).start+ranges.at(r).length, QTextCursor::KeepAnchor);
+            applyCursor.mergeCharFormat(target);
+        }
+    }
+
+    delete highlighter;
 }
 
 

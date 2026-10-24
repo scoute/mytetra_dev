@@ -116,6 +116,18 @@ void AppConfigPage_Clipper::setupUi(void)
 
   clipperBranchCombo->setEnabled(clipperBranchCustom->isChecked());
 
+  // Ручной эксклюзив включается ДО любых setChecked: иначе чек
+  // плиток ниже снес бы выбор ветки (общий родитель + штатный
+  // autoExclusive = одна группа на всех). Группы — сразу следом,
+  // дальше они держат независимость при кликах
+  for(QRadioButton *radio : {clipperBranchDefault, clipperBranchCustom, clipperBranchAsk})
+    radio->setAutoExclusive(false);
+
+  branchGroup=new QButtonGroup(this);
+  branchGroup->addButton(clipperBranchDefault);
+  branchGroup->addButton(clipperBranchCustom);
+  branchGroup->addButton(clipperBranchAsk);
+
   // Нижние плитки опроса: последние 16 или частые 16 (история одна,
   // с счетчиками — вид выбирается здесь, а не в диалоге)
   clipperTilesRecent=new QRadioButton(this);
@@ -124,26 +136,17 @@ void AppConfigPage_Clipper::setupUi(void)
   clipperTilesFrequent=new QRadioButton(this);
   clipperTilesFrequent->setText(tr("Most frequent 16"));
 
-  if(mytetraConfig.get_clippertilemode()==1)
-    clipperTilesFrequent->setChecked(true);
-  else
-    clipperTilesRecent->setChecked(true);
-
-  // Две независимые группы: все пять радио с общим родителем Qt
-  // слил бы в одну autoExclusive-группу — клик по плиткам гасил бы
-  // выбор ветки и наоборот. Поэтому везде ручной эксклюзив
-  for(QRadioButton *radio : {clipperBranchDefault, clipperBranchCustom, clipperBranchAsk,
-                             clipperTilesRecent, clipperTilesFrequent})
-    radio->setAutoExclusive(false);
-
-  branchGroup=new QButtonGroup(this);
-  branchGroup->addButton(clipperBranchDefault);
-  branchGroup->addButton(clipperBranchCustom);
-  branchGroup->addButton(clipperBranchAsk);
+  clipperTilesRecent->setAutoExclusive(false);
+  clipperTilesFrequent->setAutoExclusive(false);
 
   tilesGroup=new QButtonGroup(this);
   tilesGroup->addButton(clipperTilesRecent);
   tilesGroup->addButton(clipperTilesFrequent);
+
+  if(mytetraConfig.get_clippertilemode()==1)
+    clipperTilesFrequent->setChecked(true);
+  else
+    clipperTilesRecent->setChecked(true);
 
   // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
   // показывает подсказку без задержки наведения

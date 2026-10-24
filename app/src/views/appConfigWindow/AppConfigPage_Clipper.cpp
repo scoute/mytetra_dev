@@ -12,6 +12,7 @@
 #include <QKeySequenceEdit>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QButtonGroup>
 #include "libraries/MtComboBox.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
@@ -127,6 +128,22 @@ void AppConfigPage_Clipper::setupUi(void)
     clipperTilesFrequent->setChecked(true);
   else
     clipperTilesRecent->setChecked(true);
+
+  // Две независимые группы: все пять радио с общим родителем Qt
+  // слил бы в одну autoExclusive-группу — клик по плиткам гасил бы
+  // выбор ветки и наоборот. Поэтому везде ручной эксклюзив
+  for(QRadioButton *radio : {clipperBranchDefault, clipperBranchCustom, clipperBranchAsk,
+                             clipperTilesRecent, clipperTilesFrequent})
+    radio->setAutoExclusive(false);
+
+  branchGroup=new QButtonGroup(this);
+  branchGroup->addButton(clipperBranchDefault);
+  branchGroup->addButton(clipperBranchCustom);
+  branchGroup->addButton(clipperBranchAsk);
+
+  tilesGroup=new QButtonGroup(this);
+  tilesGroup->addButton(clipperTilesRecent);
+  tilesGroup->addButton(clipperTilesFrequent);
 
   // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
   // показывает подсказку без задержки наведения

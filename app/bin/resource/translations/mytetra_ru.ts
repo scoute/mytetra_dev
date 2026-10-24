@@ -629,6 +629,14 @@ MyTetra должна быть запущена.</translation>
         <source>Where do you want to paste?</source>
         <translation>Куда хотите вставить?</translation>
     </message>
+    <message>
+        <source>Tiles</source>
+        <translation>Плитка</translation>
+    </message>
+    <message>
+        <source>Tree</source>
+        <translation>Дерево</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Crypt</name>

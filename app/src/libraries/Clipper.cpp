@@ -664,8 +664,12 @@ bool Clipper::finishClip(ClipData &clipData)
     {
         if(!recordId.isEmpty() && model->isRecordIdExists(recordId))
         {
-            const QString message=tr("Already clipped, skipped.");
+            const QString message=mytetraConfig.get_clipperopendup()
+                ? tr("Already clipped, opened existing note.")
+                : tr("Already clipped, skipped.");
             notify(tr("Web Clipper"), message);
+            if(mytetraConfig.get_clipperopendup())
+                openExistingRecord(recordId);
             clipData.errorMessage=message;
             return false;
         }
@@ -693,10 +697,15 @@ bool Clipper::finishClip(ClipData &clipData)
         return false;
     }
 
-    if(isDuplicate(branchItem, recordId, newHash))
+    QString matchedId;
+    if(isDuplicate(branchItem, recordId, newHash, &matchedId))
     {
-        const QString message=tr("Already clipped, skipped.");
+        const QString message=mytetraConfig.get_clipperopendup()
+            ? tr("Already clipped, opened existing note.")
+            : tr("Already clipped, skipped.");
         notify(tr("Web Clipper"), message);
+        if(mytetraConfig.get_clipperopendup())
+            openExistingRecord(matchedId.isEmpty() ? recordId : matchedId);
         clipData.errorMessage=message;
         return false;
     }
@@ -1332,15 +1341,20 @@ void Clipper::rememberRecentBranch(const QString &branchId)
 // Защита от повторной вставки: быстрый путь — запись с id из хеша уже
 // есть в дереве; медленный — сравнение хешей текстов свежих 2000 записей
 // ветки (ловит дубли, вставленные до хеш-id). Ограничение сканирования —
-// свежие 2000
-bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash)
+// свежие 2000. Найденный id отдается через matchedId для прыжка к оригиналу
+bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const QByteArray &hash,
+                          QString *matchedId)
 {
     if(!branchItem || hash.isEmpty())
         return false;
 
     KnowTreeModel *model=treeModel();
     if(model && !recordId.isEmpty() && model->isRecordIdExists(recordId))
+    {
+        if(matchedId!=nullptr)
+            *matchedId=recordId;
         return true;
+    }
 
     RecordTableData *table=branchItem->recordtableGetTableData();
     if(!table)
@@ -1368,10 +1382,35 @@ bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const Q
         const QByteArray existingHash=QCryptographicHash::hash(textFile.readAll(),
                                                                QCryptographicHash::Sha256);
         if(existingHash==hash)
+        {
+            if(matchedId!=nullptr)
+                *matchedId=record->getField(QStringLiteral("id"));
             return true;
+        }
     }
 
     return false;
+}
+
+
+// Прыжок к уже вставленной заметке: путь резолвится вживую
+// (ветку могли переместить), окно поверх не тянем
+void Clipper::openExistingRecord(const QString &recordId)
+{
+    KnowTreeModel *model=treeModel();
+    if(model==nullptr || recordId.isEmpty())
+        return;
+
+    const QStringList path=model->getRecordPath(recordId);
+    if(path.isEmpty() || !model->isItemValid(path))
+        return;
+
+    // Через invokeMethod, чтобы не линковать MainWindow (тесты, moc)
+    QObject *mainWindow=find_object<QObject>("mainwindow");
+    if(mainWindow)
+        QMetaObject::invokeMethod(mainWindow, "setTreeAndRecordtablePositions",
+                                  Q_ARG(QStringList, path),
+                                  Q_ARG(QString, recordId));
 }
 
 

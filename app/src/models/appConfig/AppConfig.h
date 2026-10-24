@@ -423,6 +423,10 @@ public:
     int get_clippertilemode(void);
     void set_clippertilemode(int mode);
 
+    // При попытке вставить дубль открывать оригинал заметки
+    bool get_clipperopendup(void);
+    void set_clipperopendup(bool open);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -580,6 +584,7 @@ private:
     QStringList get_parameter_table_56(bool withEndSignature=true);
     QStringList get_parameter_table_57(bool withEndSignature=true);
     QStringList get_parameter_table_58(bool withEndSignature=true);
+    QStringList get_parameter_table_59(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

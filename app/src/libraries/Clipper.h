@@ -112,17 +112,6 @@ public slots:
 #if defined(Q_OS_WIN)
     // Нажатие глобального хоткея Windows: скопировать выделение и забрать
     void onWinHotkey(void);
-
-    // Чтение сырого Windows HTML Format из буфера (там SourceURL).
-    // Qt отдает только фрагмент, заголовок отрезается
-    static QByteArray readNativeHtmlFormat(void);
-
-    // Заголовок окна по хендлу. void* чтобы не тащить windows.h в заголовок
-    static QString windowCaption(void *hwnd);
-
-    void *m_hotkeyWindow=nullptr; // Окно под фокусом в момент хоткея
-    QString m_hotkeyTitle;         // Его заголовок (название страницы)
-    quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
 #endif
 
 signals:
@@ -181,6 +170,17 @@ private:
 
 #if defined(Q_OS_WIN)
     ClipperWinFilter *winFilter=nullptr; // Приёмник WM_HOTKEY
+
+    // Чтение сырого Windows HTML Format из буфера (там SourceURL).
+    // Qt отдает только фрагмент, заголовок отрезается
+    static QByteArray readNativeHtmlFormat(void);
+
+    // Заголовок окна по хендлу. void* чтобы не тащить windows.h в заголовок
+    static QString windowCaption(void *hwnd);
+
+    void *m_hotkeyWindow=nullptr; // Окно под фокусом в момент хоткея
+    QString m_hotkeyTitle;         // Его заголовок (название страницы)
+    quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
 #endif
 
     bool hotkeyActive=false;

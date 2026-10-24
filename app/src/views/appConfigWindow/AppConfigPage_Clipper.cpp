@@ -128,10 +128,6 @@ void AppConfigPage_Clipper::setupUi(void)
   else
     clipperTilesRecent->setChecked(true);
 
-  // Начальное состояние зависимости применяется сразу: сигналы
-  // toggled при начальной установке еще не подключены
-  onBranchModeChanged();
-
   // Знак вопроса у группы клиппера: виден сразу, клик мгновенно
   // показывает подсказку без задержки наведения
   clipperHelpButton=new QToolButton(this);
@@ -221,6 +217,11 @@ void AppConfigPage_Clipper::assembly(void)
 
   // Основной слой устанавливается
   setLayout(centralLayout);
+
+  // Начальное состояние зависимостей (комбо, серая строка плиток):
+  // вызывается здесь, а не в setupUi — все виджеты уже созданы.
+  // Раньше вызов в setupUi падал: clipperTilesLabel живет в assembly
+  onBranchModeChanged();
 }
 
 

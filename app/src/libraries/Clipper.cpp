@@ -1415,7 +1415,17 @@ struct XKeyEventCompat
     unsigned int keycode;
     int same_screen;
     int pad2;
+
+    // XNextEvent копирует в буфер весь XEvent (24 long = 192 байта),
+    // а не только клавишу (96 байт). Без хвоста первое же событие
+    // рвало стек (stack smashing на первом хоткее под X11)
+    long tail[12];
 };
+
+// Совместимая структура обязана совпадать с XEvent размером:
+// иначе XNextEvent снова начнет писать мимо буфера
+static_assert(sizeof(XKeyEventCompat)==24*sizeof(long),
+              "XKeyEventCompat must match XEvent size");
 
 typedef void *(*XOpenDisplayFunc)(const char *);
 typedef int (*XCloseDisplayFunc)(void *);

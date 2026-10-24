@@ -2125,6 +2125,10 @@ void MainWindow::initViewMenu(void)
     viewFavoritesAction->setCheckable(true);
     viewMenu->addAction(viewFavoritesAction);
 
+    viewTreeFilterAction=new QAction(tr("Show branch filter"), this);
+    viewTreeFilterAction->setCheckable(true);
+    viewMenu->addAction(viewTreeFilterAction);
+
     viewToolsAction=new QAction(tr("Show editor toolbar"), this);
     viewToolsAction->setCheckable(true);
     viewToolsAction->setObjectName(QStringLiteral("viewToolsAction"));
@@ -2152,6 +2156,8 @@ void MainWindow::initViewMenu(void)
             this,              &MainWindow::onViewHeaderToggled);
     connect(viewFavoritesAction, &QAction::toggled,
             this,                &MainWindow::onViewFavoritesToggled);
+    connect(viewTreeFilterAction, &QAction::toggled,
+            this,                  &MainWindow::onViewTreeFilterToggled);
     connect(viewToolsAction, &QAction::toggled,
             this,            &MainWindow::onViewToolsToggled);
     connect(viewReadOnlyAction, &QAction::toggled,
@@ -2175,6 +2181,9 @@ void MainWindow::syncViewMenu(void)
 
     if(viewFavoritesAction!=nullptr)
         viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
+
+    if(viewTreeFilterAction!=nullptr)
+        viewTreeFilterAction->setChecked(mytetraConfig.get_treeFilterVisible());
 
     // Панель может прятаться мимо меню (кнопка toggleTools, хоткей):
     // пометка подтягивается при каждом открытии
@@ -2204,6 +2213,16 @@ void MainWindow::onViewFavoritesToggled(bool checked)
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
     if(favoritesPanel!=nullptr)
         favoritesPanel->refreshFavorites();
+}
+
+
+void MainWindow::onViewTreeFilterToggled(bool checked)
+{
+    mytetraConfig.set_treeFilterVisible(checked);
+
+    TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+    if(treeScreen!=nullptr)
+        treeScreen->setTreeFilterVisible(checked);
 }
 
 
@@ -2838,6 +2857,9 @@ void MainWindow::retranslateUi(void)
 
         if(viewFavoritesAction!=nullptr)
             viewFavoritesAction->setText(tr("Show favorites panel"));
+
+        if(viewTreeFilterAction!=nullptr)
+            viewTreeFilterAction->setText(tr("Show branch filter"));
 
         if(viewSecretColorAction!=nullptr)
             viewSecretColorAction->setText(tr("Change secret color..."));

@@ -1288,6 +1288,10 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
 <context>
     <name>TreeScreen</name>
     <message>
+        <source>Filter branches...</source>
+        <translation>Фильтр веток...</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
@@ -5162,6 +5166,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Показывать панель избранного</translation>
     </message>
     <message>
+        <source>Show branch filter</source>
+        <translation>Показывать фильтр веток</translation>
+    </message>
+    <message>
         <source>Show editor toolbar</source>
         <translation>Показывать панель инструментов редактора</translation>
     </message>
@@ -7760,6 +7768,10 @@ Enable it in Settings on the History page.</source>
 </context>
 <context>
     <name>TreeScreen</name>
+    <message>
+        <source>Filter branches...</source>
+        <translation>Фильтр веток...</translation>
+    </message>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="599"/>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="638"/>

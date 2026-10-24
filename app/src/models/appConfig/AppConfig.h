@@ -237,6 +237,10 @@ public:
     bool get_favoritesEnabled(void);
     void set_favoritesEnabled(bool state);
 
+    // Строка фильтра над деревом веток (тумблер в меню Вид)
+    bool get_treeFilterVisible(void);
+    void set_treeFilterVisible(bool state);
+
     // Хранилище избранного: "sidecar" (data/favorites.xml, по умолчанию)
     // или "xml" (поля favorite в mytetra.xml). Тоже без версий
     QString get_favoritesStorage(void);
@@ -585,6 +589,7 @@ private:
     QStringList get_parameter_table_57(bool withEndSignature=true);
     QStringList get_parameter_table_58(bool withEndSignature=true);
     QStringList get_parameter_table_59(bool withEndSignature=true);
+    QStringList get_parameter_table_60(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

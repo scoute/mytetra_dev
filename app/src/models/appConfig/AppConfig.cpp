@@ -144,7 +144,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_59(true);
+        QStringList actualTable=get_parameter_table_60(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -914,6 +914,19 @@ void AppConfig::set_editorFindEmbedded(bool state)
 bool AppConfig::get_favoritesEnabled(void)
 {
     return m_conf->value("favoritesEnabled", true).toBool();
+}
+
+
+// Строка фильтра над деревом веток (тумблер в меню Вид)
+bool AppConfig::get_treeFilterVisible(void)
+{
+    return m_conf->value("treeFilterVisible", true).toBool();
+}
+
+
+void AppConfig::set_treeFilterVisible(bool state)
+{
+    m_conf->setValue("treeFilterVisible", state);
 }
 
 
@@ -2062,6 +2075,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_57;
     parameterFunctions << &AppConfig::get_parameter_table_58;
     parameterFunctions << &AppConfig::get_parameter_table_59;
+    parameterFunctions << &AppConfig::get_parameter_table_60;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3277,6 +3291,26 @@ QStringList AppConfig::get_parameter_table_59(bool withEndSignature)
     // Клиппер: при попытке вставить дубль открывать оригинал заметки.
     // Дефолт true — поведение нужно сразу, галочка для отключения
     table << "clipperopendup" << "bool" << "true";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_60(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 59
+    table << get_parameter_table_59(false);
+
+    // Строка фильтра над деревом веток (тумблер в меню Вид).
+    // Дефолт true — фильтр виден сразу
+    table << "treeFilterVisible" << "bool" << "true";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

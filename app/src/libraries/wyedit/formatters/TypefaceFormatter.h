@@ -90,11 +90,31 @@ private:
     // (CodePlain - старое поведение без подсветки)
     void formatCodeWithLanguage(int language);
 
+    // Каноническое имя языка для маркера блока кода. Без перевода:
+    // маркер в тексте заметки всегда на английском. Пусто для Plain и JSON
+    // (у JSON нет комментариев, маркер вставлять не во что)
+    static QString codeMarkerName(int language);
+
+    // Строка-маркер языка для вставки в текст. Пусто - у языка нет маркера
+    static QString codeMarkerLine(int language);
+
+    // Распознать наш маркер в строке, вернуть язык или -1.
+    // Форматы: // {lang = Имя}, # {lang = Имя}, -- {lang = Имя},
+    // <!-- {lang = Имя} -->. Совпадение строгое: вся строка - только маркер
+    static int codeMarkerLanguage(const QString &line);
+
     // Одноразовая подсветка синтаксиса в текущем выделении через
     // хайлайтеры QCodeEditor на временном документе. Цвета запекаются
     // в HTML заметки, поэтому переживают сохранение и не требуют
     // живого QSyntaxHighlighter на документе редактора
     void applyCodeHighlight(int language);
+
+    // Обеспечить маркер языка в начале выделения: заменить наш маркер
+    // (в выделении или строкой выше) на новый, вставить новый сверху
+    // или убрать маркер для языка без маркера (Plain, JSON).
+    // Вызывается внутри edit-блока formatCodeWithLanguage.
+    // Возвращает false, если после обработки выделять нечего
+    bool normalizeCodeMarker(int language);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

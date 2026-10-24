@@ -204,6 +204,7 @@ private:
     quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
     QMimeData *m_savedClipboard=nullptr; // Чужой буфер на время Ctrl+A
     bool m_fullWindowFlow=false;  // Забор всей страницы: титул из окна
+    int m_fullWindowTries=0;      // Попытки дождаться копии медленной страницы
 
     bool hotkeyActive=false;
     QString hotkeyActiveSequence;

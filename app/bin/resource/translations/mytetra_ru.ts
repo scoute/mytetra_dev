@@ -594,6 +594,22 @@ MyTetra должна быть запущена.</translation>
         <translation>Статус:</translation>
     </message>
     <message>
+        <source>Target branch:</source>
+        <translation>Целевая ветка:</translation>
+    </message>
+    <message>
+        <source>To default branch (unsorted_notes)</source>
+        <translation>В ветку по умолчанию (unsorted_notes)</translation>
+    </message>
+    <message>
+        <source>To selected branch:</source>
+        <translation>В выбранную ветку:</translation>
+    </message>
+    <message>
+        <source>Root branches with two nesting levels</source>
+        <translation>Корневые ветки с двумя уровнями вложений</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="161"/>
         <source>Clipper status is unavailable.</source>
         <translation>Статус клиппера недоступен.</translation>
@@ -1950,9 +1966,8 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Уже вставлено, пропущено.</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/Clipper.cpp" line="520"/>
-        <source>Saved to unsorted_notes: %1</source>
-        <translation>Сохранено в unsorted_notes: %1</translation>
+        <source>Saved to %1: %2</source>
+        <translation>Сохранено в %1: %2</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="526"/>

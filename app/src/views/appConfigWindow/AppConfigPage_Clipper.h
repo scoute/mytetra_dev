@@ -12,9 +12,12 @@ class QToolButton;
 class QCheckBox;
 class QKeySequenceEdit;
 class QPushButton;
+class QRadioButton;
+class MtComboBox;
 
 // Страница настроек клиппера: включение, глобальный хоткей (X11),
-// статус бэкенда, кнопка проверки, лимиты картинок и подсказка
+// статус бэкенда, кнопка проверки, лимиты картинок, целевая ветка
+// и подсказка
 
 class AppConfigPage_Clipper : public ConfigPage
 {
@@ -32,6 +35,14 @@ private slots:
   // Знак вопроса у группы клиппера: мгновенная подсказка
   void onClipperHelpButton(void);
   void onClickedClipperTest(void);
+
+  // Переключение радиокнопок ветки: список активен только в режиме выбора
+  void onBranchModeChanged(void);
+
+  // Список веток для комбо: корневые + два уровня вложений.
+  // Сохраненная ветка глубже третьего уровня дописывается отдельно,
+  // чтобы выбор не терялся
+  void rebuildBranchList(void);
 
 private:
   void updateClipperStatus(void);
@@ -57,6 +68,12 @@ protected:
   // Лимиты клиппера: число картинок в одной заметке и размер одной картинки
   QSpinBox *clipperMaxImages;
   QSpinBox *clipperMaxImageSizeMb;
+
+  // Целевая ветка: радиокнопки "по умолчанию" / "выбранная" и список
+  // корневых веток с двумя уровнями вложений
+  QRadioButton *clipperBranchDefault;
+  QRadioButton *clipperBranchCustom;
+  MtComboBox *clipperBranchCombo;
 
   // Подписи формы и сама форма: нужны для перевода на лету
   QLabel *clipperMaxImagesLabel;

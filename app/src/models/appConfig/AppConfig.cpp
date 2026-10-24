@@ -144,7 +144,7 @@ QString AppConfig::get_parameter(QString name)
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
         // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_54(true);
+        QStringList actualTable=get_parameter_table_56(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
@@ -1538,6 +1538,20 @@ void AppConfig::set_clipperbranchmode(int mode)
 }
 
 
+// Вид опроса "куда вставить" в режиме "спрашивать каждый раз":
+// 0 — плитка, 1 — дерево
+int AppConfig::get_clipperaskview(void)
+{
+    return this->get_parameter("clipperaskview").toInt();
+}
+
+
+void AppConfig::set_clipperaskview(int mode)
+{
+    m_conf->setValue("clipperaskview", mode);
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -2019,6 +2033,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_53;
     parameterFunctions << &AppConfig::get_parameter_table_54;
     parameterFunctions << &AppConfig::get_parameter_table_55;
+    parameterFunctions << &AppConfig::get_parameter_table_56;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3147,6 +3162,26 @@ QStringList AppConfig::get_parameter_table_55(bool withEndSignature)
     // 1 — выбранная ветка, 2 — спрашивать каждый раз). Дефолт 0
     // сохраняет прежнее поведение на старых конфигах
     table << "clipperbranchmode" << "int" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_56(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 55
+    table << get_parameter_table_55(false);
+
+    // Клиппер: вид опроса "куда вставить" (0 — плитка, 1 — дерево).
+    // Дефолт 0 — прежний вид на старых конфигах
+    table << "clipperaskview" << "int" << "0";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

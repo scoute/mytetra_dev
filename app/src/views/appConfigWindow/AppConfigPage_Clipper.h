@@ -13,6 +13,7 @@ class QCheckBox;
 class QKeySequenceEdit;
 class QPushButton;
 class QRadioButton;
+class QButtonGroup;
 class MtComboBox;
 
 // Страница настроек клиппера: включение, глобальный хоткей (X11),
@@ -79,6 +80,10 @@ protected:
   // Нижние плитки опроса: последние 16 или частые 16
   QRadioButton *clipperTilesRecent;
   QRadioButton *clipperTilesFrequent;
+
+  // Группы эксклюзива: ветка и плитки выбираются независимо
+  QButtonGroup *branchGroup;
+  QButtonGroup *tilesGroup;
 
   // Подписи формы и сама форма: нужны для перевода на лету
   QLabel *clipperMaxImagesLabel;

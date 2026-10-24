@@ -988,9 +988,12 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
     QString plainText=document.toPlainText();
 
     // Название: <title> (во фрагменте его почти никогда нет),
-    // затем шапка окна браузера из момента хоткея, затем первая строка.
-    // Шапка забирается и очищается здесь: прямой забор без хоткея
-    // не должен подхватывать чужой заголовок
+    // затем шапка окна браузера, затем первая строка.
+    // Шапка — из момента хоткея, а если ее нет (прямой вызов без хоткея:
+    // --control, кнопка проверки) — свежая. Потребляется здесь же,
+    // чтобы прямой забор не подхватил чужой заголовок
+    if(pageTitle.isEmpty() && m_hotkeyCaption.isEmpty())
+        m_hotkeyCaption=foregroundWindowCaption();
     const QString browserTitle=browserTitleFromCaption(m_hotkeyCaption);
     m_hotkeyCaption.clear();
 
@@ -2012,6 +2015,41 @@ QString Clipper::x11ActiveWindowCaption(void *x11Lib, void *xDisplay)
     }
 
     return QString();
+#endif
+}
+
+
+// Сырая шапка окна под фокусом прямо сейчас. Для потоков без снимка
+// из момента хоткея: --control, кнопка проверки, сломанный граббер.
+// На X11 со своим соединением, чтобы не зависеть от граббера
+QString Clipper::foregroundWindowCaption(void)
+{
+#if defined(Q_OS_WIN)
+    return windowCaption(GetForegroundWindow());
+#elif !defined(Q_OS_LINUX)
+    return QString();
+#else
+    static void *fgLib=nullptr;
+    static void *fgDisplay=nullptr;
+    static bool fgTried=false;
+
+    if(!fgTried)
+    {
+        fgTried=true;
+        fgLib=dlopen("libX11.so.6", RTLD_NOW);
+        if(!fgLib)
+            fgLib=dlopen("libX11.so", RTLD_NOW);
+
+        if(fgLib!=nullptr)
+        {
+            typedef void *(*OpenDisplayFunc)(const char *);
+            OpenDisplayFunc pOpenDisplay=(OpenDisplayFunc)dlsym(fgLib, "XOpenDisplay");
+            if(pOpenDisplay!=nullptr)
+                fgDisplay=pOpenDisplay(nullptr);
+        }
+    }
+
+    return x11ActiveWindowCaption(fgLib, fgDisplay);
 #endif
 }
 

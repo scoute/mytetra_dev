@@ -1988,9 +1988,12 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Клиппер выключен в настройках.</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/Clipper.cpp" line="399"/>
         <source>Global hotkey unavailable.</source>
         <translation>Глобальный хоткей недоступен.</translation>
+    </message>
+    <message>
+        <source>SSL unavailable</source>
+        <translation>SSL недоступен</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="421"/>

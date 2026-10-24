@@ -610,8 +610,8 @@ MyTetra должна быть запущена.</translation>
         <translation>Корневые ветки с двумя уровнями вложений</translation>
     </message>
     <message>
-        <source>Tiles in prompt:</source>
-        <translation>Плитки в опросе:</translation>
+        <source>Tiles:</source>
+        <translation>Плитки:</translation>
     </message>
     <message>
         <source>Last 16</source>

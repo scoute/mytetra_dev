@@ -955,6 +955,10 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
     else
         clipData.title=makeTitle(plainText);
 
+    qDebug() << "Clipper: collect url" << (pageUrl.isEmpty() ? QStringLiteral("-") : pageUrl)
+             << "titleSrc" << (!pageTitle.isEmpty() ? "page" : (m_fullWindowFlow ? "window" : "text"))
+             << "htmlBytes" << clipData.html.size();
+
     // Ссылка на источник: явная из --url, затем SourceURL страницы,
     // затем одинокий URL в буфере. Первая ссылка из текста не берётся:
     // в скопированной странице обычно чужой URL, а не адрес самой страницы
@@ -1714,6 +1718,18 @@ void Clipper::clipNowAfterHotkey(void)
        !m_hotkeyTitle.isEmpty() &&
        IsWindow(static_cast<HWND>(m_hotkeyWindow)))
     {
+        DWORD fgPid=0;
+        GetWindowThreadProcessId(static_cast<HWND>(m_hotkeyWindow), &fgPid);
+
+        // Фокус в самой MyTetra, а выделения нет: Ctrl+A выделил бы
+        // текст нашей же заметки и получилась бы мусорная копия.
+        // Молча пропускаем: для клипа из MyTetra есть обычное копирование
+        if(fgPid==GetCurrentProcessId())
+        {
+            qDebug() << "Clipper: hotkey in own window without selection, skipped";
+            return;
+        }
+
         clipFullWindow();
         return;
     }
@@ -1822,7 +1838,8 @@ void Clipper::clipFullWindowGrab(void)
             qDebug() << "Clipper: fallback clipboard formats" << mime->formats()
                      << "hasText" << mime->hasText() << "len"
                      << (mime->hasText() ? mime->text().size() : -1)
-                     << "hasHtml" << mime->hasHtml();
+                     << "hasHtml" << mime->hasHtml()
+                     << "htmlLen" << (mime->hasHtml() ? mime->html().size() : -1);
         if(saved!=nullptr)
         {
             if(QApplication::clipboard()!=nullptr)

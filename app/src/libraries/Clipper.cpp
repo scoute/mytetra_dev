@@ -296,28 +296,21 @@ QString Clipper::extractUrl(const QString &text)
 }
 
 
-// Глубокая копия содержимого буфера (все форматы). Владелец — вызыватель:
-// сохранить чужой буфер на время Ctrl+A и вернуть как был
-QMimeData *Clipper::cloneMimeData(const QMimeData *src)
+// Адрес страницы из сырого Windows HTML Format (заголовок SourceURL).
+// Возвращается как есть, годность проверяет looksLikeUrl у вызывателя
+QString Clipper::parseHtmlFormatSourceUrl(const QByteArray &raw)
 {
-    if(src==nullptr)
-        return nullptr;
+    const QList<QByteArray> lines=raw.split('\n');
 
-    QMimeData *copy=new QMimeData();
+    for(QByteArray line : lines)
+    {
+        line=line.trimmed();
 
-    foreach(const QString &format, src->formats())
-        copy->setData(format, src->data(format));
+        if(line.size()>10 && line.left(10).compare("SourceURL:", Qt::CaseInsensitive)==0)
+            return QString::fromLatin1(line.mid(10).trimmed());
+    }
 
-    if(src->hasImage())
-        copy->setImageData(src->imageData());
-
-    if(src->hasUrls())
-        copy->setUrls(src->urls());
-
-    if(src->hasColor())
-        copy->setColorData(src->colorData());
-
-    return copy;
+    return QString();
 }
 
 
@@ -337,27 +330,6 @@ QString Clipper::resolveUrl(const QString &urlHint, const QString &sourceUrl,
 }
 
 
-// Адрес страницы из сырого Windows HTML Format: строка SourceURL
-// в заголовке (Version/StartHTML/.../SourceURL). Возвращается как есть,
-// годность проверяет looksLikeUrl у вызывателя
-QString Clipper::parseHtmlFormatSourceUrl(const QByteArray &raw)
-{
-    const QList<QByteArray> lines=raw.split('\n');
-
-    for(QByteArray line : lines)
-    {
-        line=line.trimmed();
-
-        if(line.size()>10 && line.left(10).compare("SourceURL:", Qt::CaseInsensitive)==0)
-            return QString::fromLatin1(line.mid(10).trimmed());
-    }
-
-    return QString();
-}
-
-
-// Название страницы из <title> сырого или фрагмента HTML.
-// Сущности декодируются, длина как у makeTitle
 QString Clipper::extractHtmlTitle(const QString &html)
 {
     static const QRegularExpression titleRe("<title[^>]*>(.*?)</title>",
@@ -948,15 +920,13 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
 
     QString plainText=document.toPlainText();
 
-    if(m_fullWindowFlow && !m_hotkeyTitle.isEmpty())
-        clipData.title=m_hotkeyTitle;
-    else if(!pageTitle.isEmpty())
+    if(!pageTitle.isEmpty())
         clipData.title=pageTitle;
     else
         clipData.title=makeTitle(plainText);
 
     qDebug() << "Clipper: collect url" << (pageUrl.isEmpty() ? QStringLiteral("-") : pageUrl)
-             << "titleSrc" << (!pageTitle.isEmpty() ? "page" : (m_fullWindowFlow ? "window" : "text"))
+             << "titleSrc" << (!pageTitle.isEmpty() ? "page" : "text")
              << "htmlBytes" << clipData.html.size();
 
     // Ссылка на источник: явная из --url, затем SourceURL страницы,
@@ -1716,10 +1686,6 @@ void Clipper::onWinHotkey(void)
 
     qDebug() << "Clipper: hotkey focus child" << focusedChild
              << QString::fromWCharArray(childClass);
-    delete m_savedClipboard;
-    m_savedClipboard=nullptr;
-    m_fullWindowFlow=false;
-
     // Один хоткей на всё: сначала скопировать выделение в буфер,
     // затем забрать буфер в unsorted_notes
     sendCopyKeys();
@@ -1730,125 +1696,52 @@ void Clipper::onWinHotkey(void)
 void Clipper::clipNowAfterHotkey(void)
 {
     // Ненулевой счетчик и тот же номер: буфер не тронут — выделения
-    // не было. Живое окно с названием есть — страница забирается
-    // целиком через Ctrl+A; иначе обычный забор скопированного
+    // не было. Дальше два пути: чужое окно — подождать медленную копию,
+    // своё окно — молча пропустить (иначе мусорная заметка из себя)
     const DWORD nowSeq=GetClipboardSequenceNumber();
     qDebug() << "Clipper: after hotkey copy seq" << m_hotkeyClipSeq << "->" << nowSeq;
 
-    if(m_hotkeyClipSeq!=0 &&
-       nowSeq==m_hotkeyClipSeq &&
-       !m_hotkeyTitle.isEmpty() &&
-       IsWindow(static_cast<HWND>(m_hotkeyWindow)))
+    if(m_hotkeyClipSeq==0 || nowSeq!=m_hotkeyClipSeq)
+    {
+        clipNow();
+        return;
+    }
+
+    if(!m_hotkeyTitle.isEmpty() && IsWindow(static_cast<HWND>(m_hotkeyWindow)))
     {
         DWORD fgPid=0;
         GetWindowThreadProcessId(static_cast<HWND>(m_hotkeyWindow), &fgPid);
 
-        // Фокус в самой MyTetra, а выделения нет: Ctrl+A выделил бы
-        // текст нашей же заметки и получилась бы мусорная копия.
-        // Молча пропускаем: для клипа из MyTetra есть обычное копирование
         if(fgPid==GetCurrentProcessId())
         {
             qDebug() << "Clipper: hotkey in own window without selection, skipped";
             return;
         }
-
-        clipFullWindow();
-        return;
     }
 
-    clipNow();
+    m_copyWaitTries=0;
+    QTimer::singleShot(250, this, &Clipper::clipWaitCopyRetry);
 }
 
 
-// Эмуляция Ctrl+A для забора всей страницы без выделения
-void Clipper::sendSelectAllKeys(void)
+
+
+void Clipper::clipWaitCopyRetry(void)
 {
-    INPUT input[4]={};
-    for(int i=0; i<4; ++i)
-        input[i].type=INPUT_KEYBOARD;
-    input[0].ki.wVk=VK_CONTROL;
-    input[1].ki.wVk='A';
-    input[2].ki.wVk='A';
-    input[2].ki.dwFlags=KEYEVENTF_KEYUP;
-    input[3].ki.wVk=VK_CONTROL;
-    input[3].ki.dwFlags=KEYEVENTF_KEYUP;
-    logSendInput("Ctrl+A", SendInput(4, input, sizeof(INPUT)));
-}
-
-
-// Без выделения: выделить всё, скопировать, забрать. Чужой буфер
-// сохраняется и восстанавливается, фокус проверяется — Ctrl+A
-// в чужое окно бить нельзя. Пауза между Ctrl+A и Ctrl+C: медленной
-// странице нужно время на выделение, иначе копируется пустота
-void Clipper::clipFullWindow(void)
-{
-    HWND foreground=GetForegroundWindow();
-    qDebug() << "Clipper: full window grab, focus" << foreground
-             << "expected" << m_hotkeyWindow;
-
-    if(foreground!=static_cast<HWND>(m_hotkeyWindow))
-    {
-        clipWindowTitle(m_hotkeyTitle);
-        return;
-    }
-
-    delete m_savedClipboard;
-    m_savedClipboard=cloneMimeData(QApplication::clipboard()->mimeData());
-
-    sendSelectAllKeys();
-    QTimer::singleShot(300, this, &Clipper::clipFullWindowCopy);
-}
-
-
-// Вторая фаза: выделение уже должно стоять, копировать
-void Clipper::clipFullWindowCopy(void)
-{
-    if(!IsWindow(static_cast<HWND>(m_hotkeyWindow)))
-    {
-        QMimeData *saved=m_savedClipboard;
-        m_savedClipboard=nullptr;
-        m_fullWindowFlow=false;
-
-        if(saved!=nullptr)
-        {
-            if(QApplication::clipboard()!=nullptr)
-                QApplication::clipboard()->setMimeData(saved);
-            else
-                delete saved;
-        }
-
-        clipWindowTitle(m_hotkeyTitle);
-        return;
-    }
-
-    m_hotkeyClipSeq=GetClipboardSequenceNumber();
-    m_fullWindowTries=0;
-    qDebug() << "Clipper: full window copy, seq" << m_hotkeyClipSeq;
-
-    sendCopyKeys();
-    QTimer::singleShot(250, this, &Clipper::clipFullWindowGrab);
-}
-
-
-void Clipper::clipFullWindowGrab(void)
-{
-    QMimeData *saved=m_savedClipboard;
-    m_savedClipboard=nullptr;
-    m_fullWindowFlow=false;
-
-    // Опять ничего нового (защищенное поле, пустое окно, медленная
-    // страница) — подождать ещё или откатиться на заголовок
+    // Медленная копия большого выделения: перепослать Ctrl+C и подождать
+    // ещё. Всего до ~2 секунд, затем заголовок окна
     const DWORD nowSeq=GetClipboardSequenceNumber();
-    qDebug() << "Clipper: full window grab, seq" << m_hotkeyClipSeq << "->" << nowSeq
-             << "try" << m_fullWindowTries;
+    qDebug() << "Clipper: wait copy, seq" << m_hotkeyClipSeq << "->" << nowSeq
+             << "try" << m_copyWaitTries;
 
     if(m_hotkeyClipSeq!=0 &&
        nowSeq==m_hotkeyClipSeq &&
        IsWindow(static_cast<HWND>(m_hotkeyWindow)) &&
-       m_fullWindowTries<8)
+       m_copyWaitTries<8)
     {
-        m_fullWindowTries++;
-        QTimer::singleShot(250, this, &Clipper::clipFullWindowGrab);
+        m_copyWaitTries++;
+        sendCopyKeys();
+        QTimer::singleShot(250, this, &Clipper::clipWaitCopyRetry);
         return;
     }
 
@@ -1862,30 +1755,11 @@ void Clipper::clipFullWindowGrab(void)
                      << (mime->hasText() ? mime->text().size() : -1)
                      << "hasHtml" << mime->hasHtml()
                      << "htmlLen" << (mime->hasHtml() ? mime->html().size() : -1);
-        if(saved!=nullptr)
-        {
-            if(QApplication::clipboard()!=nullptr)
-                QApplication::clipboard()->setMimeData(saved);
-            else
-                delete saved;
-        }
 
         clipWindowTitle(m_hotkeyTitle);
         return;
     }
 
-    // Заголовок окна авторитетнее первой строки: он точно название
-    // страницы, а не начало текста
-    m_fullWindowFlow=true;
     clipNow();
-    m_fullWindowFlow=false;
-
-    if(saved!=nullptr)
-    {
-        if(QApplication::clipboard()!=nullptr)
-            QApplication::clipboard()->setMimeData(saved);
-        else
-            delete saved;
-    }
 }
 #endif

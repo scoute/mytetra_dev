@@ -1524,6 +1524,20 @@ void AppConfig::set_clipperbranchid(QString id)
 }
 
 
+// Режим целевой ветки клипа: 0 — по умолчанию, 1 — выбранная,
+// 2 — спрашивать каждый раз всплывающим окном
+int AppConfig::get_clipperbranchmode(void)
+{
+    return this->get_parameter("clipperbranchmode").toInt();
+}
+
+
+void AppConfig::set_clipperbranchmode(int mode)
+{
+    m_conf->setValue("clipperbranchmode", mode);
+}
+
+
 // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
 bool AppConfig::getEnablePeriodicCheckBase(void)
 {
@@ -2004,6 +2018,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_52;
     parameterFunctions << &AppConfig::get_parameter_table_53;
     parameterFunctions << &AppConfig::get_parameter_table_54;
+    parameterFunctions << &AppConfig::get_parameter_table_55;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3111,6 +3126,27 @@ QStringList AppConfig::get_parameter_table_54(bool withEndSignature)
     // слову по умолчанию выключена (ищется раннее из всех слов)
     table << "findscreen_find_injumpToNote"   << "bool" << "true";
     table << "findscreen_find_injumpFirstWord" << "bool" << "false";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_55(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 54
+    table << get_parameter_table_54(false);
+
+    // Клиппер: режим целевой ветки (0 — по умолчанию unsorted_notes,
+    // 1 — выбранная ветка, 2 — спрашивать каждый раз). Дефолт 0
+    // сохраняет прежнее поведение на старых конфигах
+    table << "clipperbranchmode" << "int" << "0";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

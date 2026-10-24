@@ -409,6 +409,11 @@ public:
     QString get_clipperbranchid(void);
     void set_clipperbranchid(QString id);
 
+    // Режим целевой ветки клипа: 0 — по умолчанию (unsorted_notes),
+    // 1 — выбранная ветка (clipperbranchid), 2 — спрашивать каждый раз
+    int get_clipperbranchmode(void);
+    void set_clipperbranchmode(int mode);
+
     // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
     bool getEnablePeriodicCheckBase(void);
     void setEnablePeriodicCheckBase(bool state);
@@ -562,6 +567,7 @@ private:
     QStringList get_parameter_table_52(bool withEndSignature=true);
     QStringList get_parameter_table_53(bool withEndSignature=true);
     QStringList get_parameter_table_54(bool withEndSignature=true);
+    QStringList get_parameter_table_55(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

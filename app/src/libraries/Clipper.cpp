@@ -56,6 +56,7 @@
 #include "models/tree/TreeItem.h"
 #include "views/tree/TreeScreen.h"
 #include "views/recordTable/RecordTableScreen.h"
+#include "views/clipBranchDialog/ClipBranchDialog.h"
 #include "controllers/recordTable/RecordTableController.h"
 
 
@@ -651,9 +652,22 @@ void Clipper::clipWindowTitle(const QString &caption)
 // Итоговое сообщение складывается в clipData.errorMessage
 bool Clipper::finishClip(ClipData &clipData)
 {
+    // Режим "спрашивать каждый раз": модальная плитка веток поверх
+    // браузера. Отмена — тихий выход без записи и без мусора в базе
+    QString askId;
+    if(mytetraConfig.get_clipperbranchmode()==2)
+    {
+        askId=ClipBranchDialog::askBranch();
+        if(askId.isEmpty())
+        {
+            clipData.errorMessage=tr("Cancelled, nothing saved.");
+            return false;
+        }
+    }
+
     TreeItem *branchItem=nullptr;
     QString branchError;
-    if(!ensureBranch(branchItem, &branchError))
+    if(!ensureBranch(branchItem, &branchError, askId))
     {
         notify(tr("Web Clipper"), branchError);
         clipData.errorMessage=branchError;
@@ -1172,7 +1186,8 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
 
 // Ветка unsorted_notes: по запомненному id, иначе по имени среди корневых,
 // иначе создание + запоминание id (переживает переименования)
-bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage)
+bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
+                              const QString &forcedId)
 {
     branchItem=nullptr;
 
@@ -1182,6 +1197,20 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage)
         if(errorMessage)
             *errorMessage=tr("Knowledge tree is not ready.");
         return false;
+    }
+
+    // Разовый выбор из опроса "куда вставить": обязан существовать,
+    // взят из живого дерева секунду назад
+    if(!forcedId.isEmpty())
+    {
+        branchItem=model->getItemById(forcedId);
+        if(!branchItem)
+        {
+            if(errorMessage)
+                *errorMessage=tr("Selected branch is gone.");
+            return false;
+        }
+        return true;
     }
 
     const QString savedId=mytetraConfig.get_clipperbranchid();

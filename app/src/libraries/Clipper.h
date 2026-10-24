@@ -204,6 +204,11 @@ private:
     // Пусто если дисплея нет или имени не нашлось — дальше забор как есть
     static QString x11ActiveWindowCaption(void *x11Lib, void *xDisplay);
 
+    // Сырая шапка окна под фокусом прямо сейчас. Для потоков без снимка
+    // из момента хоткея: --control, кнопка проверки, сломанный граббер.
+    // На X11 со своим соединением, чтобы не зависеть от граббера
+    static QString foregroundWindowCaption(void);
+
     void *x11Lib=nullptr;         // handle dlopen("libX11.so.1")
     void *xDisplay=nullptr;       // Display* (opaque, без Xlib-заголовков)
     unsigned long xRootWindow=0;

@@ -248,6 +248,7 @@ private slots:
     // Меню Вид: дубли быстрых переключателей отображения
     void onViewHeaderToggled(bool checked);
     void onViewFavoritesToggled(bool checked);
+    void onViewTreeFilterToggled(bool checked);
     void onViewToolsToggled(bool checked);
     void onViewSecretColor(void);
     void onViewPaperColor(void);
@@ -366,6 +367,7 @@ private:
     QMenu *viewMenu=nullptr;
     QAction *viewHeaderAction=nullptr;
     QAction *viewFavoritesAction=nullptr;
+    QAction *viewTreeFilterAction=nullptr;
     QAction *viewToolsAction=nullptr;
     QAction *viewReadOnlyAction=nullptr;
     QAction *viewSecretColorAction=nullptr;

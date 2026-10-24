@@ -7,7 +7,6 @@
 #include <QPair>
 #include <QString>
 
-class QMimeData;
 class QSocketNotifier;
 class QTextDocument;
 class KnowTreeModel;
@@ -97,10 +96,6 @@ public:
     // Картинка из data: URL. Пустая если разобрать не удалось. Чистая функция
     static QImage imageFromDataUrl(const QString &url);
 
-    // Глубокая копия содержимого буфера (все форматы). Владелец — вызыватель.
-    // Чистая функция — покрыта тестами
-    static QMimeData *cloneMimeData(const QMimeData *src);
-
     // Лимиты картинок из настроек. Сеттеры для тестов
     static void reloadLimits(void);
     static void setMaxImages(int count);
@@ -126,16 +121,13 @@ private slots:
     void onX11Activity(void);
 
 #if defined(Q_OS_WIN)
-    // Забор после эмуляции Ctrl+C: буфер не изменился — выделения не было,
-    // страница забирается целиком (Ctrl+A); иначе обычный забор скопированного
+    // Забор после эмуляции Ctrl+C: буфер изменился — обычный забор
+    // скопированного. Нет — выделение догоняется ожиданием (медленная
+    // копия большой страницы), затем заметка из заголовка окна
     void clipNowAfterHotkey(void);
 
-    // Второй шаг без выделения: забрать всё через Ctrl+A+C. Буфер чужой —
-    // сначала сохраняется, после забора восстанавливается
-    void clipFullWindowGrab(void);
-
-    // Промежуток между Ctrl+A и Ctrl+C для медленных страниц
-    void clipFullWindowCopy(void);
+    // Ожидание медленной копии: перепосыл Ctrl+C, затем заголовок
+    void clipWaitCopyRetry(void);
 #endif
 
 private:
@@ -189,12 +181,6 @@ private:
 
     // Заголовок окна по хендлу. void* чтобы не тащить windows.h в заголовок
     static QString windowCaption(void *hwnd);
-
-    // Эмуляция Ctrl+A для забора всей страницы
-    static void sendSelectAllKeys(void);
-
-    // Без выделения: выделить всё, скопировать, забрать
-    void clipFullWindow(void);
 #endif
 
     // Состояние хоткея без выделения (типы переносимые, используются
@@ -202,9 +188,7 @@ private:
     void *m_hotkeyWindow=nullptr; // Окно под фокусом в момент хоткея
     QString m_hotkeyTitle;         // Его заголовок (название страницы)
     quint32 m_hotkeyClipSeq=0;    // Счетчик буфера до эмуляции Ctrl+C
-    QMimeData *m_savedClipboard=nullptr; // Чужой буфер на время Ctrl+A
-    bool m_fullWindowFlow=false;  // Забор всей страницы: титул из окна
-    int m_fullWindowTries=0;      // Попытки дождаться копии медленной страницы
+    int m_copyWaitTries=0;         // Попытки дождаться медленной копии
 
     bool hotkeyActive=false;
     QString hotkeyActiveSequence;

@@ -1114,11 +1114,11 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
 
             // Формат по расширению внутреннего имени: png и jpg
             // переживают смену настройки задним числом.
-            // JPG пишется с качеством 95: дефолтные ~75 дают
+            // JPG пишется с качеством 90: дефолтные ~75 дают
             // заметные артефакты на скриншотах и тексте
             const bool isJpg=imageName.endsWith(QStringLiteral(".jpg"));
             const char *imageFormat=isJpg ? "JPG" : "PNG";
-            const int imageQuality=isJpg ? 95 : -1;
+            const int imageQuality=isJpg ? 90 : -1;
 
             picture.save(imageFileName, imageFormat, imageQuality);
           }

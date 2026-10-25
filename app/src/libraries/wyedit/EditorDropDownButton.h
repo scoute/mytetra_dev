@@ -53,6 +53,12 @@ signals:
 private slots:
     void onMenuItemClick(int num);
 
+protected:
+    // В list-режиме клик мыши и Space/Enter по кнопке должны показывать
+    // список, а не внутреннее QMenu кнопки (QToolButton с InstantPopup
+    // открывает меню приватным путем, мимо showMenu())
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     void setupUi();
     void showListMenu(void); // Всплывающий список для list-режима

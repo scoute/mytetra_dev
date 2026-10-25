@@ -39,8 +39,11 @@ public:
     QAction *superscript;
     QAction *subscript;
     EditorDropDownButton *code; // Кнопка кода: меню выбора языка подсветки
-    QAction *heading1;
-    QAction *heading2;
+    EditorDropDownButton *heading; // Кнопка заголовков: H1, H2, H3, обычный текст
+    QAction *headingH1Action;
+    QAction *headingH2Action;
+    QAction *headingH3Action;
+    QAction *headingNormalAction;
     QAction *clear; // Очистка начертания текста
     QAction *textOnly; // Полная очистка текста (оставить один текст)
     QAction *fixBreakSymbol;

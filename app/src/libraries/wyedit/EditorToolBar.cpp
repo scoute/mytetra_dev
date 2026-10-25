@@ -223,17 +223,26 @@ void EditorToolBar::setupToolBarTools(void)
     code->setListMode(true);
     code->setMaxVisibleItems(15);
 
-    // Кнопки заголовков H1/H2: checkable — подсветка актуального
-    // уровня идёт из onUpdateOutlineButtonHiglight
-    heading1=new QAction(this);
-    heading1->setCheckable(true);
-    heading1->setIcon(QIcon(":/resource/pic/edit_heading1.svg"));
-    heading1->setObjectName("editor_tb_heading1");
-
-    heading2=new QAction(this);
-    heading2->setCheckable(true);
-    heading2->setIcon(QIcon(":/resource/pic/edit_heading2.svg"));
-    heading2->setObjectName("editor_tb_heading2");
+    // Кнопка заголовков: одна выпадашка на 4 пункта (H1, H2, H3,
+    // обычный текст). Места на тулбаре мало, два отдельных H1/H2
+    // раздували линейку. Клик сразу открывает меню (InstantPopup),
+    // актуальный уровень помечается галкой из onUpdateOutlineButtonHiglight
+    heading=new EditorDropDownButton(this);
+    heading->setObjectName("editor_tb_heading");
+    heading->setIcon(QIcon(":/resource/pic/edit_heading.svg"));
+    heading->setInstantPopup(true);
+    headingH1Action=new QAction(QIcon(":/resource/pic/edit_heading1.svg"), tr("Heading 1"), this);
+    headingH2Action=new QAction(QIcon(":/resource/pic/edit_heading2.svg"), tr("Heading 2"), this);
+    headingH3Action=new QAction(QIcon(":/resource/pic/edit_heading3.svg"), tr("Heading 3"), this);
+    headingNormalAction=new QAction(tr("Normal text"), this);
+    headingH1Action->setCheckable(true);
+    headingH2Action->setCheckable(true);
+    headingH3Action->setCheckable(true);
+    headingNormalAction->setCheckable(true);
+    heading->addAction(headingH1Action);
+    heading->addAction(headingH2Action);
+    heading->addAction(headingH3Action);
+    heading->addAction(headingNormalAction);
 
     // Кнопка Clear
     clear=new QAction(this);
@@ -478,8 +487,9 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-code", code->toolPseudoButton.getSelectAction() );
     code->setStatusTip( shortcutManager.getFullDescription("editor-code") );
     code->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-code") );
-    shortcutManager.initAction("editor-heading1", heading1);
-    shortcutManager.initAction("editor-heading2", heading2);
+    shortcutManager.initAction("editor-heading1", headingH1Action);
+    shortcutManager.initAction("editor-heading2", headingH2Action);
+    shortcutManager.initAction("editor-heading3", headingH3Action);
     shortcutManager.initAction("editor-clear", clear);
     shortcutManager.initAction("editor-textOnly", textOnly);
     shortcutManager.initAction("editor-fixBreakSymbol", fixBreakSymbol);
@@ -583,6 +593,12 @@ void EditorToolBar::retranslateUi(void)
     codeTypescriptAction->setText(tr("TypeScript"));
     codeXmlAction->setText(tr("XML"));
     codeYamlAction->setText(tr("YAML"));
+
+    headingH1Action->setText(tr("Heading 1"));
+    headingH2Action->setText(tr("Heading 2"));
+    headingH3Action->setText(tr("Heading 3"));
+    headingNormalAction->setText(tr("Normal text"));
+    heading->setToolTip(tr("Heading"));
 
     // save покрыт шорткатом editor-save через setupShortcuts, здесь
     // только подсказки кнопок без горячих клавиш (мобильные)

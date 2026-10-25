@@ -57,6 +57,8 @@ Deliberately NOT taken:
   are not needed.
 
 Adaptations for qmake (this repo):
+  qcodeeditor.pri is included from app/app.pro (all paths via $$PWD),
+  so Qt Creator shows the files as their own tree instead of ../internal.
   qcodeeditor_resources.qrc replaces upstream resources/qcodeeditor_resources.qrc,
   keeping the same resource paths (:/default_style.xml, :/languages/*.xml)
   so Q_INIT_RESOURCE(qcodeeditor_resources) in upstream sources works unchanged.

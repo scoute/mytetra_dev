@@ -24,6 +24,7 @@ public:
   static bool copyDirectory(const QString &fromName, const QString &toName);
   static bool copyDirectoryRecursively(const QString &fromName, const QString &toName, QFile::Permissions permissionSpec);
   static QMap<QString, QByteArray> getFilesFromDirectory(QString dirName, QString fileMask);
+  static QMap<QString, QByteArray> getFilesFromDirectory(QString dirName, const QStringList &fileMasks);
   static bool saveFilesToDirectory(QString dirName, QMap<QString, QByteArray> fileList);
 
   static bool isDirectoryEmpty(QString dirName);

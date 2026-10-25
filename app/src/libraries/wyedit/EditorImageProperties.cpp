@@ -331,7 +331,7 @@ bool EditorImageProperties::resizeImageFile(const QString &fileName, int width, 
  const bool isJpg=fileName.endsWith(QStringLiteral(".jpg"), Qt::CaseInsensitive);
  const char *format=isJpg ? "JPG" : "PNG";
 
- return scaled.save(fileName, format, isJpg ? 95 : -1);
+ return scaled.save(fileName, format, isJpg ? 90 : -1);
 }
 
 
@@ -409,7 +409,7 @@ void EditorImageProperties::on_click_true_resize()
    const bool isJpg=trueResizeFileName.endsWith(QStringLiteral(".jpg"), Qt::CaseInsensitive);
    const char *format=isJpg ? "JPG" : "PNG";
 
-   if(!scaled.save(trueResizeFileName, format, isJpg ? 95 : -1))
+   if(!scaled.save(trueResizeFileName, format, isJpg ? 90 : -1))
     {
      QMessageBox::warning(this,
                           tr("Change true image size"),

@@ -40,6 +40,11 @@ public:
     // Публичный: нужен EditorTextArea для опознания клика по кнопке
     static QString copyCodeHref(void);
 
+    // Курсор (или начало выделения) внутри блока кода с маркером
+    // и под маркером есть хоть одна непустая строка кода.
+    // Публичный: используется контекстным меню для показа пункта копирования
+    bool isCursorInCodeBlock(void);
+
 signals:
 
     void updateOutlineButtonHiglight();
@@ -66,6 +71,10 @@ public slots:
     // Клик по ссылке-кнопке [copy] в строке маркера: код блока ниже
     // маркера уходит в буфер обмена. Позиция - место клика в документе
     void onCopyCodeClicked(int docPosition);
+
+    // Тот же копипаст, но точка берется из текущего курсора
+    // (для контекстного меню: начало выделения или позиция)
+    void onCopyCodeFromCursor(void);
     void onHeading1Clicked(void);
     void onHeading2Clicked(void);
     void onClearClicked(void);

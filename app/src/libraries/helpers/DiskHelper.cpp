@@ -339,15 +339,22 @@ bool DiskHelper::copyDirectoryRecursively(const QString &fromName,
 // Получение списка файлов с их содержимым в указанной директории
 QMap<QString, QByteArray> DiskHelper::getFilesFromDirectory(QString dirName, QString fileMask)
 {
+  return getFilesFromDirectory(dirName, QStringList() << fileMask);
+}
+
+
+// Получение списка файлов с их содержимым в указанной директории.
+// Нужно списком, потому что внутренние картинки бывают и png, и jpg,
+// а одиночная маска часть файлов молча роняла (белые квадраты
+// вместо картинок в свежесозданных заметках при формате JPG)
+QMap<QString, QByteArray> DiskHelper::getFilesFromDirectory(QString dirName, const QStringList &fileMasks)
+{
   QMap<QString, QByteArray> result;
   QDir directory(dirName);
 
   if(directory.exists())
   {
-    QStringList filter;
-    filter << fileMask;
-
-    foreach(QFileInfo info, directory.entryInfoList(filter, QDir::Files))
+    foreach(QFileInfo info, directory.entryInfoList(fileMasks, QDir::Files))
     {
       QFile f(info.absoluteFilePath());
       if(!f.open(QIODevice::ReadOnly))

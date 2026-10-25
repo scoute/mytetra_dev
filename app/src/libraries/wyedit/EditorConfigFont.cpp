@@ -101,10 +101,6 @@ void EditorConfigFont::setup_ui(void)
  codeIndentsizeapply=new QCheckBox(tr("Indent size follows formatting"),this);
  codeIndentsizeapply->setChecked( conf->get_code_indent_size_apply() );
 
- // Галка ссылки-кнопки [copy] в строке маркера блока кода
- codeCopyLink=new QCheckBox(tr("Add copy link [copy] to code marker"),this);
- codeCopyLink->setChecked( conf->get_code_copy_link_enable() );
-
 
  // Кнопка выбора цвета текста кода
  codeSelectColorLabel=new QLabel(this);
@@ -180,7 +176,6 @@ void EditorConfigFont::assembly(void)
  codeGridLayout->addWidget(codeFontsize,           1, 1);
  codeGridLayout->addWidget(codeIndentsizeapply,    2, 0);
  codeGridLayout->addWidget(codeIndentsize,         2, 1);
- codeGridLayout->addWidget(codeCopyLink,           3, 0, 1, 2);
 
  QVBoxLayout *codeLayout=new QVBoxLayout();
  codeLayout->addLayout(codeFontLayout);
@@ -308,11 +303,6 @@ int EditorConfigFont::applyChanges(void)
  // Если была изменена галка разрешения установки отступа шрифта кода
  if(conf->get_code_indent_size_apply()!=codeIndentsizeapply->isChecked()) {
   conf->set_code_indent_size_apply(codeIndentsizeapply->isChecked());
- }
-
- // Если была изменена галка ссылки-кнопки [copy] в маркере кода
- if(conf->get_code_copy_link_enable()!=codeCopyLink->isChecked()) {
-  conf->set_code_copy_link_enable(codeCopyLink->isChecked());
  }
 
  // Если был изменен цвет начертания кода

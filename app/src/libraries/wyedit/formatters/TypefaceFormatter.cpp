@@ -3,6 +3,8 @@
 #include <QTextLayout>
 #include <QFont>
 #include <QRegularExpression>
+#include <QFile>
+#include <QMap>
 #include <QDebug>
 #include <QColorDialog>
 #include <QColor>
@@ -492,7 +494,7 @@ void TypefaceFormatter::applyCodeHighlight(int language)
         return;
     }
 
-    highlighter->setSyntaxStyle(QSyntaxStyle::defaultStyle());
+    highlighter->setSyntaxStyle(codeStyleForLanguage(language));
     highlighter->rehighlight();
 
     // Форматы из временного документа переносятся в выделение.
@@ -791,6 +793,68 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
     newCursor.setPosition(newEnd, QTextCursor::KeepAnchor);
     textArea->setTextCursor(newCursor);
     return newEnd>newStart;
+}
+
+
+// Стиль подсветки для языка: отдельная тема в :/styles/<имя>.xml
+// (палитры в духе родных nano-схем, приглушенные под светлый фон),
+// поэтому языки легко отличить с первого взгляда. Кешируется,
+// fallback - стиль по умолчанию
+QSyntaxStyle *TypefaceFormatter::codeStyleForLanguage(int language)
+{
+    static QMap<int, QSyntaxStyle*> cache;
+
+    if(cache.contains(language))
+        return cache.value(language);
+
+    QString styleName;
+    switch(language)
+    {
+    case CodeAngular:    styleName=QStringLiteral("angular"); break;
+    case CodeBash:       styleName=QStringLiteral("bash"); break;
+    case CodeC:          styleName=QStringLiteral("c"); break;
+    case CodeCMake:      styleName=QStringLiteral("cmake"); break;
+    case CodeCss:        styleName=QStringLiteral("css"); break;
+    case CodeCxx:        styleName=QStringLiteral("cxx"); break;
+    case CodeCSharp:     styleName=QStringLiteral("csharp"); break;
+    case CodeGlsl:       styleName=QStringLiteral("glsl"); break;
+    case CodeGo:         styleName=QStringLiteral("go"); break;
+    case CodeHtml:       styleName=QStringLiteral("html"); break;
+    case CodeIni:        styleName=QStringLiteral("ini"); break;
+    case CodeJava:       styleName=QStringLiteral("java"); break;
+    case CodeJs:         styleName=QStringLiteral("js"); break;
+    case CodeJson:       styleName=QStringLiteral("json"); break;
+    case CodeLua:        styleName=QStringLiteral("lua"); break;
+    case CodeMake:       styleName=QStringLiteral("make"); break;
+    case CodePhp:        styleName=QStringLiteral("php"); break;
+    case CodePython:     styleName=QStringLiteral("python"); break;
+    case CodeQml:        styleName=QStringLiteral("qml"); break;
+    case CodeReact:      styleName=QStringLiteral("react"); break;
+    case CodeRust:       styleName=QStringLiteral("rust"); break;
+    case CodeSql:        styleName=QStringLiteral("sql"); break;
+    case CodeTypescript: styleName=QStringLiteral("typescript"); break;
+    case CodeXml:        styleName=QStringLiteral("xml"); break;
+    case CodeYaml:       styleName=QStringLiteral("yaml"); break;
+    default:
+        break;
+    }
+
+    QSyntaxStyle *style=QSyntaxStyle::defaultStyle();
+    if(!styleName.isEmpty())
+    {
+        QFile styleFile(QStringLiteral(":/styles/")+styleName+QStringLiteral(".xml"));
+        if(styleFile.open(QIODevice::ReadOnly))
+        {
+            QSyntaxStyle *custom=new QSyntaxStyle();
+            if(custom->load(styleFile.readAll()))
+                style=custom;
+            else
+                delete custom;
+        }
+    }
+
+    cache.insert(language, style);
+    return style;
 }
 
 

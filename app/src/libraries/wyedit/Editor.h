@@ -44,6 +44,7 @@ class EditorContextMenu;
 class EditorTextArea;
 class EditorIndentSliderAssistant;
 class EditorToolBarAssistant;
+class EditorStructurePanel;
 class Formatter;
 class MetaEditor;
 class EditorCursorPositionDetector;
@@ -229,6 +230,7 @@ private slots:
  void onShowformattingClicked(bool);
 
  void onExpandEditAreaClicked(void);
+ void onStructureToggled(bool checked);
  void onSaveClicked(void);
  void onBackClicked(void);
  void onFindInBaseClicked(void);
@@ -293,6 +295,7 @@ private:
  void setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QStringList disableToolList);
  void setupIndentSliderAssistant(void);
  void setupEditorTextArea(void);
+ void setupStructurePanel(void);
  void setupCursorPositionDetector(void);
  void setupFormatters(void);
  void assembly(void);
@@ -307,6 +310,11 @@ private:
 
  // Область редактирования текста
  EditorTextArea *textArea=nullptr;
+
+ // Панель структуры: живой список H1-H3, видна по кнопке тулбара.
+ // В диалогах едет в сплиттер рядом с текстом, в MetaEditor встает
+ // третьей колонкой сетки
+ EditorStructurePanel *structurePanel=nullptr;
 
  // Форматировщики текста
  TypefaceFormatter       *typefaceFormatter=nullptr;

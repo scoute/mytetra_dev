@@ -7222,6 +7222,14 @@ Enable it in Settings on the History page.</source>
         <translation>Оформить абзацы как заголовок третьего уровня</translation>
     </message>
     <message>
+        <source>Structure</source>
+        <translation>Структура</translation>
+    </message>
+    <message>
+        <source>Show headings outline with jump to section</source>
+        <translation>Показать оглавление с переходом в раздел</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="127"/>
         <source>Lowercase</source>
         <translation>Нижний регистр</translation>
@@ -8834,6 +8842,17 @@ This cannot be undone.</source>
         <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="548"/>
         <source>Information</source>
         <translation>Информация</translation>
+    </message>
+</context>
+<context>
+    <name>EditorStructurePanel</name>
+    <message>
+        <source>No H1-H3 headings</source>
+        <translation>Нет заголовков H1–H3</translation>
+    </message>
+    <message>
+        <source>(empty heading)</source>
+        <translation>(пустой заголовок)</translation>
     </message>
 </context>
 </TS>

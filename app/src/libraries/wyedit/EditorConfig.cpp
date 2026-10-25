@@ -244,6 +244,24 @@ void EditorConfig::set_code_indent_size_apply(bool i)
 }
 
 
+bool EditorConfig::get_structure_panel_visible(void)
+{
+    if(get_parameter("structure_panel_visible").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_structure_panel_visible(bool i)
+{
+    if(i==true)
+        conf->setValue("structure_panel_visible", 1);
+    else
+        conf->setValue("structure_panel_visible", 0);
+}
+
+
 // ----------------------
 // Настройки шага отступа
 // ----------------------
@@ -531,6 +549,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_37;
     parameterFunctions << get_parameter_table_38;
     parameterFunctions << get_parameter_table_39;
+    parameterFunctions << get_parameter_table_40;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1327,6 +1346,27 @@ QStringList EditorConfig::get_parameter_table_39(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_40(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 39
+    table << get_parameter_table_39(false);
+
+    // Видимость панели структуры. Дефолт скрыта: место в редакторе
+    // не у всех широкое, показывается кнопкой за ссылкой
+
+    table << "structure_panel_visible" << "bool" << "0";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1965,6 +2005,24 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     parts.insert(parts.indexOf("code")+1, "heading");
                 else
                     parts.append("heading");
+                result=parts.join(",");
+            }
+        }
+
+
+    // Кнопка структуры после ссылки. Порядок пользователя
+    // сохраняется, дубли исключены
+    if(versionFrom==39 && versionTo==40)
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            if(!parts.contains("structure"))
+            {
+                if(parts.contains("reference"))
+                    parts.insert(parts.indexOf("reference")+1, "structure");
+                else
+                    parts.append("structure");
                 result=parts.join(",");
             }
         }

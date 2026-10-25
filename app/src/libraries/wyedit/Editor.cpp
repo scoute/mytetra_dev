@@ -1113,10 +1113,14 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
             QImage picture=imageData.value<QImage>();
 
             // Формат по расширению внутреннего имени: png и jpg
-            // переживают смену настройки задним числом
-            const char *imageFormat=imageName.endsWith(QStringLiteral(".jpg")) ? "JPG" : "PNG";
+            // переживают смену настройки задним числом.
+            // JPG пишется с качеством 95: дефолтные ~75 дают
+            // заметные артефакты на скриншотах и тексте
+            const bool isJpg=imageName.endsWith(QStringLiteral(".jpg"));
+            const char *imageFormat=isJpg ? "JPG" : "PNG";
+            const int imageQuality=isJpg ? 95 : -1;
 
-            picture.save(imageFileName, imageFormat);
+            picture.save(imageFileName, imageFormat, imageQuality);
           }
         }
       }

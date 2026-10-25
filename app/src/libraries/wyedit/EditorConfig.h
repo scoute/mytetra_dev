@@ -49,6 +49,9 @@ public:
     void set_code_indent_size(int size);
     bool get_code_indent_size_apply(void);
     void set_code_indent_size_apply(bool i);
+
+    bool get_code_copy_link_enable(void);
+    void set_code_copy_link_enable(bool i);
     
     // Шаг изменения отступа
     int get_indent_step(void);
@@ -171,6 +174,7 @@ private:
     static QStringList get_parameter_table_33(bool withEndSignature=true);
     static QStringList get_parameter_table_34(bool withEndSignature=true);
     static QStringList get_parameter_table_35(bool withEndSignature=true);
+    static QStringList get_parameter_table_36(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

@@ -26,6 +26,7 @@ public:
  void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
  void setPasteNoteReference(bool flag); // Пункт "Вставить ссылку на заметку", виден если в буфере внутренняя ссылка
  void setCopySecret(bool flag); // Показ пункта "Скопировать секрет"
+ void setCopyCode(bool flag); // Показ пункта "Скопировать код"
  void setChangeSecretColor(bool flag); // Показ пункта "Изменить цвет секретов"
  void setPasteAsPlainText(bool flag);
  void setFormatToLowerCase(bool flag); // Активирование добавочного пункта меню "Строчные"
@@ -58,6 +59,7 @@ signals:
   void contextMenuPasteNoteReference(void);
   void contextMenuInsertNoteReference(void);
   void contextMenuCopySecret(void);
+ void contextMenuCopyCode(void);
   void contextMenuChangeSecretColor(void);
   void lowercase(void);
   void uppercase(void);
@@ -93,6 +95,7 @@ private:
   QAction *actionPasteNoteReference;
   QAction *actionInsertNoteReference;
   QAction *actionCopySecret;
+ QAction *actionCopyCode;
   QAction *actionChangeSecretColor;
 
   void setupActions(void);
@@ -123,6 +126,7 @@ protected slots:
   void onActionContextMenuPasteNoteReference(void);
   void onActionContextMenuInsertNoteReference(void);
   void onActionContextMenuCopySecret(void);
+ void onActionContextMenuCopyCode(void);
   void onActionContextMenuChangeSecretColor(void);
 
   void onActionLowercase();

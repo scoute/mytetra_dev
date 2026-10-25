@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Per-language style for MyTetra code blocks (glsl).
+     Same style names as default_style.xml; colors follow the
+     language's nano color scheme, darkened for light background. -->
+<style-scheme version="1.0" name="Mytetra-glsl">
+    <style name="Keyword" foreground="#00695C"/>
+    <style name="Decl" foreground="#007A00"/>
+    <style name="Package" foreground="#2A8A9A"/>
+    <style name="Flow" foreground="#8A0099"/>
+    <style name="PrimitiveType" foreground="#007A8A"/>
+    <style name="Type" foreground="#800080"/>
+    <style name="Function" foreground="#00677c"/>
+    <style name="Number" foreground="#000080"/>
+    <style name="String" foreground="#7A1F1F"/>
+    <style name="Comment" foreground="#008000"/>
+    <style name="Preprocessor" foreground="#2A5ACC"/>
+    <style name="Global" foreground="#ce5c00"/>
+    <style name="Field" foreground="#800000"/>
+    <style name="Text" foreground="#000000"/>
+    <style name="Operator" foreground="#"/>
+    <style name="Literal" foreground="#B00020"/>
+    <style name="Property" foreground="#1A56AA"/>
+</style-scheme>

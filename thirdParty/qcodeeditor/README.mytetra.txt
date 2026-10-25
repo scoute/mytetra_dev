@@ -60,4 +60,8 @@ Adaptations for qmake (this repo):
   qcodeeditor_resources.qrc replaces upstream resources/qcodeeditor_resources.qrc,
   keeping the same resource paths (:/default_style.xml, :/languages/*.xml)
   so Q_INIT_RESOURCE(qcodeeditor_resources) in upstream sources works unchanged.
+  Per-language color themes live in resources/styles/*.xml (:/styles/<lang>.xml,
+  shared files reused through qrc aliases); picked by
+  TypefaceFormatter::codeStyleForLanguage(). Regenerate them with
+  tools/genstyles.py (palette table inside, nano-inspired).
   app.pro adds ../thirdParty/qcodeeditor/include to INCLUDEPATH.

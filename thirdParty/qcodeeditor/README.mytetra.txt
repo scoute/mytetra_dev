@@ -32,7 +32,9 @@ MyTetra-side adapters (our files, upstream patterns reused):
   file as a constructor parameter (used for C, Java, C#, Go, Rust, JS).
   include/QBashHighlighter, include/internal/QBashHighlighter.hpp,
   src/internal/QBashHighlighter.cpp - QPythonHighlighter-pattern highlighter
-  for Bash (# comments, "..."/'...' strings, $var highlighting).
+  for Bash (# comments only after blank, "..."/'...' strings, $var/${var}/$?
+  highlighting, function calls, VAR= assignments, [[ ]]/;;/||/&& operators,
+  -x/--long options; rule ideas mirror nano sh.nanorc, code is original).
 
 Deliberately NOT taken:
   QCodeEditor widget, QLineNumberArea, QFramedTextAttribute,

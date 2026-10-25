@@ -529,6 +529,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_35;
     parameterFunctions << get_parameter_table_36;
     parameterFunctions << get_parameter_table_37;
+    parameterFunctions << get_parameter_table_38;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1285,6 +1286,26 @@ QStringList EditorConfig::get_parameter_table_37(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_38(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 37
+    table << get_parameter_table_37(false);
+
+    // Новых ключей нет: версия нужна, чтобы правилом 37->38
+    // (см. update_version_change_value) дотянуть кнопки
+    // heading1,heading2 в tools_line_1 существующих конфигов
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1878,6 +1899,32 @@ QString EditorConfig::update_version_change_value(int versionFrom,
             result=parts.join(",");
         }
     }
+
+
+    // Кнопки заголовков H1/H2 после code. Коммит cfafac27 менял только
+    // дефолт таблицы 3, поэтому существующие конфиги кнопок не получили.
+    // Порядок пользователя сохраняется, дубли исключены
+    if(versionFrom==37 && versionTo==38)
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            if(!parts.contains("heading1") && !parts.contains("heading2"))
+            {
+                if(parts.contains("code"))
+                {
+                    int pos=parts.indexOf("code")+1;
+                    parts.insert(pos, "heading1");
+                    parts.insert(pos+1, "heading2");
+                }
+                else
+                {
+                    parts.append("heading1");
+                    parts.append("heading2");
+                }
+                result=parts.join(",");
+            }
+        }
 
 
     return result;

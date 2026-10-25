@@ -784,8 +784,12 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
     }
 
     // Язык с маркером: заменить найденный или вставить новый сверху.
-    // К маркеру всегда приписывается ссылка-кнопка [copy]
-    const QString fullMarker=newMarker+QStringLiteral(" ")+copyCodeSuffix();
+    // Суффикс-ссылка [copy] приписывается, только если он разрешен
+    // в настройках (иначе старые маркеры молча чистятся от него)
+    QString fullMarker=newMarker;
+
+    if(editorConfig->get_code_copy_link_enable())
+        fullMarker+=QStringLiteral(" ")+copyCodeSuffix();
 
     if(markerBlock.isValid())
     {
@@ -796,7 +800,8 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.setPosition(markerPos+markerLen, QTextCursor::KeepAnchor);
         edit.insertText(fullMarker);
 
-        applyCopyLinkFormat(markerPos, newMarker.length());
+        if(editorConfig->get_code_copy_link_enable())
+            applyCopyLinkFormat(markerPos, newMarker.length());
 
         int delta=fullMarker.length()-markerLen;
         if(markerAbove)
@@ -817,7 +822,8 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.setPosition(insertPos);
         edit.insertText(fullMarker+QStringLiteral("\n"));
 
-        applyCopyLinkFormat(insertPos, newMarker.length());
+        if(editorConfig->get_code_copy_link_enable())
+            applyCopyLinkFormat(insertPos, newMarker.length());
 
         int inserted=fullMarker.length()+1;
 
@@ -974,15 +980,42 @@ bool TypefaceFormatter::isCodeBlock(const QTextBlock &block) const
 }
 
 
-// Собрать текст кода под строкой маркера, начиная с блока,
-// содержащего позицию. Пусто - маркера нет или кода под ним нет
+// Собрать текст кода под строкой маркера. Точка может быть как на
+// самом маркере (клик по [copy]), так и ниже в теле кода (контекстное
+// меню): во втором случае маркер ищется подъемом вверх по строкам кода.
+// Пусто - маркера нет или кода под ним нет
 QString TypefaceFormatter::collectCodeBelowMarker(int docPosition) const
 {
     QTextDocument *doc=textArea->document();
 
     QTextBlock block=doc->findBlock(docPosition);
 
-    if(!block.isValid() || codeMarkerLanguage(block.text())<0)
+    if(block.isValid() && codeMarkerLanguage(block.text())<0)
+    {
+        // Подъем вверх, пока идут строки кода
+        int guard=0;
+        while(block.isValid() && isCodeBlock(block) && guard<100000)
+        {
+            QTextBlock prev=block.previous();
+
+            if(!prev.isValid())
+                return QString();
+
+            if(codeMarkerLanguage(prev.text())>=0)
+            {
+                block=prev;
+                break;
+            }
+
+            block=prev;
+            ++guard;
+        }
+
+        if(!block.isValid() || codeMarkerLanguage(block.text())<0)
+            return QString();
+    }
+
+    if(!block.isValid())
         return QString();
 
     QStringList lines;
@@ -1000,6 +1033,66 @@ QString TypefaceFormatter::collectCodeBelowMarker(int docPosition) const
         lines.takeLast();
 
     return lines.join(QStringLiteral("\n"));
+}
+
+
+// Курсор (или начало выделения) внутри блока кода с маркером
+// и под маркером есть хоть одна непустая строка кода.
+// Используется контекстным меню для показа пункта копирования
+bool TypefaceFormatter::isCursorInCodeBlock(void)
+{
+    QTextCursor cursor=textArea->textCursor();
+
+    const int pos=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+
+    QTextDocument *doc=textArea->document();
+
+    QTextBlock block=doc->findBlock(pos);
+
+    // Стоим прямо на маркере
+    if(block.isValid() && codeMarkerLanguage(block.text())>=0)
+    {
+        for(QTextBlock code=block.next(); code.isValid(); code=code.next())
+        {
+            if(!isCodeBlock(code))
+                break;
+
+            if(!code.text().trimmed().isEmpty())
+                return true;
+        }
+
+        return false;
+    }
+
+    // Поднимаемся по строкам кода до маркера
+    int guard=0;
+    while(block.isValid() && isCodeBlock(block) && guard<100000)
+    {
+        QTextBlock prev=block.previous();
+
+        if(!prev.isValid())
+            return false;
+
+        if(codeMarkerLanguage(prev.text())>=0)
+            return true;
+
+        block=prev;
+        ++guard;
+    }
+
+    return false;
+}
+
+
+// Тот же копипаст, но точка берется из текущего курсора
+// (для контекстного меню: начало выделения или позиция)
+void TypefaceFormatter::onCopyCodeFromCursor(void)
+{
+    QTextCursor cursor=textArea->textCursor();
+
+    const int pos=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+
+    onCopyCodeClicked(pos);
 }
 
 

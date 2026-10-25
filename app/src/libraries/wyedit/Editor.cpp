@@ -533,6 +533,9 @@ void Editor::setupSignals(void)
   connect(editorContextMenu,  &EditorContextMenu::contextMenuCopySecret,
           secretFormatter,   &SecretFormatter::onContextMenuCopySecret,
           Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuCopyCode,
+          typefaceFormatter,  &TypefaceFormatter::onCopyCodeFromCursor,
+          Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuChangeSecretColor,
           secretFormatter,   &SecretFormatter::onContextMenuChangeSecretColor,
           Qt::DirectConnection);

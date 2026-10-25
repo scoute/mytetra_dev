@@ -64,6 +64,8 @@ actionMoveVoice=new QAction(this);
  actionInsertNoteReference->setIcon(QIcon(":/resource/pic/note_reference_plus.svg"));
  actionCopySecret=new QAction(this);
  actionChangeSecretColor=new QAction(this);
+actionCopyCode=new QAction(this);
+actionCopyCode->setIcon(QIcon(":/resource/pic/edit_code.svg"));
 
  actionLowercase=new QAction(this);
  actionUppercase=new QAction(this);
@@ -114,6 +116,7 @@ void EditorContextMenu::setupShortcuts(void)
     shortcutManager.initAction("editor-insertNoteReference", actionInsertNoteReference );
 
     actionCopySecret->setText(tr("Copy secret")); // Скопировать содержимое секрета
+    actionCopyCode->setText(tr("Copy code")); // Скопировать код блока целиком
 
     actionChangeSecretColor->setText(tr("Change secret color...")); // Сменить глобальный цвет секретов
 
@@ -185,6 +188,9 @@ void EditorContextMenu::update(void)
     // Курсор в секрете: доступны копирование содержимого и смена цвета
     setCopySecret(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
     setChangeSecretColor(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnSecret());
+
+    // Курсор в блоке кода: доступно копирование кода блока целиком
+    setCopyCode(static_cast<Editor*>(this->parent())->typefaceFormatter->isCursorInCodeBlock());
 
     // Если в буфере обмена есть текст
     if(QGuiApplication::clipboard()->text().size()>0) {
@@ -319,6 +325,14 @@ void EditorContextMenu::setCopySecret(bool flag)
 }
 
 
+// Показ пункта "Скопировать код"
+void EditorContextMenu::setCopyCode(bool flag)
+{
+    actionCopyCode->setVisible(flag);
+    actionCopyCode->setEnabled(flag);
+}
+
+
 // Показывать или нет пункт смены цвета секрета
 void EditorContextMenu::setChangeSecretColor(bool flag)
 {
@@ -376,6 +390,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionPasteNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPasteNoteReference);
     connect(actionInsertNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuInsertNoteReference);
     connect(actionCopySecret,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuCopySecret);
+    connect(actionCopyCode,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuCopyCode);
     connect(actionChangeSecretColor,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuChangeSecretColor);
 
     connect(actionLowercase, &QAction::triggered, this, &EditorContextMenu::onActionLowercase);
@@ -390,6 +405,7 @@ void EditorContextMenu::setupMenu(void)
 {
     this->addAction(actionCut);
     this->addAction(actionCopy);
+    this->addAction(actionCopyCode);
     this->addAction(actionPaste);
     this->addAction(actionPasteAsPlainText);
 
@@ -598,6 +614,14 @@ void EditorContextMenu::onActionContextMenuCopySecret()
     update();
     if(actionCopySecret->isEnabled()) {
         emit contextMenuCopySecret();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuCopyCode()
+{
+    update();
+    if(actionCopyCode->isEnabled()) {
+        emit contextMenuCopyCode();
     }
 }
 

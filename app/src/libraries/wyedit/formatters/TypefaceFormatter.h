@@ -36,6 +36,10 @@ public:
                        CodeRust, CodeSql, CodeTypescript, CodeXml, CodeYaml,
                        CodeCount};
 
+    // Адрес ссылки-кнопки [copy] в строке маркера блока кода.
+    // Публичный: нужен EditorTextArea для опознания клика по кнопке
+    static QString copyCodeHref(void);
+
 signals:
 
     void updateOutlineButtonHiglight();
@@ -58,6 +62,10 @@ public slots:
     void onSubScriptClicked(void);
     void onMonospaceClicked(void);
     void onCodeLanguageClicked(int language);
+
+    // Клик по ссылке-кнопке [copy] в строке маркера: код блока ниже
+    // маркера уходит в буфер обмена. Позиция - место клика в документе
+    void onCopyCodeClicked(int docPosition);
     void onHeading1Clicked(void);
     void onHeading2Clicked(void);
     void onClearClicked(void);
@@ -104,8 +112,14 @@ private:
     // Распознать наш маркер в строке, вернуть язык или -1.
     // Форматы: // {lang = Имя}, # {lang = Имя}, -- {lang = Имя},
     // ; {lang = Имя}, /* {lang = Имя} */, <!-- {lang = Имя} -->.
-    // Совпадение строгое: вся строка - только маркер
+    // В хвосте может быть ссылка-кнопка [copy]. Совпадение строгое:
+    // вся строка - только маркер с необязательным суффиксом
     static int codeMarkerLanguage(const QString &line);
+
+    // Текст кнопки копирования, добавляемый к строке маркера через пробел.
+    // Не переводится: это часть маркера, который всегда на английском,
+    // иначе опознание маркера ломается на других языках интерфейса
+    static QString copyCodeSuffix(void);
 
     // Одноразовая подсветка синтаксиса в текущем выделении через
     // хайлайтеры QCodeEditor на временном документе. Цвета запекаются
@@ -129,6 +143,23 @@ private:
     // Залить фоном абзацы текущего выделения (единая плашка блока кода).
     // Вызывается внутри edit-блока formatCodeWithLanguage
     void setCodeBlockBackground(const QBrush &brush);
+
+    // Цвет плашки блока кода. Единый для всех мест, где плашка
+    // ставится и где опознается (копирование блока)
+    static QColor codeCardColor(void);
+
+    // Собрать текст кода под строкой маркера, начиная с блока,
+    // содержащего позицию. Пусто - маркера нет или кода под ним нет
+    QString collectCodeBelowMarker(int docPosition) const;
+
+    // Проверка, что абзац выглядит как строка блока кода: либо
+    // залит плашкой карточки, либо набран шрифтом кода
+    bool isCodeBlock(const QTextBlock &block) const;
+
+    // Оформить суффикс-кнопку [copy] в строке маркера как ссылку.
+    // lineStart - начало строки, markerLen - длина текста маркера
+    // без суффикса. Вызывается внутри edit-блока
+    void applyCopyLinkFormat(int lineStart, int markerLen);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

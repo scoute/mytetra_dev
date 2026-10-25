@@ -25,7 +25,7 @@ bool GitHelper::isAvailable(void)
 
         if(probe.exitStatus()==QProcess::NormalExit && probe.exitCode()==0)
         {
-            out=QString::fromLocal8Bit(probe.readAllStandardOutput()).trimmed();
+            out=QString::fromUtf8(probe.readAllStandardOutput()).trimmed();
 
             // "git version 2.43.0" -> "2.43.0"
             const QString prefix=QStringLiteral("git version ");
@@ -60,9 +60,17 @@ int GitHelper::run(const QString &workDir, const QStringList &args,
     if(!isAvailable())
         return -1;
 
+    // Git везде отдает UTF-8 (сообщения коммитов, diff, содержимое файлов),
+    // а читаем мы через fromUtf8 ниже. core.quotePath=false отключает
+    // октальное квочение не-ASCII путей, иначе кириллица в путях видна
+    // как \320\222... и ломает подмену путей на заголовок в diff
+    QStringList fullArgs;
+    fullArgs << QStringLiteral("-c") << QStringLiteral("core.quotePath=false");
+    fullArgs+=args;
+
     QProcess git;
     git.setWorkingDirectory(workDir);
-    git.start(QStringLiteral("git"), args);
+    git.start(QStringLiteral("git"), fullArgs);
 
     if(!git.waitForStarted(10000))
         return -1;
@@ -82,10 +90,10 @@ int GitHelper::run(const QString &workDir, const QStringList &args,
     }
 
     if(stdoutText!=nullptr)
-        *stdoutText=QString::fromLocal8Bit(git.readAllStandardOutput());
+        *stdoutText=QString::fromUtf8(git.readAllStandardOutput());
 
     if(stderrText!=nullptr)
-        *stderrText=QString::fromLocal8Bit(git.readAllStandardError());
+        *stderrText=QString::fromUtf8(git.readAllStandardError());
 
     if(git.exitStatus()!=QProcess::NormalExit)
         return -1;

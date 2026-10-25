@@ -126,6 +126,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-code",                Data{ QKeySequence("Ctrl+M"), tr("Code"), tr("Format text as code with a choice of highlighting language") });
     defaultKeyTable.insert("editor-heading1",           Data{ QKeySequence("Ctrl+1"), tr("Heading 1"), tr("Format paragraphs as first-level heading") });
     defaultKeyTable.insert("editor-heading2",           Data{ QKeySequence("Ctrl+2"), tr("Heading 2"), tr("Format paragraphs as second-level heading") });
+    defaultKeyTable.insert("editor-heading3",           Data{ QKeySequence("Ctrl+3"), tr("Heading 3"), tr("Format paragraphs as third-level heading") });
     defaultKeyTable.insert("editor-lowercase",           Data{ QKeySequence(""), tr("Lowercase"), tr("") });
     defaultKeyTable.insert("editor-uppercase",           Data{ QKeySequence(""), tr("Uppercase"), tr("") });
     defaultKeyTable.insert("editor-clear",               Data{ QKeySequence("Ctrl+K"), tr("Clear format"), tr("When selected whole paragraph both text and paragraph format is reset to default or just text format in other case") });

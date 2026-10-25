@@ -75,8 +75,9 @@ public slots:
     // Тот же копипаст, но точка берется из текущего курсора
     // (для контекстного меню: начало выделения или позиция)
     void onCopyCodeFromCursor(void);
-    void onHeading1Clicked(void);
-    void onHeading2Clicked(void);
+    // Выбор пункта меню кнопки заголовков: 0-H1, 1-H2, 2-H3,
+    // 3-обычный текст. H1-H3 тумблеры (повтор снимает уровень)
+    void onHeadingClicked(int index);
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);
@@ -102,7 +103,7 @@ public slots:
 
 private:
 
-    // Общий движок заголовков H1/H2: выставить уровень абзацам
+    // Общий движок заголовков H1-H3: выставить уровень абзацам
     // в выделении (повторный клик снимает в обычный текст)
     void applyHeadingLevel(int level);
 

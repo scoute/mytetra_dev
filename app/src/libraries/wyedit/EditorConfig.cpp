@@ -530,6 +530,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_36;
     parameterFunctions << get_parameter_table_37;
     parameterFunctions << get_parameter_table_38;
+    parameterFunctions << get_parameter_table_39;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1306,6 +1307,26 @@ QStringList EditorConfig::get_parameter_table_38(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_39(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 38
+    table << get_parameter_table_38(false);
+
+    // Новых ключей нет: версия нужна, чтобы правилом 38->39
+    // (см. update_version_change_value) схлопнуть кнопки
+    // heading1,heading2 в одну выпадашку heading
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1922,6 +1943,28 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     parts.append("heading1");
                     parts.append("heading2");
                 }
+                result=parts.join(",");
+            }
+        }
+
+
+    // Одна выпадашка заголовков вместо двух кнопок. Две кнопки
+    // появились правилом 37->38, теперь схлопываются в heading
+    // после code. Порядок пользователя сохраняется, дубли исключены
+    if(versionFrom==38 && versionTo==39)
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            if(parts.contains("heading1") || parts.contains("heading2"))
+            {
+                parts.removeAll("heading1");
+                parts.removeAll("heading2");
+                parts.removeAll("heading");
+                if(parts.contains("code"))
+                    parts.insert(parts.indexOf("code")+1, "heading");
+                else
+                    parts.append("heading");
                 result=parts.join(",");
             }
         }

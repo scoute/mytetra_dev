@@ -667,11 +667,8 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->code, &EditorDropDownButton::menuItemClicked,
             typefaceFormatter,            &TypefaceFormatter::onCodeLanguageClicked);
 
-    connect(editorToolBarAssistant->heading1, &QAction::triggered,
-            typefaceFormatter,                &TypefaceFormatter::onHeading1Clicked);
-
-    connect(editorToolBarAssistant->heading2, &QAction::triggered,
-            typefaceFormatter,                &TypefaceFormatter::onHeading2Clicked);
+    connect(editorToolBarAssistant->heading, &EditorDropDownButton::menuItemClicked,
+            typefaceFormatter,                  &TypefaceFormatter::onHeadingClicked);
 
     connect(editorToolBarAssistant->clear, &QAction::triggered,
             typefaceFormatter,             &TypefaceFormatter::onClearClicked);

@@ -3959,6 +3959,26 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>YAML</source>
         <translation>YAML</translation>
     </message>
+    <message>
+        <source>Heading 1</source>
+        <translation>Заголовок 1</translation>
+    </message>
+    <message>
+        <source>Heading 2</source>
+        <translation>Заголовок 2</translation>
+    </message>
+    <message>
+        <source>Heading 3</source>
+        <translation>Заголовок 3</translation>
+    </message>
+    <message>
+        <source>Normal text</source>
+        <translation>Обычный текст</translation>
+    </message>
+    <message>
+        <source>Heading</source>
+        <translation>Заголовок</translation>
+    </message>
 
     <message>
         <source>Show text in detached window</source>
@@ -7192,6 +7212,14 @@ Enable it in Settings on the History page.</source>
     <message>
         <source>Format paragraphs as second-level heading</source>
         <translation>Оформить абзацы как заголовок второго уровня</translation>
+    </message>
+    <message>
+        <source>Heading 3</source>
+        <translation>Заголовок 3</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as third-level heading</source>
+        <translation>Оформить абзацы как заголовок третьего уровня</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="127"/>

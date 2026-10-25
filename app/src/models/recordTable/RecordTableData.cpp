@@ -289,7 +289,7 @@ Record RecordTableData::getRecordFat(int pos)
 
     // Добавление бинарных образов файлов картинок
     QString directory=mytetraConfig.get_tetradir()+"/base/"+resultRecord.getField("dir");
-    resultRecord.setPictureFiles( DiskHelper::getFilesFromDirectory(directory, "*.png") );
+    resultRecord.setPictureFiles( DiskHelper::getFilesFromDirectory(directory, QStringList() << QStringLiteral("*.png") << QStringLiteral("*.jpg")) );
 
     return resultRecord;
 }

@@ -244,24 +244,6 @@ void EditorConfig::set_code_indent_size_apply(bool i)
 }
 
 
-bool EditorConfig::get_code_copy_link_enable(void)
-{
-    if(get_parameter("code_copy_link_enable").toInt()==1)
-        return true;
-    else
-        return false;
-}
-
-
-void EditorConfig::set_code_copy_link_enable(bool i)
-{
-    if(i==true)
-        conf->setValue("code_copy_link_enable", 1);
-    else
-        conf->setValue("code_copy_link_enable", 0);
-}
-
-
 // ----------------------
 // Настройки шага отступа
 // ----------------------
@@ -546,6 +528,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_34;
     parameterFunctions << get_parameter_table_35;
     parameterFunctions << get_parameter_table_36;
+    parameterFunctions << get_parameter_table_37;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1272,6 +1255,28 @@ QStringList EditorConfig::get_parameter_table_36(bool withEndSignature)
     // Чистое добавление ключа: update_version_change_value() не трогается
 
     table << "code_copy_link_enable" << "bool" << "1";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_37(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 36
+    table << get_parameter_table_36(false);
+
+    // Ключ code_copy_link_enable убран: тумблер выпилен,
+    // ссылка-кнопка [copy] ставится всегда. Удаление идет
+    // штатным remove_option, конфиги чистятся при миграции
+
+    table=remove_option(table, "code_copy_link_enable");
 
     if(withEndSignature)
         table << "0" << "0" << "0";

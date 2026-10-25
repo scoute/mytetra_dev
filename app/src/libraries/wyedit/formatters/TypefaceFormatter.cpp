@@ -784,12 +784,8 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
     }
 
     // Язык с маркером: заменить найденный или вставить новый сверху.
-    // Суффикс-ссылка [copy] приписывается, только если он разрешен
-    // в настройках (иначе старые маркеры молча чистятся от него)
-    QString fullMarker=newMarker;
-
-    if(editorConfig->get_code_copy_link_enable())
-        fullMarker+=QStringLiteral(" ")+copyCodeSuffix();
+    // Ссылка-кнопка [copy] приписывается всегда
+    const QString fullMarker=newMarker+QStringLiteral(" ")+copyCodeSuffix();
 
     if(markerBlock.isValid())
     {
@@ -800,8 +796,7 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.setPosition(markerPos+markerLen, QTextCursor::KeepAnchor);
         edit.insertText(fullMarker);
 
-        if(editorConfig->get_code_copy_link_enable())
-            applyCopyLinkFormat(markerPos, newMarker.length());
+        applyCopyLinkFormat(markerPos, newMarker.length());
 
         int delta=fullMarker.length()-markerLen;
         if(markerAbove)
@@ -822,8 +817,7 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.setPosition(insertPos);
         edit.insertText(fullMarker+QStringLiteral("\n"));
 
-        if(editorConfig->get_code_copy_link_enable())
-            applyCopyLinkFormat(insertPos, newMarker.length());
+        applyCopyLinkFormat(insertPos, newMarker.length());
 
         int inserted=fullMarker.length()+1;
 

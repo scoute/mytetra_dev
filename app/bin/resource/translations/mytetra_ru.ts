@@ -2907,11 +2907,6 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Устанавливать отступ</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="105"/>
-        <source>Add copy link [copy] to code marker</source>
-        <translation>Добавлять ссылку-кнопку [copy] в маркер кода</translation>
-    </message>
-    <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="107"/>
         <source>Apply last color on button click</source>
         <translation>Применять последний цвет по клику на кнопку</translation>

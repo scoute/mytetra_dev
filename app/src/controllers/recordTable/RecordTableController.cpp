@@ -653,7 +653,7 @@ void RecordTableController::addNewRecord(int mode)
   record.setField("author", addNewRecordWin.getField("author"));
   record.setField("url",    addNewRecordWin.getField("url"));
   record.setField("tags",   addNewRecordWin.getField("tags"));
-  record.setPictureFiles( DiskHelper::getFilesFromDirectory(directory, "*.png") );
+  record.setPictureFiles( DiskHelper::getFilesFromDirectory(directory, QStringList() << QStringLiteral("*.png") << QStringLiteral("*.jpg")) );
 
   // Пока что принята концепция, что файлы нельзя приаттачить в момент создания записи
   // Запись должна быть создана, потом можно аттачить файлы.

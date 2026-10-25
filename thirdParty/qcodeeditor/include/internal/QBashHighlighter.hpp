@@ -35,6 +35,9 @@ private:
 
     QVector<QHighlightRule> m_highlightRules;
 
+    QRegularExpression m_functionPattern;
+
     QRegularExpression m_variablePattern;
     QRegularExpression m_bracedVariablePattern;
+    QRegularExpression m_specialVariablePattern;
 };

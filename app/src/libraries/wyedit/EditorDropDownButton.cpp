@@ -87,6 +87,26 @@ void EditorDropDownButton::setInstantPopup(bool enable)
 }
 
 
+// Ограничение видимой высоты меню заданным числом пунктов.
+// Меню при этом становится прокручиваемым: Qt сам показывает
+// стрелки сверху/снизу, когда содержимое не влезает
+void EditorDropDownButton::setMaxVisibleItems(int count)
+{
+    m_maxVisibleItems=count;
+
+    if(count>0)
+    {
+        // Высота одного пункта: шрифт меню плюс запас на иконку и отступы.
+        // Последний пункт виден частично - это и намекает на прокрутку,
+        // поэтому берется чуть меньше полного шага
+        int itemHeight=m_menu->fontMetrics().height()+6;
+        m_menu->setMaximumHeight(itemHeight*count);
+    }
+    else
+        m_menu->setMaximumHeight(QWIDGETSIZE_MAX);
+}
+
+
 void EditorDropDownButton::showMenu()
 {
     m_button->showMenu();

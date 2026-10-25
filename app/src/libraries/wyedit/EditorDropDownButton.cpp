@@ -1,8 +1,11 @@
 #include <QAction>
 #include <QToolButton>
+#include <QListWidget>
 #include <QHBoxLayout>
 #include <QStyle>
 #include <QMenu>
+#include <QApplication>
+#include <QPointer>
 #include <QDebug>
 
 #include "EditorDropDownButton.h"
@@ -87,28 +90,100 @@ void EditorDropDownButton::setInstantPopup(bool enable)
 }
 
 
-// Ограничение видимой высоты меню заданным числом пунктов.
-// Меню при этом становится прокручиваемым: Qt сам показывает
-// стрелки сверху/снизу, когда содержимое не влезает
+// Режим списка: вместо QMenu показывается всплывающий QListWidget
+// со штатной полосой прокрутки
+void EditorDropDownButton::setListMode(bool enable)
+{
+    m_listMode=enable;
+}
+
+
+// Видимая высота всплывающего списка в пунктах (только list-режим).
+// Остальные пункты доступны прокруткой
 void EditorDropDownButton::setMaxVisibleItems(int count)
 {
     m_maxVisibleItems=count;
+}
 
-    if(count>0)
+
+// Показать всплывающий список языков (list-режим). Пункты берутся
+// из действий меню, индекс пункта совпадает с menuIndex действия,
+// поэтому сигнал menuItemClicked работает как для QMenu
+void EditorDropDownButton::showListMenu(void)
+{
+    // Запоминается фокус, чтобы вернуть его после закрытия списка.
+    // QMenu фокус не трогает, список с Qt::Popup - забирает
+    QWidget *previousFocusWidget=QApplication::focusWidget();
+    QPointer<QWidget> focusGuard(previousFocusWidget);
+
+    QListWidget *list=new QListWidget(m_button);
+    list->setWindowFlags(Qt::Popup);
+    list->setFocusPolicy(Qt::StrongFocus);
+    list->setUniformItemSizes(true);
+
+    int maxWidth=m_button->width();
+    for(QAction *action : m_menu->actions())
     {
-        // Высота одного пункта: шрифт меню плюс запас на иконку и отступы.
-        // Последний пункт виден частично - это и намекает на прокрутку,
-        // поэтому берется чуть меньше полного шага
-        int itemHeight=m_menu->fontMetrics().height()+6;
-        m_menu->setMaximumHeight(itemHeight*count);
+        QListWidgetItem *item=new QListWidgetItem(action->icon(), action->text(), list);
+        item->setData(Qt::UserRole, action->property("menuIndex").toInt());
+        maxWidth=qMax(maxWidth, list->sizeHintForColumn(0));
     }
-    else
-        m_menu->setMaximumHeight(QWIDGETSIZE_MAX);
+
+    int rowCount=list->count();
+    int visibleCount=rowCount;
+    if(m_maxVisibleItems>0)
+        visibleCount=qMin(rowCount, m_maxVisibleItems);
+
+    int rowHeight=list->sizeHintForRow(0);
+    if(rowHeight<=0)
+        rowHeight=list->fontMetrics().height()+8;
+
+    list->setMinimumWidth(maxWidth+4);
+    list->setFixedHeight(visibleCount*rowHeight+2*list->frameWidth());
+
+    QPoint popupPos=m_button->mapToGlobal(QPoint(0, m_button->height()));
+    list->move(popupPos);
+    list->setCurrentRow(0);
+
+    connect(list, &QListWidget::itemClicked,
+            this, [this, list, focusGuard](QListWidgetItem *item){
+                int index=item->data(Qt::UserRole).toInt();
+                list->close();
+                if(!focusGuard.isNull())
+                    focusGuard->setFocus();
+                this->onMenuItemClick(index);
+            });
+
+    connect(list, &QListWidget::itemActivated,
+            this, [this, list, focusGuard](QListWidgetItem *item){
+                int index=item->data(Qt::UserRole).toInt();
+                list->close();
+                if(!focusGuard.isNull())
+                    focusGuard->setFocus();
+                this->onMenuItemClick(index);
+            });
+
+    // Список удаляется сам при закрытии
+    connect(list, &QListWidget::destroyed,
+            this, [focusGuard](){
+                if(!focusGuard.isNull() && QApplication::focusWidget()==nullptr)
+                    focusGuard->setFocus();
+            });
+    list->setAttribute(Qt::WA_DeleteOnClose);
+
+    list->show();
+    list->setFocus();
 }
 
 
 void EditorDropDownButton::showMenu()
 {
+    if(m_listMode)
+    {
+        showListMenu();
+        return;
+    }
+
     m_button->showMenu();
 
     qDebug() << "Show menu for EditorDropDownButton";

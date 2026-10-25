@@ -29,9 +29,14 @@ public:
     // должны сразу показывать меню, а не применять действие по умолчанию
     void setInstantPopup(bool enable=true);
 
-    // Ограничить видимую высоту меню заданным числом пунктов.
-    // Меню при этом становится прокручиваемым (стрелки сверху/снизу).
-    // Нужно для длинных меню вроде выбора языка кода
+    // Режим списка: вместо QMenu показывается всплывающий QListWidget
+    // со штатной полосой прокрутки. Нужен для длинных меню (выбор языка),
+    // так как QMenu умеет прокручиваться только у краев экрана, а
+    // maximumHeight его просто обрезает без стрелок
+    void setListMode(bool enable=true);
+
+    // Видимая высота всплывающего списка в пунктах (только list-режим).
+    // Остальные пункты доступны прокруткой
     void setMaxVisibleItems(int count);
 
     EditorToolPseudoButton toolPseudoButton;
@@ -50,6 +55,7 @@ private slots:
 
 private:
     void setupUi();
+    void showListMenu(void); // Всплывающий список для list-режима
 
     void setDividingMargin();
 
@@ -57,7 +63,9 @@ private:
     QMenu *m_menu;
 
     int m_actionCount=0;
-    int m_maxVisibleItems=-1; // Без ограничения, пока не вызовут setMaxVisibleItems
+
+    bool m_listMode=false; // Показывать QListWidget вместо QMenu
+    int m_maxVisibleItems=-1; // Видимых пунктов в list-режиме
 };
 
 #endif // EDITORDROPDOWNBUTTON_H

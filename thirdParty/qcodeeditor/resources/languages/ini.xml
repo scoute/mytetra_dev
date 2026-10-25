@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <section name="Keyword">
+        <name>false</name>
+        <name>no</name>
+        <name>off</name>
+        <name>on</name>
+        <name>true</name>
+        <name>yes</name>
+    </section>
+</root>

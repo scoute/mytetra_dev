@@ -5,87 +5,85 @@
         <name>abstract</name>
         <name>alignof</name>
         <name>as</name>
-        <name>assert</name>
-        <name>assert_eq</name>
-        <name>assert_ne</name>
+        <name>assert!</name>
+        <name>assert_eq!</name>
+        <name>assert_ne!</name>
         <name>async</name>
         <name>await</name>
         <name>be</name>
-        <name>bitflags</name>
+        <name>bitflags!</name>
         <name>box</name>
         <name>break</name>
-        <name>bytes</name>
-        <name>cfg</name>
-        <name>col</name>
-        <name>concat</name>
-        <name>concat_idents</name>
+        <name>bytes!</name>
+        <name>cfg!</name>
+        <name>col!</name>
+        <name>concat!</name>
+        <name>concat_idents!</name>
         <name>const</name>
         <name>continue</name>
         <name>crate</name>
-        <name>debug_assert</name>
-        <name>debug_assert_eq</name>
-        <name>debug_assert_ne</name>
+        <name>debug_assert!</name>
+        <name>debug_assert_eq!</name>
+        <name>debug_assert_ne!</name>
         <name>do</name>
         <name>dyn</name>
         <name>else</name>
-        <name>env</name>
+        <name>env!</name>
         <name>extern</name>
-        <name>false</name>
-        <name>file</name>
+        <name>file!</name>
         <name>final</name>
         <name>fn</name>
         <name>for</name>
-        <name>format</name>
-        <name>format_args</name>
+        <name>format!</name>
+        <name>format_args!</name>
         <name>if</name>
         <name>impl</name>
         <name>in</name>
-        <name>include_bin</name>
-        <name>include_str</name>
+        <name>include_bin!</name>
+        <name>include_str!</name>
         <name>let</name>
-        <name>line</name>
-        <name>local_data_key</name>
+        <name>line!</name>
+        <name>local_data_key!</name>
         <name>loop</name>
-        <name>macro_rules</name>
+        <name>macro_rules!</name>
         <name>match</name>
         <name>mod</name>
-        <name>module_path</name>
+        <name>module_path!</name>
         <name>move</name>
         <name>mut</name>
         <name>offsetof</name>
         <name>once</name>
-        <name>option_env</name>
+        <name>option_env!</name>
         <name>override</name>
-        <name>panic</name>
-        <name>print</name>
-        <name>println</name>
+        <name>panic!</name>
+        <name>print!</name>
+        <name>println!</name>
         <name>priv</name>
         <name>pub</name>
         <name>pure</name>
         <name>ref</name>
         <name>return</name>
-        <name>select</name>
+        <name>select!</name>
         <name>self</name>
         <name>sizeof</name>
         <name>static</name>
-        <name>stringify</name>
+        <name>stringify!</name>
         <name>super</name>
         <name>trait</name>
-        <name>true</name>
-        <name>try</name>
+        <name>try!</name>
         <name>type</name>
         <name>typeof</name>
-        <name>unimplemented</name>
-        <name>unreachable</name>
+        <name>unimplemented!</name>
+        <name>unreachable!</name>
         <name>unsafe</name>
         <name>unsized</name>
         <name>use</name>
-        <name>vec</name>
+        <name>vec!</name>
         <name>virtual</name>
         <name>where</name>
         <name>while</name>
-        <name>write</name>
-        <name>writeln</name>
+        <name>write!</name>
+        <name>writeln!</name>
         <name>yield</name>
     </section>
     <section name="PrimitiveType">
@@ -114,5 +112,9 @@
         <name>u8</name>
         <name>union</name>
         <name>usize</name>
+    </section>
+    <section name="Literal">
+        <name>false</name>
+        <name>true</name>
     </section>
 </root>

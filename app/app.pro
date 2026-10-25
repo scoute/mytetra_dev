@@ -300,15 +300,19 @@ HEADERS = src/main.h \
     src/libraries/TraceLogger.h \
     ../thirdParty/qcodeeditor/include/internal/QBashHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QCLikeHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QCssHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QCXXHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QGLSLHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QHighlightBlockRule.hpp \
     ../thirdParty/qcodeeditor/include/internal/QHighlightRule.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QIniHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QJSONHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QLanguage.hpp \
     ../thirdParty/qcodeeditor/include/internal/QLuaHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QPhpHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QPythonHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QStyleSyntaxHighlighter.hpp \
+    ../thirdParty/qcodeeditor/include/internal/QSqlHighlighter.hpp \
     ../thirdParty/qcodeeditor/include/internal/QSyntaxStyle.hpp \
     ../thirdParty/qcodeeditor/include/internal/QXMLHighlighter.hpp \
     src/libraries/wyedit/formatters/ReferenceFormatter.h \
@@ -528,13 +532,17 @@ SOURCES = src/main.cpp \
     src/libraries/TraceLogger.cpp \
     ../thirdParty/qcodeeditor/src/internal/QBashHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QCLikeHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QCssHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QCXXHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QGLSLHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QIniHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QJSONHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QLanguage.cpp \
     ../thirdParty/qcodeeditor/src/internal/QLuaHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QPhpHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QPythonHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QStyleSyntaxHighlighter.cpp \
+    ../thirdParty/qcodeeditor/src/internal/QSqlHighlighter.cpp \
     ../thirdParty/qcodeeditor/src/internal/QSyntaxStyle.cpp \
     ../thirdParty/qcodeeditor/src/internal/QXMLHighlighter.cpp \
     src/libraries/wyedit/formatters/ReferenceFormatter.cpp \

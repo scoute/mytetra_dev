@@ -13,7 +13,11 @@
 #include <QCXXHighlighter>
 #include <QBashHighlighter>
 #include <QCLikeHighlighter>
+#include <QCssHighlighter>
 #include <QGLSLHighlighter>
+#include <QIniHighlighter>
+#include <QPhpHighlighter>
+#include <QSqlHighlighter>
 #include <QJSONHighlighter>
 #include <QLuaHighlighter>
 #include <QPythonHighlighter>
@@ -282,7 +286,7 @@ void TypefaceFormatter::onMonospaceClicked(void)
 // Выбор пункта меню кнопки кода: форматирование с подсветкой выбранного языка
 void TypefaceFormatter::onCodeLanguageClicked(int language)
 {
-    if(language<CodePlain || language>CodeXml)
+    if(language<CodePlain || language>=CodeCount)
         return;
 
     formatCodeWithLanguage(language);
@@ -467,14 +471,23 @@ void TypefaceFormatter::applyCodeHighlight(int language)
     case CodePython: highlighter=new QPythonHighlighter(&tempDoc); break;
     case CodeAngular:
     case CodeHtml:   highlighter=new QXMLHighlighter(&tempDoc); break;
-    case CodeBash:   highlighter=new QBashHighlighter(&tempDoc); break;
+    case CodeBash:
+    case CodeCMake:
+    case CodeMake:
+    case CodeYaml:   highlighter=new QBashHighlighter(&tempDoc); break;
     case CodeC:      highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/c.xml"), &tempDoc); break;
     case CodeCSharp: highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/csharp.xml"), &tempDoc); break;
     case CodeGo:     highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/go.xml"), &tempDoc); break;
     case CodeJava:   highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/java.xml"), &tempDoc); break;
     case CodeJs:
     case CodeReact:  highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/js.xml"), &tempDoc); break;
+    case CodeQml:    highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/qml.xml"), &tempDoc); break;
+    case CodeTypescript: highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/typescript.xml"), &tempDoc); break;
     case CodeRust:   highlighter=new QCLikeHighlighter(QStringLiteral(":/languages/rust.xml"), &tempDoc); break;
+    case CodeSql:    highlighter=new QSqlHighlighter(&tempDoc); break;
+    case CodePhp:    highlighter=new QPhpHighlighter(&tempDoc); break;
+    case CodeCss:    highlighter=new QCssHighlighter(&tempDoc); break;
+    case CodeIni:    highlighter=new QIniHighlighter(&tempDoc); break;
     default:
         return;
     }
@@ -498,7 +511,11 @@ void TypefaceFormatter::applyCodeHighlight(int language)
         for(int r=0; r<ranges.size(); ++r)
         {
             QTextCharFormat source=ranges.at(r).format;
-            if(!source.foreground().color().isValid())
+
+            // Пустой формат (стиль не знает такого имени, например Text
+            // или Operator в теме по умолчанию) пропускается: кисть
+            // по умолчанию черная и валидная, проверять надо стиль кисти
+            if(source.foreground().style()==Qt::NoBrush)
                 continue;
 
             QTextCharFormat target;
@@ -529,18 +546,26 @@ QString TypefaceFormatter::codeMarkerName(int language)
     case CodeAngular: return QStringLiteral("Angular");
     case CodeBash:    return QStringLiteral("Bash");
     case CodeC:       return QStringLiteral("C");
+    case CodeCMake:    return QStringLiteral("CMake");
+    case CodeCss:      return QStringLiteral("CSS");
     case CodeCxx:     return QStringLiteral("C++");
     case CodeCSharp:  return QStringLiteral("C#");
     case CodeGlsl:    return QStringLiteral("GLSL");
     case CodeGo:      return QStringLiteral("Go");
     case CodeHtml:    return QStringLiteral("HTML");
+    case CodeIni:     return QStringLiteral("INI");
     case CodeJava:    return QStringLiteral("Java");
     case CodeJs:      return QStringLiteral("JavaScript");
     case CodeLua:     return QStringLiteral("Lua");
+    case CodeMake:    return QStringLiteral("Make");
     case CodePython:  return QStringLiteral("Python");
+    case CodeQml:     return QStringLiteral("QML");
     case CodeReact:   return QStringLiteral("React");
     case CodeRust:    return QStringLiteral("Rust");
+    case CodeSql:     return QStringLiteral("SQL");
+    case CodeTypescript: return QStringLiteral("TypeScript");
     case CodeXml:     return QStringLiteral("XML");
+    case CodeYaml:    return QStringLiteral("YAML");
     default:          return QString();
     }
 }
@@ -557,9 +582,17 @@ QString TypefaceFormatter::codeMarkerLine(int language)
     {
     case CodePython:
     case CodeBash:
+    case CodeCMake:
+    case CodeMake:
+    case CodeYaml:
         return QStringLiteral("# {lang = ")+name+QStringLiteral("}");
     case CodeLua:
+    case CodeSql:
         return QStringLiteral("-- {lang = ")+name+QStringLiteral("}");
+    case CodeIni:
+        return QStringLiteral("; {lang = ")+name+QStringLiteral("}");
+    case CodeCss:
+        return QStringLiteral("/* {lang = ")+name+QStringLiteral("} */");
     case CodeHtml:
     case CodeXml:
     case CodeAngular:
@@ -571,15 +604,17 @@ QString TypefaceFormatter::codeMarkerLine(int language)
 
 
 // Распознать наш маркер в строке, вернуть язык или -1.
+// Форматы: // {lang = Имя}, # {lang = Имя}, -- {lang = Имя},
+// ; {lang = Имя}, /* {lang = Имя} */, <!-- {lang = Имя} -->.
 // Совпадение строгое: вся строка - только маркер
 int TypefaceFormatter::codeMarkerLanguage(const QString &line)
 {
     QString trimmed=line.trimmed();
 
     static const QRegularExpression lineMarker(
-        QStringLiteral("^(?://|#|--)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*$"));
-    static const QRegularExpression htmlMarker(
-        QStringLiteral("^<!--\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*-->\\s*$"));
+        QStringLiteral("^(?://|#|--|;)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*$"));
+    static const QRegularExpression blockMarker(
+        QStringLiteral("^(?:<!--|/\\*)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*(?:-->|\\*/)\\s*$"));
 
     QString name;
     QRegularExpressionMatch match=lineMarker.match(trimmed);
@@ -587,7 +622,7 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
         name=match.captured(1);
     else
     {
-        match=htmlMarker.match(trimmed);
+        match=blockMarker.match(trimmed);
         if(match.hasMatch())
             name=match.captured(1);
     }
@@ -596,7 +631,7 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
         return -1;
 
     // JSON маркеров не имеет, его имя здесь не опознается
-    for(int lang=CodeAngular; lang<=CodeXml; ++lang)
+    for(int lang=CodeAngular; lang<CodeCount; ++lang)
     {
         if(lang==CodeJson)
             continue;
@@ -744,7 +779,10 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.insertText(newMarker+QStringLiteral("\n"));
 
         int inserted=newMarker.length()+1;
-        newStart=selectStart+inserted;
+
+        // Маркер включается в выделение, чтобы ниже получить
+        // базовое оформление и подсветку как комментария
+        newStart=insertPos;
         newEnd=selectEnd+inserted;
     }
 

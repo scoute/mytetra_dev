@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <section name="Literal">
+        <name>false</name>
+        <name>null</name>
+        <name>true</name>
+    </section>
+</root>

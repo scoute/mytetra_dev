@@ -28,10 +28,12 @@ public:
     // кнопки кода в EditorToolBar (пункт 0 - старый обычный код,
     // дальше языки по алфавиту)
     enum CodeLanguage {CodePlain=0,
-                       CodeAngular, CodeBash, CodeC, CodeCxx, CodeCSharp,
-                       CodeGlsl, CodeGo, CodeHtml, CodeJava, CodeJs,
-                       CodeJson, CodeLua, CodePython, CodeReact, CodeRust,
-                       CodeXml};
+                       CodeAngular, CodeBash, CodeC, CodeCMake, CodeCss,
+                       CodeCxx, CodeCSharp, CodeGlsl, CodeGo, CodeHtml,
+                       CodeIni, CodeJava, CodeJs, CodeJson, CodeLua,
+                       CodeMake, CodePhp, CodePython, CodeQml, CodeReact,
+                       CodeRust, CodeSql, CodeTypescript, CodeXml, CodeYaml,
+                       CodeCount};
 
 signals:
 
@@ -100,7 +102,8 @@ private:
 
     // Распознать наш маркер в строке, вернуть язык или -1.
     // Форматы: // {lang = Имя}, # {lang = Имя}, -- {lang = Имя},
-    // <!-- {lang = Имя} -->. Совпадение строгое: вся строка - только маркер
+    // ; {lang = Имя}, /* {lang = Имя} */, <!-- {lang = Имя} -->.
+    // Совпадение строгое: вся строка - только маркер
     static int codeMarkerLanguage(const QString &line);
 
     // Одноразовая подсветка синтаксиса в текущем выделении через

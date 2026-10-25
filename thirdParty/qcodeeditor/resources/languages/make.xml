@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <section name="Keyword">
+        <name>define</name>
+        <name>else</name>
+        <name>endef</name>
+        <name>endif</name>
+        <name>export</name>
+        <name>ifn?def</name>
+        <name>ifn?eq</name>
+        <name>include</name>
+        <name>override</name>
+        <name>private</name>
+        <name>sinclude</name>
+        <name>undefine</name>
+        <name>unexport</name>
+        <name>vpath</name>
+    </section>
+    <section name="Function">
+        <name>abspath</name>
+        <name>addsuffix</name>
+        <name>and</name>
+        <name>ar</name>
+        <name>basename</name>
+        <name>call</name>
+        <name>dir</name>
+        <name>error</name>
+        <name>eval</name>
+        <name>file</name>
+        <name>filter</name>
+        <name>find</name>
+        <name>findstring</name>
+        <name>firstword</name>
+        <name>flavor</name>
+        <name>foreach</name>
+        <name>guile</name>
+        <name>if</name>
+        <name>info</name>
+        <name>install</name>
+        <name>join</name>
+        <name>lastword</name>
+        <name>load</name>
+        <name>notdir</name>
+        <name>or</name>
+        <name>origin</name>
+        <name>patsubst</name>
+        <name>ranlib</name>
+        <name>realpath</name>
+        <name>rm</name>
+        <name>shell</name>
+        <name>sort</name>
+        <name>strip</name>
+        <name>subst</name>
+        <name>suffix</name>
+        <name>value</name>
+        <name>warning</name>
+        <name>wildcard</name>
+        <name>word</name>
+    </section>
+    <section name="Literal">
+        <name>false</name>
+        <name>true</name>
+    </section>
+    <section name="Global">
+        <name>CFLAGS</name>
+        <name>LIBS</name>
+        <name>PREFIX</name>
+    </section>
+</root>

@@ -126,6 +126,10 @@ private:
     // Возвращает false, если после обработки выделять нечего
     bool normalizeCodeMarker(int language);
 
+    // Залить фоном абзацы текущего выделения (единая плашка блока кода).
+    // Вызывается внутри edit-блока formatCodeWithLanguage
+    void setCodeBlockBackground(const QBrush &brush);
+
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);
     void doChangeFontFamily(QString fontFamily);

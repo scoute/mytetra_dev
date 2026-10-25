@@ -81,19 +81,28 @@ public:
     QAction *codeAngularAction;
     QAction *codeBashAction;
     QAction *codeCAction;
+    QAction *codeCMakeAction;
+    QAction *codeCssAction;
     QAction *codeCxxAction;
     QAction *codeCSharpAction;
     QAction *codeGlslAction;
     QAction *codeGoAction;
     QAction *codeHtmlAction;
+    QAction *codeIniAction;
     QAction *codeJavaAction;
     QAction *codeJsAction;
     QAction *codeJsonAction;
     QAction *codeLuaAction;
+    QAction *codeMakeAction;
+    QAction *codePhpAction;
     QAction *codePythonAction;
+    QAction *codeQmlAction;
     QAction *codeReactAction;
     QAction *codeRustAction;
+    QAction *codeSqlAction;
+    QAction *codeTypescriptAction;
     QAction *codeXmlAction;
+    QAction *codeYamlAction;
 
     QAction *reference;
     QAction *secret;

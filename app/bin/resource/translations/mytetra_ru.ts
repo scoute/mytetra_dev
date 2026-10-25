@@ -3800,106 +3800,161 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="170"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="539"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="559"/>
         <source>Plain code</source>
         <translation>Обычный код</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="171"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="540"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="560"/>
         <source>Angular</source>
         <translation>Angular</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="172"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="541"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="561"/>
         <source>Bash</source>
         <translation>Bash</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="173"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="542"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="562"/>
         <source>C</source>
         <translation>C</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="174"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="543"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="563"/>
+        <source>CMake</source>
+        <translation>CMake</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="175"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="564"/>
+        <source>CSS</source>
+        <translation>CSS</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="176"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="565"/>
         <source>C++</source>
         <translation>C++</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="175"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="544"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="177"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="566"/>
         <source>C#</source>
         <translation>C#</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="176"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="545"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="178"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="567"/>
         <source>GLSL</source>
         <translation>GLSL</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="177"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="546"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="179"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="568"/>
         <source>Go</source>
         <translation>Go</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="178"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="547"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="180"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="569"/>
         <source>HTML</source>
         <translation>HTML</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="179"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="548"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="181"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="570"/>
+        <source>INI</source>
+        <translation>INI</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="182"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="571"/>
         <source>Java</source>
         <translation>Java</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="180"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="549"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="183"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="572"/>
         <source>JavaScript</source>
         <translation>JavaScript</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="181"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="550"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="184"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="573"/>
         <source>JSON</source>
         <translation>JSON</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="182"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="551"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="185"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="574"/>
         <source>Lua</source>
         <translation>Lua</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="183"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="552"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="186"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="575"/>
+        <source>Make</source>
+        <translation>Make</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="187"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="576"/>
+        <source>PHP</source>
+        <translation>PHP</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="188"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="577"/>
         <source>Python</source>
         <translation>Python</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="184"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="553"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="189"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="578"/>
+        <source>QML</source>
+        <translation>QML</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="190"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="579"/>
         <source>React</source>
         <translation>React</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="185"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="554"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="191"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="580"/>
         <source>Rust</source>
         <translation>Rust</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="186"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="555"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="192"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="581"/>
+        <source>SQL</source>
+        <translation>SQL</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="193"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="582"/>
+        <source>TypeScript</source>
+        <translation>TypeScript</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="194"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="583"/>
         <source>XML</source>
         <translation>XML</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="195"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="584"/>
+        <source>YAML</source>
+        <translation>YAML</translation>
+    </message>
+
     <message>
         <source>Show text in detached window</source>
         <translation type="vanished">Показать текст в открепляемом окне</translation>

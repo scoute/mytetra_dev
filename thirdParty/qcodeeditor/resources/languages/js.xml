@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <section name="Keyword">
-        <name>Infinity</name>
-        <name>NaN</name>
         <name>as</name>
         <name>async</name>
         <name>await</name>
@@ -17,7 +15,6 @@
         <name>do</name>
         <name>else</name>
         <name>export</name>
-        <name>false</name>
         <name>finally</name>
         <name>for</name>
         <name>from</name>
@@ -28,7 +25,6 @@
         <name>instanceof</name>
         <name>let</name>
         <name>new</name>
-        <name>null</name>
         <name>of</name>
         <name>return</name>
         <name>static</name>
@@ -36,10 +32,8 @@
         <name>switch</name>
         <name>this</name>
         <name>throw</name>
-        <name>true</name>
         <name>try</name>
         <name>typeof</name>
-        <name>undefined</name>
         <name>void</name>
         <name>while</name>
         <name>with</name>
@@ -115,5 +109,13 @@
         <name>require</name>
         <name>unescape</name>
         <name>window</name>
+    </section>
+    <section name="Literal">
+        <name>Infinity</name>
+        <name>NaN</name>
+        <name>false</name>
+        <name>null</name>
+        <name>true</name>
+        <name>undefined</name>
     </section>
 </root>

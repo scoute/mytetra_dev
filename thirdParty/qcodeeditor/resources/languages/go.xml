@@ -1,33 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
     <section name="Keyword">
-        <name>break</name>
         <name>case</name>
-        <name>chan</name>
-        <name>const</name>
-        <name>continue</name>
         <name>default</name>
         <name>defer</name>
         <name>else</name>
-        <name>fallthrough</name>
-        <name>false</name>
         <name>for</name>
-        <name>func</name>
         <name>go</name>
         <name>if</name>
-        <name>import</name>
-        <name>interface</name>
-        <name>iota</name>
-        <name>nil</name>
-        <name>package</name>
         <name>range</name>
-        <name>return</name>
         <name>select</name>
-        <name>struct</name>
         <name>switch</name>
         <name>to</name>
-        <name>true</name>
+    </section>
+    <section name="Decl">
+        <name>chan</name>
+        <name>const</name>
+        <name>func</name>
+        <name>interface</name>
+        <name>map</name>
+        <name>struct</name>
         <name>type</name>
+        <name>var</name>
+    </section>
+    <section name="Package">
+        <name>import</name>
+        <name>package</name>
+    </section>
+    <section name="Flow">
+        <name>break</name>
+        <name>continue</name>
+        <name>fallthrough</name>
+        <name>goto</name>
+        <name>return</name>
+    </section>
+    <section name="Literal">
+        <name>false</name>
+        <name>iota</name>
+        <name>nil</name>
+        <name>true</name>
     </section>
     <section name="PrimitiveType">
         <name>bool</name>

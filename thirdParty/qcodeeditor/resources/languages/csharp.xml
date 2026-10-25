@@ -25,7 +25,6 @@
         <name>event</name>
         <name>explicit</name>
         <name>extern</name>
-        <name>false</name>
         <name>finally</name>
         <name>fixed</name>
         <name>for</name>
@@ -48,7 +47,6 @@
         <name>long</name>
         <name>namespace</name>
         <name>new</name>
-        <name>null</name>
         <name>object</name>
         <name>operator</name>
         <name>orderby</name>
@@ -72,7 +70,6 @@
         <name>switch</name>
         <name>this</name>
         <name>throw</name>
-        <name>true</name>
         <name>try</name>
         <name>typeof</name>
         <name>unchecked</name>
@@ -117,5 +114,10 @@
         <name>region</name>
         <name>undef</name>
         <name>warning</name>
+    </section>
+    <section name="Literal">
+        <name>false</name>
+        <name>null</name>
+        <name>true</name>
     </section>
 </root>

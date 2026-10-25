@@ -25,6 +25,11 @@
     <style name="Function" foreground="#00677c" background="#ffffff"/>
     <style name="Keyword" foreground="#808000"/>
     <style name="PrimitiveType" foreground="#808000"/>
+    <style name="Decl" foreground="#007A00"/>
+    <style name="Flow" foreground="#8A0099"/>
+    <style name="Package" foreground="#2A8A9A"/>
+    <style name="Literal" foreground="#B00020"/>
+    <style name="Property" foreground="#1A56AA"/>
     <style name="Operator"/>
     <style name="Overloaded Operator"/>
     <style name="Preprocessor" foreground="#000080"/>

@@ -8,7 +8,6 @@
         <name>elif</name>
         <name>else</name>
         <name>esac</name>
-        <name>false</name>
         <name>fi</name>
         <name>for</name>
         <name>function</name>
@@ -17,7 +16,6 @@
         <name>select</name>
         <name>then</name>
         <name>time</name>
-        <name>true</name>
         <name>until</name>
         <name>while</name>
     </section>
@@ -79,5 +77,9 @@
         <name>unalias</name>
         <name>unset</name>
         <name>wait</name>
+    </section>
+    <section name="Literal">
+        <name>false</name>
+        <name>true</name>
     </section>
 </root>

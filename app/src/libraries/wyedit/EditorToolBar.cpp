@@ -171,36 +171,56 @@ void EditorToolBar::setupToolBarTools(void)
     codeAngularAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Angular"), this);
     codeBashAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Bash"), this);
     codeCAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("C"), this);
+    codeCMakeAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("CMake"), this);
+    codeCssAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("CSS"), this);
     codeCxxAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("C++"), this);
     codeCSharpAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("C#"), this);
     codeGlslAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("GLSL"), this);
     codeGoAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Go"), this);
     codeHtmlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("HTML"), this);
+    codeIniAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("INI"), this);
     codeJavaAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Java"), this);
     codeJsAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("JavaScript"), this);
     codeJsonAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("JSON"), this);
     codeLuaAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Lua"), this);
+    codeMakeAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Make"), this);
+    codePhpAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("PHP"), this);
     codePythonAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Python"), this);
+    codeQmlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("QML"), this);
     codeReactAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("React"), this);
     codeRustAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("Rust"), this);
+    codeSqlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("SQL"), this);
+    codeTypescriptAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("TypeScript"), this);
     codeXmlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("XML"), this);
+    codeYamlAction=new QAction(QIcon(":/resource/pic/edit_code.svg"), tr("YAML"), this);
     code->addAction(codePlainAction);
     code->addAction(codeAngularAction);
     code->addAction(codeBashAction);
     code->addAction(codeCAction);
+    code->addAction(codeCMakeAction);
+    code->addAction(codeCssAction);
     code->addAction(codeCxxAction);
     code->addAction(codeCSharpAction);
     code->addAction(codeGlslAction);
     code->addAction(codeGoAction);
     code->addAction(codeHtmlAction);
+    code->addAction(codeIniAction);
     code->addAction(codeJavaAction);
     code->addAction(codeJsAction);
     code->addAction(codeJsonAction);
     code->addAction(codeLuaAction);
+    code->addAction(codeMakeAction);
+    code->addAction(codePhpAction);
     code->addAction(codePythonAction);
+    code->addAction(codeQmlAction);
     code->addAction(codeReactAction);
     code->addAction(codeRustAction);
+    code->addAction(codeSqlAction);
+    code->addAction(codeTypescriptAction);
     code->addAction(codeXmlAction);
+    code->addAction(codeYamlAction);
+    // Пунктов стало много: меню показывает 15 и прокручивается
+    code->setMaxVisibleItems(15);
 
     // Кнопки заголовков H1/H2: checkable — подсветка актуального
     // уровня идёт из onUpdateOutlineButtonHiglight
@@ -540,19 +560,28 @@ void EditorToolBar::retranslateUi(void)
     codeAngularAction->setText(tr("Angular"));
     codeBashAction->setText(tr("Bash"));
     codeCAction->setText(tr("C"));
+    codeCMakeAction->setText(tr("CMake"));
+    codeCssAction->setText(tr("CSS"));
     codeCxxAction->setText(tr("C++"));
     codeCSharpAction->setText(tr("C#"));
     codeGlslAction->setText(tr("GLSL"));
     codeGoAction->setText(tr("Go"));
     codeHtmlAction->setText(tr("HTML"));
+    codeIniAction->setText(tr("INI"));
     codeJavaAction->setText(tr("Java"));
     codeJsAction->setText(tr("JavaScript"));
     codeJsonAction->setText(tr("JSON"));
     codeLuaAction->setText(tr("Lua"));
+    codeMakeAction->setText(tr("Make"));
+    codePhpAction->setText(tr("PHP"));
     codePythonAction->setText(tr("Python"));
+    codeQmlAction->setText(tr("QML"));
     codeReactAction->setText(tr("React"));
     codeRustAction->setText(tr("Rust"));
+    codeSqlAction->setText(tr("SQL"));
+    codeTypescriptAction->setText(tr("TypeScript"));
     codeXmlAction->setText(tr("XML"));
+    codeYamlAction->setText(tr("YAML"));
 
     // save покрыт шорткатом editor-save через setupShortcuts, здесь
     // только подсказки кнопок без горячих клавиш (мобильные)

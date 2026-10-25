@@ -13,7 +13,6 @@
         <name>else</name>
         <name>exports</name>
         <name>extends</name>
-        <name>false</name>
         <name>final</name>
         <name>finally</name>
         <name>for</name>
@@ -48,7 +47,6 @@
         <name>to</name>
         <name>transient</name>
         <name>transitive</name>
-        <name>true</name>
         <name>try</name>
         <name>uses</name>
         <name>var</name>
@@ -68,5 +66,9 @@
         <name>int</name>
         <name>short</name>
         <name>void</name>
+    </section>
+    <section name="Literal">
+        <name>false</name>
+        <name>true</name>
     </section>
 </root>

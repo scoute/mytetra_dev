@@ -1150,15 +1150,17 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 }
 
 
-void TypefaceFormatter::onHeading1Clicked(void)
+void TypefaceFormatter::onHeadingClicked(int index)
 {
-    applyHeadingLevel(1);
-}
-
-
-void TypefaceFormatter::onHeading2Clicked(void)
-{
-    applyHeadingLevel(2);
+    // Пункты меню: 0-H1, 1-H2, 2-H3, 3-обычный текст
+    if(index==0)
+        applyHeadingLevel(1);
+    else if(index==1)
+        applyHeadingLevel(2);
+    else if(index==2)
+        applyHeadingLevel(3);
+    else if(index==3)
+        applyHeadingLevel(0);
 }
 
 

@@ -55,7 +55,6 @@ private:
   QLabel        *codeSelectColorLabel;
   QToolButton   *codeSelectColorButton;
   QColor        *codeColor;
-  QCheckBox     *codeCopyLink;
 
   // Клик по кнопке цвета красит в последний цвет без пикера
   QCheckBox     *applyLastColorCheckBox;

@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QColorDialog>
 #include <QStyle>
+#include <QSplitter>
 #include <QPalette>
 #include <QStringList>
 #include <QMenu>
@@ -22,6 +23,7 @@
 
 #include "Editor.h"
 #include "EditorConfig.h"
+#include "EditorStructurePanel.h"
 #include "libraries/ShortcutManager.h"
 
 extern ShortcutManager shortcutManager;
@@ -195,6 +197,8 @@ void Editor::init(int mode)
 
   setupSignals();
 
+  setupStructurePanel(); // После тулбара и текста: кнопке выставляется состояние из конфига
+
   if(initDataEnableAssembly)
     assembly();
 
@@ -225,6 +229,35 @@ void Editor::setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QSt
   // Установлен this в качестве родителя, поэтому вручную удалять объект в деструкторе не нужно
   editorToolBarAssistant=new EditorToolBarAssistant(this, mode, textArea, disableToolList);
   editorToolBarAssistant->setObjectName("toolBarAssistant");
+}
+
+
+// Создание и настройка панели структуры
+void Editor::setupStructurePanel(void)
+{
+  structurePanel=new EditorStructurePanel(this);
+  structurePanel->setTextArea(textArea);
+
+  const bool visible=editorConfig->get_structure_panel_visible();
+  structurePanel->setVisible(visible);
+  editorToolBarAssistant->structure->setChecked(visible);
+
+  if(visible)
+    structurePanel->rebuild();
+}
+
+
+// Показ или скрытие панели структуры кнопкой тулбара
+void Editor::onStructureToggled(bool checked)
+{
+  if(structurePanel==nullptr)
+    return;
+
+  structurePanel->setVisible(checked);
+  editorConfig->set_structure_panel_visible(checked);
+
+  if(checked)
+    structurePanel->rebuild();
 }
 
 
@@ -812,6 +845,9 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->expandEditArea, &QAction::triggered,
             this,                                   &Editor::onExpandEditAreaClicked);
 
+    connect(editorToolBarAssistant->structure, &QAction::triggered,
+            this,                               &Editor::onStructureToggled);
+
     connect(editorToolBarAssistant->save, &QAction::triggered,
             this,                         &Editor::onSaveClicked);
 
@@ -863,13 +899,21 @@ void Editor::assembly(void)
   else
     indentSliderAssistant->setVisible(false);
 
-  // Добавляется область редактирования
-  buttonsAndEditLayout->addWidget(textArea);
+  // Область редактирования и панель структуры делят место через
+  // сплиттер. MetaEditor этот путь не использует: он кладет панель
+  // третьей колонкой своей сетки сам
+  QSplitter *editSplitter=new QSplitter(Qt::Horizontal, this);
+  editSplitter->addWidget(textArea);
+  editSplitter->addWidget(structurePanel);
+  editSplitter->setStretchFactor(0, 1);
+  editSplitter->setStretchFactor(1, 0);
+  editSplitter->setCollapsible(0, false);
+  buttonsAndEditLayout->addWidget(editSplitter);
 
   // Полоска поиска вставляется перед текстом как временный родитель.
   // MetaEditor перевешивает ее в свою сетку над текстом: без этого она
   // останется сиротой без геометрии внутри layout редактора
-  buttonsAndEditLayout->insertWidget(buttonsAndEditLayout->indexOf(textArea), findBar);
+  buttonsAndEditLayout->insertWidget(buttonsAndEditLayout->indexOf(editSplitter), findBar);
 
   // Полученый набор элементов устанавливается для текущего окна
   setLayout(buttonsAndEditLayout);

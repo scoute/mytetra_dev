@@ -428,6 +428,11 @@ void Editor::setupSignals(void)
           imageFormatter, &ImageFormatter::onClickOnImage,
           Qt::DirectConnection);
 
+  // Клик по ссылке-кнопке [copy] в строке маркера блока кода
+  connect(textArea,          &EditorTextArea::clickedOnCopyCode,
+          typefaceFormatter, &TypefaceFormatter::onCopyCodeClicked,
+          Qt::DirectConnection);
+
   // Двойной клик по картинке, для ImageFormatter
   connect(textArea,       &EditorTextArea::doubleClickOnImage,
           imageFormatter, &ImageFormatter::onDoubleClickOnImage,

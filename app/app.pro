@@ -179,6 +179,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorDropDownButton.h \
     src/libraries/wyedit/EditorShowTextContextMenu.h \
     src/libraries/wyedit/EditorShowTextDispatcher.h \
+    src/libraries/wyedit/EditorStructurePanel.h \
     src/libraries/wyedit/EditorToolPseudoButton.h \
     src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAbstractModel.h \
     src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAvailableToolsModel.h \
@@ -395,6 +396,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorDropDownButton.cpp \
     src/libraries/wyedit/EditorShowTextContextMenu.cpp \
     src/libraries/wyedit/EditorShowTextDispatcher.cpp \
+    src/libraries/wyedit/EditorStructurePanel.cpp \
     src/libraries/wyedit/EditorToolPseudoButton.cpp \
     src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAbstractModel.cpp \
     src/libraries/wyedit/mvc/models/editorToolbarSettings/EditorToolbarSettingsAvailableToolsModel.cpp \

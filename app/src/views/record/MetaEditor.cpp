@@ -17,6 +17,7 @@
 
 #include "libraries/wyedit/Editor.h"
 #include "libraries/wyedit/EditorTextArea.h"
+#include "libraries/wyedit/EditorStructurePanel.h"
 #include "libraries/wyedit/EditorIndentSliderAssistant.h"
 #include "libraries/wyedit/EditorToolBarAssistant.h"
 #include "libraries/wyedit/indentslider/IndentSlider.h"
@@ -188,6 +189,11 @@ void MetaEditor::metaAssembly(void)
     gridLayout->addWidget(findBarWidget(),                       5,0, 1,2);
 
   gridLayout->addWidget(textArea,                                 6,0, 1,2);
+
+  // Панель структуры живет в третьей колонке на высоте текста.
+  // Скрытая места не занимает, колонка схлопывается в ноль
+  if(structurePanel!=nullptr)
+    gridLayout->addWidget(structurePanel,                          6,2);
 
   gridLayout->addWidget(labelUrl,             7,0);
   gridLayout->addWidget(recordUrl,            7,1);

@@ -40,10 +40,7 @@ void EditorDropDownButton::setupUi()
     // Собирается виджет
     layout->addWidget(m_button);
 
-    // В list-режиме клики и клавиатура перехватываются фильтром,
-    // чтобы показать список вместо внутреннего QMenu кнопки
     m_button->installEventFilter(this);
-
     // Клик по кнопке (стрелка меню его не дает): applying last color
     connect(m_button, &QToolButton::clicked,
             this,     &EditorDropDownButton::buttonClicked);
@@ -127,6 +124,12 @@ void EditorDropDownButton::showListMenu(void)
     list->setFocusPolicy(Qt::StrongFocus);
     list->setUniformItemSizes(true);
 
+    // Подсветка следует за мышью, как в обычном QMenu:
+    // без tracking вьюпорт не шлет hover-события и строка
+    // подсвечивается только по клику
+    list->setMouseTracking(true);
+    list->viewport()->setMouseTracking(true);
+
     int maxWidth=m_button->width();
     for(QAction *action : m_menu->actions())
     {
@@ -151,6 +154,15 @@ void EditorDropDownButton::showListMenu(void)
     list->move(popupPos);
     list->setCurrentRow(0);
 
+    // Текущий открытый список запоминается, чтобы фильтр событий
+    // мог двигать текущую строку за мышью. Прошлый список, если вдруг
+    // еще жив, закрывается: открыт всегда только один
+    if(m_list!=nullptr)
+        m_list->close();
+
+    m_list=list;
+    list->viewport()->installEventFilter(this);
+
     connect(list, &QListWidget::itemClicked,
             this, [this, list, focusGuard](QListWidgetItem *item){
                 int index=item->data(Qt::UserRole).toInt();
@@ -171,7 +183,9 @@ void EditorDropDownButton::showListMenu(void)
 
     // Список удаляется сам при закрытии
     connect(list, &QListWidget::destroyed,
-            this, [focusGuard](){
+            this, [this, list, focusGuard](){
+                if(m_list==list)
+                    m_list=nullptr;
                 if(!focusGuard.isNull() && QApplication::focusWidget()==nullptr)
                     focusGuard->setFocus();
             });
@@ -204,6 +218,19 @@ bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
                 return true;
             }
         }
+    }
+
+    // Движение мыши над открытым списком: текущая строка едет за курсором.
+    // Отслеживается напрямую по событию, а не через itemEntered,
+    // чтобы поведение не зависело от доставки hover-событий
+    if(m_list!=nullptr && watched==m_list->viewport() &&
+            event->type()==QEvent::MouseMove)
+    {
+        QMouseEvent *mouseEvent=static_cast<QMouseEvent *>(event);
+        QListWidgetItem *item=m_list->itemAt(mouseEvent->pos());
+
+        if(item!=nullptr)
+            m_list->setCurrentItem(item);
     }
 
     return QWidget::eventFilter(watched, event);

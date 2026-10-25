@@ -11,6 +11,7 @@
 
 class QToolButton;
 class QMenu;
+class QListWidget;
 
 
 class EditorDropDownButton : public QWidget
@@ -72,6 +73,7 @@ private:
 
     bool m_listMode=false; // Показывать QListWidget вместо QMenu
     int m_maxVisibleItems=-1; // Видимых пунктов в list-режиме
+    QListWidget *m_list=nullptr; // Текущий всплывающий список (пока открыт)
 };
 
 #endif // EDITORDROPDOWNBUTTON_H

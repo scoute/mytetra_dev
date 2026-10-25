@@ -219,7 +219,8 @@ void EditorToolBar::setupToolBarTools(void)
     code->addAction(codeTypescriptAction);
     code->addAction(codeXmlAction);
     code->addAction(codeYamlAction);
-    // Пунктов стало много: меню показывает 15 и прокручивается
+    // Пунктов стало много: список показывает 15 и прокручивается
+    code->setListMode(true);
     code->setMaxVisibleItems(15);
 
     // Кнопки заголовков H1/H2: checkable — подсветка актуального

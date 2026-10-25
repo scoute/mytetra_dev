@@ -5,6 +5,8 @@
 #include <QRegularExpression>
 #include <QFile>
 #include <QMap>
+#include <QClipboard>
+#include <QToolTip>
 #include <QDebug>
 #include <QColorDialog>
 #include <QColor>
@@ -407,7 +409,7 @@ void TypefaceFormatter::formatCodeWithLanguage(int language)
     // единой плашкой. Обычный код заливку наоборот снимает, чтобы Plain
     // оставался старым поведением без карточки
     if(language!=CodePlain)
-        setCodeBlockBackground(QBrush(QColor(QStringLiteral("#F2F4F7"))));
+        setCodeBlockBackground(QBrush(codeCardColor()));
     else
         setCodeBlockBackground(QBrush(Qt::NoBrush));
 
@@ -614,6 +616,28 @@ QString TypefaceFormatter::codeMarkerLine(int language)
 
 
 // Распознать наш маркер в строке, вернуть язык или -1.
+// Адрес ссылки-кнопки [copy] в строке маркера
+QString TypefaceFormatter::copyCodeHref(void)
+{
+    return QStringLiteral("mytetra://copy-code");
+}
+
+
+// Текст кнопки копирования, добавляемый к строке маркера через пробел
+QString TypefaceFormatter::copyCodeSuffix(void)
+{
+    return QStringLiteral("[copy]");
+}
+
+
+// Цвет плашки блока кода
+QColor TypefaceFormatter::codeCardColor(void)
+{
+    return QColor(QStringLiteral("#F2F4F7"));
+}
+
+
+// Распознать наш маркер в строке, вернуть язык или -1.
 // Форматы: // {lang = Имя}, # {lang = Имя}, -- {lang = Имя},
 // ; {lang = Имя}, /* {lang = Имя} */, <!-- {lang = Имя} -->.
 // Совпадение строгое: вся строка - только маркер
@@ -622,9 +646,9 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
     QString trimmed=line.trimmed();
 
     static const QRegularExpression lineMarker(
-        QStringLiteral("^(?://|#|--|;)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*$"));
+        QStringLiteral("^(?://|#|--|;)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*(?:\\[copy\\])?\\s*$"));
     static const QRegularExpression blockMarker(
-        QStringLiteral("^(?:<!--|/\\*)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*(?:-->|\\*/)\\s*$"));
+        QStringLiteral("^(?:<!--|/\\*)\\s*\\{lang\\s*=\\s*(.+?)\\}\\s*(?:-->|\\*/)\\s*(?:\\[copy\\])?\\s*$"));
 
     QString name;
     QRegularExpressionMatch match=lineMarker.match(trimmed);
@@ -759,7 +783,10 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         return true;
     }
 
-    // Язык с маркером: заменить найденный или вставить новый сверху
+    // Язык с маркером: заменить найденный или вставить новый сверху.
+    // К маркеру всегда приписывается ссылка-кнопка [copy]
+    const QString fullMarker=newMarker+QStringLiteral(" ")+copyCodeSuffix();
+
     if(markerBlock.isValid())
     {
         int markerPos=markerBlock.position();
@@ -767,9 +794,11 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
 
         edit.setPosition(markerPos);
         edit.setPosition(markerPos+markerLen, QTextCursor::KeepAnchor);
-        edit.insertText(newMarker);
+        edit.insertText(fullMarker);
 
-        int delta=newMarker.length()-markerLen;
+        applyCopyLinkFormat(markerPos, newMarker.length());
+
+        int delta=fullMarker.length()-markerLen;
         if(markerAbove)
         {
             newStart=selectStart+delta;
@@ -786,9 +815,11 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         int insertPos=firstBlock.position();
 
         edit.setPosition(insertPos);
-        edit.insertText(newMarker+QStringLiteral("\n"));
+        edit.insertText(fullMarker+QStringLiteral("\n"));
 
-        int inserted=newMarker.length()+1;
+        applyCopyLinkFormat(insertPos, newMarker.length());
+
+        int inserted=fullMarker.length()+1;
 
         // Маркер включается в выделение, чтобы ниже получить
         // базовое оформление и подсветку как комментария
@@ -874,6 +905,116 @@ void TypefaceFormatter::setCodeBlockBackground(const QBrush &brush)
     backgroundFormatting.setBackground(brush);
 
     textArea->textCursor().mergeBlockFormat(backgroundFormatting);
+}
+
+
+// Оформить суффикс-кнопку [copy] в строке маркера как ссылку.
+// lineStart - начало строки, markerLen - длина текста маркера
+// без суффикса. Вызывается внутри edit-блока
+void TypefaceFormatter::applyCopyLinkFormat(int lineStart, int markerLen)
+{
+    const int linkStart=lineStart+markerLen+1; // После пробела
+    const int linkLength=copyCodeSuffix().length();
+
+    QTextCursor linkCursor(textArea->document());
+    linkCursor.setPosition(linkStart);
+    linkCursor.setPosition(linkStart+linkLength, QTextCursor::KeepAnchor);
+
+    QTextCharFormat linkFormat;
+    linkFormat.setAnchor(true);
+    linkFormat.setAnchorHref(copyCodeHref());
+    linkFormat.setFontUnderline(true);
+
+    linkCursor.mergeCharFormat(linkFormat);
+}
+
+
+// Проверка, что абзац выглядит как строка блока кода: либо залит
+// плашкой карточки, либо набран шрифтом кода (блоки, оформленные
+// до появления карточек, опознаются по шрифту)
+bool TypefaceFormatter::isCodeBlock(const QTextBlock &block) const
+{
+    if(!block.isValid())
+        return false;
+
+    if(block.blockFormat().background().style()!=Qt::NoBrush &&
+       block.blockFormat().background().color()==codeCardColor())
+        return true;
+
+    // Шрифт кода из настроек
+    QFont codeFont;
+    codeFont.fromString(editorConfig->get_code_font());
+
+    for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+    {
+        QTextFragment fragment=it.fragment();
+
+        if(!fragment.isValid() || fragment.length()==0)
+            continue;
+
+        // Пустые и пробельные фрагменты не показательны
+        QString text=fragment.text();
+        bool hasNonSpace=false;
+        for(QChar ch : text)
+        {
+            if(!ch.isSpace())
+            {
+                hasNonSpace=true;
+                break;
+            }
+        }
+
+        if(!hasNonSpace)
+            continue;
+
+        return fragment.charFormat().fontFamily()==codeFont.family();
+    }
+
+    return false;
+}
+
+
+// Собрать текст кода под строкой маркера, начиная с блока,
+// содержащего позицию. Пусто - маркера нет или кода под ним нет
+QString TypefaceFormatter::collectCodeBelowMarker(int docPosition) const
+{
+    QTextDocument *doc=textArea->document();
+
+    QTextBlock block=doc->findBlock(docPosition);
+
+    if(!block.isValid() || codeMarkerLanguage(block.text())<0)
+        return QString();
+
+    QStringList lines;
+
+    for(QTextBlock code=block.next(); code.isValid(); code=code.next())
+    {
+        if(!isCodeBlock(code))
+            break;
+
+        lines.append(code.text());
+    }
+
+    // Висячие пустые строки в конце в буфер не идут
+    while(!lines.isEmpty() && lines.last().trimmed().isEmpty())
+        lines.takeLast();
+
+    return lines.join(QStringLiteral("\n"));
+}
+
+
+// Клик по ссылке-кнопке [copy] в строке маркера: код блока ниже
+// маркера уходит в буфер обмена
+void TypefaceFormatter::onCopyCodeClicked(int docPosition)
+{
+    const QString code=collectCodeBelowMarker(docPosition);
+
+    if(code.isEmpty())
+        return;
+
+    QApplication::clipboard()->setText(code);
+
+    QToolTip::showText(QCursor::pos(), tr("Code copied to clipboard"));
 }
 
 

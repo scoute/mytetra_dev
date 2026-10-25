@@ -8285,6 +8285,11 @@ Please select single item for enabling edit operation.</source>
 Возможно  искажение в форматировании.</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1013"/>
+        <source>Code copied to clipboard</source>
+        <translation>Код скопирован в буфер обмена</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1299"/>
         <source>Select text color</source>
         <translation>Выбор цвета текста</translation>

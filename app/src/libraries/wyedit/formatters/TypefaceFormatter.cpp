@@ -403,6 +403,14 @@ void TypefaceFormatter::formatCodeWithLanguage(int language)
     if(language!=CodePlain)
         applyCodeHighlight(language);
 
+    // Фоновая заливка блока: код (вместе со строкой-маркером) выглядит
+    // единой плашкой. Обычный код заливку наоборот снимает, чтобы Plain
+    // оставался старым поведением без карточки
+    if(language!=CodePlain)
+        setCodeBlockBackground(QBrush(QColor(QStringLiteral("#F2F4F7"))));
+    else
+        setCodeBlockBackground(QBrush(Qt::NoBrush));
+
     textArea->textCursor().endEditBlock();
 }
 
@@ -855,6 +863,17 @@ QSyntaxStyle *TypefaceFormatter::codeStyleForLanguage(int language)
 
     cache.insert(language, style);
     return style;
+}
+
+
+// Залить фоном абзацы текущего выделения (единая плашка блока кода).
+// Вызывается внутри edit-блока formatCodeWithLanguage
+void TypefaceFormatter::setCodeBlockBackground(const QBrush &brush)
+{
+    QTextBlockFormat backgroundFormatting;
+    backgroundFormatting.setBackground(brush);
+
+    textArea->textCursor().mergeBlockFormat(backgroundFormatting);
 }
 
 

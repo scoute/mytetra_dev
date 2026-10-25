@@ -6,6 +6,8 @@
 #include <QMenu>
 #include <QApplication>
 #include <QPointer>
+#include <QKeyEvent>
+#include <QMouseEvent>
 #include <QDebug>
 
 #include "EditorDropDownButton.h"
@@ -37,6 +39,10 @@ void EditorDropDownButton::setupUi()
 
     // Собирается виджет
     layout->addWidget(m_button);
+
+    // В list-режиме клики и клавиатура перехватываются фильтром,
+    // чтобы показать список вместо внутреннего QMenu кнопки
+    m_button->installEventFilter(this);
 
     // Клик по кнопке (стрелка меню его не дает): applying last color
     connect(m_button, &QToolButton::clicked,
@@ -173,6 +179,34 @@ void EditorDropDownButton::showListMenu(void)
 
     list->show();
     list->setFocus();
+}
+
+
+// В list-режиме клик мыши и Space/Enter по кнопке показывают список,
+// а не внутреннее QMenu кнопки (QToolButton с InstantPopup открывает
+// меню приватным путем, мимо showMenu())
+bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
+{
+    if(m_listMode && watched==m_button)
+    {
+        if(event->type()==QEvent::MouseButtonPress)
+        {
+            showListMenu();
+            return true;
+        }
+
+        if(event->type()==QEvent::KeyPress)
+        {
+            int key=static_cast<QKeyEvent *>(event)->key();
+            if(key==Qt::Key_Space || key==Qt::Key_Enter || key==Qt::Key_Return)
+            {
+                showListMenu();
+                return true;
+            }
+        }
+    }
+
+    return QWidget::eventFilter(watched, event);
 }
 
 

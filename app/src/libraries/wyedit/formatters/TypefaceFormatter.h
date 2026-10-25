@@ -13,6 +13,7 @@ class QTextCharFormat;
 class QTextDocument;
 class QTextFrame;
 class QTextTable;
+class QSyntaxStyle;
 
 
 class TypefaceFormatter : public Formatter
@@ -111,6 +112,12 @@ private:
     // в HTML заметки, поэтому переживают сохранение и не требуют
     // живого QSyntaxHighlighter на документе редактора
     void applyCodeHighlight(int language);
+
+    // Стиль подсветки для языка: отдельная тема в :/styles/<имя>.xml
+    // (палитры в духе родных nano-схем, приглушенные под светлый фон),
+    // поэтому языки легко отличить с первого взгляда. Кешируется,
+    // fallback - стиль по умолчанию
+    static QSyntaxStyle *codeStyleForLanguage(int language);
 
     // Обеспечить маркер языка в начале выделения: заменить наш маркер
     // (в выделении или строкой выше) на новый, вставить новый сверху

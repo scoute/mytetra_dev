@@ -27,6 +27,7 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "EditorConfig.h"
+#include "formatters/TypefaceFormatter.h"
 
 
 extern GlobalParameters globalParameters;
@@ -499,6 +500,26 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
             QTextEdit::mousePressEvent(event);
 
             emit clickedOnVoiceBubble(voiceHref, docPoint);
+            return;
+        }
+    }
+
+    // Клик по ссылке-кнопке [copy] в строке маркера блока кода:
+    // код блока уходит в буфер обмена. Работает и с Ctrl, и без:
+    // проверка стоит раньше общей обработки ссылок, чтобы клик
+    // не уходил в переход по ссылке. Курсор не перемещается
+    if(event->type()==QEvent::MouseButtonPress &&
+       event->button()==Qt::LeftButton)
+    {
+        const QString href=this->anchorAt(event->pos());
+
+        if(href==TypefaceFormatter::copyCodeHref())
+        {
+            const int docPosition=cursorForPosition(event->pos()).position();
+
+            emit clickedOnCopyCode(docPosition);
+
+            event->ignore();
             return;
         }
     }

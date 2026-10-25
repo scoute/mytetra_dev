@@ -52,6 +52,11 @@ signals:
     // Одинарный клик по баблу голосовой заметки: play/pause на месте
     void clickedOnVoiceBubble(QString href, QPointF docPoint);
 
+    // Клик по ссылке-кнопке [copy] в строке маркера блока кода.
+    // Передается позиция документа: обработчик сам находит строку
+    // маркера и забирает код ниже нее
+    void clickedOnCopyCode(int docPosition);
+
     void downloadImages(const QString href);
 
     void doubleClickOnImage();

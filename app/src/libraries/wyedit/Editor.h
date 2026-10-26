@@ -308,6 +308,10 @@ private:
  virtual void keyPressEvent(QKeyEvent *event);
  virtual void keyReleaseEvent(QKeyEvent *event);
 
+ // Перехват Enter в заголовке раньше штатного сплита:
+ // в конце заголовка новый абзац сразу обычный, а не еще заголовок
+ virtual bool eventFilter(QObject *object, QEvent *event);
+
  // Область редактирования текста
  EditorTextArea *textArea=nullptr;
 

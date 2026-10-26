@@ -1144,6 +1144,19 @@ bool KnowTreeModel::moveBranch(const QString &sourceId, const QString &targetId,
 }
 
 
+// Перемещение ветки к новому родителю. Уже на месте — успех без действий
+bool KnowTreeModel::moveBranchToParent(TreeItem *item, TreeItem *newParent)
+{
+    if(item==nullptr || newParent==nullptr || item==newParent)
+        return false;
+
+    if(item->parent()==newParent)
+        return true; // Уже на месте — успех без действий
+
+    return moveBranch(item->getField("id"), newParent->getField("id"), true);
+}
+
+
 // Данные для вида. Вырезанная ветка красится приглушенным цветом,
 // остальное отдается базовой реализации
 QVariant KnowTreeModel::data(const QModelIndex &index, int role) const

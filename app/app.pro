@@ -194,6 +194,11 @@ HEADERS = src/main.h \
     src/views/appConfigWindow/AppConfigPage_Search.h \
     src/views/appConfigWindow/AppConfigPage_Clipper.h \
     src/views/appConfigWindow/AppConfigPage_Mcp.h \
+    src/views/appConfigWindow/AppConfigPage_Team.h \
+    src/views/subscriptions/SubscriptionPanel.h \
+    src/views/subscriptions/BranchSliceDialog.h \
+    src/views/subscriptions/ChangeViewDialog.h \
+    src/views/subscriptions/TextDiffDialog.h \
     src/views/appConfigWindow/AppConfigPage_Voice.h \
     src/views/appConfigWindow/AppConfigPage_Theme.h \
     src/views/mcpHistory/McpHistoryDialog.h \
@@ -349,6 +354,7 @@ HEADERS+=\
     src/libraries/GitHelper.h \
     src/libraries/BranchPublisher.h \
     src/libraries/SharedDirWatcher.h \
+    src/libraries/SubscriptionImportEngine.h \
     src/libraries/UnifiedDiff.h \
     src/libraries/ChangeHistory.h \
     src/libraries/BranchDiffEngine.h \
@@ -418,6 +424,11 @@ SOURCES = src/main.cpp \
     src/views/appConfigWindow/AppConfigPage_Search.cpp \
     src/views/appConfigWindow/AppConfigPage_Clipper.cpp \
     src/views/appConfigWindow/AppConfigPage_Mcp.cpp \
+    src/views/appConfigWindow/AppConfigPage_Team.cpp \
+    src/views/subscriptions/SubscriptionPanel.cpp \
+    src/views/subscriptions/BranchSliceDialog.cpp \
+    src/views/subscriptions/ChangeViewDialog.cpp \
+    src/views/subscriptions/TextDiffDialog.cpp \
     src/views/appConfigWindow/AppConfigPage_Voice.cpp \
     src/views/appConfigWindow/AppConfigPage_Theme.cpp \
     src/views/mcpHistory/McpHistoryDialog.cpp \
@@ -576,6 +587,7 @@ SOURCES+=\
     src/libraries/GitHelper.cpp \
     src/libraries/BranchPublisher.cpp \
     src/libraries/SharedDirWatcher.cpp \
+    src/libraries/SubscriptionImportEngine.cpp \
     src/libraries/UnifiedDiff.cpp \
     src/libraries/ChangeHistory.cpp \
     src/libraries/BranchDiffEngine.cpp \

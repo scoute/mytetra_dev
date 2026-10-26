@@ -45,6 +45,7 @@ private:
     QListWidgetItem *pageFavorites;
     QListWidgetItem *pageClipper;
     QListWidgetItem *pageMcp;
+    QListWidgetItem *pageTeam;
     QListWidgetItem *pageVoice;
     QListWidgetItem *pageMisc;
 

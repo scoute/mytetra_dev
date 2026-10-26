@@ -78,6 +78,17 @@ public slots:
     // Выбор пункта меню кнопки заголовков: 0-H1, 1-H2, 2-H3,
     // 3-обычный текст. H1-H3 тумблеры (повтор снимает уровень)
     void onHeadingClicked(int index);
+
+    // Префикс ссылок-переходов оглавления. Публичный: нужен
+    // EditorTextArea для опознания клика по пункту оглавления
+    static QString tocGoPrefix(void);
+
+    // Вставка снимка оглавления (H1-H3) в курсор или обновление
+    // оглавления под курсором повторным вызовом
+    void onTocClicked(void);
+
+    // Клик по пункту оглавления: прыжок в раздел
+    void onTocGoClicked(const QString &href);
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);
@@ -106,6 +117,21 @@ private:
     // Общий движок заголовков H1-H3: выставить уровень абзацам
     // в выделении (повторный клик снимает в обычный текст)
     void applyHeadingLevel(int level);
+
+    // Строка снимка оглавления: уровень, текст, позиция абзаца
+    struct TocEntry
+    {
+        int level;
+        QString text;
+        int position;
+    };
+
+    // Все заголовки H1-H3 документа по порядку. Пустые пропускаются,
+    // длинные обрезаются: это снимок для оглавления, а не весь текст
+    QList<TocEntry> collectTocEntries(void) const;
+
+    // Абзац - строка оглавления: хоть один фрагмент несет нашу ссылку
+    bool blockHasTocLink(const QTextBlock &block) const;
 
     // Форматирование выделения как блока кода с подсветкой выбранного языка
     // (CodePlain - старое поведение без подсветки)

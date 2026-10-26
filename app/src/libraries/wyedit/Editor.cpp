@@ -466,6 +466,11 @@ void Editor::setupSignals(void)
           typefaceFormatter, &TypefaceFormatter::onCopyCodeClicked,
           Qt::DirectConnection);
 
+  // Клик по пункту оглавления: прыжок в раздел
+  connect(textArea,          &EditorTextArea::clickedOnTocGo,
+          typefaceFormatter, &TypefaceFormatter::onTocGoClicked,
+          Qt::DirectConnection);
+
   // Двойной клик по картинке, для ImageFormatter
   connect(textArea,       &EditorTextArea::doubleClickOnImage,
           imageFormatter, &ImageFormatter::onDoubleClickOnImage,
@@ -702,6 +707,9 @@ void Editor::setupToolsSignals(void)
 
     connect(editorToolBarAssistant->heading, &EditorDropDownButton::menuItemClicked,
             typefaceFormatter,                  &TypefaceFormatter::onHeadingClicked);
+
+    connect(editorToolBarAssistant->toc, &QAction::triggered,
+            typefaceFormatter,            &TypefaceFormatter::onTocClicked);
 
     connect(editorToolBarAssistant->clear, &QAction::triggered,
             typefaceFormatter,             &TypefaceFormatter::onClearClicked);

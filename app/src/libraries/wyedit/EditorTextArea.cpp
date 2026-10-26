@@ -522,6 +522,17 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
             event->ignore();
             return;
         }
+
+        // Клик по пункту оглавления: прыжок в раздел. Работает и с Ctrl,
+        // и без: проверка стоит раньше общей обработки ссылок, чтобы клик
+        // не уходил в переход по ссылке. Курсор ставит обработчик
+        if(href.startsWith(TypefaceFormatter::tocGoPrefix()))
+        {
+            emit clickedOnTocGo(href);
+
+            event->ignore();
+            return;
+        }
     }
 
     // Если клик происходит вместе с клавишей-модификатором Ctrl

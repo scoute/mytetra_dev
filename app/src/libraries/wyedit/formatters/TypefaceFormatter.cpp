@@ -1268,8 +1268,46 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
     cursor.beginEditBlock();
 
-    for(QTextBlock block=textArea->document()->findBlock(from);
-        block.isValid() && block.position()<=to;
+    // Разбить абзацы по внутристрочным разрывам строк (U+2028/U+2029
+    // из вставок с веба) - но только когда заголовки ставятся, а не
+    // снимаются. Иначе несколько зрительных строк остаются одним
+    // блоком и уходят в один пункт оглавления. Справа налево, чтобы
+    // позиции левее не ехали; курсор-выделение само едет за правками,
+    // границы прохода перечитываются ниже
+    int realFrom=from;
+    int realTo=to;
+    if(target>0)
+    {
+        QList<int> separators;
+        for(QTextBlock block=textArea->document()->findBlock(from);
+            block.isValid() && block.position()<=to;
+            block=block.next())
+        {
+            const QString text=block.text();
+            for(int i=0; i<text.length(); ++i)
+                if(text[i]==QChar(0x2028) || text[i]==QChar(0x2029))
+                    separators << block.position()+i;
+        }
+
+        for(int i=separators.size()-1; i>=0; --i)
+        {
+            QTextCursor splitCursor(textArea->document());
+            splitCursor.setPosition(separators[i]);
+            splitCursor.insertBlock();
+
+            // Курсор встает в начало нового абзаца - прямо на
+            // символ-разрыв: удаляется он сам, а не перенос
+            // (удаление по старой позиции стирало перенос и
+            // склеивало абзацы обратно)
+            splitCursor.deleteChar();
+        }
+
+        realFrom=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+        realTo=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
+    }
+
+    for(QTextBlock block=textArea->document()->findBlock(realFrom);
+        block.isValid() && block.position()<=realTo;
         block=block.next())
     {
         const int oldLevel=block.blockFormat().headingLevel();
@@ -1279,6 +1317,11 @@ void TypefaceFormatter::applyHeadingLevel(int level)
         // Обычный абзац без stash трогать нечем: снимать нечего,
         // иначе сброс в обычный текст затирал бы размер начертания
         if(target==0 && oldLevel==0 && (stash==nullptr || !stash->hasData))
+            continue;
+
+        // Пустые абзацы заголовками не делаются: иначе плодятся
+        // пустые H1/H2/H3. Снятие уровня с пустых работает как обычно
+        if(target>0 && block.text().simplified().isEmpty())
             continue;
 
         // В заголовок: исходное запомнить один раз для точного отката.

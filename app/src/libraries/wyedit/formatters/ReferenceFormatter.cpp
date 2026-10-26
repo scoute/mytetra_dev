@@ -142,12 +142,20 @@ void ReferenceFormatter::onReferenceClicked(void)
                              tr("A link to the note itself makes no sense."),
                              QMessageBox::NoButton,
                              editor);
-        guardBox.addButton(tr("Insert anyway"), QMessageBox::AcceptRole);
+        // Ответ через нажатую кнопку: exec() возвращает StandardButton
+        // (для кастомной кнопки — ее роль, а не QDialog::Accepted),
+        // поэтому сравнение только через clickedButton()
+        QPushButton *insertAnywayButton=guardBox.addButton(tr("Insert anyway"), QMessageBox::AcceptRole);
         guardBox.addButton(QMessageBox::Cancel);
         guardBox.setDefaultButton(QMessageBox::Cancel);
 
-        // Ответ через результат: согласие и программный accept() тоже считаются
-        if(guardBox.exec()!=QDialog::Accepted)
+        // Ответ считывается с нажатой кнопки: exec() для кастомной
+        // кнопки возвращает ее роль, а не QDialog::Accepted, поэтому
+        // сравнивать результат exec() с Accepted нельзя — только
+        // clickedButton() с указателем кнопки "Вставить всё равно"
+        guardBox.exec();
+
+        if(guardBox.clickedButton()!=insertAnywayButton)
             return;
     }
 

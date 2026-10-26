@@ -11,6 +11,7 @@
 #include <QColorDialog>
 #include <QColor>
 #include <QDomNode>
+#include <QUrl>
 #include <QTextTable>
 #include <QApplication>
 
@@ -1161,6 +1162,215 @@ void TypefaceFormatter::onHeadingClicked(int index)
         applyHeadingLevel(3);
     else if(index==3)
         applyHeadingLevel(0);
+}
+
+
+// Префикс ссылок-переходов оглавления. Дальше через слэш:
+// уровень, порядковый номер заголовка, кодированный текст.
+// Номер - запасной ключ, если текст заголовка поменяли после вставки
+QString TypefaceFormatter::tocGoPrefix(void)
+{
+    return QStringLiteral("mytetra://toc-go/");
+}
+
+
+QList<TypefaceFormatter::TocEntry> TypefaceFormatter::collectTocEntries(void) const
+{
+    QList<TocEntry> entries;
+
+    for(QTextBlock block=textArea->document()->begin(); block.isValid(); block=block.next())
+    {
+        const int level=block.blockFormat().headingLevel();
+        if(level<1 || level>3)
+            continue;
+
+        QString text=block.text().simplified();
+        if(text.isEmpty())
+            continue;
+        if(text.length()>120)
+            text=text.left(120)+QStringLiteral("…");
+
+        TocEntry entry;
+        entry.level=level;
+        entry.text=text;
+        entry.position=block.position();
+        entries << entry;
+    }
+
+    return entries;
+}
+
+
+bool TypefaceFormatter::blockHasTocLink(const QTextBlock &block) const
+{
+    if(!block.isValid())
+        return false;
+
+    for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        if(it.fragment().charFormat().anchorHref().startsWith(tocGoPrefix()))
+            return true;
+
+    return false;
+}
+
+
+// Вставка снимка оглавления: каждый заголовок - абзац с отступом
+// уровня и ссылкой-переходом. Курсор под оглавлением или внутри него:
+// соседние абзацы-ссылки вырезаются и пишутся заново (обновление
+// повторным хоткеем). Иначе оглавление вставляется в курсор
+void TypefaceFormatter::onTocClicked(void)
+{
+    const QList<TocEntry> entries=collectTocEntries();
+    if(entries.isEmpty())
+        return;
+
+    QTextCursor cursor=textArea->textCursor();
+
+    // Границы оглавления под курсором. Курсор после вставки стоит
+    // на первой строке оглавления, поэтому без ссылки в текущем
+    // абзаце проверяется еще и предыдущий
+    QTextBlock first=cursor.block();
+    if(!blockHasTocLink(first) &&
+       first.previous().isValid() && blockHasTocLink(first.previous()))
+        first=first.previous();
+
+    bool haveToc=blockHasTocLink(first);
+    QTextBlock last=first;
+    if(haveToc)
+    {
+        while(first.previous().isValid() && blockHasTocLink(first.previous()))
+            first=first.previous();
+        while(last.next().isValid() && blockHasTocLink(last.next()))
+            last=last.next();
+    }
+
+    QTextCursor edit(textArea->document());
+    edit.beginEditBlock();
+
+    if(haveToc)
+    {
+        // Старое оглавление вырезается целиком, дальше пишется
+        // в оставшийся пустой абзац. Конец выделения - именно конец
+        // текста последнего абзаца (EndOfBlock), его перенос строки
+        // остается: иначе строка оглавления склеится со следующим.
+        // Позиции - целыми числами до правок: хендлы QTextBlock после
+        // removeSelectedText протухают и врут про position()
+        const int firstPos=first.position();
+        edit.setPosition(firstPos);
+        edit.setPosition(last.position(), QTextCursor::KeepAnchor);
+        edit.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+        edit.removeSelectedText();
+        edit.setPosition(firstPos);
+    }
+    else
+    {
+        // Новое оглавление пишется строго в пустой абзац, текст
+        // существующих абзацев не разрезается и не затирается
+        edit.setPosition(cursor.position());
+        if(edit.block().text().isEmpty())
+        {
+            // Уже пустой абзац: пишем прямо сюда
+        }
+        else if(edit.atBlockStart())
+        {
+            // В начале абзаца: пустой абзац появляется перед ним
+            edit.insertBlock();
+            edit.movePosition(QTextCursor::PreviousBlock);
+        }
+        else
+        {
+            // Внутри или в конце абзаца: пустой абзац появляется после него
+            edit.movePosition(QTextCursor::EndOfBlock);
+            edit.insertBlock();
+        }
+    }
+
+    const int tocStart=edit.position();
+
+    for(int i=0; i<entries.size(); ++i)
+    {
+        if(i>0)
+            edit.insertBlock();
+
+        QTextBlockFormat blockFormat;
+        blockFormat.setIndent(entries[i].level-1);
+        edit.setBlockFormat(blockFormat);
+
+        edit.setCharFormat(QTextCharFormat());
+
+        const QString href=tocGoPrefix()
+            +QString::number(entries[i].level)+QStringLiteral("/")
+            +QString::number(i)+QStringLiteral("/")
+            +QString::fromLatin1(QUrl::toPercentEncoding(entries[i].text));
+
+        edit.insertText(entries[i].text);
+
+        // Вставленный текст оформляется ссылкой-переходом
+        QTextCursor linkCursor(edit.document());
+        const int linkEnd=edit.position();
+        linkCursor.setPosition(linkEnd-entries[i].text.length());
+        linkCursor.setPosition(linkEnd, QTextCursor::KeepAnchor);
+
+        QTextCharFormat linkFormat;
+        linkFormat.setAnchor(true);
+        linkFormat.setAnchorHref(href);
+        linkFormat.setFontUnderline(true);
+        linkCursor.mergeCharFormat(linkFormat);
+    }
+
+    edit.endEditBlock();
+
+    // Курсор - в начало оглавления: повторный хоткей обновит на месте
+    QTextCursor result(textArea->document());
+    result.setPosition(tocStart);
+    textArea->setTextCursor(result);
+}
+
+
+// Клик по пункту оглавления: прыжок в раздел. Сначала ищется
+// заголовок с тем же уровнем и текстом (пережил правки вокруг),
+// запасной вариант - тот же порядковый номер того же уровня.
+// Ничего не нашлось - молча игнорируется (оглавление устарело)
+void TypefaceFormatter::onTocGoClicked(const QString &href)
+{
+    if(!href.startsWith(tocGoPrefix()))
+        return;
+
+    const QStringList parts=href.mid(tocGoPrefix().length()).split(QStringLiteral("/"));
+    if(parts.size()<3)
+        return;
+
+    bool okLevel=false;
+    bool okIndex=false;
+    const int level=parts[0].toInt(&okLevel);
+    const int index=parts[1].toInt(&okIndex);
+    const QString text=QString::fromUtf8(QByteArray::fromPercentEncoding(parts[2].toLatin1()));
+    if(!okLevel || !okIndex)
+        return;
+
+    const QList<TocEntry> entries=collectTocEntries();
+
+    int target=-1;
+    for(int i=0; i<entries.size(); ++i)
+        if(entries[i].level==level && entries[i].text==text)
+        {
+            target=i;
+            break;
+        }
+    if(target<0)
+        for(int i=0; i<entries.size(); ++i)
+            if(entries[i].level==level && i==index)
+            {
+                target=i;
+                break;
+            }
+    if(target<0)
+        return;
+
+    QTextCursor cursor(textArea->document());
+    cursor.setPosition(entries[target].position);
+    textArea->setTextCursor(cursor);
+    textArea->ensureCursorVisible();
 }
 
 

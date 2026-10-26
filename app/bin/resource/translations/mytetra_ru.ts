@@ -7230,6 +7230,14 @@ Enable it in Settings on the History page.</source>
         <translation>Показать оглавление с переходом в раздел</translation>
     </message>
     <message>
+        <source>Table of contents</source>
+        <translation>Оглавление</translation>
+    </message>
+    <message>
+        <source>Insert or refresh the table of contents snapshot</source>
+        <translation>Вставить снимок оглавления или обновить его</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="127"/>
         <source>Lowercase</source>
         <translation>Нижний регистр</translation>

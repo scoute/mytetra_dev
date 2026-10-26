@@ -57,6 +57,10 @@ signals:
     // маркера и забирает код ниже нее
     void clickedOnCopyCode(int docPosition);
 
+    // Клик по пункту оглавления: передается адрес ссылки-перехода,
+    // обработчик сам находит раздел и ставит туда курсор
+    void clickedOnTocGo(QString href);
+
     void downloadImages(const QString href);
 
     void doubleClickOnImage();

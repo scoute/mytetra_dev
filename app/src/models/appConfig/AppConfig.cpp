@@ -1812,6 +1812,57 @@ void AppConfig::set_voiceNoteQuality(int quality)
 }
 
 
+// Профиль команды для SyncTetra: имя, почта, идентификатор,
+// каталог обмена. Прямые значения в конфиге, без таблицы версий:
+// пустая строка - легальное "не задано"
+QString AppConfig::get_teamName(void)
+{
+    return m_conf->value("teamName", "").toString();
+}
+
+
+void AppConfig::set_teamName(QString name)
+{
+    m_conf->setValue("teamName", name);
+}
+
+
+QString AppConfig::get_teamEmail(void)
+{
+    return m_conf->value("teamEmail", "").toString();
+}
+
+
+void AppConfig::set_teamEmail(QString email)
+{
+    m_conf->setValue("teamEmail", email);
+}
+
+
+QString AppConfig::get_teamId(void)
+{
+    return m_conf->value("teamId", "").toString();
+}
+
+
+void AppConfig::set_teamId(QString id)
+{
+    m_conf->setValue("teamId", id);
+}
+
+
+QString AppConfig::get_sharedDir(void)
+{
+    return m_conf->value("sharedDir", "").toString();
+}
+
+
+void AppConfig::set_sharedDir(QString path)
+{
+    m_conf->setValue("sharedDir", path);
+}
+
+
 QString AppConfig::getDockableWindowsState(void)
 {
     return this->get_parameter("dockableWindowsState");

@@ -238,6 +238,8 @@ HEADERS = src/main.h \
     src/models/recordTable/RecordTableModel.h \
     src/models/recordTable/RecordTableProxyModel.h \
     src/models/appConfig/AppConfig.h \
+    src/models/teamProfile/TeamProfile.h \
+    src/models/subscription/SubscriptionRegistry.h \
     src/views/record/AddNewRecord.h \
     src/libraries/ClipboardRecords.h \
     src/views/tree/TreeScreen.h \
@@ -457,6 +459,8 @@ SOURCES = src/main.cpp \
     src/models/recordTable/RecordTableModel.cpp \
     src/models/recordTable/RecordTableProxyModel.cpp \
     src/models/appConfig/AppConfig.cpp \
+    src/models/teamProfile/TeamProfile.cpp \
+    src/models/subscription/SubscriptionRegistry.cpp \
     src/views/record/AddNewRecord.cpp \
     src/libraries/ClipboardRecords.cpp \
     src/views/tree/TreeScreen.cpp \

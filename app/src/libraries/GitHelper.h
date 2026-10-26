@@ -71,6 +71,40 @@ public:
     // Закоммитить индекс с сообщением
     static bool commitStaged(const QString &dir, const QString &message);
 
+    // Локальная подпись репозитория (не трогает глобальный конфиг git)
+    static bool setLocalIdentity(const QString &dir, const QString &name,
+                                 const QString &email);
+
+    // Закоммитить путь если он менялся. Хеш в hash (пусто при неудаче).
+    // Без изменений коммит не делается, возвращается истина
+    static bool commitPathIfChanged(const QString &dir, const QString &message,
+                                    const QString &relPath, QString *hash=nullptr);
+
+    // Закоммитить всё если есть изменения. Без изменений истина
+    static bool commitAllIfChanged(const QString &dir, const QString &message,
+                                   QString *hash=nullptr);
+
+    // Корень репозитория вверх по дереву (по .git), пусто если нет.
+    // Для diff/детекта подписок: единый журнал shared/.git
+    static QString findRepositoryRoot(const QString &dir);
+
+    // Файлы ссылки журнала (ls-tree), только под путём при заданном
+    static QStringList listFilesInRef(const QString &repo, const QString &ref,
+                                      const QString &pathspec=QString());
+
+    // checkout пути из ссылки (восстановление). Текст ошибки опционально
+    static bool checkoutFromRef(const QString &repo, const QString &ref,
+                                const QString &pathspec,
+                                QString *errorMessage=nullptr);
+
+    // Однострочный журнал всего репозитория
+    static QStringList getLogOneline(const QString &repo);
+
+    // Архивация истории: текущее состояние новым корнем, старое
+    // чистится. Текст ошибки опционально
+    static bool archiveHistory(const QString &repo, const QString &message,
+                               QString *errorMessage=nullptr);
+
     // Усечь историю файла до целевой ревизии: все коммиты новее
     // targetRev, касающиеся file, уничтожаются, остальные
     // (других файлов) переигрываются поверх. Рабочее дерево

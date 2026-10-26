@@ -481,6 +481,11 @@ void EditorToolBarAssistant::onCursorPositionChanged()
 
     // Вызывается слот "Изменение цвета иконки выделения фона текста"
     this->onChangeBackgroundColor(color);
+
+    // Предвыбор языка в списке кнопки кода: язык блока под курсором
+    // выделяется при открытии, иначе список открывается с первой строки
+    if(code!=nullptr && m_editor!=nullptr && m_editor->typefaceFormatter!=nullptr)
+        code->setPreselectRow(m_editor->typefaceFormatter->codeLanguageAtCursor());
 }
 
 

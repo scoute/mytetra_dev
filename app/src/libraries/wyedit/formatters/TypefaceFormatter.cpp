@@ -1553,6 +1553,7 @@ bool TypefaceFormatter::handleHeadingEnter(void)
     QTextBlock block=cursor.block();
 
     bool consumed=false;
+    int headBlockNumber=-1;
     if(block.text().isEmpty())
     {
         // Пустой заголовок: уровень и вид снимаются на месте,
@@ -1598,8 +1599,47 @@ bool TypefaceFormatter::handleHeadingEnter(void)
         textArea->setCurrentCharFormat(current);
         consumed=true;
     }
+    else if(cursor.atBlockStart() && !block.text().isEmpty())
+    {
+        // В начале заголовка: штатный сплит, затем ПЕРВЫЙ (пустой)
+        // абзац приводится к обычному виду, курсор остается в нем.
+        // Заголовок ниже сохраняет текст и уровень.
+        // Состояние курсора выставляется ПОСЛЕ endEditBlock: внутри
+        // макроса оно разбивало отмену на два шага вместо одного
+        cursor.insertBlock();
+
+        QTextBlock newFirst=cursor.block().previous();
+        if(newFirst.isValid())
+        {
+            QTextBlockFormat format=newFirst.blockFormat();
+            format.setHeadingLevel(0);
+            format.setTopMargin(probeBlockFormat.topMargin());
+            format.setBottomMargin(probeBlockFormat.bottomMargin());
+
+            QTextCursor editFirst(newFirst);
+            editFirst.setBlockFormat(format);
+            headBlockNumber=newFirst.blockNumber();
+        }
+        consumed=true;
+    }
 
     cursor.endEditBlock();
+
+    if(consumed && headBlockNumber>=0)
+    {
+        QTextBlock headBlock=textArea->document()->findBlockByNumber(headBlockNumber);
+        if(headBlock.isValid())
+        {
+            QTextCursor headCursor(headBlock);
+            textArea->setTextCursor(headCursor);
+
+            QTextCharFormat current=textArea->currentCharFormat();
+            current.setFontPointSize(baseSize);
+            current.setFontWeight(QFont::Normal);
+            current.clearProperty(QTextFormat::FontSizeAdjustment);
+            textArea->setCurrentCharFormat(current);
+        }
+    }
 
     return consumed;
 }

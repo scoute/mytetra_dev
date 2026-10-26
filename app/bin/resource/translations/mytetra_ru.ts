@@ -8872,5 +8872,10 @@ This cannot be undone.</source>
         <source>(empty heading)</source>
         <translation>(пустой заголовок)</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorStructurePanel.cpp" line="23"/>
+        <source>Outline</source>
+        <translation>Оглавление</translation>
+    </message>
 </context>
 </TS>

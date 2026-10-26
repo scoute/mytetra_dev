@@ -1,5 +1,7 @@
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QScreen>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -134,10 +136,16 @@ void EditorSpecialCharDialog::assembly(void)
    QLabel *recentLabel=new QLabel(tr("Recent:"), this);
    centralLayout->addWidget(recentLabel);
 
+   // Недавние прижаты влево: иначе сетка тянется на всю ширину
+   // и короткий ряд смотрится отцентрованным
+   QHBoxLayout *recentRowLayout=new QHBoxLayout();
+   recentRowLayout->setContentsMargins(0, 0, 0, 0);
    QGridLayout *recentLayout=new QGridLayout();
    int recentRow=0;
    fillGrid(recentLayout, recent, columns, recentRow);
-   centralLayout->addLayout(recentLayout);
+   recentRowLayout->addLayout(recentLayout);
+   recentRowLayout->addStretch();
+   centralLayout->addLayout(recentRowLayout);
   }
 
  // Вся таблица — в прокрутке: три сотни кнопок в экран не влезают.
@@ -155,6 +163,13 @@ void EditorSpecialCharDialog::assembly(void)
 
  scroll->setWidget(gridHost);
  centralLayout->addWidget(scroll);
+
+ // Стартовой ширины хватает на все колонки без горизонтальной
+ // прокрутки: минимум содержимого + вертикальный скроллбар
+ // (таблица всегда выше вьюпорта, он виден сразу) + рамки
+ scroll->setMinimumWidth(gridHost->minimumSizeHint().width()
+                         + scroll->verticalScrollBar()->sizeHint().width()
+                         + 2*scroll->frameWidth());
 
  // Кнопки шрифта покрупнее чтобы символы читались
  foreach(QPushButton *button, symbolButtons)

@@ -1264,14 +1264,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
     QTextBlockFormat probeBlockFormat;
     headingProbeMargins(target, probeBlockFormat);
 
-    // Базовый размер обычного текста: от него масштабируются уровни.
-    // Берется размер шрифта документа (в редакторе выставлен), запасной -
-    // шрифт приложения. Ноль исключен: дальше на него умножается
-    double normalSize=textArea->document()->defaultFont().pointSizeF();
-    if(!(normalSize>0.0))
-        normalSize=QApplication::font().pointSizeF();
-    if(!(normalSize>0.0))
-        normalSize=10.0;
+    const double baseNormalSize=normalPointSize();
 
     cursor.beginEditBlock();
 
@@ -1298,13 +1291,13 @@ void TypefaceFormatter::applyHeadingLevel(int level)
             if(!it.atEnd())
             {
                 const QTextCharFormat src=it.fragment().charFormat();
-                stash->pointSize=src.fontPointSize()>0.0 ? src.fontPointSize() : normalSize;
+                stash->pointSize=src.fontPointSize()>0.0 ? src.fontPointSize() : baseNormalSize;
                 stash->weight=src.fontWeight();
                 stash->sizeAdjustment=src.property(QTextFormat::FontSizeAdjustment);
             }
             else
             {
-                stash->pointSize=normalSize;
+                stash->pointSize=baseNormalSize;
             }
             stash->topMargin=block.blockFormat().topMargin();
             stash->bottomMargin=block.blockFormat().bottomMargin();
@@ -1345,7 +1338,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
         // в нейтральный ноль: оно не откатывается undo и плодит мусор
         if(target>0)
         {
-            double baseSize=normalSize;
+            double baseSize=baseNormalSize;
             if(stash!=nullptr && stash->hasData && stash->stashedLevel==0 && stash->pointSize>0.0)
                 baseSize=stash->pointSize;
             else if(!snapshots.isEmpty() && snapshots.first().format.fontPointSize()>0.0)
@@ -1414,7 +1407,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
                     QTextCharFormat fragmentFormat;
                     const double fragSize=snap.format.fontPointSize();
-                    fragmentFormat.setFontPointSize(fragSize>0.0 ? fragSize : normalSize);
+                    fragmentFormat.setFontPointSize(fragSize>0.0 ? fragSize : baseNormalSize);
                     fragmentFormat.setFontWeight(QFont::Normal);
                     fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                     fragmentCursor.mergeCharFormat(fragmentFormat);
@@ -1445,6 +1438,95 @@ void TypefaceFormatter::onHeadingClicked(int index)
         applyHeadingLevel(3);
     else if(index==3)
         applyHeadingLevel(0);
+}
+
+
+double TypefaceFormatter::normalPointSize(void) const
+{
+    double size=textArea->document()->defaultFont().pointSizeF();
+    if(!(size>0.0))
+        size=QApplication::font().pointSizeF();
+    if(!(size>0.0))
+        size=10.0;
+
+    return size;
+}
+
+
+// Enter в заголовке без выделения. В конце непустого заголовка новый
+// абзац сразу обычный (иначе каждый Enter плодит пустые H1/H2/H3),
+// на пустом заголовке уровень снимается на месте без новой строки.
+// В середине абзаца и вне заголовков - false, работает штатный путь
+bool TypefaceFormatter::handleHeadingEnter(void)
+{
+    if(textArea->isReadOnly())
+        return false;
+
+    QTextCursor cursor=textArea->textCursor();
+    if(cursor.hasSelection())
+        return false;
+
+    QTextBlock block=cursor.block();
+    if(block.blockFormat().headingLevel()<1)
+        return false;
+
+    QTextBlockFormat probeBlockFormat;
+    headingProbeMargins(0, probeBlockFormat);
+
+    const double baseSize=normalPointSize();
+
+    cursor.beginEditBlock();
+
+    bool consumed=false;
+    if(block.text().isEmpty())
+    {
+        // Пустой заголовок: уровень и вид снимаются на месте,
+        // новой строки нет. Метка стирается: абзац снова обычный
+        QTextBlockFormat format=block.blockFormat();
+        format.setHeadingLevel(0);
+        format.setTopMargin(probeBlockFormat.topMargin());
+        format.setBottomMargin(probeBlockFormat.bottomMargin());
+
+        QTextCursor edit(block);
+        edit.setBlockFormat(format);
+        block.setUserData(nullptr);
+
+        textArea->setTextCursor(edit);
+        QTextCharFormat current=textArea->currentCharFormat();
+        current.setFontPointSize(baseSize);
+        current.setFontWeight(QFont::Normal);
+        current.clearProperty(QTextFormat::FontSizeAdjustment);
+        textArea->setCurrentCharFormat(current);
+        consumed=true;
+    }
+    else if(cursor.atBlockEnd())
+    {
+        // В конце заголовка: штатный сплит, затем новый абзац
+        // приводится к обычному виду. В середине абзаца сплит
+        // штатный: обе половины остаются заголовком
+        cursor.insertBlock();
+
+        QTextBlock newBlock=cursor.block();
+        QTextBlockFormat format=newBlock.blockFormat();
+        format.setHeadingLevel(0);
+        format.setTopMargin(probeBlockFormat.topMargin());
+        format.setBottomMargin(probeBlockFormat.bottomMargin());
+
+        QTextCursor edit(newBlock);
+        edit.setBlockFormat(format);
+
+        textArea->setTextCursor(cursor);
+        QTextCharFormat current=textArea->currentCharFormat();
+        current.setFontPointSize(baseSize);
+        current.setFontWeight(QFont::Normal);
+        current.clearProperty(QTextFormat::FontSizeAdjustment);
+        textArea->setCurrentCharFormat(current);
+        consumed=true;
+    }
+
+    cursor.endEditBlock();
+
+    return consumed;
 }
 
 

@@ -1,15 +1,16 @@
 #ifndef EDITORSTRUCTUREPANEL_H
 #define EDITORSTRUCTUREPANEL_H
 
-#include <QListWidget>
+#include <QWidget>
 
 class EditorTextArea;
-class QTimer;
+class QListWidget;
+class QListWidgetItem;
 
-// Панель «Структура»: живой список заголовков H1-H3 текущей заметки.
-// Клик по пункту ставит курсор в начало раздела. Сама панель текст
-// не меняет и undo-стек не трогает
-class EditorStructurePanel : public QListWidget
+// Панель «Структура»: заголовок и живой список заголовков H1-H3
+// текущей заметки. Клик по пункту ставит курсор в начало раздела.
+// Сама панель текст не меняет и undo-стек не трогает
+class EditorStructurePanel : public QWidget
 {
     Q_OBJECT
 
@@ -23,6 +24,10 @@ public:
 
     // Перечитать заголовки из документа
     void rebuild(void);
+
+    int count(void) const;
+    QListWidgetItem *item(int row) const;
+    int currentRow(void) const;
 
 private slots:
 
@@ -38,6 +43,7 @@ private:
 
     EditorTextArea *m_area=nullptr;
     QTimer *m_timer=nullptr;
+    QListWidget *m_list=nullptr;
     bool m_sync=false;
 };
 

@@ -741,6 +741,13 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->fontColor, &EditorDropDownButton::buttonClicked,
             typefaceFormatter,                 &TypefaceFormatter::onFontcolorApplyLast);
 
+    // Хоткей цвета текста: то же что клик по кнопке. Внутренний показ
+    // меню от псевдокнопки отключается, иначе сработает дважды
+    editorToolBarAssistant->fontColor->toolPseudoButton.getSelectAction()->disconnect(
+        &editorToolBarAssistant->fontColor->toolPseudoButton);
+    connect(editorToolBarAssistant->fontColor->toolPseudoButton.getSelectAction(), &QAction::triggered,
+            this, &Editor::onFontcolorHotkey);
+
     // Цвет фона текста
     connect(editorToolBarAssistant->backgroundColor, &EditorDropDownButton::menuItemClicked,
             typefaceFormatter,                       &TypefaceFormatter::onBackgroundcolorClicked);
@@ -748,6 +755,12 @@ void Editor::setupToolsSignals(void)
     // Клик по самой кнопке фона: красит в последний цвет без пикера
     connect(editorToolBarAssistant->backgroundColor, &EditorDropDownButton::buttonClicked,
             typefaceFormatter,                       &TypefaceFormatter::onBackgroundcolorApplyLast);
+
+    // Хоткей цвета фона: то же что клик по кнопке
+    editorToolBarAssistant->backgroundColor->toolPseudoButton.getSelectAction()->disconnect(
+        &editorToolBarAssistant->backgroundColor->toolPseudoButton);
+    connect(editorToolBarAssistant->backgroundColor->toolPseudoButton.getSelectAction(), &QAction::triggered,
+            this, &Editor::onBackgroundcolorHotkey);
 
     connect(editorToolBarAssistant->indentPlus, &QAction::triggered,
             placementFormatter,                 &PlacementFormatter::onIndentplusClicked);
@@ -2539,6 +2552,27 @@ void Editor::onToAttachClicked(void)
 void Editor::onFindInBaseClicked(void)
 {
   emit wyeditFindInBaseClicked();
+}
+
+
+// Горячая клавиша цвета текста: как клик по кнопке (последний цвет
+// без пикера), при выключенной настройке — открыть меню как раньше
+void Editor::onFontcolorHotkey(void)
+{
+  if(editorConfig!=nullptr && editorConfig->get_applyLastColorOnClick())
+    typefaceFormatter->onFontcolorApplyLast();
+  else
+    editorToolBarAssistant->fontColor->showMenu();
+}
+
+
+// Горячая клавиша цвета фона: как клик по кнопке, иначе открыть меню
+void Editor::onBackgroundcolorHotkey(void)
+{
+  if(editorConfig!=nullptr && editorConfig->get_applyLastColorOnClick())
+    typefaceFormatter->onBackgroundcolorApplyLast();
+  else
+    editorToolBarAssistant->backgroundColor->showMenu();
 }
 
 

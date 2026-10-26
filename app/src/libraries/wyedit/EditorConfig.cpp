@@ -551,6 +551,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_39;
     parameterFunctions << get_parameter_table_40;
     parameterFunctions << get_parameter_table_41;
+    parameterFunctions << get_parameter_table_42;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1388,6 +1389,27 @@ QStringList EditorConfig::get_parameter_table_41(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_42(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 41
+    table << get_parameter_table_41(false);
+
+    // Новых ключей нет: версия нужна, чтобы правилом 41->42
+    // (см. update_version_change_value) убрать кнопку скрытия панели
+    // toggleTools с тулбара (остается хоткей и пункт меню Вид) и
+    // переставить heading,toc,structure на вторую линейку
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -2065,6 +2087,61 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                 result=parts.join(",");
             }
         }
+
+
+    // Кнопка скрытия панели toggleTools убирается с тулбара совсем:
+    // остаются хоткей и пункт меню Вид. Кнопки heading,toc,structure
+    // уезжают с первой линейки на вторую, за secret (а если следом
+    // стоит createTable - встают между ними), с разделителями с обеих
+    // сторон. Порядок пользователя сохраняется, дубли исключены
+    if(versionFrom==41 && versionTo==42)
+    {
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("heading");
+            parts.removeAll("toc");
+            parts.removeAll("structure");
+            result=parts.join(",");
+        }
+
+        if(name=="tools_line_2")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("toggleTools");
+            parts.removeAll("heading");
+            parts.removeAll("toc");
+            parts.removeAll("structure");
+
+            QStringList group;
+            group << "separator" << "heading" << "toc" << "structure" << "separator";
+
+            if(parts.contains("secret") && parts.contains("createTable") &&
+               parts.indexOf("createTable")>parts.indexOf("secret"))
+            {
+                int pos=parts.indexOf("createTable");
+                for(int i=0; i<group.size(); ++i)
+                    parts.insert(pos+i, group[i]);
+            }
+            else if(parts.contains("secret"))
+            {
+                int pos=parts.indexOf("secret")+1;
+                for(int i=0; i<group.size(); ++i)
+                    parts.insert(pos+i, group[i]);
+            }
+            else
+                parts.append(group);
+
+            // Двойные разделители на стыках схлопываются в один
+            for(int i=parts.size()-1; i>0; --i)
+                if(parts[i]=="separator" && parts[i-1]=="separator")
+                    parts.removeAt(i);
+
+            result=parts.join(",");
+        }
+    }
 
 
     return result;

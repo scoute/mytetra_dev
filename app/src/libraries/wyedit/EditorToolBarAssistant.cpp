@@ -158,7 +158,13 @@ void EditorToolBarAssistant::onChangeFontselectOnDisplay(QString fontName)
     fontSelect->setIsProgrammChanged(true);
     if(fontName.size()>0)
     {
-        int n=fontSelect->findText(fontName);
+        // Если шрифт есть среди недавних — выделяется строка сверху,
+        // а не дубль из общего списка (иначе список открывается
+        // прокрученным вниз и недавние не видно)
+        int n=fontSelect->recentRowForFamily(fontName);
+
+        if(n<0)
+            n=fontSelect->findText(fontName);
 
         // Если шрифт с заданным названием найден в списке шрифтов (в комбобоксе)
         if(n>=0)

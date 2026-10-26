@@ -1,6 +1,7 @@
 #include <QStackedWidget>
 #include <QListWidget>
 #include <QDialogButtonBox>
+#include <QPushButton>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QScrollArea>
@@ -46,6 +47,11 @@ void ConfigDialog::setupUi(void)
 
     // Кнопки закрытия диалога
     confirmButtons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+
+    // Кнопка перехода в смежные настройки (слева внизу).
+    // Текст и видимость задает владелец через setAlterSettingsButton()
+    alterSettingsButton = new QPushButton(this);
+    alterSettingsButton->setVisible(false);
 }
 
 
@@ -55,9 +61,25 @@ void ConfigDialog::setupSignals(void)
 
     connect(confirmButtons, &QDialogButtonBox::rejected, this, &ConfigDialog::reject);
 
+    connect(alterSettingsButton, &QPushButton::clicked,
+            this,                &ConfigDialog::alterSettingsRequested);
+
     connect(contentsWidget, &QListWidget::currentItemChanged,
             this,           &ConfigDialog::changePage);
 
+}
+
+
+void ConfigDialog::setAlterSettingsButton(const QString &text)
+{
+    alterSettingsButton->setText(text);
+    alterSettingsButton->setVisible(true);
+}
+
+
+void ConfigDialog::applyAndClose(void)
+{
+    applyChanges();
 }
 
 
@@ -71,6 +93,7 @@ void ConfigDialog::assembly(void)
     // scrollArea->adjustSize();
 
     QHBoxLayout *buttonsLayout = new QHBoxLayout;
+    buttonsLayout->addWidget(alterSettingsButton);
     buttonsLayout->addStretch(1);
     buttonsLayout->addWidget(confirmButtons);
 

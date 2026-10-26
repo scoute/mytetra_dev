@@ -9,6 +9,7 @@ class QListWidgetItem;
 class QStackedWidget;
 class QListWidgetItem;
 class QScrollArea;
+class QPushButton;
 
 
 class ConfigDialog : public QDialog
@@ -25,6 +26,18 @@ public:
     void externalChangePage(QListWidgetItem *item);
     void setMenuListVisible(bool visible);
 
+    // Кнопка перехода в смежные настройки (слева внизу):
+    // из общих - в настройки редактора и наоборот
+    void setAlterSettingsButton(const QString &text);
+
+    // Применить как по OK (с возможным выходом на перезапуск) и закрыть.
+    // Нужно прыжкам между диалогами: голый accept() обошел бы applyChanges,
+    // который висит на кнопке OK, и правки молча потерялись бы
+    void applyAndClose(void);
+
+signals:
+    void alterSettingsRequested(void);
+
 private slots:    
     void applyChanges(void);
     void changePage(QListWidgetItem *current, QListWidgetItem *previous);
@@ -40,6 +53,7 @@ private:
     QListWidget *contentsWidget;
     QStackedWidget *pagesWidget;
     QDialogButtonBox *confirmButtons;
+    QPushButton *alterSettingsButton;
 };
 
 #endif // CONFIGDIALOG_H

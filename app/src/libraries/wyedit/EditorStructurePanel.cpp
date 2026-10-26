@@ -78,6 +78,40 @@ int EditorStructurePanel::currentRow(void) const
 }
 
 
+void EditorStructurePanel::setTitleVisible(bool visible)
+{
+    if(m_title==nullptr)
+        return;
+
+    m_title->setVisible(visible);
+
+    if(QBoxLayout *layout=qobject_cast<QBoxLayout *>(this->layout()))
+        layout->setSpacing(visible ? 2 : 0);
+}
+
+
+int EditorStructurePanel::firstItemTextX(void) const
+{
+    if(m_list==nullptr || m_list->count()==0)
+        return -1;
+
+    for(int i=0; i<m_list->count(); ++i)
+    {
+        QListWidgetItem *item=m_list->item(i);
+        if(item==nullptr || item->text().startsWith(QLatin1Char(' ')))
+            continue;
+
+        const QRect r=m_list->visualItemRect(item);
+        if(!r.isValid() || r.width()<=0 || m_list->viewport()->width()<=0)
+            return -1;
+
+        return m_list->viewport()->mapTo(const_cast<EditorStructurePanel *>(this), r.topLeft()).x();
+    }
+
+    return -1;
+}
+
+
 void EditorStructurePanel::rebuild(void)
 {
     if(m_area==nullptr || m_list==nullptr)
@@ -131,32 +165,14 @@ void EditorStructurePanel::showEvent(QShowEvent *event)
 
 void EditorStructurePanel::adjustTitleIndent(void)
 {
-    if(m_title==nullptr || m_list==nullptr)
-        return;
-
-    // Без готовой геометрии вьюпорта замер врал бы: ждем раскладку
-    if(m_list->viewport()->width()<=0 || m_list->viewport()->height()<=0)
+    if(m_title==nullptr || !m_title->isVisible())
         return;
 
     int indent=2;
-    if(m_list->count()>0)
-    {
-        // Первая строка без отступа-вложенности: к ее тексту и ровняемся
-        for(int i=0; i<m_list->count(); ++i)
-        {
-            QListWidgetItem *first=m_list->item(i);
-            if(first==nullptr || first->text().startsWith(QLatin1Char(' ')))
-                continue;
+    const int itemX=firstItemTextX();
+    if(itemX>=0)
+        indent=qMax(0, itemX-m_title->x());
 
-            const QRect r=m_list->visualItemRect(first);
-            if(r.isValid() && r.width()>0)
-            {
-                const int itemX=m_list->viewport()->mapTo(this, r.topLeft()).x();
-                indent=qMax(0, itemX-m_title->x());
-            }
-            break;
-        }
-    }
     m_title->setIndent(indent);
 }
 

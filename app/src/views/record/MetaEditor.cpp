@@ -10,6 +10,7 @@
 #include <QBoxLayout>
 #include <QGridLayout>
 #include <QScrollArea>
+#include <QTimer>
 #include <QSplitter>
 #include <QtDebug>
 
@@ -190,10 +191,27 @@ void MetaEditor::metaAssembly(void)
 
   gridLayout->addWidget(textArea,                                 6,0, 1,2);
 
+  // Подпись оглавления - в пустой колонке над списком, прижата книзу:
+  // так список начинается ровно на уровне текста заметки, а не ниже
+  // подписи. Внутренняя подпись самой панели здесь не нужна
+  structureTitleLabel=new QLabel(this);
+  {
+    QFont titleFont=this->font();
+    titleFont.setBold(true);
+    structureTitleLabel->setFont(titleFont);
+  }
+  structureTitleLabel->setText(tr("Outline"));
+  structureTitleLabel->setAlignment(Qt::AlignBottom | Qt::AlignLeft);
+  gridLayout->addWidget(structureTitleLabel,                     1,2, 5,1, Qt::AlignBottom);
+
   // Панель структуры живет в третьей колонке на высоте текста.
   // Скрытая места не занимает, колонка схлопывается в ноль
   if(structurePanel!=nullptr)
+  {
+    structurePanel->setTitleVisible(false);
+    structureTitleLabel->setVisible(structurePanel->isVisible());
     gridLayout->addWidget(structurePanel,                          6,2);
+  }
 
   gridLayout->addWidget(labelUrl,             7,0);
   gridLayout->addWidget(recordUrl,            7,1);
@@ -734,7 +752,51 @@ void MetaEditor::retranslateUi(void)
   labelUrl->setText(tr("<B>Url:</B> "));
   labelTags->setText(tr("<B>Tags:</B> "));
 
+  if(structureTitleLabel!=nullptr)
+    structureTitleLabel->setText(tr("Outline"));
+
   updateCursorLabel();
 
   editorToolBarAssistant->retranslateUi();
+}
+
+
+void MetaEditor::onStructureToggled(bool checked)
+{
+  Editor::onStructureToggled(checked);
+
+  if(structureTitleLabel!=nullptr)
+  {
+    structureTitleLabel->setVisible(checked);
+
+    // Отступ зависит от готовой геометрии списка: пересчитать
+    // после того, как панель покажут и разложат
+    if(checked)
+      QTimer::singleShot(0, this, &MetaEditor::alignStructureTitle);
+  }
+}
+
+
+void MetaEditor::showEvent(QShowEvent *event)
+{
+  QWidget::showEvent(event);
+
+  // Отступ подписи подгоняется под первый пункт списка, но замеру
+  // нужна состоявшаяся раскладка: повтор после показа
+  QTimer::singleShot(0, this, &MetaEditor::alignStructureTitle);
+}
+
+
+void MetaEditor::alignStructureTitle(void)
+{
+  if(structureTitleLabel==nullptr || structurePanel==nullptr)
+    return;
+
+  const int itemX=structurePanel->firstItemTextX();
+  if(itemX<0)
+    return;
+
+  // Подпись и панель делят одну колонку сетки с левого края,
+  // поэтому смещение переносится как есть
+  structureTitleLabel->setIndent(qMax(0, itemX));
 }

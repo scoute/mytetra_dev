@@ -10,6 +10,7 @@ class QGridLayout;
 class QScrollArea;
 class QSplitter;
 class QLabel;
+class QShowEvent;
 
 class AttachTableScreen;
 
@@ -23,6 +24,10 @@ public slots:
  void clearAll(void);
  void onClickToTag(const QString &tagNum);
  void onClickToUrl(const QString &link);
+ void onStructureToggled(bool checked) override;
+
+private slots:
+ void alignStructureTitle(void);
 
 public:
  MetaEditor(QWidget *parent=nullptr);
@@ -46,6 +51,11 @@ public:
  void setReadOnly(bool state);
 
  void setFocusToBaseWidget();
+
+protected:
+ void showEvent(QShowEvent *event) override;
+
+public:
 
  // Цвет фона поля заметки: настройка поверх цвета темы.
  // Пустая строка effectiveNotePaperColor означает цвет темы
@@ -77,6 +87,11 @@ private:
  void setMininizeGridRow(QWidget *widget);
  void setNormalGridRow(QWidget *widget);
  int getGridRowNumber(QWidget *widget);
+
+ // Подпись оглавления живет в пустой колонке над списком, а не внутри
+ // панели: так список начинается ровно на уровне текста заметки.
+ // Видимость - синхронно с панелью, отступ - по первому пункту
+ QLabel *structureTitleLabel=nullptr;
 
  QLabel *treePath; // Надпись Path (только для мобильного интерфейса)
 

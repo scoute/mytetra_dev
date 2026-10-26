@@ -347,6 +347,8 @@ HEADERS+=\
     src/libraries/GitHelper.h \
     src/libraries/UnifiedDiff.h \
     src/libraries/ChangeHistory.h \
+    src/libraries/BranchDiffEngine.h \
+    src/libraries/TextDiff.h \
     src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
@@ -567,6 +569,8 @@ SOURCES+=\
     src/libraries/GitHelper.cpp \
     src/libraries/UnifiedDiff.cpp \
     src/libraries/ChangeHistory.cpp \
+    src/libraries/BranchDiffEngine.cpp \
+    src/libraries/TextDiff.cpp \
     src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \

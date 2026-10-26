@@ -127,14 +127,14 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-heading1",           Data{ QKeySequence("Ctrl+1"), tr("Heading 1"), tr("Format paragraphs as first-level heading") });
     defaultKeyTable.insert("editor-heading2",           Data{ QKeySequence("Ctrl+2"), tr("Heading 2"), tr("Format paragraphs as second-level heading") });
     defaultKeyTable.insert("editor-heading3",           Data{ QKeySequence("Ctrl+3"), tr("Heading 3"), tr("Format paragraphs as third-level heading") });
-    defaultKeyTable.insert("editor-structure",          Data{ QKeySequence(""), tr("Structure"), tr("Show headings outline with jump to section") });
-    defaultKeyTable.insert("editor-toc",                Data{ QKeySequence("Ctrl+Shift+C"), tr("Table of contents"), tr("Insert or refresh the table of contents snapshot") });
+    defaultKeyTable.insert("editor-structure",          Data{ QKeySequence(""), tr("Show/hide document structure"), tr("Show headings outline with jump to section") });
+    defaultKeyTable.insert("editor-toc",                Data{ QKeySequence("Ctrl+Shift+C"), tr("Insert table of contents"), tr("Insert or refresh the table of contents snapshot") });
     defaultKeyTable.insert("editor-lowercase",           Data{ QKeySequence(""), tr("Lowercase"), tr("") });
     defaultKeyTable.insert("editor-uppercase",           Data{ QKeySequence(""), tr("Uppercase"), tr("") });
     defaultKeyTable.insert("editor-clear",               Data{ QKeySequence("Ctrl+K"), tr("Clear format"), tr("When selected whole paragraph both text and paragraph format is reset to default or just text format in other case") });
     defaultKeyTable.insert("editor-textOnly",            Data{ QKeySequence("Ctrl+Shift+K"), tr("Text only"), tr("") });
     defaultKeyTable.insert("editor-fixBreakSymbol",      Data{ QKeySequence("Ctrl+Shift+R"), tr("Return type replace"), tr("Replace soft carriage return to standard carriage return") });
-    defaultKeyTable.insert("editor-tabsToSpaces",        Data{ QKeySequence(), tr("Tabs to spaces"), tr("Replace tab characters with spaces in selection or whole note") });
+    defaultKeyTable.insert("editor-tabsToSpaces",        Data{ QKeySequence(), tr("Replace tab characters with spaces"), tr("Replace tab characters with spaces in selection or whole note") });
     defaultKeyTable.insert("editor-numericList",         Data{ QKeySequence("F12"), tr("Numeric list"), tr("") });
     defaultKeyTable.insert("editor-dotList",             Data{ QKeySequence("Shift+F12"), tr("Marked list"), tr("") });
     defaultKeyTable.insert("editor-indentPlus",          Data{ QKeySequence("Ctrl+Alt+I"), tr("Increase indent"), tr("") });

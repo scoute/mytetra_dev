@@ -2882,6 +2882,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Misc</source>
         <translation>Разное</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigDialog.cpp" line="29"/>
+        <source>MyTetra settings...</source>
+        <translation>Настройки MyTetra...</translation>
+    </message>
 </context>
 <context>
     <name>EditorConfigFont</name>
@@ -6360,6 +6365,11 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="777"/>
         <source>Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.</source>
         <translation>Удалить тег везде. Необратимо. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="90"/>
+        <source>Editor settings...</source>
+        <translation>Настройки редактора...</translation>
     </message>
 </context>
 <context>

@@ -11,6 +11,9 @@ class EditorConfigDialog : public QWidget
 
 public:
  EditorConfigDialog(QWidget *parent=nullptr);
+
+private slots:
+ void onAlterToAppSettings(void);
     
 private:
  ConfigDialog *configDialog;

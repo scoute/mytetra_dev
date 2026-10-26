@@ -1,5 +1,7 @@
 #include <QTextBlock>
+#include <QTextBlockUserData>
 #include <QTextDocument>
+#include <QPainter>
 #include <QTextLayout>
 #include <QFont>
 #include <QRegularExpression>
@@ -1106,6 +1108,130 @@ void TypefaceFormatter::onCopyCodeClicked(int docPosition)
 }
 
 
+// Запомненное оформление абзаца до первого превращения в заголовок:
+// размер, жирность и отступы. Нужно для точного отката: снятие уровня
+// возвращает свое, а не дефолт. Запоминается один раз: H1->H2 хранит
+// исходное обычное оформление. Только стандартные свойства: все
+// откатывается штатным undo и не оставляет мусора значений
+struct HeadingStash : public QTextBlockUserData
+{
+    int stashedLevel=0;
+    double pointSize=0.0;
+    int weight=QFont::Normal;
+    QVariant sizeAdjustment;
+    double topMargin=0.0;
+    double bottomMargin=0.0;
+    bool hasData=false;
+};
+
+
+// Высота чернил строки: строки изображения с не-белыми пикселями.
+// Нужна для замера масштабного коэффициента заголовков
+static int inkedHeight(const QImage &image)
+{
+    int top=image.height();
+    int bottom=-1;
+
+    for(int y=0; y<image.height(); ++y)
+        for(int x=0; x<image.width(); ++x)
+            if(image.pixel(x, y)!=qRgb(255, 255, 255))
+            {
+                if(y<top)
+                    top=y;
+                if(y>bottom)
+                    bottom=y;
+            }
+
+    if(bottom<top)
+        return 0;
+
+    return bottom-top+1;
+}
+
+
+// Масштабный коэффициент размера заголовка: во сколько раз h1/h2/h3
+// крупнее обычного текста. Qt хранит крупность в свойстве
+// FontSizeAdjustment, а оно не откатывается undo и плодит мусор,
+// поэтому в работу берутся абсолютные размеры. Коэффициент замеряется
+// один раз за сессию рендером эталона: допущений о внутренностях Qt нет
+static double headingScaleFactor(int level)
+{
+    static double factors[4]={0.0, 0.0, 0.0, 0.0};
+    static bool measured=false;
+
+    if(!measured)
+    {
+        measured=true;
+        factors[0]=1.0;
+
+        auto renderTag=[](const QString &tag) -> int
+        {
+            QTextDocument probe;
+            QFont baseFont;
+            baseFont.setPointSize(100);
+            probe.setDefaultFont(baseFont);
+            probe.setHtml(tag);
+            probe.setTextWidth(2000);
+
+            QImage image(2000, 400, QImage::Format_RGB32);
+            image.fill(Qt::white);
+            QPainter painter(&image);
+            probe.drawContents(&painter);
+            painter.end();
+
+            return inkedHeight(image);
+        };
+
+        const int plainHeight=renderTag(QStringLiteral("<p>Hg</p>"));
+        if(plainHeight>0)
+        {
+            const int h1=renderTag(QStringLiteral("<h1>Hg</h1>"));
+            const int h2=renderTag(QStringLiteral("<h2>Hg</h2>"));
+            const int h3=renderTag(QStringLiteral("<h3>Hg</h3>"));
+            if(h1>0)
+                factors[1]=double(h1)/double(plainHeight);
+            if(h2>0)
+                factors[2]=double(h2)/double(plainHeight);
+            if(h3>0)
+                factors[3]=double(h3)/double(plainHeight);
+        }
+
+        for(int i=0; i<4; ++i)
+            if(factors[i]<=0.0)
+                factors[i]=1.0;
+
+        qDebug() << "Heading scale factors H1/H2/H3:" << factors[1] << factors[2] << factors[3];
+    }
+
+    if(level<0 || level>3)
+        return 1.0;
+
+    return factors[level];
+}
+
+
+// Эталон блочных отступов уровня: снимается с временного документа
+static void headingProbeMargins(int level, QTextBlockFormat &blockFormat)
+{
+    QTextDocument probe;
+    if(level==1)
+        probe.setHtml(QStringLiteral("<h1>x</h1>"));
+    else if(level==2)
+        probe.setHtml(QStringLiteral("<h2>x</h2>"));
+    else if(level==3)
+        probe.setHtml(QStringLiteral("<h3>x</h3>"));
+    else
+        probe.setHtml(QStringLiteral("<p>x</p>"));
+
+    QTextBlock block=probe.begin();
+    if(block.isValid())
+    {
+        blockFormat.setTopMargin(block.blockFormat().topMargin());
+        blockFormat.setBottomMargin(block.blockFormat().bottomMargin());
+    }
+}
+
+
 // Установка уровня заголовка для абзацев в выделении (или текущего
 // абзаца без выделения). Повторный клик по своему уровню снимает
 // его в обычный текст. Символьное форматирование не трогается:
@@ -1134,17 +1260,169 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
     const int target=allSame ? 0 : level;
 
+    // Эталон блочных отступов целевого уровня
+    QTextBlockFormat probeBlockFormat;
+    headingProbeMargins(target, probeBlockFormat);
+
+    // Базовый размер обычного текста: от него масштабируются уровни.
+    // Берется размер шрифта документа (в редакторе выставлен), запасной -
+    // шрифт приложения. Ноль исключен: дальше на него умножается
+    double normalSize=textArea->document()->defaultFont().pointSizeF();
+    if(!(normalSize>0.0))
+        normalSize=QApplication::font().pointSizeF();
+    if(!(normalSize>0.0))
+        normalSize=10.0;
+
     cursor.beginEditBlock();
 
     for(QTextBlock block=textArea->document()->findBlock(from);
         block.isValid() && block.position()<=to;
         block=block.next())
     {
+        const int oldLevel=block.blockFormat().headingLevel();
+
+        HeadingStash *stash=static_cast<HeadingStash *>(block.userData());
+
+        // Обычный абзац без stash трогать нечем: снимать нечего,
+        // иначе сброс в обычный текст затирал бы размер начертания
+        if(target==0 && oldLevel==0 && (stash==nullptr || !stash->hasData))
+            continue;
+
+        // В заголовок: исходное запомнить один раз для точного отката.
+        // Незаданный размер резолвится в базовый сразу: дальше везде
+        // только явные значения, никаких снятий и нулей
+        if(target>0 && stash==nullptr)
+        {
+            stash=new HeadingStash();
+            QTextBlock::iterator it=block.begin();
+            if(!it.atEnd())
+            {
+                const QTextCharFormat src=it.fragment().charFormat();
+                stash->pointSize=src.fontPointSize()>0.0 ? src.fontPointSize() : normalSize;
+                stash->weight=src.fontWeight();
+                stash->sizeAdjustment=src.property(QTextFormat::FontSizeAdjustment);
+            }
+            else
+            {
+                stash->pointSize=normalSize;
+            }
+            stash->topMargin=block.blockFormat().topMargin();
+            stash->bottomMargin=block.blockFormat().bottomMargin();
+            stash->stashedLevel=oldLevel;
+            stash->hasData=true;
+            block.setUserData(stash);
+        }
+
         QTextBlockFormat format=block.blockFormat();
         format.setHeadingLevel(target);
+        format.setTopMargin(probeBlockFormat.topMargin());
+        format.setBottomMargin(probeBlockFormat.bottomMargin());
 
         QTextCursor edit(block);
         edit.setBlockFormat(format);
+
+        // Снапшот фрагментов абзаца: позиции и форматы. Применяется
+        // вторым проходом, так как setCharFormat дробит фрагменты
+        // и инвалидирует итератор. Позиции не едут: длина не меняется
+        struct FragmentSnapshot
+        {
+            int position;
+            int length;
+            QTextCharFormat format;
+        };
+        QList<FragmentSnapshot> snapshots;
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            FragmentSnapshot snap;
+            snap.position=it.fragment().position();
+            snap.length=it.fragment().length();
+            snap.format=it.fragment().charFormat();
+            snapshots << snap;
+        }
+
+        // Размер заголовка - абсолютный: масштаб от базового. Свойство
+        // FontSizeAdjustment не трогается выставлением, только сбросом
+        // в нейтральный ноль: оно не откатывается undo и плодит мусор
+        if(target>0)
+        {
+            double baseSize=normalSize;
+            if(stash!=nullptr && stash->hasData && stash->stashedLevel==0 && stash->pointSize>0.0)
+                baseSize=stash->pointSize;
+            else if(!snapshots.isEmpty() && snapshots.first().format.fontPointSize()>0.0)
+                baseSize=snapshots.first().format.fontPointSize();
+
+            const double absoluteSize=baseSize*headingScaleFactor(target);
+
+            for(const FragmentSnapshot &snap : snapshots)
+            {
+                QTextCursor fragmentCursor(textArea->document());
+                fragmentCursor.setPosition(snap.position);
+                fragmentCursor.setPosition(snap.position+snap.length, QTextCursor::KeepAnchor);
+
+                // Только merge явными значениями: судьба каждого
+                // свойства предсказуема (ничего лишнего не задевается),
+                // а полный setCharFormat на выделении в этой версии Qt
+                // замечен в непересчете вида. Ступень FontSizeAdjustment
+                // только снимается где есть: само ее присутствие
+                // переключает раскладку на свой путь и глушит явный
+                // размер, а выставление не откатывается undo.
+                // Свежим фрагментам она не ставится
+                QTextCharFormat fragmentFormat;
+                fragmentFormat.setFontPointSize(absoluteSize);
+                fragmentFormat.setFontWeight(QFont::Bold);
+                if(snap.format.hasProperty(QTextFormat::FontSizeAdjustment))
+                    fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
+                fragmentCursor.mergeCharFormat(fragmentFormat);
+            }
+        }
+        else
+        {
+            // Назад в обычный. Был обычным - вернуть свое из stash,
+            // был загруженным заголовком - нормализовать: свой размер
+            // (если задан), обычная жирность, ступень снимается.
+            // Везде только merge явными значениями: снятий свойств,
+            // кроме чужой ступени, нет, нейтральный ноль не пишется
+            if(stash!=nullptr && stash->hasData && stash->stashedLevel==0)
+            {
+                format.setTopMargin(stash->topMargin);
+                format.setBottomMargin(stash->bottomMargin);
+                edit.setBlockFormat(format);
+
+                for(const FragmentSnapshot &snap : snapshots)
+                {
+                    QTextCursor fragmentCursor(textArea->document());
+                    fragmentCursor.setPosition(snap.position);
+                    fragmentCursor.setPosition(snap.position+snap.length, QTextCursor::KeepAnchor);
+
+                    QTextCharFormat fragmentFormat;
+                    fragmentFormat.setFontPointSize(stash->pointSize);
+                    fragmentFormat.setFontWeight(stash->weight);
+                    if(stash->sizeAdjustment.isValid())
+                        fragmentFormat.setProperty(QTextFormat::FontSizeAdjustment, stash->sizeAdjustment);
+                    else
+                        fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
+                    fragmentCursor.mergeCharFormat(fragmentFormat);
+                }
+            }
+            else
+            {
+                for(const FragmentSnapshot &snap : snapshots)
+                {
+                    QTextCursor fragmentCursor(textArea->document());
+                    fragmentCursor.setPosition(snap.position);
+                    fragmentCursor.setPosition(snap.position+snap.length, QTextCursor::KeepAnchor);
+
+                    QTextCharFormat fragmentFormat;
+                    const double fragSize=snap.format.fontPointSize();
+                    fragmentFormat.setFontPointSize(fragSize>0.0 ? fragSize : normalSize);
+                    fragmentFormat.setFontWeight(QFont::Normal);
+                    fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
+                    fragmentCursor.mergeCharFormat(fragmentFormat);
+                }
+            }
+
+            block.setUserData(nullptr);
+        }
     }
 
     cursor.endEditBlock();

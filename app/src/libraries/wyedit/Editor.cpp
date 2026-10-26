@@ -945,6 +945,11 @@ void Editor::setTextarea(QString text)
   // Очищается URL документа, так как документ создается "из ничего"
   textArea->document()->setMetaInformation( QTextDocument::DocumentUrl, "" );
 
+  // Ссылки-кнопки [copy] без подчеркивания, как свежие: HTML-импортер
+  // подчеркивает все ссылки по умолчанию
+  if(typefaceFormatter!=nullptr)
+    typefaceFormatter->normalizeCopyLinkUnderline();
+
   // Секреты подтягиваются под глобальный цвет из настроек
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();

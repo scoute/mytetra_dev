@@ -103,6 +103,11 @@ public slots:
 
     // Клик по пункту оглавления: прыжок в раздел
     void onTocGoClicked(const QString &href);
+
+    // Снять подчеркивание со ссылок-кнопок [copy]: HTML-импортер ставит
+    // его всем ссылкам по умолчанию, а свежие ссылки идут без него.
+    // Вызывается при загрузке заметки, чтобы вид совпадал
+    void normalizeCopyLinkUnderline(void);
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);

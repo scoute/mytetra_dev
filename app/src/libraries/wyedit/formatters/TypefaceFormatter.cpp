@@ -913,7 +913,11 @@ void TypefaceFormatter::setCodeBlockBackground(const QBrush &brush)
 
 // Оформить суффикс-кнопку [copy] в строке маркера как ссылку.
 // lineStart - начало строки, markerLen - длина текста маркера
-// без суффикса. Вызывается внутри edit-блока
+// без суффикса. Вызывается внутри edit-блока.
+// Подчеркивание специально НЕ ставится: ссылка-кнопка выглядит как
+// обычный текст (узнается по руке курсора), а HTML-импортер при
+// загрузке подчеркивает все ссылки - расхождение чистится
+// в normalizeCopyLinkUnderline
 void TypefaceFormatter::applyCopyLinkFormat(int lineStart, int markerLen)
 {
     const int linkStart=lineStart+markerLen+1; // После пробела
@@ -926,7 +930,6 @@ void TypefaceFormatter::applyCopyLinkFormat(int lineStart, int markerLen)
     QTextCharFormat linkFormat;
     linkFormat.setAnchor(true);
     linkFormat.setAnchorHref(copyCodeHref());
-    linkFormat.setFontUnderline(true);
 
     linkCursor.mergeCharFormat(linkFormat);
 }
@@ -1865,6 +1868,42 @@ void TypefaceFormatter::onTocClicked(void)
     QTextCursor result(textArea->document());
     result.setPosition(regionStarts.first());
     textArea->setTextCursor(result);
+}
+
+
+// Снять подчеркивание со ссылок-кнопок [copy]: HTML-импортер ставит
+// его всем ссылкам по умолчанию, а свежие ссылки идут без него.
+// Снимается merge с явным false (setCharFormat на выделении в этой
+// версии Qt замечен в непересчете раскладки)
+void TypefaceFormatter::normalizeCopyLinkUnderline(void)
+{
+    QTextDocument *doc=textArea->document();
+
+    // Сначала позиции: merge дробит фрагменты и инвалидирует итератор.
+    // Позиции не едут: длина текста не меняется
+    QList<QPair<int, int> > linkRanges;
+    for(QTextBlock block=doc->begin(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+            if(it.fragment().charFormat().anchorHref()==copyCodeHref())
+                linkRanges << qMakePair(it.fragment().position(), it.fragment().length());
+
+    if(linkRanges.isEmpty())
+        return;
+
+    QTextCursor edit(doc);
+    edit.beginEditBlock();
+
+    for(int i=0; i<linkRanges.size(); ++i)
+    {
+        edit.setPosition(linkRanges[i].first);
+        edit.setPosition(linkRanges[i].first+linkRanges[i].second, QTextCursor::KeepAnchor);
+
+        QTextCharFormat format;
+        format.setFontUnderline(false);
+        edit.mergeCharFormat(format);
+    }
+
+    edit.endEditBlock();
 }
 
 
@@ -3718,6 +3757,11 @@ void TypefaceFormatter::doChangeFontFamily(QString fontFamily)
     // в Code убивало предыдущее форматирование)
     format.clearProperty(QTextFormat::FontWeight);
     format.clearProperty(QTextFormat::FontItalic);
+
+    // Подчеркивание тоже не трогаем: setFont() несет underline=false
+    // по умолчанию и гасил бы его у ссылки-кнопки [copy] в маркере
+    // (она живет без подчеркивания, см. normalizeCopyLinkUnderline)
+    format.clearProperty(QTextFormat::FontUnderline);
 
     // Сброс свойства размера шрифта
     // Текущий HTML-преобразователь в Qt все равно дописывает в span размер шрифта,

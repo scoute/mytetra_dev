@@ -1,6 +1,7 @@
 #include <QTimer>
 #include <QLabel>
 #include <QListWidget>
+#include <QShowEvent>
 #include <QVBoxLayout>
 #include <QTextDocument>
 #include <QTextBlock>
@@ -22,7 +23,7 @@ EditorStructurePanel::EditorStructurePanel(QWidget *parent) : QWidget(parent)
 
     QLabel *title=new QLabel(tr("Outline"), this);
     title->setFont(titleFont);
-    title->setIndent(2);
+    m_title=title;
 
     m_list=new QListWidget(this);
     m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -112,6 +113,43 @@ void EditorStructurePanel::rebuild(void)
 
     onCursorMoved();
     m_sync=false;
+
+    adjustTitleIndent();
+}
+
+
+void EditorStructurePanel::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    adjustTitleIndent();
+}
+
+
+void EditorStructurePanel::adjustTitleIndent(void)
+{
+    if(m_title==nullptr || m_list==nullptr)
+        return;
+
+    int indent=2;
+    if(m_list->count()>0)
+    {
+        // Первая строка без отступа-вложенности: к ее тексту и ровняемся
+        for(int i=0; i<m_list->count(); ++i)
+        {
+            QListWidgetItem *first=m_list->item(i);
+            if(first==nullptr || first->text().startsWith(QLatin1Char(' ')))
+                continue;
+
+            const QRect r=m_list->visualItemRect(first);
+            if(r.isValid() && r.width()>0)
+            {
+                const int itemX=m_list->viewport()->mapTo(this, r.topLeft()).x();
+                indent=qMax(0, itemX-m_title->x());
+            }
+            break;
+        }
+    }
+    m_title->setIndent(indent);
 }
 
 

@@ -162,6 +162,7 @@ void EditorDropDownButton::showListMenu(void)
 
     m_list=list;
     list->viewport()->installEventFilter(this);
+    list->installEventFilter(this); // Esc ловится самим списком, не вьюпортом
 
     connect(list, &QListWidget::itemClicked,
             this, [this, list, focusGuard](QListWidgetItem *item){
@@ -231,6 +232,20 @@ bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
 
         if(item!=nullptr)
             m_list->setCurrentItem(item);
+    }
+
+    // Отмена списка по Esc: обычный QMenu закрывается сам,
+    // самодельному списку закрытие делается вручную. Фокус
+    // возвращается штатным путем через обработчик destroyed
+    if(m_list!=nullptr && watched==m_list &&
+            event->type()==QEvent::KeyPress)
+    {
+        int key=static_cast<QKeyEvent *>(event)->key();
+        if(key==Qt::Key_Escape)
+        {
+            m_list->close();
+            return true;
+        }
     }
 
     return QWidget::eventFilter(watched, event);

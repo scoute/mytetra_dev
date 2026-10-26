@@ -42,7 +42,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     // в диалоговом окне и на панели задач
     configDialog=new ConfigDialog( parent );
     configDialog->setAttribute(Qt::WA_DeleteOnClose);
-    configDialog->setWindowTitle(QObject::tr("MyTetra settings"));
+    configDialog->setWindowTitle(QObject::tr("SyncTetra settings"));
 
     if(mytetraConfig.getInterfaceMode()=="mobile")
     {
@@ -135,7 +135,7 @@ void AppConfigDialog::retranslateUi(void)
     if(configDialog==nullptr)
         return;
 
-    configDialog->setWindowTitle(QObject::tr("MyTetra settings"));
+    configDialog->setWindowTitle(QObject::tr("SyncTetra settings"));
     configDialog->setAlterSettingsButton(QObject::tr("Editor settings..."));
 
     pageMain->setText(QObject::tr("Main"));

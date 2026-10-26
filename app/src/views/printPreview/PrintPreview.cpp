@@ -39,7 +39,7 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
 {
     Q_UNUSED(parent);
 
-    setWindowTitle(tr("MyTetra - Print Preview"));
+    setWindowTitle(tr("SyncTetra - Print Preview"));
 
     // Отдельное окно верхнего уровня: transient-диалог с родителем
     // оконный менеджер лишает кнопок свернуть/развернуть

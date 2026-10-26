@@ -377,7 +377,7 @@ void DatabasesManagementController::onAddClicked()
     secondBox.setText(tr("<b>Second step:</b> select trash directiory"));
     secondBox.setInformativeText(tr("For database append please select "
                                     "trash directory.\n"
-                                    "MyTetra will put changed notes "
+                                    "SyncTetra will put changed notes "
                                     "file copies and changed item tree copies "
                                     "to this directory"));
     secondBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);

@@ -634,7 +634,7 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "export_branch",
       QObject::tr(
-      "Export a branch subtree to a directory in MyTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls."
+      "Export a branch subtree to a directory in SyncTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls."
       ),      objectSchema(properties, required)));
   }
 
@@ -653,7 +653,7 @@ static QJsonArray buildToolsList(McpMode mode)
     tools.append(toolDescription(
       "import_branch",
       QObject::tr(
-      "Import a branch subtree from a MyTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls."
+      "Import a branch subtree from a SyncTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls."
       ),      objectSchema(properties, required)));
   }
 
@@ -3521,7 +3521,7 @@ int runMcpServer(int argc, char **argv)
   // missing conf.ini is a clean exit instead of a crash
   if(!globalParameters.initHeadless())
   {
-    fprintf(stderr, "mcp: conf.ini not found, can not locate MyTetra data\n");
+    fprintf(stderr, "mcp: conf.ini not found, can not locate SyncTetra data\n");
     return 2;
   }
 

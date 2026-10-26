@@ -230,7 +230,7 @@ private slots:
  void onShowformattingClicked(bool);
 
  void onExpandEditAreaClicked(void);
- void onStructureToggled(bool checked);
+ virtual void onStructureToggled(bool checked);
  void onSaveClicked(void);
  void onBackClicked(void);
  void onFindInBaseClicked(void);

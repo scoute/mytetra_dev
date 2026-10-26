@@ -122,12 +122,20 @@ void EditorStructurePanel::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     adjustTitleIndent();
+
+    // Замер в showEvent может застать неготовую геометрию (раскладка
+    // применяется уже после показа): повтор уже по факту раскладки
+    QTimer::singleShot(0, this, &EditorStructurePanel::adjustTitleIndent);
 }
 
 
 void EditorStructurePanel::adjustTitleIndent(void)
 {
     if(m_title==nullptr || m_list==nullptr)
+        return;
+
+    // Без готовой геометрии вьюпорта замер врал бы: ждем раскладку
+    if(m_list->viewport()->width()<=0 || m_list->viewport()->height()<=0)
         return;
 
     int indent=2;

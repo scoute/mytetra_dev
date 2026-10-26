@@ -1084,6 +1084,48 @@ bool TypefaceFormatter::isCursorInCodeBlock(void)
 }
 
 
+// Язык блока кода под курсором (индекс CodeLanguage) или -1.
+// Как isCursorInCodeBlock, но возвращает язык: стоим на маркере —
+// язык маркера, стоим в коде — язык маркера выше по блоку
+int TypefaceFormatter::codeLanguageAtCursor(void)
+{
+    QTextCursor cursor=textArea->textCursor();
+
+    const int pos=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+
+    QTextDocument *doc=textArea->document();
+
+    QTextBlock block=doc->findBlock(pos);
+
+    if(block.isValid())
+    {
+        const int markerLang=codeMarkerLanguage(block.text());
+
+        if(markerLang>=0)
+            return markerLang;
+    }
+
+    int guard=0;
+    while(block.isValid() && isCodeBlock(block) && guard<100000)
+    {
+        QTextBlock prev=block.previous();
+
+        if(!prev.isValid())
+            break;
+
+        const int prevLang=codeMarkerLanguage(prev.text());
+
+        if(prevLang>=0)
+            return prevLang;
+
+        block=prev;
+        ++guard;
+    }
+
+    return -1;
+}
+
+
 // Тот же копипаст, но точка берется из текущего курсора
 // (для контекстного меню: начало выделения или позиция)
 void TypefaceFormatter::onCopyCodeFromCursor(void)

@@ -74,6 +74,12 @@ private:
     bool m_listMode=false; // Показывать QListWidget вместо QMenu
     int m_maxVisibleItems=-1; // Видимых пунктов в list-режиме
     QListWidget *m_list=nullptr; // Текущий всплывающий список (пока открыт)
+    int m_preselectRow=-1; // Строка, выделяемая при открытии списка (язык под курсором)
+
+public:
+    // Какая строка выделяется при открытии списка. -1 — первая.
+    // Для кнопки кода сюда кладется язык блока под курсором
+    void setPreselectRow(int row);
 };
 
 #endif // EDITORDROPDOWNBUTTON_H

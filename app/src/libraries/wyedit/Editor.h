@@ -67,6 +67,7 @@ class Editor : public QWidget
  friend class SecretFormatter;
 
  friend class EditorContextMenu;
+ friend class EditorToolBarAssistant;
 
 public:
  Editor(QWidget *parent=nullptr);

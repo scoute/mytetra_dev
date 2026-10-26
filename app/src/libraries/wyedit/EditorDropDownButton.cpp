@@ -109,6 +109,12 @@ void EditorDropDownButton::setMaxVisibleItems(int count)
 }
 
 
+void EditorDropDownButton::setPreselectRow(int row)
+{
+    m_preselectRow=row;
+}
+
+
 // Показать всплывающий список языков (list-режим). Пункты берутся
 // из действий меню, индекс пункта совпадает с menuIndex действия,
 // поэтому сигнал menuItemClicked работает как для QMenu
@@ -158,7 +164,13 @@ void EditorDropDownButton::showListMenu(void)
 
     QPoint popupPos=m_button->mapToGlobal(QPoint(0, m_button->height()));
     list->move(popupPos);
-    list->setCurrentRow(0);
+
+    // Предвыбор строки: язык блока под курсором (кнопка кода),
+    // иначе первая. Невалидный номер игнорируется
+    if(m_preselectRow>=0 && m_preselectRow<rowCount)
+        list->setCurrentRow(m_preselectRow);
+    else
+        list->setCurrentRow(0);
 
     // Текущий открытый список запоминается, чтобы фильтр событий
     // мог двигать текущую строку за мышью. Прошлый список, если вдруг
@@ -210,6 +222,18 @@ bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
 {
     if(m_listMode && watched==m_button)
     {
+        // Повторный клик по кнопке закрывает открытый список (тоггл).
+        // Без этого пресс сначала гасит Qt::Popup, а потом тут же
+        // открывает список заново — закрыть кликом невозможно.
+        // Проверка только на press: release при открытом списке
+        // относится ему же, а не кнопке
+        if(event->type()==QEvent::MouseButtonPress &&
+           m_list!=nullptr && m_list->isVisible())
+        {
+            m_list->close();
+            return true;
+        }
+
         if(event->type()==QEvent::MouseButtonPress)
         {
             showListMenu();

@@ -353,6 +353,10 @@ void Editor::setupSignals(void)
 {
   setupToolsSignals();
 
+  // Перехват Enter в заголовке раньше штатного сплита:
+  // в конце заголовка новый абзац сразу обычный
+  textArea->installEventFilter(this);
+
   // Обратка для typefaceFormatter todo: подумать, а надо ли
   connect(typefaceFormatter,      &TypefaceFormatter::updateOutlineButtonHiglight,
           editorToolBarAssistant, &EditorToolBarAssistant::onUpdateOutlineButtonHiglight,
@@ -1598,6 +1602,24 @@ void Editor::keyPressEvent(QKeyEvent *event)
   }
 
   QWidget::keyPressEvent(event);
+}
+
+
+// Перехват Enter в заголовке раньше штатного сплита QTextEdit.
+// Остальные события идут штатным путем без изменений
+bool Editor::eventFilter(QObject *object, QEvent *event)
+{
+  if(object==textArea && event->type()==QEvent::KeyPress)
+  {
+    QKeyEvent *keyEvent=static_cast<QKeyEvent *>(event);
+    if((keyEvent->key()==Qt::Key_Return || keyEvent->key()==Qt::Key_Enter) &&
+       keyEvent->modifiers()==Qt::NoModifier &&
+       typefaceFormatter!=nullptr &&
+       typefaceFormatter->handleHeadingEnter())
+      return true;
+  }
+
+  return QWidget::eventFilter(object, event);
 }
 
 

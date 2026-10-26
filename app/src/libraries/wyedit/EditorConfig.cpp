@@ -550,6 +550,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_38;
     parameterFunctions << get_parameter_table_39;
     parameterFunctions << get_parameter_table_40;
+    parameterFunctions << get_parameter_table_41;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1367,6 +1368,26 @@ QStringList EditorConfig::get_parameter_table_40(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_41(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 40
+    table << get_parameter_table_40(false);
+
+    // Новых ключей нет: версия нужна, чтобы правилом 40->41
+    // (см. update_version_change_value) дотянуть кнопку
+    // оглавления toc за кнопкой структуры
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -2023,6 +2044,24 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     parts.insert(parts.indexOf("reference")+1, "structure");
                 else
                     parts.append("structure");
+                result=parts.join(",");
+            }
+        }
+
+
+    // Кнопка оглавления за кнопкой структуры. Порядок пользователя
+    // сохраняется, дубли исключены
+    if(versionFrom==40 && versionTo==41)
+        if(name=="tools_line_1")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            if(!parts.contains("toc"))
+            {
+                if(parts.contains("structure"))
+                    parts.insert(parts.indexOf("structure")+1, "toc");
+                else
+                    parts.append("toc");
                 result=parts.join(",");
             }
         }

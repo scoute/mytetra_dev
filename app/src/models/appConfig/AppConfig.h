@@ -499,6 +499,18 @@ public:
     int get_voiceNoteQuality(void);
     void set_voiceNoteQuality(int quality);
 
+    // Профиль команды для SyncTetra: имя, почта, идентификатор,
+    // каталог обмена. Прямые значения в конфиге, без таблицы версий:
+    // пустая строка - легальное "не задано"
+    QString get_teamName(void);
+    void set_teamName(QString name);
+    QString get_teamEmail(void);
+    void set_teamEmail(QString email);
+    QString get_teamId(void);
+    void set_teamId(QString id);
+    QString get_sharedDir(void);
+    void set_sharedDir(QString path);
+
     // Список открепляемых окон с координатами окон
     QString getDockableWindowsState(void);
     void setDockableWindowsState(QString state);

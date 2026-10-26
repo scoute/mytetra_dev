@@ -540,10 +540,12 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
             return;
         }
 
-        // Клик по пункту оглавления: прыжок в раздел. Работает и с Ctrl,
-        // и без: проверка стоит раньше общей обработки ссылок, чтобы клик
-        // не уходил в переход по ссылке. Курсор ставит обработчик
-        if(href.startsWith(TypefaceFormatter::tocGoPrefix()))
+        // Клик по пункту оглавления или его якорю: прыжок в раздел.
+        // Работает и с Ctrl, и без: проверка стоит раньше общей обработки
+        // ссылок, чтобы клик не уходил в переход по ссылке. Курсор ставит
+        // обработчик
+        if(href==TypefaceFormatter::tocAnchorHref() ||
+           href.startsWith(TypefaceFormatter::tocGoPrefix()))
         {
             emit clickedOnTocGo(href);
 

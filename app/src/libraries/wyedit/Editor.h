@@ -239,6 +239,11 @@ private slots:
 
  void onCursorPositionChanged(void); // Слот, контролирущий перемещение курсора
  void onSelectionChanged(void);
+
+ // Горячие клавиши цвета: как клик по кнопке (последний цвет),
+ // при выключенной настройке — как раньше, открыть меню
+ void onFontcolorHotkey(void);
+ void onBackgroundcolorHotkey(void);
  void onUndo(void);
  void onRedo(void);
  void onCut(void);

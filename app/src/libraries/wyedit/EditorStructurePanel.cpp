@@ -1,4 +1,7 @@
 #include <QTimer>
+#include <QLabel>
+#include <QListWidget>
+#include <QVBoxLayout>
 #include <QTextDocument>
 #include <QTextBlock>
 #include <QTextCursor>
@@ -7,20 +10,36 @@
 #include "EditorTextArea.h"
 
 
-EditorStructurePanel::EditorStructurePanel(QWidget *parent) : QListWidget(parent)
+EditorStructurePanel::EditorStructurePanel(QWidget *parent) : QWidget(parent)
 {
     setObjectName("editor_structure_panel");
     setVisible(false); // Показывается кнопкой тулбара
     setMinimumWidth(140);
     setMaximumWidth(320);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    QFont titleFont=this->font();
+    titleFont.setBold(true);
+
+    QLabel *title=new QLabel(tr("Outline"), this);
+    title->setFont(titleFont);
+    title->setIndent(2);
+
+    m_list=new QListWidget(this);
+    m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_list->setUniformItemSizes(true);
+
+    QVBoxLayout *layout=new QVBoxLayout(this);
+    layout->setContentsMargins(2, 2, 2, 2);
+    layout->setSpacing(2);
+    layout->addWidget(title);
+    layout->addWidget(m_list, 1);
 
     m_timer=new QTimer(this);
     m_timer->setSingleShot(true);
     m_timer->setInterval(300); // Дебаунс: перестройка не на каждую клавишу
     connect(m_timer, &QTimer::timeout, this, &EditorStructurePanel::onRebuildTimeout);
 
-    connect(this, &QListWidget::itemClicked, this, &EditorStructurePanel::onJump);
+    connect(m_list, &QListWidget::itemClicked, this, &EditorStructurePanel::onJump);
 }
 
 
@@ -40,13 +59,31 @@ void EditorStructurePanel::setTextArea(EditorTextArea *area)
 }
 
 
+int EditorStructurePanel::count(void) const
+{
+    return m_list ? m_list->count() : 0;
+}
+
+
+QListWidgetItem *EditorStructurePanel::item(int row) const
+{
+    return m_list ? m_list->item(row) : nullptr;
+}
+
+
+int EditorStructurePanel::currentRow(void) const
+{
+    return m_list ? m_list->currentRow() : -1;
+}
+
+
 void EditorStructurePanel::rebuild(void)
 {
-    if(m_area==nullptr)
+    if(m_area==nullptr || m_list==nullptr)
         return;
 
     m_sync=true;
-    clear();
+    m_list->clear();
 
     QTextDocument *doc=m_area->document();
     for(QTextBlock block=doc->begin(); block.isValid(); block=block.next())
@@ -56,20 +93,20 @@ void EditorStructurePanel::rebuild(void)
             continue;
 
         QString text=block.text().simplified();
-        if(text.length()>100)
-            text=text.left(100)+QStringLiteral("…");
         if(text.isEmpty())
             text=tr("(empty heading)");
+        if(text.length()>100)
+            text=text.left(100)+QStringLiteral("…");
 
         // Вложенность видна отступом: H1 без отступа, H2 и H3 глубже
-        QListWidgetItem *item=new QListWidgetItem(QString((level-1)*2, QLatin1Char(' '))+text, this);
+        QListWidgetItem *item=new QListWidgetItem(QString((level-1)*2, QLatin1Char(' '))+text, m_list);
         item->setData(Qt::UserRole, block.position());
         item->setToolTip(block.text().simplified());
     }
 
-    if(count()==0)
+    if(m_list->count()==0)
     {
-        QListWidgetItem *item=new QListWidgetItem(tr("No H1-H3 headings"), this);
+        QListWidgetItem *item=new QListWidgetItem(tr("No H1-H3 headings"), m_list);
         item->setFlags(item->flags() & ~(Qt::ItemIsSelectable | Qt::ItemIsEnabled));
     }
 
@@ -113,16 +150,16 @@ void EditorStructurePanel::onJump(QListWidgetItem *item)
 
 void EditorStructurePanel::onCursorMoved(void)
 {
-    if(m_sync || m_area==nullptr || count()==0)
+    if(m_sync || m_area==nullptr || m_list==nullptr || m_list->count()==0)
         return;
 
     const int row=currentHeadingRow(m_area->textCursor().position());
 
     m_sync=true;
     if(row>=0)
-        setCurrentRow(row);
+        m_list->setCurrentRow(row);
     else
-        clearSelection();
+        m_list->clearSelection();
     m_sync=false;
 }
 

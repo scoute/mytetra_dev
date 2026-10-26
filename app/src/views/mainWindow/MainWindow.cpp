@@ -3202,9 +3202,9 @@ void MainWindow::onClickHelpAboutMyTetra(void)
 
     infoProgramName=tr("<b>SyncTetra</b> - fork MyTetra,<br/>smart manager for information collecting,<br/>с возможностью делиться базой знаний через syncthing/etc.<br/><br/>");
     infoVersion="v."+version+"<br/><br/>";
-    infoAuthor="Author: Sergey M. Stepanov<br/>";
-    infoEmail="Author Email:<i>xintrea@gmail.com</i><br/><br/>";
-    infoLicense="GNU General Public License v.3.0<br/><br/>";
+    infoAuthor=tr("Author MyTetra: Sergey M. Stepanov (xintrea@gmail.com)<br/>");
+    infoEmail=tr("Author SyncTetra: Serg_St (scoute.me@gmail.com)<br/><br/>");
+    infoLicense=tr("GNU General Public License v.3.0<br/><br/>");
 
     QString info=infoProgramName+
             infoVersion+

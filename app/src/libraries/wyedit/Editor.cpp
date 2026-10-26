@@ -1612,8 +1612,11 @@ bool Editor::eventFilter(QObject *object, QEvent *event)
   if(object==textArea && event->type()==QEvent::KeyPress)
   {
     QKeyEvent *keyEvent=static_cast<QKeyEvent *>(event);
+    // Нумпадный Enter несет флаг KeypadModifier - это тот же обычный Enter
+    const bool plainEnter=keyEvent->modifiers()==Qt::NoModifier ||
+                           keyEvent->modifiers()==Qt::KeypadModifier;
     if((keyEvent->key()==Qt::Key_Return || keyEvent->key()==Qt::Key_Enter) &&
-       keyEvent->modifiers()==Qt::NoModifier &&
+       plainEnter &&
        typefaceFormatter!=nullptr &&
        typefaceFormatter->handleHeadingEnter())
       return true;

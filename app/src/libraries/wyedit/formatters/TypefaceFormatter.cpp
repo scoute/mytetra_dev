@@ -1453,21 +1453,34 @@ double TypefaceFormatter::normalPointSize(void) const
 }
 
 
-// Enter в заголовке без выделения. В конце непустого заголовка новый
+// Enter в заголовке. В конце непустого заголовка новый
 // абзац сразу обычный (иначе каждый Enter плодит пустые H1/H2/H3),
 // на пустом заголовке уровень снимается на месте без новой строки.
-// В середине абзаца и вне заголовков - false, работает штатный путь
+// Выделение строго внутри одного заголовка вырезается как штатно,
+// затем работают те же правила. В середине абзаца, через абзацы
+// и вне заголовков - false, работает штатный путь
 bool TypefaceFormatter::handleHeadingEnter(void)
 {
     if(textArea->isReadOnly())
         return false;
 
     QTextCursor cursor=textArea->textCursor();
-    if(cursor.hasSelection())
-        return false;
 
-    QTextBlock block=cursor.block();
-    if(block.blockFormat().headingLevel()<1)
+    bool eraseSelection=false;
+    if(cursor.hasSelection())
+    {
+        // После выбора уровня из меню выделение обычно остается,
+        // и Enter с ним уходил в штатный путь с наследованием уровня.
+        // Выделение строго внутри одного заголовка вырезается здесь,
+        // через абзацы - штатный путь
+        QTextBlock startBlock=textArea->document()->findBlock(cursor.selectionStart());
+        QTextBlock endBlock=textArea->document()->findBlock(cursor.selectionEnd());
+        if(startBlock!=endBlock || startBlock.blockFormat().headingLevel()<1)
+            return false;
+
+        eraseSelection=true;
+    }
+    else if(cursor.block().blockFormat().headingLevel()<1)
         return false;
 
     QTextBlockFormat probeBlockFormat;
@@ -1476,6 +1489,11 @@ bool TypefaceFormatter::handleHeadingEnter(void)
     const double baseSize=normalPointSize();
 
     cursor.beginEditBlock();
+
+    if(eraseSelection)
+        cursor.removeSelectedText();
+
+    QTextBlock block=cursor.block();
 
     bool consumed=false;
     if(block.text().isEmpty())

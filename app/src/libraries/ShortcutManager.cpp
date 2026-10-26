@@ -459,10 +459,13 @@ QString ShortcutManager::getDefaultKeySequenceAsText(QString actionName)
 void ShortcutManager::initAction(QString actionName, QAction *action)
 {
     if(keyTable.contains(actionName)) {
+        // Текст без суффикса шортката: QMenu и тулбары рисуют колонку
+        // шортката сами из action->shortcut(), суффикс давал задвоение.
+        // Подсказки с шорткатом остаются в toolTip/statusTip
         action->setShortcut(  getKeySequence(actionName) );
         action->setStatusTip( getFullDescription(actionName) );
         action->setToolTip(   getDescriptionWithShortcut(actionName) );
-        action->setText(      getDescriptionWithShortcut(actionName) );
+        action->setText(      getDescription(actionName) );
     } else {
         criticalError("Not found available action name "+actionName);
     }
@@ -476,7 +479,7 @@ void ShortcutManager::initToolButton(QString actionName, QToolButton *action)
         action->setShortcut(  getKeySequence(actionName) );
         action->setStatusTip( getFullDescription(actionName) );
         action->setToolTip(   getDescriptionWithShortcut(actionName) );
-        action->setText(      getDescriptionWithShortcut(actionName) );
+        action->setText(      getDescription(actionName) );
     } else {
         criticalError("Not found available action name "+actionName);
     }

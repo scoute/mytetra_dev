@@ -1244,11 +1244,19 @@ void TypefaceFormatter::applyHeadingLevel(int level)
     const int from=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
     const int to=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
 
+    // Конец выделения ровно на границе абзаца этот абзац не включает:
+    // иначе выделение строки вместе с переводом цепляет следующую,
+    // та заранее становится заголовком, а повторный клик ее снимает
+    int endBound=to;
+    if(cursor.hasSelection() && to>from &&
+       textArea->document()->findBlock(to).position()==to)
+        endBound=to-1;
+
     // Тумблер: все затронутые абзацы уже этого уровня — снять в обычный
     bool allSame=true;
 
     for(QTextBlock block=textArea->document()->findBlock(from);
-        block.isValid() && block.position()<=to;
+        block.isValid() && block.position()<=endBound;
         block=block.next())
     {
         if(block.blockFormat().headingLevel()!=level)
@@ -1275,12 +1283,12 @@ void TypefaceFormatter::applyHeadingLevel(int level)
     // позиции левее не ехали; курсор-выделение само едет за правками,
     // границы прохода перечитываются ниже
     int realFrom=from;
-    int realTo=to;
+    int realTo=endBound;
     if(target>0)
     {
         QList<int> separators;
         for(QTextBlock block=textArea->document()->findBlock(from);
-            block.isValid() && block.position()<=to;
+            block.isValid() && block.position()<=endBound;
             block=block.next())
         {
             const QString text=block.text();
@@ -1304,6 +1312,12 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
         realFrom=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
         realTo=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
+
+        // То же правило границы после сплита: конец ровно на границе
+        // абзаца этот абзац не включает
+        if(cursor.hasSelection() && realTo>realFrom &&
+           textArea->document()->findBlock(realTo).position()==realTo)
+            realTo=realTo-1;
     }
 
     for(QTextBlock block=textArea->document()->findBlock(realFrom);

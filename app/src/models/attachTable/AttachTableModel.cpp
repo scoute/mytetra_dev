@@ -5,6 +5,7 @@
 #include "Attach.h"
 #include "AttachTableData.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "libraries/helpers/DiskHelper.h"
 #include "views/tree/TreeScreen.h"
 
 
@@ -90,7 +91,7 @@ QVariant AttachTableModel::getCell(int row, int column) const
     case ATTACHTABLE_COLUMN_FILENAME:
       return QVariant(table->getFileName(row));
     case ATTACHTABLE_COLUMN_FILESIZE:
-      return QVariant(table->getFileSize(row));
+      return QVariant(DiskHelper::formatFileSize(table->getFileSize(row)));
     case ATTACHTABLE_COLUMN_DESCRIPTION:
       return QVariant(table->getAttach(table->getIdByRow(row)).getField("description"));
     case ATTACHTABLE_COLUMN_LINK:

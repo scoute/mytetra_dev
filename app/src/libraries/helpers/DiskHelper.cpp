@@ -421,6 +421,19 @@ bool DiskHelper::isDirectoryEmpty(QString dirName)
 }
 
 
+// Человекочитаемый размер файла: байты, KB, MB
+QString DiskHelper::formatFileSize(qint64 bytes)
+{
+  if(bytes<1024)
+    return QString::number(bytes);
+
+  if(bytes<1024*1024)
+    return QString::number(bytes/1024)+QStringLiteral(" KB");
+
+  return QString::number(bytes/(1024*1024))+QStringLiteral(" MB");
+}
+
+
 // Копирование содержимого каталога ресурсов QRC в каталог на диске
 // Копирование происходит рекурсивно со всеми файлами и подкаталогами
 bool DiskHelper::copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath)

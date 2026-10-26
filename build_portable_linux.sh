@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Сборка портабельной версии MyTetra для Linux.
-# Все компоненты складываются в одну папку: бинарь mytetra, бинарь
+# Сборка портабельной версии SyncTetra для Linux.
+# Все компоненты складываются в одну папку: бинарь synctetra, бинарь
 # mimetex для формул, копии библиотек Qt и ее зависимостей в lib,
 # плагины Qt в plugins, qt.conf и скрипт запуска start.sh.
 # Настоящий portable: Qt лежит рядом с программой и не берется из
@@ -15,7 +15,7 @@
 #   ./build_portable_linux.sh            без параметров: исходники откуда
 #                                        запущен скрипт, сборка из каталога
 #                                        Qt Creator, Qt SDK из его Makefile,
-#                                        результат рядом в MyTetra-lin-portable
+#                                        результат рядом в SyncTetra-lin-portable
 #   ./build_portable_linux.sh --clean    предварительно очистить сборочный каталог
 #   ./build_portable_linux.sh --jobs 4   число потоков сборки
 #   ./build_portable_linux.sh --portable-dir /путь/к/папке   куда сложить сборку
@@ -150,7 +150,7 @@ fi
 
 # Папка результата по умолчанию рядом с исходниками
 if [[ "${PORTABLE_DIR_EXPLICIT}" -eq 0 ]]; then
-    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-lin-portable"
+    PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/SyncTetra-lin-portable"
 fi
 
 # Каталог сборки: если не задан явно, ищется каталог сборки Qt Creator
@@ -230,7 +230,7 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
              "${SOURCE_DIR}/thirdParty/mimetex/build/bin"
 
     # qmake создает Makefile, make собирает. mimetex собирается как отдельный
-    # проект и копируется рядом с mytetra, поэтому собирается весь mytetra.pro
+    # проект и копируется рядом с synctetra, поэтому собирается весь mytetra.pro
     "${QMAKE}" "${SOURCE_DIR}/mytetra.pro"
     "${MAKE_BIN}" -j"${JOBS}"
 fi
@@ -241,8 +241,8 @@ fi
 
 BUILT_DIR="${BUILD_DIR}/app/bin"
 
-if [[ ! -x "${BUILT_DIR}/mytetra" ]]; then
-    echo "ОШИБКА: не собран mytetra в ${BUILT_DIR}" >&2
+if [[ ! -x "${BUILT_DIR}/synctetra" ]]; then
+    echo "ОШИБКА: не собран synctetra в ${BUILT_DIR}" >&2
     exit 3
 fi
 
@@ -262,15 +262,15 @@ mkdir -p "${PORTABLE_DIR}"
 # Старые бинари убираются, чтобы в папке не осталось прошлой сборки.
 # Конфиги и данные пользователя НЕ трогаются: их в поставке нет,
 # а чужие удалять нельзя
-rm -f "${PORTABLE_DIR}/mytetra" "${PORTABLE_DIR}/mimetex"
+rm -f "${PORTABLE_DIR}/synctetra" "${PORTABLE_DIR}/mimetex"
 
-cp "${BUILT_DIR}/mytetra" "${PORTABLE_DIR}/mytetra"
+cp "${BUILT_DIR}/synctetra" "${PORTABLE_DIR}/synctetra"
 cp "${BUILT_DIR}/mimetex" "${PORTABLE_DIR}/mimetex"
 
-chmod +x "${PORTABLE_DIR}/mytetra" "${PORTABLE_DIR}/mimetex"
+chmod +x "${PORTABLE_DIR}/synctetra" "${PORTABLE_DIR}/mimetex"
 
 if [[ "${DO_STRIP}" -eq 1 ]] && command -v strip >/dev/null 2>&1; then
-    strip "${PORTABLE_DIR}/mytetra" "${PORTABLE_DIR}/mimetex"
+    strip "${PORTABLE_DIR}/synctetra" "${PORTABLE_DIR}/mimetex"
 fi
 
 # --------------------------------------------------------------------------
@@ -291,9 +291,9 @@ PLUGINS_DIR="${PORTABLE_DIR}/plugins"
 rm -rf "${LIB_DIR}" "${PLUGINS_DIR}"
 mkdir -p "${LIB_DIR}" "${PLUGINS_DIR}"
 
-# Пути всех библиотек, от которых зависит собранный mytetra.
+# Пути всех библиотек, от которых зависит собранный synctetra.
 # mimetex зависит только от libc, поэтому его библиотеки отдельно не нужны
-mapfile -t NEEDED_LIBS < <(LD_LIBRARY_PATH="${QT_SDK}/lib" ldd "${PORTABLE_DIR}/mytetra" | awk '{print $3}' | grep "^/")
+mapfile -t NEEDED_LIBS < <(LD_LIBRARY_PATH="${QT_SDK}/lib" ldd "${PORTABLE_DIR}/synctetra" | awk '{print $3}' | grep "^/")
 
 COPIED_LIBS=0
 for lib in "${NEEDED_LIBS[@]}"; do
@@ -331,7 +331,7 @@ for lib in "${NEEDED_LIBS[@]}"; do
 done
 
 # Все библиотеки Qt копируются целиком, а не только те, что видны в ldd
-# mytetra. Некоторые нужны только плагинам: например, svg-плагины
+# synctetra. Некоторые нужны только плагинам: например, svg-плагины
 # иконок и форматов требуют Qt5Svg, а сама программа ее не линкует.
 # Без нее Qt падает при загрузке плагинов, и это выглядит как
 # аварийный старт без всякого сообщения
@@ -426,7 +426,7 @@ fi
 # резолвиться в системный Qt. Иначе будет как с qsvg: падение на старте
 # без сообщений, чинится только разбором ldd
 MIXED=0
-for target in "${PORTABLE_DIR}/mytetra" "${PLUGINS_DIR}"/*/*.so; do
+for target in "${PORTABLE_DIR}/synctetra" "${PLUGINS_DIR}"/*/*.so; do
     [[ -f "${target}" ]] || continue
     BAD="$(LD_LIBRARY_PATH="${LIB_DIR}" ldd "${target}" 2>/dev/null | grep "libQt5" | grep -v "${LIB_DIR}" || true)"
     if [[ -n "${BAD}" ]]; then
@@ -444,7 +444,7 @@ fi
 # с Multimedia) виден здесь, а не падением на чужой машине. Плагины
 # тоже проверяются: у них свои зависимости от Qt
 NOTFOUND=0
-for target in "${PORTABLE_DIR}/mytetra" "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
+for target in "${PORTABLE_DIR}/synctetra" "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
     [[ -f "${target}" ]] || continue
     MISSING="$(LD_LIBRARY_PATH="${LIB_DIR}" ldd "${target}" 2>/dev/null | grep "not found" || true)"
     if [[ -n "${MISSING}" ]]; then
@@ -471,13 +471,13 @@ EOF
 
 # Пути задаются прямо в скрипте, как того требует портабельная сборка:
 # запуск идет из любого каталога, директория определяется по самому скрипту.
-# Аргументы пробрасываются: это нужно в том числе для mytetra --control
+# Аргументы пробрасываются: это нужно в том числе для synctetra --control
 # (глобальный хоткей клиппера из ОС)
 LAUNCHER="${PORTABLE_DIR}/start.sh"
 
 cat > "${LAUNCHER}" <<EOF
 #!/usr/bin/env bash
-# Запуск портабельной версии MyTetra.
+# Запуск портабельной версии SyncTetra.
 # Пути к библиотекам и плагинам рядом с программой заданы вручную,
 # поэтому Qt берется из этой папки, а не из системы
 
@@ -492,13 +492,13 @@ export LD_LIBRARY_PATH="\${PORTABLE_DIR}/lib:\${LD_LIBRARY_PATH}"
 # Плагины Qt (платформа, картинки, иконки)
 export QT_PLUGIN_PATH="\${PORTABLE_DIR}/plugins"
 
-exec "\${PORTABLE_DIR}/mytetra" "\$@"
+exec "\${PORTABLE_DIR}/synctetra" "\$@"
 EOF
 
 chmod +x "${LAUNCHER}"
 
 cat > "${PORTABLE_DIR}/PORTABLE.txt" <<'EOF'
-MyTetra portable для Linux
+SyncTetra portable для Linux
 ==========================
 Запуск: ./start.sh
 
@@ -509,7 +509,7 @@ MyTetra portable для Linux
 Глобальный хоткей клиппера (пример Ctrl+Q) вешается средствами
 рабочего стола на команду:
   /путь/к/start.sh --control --clipboard
-MyTetra при этом должна быть запущена.
+SyncTetra при этом должна быть запущена.
 EOF
 
 # --------------------------------------------------------------------------
@@ -520,7 +520,7 @@ VERSION="$(grep -E '^#define APPLICATION_RELEASE_(VERSION|SUBVERSION|MICROVERSIO
               "${SOURCE_DIR}/app/src/main.h" | awk '{print $3}' | paste -sd. -)"
 
 echo "Готово. Версия ${VERSION}"
-echo "Бинари: mytetra, mimetex (Qt-библиотеки внутри: ${COPIED_LIBS} шт)"
+echo "Бинари: synctetra, mimetex (Qt-библиотеки внутри: ${COPIED_LIBS} шт)"
 echo "Содержимое ${PORTABLE_DIR}:"
 ls -lh "${PORTABLE_DIR}" | tail -n +2 | awk '{print "  " $9 "  " $5}'
 echo "Размер папки: $(du -sh "${PORTABLE_DIR}" | awk '{print $1}')"
@@ -539,7 +539,7 @@ if [[ "${DO_SMOKE}" -eq 1 ]]; then
     SMOKE_DIR="$(mktemp -d)"
     cp -r "${PORTABLE_DIR}/." "${SMOKE_DIR}/"
     mkdir -p "${SMOKE_DIR}/data/base/seed00000000000001"
-    cp "${SOURCE_DIR}/app/bin/resource/standartdata/mytetra.xml" "${SMOKE_DIR}/data/" 2>/dev/null || true
+    cp "${SOURCE_DIR}/app/bin/resource/standartdata/synctetra.xml" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/database.ini" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/base/1300000000aaaaaaaaa2/text.html" "${SMOKE_DIR}/data/base/seed00000000000001/" 2>/dev/null || true
     printf '[General]\nprintdebugmessages=true\n' > "${SMOKE_DIR}/conf.ini"

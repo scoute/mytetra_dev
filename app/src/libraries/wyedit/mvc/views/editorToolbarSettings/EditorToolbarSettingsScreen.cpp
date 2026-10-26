@@ -224,7 +224,7 @@ void EditorToolbarSettingsScreen::onMoveAvailableCommandToUsedCommands()
         if (commandIndex1!=QModelIndex()) {
             // Нашли такую же команду в ToolBar 1
             QMessageBox *msbox = new QMessageBox(
-                        QMessageBox::Icon::Warning, "mytetra",
+                        QMessageBox::Icon::Warning, "synctetra",
                         tr("<b>%1:</b> This command is already in <b>%2</b>.").arg(command).arg(tr("ToolBar 1")),
                         QMessageBox::Ok, this
             );

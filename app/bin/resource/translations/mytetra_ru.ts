@@ -269,11 +269,7 @@ This can happen if there is no free space left on the hard disk or it is impossi
 </context>
 <context>
     <name>AppConfigDialog</name>
-    <message>
-        <source>MyTetra settings</source>
-        <translation type="vanished">Настройки MyTetra</translation>
-    </message>
-    <message>
+        <message>
         <source>Main</source>
         <translation type="vanished">Основные</translation>
     </message>
@@ -305,6 +301,10 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Search</source>
         <translation type="vanished">Поиск</translation>
     </message>
+    <message>
+        <source>SyncTetra settings</source>
+        <translation type="vanished">Настройки SyncTetra</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -328,13 +328,7 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Midnight</source>
         <translation type="vanished">Полуночная</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
-        <source>Run MyTetra in a minimized window</source>
-        <translation>Запускать MyTetra в свернутом окне</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="86"/>
         <source>Hide detached windows if close main window</source>
@@ -361,6 +355,12 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="88"/>
         <source>Windows behavior</source>
         <translation>Поведение окон</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation>Запускать SyncTetra в свернутом окне</translation>
     </message>
 </context>
 <context>
@@ -557,13 +557,7 @@ MyTetra must be running.</source>
 Назначьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
 MyTetra должна быть запущена.</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
-        <source>Saves the OS clipboard into a note: mytetra --control --clipboard [--url]</source>
-        <translation>Сохраняет буфер обмена ОС в заметку: mytetra --control --clipboard [--url]</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="105"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="198"/>
         <source>Maximum images per note:</source>
@@ -634,6 +628,24 @@ MyTetra должна быть запущена.</translation>
         <source>Clipper status is unavailable.</source>
         <translation>Статус клиппера недоступен.</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
+        <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
+Run: synctetra --control --clipboard [--url]
+Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
+SyncTetra must be running.</source>
+        <translation>Клиппер сохраняет буфер обмена ОС в заметку ветки unsorted_notes.
+Запуск: synctetra --control --clipboard [--url]
+Назначьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
+SyncTetra должна быть запущена.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
+        <source>Saves the OS clipboard into a note: synctetra --control --clipboard [--url]</source>
+        <translation>Сохраняет буфер обмена ОС в заметку: synctetra --control --clipboard [--url]</translation>
+    </message>
 </context>
 <context>
     <name>ClipBranchDialog</name>
@@ -678,13 +690,7 @@ MyTetra должна быть запущена.</translation>
         <source>Ask the password when you click on an encrypted item</source>
         <translation>Спрашивать пароль при клике на зашифрованную ветку</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
-        <source>Ask the password at MyTetra startup</source>
-        <translation>Спрашивать пароль при старте MyTetra</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="82"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="304"/>
         <source>Store password</source>
@@ -823,6 +829,12 @@ Stored password will be cleared if uncheck this checkbox.</source>
     <message>
         <source>Done. Re-encrypted branches: %1.</source>
         <translation>Готово. Перешифровано веток: %1.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
+        <source>Ask the password at SyncTetra startup</source>
+        <translation>Спрашивать пароль при старте SyncTetra</translation>
     </message>
 </context>
 <context>
@@ -1098,36 +1110,7 @@ Linux: поставьте пакет git. Windows: https://git-scm.com.</transla
         <source>Claude Code (.mcp.json):</source>
         <translation>Claude Code (.mcp.json):</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
-        <source>MCP lets an AI client (opencode, Claude Code) read and search MyTetra notes.
-
-Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this MyTetra.
-
-Server modes:
---mcp-ro: read-only (recommended)
---mcp-rw: create and update notes, no delete
---mcp-rw-with-delete: full write, deletes go to trash
-
-While the AI writes, MyTetra shows a banner. Keep read-only unless writes are needed.
-
-Claude Code terminal way:
-claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</source>
-        <translation>MCP позволяет AI-клиенту (opencode, Claude Code) читать и искать заметки MyTetra.
-
-Включите галочку и нажмите Применить. Клиент сам запускает сервер через stdio, порт не используется. Пути в примерах ниже уже указывают на эту MyTetra.
-
-Режимы сервера:
---mcp-ro: только чтение (рекомендуется)
---mcp-rw: создание и изменение заметок, без удаления
---mcp-rw-with-delete: полная запись, удаления идут в корзину
-
-Пока AI пишет, MyTetra показывает баннер. Оставляйте только чтение, если запись не нужна.
-
-Claude Code через терминал:
-claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="195"/>
         <source>MCP help</source>
         <translation>Справка MCP</translation>
@@ -1152,6 +1135,35 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Delete — %1 tools</source>
         <translation>Удаление: %1</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
+        <source>MCP lets an AI client (opencode, Claude Code) read and search SyncTetra notes.
+
+Enable the checkbox and press Apply. The client starts the server itself over stdio, no port is used. Paths in the examples below already point to this SyncTetra.
+
+Server modes:
+--mcp-ro: read-only (recommended)
+--mcp-rw: create and update notes, no delete
+--mcp-rw-with-delete: full write, deletes go to trash
+
+While the AI writes, SyncTetra shows a banner. Keep read-only unless writes are needed.
+
+Claude Code terminal way:
+claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</source>
+        <translation>MCP позволяет AI-клиенту (opencode, Claude Code) читать и искать заметки SyncTetra.
+
+Включите галочку и нажмите Применить. Клиент сам запускает сервер через stdio, порт не используется. Пути в примерах ниже уже указывают на эту SyncTetra.
+
+Режимы сервера:
+--mcp-ro: только чтение (рекомендуется)
+--mcp-rw: создание и изменение заметок, без удаления
+--mcp-rw-with-delete: полная запись, удаления идут в корзину
+
+Пока AI пишет, SyncTetra показывает баннер. Оставляйте только чтение, если запись не нужна.
+
+Claude Code через терминал:
+claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Misc</name>
@@ -1169,11 +1181,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Print debug messages to console</source>
         <translation>Выводить отладочные сообщения в консоль</translation>
     </message>
-    <message>
-        <source>Run MyTetra in a minimized window</source>
-        <translation type="vanished">Запускать MyTetra в свернутом окне</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="43"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="101"/>
         <source>Enable action logging (experimental)</source>
@@ -1257,6 +1265,10 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Normally a site with an expired, self-signed or otherwise invalid TLS certificate is refused. This option allows downloading images and files from such sites anyway, but an attacker on the network could substitute the content. Default: off.</source>
         <translation>Обычно сайт с просроченным, самоподписанным или иным невалидным TLS-сертификатом отклоняется. Эта опция разрешает всё равно скачивать с него картинки и файлы, но злоумышленник в сети может подменить содержимое. По умолчанию выключено.</translation>
     </message>
+    <message>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation type="vanished">Запускать SyncTetra в свернутом окне</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Tree</name>
@@ -1295,6 +1307,236 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
+    </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation>Отозвать публикацию...</translation>
+    </message>
+    <message>
+        <source>Publish branch</source>
+        <translation>Опубликовать ветку</translation>
+    </message>
+    <message>
+        <source>Shared directory is not defined. Set it in the settings.</source>
+        <translation>Общий каталог не задан. Задайте его в настройках.</translation>
+    </message>
+    <message>
+        <source>Can't create shared directory:\n</source>
+        <translation>Не удаётся создать общий каталог:
+</translation>
+    </message>
+    <message>
+        <source>The branch is nested in an already published branch or contains published sub-branches.\nPublishing nested branches is not supported.</source>
+        <translation>Ветка вложена в уже опубликованную ветку или содержит опубликованные подветки.
+Публикация вложенных веток не поддерживается.</translation>
+    </message>
+    <message>
+        <source>The branch contains encrypted content.\nEncrypted data is not stored in the common directory; the publication will be in decrypted form.\n\nContinue?</source>
+        <translation>Ветка содержит шифрованное содержимое.
+Шифрованные данные не хранятся в общем каталоге; публикация будет в расшифрованном виде.
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>The branch is already published at:\n%1\n\nUpdate the publication?</source>
+        <translation>Ветка уже опубликована здесь:
+%1
+
+Обновить публикацию?</translation>
+    </message>
+    <message>
+        <source>Update publication</source>
+        <translation>Обновить публикацию</translation>
+    </message>
+    <message>
+        <source>Publication of the branch was not found.</source>
+        <translation>Публикация ветки не найдена.</translation>
+    </message>
+    <message>
+        <source>Publication failed:\n%1</source>
+        <translation>Публикация не удалась:
+%1</translation>
+    </message>
+    <message>
+        <source>The published content is large (more than 20 MB).\nThe git-history in the common directory will grow with each publication.</source>
+        <translation>Публикуемый контент большой (больше 20 МБ).
+Git-история в общем каталоге будет расти с каждой публикацией.</translation>
+    </message>
+    <message>
+        <source>Branch \"%1\" successfully %2.\nPublication directory:\n%3\nPublish version: %4\n\nThe update will travel to colleagues via Syncthing (shared folder = sync/).</source>
+        <translation>Ветка "%1" успешно %2.
+Каталог публикации:
+%3
+Версия публикации: %4
+
+Обновление доедет до коллег через Syncthing (общая папка = sync/).</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <translation>обновлена</translation>
+    </message>
+    <message>
+        <source>published</source>
+        <translation>опубликована</translation>
+    </message>
+    <message>
+        <source>\n\nJournal is unavailable (git not found in PATH):\nrecovery from the journal is disabled.</source>
+        <translation>
+
+Журнал недоступен (git не найден в PATH):
+восстановление из журнала отключено.</translation>
+    </message>
+    <message>
+        <source>Settings...</source>
+        <translation>Настройки...</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Revoke publication</source>
+        <translation>Отозвать публикацию</translation>
+    </message>
+    <message>
+        <source>Revoke the publication at:\n%1\n\nThe publication directory will be moved to the trash.</source>
+        <translation>Отозвать публикацию здесь:
+%1
+
+Каталог публикации будет перемещён в корзину.</translation>
+    </message>
+    <message>
+        <source>Publication revoked.</source>
+        <translation>Публикация отозвана.</translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <source>Source branch is not found in the database.</source>
+        <translation>Исходная ветка не найдена в базе.</translation>
+    </message>
+    <message>
+        <source>Force branch update</source>
+        <translation>Принудительно обновить ветку</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Импорт</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Изменения</translation>
+    </message>
+    <message>
+        <source>Update is still on the way: publication data has not fully arrived. Diff and import run only on a consistent version — retry after synchronization completes (check that Syncthing syncs the sync/ folder on both devices and has converged).</source>
+        <translation>Обновление ещё в пути: данные публикации доехали не полностью. Diff и импорт выполняются только по целостной версии — попробуйте после завершения синхронизации (проверьте, что Syncthing синхронизирует папку sync/ и сошёлся).</translation>
+    </message>
+    <message>
+        <source>Check status</source>
+        <translation>Проверить статус</translation>
+    </message>
+    <message>
+        <source>Publication metadata is broken (meta.json without branchId).</source>
+        <translation>Метаданные публикации повреждены (meta.json без branchId).</translation>
+    </message>
+    <message>
+        <source>Subtree \"%1\" is imported into section\n%2</source>
+        <translation>Поддерево "%1" импортировано в раздел
+%2</translation>
+    </message>
+    <message>
+        <source>imported/%1/%2</source>
+        <translation>imported/%1/%2</translation>
+    </message>
+    <message>
+        <source>Local copy of the publication is not found.</source>
+        <translation>Локальная копия публикации не найдена.</translation>
+    </message>
+    <message>
+        <source>Target branch is not found in the tree.</source>
+        <translation>Ветка-приёмник не найдена в дереве.</translation>
+    </message>
+    <message>
+        <source>Target branch is encrypted. Open it with the password before import.</source>
+        <translation>Ветка-приёмник зашифрована. Откройте её паролем перед импортом.</translation>
+    </message>
+    <message>
+        <source>There are no new changes in the publication.</source>
+        <translation>Новых изменений в публикации нет.</translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation>Изменения: %1</translation>
+    </message>
+    <message>
+        <source>Import conflict</source>
+        <translation>Конфликт импорта</translation>
+    </message>
+    <message>
+        <source>Record \"%1\" was changed locally.\nImport the owner version?</source>
+        <translation>Запись "%1» была изменена локально.
+Импортировать версию владельца?</translation>
+    </message>
+    <message>
+        <source>Replace with owner version</source>
+        <translation>Заменить версией владельца</translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation>Сохранить обе</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Пропустить</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Восстановить</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Позже</translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation>Восстановление из local</translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe local/ authority contains consistent owner publications.\n\nRestore the sync/ mirror from local/?</source>
+        <translation>Область sync/ пуста или содержит неполные данные.
+Авторитет local/ содержит целостные публикации владельца.
+
+Восстановить зеркало sync/ из local/?</translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation>Восстановление из журнала</translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation>В журнале %1 снимков(а) области sync/.</translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe unified journal contains %1 snapshot(s) with the last known state of publications.\n\nRestore publications from the journal?</source>
+        <translation>Область sync/ пуста или содержит неполные данные.
+Единый журнал содержит %1 снимков(а) с последним известным состоянием публикаций.
+
+Восстановить публикации из журнала?</translation>
+    </message>
+    <message>
+        <source>Journal size</source>
+        <translation>Размер журнала</translation>
+    </message>
+    <message>
+        <source>Exchange journal has grown: %1 snapshots (%2 MB).\nOld snapshots are only needed to restore long-deleted data. Archiving will keep only the current state (irreversibly). Archive now?</source>
+        <translation>Журнал обмена разросся: %1 снимков (%2 МБ).
+Старые снимки нужны только для восстановления давно удалённого. Архивирование оставит только текущее состояние (необратимо). Архивировать сейчас?</translation>
+    </message>
+    <message>
+        <source>Archive now</source>
+        <translation>Архивировать сейчас</translation>
     </message>
 </context>
 <context>
@@ -1394,19 +1636,7 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
 </context>
 <context>
     <name>AppConfigPage_Synchro</name>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
-        <source>Synchronize at MyTetra startup</source>
-        <translation>Синхронизировать при старте MyTetra</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
-        <source>Synchronize when exit from MyTetra</source>
-        <translation>Синхронизировать при выходе из MyTetra</translation>
-    </message>
-    <message>
+            <message>
         <source>Enable periodic synchronize</source>
         <translation type="vanished">Включить периодическую синхронизацию</translation>
     </message>
@@ -1481,6 +1711,18 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="257"/>
         <source>The first background &lt;b&gt;checking base&lt;/b&gt; starting.&lt;br/&gt;Maybe a slight delay or freezing window...</source>
         <translation>Первый фоновый запуск &lt;b&gt;проверки базы на изменение сторонней программой&lt;/b&gt;.&lt;br/&gt;Возможна небольшая задержка или &quot;замерзание&quot; окна программы...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
+        <source>Synchronize at SyncTetra startup</source>
+        <translation>Синхронизировать при старте SyncTetra</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
+        <source>Synchronize when exit from SyncTetra</source>
+        <translation>Синхронизировать при выходе из SyncTetra</translation>
     </message>
 </context>
 <context>
@@ -2342,14 +2584,7 @@ This directory should contain the file mytetra.xml.</source>
         <source>&lt;b&gt;Second step:&lt;/b&gt; select trash directiory</source>
         <translation>&lt;b&gt;Шаг второй:&lt;/b&gt; выбор директории корзины</translation>
     </message>
-    <message>
-        <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
-        <source>For database append please select trash directory.
-MyTetra will put changed notes file copies and changed item tree copies to this directory</source>
-        <translation>Чтобы добавть базу данных, пожалуйста, выберите директорию корзины.
-MyTetra будет складывать копии файлов редактируемых записей и дерева записей в эту директорию</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="395"/>
         <source>Select trash directory</source>
         <translation>Выбор директории корзины</translation>
@@ -2446,6 +2681,13 @@ MyTetra будет складывать копии файлов редактир
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="555"/>
         <source>Write &quot;yes&quot; to confirm:</source>
         <translation>Напишите &quot;yes&quot; для подтверждения действия:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
+        <source>For database append please select trash directory.
+SyncTetra will put changed notes file copies and changed item tree copies to this directory</source>
+        <translation>Чтобы добавть базу данных, пожалуйста, выберите директорию корзины.
+SyncTetra будет складывать копии файлов редактируемых записей и дерева записей в эту директорию</translation>
     </message>
 </context>
 <context>
@@ -4228,12 +4470,7 @@ Enter your old password and new password.
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
-        <source>MyTetra: Password</source>
-        <translation>MyTetra: Пароль</translation>
-    </message>
-    <message>
+        <message>
         <source>Password</source>
         <translation type="obsolete">Пароль</translation>
     </message>
@@ -4272,6 +4509,11 @@ Enter your old password and new password.
     <message>
         <source>Passwords not equal!</source>
         <translation type="obsolete">Пароли не совпадают!</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
+        <source>SyncTetra: Password</source>
+        <translation>SyncTetra: Пароль</translation>
     </message>
 </context>
 <context>
@@ -4896,12 +5138,7 @@ Try to search for entire database.</source>
         <source>Portable text</source>
         <translation>Текст портабельного режима</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
-        <source>Welcome to MyTetra v.</source>
-        <translation>Вас приветствует MyTetra v.</translation>
-    </message>
-    <message>
+        <message>
         <source>Please, select application mode:</source>
         <translation type="vanished">Пожалуйста, выберите режим установки программы:</translation>
     </message>
@@ -4925,29 +5162,28 @@ and create application files in it.</source>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="109"/>
         <source>Create application files
 in current directory &quot;%1&quot;.</source>
-        <translation>Файлы приложения будут созданы в текущей директории &quot;%1&quot; рядом с исполняемым файлом MyTetra.</translation>
+        <translation>Файлы приложения будут созданы в текущей директории &quot;%1&quot; рядом с исполняемым файлом SyncTetra.</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="114"/>
-        <source>Can&apos;t create portable version.
-Сan&apos;t write data to MyTetra binary file directory &quot;%1&quot;.</source>
-        <translation>Невозможно установить портабельную версию. Невозможно создать файлы в текущей директории &quot;%1&quot; рядом с исполняемым файлом MyTetra.</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="142"/>
         <source>Please select one of install mode.</source>
         <translation>Пожалуйста, выберите один из режимов инсталляции.</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
+        <source>Welcome to SyncTetra v.</source>
+        <translation>Вас приветствует SyncTetra v.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="114"/>
+        <source>Can&apos;t create portable version.
+Сan&apos;t write data to SyncTetra binary file directory &quot;%1&quot;.</source>
+        <translation>Невозможно установить портабельную версию. Невозможно создать файлы в текущей директории &quot;%1&quot; рядом с исполняемым файлом SyncTetra.</translation>
+    </message>
 </context>
 <context>
     <name>KnowTreeModel</name>
-    <message>
-        <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
-        <source>Unsupported version of the database format.
-You need to update MyTetra.</source>
-        <translation>Неподдерживаемый формат базы данных. Пожалуйста, обновите версию MyTetra.</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="335"/>
         <source>The exporting file %1 is not writable.</source>
         <translation>Невозможно открыть экспортируемый файл %1 для записи.</translation>
@@ -4981,6 +5217,12 @@ You need to update MyTetra.</source>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="579"/>
         <source>Import error: unable to copy record data from %1 to %2.</source>
         <translation>Ошибка импорта: не могу скопировать данные записи из %1 в %2.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
+        <source>Unsupported version of the database format.
+You need to update SyncTetra.</source>
+        <translation>Неподдерживаемый формат базы данных. Пожалуйста, обновите версию SyncTetra.</translation>
     </message>
 </context>
 <context>
@@ -5125,13 +5367,7 @@ You need to update MyTetra.</source>
         <source>&amp;Help</source>
         <translation>Справка</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
-        <source>About MyTetra</source>
-        <translation>О программе MyTetra</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1383"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
         <source>About Qt</source>
@@ -5203,12 +5439,7 @@ You need to update MyTetra.</source>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;Техническая информация&lt;/b&gt;</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
-        <source>MyTetra: can&apos;t synchronization</source>
-        <translation>MyTetra: Синхронизация невозможна</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2502"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Не задана команда синхронизации.&lt;br&gt;Проверьте меню &quot;Инструменты&quot;, &quot;Настройки&quot;, раздел &quot;Синхронизация&quot;.</translation>
@@ -5218,12 +5449,7 @@ You need to update MyTetra.</source>
 Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation type="obsolete">Не задана команда синхронизации.\nПроверьте меню \&quot;Инструменты\&quot;, \&quot;Настройки\&quot;, раздел \&quot;Синхронизация\&quot;.</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
-        <source>MyTetra synchronization</source>
-        <translation>Синхронизация MyTetra</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2522"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>Происходит синхронизация. Пожалуйста, подождите...</translation>
@@ -5234,12 +5460,7 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>&amp;Restore window</source>
         <translation>Показать окно</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
-        <source>MCP session is active%1, MyTetra works in read-only mode</source>
-        <translation>MCP-сессия активна%1, MyTetra работает в режиме только чтения</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2032"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2560"/>
         <source>Ma&amp;ximize window</source>
@@ -5406,7 +5627,44 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <source>; peers: %1</source>
         <translation>; пиры: %1</translation>
-    </message></context>
+    </message>    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
+        <source>About SyncTetra</source>
+        <translation>О программе SyncTetra</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
+        <source>SyncTetra: can&apos;t synchronization</source>
+        <translation>SyncTetra: Синхронизация невозможна</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
+        <source>SyncTetra synchronization</source>
+        <translation>Синхронизация SyncTetra</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
+        <source>MCP session is active%1, SyncTetra works in read-only mode</source>
+        <translation>MCP-сессия активна%1, SyncTetra работает в режиме только чтения</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;SyncTetra&lt;/b&gt; - fork MyTetra,&lt;br/&gt;smart manager for information collecting,&lt;br/&gt;с возможностью делиться базой знаний через syncthing/etc.&lt;br/&gt;&lt;br/&gt;</source>
+        <translation>&lt;b&gt;SyncTetra&lt;/b&gt; — форк MyTetra,&lt;br/&gt;умный менеджер для сбора информации,&lt;br/&gt;с возможностью делиться базой знаний через syncthing/etc.&lt;br/&gt;&lt;br/&gt;</translation>
+    </message>
+    <message>
+        <source>Author MyTetra: Sergey M. Stepanov (xintrea@gmail.com)&lt;br/&gt;</source>
+        <translation>Автор MyTetra: Sergey M. Stepanov (xintrea@gmail.com)&lt;br/&gt;</translation>
+    </message>
+    <message>
+        <source>Author SyncTetra: Serg_St (scoute.me@gmail.com)&lt;br/&gt;&lt;br/&gt;</source>
+        <translation>Автор SyncTetra: Serg_St (scoute.me@gmail.com)&lt;br/&gt;&lt;br/&gt;</translation>
+    </message>
+    <message>
+        <source>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</source>
+        <translation>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</translation>
+    </message>
+</context>
 <context>
     <name>MathExpressionFormatter</name>
     <message>
@@ -5629,18 +5887,18 @@ in application settings in Crypt section.</source>
 </context>
 <context>
     <name>PeriodicCheckBase</name>
-    <message>
+            <message>
         <source>The database was changed by external application.
-MyTetra needs to reload the database tree to keep data consistency.</source>
+SyncTetra needs to reload the database tree to keep data consistency.</source>
         <translation type="vanished">База данных была изменена сторонней программой.
-MyTetra перечитает дерево для продолжения работы с новыми данными.</translation>
+SyncTetra перечитает дерево для продолжения работы с новыми данными.</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/PeriodicCheckBase.cpp" line="65"/>
         <source>The database was changed by external application or services.
-MyTetra reload the database tree to keep data consistency.</source>
+SyncTetra reload the database tree to keep data consistency.</source>
         <translation>База данных была изменена сторонней программой или сервисом.
-MyTetra перечитает дерево для продолжения работы с новыми данными.</translation>
+SyncTetra перечитает дерево для продолжения работы с новыми данными.</translation>
     </message>
 </context>
 <context>
@@ -5653,12 +5911,7 @@ MyTetra перечитает дерево для продолжения рабо
 </context>
 <context>
     <name>PrintPreview</name>
-    <message>
-        <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
-        <source>MyTetra - Print Preview</source>
-        <translation>MyTetra — Предпросмотр страницы</translation>
-    </message>
-    <message>
+        <message>
         <source>&amp;Print...</source>
         <translation type="vanished">Печать...</translation>
     </message>
@@ -5694,6 +5947,11 @@ MyTetra перечитает дерево для продолжения рабо
     <message>
         <source>&amp;Close</source>
         <translation type="vanished">Закрыть [x]</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
+        <source>SyncTetra - Print Preview</source>
+        <translation>SyncTetra — Предпросмотр страницы</translation>
     </message>
 </context>
 <context>
@@ -5751,31 +6009,13 @@ MyTetra перечитает дерево для продолжения рабо
         <source>Unable to rename the file %1 from disk: file not found.</source>
         <translation>Невозможно переименовать файл %1 на диске: файл не найден</translation>
     </message>
-    <message>
-        <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
-        <source>The database is not consistent.
-The directory %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
-        <translation>Целостность базы данных нарушена.
-Директория %1 не найдена.
-Чтобы исправить ошибку, MyTetra создаст пустую запись.</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1061"/>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1080"/>
         <source>Warning!</source>
         <translation>Внимание!</translation>
     </message>
-    <message>
-        <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
-        <source>The database is not consistent.
-The file %1 is not found.
-MyTetra will try to create a blank entry to fix it.</source>
-        <translation>Целостность базы данных нарушена.
-Файл %1 не найден.
-Чтобы исправить ошибку, MyTetra создаст пустую запись.</translation>
-    </message>
-    <message>
+        <message>
         <source>Edit config file (dangerous!)</source>
         <translation type="vanished">Редактирование конфиг-файла (Аккуратно!)</translation>
     </message>
@@ -6098,13 +6338,7 @@ MyTetra will try to create a blank entry to fix it.</source>
         <source>Print</source>
         <translation type="obsolete">Печать</translation>
     </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
-        <source>MyTetra settings</source>
-        <translation>Настройки MyTetra</translation>
-    </message>
-    <message>
+        <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="120"/>
         <source>Main</source>
@@ -6311,17 +6545,7 @@ Please report about this problem to the developers.</source>
         <source>Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
         <translation>Снять звезду с заметки. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
     </message>
-    <message>
-        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="613"/>
-        <source>Export a branch subtree to a directory in MyTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.</source>
-        <translation>Выгрузить поддерево ветки в каталог в обменном формате MyTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="632"/>
-        <source>Import a branch subtree from a MyTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.</source>
-        <translation>Вгрузить поддерево ветки из обменного каталога MyTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
-    </message>
-    <message>
+            <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="648"/>
         <source>Same-name or same-text note groups.</source>
         <translation>Группы заметок с одинаковым именем или текстом.</translation>
@@ -6375,6 +6599,44 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="90"/>
         <source>Editor settings...</source>
         <translation>Настройки редактора...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
+        <source>The database is not consistent.
+The directory %1 is not found.
+SyncTetra will try to create a blank entry to fix it.</source>
+        <translation>Целостность базы данных нарушена.
+Директория %1 не найдена.
+Чтобы исправить ошибку, SyncTetra создаст пустую запись.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
+        <source>The database is not consistent.
+The file %1 is not found.
+SyncTetra will try to create a blank entry to fix it.</source>
+        <translation>Целостность базы данных нарушена.
+Файл %1 не найден.
+Чтобы исправить ошибку, SyncTetra создаст пустую запись.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
+        <source>SyncTetra settings</source>
+        <translation>Настройки SyncTetra</translation>
+    </message>
+    <message>
+        <source>Teamwork</source>
+        <translation>Работа в команде</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="613"/>
+        <source>Export a branch subtree to a directory in SyncTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Выгрузить поддерево ветки в каталог в обменном формате SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="632"/>
+        <source>Import a branch subtree from a SyncTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Вгрузить поддерево ветки из обменного каталога SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
     </message>
 </context>
 <context>
@@ -7769,6 +8031,30 @@ Enable it in Settings on the History page.</source>
         <source>Move voice file and link into another note</source>
         <translation>Переместить файл и ссылку голосовой заметки в другую заметку</translation>
     </message>
+    <message>
+        <source>Publish branch to shared directory</source>
+        <translation>Опубликовать ветку в общий каталог</translation>
+    </message>
+    <message>
+        <source>Publish branch to common directory (shared)</source>
+        <translation>Опубликовать ветку в общий каталог (shared)</translation>
+    </message>
+    <message>
+        <source>Update branch publication</source>
+        <translation>Обновить публикацию ветки</translation>
+    </message>
+    <message>
+        <source>Force update of branch publication</source>
+        <translation>Принудительно обновить публикацию ветки</translation>
+    </message>
+    <message>
+        <source>Revoke branch publication</source>
+        <translation>Отозвать публикацию ветки</translation>
+    </message>
+    <message>
+        <source>Revoke branch publication to trash</source>
+        <translation>Отозвать публикацию ветки в корзину</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -7865,10 +8151,10 @@ Enable it in Settings on the History page.</source>
         <source>&lt;b&gt;Warning:&lt;/b&gt; Some keys sequences are bindings as global hot keys in your OS. </source>
         <translation>&lt;b&gt;Внимание&lt;/b&gt; Некоторые сочетания клавиш закреплены в вашей ОС как глобальные горячие клавиши. </translation>
     </message>
-    <message>
+        <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="227"/>
-        <source>Do not use these shortcuts in MyTetra.</source>
-        <translation>Не используйте такие сочетания клавиш в MyTetra.</translation>
+        <source>Do not use these shortcuts in SyncTetra.</source>
+        <translation>Не используйте такие сочетания клавиш в SyncTetra.</translation>
     </message>
 </context>
 <context>
@@ -8881,6 +9167,768 @@ This cannot be undone.</source>
         <location filename="../../../src/libraries/wyedit/EditorStructurePanel.cpp" line="23"/>
         <source>Outline</source>
         <translation>Оглавление</translation>
+    </message>
+</context>
+<context>
+    <name>SubscriptionImportEngine</name>
+    <message>
+        <source>Cannot open %1/branch.xml</source>
+        <translation>Не удаётся открыть %1/branch.xml</translation>
+    </message>
+    <message>
+        <source>Publication branch.xml is broken</source>
+        <translation>Файл публикации branch.xml повреждён</translation>
+    </message>
+    <message>
+        <source>Publication is not loaded</source>
+        <translation>Публикация не загружена</translation>
+    </message>
+    <message>
+        <source>Tree model is not passed</source>
+        <translation>Модель дерева не передана</translation>
+    </message>
+    <message>
+        <source>Subscription registry is not passed</source>
+        <translation>Реестр подписок не передан</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>неизвестный</translation>
+    </message>
+    <message>
+        <source>branch</source>
+        <translation>ветка</translation>
+    </message>
+    <message>
+        <source>Cannot create import container</source>
+        <translation>Не удаётся создать контейнер импорта</translation>
+    </message>
+    <message>
+        <source>Import container is not found in tree</source>
+        <translation>Контейнер импорта не найден в дереве</translation>
+    </message>
+    <message>
+        <source>Cannot create owner folder</source>
+        <translation>Не удаётся создать папку владельца</translation>
+    </message>
+    <message>
+        <source>Branch %1 is not found in publication</source>
+        <translation>Ветка %1 не найдена в публикации</translation>
+    </message>
+    <message>
+        <source>Parent branch %1 is not found in tree</source>
+        <translation>Ветка-родитель %1 не найдена в дереве</translation>
+    </message>
+    <message>
+        <source>No tree model to create a branch</source>
+        <translation>Нет модели дерева для создания ветки</translation>
+    </message>
+    <message>
+        <source>Local copy of publication is not found</source>
+        <translation>Локальная копия публикации не найдена</translation>
+    </message>
+    <message>
+        <source>Target branch is not found in tree</source>
+        <translation>Ветка-приёмник не найдена в дереве</translation>
+    </message>
+    <message>
+        <source>Cannot create branch</source>
+        <translation>Не удаётся создать ветку</translation>
+    </message>
+    <message>
+        <source>No tree model to move a branch</source>
+        <translation>Нет модели дерева для перемещения ветки</translation>
+    </message>
+    <message>
+        <source>Cannot move branch «%1»</source>
+        <translation>Не удаётся переместить ветку «%1»</translation>
+    </message>
+    <message>
+        <source>Record %1 is not found in publication</source>
+        <translation>Запись %1 не найдена в публикации</translation>
+    </message>
+    <message>
+        <source>Record %1 is not found in branch.xml</source>
+        <translation>Запись %1 не найдена в branch.xml</translation>
+    </message>
+    <message>
+        <source>Cannot insert record into branch</source>
+        <translation>Не удаётся вставить запись в ветку</translation>
+    </message>
+    <message>
+        <source>Record inserted but not found in table</source>
+        <translation>Запись вставлена, но не найдена в таблице</translation>
+    </message>
+    <message>
+        <source>Record directory %1 is not found in publication</source>
+        <translation>Каталог записи %1 не найден в публикации</translation>
+    </message>
+    <message>
+        <source>Cannot create record directory %1</source>
+        <translation>Не удаётся создать каталог записи %1</translation>
+    </message>
+    <message>
+        <source>Cannot copy file %1 to record</source>
+        <translation>Не удаётся скопировать файл %1 в запись</translation>
+    </message>
+</context>
+<context>
+    <name>SharedDirWatcher</name>
+    <message>
+        <source>Journal shared/.git is not found</source>
+        <translation>Журнал shared/.git не найден</translation>
+    </message>
+    <message>
+        <source>git is not available in PATH</source>
+        <translation>git недоступен в PATH</translation>
+    </message>
+    <message>
+        <source>Journal is empty (no snapshots)</source>
+        <translation>Журнал пуст (нет снимков)</translation>
+    </message>
+</context>
+<context>
+    <name>SubscriptionPanel</name>
+    <message>
+        <source>Subscriptions</source>
+        <translation>Подписки</translation>
+    </message>
+    <message>
+        <source>My publications</source>
+        <translation>Мои публикации</translation>
+    </message>
+    <message>
+        <source>Available</source>
+        <translation>Доступно</translation>
+    </message>
+    <message>
+        <source>(shared directory is not set)</source>
+        <translation>(общий каталог не задан)</translation>
+    </message>
+    <message>
+        <source>(no publications — check that Syncthing syncs the sync/ folder)</source>
+        <translation>(публикаций нет — проверьте, что Syncthing синхронизирует папку sync/)</translation>
+    </message>
+    <message>
+        <source>On every device, share only the sync/ folder inside the shared directory. If publications do not appear, verify the Syncthing folder path and that the sync is complete.</source>
+        <translation>На каждом устройстве расшарьте только папку sync/ внутри общего каталога. Если публикации не появляются, проверьте путь папки Syncthing и завершённость синхронизации.</translation>
+    </message>
+    <message>
+        <source> — %1</source>
+        <translation> — %1</translation>
+    </message>
+    <message>
+        <source> *</source>
+        <translation> *</translation>
+    </message>
+    <message>
+        <source> (...</source>
+        <translation> (...</translation>
+    </message>
+    <message>
+        <source>\nUpdate is on the way — data has not fully arrived yet. Check that Syncthing syncs the sync/ folder and has converged.</source>
+        <translation>
+Обновление в пути — данные ещё не доехали полностью. Проверьте, что Syncthing синхронизирует папку sync/ и сошёлся.</translation>
+    </message>
+    <message>
+        <source>Unsubscribe</source>
+        <translation>Отписаться</translation>
+    </message>
+    <message>
+        <source>Mark as viewed</source>
+        <translation>Отметить просмотренным</translation>
+    </message>
+    <message>
+        <source>Open slice...</source>
+        <translation>Открыть срез...</translation>
+    </message>
+    <message>
+        <source>Show changes / Import...</source>
+        <translation>Показать изменения / Импорт...</translation>
+    </message>
+    <message>
+        <source>Force branch update / recovery...</source>
+        <translation>Принудительно обновить ветку / восстановление...</translation>
+    </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation>Отозвать публикацию...</translation>
+    </message>
+    <message>
+        <source>Subscribe</source>
+        <translation>Подписаться</translation>
+    </message>
+    <message>
+        <source>Refresh list</source>
+        <translation>Обновить список</translation>
+    </message>
+    <message>
+        <source>Restore sync/ from local...</source>
+        <translation>Восстановить sync/ из local/...</translation>
+    </message>
+    <message>
+        <source>Restore sync/ from journal... (%1)</source>
+        <translation>Восстановить sync/ из журнала... (%1)</translation>
+    </message>
+    <message>
+        <source>Archive journal history... (%1)</source>
+        <translation>Архивировать историю журнала... (%1)</translation>
+    </message>
+    <message>
+        <source>Journal unavailable: git not found in PATH</source>
+        <translation>Журнал недоступен: git не найден в PATH</translation>
+    </message>
+    <message>
+        <source>(journal is empty — nothing to restore)</source>
+        <translation>(журнал пуст — восстанавливать нечего)</translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation>Восстановление из local</translation>
+    </message>
+    <message>
+        <source>The sync/ mirror will be rebuilt from the local/ authority (only own publications, no git).\n\nContinue?</source>
+        <translation>Зеркало sync/ будет перестроено из авторитета local/ (только свои публикации владельца, без git).
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Publications restored: %1.</source>
+        <translation>Восстановлено публикаций: %1.</translation>
+    </message>
+    <message>
+        <source>Recovery is not required.</source>
+        <translation>Восстановление не требуется.</translation>
+    </message>
+    <message>
+        <source>Cannot restore from local/:\n%1</source>
+        <translation>Не удалось восстановить из local/:
+%1</translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation>Восстановление из журнала</translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation>В журнале %1 снимков(а) области sync/.</translation>
+    </message>
+    <message>
+        <source>\nThe sync/ area is empty or broken — recovery is required.</source>
+        <translation>
+Область sync/ пуста или повреждена — восстановление необходимо.</translation>
+    </message>
+    <message>
+        <source>\nThe sync/ area contains consistent publications.</source>
+        <translation>
+Область sync/ содержит целостные публикации.</translation>
+    </message>
+    <message>
+        <source>Restore from journal:\n  — only publications missing on disk;\n  — the whole sync/ area (replace current state).</source>
+        <translation>Восстановить из журнала:
+  — только недостающие на диске публикации;
+  — всю область sync/ (заменить текущее состояние).</translation>
+    </message>
+    <message>
+        <source>Only missing</source>
+        <translation>Только недостающие</translation>
+    </message>
+    <message>
+        <source>Whole sync/</source>
+        <translation>Весь sync/</translation>
+    </message>
+    <message>
+        <source>Recovery is complete.</source>
+        <translation>Восстановление завершено.</translation>
+    </message>
+    <message>
+        <source>Cannot restore from journal:\n%1</source>
+        <translation>Не удалось восстановить из журнала:
+%1</translation>
+    </message>
+    <message>
+        <source>Archive journal history</source>
+        <translation>Архивирование истории журнала</translation>
+    </message>
+    <message>
+        <source>Journal history contains %1 snapshot(s).\nAfter archiving, the current state will become the only snapshot, and the previous history will be deleted (irreversibly).\n\nContinue?</source>
+        <translation>История журнала содержит %1 снимков(а).
+После архивирования текущее состояние станет единственным снимком, а прежняя история будет удалена (необратимо).
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>Journal history is archived.</source>
+        <translation>История журнала архивирована.</translation>
+    </message>
+    <message>
+        <source>Cannot archive history:\n%1</source>
+        <translation>Не удалось архивировать историю:
+%1</translation>
+    </message>
+    <message>
+        <source>This is your own publication. No need to subscribe to it.</source>
+        <translation>Это ваша собственная публикация. Подписываться на неё не нужно.</translation>
+    </message>
+    <message>
+        <source>Publication has not fully arrived yet. Subscription will become available after synchronization completes.</source>
+        <translation>Публикация ещё не доехала полностью. Подписка станет доступна после завершения синхронизации.</translation>
+    </message>
+    <message>
+        <source>Publication has not fully arrived yet. It can be marked as viewed after synchronization completes.</source>
+        <translation>Публикация ещё не доехала полностью. Отметить просмотренным можно после завершения синхронизации.</translation>
+    </message>
+</context>
+<context>
+    <name>BranchSliceDialog</name>
+    <message>
+        <source>Slice: publication is broken</source>
+        <translation>Срез: публикация повреждена</translation>
+    </message>
+    <message>
+        <source> — %1</source>
+        <translation> — %1</translation>
+    </message>
+    <message>
+        <source>Slice: %1</source>
+        <translation>Срез: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — version %2, published %3</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; — версия %2, опубликовано %3</translation>
+    </message>
+    <message>
+        <source>Slice</source>
+        <translation>Срез</translation>
+    </message>
+    <message>
+        <source> / </source>
+        <translation> / </translation>
+    </message>
+    <message>
+        <source>\nauthor: </source>
+        <translation>
+автор: </translation>
+    </message>
+    <message>
+        <source>\ntags: </source>
+        <translation>
+метки: </translation>
+    </message>
+    <message>
+        <source>\nctime: </source>
+        <translation>
+создано: </translation>
+    </message>
+    <message>
+        <source>Deleted by owner</source>
+        <translation>Удалено владельцем</translation>
+    </message>
+    <message>
+        <source>Branch: %1</source>
+        <translation>Ветка: %1</translation>
+    </message>
+    <message>
+        <source>Branch deleted by owner</source>
+        <translation>Ветка удалена владельцем</translation>
+    </message>
+    <message>
+        <source>Record: %1</source>
+        <translation>Запись: %1</translation>
+    </message>
+    <message>
+        <source>Record deleted by owner</source>
+        <translation>Запись удалена владельцем</translation>
+    </message>
+    <message>
+        <source>new records: %1</source>
+        <translation>новых записей: %1</translation>
+    </message>
+    <message>
+        <source>changed: %1</source>
+        <translation>изменено: %1</translation>
+    </message>
+    <message>
+        <source>structure changes: %1</source>
+        <translation>изменения структуры: %1</translation>
+    </message>
+    <message>
+        <source>Changes since last import: %1</source>
+        <translation>Изменений с последнего импорта: %1</translation>
+    </message>
+    <message>
+        <source>; </source>
+        <translation>; </translation>
+    </message>
+    <message>
+        <source>&lt;font color=\"red\"&gt;deleted by owner: %1 branches, %2 records&lt;/font&gt;</source>
+        <translation>&lt;font color="red"&gt;удалено владельцем: веток %1, записей %2&lt;/font&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;%1</source>
+        <translation>&lt;br&gt;%1</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;font color=\"red\"&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;i&gt;This object was deleted by the owner in the current publication version.&lt;br&gt;The previously imported local copy stays in your database; deleting it is only possible explicitly in the \"What changed\" dialog.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;font color="red"&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;i&gt;Этот объект удалён владельцем в текущей версии публикации.&lt;br&gt;Ранее импортированная локальная копия остаётся в вашей базе; её удаление — только явным действием в диалоге «Что изменилось».&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Select a record on the left to view.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Выберите запись слева для просмотра.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Record file is not found.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;%1&lt;/p&gt;&lt;p&gt;&lt;i&gt;Файл записи не найден.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+</context>
+<context>
+    <name>ChangeViewDialog</name>
+    <message>
+        <source> — %1</source>
+        <translation> — %1</translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation>Изменения: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — publication changes.&lt;br&gt;Select what to import. Deletions are marked as dangerous.</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; — изменения публикации.&lt;br&gt;Выберите, что импортировать. Удаления отмечены как опасные.</translation>
+    </message>
+    <message>
+        <source>Custom (manually)</source>
+        <translation>Выборочно (вручную)</translation>
+    </message>
+    <message>
+        <source>New records only</source>
+        <translation>Только новые записи</translation>
+    </message>
+    <message>
+        <source>All except deletions</source>
+        <translation>Всё, кроме удалений</translation>
+    </message>
+    <message>
+        <source>All, including deletions</source>
+        <translation>Всё, включая удаления</translation>
+    </message>
+    <message>
+        <source>Import mode:</source>
+        <translation>Режим импорта:</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation>Изменение</translation>
+    </message>
+    <message>
+        <source>Diff</source>
+        <translation>Diff</translation>
+    </message>
+    <message>
+        <source>Object</source>
+        <translation>Объект</translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation>Описание</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Изменения</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>История</translation>
+    </message>
+    <message>
+        <source>Apply selected</source>
+        <translation>Применить выбранное</translation>
+    </message>
+    <message>
+        <source>Mark as viewed</source>
+        <translation>Отметить просмотренным</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Diff in separate window…</source>
+        <translation>Diff в отдельном окне…</translation>
+    </message>
+    <message>
+        <source>diff</source>
+        <translation>diff</translation>
+    </message>
+    <message>
+        <source>Double click — open diff in separate window</source>
+        <translation>Двойной клик — открыть diff в отдельном окне</translation>
+    </message>
+    <message>
+        <source>History is unavailable.</source>
+        <translation>История недоступна.</translation>
+    </message>
+    <message>
+        <source>No version history (publication was created before the journal).</source>
+        <translation>История версий отсутствует (публикация создана до введения журнала).</translation>
+    </message>
+    <message>
+        <source>Version history is empty.</source>
+        <translation>История версий пуста.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;v%1&lt;/b&gt; — %2 (%3)&lt;br&gt;</source>
+        <translation>&lt;b&gt;v%1&lt;/b&gt; — %2 (%3)&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&amp;nbsp;&amp;nbsp;&lt;i&gt;first publication&lt;/i&gt;&lt;br&gt;</source>
+        <translation>&amp;nbsp;&amp;nbsp;&lt;i&gt;первая публикация&lt;/i&gt;&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&amp;nbsp;&amp;nbsp;• %1: %2&lt;br&gt;</source>
+        <translation>&amp;nbsp;&amp;nbsp;• %1: %2&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>New record</source>
+        <translation>Новая запись</translation>
+    </message>
+    <message>
+        <source>Record change</source>
+        <translation>Изменение записи</translation>
+    </message>
+    <message>
+        <source>Record delete</source>
+        <translation>Удаление записи</translation>
+    </message>
+    <message>
+        <source>Branch rename</source>
+        <translation>Переименование ветки</translation>
+    </message>
+    <message>
+        <source>Branch move</source>
+        <translation>Перемещение ветки</translation>
+    </message>
+    <message>
+        <source>New branch</source>
+        <translation>Новая ветка</translation>
+    </message>
+    <message>
+        <source>Branch delete</source>
+        <translation>Удаление ветки</translation>
+    </message>
+    <message>
+        <source>is added to the personal database</source>
+        <translation>добавляется в личную базу</translation>
+    </message>
+    <message>
+        <source>DANGER: local copy will be moved to trash</source>
+        <translation>ОПАСНО: локальная копия будет перенесена в корзину</translation>
+    </message>
+    <message>
+        <source>a local copy of the branch is created</source>
+        <translation>создаётся локальная копия ветки</translation>
+    </message>
+    <message>
+        <source>rename of the local branch copy</source>
+        <translation>переименование локальной копии ветки</translation>
+    </message>
+    <message>
+        <source>move of the local branch copy</source>
+        <translation>перемещение локальной копии ветки</translation>
+    </message>
+    <message>
+        <source>DANGER: branch with contents will go to trash</source>
+        <translation>ОПАСНО: ветка с содержимым уйдёт в корзину</translation>
+    </message>
+    <message>
+        <source>fields: %1</source>
+        <translation>поля: %1</translation>
+    </message>
+    <message>
+        <source>text</source>
+        <translation>текст</translation>
+    </message>
+    <message>
+        <source>+attachments: %1</source>
+        <translation>+вложения: %1</translation>
+    </message>
+    <message>
+        <source>-attachments: %1</source>
+        <translation>-вложения: %1</translation>
+    </message>
+    <message>
+        <source>tree structure (not imported)</source>
+        <translation>структура дерева (не импортируется)</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;New record&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Новая запись&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Record change&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Изменение записи&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;%1&lt;/b&gt;:&lt;br&gt;</source>
+        <translation>&lt;br&gt;&lt;b&gt;%1&lt;/b&gt;:&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;i&gt;Was:&lt;/i&gt; %1&lt;br&gt;</source>
+        <translation>&lt;i&gt;Было:&lt;/i&gt; %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;i&gt;Now:&lt;/i&gt; %1&lt;br&gt;</source>
+        <translation>&lt;i&gt;Стало:&lt;/i&gt; %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Record text&lt;/b&gt;:&lt;br&gt;%1</source>
+        <translation>&lt;br&gt;&lt;b&gt;Текст записи&lt;/b&gt;:&lt;br&gt;%1</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Record text&lt;/b&gt; changed by owner.</source>
+        <translation>&lt;br&gt;&lt;b&gt;Текст записи&lt;/b&gt; изменён владельцем.</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Attachments added&lt;/b&gt;: %1</source>
+        <translation>&lt;br&gt;&lt;b&gt;Добавлены вложения&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>&lt;br&gt;&lt;b&gt;Attachments removed&lt;/b&gt;: %1</source>
+        <translation>&lt;br&gt;&lt;b&gt;Удалены вложения&lt;/b&gt;: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Record delete&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Удаление записи&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy will be moved to trash and removed from the tree.</source>
+        <translation>Локальная копия будет перенесена в корзину и убрана из дерева.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch move&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Перемещение ветки&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy of the branch will be moved to the owner parent branch.</source>
+        <translation>Локальная копия ветки будет перемещена к ветке-родителю владельца.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch delete&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Удаление ветки&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy of the branch with all records will be moved to trash.</source>
+        <translation>Локальная копия ветки со всеми записями будет перенесена в корзину.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;New branch&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Новая ветка&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>A local copy of the branch will be created; its records are imported separately.</source>
+        <translation>Будет создана локальная копия ветки; её записи импортируются отдельно.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Branch rename&lt;/b&gt;: %1&lt;br&gt;</source>
+        <translation>&lt;b&gt;Переименование ветки&lt;/b&gt;: %1&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>The local copy of the branch will be renamed.</source>
+        <translation>Локальная копия ветки будет переименована.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt;: %2&lt;br&gt;</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt;: %2&lt;br&gt;</translation>
+    </message>
+    <message>
+        <source>Nothing is selected.</source>
+        <translation>Ничего не выбрано.</translation>
+    </message>
+    <message>
+        <source>Dangerous changes selected: %1 (deletions).\nLocal copies will be moved to trash. Continue?</source>
+        <translation>Выбрано опасных изменений: %1 (удаления).
+Локальные копии будут перенесены в корзину. Продолжить?</translation>
+    </message>
+    <message>
+        <source>All changes will be marked as viewed without importing into the personal database. Continue?</source>
+        <translation>Все изменения будут помечены просмотренными без импорта в личную базу. Продолжить?</translation>
+    </message>
+</context>
+<context>
+    <name>TextDiffDialog</name>
+    <message>
+        <source>Diff: %1</source>
+        <translation>Diff: %1</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;%1&lt;/b&gt; — text comparison.&lt;br&gt;Red is before (local copy), green is after (owner version).</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; — сравнение текста.&lt;br&gt;Красное — было (локальная копия), зелёное — стало (версия владельца).</translation>
+    </message>
+    <message>
+        <source>Line diff</source>
+        <translation>Построчный diff</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;i&gt;No local copy to compare with.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;i&gt;Нет локальной копии для сравнения.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;&lt;i&gt;Owner version text is unavailable.&lt;/i&gt;&lt;/p&gt;</source>
+        <translation>&lt;p&gt;&lt;i&gt;Текст версии владельца недоступен.&lt;/i&gt;&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Was (local copy)</source>
+        <translation>Было (локальная копия)</translation>
+    </message>
+    <message>
+        <source>Now (owner version)</source>
+        <translation>Стало (версия владельца)</translation>
+    </message>
+    <message>
+        <source>diff and render side by side</source>
+        <translation>diff и рендер в одном ряду</translation>
+    </message>
+    <message>
+        <source>diff above render</source>
+        <translation>diff сверху рендера</translation>
+    </message>
+</context>
+<context>
+    <name>AppConfigPage_Team</name>
+    <message>
+        <source>For example: Ivan Petrov</source>
+        <translation>Например: Иван Петров</translation>
+    </message>
+    <message>
+        <source>For example: ivan@example.com</source>
+        <translation>Например: ivan@example.com</translation>
+    </message>
+    <message>
+        <source>Generate new ID</source>
+        <translation>Сгенерировать новый ID</translation>
+    </message>
+    <message>
+        <source>Directory for publishing branches, synchronized via Syncthing. Empty means the default directory near the program binary.</source>
+        <translation>Каталог для публикации веток, синхронизируется через Syncthing. Пусто — каталог по умолчанию рядом с бинарником программы.</translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation>Обзор...</translation>
+    </message>
+    <message>
+        <source>These settings identify you as the owner of branches published to the shared directory. The name and email are shown to your colleagues when they view a shared branch.</source>
+        <translation>Эти настройки идентифицируют вас как владельца веток, публикуемых в общий каталог. Имя и почта показываются коллегам при просмотре общей ветки.</translation>
+    </message>
+    <message>
+        <source>Syncthing tip: share &lt;b&gt;only&lt;/b&gt; the &lt;i&gt;sync/&lt;/i&gt; folder inside the shared directory between devices. Your personal database, the local journal and owner copies are never synchronized — only published branches travel.</source>
+        <translation>Подсказка Syncthing: расшаривайте между устройствами &lt;b&gt;только&lt;/b&gt; папку &lt;i&gt;sync/&lt;/i&gt; внутри общего каталога. Ваша личная база, локальный журнал и копии владельца никогда не синхронизируются — путешествуют только опубликованные ветки.</translation>
+    </message>
+    <message>
+        <source>One Syncthing folder = shared/sync/. Do not share the whole shared/ directory, your database or trash.</source>
+        <translation>Одна папка Syncthing = shared/sync/. Не расшаривайте весь каталог shared/, вашу базу или корзину.</translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation>Профиль</translation>
     </message>
 </context>
 </TS>

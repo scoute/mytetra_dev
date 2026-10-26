@@ -76,7 +76,7 @@ void AppConfigPage_Crypt::setupUi(void)
   howPassRequestBox->setTitle(tr("Access to encrypted data"));
 
   howPassRequestRadio1=new QRadioButton(tr("Ask the password when you click on an encrypted item"));
-  howPassRequestRadio2=new QRadioButton(tr("Ask the password at MyTetra startup"));
+  howPassRequestRadio2=new QRadioButton(tr("Ask the password at SyncTetra startup"));
 
   // Точка устанавливается возле того пункта, который настроен в конфиге
   if(mytetraConfig.get_howpassrequest()=="atClickOnCryptBranch")
@@ -403,7 +403,7 @@ void AppConfigPage_Crypt::retranslateUi(void)
 
   howPassRequestBox->setTitle(tr("Access to encrypted data"));
   howPassRequestRadio1->setText(tr("Ask the password when you click on an encrypted item"));
-  howPassRequestRadio2->setText(tr("Ask the password at MyTetra startup"));
+  howPassRequestRadio2->setText(tr("Ask the password at SyncTetra startup"));
 
   storePassRequestBox->setTitle(tr("Store password"));
   passwordSaveEnable->setText(tr("Store password locally"));

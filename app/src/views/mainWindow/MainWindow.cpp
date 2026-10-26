@@ -2034,7 +2034,7 @@ void MainWindow::initHelpMenu(void)
     helpMenu = new QMenu(tr("&Help"), this);
     this->menuBar()->addMenu(helpMenu);
 
-    actionHelpMenuAboutMyTetra = new QAction(tr("About MyTetra"), this);
+    actionHelpMenuAboutMyTetra = new QAction(tr("About SyncTetra"), this);
     helpMenu->addAction(actionHelpMenuAboutMyTetra);
 
     actionHelpMenuAboutQt = new QAction(tr("About Qt"), this);
@@ -2446,7 +2446,7 @@ QString MainWindow::mcpBannerText(void)
       peers.append(mode.isEmpty() ? it.key() : it.key()+QStringLiteral(" ")+mode);
     }
 
-    QString text=tr("MCP session is active%1, MyTetra works in read-only mode").arg(modesText);
+    QString text=tr("MCP session is active%1, SyncTetra works in read-only mode").arg(modesText);
 
     if(!peers.isEmpty())
       text+=tr("; peers: %1").arg(peers.join(QStringLiteral(", ")));
@@ -2880,7 +2880,7 @@ void MainWindow::retranslateUi(void)
     {
         helpMenu->setTitle(tr("&Help"));
 
-        actionHelpMenuAboutMyTetra->setText(tr("About MyTetra"));
+        actionHelpMenuAboutMyTetra->setText(tr("About SyncTetra"));
         actionHelpMenuAboutQt->setText(tr("About Qt"));
         actionHelpMenuTechnicalInfo->setText(tr("Technical info"));
     }
@@ -3200,7 +3200,7 @@ void MainWindow::onClickHelpAboutMyTetra(void)
     QString infoEmail;
     QString infoLicense;
 
-    infoProgramName="<b>MyTetra</b> - smart manager<br/>for information collecting<br/><br/>";
+    infoProgramName=tr("<b>SyncTetra</b> - fork MyTetra,<br/>smart manager for information collecting,<br/>с возможностью делиться базой знаний через syncthing/etc.<br/><br/>");
     infoVersion="v."+version+"<br/><br/>";
     infoAuthor="Author: Sergey M. Stepanov<br/>";
     infoEmail="Author Email:<i>xintrea@gmail.com</i><br/><br/>";
@@ -3213,7 +3213,7 @@ void MainWindow::onClickHelpAboutMyTetra(void)
             infoLicense;
 
     QMessageBox::about(this,
-                       "MyTetra v."+version,
+                       "SyncTetra v."+version,
                        info);
 }
 
@@ -3366,7 +3366,7 @@ void MainWindow::synchronization(bool visible)
     if(command.trimmed().length()==0)
     {
         QMessageBox::warning(this,
-                             tr("MyTetra: can't synchronization"),
+                             tr("SyncTetra: can't synchronization"),
                              tr("Do not set synchronization command.<br>Check the setting in \"Sync\" section in \"Tools\" menu"),
                              QMessageBox::Close);
 
@@ -3386,7 +3386,7 @@ void MainWindow::synchronization(bool visible)
 
     // Запуск команды синхронизации
     auto runner = globalParameters.getSyncroCommandRunnner();
-    runner->setWindowTitle(tr("MyTetra synchronization"));
+    runner->setWindowTitle(tr("SyncTetra synchronization"));
     runner->setMessageText(tr("Synchronization in progress, please wait..."));
     runner->setCommand(command);
     runner->run(visible);

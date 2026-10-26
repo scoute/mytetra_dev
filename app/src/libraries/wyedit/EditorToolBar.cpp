@@ -359,6 +359,12 @@ void EditorToolBar::setupToolBarTools(void)
     structure->setIcon(QIcon(":/resource/pic/edit_structure.svg"));
     structure->setObjectName("editor_tb_structure");
 
+    // Кнопка оглавления: вставка снимка H1-H3 в текст, повторный вызов
+    // обновляет снимок на месте. В линейке сразу за структурой
+    toc=new QAction(this);
+    toc->setIcon(QIcon(":/resource/pic/edit_toc.svg"));
+    toc->setObjectName("editor_tb_toc");
+
     // Кнопка закрашивания секретов
     secret=new QAction(this);
     secret->setIcon(QIcon(":/resource/pic/secret.svg"));
@@ -539,6 +545,7 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-settings", settings);
     shortcutManager.initAction("editor-reference", reference);
     shortcutManager.initAction("editor-structure", structure);
+    shortcutManager.initAction("editor-toc", toc);
     shortcutManager.initAction("editor-secret", secret);
     shortcutManager.initAction("editor-showHtml", showHtml);
     shortcutManager.initAction("editor-showFormatting", showFormatting);

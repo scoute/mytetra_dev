@@ -450,7 +450,24 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
             voiceHref=VoiceNoteHelper::bubbleHrefAt(
                 document(), cursorForPosition(m_currentMousePosition).position());
 
-        if(!imageName.isEmpty())
+        // Ссылки-действия ([copy] в маркере кода, пункты оглавления)
+        // тоже работают без Ctrl, поэтому рука-подсказка показывается
+        // сразу, а не только с зажатым Ctrl
+        QString actionHref=anchorAt(m_currentMousePosition);
+        const bool isActionLink=!actionHref.isEmpty() &&
+                                (actionHref==TypefaceFormatter::copyCodeHref() ||
+                                 actionHref.startsWith(TypefaceFormatter::tocGoPrefix()));
+
+        if(isActionLink)
+        {
+            if(!m_mouseCursorOverriden)
+            {
+                qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
+                m_mouseCursorOverriden = true;
+                globalParameters.getStatusBar()->showMessage(actionHref);
+            }
+        }
+        else if(!imageName.isEmpty())
         {
             if(!m_mouseCursorOverriden)
             {

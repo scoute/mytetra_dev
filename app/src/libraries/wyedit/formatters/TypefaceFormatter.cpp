@@ -1148,6 +1148,11 @@ void TypefaceFormatter::applyHeadingLevel(int level)
     }
 
     cursor.endEditBlock();
+
+    // Подсветка актуального уровня в меню заголовков и на кнопках
+    // обновляется сразу: курсор при смене уровня не двигается,
+    // без этого галка висела бы до первого движения курсора
+    emit updateOutlineButtonHiglight();
 }
 
 

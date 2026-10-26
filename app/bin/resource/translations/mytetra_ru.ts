@@ -5492,6 +5492,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Cursor: line %1, position %2</source>
         <translation>Курсор: строка %1, позиция %2</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="193"/>
+        <source>Outline</source>
+        <translation>Оглавление</translation>
+    </message>
 </context>
 <context>
     <name>NotePickerDialog</name>

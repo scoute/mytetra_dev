@@ -26,9 +26,18 @@ public:
     // Перечитать заголовки из документа
     void rebuild(void);
 
+    // Подпись над списком. Видна всегда, кроме случая когда панель
+    // живет в сетке MetaEditor: там подпись - отдельный виджет выше,
+    // чтобы список начинался ровно на уровне текста заметки
+    void setTitleVisible(bool visible);
+
     int count(void) const;
     QListWidgetItem *item(int row) const;
     int currentRow(void) const;
+
+    // Смещение текста первой неиндентированной строки от левого края
+    // панели: под него ровняется внешняя подпись в MetaEditor
+    int firstItemTextX(void) const;
 
 private slots:
 

@@ -2913,12 +2913,12 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorConfigFont.cpp" line="107"/>
-        <source>Apply last color on button click</source>
-        <translation>Применять последний цвет по клику на кнопку</translation>
+        <source>Apply last text/background color</source>
+        <translation>Применять последний цвет текста/фона</translation>
     </message>
     <message>
-        <source>Clicking the text or background color button paints in the last used color without opening the picker</source>
-        <translation>Клик по кнопке цвета текста или фона красит в последний использованный цвет без открытия палитры</translation>
+        <source>Clicking the text or background color button or its hotkey paints in the last used color without opening the picker</source>
+        <translation>Клик по кнопке цвета текста/фона или её горячей клавише красит последним использованным цветом без открытия палитры</translation>
     </message>
     <message>
         <source>Code color</source>
@@ -7237,16 +7237,16 @@ Enable it in Settings on the History page.</source>
         <translation>Оформить абзацы как заголовок третьего уровня</translation>
     </message>
     <message>
-        <source>Structure</source>
-        <translation>Структура</translation>
+        <source>Show/hide document structure</source>
+        <translation>Показать/скрыть структуру документа</translation>
     </message>
     <message>
         <source>Show headings outline with jump to section</source>
         <translation>Показать оглавление с переходом в раздел</translation>
     </message>
     <message>
-        <source>Table of contents</source>
-        <translation>Оглавление</translation>
+        <source>Insert table of contents</source>
+        <translation>Вставить оглавление</translation>
     </message>
     <message>
         <source>Insert or refresh the table of contents snapshot</source>
@@ -7402,8 +7402,8 @@ Enable it in Settings on the History page.</source>
         <translation>Показать или спрятать панель инструментов редактора</translation>
     </message>
     <message>
-        <source>Tabs to spaces</source>
-        <translation>Табы в пробелы</translation>
+        <source>Replace tab characters with spaces</source>
+        <translation>Замена символов табуляции в пробелы</translation>
     </message>
     <message>
         <source>Replace tab characters with spaces in selection or whole note</source>

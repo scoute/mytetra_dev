@@ -160,8 +160,8 @@ void EditorSpecialCharDialog::assembly(void)
  foreach(QPushButton *button, symbolButtons)
   button->setFont(buttonFont);
 
- // Только отмена: выбор делается кликом по символу
- QDialogButtonBox *buttonBox=new QDialogButtonBox(QDialogButtonBox::Cancel, this);
+ // Только закрытие: выбор делается кликом по символу
+ QDialogButtonBox *buttonBox=new QDialogButtonBox(QDialogButtonBox::Close, this);
  connect(buttonBox, &QDialogButtonBox::rejected, this, &EditorSpecialCharDialog::reject);
  centralLayout->addWidget(buttonBox);
 

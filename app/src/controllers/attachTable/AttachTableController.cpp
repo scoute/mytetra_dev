@@ -652,7 +652,7 @@ void AttachTableController::onShowAttachInfo(void)
                              "<b>Attach:</b> "+attachTableData->getFileNameById(id)+"\n"+\
                              "<b>Attach ID:</b> "+id+"\n"+\
                              "<b>Attach type:</b> "+attachTableData->getAttach(id).getField("type")+"\n"+\
-                             "<b>File size:</b> "+QString::number( attachTableData->getAttach(id).getFileSize() )+" bytes\n"+\
+                             "<b>File size:</b> "+DiskHelper::formatFileSize( attachTableData->getAttach(id).getFileSize() )+"\n"+\
                              "<b>Full path:</b> "+attachTableData->getAbsoluteInnerFileNameById(id)+\
                              "</p></pre>"
                              );

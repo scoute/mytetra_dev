@@ -347,6 +347,8 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
     src/libraries/GitHelper.h \
+    src/libraries/BranchPublisher.h \
+    src/libraries/SharedDirWatcher.h \
     src/libraries/UnifiedDiff.h \
     src/libraries/ChangeHistory.h \
     src/libraries/BranchDiffEngine.h \
@@ -369,6 +371,7 @@ HEADERS+=\
     src/libraries/MtTableWidget.h \
     src/views/tree/KnowTreeView.h \
     src/views/tree/KnowTreeDelegate.h \
+    src/views/tree/PublishedBadgeDelegate.h \
     src/libraries/MtStyledItemDelegate.h
 
 SOURCES = src/main.cpp \
@@ -571,6 +574,8 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
     src/libraries/GitHelper.cpp \
+    src/libraries/BranchPublisher.cpp \
+    src/libraries/SharedDirWatcher.cpp \
     src/libraries/UnifiedDiff.cpp \
     src/libraries/ChangeHistory.cpp \
     src/libraries/BranchDiffEngine.cpp \
@@ -593,6 +598,7 @@ SOURCES+=\
     src/libraries/MtTableWidget.cpp \
     src/views/tree/KnowTreeView.cpp \
     src/views/tree/KnowTreeDelegate.cpp \
+    src/views/tree/PublishedBadgeDelegate.cpp \
     src/libraries/MtStyledItemDelegate.cpp
 
 # Вендоренные статические библиотеки для голосовых заметок:

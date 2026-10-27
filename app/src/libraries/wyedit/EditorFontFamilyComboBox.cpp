@@ -1,7 +1,58 @@
 #include <QDebug>
 #include <QtGlobal>
+#include <QPainter>
+#include <QStyledItemDelegate>
 
 #include "EditorFontFamilyComboBox.h"
+
+
+// Делегат всплывающего списка: пустые строки штатный делегат
+// QFontComboBox рисует мусором (буква вместо пустого места).
+// Обертка рисует сама только их: строка-разделитель — линию,
+// ""-маркер смешанных шрифтов — пусто. Остальное отдается
+// штатному делегату без изменений
+class FontListDelegate : public QStyledItemDelegate
+{
+public:
+    explicit FontListDelegate(QAbstractItemDelegate *base, QObject *parent=nullptr)
+        : QStyledItemDelegate(parent), baseDelegate(base), separatorRow(-1) {}
+
+    void setSeparatorRow(int row) { separatorRow=row; }
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override
+    {
+        const bool isEmptyRow=index.data(Qt::DisplayRole).toString().isEmpty();
+
+        if(!isEmptyRow)
+        {
+            baseDelegate->paint(painter, option, index);
+            return;
+        }
+
+        if(option.state & QStyle::State_Selected)
+            painter->fillRect(option.rect, option.palette.highlight());
+
+        if(index.row()==separatorRow)
+        {
+            const int y=option.rect.center().y();
+            painter->setPen(option.palette.color(QPalette::Mid));
+            painter->drawLine(option.rect.left()+6, y,
+                              option.rect.right()-6, y);
+        }
+        // ""-маркер: рисуется пустым (только подсветка выше)
+    }
+
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const override
+    {
+        return baseDelegate->sizeHint(option, index);
+    }
+
+private:
+    QAbstractItemDelegate *baseDelegate;
+    int separatorRow;
+};
 
 
 EditorFontFamilyComboBox::EditorFontFamilyComboBox(QWidget *parent) :
@@ -20,6 +71,11 @@ EditorFontFamilyComboBox::EditorFontFamilyComboBox(QWidget *parent) :
     previousIndex=this->currentIndex();
 
     recentRows=0;
+
+    // Обертка над штатным делегатом вьюхи: пустые строки рисуются
+    // вручную (линия разделителя, пустой маркер), остальное как было
+    listDelegate=new FontListDelegate(this->view()->itemDelegate(), this->view());
+    this->view()->setItemDelegate(listDelegate);
 
     QRegularExpression rx(".+"); // 1 или больше символов (т. е. не пустая строка)
     QValidator *validator = new QRegularExpressionValidator(rx, this);
@@ -58,6 +114,13 @@ void EditorFontFamilyComboBox::onCurrentIndexChanged(int index)
         return;
     }
 
+    // Строка-разделитель после недавних — не выбор, откат назад
+    if(!isProgrammChanged && recentRows>0 && index==recentRows+1) {
+        qDebug() << "EditorFontFamilyComboBox::onCurrentIndexChanged. Separator row is not selectable.";
+        this->setCurrentIndex(previousIndex);
+        return;
+    }
+
     previousIndex=index;
 }
 
@@ -71,11 +134,11 @@ void EditorFontFamilyComboBox::reloadRecentFonts(const QStringList &recent, cons
 {
     this->blockSignals(true);
 
-    // Снос прошлой группы (шрифты; разделитель всегда сразу за ними)
+    // Снос прошлой группы (шрифты; линия-разделитель всегда сразу за ними)
     for(int i=0; i<recentRows; ++i)
         this->removeItem(1);
 
-    if(this->count()>1 && this->itemText(1).isEmpty())
+    if(recentRows>0 && this->count()>1)
         this->removeItem(1);
 
     recentRows=0;
@@ -90,13 +153,16 @@ void EditorFontFamilyComboBox::reloadRecentFonts(const QStringList &recent, cons
             continue;
 
         this->insertItem(row, family);
-        this->setItemData(row, QFont(family), Qt::FontRole);
         row++;
         recentRows++;
     }
 
     if(recentRows>0)
         this->insertSeparator(row);
+
+    // Разделитель известен делегату: рисует линию вместо мусора
+    if(listDelegate!=nullptr)
+        listDelegate->setSeparatorRow(recentRows>0 ? recentRows+1 : -1);
 
     // Текущий шрифт обратно (мог съехать из-за вставки строк).
     // Если он есть среди недавних — выделяется строка сверху,

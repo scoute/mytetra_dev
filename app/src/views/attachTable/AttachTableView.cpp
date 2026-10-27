@@ -22,6 +22,7 @@
 #include "models/attachTable/AttachTableModel.h"
 #include "models/attachTable/Attach.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/GestureHelper.h"
 
 
@@ -120,7 +121,7 @@ bool AttachTableView::event(QEvent *event)
   if(event->type()==QEvent::ToolTip)
   {
     QHelpEvent *helpEvent=static_cast<QHelpEvent *>(event);
-    const QString html=attachImageTooltip(indexAt(helpEvent->pos()));
+    const QString html=attachPreviewTooltip(indexAt(helpEvent->pos()));
 
     if(html.isEmpty())
       QToolTip::hideText();
@@ -131,6 +132,44 @@ bool AttachTableView::event(QEvent *event)
   }
 
   return QTableView::event(event);
+}
+
+
+// HTML предпросмотра вложения для тултипа: картинка — миниатюра,
+// текст — первые строки, остальное — строка с размером.
+// Пусто если строка невалидна
+QString AttachTableView::attachPreviewTooltip(const QModelIndex &index) const
+{
+  const QString imageHtml=attachImageTooltip(index);
+
+  if(!imageHtml.isEmpty())
+    return imageHtml;
+
+  if(!index.isValid())
+    return QString();
+
+  AttachTableModel *attachModel=qobject_cast<AttachTableModel *>(model());
+
+  if(attachModel==nullptr)
+    return QString();
+
+  const Attach attach=attachModel->getAttach(index);
+
+  if(attach.getField("type")!=QStringLiteral("file"))
+    return QString();
+
+  const QString absoluteFileName=attach.getAbsoluteInnerFileName();
+
+  if(DiskHelper::fileLooksLikeText(absoluteFileName))
+  {
+    const QString snippet=DiskHelper::readTextSnippet(absoluteFileName);
+
+    if(!snippet.isEmpty())
+      return QStringLiteral("<pre>")+snippet+QStringLiteral("</pre>");
+  }
+
+  return QStringLiteral("<b>")+attach.getField("fileName").toHtmlEscaped()+QStringLiteral("</b><br>")+
+         DiskHelper::formatFileSize(attach.getFileSize());
 }
 
 

@@ -112,11 +112,17 @@ public:
     bool get_applyLastColorOnClick(void);
     void set_applyLastColorOnClick(bool apply);
 
-    // Недавние шрифты (примененные через список), новые сверху, максимум 5.
-    // Хранение одной строкой через ";" как списки инструментов
+    // Недавние шрифты: топ-10 по частоте использования (выбор
+    // из списка и шрифт под курсором считаются использованием).
+    // Хранение одной строкой через ";" как списки инструментов.
+    // Счетчики — в recentFontsUsage ("Family=count;..."), порядок —
+    // по убыванию частоты, равные — свежие выше
     QStringList get_recentFonts(void);
     void add_recentFont(const QString &family);
+    void noteFontUsed(const QString &family);
     void set_recentFonts(const QStringList &families);
+    QString get_recentFontsUsage(void);
+    void set_recentFontsUsage(const QString &usage);
 
     // Недавние спецсимволы, новые сверху, максимум 12.
     // Хранение одной строкой через "\n" (символы могут содержать ";" и ",")
@@ -181,6 +187,7 @@ private:
     static QStringList get_parameter_table_40(bool withEndSignature=true);
     static QStringList get_parameter_table_41(bool withEndSignature=true);
     static QStringList get_parameter_table_42(bool withEndSignature=true);
+    static QStringList get_parameter_table_43(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

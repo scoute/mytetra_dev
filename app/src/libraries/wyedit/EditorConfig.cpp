@@ -2,6 +2,7 @@
 #include <QtGlobal>
 #include <QtDebug>
 #include <QTextCodec>
+#include <algorithm>
 
 #include "EditorConfig.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -552,6 +553,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_40;
     parameterFunctions << get_parameter_table_41;
     parameterFunctions << get_parameter_table_42;
+    parameterFunctions << get_parameter_table_43;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1410,6 +1412,28 @@ QStringList EditorConfig::get_parameter_table_42(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_43(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 42
+    table << get_parameter_table_42(false);
+
+    // История использования шрифтов "Family=count;..." для топ-10
+    // недавних по частоте. Чистое добавление ключа:
+    // update_version_change_value() не трогается
+
+    table << "recentFontsUsage" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1446,22 +1470,100 @@ void EditorConfig::set_recentSymbols(const QStringList &symbols)
 
 QStringList EditorConfig::get_recentFonts(void)
 {
-    // Пустая строка — легальное "пусто", чтения напрямую:
-    // get_parameter() считает пустоту ошибкой
-    return conf->value("recentFonts").toString().split(";", Qt::SkipEmptyParts);
+    // Топ-10 по частоте из истории использования. Пустая история —
+    // легальное "пусто", плюс ленивая миграция старого списка
+    // recentFonts (порядок списка = давность, счетчик 1 каждому)
+    const QString usage=get_recentFontsUsage();
+
+    if(usage.isEmpty())
+    {
+        const QStringList legacy=conf->value("recentFonts").toString().split(";", Qt::SkipEmptyParts);
+
+        if(!legacy.isEmpty())
+        {
+            QStringList seeded;
+            foreach(const QString &family, legacy)
+                if(!family.isEmpty())
+                    seeded << family+QStringLiteral("=1");
+
+            set_recentFontsUsage(seeded.join(";"));
+        }
+
+        return legacy.mid(0, 10);
+    }
+
+    QStringList result;
+    foreach(const QString &entry, usage.split(";", Qt::SkipEmptyParts))
+    {
+        const QString family=entry.section("=", 0, 0);
+
+        if(!family.isEmpty())
+            result << family;
+
+        if(result.size()>=10)
+            break;
+    }
+
+    return result;
+}
+
+
+// Использование шрифта (выбор из списка или шрифт под курсором):
+// счетчик растет, список переупорядочивается по частоте,
+// равные — свежие выше. Хранится с запасом (30), показывается топ-10
+void EditorConfig::noteFontUsed(const QString &family)
+{
+    if(family.isEmpty())
+        return;
+
+    QList<QPair<QString, int>> stats;
+    foreach(const QString &entry, get_recentFontsUsage().split(";", Qt::SkipEmptyParts))
+    {
+        const QString name=entry.section("=", 0, 0);
+        const int count=entry.section("=", 1, 1).toInt();
+
+        if(!name.isEmpty())
+            stats << qMakePair(name, qMax(count, 1));
+    }
+
+    bool found=false;
+    for(int i=0; i<stats.size(); ++i)
+        if(stats.at(i).first==family)
+        {
+            stats[i].second++;
+            stats.move(i, 0);
+            found=true;
+            break;
+        }
+
+    if(!found)
+        stats.prepend(qMakePair(family, 1));
+
+    std::stable_sort(stats.begin(), stats.end(),
+                     [](const QPair<QString, int> &a, const QPair<QString, int> &b)
+                     { return a.second>b.second; });
+
+    while(stats.size()>30)
+        stats.removeLast();
+
+    QStringList packed;
+    foreach(const auto &item, stats)
+        packed << item.first+QStringLiteral("=")+QString::number(item.second);
+
+    set_recentFontsUsage(packed.join(";"));
+
+    QStringList top;
+    for(int i=0; i<stats.size() && i<10; ++i)
+        top << stats.at(i).first;
+
+    set_recentFonts(top);
 }
 
 
 void EditorConfig::add_recentFont(const QString &family)
 {
-    if(family.isEmpty())
-        return;
-
-    QStringList list=get_recentFonts();
-    list.removeAll(family);
-    list.prepend(family);
-
-    set_recentFonts(list);
+    // Явный выбор шрифта — тоже использование
+    noteFontUsed(family);
 }
 
 
@@ -1471,10 +1573,24 @@ void EditorConfig::set_recentFonts(const QStringList &families)
 
     list.removeAll(QString());
 
-    while(list.size()>5)
+    while(list.size()>10)
         list.removeLast();
 
     conf->setValue("recentFonts", list.join(";"));
+}
+
+
+QString EditorConfig::get_recentFontsUsage(void)
+{
+    // Пустая строка — легальное "пусто", чтения напрямую:
+    // get_parameter() считает пустоту ошибкой
+    return conf->value("recentFontsUsage").toString();
+}
+
+
+void EditorConfig::set_recentFontsUsage(const QString &usage)
+{
+    conf->setValue("recentFontsUsage", usage);
 }
 
 

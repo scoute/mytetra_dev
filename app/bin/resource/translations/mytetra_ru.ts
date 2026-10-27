@@ -6858,6 +6858,10 @@ Enable it in Settings on the History page.</source>
         <translation>Ссылка на саму себя</translation>
     </message>
     <message>
+        <source>A link to the note itself makes no sense.</source>
+        <translation>Ссылка на саму себя в заметке не имеет смысла.</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp" line="137"/>
         <source>A link to the note itself makes no sense.</source>
         <translation>Ссылка на саму себя в заметке не имеет смысла.</translation>

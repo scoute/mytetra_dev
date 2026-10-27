@@ -2,15 +2,19 @@
 #include <QToolBar>
 #include <QVBoxLayout>
 #include <QAction>
+#include <QRadioButton>
 
 #include "AttachTableScreen.h"
 #include "AttachTableView.h"
+#include "AttachTableTileView.h"
 #include "controllers/attachTable/AttachTableController.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ActionHelper.h"
+#include "models/appConfig/AppConfig.h"
 
 
 extern ShortcutManager shortcutManager;
+extern AppConfig mytetraConfig;
 
 
 AttachTableScreen::AttachTableScreen(QWidget *parent) : QWidget(parent)
@@ -92,6 +96,9 @@ void AttachTableScreen::setupShortcuts(void)
     shortcutManager.initAction("attach-saveAsAttach",     actionSaveAsAttach );
     shortcutManager.initAction("attach-showAttachInfo",   actionShowAttachInfo );
     shortcutManager.initAction("attach-switchToEditor",   actionSwitchToEditor );
+
+    viewModeListRadio->setText(tr("List"));
+    viewModeTilesRadio->setText(tr("Tiles"));
 }
 
 
@@ -113,6 +120,17 @@ void AttachTableScreen::setupUI(void)
   toolsLine->addSeparator();
 
   insertActionAsButton(toolsLine, actionSwitchToEditor);
+
+  // Переключатель вида: список или плитка. Радиокнопки с общим
+  // родителем взаимоисключающие штатно, тексты обновляются
+  // в setupShortcuts вместе с остальными подписями
+  toolsLine->addSeparator();
+
+  viewModeListRadio=new QRadioButton(this);
+  viewModeTilesRadio=new QRadioButton(this);
+
+  toolsLine->addWidget(viewModeListRadio);
+  toolsLine->addWidget(viewModeTilesRadio);
 }
 
 
@@ -131,8 +149,46 @@ void AttachTableScreen::setupSignals(void)
 
   connect(actionSwitchToEditor,   &QAction::triggered, attachTableController, &AttachTableController::onSwitchToEditor);
 
+  // Переключение вида списка/плитки
+  connect(viewModeListRadio,  &QRadioButton::toggled,
+          this,               &AttachTableScreen::onAttachViewModeChanged);
+  connect(viewModeTilesRadio, &QRadioButton::toggled,
+          this,               &AttachTableScreen::onAttachViewModeChanged);
+
   // Обновление горячих клавиш, если они были изменены
   connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &AttachTableScreen::setupShortcuts);
+}
+
+
+void AttachTableScreen::onAttachViewModeChanged(void)
+{
+  // Слот зовется от обеих радиокнопок — реакция только на включение
+  if(viewModeTilesRadio->isChecked())
+    mytetraConfig.set_attachViewMode("tiles");
+  else if(viewModeListRadio->isChecked())
+    mytetraConfig.set_attachViewMode("list");
+  else
+    return;
+
+  mytetraConfig.sync();
+  updateAttachViewVisibility();
+}
+
+
+void AttachTableScreen::updateAttachViewVisibility(void)
+{
+  const bool tilesMode=(mytetraConfig.get_attachViewMode()=="tiles");
+
+  // Блокировка сигналов: checked выставляется программно
+  viewModeListRadio->blockSignals(true);
+  viewModeTilesRadio->blockSignals(true);
+  viewModeListRadio->setChecked(!tilesMode);
+  viewModeTilesRadio->setChecked(tilesMode);
+  viewModeListRadio->blockSignals(false);
+  viewModeTilesRadio->blockSignals(false);
+
+  attachTableController->getView()->setVisible(!tilesMode);
+  attachTableController->getTileView()->setVisible(tilesMode);
 }
 
 
@@ -143,6 +199,10 @@ void AttachTableScreen::assembly(void)
 
   screenLayout->addWidget(toolsLine);
   screenLayout->addWidget(attachTableController->getView());
+  screenLayout->addWidget(attachTableController->getTileView());
+
+  // Начальный вид из конфига (список по умолчанию)
+  updateAttachViewVisibility();
 
   setLayout(screenLayout);
 

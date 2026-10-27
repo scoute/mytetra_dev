@@ -275,6 +275,8 @@ HEADERS = src/main.h \
     src/models/attachTable/AttachTableData.h \
     src/models/attachTable/AttachTableModel.h \
     src/views/attachTable/AttachTableView.h \
+    src/views/attachTable/AttachTableTileView.h \
+    src/views/attachTable/AttachTableTileDelegate.h \
     src/views/attachTable/AttachTableScreen.h \
     src/controllers/attachTable/AttachTableController.h \
     src/controllers/recordTable/RecordTableController.h \
@@ -492,6 +494,8 @@ SOURCES = src/main.cpp \
     src/models/attachTable/AttachTableData.cpp \
     src/models/attachTable/AttachTableModel.cpp \
     src/views/attachTable/AttachTableView.cpp \
+    src/views/attachTable/AttachTableTileView.cpp \
+    src/views/attachTable/AttachTableTileDelegate.cpp \
     src/views/attachTable/AttachTableScreen.cpp \
     src/controllers/recordTable/RecordTableController.cpp \
     src/controllers/attachTable/AttachTableController.cpp \

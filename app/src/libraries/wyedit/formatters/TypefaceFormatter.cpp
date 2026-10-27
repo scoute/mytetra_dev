@@ -2976,7 +2976,7 @@ void TypefaceFormatter::onFontselectChanged(const QFont &font)
     // editor->currentFontFamily=font.family();
     this->doChangeFontFamily( font.family() );
 
-    // Примененный шрифт — наверх списка недавних (без дублей, максимум 5).
+    // Примененный шрифт — в историю использования (счетчик топ-10).
     // Комбобокс перестраивается и возвращается на текущий шрифт
     editorConfig->add_recentFont(font.family());
     editor->editorToolBarAssistant->fontSelect->reloadRecentFonts(editorConfig->get_recentFonts(),

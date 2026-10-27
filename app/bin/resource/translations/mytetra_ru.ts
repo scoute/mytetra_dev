@@ -6899,6 +6899,10 @@ Enable it in Settings on the History page.</source>
         <source>Select text to hide as secret</source>
         <translation>Выделите текст чтобы скрыть секретом</translation>
     </message>
+    <message>
+        <source>Secret revealed</source>
+        <translation>Секрет открыт</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>
@@ -7692,13 +7696,13 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="147"/>
-        <source>Hide as secret</source>
-        <translation>Скрыть секретом</translation>
+        <source>Reveal/hide as secret</source>
+        <translation>Открыть/скрыть секретом</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="147"/>
-        <source>Paint selected text as secret</source>
-        <translation>Закрасить выделенный текст как секрет</translation>
+        <source>Paint selected text as secret, click on a secret reveals it</source>
+        <translation>Закрасить выделенный текст как секрет, клик по секрету открывает его</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="194"/>

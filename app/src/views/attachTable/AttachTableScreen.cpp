@@ -80,6 +80,11 @@ void AttachTableScreen::setupActions(void)
   // Переключение на редактор
   actionSwitchToEditor = new QAction(this);
   actionSwitchToEditor->setIcon(QIcon(":/resource/pic/attach_switch_to_editor.svg"));
+
+  // Переключатель вида создается здесь, а не в setupUI: тексты ему
+  // выставляет setupShortcuts, который идет раньше setupUI
+  viewModeListRadio=new QRadioButton(this);
+  viewModeTilesRadio=new QRadioButton(this);
 }
 
 
@@ -121,13 +126,10 @@ void AttachTableScreen::setupUI(void)
 
   insertActionAsButton(toolsLine, actionSwitchToEditor);
 
-  // Переключатель вида: список или плитка. Радиокнопки с общим
-  // родителем взаимоисключающие штатно, тексты обновляются
-  // в setupShortcuts вместе с остальными подписями
+  // Переключатель вида: список или плитка. Радиокнопки созданы
+  // в setupActions, с общим родителем взаимоисключающие штатно,
+  // тексты обновляются в setupShortcuts вместе с остальными подписями
   toolsLine->addSeparator();
-
-  viewModeListRadio=new QRadioButton(this);
-  viewModeTilesRadio=new QRadioButton(this);
 
   toolsLine->addWidget(viewModeListRadio);
   toolsLine->addWidget(viewModeTilesRadio);

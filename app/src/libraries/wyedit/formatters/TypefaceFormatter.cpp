@@ -1801,6 +1801,7 @@ void TypefaceFormatter::insertTocEntries(QTextCursor &edit, const QList<TocEntry
         QTextCharFormat linkFormat;
         linkFormat.setAnchor(true);
         linkFormat.setAnchorHref(href);
+        linkFormat.setForeground(editorConfig->linkColorForHref(href));
         linkFormat.setFontUnderline(true);
         linkCursor.mergeCharFormat(linkFormat);
     }

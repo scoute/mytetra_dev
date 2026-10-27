@@ -29,11 +29,12 @@ EditorConfigDialog::EditorConfigDialog(QWidget *parent) : QWidget(parent)
  connect(configDialog, &ConfigDialog::alterSettingsRequested,
          this,          &EditorConfigDialog::onAlterToAppSettings);
 
- // Страница шрифтов чуть шире вьюпорта по sizeHint (~15px),
- // из-за чего появляется горизонтальный скролл. Небольшой
- // запас по ширине убирает его с учетом разных локалей
+ // Страница шрифтов чуть больше вьюпорта по sizeHint
+ // (~15px в ширину, ~45px в высоту с тремя цветами ссылок),
+ // из-за чего появляются скроллы. Небольшой запас убирает их
+ // с учетом разных локалей
  configDialog->adjustSize();
- configDialog->resize(configDialog->width()+60, configDialog->height());
+ configDialog->resize(configDialog->width()+60, configDialog->height()+60);
 
  configDialog->exec();
 }

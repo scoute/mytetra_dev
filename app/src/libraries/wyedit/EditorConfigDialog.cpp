@@ -29,6 +29,12 @@ EditorConfigDialog::EditorConfigDialog(QWidget *parent) : QWidget(parent)
  connect(configDialog, &ConfigDialog::alterSettingsRequested,
          this,          &EditorConfigDialog::onAlterToAppSettings);
 
+ // Страница шрифтов чуть шире вьюпорта по sizeHint (~15px),
+ // из-за чего появляется горизонтальный скролл. Небольшой
+ // запас по ширине убирает его с учетом разных локалей
+ configDialog->adjustSize();
+ configDialog->resize(configDialog->width()+60, configDialog->height());
+
  configDialog->exec();
 }
 

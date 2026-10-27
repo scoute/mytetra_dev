@@ -7,6 +7,8 @@
 #include "EditorToolPseudoButton.h"
 
 
+class FontListDelegate;
+
 class EditorFontFamilyComboBox : public QFontComboBox
 {
     Q_OBJECT
@@ -43,6 +45,10 @@ protected:
     // Сколько строк занимает MRU-группа (шрифты без разделителя):
     // сносится перед перестройкой
     int recentRows;
+
+    // Обертка делегата вьюхи (рисует разделитель линией). Создается
+    // в конструкторе, переживает перестройки списка
+    FontListDelegate *listDelegate=nullptr;
 };
 
 #endif // EDITORFONTFAMILYCOMBOBOX_H

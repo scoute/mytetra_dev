@@ -134,11 +134,19 @@ void EditorConfigFont::setup_ui(void)
  linkColorInternalButton=new QToolButton(this);
  linkColorInternal=new QColor(conf->get_linkColorInternal());
 
+ linkColorTocGoLabel=new QLabel(this);
+ linkColorTocGoLabel->setText(tr("Section link color"));
+
+ linkColorTocGoButton=new QToolButton(this);
+ linkColorTocGo=new QColor(conf->get_linkColorTocGo());
+
  QPixmap linkPix(16, 16);
  linkPix.fill(linkColorExternal->rgb());
  linkColorExternalButton->setIcon(linkPix);
  linkPix.fill(linkColorInternal->rgb());
  linkColorInternalButton->setIcon(linkPix);
+ linkPix.fill(linkColorTocGo->rgb());
+ linkColorTocGoButton->setIcon(linkPix);
 }
 
 
@@ -159,6 +167,8 @@ void EditorConfigFont::setup_signals(void)
          this,                    &EditorConfigFont::on_linkcolor_external_button_click);
  connect(linkColorInternalButton, &QToolButton::clicked,
          this,                    &EditorConfigFont::on_linkcolor_internal_button_click);
+ connect(linkColorTocGoButton, &QToolButton::clicked,
+         this,                    &EditorConfigFont::on_linkcolor_tocgo_button_click);
 }
 
 
@@ -218,6 +228,8 @@ void EditorConfigFont::assembly(void)
  linkGridLayout->addWidget(linkColorExternalButton, 0, 1);
  linkGridLayout->addWidget(linkColorInternalLabel,  1, 0);
  linkGridLayout->addWidget(linkColorInternalButton, 1, 1);
+ linkGridLayout->addWidget(linkColorTocGoLabel,  2, 0);
+ linkGridLayout->addWidget(linkColorTocGoButton, 2, 1);
 
  QGroupBox *linkGroupBox=new QGroupBox(tr("Link colors"));
  linkGroupBox->setLayout(linkGridLayout);
@@ -291,6 +303,12 @@ void EditorConfigFont::on_linkcolor_external_button_click()
 void EditorConfigFont::on_linkcolor_internal_button_click()
 {
  on_linkcolor_button_click(linkColorInternalButton, linkColorInternal);
+}
+
+
+void EditorConfigFont::on_linkcolor_tocgo_button_click()
+{
+ on_linkcolor_button_click(linkColorTocGoButton, linkColorTocGo);
 }
 
 
@@ -388,6 +406,9 @@ int EditorConfigFont::applyChanges(void)
 
  if(conf->get_linkColorInternal()!=linkColorInternal->name())
   conf->set_linkColorInternal(linkColorInternal->name());
+
+ if(conf->get_linkColorTocGo()!=linkColorTocGo->name())
+  conf->set_linkColorTocGo(linkColorTocGo->name());
 
  // Клик по кнопке цвета: последний цвет без пикера
  if(conf->get_applyLastColorOnClick()!=applyLastColorCheckBox->isChecked()) {

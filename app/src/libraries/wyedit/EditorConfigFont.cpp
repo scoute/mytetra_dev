@@ -118,6 +118,27 @@ void EditorConfigFont::setup_ui(void)
  applyLastColorCheckBox=new QCheckBox(tr("Apply last text/background color"), this);
  applyLastColorCheckBox->setToolTip(tr("Clicking the text or background color button or its hotkey paints in the last used color without opening the picker"));
  applyLastColorCheckBox->setChecked(conf->get_applyLastColorOnClick());
+
+ // Цвета ссылок: внешние (http, файлы) и внутренние (на другие заметки).
+ // Кнопки создаются здесь (в setup_ui), а не в assembly: коннекты
+ // в setup_signals идут раньше assembly
+ linkColorExternalLabel=new QLabel(this);
+ linkColorExternalLabel->setText(tr("External link color"));
+
+ linkColorExternalButton=new QToolButton(this);
+ linkColorExternal=new QColor(conf->get_linkColorExternal());
+
+ linkColorInternalLabel=new QLabel(this);
+ linkColorInternalLabel->setText(tr("Internal link color"));
+
+ linkColorInternalButton=new QToolButton(this);
+ linkColorInternal=new QColor(conf->get_linkColorInternal());
+
+ QPixmap linkPix(16, 16);
+ linkPix.fill(linkColorExternal->rgb());
+ linkColorExternalButton->setIcon(linkPix);
+ linkPix.fill(linkColorInternal->rgb());
+ linkColorInternalButton->setIcon(linkPix);
 }
 
 
@@ -190,25 +211,8 @@ void EditorConfigFont::assembly(void)
  codeGroupBox->setLayout(codeLayout);
 
 
- // Цвета ссылок: внешние (http, файлы) и внутренние (на другие заметки)
- linkColorExternalLabel=new QLabel(this);
- linkColorExternalLabel->setText(tr("External link color"));
-
- linkColorExternalButton=new QToolButton(this);
- linkColorExternal=new QColor(conf->get_linkColorExternal());
-
- linkColorInternalLabel=new QLabel(this);
- linkColorInternalLabel->setText(tr("Internal link color"));
-
- linkColorInternalButton=new QToolButton(this);
- linkColorInternal=new QColor(conf->get_linkColorInternal());
-
- QPixmap linkPix(16, 16);
- linkPix.fill(linkColorExternal->rgb());
- linkColorExternalButton->setIcon(linkPix);
- linkPix.fill(linkColorInternal->rgb());
- linkColorInternalButton->setIcon(linkPix);
-
+ // Цвета ссылок: внешние (http, файлы) и внутренние (на другие заметки).
+ // Виджеты созданы в setup_ui, здесь только раскладка
  QGridLayout *linkGridLayout=new QGridLayout();
  linkGridLayout->addWidget(linkColorExternalLabel,  0, 0);
  linkGridLayout->addWidget(linkColorExternalButton, 0, 1);

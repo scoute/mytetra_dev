@@ -45,6 +45,12 @@ public:
     QString get_code_font_color(void);
     void set_code_font_color(QString color);
 
+    // Цвета внешних и внутренних ссылок (дефолты в таблице 44)
+    QString get_linkColorExternal(void);
+    void set_linkColorExternal(QString color);
+    QString get_linkColorInternal(void);
+    void set_linkColorInternal(QString color);
+
     int  get_code_indent_size(void);
     void set_code_indent_size(int size);
     bool get_code_indent_size_apply(void);
@@ -188,6 +194,7 @@ private:
     static QStringList get_parameter_table_41(bool withEndSignature=true);
     static QStringList get_parameter_table_42(bool withEndSignature=true);
     static QStringList get_parameter_table_43(bool withEndSignature=true);
+    static QStringList get_parameter_table_44(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

@@ -133,6 +133,11 @@ void EditorConfigFont::setup_signals(void)
 
  connect(codeSelectColorButton, &QToolButton::clicked,
          this,                  &EditorConfigFont::on_code_select_color_button_click);
+
+ connect(linkColorExternalButton, &QToolButton::clicked,
+         this,                    &EditorConfigFont::on_linkcolor_external_button_click);
+ connect(linkColorInternalButton, &QToolButton::clicked,
+         this,                    &EditorConfigFont::on_linkcolor_internal_button_click);
 }
 
 
@@ -185,11 +190,41 @@ void EditorConfigFont::assembly(void)
  codeGroupBox->setLayout(codeLayout);
 
 
+ // Цвета ссылок: внешние (http, файлы) и внутренние (на другие заметки)
+ linkColorExternalLabel=new QLabel(this);
+ linkColorExternalLabel->setText(tr("External link color"));
+
+ linkColorExternalButton=new QToolButton(this);
+ linkColorExternal=new QColor(conf->get_linkColorExternal());
+
+ linkColorInternalLabel=new QLabel(this);
+ linkColorInternalLabel->setText(tr("Internal link color"));
+
+ linkColorInternalButton=new QToolButton(this);
+ linkColorInternal=new QColor(conf->get_linkColorInternal());
+
+ QPixmap linkPix(16, 16);
+ linkPix.fill(linkColorExternal->rgb());
+ linkColorExternalButton->setIcon(linkPix);
+ linkPix.fill(linkColorInternal->rgb());
+ linkColorInternalButton->setIcon(linkPix);
+
+ QGridLayout *linkGridLayout=new QGridLayout();
+ linkGridLayout->addWidget(linkColorExternalLabel,  0, 0);
+ linkGridLayout->addWidget(linkColorExternalButton, 0, 1);
+ linkGridLayout->addWidget(linkColorInternalLabel,  1, 0);
+ linkGridLayout->addWidget(linkColorInternalButton, 1, 1);
+
+ QGroupBox *linkGroupBox=new QGroupBox(tr("Link colors"));
+ linkGroupBox->setLayout(linkGridLayout);
+
+
  // Общая сборка
  QVBoxLayout *centralLayout=new QVBoxLayout();
  centralLayout->addLayout(defaultFontLayout);
  centralLayout->addWidget(monospaceGroupBox);
  centralLayout->addWidget(codeGroupBox);
+ centralLayout->addWidget(linkGroupBox);
  centralLayout->addWidget(applyLastColorCheckBox);
  centralLayout->addStretch();
  
@@ -239,6 +274,40 @@ void EditorConfigFont::on_code_select_color_button_click()
 
    // Запоминается новый цвет
    codeColor->setNamedColor(selectedColor.name());
+  }
+}
+
+
+void EditorConfigFont::on_linkcolor_external_button_click()
+{
+ on_linkcolor_button_click(linkColorExternalButton, linkColorExternal);
+}
+
+
+void EditorConfigFont::on_linkcolor_internal_button_click()
+{
+ on_linkcolor_button_click(linkColorInternalButton, linkColorInternal);
+}
+
+
+void EditorConfigFont::on_linkcolor_button_click(QToolButton *button, QColor *color)
+{
+ // Исходный цвет
+ QColor startColor(*color);
+
+ // Диалог запроса цвета
+ QColor selectedColor=QColorDialog::getColor(startColor, this, QString(), QColorDialog::ShowAlphaChannel);
+
+ // Если цвет выбран, и он правильный
+ if(selectedColor.isValid())
+  {
+   // Меняется цвет квадратика на кнопке
+   QPixmap pix(16, 16);
+   pix.fill(selectedColor);
+   button->setIcon(pix);
+
+   // Запоминается новый цвет
+   color->setNamedColor(selectedColor.name());
   }
 }
 
@@ -308,6 +377,13 @@ int EditorConfigFont::applyChanges(void)
  // Если был изменен цвет начертания кода
  if(conf->get_code_font_color()!=codeColor->name())
   conf->set_code_font_color(codeColor->name());
+
+ // Если были изменены цвета ссылок
+ if(conf->get_linkColorExternal()!=linkColorExternal->name())
+  conf->set_linkColorExternal(linkColorExternal->name());
+
+ if(conf->get_linkColorInternal()!=linkColorInternal->name())
+  conf->set_linkColorInternal(linkColorInternal->name());
 
  // Клик по кнопке цвета: последний цвет без пикера
  if(conf->get_applyLastColorOnClick()!=applyLastColorCheckBox->isChecked()) {

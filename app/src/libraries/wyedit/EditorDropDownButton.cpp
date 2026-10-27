@@ -212,6 +212,12 @@ void EditorDropDownButton::showListMenu(void)
 
     list->show();
     list->setFocus();
+
+    // Явный захват мыши: голый QWidget с Qt::Popup сам граб не ставит
+    // (в отличие от QMenu), и клики вне списка до него не доходят —
+    // без граба закрыть кликом мимо невозможно. Клик вне прямоугольника
+    // гасится в фильтре событий ниже, граб снимается скрытием
+    list->grabMouse();
 }
 
 
@@ -272,6 +278,21 @@ bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
     {
         int key=static_cast<QKeyEvent *>(event)->key();
         if(key==Qt::Key_Escape)
+        {
+            m_list->close();
+            return true;
+        }
+    }
+
+    // Клик мимо списка при активном грабе мыши: пресса приходит
+    // в сам список с координатами вне его прямоугольника.
+    // Закрыть и съесть, иначе клик провалится дальше
+    if(m_list!=nullptr && watched==m_list &&
+            event->type()==QEvent::MouseButtonPress)
+    {
+        QMouseEvent *mouseEvent=static_cast<QMouseEvent *>(event);
+
+        if(!m_list->rect().contains(mouseEvent->pos()))
         {
             m_list->close();
             return true;

@@ -1915,6 +1915,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <source>Return to editor</source>
         <translation type="vanished">Вернуться в редактор</translation>
     </message>
+    <message>
+        <source>List</source>
+        <translation>Список</translation>
+    </message>
+    <message>
+        <source>Tiles</source>
+        <translation>Плитка</translation>
+    </message>
 </context>
 <context>
     <name>AttachTableView</name>

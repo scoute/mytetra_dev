@@ -154,7 +154,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-scrollDown",          Data{ QKeySequence("Ctrl+Down"), tr("Scroll down"), tr("Scroll text down without moving cursor") });
     defaultKeyTable.insert("editor-settings",            Data{ QKeySequence("Ctrl+Alt+G"), tr("Editor settings"), tr("") });
     defaultKeyTable.insert("editor-reference",           Data{ QKeySequence("Ctrl+Shift+U"), tr("Edit reference URL"), tr("") });
-    defaultKeyTable.insert("editor-secret",              Data{ QKeySequence("Ctrl+Shift+J"), tr("Hide as secret"), tr("Paint selected text as secret") });
+    defaultKeyTable.insert("editor-secret",              Data{ QKeySequence("Ctrl+Shift+J"), tr("Reveal/hide as secret"), tr("Paint selected text as secret, click on a secret reveals it") });
     defaultKeyTable.insert("editor-showHtml",            Data{ QKeySequence("Ctrl+Shift+H"), tr("Edit HTML code"), tr("") });
     defaultKeyTable.insert("editor-showFormatting",      Data{ QKeySequence("Ctrl+F10"), tr("Show special chars"), tr("") });
     defaultKeyTable.insert("editor-createTable",         Data{ QKeySequence("Ctrl+F12"), tr("Create a new table"), tr("") });

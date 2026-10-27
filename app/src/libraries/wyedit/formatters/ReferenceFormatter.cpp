@@ -222,15 +222,12 @@ void ReferenceFormatter::onReferenceClicked(void)
 }
 
 
-// Цвет ссылки по адресу: внутренние (mytetra://note/...) из настройки
-// linkColorInternal, остальные из linkColorExternal.
+// Цвет ссылки по адресу: единая точка в конфиге
+// (внешние, mytetra://note/..., mytetra://toc-go/...).
 // Невалидные значения настроек геттеры уже подменили дефолтами
 QColor ReferenceFormatter::linkColorForHref(const QString &href) const
 {
-    if(LinkHelper::isHrefInternal(href))
-        return QColor(editorConfig->get_linkColorInternal());
-
-    return QColor(editorConfig->get_linkColorExternal());
+    return editorConfig->linkColorForHref(href);
 }
 
 

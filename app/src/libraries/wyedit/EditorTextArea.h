@@ -129,6 +129,11 @@ private:
     // Голосовые ссылки и баблы в диапазоне документа без дублей
     QStringList voiceHrefsInRange(int from, int to) const;
 
+    // Простановка цветов якорям по типу ссылки после HTML-вставки.
+    // Служебные href (голос, copy-кнопка, toc-метка) не трогаются:
+    // их формат выставляется своим кодом отдельно
+    void recolorAnchorsInRange(int startPos, int endPos);
+
     // Рабочий каталог заметки через родителя-редактор
     QString voiceWorkDirectory(void) const;
 

@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QSettings>
 #include <QImage>
+#include <QColor>
 
 
 class EditorConfig : public QWidget
@@ -46,10 +47,19 @@ public:
     void set_code_font_color(QString color);
 
     // Цвета внешних и внутренних ссылок (дефолты в таблице 44)
+    // и ссылок на разделы оглавления (дефолт в таблице 45)
     QString get_linkColorExternal(void);
     void set_linkColorExternal(QString color);
     QString get_linkColorInternal(void);
     void set_linkColorInternal(QString color);
+    QString get_linkColorTocGo(void);
+    void set_linkColorTocGo(QString color);
+
+    // Цвет ссылки по адресу: внешние, mytetra://note/, mytetra://toc-go/.
+    // Единая точка для диалогы/оглавления/вставки: расхождений
+    // синий/зеленый больше нет. Служебные href (copy-code, toc-метка,
+    // голос) сюда не попадают, их красит вызывающий код сам
+    QColor linkColorForHref(const QString &href);
 
     int  get_code_indent_size(void);
     void set_code_indent_size(int size);
@@ -195,6 +205,7 @@ private:
     static QStringList get_parameter_table_42(bool withEndSignature=true);
     static QStringList get_parameter_table_43(bool withEndSignature=true);
     static QStringList get_parameter_table_44(bool withEndSignature=true);
+    static QStringList get_parameter_table_45(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

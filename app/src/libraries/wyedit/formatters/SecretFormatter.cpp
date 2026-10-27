@@ -68,7 +68,20 @@ void SecretFormatter::onSecretClicked(void)
     reveal=selectionContainsSecret(cursor.selectionStart(),
                                    cursor.selectionEnd());
   else
+  {
     reveal=editor->cursorPositionDetector->isCursorOnSecret();
+
+    // Осиротевшая закраска без якоря (остаток старых версий):
+    // секретом считается и просто пара секретных красок
+    if(!reveal)
+    {
+      QTextCursor probeCursor=textArea->textCursor();
+      reveal=isSecretLikeFormat(probeCursor.charFormat());
+
+      if(!reveal && probeCursor.movePosition(QTextCursor::Right))
+        reveal=isSecretLikeFormat(probeCursor.charFormat());
+    }
+  }
 
   qDebug() << "Secret toggle: decision" << (reveal ? "reveal" : "hide-or-hint");
 
@@ -76,10 +89,10 @@ void SecretFormatter::onSecretClicked(void)
   {
     const int savedPosition=cursor.position();
 
-    // Границы секрета как в копировании: метка соседних символов,
-    // выделение расширяется до целого секрета. Правая граница
-    // упирается в конец документа: setPosition за границей
-    // игнорируется, а не клиппится
+    // Границы секрета как в копировании: метка соседних символов
+    // (или секретные краски), выделение расширяется до целого секрета.
+    // Правая граница упирается в конец документа: setPosition за
+    // границей игнорируется, а не клиппится
     QTextCursor probeCursor(cursor);
     QTextDocument *document=textArea->document();
     const int docEnd=document->characterCount()-1;
@@ -90,7 +103,7 @@ void SecretFormatter::onSecretClicked(void)
     while(left>0)
     {
       probeCursor.setPosition(left);
-      if(!isSecretFormat(probeCursor.charFormat()))
+      if(!isSecretLikeFormat(probeCursor.charFormat()))
         break;
       left--;
     }
@@ -98,7 +111,7 @@ void SecretFormatter::onSecretClicked(void)
     while(right<docEnd)
     {
       probeCursor.setPosition(right+1);
-      if(!isSecretFormat(probeCursor.charFormat()))
+      if(!isSecretLikeFormat(probeCursor.charFormat()))
         break;
       right++;
     }
@@ -145,8 +158,9 @@ void SecretFormatter::onSecretClicked(void)
 
 
 // Есть ли хоть один секрет внутри выделения [start, end).
-// Проверка строгая (без захвата соседей): формат символа i
-// читается позицией i+1. Пустой диапазон — false
+// Секретом считается и якорь secret, и просто пара секретных красок
+// (осиротевшая закраска). Проверка строгая (без захвата соседей):
+// формат символа i читается позицией i+1. Пустой диапазон — false
 bool SecretFormatter::selectionContainsSecret(int start, int end) const
 {
   if(end<=start)
@@ -158,7 +172,7 @@ bool SecretFormatter::selectionContainsSecret(int start, int end) const
   {
     probeCursor.setPosition(i+1);
 
-    if(isSecretFormat(probeCursor.charFormat()))
+    if(isSecretLikeFormat(probeCursor.charFormat()))
       return true;
   }
 
@@ -166,8 +180,24 @@ bool SecretFormatter::selectionContainsSecret(int start, int end) const
 }
 
 
-// Снять закраску с диапазона: якорь и краски убираются, текст
-// становится обычным. Курсор возвращается в исходную точку
+// Похож ли формат на секрет: якорь secret либо пара секретных красок
+// без якоря (остаток старых версий, чистится тем же reveal)
+bool SecretFormatter::isSecretLikeFormat(const QTextCharFormat &format)
+{
+  if(isSecretFormat(format))
+    return true;
+
+  const QColor secret=secretColor();
+
+  return format.foreground().color()==secret &&
+         format.background().color()==secret;
+}
+
+
+// Снять закраску с диапазона: якорь убирается, краски ставятся
+// в обычные (явно, через палитру: clearForeground/clearBackground
+// в mergeCharFormat — no-op, снятое свойство не перезаписывает).
+// Курсор возвращается в исходную точку
 void SecretFormatter::revealSecretRange(int left, int right)
 {
   if(left>=right)
@@ -180,8 +210,8 @@ void SecretFormatter::revealSecretRange(int left, int right)
   QTextCharFormat clearFormat;
   clearFormat.setAnchor(false);
   clearFormat.setAnchorHref(QString());
-  clearFormat.clearForeground();
-  clearFormat.clearBackground();
+  clearFormat.setForeground(QApplication::palette().color(QPalette::Text));
+  clearFormat.setBackground(Qt::NoBrush);
 
   cursor.mergeCharFormat(clearFormat);
 }

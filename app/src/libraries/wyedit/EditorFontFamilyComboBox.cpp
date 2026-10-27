@@ -35,10 +35,12 @@ public:
 
         if(index.row()==separatorRow)
         {
+            painter->save();
             const int y=option.rect.center().y();
             painter->setPen(option.palette.color(QPalette::Mid));
             painter->drawLine(option.rect.left()+6, y,
                               option.rect.right()-6, y);
+            painter->restore();
         }
         // ""-маркер: рисуется пустым (только подсветка выше)
     }

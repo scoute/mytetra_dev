@@ -54,6 +54,10 @@ private:
     void insertTitledLink(const QString &internalHref,
                                   const QString &targetName);
 
+    // Цвет ссылки по адресу: внутренние (mytetra://note/...) —
+    // настройка linkColorInternal, остальные — linkColorExternal
+    QColor linkColorForHref(const QString &href) const;
+
 };
 
 

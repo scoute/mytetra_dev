@@ -207,7 +207,7 @@ void ReferenceFormatter::onReferenceClicked(void)
     if(refereceUrl.length()>0)
     {
         charFormat.setAnchor(true);
-        charFormat.setForeground(QApplication::palette().color(QPalette::Link));
+        charFormat.setForeground(linkColorForHref(refereceUrl));
         charFormat.setFontUnderline(true);
 
         textArea->textCursor().mergeCharFormat(charFormat);
@@ -219,6 +219,18 @@ void ReferenceFormatter::onReferenceClicked(void)
 
         textArea->textCursor().setCharFormat(charFormat);
     }
+}
+
+
+// Цвет ссылки по адресу: внутренние (mytetra://note/...) из настройки
+// linkColorInternal, остальные из linkColorExternal.
+// Невалидные значения настроек геттеры уже подменили дефолтами
+QColor ReferenceFormatter::linkColorForHref(const QString &href) const
+{
+    if(LinkHelper::isHrefInternal(href))
+        return QColor(editorConfig->get_linkColorInternal());
+
+    return QColor(editorConfig->get_linkColorExternal());
 }
 
 
@@ -393,7 +405,7 @@ void ReferenceFormatter::insertTitledLink(const QString &internalHref,
     QTextCharFormat linkFormat;
     linkFormat.setAnchor(true);
     linkFormat.setAnchorHref(internalHref);
-    linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
+    linkFormat.setForeground(linkColorForHref(internalHref));
     linkFormat.setFontUnderline(true);
 
     QTextCursor cursor=textArea->textCursor();

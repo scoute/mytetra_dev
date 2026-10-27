@@ -210,6 +210,49 @@ void EditorConfig::set_code_font_color(QString color)
 }
 
 
+// Цвет внешних ссылок (http, файлы, относительные).
+// Невалидное/пустое значение читается как дефолт палитры
+QString EditorConfig::get_linkColorExternal(void)
+{
+    const QString color=get_parameter("linkColorExternal");
+
+    if(QColor(color).isValid())
+        return color;
+
+    return QStringLiteral("#0066CC");
+}
+
+
+void EditorConfig::set_linkColorExternal(QString color)
+{
+    QColor saveColor(color);
+
+    if(saveColor.isValid())
+        conf->setValue("linkColorExternal", color);
+}
+
+
+// Цвет ссылок на другие заметки (mytetra://note/...)
+QString EditorConfig::get_linkColorInternal(void)
+{
+    const QString color=get_parameter("linkColorInternal");
+
+    if(QColor(color).isValid())
+        return color;
+
+    return QStringLiteral("#009900");
+}
+
+
+void EditorConfig::set_linkColorInternal(QString color)
+{
+    QColor saveColor(color);
+
+    if(saveColor.isValid())
+        conf->setValue("linkColorInternal", color);
+}
+
+
 int EditorConfig::get_code_indent_size(void)
 {
     int n=get_parameter("code_indent_size").toInt();
@@ -554,6 +597,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_41;
     parameterFunctions << get_parameter_table_42;
     parameterFunctions << get_parameter_table_43;
+    parameterFunctions << get_parameter_table_44;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1426,6 +1470,29 @@ QStringList EditorConfig::get_parameter_table_43(bool withEndSignature)
     // update_version_change_value() не трогается
 
     table << "recentFontsUsage" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_44(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 43
+    table << get_parameter_table_43(false);
+
+    // Цвета внешних и внутренних ссылок. Синий/зеленый по умолчанию:
+    // читаются и на светлой, и на темной теме. Чистое добавление ключей:
+    // update_version_change_value() не трогается
+
+    table << "linkColorExternal" << "QString" << "#0066CC";
+    table << "linkColorInternal" << "QString" << "#009900";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

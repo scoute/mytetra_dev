@@ -3,9 +3,11 @@
 
 #include <QObject>
 #include <QModelIndexList>
+#include <QItemSelectionModel>
 
 
 class AttachTableView;
+class AttachTableTileView;
 class AttachTableModel;
 class AttachTableData;
 class MetaEditor;
@@ -20,6 +22,11 @@ public:
   virtual ~AttachTableController();
 
   AttachTableView *getView(void);
+
+  // Плитка и текущий видимый вид (для родителей диалогов и ширины)
+  AttachTableTileView *getTileView(void);
+  QWidget *currentView(void) const;
+
   void setAttachTableData(AttachTableData *attachTableData);
   AttachTableData *getAttachTableData();
 
@@ -53,6 +60,11 @@ protected:
 
   AttachTableView *view;
   AttachTableModel *model;
+
+  // Плитка с тем же model; выделение общее через selectionModel —
+  // действия контроллера не зависят от активного вида
+  AttachTableTileView *tileView;
+  QItemSelectionModel *selectionModel;
 
   MetaEditor *metaEditor;
 };

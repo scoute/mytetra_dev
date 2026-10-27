@@ -930,6 +930,28 @@ void AppConfig::set_treeFilterVisible(bool state)
 }
 
 
+// Вид панели прикрепленных файлов: "list" или "tiles".
+// Неизвестное значение читается как "list"
+QString AppConfig::get_attachViewMode(void)
+{
+    const QString mode=m_conf->value("attachViewMode", "list").toString();
+
+    if(mode==QStringLiteral("tiles"))
+        return mode;
+
+    return QStringLiteral("list");
+}
+
+
+void AppConfig::set_attachViewMode(QString mode)
+{
+    if(mode!=QStringLiteral("tiles"))
+        mode=QStringLiteral("list");
+
+    m_conf->setValue("attachViewMode", mode);
+}
+
+
 void AppConfig::set_favoritesEnabled(bool state)
 {
     m_conf->setValue("favoritesEnabled", state);
@@ -2076,6 +2098,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_58;
     parameterFunctions << &AppConfig::get_parameter_table_59;
     parameterFunctions << &AppConfig::get_parameter_table_60;
+    parameterFunctions << &AppConfig::get_parameter_table_61;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -3311,6 +3334,26 @@ QStringList AppConfig::get_parameter_table_60(bool withEndSignature)
     // Строка фильтра над деревом веток (тумблер в меню Вид).
     // Дефолт true — фильтр виден сразу
     table << "treeFilterVisible" << "bool" << "true";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_61(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 60
+    table << get_parameter_table_60(false);
+
+    // Вид панели прикрепленных файлов: список или плитка.
+    // Чистое добавление ключа
+    table << "attachViewMode" << "QString" << "list";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

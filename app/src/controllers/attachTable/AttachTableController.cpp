@@ -8,6 +8,7 @@
 
 #include "AttachTableController.h"
 #include "views/attachTable/AttachTableView.h"
+#include "views/attachTable/AttachTableTileView.h"
 #include "models/attachTable/AttachTableModel.h"
 #include "models/attachTable/AttachTableData.h"
 #include "models/appConfig/AppConfig.h"
@@ -47,18 +48,48 @@ AttachTableController::AttachTableController(QObject *parent, QObject *iMetaEdit
 
   // Модель данных задается для вида
   view->setModel(model);
+
+  // Плитка на той же модели; выделение общее с таблицей, чтобы все
+  // действия (открыть, удалить, инфо) не зависели от активного вида
+  tileView=new AttachTableTileView( qobject_cast<QWidget *>(parent) );
+  tileView->setObjectName("attachTableTileView");
+  tileView->setController(this);
+  tileView->init();
+  tileView->setModel(model);
+
+  selectionModel=new QItemSelectionModel(model, this);
+  view->setSelectionModel(selectionModel);
+  tileView->setSelectionModel(selectionModel);
 }
 
 
 AttachTableController::~AttachTableController()
 {
   delete view;
+  delete tileView;
   delete model;
 }
 
 
 AttachTableView *AttachTableController::getView(void)
 {
+  return view;
+}
+
+
+AttachTableTileView *AttachTableController::getTileView(void)
+{
+  return tileView;
+}
+
+
+// Видимый сейчас вид (таблица или плитка): родитель диалогов,
+// ширина и прочие виджетные нужды
+QWidget *AttachTableController::currentView(void) const
+{
+  if(tileView!=nullptr && tileView->isVisible())
+    return tileView;
+
   return view;
 }
 
@@ -91,10 +122,10 @@ void AttachTableController::onAddLink()
 void AttachTableController::onAddAttachFromUrl(void)
 {
   // Окно запроса URL
-  QInputDialog inputDialog(view);
+  QInputDialog inputDialog(currentView());
 
   // Установка ширины окна запроса URL
-  int dialogWidth=int(0.9*(float)view->width());
+  int dialogWidth=int(0.9*(float)currentView()->width());
   inputDialog.setMinimumWidth( dialogWidth );
   inputDialog.resize(inputDialog.size());
 
@@ -513,7 +544,7 @@ void AttachTableController::onEditFileName(void)
 
   // Запрос нового имени файла
   bool isOk;
-  QString newFileName = QInputDialog::getText(view,
+  QString newFileName = QInputDialog::getText(currentView(),
                                               tr("File name editing"),
                                               tr("File name:"),
                                               QLineEdit::Normal,
@@ -687,7 +718,8 @@ QList<QString> AttachTableController::getSelectedId(void)
   QList<QString> selectedId;
 
   // Получение списка выделенных в таблице на экране Item-элементов
-  QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
+  // (выделение общее для таблицы и плитки)
+  QModelIndexList selectItems=selectionModel->selectedIndexes();
 
   // Перебор выделенных элементов. Так как имеем несколько столбцов, то для одной строки будет несколько QModelIndex
   int previousRow=-1;

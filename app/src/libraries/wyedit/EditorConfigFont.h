@@ -38,6 +38,7 @@ private slots:
 
   void on_linkcolor_external_button_click();
   void on_linkcolor_internal_button_click();
+  void on_linkcolor_tocgo_button_click();
 
   // Общий запрос цвета для кнопок ссылок
   void on_linkcolor_button_click(QToolButton *button, QColor *color);
@@ -72,6 +73,10 @@ private:
   QLabel        *linkColorInternalLabel;
   QToolButton   *linkColorInternalButton;
   QColor        *linkColorInternal;
+
+  QLabel        *linkColorTocGoLabel;
+  QToolButton   *linkColorTocGoButton;
+  QColor        *linkColorTocGo;
 
   EditorConfig *conf;
  

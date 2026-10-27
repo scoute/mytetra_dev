@@ -6,6 +6,7 @@
 
 #include "EditorConfig.h"
 #include "libraries/helpers/DebugHelper.h"
+#include "libraries/helpers/LinkHelper.h"
 
 
 // Конструктор объекта хранения настроек редактора
@@ -250,6 +251,42 @@ void EditorConfig::set_linkColorInternal(QString color)
 
     if(saveColor.isValid())
         conf->setValue("linkColorInternal", color);
+}
+
+
+// Цвет ссылок на разделы оглавления (mytetra://toc-go/...)
+QString EditorConfig::get_linkColorTocGo(void)
+{
+    const QString color=get_parameter("linkColorTocGo");
+
+    if(QColor(color).isValid())
+        return color;
+
+    return QStringLiteral("#800080");
+}
+
+
+void EditorConfig::set_linkColorTocGo(QString color)
+{
+    QColor saveColor(color);
+
+    if(saveColor.isValid())
+        conf->setValue("linkColorTocGo", color);
+}
+
+
+// Цвет ссылки по адресу. Служебные href сюда не передаются:
+// isHrefInternal/isHrefTocGo их не опознают, и они честно
+// упадут в ветку внешних. Вызывающий код их отфильтровывает сам
+QColor EditorConfig::linkColorForHref(const QString &href)
+{
+    if(LinkHelper::isHrefInternal(href))
+        return QColor(get_linkColorInternal());
+
+    if(LinkHelper::isHrefTocGo(href))
+        return QColor(get_linkColorTocGo());
+
+    return QColor(get_linkColorExternal());
 }
 
 
@@ -598,6 +635,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_42;
     parameterFunctions << get_parameter_table_43;
     parameterFunctions << get_parameter_table_44;
+    parameterFunctions << get_parameter_table_45;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1493,6 +1531,27 @@ QStringList EditorConfig::get_parameter_table_44(bool withEndSignature)
 
     table << "linkColorExternal" << "QString" << "#0066CC";
     table << "linkColorInternal" << "QString" << "#009900";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_45(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 44
+    table << get_parameter_table_44(false);
+
+    // Цвет ссылок на разделы оглавления (mytetra://toc-go/...).
+    // Чистое добавление ключа: update_version_change_value() не трогается
+
+    table << "linkColorTocGo" << "QString" << "#800080";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

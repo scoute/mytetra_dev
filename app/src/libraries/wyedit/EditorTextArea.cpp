@@ -1058,12 +1058,94 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
 
     qDebug() << "Insert filtered HTML text: " << htmlFilterDoc.toHtml();
 
+    const int pasteStart=this->textCursor().position();
     this->textCursor().insertHtml( htmlFilterDoc.toHtml() );
+    const int pasteEnd=this->textCursor().position();
+
+    // Якорям из HTML проставляется цвет по типу ссылки.
+    // Вставленный HTML красит все якоря дефолтным синим,
+    // настройки цветов игнорируются (синий вместо зеленого
+    // у mytetra://note при вставке из "Копировать ссылку")
+    recolorAnchorsInRange(pasteStart, pasteEnd);
 
     // Доделка голосовой вставки: файлы из другой заметки,
     // материализация баблов
     if(!pendingVoiceMimes.isEmpty())
         finishVoicePaste(pendingVoiceMimes.takeFirst());
+}
+
+
+void EditorTextArea::recolorAnchorsInRange(int startPos, int endPos)
+{
+    if(endPos<=startPos)
+        return;
+
+    EditorConfig *sinkConfig=find_object<EditorConfig>("editorconfig");
+
+    if(sinkConfig==nullptr)
+        return;
+
+    QTextDocument *doc=this->document();
+
+    if(doc==nullptr)
+        return;
+
+    // Два прохода: сначала собираются якоря диапазона,
+    // потом красятся. Красить в том же цикле нельзя:
+    // mergeCharFormat рвет фрагменты и роняет итератор
+    struct AnchorSpan { int start; int length; QString href; };
+    QList<AnchorSpan> spans;
+
+    for(QTextBlock block=doc->findBlock(startPos); block.isValid(); block=block.next())
+    {
+        if(block.position()>=endPos)
+            break;
+
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            QTextFragment fragment=it.fragment();
+
+            if(fragment.position()+fragment.length()<=startPos)
+                continue;
+
+            if(fragment.position()>=endPos)
+                break;
+
+            const QTextCharFormat format=fragment.charFormat();
+
+            if(!format.isAnchor())
+                continue;
+
+            const QString href=format.anchorHref();
+
+            if(href.isEmpty())
+                continue;
+
+            if(href.startsWith(QStringLiteral("voicenote://")) ||
+               href==QStringLiteral("mytetra://copy-code") ||
+               href==QStringLiteral("mytetra://toc"))
+                continue;
+
+            AnchorSpan span;
+            span.start=qMax(fragment.position(), startPos);
+            span.length=qMin(fragment.position()+fragment.length(), endPos)-span.start;
+            span.href=href;
+
+            if(span.length>0)
+                spans.append(span);
+        }
+    }
+
+    foreach(const AnchorSpan &span, spans)
+    {
+        QTextCursor fragmentCursor(doc);
+        fragmentCursor.setPosition(span.start);
+        fragmentCursor.setPosition(span.start+span.length, QTextCursor::KeepAnchor);
+
+        QTextCharFormat colorFormat;
+        colorFormat.setForeground(sinkConfig->linkColorForHref(span.href));
+        fragmentCursor.mergeCharFormat(colorFormat);
+    }
 }
 
 

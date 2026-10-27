@@ -2959,6 +2959,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Internal link color</source>
         <translation>Цвет внутренних ссылок</translation>
     </message>
+    <message>
+        <source>Section link color</source>
+        <translation>Цвет ссылок на разделы</translation>
+    </message>
 </context>
 <context>
     <name>EditorConfigMathExpression</name>

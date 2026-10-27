@@ -60,11 +60,17 @@ void SecretFormatter::onSecretClicked(void)
   bool reveal=false;
   QTextCursor cursor=textArea->textCursor();
 
+  qDebug() << "Secret toggle: hasSelection" << cursor.hasSelection()
+           << "pos" << cursor.position()
+           << "sel" << cursor.selectionStart() << cursor.selectionEnd();
+
   if(cursor.hasSelection())
     reveal=selectionContainsSecret(cursor.selectionStart(),
                                    cursor.selectionEnd());
   else
     reveal=editor->cursorPositionDetector->isCursorOnSecret();
+
+  qDebug() << "Secret toggle: decision" << (reveal ? "reveal" : "hide-or-hint");
 
   if(reveal)
   {
@@ -99,6 +105,9 @@ void SecretFormatter::onSecretClicked(void)
 
     revealSecretRange(left, right);
 
+    qDebug() << "Secret revealed range" << left << right
+             << "cursor restored to" << savedPosition;
+
     cursor.setPosition(savedPosition);
     textArea->setTextCursor(cursor);
 
@@ -112,6 +121,8 @@ void SecretFormatter::onSecretClicked(void)
 
   if(!cursor.hasSelection())
   {
+    qDebug() << "Secret toggle: no selection outside secret, hint shown";
+
     QStatusBar *statusBar=globalParameters.getStatusBar();
 
     if(statusBar!=nullptr)
@@ -119,6 +130,8 @@ void SecretFormatter::onSecretClicked(void)
 
     return;
   }
+
+  qDebug() << "Secret hide range" << cursor.selectionStart() << cursor.selectionEnd();
 
   QTextCharFormat charFormat;
   charFormat.setAnchor(true);

@@ -53,47 +53,48 @@ QColor SecretFormatter::secretColor(void)
 // красить нечего, а слово под курсором угадывать не надо
 void SecretFormatter::onSecretClicked(void)
 {
-  // Курсор или выделение на секрете: открыть, а не закрашивать
-  if(editor->cursorPositionDetector->isCursorOnSecret())
+  // Решение "открывать": секрет под курсором без выделения —
+  // штатный детектор; в выделении достаточно ХОТЬ ОДНОГО секрета
+  // (строгое "все выделение внутри" требует ювелирного выделения
+  // без захвата соседних символов и молча перекрашивает поверх)
+  bool reveal=false;
+  QTextCursor cursor=textArea->textCursor();
+
+  if(cursor.hasSelection())
+    reveal=selectionContainsSecret(cursor.selectionStart(),
+                                   cursor.selectionEnd());
+  else
+    reveal=editor->cursorPositionDetector->isCursorOnSecret();
+
+  if(reveal)
   {
-    QTextCursor cursor=textArea->textCursor();
     const int savedPosition=cursor.position();
 
-    int left;
-    int right;
+    // Границы секрета как в копировании: метка соседних символов,
+    // выделение расширяется до целого секрета. Правая граница
+    // упирается в конец документа: setPosition за границей
+    // игнорируется, а не клиппится
+    QTextCursor probeCursor(cursor);
+    QTextDocument *document=textArea->document();
+    const int docEnd=document->characterCount()-1;
 
-    if(cursor.hasSelection())
+    int left=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+    int right=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
+
+    while(left>0)
     {
-      left=cursor.selectionStart();
-      right=cursor.selectionEnd();
+      probeCursor.setPosition(left);
+      if(!isSecretFormat(probeCursor.charFormat()))
+        break;
+      left--;
     }
-    else
+
+    while(right<docEnd)
     {
-      // Границы секрета как в копировании: метка соседних символов.
-      // Правая граница упирается в конец документа: setPosition за
-      // границей игнорируется, а не клиппится
-      QTextCursor probeCursor(cursor);
-      QTextDocument *document=textArea->document();
-      const int docEnd=document->characterCount()-1;
-
-      left=cursor.position();
-      right=left;
-
-      while(left>0)
-      {
-        probeCursor.setPosition(left);
-        if(!isSecretFormat(probeCursor.charFormat()))
-          break;
-        left--;
-      }
-
-      while(right<docEnd)
-      {
-        probeCursor.setPosition(right+1);
-        if(!isSecretFormat(probeCursor.charFormat()))
-          break;
-        right++;
-      }
+      probeCursor.setPosition(right+1);
+      if(!isSecretFormat(probeCursor.charFormat()))
+        break;
+      right++;
     }
 
     revealSecretRange(left, right);
@@ -108,8 +109,6 @@ void SecretFormatter::onSecretClicked(void)
 
     return;
   }
-
-  QTextCursor cursor=textArea->textCursor();
 
   if(!cursor.hasSelection())
   {
@@ -129,6 +128,28 @@ void SecretFormatter::onSecretClicked(void)
   charFormat.setFontUnderline(false);
 
   cursor.mergeCharFormat(charFormat);
+}
+
+
+// Есть ли хоть один секрет внутри выделения [start, end).
+// Проверка строгая (без захвата соседей): формат символа i
+// читается позицией i+1. Пустой диапазон — false
+bool SecretFormatter::selectionContainsSecret(int start, int end) const
+{
+  if(end<=start)
+    return false;
+
+  QTextCursor probeCursor=textArea->textCursor();
+
+  for(int i=start; i<end; ++i)
+  {
+    probeCursor.setPosition(i+1);
+
+    if(isSecretFormat(probeCursor.charFormat()))
+      return true;
+  }
+
+  return false;
 }
 
 

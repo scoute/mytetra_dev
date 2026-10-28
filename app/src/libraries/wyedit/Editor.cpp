@@ -236,7 +236,10 @@ void Editor::setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QSt
 // показывается сам при наличии заголовков H1-H3
 void Editor::setupFloatToc(void)
 {
-  floatToc=new EditorFloatToc(textArea->viewport());
+  // Создание плавающего содержания: родителем сам редактор,
+// а не вьюпорт — дети вьюпорта прокручиваются вместе с текстом
+// (QWidget::scroll двигает их), оверлей же стоит на месте
+  floatToc=new EditorFloatToc(textArea);
   floatToc->setTextArea(textArea);
 }
 

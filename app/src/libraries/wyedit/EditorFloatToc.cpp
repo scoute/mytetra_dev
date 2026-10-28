@@ -8,6 +8,7 @@
 #include <QEvent>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QScrollBar>
 
 #include "EditorFloatToc.h"
 #include "EditorTextArea.h"
@@ -80,8 +81,26 @@ void EditorFloatToc::setTextArea(EditorTextArea *area)
  connect(m_area, &QTextEdit::cursorPositionChanged,
          this,    &EditorFloatToc::onCursorMoved);
 
+ // Ресайз и редактора, и вьюпорта: геометрия вьюпорта (а с ней
+ // и привязка оверлея) меняется и при появлении скроллбаров.
+ // Диапазоны скроллбаров — на случай асинхронной раскладки
+ // документа: диапазоны встают позже показа, ресайза вьюпорта
+ // при этом может уже не быть
+ m_area->installEventFilter(this);
+
  if(m_area->viewport()!=nullptr)
   m_area->viewport()->installEventFilter(this);
+
+ connect(m_area->verticalScrollBar(), &QScrollBar::rangeChanged,
+         this,                         &EditorFloatToc::onBarsRangeChanged);
+ connect(m_area->horizontalScrollBar(), &QScrollBar::rangeChanged,
+         this,                           &EditorFloatToc::onBarsRangeChanged);
+
+ // Появление/скрытие скроллбара меняет геометрию вьюпорта,
+ // но ресайз вьюпорта при этом не всегда доходит: ловим
+ // показ/скрытие самих полос напрямую
+ m_area->verticalScrollBar()->installEventFilter(this);
+ m_area->horizontalScrollBar()->installEventFilter(this);
 
  rebuild();
 }
@@ -89,8 +108,18 @@ void EditorFloatToc::setTextArea(EditorTextArea *area)
 
 bool EditorFloatToc::eventFilter(QObject *watched, QEvent *event)
 {
- if(m_area!=nullptr && watched==m_area->viewport() &&
+ if(m_area==nullptr)
+  return QWidget::eventFilter(watched, event);
+
+ if((watched==m_area || watched==m_area->viewport()) &&
     event->type()==QEvent::Resize)
+  place();
+
+ // Появление/скрытие полос меняет геометрию вьюпорта,
+ // а ресайз вьюпорта при этом не всегда доходит
+ if((watched==m_area->verticalScrollBar() ||
+     watched==m_area->horizontalScrollBar()) &&
+    (event->type()==QEvent::Show || event->type()==QEvent::Hide))
   place();
 
  return QWidget::eventFilter(watched, event);
@@ -98,6 +127,8 @@ bool EditorFloatToc::eventFilter(QObject *watched, QEvent *event)
 
 
 // Оверлей прижат к правому верху вьюпорта с отступом.
+// Координаты — в системе редактора (оверлей его потомок),
+// за базу берется геометрия вьюпорта
 // Высота ограничена вьюпортом: длинный список уезжает в свой скролл
 void EditorFloatToc::place(void)
 {
@@ -105,14 +136,16 @@ void EditorFloatToc::place(void)
   return;
 
  const int margin=8;
- const int viewportWidth=m_area->viewport()->width();
- const int viewportHeight=m_area->viewport()->height();
+ QWidget *viewport=m_area->viewport();
+ const int viewportWidth=viewport->width();
+ const int viewportHeight=viewport->height();
 
  setMaximumHeight(qMax(120, viewportHeight-margin*2-16));
  adjustSize();
 
  const int w=width();
- move(viewportWidth-w-margin, margin);
+ move(viewport->pos().x()+viewportWidth-w-margin,
+      viewport->pos().y()+margin);
 }
 
 
@@ -198,6 +231,15 @@ void EditorFloatToc::paintEvent(QPaintEvent *event)
 void EditorFloatToc::onRebuildTimeout(void)
 {
  rebuild();
+}
+
+
+void EditorFloatToc::onBarsRangeChanged(int minimum, int maximum)
+{
+ Q_UNUSED(minimum);
+ Q_UNUSED(maximum);
+
+ place();
 }
 
 

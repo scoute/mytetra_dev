@@ -13,7 +13,7 @@
 
 class QLabel;
 class QPushButton;
-class QComboBox;
+class MtComboBox;
 class QRadioButton;
 class QLineEdit;
 class QTimer;
@@ -164,7 +164,7 @@ private:
     QRadioButton *mp3Radio;
     QLabel *formatInfoLabel;
     QLineEdit *fileNameEdit;
-    QComboBox *deviceCombo;
+    MtComboBox *deviceCombo;
     QPushButton *recordButton;
     QPushButton *insertButton;
     QPushButton *cancelButton;

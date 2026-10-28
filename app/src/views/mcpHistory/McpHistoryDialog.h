@@ -16,7 +16,7 @@ struct McpHistoryEntry
   QString summary;
 };
 
-class QComboBox;
+class MtComboBox;
 class QListWidget;
 
 // Н модальное окно истории действий активной MCP-сессии.
@@ -47,7 +47,7 @@ private:
   QList<McpHistoryEntry> m_entries;
   QString m_filter="all";
 
-  QComboBox *m_filterBox=nullptr;
+  MtComboBox *m_filterBox=nullptr;
   QListWidget *m_list=nullptr;
 };
 

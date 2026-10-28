@@ -78,7 +78,7 @@ void EditorConfigMisc::setupUi(void)
  imageMaxSizeLabel=new QLabel(this);
  imageMaxSizeLabel->setText(tr("Max image size"));
 
- imageMaxSizeCombo=new QComboBox(this);
+ imageMaxSizeCombo=new MtComboBox(this);
  imageMaxSizeCombo->addItem(QStringLiteral("640"), 640);
  imageMaxSizeCombo->addItem(QStringLiteral("800"), 800);
  imageMaxSizeCombo->addItem(QStringLiteral("1024"), 1024);

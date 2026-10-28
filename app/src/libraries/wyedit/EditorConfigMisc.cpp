@@ -102,6 +102,12 @@ void EditorConfigMisc::setupUi(void)
  allowTrueImageResizeCheckBox->setToolTip(tr("Shows a button in Image properties that rewrites the image file. The original is moved to trash. Off by default."));
  allowTrueImageResizeCheckBox->setChecked(conf->get_allowTrueImageResize());
 
+ // Закрытие окна спецсимволов после вставки символа
+ specialCharCloseOnInsertCheckBox=new QCheckBox(this);
+ specialCharCloseOnInsertCheckBox->setText(tr("Close special character window after insert"));
+ specialCharCloseOnInsertCheckBox->setToolTip(tr("Inserting a symbol closes the window. Off keeps it open for typing several symbols in a row. On by default."));
+ specialCharCloseOnInsertCheckBox->setChecked(conf->get_specialCharCloseOnInsert());
+
  // Кнопка редактирования файла конфигурации WyEdit
  editWyEditConfigFile=new QPushButton(this);
  editWyEditConfigFile->setText(tr("Edit config file"));
@@ -151,6 +157,7 @@ void EditorConfigMisc::assembly(void)
 
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(configLayout);
+  centralLayout->addWidget(specialCharCloseOnInsertCheckBox);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
@@ -204,6 +211,11 @@ int EditorConfigMisc::applyChanges(void)
  // Мастер-тумблер истинного размера
  if(conf->get_allowTrueImageResize()!=allowTrueImageResizeCheckBox->isChecked()) {
    conf->set_allowTrueImageResize(allowTrueImageResizeCheckBox->isChecked());
+ }
+
+ // Закрытие окна спецсимволов после вставки
+ if(conf->get_specialCharCloseOnInsert()!=specialCharCloseOnInsertCheckBox->isChecked()) {
+   conf->set_specialCharCloseOnInsert(specialCharCloseOnInsertCheckBox->isChecked());
  }
  
  return difficultChanges;

@@ -53,6 +53,10 @@ private:
   // (опасная зона: действие необратимо, оригинал уходит в корзину)
   QCheckBox *allowTrueImageResizeCheckBox;
 
+  // Закрывать окно спецсимволов после вставки.
+  // Выключено — окно остается открытым, символы набираются подряд
+  QCheckBox *specialCharCloseOnInsertCheckBox;
+
   QPushButton *editWyEditConfigFile;
   
   EditorConfig *conf;

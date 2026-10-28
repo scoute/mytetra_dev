@@ -3032,6 +3032,14 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Shows a button in Image properties that rewrites the image file. The original is moved to trash. Off by default.</source>
         <translation>Показывает кнопку в свойствах картинки, перезаписывающую файл. Оригинал перемещается в корзину. По умолчанию выключено.</translation>
     </message>
+    <message>
+        <source>Close special character window after insert</source>
+        <translation>Закрывать окно спецсимволов после вставки</translation>
+    </message>
+    <message>
+        <source>Inserting a symbol closes the window. Off keeps it open for typing several symbols in a row. On by default.</source>
+        <translation>Вставка символа закрывает окно. Выключено — окно остается открытым для набора нескольких символов подряд. По умолчанию включено.</translation>
+    </message>
 
     <message>
         <source>Formula update timer</source>

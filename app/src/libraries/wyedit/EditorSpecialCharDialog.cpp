@@ -233,9 +233,16 @@ void EditorSpecialCharDialog::on_symbol_button_clicked(void)
 
  pickedSymbol=button->text();
 
- // Диалог не закрывается: каждый клик сразу вставляет символ
- // в редактор через сигнал, можно набирать несколько подряд
+ // Каждый клик сразу вставляет символ в редактор через сигнал,
+ // слот вставки отрабатывает синхронно. Дальше по настройке:
+ // окно закрывается (по умолчанию) или остается открытым и
+ // можно набирать несколько символов подряд
  emit symbolPicked(pickedSymbol);
+
+ EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+ if(editorConfig!=nullptr && editorConfig->get_specialCharCloseOnInsert())
+  accept();
 }
 
 

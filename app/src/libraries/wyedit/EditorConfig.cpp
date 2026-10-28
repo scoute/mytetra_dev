@@ -636,6 +636,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_43;
     parameterFunctions << get_parameter_table_44;
     parameterFunctions << get_parameter_table_45;
+    parameterFunctions << get_parameter_table_46;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1560,6 +1561,27 @@ QStringList EditorConfig::get_parameter_table_45(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_46(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 45
+    table << get_parameter_table_45(false);
+
+    // Закрывать окно спецсимволов после вставки символа.
+    // Чистое добавление ключа: update_version_change_value() не трогается
+
+    table << "specialCharCloseOnInsert" << "bool" << "1";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -1587,7 +1609,7 @@ void EditorConfig::set_recentSymbols(const QStringList &symbols)
 
     list.removeAll(QString());
 
-    while(list.size()>12)
+    while(list.size()>20)
         list.removeLast();
 
     conf->setValue("recentSymbols", list.join("\n"));
@@ -1735,6 +1757,24 @@ void EditorConfig::set_allowTrueImageResize(bool allow)
         conf->setValue("allowTrueImageResize", 1);
     else
         conf->setValue("allowTrueImageResize", 0);
+}
+
+
+bool EditorConfig::get_specialCharCloseOnInsert(void)
+{
+    if(get_parameter("specialCharCloseOnInsert").toInt()==1)
+        return true;
+    else
+        return false;
+}
+
+
+void EditorConfig::set_specialCharCloseOnInsert(bool close)
+{
+    if(close==true)
+        conf->setValue("specialCharCloseOnInsert", 1);
+    else
+        conf->setValue("specialCharCloseOnInsert", 0);
 }
 
 

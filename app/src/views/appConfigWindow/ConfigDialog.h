@@ -10,6 +10,7 @@ class QStackedWidget;
 class QListWidgetItem;
 class QScrollArea;
 class QPushButton;
+class QShowEvent;
 
 
 class ConfigDialog : public QDialog
@@ -48,6 +49,19 @@ private:
     void assembly(void);
 
     QListWidgetItem *createItems(QString name);
+
+    // Доращивание ширины под видимую страницу (см. showEvent):
+    // вызывается при показе и при каждом переключении страниц
+    void widenToFitCurrentPage(void);
+
+    // Одноразовое доращивание ширины при показе: страницы лежат
+    // в скроллах, чей sizeHint не отражает контент, поэтому диалог
+    // открывается уже имеющейся ширины и длинные страницы (клиппер,
+    // вложения, шифрование) уезжают в горизонтальный скролл.
+    // Меряется только видимая страница (у скрытых вьюпорт схлопнут
+    // и maximum мусорный). Доращивание ровно на выступ делает окно
+    // шире само, одинаково для всех тем
+    void showEvent(QShowEvent *event) override;
 
 
     QListWidget *contentsWidget;

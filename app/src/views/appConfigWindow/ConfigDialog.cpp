@@ -5,6 +5,8 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QScrollArea>
+#include <QScrollBar>
+#include <QShowEvent>
 
 #include "ConfigDialog.h"
 #include "ConfigPage.h"
@@ -67,6 +69,10 @@ void ConfigDialog::setupSignals(void)
     connect(contentsWidget, &QListWidget::currentItemChanged,
             this,           &ConfigDialog::changePage);
 
+    // Новая страница может быть шире: дорастить окно при переключении
+    connect(pagesWidget, &QStackedWidget::currentChanged,
+            this,        &ConfigDialog::widenToFitCurrentPage);
+
 }
 
 
@@ -104,6 +110,38 @@ void ConfigDialog::assembly(void)
     setLayout(mainLayout);
 
     this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+}
+
+
+// Доращивание ширины под видимую страницу: если контент выступает
+// за вьюпорт (горизонтальный скролл), окно расширяется ровно
+// на выступ. Только расширяет, уже не сужает
+void ConfigDialog::widenToFitCurrentPage(void)
+{
+    QWidget *currentPage=pagesWidget->currentWidget();
+
+    if(currentPage==nullptr)
+        return;
+
+    QScrollArea *currentScroll=qobject_cast<QScrollArea *>(currentPage);
+
+    if(currentScroll==nullptr)
+        return;
+
+    const int overflow=currentScroll->horizontalScrollBar()->maximum();
+
+    if(overflow>0)
+        resize(width()+overflow+10, height());
+}
+
+
+// Одноразовое доращивание ширины при показе (см. заголовок):
+// максимальный выступ горизонтали по всем страницам
+void ConfigDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+
+    widenToFitCurrentPage();
 }
 
 

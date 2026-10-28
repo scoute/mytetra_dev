@@ -486,10 +486,12 @@ This can happen if there is no free space left on the hard disk or it is impossi
 <context>
     <name>AppConfigPage_Clipper</name>
     <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="47"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="180"/>
-        <source>Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)</source>
-        <translation>Веб-клиппер: вставка буфера обмена в unsorted_notes по глобальному хоткею (X11, Windows)</translation>
+        <source>Web Clipper (global hotkey)</source>
+        <translation>Веб-клиппер (глобальный хоткей)</translation>
+    </message>
+    <message>
+        <source>Paste clipboard to unsorted_notes by global hotkey (X11, Windows)</source>
+        <translation>Вставка буфера обмена в unsorted_notes по глобальному хоткею (X11, Windows)</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="51"/>

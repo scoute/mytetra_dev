@@ -83,6 +83,9 @@ private slots:
  void enable_find_button(const QString &text);
  void emit_highlight(void);
 
+ // Подсказки стрелок зависят от горячих клавиш
+ void setupShortcuts(void);
+
 private:
   QLineEdit *lineEdit;
   QCheckBox *mathCase;

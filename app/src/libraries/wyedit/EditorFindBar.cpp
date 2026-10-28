@@ -9,6 +9,10 @@
 #include "Editor.h"
 #include "EditorConfig.h"
 #include "EditorFindBar.h"
+#include "libraries/ShortcutManager.h"
+
+
+extern ShortcutManager shortcutManager;
 
 
 EditorFindBar::EditorFindBar(QWidget *parent) : QWidget(parent)
@@ -84,14 +88,16 @@ void EditorFindBar::setup_ui(void)
   prevButton=new QPushButton(this);
   prevButton->setIcon(style()->standardIcon(QStyle::SP_ArrowBack));
   prevButton->setObjectName("findbarSquareButton");
-  prevButton->setToolTip(tr("Previous match (Shift+Enter)"));
   prevButton->setEnabled(false);
 
   nextButton=new QPushButton(this);
   nextButton->setIcon(style()->standardIcon(QStyle::SP_ArrowForward));
   nextButton->setObjectName("findbarSquareButton");
-  nextButton->setToolTip(tr("Next match (Enter)"));
   nextButton->setEnabled(false);
+
+  // Подсказки со стрелками освежает setupShortcuts:
+  // текст зависит от назначенных горячих клавиш и может
+  // меняться в настройках (по умолчанию F3 и Shift+F3)
 
   // Счетчик вида "2 of 5". Пустой пока нет активного поиска.
   // Ширина не резервируется: пустой счетчик не должен оставлять
@@ -158,6 +164,21 @@ void EditorFindBar::setup_signals(void)
 
   connect(detachButton, &QPushButton::clicked,
           this,         &EditorFindBar::detach_clicked);
+
+  // Подсказки зависят от горячих клавиш: освежать при их смене
+  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut,
+          this,             &EditorFindBar::setupShortcuts);
+
+  setupShortcuts();
+}
+
+
+// Подсказки стрелок с актуальными горячими клавишами
+// (F3 и Shift+F3 по умолчанию, могут переназначаться)
+void EditorFindBar::setupShortcuts(void)
+{
+  prevButton->setToolTip(shortcutManager.getDescriptionWithShortcut("editor-findPrevious"));
+  nextButton->setToolTip(shortcutManager.getDescriptionWithShortcut("editor-findNext"));
 }
 
 

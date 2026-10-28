@@ -9,6 +9,8 @@ class QGridLayout;
 class QPushButton;
 class QLabel;
 class QDialogButtonBox;
+class QScrollArea;
+class QShowEvent;
 
 
 // Выбор спецсимволов для вставки в текст: таблица символов и ряд
@@ -44,6 +46,10 @@ private:
  void setup_ui(void);
  void assembly(void);
 
+ // Одноразовое доращивание ширины при показе: QSS-рамки тем
+ // выедают вьюпорт, ручной расчет в assembly их не видит
+ void showEvent(QShowEvent *event) override;
+
  // Кнопки таблицы и недавних: текст кнопки и есть символ
  void fillGrid(QGridLayout *layout,
                const QStringList &symbols,
@@ -53,6 +59,12 @@ private:
  QString pickedSymbol;
 
  QList<QPushButton *> symbolButtons;
+
+ // Прокрутка таблицы: нужна в showEvent для проверки скролла
+ QScrollArea *scroll=nullptr;
+
+ // Ширина уже доращивалась: повторный показ не трогаем
+ bool widthFixed=false;
 };
 
 

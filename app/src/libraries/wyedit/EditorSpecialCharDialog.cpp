@@ -151,7 +151,7 @@ void EditorSpecialCharDialog::assembly(void)
  // Вся таблица — в прокрутке: три сотни кнопок в экран не влезают.
  // Минимум 8 рядов кнопок 36px, дальше растет вместе с окном:
  // у прокрутки вертикально Expanding, кнопка Cancel прижата к низу
- QScrollArea *scroll=new QScrollArea(this);
+ scroll=new QScrollArea(this);
  scroll->setWidgetResizable(true);
  scroll->setMinimumHeight(360);
  scroll->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
@@ -221,6 +221,31 @@ void EditorSpecialCharDialog::fillGrid(QGridLayout *layout,
 
  if(column!=0)
   row++;
+}
+
+
+// Одноразовое доращивание ширины при показе. Ручной расчет
+// minimumWidth в assembly складывает контент+скроллбар+рамки стиля,
+// но QSS-рамки и отступы тем (dark: border 1px + padding 2px = 6px)
+// вьюпорт выедают, а в расчет не входят. Если горизонтальный скролл
+// все же появился — окно доращивается ровно на величину выступа.
+// В светлых темах maximum нулевой, окно не трогается
+void EditorSpecialCharDialog::showEvent(QShowEvent *event)
+{
+ QDialog::showEvent(event);
+
+ if(widthFixed)
+  return;
+
+ widthFixed=true;
+
+ if(scroll==nullptr)
+  return;
+
+ const int overflow=scroll->horizontalScrollBar()->maximum();
+
+ if(overflow>0)
+  resize(width()+overflow+2, height());
 }
 
 

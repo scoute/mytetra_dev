@@ -208,5 +208,13 @@ void ChangeHistoryDialog::updateDiff(void)
     if(diff.isEmpty())
         diffView->setPlainText(tr("No differences from current text"));
     else
-        diffView->setHtml(UnifiedDiff::toColoredHtml(diff));
+    {
+        // Темные темы (dark, midnight): светлая палитра диффа,
+        // иначе служебные строки черным по темному не читаются
+        const QString theme=mytetraConfig.getInterfaceTheme();
+        const bool darkTheme=(theme==QStringLiteral("dark") ||
+                              theme==QStringLiteral("midnight"));
+
+        diffView->setHtml(UnifiedDiff::toColoredHtml(diff, darkTheme));
+    }
 }

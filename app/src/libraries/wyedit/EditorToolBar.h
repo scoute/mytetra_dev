@@ -168,6 +168,10 @@ public slots:
 
     void setupShortcuts(void);
 
+    // Контекстное меню линеек: единственный пункт настроек редактора,
+    // по аналогии с меню линеек списка записей
+    void onToolbarContextMenu(const QPoint &pos);
+
     // Прямые тексты выпадашек цвета и подсказок. Остальное освежает
     // setupShortcuts по сигналу updateWidgetShortcut
     void retranslateUi(void);

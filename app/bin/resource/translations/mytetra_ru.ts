@@ -4025,6 +4025,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Show attach files</source>
         <translation type="vanished">Показать прикрепленные файлы</translation>
     </message>
+    <message>
+        <source>Editor settings...</source>
+        <translation>Настройки редактора...</translation>
+    </message>
 </context>
 <context>
     <name>EditorToolbarAvailableCommandsModel</name>

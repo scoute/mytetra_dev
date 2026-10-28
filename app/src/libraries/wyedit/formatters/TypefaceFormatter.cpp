@@ -3018,7 +3018,7 @@ void TypefaceFormatter::onFontsizeChanged(int n)
 // Параметр n - это номер выбранного пункта в выпадающей кнопке выбора цвета,
 // счет кнопок с нуля.
 // При n=0 нужно запустить диалог выбора цвета,
-// При n=1 нужно установить стандартный цвет (нет цвета)
+// При n=1 сбрасывается цвет (нет цвета), сброс запоминается последним
 void TypefaceFormatter::onFontcolorClicked(int n)
 {
     // TRACELOG
@@ -3062,9 +3062,13 @@ void TypefaceFormatter::onFontcolorClicked(int n)
 
     if (n==1)
     {
-        selectedColor = QApplication::style()->standardPalette().color(QPalette::WindowText);
+        // "Нет цвета": запоминается как последний (прозрачный),
+        // клик по кнопке будет сбрасывать цвет, а не красить
+        selectedColor = Qt::transparent;
 
-        // Меняется цвет кнопки и устанавливается цвет текста
+        editorConfig->set_lastFontColor(selectedColor.name(QColor::HexArgb));
+
+        // Меняется цвет кнопки и сбрасывается цвет текста
         this->doChangeFontcolor( selectedColor );
     }
 }
@@ -3381,6 +3385,79 @@ void TypefaceFormatter::clearBackgroundInSimpleSelection(const QTextCursor &curs
 
     // 3) Очистка фона ячеек таблиц и самих таблиц только внутри выделения
     clearTableCellsBackground(doc, selStart, selEnd);
+}
+
+
+void TypefaceFormatter::clearForegroundInSimpleSelection(const QTextCursor &cursor)
+{
+    QTextDocument *doc = textArea->document();
+    const int selStart = cursor.selectionStart();
+    const int selEnd   = cursor.selectionEnd();
+
+    // Свойство именно снимается: mergeCharFormat неустановленное
+    // свойство не перезаписывает, поэтому формат фрагмента
+    // копируется, чистится и кладется обратно целиком
+    QTextBlock block = doc->findBlock(selStart);
+
+    while(block.isValid() && block.position()<selEnd)
+    {
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            QTextFragment fragment=it.fragment();
+
+            const int fragStart=fragment.position();
+            const int fragEnd=fragStart+fragment.length();
+
+            if(fragEnd<=selStart)
+                continue;
+
+            if(fragStart>=selEnd)
+                break;
+
+            QTextCharFormat format=fragment.charFormat();
+
+            if(!format.hasProperty(QTextFormat::ForegroundBrush))
+                continue;
+
+            format.clearProperty(QTextFormat::ForegroundBrush);
+
+            QTextCursor fragmentCursor(doc);
+            fragmentCursor.setPosition(qMax(fragStart, selStart));
+            fragmentCursor.setPosition(qMin(fragEnd, selEnd), QTextCursor::KeepAnchor);
+            fragmentCursor.setCharFormat(format);
+        }
+
+        block=block.next();
+    }
+}
+
+
+void TypefaceFormatter::clearForegroundInSelection()
+{
+    QTextCursor cur = textArea->textCursor();
+
+    if ( !cur.hasSelection() )
+    {
+        return;
+    }
+
+    QList<QTextCursor> cursors;
+
+    // Если это не простое непрерывное выделение
+    if ( cur.hasComplexSelection() )
+    {
+        cursors << this->getComplexSelectionCursors();
+    }
+    else
+    {
+        cursors << cur;
+    }
+
+
+    for ( const auto &cursor : cursors )
+    {
+        this->clearForegroundInSimpleSelection(cursor);
+    }
 }
 
 
@@ -3701,8 +3778,18 @@ void TypefaceFormatter::doChangeFontcolor(const QColor &selectedColor)
 {
     // TRACELOG
 
+    // Прозрачный цвет означает "Нет цвета": foreground сбрасывается,
+    // а не красится (как сброс фона в doChangeBackgroundColor)
+    if(selectedColor.alpha()==0)
+    {
+        textArea->textCursor().beginEditBlock();
+
+        this->clearForegroundInSelection();
+
+        textArea->textCursor().endEditBlock();
+    }
     // Если выделение есть
-    if ( textArea->textCursor().hasSelection() )
+    else if ( textArea->textCursor().hasSelection() )
     {
         textArea->setTextColor( selectedColor ); // Меняется цвет текста
     }

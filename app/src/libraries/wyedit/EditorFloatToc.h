@@ -48,6 +48,7 @@ protected:
 private slots:
  void onDocumentChanged(void);
  void onRebuildTimeout(void);
+ void onBarsRangeChanged(int minimum, int maximum);
  void onJump(QListWidgetItem *item);
  void onCursorMoved(void);
  void onToggleCollapsed(void);

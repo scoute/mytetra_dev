@@ -260,6 +260,11 @@ private:
 
     void clearBackgroundInSelection();
     void clearBackgroundInSimpleSelection(const QTextCursor &cursor);
+
+    // Сброс цвета текста в выделении (пункт "Нет цвета").
+    // Зеркально сбросу фона: NoBrush вместо краски
+    void clearForegroundInSelection();
+    void clearForegroundInSimpleSelection(const QTextCursor &cursor);
     static void clearTableCellsBackground(QTextDocument *doc, int selStart, int selEnd);
     static void findAndClearTables(QTextFrame *frame, int selStart, int selEnd);
     static void clearSingleTable(QTextTable *table, int selStart, int selEnd);

@@ -1,9 +1,11 @@
 #include <QDebug>
 #include <QStringList>
 #include <QToolButton>
+#include <QMenu>
 
 #include "main.h"
 #include "EditorToolBar.h"
+#include "EditorConfigDialog.h"
 #include "EditorDropDownButton.h"
 #include "EditorFontSizeComboBox.h"
 #include "EditorFontFamilyComboBox.h"
@@ -98,6 +100,34 @@ void EditorToolBar::setupSignals()
 {
     // Обновление горячих клавиш, если они были изменены
     connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &EditorToolBar::setupShortcuts);
+
+    // Контекстные меню линеек: только на пустом месте, там единственный
+    // пункт перехода в настройки редактора
+    toolsLine1.setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(&toolsLine1, &QToolBar::customContextMenuRequested,
+            this,          &EditorToolBar::onToolbarContextMenu);
+
+    toolsLine2.setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(&toolsLine2, &QToolBar::customContextMenuRequested,
+            this,          &EditorToolBar::onToolbarContextMenu);
+}
+
+
+void EditorToolBar::onToolbarContextMenu(const QPoint &pos)
+{
+    QToolBar *line=qobject_cast<QToolBar *>(sender());
+
+    if(line==nullptr)
+        return;
+
+    QMenu menu(this);
+    QAction *setupAction=menu.addAction(tr("Editor settings..."));
+
+    if(menu.exec(line->mapToGlobal(pos))==setupAction)
+    {
+        // Диалог модалит сам в конструкторе, exec вызывать не надо
+        EditorConfigDialog editorDialog(this);
+    }
 }
 
 

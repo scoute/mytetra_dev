@@ -22,8 +22,10 @@ public:
                              const QString &title);
 
     // Раскраска unified diff в HTML для QTextBrowser.
-    // Заголовки серым, добавления зеленым, удаления красным
-    static QString toColoredHtml(const QString &diff);
+    // Заголовки серым, добавления зеленым, удаления красным.
+    // dark=true — палитра под темную тему: черный текст
+    // на темном фоне иначе вообще не читается
+    static QString toColoredHtml(const QString &diff, bool dark=false);
 };
 
 #endif /* _UNIFIEDDIFF_H_ */

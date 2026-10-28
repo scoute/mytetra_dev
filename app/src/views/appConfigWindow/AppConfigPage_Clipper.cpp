@@ -48,18 +48,24 @@ void AppConfigPage_Clipper::setupUi(void)
 {
   qDebug() << "Create clipper config page";
 
-  // Веб-клиппер: вставка из буфера обмена в unsorted_notes по глобальному хоткею.
-  // Сам хоткей работает только под X11; кнопка проверки — везде
+  // Веб-клиппер: вставка из буфера обмена по глобальному хоткею.
+  // Сам хоткей работает только под X11; кнопка проверки — везде.
+  // Текст короткий специально: длинная строка растягивала бы всю
+  // страницу (а за ней и весь диалог) — подробности в подсказке
   clipperEnable=new QCheckBox(this);
-  clipperEnable->setText(tr("Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
+  clipperEnable->setText(tr("Web Clipper (global hotkey)"));
+  clipperEnable->setToolTip(tr("Paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
   clipperEnable->setChecked(mytetraConfig.get_clipperenable());
 
   clipperHotkeyEdit=new QKeySequenceEdit(this);
   clipperHotkeyEdit->setToolTip(tr("Global hotkey, for example Ctrl+Alt+V. Latin keys only."));
   clipperHotkeyEdit->setKeySequence(QKeySequence(mytetraConfig.get_clipperhotkey()));
 
+  // Статус переносится и не раздвигает форму: ширина берется
+  // по остатку, а не по длине текста (статус бывает длинным)
   clipperStatusLabel=new QLabel(this);
   clipperStatusLabel->setWordWrap(true);
+  clipperStatusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 
   clipperTestButton=new QPushButton(this);
   clipperTestButton->setText(tr("Clip now"));
@@ -100,6 +106,9 @@ void AppConfigPage_Clipper::setupUi(void)
   // пустые квадраты в попапе (общий грабель, см. AGENTS.md)
   clipperBranchCombo=new MtComboBox(this);
   clipperBranchCombo->setToolTip(tr("Root branches with two nesting levels"));
+  // Ширина комбо по содержимому (длинные пути веток) не должна
+  // растягивать страницу: показ по минимуму, полные имена в попапе
+  clipperBranchCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
   rebuildBranchList();
 
   const QString savedId=mytetraConfig.get_clipperbranchid();
@@ -326,7 +335,8 @@ void AppConfigPage_Clipper::onClickedClipperTest(void)
 
 void AppConfigPage_Clipper::retranslateUi(void)
 {
-  clipperEnable->setText(tr("Web Clipper: paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
+  clipperEnable->setText(tr("Web Clipper (global hotkey)"));
+  clipperEnable->setToolTip(tr("Paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
   clipperHotkeyEdit->setToolTip(tr("Global hotkey, for example Ctrl+Alt+V. Latin keys only."));
 
   clipperTestButton->setText(tr("Clip now"));

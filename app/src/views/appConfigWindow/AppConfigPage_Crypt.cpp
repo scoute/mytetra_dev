@@ -173,10 +173,17 @@ void AppConfigPage_Crypt::setupUi(void)
   reencryptButton=new QPushButton(this);
   reencryptButton->setText(tr("Re-encrypt data with selected method"));
 
-  QHBoxLayout *cryptMethodLayout=new QHBoxLayout;
-  cryptMethodLayout->addWidget(cryptMethodCombo);
-  cryptMethodLayout->addWidget(reencryptButton);
-  cryptMethodLayout->addStretch();
+  // Комбо и кнопка друг под другом: кнопка с длинным текстом
+  // в одном ряду с комбо растягивала бы страницу в полтора раза.
+  // Комбо прижато влево коротким рядом, кнопка своей строкой
+  QVBoxLayout *cryptMethodLayout=new QVBoxLayout;
+
+  QHBoxLayout *cryptMethodComboRow=new QHBoxLayout;
+  cryptMethodComboRow->addWidget(cryptMethodCombo);
+  cryptMethodComboRow->addStretch();
+  cryptMethodLayout->addLayout(cryptMethodComboRow);
+
+  cryptMethodLayout->addWidget(reencryptButton, 0, Qt::AlignLeft);
   cryptMethodBox->setLayout(cryptMethodLayout);
 }
 
@@ -225,14 +232,16 @@ void AppConfigPage_Crypt::setupSignals(void)
 
 void AppConfigPage_Crypt::assembly(void)
 {
+  // Метод шифрования — самый верх: выбор шифра важнее
+  // парольных мелочей, его ищут первым
   // Собирается основной слой
   QVBoxLayout *central_layout=new QVBoxLayout();
+  central_layout->addWidget(cryptMethodBox);
   central_layout->addWidget(passRetrieveBox);
   central_layout->addWidget(howPassRequestBox);
   central_layout->addWidget(storePassRequestBox);
   central_layout->addWidget(autoClosePasswordBox);
   central_layout->addWidget(decryptFileToTrashDirectoryBox);
-  central_layout->addWidget(cryptMethodBox);
   central_layout->addStretch();
 
   // Основной слой устанавливается

@@ -116,6 +116,11 @@ public:
     bool get_allowTrueImageResize(void);
     void set_allowTrueImageResize(bool allow);
 
+    // Закрывать окно спецсимволов после вставки (дефолт в таблице 46).
+    // Выключено — диалог остается открытым, можно набирать подряд
+    bool get_specialCharCloseOnInsert(void);
+    void set_specialCharCloseOnInsert(bool close);
+
     // Последние выбранные пользователем цвета текста и фона:
     // клик по кнопке красит в них без пикера (как в LibreOffice)
     QString get_lastFontColor(void);
@@ -206,6 +211,7 @@ private:
     static QStringList get_parameter_table_43(bool withEndSignature=true);
     static QStringList get_parameter_table_44(bool withEndSignature=true);
     static QStringList get_parameter_table_45(bool withEndSignature=true);
+    static QStringList get_parameter_table_46(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

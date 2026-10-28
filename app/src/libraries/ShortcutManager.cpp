@@ -127,7 +127,6 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-heading1",           Data{ QKeySequence("Ctrl+1"), tr("Heading 1"), tr("Format paragraphs as first-level heading") });
     defaultKeyTable.insert("editor-heading2",           Data{ QKeySequence("Ctrl+2"), tr("Heading 2"), tr("Format paragraphs as second-level heading") });
     defaultKeyTable.insert("editor-heading3",           Data{ QKeySequence("Ctrl+3"), tr("Heading 3"), tr("Format paragraphs as third-level heading") });
-    defaultKeyTable.insert("editor-structure",          Data{ QKeySequence(""), tr("Show/hide document structure"), tr("Show headings outline with jump to section") });
     defaultKeyTable.insert("editor-toc",                Data{ QKeySequence("Ctrl+Shift+C"), tr("Insert table of contents"), tr("Insert or refresh the table of contents snapshot") });
     defaultKeyTable.insert("editor-lowercase",           Data{ QKeySequence(""), tr("Lowercase"), tr("") });
     defaultKeyTable.insert("editor-uppercase",           Data{ QKeySequence(""), tr("Uppercase"), tr("") });

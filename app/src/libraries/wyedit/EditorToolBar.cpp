@@ -382,13 +382,6 @@ void EditorToolBar::setupToolBarTools(void)
     reference->setIcon(QIcon(":/resource/pic/edit_reference.svg"));
     reference->setObjectName("editor_tb_reference");
 
-    // Кнопка панели структуры: живой список H1-H3 с прыжком в раздел.
-    // В линейке встает сразу за ссылкой (правило миграции 39->40)
-    structure=new QAction(this);
-    structure->setCheckable(true);
-    structure->setIcon(QIcon(":/resource/pic/edit_structure.svg"));
-    structure->setObjectName("editor_tb_structure");
-
     // Кнопка оглавления: вставка снимка H1-H3 в текст, повторный вызов
     // обновляет снимок на месте. В линейке сразу за структурой
     toc=new QAction(this);
@@ -574,7 +567,6 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-findText", findText);
     shortcutManager.initAction("editor-settings", settings);
     shortcutManager.initAction("editor-reference", reference);
-    shortcutManager.initAction("editor-structure", structure);
     shortcutManager.initAction("editor-toc", toc);
     shortcutManager.initAction("editor-secret", secret);
     shortcutManager.initAction("editor-showHtml", showHtml);

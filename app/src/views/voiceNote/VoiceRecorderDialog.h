@@ -197,6 +197,16 @@ private:
     qint64 durationMs;
     bool hasRecording;
 
+    // Первые батчи аналогового микрофона после паузы бывают
+    // мусорные, сколько уже пропущено
+    int warmupDroppedMs;
+
+    // Фильтр постоянной составляющей: мусор прогрева входа -
+    // это DC. Состояние одноэлементное, переносится между чанками
+    bool dcBlockInit;
+    double dcBlockPrevIn;
+    double dcBlockPrevOut;
+
     QString filePath;
 };
 

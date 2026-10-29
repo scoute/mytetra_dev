@@ -32,6 +32,36 @@
 extern AppConfig mytetraConfig;
 
 
+// Сколько мусора прогрева аналогового входа можно пропустить за
+// одну запись (мс). Потолок на случай, если за мусор принят
+// громкий реальный звук - падение записи всё равно не бесконечно
+static const int WARMUP_MAX_DROP_MS=3000;
+
+// Срез DC-blocker в герцах. Мусор прогрева аналогового (HDA)
+// микрофона - это конденсатор смещения: постоянное смещение с
+// затухающим низкочастотным хвостом. Ниже фундаментальной частоты
+// мужского голоса (~85 Гц) речи нет, так что срез безопасен
+static const double DC_BLOCK_CUTOFF_HZ=40.0;
+
+
+// Батч мусора прогрева в насыщении (когда весь батч на пределе,
+// как при неподвижном DC) не пишется вовсе. Широкополосный
+// числовой мусор так же гасится на всякий случай
+static bool isSaturatedChunk(const short *pcm, int samples)
+{
+    if(samples<480) // короче 10 мс статистика не работает
+        return false;
+
+    int saturated=0;
+
+    for(int i=0; i<samples; ++i)
+        if(qAbs(pcm[i])>=32000)
+            ++saturated;
+
+    return static_cast<qreal>(saturated)/samples>=0.2;
+}
+
+
 WaveformWidget::WaveformWidget(QWidget *parent) : QWidget(parent)
 {
     setMinimumSize(260, 80);
@@ -107,7 +137,15 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     fileNameEdited(false),
     elapsedRunning(false),
     durationMs(0),
-    hasRecording(false)
+    hasRecording(false),
+
+    // Прогрев аналогового входа: счётчик мусора и чистое
+    // стартовое состояние DC-blocker (флаг, что первый чанк уже
+    // использован как точка отсчета)
+    warmupDroppedMs(0),
+    dcBlockInit(false),
+    dcBlockPrevIn(0.0),
+    dcBlockPrevOut(0.0)
 {
     setWindowTitle(tr("Voice note"));
     setModal(true);
@@ -805,6 +843,13 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
 
     opusFormat=format;
 
+    // Сколько мусора пропущено и что фильтр DC еще не инициализирован,
+    // ровно для этой записи
+    warmupDroppedMs=0;
+    dcBlockInit=false;
+    dcBlockPrevIn=0.0;
+    dcBlockPrevOut=0.0;
+
     if(!opusWriter.open(filePath, format.sampleRate()))
     {
         statusLabel->setText(opusWriter.errorString());
@@ -887,8 +932,62 @@ void VoiceRecorderDialog::onOpusAudioData(void)
     if(data.isEmpty())
         return;
 
-    const int samples=data.size()/static_cast<int>(sizeof(short));
-    const short *pcm=reinterpret_cast<const short *>(data.constData());
+    // DC-blocker: y[n]=x[n]-x[n-1]+R*y[n-1]. Снимает выстрел по
+    // постоянной составляющей при пробуждении аналогового входа
+    // из suspend: рельса демпфируется в ноль за миллисекунды,
+    // затухающий низкочастотный хвост тоже уходит.
+    // Фильтр в одном копе QByteArray, ибо данные и так из копии
+    // readAll
+    QByteArray processed=data;
+    short *pcm=reinterpret_cast<short *>(processed.data());
+    const int samples=processed.size()/static_cast<int>(sizeof(short));
+    const double radius=1.0-6.2831853071795862*DC_BLOCK_CUTOFF_HZ
+                                    /opusFormat.sampleRate();
+
+    qreal rawSum=0.0;
+    qreal rawMean=0.0;
+
+    int start=0;
+
+    if(!dcBlockInit)
+    {
+        // Первая выборка записи считается точкой отсчета DC:
+        // рельса с самого начала не имеет переходных процессов
+        dcBlockInit=true;
+        dcBlockPrevIn=pcm[0];
+        dcBlockPrevOut=0.0;
+        pcm[0]=0;
+        start=1;
+    }
+
+    for(int i=start; i<samples; ++i)
+    {
+        // Среднее сырых сэмплов - для теста рельсы: у нормальной
+        // речи DC никогда не доходит до половины шкалы
+        rawSum+=pcm[i];
+
+        const double s=pcm[i];
+        const double y=s-dcBlockPrevIn+radius*dcBlockPrevOut;
+        dcBlockPrevIn=s;
+        dcBlockPrevOut=y;
+        pcm[i]=static_cast<short>(qBound(-32768.0, y, 32767.0));
+    }
+
+    rawMean=static_cast<qreal>(rawSum)/samples;
+
+    // Мусор прогрева: насыщенные батчи не пишем и в волну не
+    // показываем (после фильтра DC такое уже почти не случается,
+    // Insurance от широкополосного цифрового мусора). Плюс батч
+    // с рельсой по DC: ступенька внутри чанка фильтр уже
+    // не гасит
+    const bool garbageChunk=isSaturatedChunk(pcm, samples)
+                            || qAbs(rawMean)>=16384;
+
+    if(warmupDroppedMs<WARMUP_MAX_DROP_MS && garbageChunk)
+    {
+        warmupDroppedMs+=samples*1000/opusFormat.sampleRate();
+        return;
+    }
 
     // Пик для волны из того же потока, масштаб как у пробы
     qreal peak=0.0;

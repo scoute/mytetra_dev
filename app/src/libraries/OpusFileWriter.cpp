@@ -173,7 +173,12 @@ void OpusFileWriter::writeHeaders(void)
     packet.packetno=1;
     ogg_stream_packetin(streamState, &packet);
 
-    flushPages(false);
+    // Страница OpusTags обязана заканчиваться ровно на нем же:
+    // libopusfile (audacious, mpv и другие) отбраковывает поток,
+    // если на странице этого заголовка есть хотя бы еще пакет.
+    // pageout дожидается наполнения страницы, теги уехали бы
+    // за первым аудио-сегментом, поэтому полный сброс
+    flushPages(true);
 
     headersWritten=true;
 }

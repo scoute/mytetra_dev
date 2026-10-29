@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QComboBox>
 #include "libraries/MtComboBox.h"
 #include <QLineEdit>
@@ -143,9 +144,17 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // стартовое состояние DC-blocker (флаг, что первый чанк уже
     // использован как точка отсчета)
     warmupDroppedMs(0),
+
+    // Прогрев входа: запускается в конце конструктора, когда
+    // комбобокс устройств уже собран
+    micMonitoring(false),
+
     dcBlockInit(false),
     dcBlockPrevIn(0.0),
-    dcBlockPrevOut(0.0)
+    dcBlockPrevOut(0.0),
+
+    // Подавление фона: флаг фактической галочки
+    noiseSuppressOn(false)
 {
     setWindowTitle(tr("Voice note"));
     setModal(true);
@@ -157,6 +166,13 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     QLabel *formatLabel=new QLabel(tr("Format:"), this);
     opusRadio=new QRadioButton(tr("Opus (.opus)"), this);
     mp3Radio=new QRadioButton(tr("MP3 (.mp3)"), this);
+    noiseSuppress=new QCheckBox(tr("Suppress noise"), this);
+
+    // Подавление фона по галочке: период, на котором говорят,
+    // записывается с цепочкой фильтров и гейтом. Настройка
+    // хранится в конфиге, включено по умолчанию
+    noiseSuppress->setChecked(mytetraConfig.get_voiceNoteNoiseSuppress());
+    noiseSuppressOn=noiseSuppress->isChecked();
 
     // Свои группы: иначе autoExclusive сиблингов сбрасывает
     // выбор формата при выборе качества и наоборот
@@ -200,6 +216,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     formatLayout->addWidget(opusRadio);
     formatLayout->addWidget(mp3Radio);
     formatLayout->addStretch();
+    formatLayout->addWidget(noiseSuppress);
     centralLayout->addLayout(formatLayout);
 
     QHBoxLayout *fileNameLayout=new QHBoxLayout();
@@ -279,6 +296,9 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
         currentFormat=VoiceFormatMp3;
     }
 
+    // Галочка подавления следует за форматом
+    updateNoiseSuppressAvailable();
+
     // Предложенное имя: метка времени плюс расширение формата
     fileNameEdit->setText(autoStem()+currentExtension());
 
@@ -300,6 +320,8 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
             this,          &VoiceRecorderDialog::onRecordToggled);
     connect(deviceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this,        &VoiceRecorderDialog::onDeviceChanged);
+    connect(noiseSuppress, &QCheckBox::toggled,
+            this,          &VoiceRecorderDialog::onNoiseSuppressToggled);
     connect(recorder, QOverload<QMediaRecorder::Error>::of(&QAudioRecorder::error),
             this,     &VoiceRecorderDialog::onRecorderError);
     connect(recorder, &QAudioRecorder::stateChanged,
@@ -322,7 +344,17 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
 
     const int defaultIndex=deviceCombo->findText(
         QAudioDeviceInfo::defaultInputDevice().deviceName());
+
+    // Предвыбор без сигнала смены: сработавший onDeviceChanged
+    // открыл бы вход при построении окна, а монитор запускается
+    // один раз явно, в конце конструктора
+    deviceCombo->blockSignals(true);
     deviceCombo->setCurrentIndex(defaultIndex>=0 ? defaultIndex : 0);
+    deviceCombo->blockSignals(false);
+
+    // Явный выбор для бэкенда MP3: сигнал смены выше подавлен
+    if(!deviceCombo->currentText().isEmpty())
+        recorder->setAudioInput(deviceCombo->currentText());
 
     if(devices.isEmpty())
     {
@@ -347,6 +379,13 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
         recordButton->setEnabled(false);
         statusLabel->setText(tr("No supported audio format"));
     }
+
+    // Прогрев: вход открывается сразу при появлении окна. К нажатию
+    // записи мусор аналогового пробуждения давно осел, а модель
+    // шума откалибрована реальным фоном. Волна показывает живой
+    // уровень микрофона
+    if(!devices.isEmpty())
+        startMonitor();
 }
 
 
@@ -356,6 +395,10 @@ VoiceRecorderDialog::~VoiceRecorderDialog(void)
     // в файл который ниже удаляется, а на Windows открытый файл
     // вообще не удалить
     stopOpusCapture();
+
+    // Прогрев держал вход живым для следующего дубля: при закрытии
+    // окна он освобождается явно, до удаления объекта
+    stopMonitor();
 
     if(recorder->state()==QMediaRecorder::RecordingState)
         recorder->stop();
@@ -587,6 +630,9 @@ void VoiceRecorderDialog::onFormatRadio(bool checked)
     else if(mp3Radio->isChecked())
         currentFormat=VoiceFormatMp3;
 
+    // Галочка подавления следует за форматом
+    updateNoiseSuppressAvailable();
+
     updateFormatInfo();
 
     // Расширение в поле имени следует за форматом: нетронутое
@@ -661,6 +707,10 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
         // MP3 пишет бэкенд, Opus пишет наш энкодер
         if(format==VoiceFormatMp3)
         {
+            // Устройство освобождается от прогрева: бэкенд открывает
+            // захват сам, двух владельцев быть не должно
+            stopMonitor();
+
             applyFormat(format);
             recorder->setOutputLocation(QUrl::fromLocalFile(filePath));
             recorder->record();
@@ -697,6 +747,18 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
             // не сменил (тихо ничего не писал), завершаем сами
             if(recorder->state()!=QMediaRecorder::RecordingState)
                 finishRecording();
+
+            // Прогрев возобновляется после бэкенда: он не всегда
+            // отпускает устройство мгновенно, попытка отложена.
+            // Неуспех не фатален - следующее нажатие записи пойдет
+            // старым путем уже с нажатия
+            QTimer::singleShot(300, this, [this]
+            {
+                // Нажатие Записи внутри задержки: вход нельзя ронять
+                // рестартом, учитывая активную запись
+                if(!recordButton->isChecked())
+                    startMonitor();
+            });
         }
         else
         {
@@ -782,6 +844,27 @@ void VoiceRecorderDialog::onDeviceChanged(int index)
     // Выбранное устройство пишет. Имя пустое пока список пуст
     if(!deviceCombo->currentText().isEmpty())
         recorder->setAudioInput(deviceCombo->currentText());
+
+    // Прогрев переключается с устройством: мусор нового входа
+    // пропускается заново, состояния в startMonitor сбрасываются
+    // намеренно. При записи комбобокс заблокирован, лишнего
+    // не случается
+    if(!recordButton->isChecked())
+        startMonitor();
+}
+
+
+// Доступность галочки шумоподавления: работает только на
+// собственном захвате Opus. MP3 пишет бэкенд, из его конвейера
+// проба читает, но подменить поток не может
+void VoiceRecorderDialog::updateNoiseSuppressAvailable(void)
+{
+    const bool available=(currentFormat==VoiceFormatOpus);
+
+    noiseSuppress->setEnabled(available);
+    noiseSuppress->setToolTip(available
+                              ? QString()
+                              : tr("Noise suppression works in Opus format"));
 }
 
 
@@ -799,10 +882,37 @@ QAudioDeviceInfo VoiceRecorderDialog::currentInputDevice(void) const
 }
 
 
-bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
+// Пересчет галочки подавления шума: живой флаг и настройка
+void VoiceRecorderDialog::onNoiseSuppressToggled(bool checked)
 {
-    stopOpusCapture();
+    noiseSuppressOn=checked;
+    mytetraConfig.set_voiceNoteNoiseSuppress(checked);
+}
 
+
+// Пересчет окон преобразования очистителя шума под частоту
+// записи и чистое состояние его оценок
+void VoiceRecorderDialog::setupNoiseChain(int sampleRate)
+{
+    noiseSuppressor.setup(sampleRate);
+}
+
+
+// Пропуск чанка через спектральное подавление шума. Пол тянется
+// онлайн по сглаженным огибающим бинов (без подслушивания до
+// нажатия записи), фон глушится и в паузах, и под речью
+void VoiceRecorderDialog::applyNoiseSuppress(short *pcm, int samples)
+{
+    noiseSuppressor.process(pcm, samples);
+}
+
+
+// Договаривание формата записи с устройством и открытие самого входа:
+// общая часть монитора прогрева и старого пути (файл не открывает).
+// false - нет устройства/формата или вход занят; причины первых двух
+// уже в статусе, занятость входа репортится только по флагу
+bool VoiceRecorderDialog::openOpusInput(bool reportStartError)
+{
     QAudioDeviceInfo device=currentInputDevice();
 
     if(device.isNull())
@@ -844,17 +954,16 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
     opusFormat=format;
 
     // Сколько мусора пропущено и что фильтр DC еще не инициализирован,
-    // ровно для этой записи
+    // ровно для этой сессии входа
     warmupDroppedMs=0;
     dcBlockInit=false;
     dcBlockPrevIn=0.0;
     dcBlockPrevOut=0.0;
 
-    if(!opusWriter.open(filePath, format.sampleRate()))
-    {
-        statusLabel->setText(opusWriter.errorString());
-        return false;
-    }
+    // Подавление фона: пересчет коэффициентов под частоту входа
+    // и чистое состояние. Оценки шума калибруются в потоке до
+    // нажатия записи
+    setupNoiseChain(format.sampleRate());
 
     audioInput=new QAudioInput(device, opusFormat, this);
     opusDevice=audioInput->start();
@@ -862,20 +971,17 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
     // Старт может не состояться: устройство еще не отпущено прошлым
     // дублем (deleteLater + асинхронное освобождение в бэкенде) или
     // занято другим приложением. Без проверки дальше тихая мертвая
-    // запись (readyRead не придет, файл пустой, вставка неактивна),
-    // а stop() по нестартовавшему входу роняет часть бэкендов.
-    // Поэтому неуспех сразу превращается в чистую ошибку
+    // запись (readyRead не придет), а stop() по нестартовавшему входу
+    // роняет часть бэкендов, поэтому неуспех сразу чистый
     if(opusDevice==nullptr || audioInput->error()!=QAudio::NoError)
     {
-        statusLabel->setText(tr("Can not record here"));
-
-        // Здесь не из сигнала входа, удаляем сразу, не deleteLater
+        // Здесь вызов не из сигнала входа: удаляем сразу, не deleteLater
         delete audioInput;
         audioInput=nullptr;
         opusDevice=nullptr;
 
-        if(opusWriter.isOpen())
-            opusWriter.close();
+        if(reportStartError)
+            statusLabel->setText(tr("Can not record here"));
 
         return false;
     }
@@ -889,36 +995,118 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
 }
 
 
-void VoiceRecorderDialog::stopOpusCapture(void)
+bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
 {
-    if(audioInput!=nullptr)
+    // Прошлый дубль: файл закрывается, при прогреве вход не трогается
+    stopOpusCapture();
+
+    // Прогрев: вход жив, мусор осел, модель шума откалибрована.
+    // Запись идет в тот же поток. Бюджет пропуска мусора свежий,
+    // на случай всплеска при нажатии; состояния DC и оценки
+    // шума специально не сбрасываются
+    if(micMonitoring)
     {
-        // Сигналы отключаются до удаления: readyRead/stateChanged
-        // иначе их доставка в полуживой объект роняет бэкенд
-        // (PulseAudio threaded-ml) при повторных записях
-        if(opusDevice!=nullptr)
-            disconnect(opusDevice, &QIODevice::readyRead,
-                       this,        &VoiceRecorderDialog::onOpusAudioData);
+        warmupDroppedMs=0;
 
-        disconnect(audioInput, &QAudioInput::stateChanged,
-                   this,       &VoiceRecorderDialog::onOpusStateChanged);
+        if(!opusWriter.open(filePath, opusFormat.sampleRate()))
+        {
+            statusLabel->setText(opusWriter.errorString());
+            return false;
+        }
 
-        // Нестартовавший вход (остаток неуспешного старта) stop()
-        // не дергаем: часть бэкендов на этом падает. Только удаляем
-        if(audioInput->state()!=QAudio::StoppedState)
-            audioInput->stop();
-
-        // Синхронное удаление: deleteLater оставлял вход живым до
-        // следующего цикла событий, и при закрытии диалога бэкенд
-        // обращался к уже освобожденным данным
-        delete audioInput;
-        audioInput=nullptr;
+        waveform->clearLevels();
+        return true;
     }
 
-    opusDevice=nullptr;
+    // Старый путь: прогрева нет (устройство было занято при открытии
+    // окна или прогрев не удался), вход открывается по нажатию
+    if(!openOpusInput(true))
+        return false;
 
+    if(!opusWriter.open(filePath, opusFormat.sampleRate()))
+    {
+        statusLabel->setText(opusWriter.errorString());
+
+        // Файл не открылся: записи не будет, вход освобождается,
+        // устройство не держится занятым впустую
+        stopOpusCapture();
+
+        return false;
+    }
+
+    waveform->clearLevels();
+
+    return true;
+}
+
+
+void VoiceRecorderDialog::stopOpusCapture(void)
+{
+    // Дубль заканчивается закрытием файла
     if(opusWriter.isOpen())
         opusWriter.close();
+
+    // Прогрев жив: вход тот же, монитор продолжается и после записи,
+    // следующий дубль воспользуется уже прогретым состоянием
+    if(micMonitoring)
+        return;
+
+    // Старый путь: вход освобождается целиком
+    stopMonitor();
+}
+
+
+// Прогрев входа: вход стримит пока открыто окно. Мусор аналогового
+// пробуждения оседает до нажатия записи, модель шума калибруется
+// реальным фоном комнаты, волна показывает живой уровень. Начало -
+// с рестарта: старый вход сначала освобождается
+void VoiceRecorderDialog::startMonitor(void)
+{
+    stopMonitor();
+
+    // Без репорта в статус: прогрев не обязательная часть, старый
+    // путь нажатия записи полноценный запасной вариант
+    if(!openOpusInput(false))
+        return;
+
+    micMonitoring=true;
+    waveform->clearLevels();
+}
+
+
+void VoiceRecorderDialog::stopMonitor(void)
+{
+    micMonitoring=false;
+
+    // Освобождать нечего: после старого пути вход уже удален,
+    // сбрасывается только указатель устройства
+    if(audioInput==nullptr)
+    {
+        opusDevice=nullptr;
+        return;
+    }
+
+    // Сигналы отключаются до удаления: readyRead/stateChanged
+    // иначе их доставка в полуживой объект роняет бэкенд
+    // (PulseAudio threaded-ml) при повторных записях
+    if(opusDevice!=nullptr)
+        disconnect(opusDevice, &QIODevice::readyRead,
+                   this,        &VoiceRecorderDialog::onOpusAudioData);
+
+    disconnect(audioInput, &QAudioInput::stateChanged,
+               this,       &VoiceRecorderDialog::onOpusStateChanged);
+
+    // Нестартовавший вход (остаток неуспешного старта) stop()
+    // не дергаем: часть бэкендов на этом падает. Только удаляем
+    if(audioInput->state()!=QAudio::StoppedState)
+        audioInput->stop();
+
+    // Синхронное удаление: deleteLater оставлял вход живым до
+    // следующего цикла событий, и при закрытии диалога бэкенд
+    // обращался к уже освобожденным данным
+    delete audioInput;
+    audioInput=nullptr;
+    opusDevice=nullptr;
 }
 
 
@@ -977,7 +1165,7 @@ void VoiceRecorderDialog::onOpusAudioData(void)
 
     // Мусор прогрева: насыщенные батчи не пишем и в волну не
     // показываем (после фильтра DC такое уже почти не случается,
-    // Insurance от широкополосного цифрового мусора). Плюс батч
+    // доставка от широкополосного цифрового мусора). Плюс батч
     // с рельсой по DC: ступенька внутри чанка фильтр уже
     // не гасит
     const bool garbageChunk=isSaturatedChunk(pcm, samples)
@@ -989,13 +1177,26 @@ void VoiceRecorderDialog::onOpusAudioData(void)
         return;
     }
 
-    // Пик для волны из того же потока, масштаб как у пробы
+    // Подавление фона по галочке: в модель шума попадают только
+    // чанки, прошедшие проверку мусора прогрева, - пол калибруется
+    // реальным звуком, а не рельсовой помехой
+    if(noiseSuppressOn)
+        applyNoiseSuppress(pcm, samples);
+
+    // Пик для волны из того же потока, масштаб как у пробы. Уровень
+    // рисуется и во время прогрева: видно, жив ли микрофон и не
+    // занят ли он посторонним приложением
     qreal peak=0.0;
 
     for(int i=0; i<samples; ++i)
         peak=qMax(peak, qAbs(static_cast<qreal>(pcm[i]))/32768.0);
 
     waveform->pushLevel(peak*4.0);
+
+    // Во время прогрева файл не открыт: чанки заканчиваются
+    // на волне и подавлении шума
+    if(!opusWriter.isOpen())
+        return;
 
     if(!opusWriter.writePcm(pcm, samples))
     {
@@ -1018,6 +1219,9 @@ void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
     if(audioInput==nullptr || audioInput->error()==QAudio::NoError)
         return;
 
+    // Поломанный вход монитором оставаться не может: он
+    // разбирается целиком, в конце будет попытка ре-прогрева
+    micMonitoring=false;
     stopOpusCapture();
 
     timer->stop();
@@ -1040,6 +1244,10 @@ void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
 
     hasRecording=false;
     insertButton->setEnabled(false);
+
+    // Попытка ре-прогрева: следующее нажатие записи в случае удачи
+    // снова получит прогретый вход, в случае неудачи - старый путь
+    startMonitor();
 }
 
 

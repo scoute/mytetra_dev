@@ -1817,6 +1817,20 @@ void AppConfig::set_voiceNoteFormat(QString format)
 }
 
 
+// Подавление фонового шума (HP+вырезки гула+гейт) в диалоге записи
+// голосовых заметок. Включено по умолчанию
+bool AppConfig::get_voiceNoteNoiseSuppress(void)
+{
+    return m_conf->value("voiceNoteNoiseSuppress", true).toBool();
+}
+
+
+void AppConfig::set_voiceNoteNoiseSuppress(bool value)
+{
+    m_conf->setValue("voiceNoteNoiseSuppress", value);
+}
+
+
 // Качество голосовых заметок по умолчанию: 0 low, 1 high.
 // Low если не задано или мусор: файлы меньше, голоса хватает.
 // Старые medium (1) и high (2) едут в high

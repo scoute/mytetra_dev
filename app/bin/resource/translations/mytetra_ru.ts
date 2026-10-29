@@ -8627,6 +8627,10 @@ Please select single item for enabling edit operation.</source>
         <translation>Старая запись будет перезаписана</translation>
     </message>
     <message>
+        <source>Noise suppression works in Opus format</source>
+        <translation>Подавление шума работает в формате Opus</translation>
+    </message>
+    <message>
         <source>Insert</source>
         <translation>Вставить</translation>
     </message>
@@ -8649,6 +8653,10 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>MP3 (.mp3)</source>
         <translation>MP3 (.mp3)</translation>
+    </message>
+    <message>
+        <source>Suppress noise</source>
+        <translation>Подавлять шум</translation>
     </message>
     <message>
         <source>Microphone:</source>

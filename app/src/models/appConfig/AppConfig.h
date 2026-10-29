@@ -499,6 +499,11 @@ public:
     QString get_voiceNoteFormat(void);
     void set_voiceNoteFormat(QString format);
 
+    // Подавление фонового шума в диалоге записи голосовых заметок.
+    // По умолчанию включено: цепочка HP+гейт наTurn очищает гул
+    bool get_voiceNoteNoiseSuppress(void);
+    void set_voiceNoteNoiseSuppress(bool value);
+
     // Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high
     int get_voiceNoteQuality(void);
     void set_voiceNoteQuality(int quality);

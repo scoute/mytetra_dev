@@ -848,12 +848,25 @@ void VoiceRecorderDialog::stopOpusCapture(void)
 {
     if(audioInput!=nullptr)
     {
+        // Сигналы отключаются до удаления: readyRead/stateChanged
+        // иначе их доставка в полуживой объект роняет бэкенд
+        // (PulseAudio threaded-ml) при повторных записях
+        if(opusDevice!=nullptr)
+            disconnect(opusDevice, &QIODevice::readyRead,
+                       this,        &VoiceRecorderDialog::onOpusAudioData);
+
+        disconnect(audioInput, &QAudioInput::stateChanged,
+                   this,       &VoiceRecorderDialog::onOpusStateChanged);
+
         // Нестартовавший вход (остаток неуспешного старта) stop()
         // не дергаем: часть бэкендов на этом падает. Только удаляем
         if(audioInput->state()!=QAudio::StoppedState)
             audioInput->stop();
 
-        audioInput->deleteLater();
+        // Синхронное удаление: deleteLater оставлял вход живым до
+        // следующего цикла событий, и при закрытии диалога бэкенд
+        // обращался к уже освобожденным данным
+        delete audioInput;
         audioInput=nullptr;
     }
 

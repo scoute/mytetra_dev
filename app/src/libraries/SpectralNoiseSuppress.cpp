@@ -6,12 +6,17 @@
 #include <cstring>
 
 // Пассивные константы алгоритма
-static const int NOISE_WIN_FRAMES=187; // окно пола шума ~1 с (187.5 кадр/с)
+static const int NOISE_WIN_FRAMES=375; // окно пола шума ~2 с (187.5 кадр/с):
+                                       // холды до пары секунд проходят,
+                                       // фон в паузах давится как раньше
 static const double SMOOTH_FACTOR=0.9; // сглаживание огибающей бина
 static const double FLOOR_BIAS=1.2;    // множитель минимума огибающей
 static const double SUBTRACT_BETA=2.0; // во сколько раз вычитается пол
 static const double GAIN_FLOOR=0.05;   // предел гейна, -26 дБ
 static const int SEED_FRAMES=32;       // засев пола: ~170 мс старта записи
+static const int SEED_REPLICATE_AT=8;  // реплика пишется не первым кадром,
+                                       // а девятым: окна к этому моменту
+                                       // наполнены реальным звуком
 
 SpectralNoiseSuppress::SpectralNoiseSuppress(void) :
     sampleRate(48000),
@@ -166,15 +171,17 @@ void SpectralNoiseSuppress::processFrame(void)
                                +(1.0-SMOOTH_FACTOR)*mag);
         smoothMag[k]=sm;
 
-        // Начальный засев: первый кадр записывается по всему кольцу,
-        // следующие - обновляют минимумом - пол с первого кадра не
-        // выше фона первых мгновений записи, гуль в нем сохраняется.
-        // По окончании засева кольцо живет обычной жизнью
+        // Начальный засев: девятый кадр записывается по всему кольцу,
+        // следующие - обновляют минимумом. Реплика не первым кадром:
+        // первые кадры почти тихие из-за нулевого префилла латентности,
+        // иначе пол весь период окна стоял бы near zero и подавления
+        // в начале не было бы вообще. Агрессивный минимум засева
+        // случайный всплеск в кадре реплики прибивает за пару кадров
         if(seedLeft>0)
         {
             float *col=noiseRing.data()+k*noiseWin;
 
-            if(seedLeft==SEED_FRAMES)
+            if(seedLeft==SEED_FRAMES-SEED_REPLICATE_AT)
             {
                 for(int i=0; i<noiseWin; ++i)
                     col[i]=sm;

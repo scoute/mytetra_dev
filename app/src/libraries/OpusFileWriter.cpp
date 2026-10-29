@@ -7,8 +7,8 @@
 #include "OpusFileWriter.h"
 
 
-// Фиксированный профиль голоса: CBR 24 кбит, кадр 20 мс
-static const int OPUS_VOICE_BITRATE=24000;
+// Фиксированный профиль голоса: CBR 32 кбит, кадр 20 мс
+static const int OPUS_VOICE_BITRATE=32000;
 static const int OPUS_VOICE_FRAME_MS=20;
 
 

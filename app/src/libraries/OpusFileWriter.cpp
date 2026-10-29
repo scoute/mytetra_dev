@@ -25,6 +25,12 @@ OpusFileWriter::OpusFileWriter(void)
     nextPacketNo=2;
     headersWritten=false;
     eosWritten=false;
+
+    // Иначе после нескольких дублей в writePcm монтируется пакет
+    // с мусорной длиной из прошлого прохода стека: segfault
+    // в ogg_stream_packetin
+    heldLen=0;
+    heldValid=false;
 }
 
 
@@ -106,6 +112,13 @@ bool OpusFileWriter::open(const QString &filePath, int inputSampleRate)
     headersWritten=false;
     eosWritten=false;
     nextPacketNo=2;
+
+    // «Удержанный» кадр прошлой записи сюда не попадает: если
+    // heldValid остался истинным от предыдущего дубля (например,
+    // после ошибки кодирования), writePcm на первом кадре пошлет
+    // пакет с чужой длиной
+    heldLen=0;
+    heldValid=false;
 
     writeHeaders();
 
@@ -244,8 +257,10 @@ bool OpusFileWriter::writePcm(const short *pcm, int sampleCount)
         }
 
         // Последний готовый кадр придерживается: EOS должен стоять
-        // на реальном аудио, а не на пустом пакете
-        if(heldValid)
+        // на реальном аудио, а не на пустом пакете. heldLen
+        // ограничен размером heldData: даже если состояние
+        // испорчено извне, пакет в ogg не уйдет с дурной длиной
+        if(heldValid && heldLen>0 && heldLen<=static_cast<int>(sizeof(heldData)))
         {
             if(!submitFrame(heldData, heldLen, false))
                 return false;
@@ -297,7 +312,7 @@ bool OpusFileWriter::close(void)
 
         if(encodedBytes>=0)
         {
-            if(heldValid)
+            if(heldValid && heldLen>0 && heldLen<=static_cast<int>(sizeof(heldData)))
             {
                 if(!submitFrame(heldData, heldLen, false))
                     ok=false;
@@ -318,16 +333,28 @@ bool OpusFileWriter::close(void)
             ogg_stream_packetin(streamState, &packet);
         }
         else
+        {
             ok=false;
+            heldValid=false;
+            heldLen=0;
+        }
 
         pendingCount=0;
     }
-    else if(heldValid)
+    else if(heldValid && heldLen>0 && heldLen<=static_cast<int>(sizeof(heldData)))
     {
         if(!submitFrame(heldData, heldLen, true))
             ok=false;
 
         heldValid=false;
+    }
+    else
+    {
+        // Ни остатка, ни корректного удержанного кадра: EOS был
+        // отдан бэкендом явной ошибкой в прошлой попытке, и не
+        // надо уносить это состояние в следующий дубль
+        heldValid=false;
+        heldLen=0;
     }
 
     if(!flushPages(true))

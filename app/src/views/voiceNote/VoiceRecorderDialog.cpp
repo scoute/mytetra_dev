@@ -430,12 +430,12 @@ QMultimedia::EncodingMode VoiceRecorderDialog::encodingMode(void)
 
 VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(VoiceFormat format)
 {
-    // Один профиль на формат: Opus 48 кГц/24 кбит CBR,
+    // Один профиль на формат: Opus 48 кГц/32 кбит CBR,
     // MP3 32 кГц фикс (битрейт lame игнорит, catch-22 Qt 5.15)
     if(format==VoiceFormatMp3)
         return {QMultimedia::NormalQuality, 0, 32000};
 
-    return {QMultimedia::NormalQuality, 24000, 48000};
+    return {QMultimedia::NormalQuality, 32000, 48000};
 }
 
 

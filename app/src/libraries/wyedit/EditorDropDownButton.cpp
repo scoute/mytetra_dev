@@ -172,6 +172,21 @@ void EditorDropDownButton::showListMenu(void)
     else
         list->setCurrentRow(0);
 
+    // Текущий язык дополнительно помечается галкой: одного
+    // current-подсвечивания в чужой теме может быть не видно,
+    // а чекбокс рисуется стилем всегда. Без языка под курсором
+    // галок нет, чекбокс ставится только на текущую строку
+    if(m_preselectRow>=0 && m_preselectRow<rowCount)
+    {
+        QListWidgetItem *current=list->item(m_preselectRow);
+
+        if(current!=nullptr)
+        {
+            current->setFlags(current->flags() | Qt::ItemIsUserCheckable);
+            current->setCheckState(Qt::Checked);
+        }
+    }
+
     // Текущий открытый список запоминается, чтобы фильтр событий
     // мог двигать текущую строку за мышью. Прошлый список, если вдруг
     // еще жив, закрывается: открыт всегда только один

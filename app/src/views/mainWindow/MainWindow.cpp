@@ -382,7 +382,7 @@ void MainWindow::assembly(void)
     vSplitter=new QSplitter(Qt::Vertical);
     vSplitter->addWidget(recordTableScreen); // Список конечных записей
     vSplitter->addWidget(editorScreen);      // Текст записи
-    vSplitter->setCollapsible(0,false); // Список конечных записей не может смыкаться
+    vSplitter->setCollapsible(0,true); // Список записей сворачивается в ноль
     vSplitter->setCollapsible(1,false); // Содержимое записи не может смыкаться
 
     hSplitter=new QSplitter(Qt::Horizontal);
@@ -1567,7 +1567,7 @@ void MainWindow::applyRecordTablePosition(void)
         // начало hSplitter. Без replaceWidget, по той же причине
         vSplitter->insertWidget(0, recordTableScreen);
         hSplitter->insertWidget(0, treeScreen);
-        vSplitter->setCollapsible(0, false);
+        vSplitter->setCollapsible(0, true);
         vSplitter->setCollapsible(1, false);
 
         // Синхронное удаление: виджеты уже переехали, детей нет.

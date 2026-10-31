@@ -352,6 +352,8 @@ HEADERS+=\
     src/libraries/ChangeHistory.h \
     src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
+    src/libraries/AppContext.h \
+    src/libraries/crypt/CryptKeyHolder.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/views/enterPassword/EnterPassword.h \
     src/views/consoleEmulator/ConsoleEmulator.h \
@@ -575,6 +577,8 @@ SOURCES+=\
     src/libraries/ChangeHistory.cpp \
     src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
+    src/libraries/AppContext.cpp \
+    src/libraries/crypt/CryptKeyHolder.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \

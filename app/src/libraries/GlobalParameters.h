@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QStatusBar>
 
+#include "libraries/crypt/CryptKeyHolder.h"
+
 class TreeScreen;
 class MetaEditor;
 class RecordTableScreen;
@@ -81,6 +83,11 @@ public:
     void setCryptKey(QByteArray hash);
     QByteArray getCryptKey(void);
 
+    // Каноническое хранилище ключа. Методы выше делегируют сюда.
+    // Новый код ходит через cryptHolder(), а не через get/set
+    CryptKeyHolder &cryptHolder(void);
+    const CryptKeyHolder &cryptHolder(void) const;
+
     QString getInstallAutodetectLang();
 
 private:
@@ -107,7 +114,9 @@ private:
     QString m_systemCodepage;
     QString m_consoleCodepage;
 
-    QByteArray passwordHash;
+    QByteArray passwordHash; // Совместимость: больше не пишется напрямую, см. m_cryptHolder
+
+    CryptKeyHolder m_cryptHolder;
 
     //! Язык, который был автоопределен если запускалась инсталляция базы знаний.
     //! Если автоинсталляция не запускалась, это значение будет пустой строкой

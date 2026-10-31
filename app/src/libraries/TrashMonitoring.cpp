@@ -4,11 +4,13 @@
 #include <QMessageBox>
 
 #include "TrashMonitoring.h"
+#include "views/mainWindow/MainWindow.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 
 extern AppConfig mytetraConfig;
-extern QObject *pMainWindow;
+class MainWindow;
+extern MainWindow *pMainWindow;
 
 
 TrashMonitoring::TrashMonitoring(void)

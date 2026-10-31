@@ -38,6 +38,10 @@
 #include "libraries/PeriodicSyncro.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
+#include "libraries/AppContext.h"
+#include "libraries/Favorites.h"
+#include "libraries/BacklinkIndex.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/CssHelper.h"
 
@@ -45,9 +49,9 @@
 
 using namespace std;
 
-// todo: Разгрести объекты глобальной области, переделать все
-// на синглтоны, сделать объект ядра, поместить объекты глабальной
-// области в ядро как в единую центральную точку доступа
+// Ядро доступно через AppContext::instance() (P1).
+// Файловые глобалы ниже остаются как шимы совместимости,
+// новый код ходит через AppContext
 
 
 // Фиксированные параметры программы (жестко заданные в текущей версии MyTetra)
@@ -84,11 +88,13 @@ ShortcutManager shortcutManager;
 PeriodicCheckBase periodicCheckBase;
 PeriodicSyncro periodicSyncro;
 
-// Указатель на внутренний буфер обмена
-InternalClipboard *internalClipboard;
+// Указатель на внутренний буфер обмена. Владелец - QApplication
+// (родитель задается при создании, P0: раньше был голый new без delete)
+InternalClipboard *internalClipboard=nullptr;
 
-// Указатель на основное окно программы
-QObject *pMainWindow;
+// Указатель на основное окно программы. Типизирован (P0):
+// раньше был QObject*, что прятало ошибки кастов до рантайма
+MainWindow *pMainWindow=nullptr;
 
 
 void printHelp()
@@ -347,11 +353,43 @@ int main(int argc, char ** argv)
     // чтобы были переведены все действия по горячим клавишам
     shortcutManager.init();
 
-    // Инициализация указателя на внутренний буфер обмена
-    internalClipboard = new InternalClipboard();
+    // P0: буфер с Qt-родителем, удалится вместе с QApplication.
+    // Раньше был голый new без delete
+    internalClipboard=new InternalClipboard(&app);
+
+    // P1: разрыв WalkHistory -> extern visitHistory, внедрение зависимости
+    walkHistory.setVisitHistory(&visitHistory);
+
+    // P1: синглтоны-библиотеки получают Qt-родителя и единый жизненный цикл.
+    // Раньше были бессмертные Meyers static без владельца
+    Favorites::instance().setParent(&app);
+    BacklinkIndex::instance().setParent(&app);
+    EditorShowTextDispatcher::instance()->setParent(&app);
 
     // Создание объекта главного окна
     MainWindow win;
+
+    // P1: центральная точка доступа. Новый код ходит через
+    // AppContext::instance().mainWindow() и др. вместо extern
+    AppContext::instance().setParent(&app);
+    AppContext::instance().init(&fixedParameters,
+                                &globalParameters,
+                                &mytetraConfig,
+                                &mytetraFiles,
+                                &dataBaseConfig,
+                                &trashMonitoring,
+                                &walkHistory,
+                                &visitHistory,
+                                &actionLogger,
+                                &shortcutManager,
+                                &periodicCheckBase,
+                                &periodicSyncro,
+                                internalClipboard,
+                                &win,
+                                &globalParameters.cryptHolder());
+    AppContext::instance().registerSingletons(&Favorites::instance(),
+                                              &BacklinkIndex::instance(),
+                                              EditorShowTextDispatcher::instance());
 
     // Сразу восстанавливается вид окна в предыдущий запуск
     // Эти действия нельзя делать в конструкторе главного окна, т.к. окно еще не создано

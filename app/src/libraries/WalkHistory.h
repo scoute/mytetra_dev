@@ -21,6 +21,8 @@ struct WALK_HISTORY_DATA
 };
 
 
+class VisitHistory;
+
 class WalkHistory : public QObject
 {
  Q_OBJECT
@@ -28,6 +30,12 @@ class WalkHistory : public QObject
 public:
  WalkHistory(void);
  ~WalkHistory(void);
+
+ // Внедрение журнала посещений. Вызывает AppContext/main(),
+ // чтобы разорвать extern-связку WalkHistory -> visitHistory.
+ // Пока не задано, используется глобальный visitHistory для совместимости
+ void setVisitHistory(VisitHistory *visitHistory);
+ VisitHistory *visitHistory(void);
 
  void clear(void);
 
@@ -41,6 +49,9 @@ public:
  void setDrop(bool flag);
 
 protected:
+
+ // Внедренный журнал посещений. Null пока main() не вызовет setVisitHistory()
+ VisitHistory *m_visitHistory=nullptr;
 
   bool dropFlag;
 

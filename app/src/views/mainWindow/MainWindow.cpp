@@ -108,12 +108,13 @@ extern GlobalParameters globalParameters;
 extern WalkHistory walkHistory;
 extern ActionLogger actionLogger;
 extern ShortcutManager shortcutManager;
+extern MainWindow *pMainWindow;
 
 
 MainWindow::MainWindow() : QMainWindow()
 {
-    extern QObject *pMainWindow;
-    pMainWindow=this;
+    // P0: pMainWindow типизирован как MainWindow*, extern вверху файла
+    ::pMainWindow=this;
     setObjectName("mainwindow");
 
     installEventFilter(this);

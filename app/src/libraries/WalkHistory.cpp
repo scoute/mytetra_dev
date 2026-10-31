@@ -10,6 +10,29 @@
 extern VisitHistory visitHistory;
 
 
+void WalkHistory::setVisitHistory(VisitHistory *visitHistory)
+{
+    m_visitHistory=visitHistory;
+}
+
+
+VisitHistory *WalkHistory::visitHistory(void)
+{
+    return m_visitHistory;
+}
+
+
+static VisitHistory *resolveVisitHistory(WalkHistory *self)
+{
+    // Предпочитается внедренный журнал, глобалка только для совместимости
+    // пока не все вызовы идут через AppContext
+    if(self->visitHistory()!=nullptr)
+        return self->visitHistory();
+
+    return &::visitHistory;
+}
+
+
 WalkHistory::WalkHistory(void)
 {
  clear();
@@ -93,7 +116,7 @@ void WalkHistory::add(QString id,
     leaveMarkPoint=-1;
 
     // Факт посещения уходит в журнал панели истории
-    visitHistory.logVisit(id);
+    resolveVisitHistory(this)->logVisit(id);
 
     print();
     return;
@@ -129,7 +152,7 @@ void WalkHistory::add(QString id,
     historyId << id;
 
     // Факт посещения уходит в журнал панели истории
-    visitHistory.logVisit(id);
+    resolveVisitHistory(this)->logVisit(id);
 
     qDebug() << "WalkHistory add id: " << id;
     qDebug() << "WalkHistory pointer: " << historyPoint;

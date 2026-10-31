@@ -4,11 +4,13 @@
 #include <QMessageBox>
 
 #include "ConfigEditorHelper.h"
+#include "views/mainWindow/MainWindow.h"
 #include "libraries/wyedit/EditorMultiLineInputDialog.h"
 #include "libraries/helpers/DebugHelper.h"
 
 
-extern QObject *pMainWindow;
+class MainWindow;
+extern MainWindow *pMainWindow;
 
 
 ConfigEditorHelper::ConfigEditorHelper()

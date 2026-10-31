@@ -503,13 +503,26 @@ CommandRunner *GlobalParameters::getSyncroCommandRunnner()
 
 void GlobalParameters::setCryptKey(QByteArray hash)
 {
+    m_cryptHolder.setKey(hash);
     passwordHash=hash;
 }
 
 
 QByteArray GlobalParameters::getCryptKey(void)
 {
-    return passwordHash;
+    return m_cryptHolder.key();
+}
+
+
+CryptKeyHolder &GlobalParameters::cryptHolder(void)
+{
+    return m_cryptHolder;
+}
+
+
+const CryptKeyHolder &GlobalParameters::cryptHolder(void) const
+{
+    return m_cryptHolder;
 }
 
 

@@ -9,13 +9,15 @@
 #include <iostream>
 
 #include "DebugHelper.h"
+#include "views/mainWindow/MainWindow.h"
 #include "libraries/ActionLogger.h"
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
 
 
 extern ActionLogger actionLogger;
-extern QObject *pMainWindow;
+class MainWindow;
+extern MainWindow *pMainWindow;
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
 

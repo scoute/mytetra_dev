@@ -30,6 +30,7 @@ protected:
     QRadioButton *mp3Radio;
 
     QGroupBox *qualityBox;
+    QRadioButton *qualitySuperLowRadio;
     QRadioButton *qualityExtraLowRadio;
     QRadioButton *qualityLowRadio;
     QRadioButton *qualityMiddleRadio;

@@ -37,6 +37,7 @@ class BacklinksPanel;
 class TagsPanel;
 class WindowSwitcher;
 class CommandRunner;
+class TrayManager;
 
 class MainWindow : public QMainWindow
 {
@@ -275,7 +276,7 @@ private slots:
 
     void onSyncroCommandFinishWork(void);
 
-    void iconActivated(QSystemTrayIcon::ActivationReason reason);
+    // P3: клик по иконке обрабатывает TrayManager::onIconActivated
 
     void onFocusChanged(QWidget *, QWidget *);
 
@@ -305,9 +306,8 @@ private:
 
     void initRecordTableActions(void);
 
-    void setupIconActions(void);
-    void createTrayIcon(void);
-    void setIcon(void);
+    // P3: трей живет в TrayManager (DI через QWidget-хост).
+    // Здесь только владение и два фасада ниже
 
     // Отложенное применение размеров левой колонки после её показа
     void applyRecordTableSizes(void);
@@ -353,10 +353,7 @@ private:
     QAction *actionHelpMenuAboutQt;
     QAction *actionHelpMenuTechnicalInfo;
 
-    QAction *actionTrayRestore;
-    QAction *actionTrayMaximize;
-    QAction *actionTrayMinimize;
-    QAction *actionTrayQuit;
+    // P3: действия трея переехали в TrayManager
 
     QAction *actionFocusTree;
     QAction *actionFocusNoteTable;
@@ -398,8 +395,7 @@ private:
     TagsPanel *tagsPanel=nullptr;
     QDockWidget *tagsPanelDock=nullptr;
 
-    QSystemTrayIcon *trayIcon;
-    QMenu           *trayIconMenu;
+    TrayManager *trayManager=nullptr;
 
     // Веб-клиппер (глобальный хоткей -> unsorted_notes)
     Clipper clipper;

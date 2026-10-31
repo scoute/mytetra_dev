@@ -5054,6 +5054,29 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
+    <name>TrayManager</name>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="40"/>
+        <source>&amp;Restore window</source>
+        <translation>Показать окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="44"/>
+        <source>Ma&amp;ximize window</source>
+        <translation>Развернуть окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="48"/>
+        <source>Mi&amp;nimize window</source>
+        <translation>Свернуть окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="52"/>
+        <source>&amp;Quit</source>
+        <translation>Выход</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>

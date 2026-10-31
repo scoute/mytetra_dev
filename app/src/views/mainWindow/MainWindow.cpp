@@ -65,6 +65,7 @@ public:
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"
+#include "TrayManager.h"
 #include "views/printPreview/PrintPreview.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
@@ -131,11 +132,16 @@ MainWindow::MainWindow() : QMainWindow()
 
     setupShortcuts();
 
-    setupIconActions();
-    createTrayIcon();
-    setIcon();
-    if(QSystemTrayIcon::isSystemTrayAvailable())
-        trayIcon->show();
+    // P3: трей - отдельный TrayManager с DI (хост - это окно как QWidget)
+    trayManager=new TrayManager(this, this);
+    connect(trayManager, &TrayManager::restoreRequested,
+            this, &MainWindow::showWindow);
+    connect(trayManager, &TrayManager::quitRequested,
+            this, &MainWindow::applicationExit);
+    trayManager->setupActions();
+    trayManager->createTrayIcon();
+    trayManager->setIcon();
+    trayManager->show();
 
     // Инициализируется объект слежения за корзиной
     trashMonitoring.init(mytetraConfig.get_trashdir());
@@ -1028,10 +1034,8 @@ void MainWindow::retranslateUi(void)
         actionHelpMenuTechnicalInfo->setText(tr("Technical info"));
     }
 
-    actionTrayRestore->setText(tr("&Restore window"));
-    actionTrayMaximize->setText(tr("Ma&ximize window"));
-    actionTrayMinimize->setText(tr("Mi&nimize window"));
-    actionTrayQuit->setText(tr("&Quit"));
+    // P3: пункты трея переводит сам менеджер
+    trayManager->retranslate();
 
     historyPanelDock->setWindowTitle(tr("History"));
 
@@ -1617,7 +1621,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         // При приходе события закрыть окно, событие игнорируется
         // и окно просто делается невидимым. Это нужно чтобы при закрытии окна
         // программа не завершала работу
-        if(trayIcon->isVisible())
+        if(trayManager->isVisible())
         {
             hide();
             event->ignore();

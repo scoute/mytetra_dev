@@ -65,6 +65,7 @@ public:
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"
+#include "TrayManager.h"
 #include "views/printPreview/PrintPreview.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
@@ -114,35 +115,13 @@ extern MainWindow *pMainWindow;
 // Показ всплывающего сообщения в системном трее.
 // Используется фоновыми задачами (клиппер), которым некого спросить,
 // но надо сообщить пользователю о результате
+
+
+// Показ всплывающего сообщения в системном трее.
+// P3: фасад над TrayManager (вызывает и Clipper через invokeMethod)
 void MainWindow::showTrayMessage(const QString &title, const QString &text)
 {
-    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
-        return;
-
-    if(trayIcon==nullptr || trayIcon->isVisible()==false)
-        return;
-
-    trayIcon->showMessage(title, text, QSystemTrayIcon::Warning);
-}
-
-
-// Клиппер из меню Tools: вставка из буфера в unsorted_notes сейчас.
-// Ссылка на источник ищется в самом тексте буфера
-
-
-void MainWindow::setupIconActions(void)
-{
-    actionTrayRestore = new QAction(tr("&Restore window"), this);
-    connect(actionTrayRestore, &QAction::triggered, this, &MainWindow::showWindow);
-
-    actionTrayMaximize = new QAction(tr("Ma&ximize window"), this);
-    connect(actionTrayMaximize, &QAction::triggered, this, &MainWindow::showMaximized);
-
-    actionTrayMinimize = new QAction(tr("Mi&nimize window"), this);
-    connect(actionTrayMinimize, &QAction::triggered, this, &MainWindow::hide);
-
-    actionTrayQuit = new QAction(tr("&Quit"), this);
-    connect(actionTrayQuit, &QAction::triggered, this, &MainWindow::applicationExit);
+    trayManager->showMessage(title, text);
 }
 
 
@@ -155,84 +134,3 @@ void MainWindow::showWindow()
     // Восстанавливается поведение открепляемых окон
     EditorShowTextDispatcher::instance()->restoreBehavior();
 }
-
-
-void MainWindow::createTrayIcon(void)
-{
-    trayIconMenu = new QMenu(this);
-    trayIconMenu->addAction(actionTrayRestore);
-    trayIconMenu->addAction(actionTrayMaximize);
-    trayIconMenu->addAction(actionTrayMinimize);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(actionTrayQuit);
-
-    trayIcon = new QSystemTrayIcon(this);
-    trayIcon->setContextMenu(trayIconMenu);
-}
-
-
-void MainWindow::setIcon(void)
-{
-    connect(trayIcon, &QSystemTrayIcon::activated,
-            this,     &MainWindow::iconActivated);
-
-    QIcon icon = QIcon(":/resource/pic/logo.svg");
-    trayIcon->setIcon(icon);
-    setWindowIcon(icon);
-
-    // tray_icon->setToolTip(iconComboBox->itemText(index));
-}
-
-
-void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
-{
-    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
-        return;
-
-    qDebug() << "Click on tray icon";
-
-    switch (reason)
-    {
-    case QSystemTrayIcon::Trigger:
-    case QSystemTrayIcon::DoubleClick:
-        // Если окно видно
-        if(isVisible())
-        {
-            // Если окно неактивно, значит активно другое (и возможно оно перекрывает окно MyTetra)
-            // Не работает в Windows, в Linux не проверял
-            // Причина неработоспособности - при клике на иконку, окно MyTera всегда становится неактивным (т.к. активен систрей)
-            // И условие срабатывает всегда. Доделать или отказаться
-            // if(QGuiApplication::applicationState() == Qt::ApplicationInactive)
-            // {
-            //   activateWindow();
-            //   return;
-            // }
-
-            if(isMinimized())
-            {
-                qDebug() << "If visible and minimized";
-                showWindow();
-                return;
-            }
-            else
-            {
-                qDebug() << "Hide";
-                hide();
-                return;
-            }
-        }
-        else
-        {
-            qDebug() << "If not visible";
-            showWindow();
-            return;
-            // if(isMinimized()) showNormal();
-            // else show();
-        }
-    default:
-        ;
-    }
-}
-
-
-// Слот закрытия окна

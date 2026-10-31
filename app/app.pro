@@ -171,7 +171,9 @@ HEADERS = src/main.h \
     src/libraries/helpers/SortHelper.h \
     src/libraries/helpers/UniqueIdHelper.h \
     src/libraries/mcp/McpServer.h \
+    src/libraries/mcp/McpServerPrivate.h \
     src/libraries/mcp/McpTools.h \
+    src/libraries/mcp/McpToolsPrivate.h \
     src/libraries/OpusFileWriter.h \
     src/libraries/OpusFileReader.h \
     src/libraries/OpusPlayer.h \
@@ -401,7 +403,15 @@ SOURCES = src/main.cpp \
     src/libraries/helpers/SortHelper.cpp \
     src/libraries/helpers/UniqueIdHelper.cpp \
     src/libraries/mcp/McpServer.cpp \
+    src/libraries/mcp/McpServerTools.cpp \
+    src/libraries/mcp/McpServerGui.cpp \
+    src/libraries/mcp/McpServerSession.cpp \
+    src/libraries/mcp/McpServerBatch.cpp \
     src/libraries/mcp/McpTools.cpp \
+    src/libraries/mcp/McpToolsRead.cpp \
+    src/libraries/mcp/McpToolsWrite.cpp \
+    src/libraries/mcp/McpToolsTags.cpp \
+    src/libraries/mcp/McpToolsAttach.cpp \
     src/libraries/OpusFileWriter.cpp \
     src/libraries/OpusFileReader.cpp \
     src/libraries/OpusPlayer.cpp \

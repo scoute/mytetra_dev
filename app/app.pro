@@ -523,6 +523,10 @@ SOURCES = src/main.cpp \
     src/libraries/crypt/XChaChaCipherBackend.cpp \
     src/libraries/wyedit/EditorToolBar.cpp \
     src/libraries/wyedit/formatters/TypefaceFormatter.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterCode.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterHeadings.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterFont.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterCleanup.cpp \
     src/libraries/wyedit/formatters/Formatter.cpp \
     src/libraries/wyedit/formatters/PlacementFormatter.cpp \
     src/libraries/wyedit/formatters/ListFormatter.cpp \

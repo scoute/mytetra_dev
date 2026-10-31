@@ -8663,6 +8663,10 @@ Please select single item for enabling edit operation.</source>
         <translation>Качество:</translation>
     </message>
     <message>
+        <source>Super low (12 kbit/s)</source>
+        <translation>Сверхнизкое (12 кбит/с)</translation>
+    </message>
+    <message>
         <source>Extra low (16 kbit/s)</source>
         <translation>Минимальное (16 кбит/с)</translation>
     </message>
@@ -8748,6 +8752,10 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Default Opus quality</source>
         <translation>Качество Opus по умолчанию</translation>
+    </message>
+    <message>
+        <source>Super low (12 kbit/s)</source>
+        <translation>Сверхнизкое (12 кбит/с)</translation>
     </message>
     <message>
         <source>Extra low (16 kbit/s)</source>

@@ -53,6 +53,7 @@ void AppConfigPage_Voice::setupUi(void)
   // Качество Opus по умолчанию из конфига, Middle если мусор
   qualityBox=new QGroupBox(this);
 
+  qualitySuperLowRadio=new QRadioButton(this);
   qualityExtraLowRadio=new QRadioButton(this);
   qualityLowRadio=new QRadioButton(this);
   qualityMiddleRadio=new QRadioButton(this);
@@ -62,6 +63,7 @@ void AppConfigPage_Voice::setupUi(void)
   // Группы до установок: иначе autoExclusive сиблингов
   // сбрасывает соседний выбор
   QButtonGroup *qualityGroup=new QButtonGroup(this);
+  qualityGroup->addButton(qualitySuperLowRadio);
   qualityGroup->addButton(qualityExtraLowRadio);
   qualityGroup->addButton(qualityLowRadio);
   qualityGroup->addButton(qualityMiddleRadio);
@@ -71,22 +73,26 @@ void AppConfigPage_Voice::setupUi(void)
   switch(mytetraConfig.get_voiceNoteQuality())
   {
   case 0:
-    qualityExtraLowRadio->setChecked(true);
+    qualitySuperLowRadio->setChecked(true);
     break;
 
   case 1:
-    qualityLowRadio->setChecked(true);
-    break;
-
-  case 3:
-    qualityHighRadio->setChecked(true);
-    break;
-
-  case 4:
-    qualityExtraRadio->setChecked(true);
+    qualityExtraLowRadio->setChecked(true);
     break;
 
   case 2:
+    qualityLowRadio->setChecked(true);
+    break;
+
+  case 4:
+    qualityHighRadio->setChecked(true);
+    break;
+
+  case 5:
+    qualityExtraRadio->setChecked(true);
+    break;
+
+  case 3:
   default:
     qualityMiddleRadio->setChecked(true);
     break;
@@ -110,6 +116,7 @@ void AppConfigPage_Voice::assembly(void)
   formatBox->setLayout(formatLayout);
 
   QVBoxLayout *qualityLayout=new QVBoxLayout();
+  qualityLayout->addWidget(qualitySuperLowRadio);
   qualityLayout->addWidget(qualityExtraLowRadio);
   qualityLayout->addWidget(qualityLowRadio);
   qualityLayout->addWidget(qualityMiddleRadio);
@@ -133,6 +140,7 @@ void AppConfigPage_Voice::retranslateUi(void)
   mp3Radio->setText(tr("MP3 (.mp3)"));
 
   qualityBox->setTitle(tr("Default Opus quality"));
+  qualitySuperLowRadio->setText(tr("Super low (12 kbit/s)"));
   qualityExtraLowRadio->setText(tr("Extra low (16 kbit/s)"));
   qualityLowRadio->setText(tr("Low (24 kbit/s)"));
   qualityMiddleRadio->setText(tr("Middle (32 kbit/s)"));
@@ -153,16 +161,18 @@ int AppConfigPage_Voice::applyChanges(void)
   if(mytetraConfig.get_voiceNoteFormat()!=format)
     mytetraConfig.set_voiceNoteFormat(format);
 
-  int quality=2;
+  int quality=3;
 
-  if(qualityExtraLowRadio->isChecked())
+  if(qualitySuperLowRadio->isChecked())
     quality=0;
-  else if(qualityLowRadio->isChecked())
+  else if(qualityExtraLowRadio->isChecked())
     quality=1;
+  else if(qualityLowRadio->isChecked())
+    quality=2;
   else if(qualityHighRadio->isChecked())
-    quality=3;
-  else if(qualityExtraRadio->isChecked())
     quality=4;
+  else if(qualityExtraRadio->isChecked())
+    quality=5;
 
   if(mytetraConfig.get_voiceNoteQuality()!=quality)
     mytetraConfig.set_voiceNoteQuality(quality);

@@ -355,6 +355,14 @@ HEADERS+=\
     src/libraries/AppContext.h \
     src/libraries/crypt/CryptKeyHolder.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
+    src/models/appConfig/AppConfigStorage.h \
+    src/models/appConfig/AppConfigUi.h \
+    src/models/appConfig/AppConfigFind.h \
+    src/models/appConfig/AppConfigSync.h \
+    src/models/appConfig/AppConfigCrypto.h \
+    src/models/appConfig/AppConfigRecordTable.h \
+    src/models/appConfig/AppConfigClipper.h \
+    src/models/appConfig/AppConfigServices.h \
     src/views/enterPassword/EnterPassword.h \
     src/views/consoleEmulator/ConsoleEmulator.h \
     src/views/waitClock/WaitClock.h \
@@ -580,6 +588,15 @@ SOURCES+=\
     src/libraries/AppContext.cpp \
     src/libraries/crypt/CryptKeyHolder.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
+    src/models/appConfig/AppConfigStorage.cpp \
+    src/models/appConfig/AppConfigUi.cpp \
+    src/models/appConfig/AppConfigFind.cpp \
+    src/models/appConfig/AppConfigSync.cpp \
+    src/models/appConfig/AppConfigCrypto.cpp \
+    src/models/appConfig/AppConfigRecordTable.cpp \
+    src/models/appConfig/AppConfigClipper.cpp \
+    src/models/appConfig/AppConfigServices.cpp \
+    src/models/appConfig/AppConfigTables.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \
     src/views/waitClock/WaitClock.cpp \

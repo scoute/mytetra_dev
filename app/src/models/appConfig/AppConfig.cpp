@@ -7,6 +7,15 @@
 #include "AppConfig.h"
 #include "AppConfigUpdater.h"
 
+#include "AppConfigStorage.h"
+#include "AppConfigUi.h"
+#include "AppConfigFind.h"
+#include "AppConfigSync.h"
+#include "AppConfigCrypto.h"
+#include "AppConfigRecordTable.h"
+#include "AppConfigClipper.h"
+#include "AppConfigServices.h"
+
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -34,6 +43,7 @@ AppConfig::~AppConfig()
         m_conf->sync();
     }
 }
+
 
 
 void AppConfig::init(void)
@@ -68,6 +78,13 @@ void AppConfig::init(void)
 
     m_isInit = true;
 }
+
+
+// Создание первой при старте программы копии конфигов MyTetra в корзине
+// Это необходимо чтобы в корзине лежали актуальные копии конфигов при каждом старте программы
+// А так же если копии сделать невозможно, это значит что переписывать
+// или запускать sync() для конфигов нельзя, так как они могут обнулиться,
+// например если закончилось свободное место на диске, поэтому программу надо завершить
 
 
 // Создание первой при старте программы копии конфигов MyTetra в корзине
@@ -125,10 +142,16 @@ void AppConfig::sync(void)
 
 
 // Получение имени файла конфига, с которым происходит работа
+
+
+// Получение имени файла конфига, с которым происходит работа
 QString AppConfig::getConfigFileName()
 {
     return m_conf->fileName();
 }
+
+
+// Получение параметра по имени в виде строки с проверкой его существования
 
 
 // Получение параметра по имени в виде строки с проверкой его существования
@@ -159,108 +182,6 @@ QString AppConfig::get_parameter(QString name)
 
 
 // Установка имени директории с данными (в которой находится mytetra.xml)
-bool AppConfig::set_tetradir(QString dirName)
-{
-    QDir directory(dirName);
-
-    if (directory.exists() && directory.isReadable())
-    {
-        m_conf->setValue("tetradir", dirName);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-// Получение имени директории с данными (в которой находится mytetra.xml)
-QString AppConfig::get_tetradir(void)
-{
-    return this->get_parameter("tetradir");
-}
-
-
-// Установка имени директории с корзиной
-bool AppConfig::set_trashdir(QString dirName)
-{
-    QDir directory(dirName);
-
-    if (directory.exists() && directory.isReadable())
-    {
-        m_conf->setValue("trashdir", dirName);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-// Получение имени директории с корзиной
-QString AppConfig::get_trashdir(void)
-{
-    return this->get_parameter("trashdir");
-}
-
-
-// Получение максимального размера директории корзины в мегабайтах
-unsigned int AppConfig::get_trashsize(void)
-{
-    return this->get_parameter("trashsize").toUInt();
-}
-
-
-// Установка максимального размера директории корзины в мегабайтах
-bool AppConfig::set_trashsize(unsigned int mbSize)
-{
-    if (mbSize>0)
-    {
-        m_conf->setValue("trashsize", mbSize);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-// Получение максимально допустимого числа файлов в корзине
-int AppConfig::get_trashmaxfilecount(void)
-{
-    return this->get_parameter("trashmaxfilecount").toInt();
-}
-
-
-// Установка максимально допустимого числа файлов в корзине
-bool AppConfig::set_trashmaxfilecount(int count)
-{
-    if (count>0)
-    {
-        m_conf->setValue("trashmaxfilecount", count);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-bool AppConfig::get_cutbranchconfirm(void)
-{
-    return m_conf->value("cutbranchconfirm").toBool();
-}
-
-
-bool AppConfig::set_cutbranchconfirm(bool confirm)
-{
-    m_conf->setValue("cutbranchconfirm", confirm);
-    return true;
-}
 
 
 bool AppConfig::get_printdebugmessages(void)
@@ -310,1156 +231,6 @@ void AppConfig::set_addnewrecord_expand_info(QString state)
 }
 
 
-QByteArray AppConfig::get_mainwingeometry(void)
-{
-    return QByteArray::fromBase64( m_conf->value("mainwingeometry", "").toString().toLatin1() );
-}
-
-
-void AppConfig::set_mainwingeometry(QByteArray dataGeometry)
-{
-    qDebug() << "Save main window geometry";
-
-    m_conf->setValue( "mainwingeometry", QString( dataGeometry.toBase64().data() ) );
-}
-
-
-QList<int> AppConfig::get_vspl_size_list(void)
-{
-    return get_splitter_size_list("vspl");
-}
-
-
-void AppConfig::set_vspl_size_list(QList<int> list)
-{
-    set_splitter_size_list("vspl", list);
-}
-
-
-QList<int> AppConfig::get_hspl_size_list(void)
-{
-    return get_splitter_size_list("hspl");
-}
-
-
-void AppConfig::set_hspl_size_list(QList<int> list)
-{
-    set_splitter_size_list("hspl", list);
-}
-
-
-QList<int> AppConfig::get_findsplitter_size_list(void)
-{
-    return get_splitter_size_list("findsplitter");
-}
-
-
-void AppConfig::set_findsplitter_size_list(QList<int> list)
-{
-    // qDebug() << "Config set find splitter list to " << list;
-    set_splitter_size_list("findsplitter", list);
-}
-
-
-QList<int> AppConfig::get_leftspl_size_list(void)
-{
-    return get_splitter_size_list("leftspl");
-}
-
-
-void AppConfig::set_leftspl_size_list(QList<int> list)
-{
-    set_splitter_size_list("leftspl", list);
-}
-
-
-QList<int> AppConfig::get_splitter_size_list(QString name)
-{
-    QStringList line_list;
-    QList<int> list;
-
-    line_list = (m_conf->value(name+"_size_list", "100,100")).toString().split(",");
-
-    for (int i=0;i < line_list.size(); ++i)
-    {
-        list.append( line_list.at(i).toInt() );
-    }
-
-    return list;
-}
-
-
-void AppConfig::set_splitter_size_list(QString name, QList<int> list)
-{
-    QStringList line_list;
-
-    for (int i=0;i < list.size(); ++i)
-    {
-        line_list.append( QString::number(list.at(i)) );
-    }
-
-    m_conf->setValue(name+"_size_list", line_list.join(","));
-}
-
-
-QStringList AppConfig::get_tree_position(void)
-{
-    return (m_conf->value("tree_position","1")).toString().split(",");
-}
-
-
-void AppConfig::set_tree_position(QStringList list)
-{
-    qDebug() << "AppConfig::set_tree_position() : " << list;
-    m_conf->setValue("tree_position", list.join(","));
-}
-
-
-// ID записи в таблице конечных записей, которая выделена на экране
-QString AppConfig::get_recordtable_selected_record_id(void)
-{
-    return m_conf->value("recordtableSelectedRecordId", 0).toString();
-}
-
-
-// ID записи в таблице конечных записей, которая выделена на экране
-void AppConfig::set_recordtable_selected_record_id(QString id)
-{
-    m_conf->setValue("recordtableSelectedRecordId", id);
-}
-
-
-int AppConfig::get_findscreen_wordregard(void)
-{
-    return m_conf->value("findscreen_wordregard", 0).toInt();
-}
-
-
-void AppConfig::set_findscreen_wordregard(int pos)
-{
-    m_conf->setValue("findscreen_wordregard",pos);
-}
-
-
-int AppConfig::get_findscreen_howextract(void)
-{
-    return m_conf->value("findscreen_howextract", 0).toInt();
-}
-
-
-void AppConfig::set_findscreen_howextract(int pos)
-{
-    m_conf->setValue("findscreen_howextract", pos);
-}
-
-
-int AppConfig::getFindScreenTreeSearchArea(void)
-{
-    return m_conf->value("findScreenTreeSearchArea", 0).toInt();
-}
-
-
-void AppConfig::setFindScreenTreeSearchArea(int pos)
-{
-    m_conf->setValue("findScreenTreeSearchArea", pos);
-}
-
-
-bool AppConfig::get_findscreen_find_in_field(QString fieldName)
-{
-    // Дефолт для отсутствующего ключа: искать везде, кроме текста записи.
-    // Поиск по тексту медленный и шумит, остальные поля быстрые
-    // и нужны для полноты (в том числе автокомплита)
-    bool defaultValue=(fieldName!="text");
-
-    return m_conf->value("findscreen_find_in"+fieldName, defaultValue).toBool();
-}
-
-
-void AppConfig::set_findscreen_find_in_field(QString fieldName, bool isChecked)
-{
-    m_conf->setValue("findscreen_find_in"+fieldName, isChecked);
-}
-
-
-bool AppConfig::get_findscreen_show(void)
-{
-    return m_conf->value("findscreen_show", 0).toBool();
-}
-
-
-void AppConfig::set_findscreen_show(bool isShow)
-{
-    m_conf->setValue("findscreen_show", isShow);
-}
-
-
-QString AppConfig::get_howpassrequest(void)
-{
-    return this->get_parameter("howpassrequest");
-}
-
-
-void AppConfig::set_howpassrequest(QString mode)
-{
-    if (mode=="atClickOnCryptBranch" || mode=="atStartProgram")
-    {
-        m_conf->setValue("howpassrequest", mode);
-    }
-    else
-    {
-        criticalError("Set unavailable value for howpassrequest "+mode);
-    }
-}
-
-
-bool AppConfig::get_autoClosePasswordEnable(void)
-{
-    return m_conf->value("autoClosePasswordEnable", 0).toBool();
-}
-
-
-void AppConfig::set_autoClosePasswordEnable(bool flag)
-{
-    m_conf->setValue("autoClosePasswordEnable", flag);
-}
-
-
-int AppConfig::get_autoClosePasswordDelay(void)
-{
-    return m_conf->value("autoClosePasswordDelay", 0).toInt();
-}
-
-
-void AppConfig::set_autoClosePasswordDelay(int delay)
-{
-    m_conf->setValue("autoClosePasswordDelay", delay);
-}
-
-
-bool AppConfig::get_autosaveEnable(void)
-{
-    return m_conf->value("autosaveEnable", true).toBool();
-}
-
-
-void AppConfig::set_autosaveEnable(bool flag)
-{
-    m_conf->setValue("autosaveEnable", flag);
-}
-
-
-int AppConfig::get_autosaveInterval(void)
-{
-    return m_conf->value("autosaveInterval", 10).toInt();
-}
-
-
-void AppConfig::set_autosaveInterval(int minutes)
-{
-    m_conf->setValue("autosaveInterval", minutes);
-}
-
-
-bool AppConfig::get_historySquashEnable(void)
-{
-    return m_conf->value("historySquashEnable", true).toBool();
-}
-
-
-void AppConfig::set_historySquashEnable(bool flag)
-{
-    m_conf->setValue("historySquashEnable", flag);
-}
-
-
-int AppConfig::get_historySquashKeep(void)
-{
-    return m_conf->value("historySquashKeep", 100).toInt();
-}
-
-
-void AppConfig::set_historySquashKeep(int count)
-{
-    m_conf->setValue("historySquashKeep", count);
-}
-
-
-int AppConfig::get_historySquashMode(void)
-{
-    return m_conf->value("historySquashMode", 0).toInt();
-}
-
-
-void AppConfig::set_historySquashMode(int mode)
-{
-    m_conf->setValue("historySquashMode", mode);
-}
-
-
-bool AppConfig::get_historyEnable(void)
-{
-    return m_conf->value("historyEnable", false).toBool();
-}
-
-
-void AppConfig::set_historyEnable(bool flag)
-{
-    m_conf->setValue("historyEnable", flag);
-}
-
-
-bool AppConfig::get_runinminimizedwindow(void)
-{
-    return m_conf->value("runinminimizedwindow").toBool();
-}
-
-
-void AppConfig::set_runinminimizedwindow(bool flag)
-{
-    m_conf->setValue("runinminimizedwindow", flag);
-}
-
-
-QString AppConfig::get_synchrocommand(void)
-{
-    return this->get_parameter("synchrocommand");
-}
-
-
-void AppConfig::set_synchrocommand(QString command)
-{
-    m_conf->setValue("synchrocommand", command);
-}
-
-
-bool AppConfig::get_synchroonstartup(void)
-{
-    return m_conf->value("synchroonstartup").toBool();
-}
-
-
-void AppConfig::set_synchroonstartup(bool flag)
-{
-    m_conf->setValue("synchroonstartup", flag);
-}
-
-
-bool AppConfig::get_synchroonexit(void)
-{
-    return m_conf->value("synchroonexit").toBool();
-}
-
-
-void AppConfig::set_synchroonexit(bool flag)
-{
-    m_conf->setValue("synchroonexit", flag);
-}
-
-
-bool AppConfig::getSyncroConsoleDetails(void)
-{
-    return m_conf->value("syncroConsoleDetails").toBool();
-}
-
-
-void AppConfig::setSyncroConsoleDetails(bool flag)
-{
-    m_conf->setValue("syncroConsoleDetails", flag);
-}
-
-
-int AppConfig::getEditorCursorPosition(void)
-{
-    return m_conf->value("editorCursorPosition",0).toInt();
-}
-
-
-void AppConfig::setEditorCursorPosition(int n)
-{
-    m_conf->setValue("editorCursorPosition", n);
-}
-
-
-int AppConfig::getEditorScrollBarPosition(void)
-{
-    return m_conf->value("editorScrollBarPosition",0).toInt();
-}
-
-
-void AppConfig::setEditorScrollBarPosition(int n)
-{
-    m_conf->setValue("editorScrollBarPosition", n);
-}
-
-
-QString AppConfig::getPasswordMiddleHash(void)
-{
-    return this->get_parameter("passwordMiddleHash");
-}
-
-
-void AppConfig::setPasswordMiddleHash(QString hash)
-{
-    m_conf->setValue("passwordMiddleHash", hash);
-}
-
-
-// Нужно ли локально хранить пароль (точнее, промежуточный хеш пароля)
-bool AppConfig::getPasswordSaveFlag(void)
-{
-    return m_conf->value("passwordSaveFlag").toBool();
-}
-
-
-void AppConfig::setPasswordSaveFlag(bool flag)
-{
-    m_conf->setValue("passwordSaveFlag", flag);
-}
-
-
-bool AppConfig::getRememberCursorAtHistoryNavigation(void)
-{
-    return m_conf->value("rememberCursorAtHistoryNavigation").toBool();
-}
-
-
-void AppConfig::setRememberCursorAtHistoryNavigation(bool flag)
-{
-    m_conf->setValue("rememberCursorAtHistoryNavigation", flag);
-}
-
-
-bool AppConfig::getRememberCursorAtOrdinarySelection(void)
-{
-    return m_conf->value("rememberCursorAtOrdinarySelection").toBool();
-}
-
-
-void AppConfig::setRememberCursorAtOrdinarySelection(bool flag)
-{
-    m_conf->setValue("rememberCursorAtOrdinarySelection", flag);
-}
-
-
-int AppConfig::getUglyQssReplaceHeightForTableView(void)
-{
-    return m_conf->value("uglyQssReplaceHeightForTableView", 0).toInt();
-}
-
-void AppConfig::setUglyQssReplaceHeightForTableView(int n)
-{
-    m_conf->setValue("uglyQssReplaceHeightForTableView", n);
-}
-
-
-// Перечень полей, отображаемых в таблице конечных записей.
-// Служебные поля без подписи (favorite) из старых конфигов
-// отрезаются здесь: колонками они не являются, пустой столбец
-// с пустым заголовком не нужен. При следующем apply список
-// перезапишется уже чистым
-QStringList AppConfig::getRecordTableShowFields(void)
-{
-    QStringList fields=(m_conf->value("recordTableShowFields", "name")).toString().split(",");
-    QStringList columns;
-
-    foreach(const QString &field, fields)
-      if(FixedParameters::isRecordFieldColumn(field))
-        columns << field;
-
-    if(columns.isEmpty())
-      columns << "name";
-
-    return columns;
-}
-
-
-void AppConfig::setRecordTableShowFields(QStringList fields)
-{
-    // Не должно быть так, чтобы был пустой список
-    if (fields.size()==0)
-    {
-        fields << "name";
-    }
-
-    m_conf->setValue("recordTableShowFields", fields.join(","));
-}
-
-
-bool AppConfig::getRecordTableShowHorizontalHeaders(void)
-{
-    return m_conf->value("recordTableShowHorizontalHeaders").toBool();
-}
-
-
-void AppConfig::setRecordTableShowHorizontalHeaders(bool flag)
-{
-    m_conf->setValue("recordTableShowHorizontalHeaders", flag);
-}
-
-
-bool AppConfig::getRecordTableShowVerticalHeaders(void)
-{
-    return m_conf->value("recordTableShowVerticalHeaders").toBool();
-}
-
-
-void AppConfig::setRecordTableShowVerticalHeaders(bool flag)
-{
-    m_conf->setValue("recordTableShowVerticalHeaders", flag);
-}
-
-
-// Ширина полей, отображаемых в таблице конечных записей
-QStringList AppConfig::getRecordTableFieldsWidth(void)
-{
-    return (m_conf->value("recordTableFieldsWidth", "256")).toString().split(",");
-}
-
-
-void AppConfig::setRecordTableFieldsWidth(QStringList fields)
-{
-    // В списке с одним элементом должна стоять стандартная величина (всеравно она не влияет, и начнет влиять только после появления второй колонки)
-    if (fields.size()==1)
-    {
-        fields[0]="256";
-    }
-
-    // Не должно быть так, чтобы был пустой список
-    if (fields.size()==0)
-    {
-        fields << "256";
-    }
-
-    m_conf->setValue("recordTableFieldsWidth", fields.join(","));
-}
-
-
-// Показывать ли сплешскрин при старте программы
-bool AppConfig::getShowSplashScreen(void)
-{
-    return m_conf->value("showSplashScreen").toBool();
-}
-
-
-void AppConfig::setShowSplashScreen(bool isShow)
-{
-    m_conf->setValue("showSplashScreen", isShow);
-}
-
-
-// Режим интерфейса, возможные значения "desktop" и "mobile"
-QString AppConfig::getInterfaceMode(void)
-{
-    QString mode = this->get_parameter("interfaceMode");
-    return mode;
-}
-
-
-void AppConfig::setInterfaceMode(QString mode)
-{
-    m_conf->setValue("interfaceMode", mode);
-}
-
-// Имя последнего активного виджета
-QString AppConfig::getFocusWidget(void)
-{
-    QString widgetName = this->get_parameter("focusWidget");
-    return widgetName;
-}
-
-
-void AppConfig::setFocusWidget(QString widgetName)
-{
-    m_conf->setValue("focusWidget", widgetName);
-}
-
-
-QStringList AppConfig::getHideEditorTools(void)
-{
-    return (m_conf->value("hideEditorTools", "")).toString().split(",");
-}
-
-
-void AppConfig::setHideEditorTools(QStringList toolsNames)
-{
-    m_conf->setValue("hideEditorTools", toolsNames.join(","));
-}
-
-
-bool AppConfig::getFindInBaseExpand(void)
-{
-    return m_conf->value("findInBaseExpand").toBool();
-}
-
-
-void AppConfig::setFindInBaseExpand(bool state)
-{
-    m_conf->setValue("findInBaseExpand", state);
-}
-
-
-bool AppConfig::get_editorFindEmbedded(void)
-{
-    return m_conf->value("editorFindEmbedded", true).toBool();
-}
-
-
-void AppConfig::set_editorFindEmbedded(bool state)
-{
-    m_conf->setValue("editorFindEmbedded", state);
-}
-
-
-bool AppConfig::get_favoritesEnabled(void)
-{
-    return m_conf->value("favoritesEnabled", true).toBool();
-}
-
-
-// Строка фильтра над деревом веток (тумблер в меню Вид)
-bool AppConfig::get_treeFilterVisible(void)
-{
-    return m_conf->value("treeFilterVisible", true).toBool();
-}
-
-
-void AppConfig::set_treeFilterVisible(bool state)
-{
-    m_conf->setValue("treeFilterVisible", state);
-}
-
-
-// Вид панели прикрепленных файлов: "list" или "tiles".
-// Неизвестное значение читается как "list"
-QString AppConfig::get_attachViewMode(void)
-{
-    const QString mode=m_conf->value("attachViewMode", "list").toString();
-
-    if(mode==QStringLiteral("tiles"))
-        return mode;
-
-    return QStringLiteral("list");
-}
-
-
-void AppConfig::set_attachViewMode(QString mode)
-{
-    if(mode!=QStringLiteral("tiles"))
-        mode=QStringLiteral("list");
-
-    m_conf->setValue("attachViewMode", mode);
-}
-
-
-void AppConfig::set_favoritesEnabled(bool state)
-{
-    m_conf->setValue("favoritesEnabled", state);
-}
-
-
-QString AppConfig::get_favoritesStorage(void)
-{
-    return m_conf->value("favoritesStorage", "sidecar").toString();
-}
-
-
-void AppConfig::set_favoritesStorage(const QString &mode)
-{
-    m_conf->setValue("favoritesStorage", mode);
-}
-
-
-
-// Разрешено ли использовать собственный формат вывода даты и времени
-bool AppConfig::getEnableCustomDateTimeFormat(void)
-{
-    return m_conf->value("enableCustomDateTimeFormat").toBool();
-}
-
-void AppConfig::setEnableCustomDateTimeFormat(bool state)
-{
-    m_conf->setValue("enableCustomDateTimeFormat", state);
-}
-
-
-// Строка собственного формата вывода даты и времени
-QString AppConfig::getCustomDateTimeFormat(void)
-{
-    return this->get_parameter("customDateTimeFormat");
-}
-
-void AppConfig::setCustomDateTimeFormat(QString format)
-{
-    m_conf->setValue("customDateTimeFormat", format);
-}
-
-
-// Путь на диске по которому пользователь открывал файлы чтобы приаттачить их к записи
-QString AppConfig::getAttachAppendDir(void)
-{
-    return this->get_parameter("attachAppendDir");
-}
-
-void AppConfig::setAttachAppendDir(QString dir)
-{
-    m_conf->setValue("attachAppendDir", dir);
-}
-
-
-// Путь на диске по которому пользователь сохранял (Сохранить как...)приаттаченные файлы
-QString AppConfig::getAttachSaveAsDir(void)
-{
-    return this->get_parameter("attachSaveAsDir");
-}
-
-void AppConfig::setAttachSaveAsDir(QString dir)
-{
-    m_conf->setValue("attachSaveAsDir", dir);
-}
-
-
-// Разрешать ли для просмотра расшифровывать зашифрованные файлы в директорию корзины MyTetra
-bool AppConfig::getEnableDecryptFileToTrashDirectory(void)
-{
-    return m_conf->value("enableDecryptFileToTrashDirectory").toBool();
-}
-
-void AppConfig::setEnableDecryptFileToTrashDirectory(bool state)
-{
-    m_conf->setValue("enableDecryptFileToTrashDirectory", state);
-}
-
-
-// Получение размера файла лога действий
-unsigned int AppConfig::getActionLogMaximumSize(void)
-{
-    return this->get_parameter("actionLogMaximumSize").toUInt();
-}
-
-
-// Установка размера файла лога действий в мегабайтах
-void AppConfig::setActionLogMaximumSize(unsigned int mbSize)
-{
-    m_conf->setValue("actionLogMaximumSize", mbSize);
-}
-
-
-// Разрешено ли логирование
-bool AppConfig::getEnableLogging(void)
-{
-    return m_conf->value("enableLogging").toBool();
-}
-
-void AppConfig::setEnableLogging(bool state)
-{
-    m_conf->setValue("enableLogging", state);
-}
-
-// Разрешена ли подсветка записей с прикрепленными файлами
-bool AppConfig::getEnableRecordWithAttachHighlight(void)
-{
-    return m_conf->value("enableRecordWithAttachHighlight").toBool();
-}
-
-void AppConfig::setEnableRecordWithAttachHighlight(bool state)
-{
-    m_conf->setValue("enableRecordWithAttachHighlight", state);
-}
-
-
-// Цвет подсветки записей с прикрепленными файлами
-QString AppConfig::getRecordWithAttachHighlightColor(void)
-{
-    return this->get_parameter("recordWithAttachHighlightColor");
-}
-
-
-void AppConfig::setRecordWithAttachHighlightColor(QString color)
-{
-    QColor saveColor(color);
-
-    // Если сохраняема строка действительно содержит закодированный цвет
-    if (saveColor.isValid())
-    {
-        m_conf->setValue("recordWithAttachHighlightColor", color);
-    }
-}
-
-
-// Цвет закраски секрета в формате "#77767b"
-QString AppConfig::get_secretColor(void)
-{
-    return this->get_parameter("secretColor");
-}
-
-
-void AppConfig::set_secretColor(QString color)
-{
-    QColor saveColor(color);
-
-    // Если сохраняема строка действительно содержит закодированный цвет
-    if (saveColor.isValid())
-    {
-        m_conf->setValue("secretColor", color);
-    }
-}
-
-
-// Цвет фона поля заметки. Пустая строка означает цвет темы по умолчанию.
-// Параметр намеренно не входит в версионные таблицы (как editorFindEmbedded):
-// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
-QString AppConfig::get_notePaperColor(void)
-{
-    return m_conf->value("notePaperColor", "").toString();
-}
-
-
-void AppConfig::set_notePaperColor(QString color)
-{
-    // Пустая строка разрешена: это возврат к цвету темы
-    if(color.isEmpty())
-    {
-        m_conf->setValue("notePaperColor", "");
-        return;
-    }
-
-    QColor saveColor(color);
-
-    // Если сохраняема строка действительно содержит закодированный цвет
-    if (saveColor.isValid())
-    {
-        m_conf->setValue("notePaperColor", color);
-    }
-}
-
-
-// Цвет шрифта поля заметки. Пустая строка означает цвет темы по умолчанию.
-// Параметр намеренно не входит в версионные таблицы (как notePaperColor):
-// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
-QString AppConfig::get_noteFontColor(void)
-{
-    return m_conf->value("noteFontColor", "").toString();
-}
-
-
-void AppConfig::set_noteFontColor(QString color)
-{
-    // Пустая строка разрешена: это возврат к цвету темы
-    if(color.isEmpty())
-    {
-        m_conf->setValue("noteFontColor", "");
-        return;
-    }
-
-    QColor saveColor(color);
-
-    // Если сохраняема строка действительно содержит закодированный цвет
-    if (saveColor.isValid())
-    {
-        m_conf->setValue("noteFontColor", color);
-    }
-}
-
-
-// Кастомный дизайн поверх темы. Параметры намеренно не входят
-// в версионные таблицы (как noteFontColor): отсутствующий ключ
-// покрывается значением по умолчанию, миграция conf не нужна
-QString AppConfig::get_themeCustomTreeBackground(void)
-{
-    return m_conf->value("themeCustomTreeBackground", "").toString();
-}
-
-void AppConfig::set_themeCustomTreeBackground(QString color)
-{
-    m_conf->setValue("themeCustomTreeBackground", color);
-}
-
-QString AppConfig::get_themeCustomTreeText(void)
-{
-    return m_conf->value("themeCustomTreeText", "").toString();
-}
-
-void AppConfig::set_themeCustomTreeText(QString color)
-{
-    m_conf->setValue("themeCustomTreeText", color);
-}
-
-QString AppConfig::get_themeCustomTableBackground(void)
-{
-    return m_conf->value("themeCustomTableBackground", "").toString();
-}
-
-void AppConfig::set_themeCustomTableBackground(QString color)
-{
-    m_conf->setValue("themeCustomTableBackground", color);
-}
-
-QString AppConfig::get_themeCustomTableText(void)
-{
-    return m_conf->value("themeCustomTableText", "").toString();
-}
-
-void AppConfig::set_themeCustomTableText(QString color)
-{
-    m_conf->setValue("themeCustomTableText", color);
-}
-
-QString AppConfig::get_themeCustomTableAlternate(void)
-{
-    return m_conf->value("themeCustomTableAlternate", "").toString();
-}
-
-void AppConfig::set_themeCustomTableAlternate(QString color)
-{
-    m_conf->setValue("themeCustomTableAlternate", color);
-}
-
-QString AppConfig::get_themeCustomInterfaceFontFamily(void)
-{
-    return m_conf->value("themeCustomInterfaceFontFamily", "").toString();
-}
-
-void AppConfig::set_themeCustomInterfaceFontFamily(QString family)
-{
-    m_conf->setValue("themeCustomInterfaceFontFamily", family);
-}
-
-int AppConfig::get_themeCustomInterfaceFontSize(void)
-{
-    return m_conf->value("themeCustomInterfaceFontSize", -1).toInt();
-}
-
-void AppConfig::set_themeCustomInterfaceFontSize(int size)
-{
-    m_conf->setValue("themeCustomInterfaceFontSize", size);
-}
-
-int AppConfig::get_themeCustomTreeFontSize(void)
-{
-    return m_conf->value("themeCustomTreeFontSize", -1).toInt();
-}
-
-void AppConfig::set_themeCustomTreeFontSize(int size)
-{
-    m_conf->setValue("themeCustomTreeFontSize", size);
-}
-
-int AppConfig::get_themeCustomTableFontSize(void)
-{
-    return m_conf->value("themeCustomTableFontSize", -1).toInt();
-}
-
-void AppConfig::set_themeCustomTableFontSize(int size)
-{
-    m_conf->setValue("themeCustomTableFontSize", size);
-}
-
-int AppConfig::get_themeCustomTreeIndentation(void)
-{
-    return m_conf->value("themeCustomTreeIndentation", -1).toInt();
-}
-
-void AppConfig::set_themeCustomTreeIndentation(int pixels)
-{
-    m_conf->setValue("themeCustomTreeIndentation", pixels);
-}
-
-int AppConfig::get_themeCustomTableRowHeight(void)
-{
-    return m_conf->value("themeCustomTableRowHeight", -1).toInt();
-}
-
-void AppConfig::set_themeCustomTableRowHeight(int pixels)
-{
-    m_conf->setValue("themeCustomTableRowHeight", pixels);
-}
-
-QString AppConfig::get_themeCustomNotePaperImage(void)
-{
-    return m_conf->value("themeCustomNotePaperImage", "").toString();
-}
-
-void AppConfig::set_themeCustomNotePaperImage(QString path)
-{
-    m_conf->setValue("themeCustomNotePaperImage", path);
-}
-
-int AppConfig::get_themeCustomNotePaperBuiltin(void)
-{
-    return m_conf->value("themeCustomNotePaperBuiltin", 0).toInt();
-}
-
-void AppConfig::set_themeCustomNotePaperBuiltin(int index)
-{
-    // Верхняя граница не проверяется здесь: чтение идёт через
-    // value() с дефолтом, запись только из выпадашки на четыре пункта
-    if(index<0)
-        index=0;
-
-    m_conf->setValue("themeCustomNotePaperBuiltin", index);
-}
-
-QString AppConfig::get_themeCustomNotePaperMode(void)
-{
-    return m_conf->value("themeCustomNotePaperMode", "texture").toString();
-}
-
-void AppConfig::set_themeCustomNotePaperMode(QString mode)
-{
-    if(mode!="color" && mode!="texture")
-        mode="texture";
-
-    m_conf->setValue("themeCustomNotePaperMode", mode);
-}
-
-QString AppConfig::get_themeCustomBaseTheme(void)
-{
-    return m_conf->value("themeCustomBaseTheme", "default").toString();
-}
-
-void AppConfig::set_themeCustomBaseTheme(QString name)
-{
-    if(name!="default" && name!="dark" &&
-       name!="modern" && name!="midnight")
-        name="default";
-
-    m_conf->setValue("themeCustomBaseTheme", name);
-}
-
-
-// Человеко-читаемые имена вложенных файлов на диске.
-// Параметр намеренно не входит в версионные таблицы (как noteFontColor):
-// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
-bool AppConfig::get_attachHumanReadableNames(void)
-{
-    return get_attachNameMode()==AttachNameHybrid;
-}
-
-
-void AppConfig::set_attachHumanReadableNames(bool state)
-{
-    set_attachNameMode(state ? AttachNameHybrid : AttachNameSystem);
-}
-
-
-// Режим имен вложенных файлов на диске.
-// Параметр намеренно не входит в версионные таблицы (как noteFontColor):
-// отсутствующий ключ покрывается значением по умолчанию, миграция conf не нужна
-int AppConfig::get_attachNameMode(void)
-{
-    if(m_conf->contains("attachNameMode"))
-        return m_conf->value("attachNameMode", AttachNameSystem).toInt();
-
-    // Совместимость с версией 1.69: там был только флаг гибридного режима
-    if(m_conf->value("attachHumanReadableNames", false).toBool())
-        return AttachNameHybrid;
-
-    return AttachNameSystem;
-}
-
-
-void AppConfig::set_attachNameMode(int mode)
-{
-    if(mode<AttachNameSystem || mode>AttachNameOriginal)
-        mode=AttachNameSystem;
-
-    m_conf->setValue("attachNameMode", mode);
-
-    // Устаревший флаг держится в синхроне для чтения старыми версиями
-    m_conf->setValue("attachHumanReadableNames", mode==AttachNameHybrid);
-}
-
-
-bool AppConfig::get_recordHeaderVisible(void)
-{
-    return m_conf->value("recordHeaderVisible", true).toBool();
-}
-
-
-void AppConfig::set_recordHeaderVisible(bool state)
-{
-    m_conf->setValue("recordHeaderVisible", state);
-}
-
-
-bool AppConfig::get_recordTableUnderTree(void)
-{
-    return m_conf->value("recordTableUnderTree", false).toBool();
-}
-
-
-void AppConfig::set_recordTableUnderTree(bool state)
-{
-    m_conf->setValue("recordTableUnderTree", state);
-}
-
-
-// QSettings хранит строку с запятыми как QStringList, поэтому
-// value.toString() для такого ключа дает пустоту. Разбираются оба
-// варианта: и список, и одиночная строка. Заодно срезаются пробелы
-// после запятых, которые мог оставить ручной редактор conf.ini
-static QStringList readToolbarOrder(const QVariant &value)
-{
-    QStringList result;
-
-    foreach(const QString &part, value.toStringList())
-        foreach(const QString &item, part.split(","))
-            if(!item.trimmed().isEmpty())
-                result.append(item.trimmed());
-
-    return result;
-}
-
-
-QStringList AppConfig::getTreeToolbarOrder(void)
-{
-    return readToolbarOrder(m_conf->value("treeToolbarOrder", ""));
-}
-
-
-void AppConfig::setTreeToolbarOrder(QStringList order)
-{
-    m_conf->setValue("treeToolbarOrder", order.join(","));
-}
-
-
-QStringList AppConfig::getRecordToolbarOrder(void)
-{
-    return readToolbarOrder(m_conf->value("recordToolbarOrder", ""));
-}
-
-
-void AppConfig::setRecordToolbarOrder(QStringList order)
-{
-    m_conf->setValue("recordToolbarOrder", order.join(","));
-}
-
-
-QStringList AppConfig::getRecordExtraToolbarOrder(void)
-{
-    return readToolbarOrder(m_conf->value("recordExtraToolbarOrder", ""));
-}
-
-
-void AppConfig::setRecordExtraToolbarOrder(QStringList order)
-{
-    m_conf->setValue("recordExtraToolbarOrder", order.join(","));
-}
-
-
-bool AppConfig::get_readOnly(void)
-{
-    return m_conf->value("readOnly", false).toBool() || m_mcpUiLock;
-}
-
-
-bool AppConfig::isGlobalReadOnly(void)
-{
-    return m_conf->value("readOnly", false).toBool();
-}
-
-
 void AppConfig::setMcpUiLock(bool locked)
 {
     m_mcpUiLock=locked;
@@ -1471,457 +242,6 @@ bool AppConfig::isMcpUiLocked(void)
     return m_mcpUiLock;
 }
 
-
-void AppConfig::set_readOnly(bool state)
-{
-    m_conf->setValue("readOnly", state);
-}
-
-
-int AppConfig::get_clipperMaxImages(void)
-{
-    return this->get_parameter("clipperMaxImages").toInt();
-}
-
-
-bool AppConfig::set_clipperMaxImages(int count)
-{
-    if(count>0)
-    {
-        m_conf->setValue("clipperMaxImages", count);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-// Максимальный размер одной картинки клиппера в мегабайтах
-int AppConfig::get_clipperMaxImageSizeMb(void)
-{
-    return this->get_parameter("clipperMaxImageSizeMb").toInt();
-}
-
-
-bool AppConfig::set_clipperMaxImageSizeMb(int mbSize)
-{
-    if(mbSize>0)
-    {
-        m_conf->setValue("clipperMaxImageSizeMb", mbSize);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-// Веб-клиппер включен или нет
-bool AppConfig::get_clipperenable(void)
-{
-    return m_conf->value("clipperenable").toBool();
-}
-
-
-void AppConfig::set_clipperenable(bool flag)
-{
-    m_conf->setValue("clipperenable", flag);
-}
-
-
-// Глобальный хоткей клиппера в формате QKeySequence (работает под X11)
-QString AppConfig::get_clipperhotkey(void)
-{
-    return this->get_parameter("clipperhotkey");
-}
-
-
-void AppConfig::set_clipperhotkey(QString sequence)
-{
-    m_conf->setValue("clipperhotkey", sequence);
-}
-
-
-// Id ветки unsorted_notes (запоминается после создания,
-// переживает переименования ветки)
-QString AppConfig::get_clipperbranchid(void)
-{
-    return this->get_parameter("clipperbranchid");
-}
-
-
-void AppConfig::set_clipperbranchid(QString id)
-{
-    m_conf->setValue("clipperbranchid", id);
-}
-
-
-// Режим целевой ветки клипа: 0 — по умолчанию, 1 — выбранная,
-// 2 — спрашивать каждый раз всплывающим окном
-int AppConfig::get_clipperbranchmode(void)
-{
-    return this->get_parameter("clipperbranchmode").toInt();
-}
-
-
-void AppConfig::set_clipperbranchmode(int mode)
-{
-    m_conf->setValue("clipperbranchmode", mode);
-}
-
-
-// Частые ветки клипов: пары id:count через ";", частые впереди
-QString AppConfig::get_clipperrecent(void)
-{
-    return this->get_parameter("clipperrecent");
-}
-
-
-void AppConfig::set_clipperrecent(const QString &ids)
-{
-    m_conf->setValue("clipperrecent", ids);
-}
-
-
-// Какие 16 плиток внизу опроса: 0 — последние, 1 — частые
-int AppConfig::get_clippertilemode(void)
-{
-    return this->get_parameter("clippertilemode").toInt();
-}
-
-
-void AppConfig::set_clippertilemode(int mode)
-{
-    m_conf->setValue("clippertilemode", mode);
-}
-
-
-// При попытке вставить дубль открывать оригинал заметки
-bool AppConfig::get_clipperopendup(void)
-{
-    return m_conf->value("clipperopendup", true).toBool();
-}
-
-
-void AppConfig::set_clipperopendup(bool open)
-{
-    m_conf->setValue("clipperopendup", open);
-}
-
-
-// Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
-bool AppConfig::getEnablePeriodicCheckBase(void)
-{
-    return m_conf->value("enablePeriodicCheckBase").toBool();
-}
-
-void AppConfig::setEnablePeriodicCheckBase(bool state)
-{
-    m_conf->setValue("enablePeriodicCheckBase", state);
-}
-
-
-// Период проверки файла базы на предмет изменения сторонней программой
-int AppConfig::getCheckBasePeriod(void)
-{
-    return this->get_parameter("checkBasePeriod").toInt();
-}
-
-
-void AppConfig::setCheckBasePeriod(int period)
-{
-    m_conf->setValue("checkBasePeriod", period);
-}
-
-
-// Необходимо ли выводить сообщение если база была изменена другой программой
-bool AppConfig::getEnablePeriodicCheckMessage(void)
-{
-    return m_conf->value("enablePeriodicCheckMessage").toBool();
-}
-
-void AppConfig::setEnablePeriodicCheckMessage(bool state)
-{
-    m_conf->setValue("enablePeriodicCheckMessage", state);
-}
-
-
-int AppConfig::getPreviewIconSize(void)
-{
-    return m_conf->value("previewIconSize",0).toInt();
-}
-
-
-void AppConfig::setPreviewIconSize(int n)
-{
-    m_conf->setValue("previewIconSize", n);
-}
-
-
-QString AppConfig::getIconCurrentSectionName(void)
-{
-    return this->get_parameter("iconCurrentSectionName");
-}
-
-void AppConfig::setIconCurrentSectionName(QString name)
-{
-    m_conf->setValue("iconCurrentSectionName", name);
-}
-
-
-
-// Разрешена ли периодическая синхронизация
-bool AppConfig::getEnablePeriodicSyncro(void)
-{
-    return m_conf->value("enablePeriodicSyncro").toBool();
-}
-
-void AppConfig::setEnablePeriodicSyncro(bool state)
-{
-    m_conf->setValue("enablePeriodicSyncro", state);
-}
-
-
-// Период автоматической периодической синхронизации
-int AppConfig::getPeriodicSyncroPeriod(void)
-{
-    return this->get_parameter("periodicSyncroPeriod").toInt();
-}
-
-
-void AppConfig::setPeriodicSyncroPeriod(int period)
-{
-    m_conf->setValue("periodicSyncroPeriod", period);
-}
-
-
-// Разрешено ли создавать запись без текста
-bool AppConfig::getEnableCreateEmptyRecord(void)
-{
-    return m_conf->value("enableCreateEmptyRecord").toBool();
-}
-
-void AppConfig::setEnableCreateEmptyRecord(bool state)
-{
-    m_conf->setValue("enableCreateEmptyRecord", state);
-}
-
-
-// Разрешен ли доступ внешнего AI-клиента через MCP.
-// По умолчанию запрещен: включается галочкой на странице MCP
-bool AppConfig::get_mcpAllow(void)
-{
-    return m_conf->value("mcpAllow", false).toBool();
-}
-
-void AppConfig::set_mcpAllow(bool state)
-{
-    m_conf->setValue("mcpAllow", state);
-}
-
-
-// Игнорировать ошибки проверки TLS при сетевой загрузке.
-// По умолчанию false: самоподписанный/просроченный сертификат
-// отклоняется, иначе MITM может подменить картинку или файл
-bool AppConfig::get_tlsIgnoreInvalidCertificates(void)
-{
-    return m_conf->value("tlsIgnoreInvalidCertificates", false).toBool();
-}
-
-void AppConfig::set_tlsIgnoreInvalidCertificates(bool state)
-{
-    m_conf->setValue("tlsIgnoreInvalidCertificates", state);
-}
-
-
-// Показывать ли общий итог записей с учетом подветок.
-// По умолчанию выключено: только свои [n]
-bool AppConfig::get_showSubtreeCount(void)
-{
-    return m_conf->value("showSubtreeCount", false).toBool();
-}
-
-void AppConfig::set_showSubtreeCount(bool state)
-{
-    m_conf->setValue("showSubtreeCount", state);
-}
-
-
-// Раскладка импорта Telegram. Неизвестное значение лечится
-// в дефолт: импорт всегда рабочий
-QString AppConfig::get_telegramImportMode(void)
-{
-    const QString mode=m_conf->value("telegramImportMode", QStringLiteral("month")).toString();
-
-    if(mode==QStringLiteral("message") || mode==QStringLiteral("day") ||
-       mode==QStringLiteral("year"))
-        return mode;
-
-    return QStringLiteral("month");
-}
-
-void AppConfig::set_telegramImportMode(const QString &mode)
-{
-    if(mode==QStringLiteral("message") || mode==QStringLiteral("day") ||
-       mode==QStringLiteral("year"))
-        m_conf->setValue("telegramImportMode", mode);
-    else
-        m_conf->setValue("telegramImportMode", QStringLiteral("month"));
-}
-
-
-// Метод шифрования. rc5 если не задано или лежит мусор:
-// неизвестное значение никогда не должно молча ронять данные
-QString AppConfig::get_cryptMethod(void)
-{
-    const QString method=m_conf->value("cryptMethod", QStringLiteral("rc5")).toString();
-
-    if(method==QStringLiteral("xchacha"))
-        return method;
-
-    return QStringLiteral("rc5");
-}
-
-
-void AppConfig::set_cryptMethod(const QString &method)
-{
-    if(method==QStringLiteral("xchacha"))
-        m_conf->setValue("cryptMethod", method);
-    else
-        m_conf->setValue("cryptMethod", QStringLiteral("rc5"));
-}
-
-
-// Формат голосовых заметок по умолчанию. Opus если не задано
-// или лежит мусор: диалог записи все равно проверяет поддержку
-QString AppConfig::get_voiceNoteFormat(void)
-{
-    const QString format=m_conf->value("voiceNoteFormat", "opus").toString();
-
-    if(format==QStringLiteral("mp3") || format==QStringLiteral("opus"))
-        return format;
-
-    return QStringLiteral("opus");
-}
-
-
-void AppConfig::set_voiceNoteFormat(QString format)
-{
-    if(format!=QStringLiteral("mp3") && format!=QStringLiteral("opus"))
-        format=QStringLiteral("opus");
-
-    m_conf->setValue("voiceNoteFormat", format);
-}
-
-
-// Подавление фонового шума (HP+вырезки гула+гейт) в диалоге записи
-// голосовых заметок. Включено по умолчанию
-bool AppConfig::get_voiceNoteNoiseSuppress(void)
-{
-    return m_conf->value("voiceNoteNoiseSuppress", true).toBool();
-}
-
-
-void AppConfig::set_voiceNoteNoiseSuppress(bool value)
-{
-    m_conf->setValue("voiceNoteNoiseSuppress", value);
-}
-
-
-// Качество Opus голосовых заметок по умолчанию: 0 super low (12 кбит),
-// 1 extra low (16 кбит), 2 low (24 кбит), 3 middle (32 кбит, дефолт),
-// 4 high (48 кбит), 5 extra high (64 кбит).
-int AppConfig::get_voiceNoteQuality(void)
-{
-    const int quality=m_conf->value("voiceNoteQuality", 3).toInt();
-
-    return qBound(0, quality, 5);
-}
-
-
-void AppConfig::set_voiceNoteQuality(int quality)
-{
-    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 5));
-}
-
-
-QString AppConfig::getDockableWindowsState(void)
-{
-    return this->get_parameter("dockableWindowsState");
-}
-
-void AppConfig::setDockableWindowsState(QString state)
-{
-    m_conf->setValue("dockableWindowsState", state);
-}
-
-
-QString AppConfig::getDockableWindowsBehavior(void)
-{
-    return this->get_parameter("dockableWindowsBehavior");
-}
-
-void AppConfig::setDockableWindowsBehavior(QString mode)
-{
-    if (mode=="single" || mode=="together")
-    {
-        m_conf->setValue("dockableWindowsBehavior", mode);
-    }
-    else
-    {
-        criticalError("Unavailable value for dockableWindowsBehavior "+mode);
-    }
-}
-
-
-// Получение имени темы оформления
-QString AppConfig::getInterfaceTheme()
-{
-    return this->get_parameter("interfaceTheme");
-}
-
-bool AppConfig::setInterfaceTheme(QString themeName)
-{
-    if ( !fixedParameters.themesAvailableList.contains(themeName) )
-    {
-        return false;
-    }
-
-    m_conf->setValue("interfaceTheme", themeName);
-
-    return true;
-}
-
-
-QString AppConfig::getInterfaceIconSize()
-{
-    return this->get_parameter("interfaceIconSize");
-}
-
-bool AppConfig::setInterfaceIconSize(QString sizeName)
-{
-    // Если установлено какое-то имя размера иконок,
-    // и оно не входит в список разрешенных
-    if ( sizeName!="" and
-         !fixedParameters.interfaceIconSizeAvailableMap.keys().contains(sizeName) )
-    {
-        return false;
-    }
-
-    // Запоминается имя размера иконок. Оно может быть пустым или
-    // в виде строки из списка разрешенных размеров
-    m_conf->setValue("interfaceIconSize", sizeName);
-
-    return true;
-}
-
-
-// --------------------
-// Номер версии конфига
-// --------------------
 
 int AppConfig::get_config_version(void)
 {
@@ -1937,1440 +257,1430 @@ void AppConfig::set_config_version(int i)
 }
 
 
-QStringList AppConfig::removeParameterFromTable(QString removeName, QStringList table)
+// P2: ленивые доступы к секциям. Бэкенд перепривязывается при
+// каждом обращении, поэтому фасады работают и без init()
+// (пробы ставят m_conf напрямую)
+
+AppConfigStorage *AppConfig::storageSection(void)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    if(m_storage==nullptr)
     {
-        // Выясняется имя параметра
-        QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
-
-        // Если имя совпадает с удаляемым
-        if (name==removeName)
-        {
-            // Удаляются данные об элементе (удаляется ячейка с одним и тем же номером
-            // столько раз, сколько полей в таблице)
-            for (int j=0; j<MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD; j++)
-            {
-                table.removeAt(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
-            }
-
-            break;
-        }
+        m_storage=new AppConfigStorage(this);
     }
 
-    return table;
+    m_storage->setBackend(m_conf, this);
+
+    return m_storage;
 }
 
-
-// Получение типа параметра в виде строки
-QString AppConfig::getParameterTypeFromTable(QString parameterName, QStringList table)
+AppConfigUi *AppConfig::uiSection(void)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    if(m_ui==nullptr)
     {
-        // Выясняется имя параметра
-        QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
-
-        if (name==parameterName)
-        {
-            return table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD+1);
-        }
+        m_ui=new AppConfigUi(this);
     }
 
-    return "";
+    m_ui->setBackend(m_conf, this);
+
+    return m_ui;
 }
 
-
-// Получение значения параметра по-умолчнию, в виде строки
-QString AppConfig::getParameterDefaultValueFromTable(QString parameterName, QStringList table)
+AppConfigFind *AppConfig::findSection(void)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    if(m_find==nullptr)
     {
-        // Выясняется имя параметра
-        QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
-
-        if (name==parameterName)
-        {
-            return table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD+2);
-        }
+        m_find=new AppConfigFind(this);
     }
 
-    return "";
+    m_find->setBackend(m_conf, this);
+
+    return m_find;
 }
 
-
-// Замена типа и значения параметра по-умолчанию
-QStringList AppConfig::replaceParameterInTable(QString replaceName,
-                                               QString replaceType,
-                                               QString replaceDefaultValue,
-                                               QStringList table)
+AppConfigSync *AppConfig::syncSection(void)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    if(m_sync==nullptr)
     {
-        // Выясняется имя параметра
-        QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
-
-        // Если имя совпадает с заменяемым
-        if (name==replaceName)
-        {
-            table[i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD+1]=replaceType;
-            table[i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD+2]=replaceDefaultValue;
-
-            break;
-        }
+        m_sync=new AppConfigSync(this);
     }
 
-    return table;
+    m_sync->setBackend(m_conf, this);
+
+    return m_sync;
 }
 
-
-
-// ------------------------------------
-// Методы для обновления версии конфига
-// ------------------------------------
-
-void AppConfig::update_version_process(void)
+AppConfigCrypto *AppConfig::cryptoSection(void)
 {
-    QString configFileName=globalParameters.getWorkDirectory()+"/conf.ini";
-
-    AppConfigUpdater updater;
-    updater.setConfigFile(configFileName);
-
-    // Номер версии текущего конфига, который есть на начало обновления
-    int fromVersion=get_config_version();
-
-    // Эта строка компилируется нормально, сделать на ее основе список указателей на функцию
-    // std::function< QStringList(AppConfig&, bool) > pFunction=&AppConfig::get_parameter_table_1;
-
-    // Перечень функций, выдающих список параметров для конкретной версии конфига
-    QList< std::function< QStringList(AppConfig&, bool) > > parameterFunctions;
-
-    // Исторически счет версий идет с 1, поэтому, чтобы не запутаться,
-    // создается пустой нуливой элемент
-    parameterFunctions << nullptr;
-
-    parameterFunctions << &AppConfig::get_parameter_table_1;
-    parameterFunctions << &AppConfig::get_parameter_table_2;
-    parameterFunctions << &AppConfig::get_parameter_table_3;
-    parameterFunctions << &AppConfig::get_parameter_table_4;
-    parameterFunctions << &AppConfig::get_parameter_table_5;
-    parameterFunctions << &AppConfig::get_parameter_table_6;
-    parameterFunctions << &AppConfig::get_parameter_table_7;
-    parameterFunctions << &AppConfig::get_parameter_table_8;
-    parameterFunctions << &AppConfig::get_parameter_table_9;
-    parameterFunctions << &AppConfig::get_parameter_table_10;
-    parameterFunctions << &AppConfig::get_parameter_table_11;
-    parameterFunctions << &AppConfig::get_parameter_table_12;
-    parameterFunctions << &AppConfig::get_parameter_table_13;
-    parameterFunctions << &AppConfig::get_parameter_table_14;
-    parameterFunctions << &AppConfig::get_parameter_table_15;
-    parameterFunctions << &AppConfig::get_parameter_table_16;
-    parameterFunctions << &AppConfig::get_parameter_table_17;
-    parameterFunctions << &AppConfig::get_parameter_table_18;
-    parameterFunctions << &AppConfig::get_parameter_table_19;
-    parameterFunctions << &AppConfig::get_parameter_table_20;
-    parameterFunctions << &AppConfig::get_parameter_table_21;
-    parameterFunctions << &AppConfig::get_parameter_table_22;
-    parameterFunctions << &AppConfig::get_parameter_table_23;
-    parameterFunctions << &AppConfig::get_parameter_table_24;
-    parameterFunctions << &AppConfig::get_parameter_table_25;
-    parameterFunctions << &AppConfig::get_parameter_table_26;
-    parameterFunctions << &AppConfig::get_parameter_table_27;
-    parameterFunctions << &AppConfig::get_parameter_table_28;
-    parameterFunctions << &AppConfig::get_parameter_table_29;
-    parameterFunctions << &AppConfig::get_parameter_table_30;
-    parameterFunctions << &AppConfig::get_parameter_table_31;
-    parameterFunctions << &AppConfig::get_parameter_table_32;
-    parameterFunctions << &AppConfig::get_parameter_table_33;
-    parameterFunctions << &AppConfig::get_parameter_table_34;
-    parameterFunctions << &AppConfig::get_parameter_table_35;
-    parameterFunctions << &AppConfig::get_parameter_table_36;
-    parameterFunctions << &AppConfig::get_parameter_table_37;
-    parameterFunctions << &AppConfig::get_parameter_table_38;
-    parameterFunctions << &AppConfig::get_parameter_table_39;
-    parameterFunctions << &AppConfig::get_parameter_table_40;
-    parameterFunctions << &AppConfig::get_parameter_table_41;
-    parameterFunctions << &AppConfig::get_parameter_table_42;
-    parameterFunctions << &AppConfig::get_parameter_table_43;
-    parameterFunctions << &AppConfig::get_parameter_table_44;
-    parameterFunctions << &AppConfig::get_parameter_table_45;
-    parameterFunctions << &AppConfig::get_parameter_table_46;
-    parameterFunctions << &AppConfig::get_parameter_table_47;
-    parameterFunctions << &AppConfig::get_parameter_table_48;
-    parameterFunctions << &AppConfig::get_parameter_table_49;
-    parameterFunctions << &AppConfig::get_parameter_table_50;
-    parameterFunctions << &AppConfig::get_parameter_table_51;
-    parameterFunctions << &AppConfig::get_parameter_table_52;
-    parameterFunctions << &AppConfig::get_parameter_table_53;
-    parameterFunctions << &AppConfig::get_parameter_table_54;
-    parameterFunctions << &AppConfig::get_parameter_table_55;
-    parameterFunctions << &AppConfig::get_parameter_table_56;
-    parameterFunctions << &AppConfig::get_parameter_table_57;
-    parameterFunctions << &AppConfig::get_parameter_table_58;
-    parameterFunctions << &AppConfig::get_parameter_table_59;
-    parameterFunctions << &AppConfig::get_parameter_table_60;
-    parameterFunctions << &AppConfig::get_parameter_table_61;
-
-    for (int i=1; i<parameterFunctions.count()-1; ++i)
+    if(m_crypto==nullptr)
     {
-        // Обновление идет только для версий, которые более новые чем версия текущего конфига
-        if (i>=fromVersion)
-        {
-            // В вызове метода: *this - это объект, а true - это первый параметр метода.
-            // Именно так работает вызов метода для std::function
-            updater.updateVersion(i,
-                                  i+1,
-                                  (parameterFunctions.at(i))(*this, true),
-                                  (parameterFunctions.at(i+1))(*this, true) );
-        }
+        m_crypto=new AppConfigCrypto(this);
     }
+
+    m_crypto->setBackend(m_conf, this);
+
+    return m_crypto;
+}
+
+AppConfigRecordTable *AppConfig::recordTableSection(void)
+{
+    if(m_recordtable==nullptr)
+    {
+        m_recordtable=new AppConfigRecordTable(this);
+    }
+
+    m_recordtable->setBackend(m_conf, this);
+
+    return m_recordtable;
+}
+
+AppConfigClipper *AppConfig::clipperSection(void)
+{
+    if(m_clipper==nullptr)
+    {
+        m_clipper=new AppConfigClipper(this);
+    }
+
+    m_clipper->setBackend(m_conf, this);
+
+    return m_clipper;
+}
+
+AppConfigServices *AppConfig::servicesSection(void)
+{
+    if(m_services==nullptr)
+    {
+        m_services=new AppConfigServices(this);
+    }
+
+    m_services->setBackend(m_conf, this);
+
+    return m_services;
 }
 
 
-QStringList AppConfig::get_parameter_table_1(bool withEndSignature)
+// --------------------
+// Секция Storage (реализация в AppConfigStorage.cpp)
+// --------------------
+
+bool AppConfig::set_tetradir(QString dirName)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return storageSection()->set_tetradir(dirName);
+}
 
-    table << "addnewrecord_expand_info" << "int" << "1";
-    table << "findscreen_find_inname"   << "bool" << "true";
-    table << "findscreen_find_intags"   << "bool" << "true";
-    table << "findscreen_find_intext"   << "bool" << "true";
-    table << "findscreen_howextract"    << "int" << "1";
-    table << "findscreen_show"          << "bool" << "false";
-    table << "findscreen_wordregard"    << "int" << "1";
-    table << "findsplitter_size_list"   << "QString" << "517,141";
-    table << "hspl_size_list"           << "QString" << "237,621";
-    table << "lastidnum"                << "int" << "3537";
-    table << "lastnotenum"              << "int" << "3119";
-    table << "lastprefixnum"            << "int" << "7540";
-    table << "mainwingeometry"          << "QString" << "155,24,864,711)";
-    table << "recordtable_position"     << "int" << "0";
-    table << "tetradir"                 << "QString" << "/opt/mytetra/data";
-    table << "trashdir"                 << "QString" << "/opt/mytetra/trash";
-    table << "trashmaxfilecount"        << "int" << "200";
-    table << "trashsize"                << "int" << "5";
-    table << "tree_position"            << "QString" << "0,1818,1819";
-    table << "vspl_size_list"           << "QString" << "171,487";
-    table << "findscreen_find_inauthor" << "bool" << "true";
-    table << "findscreen_find_inurl"    << "bool" << "false";
+    // Директория с базой знаний
+QString AppConfig::get_tetradir(void)
+{
+    return storageSection()->get_tetradir();
+}
 
-    if (withEndSignature)
-        table << "0" << "0" << "0";
+bool AppConfig::set_trashdir(QString dirName)
+{
+    return storageSection()->set_trashdir(dirName);
+}
 
-    return table;
+    // Директория с корзиной
+QString AppConfig::get_trashdir(void)
+{
+    return storageSection()->get_trashdir();
+}
+
+    // Максимальный размер директории корзины в мегабайтах
+unsigned int AppConfig::get_trashsize(void)
+{
+    return storageSection()->get_trashsize();
+}
+
+bool AppConfig::set_trashsize(unsigned int mbSize)
+{
+    return storageSection()->set_trashsize(mbSize);
+}
+
+    // Максимально допустимое число файлов в корзине
+int AppConfig::get_trashmaxfilecount(void)
+{
+    return storageSection()->get_trashmaxfilecount();
+}
+
+bool AppConfig::set_trashmaxfilecount(int count)
+{
+    return storageSection()->set_trashmaxfilecount(count);
+}
+
+    // Путь на диске по которому пользователь открывал файлы чтобы приаттачить их к записи
+QString AppConfig::getAttachAppendDir(void)
+{
+    return storageSection()->getAttachAppendDir();
+}
+
+void AppConfig::setAttachAppendDir(QString dir)
+{
+    storageSection()->setAttachAppendDir(dir);
+}
+
+    // Путь на диске по которому пользователь сохранял (Сохранить как...) приаттаченные файлы
+QString AppConfig::getAttachSaveAsDir(void)
+{
+    return storageSection()->getAttachSaveAsDir();
+}
+
+void AppConfig::setAttachSaveAsDir(QString dir)
+{
+    storageSection()->setAttachSaveAsDir(dir);
+}
+
+    // Разрешать ли для просмотра расшифровывать зашифрованные файлы в директорию корзины MyTetra
+bool AppConfig::getEnableDecryptFileToTrashDirectory(void)
+{
+    return storageSection()->getEnableDecryptFileToTrashDirectory();
+}
+
+void AppConfig::setEnableDecryptFileToTrashDirectory(bool state)
+{
+    storageSection()->setEnableDecryptFileToTrashDirectory(state);
+}
+
+    // Размер файла лога дейсвтвий
+unsigned int AppConfig::getActionLogMaximumSize()
+{
+    return storageSection()->getActionLogMaximumSize();
+}
+
+void AppConfig::setActionLogMaximumSize(unsigned int mbSize)
+{
+    storageSection()->setActionLogMaximumSize(mbSize);
+}
+
+    // Разрешено ли логирование
+bool AppConfig::getEnableLogging(void)
+{
+    return storageSection()->getEnableLogging();
+}
+
+void AppConfig::setEnableLogging(bool state)
+{
+    storageSection()->setEnableLogging(state);
+}
+
+    // Человеко-читаемые имена вложенных файлов на диске (схема id_имя.ext
+    // вместо id.ext). По умолчанию выключено. Включается кнопкой миграции
+    // в настройках прикрепленных файлов, после чего новые вложения
+    // сразу сохраняются по человеко-читаемой схеме.
+    // Устаревший флаг: теперь схема задается режимом attachNameMode,
+    // методы оставлены для совместимости (true = гибридный режим)
+bool AppConfig::get_attachHumanReadableNames(void)
+{
+    return storageSection()->get_attachHumanReadableNames();
+}
+
+void AppConfig::set_attachHumanReadableNames(bool state)
+{
+    storageSection()->set_attachHumanReadableNames(state);
+}
+
+int AppConfig::get_attachNameMode(void)
+{
+    return storageSection()->get_attachNameMode();
+}
+
+void AppConfig::set_attachNameMode(int mode)
+{
+    storageSection()->set_attachNameMode(mode);
 }
 
 
-QStringList AppConfig::get_parameter_table_2(bool withEndSignature)
+// --------------------
+// Секция Ui (реализация в AppConfigUi.cpp)
+// --------------------
+
+    // Нужно ли показывать подтверждение при выполнении действия "cut на ветке
+bool AppConfig::get_cutbranchconfirm(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 1
-    table << get_parameter_table_1(false);
-
-    // Новый параметр
-    table << "cutbranchconfirm"         << "bool" << "true";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_cutbranchconfirm();
 }
 
-
-QStringList AppConfig::get_parameter_table_3(bool withEndSignature)
+bool AppConfig::set_cutbranchconfirm(bool confirm)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 2
-    table << get_parameter_table_2(false);
-
-    // Новый параметр
-    table << "printdebugmessages"         << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->set_cutbranchconfirm(confirm);
 }
 
-
-QStringList AppConfig::get_parameter_table_4(bool withEndSignature)
+    // Геометрия основного окна
+QByteArray AppConfig::get_mainwingeometry(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 3
-    table << get_parameter_table_3(false);
-
-    // Новые параметры
-    table << "interfacelanguage" << "QString" << "en";
-    table << "programm" << "QString" << "mytetra";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_mainwingeometry();
 }
 
-
-QStringList AppConfig::get_parameter_table_5(bool withEndSignature)
+void AppConfig::set_mainwingeometry(QByteArray dataGeometry)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 4
-    table << get_parameter_table_4(false);
-
-    // Исключаются ненужные в новой версии параметры
-    table=removeParameterFromTable("lastidnum", table);
-    table=removeParameterFromTable("lastnotenum", table);
-    table=removeParameterFromTable("lastprefixnum", table);
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_mainwingeometry(dataGeometry);
 }
 
-
-QStringList AppConfig::get_parameter_table_6(bool withEndSignature)
+QList<int> AppConfig::get_vspl_size_list(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 5
-    table << get_parameter_table_5(false);
-
-    // Новые параметры
-    table << "howpassrequest" << "QString" << "atClickOnCryptBranch";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_vspl_size_list();
 }
 
-
-QStringList AppConfig::get_parameter_table_7(bool withEndSignature)
+void AppConfig::set_vspl_size_list(QList<int> list)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 6
-    table << get_parameter_table_6(false);
-
-    // Новые параметры
-    table << "runinminimizedwindow" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_vspl_size_list(list);
 }
 
-
-QStringList AppConfig::get_parameter_table_8(bool withEndSignature)
+QList<int> AppConfig::get_hspl_size_list(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 7
-    table << get_parameter_table_7(false);
-
-    // Новые параметры
-    table << "synchrocommand" << "QString" << "";
-    table << "synchroonstartup" << "bool" << "false";
-    table << "synchroonexit" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_hspl_size_list();
 }
 
-
-QStringList AppConfig::get_parameter_table_9(bool withEndSignature)
+void AppConfig::set_hspl_size_list(QList<int> list)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 8
-    table << get_parameter_table_8(false);
-
-    // Новые параметры
-    table << "syncroConsoleDetails" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_hspl_size_list(list);
 }
 
-
-QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
+QList<int> AppConfig::get_findsplitter_size_list(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 9
-    table << get_parameter_table_9(false);
-
-    // Новые параметры
-    table << "autoClosePasswordEnable" << "bool" << "false";
-    table << "autoClosePasswordDelay" << "int" << "10";
-    table << "autosaveEnable" << "bool" << "true";
-    table << "autosaveInterval" << "int" << "10";
-    table << "historySquashEnable" << "bool" << "true";
-    table << "historySquashKeep" << "int" << "100";
-    table << "historySquashMode" << "int" << "0";
-    table << "historyEnable" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_findsplitter_size_list();
 }
 
-
-QStringList AppConfig::get_parameter_table_11(bool withEndSignature)
+void AppConfig::set_findsplitter_size_list(QList<int> list)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 10
-    table << get_parameter_table_10(false);
-
-    // Новые параметры
-    table << "editorCursorPosition" << "int" << "0";
-    table << "editorScrollBarPosition" << "int" << "0";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_findsplitter_size_list(list);
 }
 
-
-QStringList AppConfig::get_parameter_table_12(bool withEndSignature)
+    // Размеры левой колонки (дерево над списком записей), когда список
+    // записей перенесён под дерево. Остальные сплиттеры - выше
+QList<int> AppConfig::get_leftspl_size_list(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 11
-    table << get_parameter_table_11(false);
-
-    // Новые параметры
-    table << "passwordMiddleHash" << "QString" << "";
-    table << "passwordSaveFlag" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_leftspl_size_list();
 }
 
-
-QStringList AppConfig::get_parameter_table_13(bool withEndSignature)
+void AppConfig::set_leftspl_size_list(QList<int> list)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 12
-    table << get_parameter_table_12(false);
-
-    // Новые параметры
-    table << "rememberCursorAtHistoryNavigation" << "bool" << "true";
-    table << "rememberCursorAtOrdinarySelection" << "bool" << "true";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_leftspl_size_list(list);
 }
 
-
-QStringList AppConfig::get_parameter_table_14(bool withEndSignature)
+QList<int> AppConfig::get_splitter_size_list(QString name)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 13
-    table << get_parameter_table_13(false);
-
-    // Новые параметры
-    table << "findScreenTreeSearchArea" << "int" << "0"; // Область поиска. Искать во всем дереве - 0, искать в текущей ветке - 1
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_splitter_size_list(name);
 }
 
-
-QStringList AppConfig::get_parameter_table_15(bool withEndSignature)
+void AppConfig::set_splitter_size_list(QString name, QList<int> list)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 14
-    table << get_parameter_table_14(false);
-
-    // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
-        table << "uglyQssReplaceHeightForTableView" << "int" << "35"; // Так как не все параметры можно стилизовать через QSS, здесь задается высота ячейки таблицы
-    else
-        table << "uglyQssReplaceHeightForTableView" << "int" << "0";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_splitter_size_list(name, list);
 }
 
-
-QStringList AppConfig::get_parameter_table_16(bool withEndSignature)
+QStringList AppConfig::get_tree_position(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 15
-    table << get_parameter_table_15(false);
-
-    // Новые параметры
-    table << "recordTableShowFields" << "QString" << "name,tags";
-    table << "recordTableFieldsWidth" << "QString" << "256,128";
-    table << "recordTableShowHorizontalHeaders" << "bool" << "true";
-    table << "recordTableShowVerticalHeaders" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_tree_position();
 }
 
-
-QStringList AppConfig::get_parameter_table_17(bool withEndSignature)
+void AppConfig::set_tree_position(QStringList list)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 16
-    table << get_parameter_table_16(false);
-
-    // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
-        table << "showSplashScreen" << "bool" << "true"; // В Андроид долгий запуск, нужно показывать сплешскрин
-    else
-        table << "showSplashScreen" << "bool" << "false"; // На десктопе быстрый запуск, сплешскрин только мешает
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_tree_position(list);
 }
 
-
-QStringList AppConfig::get_parameter_table_18(bool withEndSignature)
+bool AppConfig::get_runinminimizedwindow(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 17
-    table << get_parameter_table_17(false);
-
-    // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
-        table << "interfaceMode" << "QString" << "mobile"; // В Андроид должен быть мобильный интерфейс
-    else
-        table << "interfaceMode" << "QString" << "desktop"; // На десктопе должен быть интерфейс адаптированный для работы на рабочем столе
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_runinminimizedwindow();
 }
 
-
-QStringList AppConfig::get_parameter_table_19(bool withEndSignature)
+void AppConfig::set_runinminimizedwindow(bool flag)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 18
-    table << get_parameter_table_18(false);
-
-    // Новые параметры
-    table << "focusWidget" << "QString" << "";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_runinminimizedwindow(flag);
 }
 
-
-QStringList AppConfig::get_parameter_table_20(bool withEndSignature)
+int AppConfig::getEditorCursorPosition(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 19
-    table << get_parameter_table_19(false);
-
-    // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
-        table << "hideEditorTools" << "QString" << "italic,underline,monospace,alignleft,aligncenter,alignright,alignwidth,numericlist,dotlist,indentplus,indentminus,showformatting,showhtml,fontcolor,backgroundcolor,expand_edit_area,save,createtable,table_add_row,table_remove_row,table_add_col,table_remove_col,table_merge_cells,table_split_cell"; // В Андроид прячутся инструменты сложного форматирования текста
-    else
-        table << "hideEditorTools" << "QString" << ""; // На десктопе скрываемых кнопок редактора нет
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getEditorCursorPosition();
 }
 
-
-QStringList AppConfig::get_parameter_table_21(bool withEndSignature)
+void AppConfig::setEditorCursorPosition(int n)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 20
-    table << get_parameter_table_20(false);
-
-    table << "findInBaseExpand" << "bool" << "true";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setEditorCursorPosition(n);
 }
 
-
-QStringList AppConfig::get_parameter_table_22(bool withEndSignature)
+int AppConfig::getEditorScrollBarPosition(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 21
-    table << get_parameter_table_21(false);
-
-    table << "recordtableSelectedRecordId" << "QString" << "";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getEditorScrollBarPosition();
 }
 
-
-QStringList AppConfig::get_parameter_table_23(bool withEndSignature)
+void AppConfig::setEditorScrollBarPosition(int n)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 22
-    table << get_parameter_table_22(false);
-
-    // Исключаются ненужные в новой версии параметры
-    table=removeParameterFromTable("recordtable_position", table);
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setEditorScrollBarPosition(n);
 }
 
-
-QStringList AppConfig::get_parameter_table_24(bool withEndSignature)
+int AppConfig::getUglyQssReplaceHeightForTableView(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 23
-    table << get_parameter_table_23(false);
-
-    table << "enableCustomDateTimeFormat" << "bool" << "false";
-    table << "customDateTimeFormat" << "QString" << "";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getUglyQssReplaceHeightForTableView();
 }
 
-
-QStringList AppConfig::get_parameter_table_25(bool withEndSignature)
+void AppConfig::setUglyQssReplaceHeightForTableView(int n)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 24
-    table << get_parameter_table_24(false);
-
-    table << "attachAppendDir" << "QString" << "";
-    table << "attachSaveAsDir" << "QString" << "";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setUglyQssReplaceHeightForTableView(n);
 }
 
-
-QStringList AppConfig::get_parameter_table_26(bool withEndSignature)
+    // Показывать ли сплешскрин при старте программы
+bool AppConfig::getShowSplashScreen(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 25
-    table << get_parameter_table_25(false);
-
-    table << "enableDecryptFileToTrashDirectory" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getShowSplashScreen();
 }
 
-
-QStringList AppConfig::get_parameter_table_27(bool withEndSignature)
+void AppConfig::setShowSplashScreen(bool isShow)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 26
-    table << get_parameter_table_26(false);
-
-    table << "actionLogMaximumSize" << "int" << "1"; // 1 Мб
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setShowSplashScreen(isShow);
 }
 
-
-QStringList AppConfig::get_parameter_table_28(bool withEndSignature)
+    // Режим интерфейса, возможные значения "desktop" и "mobile"
+QString AppConfig::getInterfaceMode(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 27
-    table << get_parameter_table_27(false);
-
-    table << "enableLogging" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getInterfaceMode();
 }
 
-
-QStringList AppConfig::get_parameter_table_29(bool withEndSignature)
+void AppConfig::setInterfaceMode(QString mode)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 28
-    table << get_parameter_table_28(false);
-
-    table << "enableRecordWithAttachHighlight" << "bool" << "true";
-    table << "recordWithAttachHighlightColor" << "QString" << "#d1e3c5";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setInterfaceMode(mode);
 }
 
-
-QStringList AppConfig::get_parameter_table_30(bool withEndSignature)
+QString AppConfig::getFocusWidget(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 29
-    table << get_parameter_table_29(false);
-
-    table << "enablePeriodicCheckBase" << "bool" << "false";
-    table << "checkBasePeriod" << "int" << "20";
-    table << "enablePeriodicCheckMessage" << "bool" << "false";
-
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getFocusWidget();
 }
 
-
-QStringList AppConfig::get_parameter_table_31(bool withEndSignature)
+void AppConfig::setFocusWidget(QString widgetName)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 30
-    table << get_parameter_table_30(false);
-
-    table << "previewIconSize" << "int" << "24";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setFocusWidget(widgetName);
 }
 
-
-QStringList AppConfig::get_parameter_table_32(bool withEndSignature)
+QStringList AppConfig::getHideEditorTools(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 31
-    table << get_parameter_table_31(false);
-
-    table << "iconCurrentSectionName" << "QString" << "Essential";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getHideEditorTools();
 }
 
-
-QStringList AppConfig::get_parameter_table_33(bool withEndSignature)
+void AppConfig::setHideEditorTools(QStringList toolsNames)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 32
-    table << get_parameter_table_32(false);
-
-    table << "enablePeriodicSyncro" << "bool" << "false";
-    table << "periodicSyncroPeriod" << "int" << "300";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setHideEditorTools(toolsNames);
 }
 
-
-QStringList AppConfig::get_parameter_table_34(bool withEndSignature)
+    // Флаг, показывающий распахнуты ли все инструметы управления в окне поиска по базе
+bool AppConfig::getFindInBaseExpand(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 33
-    table << get_parameter_table_33(false);
-
-    table << "enableCreateEmptyRecord" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->getFindInBaseExpand();
 }
 
-
-QStringList AppConfig::get_parameter_table_35(bool withEndSignature)
+void AppConfig::setFindInBaseExpand(bool state)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 34
-    table << get_parameter_table_34(false);
-
-    // Новый флаг, поиск по названию ветки
-    table << "findscreen_find_innameItem" << "bool" << "false";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->setFindInBaseExpand(state);
 }
 
-
-QStringList AppConfig::get_parameter_table_36(bool withEndSignature)
+    // Режим поиска в заметке: встраиваемая полоска (true) или отдельное окно
+    // (false). По умолчанию полоска, переключается кнопками в окне,
+    // на полоске и радиокнопками на странице настроек Search
+bool AppConfig::get_editorFindEmbedded(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 35
-    table << get_parameter_table_35(false);
-
-    // Состояние окрепляемых окон
-    // Предполагаемый формат - "IDзаписи1,x1,y1,w1,h1;IDзаписи2,x2,y2,w2,h2..."
-    table << "dockableWindowsState" << "QString" << "";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_editorFindEmbedded();
 }
 
-
-QStringList AppConfig::get_parameter_table_37(bool withEndSignature)
+void AppConfig::set_editorFindEmbedded(bool state)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 36
-    table << get_parameter_table_36(false);
-
-    // Поведение окрепляемых окон
-    table << "dockableWindowsBehavior" << "QString" << "single";
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_editorFindEmbedded(state);
 }
 
-
-QStringList AppConfig::get_parameter_table_38(bool withEndSignature)
+    // Панель избранного видна (по умолчанию да). Намеренно вне
+    // версионных таблиц, как editorFindEmbedded
+bool AppConfig::get_favoritesEnabled(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 37
-    table << get_parameter_table_37(false);
-
-    // Обновление формата конфига не происходит, обновляется только
-    // представление параметра dockableWindowsState
-    // см. AppConfigUpdater::updateValueRepresentation
-
-    if (withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_favoritesEnabled();
 }
 
-
-QStringList AppConfig::get_parameter_table_39(bool withEndSignature)
+    // Строка фильтра над деревом веток (тумблер в меню Вид)
+bool AppConfig::get_treeFilterVisible(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 38
-    table << get_parameter_table_38(false);
-
-    // Стандартная тема оформления
-    table << "theme" << "QString" << "light";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_treeFilterVisible();
 }
 
-
-QStringList AppConfig::get_parameter_table_40(bool withEndSignature)
+void AppConfig::set_treeFilterVisible(bool state)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 39
-    table << get_parameter_table_39(false);
-
-    // Обновление формата конфига не происходит, обновляется только
-    // представление параметра theme
-    // см. AppConfigUpdater::updateValueRepresentation
-
-    // Теперь допустимые значения theme - default и dark, темы light нет
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_treeFilterVisible(state);
 }
 
-
-QStringList AppConfig::get_parameter_table_41(bool withEndSignature)
+    // Вид панели прикрепленных файлов: "list" или "tiles"
+QString AppConfig::get_attachViewMode(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 40
-    table << get_parameter_table_40(false);
-
-
-    // Пример переименования значения theme в themeName
-    // Пока такое решение рабочее, но нерекомендовано
-
-    // Значение старого параметра theme
-    // QString themeName = this->m_conf->value("theme").toString();
-
-    // Запоминается тема оформления в новом параметре
-    // table << "interfaceTheme" << "QString" << themeName;
-
-
-    // Исключаются ненужные в новой версии параметры
-    table=removeParameterFromTable("theme", table);
-
-    // Новый параметр, хранящий тему оформления
-    table << "interfaceTheme" << "QString" << "default";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return uiSection()->get_attachViewMode();
 }
 
-
-QStringList AppConfig::get_parameter_table_42(bool withEndSignature)
+void AppConfig::set_attachViewMode(QString mode)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 41
-    table << get_parameter_table_41(false);
-
-    // Размер иконок.
-    // Размер обозначается специальными строками, начинающимися на "META_ICON_"
-    // Если размер пустой, используется системный размер иконок
-    table << "interfaceIconSize" << "QString" << "";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    uiSection()->set_attachViewMode(mode);
 }
 
-
-QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
+void AppConfig::set_favoritesEnabled(bool state)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    uiSection()->set_favoritesEnabled(state);
+}
 
-    // Старые параметры, аналогичные версии 42
-    table << get_parameter_table_42(false);
+    // Хранилище избранного: "sidecar" (data/favorites.xml, по умолчанию)
+    // или "xml" (поля favorite в mytetra.xml). Тоже без версий
+QString AppConfig::get_favoritesStorage(void)
+{
+    return uiSection()->get_favoritesStorage();
+}
+
+void AppConfig::set_favoritesStorage(const QString &mode)
+{
+    uiSection()->set_favoritesStorage(mode);
+}
+
+    // Разрешено ли использовать собственный формат вывода даты и времени
+bool AppConfig::getEnableCustomDateTimeFormat(void)
+{
+    return uiSection()->getEnableCustomDateTimeFormat();
+}
+
+void AppConfig::setEnableCustomDateTimeFormat(bool state)
+{
+    uiSection()->setEnableCustomDateTimeFormat(state);
+}
+
+    // Строка собственного формата вывода даты и времени
+QString AppConfig::getCustomDateTimeFormat(void)
+{
+    return uiSection()->getCustomDateTimeFormat();
+}
+
+void AppConfig::setCustomDateTimeFormat(QString format)
+{
+    uiSection()->setCustomDateTimeFormat(format);
+}
+
+    // Разрешена ли подсветка записей с прикрепленными файлами
+bool AppConfig::getEnableRecordWithAttachHighlight(void)
+{
+    return uiSection()->getEnableRecordWithAttachHighlight();
+}
+
+void AppConfig::setEnableRecordWithAttachHighlight(bool state)
+{
+    uiSection()->setEnableRecordWithAttachHighlight(state);
+}
+
+    // Цвет подсветки записей с прикрепленными файлами
+QString AppConfig::getRecordWithAttachHighlightColor(void)
+{
+    return uiSection()->getRecordWithAttachHighlightColor();
+}
+
+void AppConfig::setRecordWithAttachHighlightColor(QString color)
+{
+    uiSection()->setRecordWithAttachHighlightColor(color);
+}
 
     // Цвет закраски секрета в формате "#77767b"
-    table << "secretColor" << "QString" << "#77767b";
+QString AppConfig::get_secretColor(void)
+{
+    return uiSection()->get_secretColor();
+}
 
-    if(withEndSignature)
-        table << "0" << "0" << "0";
+void AppConfig::set_secretColor(QString color)
+{
+    uiSection()->set_secretColor(color);
+}
 
-    return table;
+    // Цвет фона поля заметки. Пустая строка означает цвет темы
+    // по умолчанию, иначе формат цвета - "#B0BAC7"
+QString AppConfig::get_notePaperColor(void)
+{
+    return uiSection()->get_notePaperColor();
+}
+
+void AppConfig::set_notePaperColor(QString color)
+{
+    uiSection()->set_notePaperColor(color);
+}
+
+    // Цвет шрифта поля заметки. Пустая строка означает цвет темы
+    // по умолчанию, иначе формат цвета - "#000000"
+QString AppConfig::get_noteFontColor(void)
+{
+    return uiSection()->get_noteFontColor();
+}
+
+void AppConfig::set_noteFontColor(QString color)
+{
+    uiSection()->set_noteFontColor(color);
+}
+
+    // Кастомный дизайн поверх темы. Пусто/-1 означает цвет/размер темы,
+    // иначе значение пользователя. Применяется CssHelper::applyCustomDesign
+QString AppConfig::get_themeCustomTreeBackground(void)
+{
+    return uiSection()->get_themeCustomTreeBackground();
+}
+
+void AppConfig::set_themeCustomTreeBackground(QString color)
+{
+    uiSection()->set_themeCustomTreeBackground(color);
+}
+
+QString AppConfig::get_themeCustomTreeText(void)
+{
+    return uiSection()->get_themeCustomTreeText();
+}
+
+void AppConfig::set_themeCustomTreeText(QString color)
+{
+    uiSection()->set_themeCustomTreeText(color);
+}
+
+QString AppConfig::get_themeCustomTableBackground(void)
+{
+    return uiSection()->get_themeCustomTableBackground();
+}
+
+void AppConfig::set_themeCustomTableBackground(QString color)
+{
+    uiSection()->set_themeCustomTableBackground(color);
+}
+
+QString AppConfig::get_themeCustomTableText(void)
+{
+    return uiSection()->get_themeCustomTableText();
+}
+
+void AppConfig::set_themeCustomTableText(QString color)
+{
+    uiSection()->set_themeCustomTableText(color);
+}
+
+QString AppConfig::get_themeCustomTableAlternate(void)
+{
+    return uiSection()->get_themeCustomTableAlternate();
+}
+
+void AppConfig::set_themeCustomTableAlternate(QString color)
+{
+    uiSection()->set_themeCustomTableAlternate(color);
+}
+
+QString AppConfig::get_themeCustomInterfaceFontFamily(void)
+{
+    return uiSection()->get_themeCustomInterfaceFontFamily();
+}
+
+void AppConfig::set_themeCustomInterfaceFontFamily(QString family)
+{
+    uiSection()->set_themeCustomInterfaceFontFamily(family);
+}
+
+int AppConfig::get_themeCustomInterfaceFontSize(void)
+{
+    return uiSection()->get_themeCustomInterfaceFontSize();
+}
+
+void AppConfig::set_themeCustomInterfaceFontSize(int size)
+{
+    uiSection()->set_themeCustomInterfaceFontSize(size);
+}
+
+int AppConfig::get_themeCustomTreeFontSize(void)
+{
+    return uiSection()->get_themeCustomTreeFontSize();
+}
+
+void AppConfig::set_themeCustomTreeFontSize(int size)
+{
+    uiSection()->set_themeCustomTreeFontSize(size);
+}
+
+int AppConfig::get_themeCustomTableFontSize(void)
+{
+    return uiSection()->get_themeCustomTableFontSize();
+}
+
+void AppConfig::set_themeCustomTableFontSize(int size)
+{
+    uiSection()->set_themeCustomTableFontSize(size);
+}
+
+int AppConfig::get_themeCustomTreeIndentation(void)
+{
+    return uiSection()->get_themeCustomTreeIndentation();
+}
+
+void AppConfig::set_themeCustomTreeIndentation(int pixels)
+{
+    uiSection()->set_themeCustomTreeIndentation(pixels);
+}
+
+int AppConfig::get_themeCustomTableRowHeight(void)
+{
+    return uiSection()->get_themeCustomTableRowHeight();
+}
+
+void AppConfig::set_themeCustomTableRowHeight(int pixels)
+{
+    uiSection()->set_themeCustomTableRowHeight(pixels);
+}
+
+    // Мозаичный фон заметок: тайл повторяется по обеим осям.
+    // Пусто означает без картинки. Повторяется по обеим осям
+QString AppConfig::get_themeCustomNotePaperImage(void)
+{
+    return uiSection()->get_themeCustomNotePaperImage();
+}
+
+void AppConfig::set_themeCustomNotePaperImage(QString path)
+{
+    uiSection()->set_themeCustomNotePaperImage(path);
+}
+
+    // Индекс встроенного тайла (0 - tx_fabric.jpg). Свой файл выше
+    // имеет приоритет над индексом
+int AppConfig::get_themeCustomNotePaperBuiltin(void)
+{
+    return uiSection()->get_themeCustomNotePaperBuiltin();
+}
+
+void AppConfig::set_themeCustomNotePaperBuiltin(int index)
+{
+    uiSection()->set_themeCustomNotePaperBuiltin(index);
+}
+
+    // Режим фона заметок: "color" или "texture". Текстура без своего
+    // файла означает встроенный tx_fabric.jpg
+QString AppConfig::get_themeCustomNotePaperMode(void)
+{
+    return uiSection()->get_themeCustomNotePaperMode();
+}
+
+void AppConfig::set_themeCustomNotePaperMode(QString mode)
+{
+    uiSection()->set_themeCustomNotePaperMode(mode);
+}
+
+    // Базовая тема для Custom: одна из четырех (default, dark,
+    // modern, midnight). Сами базовые темы не меняются никогда
+QString AppConfig::get_themeCustomBaseTheme(void)
+{
+    return uiSection()->get_themeCustomBaseTheme();
+}
+
+void AppConfig::set_themeCustomBaseTheme(QString name)
+{
+    uiSection()->set_themeCustomBaseTheme(name);
+}
+
+    // Шапка заметки (название и автор) над редактором.
+    // По умолчанию показана
+bool AppConfig::get_recordHeaderVisible(void)
+{
+    return uiSection()->get_recordHeaderVisible();
+}
+
+void AppConfig::set_recordHeaderVisible(bool state)
+{
+    uiSection()->set_recordHeaderVisible(state);
+}
+
+    // Положение списка записей: false - справа от дерева (по умолчанию),
+    // true - под деревом в левой колонке. Страница Notes area
+bool AppConfig::get_recordTableUnderTree(void)
+{
+    return uiSection()->get_recordTableUnderTree();
+}
+
+void AppConfig::set_recordTableUnderTree(bool state)
+{
+    uiSection()->set_recordTableUnderTree(state);
+}
+
+    // Порядок кнопок тулбаров в виде списков через запятую.
+    // Пусто - не настраивалось, экраны строят порядок по умолчанию.
+    // (Пустой настроенный список невозможен: в задействованных
+    // обязана остаться хотя бы одна команда, как в редакторе)
+QStringList AppConfig::getTreeToolbarOrder(void)
+{
+    return uiSection()->getTreeToolbarOrder();
+}
+
+void AppConfig::setTreeToolbarOrder(QStringList order)
+{
+    uiSection()->setTreeToolbarOrder(order);
+}
+
+QStringList AppConfig::getRecordToolbarOrder(void)
+{
+    return uiSection()->getRecordToolbarOrder();
+}
+
+void AppConfig::setRecordToolbarOrder(QStringList order)
+{
+    uiSection()->setRecordToolbarOrder(order);
+}
+
+QStringList AppConfig::getRecordExtraToolbarOrder(void)
+{
+    return uiSection()->getRecordExtraToolbarOrder();
+}
+
+void AppConfig::setRecordExtraToolbarOrder(QStringList order)
+{
+    uiSection()->setRecordExtraToolbarOrder(order);
+}
+
+    // Размер иконок в окне выбора (иконки, прикрепляемые к веткам)
+int AppConfig::getPreviewIconSize(void)
+{
+    return uiSection()->getPreviewIconSize();
+}
+
+void AppConfig::setPreviewIconSize(int n)
+{
+    uiSection()->setPreviewIconSize(n);
+}
+
+    // Последняя выбранная секция в окошке выбора иконок
+QString AppConfig::getIconCurrentSectionName(void)
+{
+    return uiSection()->getIconCurrentSectionName();
+}
+
+void AppConfig::setIconCurrentSectionName(QString name)
+{
+    uiSection()->setIconCurrentSectionName(name);
+}
+
+    // Показывать ли в дереве общий итог записей с учетом подветок.
+    // По умолчанию выключено: только свои [n]. Страница Branch tree
+bool AppConfig::get_showSubtreeCount(void)
+{
+    return uiSection()->get_showSubtreeCount();
+}
+
+void AppConfig::set_showSubtreeCount(bool state)
+{
+    uiSection()->set_showSubtreeCount(state);
+}
+
+    // Список открепляемых окон с координатами окон
+QString AppConfig::getDockableWindowsState(void)
+{
+    return uiSection()->getDockableWindowsState();
+}
+
+void AppConfig::setDockableWindowsState(QString state)
+{
+    uiSection()->setDockableWindowsState(state);
+}
+
+QString AppConfig::getDockableWindowsBehavior(void)
+{
+    return uiSection()->getDockableWindowsBehavior();
+}
+
+void AppConfig::setDockableWindowsBehavior(QString mode)
+{
+    uiSection()->setDockableWindowsBehavior(mode);
+}
+
+    // Тема оформления интерфейса
+QString AppConfig::getInterfaceTheme()
+{
+    return uiSection()->getInterfaceTheme();
+}
+
+bool AppConfig::setInterfaceTheme(QString themeName)
+{
+    return uiSection()->setInterfaceTheme(themeName);
+}
+
+QString AppConfig::getInterfaceIconSize()
+{
+    return uiSection()->getInterfaceIconSize();
+}
+
+bool AppConfig::setInterfaceIconSize(QString sizeName)
+{
+    return uiSection()->setInterfaceIconSize(sizeName);
 }
 
 
-QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
+// --------------------
+// Секция Find (реализация в AppConfigFind.cpp)
+// --------------------
+
+    // Настройки виджета поиска по базе
+int AppConfig::get_findscreen_wordregard(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return findSection()->get_findscreen_wordregard();
+}
 
-    // Старые параметры, аналогичные версии 43
-    table << get_parameter_table_43(false);
+void AppConfig::set_findscreen_wordregard(int pos)
+{
+    findSection()->set_findscreen_wordregard(pos);
+}
 
-    // Шапка заметки показана
-    table << "recordHeaderVisible" << "bool" << "true";
+int AppConfig::get_findscreen_howextract(void)
+{
+    return findSection()->get_findscreen_howextract();
+}
 
-    if(withEndSignature)
-        table << "0" << "0" << "0";
+void AppConfig::set_findscreen_howextract(int pos)
+{
+    findSection()->set_findscreen_howextract(pos);
+}
 
-    return table;
+int AppConfig::getFindScreenTreeSearchArea(void)
+{
+    return findSection()->getFindScreenTreeSearchArea();
+}
+
+void AppConfig::setFindScreenTreeSearchArea(int pos)
+{
+    findSection()->setFindScreenTreeSearchArea(pos);
+}
+
+bool AppConfig::get_findscreen_find_in_field(QString fieldName)
+{
+    return findSection()->get_findscreen_find_in_field(fieldName);
+}
+
+void AppConfig::set_findscreen_find_in_field(QString fieldName, bool isChecked)
+{
+    findSection()->set_findscreen_find_in_field(fieldName, isChecked);
+}
+
+bool AppConfig::get_findscreen_show(void)
+{
+    return findSection()->get_findscreen_show();
+}
+
+void AppConfig::set_findscreen_show(bool isShow)
+{
+    findSection()->set_findscreen_show(isShow);
 }
 
 
-QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
+// --------------------
+// Секция Sync (реализация в AppConfigSync.cpp)
+// --------------------
+
+    // Умное автосохранение: только при реальных правках,
+    // без изменений ни файла ни коммита. По умолчанию вкл, 10 мин
+bool AppConfig::get_autosaveEnable(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return syncSection()->get_autosaveEnable();
+}
 
-    // Старые параметры, аналогичные версии 44
-    table << get_parameter_table_44(false);
+void AppConfig::set_autosaveEnable(bool flag)
+{
+    syncSection()->set_autosaveEnable(flag);
+}
 
-    // Веб-клиппер: лимиты картинок, включение, глобальный хоткей (X11),
-    // запомненная ветка unsorted_notes
-    table << "clipperMaxImages" << "int" << "20";
-    table << "clipperMaxImageSizeMb" << "int" << "5";
-    table << "clipperenable" << "bool" << "true";
-    table << "clipperhotkey" << "QString" << "Ctrl+Alt+V";
-    table << "clipperbranchid" << "QString" << "";
+int AppConfig::get_autosaveInterval(void)
+{
+    return syncSection()->get_autosaveInterval();
+}
 
-    if(withEndSignature)
-        table << "0" << "0" << "0";
+void AppConfig::set_autosaveInterval(int minutes)
+{
+    syncSection()->set_autosaveInterval(minutes);
+}
 
-    return table;
+    // Сквош истории изменений: автосжатие снизу по лимиту.
+    // По умолчанию включено, хранить 100 (genesis плюс свежие)
+bool AppConfig::get_historySquashEnable(void)
+{
+    return syncSection()->get_historySquashEnable();
+}
+
+void AppConfig::set_historySquashEnable(bool flag)
+{
+    syncSection()->set_historySquashEnable(flag);
+}
+
+int AppConfig::get_historySquashKeep(void)
+{
+    return syncSection()->get_historySquashKeep();
+}
+
+void AppConfig::set_historySquashKeep(int count)
+{
+    syncSection()->set_historySquashKeep(count);
+}
+
+    // Стратегия сжатия (GitHelper::SquashMode).
+    // По умолчанию удалять старые
+int AppConfig::get_historySquashMode(void)
+{
+    return syncSection()->get_historySquashMode();
+}
+
+void AppConfig::set_historySquashMode(int mode)
+{
+    syncSection()->set_historySquashMode(mode);
+}
+
+    // Мастер-тумблер ведения истории заметок. Выключенная история
+    // не снимается и диалог не открывается. По умолчанию выключена:
+    // нужен установленный git, проверяется при включении
+bool AppConfig::get_historyEnable(void)
+{
+    return syncSection()->get_historyEnable();
+}
+
+void AppConfig::set_historyEnable(bool flag)
+{
+    syncSection()->set_historyEnable(flag);
+}
+
+QString AppConfig::get_synchrocommand(void)
+{
+    return syncSection()->get_synchrocommand();
+}
+
+void AppConfig::set_synchrocommand(QString command)
+{
+    syncSection()->set_synchrocommand(command);
+}
+
+bool AppConfig::get_synchroonstartup(void)
+{
+    return syncSection()->get_synchroonstartup();
+}
+
+void AppConfig::set_synchroonstartup(bool flag)
+{
+    syncSection()->set_synchroonstartup(flag);
+}
+
+bool AppConfig::get_synchroonexit(void)
+{
+    return syncSection()->get_synchroonexit();
+}
+
+void AppConfig::set_synchroonexit(bool flag)
+{
+    syncSection()->set_synchroonexit(flag);
+}
+
+bool AppConfig::getSyncroConsoleDetails(void)
+{
+    return syncSection()->getSyncroConsoleDetails();
+}
+
+void AppConfig::setSyncroConsoleDetails(bool flag)
+{
+    syncSection()->setSyncroConsoleDetails(flag);
+}
+
+    // Разрешена ли периодическая проверка файла базы на предмет изменения сторонней программой
+bool AppConfig::getEnablePeriodicCheckBase(void)
+{
+    return syncSection()->getEnablePeriodicCheckBase();
+}
+
+void AppConfig::setEnablePeriodicCheckBase(bool state)
+{
+    syncSection()->setEnablePeriodicCheckBase(state);
+}
+
+    // Период проверки файла базы на предмет изменения сторонней программой
+int AppConfig::getCheckBasePeriod()
+{
+    return syncSection()->getCheckBasePeriod();
+}
+
+void AppConfig::setCheckBasePeriod(int period)
+{
+    syncSection()->setCheckBasePeriod(period);
+}
+
+    // Необходимо ли выводить сообщение если база была изменена другой программой
+bool AppConfig::getEnablePeriodicCheckMessage(void)
+{
+    return syncSection()->getEnablePeriodicCheckMessage();
+}
+
+void AppConfig::setEnablePeriodicCheckMessage(bool state)
+{
+    syncSection()->setEnablePeriodicCheckMessage(state);
+}
+
+    // Разрешена ли периодическая синхронизация
+bool AppConfig::getEnablePeriodicSyncro(void)
+{
+    return syncSection()->getEnablePeriodicSyncro();
+}
+
+void AppConfig::setEnablePeriodicSyncro(bool state)
+{
+    syncSection()->setEnablePeriodicSyncro(state);
+}
+
+    // Период автоматической периодической синхронизации
+int AppConfig::getPeriodicSyncroPeriod(void)
+{
+    return syncSection()->getPeriodicSyncroPeriod();
+}
+
+void AppConfig::setPeriodicSyncroPeriod(int period)
+{
+    syncSection()->setPeriodicSyncroPeriod(period);
 }
 
 
-QStringList AppConfig::get_parameter_table_46(bool withEndSignature)
+// --------------------
+// Секция Crypto (реализация в AppConfigCrypto.cpp)
+// --------------------
+
+QString AppConfig::get_howpassrequest(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return cryptoSection()->get_howpassrequest();
+}
 
-    // Ремонтная версия без новых ключей: миграция 44->45 могла усечься
-    // лимитом апдейтера, и conf.ini мог остаться без клиппер-ключей.
-    // Перепрогон добавляет недостающее дефолтами, имеющиеся не трогает
-    table << get_parameter_table_45(false);
+void AppConfig::set_howpassrequest(QString mode)
+{
+    cryptoSection()->set_howpassrequest(mode);
+}
 
-    if(withEndSignature)
-        table << "0" << "0" << "0";
+bool AppConfig::get_autoClosePasswordEnable(void)
+{
+    return cryptoSection()->get_autoClosePasswordEnable();
+}
 
-    return table;
+void AppConfig::set_autoClosePasswordEnable(bool flag)
+{
+    cryptoSection()->set_autoClosePasswordEnable(flag);
+}
+
+int AppConfig::get_autoClosePasswordDelay(void)
+{
+    return cryptoSection()->get_autoClosePasswordDelay();
+}
+
+void AppConfig::set_autoClosePasswordDelay(int delay)
+{
+    cryptoSection()->set_autoClosePasswordDelay(delay);
+}
+
+QString AppConfig::getPasswordMiddleHash(void)
+{
+    return cryptoSection()->getPasswordMiddleHash();
+}
+
+void AppConfig::setPasswordMiddleHash(QString hash)
+{
+    cryptoSection()->setPasswordMiddleHash(hash);
+}
+
+bool AppConfig::getPasswordSaveFlag(void)
+{
+    return cryptoSection()->getPasswordSaveFlag();
+}
+
+void AppConfig::setPasswordSaveFlag(bool flag)
+{
+    cryptoSection()->setPasswordSaveFlag(flag);
+}
+
+bool AppConfig::getRememberCursorAtHistoryNavigation(void)
+{
+    return cryptoSection()->getRememberCursorAtHistoryNavigation();
+}
+
+void AppConfig::setRememberCursorAtHistoryNavigation(bool flag)
+{
+    cryptoSection()->setRememberCursorAtHistoryNavigation(flag);
+}
+
+bool AppConfig::getRememberCursorAtOrdinarySelection(void)
+{
+    return cryptoSection()->getRememberCursorAtOrdinarySelection();
+}
+
+void AppConfig::setRememberCursorAtOrdinarySelection(bool flag)
+{
+    cryptoSection()->setRememberCursorAtOrdinarySelection(flag);
+}
+
+    // Метод шифрования: rc5 (совместимый) или xchacha (современный)
+QString AppConfig::get_cryptMethod(void)
+{
+    return cryptoSection()->get_cryptMethod();
+}
+
+void AppConfig::set_cryptMethod(const QString &method)
+{
+    cryptoSection()->set_cryptMethod(method);
 }
 
 
-QStringList AppConfig::get_parameter_table_47(bool withEndSignature)
+// --------------------
+// Секция RecordTable (реализация в AppConfigRecordTable.cpp)
+// --------------------
+
+    // ID записи в таблице конечных записей, которая выделена на экране
+QString AppConfig::get_recordtable_selected_record_id(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return recordTableSection()->get_recordtable_selected_record_id();
+}
 
-    // Второй ремонтный перепрогон: conf.ini со штампом версии 46 из других
-    // веток может не содержать клиппер-ключей. Состав тот же, что в 45
-    table << get_parameter_table_46(false);
+void AppConfig::set_recordtable_selected_record_id(QString id)
+{
+    recordTableSection()->set_recordtable_selected_record_id(id);
+}
 
-    if(withEndSignature)
-        table << "0" << "0" << "0";
+    // Перечень полей, отображаемых в таблице конечных записей
+QStringList AppConfig::getRecordTableShowFields(void)
+{
+    return recordTableSection()->getRecordTableShowFields();
+}
 
-    return table;
+void AppConfig::setRecordTableShowFields(QStringList fields)
+{
+    recordTableSection()->setRecordTableShowFields(fields);
+}
+
+    // Нужно ли отображать горизонтальные заголовки в таблице конечных записей
+bool AppConfig::getRecordTableShowHorizontalHeaders(void)
+{
+    return recordTableSection()->getRecordTableShowHorizontalHeaders();
+}
+
+void AppConfig::setRecordTableShowHorizontalHeaders(bool flag)
+{
+    recordTableSection()->setRecordTableShowHorizontalHeaders(flag);
+}
+
+    // Нужно ли отображать вертикальные заголовки в таблице конечных записей
+bool AppConfig::getRecordTableShowVerticalHeaders(void)
+{
+    return recordTableSection()->getRecordTableShowVerticalHeaders();
+}
+
+void AppConfig::setRecordTableShowVerticalHeaders(bool flag)
+{
+    recordTableSection()->setRecordTableShowVerticalHeaders(flag);
+}
+
+    // Ширина полей, отображаемых в таблице конечных записей
+QStringList AppConfig::getRecordTableFieldsWidth(void)
+{
+    return recordTableSection()->getRecordTableFieldsWidth();
+}
+
+void AppConfig::setRecordTableFieldsWidth(QStringList fieldsWidth)
+{
+    recordTableSection()->setRecordTableFieldsWidth(fieldsWidth);
+}
+
+    // Глобальный режим только чтения: запрещены любые изменения базы,
+    // разрешены навигация и просмотр. По умолчанию выключен
+bool AppConfig::get_readOnly(void)
+{
+    return recordTableSection()->get_readOnly();
+}
+
+    // Сырой глобальный флаг без учёта сессии. Им смотрят только
+    // MCP-записи: они продолжают писать при заблокированном UI
+bool AppConfig::isGlobalReadOnly(void)
+{
+    return recordTableSection()->isGlobalReadOnly();
+}
+
+void AppConfig::set_readOnly(bool state)
+{
+    recordTableSection()->set_readOnly(state);
+}
+
+    // Разрешено ли создавать запись без текста
+bool AppConfig::getEnableCreateEmptyRecord(void)
+{
+    return recordTableSection()->getEnableCreateEmptyRecord();
+}
+
+void AppConfig::setEnableCreateEmptyRecord(bool state)
+{
+    recordTableSection()->setEnableCreateEmptyRecord(state);
 }
 
 
-QStringList AppConfig::get_parameter_table_48(bool withEndSignature)
+// --------------------
+// Секция Clipper (реализация в AppConfigClipper.cpp)
+// --------------------
+
+    // Лимиты клиппера: сколько картинок забирать в одну заметку
+    // и максимальный размер одной картинки в мегабайтах
+int AppConfig::get_clipperMaxImages(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return clipperSection()->get_clipperMaxImages();
+}
 
-    // Старые параметры, аналогичные версии 47
-    table << get_parameter_table_47(false);
+bool AppConfig::set_clipperMaxImages(int count)
+{
+    return clipperSection()->set_clipperMaxImages(count);
+}
 
-    // Глобальный режим только чтения (без изменений базы)
-    table << "readOnly" << "bool" << "false";
+int AppConfig::get_clipperMaxImageSizeMb(void)
+{
+    return clipperSection()->get_clipperMaxImageSizeMb();
+}
 
-    if(withEndSignature)
-        table << "0" << "0" << "0";
+bool AppConfig::set_clipperMaxImageSizeMb(int mbSize)
+{
+    return clipperSection()->set_clipperMaxImageSizeMb(mbSize);
+}
 
-    return table;
+    // Веб-клиппер: включение, глобальный хоткей, запомненная ветка
+bool AppConfig::get_clipperenable(void)
+{
+    return clipperSection()->get_clipperenable();
+}
+
+void AppConfig::set_clipperenable(bool flag)
+{
+    clipperSection()->set_clipperenable(flag);
+}
+
+QString AppConfig::get_clipperhotkey(void)
+{
+    return clipperSection()->get_clipperhotkey();
+}
+
+void AppConfig::set_clipperhotkey(QString sequence)
+{
+    clipperSection()->set_clipperhotkey(sequence);
+}
+
+QString AppConfig::get_clipperbranchid(void)
+{
+    return clipperSection()->get_clipperbranchid();
+}
+
+void AppConfig::set_clipperbranchid(QString id)
+{
+    clipperSection()->set_clipperbranchid(id);
+}
+
+    // Режим целевой ветки клипа: 0 — по умолчанию (unsorted_notes),
+    // 1 — выбранная ветка (clipperbranchid), 2 — спрашивать каждый раз
+int AppConfig::get_clipperbranchmode(void)
+{
+    return clipperSection()->get_clipperbranchmode();
+}
+
+void AppConfig::set_clipperbranchmode(int mode)
+{
+    clipperSection()->set_clipperbranchmode(mode);
+}
+
+    // Частые ветки клипов: пары id:count через ";", частые впереди,
+    // лимит 16. Нижние плитки опроса показывают их вместо полного списка
+QString AppConfig::get_clipperrecent(void)
+{
+    return clipperSection()->get_clipperrecent();
+}
+
+void AppConfig::set_clipperrecent(const QString &ids)
+{
+    clipperSection()->set_clipperrecent(ids);
+}
+
+    // Какие 16 плиток внизу опроса: 0 — последние, 1 — частые
+int AppConfig::get_clippertilemode(void)
+{
+    return clipperSection()->get_clippertilemode();
+}
+
+void AppConfig::set_clippertilemode(int mode)
+{
+    clipperSection()->set_clippertilemode(mode);
+}
+
+    // При попытке вставить дубль открывать оригинал заметки
+bool AppConfig::get_clipperopendup(void)
+{
+    return clipperSection()->get_clipperopendup();
+}
+
+void AppConfig::set_clipperopendup(bool open)
+{
+    clipperSection()->set_clipperopendup(open);
 }
 
 
-QStringList AppConfig::get_parameter_table_49(bool withEndSignature)
+// --------------------
+// Секция Services (реализация в AppConfigServices.cpp)
+// --------------------
+
+    // Разрешен ли запуск MCP-сервера внешним AI-клиентом
+bool AppConfig::get_mcpAllow(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 48
-    table << get_parameter_table_48(false);
-
-    // Разрешение доступа внешнего AI-клиента через MCP, по умолчанию закрыт
-    table << "mcpAllow" << "bool" << "false";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return servicesSection()->get_mcpAllow();
 }
 
-
-QStringList AppConfig::get_parameter_table_50(bool withEndSignature)
+void AppConfig::set_mcpAllow(bool state)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 49
-    table << get_parameter_table_49(false);
-
-    // Общий итог записей с учетом подветок, по умолчанию выключен
-    table << "showSubtreeCount" << "bool" << "false";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    servicesSection()->set_mcpAllow(state);
 }
-
-
-QStringList AppConfig::get_parameter_table_51(bool withEndSignature)
-{
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 50
-    table << get_parameter_table_50(false);
-
-    // Раскладка импорта Telegram, по умолчанию заметка на месяц
-    table << "telegramImportMode" << "QString" << "month";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
-}
-
-
-QStringList AppConfig::get_parameter_table_52(bool withEndSignature)
-{
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 51
-    table << get_parameter_table_51(false);
-
-    // Метод шифрования, по умолчанию RC5 ради совместимости.
-    // Новое значение применяется только к новым шифрованиям,
-    // расшифровка отличает шифры по магии блоба
-
-    table << "cryptMethod" << "QString" << "rc5";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
-}
-
-
-QStringList AppConfig::get_parameter_table_53(bool withEndSignature)
-{
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 52
-    table << get_parameter_table_52(false);
 
     // Игнорировать ошибки проверки TLS при загрузке картинок/файлов.
-    // По умолчанию false: небезопасный режим только по явному согласию
-    table << "tlsIgnoreInvalidCertificates" << "bool" << "false";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    // По умолчанию выключено: невалидный/самоподписанный сертификат
+    // отклоняется. Включение снижает защиту от MITM
+bool AppConfig::get_tlsIgnoreInvalidCertificates(void)
+{
+    return servicesSection()->get_tlsIgnoreInvalidCertificates();
 }
 
-
-QStringList AppConfig::get_parameter_table_54(bool withEndSignature)
+void AppConfig::set_tlsIgnoreInvalidCertificates(bool state)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 53
-    table << get_parameter_table_53(false);
-
-    // Прыжок в текст заметки из глобального поиска: двойной клик
-    // по строке открывает поиск внутри заметки с переходом к совпадению.
-    // По умолчанию включен. Зависимая галка прыжка только по первому
-    // слову по умолчанию выключена (ищется раннее из всех слов)
-    table << "findscreen_find_injumpToNote"   << "bool" << "true";
-    table << "findscreen_find_injumpFirstWord" << "bool" << "false";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    servicesSection()->set_tlsIgnoreInvalidCertificates(state);
 }
 
-
-QStringList AppConfig::get_parameter_table_55(bool withEndSignature)
+    // Раскладка импорта Telegram: "month" (заметка на месяц,
+    // по умолчанию), "year" (заметка на год, прямо в чате),
+    // "day" (заметка на день, ветки чат-год-месяц)
+    // или "message" (заметка на сообщение, ветки чат-год-месяц-день)
+QString AppConfig::get_telegramImportMode(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 54
-    table << get_parameter_table_54(false);
-
-    // Клиппер: режим целевой ветки (0 — по умолчанию unsorted_notes,
-    // 1 — выбранная ветка, 2 — спрашивать каждый раз). Дефолт 0
-    // сохраняет прежнее поведение на старых конфигах
-    table << "clipperbranchmode" << "int" << "0";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return servicesSection()->get_telegramImportMode();
 }
 
-
-QStringList AppConfig::get_parameter_table_56(bool withEndSignature)
+void AppConfig::set_telegramImportMode(const QString &mode)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 55
-    table << get_parameter_table_55(false);
-
-    // Клиппер: вид опроса "куда вставить" (0 — плитка, 1 — дерево).
-    // Дефолт 0 — прежний вид на старых конфигах
-    table << "clipperaskview" << "int" << "0";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    servicesSection()->set_telegramImportMode(mode);
 }
 
-
-QStringList AppConfig::get_parameter_table_57(bool withEndSignature)
+    // Формат голосовых заметок по умолчанию: opus или mp3.
+    // Выбирается радио на странице Voice notes, в диалоге
+    // записи переключается. Неподдержанный бэкендом сбрасывается
+QString AppConfig::get_voiceNoteFormat(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 56, кроме вида опроса:
-    // дефолтом становится дерево
-    table << removeParameterFromTable("clipperaskview", get_parameter_table_56(false));
-
-    // Клиппер: вид опроса "куда вставить" (0 — плитка, 1 — дерево).
-    // Дефолт 1 — дерево. Сохраненный выбор не трогается: апдейтер
-    // хранит имеющееся значение, дефолт только для новых конфигов
-    table << "clipperaskview" << "int" << "1";
-
-    // Клиппер: недавние ветки вставок, id через ";", свежие впереди
-    table << "clipperrecent" << "QString" << "";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return servicesSection()->get_voiceNoteFormat();
 }
 
-
-QStringList AppConfig::get_parameter_table_58(bool withEndSignature)
+void AppConfig::set_voiceNoteFormat(QString format)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 57, кроме вида опроса:
-    // переключалка плитка/дерево убрана (единый экран: дерево с
-    // фильтром сверху, частые плитки снизу). Апдейтер сам выкинет
-    // ключ из конфигов: пишет только ключи финальной таблицы
-    table << removeParameterFromTable("clipperaskview", get_parameter_table_57(false));
-
-    // Клиппер: какие 16 плиток внизу опроса (0 — последние, 1 — частые)
-    table << "clippertilemode" << "int" << "0";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    servicesSection()->set_voiceNoteFormat(format);
 }
 
-
-QStringList AppConfig::get_parameter_table_59(bool withEndSignature)
+    // Подавление фонового шума в диалоге записи голосовых заметок.
+    // По умолчанию включено: цепочка HP+гейт наTurn очищает гул
+bool AppConfig::get_voiceNoteNoiseSuppress(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 58
-    table << get_parameter_table_58(false);
-
-    // Клиппер: при попытке вставить дубль открывать оригинал заметки.
-    // Дефолт true — поведение нужно сразу, галочка для отключения
-    table << "clipperopendup" << "bool" << "true";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    return servicesSection()->get_voiceNoteNoiseSuppress();
 }
 
-
-QStringList AppConfig::get_parameter_table_60(bool withEndSignature)
+void AppConfig::set_voiceNoteNoiseSuppress(bool value)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
-
-    // Старые параметры, аналогичные версии 59
-    table << get_parameter_table_59(false);
-
-    // Строка фильтра над деревом веток (тумблер в меню Вид).
-    // Дефолт true — фильтр виден сразу
-    table << "treeFilterVisible" << "bool" << "true";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+    servicesSection()->set_voiceNoteNoiseSuppress(value);
 }
 
-
-QStringList AppConfig::get_parameter_table_61(bool withEndSignature)
+    // Качество голосовых заметок по умолчанию: 0 low, 1 medium, 2 high
+int AppConfig::get_voiceNoteQuality(void)
 {
-    // Таблица параметров
-    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
-    QStringList table;
+    return servicesSection()->get_voiceNoteQuality();
+}
 
-    // Старые параметры, аналогичные версии 60
-    table << get_parameter_table_60(false);
-
-    // Вид панели прикрепленных файлов: список или плитка.
-    // Чистое добавление ключа
-    table << "attachViewMode" << "QString" << "list";
-
-    if(withEndSignature)
-        table << "0" << "0" << "0";
-
-    return table;
+void AppConfig::set_voiceNoteQuality(int quality)
+{
+    servicesSection()->set_voiceNoteQuality(quality);
 }

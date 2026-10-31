@@ -9,6 +9,15 @@
 class QRect;
 class QStringList;
 
+class AppConfigStorage;
+class AppConfigUi;
+class AppConfigFind;
+class AppConfigSync;
+class AppConfigCrypto;
+class AppConfigRecordTable;
+class AppConfigClipper;
+class AppConfigServices;
+
 // Класс, хранящий информацию о структуре конфига программы
 // и позволяющий получить или записать значения в конфиг программы
 
@@ -524,9 +533,15 @@ public:
 
 private:
 
-    void createFirstAtStartConfigCopy();
+    void createFirstAtStartConfigCopy(void);
 
+public:
+
+    // P2: чтение сырого ключа с фолбэком на дефолт актуальной таблицы.
+    // Публичный чтобы секции конфига ходили через хост
     QString get_parameter(QString name);
+
+private:
 
     QStringList removeParameterFromTable(QString removeName, QStringList table);
     QString getParameterTypeFromTable(QString parameterName, QStringList table);
@@ -601,8 +616,28 @@ private:
     QStringList get_parameter_table_60(bool withEndSignature=true);
     QStringList get_parameter_table_61(bool withEndSignature=true);
 
+    // P2: ленивые доступы к секциям. Бэкенд перепривязывается
+    // при каждом обращении, фасады работают и без init()
+    AppConfigStorage *storageSection(void);
+    AppConfigUi *uiSection(void);
+    AppConfigFind *findSection(void);
+    AppConfigSync *syncSection(void);
+    AppConfigCrypto *cryptoSection(void);
+    AppConfigRecordTable *recordTableSection(void);
+    AppConfigClipper *clipperSection(void);
+    AppConfigServices *servicesSection(void);
+
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;
+
+    AppConfigStorage *m_storage=nullptr;
+    AppConfigUi *m_ui=nullptr;
+    AppConfigFind *m_find=nullptr;
+    AppConfigSync *m_sync=nullptr;
+    AppConfigCrypto *m_crypto=nullptr;
+    AppConfigRecordTable *m_recordtable=nullptr;
+    AppConfigClipper *m_clipper=nullptr;
+    AppConfigServices *m_services=nullptr;
 
     // Блокировка UI на время MCP-сессии. Только рантайм: в QSettings
     // не пишется, после перезапуска всегда false

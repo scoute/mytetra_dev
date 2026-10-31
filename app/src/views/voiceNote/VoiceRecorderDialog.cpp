@@ -188,6 +188,16 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // Метка только информирует о параметрах
     formatInfoLabel=new QLabel(this);
 
+    // Качество Opus: 24 low, 32 middle (дефолт), 48 high, 64 extra.
+    // Индекс пункта совпадает с voiceNoteQuality из конфига
+    opusQualityLabel=new QLabel(tr("Quality:"), this);
+    opusQuality=new MtComboBox(this);
+    opusQuality->addItem(tr("Low (24 kbit/s)"));
+    opusQuality->addItem(tr("Middle (32 kbit/s)"));
+    opusQuality->addItem(tr("High (48 kbit/s)"));
+    opusQuality->addItem(tr("Extra high (64 kbit/s)"));
+    opusQuality->setCurrentIndex(mytetraConfig.get_voiceNoteQuality());
+
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);
     deviceCombo=new MtComboBox(this);
 
@@ -224,7 +234,11 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     fileNameLayout->addWidget(fileNameEdit, 1);
     centralLayout->addLayout(fileNameLayout);
 
-    centralLayout->addWidget(formatInfoLabel);
+    QHBoxLayout *formatInfoLayout=new QHBoxLayout();
+    formatInfoLayout->addWidget(formatInfoLabel, 1);
+    formatInfoLayout->addWidget(opusQualityLabel);
+    formatInfoLayout->addWidget(opusQuality);
+    centralLayout->addLayout(formatInfoLayout);
 
     QHBoxLayout *deviceLayout=new QHBoxLayout();
     deviceLayout->addWidget(deviceLabel);
@@ -299,6 +313,9 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // Галочка подавления следует за форматом
     updateNoiseSuppressAvailable();
 
+    // Выбор качества следует за форматом
+    updateOpusQualityAvailable();
+
     // Предложенное имя: метка времени плюс расширение формата
     fileNameEdit->setText(autoStem()+currentExtension());
 
@@ -322,6 +339,8 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
             this,        &VoiceRecorderDialog::onDeviceChanged);
     connect(noiseSuppress, &QCheckBox::toggled,
             this,          &VoiceRecorderDialog::onNoiseSuppressToggled);
+    connect(opusQuality, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,        &VoiceRecorderDialog::onOpusQualityChanged);
     connect(recorder, QOverload<QMediaRecorder::Error>::of(&QAudioRecorder::error),
             this,     &VoiceRecorderDialog::onRecorderError);
     connect(recorder, &QAudioRecorder::stateChanged,
@@ -430,12 +449,34 @@ QMultimedia::EncodingMode VoiceRecorderDialog::encodingMode(void)
 
 VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(VoiceFormat format)
 {
-    // Один профиль на формат: Opus 48 кГц/32 кбит CBR,
+    // Один профиль на формат: Opus 48 кГц/CBR по выбору качества,
     // MP3 32 кГц фикс (битрейт lame игнорит, catch-22 Qt 5.15)
     if(format==VoiceFormatMp3)
         return {QMultimedia::NormalQuality, 0, 32000};
 
-    return {QMultimedia::NormalQuality, 32000, 48000};
+    return {QMultimedia::NormalQuality,
+            opusBitrateForQuality(mytetraConfig.get_voiceNoteQuality()),
+            48000};
+}
+
+
+int VoiceRecorderDialog::opusBitrateForQuality(int quality)
+{
+    switch(qBound(0, quality, 3))
+    {
+    case 0:
+        return 24000;
+
+    case 2:
+        return 48000;
+
+    case 3:
+        return 64000;
+
+    case 1:
+    default:
+        return 32000;
+    }
 }
 
 
@@ -633,6 +674,9 @@ void VoiceRecorderDialog::onFormatRadio(bool checked)
     // Галочка подавления следует за форматом
     updateNoiseSuppressAvailable();
 
+    // Выбор качества следует за форматом
+    updateOpusQualityAvailable();
+
     updateFormatInfo();
 
     // Расширение в поле имени следует за форматом: нетронутое
@@ -731,6 +775,7 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
         opusRadio->setEnabled(false);
         mp3Radio->setEnabled(false);
         fileNameEdit->setEnabled(false);
+        updateOpusQualityAvailable();
 
         recordButton->setText(tr("Stop"));
         statusLabel->setText(tr("Recording..."));
@@ -812,6 +857,7 @@ void VoiceRecorderDialog::finishRecording(void)
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
     fileNameEdit->setEnabled(true);
+    updateOpusQualityAvailable();
     updateRecordButton();
 
     if(recordButton->isChecked())
@@ -887,6 +933,36 @@ void VoiceRecorderDialog::onNoiseSuppressToggled(bool checked)
 {
     noiseSuppressOn=checked;
     mytetraConfig.set_voiceNoteNoiseSuppress(checked);
+}
+
+
+// Доступность выбора качества Opus: битрейт MP3 задает бэкенд,
+// на ходу не переключается. Подсказка объясняет причину блокировки
+void VoiceRecorderDialog::updateOpusQualityAvailable(void)
+{
+    const bool available=(currentFormat==VoiceFormatOpus) &&
+                         !recordButton->isChecked();
+
+    opusQualityLabel->setEnabled(available);
+    opusQuality->setEnabled(available);
+
+    QString tip;
+
+    if(currentFormat!=VoiceFormatOpus)
+        tip=tr("Quality applies to Opus format");
+    else if(recordButton->isChecked())
+        tip=tr("Stop recording to change quality");
+
+    opusQuality->setToolTip(tip);
+}
+
+
+// Смена качества Opus: настройка и подпись параметров.
+// Писатель берет битрейт при старте записи, на ходу не применяется
+void VoiceRecorderDialog::onOpusQualityChanged(int index)
+{
+    mytetraConfig.set_voiceNoteQuality(index);
+    updateFormatInfo();
 }
 
 
@@ -999,6 +1075,10 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
 {
     // Прошлый дубль: файл закрывается, при прогреве вход не трогается
     stopOpusCapture();
+
+    // Битрейт из выбора качества: писатель применяет его в open
+    opusWriter.setTargetBitrate(
+        qualityProfile(VoiceFormatOpus).bitRate);
 
     // Прогрев: вход жив, мусор осел, модель шума откалибрована.
     // Запись идет в тот же поток. Бюджет пропуска мусора свежий,
@@ -1233,6 +1313,7 @@ void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
     opusRadio->setEnabled(opusAvailable);
     mp3Radio->setEnabled(mp3Available);
     fileNameEdit->setEnabled(true);
+    updateOpusQualityAvailable();
     updateRecordButton();
 
     if(recordButton->isChecked())

@@ -76,6 +76,7 @@ private slots:
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
     void onNoiseSuppressToggled(bool checked);
+    void onOpusQualityChanged(int index);
     void onStateChanged(QMediaRecorder::State state);
     void onRecorderError(QMediaRecorder::Error error);
     void onProbeBuffer(const QAudioBuffer &buffer);
@@ -96,12 +97,16 @@ private:
         VoiceFormatMp3
     };
 
-    // Один профиль на формат: Opus 48 кГц/32 кбит,
+    // Один профиль на формат: Opus 48 кГц/CBR по выбору качества,
     // MP3 32 кГц фикс (битрейт lame бэкенд игнорит,
     // upstream catch-22 Qt 5.15)
 
+    // Битрейт Opus по индексу качества 0..3 (24/32/48/64 кбит).
+    // Статика чтобы стенд проверял параметры без микрофона и бэкенда
+    static int opusBitrateForQuality(int quality);
+
     // Профиль формата: VBR-качество, целевой битрейт
-    // и частота. Opus CBR 32 кбит (лесенка держится),
+    // и частота. Opus CBR по выбору качества (лесенка держится),
     // MP3 битрейт 0 = не выставлять (все равно игнорит)
     struct VoiceQualityProfile
     {
@@ -178,6 +183,11 @@ private:
     // MP3-запись без подавления, поэтому блокируется
     void updateNoiseSuppressAvailable(void);
 
+    // Доступность выбора качества: только для Opus и вне записи,
+    // битрейт MP3 задает бэкенд. Вызывается из смены формата,
+    // старта/стопа и инициализации
+    void updateOpusQualityAvailable(void);
+
     // Пропуск чанка через спектральное подавление шума (фон
     // глушится и в паузах, и под речью; уровень речи не трогается;
     // пол калибруется потоком прогрева и записи)
@@ -191,6 +201,8 @@ private:
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
     QLabel *formatInfoLabel;
+    QLabel *opusQualityLabel;
+    MtComboBox *opusQuality;
     QLineEdit *fileNameEdit;
     MtComboBox *deviceCombo;
     QPushButton *recordButton;

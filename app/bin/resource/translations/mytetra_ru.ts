@@ -8659,6 +8659,34 @@ Please select single item for enabling edit operation.</source>
         <translation>Подавлять шум</translation>
     </message>
     <message>
+        <source>Quality:</source>
+        <translation>Качество:</translation>
+    </message>
+    <message>
+        <source>Low (24 kbit/s)</source>
+        <translation>Низкое (24 кбит/с)</translation>
+    </message>
+    <message>
+        <source>Middle (32 kbit/s)</source>
+        <translation>Среднее (32 кбит/с)</translation>
+    </message>
+    <message>
+        <source>High (48 kbit/s)</source>
+        <translation>Высокое (48 кбит/с)</translation>
+    </message>
+    <message>
+        <source>Extra high (64 kbit/s)</source>
+        <translation>Максимальное (64 кбит/с)</translation>
+    </message>
+    <message>
+        <source>Quality applies to Opus format</source>
+        <translation>Качество действует для формата Opus</translation>
+    </message>
+    <message>
+        <source>Stop recording to change quality</source>
+        <translation>Остановите запись, чтобы сменить качество</translation>
+    </message>
+    <message>
         <source>Microphone:</source>
         <translation>Микрофон:</translation>
     </message>
@@ -8712,6 +8740,26 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>MP3 (.mp3)</source>
         <translation>MP3 (.mp3)</translation>
+    </message>
+    <message>
+        <source>Default Opus quality</source>
+        <translation>Качество Opus по умолчанию</translation>
+    </message>
+    <message>
+        <source>Low (24 kbit/s)</source>
+        <translation>Низкое (24 кбит/с)</translation>
+    </message>
+    <message>
+        <source>Middle (32 kbit/s)</source>
+        <translation>Среднее (32 кбит/с)</translation>
+    </message>
+    <message>
+        <source>High (48 kbit/s)</source>
+        <translation>Высокое (48 кбит/с)</translation>
+    </message>
+    <message>
+        <source>Extra high (64 kbit/s)</source>
+        <translation>Максимальное (64 кбит/с)</translation>
     </message>
 </context>
 <context>

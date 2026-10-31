@@ -230,6 +230,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorFindBar.h \
     src/libraries/wyedit/EditorImageOpenDialog.h \
     src/views/mainWindow/MainWindow.h \
+    src/views/mainWindow/MenuBuilder.h \
     src/views/mainWindow/TrayManager.h \
     src/views/printPreview/PrintPreview.h \
     src/views/printPreview/PreviewView.h \
@@ -473,6 +474,7 @@ SOURCES = src/main.cpp \
     src/views/mainWindow/MainWindowLayout.cpp \
     src/views/mainWindow/MainWindowMcp.cpp \
     src/views/mainWindow/MainWindowTray.cpp \
+    src/views/mainWindow/MenuBuilder.cpp \
     src/views/mainWindow/TrayManager.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \

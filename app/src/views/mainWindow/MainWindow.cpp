@@ -66,6 +66,7 @@ public:
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"
 #include "TrayManager.h"
+#include "MenuBuilder.h"
 #include "views/printPreview/PrintPreview.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
@@ -121,11 +122,19 @@ MainWindow::MainWindow() : QMainWindow()
     installEventFilter(this);
 
     setupUI();
-    initFileMenu();
-    initToolsMenu();
-    initViewMenu();
-    initThemesMenu();
-    initHelpMenu();
+
+    // P3: меню строит MenuBuilder. DI: menubar для вставки,
+    // тогглы доков и десктоп/мобайл режим параметрами
+    menuBuilder=new MenuBuilder(menuBar(), this);
+    menuBuilder->buildAll(tagsPanelDock->toggleViewAction(),
+                          historyPanelDock->toggleViewAction(),
+                          backlinksPanelDock->toggleViewAction(),
+                          mytetraConfig.getInterfaceMode()==QStringLiteral("desktop"));
+
+    // Начальная пометка пунктов Вид до коннектов: setChecked с тем же
+    // значением toggled не дергает (как было внутри initViewMenu)
+    syncViewMenu();
+
     initHiddenActions();
     setupSignals();
     assembly();
@@ -278,20 +287,20 @@ void MainWindow::setupSignals(void)
 
 
     // Сигналы пунктов меню
-    connect(actionFileMenuDatabasesManagement, &QAction::triggered, this, &MainWindow::fileDatabasesManagement);
-    connect(actionFileMenuExportTreeItem, &QAction::triggered, this, &MainWindow::fileExportBranch);
-    connect(actionFileMenuImportTreeItem, &QAction::triggered, this, &MainWindow::fileImportBranch);
-    connect(actionFileMenuImportTelegram, &QAction::triggered, this, &MainWindow::fileImportTelegram);
-    connect(actionFileMenuPrint, &QAction::triggered, this, &MainWindow::filePrint);
-    connect(actionFileMenuPrintPreview, &QAction::triggered, this, &MainWindow::filePrintPreview);
-    connect(actionFileMenuExportPdf, &QAction::triggered, this, &MainWindow::filePrintPdf);
-    connect(actionFileMenuQuit, &QAction::triggered, this, &MainWindow::applicationExit);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FileDatabases), &QAction::triggered, this, &MainWindow::fileDatabasesManagement);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FileExportTree), &QAction::triggered, this, &MainWindow::fileExportBranch);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FileImportTree), &QAction::triggered, this, &MainWindow::fileImportBranch);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FileImportTelegram), &QAction::triggered, this, &MainWindow::fileImportTelegram);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FilePrint), &QAction::triggered, this, &MainWindow::filePrint);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FilePrintPreview), &QAction::triggered, this, &MainWindow::filePrintPreview);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FileExportPdf), &QAction::triggered, this, &MainWindow::filePrintPdf);
+    connect(menuBuilder->action(MenuBuilder::ActionId::FileQuit), &QAction::triggered, this, &MainWindow::applicationExit);
 
 
     // Поиск по базе в стандартном меню
-    connect(actionToolsMenuFindInBase, &QAction::triggered, this, &MainWindow::toolsFindInBase);
-    connect(actionToolsMenuImagesGallery, &QAction::triggered, this, &MainWindow::toolsImagesGallery);
-    connect(actionToolsMenuFilesGallery, &QAction::triggered, this, &MainWindow::toolsFilesGallery);
+    connect(menuBuilder->action(MenuBuilder::ActionId::ToolsFindInBase), &QAction::triggered, this, &MainWindow::toolsFindInBase);
+    connect(menuBuilder->action(MenuBuilder::ActionId::ToolsImagesGallery), &QAction::triggered, this, &MainWindow::toolsImagesGallery);
+    connect(menuBuilder->action(MenuBuilder::ActionId::ToolsFilesGallery), &QAction::triggered, this, &MainWindow::toolsFilesGallery);
     if(mytetraConfig.getInterfaceMode()=="mobile")
     {
         // Кнопка поиска по базе в меню дерева разделов для мобильного интерфейса
@@ -306,49 +315,61 @@ void MainWindow::setupSignals(void)
     connect(editorScreen, &MetaEditor::wyeditFindInBaseWithText, this, &MainWindow::toolsFindInBaseWithText);
 
     // Вызов окна просмотра лога
-    connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
+    connect(menuBuilder->action(MenuBuilder::ActionId::ToolsActionLog), &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
     // Клиппер: заметка из буфера обмена в ветку unsorted_notes
-    connect(actionToolsMenuClipFromClipboard, &QAction::triggered, this, &MainWindow::runClipperNow);
+    connect(menuBuilder->action(MenuBuilder::ActionId::ToolsClipFromClipboard), &QAction::triggered, this, &MainWindow::runClipperNow);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
     {
-        connect(actionToolsMenuPreferences, &QAction::triggered, this, &MainWindow::toolsPreferences);
+        connect(menuBuilder->action(MenuBuilder::ActionId::ToolsPreferences), &QAction::triggered, this, &MainWindow::toolsPreferences);
     }
     else
     {
-        connect(actionDirectPreferencesMain, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesMain); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectMain), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectMain)); } );
 
-        connect(actionDirectPreferencesAppearance, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesAppearance); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectAppearance), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectAppearance)); } );
 
-        connect(actionDirectPreferencesCrypt, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesCrypt); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectCrypt), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectCrypt)); } );
 
-        connect(actionDirectPreferencesSyncro, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesSyncro); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectSyncro), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectSyncro)); } );
 
-        connect(actionDirectPreferencesRecordTable, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesRecordTable); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectRecordTable), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectRecordTable)); } );
 
-        connect(actionDirectPreferencesAttach, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesAttach); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectAttach), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectAttach)); } );
 
-        connect(actionDirectPreferencesKeyboard, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesKeyboard); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectKeyboard), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectKeyboard)); } );
 
-        connect(actionDirectPreferencesHistory, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesHistory); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectHistory), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectHistory)); } );
 
-        connect(actionDirectPreferencesMisc, &QAction::triggered,
-                this, [this](){ runDirectPreferences(actionDirectPreferencesMisc); } );
+        connect(menuBuilder->action(MenuBuilder::ActionId::DirectMisc), &QAction::triggered,
+                this, [this](){ runDirectPreferences(menuBuilder->action(MenuBuilder::ActionId::DirectMisc)); } );
     }
 
-    connect(actionHelpMenuAboutMyTetra, &QAction::triggered, this, &MainWindow::onClickHelpAboutMyTetra);
-    connect(actionHelpMenuAboutQt, &QAction::triggered, this, &MainWindow::onClickHelpAboutQt);
-    connect(actionHelpMenuTechnicalInfo, &QAction::triggered, this, &MainWindow::onClickHelpTechnicalInfo);
+    connect(menuBuilder->action(MenuBuilder::ActionId::HelpAboutMyTetra), &QAction::triggered, this, &MainWindow::onClickHelpAboutMyTetra);
+    connect(menuBuilder->action(MenuBuilder::ActionId::HelpAboutQt), &QAction::triggered, this, &MainWindow::onClickHelpAboutQt);
+    connect(menuBuilder->action(MenuBuilder::ActionId::HelpTechnicalInfo), &QAction::triggered, this, &MainWindow::onClickHelpTechnicalInfo);
+
+    // P3: тогглы вида и темы идут сигналами билдера (были внутри init*Menu)
+    connect(menuBuilder, &MenuBuilder::viewHeaderToggled, this, &MainWindow::onViewHeaderToggled);
+    connect(menuBuilder, &MenuBuilder::viewFavoritesToggled, this, &MainWindow::onViewFavoritesToggled);
+    connect(menuBuilder, &MenuBuilder::viewTreeFilterToggled, this, &MainWindow::onViewTreeFilterToggled);
+    connect(menuBuilder, &MenuBuilder::viewToolsToggled, this, &MainWindow::onViewToolsToggled);
+    connect(menuBuilder, &MenuBuilder::viewReadOnlyToggled, this, &MainWindow::onViewReadOnlyToggled);
+    connect(menuBuilder, &MenuBuilder::secretColorRequested, this, &MainWindow::onViewSecretColor);
+    connect(menuBuilder, &MenuBuilder::paperColorRequested, this, &MainWindow::onViewPaperColor);
+    connect(menuBuilder, &MenuBuilder::themeChosen, this, &MainWindow::onThemeMenuTriggered);
+    connect(menuBuilder, &MenuBuilder::themeConfigureRequested, this, &MainWindow::onThemeConfigure);
+    connect(menuBuilder, &MenuBuilder::viewMenuShown, this, &MainWindow::syncViewMenu);
 
     connect(actionFocusTree, &QAction::triggered, this, &MainWindow::onClickFocusTree);
     connect(actionFocusNoteTable, &QAction::triggered, this, &MainWindow::onClickFocusNoteTable);
@@ -896,18 +917,18 @@ void MainWindow::setupShortcuts(void)
 
     // Ctrl+P открывает предпросмотр печати (там же кнопка прямой печати).
     // Прямая печать без предпросмотра висит на misc-printDirect
-    shortcutManager.initAction("misc-print", actionFileMenuPrintPreview );
-    shortcutManager.initAction("misc-printDirect", actionFileMenuPrint );
-    shortcutManager.initAction("misc-exportPdf", actionFileMenuExportPdf );
-    shortcutManager.initAction("misc-quit", actionFileMenuQuit );
+    shortcutManager.initAction("misc-print", menuBuilder->action(MenuBuilder::ActionId::FilePrintPreview) );
+    shortcutManager.initAction("misc-printDirect", menuBuilder->action(MenuBuilder::ActionId::FilePrint) );
+    shortcutManager.initAction("misc-exportPdf", menuBuilder->action(MenuBuilder::ActionId::FileExportPdf) );
+    shortcutManager.initAction("misc-quit", menuBuilder->action(MenuBuilder::ActionId::FileQuit) );
 
-    shortcutManager.initAction("misc-findInBase", actionToolsMenuFindInBase );
+    shortcutManager.initAction("misc-findInBase", menuBuilder->action(MenuBuilder::ActionId::ToolsFindInBase) );
 
-    shortcutManager.initAction("misc-imagesGallery", actionToolsMenuImagesGallery );
+    shortcutManager.initAction("misc-imagesGallery", menuBuilder->action(MenuBuilder::ActionId::ToolsImagesGallery) );
 
-    shortcutManager.initAction("misc-clipFromClipboard", actionToolsMenuClipFromClipboard );
+    shortcutManager.initAction("misc-clipFromClipboard", menuBuilder->action(MenuBuilder::ActionId::ToolsClipFromClipboard) );
 
-    shortcutManager.initAction("misc-readOnly", viewReadOnlyAction );
+    shortcutManager.initAction("misc-readOnly", menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly) );
 
     shortcutManager.initAction("misc-focusTree", actionFocusTree );
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
@@ -925,114 +946,17 @@ void MainWindow::setupShortcuts(void)
 // а прямой setText их бы затер
 void MainWindow::retranslateUi(void)
 {
-    if(fileMenu!=nullptr)
-    {
-        fileMenu->setTitle(tr("&File"));
+    // P3: меню и пункты переводит билдер (зеркало старого кода).
+    // Вызывается до shortcutManager.retranslate() как раньше
+    menuBuilder->retranslate();
 
-        actionFileMenuDatabasesManagement->setText(tr("Databases management"));
-        actionFileMenuExportTreeItem->setText(tr("Export tree item"));
-        actionFileMenuImportTreeItem->setText(tr("Import tree item"));
-        actionFileMenuImportTelegram->setText(tr("Import Telegram chat..."));
-        actionFileMenuPrintPreview->setText(tr("Print Preview..."));
-    }
+    // Переключатели доков истории и меток: текст тоже идет через шорткаты,
+    // но initAction для них звался один раз при построении (как было)
+    shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
+    shortcutManager.initAction("misc-tagsPanel", tagsPanelDock->toggleViewAction());
 
-    if(toolsMenu!=nullptr)
-    {
-        toolsMenu->setTitle(tr("&Tools"));
-
-        actionToolsMenuActionLog->setText(tr("Action &log"));
-
-        actionToolsMenuFilesGallery->setText(tr("Attached &files"));
-
-        // Переключатель дока истории: текст тоже идет через шорткаты,
-        // но initAction для него звался один раз при построении
-        shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
-
-        // Переключатель дока меток: текст тоже идет через шорткаты,
-        // но initAction для него звался один раз при построении
-        shortcutManager.initAction("misc-tagsPanel", tagsPanelDock->toggleViewAction());
-
-        if(actionToolsMenuPreferences!=nullptr)
-            actionToolsMenuPreferences->setText(tr("&Preferences"));
-
-        if(preferencesSubMenu!=nullptr)
-        {
-            preferencesSubMenu->setTitle(tr("&Preferences"));
-
-            // Пары действие-текст как в initPreferencesMenu
-            const struct { QAction **slot; const char *text; } pages[]={
-                {&actionDirectPreferencesMain, "Main"},
-                {&actionDirectPreferencesAppearance, "Appearance"},
-                {&actionDirectPreferencesCrypt, "Crypt"},
-                {&actionDirectPreferencesSyncro, "Syncro"},
-                {&actionDirectPreferencesRecordTable, "Notes Area"},
-                {&actionDirectPreferencesAttach, "Attaches"},
-                {&actionDirectPreferencesKeyboard, "Keyboard"},
-                {&actionDirectPreferencesHistory, "History"},
-                {&actionDirectPreferencesMisc, "Misc"},
-            };
-
-            for(unsigned i=0; i<sizeof(pages)/sizeof(pages[0]); ++i)
-                if(*pages[i].slot!=nullptr)
-                    (*pages[i].slot)->setText(tr(pages[i].text));
-        }
-    }
-
-    if(themesMenu!=nullptr)
-    {
-        themesMenu->setTitle(tr("&Themes"));
-
-        QMap<QString, QString> translateNames;
-        translateNames["default"]=tr("Default");
-        translateNames["dark"]=tr("Dark");
-        translateNames["modern"]=tr("Modern");
-        translateNames["midnight"]=tr("Midnight");
-        translateNames["custom"]=tr("Custom");
-
-        for(QAction *themeAction : themesMenu->actions())
-        {
-            if(themeAction==nullptr || themeAction->isSeparator() ||
-               themeAction->data().toString().isEmpty())
-                continue;
-
-            themeAction->setText(translateNames.value(themeAction->data().toString(), "Unknown"));
-        }
-
-        if(themeConfigureAction!=nullptr)
-            themeConfigureAction->setText(tr("Configure theme..."));
-    }
-
-    if(viewMenu!=nullptr)
-    {
-        viewMenu->setTitle(tr("&View"));
-
-        if(viewHeaderAction!=nullptr)
-            viewHeaderAction->setText(tr("Show note header"));
-
-        if(viewFavoritesAction!=nullptr)
-            viewFavoritesAction->setText(tr("Show favorites panel"));
-
-        if(viewTreeFilterAction!=nullptr)
-            viewTreeFilterAction->setText(tr("Show branch filter"));
-
-        if(viewSecretColorAction!=nullptr)
-            viewSecretColorAction->setText(tr("Change secret color..."));
-
-        if(viewPaperColorAction!=nullptr)
-            viewPaperColorAction->setText(tr("Change note background color..."));
-
-        // syncViewMenu обновит пометки checkable-пунктов
-        syncViewMenu();
-    }
-
-    if(helpMenu!=nullptr)
-    {
-        helpMenu->setTitle(tr("&Help"));
-
-        actionHelpMenuAboutMyTetra->setText(tr("About MyTetra"));
-        actionHelpMenuAboutQt->setText(tr("About Qt"));
-        actionHelpMenuTechnicalInfo->setText(tr("Technical info"));
-    }
+    // Пометки checkable-пунктов Вид (было в конце view-блока retranslateUi)
+    syncViewMenu();
 
     // P3: пункты трея переводит сам менеджер
     trayManager->retranslate();

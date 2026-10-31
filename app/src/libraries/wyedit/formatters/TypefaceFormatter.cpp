@@ -574,6 +574,7 @@ QString TypefaceFormatter::codeMarkerName(int language)
     case CodeJson:    return QStringLiteral("JSON");
     case CodeLua:     return QStringLiteral("Lua");
     case CodeMake:    return QStringLiteral("Make");
+    case CodePhp:     return QStringLiteral("PHP");
     case CodePython:  return QStringLiteral("Python");
     case CodeQml:     return QStringLiteral("QML");
     case CodeReact:   return QStringLiteral("React");

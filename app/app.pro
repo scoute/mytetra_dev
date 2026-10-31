@@ -458,6 +458,10 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorFindBar.cpp \
     src/libraries/wyedit/EditorImageOpenDialog.cpp \
     src/views/mainWindow/MainWindow.cpp \
+    src/views/mainWindow/MainWindowMenus.cpp \
+    src/views/mainWindow/MainWindowLayout.cpp \
+    src/views/mainWindow/MainWindowMcp.cpp \
+    src/views/mainWindow/MainWindowTray.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \
     src/views/toolbarSettings/MainToolbarSettingsScreen.cpp \

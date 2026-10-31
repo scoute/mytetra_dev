@@ -478,6 +478,9 @@ void MainWindow::saveAllState(void)
 
 
 // Слот, срабатывающий когда происходит выход из оконной системы
+
+
+// Слот, срабатывающий когда происходит выход из оконной системы
 void MainWindow::commitData(QSessionManager& manager)
 {
     Q_UNUSED(manager)
@@ -491,22 +494,6 @@ void MainWindow::commitData(QSessionManager& manager)
 // Используется для обработки ссобщений, приходящих от других экземпляров MyTetra
 // Разбор аргумента MCP-команд: весь текст после первого пробела это
 // компактный JSON (пробелы внутри допустимы, переводов строк нет)
-static QJsonObject parseMcpCommandArgs(const QString &message)
-{
-  int spacePos=message.indexOf(' ');
-
-  if(spacePos<0)
-    return QJsonObject();
-
-  QJsonParseError parseError;
-  QJsonDocument doc=QJsonDocument::fromJson(message.mid(spacePos+1).toUtf8(),
-                                            &parseError);
-
-  if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
-    return QJsonObject();
-
-  return doc.object();
-}
 
 
 void MainWindow::messageHandler(QString message)
@@ -785,1611 +772,6 @@ void MainWindow::messageHandler(QString message)
 
 // Синхронный ответ на mcp-команду для протокола запрос-ответ.
 // Упаковка итога handleMcpCommand в компактный JSON
-QByteArray MainWindow::handleMcpMessage(const QString &message)
-{
-  QStringList messageParts=message.split(" ");
-
-  if(messageParts.isEmpty())
-    return QJsonDocument(QJsonObject{{"ok", false},
-                                     {"error", "Empty message"}}).toJson(QJsonDocument::Compact);
-
-  const QString command=messageParts.at(0);
-
-  if(!mytetraConfig.get_mcpAllow())
-    return QJsonDocument(QJsonObject{{"ok", false},
-                                     {"error", "MCP is disabled in settings"}}).toJson(QJsonDocument::Compact);
-
-  QJsonObject args=parseMcpCommandArgs(message);
-  QJsonObject result;
-  QString error;
-
-  if(!handleMcpCommand(command, args, result, error))
-    return QJsonDocument(QJsonObject{{"ok", false},
-                                     {"error", error.isEmpty() ? "Command failed" : error}})
-      .toJson(QJsonDocument::Compact);
-
-  result["ok"]=true;
-
-  return QJsonDocument(result).toJson(QJsonDocument::Compact);
-}
-
-
-// Применение одной mcp-команды к живой модели с возвратом итога.
-// Тела веток - те же applyXxx что были в messageHandler, но тихие
-// return заменены на текст ошибки: сервер отдаёт её агенту как есть,
-// вместо гадания "did not apply... retry"
-bool MainWindow::handleMcpCommand(const QString &command,
-                                  const QJsonObject &args,
-                                  QJsonObject &result,
-                                  QString &error)
-{
-  result=QJsonObject();
-  error=QString();
-
-  if(command=="mcpCreateBranch")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    QJsonObject created=McpTools::applyCreateBranch(treeScreen->knowTreeModel,
-                                                    args.value("parent_id").toString(),
-                                                    args.value("id").toString(),
-                                                    args.value("name").toString(),
-                                                    error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(created.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result=created;
-    return true;
-  }
-
-  else if(command=="mcpCreateNote")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    QJsonObject created=McpTools::applyCreateNote(treeScreen->knowTreeModel,
-                                                  args.value("branch_id").toString(),
-                                                  args.value("id").toString(),
-                                                  args.value("name").toString(),
-                                                  args.value("html").toString(),
-                                                  args.value("tags").toString(),
-                                                  error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(created.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result=created;
-    return true;
-  }
-
-  else if(command=="mcpUpdateNote")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    QStringList updatedFields;
-
-    // Открытый в редакторе текст не трогается: редактор держит свой
-    // буфер до перевыбора (last writer wins), как при любом
-    // стороннем изменении файла
-    const bool ok=McpTools::applyUpdateNote(treeScreen->knowTreeModel,
-                                            args.value("id").toString(),
-                                            args.value("has_name").toBool(false),
-                                            args.value("name").toString(),
-                                            args.value("has_html").toBool(false),
-                                            args.value("html").toString(),
-                                            args.value("has_tags").toBool(false),
-                                            args.value("tags").toString(),
-                                            error,
-                                            updatedFields);
-
-    if(!ok)
-    {
-      if(error.isEmpty())
-        error="Note was not updated";
-
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result["id"]=args.value("id").toString();
-
-    QJsonArray fields;
-    foreach(const QString &field, updatedFields)
-      fields.append(field);
-    result["updated_fields"]=fields;
-
-    return true;
-  }
-
-  else if(command=="mcpDeleteNote")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    const QString id=args.value("id").toString();
-
-    if(id.isEmpty())
-    {
-      error="Empty id";
-      return false;
-    }
-
-    if(!McpTools::applyDeleteNote(treeScreen->knowTreeModel, id, error))
-    {
-      if(error.isEmpty())
-        error="Note was not deleted";
-
-      return false;
-    }
-
-    emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(QSet<QString>() << id);
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result["id"]=id;
-    return true;
-  }
-
-  else if(command=="mcpDeleteBranch")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    const QString id=args.value("id").toString();
-
-    if(id.isEmpty())
-    {
-      error="Empty id";
-      return false;
-    }
-
-    QJsonObject deleted=McpTools::applyDeleteBranch(treeScreen->knowTreeModel,
-                                                    id, error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(deleted.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result=deleted;
-    return true;
-  }
-
-  else if(command=="mcpRenameBranch")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    QJsonObject renamed=McpTools::applyRenameBranch(treeScreen->knowTreeModel,
-                                                    args.value("id").toString(),
-                                                    args.value("name").toString(),
-                                                    error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(renamed.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result=renamed;
-    return true;
-  }
-
-  else if(command=="mcpMoveBranch")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    QJsonObject moved=McpTools::applyMoveBranch(treeScreen->knowTreeModel,
-                                                args.value("id").toString(),
-                                                args.value("target_id").toString(),
-                                                args.value("as_child").toBool(true),
-                                                error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(moved.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result=moved;
-    return true;
-  }
-
-  else if(command=="mcpMoveNote")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    // Как при удалении: редактор может держать указатель внутрь
-    // таблицы-источника, его состояние сбрасывается до переноса
-    find_object<MetaEditor>("editorScreen")->clearAll();
-
-    QJsonObject moved=McpTools::applyMoveNote(treeScreen->knowTreeModel,
-                                              args.value("id").toString(),
-                                              args.value("branch_id").toString(),
-                                              error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(moved.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result=moved;
-    return true;
-  }
-
-  else if(command=="mcpFavoriteNote")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    const QString id=args.value("id").toString();
-
-    if(!treeScreen->knowTreeModel->isRecordIdExists(id))
-    {
-      error="Unknown note_id: "+id;
-      return false;
-    }
-
-    Record *record=treeScreen->knowTreeModel->getRecord(id);
-
-    if(record==nullptr || record->getField("crypt")=="1")
-    {
-      error="Note is not available";
-      return false;
-    }
-
-    Favorites::instance().setFavorite(id, true);
-
-    if(!Favorites::instance().isFavorite(id))
-    {
-      error="Note was not starred";
-      return false;
-    }
-
-    flashMcpWrite();
-
-    result["id"]=id;
-    result["favorite"]=true;
-    return true;
-  }
-
-  else if(command=="mcpUnfavoriteNote")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    const QString id=args.value("id").toString();
-
-    if(!treeScreen->knowTreeModel->isRecordIdExists(id))
-    {
-      error="Unknown note_id: "+id;
-      return false;
-    }
-
-    Favorites::instance().setFavorite(id, false);
-
-    if(Favorites::instance().isFavorite(id))
-    {
-      error="Note is still starred";
-      return false;
-    }
-
-    flashMcpWrite();
-
-    result["id"]=id;
-    result["favorite"]=false;
-    return true;
-  }
-
-  else if(command=="mcpImportBranch")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    const QString parentId=args.value("parent_id").toString();
-    const QString path=args.value("path").toString();
-
-    if(!parentId.isEmpty())
-    {
-      TreeItem *parentItem=treeScreen->knowTreeModel->getItemById(parentId);
-
-      if(parentItem==nullptr || parentItem->getField("crypt")=="1")
-      {
-        error="Parent branch is not available";
-        return false;
-      }
-    }
-
-    // Плохой обменник вместо модального диалога - отказ с причиной
-    const QString dirError=McpTools::checkImportDir(path);
-
-    if(!dirError.isEmpty())
-    {
-      error=dirError;
-      return false;
-    }
-
-    QJsonObject imported=McpTools::applyImportBranch(treeScreen->knowTreeModel,
-                                                     parentId, path, error);
-
-    if(!error.isEmpty())
-      return false;
-
-    if(imported.isEmpty())
-    {
-      error="Internal error: empty result";
-      return false;
-    }
-
-    flashMcpWrite();
-
-    result=imported;
-    return true;
-  }
-
-  else if(command=="mcpRenameTag")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    int renamed=0;
-    int skipped=0;
-
-    if(!McpTools::applyRenameTag(treeScreen->knowTreeModel,
-                                 args.value("old").toString(),
-                                 args.value("new").toString(),
-                                 error, renamed, skipped))
-    {
-      if(error.isEmpty())
-        error="Tag was not renamed";
-
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result["renamed"]=renamed;
-    result["skipped"]=skipped;
-    return true;
-  }
-
-  else if(command=="mcpDeleteTag")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    int cleared=0;
-    int skipped=0;
-
-    if(!McpTools::applyDeleteTag(treeScreen->knowTreeModel,
-                                 args.value("tag").toString(),
-                                 error, cleared, skipped))
-    {
-      if(error.isEmpty())
-        error="Tag was not deleted";
-
-      return false;
-    }
-
-    treeScreen->knowTreeModel->save();
-    flashMcpWrite();
-
-    result["cleared"]=cleared;
-    result["skipped"]=skipped;
-    return true;
-  }
-
-  else if(command=="mcpApplyBatch")
-  {
-    if(mytetraConfig.isGlobalReadOnly())
-    {
-      error="Database is in global read-only mode";
-      return false;
-    }
-
-    if(args.isEmpty())
-    {
-      error="Broken command arguments";
-      return false;
-    }
-
-    QJsonArray operations=args.value("operations").toArray();
-
-    if(operations.isEmpty())
-    {
-      error="Empty operations list";
-      return false;
-    }
-
-    QSet<QString> closeWindows;
-    bool needSave=false;
-    QJsonArray opResults;
-
-    for(const QJsonValue &opValue : operations)
-    {
-      const QJsonObject op=opValue.toObject();
-      const QString tool=op.value("tool").toString();
-      const QJsonObject opArgs=op.value("arguments").toObject();
-
-      // import/export в пакет не входят
-      if(tool==QStringLiteral("import_branch") ||
-         tool==QStringLiteral("export_branch"))
-      {
-        error="Unsupported in batch: "+tool;
-        break;
-      }
-
-      // Как в одиночке: редактор может держать указатель внутрь
-      // таблицы-источника, его состояние сбрасывается до переноса
-      if(tool==QStringLiteral("move_note"))
-        find_object<MetaEditor>("editorScreen")->clearAll();
-
-      // Как в одиночке: открепленные окна удаляемой записи
-      if(tool==QStringLiteral("delete_note"))
-        closeWindows.insert(opArgs.value("note_id").toString());
-
-      QJsonObject dummy;
-
-      if(!McpTools::applyBatchOp(treeScreen->knowTreeModel,
-                                 tool, opArgs, dummy, error))
-        break;
-
-      QJsonObject opResult;
-      opResult["tool"]=tool;
-      opResult["ok"]=true;
-      opResults.append(opResult);
-
-      // Избранное сохраняет само (синглетон/сайдкар), остальное
-      // требует сейва модели
-      if(tool!=QStringLiteral("favorite_note") &&
-         tool!=QStringLiteral("unfavorite_note"))
-        needSave=true;
-    }
-
-    if(!closeWindows.isEmpty())
-      emit treeScreen->knowTreeModel->doCloseDetachedWindowByIdSet(closeWindows);
-
-    if(needSave)
-      treeScreen->knowTreeModel->save();
-
-    flashMcpWrite();
-
-    // Стоп на первой ошибке: пакет неатомарен, примененное сохраняется
-    result["applied"]=opResults.size();
-    result["total"]=operations.size();
-    result["operations"]=opResults;
-
-    if(!error.isEmpty() || opResults.size()!=operations.size())
-    {
-      if(error.isEmpty())
-        error="Batch stopped before all operations";
-
-      return false;
-    }
-
-    return true;
-  }
-
-  else if(command=="mcpHello")
-  {
-    const QString pid=args.value("pid").toString();
-
-    if(pid.isEmpty())
-    {
-      error="Empty pid";
-      return false;
-    }
-
-    // Старт сессии с нуля: история чистая, окно появляется само
-    const bool sessionStarts=mcpPeers.isEmpty();
-
-    mcpPeers[pid]=QDateTime::currentMSecsSinceEpoch();
-    mcpPeerModes[pid]=args.value("mode").toString();
-    updateMcpBanner();
-
-    if(sessionStarts)
-    {
-      mcpHistory.clear();
-      updateMcpHistoryDialog();
-
-      if(mcpHistoryDialog!=nullptr)
-        mcpHistoryDialog->show();
-    }
-
-    return true;
-  }
-
-  else if(command=="mcpBye")
-  {
-    const QString pid=args.value("pid").toString();
-
-    if(pid.isEmpty())
-    {
-      error="Empty pid";
-      return false;
-    }
-
-    mcpPeers.remove(pid);
-    mcpPeerModes.remove(pid);
-    updateMcpBanner();
-
-    return true;
-  }
-
-  else if(command=="mcpHistory")
-  {
-    addMcpHistoryEntry(args.value("kind").toString(),
-                       args.value("tool").toString(),
-                       args.value("summary").toString());
-
-    return true;
-  }
-
-  error="Unknown command: "+command;
-  return false;
-}
-
-
-// Восстанавливается геометрия окна и позиции основных разделителей
-void MainWindow::restoreWindowGeometry(void)
-{
-    if(globalParameters.getTargetOs()=="android")
-        setWindowState(Qt::WindowMaximized); // Для Андроида окно просто разворачивается на весь экран
-    else
-        restoreGeometry( mytetraConfig.get_mainwingeometry() );
-
-    // Размеры применяются только при совпадении числа виджетов:
-    // в режиме "список под деревом" у vSplitter один виджет, списки
-    // из другого режима сюда не подходят
-    if(mytetraConfig.get_vspl_size_list().size()==vSplitter->count())
-        vSplitter->setSizes(mytetraConfig.get_vspl_size_list());
-
-    if(mytetraConfig.get_hspl_size_list().size()==hSplitter->count())
-        hSplitter->setSizes(mytetraConfig.get_hspl_size_list());
-
-    findSplitter->setSizes(mytetraConfig.get_findsplitter_size_list());
-}
-
-
-// Перестановка списка записей: справа от дерева (дефолт) либо под
-// деревом в левой колонке. Вызывается при старте после восстановления
-// геометрии и вживую из настроек. Существующие высоты виджетов
-// сохраняются как есть, поэтому переключение туда-обратно не прыгает
-void MainWindow::applyRecordTablePosition(void)
-{
-    const bool under=mytetraConfig.get_recordTableUnderTree();
-    const bool isUnder=(leftColumnSplitter!=nullptr);
-
-    if(under==isUnder)
-        return;
-
-    if(under)
-    {
-        // Список записей переезжает из правой колонки под дерево.
-        // vSplitter остаётся с одним редактором.
-        // Важно: только addWidget/insertWidget, никакого replaceWidget -
-        // после него сплиттер навсегда игнорирует setSizes (стенд).
-        // addWidget сам вытаскивает виджет из старого сплиттера
-        leftColumnSplitter=new QSplitter(Qt::Vertical, this);
-        leftColumnSplitter->setObjectName("leftColumnSplitter");
-
-        leftColumnSplitter->addWidget(treeScreen);
-        leftColumnSplitter->addWidget(recordTableScreen);
-        hSplitter->insertWidget(0, leftColumnSplitter);
-
-        leftColumnSplitter->setCollapsible(0, false);
-        leftColumnSplitter->setCollapsible(1, false);
-
-        // Размеры - после показа: до show() раздавать некому.
-        // Живьём окно уже показано - ставим сразу, на холодном старте
-        // ждём показа через синглшот-цепочку со сходимостью
-        if(isVisible())
-            applyRecordTableSizes();
-        else
-        {
-            recordTableSizesRetry=0;
-            QTimer::singleShot(0, this, &MainWindow::applyRecordTableSizes);
-        }
-    }
-    else
-    {
-        // Список записей возвращается в правую колонку над редактором.
-        // Порядок важен: сначала записи в vSplitter, потом дерево в
-        // начало hSplitter. Без replaceWidget, по той же причине
-        vSplitter->insertWidget(0, recordTableScreen);
-        hSplitter->insertWidget(0, treeScreen);
-        vSplitter->setCollapsible(0, false);
-        vSplitter->setCollapsible(1, false);
-
-        // Синхронное удаление: виджеты уже переехали, детей нет.
-        // deleteLater оставлял бы пустой сплиттер болтаться до
-        // следующего прохода событийной петли
-        delete leftColumnSplitter;
-        leftColumnSplitter=nullptr;
-
-        // vSplitter c одним редактором хранил одно число: вернуть
-        // обе панели к осмысленным долям текущей высоты.
-        // Назад переключаются только живьём (окно показано),
-        // поэтому immediate setSizes здесь работает
-        const int total=vSplitter->height();
-
-        if(total>0)
-            vSplitter->setSizes(QList<int>() << total/3 << total-total/3);
-    }
-
-    recordTableScreen->toolsUpdate();
-}
-
-
-// Отложенное применение размеров после перестановки списка записей.
-// Вызывается через singleShot(0): setSizes сразу после replaceWidget
-// сплиттер игнорирует, а до show() раздавать некому. К моменту вызова
-// окно уже показано, размеры живые. Идемпотентно: при повторных
-// вызовах и смене режима туда-сюда пересчитывает текущее состояние,
-// сохранённые списки имеют приоритет
-void MainWindow::applyRecordTableSizes(void)
-{
-    if(leftColumnSplitter==nullptr)
-        return;
-
-    // Ширина левой колонки: сохранённая, иначе треть окна
-    int leftW=-1;
-    const QList<int> hs=hSplitter->sizes();
-
-    if(hs.size()>0 && hs.at(0)>0)
-        leftW=hs.at(0);
-
-    if(leftW<=0)
-    {
-        int total=hSplitter->width();
-
-        if(total<=0)
-            total=900;
-
-        leftW=total/3;
-    }
-
-    hSplitter->setSizes(QList<int>() << leftW << (hSplitter->width()-leftW>0 ? hSplitter->width()-leftW : leftW*2));
-
-    // Высота дерева и списка внутри колонки: сохранённые, иначе поровну
-    const QList<int> saved=mytetraConfig.get_leftspl_size_list();
-
-    if(saved.size()==leftColumnSplitter->count())
-        leftColumnSplitter->setSizes(saved);
-    else
-    {
-        const int total=leftColumnSplitter->height();
-        const int each=(total>0) ? total/2 : -1;
-
-        if(each>0)
-            leftColumnSplitter->setSizes(QList<int>() << each << (total-each));
-    }
-
-    // Сходимость: если окно ещё не разложено (холодный старт без
-    // сохранённой геометрии), выставленные размеры может снести
-    // первый проход раскладки. Проверяем видимый итог и повторяем,
-    // но не бесконечно
-    if(leftColumnSplitter->width()<=0 && recordTableSizesRetry<20)
-    {
-        recordTableSizesRetry++;
-        QTimer::singleShot(100, this, &MainWindow::applyRecordTableSizes);
-    }
-    else
-        recordTableSizesRetry=0;
-}
-
-
-// Запоминается геометрия окна и позиции основных разделителей
-void MainWindow::saveWindowGeometry(void)
-{
-    qDebug() << "Save window geometry and splitter sizes";
-
-    mytetraConfig.set_mainwingeometry( saveGeometry() );
-
-    // Размеры vSplitter осмысленны только с двумя виджетами
-    // (в режиме "список под деревом" там один редактор)
-    if(vSplitter->count()==2)
-        mytetraConfig.set_vspl_size_list(vSplitter->sizes());
-
-    mytetraConfig.set_hspl_size_list(hSplitter->sizes());
-
-    // Размеры левой колонки (дерево над списком) - только в этом режиме
-    if(leftColumnSplitter!=nullptr)
-        mytetraConfig.set_leftspl_size_list(leftColumnSplitter->sizes());
-
-
-    // Запоминается размер сплиттера только при видимом виджете поиска,
-    // т.к. если виджета поиска невидно, будет запомнен нуливой размер
-
-    // if(findScreenDisp->isVisible()) - так делать нельзя, т.к.
-    // данный метод вызывается из декструктора главного окна, и к этому моменту
-    // виджет уже невиден
-
-    if(mytetraConfig.get_findscreen_show())
-        mytetraConfig.set_findsplitter_size_list(findSplitter->sizes());
-}
-
-
-void MainWindow::restoreTreePosition(void)
-{
-    // Путь к последнему выбранному в дереве элементу
-    QStringList path=mytetraConfig.get_tree_position();
-
-    qDebug() << "MainWindow::restoreTreePosition() : " << path;
-
-    this->setTreePosition(path);
-}
-
-
-void MainWindow::saveTreePosition(void)
-{
-    // Получение QModelIndex выделенного в дереве элемента
-    QModelIndex index=treeScreen->getCurrentItemIndex();
-
-    // Получаем указатель вида TreeItem
-    TreeItem *item =treeScreen->knowTreeModel->getItem(index);
-
-    // Сохраняем путь к элементу item
-    mytetraConfig.set_tree_position(item->getPath());
-}
-
-
-void MainWindow::setTreePosition(QStringList path)
-{
-    if(treeScreen->knowTreeModel->isItemValid(path)==false)
-        return;
-
-    // Получаем указатель на элемент вида TreeItem, используя путь, этот указатель может вернуть и корень (если путь пустой)
-    TreeItem *item =treeScreen->knowTreeModel->getItem(path);
-
-    // qDebug() << "Set tree position to " << item->getField("name") << " id " << item->getField("id");
-
-    // Из указателя на элемент TreeItem получаем QModelIndex
-    QModelIndex setto=treeScreen->knowTreeModel->getIndexByItem(item);
-
-    // Курсор устанавливается в нужную позицию
-    treeScreen->setCursorToIndex(setto);
-}
-
-
-bool MainWindow::isTreePositionCrypt()
-{
-    QStringList path=mytetraConfig.get_tree_position();
-
-    if(treeScreen->knowTreeModel->isItemValid(path)==false)
-        return false;
-
-    // Получаем указатель на элемент вида TreeItem, используя путь
-    TreeItem *item =treeScreen->knowTreeModel->getItem(path);
-
-    if(item->getField("crypt")=="1")
-        return true;
-    else
-        return false;
-}
-
-
-void MainWindow::restoreRecordTablePosition(void)
-{
-    QString id=mytetraConfig.get_recordtable_selected_record_id();
-
-    if(id.length()>0)
-        this->setRecordtablePositionById(id);
-}
-
-
-void MainWindow::saveRecordTablePosition(void)
-{
-    QString id=recordTableScreen->getFirstSelectionId();
-
-    mytetraConfig.set_recordtable_selected_record_id(id);
-}
-
-
-void MainWindow::setRecordtablePositionById(QString id)
-{
-    recordTableScreen->setSelectionToId(id);
-}
-
-
-void MainWindow::setTreeAndRecordtablePositions(QStringList treePath, QString recordId)
-{
-    // Прыжок извне при активном фильтре дерева: цель может быть скрыта,
-    // тогда фильтр сбрасывается здесь, до позиционирования
-    if(treeScreen!=nullptr)
-        treeScreen->ensurePathVisible(treePath);
-
-    // В дереве выставляется ветка с заданным путем
-    // При этом автоматически вызовется слот TreeScreen::onKnowtreeClicked(),
-    // так как происходит выбор в selection-модели
-    this->setTreePosition(treePath);
-
-    // Так как выбор ветки в дереве приводит к обновлению таблицы списка записей
-    // только на следующей итерации обработки основного цикла событий,
-    // то здась цикл событий обновляется, чтобы нормально сработал
-    // дальнейший вызов setRecordtablePositionById(), чтобы он выставлял запись
-    // уже на обновленной таблице конечных записей
-    QCoreApplication::processEvents();
-
-    // В таблице конечных записей выставляется заданная запись
-    this->setRecordtablePositionById(recordId);
-}
-
-
-void MainWindow::saveEditorCursorPosition(void)
-{
-    int n=editorScreen->getCursorPosition();
-
-    mytetraConfig.setEditorCursorPosition(n);
-}
-
-
-void MainWindow::restoreEditorCursorPosition(void)
-{
-    int n=mytetraConfig.getEditorCursorPosition();
-
-    editorScreen->setCursorPosition(n);
-}
-
-
-void MainWindow::saveEditorScrollBarPosition(void)
-{
-    int n=editorScreen->getScrollBarPosition();
-
-    mytetraConfig.setEditorScrollBarPosition(n);
-}
-
-
-void MainWindow::restoreEditorScrollBarPosition(void)
-{
-    int n=mytetraConfig.getEditorScrollBarPosition();
-
-    editorScreen->setScrollBarPosition(n);
-}
-
-
-void MainWindow::restoreFindOnBaseVisible(void)
-{
-    bool n=mytetraConfig.get_findscreen_show();
-
-    // Определяется ссылка на виджет поиска
-    FindScreen *findScreenRel=find_object<FindScreen>("findScreenDisp");
-
-    if(n)
-        findScreenRel->show();
-    else
-        findScreenRel->hide();
-}
-
-
-void MainWindow::restoreAllWindowState(void)
-{
-    globalParameters.getWindowSwitcher()->disableSwitch();
-
-    restoreFindOnBaseVisible();
-    restoreWindowGeometry();
-
-    // Раскладка списка записей применяется после геометрии:
-    // ей нужны живые размеры виджетов
-    applyRecordTablePosition();
-
-    restoreTreePosition();
-
-    // Так как выбор ветки в дереве приводит к обновлению таблицы списка записей
-    // только на следующей итерации обработки основного цикла событий,
-    // то здась цикл событий обновляется, чтобы нормально сработал
-    // дальнейший вызов setRecordtablePositionById(), чтобы он выставлял запись
-    // уже на обновленной таблице конечных записей
-    QCoreApplication::processEvents();
-
-    restoreRecordTablePosition();
-
-
-    restoreEditorCursorPosition();
-    restoreEditorScrollBarPosition();
-
-    globalParameters.getWindowSwitcher()->enableSwitch();
-}
-
-
-void MainWindow::restoreDockableWindowsState()
-{
-    // Восстанавливаются открепляемые окна
-    EditorShowTextDispatcher::instance()->restoreOpenWindows();
-}
-
-
-// Создание раздела меню File
-void MainWindow::initFileMenu(void)
-{
-    // Создание меню
-    fileMenu = new QMenu(tr("&File"), this);
-    this->menuBar()->addMenu(fileMenu);
-
-    actionFileMenuDatabasesManagement = new QAction(tr("Databases management"), this);
-    fileMenu->addAction(actionFileMenuDatabasesManagement);
-
-    actionFileMenuExportTreeItem = new QAction(tr("Export tree item"), this);
-    fileMenu->addAction(actionFileMenuExportTreeItem);
-
-    actionFileMenuImportTreeItem = new QAction(tr("Import tree item"), this);
-    fileMenu->addAction(actionFileMenuImportTreeItem);
-    actionFileMenuImportTelegram = new QAction(tr("Import Telegram chat..."), this);
-    fileMenu->addAction(actionFileMenuImportTelegram);
-
-    fileMenu->addSeparator();
-
-    actionFileMenuPrint = new QAction(tr("&Print..."), this);
-    fileMenu->addAction(actionFileMenuPrint);
-
-    actionFileMenuPrintPreview = new QAction(tr("Print Preview..."), this);
-    fileMenu->addAction(actionFileMenuPrintPreview);
-
-    actionFileMenuExportPdf = new QAction(tr("&Export PDF..."), this);
-    fileMenu->addAction(actionFileMenuExportPdf);
-
-    fileMenu->addSeparator();
-
-    actionFileMenuQuit = new QAction(tr("&Quit"), this);
-    fileMenu->addAction(actionFileMenuQuit);
-}
-
-
-// Создание раздела меню Tools
-void MainWindow::initToolsMenu(void)
-{
-    // Создание меню
-    toolsMenu = new QMenu(tr("&Tools"), this);
-    this->menuBar()->addMenu(toolsMenu);
-
-    actionToolsMenuFindInBase = new QAction(this); // Так как есть this, указатель не будет потерян основным окном
-    toolsMenu->addAction(actionToolsMenuFindInBase);
-
-    actionToolsMenuImagesGallery = new QAction(tr("Images &gallery"), this);
-    toolsMenu->addAction(actionToolsMenuImagesGallery);
-
-    actionToolsMenuFilesGallery = new QAction(tr("Attached &files"), this);
-    toolsMenu->addAction(actionToolsMenuFilesGallery);
-
-    actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
-    toolsMenu->addAction(actionToolsMenuActionLog);
-
-    actionToolsMenuClipFromClipboard = new QAction(this);
-    toolsMenu->addAction(actionToolsMenuClipFromClipboard);
-
-    // Переключатель панели меток: видимость дока и галочка синхронны сами
-    QAction *tagsPanelToggle=tagsPanelDock->toggleViewAction();
-    tagsPanelToggle->setIcon(QIcon(":/resource/pic/tag.svg"));
-    toolsMenu->addAction(tagsPanelToggle);
-
-    shortcutManager.initAction("misc-tagsPanel", tagsPanelToggle);
-
-    // Переключатель панели истории: видимость дока и галочка синхронны сами
-    QAction *historyPanelToggle=historyPanelDock->toggleViewAction();
-    historyPanelToggle->setIcon(QIcon(":/resource/pic/history.svg"));
-    toolsMenu->addAction(historyPanelToggle);
-
-    shortcutManager.initAction("misc-historyPanel", historyPanelToggle);
-
-    // Переключатель панели входящих ссылок: видимость дока и галочка синхронны сами
-    QAction *backlinksPanelToggle=backlinksPanelDock->toggleViewAction();
-    backlinksPanelToggle->setIcon(QIcon(":/resource/pic/backlinks.svg"));
-    toolsMenu->addAction(backlinksPanelToggle);
-
-    shortcutManager.initAction("misc-backlinksPanel", backlinksPanelToggle);
-
-    toolsMenu->addSeparator();
-
-    if(mytetraConfig.getInterfaceMode()=="desktop")
-    {
-        actionToolsMenuPreferences = new QAction(tr("&Preferences"), this);
-        toolsMenu->addAction(actionToolsMenuPreferences);
-    }
-    else
-    {
-        // Создание подменю
-        preferencesSubMenu = new QMenu(tr("&Preferences"), this);
-        initPreferencesMenu(preferencesSubMenu);
-        toolsMenu->addMenu(preferencesSubMenu);
-    }
-}
-
-
-// Заполнение подраздела меню Preferences (для мобильного интерфейса)
-void MainWindow::initPreferencesMenu(QMenu *menu)
-{
-    QMap< QString, QAction **> map;
-
-    map[tr("Main")]       = &actionDirectPreferencesMain;
-    map[tr("Appearance")] = &actionDirectPreferencesAppearance;
-    map[tr("Crypt")]      = &actionDirectPreferencesCrypt;
-    map[tr("Syncro")]     = &actionDirectPreferencesSyncro;
-    map[tr("Notes Area")] = &actionDirectPreferencesRecordTable;
-    map[tr("Attaches")]   = &actionDirectPreferencesAttach;
-    map[tr("Keyboard")]   = &actionDirectPreferencesKeyboard;
-    map[tr("History")]    = &actionDirectPreferencesHistory;
-    map[tr("Misc")]       = &actionDirectPreferencesMisc;
-
-    for(auto pageName : map.keys())
-    {
-        *map[pageName] = new QAction(pageName, this);
-        menu->addAction( *map[pageName] );
-    }
-}
-
-
-void MainWindow::runDirectPreferences(QAction *action)
-{
-    QMap< QString, QAction *> map;
-
-    map["pageMain"]       = actionDirectPreferencesMain;
-    map["pageAppearance"] = actionDirectPreferencesAppearance;
-    map["pageCrypt"]      = actionDirectPreferencesCrypt;
-    map["pageSynchro"]    = actionDirectPreferencesSyncro;
-    map["pageRecordTable"]= actionDirectPreferencesRecordTable;
-    map["pageAttach"]     = actionDirectPreferencesAttach;
-    map["pageKeyboard"]   = actionDirectPreferencesKeyboard;
-    map["pageHistory"]    = actionDirectPreferencesHistory;
-    map["pageMisc"]       = actionDirectPreferencesMisc;
-
-    AppConfigDialog *dialog=nullptr;
-
-    for(auto pageName : map.keys())
-    {
-        if( map[pageName]==action )
-        {
-            dialog=new AppConfigDialog(pageName, this);
-            break;
-        }
-    }
-
-    if(dialog!=nullptr)
-    {
-        dialog->setMenuListVisible(false);
-        dialog->exec();
-
-        // Настройки могли поменять мастер-тумблеры (история и пр.):
-        // состояние пунктов перечитывается сразу, а не по следующему клику
-        if(recordTableScreen!=nullptr)
-            recordTableScreen->toolsUpdate();
-    }
-
-    delete dialog;
-}
-
-
-// Создание раздела меню Help
-void MainWindow::initHelpMenu(void)
-{
-    // Создание меню
-    helpMenu = new QMenu(tr("&Help"), this);
-    this->menuBar()->addMenu(helpMenu);
-
-    actionHelpMenuAboutMyTetra = new QAction(tr("About MyTetra"), this);
-    helpMenu->addAction(actionHelpMenuAboutMyTetra);
-
-    actionHelpMenuAboutQt = new QAction(tr("About Qt"), this);
-    helpMenu->addAction(actionHelpMenuAboutQt);
-
-    actionHelpMenuTechnicalInfo = new QAction(tr("Technical info"), this);
-    helpMenu->addAction(actionHelpMenuTechnicalInfo);
-}
-
-
-// Создание меню Темы: переключение интерфейса в один клик вместо
-// похода в настройки. Пункты строятся из списка доступных тем,
-// поэтому новая тема подхватится сама
-void MainWindow::initThemesMenu(void)
-{
-    themesMenu=new QMenu(tr("&Themes"), this);
-    this->menuBar()->addMenu(themesMenu);
-
-    // Таблица переводов имен тем как в диалоге настроек
-    QMap<QString, QString> translateNames;
-    translateNames["default"]=tr("Default");
-    translateNames["dark"]=tr("Dark");
-    translateNames["modern"]=tr("Modern");
-    translateNames["midnight"]=tr("Midnight");
-    translateNames["custom"]=tr("Custom");
-
-    QActionGroup *themeGroup=new QActionGroup(themesMenu);
-    themeGroup->setExclusive(true);
-
-    for(auto name : fixedParameters.themesAvailableList)
-    {
-        QAction *themeAction=new QAction(translateNames.value(name, "Unknown"), themesMenu);
-        themeAction->setData(name);
-        themeAction->setCheckable(true);
-        themeGroup->addAction(themeAction);
-        themesMenu->addAction(themeAction);
-    }
-
-    themesMenu->addSeparator();
-
-    // Настройка своей темы: то же окно, что страница Themes
-    // в диалоге настроек. Вне эксклюзивной группы осознанно:
-    // это действие, а не выбор темы
-    themeConfigureAction=new QAction(tr("Configure theme..."), themesMenu);
-    themesMenu->addAction(themeConfigureAction);
-    connect(themeConfigureAction, &QAction::triggered,
-            this,                &MainWindow::onThemeConfigure);
-
-    syncThemeMenu();
-
-    connect(themeGroup, &QActionGroup::triggered,
-            this,        &MainWindow::onThemeMenuTriggered);
-
-    connect(themesMenu, &QMenu::aboutToShow,
-            this,        &MainWindow::syncThemeMenu);
-}
-
-
-// Пометка текущей темы. Вызывается при открытии меню, так как тему
-// можно сменить и из диалога настроек мимо этого меню
-void MainWindow::syncThemeMenu(void)
-{
-    if(themesMenu==nullptr)
-        return;
-
-    QString currentTheme=mytetraConfig.getInterfaceTheme();
-
-    for(QAction *themeAction : themesMenu->actions())
-    {
-        // Разделитель и «Настроить тему» — не выборы темы
-        if(themeAction==nullptr || themeAction->isSeparator() ||
-           themeAction->data().toString().isEmpty())
-            continue;
-
-        themeAction->setChecked(themeAction->data().toString()==currentTheme);
-    }
-}
-
-
-// Меню Вид между Tools и Themes: дублирует быстрые переключатели
-// отображения (шапка заметки, избранное, цвет секрета, бумага), чтобы не
-// лазить за ними в диалог настроек или контекстное меню редактора
-void MainWindow::initViewMenu(void)
-{
-    viewMenu=new QMenu(tr("&View"), this);
-    this->menuBar()->addMenu(viewMenu);
-
-    viewHeaderAction=new QAction(tr("Show note header"), this);
-    viewHeaderAction->setCheckable(true);
-    viewMenu->addAction(viewHeaderAction);
-
-    viewFavoritesAction=new QAction(tr("Show favorites panel"), this);
-    viewFavoritesAction->setCheckable(true);
-    viewMenu->addAction(viewFavoritesAction);
-
-    viewTreeFilterAction=new QAction(tr("Show branch filter"), this);
-    viewTreeFilterAction->setCheckable(true);
-    viewMenu->addAction(viewTreeFilterAction);
-
-    viewToolsAction=new QAction(tr("Show editor toolbar"), this);
-    viewToolsAction->setCheckable(true);
-    viewToolsAction->setObjectName(QStringLiteral("viewToolsAction"));
-    viewMenu->addAction(viewToolsAction);
-
-    viewReadOnlyAction=new QAction(this);
-    viewReadOnlyAction->setCheckable(true);
-    viewMenu->addAction(viewReadOnlyAction);
-
-    viewMenu->addSeparator();
-
-    QAction *secretColorAction=new QAction(tr("Change secret color..."), this);
-    viewSecretColorAction=secretColorAction;
-    viewMenu->addAction(secretColorAction);
-
-    QAction *paperColorAction=new QAction(tr("Change note background color..."), this);
-    viewPaperColorAction=paperColorAction;
-    viewMenu->addAction(paperColorAction);
-
-    // Начальная пометка до коннектов: setChecked с тем же значением
-    // toggled не дергает, лишних записей в конфиг нет
-    syncViewMenu();
-
-    connect(viewHeaderAction, &QAction::toggled,
-            this,              &MainWindow::onViewHeaderToggled);
-    connect(viewFavoritesAction, &QAction::toggled,
-            this,                &MainWindow::onViewFavoritesToggled);
-    connect(viewTreeFilterAction, &QAction::toggled,
-            this,                  &MainWindow::onViewTreeFilterToggled);
-    connect(viewToolsAction, &QAction::toggled,
-            this,            &MainWindow::onViewToolsToggled);
-    connect(viewReadOnlyAction, &QAction::toggled,
-            this,               &MainWindow::onViewReadOnlyToggled);
-    connect(secretColorAction, &QAction::triggered,
-            this,              &MainWindow::onViewSecretColor);
-    connect(paperColorAction, &QAction::triggered,
-            this,              &MainWindow::onViewPaperColor);
-
-    connect(viewMenu, &QMenu::aboutToShow,
-            this,      &MainWindow::syncViewMenu);
-}
-
-
-// Пометка текущих состояний при каждом открытии: все меняется
-// и мимо меню (диалог настроек, контекстное меню секрета)
-void MainWindow::syncViewMenu(void)
-{
-    if(viewHeaderAction!=nullptr)
-        viewHeaderAction->setChecked(mytetraConfig.get_recordHeaderVisible());
-
-    if(viewFavoritesAction!=nullptr)
-        viewFavoritesAction->setChecked(mytetraConfig.get_favoritesEnabled());
-
-    if(viewTreeFilterAction!=nullptr)
-        viewTreeFilterAction->setChecked(mytetraConfig.get_treeFilterVisible());
-
-    // Панель может прятаться мимо меню (кнопка toggleTools, хоткей):
-    // пометка подтягивается при каждом открытии
-    if(viewToolsAction!=nullptr && editorScreen!=nullptr &&
-       editorScreen->editorToolBarAssistant!=nullptr)
-        viewToolsAction->setChecked(!editorScreen->editorConfig->get_hide_tools_lines());
-
-    if(viewReadOnlyAction!=nullptr)
-        viewReadOnlyAction->setChecked(mytetraConfig.isGlobalReadOnly());
-}
-
-
-void MainWindow::onViewHeaderToggled(bool checked)
-{
-    mytetraConfig.set_recordHeaderVisible(checked);
-
-    if(editorScreen!=nullptr)
-        editorScreen->updateRecordHeaderVisibility();
-}
-
-
-void MainWindow::onViewFavoritesToggled(bool checked)
-{
-    mytetraConfig.set_favoritesEnabled(checked);
-
-    // Сам refresh решит показать или спрятать по наличию звездочек
-    FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
-    if(favoritesPanel!=nullptr)
-        favoritesPanel->refreshFavorites();
-}
-
-
-void MainWindow::onViewTreeFilterToggled(bool checked)
-{
-    mytetraConfig.set_treeFilterVisible(checked);
-
-    TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
-    if(treeScreen!=nullptr)
-        treeScreen->setTreeFilterVisible(checked);
-}
-
-
-// Возврат спрятанной панели инструментов: чекбокс Вид всегда доступен,
-// в отличие от кнопки toggleTools, которая уезжает вместе с панелью
-void MainWindow::onViewToolsToggled(bool checked)
-{
-    if(editorScreen==nullptr || editorScreen->editorToolBarAssistant==nullptr)
-        return;
-
-    editorScreen->editorToolBarAssistant->switchToolsVisibility(checked ? 1 : -1);
-}
-
-
-// Переключение глобального режима только чтения: навигация и просмотр
-// разрешены, любые изменения базы запрещены
-void MainWindow::onViewReadOnlyToggled(bool checked)
-{
-    mytetraConfig.set_readOnly(checked);
-
-    applyReadOnly();
-}
-
-
-// Применить глобальный режим только чтения ко всем экранам.
-// Вызывается при переключении и при старте программы
-void MainWindow::applyReadOnly(void)
-{
-    const bool readOnly=mytetraConfig.get_readOnly();
-
-    if(treeScreen!=nullptr)
-        treeScreen->setReadOnly(readOnly);
-
-    // Действия таблицы записей пересчитываются с учётом флага,
-    // редактор — по текущей записи и флагу
-    if(recordTableScreen!=nullptr)
-        {
-         recordTableScreen->toolsUpdate();
-         recordTableScreen->refreshEditorReadOnly();
-
-         // Кнопка синхронизации меняет базу (и дёргает её же автосинхронизация)
-         recordTableScreen->setSyncroEnabled(!readOnly);
-        }
-
-    // Импорт ветки и управление базами меняют данные
-    if(actionFileMenuImportTreeItem!=nullptr)
-        actionFileMenuImportTreeItem->setEnabled(!readOnly);
-
-    if(actionFileMenuImportTelegram!=nullptr)
-        actionFileMenuImportTelegram->setEnabled(!readOnly);
-
-    if(actionFileMenuDatabasesManagement!=nullptr)
-        actionFileMenuDatabasesManagement->setEnabled(!readOnly);
-}
-
-
-void MainWindow::onViewSecretColor(void)
-{
-    const QColor current(mytetraConfig.get_secretColor());
-    const QColor chosen=QColorDialog::getColor(current, this);
-
-    if(!chosen.isValid() || chosen==current)
-        return;
-
-    mytetraConfig.set_secretColor(chosen.name());
-
-    // Сразу на диск как в контекстном меню секрета
-    mytetraConfig.sync();
-
-    // Цвет действует только на Custom: быстрый выбор сам переводит
-    // туда с текущей темой как базой, иначе клик ничего не меняет
-    if(mytetraConfig.getInterfaceTheme()!="custom")
-    {
-        mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
-
-        if(mytetraConfig.setInterfaceTheme("custom"))
-            CssHelper::loadCurrentTheme();
-    }
-
-    if(editorScreen!=nullptr)
-        editorScreen->repaintSecrets();
-}
-
-
-void MainWindow::onViewPaperColor(void)
-{
-    const QColor current(
-        MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(),
-                                           mytetraConfig.get_notePaperColor()));
-    const QColor chosen=QColorDialog::getColor(current, this);
-
-    if(!chosen.isValid() || chosen==current)
-        return;
-
-    mytetraConfig.set_notePaperColor(chosen.name());
-
-    // Сразу на диск как в соседнем пункте про цвет секрета
-    mytetraConfig.sync();
-
-    // Бумага действует только на Custom: быстрый выбор сам переводит
-    // туда с текущей темой как базой, иначе клик ничего не меняет
-    if(mytetraConfig.getInterfaceTheme()!="custom")
-    {
-        mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
-
-        if(mytetraConfig.setInterfaceTheme("custom"))
-            CssHelper::loadCurrentTheme();
-    }
-
-    if(editorScreen!=nullptr)
-        editorScreen->applyNoteColors();
-}
-
-
-// Клик по пункту меню Темы: применить выбранную тему сразу
-void MainWindow::onThemeMenuTriggered(QAction *action)
-{
-    if(action==nullptr)
-        return;
-
-    QString themeName=action->data().toString();
-
-    if(themeName==mytetraConfig.getInterfaceTheme())
-        return;
-
-    if(mytetraConfig.setInterfaceTheme(themeName))
-    {
-        CssHelper::loadCurrentTheme();
-
-        // Своя бумага поверх темы переживает смену темы,
-        // пустая настройка подхватывает цвет новой темы
-        if(editorScreen!=nullptr)
-            editorScreen->applyNoteColors();
-    }
-}
-
-
-// Пункт «Настроить тему»: то же окно, что страница Themes
-// в диалоге настроек. Пометка меню обновится при следующем
-// открытии через aboutToShow
-void MainWindow::onThemeConfigure(void)
-{
-    AppConfigDialog dialog("pageTheme", this);
-    dialog.exec();
-}
-
-
-// Создание скрытых действий для работы прочих шорткатов уровня приложения
-void MainWindow::initHiddenActions(void)
-{
-    // Действия добавляются в сам виджет
-    // Для таких действий нет визуального представления, но горячие клавиши для них работают
-    actionFocusTree = new QAction(this);
-    this->addAction(actionFocusTree);
-
-    actionFocusNoteTable = new QAction(this);
-    this->addAction(actionFocusNoteTable);
-
-    actionFocusEditor = new QAction(this);
-    this->addAction(actionFocusEditor);
-}
 
 
 // Пересчитать и показать статистику базы в статусбаре.
@@ -2416,153 +798,6 @@ void MainWindow::updateStats(void)
 
 // Внешняя MCP-правка: баннер и так висит всю сессию, здесь только
 // пересчёт (текст с режимами, видимость, блокировка)
-void MainWindow::flashMcpWrite(void)
-{
-    updateMcpBanner();
-}
-
-
-// Текст баннера: сессия активна и режимы пиров в скобках сразу
-// после «активна». UI заблокирован всегда пока висит баннер,
-// независимо от режима сервера: его записи идут мимо блокировки
-// своим каналом
-QString MainWindow::mcpBannerText(void)
-{
-    QStringList modes=mcpPeerModes.values();
-    modes.removeAll(QString());
-    modes.removeDuplicates();
-    modes.sort();
-
-    QString modesText;
-
-    if(!modes.isEmpty())
-        modesText=" ("+modes.join(", ")+")";
-
-    QStringList peers;
-
-    for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
-    {
-      const QString mode=mcpPeerModes.value(it.key());
-
-      peers.append(mode.isEmpty() ? it.key() : it.key()+QStringLiteral(" ")+mode);
-    }
-
-    QString text=tr("MCP session is active%1, MyTetra works in read-only mode").arg(modesText);
-
-    if(!peers.isEmpty())
-      text+=tr("; peers: %1").arg(peers.join(QStringLiteral(", ")));
-
-    return text;
-}
-
-
-// Баннер MCP-сессии: висит всё время пока жив хоть один пир.
-// TTL-килла нет осознанно: долгие нейронные сессии с паузами
-// убивались бы на ровном месте вместе с историей. Пир уходит
-// только по явному Bye; убитый -9 висит до перезапуска программы.
-// Пусто — баннер гаснет и UI разблокируется, есть пиры — баннер
-// виден и UI заблокирован на запись до конца сессии
-// Имя своего бинаря: MCP-сервер это та же программа, так что
-// чужой процесс под recycled pid опознается по имени
-static QString mcpOwnAppName(void)
-{
-  return QFileInfo(QCoreApplication::applicationFilePath()).baseName();
-}
-
-
-// Жив ли пир: процесс с таким pid существует И это наша программа.
-// Имя сверяется чтобы переиспользованный pid чужого процесса не
-// держал висящий баннер. Не прочиталось имя — считаем живым:
-// лучше лишний баннер, чем выкинутый живой пир
-static bool mcpPeerAlive(const QString &pid)
-{
-  const qint64 id=pid.toLongLong();
-
-  if(id<=0)
-    return false;
-
-#ifdef Q_OS_WIN32
-  HANDLE handle=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
-                            static_cast<DWORD>(id));
-
-  if(handle==nullptr)
-    return GetLastError()==ERROR_ACCESS_DENIED;
-
-  char imagePath[MAX_PATH];
-  DWORD imageSize=sizeof(imagePath);
-  const bool nameRead=(QueryFullProcessImageNameA(handle, 0,
-                                                  imagePath, &imageSize)!=0);
-  CloseHandle(handle);
-
-  if(!nameRead)
-    return true;
-
-  return QFileInfo(QString::fromLocal8Bit(imagePath)).baseName()
-         .compare(mcpOwnAppName(), Qt::CaseInsensitive)==0;
-#elif defined(Q_OS_LINUX)
-  if(::kill(static_cast<pid_t>(id), 0)!=0)
-    return errno==EPERM;
-
-  QFile commFile(QStringLiteral("/proc/%1/comm").arg(id));
-
-  if(!commFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    return true;
-
-  // comm режется ядром до 15 символов: сравнивается столько же
-  const QString comm=QString::fromLocal8Bit(commFile.readAll()).trimmed();
-
-  return comm==mcpOwnAppName().left(15);
-#else
-  if(::kill(static_cast<pid_t>(id), 0)==0)
-    return true;
-
-  return errno==EPERM;
-#endif
-}
-
-
-void MainWindow::onMcpPeerTick(void)
-{
-  QList<QString> dead;
-
-  for(auto it=mcpPeers.constBegin(); it!=mcpPeers.constEnd(); ++it)
-    if(!mcpPeerAlive(it.key()))
-      dead.append(it.key());
-
-  foreach(const QString &pid, dead)
-  {
-    mcpPeers.remove(pid);
-    mcpPeerModes.remove(pid);
-  }
-
-  updateMcpBanner();
-}
-
-
-void MainWindow::updateMcpBanner(void)
-{
-    if(mcpBannerBar==nullptr || mcpBanner==nullptr)
-        return;
-
-    if(mcpPeers.isEmpty())
-    {
-        setMcpUiLock(false);
-        mcpBannerBar->hide();
-
-        // Дисконнект: история исчезает сразу и нигде не сохраняется
-        mcpHistory.clear();
-        updateMcpHistoryDialog();
-
-        if(mcpHistoryDialog!=nullptr)
-            mcpHistoryDialog->close();
-    }
-    else
-    {
-        setMcpUiLock(true);
-        mcpBanner->setText(mcpBannerText());
-        mcpBannerBar->show();
-    }
-}
 
 
 // Перезапуск цепочки умного автосохранения с текущим конфигом
@@ -2587,6 +822,12 @@ void MainWindow::restartAutosaveTimer(void)
 // правленная запись (флаг редактора), а снапшот истории дедуплицирует
 // по тексту. Без правок ни файла ни коммита. Открытый модальный диалог
 // круг пропускает: иначе сохранился бы промежуточный предпросмотр
+
+
+// Срабатывание умного автосохранения: сохраняется только реально
+// правленная запись (флаг редактора), а снапшот истории дедуплицирует
+// по тексту. Без правок ни файла ни коммита. Открытый модальный диалог
+// круг пропускает: иначе сохранился бы промежуточный предпросмотр
 void MainWindow::onAutosaveTimeout(void)
 {
     if(editorScreen!=nullptr && editorScreen->getTextareaModified() &&
@@ -2601,112 +842,6 @@ void MainWindow::onAutosaveTimeout(void)
 // Своё досохраняется до блокировки, иначе потеряется на навигации.
 // MCP-записи смотрят сырой флаг и продолжают писать.
 // Идемпотентна: повтор не дёргает сохранение и перераскладку
-void MainWindow::setMcpUiLock(bool locked)
-{
-    if(mytetraConfig.isMcpUiLocked()==locked)
-        return;
-
-    if(locked)
-        saveTextarea();
-
-    mytetraConfig.setMcpUiLock(locked);
-    applyReadOnly();
-}
-
-
-// Накопление истории действий MCP-сессии. Хвост обрезан до трёхсот:
-// окну нужен обзор, а не архив. На диск ничего не пишется
-void MainWindow::addMcpHistoryEntry(const QString &kind,
-                                    const QString &tool,
-                                    const QString &summary)
-{
-    McpHistoryEntry entry;
-    entry.msecs=QDateTime::currentMSecsSinceEpoch();
-    entry.kind=kind.isEmpty() ? QStringLiteral("other") : kind;
-    entry.tool=tool;
-    entry.summary=summary;
-
-    mcpHistory.append(entry);
-
-    // История действий MCP для диалога: сессия агента легко
-    // дает сотни вызовов, сотни строк обрезали бы середину работы
-    while(mcpHistory.size()>5000)
-        mcpHistory.removeFirst();
-
-    updateMcpHistoryDialog();
-}
-
-
-void MainWindow::updateMcpHistoryDialog(void)
-{
-    if(mcpHistoryDialog!=nullptr)
-        mcpHistoryDialog->setHistory(mcpHistory);
-}
-
-
-// Таблица разбивки статистики: строится отдельно чтобы сортировку
-// можно было проверить без модального окна
-QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
-{
-    QList<BaseStatRow> rows;
-
-    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
-        rows=treeScreen->knowTreeModel->getBaseStatRows();
-
-    QTableWidget *table=new QTableWidget(parent);
-    table->setColumnCount(6);
-    table->setHorizontalHeaderLabels(QStringList() << tr("Branch") << tr("Note") << tr("Internal links") << tr("Images") << tr("Files") << tr("Tags"));
-    table->horizontalHeader()->setStretchLastSection(true);
-    table->horizontalHeader()->setSectionsClickable(true);
-    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    table->setRowCount(rows.size());
-
-    // Компактные строки в одну текстовую строку как в истории и метках:
-    // дефолтная высота секции QTableWidget заметно выше шрифта
-    const int rowHeight=table->fontMetrics().height()+2;
-    table->verticalHeader()->setMinimumSectionSize(rowHeight);
-    table->verticalHeader()->setDefaultSectionSize(rowHeight);
-
-    for(int r=0; r<rows.size(); ++r)
-    {
-        const BaseStatRow &row=rows.at(r);
-
-        QTableWidgetItem *branchItem=new QTableWidgetItem(row.branchPath);
-        branchItem->setData(Qt::UserRole, row.recordId);
-        table->setItem(r, 0, branchItem);
-        table->setItem(r, 1, new QTableWidgetItem(row.noteName));
-        table->setItem(r, 2, new NumberTableItem(row.links));
-        table->setItem(r, 3, new NumberTableItem(row.images));
-        table->setItem(r, 4, new NumberTableItem(row.files));
-        table->setItem(r, 5, new NumberTableItem(row.tags));
-    }
-
-    table->resizeColumnsToContents();
-    table->sortByColumn(2, Qt::DescendingOrder);
-
-    // Первый клик по столбцу сортирует по убыванию (там обычно
-    // интереснее крупные), повторный клик переключает порядок.
-    // Ручной обработчик вместо автосортировки: встроенная всегда
-    // начинает с возрастания. Порядок помнится свой, а не читается
-    // с индикатора: встроенный слот срабатывает раньше нашего
-    // и успевает индикатор перевернуть
-    connect(table->horizontalHeader(), &QHeaderView::sectionClicked, table,
-            [table, lastColumn=2, lastOrder=Qt::DescendingOrder](int logicalIndex) mutable
-    {
-      Qt::SortOrder order=Qt::DescendingOrder;
-
-      if(logicalIndex==lastColumn && lastOrder==Qt::DescendingOrder)
-        order=Qt::AscendingOrder;
-
-      lastColumn=logicalIndex;
-      lastOrder=order;
-
-      table->sortByColumn(logicalIndex, order);
-    });
-
-    return table;
-}
 
 
 // Разбивка статистики по заметкам: кто сколько ссылок держит.
@@ -2772,6 +907,11 @@ void MainWindow::setupShortcuts(void)
     shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
     shortcutManager.initAction("misc-focusEditor", actionFocusEditor );
 }
+
+
+// Перевести статичные тексты новым языком. Вызывается до
+// shortcutManager.retranslate(): тексты на шорткатах освежит сигнал,
+// а прямой setText их бы затер
 
 
 // Перевести статичные тексты новым языком. Вызывается до
@@ -2938,6 +1078,9 @@ void MainWindow::retranslateUi(void)
 
 
 // Сохранить текущую статью
+
+
+// Сохранить текущую статью
 bool MainWindow::fileSave(void)
 {
     // todo: сделать функционал
@@ -2947,11 +1090,17 @@ bool MainWindow::fileSave(void)
 
 
 // Сохранить текущую статью как файл
+
+
+// Сохранить текущую статью как файл
 bool MainWindow::fileSaveAs(void)
 {
     // todo: сделать функционал
     return true;
 }
+
+
+// Напечатать текущую статью
 
 
 // Напечатать текущую статью
@@ -2973,6 +1122,9 @@ void MainWindow::filePrint(void)
 
 
 // Предпросмотр печати текущей статьи
+
+
+// Предпросмотр печати текущей статьи
 void MainWindow::filePrintPreview(void)
 {
     PrintPreview *preview = new PrintPreview(editorScreen->getTextareaDocument(), this);
@@ -2981,6 +1133,9 @@ void MainWindow::filePrintPreview(void)
     preview->setAttribute(Qt::WA_DeleteOnClose);
     preview->show();
 }
+
+
+// Вывод текущей статьи в PDF файл
 
 
 // Вывод текущей статьи в PDF файл
@@ -3004,11 +1159,17 @@ void MainWindow::filePrintPdf(void)
 
 
 // Раздел меню File, управление базами данных
+
+
+// Раздел меню File, управление базами данных
 void MainWindow::fileDatabasesManagement(void)
 {
     DatabasesManagementScreen databasesManagementScreen(this);
     databasesManagementScreen.exec();
 }
+
+
+// Раздел меню File, экспорт текущей ветки и всех ее подветок
 
 
 // Раздел меню File, экспорт текущей ветки и всех ее подветок
@@ -3056,6 +1217,9 @@ void MainWindow::fileImportBranch(void)
 
 
 // Слот - Нормальный выход из программы
+
+
+// Слот - Нормальный выход из программы
 void MainWindow::applicationExit(void)
 {
     saveAllState();
@@ -3075,6 +1239,9 @@ void MainWindow::applicationExit(void)
     enableRealClose=true;
     emit close();
 }
+
+
+// Быстрый выход из программы, без возможности синхронизации
 
 
 // Быстрый выход из программы, без возможности синхронизации
@@ -3098,6 +1265,9 @@ void MainWindow::toolsFindInBase(void)
     else
         findScreenRel->widgetHide();
 }
+
+
+// Уход из полоски поиска в заметке в глобальный поиск с текстом запроса
 
 
 // Уход из полоски поиска в заметке в глобальный поиск с текстом запроса
@@ -3148,16 +1318,6 @@ void MainWindow::onActionLogClicked()
 // Показ всплывающего сообщения в системном трее.
 // Используется фоновыми задачами (клиппер), которым некого спросить,
 // но надо сообщить пользователю о результате
-void MainWindow::showTrayMessage(const QString &title, const QString &text)
-{
-    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
-        return;
-
-    if(trayIcon==nullptr || trayIcon->isVisible()==false)
-        return;
-
-    trayIcon->showMessage(title, text, QSystemTrayIcon::Warning);
-}
 
 
 // Клиппер из меню Tools: вставка из буфера в unsorted_notes сейчас.
@@ -3172,6 +1332,12 @@ Clipper *MainWindow::getClipper(void)
 {
     return &clipper;
 }
+
+
+// Слот, срабатывающий при нажатии в редакторе кнопки "распахнуть"
+// Флаг показывает, что нужно сделать
+// true - распахнуть область отводимую редактору
+// false - сделать область, отводимую редактору, обычной
 
 
 // Слот, срабатывающий при нажатии в редакторе кнопки "распахнуть"
@@ -3285,6 +1451,9 @@ void MainWindow::onClickFocusEditor(void)
 
 
 // Перечитывание всей базы знаний
+
+
+// Перечитывание всей базы знаний
 void MainWindow::reload(void)
 {
   reloadSaveStage();
@@ -3292,6 +1461,9 @@ void MainWindow::reload(void)
   // Стадия Load идет сразу после стадии Save, флаг о наличии задержки не выставляется
   reloadLoadStage(false);
 }
+
+
+// Перечитывание дерева знаний, стадия Save
 
 
 // Перечитывание дерева знаний, стадия Save
@@ -3306,6 +1478,9 @@ void MainWindow::reloadSaveStage(void)
   saveEditorCursorPosition();
   saveEditorScrollBarPosition();
 }
+
+
+// Перечитывание дерева знаний, стадия Load
 
 
 // Перечитывание дерева знаний, стадия Load
@@ -3342,6 +1517,9 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
     // Разблокируется история посещений элементов
     walkHistory.setDrop(false);
 }
+
+
+// Старт синхронизации
 
 
 // Старт синхронизации
@@ -3397,6 +1575,9 @@ void MainWindow::synchronization(bool visible)
 
 
 // Завершение синхронизации
+
+
+// Завершение синхронизации
 void MainWindow::onSyncroCommandFinishWork()
 {
     // Функция перечитывания дерева знаний вызывается с флагом,
@@ -3419,111 +1600,6 @@ void MainWindow::onSyncroCommandFinishWork()
     if(enableRealClose==true)
     {
         this->applicationExit();
-    }
-}
-
-
-void MainWindow::setupIconActions(void)
-{
-    actionTrayRestore = new QAction(tr("&Restore window"), this);
-    connect(actionTrayRestore, &QAction::triggered, this, &MainWindow::showWindow);
-
-    actionTrayMaximize = new QAction(tr("Ma&ximize window"), this);
-    connect(actionTrayMaximize, &QAction::triggered, this, &MainWindow::showMaximized);
-
-    actionTrayMinimize = new QAction(tr("Mi&nimize window"), this);
-    connect(actionTrayMinimize, &QAction::triggered, this, &MainWindow::hide);
-
-    actionTrayQuit = new QAction(tr("&Quit"), this);
-    connect(actionTrayQuit, &QAction::triggered, this, &MainWindow::applicationExit);
-}
-
-
-void MainWindow::showWindow()
-{
-    activateWindow();
-    showNormal();
-    raise();
-
-    // Восстанавливается поведение открепляемых окон
-    EditorShowTextDispatcher::instance()->restoreBehavior();
-}
-
-
-void MainWindow::createTrayIcon(void)
-{
-    trayIconMenu = new QMenu(this);
-    trayIconMenu->addAction(actionTrayRestore);
-    trayIconMenu->addAction(actionTrayMaximize);
-    trayIconMenu->addAction(actionTrayMinimize);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(actionTrayQuit);
-
-    trayIcon = new QSystemTrayIcon(this);
-    trayIcon->setContextMenu(trayIconMenu);
-}
-
-
-void MainWindow::setIcon(void)
-{
-    connect(trayIcon, &QSystemTrayIcon::activated,
-            this,     &MainWindow::iconActivated);
-
-    QIcon icon = QIcon(":/resource/pic/logo.svg");
-    trayIcon->setIcon(icon);
-    setWindowIcon(icon);
-
-    // tray_icon->setToolTip(iconComboBox->itemText(index));
-}
-
-
-void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
-{
-    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
-        return;
-
-    qDebug() << "Click on tray icon";
-
-    switch (reason)
-    {
-    case QSystemTrayIcon::Trigger:
-    case QSystemTrayIcon::DoubleClick:
-        // Если окно видно
-        if(isVisible())
-        {
-            // Если окно неактивно, значит активно другое (и возможно оно перекрывает окно MyTetra)
-            // Не работает в Windows, в Linux не проверял
-            // Причина неработоспособности - при клике на иконку, окно MyTera всегда становится неактивным (т.к. активен систрей)
-            // И условие срабатывает всегда. Доделать или отказаться
-            // if(QGuiApplication::applicationState() == Qt::ApplicationInactive)
-            // {
-            //   activateWindow();
-            //   return;
-            // }
-
-            if(isMinimized())
-            {
-                qDebug() << "If visible and minimized";
-                showWindow();
-                return;
-            }
-            else
-            {
-                qDebug() << "Hide";
-                hide();
-                return;
-            }
-        }
-        else
-        {
-            qDebug() << "If not visible";
-            showWindow();
-            return;
-            // if(isMinimized()) showNormal();
-            // else show();
-        }
-    default:
-        ;
     }
 }
 
@@ -3618,6 +1694,9 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
 
 
 // Обработчик отлавливает нажатия клавиш
+
+
+// Обработчик отлавливает нажатия клавиш
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     // Проброс нажатия клавиши Ctrl в редактор, даже если он не активный (не в фокусе)
@@ -3627,6 +1706,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
     QMainWindow::keyPressEvent(event);
 }
+
+
+// Обработчик отлавливает отжатия клавиш
 
 
 // Обработчик отлавливает отжатия клавиш
@@ -3708,6 +1790,11 @@ void MainWindow::goWalkHistory(void)
 // Метод, вызываемый из всех точек интерфейса, в которых происходит
 // переход к другой записи. Метод вызывается до перехода, чтобы сохранить
 // текст редактируемой записи
+
+
+// Метод, вызываемый из всех точек интерфейса, в которых происходит
+// переход к другой записи. Метод вызывается до перехода, чтобы сохранить
+// текст редактируемой записи
 void MainWindow::saveTextarea(void)
 {
     // Глобальный режим только чтения
@@ -3746,6 +1833,9 @@ void MainWindow::saveTextarea(void)
 
 
 // Слот, обрабатывающий смену фокуса на виджетах
+
+
+// Слот, обрабатывающий смену фокуса на виджетах
 void MainWindow::onFocusChanged(QWidget *widgetFrom, QWidget *widgetTo)
 {
     Q_UNUSED (widgetFrom)
@@ -3757,4 +1847,3 @@ void MainWindow::onFocusChanged(QWidget *widgetFrom, QWidget *widgetTo)
 
     return; // Временно ничего не делает
 }
-

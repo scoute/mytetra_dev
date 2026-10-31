@@ -146,6 +146,10 @@ public slots:
                           QJsonObject &result,
                           QString &error);
 
+    // P3: парсер аргументов MCP-команды. static член (был file-static),
+    // чтобы messageHandler в ядре видел его после распила по TU
+    static QJsonObject parseMcpCommandArgs(const QString &message);
+
     void toolsFindInBase(void);
 
     void filePrintPreview(void);

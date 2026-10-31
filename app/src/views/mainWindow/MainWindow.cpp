@@ -2629,7 +2629,7 @@ void MainWindow::addMcpHistoryEntry(const QString &kind,
 
     // История действий MCP для диалога: сессия агента легко
     // дает сотни вызовов, сотни строк обрезали бы середину работы
-    while(mcpHistory.size()>2000)
+    while(mcpHistory.size()>5000)
         mcpHistory.removeFirst();
 
     updateMcpHistoryDialog();

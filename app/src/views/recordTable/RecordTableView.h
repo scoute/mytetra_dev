@@ -49,6 +49,11 @@ public:
 
     void updateRow(int rowNum);
 
+    // Минимум высоты: шапка + одна строка + рамка. Сплиттер
+    // останавливается ровно на одной записи: в ноль не уходит
+    // (непонятно как вернуть), скачка со схлопыванием нет
+    QSize minimumSizeHint(void) const override;
+
 signals:
 
     void tapAndHoldGestureFinished(const QPoint &);

@@ -571,6 +571,7 @@ QString TypefaceFormatter::codeMarkerName(int language)
     case CodeIni:     return QStringLiteral("INI");
     case CodeJava:    return QStringLiteral("Java");
     case CodeJs:      return QStringLiteral("JavaScript");
+    case CodeJson:    return QStringLiteral("JSON");
     case CodeLua:     return QStringLiteral("Lua");
     case CodeMake:    return QStringLiteral("Make");
     case CodePython:  return QStringLiteral("Python");
@@ -667,14 +668,12 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
     if(name.isEmpty())
         return -1;
 
-    // JSON маркеров не имеет, его имя здесь не опознается
+    // JSON маркер имеет: копирование идет строками под маркером,
+    // сам маркер в буфер не попадает, поэтому настоящий комментарий
+    // в языке не требуется
     for(int lang=CodeAngular; lang<CodeCount; ++lang)
-    {
-        if(lang==CodeJson)
-            continue;
         if(codeMarkerName(lang)==name)
             return lang;
-    }
 
     return -1;
 }
@@ -682,7 +681,7 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
 
 // Обеспечить маркер языка в начале выделения: заменить наш маркер
 // (в выделении или строкой выше) на новый, вставить новый сверху
-// или убрать маркер для языка без маркера (Plain, JSON).
+// или убрать маркер для языка без маркера (Plain).
 // Вызывается внутри edit-блока formatCodeWithLanguage.
 // Возвращает false, если после обработки выделять нечего
 bool TypefaceFormatter::normalizeCodeMarker(int language)

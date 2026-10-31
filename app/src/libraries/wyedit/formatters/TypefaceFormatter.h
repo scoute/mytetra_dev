@@ -207,7 +207,7 @@ private:
 
     // Обеспечить маркер языка в начале выделения: заменить наш маркер
     // (в выделении или строкой выше) на новый, вставить новый сверху
-    // или убрать маркер для языка без маркера (Plain, JSON).
+    // или убрать маркер для языка без маркера (Plain).
     // Вызывается внутри edit-блока formatCodeWithLanguage.
     // Возвращает false, если после обработки выделять нечего
     bool normalizeCodeMarker(int language);
@@ -232,6 +232,12 @@ private:
     // lineStart - начало строки, markerLen - длина текста маркера
     // без суффикса. Вызывается внутри edit-блока
     void applyCopyLinkFormat(int lineStart, int markerLen);
+
+    // Снять ссылку с текста маркера и пробела после него: insertText
+    // при замене маркера наследует формат конца выделения (ссылку
+    // [copy]), и вся строка сохраняется одной ссылкой. Суффикс
+    // [copy] не трогается. Вызывается внутри edit-блока
+    void unlinkMarkerText(int lineStart, int markerLen);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

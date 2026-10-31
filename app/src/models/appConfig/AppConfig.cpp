@@ -1831,20 +1831,21 @@ void AppConfig::set_voiceNoteNoiseSuppress(bool value)
 }
 
 
-// Качество Opus голосовых заметок по умолчанию: 0 low (24 кбит),
-// 1 middle (32 кбит, дефолт), 2 high (48 кбит), 3 extra high (64 кбит).
-// Middle если не задано или мусор
+// Качество Opus голосовых заметок по умолчанию: 0 extra low (16 кбит),
+// 1 low (24 кбит), 2 middle (32 кбит, дефолт), 3 high (48 кбит),
+// 4 extra high (64 кбит). Значений 409-й версии (0..3) в релизе не было,
+// шкала вводится сразу пятиступенчатой
 int AppConfig::get_voiceNoteQuality(void)
 {
-    const int quality=m_conf->value("voiceNoteQuality", 1).toInt();
+    const int quality=m_conf->value("voiceNoteQuality", 2).toInt();
 
-    return qBound(0, quality, 3);
+    return qBound(0, quality, 4);
 }
 
 
 void AppConfig::set_voiceNoteQuality(int quality)
 {
-    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 3));
+    m_conf->setValue("voiceNoteQuality", qBound(0, quality, 4));
 }
 
 

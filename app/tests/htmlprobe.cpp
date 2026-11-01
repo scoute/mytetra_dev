@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QFile>
+#include <QPalette>
 #include <QSettings>
 #include <QTextDocument>
 #include <QTextBlock>
@@ -120,6 +121,21 @@ int main(int argc, char **argv)
         QSyntaxStyle probe;
         check(f.open(QIODevice::ReadOnly) && probe.load(QString::fromUtf8(f.readAll())), "STYLE-LOAD");
         check(probe.getFormat(QStringLiteral("Keyword")).foreground().style()!=Qt::NoBrush, "STYLE-KEYWORD");
+    }
+
+    // Выбор палитры: светлая база - html, темная - html-dark
+    check(edit.syntaxStyleName()==QStringLiteral("Mytetra-html"), "STYLE-LIGHT");
+    {
+        const QPalette saved=qApp->palette();
+        QPalette dark=saved;
+        dark.setColor(QPalette::Base, QColor(30, 30, 30));
+        dark.setColor(QPalette::Text, QColor(232, 232, 232));
+        qApp->setPalette(dark);
+
+        HtmlSourceEdit darkEdit;
+        check(darkEdit.syntaxStyleName()==QStringLiteral("Mytetra-html-dark"), "STYLE-DARK");
+
+        qApp->setPalette(saved);
     }
     bool colored=false;
     QApplication::processEvents();

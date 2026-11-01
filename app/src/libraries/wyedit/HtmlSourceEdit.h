@@ -43,6 +43,9 @@ public:
     // Строка 1-based с клампом, курсор в ее начало
     void goToLine(int line);
 
+    // Имя загруженного стиля подсветки (для проб)
+    QString syntaxStyleName(void) const;
+
     // Ширина гуттера в пикселях (для проб)
     int lineNumberAreaWidth(void) const;
 

@@ -40,12 +40,7 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/InternalClipboard.h"
 
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-extern ShortcutManager shortcutManager;
 #include "libraries/AppContext.h"
-
 
 TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
 {
@@ -71,12 +66,10 @@ TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
   updateLastKnowTreeData( QFileInfo(), false );
 }
 
-
 TreeScreen::~TreeScreen()
 {
 
 }
-
 
 void TreeScreen::setupActions(void)
 {
@@ -203,9 +196,8 @@ void TreeScreen::setupActions(void)
  treeFilterEdit->setObjectName(QStringLiteral("treeFilterEdit"));
  treeFilterEdit->setPlaceholderText(tr("Filter branches..."));
  treeFilterEdit->setClearButtonEnabled(true);
- treeFilterEdit->setVisible(mytetraConfig.get_treeFilterVisible());
+ treeFilterEdit->setVisible(AppContext::instance().appConfig()->get_treeFilterVisible());
 }
-
 
 void TreeScreen::setupShortcuts(void)
 {
@@ -216,23 +208,22 @@ void TreeScreen::setupShortcuts(void)
     actionList["findInBase"]->setText(tr("Find in base"));
     actionList["findInBase"]->setStatusTip(tr("Find in base"));
 
-    shortcutManager.initAction("tree-expandAllSubbranch", actionList["expandAllSubbranch"] );
-    shortcutManager.initAction("tree-collapseAllSubbranch", actionList["collapseAllSubbranch"] );
-    shortcutManager.initAction("tree-moveUpBranch", actionList["moveUpBranch"] );
-    shortcutManager.initAction("tree-moveDownBranch", actionList["moveDownBranch"] );
-    shortcutManager.initAction("tree-insSubbranch", actionList["insSubbranch"] );
-    shortcutManager.initAction("tree-insBranch", actionList["insBranch"] );
-    shortcutManager.initAction("tree-editBranch", actionList["editBranch"] );
-    shortcutManager.initAction("tree-delBranch", actionList["delBranch"] );
-    shortcutManager.initAction("tree-cutBranch", actionList["cutBranch"] );
-    shortcutManager.initAction("tree-copyBranch", actionList["copyBranch"] );
-    shortcutManager.initAction("tree-pasteBranch", actionList["pasteBranch"] );
-    shortcutManager.initAction("tree-pasteSubbranch", actionList["pasteSubbranch"] );
-    shortcutManager.initAction("tree-encryptBranch", actionList["encryptBranch"] );
-    shortcutManager.initAction("tree-decryptBranch", actionList["decryptBranch"] );
-    shortcutManager.initAction("tree-setIcon", actionList["setIcon"] );
+    AppContext::instance().shortcutManager()->initAction("tree-expandAllSubbranch", actionList["expandAllSubbranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-collapseAllSubbranch", actionList["collapseAllSubbranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-moveUpBranch", actionList["moveUpBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-moveDownBranch", actionList["moveDownBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-insSubbranch", actionList["insSubbranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-insBranch", actionList["insBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-editBranch", actionList["editBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-delBranch", actionList["delBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-cutBranch", actionList["cutBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-copyBranch", actionList["copyBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-pasteBranch", actionList["pasteBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-pasteSubbranch", actionList["pasteSubbranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-encryptBranch", actionList["encryptBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-decryptBranch", actionList["decryptBranch"] );
+    AppContext::instance().shortcutManager()->initAction("tree-setIcon", actionList["setIcon"] );
 }
-
 
 // Прямых текстов кроме кнопки поиска нет: все освежает setupShortcuts
 // по сигналу updateWidgetShortcut. Метод оставлен для единого интерфейса
@@ -243,7 +234,6 @@ void TreeScreen::retranslateUi(void)
     treeFilterEdit->setPlaceholderText(tr("Filter branches..."));
 }
 
-
 // Строка фильтра над деревом: показать/скрыть (тумблер в меню Вид).
 // Скрытие сбрасывает текст и возвращает все ветки
 void TreeScreen::setTreeFilterVisible(bool visible)
@@ -253,7 +243,6 @@ void TreeScreen::setTreeFilterVisible(bool visible)
   if(!visible)
     treeFilterEdit->clear();
 }
-
 
 void TreeScreen::applyTreeFilter(const QString &text)
 {
@@ -273,7 +262,6 @@ void TreeScreen::applyTreeFilter(const QString &text)
 
   filterBranches(QModelIndex(), text);
 }
-
 
 // Совпадение или видимый потомок — показать, предков совпадений
 // раскрыть (иначе находки не видно). Индексы исходной модели целы:
@@ -305,7 +293,6 @@ bool TreeScreen::filterBranches(const QModelIndex &parent, const QString &text)
   return anyVisible;
 }
 
-
 void TreeScreen::showAllBranches(const QModelIndex &parent)
 {
   KnowTreeModel *model=knowTreeModel;
@@ -318,7 +305,6 @@ void TreeScreen::showAllBranches(const QModelIndex &parent)
     showAllBranches(model->index(row, 0, parent));
   }
 }
-
 
 // Прыжок извне при активном фильтре: цель может быть скрыта.
 // Скрыта — фильтр сбросить (строка при этом остается на месте),
@@ -342,7 +328,6 @@ void TreeScreen::ensurePathVisible(const QStringList &path)
     }
 }
 
-
 // Порядок кнопок тулбара веток по умолчанию. Объединение десктопного
 // и мобильного наборов: лишнее режется режимом в rebuildToolbar.
 // spring - невидимый распор (в дефолте стоит под мобильный),
@@ -359,7 +344,6 @@ QStringList TreeScreen::defaultToolbarOrder(void)
   << "spring" << "findInBase";
 }
 
-
 // Режим кнопки: desktop, mobile или обе (пусто - обе)
 QString TreeScreen::toolbarItemMode(const QString &command)
 {
@@ -371,7 +355,6 @@ QString TreeScreen::toolbarItemMode(const QString &command)
 
  return QString();
 }
-
 
 // Перестроение тулбара из списка конфига (или дефолта).
 // Вызывается при старте и вживую из диалога настроек.
@@ -386,7 +369,7 @@ void TreeScreen::rebuildToolbar(void)
 
  toolsLine->clear();
 
- QStringList order=mytetraConfig.getTreeToolbarOrder();
+ QStringList order=AppContext::instance().appConfig()->getTreeToolbarOrder();
 
  // Разовая миграция: кнопка синхронизации переехала с тулбара веток
  // на тулбар записей вместе со своим разделителем. Старый сохраненный
@@ -410,9 +393,9 @@ void TreeScreen::rebuildToolbar(void)
    if(!order.isEmpty() && order.last()=="separator")
     order.removeLast();
 
-   mytetraConfig.setTreeToolbarOrder(order);
+   AppContext::instance().appConfig()->setTreeToolbarOrder(order);
 
-   QStringList recordOrder=mytetraConfig.getRecordToolbarOrder();
+   QStringList recordOrder=AppContext::instance().appConfig()->getRecordToolbarOrder();
 
    if(!recordOrder.isEmpty() && !recordOrder.contains("syncro"))
     {
@@ -438,17 +421,17 @@ void TreeScreen::rebuildToolbar(void)
        recordOrder.append("syncro");
       }
 
-     mytetraConfig.setRecordToolbarOrder(recordOrder);
+     AppContext::instance().appConfig()->setRecordToolbarOrder(recordOrder);
     }
 
    // Миграция должна пережить даже аварийное завершение сразу после старта
-   mytetraConfig.sync();
+   AppContext::instance().appConfig()->sync();
   }
 
  if(order.isEmpty())
   order=defaultToolbarOrder();
 
- const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+ const bool isMobile=(AppContext::instance().appConfig()->getInterfaceMode()=="mobile");
  bool lastSeparator=true; // Ведущие разделители давятся
 
  foreach(const QString &command, order)
@@ -497,7 +480,6 @@ void TreeScreen::rebuildToolbar(void)
   }
 }
 
-
 void TreeScreen::setupUI(void)
 {
  // Наполнение панели инструментов
@@ -522,7 +504,6 @@ void TreeScreen::setupUI(void)
  addAction(actionList["decryptBranch"]);
  addAction(actionList["setIcon"]);
 
-
  knowTreeView=new KnowTreeView(this);
  knowTreeView->setObjectName("knowTreeView");
  knowTreeView->setMinimumSize(150,250);
@@ -546,7 +527,6 @@ void TreeScreen::setupUI(void)
  knowTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
 
-
 void TreeScreen::setupModels(void)
 {
  // Создание и первичная настройка модели
@@ -558,7 +538,7 @@ void TreeScreen::setupModels(void)
  // knowTreeModel->setHeaders(headers);
 
  // Загрузка данных
- knowTreeModel->initFromXML( mytetraConfig.get_tetradir()+"/mytetra.xml" );
+ knowTreeModel->initFromXML( AppContext::instance().appConfig()->get_tetradir()+"/mytetra.xml" );
 
  // Модель подключется к виду
  knowTreeView->setModel(knowTreeModel);
@@ -568,7 +548,6 @@ void TreeScreen::setupModels(void)
  if(favoritesPanel!=nullptr)
    favoritesPanel->refreshFavorites();
 }
-
 
 // Контекстное меню тулбара веток: единственный пункт открывает
 // диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
@@ -584,7 +563,6 @@ void TreeScreen::onToolbarContextMenu(const QPoint &pos)
    settingsScreen.exec();
   }
 }
-
 
 // Открытие контекстного меню в дереве разделов
 void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
@@ -625,7 +603,7 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
   // Если ветка не зашифрована
   // Или ветка зашифрована, но пароль успешно введен
   if(cryptFlag!="1" ||
-     (cryptFlag=="1" && globalParameters.getCryptKey().length()>0))
+     (cryptFlag=="1" && AppContext::instance().globalParameters()->getCryptKey().length()>0))
    {
 
     // Если во внутреннем буфере обмена есть ветки
@@ -652,7 +630,6 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
       actionList["pasteBranch"]->setEnabled(false);
       actionList["pasteSubbranch"]->setEnabled(false);
      }
-
 
     // ----------------------------
     // Подсветка пунктов шифрования
@@ -687,7 +664,6 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
   menu.exec(knowTreeView->viewport()->mapToGlobal(pos));
 }
 
-
 void TreeScreen::setupSignals(void)
 {
  // Соединение сигнал-слот чтобы показать контекстное меню по правому клику на ветке
@@ -708,27 +684,24 @@ void TreeScreen::setupSignals(void)
  connect(knowTreeView, &KnowTreeView::tapAndHoldGestureFinished,
          this,         &TreeScreen::onCustomContextMenuRequested);
 
-
  // Сигнал что ветка выбрана мышкой или стрелками на клавиатуре
  // через selection-модель. Реакция происходит на перемещение курсора по дереву
- if(mytetraConfig.getInterfaceMode()=="desktop")
+ if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
  {
    connect(knowTreeView->selectionModel(), &QItemSelectionModel::currentRowChanged,
            this,                           &TreeScreen::onKnowtreeClicked);
  }
  
- if(mytetraConfig.getInterfaceMode()=="mobile")
+ if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
  {
    connect(knowTreeView, &KnowTreeView::clicked,
            this,         &TreeScreen::onKnowtreeClicked);
  }
 
-
  // Сигнал что ветка выбрана кликом мышки
  // используется для возможности ввести пароль, если в базе одна корневая ветка, и она зашифрована
  connect(knowTreeView, &KnowTreeView::pressed,
          this,         &TreeScreen::onKnowtreeClicked); // &TreeScreen::checkIfOneRootCryptItem
-
 
  // Сигнал чтобы открыть на редактирование параметры записи при двойном клике
  // connect(knowTreeView, SIGNAL(doubleClicked(const QModelIndex &)),
@@ -741,9 +714,8 @@ void TreeScreen::setupSignals(void)
  //         this, SLOT(on_knowTreeView_clicked(const QModelIndex &)));
 
  // Обновление горячих клавиш, если они были изменены
- connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &TreeScreen::setupShortcuts);
+ connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &TreeScreen::setupShortcuts);
 }
-
 
 void TreeScreen::assembly(void)
 {
@@ -792,7 +764,6 @@ void TreeScreen::assembly(void)
  lt->setContentsMargins(0,1,0,0);
 }
 
-
 void TreeScreen::expandAllSubbranch(void)
 {
  // Получение индексов выделенных строк
@@ -802,7 +773,6 @@ void TreeScreen::expandAllSubbranch(void)
   expandOrCollapseRecurse(selectitems.at(i), true);
 }
 
-
 void TreeScreen::collapseAllSubbranch(void)
 {
  // Получение индексов выделенных строк
@@ -811,7 +781,6 @@ void TreeScreen::collapseAllSubbranch(void)
  for(int i = 0; i < selectitems.size(); ++i) 
   expandOrCollapseRecurse(selectitems.at(i), false);
 }
-
 
 void TreeScreen::expandOrCollapseRecurse(QModelIndex modelIndex, bool mode)
 {
@@ -827,18 +796,15 @@ void TreeScreen::expandOrCollapseRecurse(QModelIndex modelIndex, bool mode)
 
 }
 
-
 void TreeScreen::moveUpBranch(void)
 {
  moveUpDownBranch(1);
 }
 
-
 void TreeScreen::moveDownBranch(void)
 {
  moveUpDownBranch(-1);
 }
-
 
 void TreeScreen::moveUpDownBranch(int direction)
 {
@@ -867,7 +833,6 @@ void TreeScreen::moveUpDownBranch(int direction)
   knowTreeModel->invalidateStats();
 }
 
-
 bool TreeScreen::moveCheckEnable(void)
 {
  // Получение списка индексов QModelIndex выделенных элементов
@@ -887,7 +852,6 @@ bool TreeScreen::moveCheckEnable(void)
   return true;
 }
 
-
 void TreeScreen::insBranch(void)
 {
  qDebug() << "In ins_branch()";
@@ -895,14 +859,12 @@ void TreeScreen::insBranch(void)
  insBranchSmart(true);
 }
 
-
 void TreeScreen::insSubbranch(void)
 {
  qDebug() << "In ins_subbranch()";
 
  insBranchSmart(false);
 }
-
 
 // Вспомогательная функция, используется при добавлении ветки
 // Если is_branch=true, то добавляется ветка на тот же уровень
@@ -943,7 +905,6 @@ void TreeScreen::insBranchSmart(bool is_branch)
  // Введенные данные добавляются
  insBranchProcess(index, name, is_branch);
 }
-
 
 void TreeScreen::insBranchProcess(QModelIndex index, QString name, bool is_branch)
 {
@@ -1000,7 +961,6 @@ void TreeScreen::insBranchProcess(QModelIndex index, QString name, bool is_branc
  find_object<MainWindow>("mainwindow")->setEnabled(true);
 }
 
-
 void TreeScreen::editBranch(void)
 {
  qDebug() << "In edit_branch()";
@@ -1027,7 +987,7 @@ void TreeScreen::editBranch(void)
 
  // Если ветка зашифрована и пароль не был введен
  if(item->getField("crypt")=="1" &&
-    globalParameters.getCryptKey().length()==0)
+    AppContext::instance().globalParameters()->getCryptKey().length()==0)
   return;
  
  // Получение имени ветки
@@ -1058,7 +1018,6 @@ void TreeScreen::editBranch(void)
  find_object<MainWindow>("mainwindow")->setEnabled(true);
 }
 
-
 // Удаление выбранных веток, вызывается при выборе соотвествущей
 // кнопки или пункта меню
 void TreeScreen::delBranch(QString mode)
@@ -1068,7 +1027,6 @@ void TreeScreen::delBranch(QString mode)
  // На время удаления блокируется главное окно
  find_object<MainWindow>("mainwindow")->setDisabled(true);
  find_object<MainWindow>("mainwindow")->blockSignals(true);
-
 
  // Получение списка индексов QModelIndex выделенных элементов
  QModelIndexList selectItems=knowTreeView->selectionModel()->selectedIndexes();
@@ -1084,7 +1042,7 @@ void TreeScreen::delBranch(QString mode)
 
  
  // Если системный пароль не установлен, зашифрованные ветки удалять нельзя
- if(globalParameters.getCryptKey().size()==0)
+ if(AppContext::instance().globalParameters()->getCryptKey().size()==0)
   {
    bool disableFlag=false;
 
@@ -1114,7 +1072,6 @@ void TreeScreen::delBranch(QString mode)
       break;
 
     } // Закрылся цикл перебора всех выделенных для удаления веток
-
 
    // Если в какой-то ветке обнаружено шифрование
    if(disableFlag)
@@ -1149,7 +1106,6 @@ void TreeScreen::delBranch(QString mode)
    }
  }
 
-
  // Если есть записи, помеченные как заблокированные
  if(isSelectionContainBlockRecords)
  {
@@ -1170,7 +1126,6 @@ void TreeScreen::delBranch(QString mode)
    }
  }
 
-
  // Создается окно с вопросом, нужно удалять ветки или нет
  QString title, text, del_button;
  bool enable_question=true;
@@ -1188,7 +1143,7 @@ void TreeScreen::delBranch(QString mode)
    text=tr("Are you sure you wish to cut item <b>") + branchesName.join(", ") + tr("</b> and all sub items?");
    del_button=tr("Cut");
 
-   if(mytetraConfig.get_cutbranchconfirm()) enable_question=true;
+   if(AppContext::instance().appConfig()->get_cutbranchconfirm()) enable_question=true;
    else enable_question=false;
   }
 
@@ -1205,7 +1160,6 @@ void TreeScreen::delBranch(QString mode)
    if(messageBox.clickedButton() == deleteButton) enable_del=true;
    else enable_del=false;
   }
-
 
  // Если удаление подтверждено
  if(enable_del)
@@ -1228,7 +1182,6 @@ void TreeScreen::delBranch(QString mode)
    qDebug() << "Save new tree finish";
   }
 
-
  // Разблокируется главное окно
  find_object<MainWindow>("mainwindow")->setEnabled(true);
  find_object<MainWindow>("mainwindow")->blockSignals(false);
@@ -1241,7 +1194,6 @@ void TreeScreen::delBranch(QString mode)
  treeEmptyControl();
  treeCryptControl();
 }
-
 
 void TreeScreen::cutBranch(void)
 {
@@ -1262,13 +1214,11 @@ void TreeScreen::cutBranch(void)
   }
 }
 
-
 // Отмена вырезания: серая ветка становится обычной, данные не трогаются
 void TreeScreen::cancelCutBranch(void)
 {
  knowTreeModel->clearCutBranchId();
 }
-
 
 bool TreeScreen::copyBranch(void)
 {
@@ -1295,7 +1245,6 @@ bool TreeScreen::copyBranch(void)
         return false;
     }
 
-
     // Получение индекса выделенной ветки
     QModelIndex index=getCurrentItemIndex();
 
@@ -1307,7 +1256,6 @@ bool TreeScreen::copyBranch(void)
 
     // Получение путей ко всем подветкам
     QList<QStringList> subbranchespath=item->getAllChildrenPath();
-
 
     // Проверка, содержит ли данная ветка как шифрованные
     // так и незашифрованные данные
@@ -1339,7 +1287,6 @@ bool TreeScreen::copyBranch(void)
         return false;
     }
 
-
     // --------------------------------------
     // Копирование во внутренний буфер обмена
     // --------------------------------------
@@ -1367,7 +1314,6 @@ bool TreeScreen::copyBranch(void)
 
     return true;
 }
-
 
 // Вспомогательная функция при копировании ветки в буфер
 void TreeScreen::addBranchToClipboard(ClipboardBranch *branch_clipboard_data, QStringList path, bool is_root)
@@ -1399,7 +1345,6 @@ void TreeScreen::addBranchToClipboard(ClipboardBranch *branch_clipboard_data, QS
   }
 }
 
-
 // Вставка ветки из буфера на том же уровне, что и выбранная
 void TreeScreen::pasteBranch(void)
 {
@@ -1408,7 +1353,6 @@ void TreeScreen::pasteBranch(void)
   pasteBranchSmart(true);
 }
 
-
 // Вставка ветки из буфера в виде подветки выбранной ветки
 void TreeScreen::pasteSubbranch(void)
 {
@@ -1416,7 +1360,6 @@ void TreeScreen::pasteSubbranch(void)
 
  pasteBranchSmart(false);
 }
-
 
 void TreeScreen::pasteBranchSmart(bool is_branch)
 {
@@ -1455,13 +1398,11 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
  // не было возможности сделать другие действия
  find_object<MainWindow>("mainwindow")->setDisabled(true);
 
-
  // Извлечение объекта из внутреннего буфера обмена
  const ClipboardBranch *branch;
  branch=qobject_cast<const ClipboardBranch *>(AppContext::instance().internalClipboard()->mimeData());
  branch->print();
  branch->printIdTree();
-
 
  // Получение индекса выделенной строки дерева
  QModelIndex index=this->getCurrentItemIndex();
@@ -1472,7 +1413,6 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
   pasted_branch_id=knowTreeModel->pasteNewSiblingBranch(index, (ClipboardBranch *)branch);
  else
   pasted_branch_id=knowTreeModel->pasteNewChildBranch(index, (ClipboardBranch *)branch);
-
 
  // Установка курсора на новую созданную ветку.
  // Ветки может не быть, если вставка не удалась, тогда дальше делать нечего
@@ -1495,7 +1435,6 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
  // Разблокируется главное окно
  find_object<MainWindow>("mainwindow")->setEnabled(true);
 }
-
 
 // Вставка вырезанной ветки перемещением с сохранением идентификатора.
 // В отличие от вставки копии здесь не генерируются новые ID и не копируются
@@ -1574,12 +1513,11 @@ void TreeScreen::pasteCutBranch(bool is_branch)
  knowTreeModel->clearCutBranchId();
 }
 
-
 // Шифрование ветки
 void TreeScreen::encryptBranch(void)
 {
  // Если пароль в данной сессии не вводился
- if(globalParameters.getCryptKey().size()==0)
+ if(AppContext::instance().globalParameters()->getCryptKey().size()==0)
   {
    // Запрашивается пароль
    Password password;
@@ -1594,13 +1532,11 @@ void TreeScreen::encryptBranch(void)
   }
 }
 
-
-
 // Расшифровка ветки
 void TreeScreen::decryptBranch(void)
 {
  // Если пароль в данной сессии не вводился
- if(globalParameters.getCryptKey().size()==0)
+ if(AppContext::instance().globalParameters()->getCryptKey().size()==0)
   {
    // Запрашивается пароль
    Password password;
@@ -1614,7 +1550,6 @@ void TreeScreen::decryptBranch(void)
    decryptBranchItem(); // Ветка расшифровывается
   }
 }
-
 
 void TreeScreen::encryptBranchItem(void)
 {
@@ -1638,7 +1573,6 @@ void TreeScreen::encryptBranchItem(void)
  // Обновляеются на экране ветка и ее подветки
  updateBranchOnScreen( getCurrentItemIndex() );
 }
-
 
 void TreeScreen::decryptBranchItem(void)
 {
@@ -1665,16 +1599,15 @@ void TreeScreen::decryptBranchItem(void)
  treeCryptControl();
 }
 
-
 // Установка иконки для ветки
 void TreeScreen::setIcon(void)
 {
-  QString startDirectory=mytetraConfig.get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory;
+  QString startDirectory=AppContext::instance().appConfig()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory;
   qDebug() << "Set start directory for select icon: " << startDirectory;
 
   // Создается окно выбора файла иконки
   IconSelectDialog iconSelectDialog;
-  iconSelectDialog.setDefaultSection( mytetraConfig.getIconCurrentSectionName() );
+  iconSelectDialog.setDefaultSection( AppContext::instance().appConfig()->getIconCurrentSectionName() );
   iconSelectDialog.setPath( startDirectory );
 
   int result=iconSelectDialog.exec();
@@ -1713,13 +1646,11 @@ void TreeScreen::setIcon(void)
     saveKnowTree();
   }
 
-
   // Если текущая секция изменилась, ее имя запоминается чтобы в последующем открывать виджет с этой секцией
   if(iconSelectDialog.getCurrentSection()!="" &&
-     iconSelectDialog.getCurrentSection()!=mytetraConfig.getIconCurrentSectionName())
-   mytetraConfig.setIconCurrentSectionName( iconSelectDialog.getCurrentSection() );
+     iconSelectDialog.getCurrentSection()!=AppContext::instance().appConfig()->getIconCurrentSectionName())
+   AppContext::instance().appConfig()->setIconCurrentSectionName( iconSelectDialog.getCurrentSection() );
 }
-
 
 void TreeScreen::exportBranchToDirectory(QString exportDir)
 {
@@ -1738,7 +1669,6 @@ void TreeScreen::exportBranchToDirectory(QString exportDir)
   }
 
   TreeItem *startItem=knowTreeModel->getItem( getCurrentItemIndex() );
-
 
   // ---------------------------------------------
   // Запрос пароля, если есть зашифрованные данные
@@ -1762,7 +1692,6 @@ void TreeScreen::exportBranchToDirectory(QString exportDir)
       return;
   }
 
-
   // Экспорт данных
   bool result=knowTreeModel->exportBranchToDirectory(startItem, exportDir);
 
@@ -1771,7 +1700,6 @@ void TreeScreen::exportBranchToDirectory(QString exportDir)
   else
     showMessageBox(tr("Errors occurred while exporting."));
 }
-
 
 void TreeScreen::importBranchFromDirectory(QString importDir)
 {
@@ -1784,13 +1712,12 @@ void TreeScreen::importBranchFromDirectory(QString importDir)
 
   TreeItem *startItem=knowTreeModel->getItem( getCurrentItemIndex() );
 
-
   // -----------------------------------------------
   // Запрос пароля при импорте в зашифрованную ветку
   // -----------------------------------------------
 
   // Если импорт происходит в зашифрованную ветку, но пароль не был введен
-  if(startItem->getField("crypt")=="1" && globalParameters.getCryptKey().length()==0)
+  if(startItem->getField("crypt")=="1" && AppContext::instance().globalParameters()->getCryptKey().length()==0)
   {
     showMessageBox(tr("You are importing into an encrypted item.\nPlease click Ok and enter the password.\nAll data imported will be encrypted."));
 
@@ -1800,10 +1727,8 @@ void TreeScreen::importBranchFromDirectory(QString importDir)
       return;
   }
 
-
   // Импорт данных
   QString importNodeId=knowTreeModel->importBranchFromDirectory(startItem, importDir);
-
 
   // Если импорт данных был успешным
   if(importNodeId.count()>0)
@@ -1816,7 +1741,6 @@ void TreeScreen::importBranchFromDirectory(QString importDir)
 
   showMessageBox(tr("Item importing finished."));
 }
-
 
 // Обновление на экране ветки и подветок
 void TreeScreen::updateBranchOnScreen(const QModelIndex &index)
@@ -1840,14 +1764,13 @@ void TreeScreen::updateBranchOnScreen(const QModelIndex &index)
  }
 }
 
-
 // Вспомогательный слот, позволяющий ввести пароль на ветку в случае,
 // если в базе только одна корневая ветка и она зашифрована
 /*
 void TreeScreen::checkIfOneRootCryptItem(const QModelIndex &index)
 {
     // Если пароль доступа к зашифрованным данным не вводился в этой сессии
-    if(globalParameters.getCryptKey().length()==0) {
+    if(AppContext::instance().globalParameters()->getCryptKey().length()==0) {
 
         // Указатель на текущую выбранную ветку дерева
         TreeItem *item = knowTreeModel->getItem(index);
@@ -1878,7 +1801,6 @@ void TreeScreen::checkIfOneRootCryptItem(const QModelIndex &index)
 }
 */
 
-
 // Действия при клике на ветку дерева через selection-модель
 void TreeScreen::onKnowtreeClicked(const QModelIndex &index)
 {
@@ -1896,7 +1818,6 @@ void TreeScreen::onKnowtreeClicked(const QModelIndex &index)
         processKnowtreeClicked(index); // Основная обработка
     });
 }
-
 
 // Реальные действия при клике на ветку дерева
 void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
@@ -1941,9 +1862,7 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         lastHandledIndex = index;
     }
 
-
     // QModelIndex index = nodetreeview->selectionModel()->currentIndex();
-
 
     // Сохраняется текст в окне редактирования в соответсвующий файл
     find_object<MainWindow>("mainwindow")->saveTextarea();
@@ -1954,13 +1873,12 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
     // Все инструменты по работе с _записями_ выключаются
     find_object<RecordTableScreen>("recordTableScreen")->disableAllActions();
 
-
     // Проверяется, происходит ли клик по ветке, которая зашифрованна
     // и открывающий ее правильный пароль еще не вводился в этой сессии,
     // то есть ветку невозможно просмотреть
     bool isAccessItem=true;
     if(item->getField("crypt")=="1" and
-       globalParameters.getCryptKey().length()==0)
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
     {
         isAccessItem=false;
     }
@@ -1971,7 +1889,6 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         i.next();
         i.value()->setEnabled( isAccessItem );
     }
-
 
     // Если ветка недоступна из-за того что она зашифрована и пароль еще не вводился
     if ( !isAccessItem )
@@ -1997,7 +1914,6 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         }
     }
 
-
     if ( isAccessItem )
     {
         // Получаем указатель на данные таблицы конечных записей
@@ -2007,7 +1923,7 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         find_object<RecordTableController>("recordTableController")->setTableData(rtdata);
 
         // Устанавливается текстовый путь в таблице конечных записей для мобильного варианта интерфейса
-        if(mytetraConfig.getInterfaceMode()=="mobile")
+        if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
         {
             QStringList path=item->getPathAsName();
 
@@ -2022,7 +1938,7 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         knowTreeView->resizeColumnToContents(0);
 
         // Переключаются окна (используется для мобильного интерфейса)
-        globalParameters.getWindowSwitcher()->switchFromTreeToRecordtable();
+        AppContext::instance().globalParameters()->getWindowSwitcher()->switchFromTreeToRecordtable();
     }
 
     // this->isKnowtreeClickedWork=false;
@@ -2037,7 +1953,6 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
 
 }
 
-
 /*
 void treescreen::on_knowTreeView_repaint(void)
 {
@@ -2045,7 +1960,6 @@ void treescreen::on_knowTreeView_repaint(void)
  knowTreeView->resizeColumnToContents(0);
 }
 */
-
 
 void TreeScreen::updateSelectedBranch(void)
 {
@@ -2057,12 +1971,10 @@ void TreeScreen::updateSelectedBranch(void)
   knowTreeView->update(selectitems.at(i));
 }
 
-
 QItemSelectionModel * TreeScreen::getSelectionModel(void)
 {
  return knowTreeView->selectionModel();
 }
-
 
 void TreeScreen::setCursorToIndex(QModelIndex index)
 {
@@ -2074,7 +1986,6 @@ void TreeScreen::setCursorToIndex(QModelIndex index)
     qDebug() << "Try set cursor to bad index. Set cursor disabled.";
     return;
   }
-
 
   // Если попытка установить курсор на корень (а корень в MyTetra не отображается)
   // Это условие некорректно.
@@ -2089,7 +2000,6 @@ void TreeScreen::setCursorToIndex(QModelIndex index)
   }
   */
 
-
   // Курсор устанавливается на нужный элемент дерева
   // В desktop-варианте на сигнал currentRowChanged() будет вызван слот on_knowtree_clicked()
   knowTreeView->selectionModel()->setCurrentIndex(index,QItemSelectionModel::ClearAndSelect);
@@ -2098,11 +2008,10 @@ void TreeScreen::setCursorToIndex(QModelIndex index)
   // Поэтому по ветке должен быть сделан виртуальный клик, чтобы заполнилась таблица конечных записей
   // Метод clicked() публичный начиная с Qt5 (мобильный интерфейс возможен только в Qt5)
 #if QT_VERSION >= 0x050000 && QT_VERSION < 0x060000
-  if(mytetraConfig.getInterfaceMode()=="mobile")
+  if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
     emit knowTreeView->clicked(index);
 #endif
 }
-
 
 void TreeScreen::setCursorToId(QString nodeId)
 {
@@ -2112,7 +2021,6 @@ void TreeScreen::setCursorToId(QString nodeId)
 
   setCursorToIndex(index);
 }
-
 
 // Получение номера первого выделенного элемента
 int TreeScreen::getFirstSelectedItemIndex(void)
@@ -2126,13 +2034,11 @@ int TreeScreen::getFirstSelectedItemIndex(void)
   return (selectitems.at(0)).row(); // Индекс первого выделенного элемента
 }
 
-
 // Получение индекса текущего элемента на котором стоит курсор
 QModelIndex TreeScreen::getCurrentItemIndex(void)
 {
  return knowTreeView->selectionModel()->currentIndex();
 }
-
 
 // Метод, следящий, не обнулилось ли дерево
 // Если дерево стало пустым, данный метод добавит одну ветку
@@ -2147,7 +2053,6 @@ void TreeScreen::treeEmptyControl(void)
    insBranchProcess(QModelIndex(), tr("Rename me"), false);
   }
 }
-
 
 // Глобальный режим только чтения: мутирующие действия гаснут,
 // копирование ветки, сворачивание и поиск разрешены
@@ -2173,7 +2078,6 @@ void TreeScreen::setReadOnly(bool state)
   }
 }
 
-
 QAction *TreeScreen::toolAction(const QString &command)
 {
  if(!actionList.contains(command))
@@ -2181,7 +2085,6 @@ QAction *TreeScreen::toolAction(const QString &command)
 
  return actionList[command];
 }
-
 
 // Метод, следящий, не стало ли дерево содержать только незашифрованные записи
 // Если в дереве нет шифрования, задается вопрос, нужно ли сбросить пароль
@@ -2196,7 +2099,6 @@ void TreeScreen::treeCryptControl(void)
   }
 }
 
-
 // Сохранение дерева веток на диск
 void TreeScreen::saveKnowTree(void)
 {
@@ -2209,7 +2111,6 @@ void TreeScreen::saveKnowTree(void)
   // (панель истории) обновляются по этому сигналу
   emit treeMetadataSaved();
 }
-
 
 // Перечитывание дерева веток с диска
 // Метод возвращает true, если обнаружено что данные были изменены и перечитаны
@@ -2238,7 +2139,6 @@ bool TreeScreen::reloadKnowTree(void)
   return false;
 }
 
-
 void TreeScreen::updateLastKnowTreeData(QFileInfo fileInfo, bool isFileInfoReal)
 {
   if(isFileInfoReal==false)
@@ -2247,7 +2147,6 @@ void TreeScreen::updateLastKnowTreeData(QFileInfo fileInfo, bool isFileInfoReal)
   lastKnowTreeModifyDateTime=fileInfo.lastModified();
   lastKnowTreeSize=fileInfo.size();
 }
-
 
 // Установка фокуса на базовый виджет (на список веток дерева)
 void TreeScreen::setFocusToBaseWidget()

@@ -7,34 +7,27 @@
 
 #include "VisitHistory.h"
 #include "libraries/GlobalParameters.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 // Сколько последних визитов держать в журнале. Хватает на месяцы
 // работы, файл болтается около 60КБ и не растет. По дате не режем
 // осознанно: давний редкий визит не мусор
 #define VISIT_HISTORY_KEEP_VISITS 1000
 
-
 VisitHistory::VisitHistory(void) : loaded(false)
 {
 
 }
-
 
 VisitHistory::~VisitHistory(void)
 {
 
 }
 
-
 QString VisitHistory::filePath(void) const
 {
-    return globalParameters.getWorkDirectory()+QStringLiteral("/visithistory.log");
+    return AppContext::instance().globalParameters()->getWorkDirectory()+QStringLiteral("/visithistory.log");
 }
-
 
 void VisitHistory::ensureLoaded(void) const
 {
@@ -68,7 +61,6 @@ void VisitHistory::ensureLoaded(void) const
     }
 }
 
-
 // Записать посещение. Пустые id молча отсекаются
 void VisitHistory::logVisit(const QString &id)
 {
@@ -89,7 +81,6 @@ void VisitHistory::logVisit(const QString &id)
 
     emit visitLogged(id);
 }
-
 
 // Агрегат по журналу: визиты и последнее время для каждого id.
 // Без сортировки, порядок раскладывает панель
@@ -120,7 +111,6 @@ QList<VisitStat> VisitHistory::stats(void) const
     return aggregate.values();
 }
 
-
 // Убрать одну заметку из журнала: память чистится сразу,
 // файл переписывается целиком
 void VisitHistory::forget(const QString &id)
@@ -139,7 +129,6 @@ void VisitHistory::forget(const QString &id)
     rewriteFile();
 }
 
-
 // Очистить журнал на диске и в памяти
 void VisitHistory::clear(void)
 {
@@ -150,7 +139,6 @@ void VisitHistory::clear(void)
     if(historyFile.exists())
         historyFile.remove();
 }
-
 
 // Переписать файл целиком из памяти
 void VisitHistory::rewriteFile(void) const
@@ -169,7 +157,6 @@ void VisitHistory::rewriteFile(void) const
     }
     historyFile.close();
 }
-
 
 void VisitHistory::appendLine(const QString &line)
 {

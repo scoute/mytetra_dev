@@ -28,28 +28,23 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/LinkHelper.h"
 #include "libraries/FixedParameters.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-
+#include "libraries/AppContext.h"
 
 MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
 {
     // Конфигурирование редактора перед инициализацией
     Editor::initEnableAssembly(false); // Стандартная сборка интерфейса редактора отключается
-    Editor::initConfigFileName(globalParameters.getWorkDirectory()+"/editorconf.ini");
+    Editor::initConfigFileName(AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini");
     Editor::initEnableRandomSeed(false);
-    Editor::initDisableToolList( mytetraConfig.getHideEditorTools() );
+    Editor::initDisableToolList( AppContext::instance().appConfig()->getHideEditorTools() );
 
     // Инициализация редатора
-    if(mytetraConfig.getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
         Editor::init(Editor::WYEDIT_DESKTOP_MODE);
-    else if(mytetraConfig.getInterfaceMode()=="mobile")
+    else if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
         Editor::init(Editor::WYEDIT_MOBILE_MODE);
     else
-        criticalError("In MetaEditor constructor unknown interface mode: "+mytetraConfig.getInterfaceMode());
+        criticalError("In MetaEditor constructor unknown interface mode: "+AppContext::instance().appConfig()->getInterfaceMode());
 
     setupLabels();
     setupUI();
@@ -66,12 +61,10 @@ MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
     emit updateIndentSliderGeometry();
 }
 
-
 MetaEditor::~MetaEditor(void)
 {
 
 }
-
 
 void MetaEditor::setupSignals(void)
 {
@@ -87,14 +80,13 @@ void MetaEditor::setupSignals(void)
   }
 }
 
-
 void MetaEditor::setupLabels(void)
 {
   // Путь в дереве до данной записи в виде названий веток (только для мобильного интерфейса)
   treePath=new QLabel(this);
   treePath->setTextInteractionFlags(Qt::TextSelectableByMouse |
                                     Qt::TextSelectableByKeyboard);
-  if(mytetraConfig.getInterfaceMode()=="desktop")
+  if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
     treePath->setVisible(false);
   else
     treePath->setVisible(true);
@@ -134,7 +126,6 @@ void MetaEditor::setupLabels(void)
   labelTags->setVisible(false);
 }
 
-
 void MetaEditor::setupUI(void)
 {
  // Область текстовых меток, которые выглядят на экране как [метка1] [метка2] [метка3] ...
@@ -161,7 +152,6 @@ void MetaEditor::setupUI(void)
 
  m_attachTableScreen=new AttachTableScreen(this);
 }
-
 
 // Сборка интерфейса расширенного редактора
 void MetaEditor::metaAssembly(void)
@@ -208,14 +198,12 @@ void MetaEditor::metaAssembly(void)
 
   m_extendEditorScreen->setLayout(gridLayout);
 
-
   // Сборка виджетов в переключаемые слои
   m_metaEditorJoinLayer=new QVBoxLayout(this);
   m_metaEditorJoinLayer->addWidget(m_extendEditorScreen);
   m_metaEditorJoinLayer->addWidget(m_attachTableScreen);
 
   this->setLayout(m_metaEditorJoinLayer);
-
 
   // Границы убираются, так как данный объект будет использоваться как виджет
   QLayout *lt;
@@ -228,20 +216,17 @@ void MetaEditor::metaAssembly(void)
   switchToEditorLayout();
 }
 
-
 void MetaEditor::switchToEditorLayout(void)
 {
   m_attachTableScreen->hide(); // Чтобы не было мерцания, вначале нужно делать сокрытие текущего виджета
   m_extendEditorScreen->show();
 }
 
-
 void MetaEditor::switchToAttachLayout(void)
 {
   m_extendEditorScreen->hide();
   m_attachTableScreen->show();
 }
-
 
 // Статическая функция, обрабатывает клик в редакторе по кнопке переключения на список прикрепляемых файлов
 void MetaEditor::toAttachCallback(void)
@@ -250,7 +235,6 @@ void MetaEditor::toAttachCallback(void)
   MetaEditor *edView=find_object<MetaEditor>("editorScreen");
   edView->switchToAttachLayout();
 }
-
 
 // Слот для установки значений инфополей на экране
 void MetaEditor::setField(QString n, QString v)
@@ -262,7 +246,6 @@ void MetaEditor::setField(QString n, QString v)
   else
     criticalError("metaeditor.set_field Undestand field "+n+" with value "+v);
 }
-
 
 void MetaEditor::clearAll(void)
 {
@@ -290,13 +273,11 @@ void MetaEditor::clearAll(void)
  m_attachTableScreen->clear();
 }
 
-
 void MetaEditor::setTreePath(QString path)
 {
   treePath->setVisible(true);
   treePath->setText(tr("<b>Path: </b>")+path);
 }
-
 
 void MetaEditor::setName(QString name)
 {
@@ -304,7 +285,6 @@ void MetaEditor::setName(QString name)
   recordName->setText("<b>"+name.toHtmlEscaped()+"</b>");
   updateRecordHeaderVisibility();
 }
-
 
 void MetaEditor::setAuthor(QString author)
 {
@@ -320,16 +300,14 @@ void MetaEditor::setAuthor(QString author)
   }
 }
 
-
 // Видимость шапки из настроек. Пустой автор скрыт всегда
 void MetaEditor::updateRecordHeaderVisibility(void)
 {
-  const bool show=mytetraConfig.get_recordHeaderVisible();
+  const bool show=AppContext::instance().appConfig()->get_recordHeaderVisible();
 
   recordName->setVisible(show);
   recordAuthor->setVisible(show && !recordAuthor->text().isEmpty());
 }
-
 
 void MetaEditor::setUrl(QString url)
 {
@@ -356,12 +334,10 @@ void MetaEditor::setUrl(QString url)
   }
 }
 
-
 void MetaEditor::setTags(QString tags)
 {
  // Строка с метками запоминается в явном виде
  recordTagsText=tags;
-
 
  // Строка с метками разделяется на отдельные меки
  recordTagsTextList = recordTagsText.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
@@ -369,7 +345,6 @@ void MetaEditor::setTags(QString tags)
  // В каждой метке убираются лишние пробелы по краям
  for(int i = 0; i < recordTagsTextList.size(); ++i)
   recordTagsTextList[i]=recordTagsTextList.at(i).trimmed();
-
 
  // Очищается слой с метками
  QLayoutItem *childItem;
@@ -423,7 +398,6 @@ void MetaEditor::setTags(QString tags)
  // В правый конец горизонтального слоя виджетов с метками добавляется распорка
  recordTagsLayout->addStretch();
 
-
  // Вычисляется значение логического выражения
  bool visible = !(tags.length()==0 || recordTagsTextList.size()==0);
 
@@ -454,13 +428,11 @@ void MetaEditor::setTags(QString tags)
  recordTagsScrollArea->setFixedHeight(recordTagsContainer->sizeHint().height()+2);
 }
 
-
 // Список меток открытой записи для обновления извне
 QStringList MetaEditor::getTagsList(void) const
 {
  return recordTagsTextList;
 }
-
 
 // Метод определяет, в какой строке сетки находится переданный виджет
 // и настраивается строку сетки так, чтобы она занимала минимальное пространство
@@ -478,7 +450,6 @@ void MetaEditor::setMininizeGridRow(QWidget *widget)
     }
 }
 
-
 // Метод определяет, в какой строке сетки находится переданный виджет
 // и настраивается строку сетки так, чтобы она приняла обычное форматирование
 void MetaEditor::setNormalGridRow(QWidget *widget)
@@ -494,7 +465,6 @@ void MetaEditor::setNormalGridRow(QWidget *widget)
         // layout->setRowStretch(row, 1); // Восстанавливается растяжение
     }
 }
-
 
 // Определяется, в какой строке сетки находится виджет,
 // согласно выставленному ранее данному виджету свойству
@@ -515,7 +485,6 @@ int MetaEditor::getGridRowNumber(QWidget *widget)
 
     return row;
 }
-
 
 // Слот принимает Url метки. Url состоит из порядкового номера метки,
 // по нему восстанавливается текст метки
@@ -541,12 +510,10 @@ void MetaEditor::onClickToTag(const QString &tagNum)
  findScreen->setFindTag(tag);
 }
 
-
 void MetaEditor::onClickToUrl(const QString &link)
 {
     LinkHelper::gotoReference( link );
 }
-
 
 // Метод используется, когда запись заблокирована
 void MetaEditor::setReadOnly(bool state)
@@ -561,12 +528,10 @@ void MetaEditor::setReadOnly(bool state)
   m_attachTableScreen->setReadOnly(state);
 }
 
-
 void MetaEditor::setFocusToBaseWidget()
 {
     textArea->setFocus();
 }
-
 
 // Действующий цвет фона поля заметки. Настройка имеет приоритет,
 // пустая настройка отдает цвет темы: midnight серая бумага как
@@ -589,7 +554,6 @@ QString MetaEditor::effectiveNotePaperColor(const QString &themeName,
     return "";
 }
 
-
 // Действующий цвет шрифта поля заметки. Настройка имеет приоритет,
 // пустая настройка отдает цвет теме: midnight и modern поверх серой
 // и белой бумаги пишут черным, классические темы без переопределения
@@ -608,7 +572,6 @@ QString MetaEditor::effectiveNoteFontColor(const QString &themeName,
     return "";
 }
 
-
 // Общий stylesheet поля заметки из настроек бумаги и шрифта.
 // Свой stylesheet виджета бьет тему, поэтому кладется только при явном
 // цвете хотя бы в одной настройке. Пустые настройки полностью отдают
@@ -620,16 +583,16 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
 
     // Цвета и мозаика заметок живут только на теме Custom:
     // базовые темы всегда выглядят как есть
-    if(mytetraConfig.getInterfaceTheme()!="custom")
+    if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
         return "";
 
-    QString paperSetting=mytetraConfig.get_notePaperColor();
+    QString paperSetting=AppContext::instance().appConfig()->get_notePaperColor();
     QColor paperColor(paperSetting);
 
     if(!paperSetting.isEmpty() && paperColor.isValid())
         declarations << QString("background-color: %1;").arg(paperColor.name());
 
-    QString fontSetting=mytetraConfig.get_noteFontColor();
+    QString fontSetting=AppContext::instance().appConfig()->get_noteFontColor();
     QColor fontColor(fontSetting);
 
     if(!fontSetting.isEmpty() && fontColor.isValid())
@@ -638,14 +601,14 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
     // Фон заметок: или цвет, или мозаика. Свой файл имеет приоритет,
     // иначе встроенный тайл по индексу (0 - tx_fabric.jpg).
     // Битый свой файл откатывается на встроенный
-    if(mytetraConfig.get_themeCustomNotePaperMode()=="texture")
+    if(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()=="texture")
     {
-        QString tile=mytetraConfig.get_themeCustomNotePaperImage();
+        QString tile=AppContext::instance().appConfig()->get_themeCustomNotePaperImage();
 
         if(tile.isEmpty() || !QFileInfo(tile).isReadable())
-            tile=fixedParameters.defaultNotePaperTiles.value(
-                mytetraConfig.get_themeCustomNotePaperBuiltin(),
-                fixedParameters.defaultNotePaperTiles.value(0));
+            tile=AppContext::instance().fixedParameters()->defaultNotePaperTiles.value(
+                AppContext::instance().appConfig()->get_themeCustomNotePaperBuiltin(),
+                AppContext::instance().fixedParameters()->defaultNotePaperTiles.value(0));
 
         declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(tile);
     }
@@ -656,13 +619,11 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
     return QString("QWidget[objectName=\"textArea\"] { %1 }").arg(declarations.join(" "));
 }
 
-
 // Применение цветов поля заметки (бумага и шрифт)
 void MetaEditor::applyNoteColors(void)
 {
     textArea->setStyleSheet(noteTextAreaStyleSheet());
 }
-
 
 // Позиция курсора заметки в статусбаре. Строка логическая (абзацы
 // плюс явные разрывы <br> внутри них), колонка по видимым символам:
@@ -675,7 +636,7 @@ void MetaEditor::updateCursorLabel(void)
     if(textArea==nullptr)
         return;
 
-    QStatusBar *statusBar=globalParameters.getStatusBar();
+    QStatusBar *statusBar=AppContext::instance().globalParameters()->getStatusBar();
 
     if(statusBar==nullptr)
         return;
@@ -723,7 +684,6 @@ void MetaEditor::updateCursorLabel(void)
                              .arg(cursor.positionInBlock()+1));
 }
 
-
 void MetaEditor::retranslateUi(void)
 {
   labelUrl->setText(tr("<B>Url:</B> "));
@@ -733,5 +693,4 @@ void MetaEditor::retranslateUi(void)
 
   editorToolBarAssistant->retranslateUi();
 }
-
 

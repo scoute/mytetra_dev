@@ -10,11 +10,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/crypt/CryptService.h"
 #include "libraries/crypt/CipherBackend.h"
-
-extern AppConfig mytetraConfig;
-extern DataBaseConfig dataBaseConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 void CryptMigrate::collectCryptBranches(TreeItem *item,
                                         QList<TreeItem *> &branches)
@@ -29,7 +25,6 @@ void CryptMigrate::collectCryptBranches(TreeItem *item,
         collectCryptBranches(item->child(i), branches);
 }
 
-
 CryptMigrateResult CryptMigrate::reencryptAll(KnowTreeModel *model,
                                               QProgressDialog *progress)
 {
@@ -40,7 +35,7 @@ CryptMigrateResult CryptMigrate::reencryptAll(KnowTreeModel *model,
 
     // Крипта закрыта: ключа нет, расшифровка даст мусор.
     // Вызыватель проверяет заранее, здесь страховка
-    if(globalParameters.getCryptKey().isEmpty())
+    if(AppContext::instance().globalParameters()->getCryptKey().isEmpty())
         return result;
 
     QList<TreeItem *> branches;
@@ -52,7 +47,7 @@ CryptMigrateResult CryptMigrate::reencryptAll(KnowTreeModel *model,
         progress->setValue(0);
     }
 
-    const QByteArray key=globalParameters.getCryptKey();
+    const QByteArray key=AppContext::instance().globalParameters()->getCryptKey();
 
     for(int i=0; i<branches.size(); ++i)
     {
@@ -77,14 +72,14 @@ CryptMigrateResult CryptMigrate::reencryptAll(KnowTreeModel *model,
     // Проверочный blob пароля тоже переводится на новый шифр,
     // иначе база вечно таскает хвост старого формата
     QByteArray check=QByteArray::fromBase64(
-        dataBaseConfig.get_middle_hash_check_data().toLatin1());
+        AppContext::instance().dataBaseConfig()->get_middle_hash_check_data().toLatin1());
 
     if(!check.isEmpty())
     {
         QByteArray plain=CryptService::decryptByteArray(key, check);
 
         if(!plain.isEmpty())
-            dataBaseConfig.set_middle_hash_check_data(
+            AppContext::instance().dataBaseConfig()->set_middle_hash_check_data(
                 QString(CryptService::encryptByteArray(key, plain).toBase64()));
     }
 

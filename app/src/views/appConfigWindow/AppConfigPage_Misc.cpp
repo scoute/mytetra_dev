@@ -11,11 +11,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_Misc::AppConfigPage_Misc(QWidget *parent) : ConfigPage(parent)
 {
@@ -24,12 +20,10 @@ AppConfigPage_Misc::AppConfigPage_Misc(QWidget *parent) : ConfigPage(parent)
   assembly();
 }
 
-
 AppConfigPage_Misc::~AppConfigPage_Misc()
 {
 
 }
-
 
 void AppConfigPage_Misc::setupUi(void)
 {
@@ -38,27 +32,27 @@ void AppConfigPage_Misc::setupUi(void)
   // Блок настройки отображения отладочных сообщений в консоли
   printDebugMessages=new QCheckBox(this);
   printDebugMessages->setText(tr("Print debug messages to console"));
-  printDebugMessages->setChecked(mytetraConfig.get_printdebugmessages());
+  printDebugMessages->setChecked(AppContext::instance().appConfig()->get_printdebugmessages());
 
   // Разрешение/запрещение лога действий
   enableActionLog=new QCheckBox(this);
   enableActionLog->setText(tr("Enable action logging (experimental)"));
-  enableActionLog->setChecked(mytetraConfig.getEnableLogging());
+  enableActionLog->setChecked(AppContext::instance().appConfig()->getEnableLogging());
 
   // Разрешение/запрещение создавать пустую запись (без текста)
   enableCreateEmptyRecord=new QCheckBox(this);
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
-  enableCreateEmptyRecord->setChecked(mytetraConfig.getEnableCreateEmptyRecord());
+  enableCreateEmptyRecord->setChecked(AppContext::instance().appConfig()->getEnableCreateEmptyRecord());
 
   // Умное автосохранение: срабатывает только при реальных правках
   autosaveBox=new QGroupBox(this);
   autosaveBox->setTitle(tr("Autosave"));
   autosaveEnable=new QCheckBox(tr("Enable autosave, min"), this);
-  autosaveEnable->setChecked(mytetraConfig.get_autosaveEnable());
+  autosaveEnable->setChecked(AppContext::instance().appConfig()->get_autosaveEnable());
   autosaveInterval=new QSpinBox(this);
-  autosaveInterval->setValue(mytetraConfig.get_autosaveInterval());
+  autosaveInterval->setValue(AppContext::instance().appConfig()->get_autosaveInterval());
   autosaveInterval->setRange(1, 999);
-  autosaveInterval->setEnabled(mytetraConfig.get_autosaveEnable());
+  autosaveInterval->setEnabled(AppContext::instance().appConfig()->get_autosaveEnable());
 
   // Сетевые загрузки: ослабление проверки TLS только по явному согласию.
   // По умолчанию невалидный/самоподписанный сертификат отклоняется
@@ -68,7 +62,7 @@ void AppConfigPage_Misc::setupUi(void)
   tlsIgnoreInvalidCertificates->setText(
     tr("Allow loading with invalid or self-signed TLS certificates"));
   tlsIgnoreInvalidCertificates->setChecked(
-    mytetraConfig.get_tlsIgnoreInvalidCertificates());
+    AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates());
   tlsIgnoreInvalidCertificates->setToolTip(
     tr("Disables certificate verification for images and files downloaded "
        "from the network. This reduces protection against traffic "
@@ -85,13 +79,11 @@ void AppConfigPage_Misc::setupUi(void)
   editMyTetraConfigFile->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
 }
 
-
 void AppConfigPage_Misc::setupSignals(void)
 {
   connect(editMyTetraConfigFile, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedEditMyTetraConfigFile);
   connect(autosaveEnable, &QCheckBox::toggled, autosaveInterval, &QSpinBox::setEnabled);
 }
-
 
 void AppConfigPage_Misc::assembly(void)
 {
@@ -116,7 +108,6 @@ void AppConfigPage_Misc::assembly(void)
   networkLayout->addWidget(tlsIgnoreInvalidCertificates);
   networkBox->setLayout(networkLayout);
 
-
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(printDebugMessages);
@@ -131,15 +122,13 @@ void AppConfigPage_Misc::assembly(void)
   setLayout(centralLayout);
 }
 
-
 void AppConfigPage_Misc::onClickedEditMyTetraConfigFile(void)
 {
   // Сбрасываются в файл конфига все возможные изменения, которые, возможно еще не были записаны
-  mytetraConfig.sync();
+  AppContext::instance().appConfig()->sync();
 
-  ConfigEditorHelper::editConfigFile( globalParameters.getWorkDirectory()+"/conf.ini", 0.8 );
+  ConfigEditorHelper::editConfigFile( AppContext::instance().globalParameters()->getWorkDirectory()+"/conf.ini", 0.8 );
 }
-
 
 void AppConfigPage_Misc::retranslateUi(void)
 {
@@ -166,7 +155,6 @@ void AppConfigPage_Misc::retranslateUi(void)
   dangerBox->setTitle(tr("Danger actions (Attention!)"));
 }
 
-
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -177,32 +165,32 @@ int AppConfigPage_Misc::applyChanges(void)
   int result=0;
 
   // Сохраняется настройка отображения отладочных сообщений в консоли
-  if(mytetraConfig.get_printdebugmessages()!=printDebugMessages->isChecked())
-    mytetraConfig.set_printdebugmessages(printDebugMessages->isChecked());
+  if(AppContext::instance().appConfig()->get_printdebugmessages()!=printDebugMessages->isChecked())
+    AppContext::instance().appConfig()->set_printdebugmessages(printDebugMessages->isChecked());
 
   // Сохраняется настройка разрешения/запрещения лога действий
-  if(mytetraConfig.getEnableLogging()!=enableActionLog->isChecked())
+  if(AppContext::instance().appConfig()->getEnableLogging()!=enableActionLog->isChecked())
   {
-    mytetraConfig.setEnableLogging(enableActionLog->isChecked());
+    AppContext::instance().appConfig()->setEnableLogging(enableActionLog->isChecked());
     result=1;
   }
 
   // Сохраняется настройка возможности создания записи, не содержащей текст
-  if(mytetraConfig.getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
-    mytetraConfig.setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
+  if(AppContext::instance().appConfig()->getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
+    AppContext::instance().appConfig()->setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
 
   // Умное автосохранение: интервал подхватится сам на следующем
   // срабатывании (таймер перечитывает конфиг каждый раз)
-  if(mytetraConfig.get_autosaveEnable()!=autosaveEnable->isChecked())
-    mytetraConfig.set_autosaveEnable(autosaveEnable->isChecked());
+  if(AppContext::instance().appConfig()->get_autosaveEnable()!=autosaveEnable->isChecked())
+    AppContext::instance().appConfig()->set_autosaveEnable(autosaveEnable->isChecked());
 
-  if(mytetraConfig.get_autosaveInterval()!=autosaveInterval->value())
-    mytetraConfig.set_autosaveInterval(autosaveInterval->value());
+  if(AppContext::instance().appConfig()->get_autosaveInterval()!=autosaveInterval->value())
+    AppContext::instance().appConfig()->set_autosaveInterval(autosaveInterval->value());
 
   // Сетевые загрузки: значение читается при каждом запросе,
   // перезапуск не нужен
-  if(mytetraConfig.get_tlsIgnoreInvalidCertificates()!=tlsIgnoreInvalidCertificates->isChecked())
-    mytetraConfig.set_tlsIgnoreInvalidCertificates(tlsIgnoreInvalidCertificates->isChecked());
+  if(AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates()!=tlsIgnoreInvalidCertificates->isChecked())
+    AppContext::instance().appConfig()->set_tlsIgnoreInvalidCertificates(tlsIgnoreInvalidCertificates->isChecked());
 
   return result;
 }

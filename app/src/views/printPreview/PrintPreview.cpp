@@ -17,22 +17,17 @@
 #include "PreviewView.h"
 #include "PrintPreview.h"
 #include "libraries/ShortcutManager.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 static inline int inchesToPixels(float inches, QPaintDevice *device)
 {
     return qRound(inches * device->logicalDpiY());
 }
 
-
 static inline qreal mmToInches(double mm)
 {
     return mm*0.039370147;
 }
-
 
 PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
     : QWidget(nullptr), printer(QPrinter::HighResolution)
@@ -63,12 +58,10 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
     assembly();
 }
 
-
 PrintPreview::~PrintPreview()
 {
     delete doc; // todo: Проверить на утечку памяти, добавить объекты для удаления если необходимо
 }
-
 
 void PrintPreview::setupPrintDoc()
 {
@@ -89,7 +82,6 @@ void PrintPreview::setupPrintDoc()
     f.setPointSize(10);
     doc->setDefaultFont(f);
 }
-
 
 void PrintPreview::setupUI()
 {
@@ -115,15 +107,13 @@ void PrintPreview::setupUI()
     buttonClose->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 }
 
-
 void PrintPreview::setupShortcuts()
 {
     qDebug() << "Setup shortcut for" << staticMetaObject.className();
 
-    buttonPrint->setShortcut( shortcutManager.getKeySequence("misc-print") ); // Устанавливается шорткат
-    buttonPrint->setToolTip( shortcutManager.getKeySequenceAsText("misc-print") ); // ToolTip зависит от шортката
+    buttonPrint->setShortcut( AppContext::instance().shortcutManager()->getKeySequence("misc-print") ); // Устанавливается шорткат
+    buttonPrint->setToolTip( AppContext::instance().shortcutManager()->getKeySequenceAsText("misc-print") ); // ToolTip зависит от шортката
 }
-
 
 void PrintPreview::setupSignals()
 {
@@ -134,9 +124,8 @@ void PrintPreview::setupSignals()
     connect(buttonClose, &QToolButton::clicked, this, &PrintPreview::close);
 
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &PrintPreview::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &PrintPreview::setupShortcuts);
 }
-
 
 void PrintPreview::assembly()
 {
@@ -149,7 +138,6 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();
 
-
     // Сборка содержимого окна
     centralLayout=new QVBoxLayout();
     centralLayout->addLayout(toolsbox);
@@ -161,8 +149,6 @@ void PrintPreview::assembly()
     resize(800, 600);
 }
 
-
-
 void PrintPreview::print()
 {
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
@@ -171,7 +157,6 @@ void PrintPreview::print()
     }
     delete dlg;
 }
-
 
 void PrintPreview::pageSetup()
 {

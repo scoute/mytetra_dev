@@ -28,10 +28,7 @@
 #include "VoiceRecorderDialog.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 // Сколько мусора прогрева аналогового входа можно пропустить за
 // одну запись (мс). Потолок на случай, если за мусор принят
@@ -43,7 +40,6 @@ static const int WARMUP_MAX_DROP_MS=3000;
 // затухающим низкочастотным хвостом. Ниже фундаментальной частоты
 // мужского голоса (~85 Гц) речи нет, так что срез безопасен
 static const double DC_BLOCK_CUTOFF_HZ=40.0;
-
 
 // Батч мусора прогрева в насыщении (когда весь батч на пределе,
 // как при неподвижном DC) не пишется вовсе. Широкополосный
@@ -62,12 +58,10 @@ static bool isSaturatedChunk(const short *pcm, int samples)
     return static_cast<qreal>(saturated)/samples>=0.2;
 }
 
-
 WaveformWidget::WaveformWidget(QWidget *parent) : QWidget(parent)
 {
     setMinimumSize(260, 80);
 }
-
 
 void WaveformWidget::pushLevel(qreal level)
 {
@@ -79,19 +73,16 @@ void WaveformWidget::pushLevel(qreal level)
     update();
 }
 
-
 void WaveformWidget::clearLevels(void)
 {
     levels.clear();
     update();
 }
 
-
 int WaveformWidget::levelCount(void) const
 {
     return levels.size();
 }
-
 
 qreal WaveformWidget::maxLevel(void) const
 {
@@ -102,7 +93,6 @@ qreal WaveformWidget::maxLevel(void) const
 
     return peak;
 }
-
 
 void WaveformWidget::paintEvent(QPaintEvent *event)
 {
@@ -126,7 +116,6 @@ void WaveformWidget::paintEvent(QPaintEvent *event)
         painter.drawLine(x, middle-barHeight/2, x, middle+barHeight/2);
     }
 }
-
 
 VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent) : QDialog(parent),
     workDir(workDir),
@@ -171,7 +160,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // Подавление фона по галочке: период, на котором говорят,
     // записывается с цепочкой фильтров и гейтом. Настройка
     // хранится в конфиге, включено по умолчанию
-    noiseSuppress->setChecked(mytetraConfig.get_voiceNoteNoiseSuppress());
+    noiseSuppress->setChecked(AppContext::instance().appConfig()->get_voiceNoteNoiseSuppress());
     noiseSuppressOn=noiseSuppress->isChecked();
 
     // Свои группы: иначе autoExclusive сиблингов сбрасывает
@@ -199,7 +188,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     opusQuality->addItem(tr("Middle (32 kbit/s)"));
     opusQuality->addItem(tr("High (48 kbit/s)"));
     opusQuality->addItem(tr("Extra high (64 kbit/s)"));
-    opusQuality->setCurrentIndex(mytetraConfig.get_voiceNoteQuality());
+    opusQuality->setCurrentIndex(AppContext::instance().appConfig()->get_voiceNoteQuality());
 
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);
     deviceCombo=new MtComboBox(this);
@@ -295,7 +284,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
 
     // Предвыбор из настроек, недоступный бэкенду сбрасывается.
     // По умолчанию Opus
-    const QString defaultFormat=mytetraConfig.get_voiceNoteFormat();
+    const QString defaultFormat=AppContext::instance().appConfig()->get_voiceNoteFormat();
 
     if(defaultFormat==QStringLiteral("mp3") && mp3Available)
     {
@@ -410,7 +399,6 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
         startMonitor();
 }
 
-
 VoiceRecorderDialog::~VoiceRecorderDialog(void)
 {
     // Остановка незавершенной записи: иначе вход продолжает писать
@@ -431,24 +419,20 @@ VoiceRecorderDialog::~VoiceRecorderDialog(void)
         QFile::remove(filePath);
 }
 
-
 QString VoiceRecorderDialog::recordedFilePath(void) const
 {
     return filePath;
 }
-
 
 qint64 VoiceRecorderDialog::recordedDurationMs(void) const
 {
     return durationMs;
 }
 
-
 QMultimedia::EncodingMode VoiceRecorderDialog::encodingMode(void)
 {
     return QMultimedia::ConstantBitRateEncoding;
 }
-
 
 VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(VoiceFormat format)
 {
@@ -458,10 +442,9 @@ VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(Voi
         return {QMultimedia::NormalQuality, 0, 32000};
 
     return {QMultimedia::NormalQuality,
-            opusBitrateForQuality(mytetraConfig.get_voiceNoteQuality()),
+            opusBitrateForQuality(AppContext::instance().appConfig()->get_voiceNoteQuality()),
             48000};
 }
-
 
 int VoiceRecorderDialog::opusBitrateForQuality(int quality)
 {
@@ -487,7 +470,6 @@ int VoiceRecorderDialog::opusBitrateForQuality(int quality)
         return 32000;
     }
 }
-
 
 void VoiceRecorderDialog::applyFormat(VoiceFormat format)
 {
@@ -538,7 +520,6 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
     recorder->setAudioSettings(audioSettings);
 }
 
-
 void VoiceRecorderDialog::updateFormatInfo(void)
 {
     const VoiceQualityProfile profile=qualityProfile(currentFormat);
@@ -553,7 +534,6 @@ void VoiceRecorderDialog::updateFormatInfo(void)
             tr("Opus, %1 Hz, %2 kbit/s").arg(profile.sampleRate).arg(profile.bitRate/1000));
 }
 
-
 QString VoiceRecorderDialog::currentExtension(void) const
 {
     if(currentFormat==VoiceFormatMp3)
@@ -562,13 +542,11 @@ QString VoiceRecorderDialog::currentExtension(void) const
     return QStringLiteral(".opus");
 }
 
-
 QString VoiceRecorderDialog::autoStem(void) const
 {
     return QStringLiteral("voice-")+
            QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss"));
 }
-
 
 QString VoiceRecorderDialog::uniqueFileName(const QString &stem, const QString &extension) const
 {
@@ -587,7 +565,6 @@ QString VoiceRecorderDialog::uniqueFileName(const QString &stem, const QString &
 
     return QString();
 }
-
 
 QString VoiceRecorderDialog::userFileName(void) const
 {
@@ -613,7 +590,6 @@ QString VoiceRecorderDialog::userFileName(void) const
 
     return uniqueFileName(stem, currentExtension());
 }
-
 
 qreal VoiceRecorderDialog::bufferPeak(const QAudioBuffer &buffer)
 {
@@ -669,7 +645,6 @@ qreal VoiceRecorderDialog::bufferPeak(const QAudioBuffer &buffer)
     return qMin(peak, 1.0);
 }
 
-
 void VoiceRecorderDialog::onFormatRadio(bool checked)
 {
     if(!checked)
@@ -700,14 +675,12 @@ void VoiceRecorderDialog::onFormatRadio(bool checked)
     }
 }
 
-
 void VoiceRecorderDialog::onFileNameEdited(const QString &text)
 {
     Q_UNUSED(text);
 
     fileNameEdited=true;
 }
-
 
 void VoiceRecorderDialog::onRecordToggled(bool checked)
 {
@@ -827,7 +800,6 @@ void VoiceRecorderDialog::onRecordToggled(bool checked)
     }
 }
 
-
 // Текст кнопки записи зависит от наличия файла: повторный дубль
 // перезатирает предыдущий (прошлый файл уже стерт на старте),
 // кнопка так и говорит
@@ -844,7 +816,6 @@ void VoiceRecorderDialog::updateRecordButton(void)
         recordButton->setToolTip(QString());
     }
 }
-
 
 // Завершить запись и решить про вставку. Идемпотентно: зовут
 // и стоп кнопкой, и смена состояния рекордера
@@ -891,7 +862,6 @@ void VoiceRecorderDialog::finishRecording(void)
     insertButton->setEnabled(hasRecording);
 }
 
-
 void VoiceRecorderDialog::onDeviceChanged(int index)
 {
     Q_UNUSED(index);
@@ -908,7 +878,6 @@ void VoiceRecorderDialog::onDeviceChanged(int index)
         startMonitor();
 }
 
-
 // Доступность галочки шумоподавления: работает только на
 // собственном захвате Opus. MP3 пишет бэкенд, из его конвейера
 // проба читает, но подменить поток не может
@@ -921,7 +890,6 @@ void VoiceRecorderDialog::updateNoiseSuppressAvailable(void)
                               ? QString()
                               : tr("Noise suppression works in Opus format"));
 }
-
 
 QAudioDeviceInfo VoiceRecorderDialog::currentInputDevice(void) const
 {
@@ -936,14 +904,12 @@ QAudioDeviceInfo VoiceRecorderDialog::currentInputDevice(void) const
     return QAudioDeviceInfo::defaultInputDevice();
 }
 
-
 // Пересчет галочки подавления шума: живой флаг и настройка
 void VoiceRecorderDialog::onNoiseSuppressToggled(bool checked)
 {
     noiseSuppressOn=checked;
-    mytetraConfig.set_voiceNoteNoiseSuppress(checked);
+    AppContext::instance().appConfig()->set_voiceNoteNoiseSuppress(checked);
 }
-
 
 // Доступность выбора качества Opus: битрейт MP3 задает бэкенд,
 // на ходу не переключается. Подсказка объясняет причину блокировки
@@ -965,15 +931,13 @@ void VoiceRecorderDialog::updateOpusQualityAvailable(void)
     opusQuality->setToolTip(tip);
 }
 
-
 // Смена качества Opus: настройка и подпись параметров.
 // Писатель берет битрейт при старте записи, на ходу не применяется
 void VoiceRecorderDialog::onOpusQualityChanged(int index)
 {
-    mytetraConfig.set_voiceNoteQuality(index);
+    AppContext::instance().appConfig()->set_voiceNoteQuality(index);
     updateFormatInfo();
 }
-
 
 // Пересчет окон преобразования очистителя шума под частоту
 // записи и чистое состояние его оценок
@@ -982,7 +946,6 @@ void VoiceRecorderDialog::setupNoiseChain(int sampleRate)
     noiseSuppressor.setup(sampleRate);
 }
 
-
 // Пропуск чанка через спектральное подавление шума. Пол тянется
 // онлайн по сглаженным огибающим бинов (без подслушивания до
 // нажатия записи), фон глушится и в паузах, и под речью
@@ -990,7 +953,6 @@ void VoiceRecorderDialog::applyNoiseSuppress(short *pcm, int samples)
 {
     noiseSuppressor.process(pcm, samples);
 }
-
 
 // Договаривание формата записи с устройством и открытие самого входа:
 // общая часть монитора прогрева и старого пути (файл не открывает).
@@ -1079,7 +1041,6 @@ bool VoiceRecorderDialog::openOpusInput(bool reportStartError)
     return true;
 }
 
-
 bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
 {
     // Прошлый дубль: файл закрывается, при прогреве вход не трогается
@@ -1128,7 +1089,6 @@ bool VoiceRecorderDialog::startOpusCapture(const QString &filePath)
     return true;
 }
 
-
 void VoiceRecorderDialog::stopOpusCapture(void)
 {
     // Дубль заканчивается закрытием файла
@@ -1143,7 +1103,6 @@ void VoiceRecorderDialog::stopOpusCapture(void)
     // Старый путь: вход освобождается целиком
     stopMonitor();
 }
-
 
 // Прогрев входа: вход стримит пока открыто окно. Мусор аналогового
 // пробуждения оседает до нажатия записи, модель шума калибруется
@@ -1161,7 +1120,6 @@ void VoiceRecorderDialog::startMonitor(void)
     micMonitoring=true;
     waveform->clearLevels();
 }
-
 
 void VoiceRecorderDialog::stopMonitor(void)
 {
@@ -1197,7 +1155,6 @@ void VoiceRecorderDialog::stopMonitor(void)
     audioInput=nullptr;
     opusDevice=nullptr;
 }
-
 
 void VoiceRecorderDialog::onOpusAudioData(void)
 {
@@ -1298,7 +1255,6 @@ void VoiceRecorderDialog::onOpusAudioData(void)
     timeLabel->setText(VoiceNoteHelper::formatDuration(durationMs));
 }
 
-
 void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
 {
     Q_UNUSED(state);
@@ -1340,7 +1296,6 @@ void VoiceRecorderDialog::onOpusStateChanged(QAudio::State state)
     startMonitor();
 }
 
-
 void VoiceRecorderDialog::onStateChanged(QMediaRecorder::State state)
 {
     if(state==QMediaRecorder::RecordingState)
@@ -1354,7 +1309,6 @@ void VoiceRecorderDialog::onStateChanged(QMediaRecorder::State state)
     else if(state==QMediaRecorder::StoppedState)
         finishRecording();
 }
-
 
 void VoiceRecorderDialog::onRecorderError(QMediaRecorder::Error error)
 {
@@ -1381,14 +1335,12 @@ void VoiceRecorderDialog::onRecorderError(QMediaRecorder::Error error)
     insertButton->setEnabled(false);
 }
 
-
 void VoiceRecorderDialog::onProbeBuffer(const QAudioBuffer &buffer)
 {
     // Волна с запасом x4: сырые пики микрофона мелкие,
     // кламп до 1 внутри виджета
     waveform->pushLevel(bufferPeak(buffer)*4.0);
 }
-
 
 void VoiceRecorderDialog::onTick(void)
 {
@@ -1399,7 +1351,6 @@ void VoiceRecorderDialog::onTick(void)
 
     timeLabel->setText(VoiceNoteHelper::formatDuration(durationMs));
 }
-
 
 void VoiceRecorderDialog::onInsert(void)
 {

@@ -15,10 +15,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/GitHelper.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_History::AppConfigPage_History(QWidget *parent) : ConfigPage(parent)
 {
@@ -27,12 +24,10 @@ AppConfigPage_History::AppConfigPage_History(QWidget *parent) : ConfigPage(paren
     assembly();
 }
 
-
 AppConfigPage_History::~AppConfigPage_History()
 {
 
 }
-
 
 void AppConfigPage_History::setupUi()
 {
@@ -41,17 +36,17 @@ void AppConfigPage_History::setupUi()
     // Настройки курсора при навигации по истории
     rememberAtHistoryNavigationCheckBox=new QCheckBox(this);
     rememberAtHistoryNavigationCheckBox->setText(tr("Remember cursor position at history navigation"));
-    rememberAtHistoryNavigationCheckBox->setChecked(mytetraConfig.getRememberCursorAtHistoryNavigation());
+    rememberAtHistoryNavigationCheckBox->setChecked(AppContext::instance().appConfig()->getRememberCursorAtHistoryNavigation());
 
     rememberAtOrdinarySelectionCheckBox=new QCheckBox(this);
     rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
-    rememberAtOrdinarySelectionCheckBox->setChecked(mytetraConfig.getRememberCursorAtOrdinarySelection());
+    rememberAtOrdinarySelectionCheckBox->setChecked(AppContext::instance().appConfig()->getRememberCursorAtOrdinarySelection());
 
     // Мастер-тумблер истории заметок: без него ни снапшотов,
     // ни диалога. По умолчанию история ведется
     historyEnable=new QCheckBox(this);
     historyEnable->setText(tr("Enable note history (git must be installed)"));
-    historyEnable->setChecked(mytetraConfig.get_historyEnable());
+    historyEnable->setChecked(AppContext::instance().appConfig()->get_historyEnable());
 
     squashKeepLabel=new QLabel(tr("Keep versions:"), this);
 
@@ -66,13 +61,13 @@ void AppConfigPage_History::setupUi()
     squashKeep->addItem(QStringLiteral("500"), 500);
     squashKeep->addItem(QStringLiteral("1000"), 1000);
 
-    const int keepIndex=squashKeep->findData(mytetraConfig.get_historySquashKeep());
+    const int keepIndex=squashKeep->findData(AppContext::instance().appConfig()->get_historySquashKeep());
     squashKeep->setCurrentIndex(keepIndex>=0 ? keepIndex : squashKeep->findData(100));
 
     // Все сквош-виджеты серые без мастер-тумблера.
     // Отдельной галочки автосжатия нет: раз лимит выставлен,
     // ротация идет всегда, авто после снапшота
-    const bool squashActive=mytetraConfig.get_historyEnable();
+    const bool squashActive=AppContext::instance().appConfig()->get_historyEnable();
     squashKeep->setEnabled(squashActive);
     squashKeepLabel->setEnabled(squashActive);
 
@@ -88,7 +83,7 @@ void AppConfigPage_History::setupUi()
     squashModeGroup->addButton(squashSmartMerge, 1);
     squashModeGroup->addButton(squashBundle10, 2);
 
-    const int modeIndex=qBound(0, mytetraConfig.get_historySquashMode(), 2);
+    const int modeIndex=qBound(0, AppContext::instance().appConfig()->get_historySquashMode(), 2);
     squashModeGroup->button(modeIndex)->setChecked(true);
 
     squashModeLabel->setEnabled(squashActive);
@@ -100,7 +95,6 @@ void AppConfigPage_History::setupUi()
     updateSquashEnabled();
 }
 
-
 void AppConfigPage_History::setupSignals()
 {
     // Включение истории только при наличии git: иначе предупреждение
@@ -110,7 +104,6 @@ void AppConfigPage_History::setupSignals()
     // Серость одним слотом: мастер-тумблер гасит всю группу
     connect(historyEnable, &QCheckBox::toggled, this, &AppConfigPage_History::updateSquashEnabled);
 }
-
 
 // Единое состояние серости: без мастер-тумблера серая вся группа
 void AppConfigPage_History::updateSquashEnabled(void)
@@ -125,7 +118,6 @@ void AppConfigPage_History::updateSquashEnabled(void)
     squashSmartMerge->setEnabled(active);
     squashBundle10->setEnabled(active);
 }
-
 
 void AppConfigPage_History::onHistoryEnableToggled(bool checked)
 {
@@ -144,7 +136,6 @@ void AppConfigPage_History::onHistoryEnableToggled(bool checked)
     const QSignalBlocker blocker(historyEnable);
     historyEnable->setChecked(false);
 }
-
 
 void AppConfigPage_History::assembly()
 {
@@ -189,7 +180,6 @@ void AppConfigPage_History::assembly()
     setLayout(centralLayout);
 }
 
-
 void AppConfigPage_History::retranslateUi(void)
 {
   rememberAtHistoryNavigationCheckBox->setText(tr("Remember cursor position at history navigation"));
@@ -204,7 +194,6 @@ void AppConfigPage_History::retranslateUi(void)
   squashBundle10->setText(tr("Compress every 10 entries into one except the latest 10"));
 }
 
-
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -216,26 +205,26 @@ int AppConfigPage_History::applyChanges()
 
     // Сохраняется настройка нужно ли вспоминать позицию курсора при перемещении
     // по истории
-    if(mytetraConfig.getRememberCursorAtHistoryNavigation()!=rememberAtHistoryNavigationCheckBox->isChecked())
-      mytetraConfig.setRememberCursorAtHistoryNavigation(rememberAtHistoryNavigationCheckBox->isChecked());
+    if(AppContext::instance().appConfig()->getRememberCursorAtHistoryNavigation()!=rememberAtHistoryNavigationCheckBox->isChecked())
+      AppContext::instance().appConfig()->setRememberCursorAtHistoryNavigation(rememberAtHistoryNavigationCheckBox->isChecked());
 
     // Сохраняется настройка нужно ли пытаться вспоминать позицию курсора при
     // обычном выборе записи
-    if(mytetraConfig.getRememberCursorAtOrdinarySelection()!=rememberAtOrdinarySelectionCheckBox->isChecked())
-      mytetraConfig.setRememberCursorAtOrdinarySelection(rememberAtOrdinarySelectionCheckBox->isChecked());
+    if(AppContext::instance().appConfig()->getRememberCursorAtOrdinarySelection()!=rememberAtOrdinarySelectionCheckBox->isChecked())
+      AppContext::instance().appConfig()->setRememberCursorAtOrdinarySelection(rememberAtOrdinarySelectionCheckBox->isChecked());
 
     // Мастер-тумблер истории: выключенная история не ведется,
     // сквош-настройки при ней не при делах (серые в UI)
-    if(mytetraConfig.get_historyEnable()!=historyEnable->isChecked())
-      mytetraConfig.set_historyEnable(historyEnable->isChecked());
+    if(AppContext::instance().appConfig()->get_historyEnable()!=historyEnable->isChecked())
+      AppContext::instance().appConfig()->set_historyEnable(historyEnable->isChecked());
 
     // Сквош-лимит и стратегия. Подхватятся сами при следующем
     // снапшоте
-    if(mytetraConfig.get_historySquashKeep()!=squashKeep->currentData().toInt())
-      mytetraConfig.set_historySquashKeep(squashKeep->currentData().toInt());
+    if(AppContext::instance().appConfig()->get_historySquashKeep()!=squashKeep->currentData().toInt())
+      AppContext::instance().appConfig()->set_historySquashKeep(squashKeep->currentData().toInt());
 
-    if(mytetraConfig.get_historySquashMode()!=squashModeGroup->checkedId())
-      mytetraConfig.set_historySquashMode(qBound(0, squashModeGroup->checkedId(), 2));
+    if(AppContext::instance().appConfig()->get_historySquashMode()!=squashModeGroup->checkedId())
+      AppContext::instance().appConfig()->set_historySquashMode(qBound(0, squashModeGroup->checkedId(), 2));
 
     return result;
 }

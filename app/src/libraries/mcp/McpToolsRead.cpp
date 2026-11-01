@@ -29,14 +29,11 @@
 
 #include <QFile>
 
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
-
+#include "libraries/AppContext.h"
 
 QString McpTools::branchPathOf(TreeItem *item)
 {
@@ -45,7 +42,6 @@ QString McpTools::branchPathOf(TreeItem *item)
 
   return names.join(" / ");
 }
-
 
 QJsonObject McpTools::noteObject(Record *record, const QString &branchId, const QString &branchPath)
 {
@@ -85,12 +81,10 @@ QJsonObject McpTools::noteObject(Record *record, const QString &branchId, const 
   return note;
 }
 
-
 // Оставить только запрошенные ключи. Пустой список = весь объект.
 // Неизвестные ключи - явная ошибка, а не молчаливое dropping:
 // иначе нейронка просит text у list_notes, не получает его
 // и решает что текст прочитать нечем. Текст живет в get_note
-
 
 // Оставить только запрошенные ключи. Пустой список = весь объект.
 // Неизвестные ключи - явная ошибка, а не молчаливое dropping:
@@ -128,15 +122,12 @@ static QJsonObject filterNoteFields(const QJsonObject &note, const QStringList &
   return result;
 }
 
-
 // Одна ветка плоским объектом: id, имя, родитель, итоги из кеша.
 // Определение ниже, перед listBranches
-
 
 // Одна ветка плоским объектом: id, имя, родитель, итоги из кеша.
 // Определение ниже, перед listBranches
 static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId);
-
 
 void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId, QJsonArray &out)
 {
@@ -158,9 +149,7 @@ void McpTools::appendBranches(const QModelIndex &parent, const QString &parentId
   }
 }
 
-
 // Одна ветка плоским объектом: id, имя, родитель, итоги из кеша
-
 
 // Одна ветка плоским объектом: id, имя, родитель, итоги из кеша
 static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId)
@@ -179,7 +168,6 @@ static QJsonObject flatBranchObject(TreeItem *item, const QString &parentId)
 
   return branch;
 }
-
 
 QJsonObject McpTools::listBranches(bool recursive, const QString &parentId,
                                    QString &error)
@@ -229,7 +217,6 @@ QJsonObject McpTools::listBranches(bool recursive, const QString &parentId,
   return result;
 }
 
-
 void McpTools::collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &out)
 {
   QString branchId=item->getField("id");
@@ -252,7 +239,6 @@ void McpTools::collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &ou
     for(int i=0; i<item->childCount(); ++i)
       collectBranchNotes(item->child(i), true, out);
 }
-
 
 QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
                                 int limit, QString &error,
@@ -297,7 +283,6 @@ QJsonObject McpTools::listNotes(const QString &branchId, bool recursive,
   return result;
 }
 
-
 QString McpTools::readTextWithRetry(Record *record)
 {
   QString dir=record->getField("dir");
@@ -308,7 +293,7 @@ QString McpTools::readTextWithRetry(Record *record)
 
   if(!dir.isEmpty() && !file.isEmpty())
   {
-    fullName=mytetraConfig.get_tetradir()+"/base/"+dir+"/"+file;
+    fullName=AppContext::instance().appConfig()->get_tetradir()+"/base/"+dir+"/"+file;
     before=QFileInfo(fullName).lastModified();
   }
 
@@ -325,7 +310,6 @@ QString McpTools::readTextWithRetry(Record *record)
 
   return html;
 }
-
 
 QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &error,
                                const QStringList &fields)
@@ -388,7 +372,6 @@ QJsonObject McpTools::getNote(const QString &noteId, int maxChars, QString &erro
   return result;
 }
 
-
 static QString makeSnippet(const QString &plain, int matchPos, int matchLength)
 {
   int from=qMax(0, matchPos-MCP_SNIPPET_CONTEXT);
@@ -404,7 +387,6 @@ static QString makeSnippet(const QString &plain, int matchPos, int matchLength)
 
   return snippet;
 }
-
 
 void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit,
                                QJsonArray &noteOut, QJsonArray &branchOut)
@@ -503,7 +485,6 @@ void McpTools::searchBranch(TreeItem *item, const QString &queryLower, int limit
     searchBranch(item->child(i), queryLower, limit, noteOut, branchOut);
 }
 
-
 void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower, int limit,
                        QJsonArray &noteOut, QJsonArray &branchOut)
 {
@@ -520,7 +501,6 @@ void McpTools::searchModel(const QModelIndex &parent, const QString &queryLower,
     searchBranch(item, queryLower, limit, noteOut, branchOut);
   }
 }
-
 
 QJsonObject McpTools::searchNotes(const QString &query, int limit, QString &error)
 {
@@ -549,7 +529,6 @@ QJsonObject McpTools::searchNotes(const QString &query, int limit, QString &erro
 
   return result;
 }
-
 
 QString McpTools::htmlToPlain(const QString &html)
 {
@@ -611,7 +590,6 @@ QString McpTools::htmlToPlain(const QString &html)
   return text.trimmed();
 }
 
-
 QString McpTools::plainToHtml(const QString &plain)
 {
   QString html=plain;
@@ -625,11 +603,9 @@ QString McpTools::plainToHtml(const QString &plain)
   return html;
 }
 
-
 // Корзина готова принять файлы: есть и пишемся. Иначе удаление
 // уперлось бы в criticalError с диалогом внутри, а в headless
 // это падение процесса. Создается при отсутствии как при установке
-
 
 // Корень модели: getRootItem отдает const, модель по факту живая
 TreeItem *modelRoot(KnowTreeModel *model)
@@ -637,11 +613,9 @@ TreeItem *modelRoot(KnowTreeModel *model)
   return const_cast<TreeItem*>(model->getRootItem());
 }
 
-
 // Id сиблинга с таким именем среди детей parent (без учёта регистра,
 // пробелы по краям долой). Пусто если свободно. excludeId пропускается:
 // переименование самого себя и перенос внутри своего уровня не дубль
-
 
 // Обход всех записей базы колбэком. Файлы не трогаются
 void forEachRecord(TreeItem *item,
@@ -665,7 +639,6 @@ void forEachRecord(TreeItem *item,
     forEachRecord(item->child(i), visit);
 }
 
-
 QJsonObject McpTools::debugInfo(void)
 {
   QJsonObject result;
@@ -675,7 +648,7 @@ QJsonObject McpTools::debugInfo(void)
                     QString::number(APPLICATION_RELEASE_SUBVERSION)+"."+
                     QString::number(APPLICATION_RELEASE_MICROVERSION);
 
-  const QString tetradir=mytetraConfig.get_tetradir();
+  const QString tetradir=AppContext::instance().appConfig()->get_tetradir();
   const QString xmlPath=tetradir+"/mytetra.xml";
   const QFileInfo xmlInfo(xmlPath);
 
@@ -688,7 +661,6 @@ QJsonObject McpTools::debugInfo(void)
 
   return result;
 }
-
 
 QJsonObject McpTools::baseStats(bool detailed)
 {

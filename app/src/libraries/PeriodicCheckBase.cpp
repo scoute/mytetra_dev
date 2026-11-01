@@ -8,10 +8,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 void PeriodicCheckBase::init()
 {
@@ -22,12 +19,10 @@ void PeriodicCheckBase::init()
             Qt::QueuedConnection);
 }
 
-
 bool PeriodicCheckBase::isStartEnabled()
 {
-    return mytetraConfig.getEnablePeriodicCheckBase();
+    return AppContext::instance().appConfig()->getEnablePeriodicCheckBase();
 }
-
 
 // Действия, происходящие по таймеру
 void PeriodicCheckBase::timerEvent(QTimerEvent *event)
@@ -47,7 +42,7 @@ void PeriodicCheckBase::timerEvent(QTimerEvent *event)
     QDateTime lastAccess = lastSave > lastLoad ? lastSave : lastLoad;
 
     // Время последнего изменения файла дерева
-    QString fileName=mytetraConfig.get_tetradir()+"/mytetra.xml";
+    QString fileName=AppContext::instance().appConfig()->get_tetradir()+"/mytetra.xml";
     QFileInfo fileInfo(fileName);
     QDateTime modifyDateTime=fileInfo.lastModified();
 
@@ -61,7 +56,7 @@ void PeriodicCheckBase::timerEvent(QTimerEvent *event)
         emit doUpdateDetachedWindows();
 
         // Если разрешена выдача сообщения о том, что база данных была изменена
-        if(mytetraConfig.getEnablePeriodicCheckMessage())
+        if(AppContext::instance().appConfig()->getEnablePeriodicCheckMessage())
             showMessageBox(tr("The database was changed by external application or services.\n"
                               "MyTetra reload the database tree to keep data consistency."));
     }

@@ -30,22 +30,17 @@
 #include "models/tree/KnowTreeModel.h"
 #include "views/notePicker/NotePickerDialog.h"
 #include "views/tree/KnowTreeView.h"
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 AudioFormatter::AudioFormatter()
 {
   bubbleObject=new VoiceBubbleObject(this);
 }
 
-
 VoiceBubbleObject *AudioFormatter::bubbleHandler(void)
 {
   return bubbleObject;
 }
-
 
 void AudioFormatter::bubblePlaybackState(const QString &href, bool &playing,
                                          qint64 &posMs, qint64 &totalMs)
@@ -86,7 +81,6 @@ void AudioFormatter::bubblePlaybackState(const QString &href, bool &playing,
   }
 }
 
-
 void AudioFormatter::insertBubble(const QString &href, qint64 durationMs,
                                   const QString &fileName)
 {
@@ -115,7 +109,6 @@ void AudioFormatter::insertBubble(const QString &href, qint64 durationMs,
   cursor.insertText(QStringLiteral(" "), base);
   cursor.setCharFormat(base);
 }
-
 
 void AudioFormatter::onMicRecordClicked(void)
 {
@@ -158,7 +151,6 @@ void AudioFormatter::onMicRecordClicked(void)
   insertBubble(href, recorder.recordedDurationMs(), fileName);
 }
 
-
 void AudioFormatter::materializeBubbles(void)
 {
   QTextDocument *doc=textArea->document();
@@ -172,7 +164,6 @@ void AudioFormatter::materializeBubbles(void)
   VoiceNoteHelper::materializeVoiceLinks(doc);
   cursor.endEditBlock();
 }
-
 
 QString AudioFormatter::exportHtml(void)
 {
@@ -195,7 +186,6 @@ QString AudioFormatter::exportHtml(void)
   return html;
 }
 
-
 AudioFormatter::BubbleClickAction AudioFormatter::bubbleClickAction(qreal bubbleWidth,
                                                                      qreal offsetX,
                                                                      qreal &seekFraction)
@@ -216,7 +206,6 @@ AudioFormatter::BubbleClickAction AudioFormatter::bubbleClickAction(qreal bubble
   return BubbleClickSeek;
 }
 
-
 void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoint)
 {
   if(href.isEmpty())
@@ -226,8 +215,8 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
 
   if(!QFileInfo(filePath).isFile())
   {
-    if(globalParameters.getStatusBar()!=nullptr)
-      globalParameters.getStatusBar()->showMessage(tr("Voice file not found"), 3000);
+    if(AppContext::instance().globalParameters()->getStatusBar()!=nullptr)
+      AppContext::instance().globalParameters()->getStatusBar()->showMessage(tr("Voice file not found"), 3000);
 
     return;
   }
@@ -312,8 +301,8 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
     {
       if(!opusVoicePlayer->setFile(QFileInfo(filePath).absoluteFilePath()))
       {
-        if(globalParameters.getStatusBar()!=nullptr)
-          globalParameters.getStatusBar()->showMessage(tr("Voice file not found"), 3000);
+        if(AppContext::instance().globalParameters()->getStatusBar()!=nullptr)
+          AppContext::instance().globalParameters()->getStatusBar()->showMessage(tr("Voice file not found"), 3000);
 
         return;
       }
@@ -366,7 +355,6 @@ void AudioFormatter::onBubbleClicked(const QString &href, const QPointF &docPoin
     voicePlayer->play();
 }
 
-
 void AudioFormatter::onOpusVoiceFinished(void)
 {
   // Доиграло до конца: то же, что ветка StoppedState выше
@@ -379,7 +367,6 @@ void AudioFormatter::onOpusVoiceFinished(void)
   if(pos>=0)
     textArea->document()->markContentsDirty(pos, 1);
 }
-
 
 void AudioFormatter::onVoiceTick(void)
 {
@@ -397,7 +384,6 @@ void AudioFormatter::onVoiceTick(void)
 
   textArea->document()->markContentsDirty(pos, 1);
 }
-
 
 void AudioFormatter::onVoiceStateChanged(QMediaPlayer::State state)
 {
@@ -424,7 +410,6 @@ void AudioFormatter::onVoiceStateChanged(QMediaPlayer::State state)
   }
 }
 
-
 int AudioFormatter::findBubblePos(const QString &href) const
 {
   if(href.isEmpty())
@@ -450,7 +435,6 @@ int AudioFormatter::findBubblePos(const QString &href) const
   return -1;
 }
 
-
 bool AudioFormatter::documentHasBubbles(void) const
 {
   QTextDocument *doc=textArea->document();
@@ -466,7 +450,6 @@ bool AudioFormatter::documentHasBubbles(void) const
 
   return false;
 }
-
 
 void AudioFormatter::stopVoicePlayback(void)
 {
@@ -486,7 +469,6 @@ void AudioFormatter::stopVoicePlayback(void)
     textArea->document()->markContentsDirty(pos, 1);
 }
 
-
 QString AudioFormatter::voiceHrefUnderCursor(void) const
 {
   if(editor->cursorPositionDetector->isCursorOnReference())
@@ -502,7 +484,6 @@ QString AudioFormatter::voiceHrefUnderCursor(void) const
 
   return VoiceNoteHelper::bubbleHrefAt(textArea->document(), cursor.position());
 }
-
 
 bool AudioFormatter::selectVoiceLinkRange(const QString &href)
 {
@@ -545,7 +526,6 @@ bool AudioFormatter::selectVoiceLinkRange(const QString &href)
   return select.hasSelection();
 }
 
-
 bool AudioFormatter::selectVoiceBubbleRange(const QString &href)
 {
   if(href.isEmpty())
@@ -581,7 +561,6 @@ bool AudioFormatter::selectVoiceBubbleRange(const QString &href)
 
   return select.hasSelection();
 }
-
 
 QString AudioFormatter::renameVoiceFile(const QString &workDir,
                                                  const QString &oldHref,
@@ -658,7 +637,6 @@ QString AudioFormatter::renameVoiceFile(const QString &workDir,
     return VoiceNoteHelper::makeHref(newName);
 }
 
-
 void AudioFormatter::onRenameVoiceClicked(void)
 {
     const QString href=voiceHrefUnderCursor();
@@ -723,11 +701,10 @@ void AudioFormatter::onRenameVoiceClicked(void)
         textArea->textCursor().mergeCharFormat(format);
     }
 
-    if(globalParameters.getStatusBar()!=nullptr)
-        globalParameters.getStatusBar()->showMessage(
+    if(AppContext::instance().globalParameters()->getStatusBar()!=nullptr)
+        AppContext::instance().globalParameters()->getStatusBar()->showMessage(
             tr("Renamed to %1").arg(newName), 3000);
 }
-
 
 QString AudioFormatter::moveVoiceFileToDir(const QString &srcDir,
                                                   const QString &oldHref,
@@ -818,7 +795,6 @@ QString AudioFormatter::moveVoiceFileToDir(const QString &srcDir,
     return VoiceNoteHelper::makeHref(finalName);
 }
 
-
 bool AudioFormatter::appendVoiceLinkToTextFile(const QString &textFileName,
                                               const QString &href,
                                               qint64 durationMs,
@@ -903,7 +879,6 @@ bool AudioFormatter::appendVoiceLinkToTextFile(const QString &textFileName,
     return true;
 }
 
-
 qint64 AudioFormatter::voiceDurationUnderCursor(const QString &href) const
 {
     if(href.isEmpty())
@@ -944,7 +919,6 @@ qint64 AudioFormatter::voiceDurationUnderCursor(const QString &href) const
 
     return 0;
 }
-
 
 void AudioFormatter::onMoveVoiceClicked(void)
 {
@@ -1029,7 +1003,7 @@ void AudioFormatter::onMoveVoiceClicked(void)
         return;
     }
 
-    const QString dstDir=mytetraConfig.get_tetradir()+
+    const QString dstDir=AppContext::instance().appConfig()->get_tetradir()+
         QStringLiteral("/base/")+
         target->getField(QStringLiteral("dir"));
     const QString dstTextFile=dstDir+
@@ -1072,11 +1046,10 @@ void AudioFormatter::onMoveVoiceClicked(void)
 
     textArea->textCursor().removeSelectedText();
 
-    if(globalParameters.getStatusBar()!=nullptr)
-        globalParameters.getStatusBar()->showMessage(
+    if(AppContext::instance().globalParameters()->getStatusBar()!=nullptr)
+        AppContext::instance().globalParameters()->getStatusBar()->showMessage(
             tr("Moved to \"%1\"").arg(targetName), 3000);
 }
-
 
 void AudioFormatter::onPlayVoiceClicked(void)
 {  const QString href=voiceHrefUnderCursor();
@@ -1096,7 +1069,6 @@ void AudioFormatter::onPlayVoiceClicked(void)
     player.exec();
   }
 }
-
 
 void AudioFormatter::onShowVoiceInFolder(void)
 {
@@ -1134,7 +1106,6 @@ void AudioFormatter::onShowVoiceInFolder(void)
                              tr("Can not open directory: %1").arg(absoluteDirectory));
   }
 }
-
 
 void AudioFormatter::onDeleteVoiceClicked(void)
 {

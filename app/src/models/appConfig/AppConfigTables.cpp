@@ -11,11 +11,7 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/DiskHelper.h"
-
-extern GlobalParameters globalParameters;
-extern FixedParameters fixedParameters;
-
-
+#include "libraries/AppContext.h"
 
 QStringList AppConfig::removeParameterFromTable(QString removeName, QStringList table)
 {
@@ -42,9 +38,7 @@ QStringList AppConfig::removeParameterFromTable(QString removeName, QStringList 
     return table;
 }
 
-
 // Получение типа параметра в виде строки
-
 
 // Получение типа параметра в виде строки
 QString AppConfig::getParameterTypeFromTable(QString parameterName, QStringList table)
@@ -64,9 +58,7 @@ QString AppConfig::getParameterTypeFromTable(QString parameterName, QStringList 
     return "";
 }
 
-
 // Получение значения параметра по-умолчнию, в виде строки
-
 
 // Получение значения параметра по-умолчнию, в виде строки
 QString AppConfig::getParameterDefaultValueFromTable(QString parameterName, QStringList table)
@@ -86,9 +78,7 @@ QString AppConfig::getParameterDefaultValueFromTable(QString parameterName, QStr
     return "";
 }
 
-
 // Замена типа и значения параметра по-умолчанию
-
 
 // Замена типа и значения параметра по-умолчанию
 QStringList AppConfig::replaceParameterInTable(QString replaceName,
@@ -115,16 +105,13 @@ QStringList AppConfig::replaceParameterInTable(QString replaceName,
     return table;
 }
 
-
-
 // ------------------------------------
 // Методы для обновления версии конфига
 // ------------------------------------
 
-
 void AppConfig::update_version_process(void)
 {
-    QString configFileName=globalParameters.getWorkDirectory()+"/conf.ini";
+    QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/conf.ini";
 
     AppConfigUpdater updater;
     updater.setConfigFile(configFileName);
@@ -219,7 +206,6 @@ void AppConfig::update_version_process(void)
     }
 }
 
-
 QStringList AppConfig::get_parameter_table_1(bool withEndSignature)
 {
     // Таблица параметров
@@ -255,7 +241,6 @@ QStringList AppConfig::get_parameter_table_1(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_2(bool withEndSignature)
 {
     // Таблица параметров
@@ -273,7 +258,6 @@ QStringList AppConfig::get_parameter_table_2(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_3(bool withEndSignature)
 {
@@ -293,7 +277,6 @@ QStringList AppConfig::get_parameter_table_3(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_4(bool withEndSignature)
 {
     // Таблица параметров
@@ -312,7 +295,6 @@ QStringList AppConfig::get_parameter_table_4(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_5(bool withEndSignature)
 {
@@ -334,7 +316,6 @@ QStringList AppConfig::get_parameter_table_5(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_6(bool withEndSignature)
 {
     // Таблица параметров
@@ -353,7 +334,6 @@ QStringList AppConfig::get_parameter_table_6(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_7(bool withEndSignature)
 {
     // Таблица параметров
@@ -371,7 +351,6 @@ QStringList AppConfig::get_parameter_table_7(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_8(bool withEndSignature)
 {
@@ -393,7 +372,6 @@ QStringList AppConfig::get_parameter_table_8(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_9(bool withEndSignature)
 {
     // Таблица параметров
@@ -411,7 +389,6 @@ QStringList AppConfig::get_parameter_table_9(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
 {
@@ -438,7 +415,6 @@ QStringList AppConfig::get_parameter_table_10(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_11(bool withEndSignature)
 {
     // Таблица параметров
@@ -457,7 +433,6 @@ QStringList AppConfig::get_parameter_table_11(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_12(bool withEndSignature)
 {
@@ -478,7 +453,6 @@ QStringList AppConfig::get_parameter_table_12(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_13(bool withEndSignature)
 {
     // Таблица параметров
@@ -498,7 +472,6 @@ QStringList AppConfig::get_parameter_table_13(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_14(bool withEndSignature)
 {
     // Таблица параметров
@@ -517,7 +490,6 @@ QStringList AppConfig::get_parameter_table_14(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_15(bool withEndSignature)
 {
     // Таблица параметров
@@ -528,7 +500,7 @@ QStringList AppConfig::get_parameter_table_15(bool withEndSignature)
     table << get_parameter_table_14(false);
 
     // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
+    if (AppContext::instance().globalParameters()->getTargetOs()=="android")
         table << "uglyQssReplaceHeightForTableView" << "int" << "35"; // Так как не все параметры можно стилизовать через QSS, здесь задается высота ячейки таблицы
     else
         table << "uglyQssReplaceHeightForTableView" << "int" << "0";
@@ -538,7 +510,6 @@ QStringList AppConfig::get_parameter_table_15(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_16(bool withEndSignature)
 {
@@ -561,7 +532,6 @@ QStringList AppConfig::get_parameter_table_16(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_17(bool withEndSignature)
 {
     // Таблица параметров
@@ -572,7 +542,7 @@ QStringList AppConfig::get_parameter_table_17(bool withEndSignature)
     table << get_parameter_table_16(false);
 
     // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
+    if (AppContext::instance().globalParameters()->getTargetOs()=="android")
         table << "showSplashScreen" << "bool" << "true"; // В Андроид долгий запуск, нужно показывать сплешскрин
     else
         table << "showSplashScreen" << "bool" << "false"; // На десктопе быстрый запуск, сплешскрин только мешает
@@ -582,7 +552,6 @@ QStringList AppConfig::get_parameter_table_17(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_18(bool withEndSignature)
 {
@@ -594,7 +563,7 @@ QStringList AppConfig::get_parameter_table_18(bool withEndSignature)
     table << get_parameter_table_17(false);
 
     // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
+    if (AppContext::instance().globalParameters()->getTargetOs()=="android")
         table << "interfaceMode" << "QString" << "mobile"; // В Андроид должен быть мобильный интерфейс
     else
         table << "interfaceMode" << "QString" << "desktop"; // На десктопе должен быть интерфейс адаптированный для работы на рабочем столе
@@ -604,7 +573,6 @@ QStringList AppConfig::get_parameter_table_18(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_19(bool withEndSignature)
 {
@@ -624,7 +592,6 @@ QStringList AppConfig::get_parameter_table_19(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_20(bool withEndSignature)
 {
     // Таблица параметров
@@ -635,7 +602,7 @@ QStringList AppConfig::get_parameter_table_20(bool withEndSignature)
     table << get_parameter_table_19(false);
 
     // Новые параметры
-    if (globalParameters.getTargetOs()=="android")
+    if (AppContext::instance().globalParameters()->getTargetOs()=="android")
         table << "hideEditorTools" << "QString" << "italic,underline,monospace,alignleft,aligncenter,alignright,alignwidth,numericlist,dotlist,indentplus,indentminus,showformatting,showhtml,fontcolor,backgroundcolor,expand_edit_area,save,createtable,table_add_row,table_remove_row,table_add_col,table_remove_col,table_merge_cells,table_split_cell"; // В Андроид прячутся инструменты сложного форматирования текста
     else
         table << "hideEditorTools" << "QString" << ""; // На десктопе скрываемых кнопок редактора нет
@@ -645,7 +612,6 @@ QStringList AppConfig::get_parameter_table_20(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_21(bool withEndSignature)
 {
@@ -664,7 +630,6 @@ QStringList AppConfig::get_parameter_table_21(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_22(bool withEndSignature)
 {
     // Таблица параметров
@@ -681,7 +646,6 @@ QStringList AppConfig::get_parameter_table_22(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_23(bool withEndSignature)
 {
@@ -701,7 +665,6 @@ QStringList AppConfig::get_parameter_table_23(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_24(bool withEndSignature)
 {
     // Таблица параметров
@@ -719,7 +682,6 @@ QStringList AppConfig::get_parameter_table_24(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_25(bool withEndSignature)
 {
@@ -739,7 +701,6 @@ QStringList AppConfig::get_parameter_table_25(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_26(bool withEndSignature)
 {
     // Таблица параметров
@@ -756,7 +717,6 @@ QStringList AppConfig::get_parameter_table_26(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_27(bool withEndSignature)
 {
@@ -775,7 +735,6 @@ QStringList AppConfig::get_parameter_table_27(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_28(bool withEndSignature)
 {
     // Таблица параметров
@@ -792,7 +751,6 @@ QStringList AppConfig::get_parameter_table_28(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_29(bool withEndSignature)
 {
@@ -812,7 +770,6 @@ QStringList AppConfig::get_parameter_table_29(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_30(bool withEndSignature)
 {
     // Таблица параметров
@@ -826,13 +783,11 @@ QStringList AppConfig::get_parameter_table_30(bool withEndSignature)
     table << "checkBasePeriod" << "int" << "20";
     table << "enablePeriodicCheckMessage" << "bool" << "false";
 
-
     if (withEndSignature)
         table << "0" << "0" << "0";
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_31(bool withEndSignature)
 {
@@ -851,7 +806,6 @@ QStringList AppConfig::get_parameter_table_31(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_32(bool withEndSignature)
 {
     // Таблица параметров
@@ -868,7 +822,6 @@ QStringList AppConfig::get_parameter_table_32(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_33(bool withEndSignature)
 {
@@ -888,7 +841,6 @@ QStringList AppConfig::get_parameter_table_33(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_34(bool withEndSignature)
 {
     // Таблица параметров
@@ -905,7 +857,6 @@ QStringList AppConfig::get_parameter_table_34(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_35(bool withEndSignature)
 {
@@ -924,7 +875,6 @@ QStringList AppConfig::get_parameter_table_35(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_36(bool withEndSignature)
 {
@@ -945,7 +895,6 @@ QStringList AppConfig::get_parameter_table_36(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_37(bool withEndSignature)
 {
     // Таблица параметров
@@ -963,7 +912,6 @@ QStringList AppConfig::get_parameter_table_37(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_38(bool withEndSignature)
 {
@@ -984,7 +932,6 @@ QStringList AppConfig::get_parameter_table_38(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_39(bool withEndSignature)
 {
     // Таблица параметров
@@ -1002,7 +949,6 @@ QStringList AppConfig::get_parameter_table_39(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_40(bool withEndSignature)
 {
@@ -1025,7 +971,6 @@ QStringList AppConfig::get_parameter_table_40(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_41(bool withEndSignature)
 {
     // Таблица параметров
@@ -1035,7 +980,6 @@ QStringList AppConfig::get_parameter_table_41(bool withEndSignature)
     // Старые параметры, аналогичные версии 40
     table << get_parameter_table_40(false);
 
-
     // Пример переименования значения theme в themeName
     // Пока такое решение рабочее, но нерекомендовано
 
@@ -1044,7 +988,6 @@ QStringList AppConfig::get_parameter_table_41(bool withEndSignature)
 
     // Запоминается тема оформления в новом параметре
     // table << "interfaceTheme" << "QString" << themeName;
-
 
     // Исключаются ненужные в новой версии параметры
     table=removeParameterFromTable("theme", table);
@@ -1057,7 +1000,6 @@ QStringList AppConfig::get_parameter_table_41(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_42(bool withEndSignature)
 {
@@ -1079,7 +1021,6 @@ QStringList AppConfig::get_parameter_table_42(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
 {
     // Таблица параметров
@@ -1098,7 +1039,6 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
 {
     // Таблица параметров
@@ -1116,7 +1056,6 @@ QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
 {
@@ -1141,7 +1080,6 @@ QStringList AppConfig::get_parameter_table_45(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_46(bool withEndSignature)
 {
     // Таблица параметров
@@ -1159,7 +1097,6 @@ QStringList AppConfig::get_parameter_table_46(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_47(bool withEndSignature)
 {
     // Таблица параметров
@@ -1175,7 +1112,6 @@ QStringList AppConfig::get_parameter_table_47(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_48(bool withEndSignature)
 {
@@ -1195,7 +1131,6 @@ QStringList AppConfig::get_parameter_table_48(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_49(bool withEndSignature)
 {
     // Таблица параметров
@@ -1213,7 +1148,6 @@ QStringList AppConfig::get_parameter_table_49(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_50(bool withEndSignature)
 {
@@ -1233,7 +1167,6 @@ QStringList AppConfig::get_parameter_table_50(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_51(bool withEndSignature)
 {
     // Таблица параметров
@@ -1251,7 +1184,6 @@ QStringList AppConfig::get_parameter_table_51(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_52(bool withEndSignature)
 {
@@ -1274,7 +1206,6 @@ QStringList AppConfig::get_parameter_table_52(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_53(bool withEndSignature)
 {
     // Таблица параметров
@@ -1293,7 +1224,6 @@ QStringList AppConfig::get_parameter_table_53(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_54(bool withEndSignature)
 {
@@ -1317,7 +1247,6 @@ QStringList AppConfig::get_parameter_table_54(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_55(bool withEndSignature)
 {
     // Таблица параметров
@@ -1338,7 +1267,6 @@ QStringList AppConfig::get_parameter_table_55(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_56(bool withEndSignature)
 {
     // Таблица параметров
@@ -1357,7 +1285,6 @@ QStringList AppConfig::get_parameter_table_56(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_57(bool withEndSignature)
 {
@@ -1383,7 +1310,6 @@ QStringList AppConfig::get_parameter_table_57(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_58(bool withEndSignature)
 {
     // Таблица параметров
@@ -1405,7 +1331,6 @@ QStringList AppConfig::get_parameter_table_58(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_59(bool withEndSignature)
 {
     // Таблица параметров
@@ -1425,7 +1350,6 @@ QStringList AppConfig::get_parameter_table_59(bool withEndSignature)
     return table;
 }
 
-
 QStringList AppConfig::get_parameter_table_60(bool withEndSignature)
 {
     // Таблица параметров
@@ -1444,7 +1368,6 @@ QStringList AppConfig::get_parameter_table_60(bool withEndSignature)
 
     return table;
 }
-
 
 QStringList AppConfig::get_parameter_table_61(bool withEndSignature)
 {

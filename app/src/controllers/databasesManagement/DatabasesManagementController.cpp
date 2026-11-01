@@ -27,13 +27,7 @@
 #include "libraries/IconSelectDialog.h"
 #include "controllers/recordTable/RecordTableController.h"
 #include "views/consoleEmulator/CommandRunner.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern AppFiles mytetraFiles;
-extern DataBaseConfig dataBaseConfig;
-
+#include "libraries/AppContext.h"
 
 DatabasesManagementController::DatabasesManagementController(QObject *parent) : QObject(parent)
 {
@@ -50,19 +44,16 @@ DatabasesManagementController::DatabasesManagementController(QObject *parent) : 
     view->setModel(model);
 }
 
-
 DatabasesManagementController::~DatabasesManagementController()
 {
     delete view;
     delete model;
 }
 
-
 DatabasesManagementTable *DatabasesManagementController::getView(void)
 {
     return view;
 }
-
 
 void DatabasesManagementController::onSelectClicked()
 {
@@ -74,7 +65,7 @@ void DatabasesManagementController::onSelectClicked()
     }
 
     // Переключение возможно только если не идет синхронизация
-    if ( globalParameters.getSyncroCommandRunnner()->isRun() )
+    if ( AppContext::instance().globalParameters()->getSyncroCommandRunnner()->isRun() )
     {
         // Диалог информирования о том что в момент синхронизации переключение невозможно
         QMessageBox box;
@@ -116,7 +107,7 @@ void DatabasesManagementController::onSelectClicked()
         // todo: подумать, возможно надо в памяти хранить QMap из пути к базе
         // и ключа шифрования, и автоматически их запоминать и применять
         // в пределах одной сессии запуска MyTetra
-        globalParameters.setCryptKey( QByteArray() );
+        AppContext::instance().globalParameters()->setCryptKey( QByteArray() );
 
         // Закрытие окна управления БД
         static_cast<QWidget *>( parent() )->close();
@@ -134,7 +125,6 @@ void DatabasesManagementController::onSelectClicked()
         box.exec();
     }
 }
-
 
 bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
                                                      const QString &trashPath)
@@ -163,7 +153,6 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
         return false;
     }
 
-
     // Обнуляется модель дерева
     KnowTreeModel *knowTreeModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
     knowTreeModel->clear();
@@ -172,11 +161,11 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
     find_object<RecordTableController>("recordTableController")->setTableData(nullptr);
 
     // Изменяются пути к БД в conf.ini файле
-    mytetraConfig.set_tetradir(dbPath);
-    mytetraConfig.set_trashdir(trashPath);
+    AppContext::instance().appConfig()->set_tetradir(dbPath);
+    AppContext::instance().appConfig()->set_trashdir(trashPath);
 
     // Инициализация переменных, отвечающих за хранилище данных
-    dataBaseConfig.init();
+    AppContext::instance().dataBaseConfig()->init();
 
     // Проверяется наличие коллекции прикрепляемых к веткам иконок (и иконки создаются если они отсутствуют)
     IconSelectDialog::iconsCollectionCheck();
@@ -200,7 +189,6 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
 
     return true;
 }
-
 
 void DatabasesManagementController::onCreateClicked()
 {
@@ -296,13 +284,12 @@ void DatabasesManagementController::onCreateClicked()
     // Здесь считается что все проверки пройдены, и можно создавать БД
     // Внутри функции будут созданы подкаталоги data и trash
     // относительно пути workPath
-    mytetraFiles.createFirstAppFiles(workPath,
+    AppContext::instance().appFiles()->createFirstAppFiles(workPath,
                                      AppFiles::CreateFirstAppFilesFlags::DB |
                                      AppFiles::CreateFirstAppFilesFlags::TRASH);
 
     this->addDatabase(dbPath, trashPath);
 }
-
 
 // Добавление существующей базы
 void DatabasesManagementController::onAddClicked()
@@ -370,7 +357,6 @@ void DatabasesManagementController::onAddClicked()
         return;
     }
 
-
     // Диалог, поясняющий что нужно выбрать директорию корзины
     QMessageBox secondBox;
     secondBox.setWindowTitle(title);
@@ -411,7 +397,6 @@ void DatabasesManagementController::onAddClicked()
         return; // Выход, если была нажата отмена
     }
 
-
     // Если пользователь ошибся и выбрал в качестве директории корзины
     // ту же директорию что и директория базы данных
     if ( dbPath==trashPath )
@@ -424,7 +409,6 @@ void DatabasesManagementController::onAddClicked()
 
     this->addDatabase(dbPath, trashPath);
 }
-
 
 void DatabasesManagementController::onEditClicked()
 {
@@ -491,7 +475,6 @@ void DatabasesManagementController::onEditClicked()
         }
     }
 }
-
 
 void DatabasesManagementController::onDeleteClicked()
 {
@@ -592,7 +575,6 @@ void DatabasesManagementController::onDeleteClicked()
     view->selectRow(selectRowAfterDelete);
 }
 
-
 void DatabasesManagementController::onCopyClicked()
 {
     // Перечень индексов ячеек, которые были выбраны
@@ -629,7 +611,6 @@ void DatabasesManagementController::onCopyClicked()
     QApplication::clipboard()->setText(selectedText);
 }
 
-
 void DatabasesManagementController::onDoubleClicked(const QModelIndex &index)
 {
     if (!index.isValid())
@@ -644,7 +625,6 @@ void DatabasesManagementController::onDoubleClicked(const QModelIndex &index)
     this->onSelectClicked();
 }
 
-
 void DatabasesManagementController::addDatabase(const QString &dbPath,
                                                 const QString &trashPath)
 {
@@ -656,6 +636,4 @@ void DatabasesManagementController::addDatabase(const QString &dbPath,
     // Устанавливается выделение на новую строку
     view->selectRow(newRow);
 }
-
-
 

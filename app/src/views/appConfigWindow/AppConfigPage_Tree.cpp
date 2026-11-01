@@ -10,10 +10,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/tree/TreeScreen.h"
 #include "views/toolbarSettings/MainToolbarSettingsScreen.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_Tree::AppConfigPage_Tree(QWidget *parent) : ConfigPage(parent)
 {
@@ -22,12 +19,10 @@ AppConfigPage_Tree::AppConfigPage_Tree(QWidget *parent) : ConfigPage(parent)
   assembly();
 }
 
-
 AppConfigPage_Tree::~AppConfigPage_Tree()
 {
 
 }
-
 
 void AppConfigPage_Tree::setupUi(void)
 {
@@ -41,7 +36,7 @@ void AppConfigPage_Tree::setupUi(void)
   subtreeCount=new QRadioButton(this);
   subtreeCount->setText(tr("Its own and sub-branch notes [n][m]"));
 
-  if(mytetraConfig.get_showSubtreeCount()==false)
+  if(AppContext::instance().appConfig()->get_showSubtreeCount()==false)
   {
     ownCountOnly->setChecked(true);
     subtreeCount->setChecked(false);
@@ -61,20 +56,17 @@ void AppConfigPage_Tree::setupUi(void)
   editToolbarButtons->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
 }
 
-
 void AppConfigPage_Tree::setupSignals(void)
 {
   connect(editToolbarButtons, &QPushButton::clicked,
           this,              &AppConfigPage_Tree::onClickedEditToolbarButtons);
 }
 
-
 void AppConfigPage_Tree::onClickedEditToolbarButtons(void)
 {
   MainToolbarSettingsScreen toolbuttonsScreen(this);
   toolbuttonsScreen.exec();
 }
-
 
 void AppConfigPage_Tree::assembly(void)
 {
@@ -91,7 +83,6 @@ void AppConfigPage_Tree::assembly(void)
   setLayout(centralLayout);
 }
 
-
 void AppConfigPage_Tree::retranslateUi(void)
 {
   ownCountOnly->setText(tr("Only its own notes [n] (default)"));
@@ -101,7 +92,6 @@ void AppConfigPage_Tree::retranslateUi(void)
 
   editToolbarButtons->setText(tr("Edit toolbar buttons"));
 }
-
 
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
@@ -114,9 +104,9 @@ int AppConfigPage_Tree::applyChanges(void)
 
   // Выбор пишется в конфиг и применяется живьем:
   // отображаемые имена перечитываются без перезапуска
-  if(mytetraConfig.get_showSubtreeCount()!=subtreeCount->isChecked())
+  if(AppContext::instance().appConfig()->get_showSubtreeCount()!=subtreeCount->isChecked())
   {
-    mytetraConfig.set_showSubtreeCount(subtreeCount->isChecked());
+    AppContext::instance().appConfig()->set_showSubtreeCount(subtreeCount->isChecked());
 
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
 

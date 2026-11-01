@@ -23,10 +23,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
     treeMetadataConnected(false),
@@ -38,19 +35,16 @@ TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
     setupSignals();
 }
 
-
 TagsPanel::~TagsPanel(void)
 {
 
 }
-
 
 TagsTable::TagsTable(QWidget *parent) : QTableWidget(parent),
     maxContentWidth(QWIDGETSIZE_MAX)
 {
 
 }
-
 
 // Элемент колонки количества: сортировка числовая, а не строковая
 // (строкой "10" меньше "9"). Текст для отображения тот же — цифры
@@ -59,7 +53,6 @@ CountTableWidgetItem::CountTableWidgetItem(int count)
 {
 
 }
-
 
 bool CountTableWidgetItem::operator<(const QTableWidgetItem &other) const
 {
@@ -71,13 +64,11 @@ bool CountTableWidgetItem::operator<(const QTableWidgetItem &other) const
     return QTableWidgetItem::operator<(other);
 }
 
-
 void TagsTable::setMaxContentWidth(int width)
 {
     maxContentWidth=width;
     updateGeometry();
 }
-
 
 QSize TagsTable::sizeHint(void) const
 {
@@ -86,7 +77,6 @@ QSize TagsTable::sizeHint(void) const
 
     return hint;
 }
-
 
 void TagsPanel::setupUi(void)
 {
@@ -139,7 +129,6 @@ void TagsPanel::setupUi(void)
     tagsTable->sortByColumn(1, Qt::DescendingOrder);
 }
 
-
 void TagsPanel::assembly(void)
 {
     QVBoxLayout *centralLayout=new QVBoxLayout();
@@ -149,7 +138,6 @@ void TagsPanel::assembly(void)
 
     this->setLayout(centralLayout);
 }
-
 
 void TagsPanel::setupSignals(void)
 {
@@ -171,14 +159,12 @@ void TagsPanel::setupSignals(void)
             this,                           &TagsPanel::onSectionResized);
 }
 
-
 void TagsPanel::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
     refreshTags();
 }
-
 
 // Пересборка таблицы по всему дереву
 void TagsPanel::refreshTags(void)
@@ -335,7 +321,6 @@ void TagsPanel::refreshTags(void)
     onFilterChanged(filterEdit->text());
 }
 
-
 // Восстановить выделение метки после пересборки таблицы.
 // Ищется та же строка, затем вся таблица: метка могла съехать
 // при сортировке. Выделение программное и поиск не запускает:
@@ -377,7 +362,6 @@ void TagsPanel::restoreTagSelection(int selectedRow, const QString &selectedTag)
     }
 }
 
-
 // Пользователь подвигал границу колонки тегов: ширина запоминается
 // чтобы пересборка ее не сбрасывала, док подстраивается следом
 void TagsPanel::onSectionResized(int logicalIndex, int oldSize, int newSize)
@@ -397,7 +381,6 @@ void TagsPanel::onSectionResized(int logicalIndex, int oldSize, int newSize)
                                   +2*tagsTable->frameWidth());
 }
 
-
 // Отбор строк по подстроке без учета регистра
 void TagsPanel::onFilterChanged(const QString &text)
 {
@@ -412,7 +395,6 @@ void TagsPanel::onFilterChanged(const QString &text)
     }
 }
 
-
 // Прямые тексты новым языком. Полная пересборка заодно освежает
 // заголовок дока и строки. Сортировка и ширины колонок переживают:
 // refreshTags их не сбрасывает
@@ -423,7 +405,6 @@ void TagsPanel::retranslateUi(void)
 
     refreshTags();
 }
-
 
 // Двойной клик по тегу ищет только в поле тегов, а не слово везде
 void TagsPanel::onTagClicked(int row, int column)
@@ -446,7 +427,6 @@ void TagsPanel::onTagClicked(int row, int column)
     findScreen->setFindTag(tagItem->text());
 }
 
-
 // Собрать словарь тег->количество по ветке и подветкам.
 // Регистр сводится: пишется первое встречное написание, счет суммируется.
 // Зашифрованные ветки без пароля пропускаются как в поиске
@@ -459,7 +439,7 @@ void TagsPanel::collectTagCounts(const TreeItem *curritem,
 
     // Зашифрованная ветка без введенного пароля недоступна
     if(curritem->getField("crypt")=="1" &&
-       globalParameters.getCryptKey().length()==0)
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
         return;
 
     if(curritem->recordtableGetRowCount() > 0)
@@ -486,7 +466,6 @@ void TagsPanel::collectTagCounts(const TreeItem *curritem,
         collectTagCounts(curritem->child(i), counts, display);
 }
 
-
 // Контекстное меню строки: переименовать и удалить тег.
 // Слияние имен отложено и здесь блокируется
 void TagsPanel::onTagsContextMenu(const QPoint &pos)
@@ -510,14 +489,13 @@ void TagsPanel::onTagsContextMenu(const QPoint &pos)
         onDeleteTag();
 }
 
-
 // Переименование тега во всех записях с диалогом подтверждения.
 // Новое имя обязано быть одним тегом без разделителей. Переименование
 // в существующее имя блокируется: это слияние, оно отложено
 void TagsPanel::onRenameTag(void)
 {
     // Глобальный режим только чтения: теги не переименовываются
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
         return;
 
     int row=tagsTable->currentRow();
@@ -606,12 +584,11 @@ void TagsPanel::onRenameTag(void)
     saveBaseAndRefresh(oldLower, newSpelling);
 }
 
-
 // Удаление тега из всех записей с диалогом подтверждения
 void TagsPanel::onDeleteTag(void)
 {
     // Глобальный режим только чтения: теги не удаляются
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
         return;
 
     int row=tagsTable->currentRow();
@@ -658,7 +635,6 @@ void TagsPanel::onDeleteTag(void)
     saveBaseAndRefresh(oldLower, QString());
 }
 
-
 // Собрать записи с тегом через дерево. Пустой список значит тег уже исчез
 void TagsPanel::collectTagTargetsFromTree(const QString &tagLower,
                                           QList< QPair<TreeItem *, int> > &targets)
@@ -676,7 +652,6 @@ void TagsPanel::collectTagTargetsFromTree(const QString &tagLower,
     if(rootItem!=nullptr)
         collectTagTargets(rootItem, tagLower, targets);
 }
-
 
 // Есть ли в базе тег кроме переименовываемого. Нужно для блокировки слияния
 bool TagsPanel::tagExistsInBase(const QString &tagLower, const QString &excludeLower)
@@ -702,7 +677,6 @@ bool TagsPanel::tagExistsInBase(const QString &tagLower, const QString &excludeL
 
     return display.contains(tagLower);
 }
-
 
 // Сохранить базу, обновить панель и строку меток открытой заметки
 void TagsPanel::saveBaseAndRefresh(const QString &oldLower, const QString &newSpelling)
@@ -739,7 +713,6 @@ void TagsPanel::saveBaseAndRefresh(const QString &oldLower, const QString &newSp
         metaEditor->setTags(updated.join(", "));
 }
 
-
 // Собрать записи с тегом: пары ветка и строка таблицы.
 // Сравнение без учета регистра. Зашифрованные ветки пропускаются
 void TagsPanel::collectTagTargets(TreeItem *curritem,
@@ -751,7 +724,7 @@ void TagsPanel::collectTagTargets(TreeItem *curritem,
 
     // Зашифрованная ветка без введенного пароля недоступна
     if(curritem->getField("crypt")=="1" &&
-       globalParameters.getCryptKey().length()==0)
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
         return;
 
     if(curritem->recordtableGetRowCount() > 0)
@@ -768,7 +741,6 @@ void TagsPanel::collectTagTargets(TreeItem *curritem,
     for(int i=0; i<curritem->childCount(); i++)
         collectTagTargets(curritem->child(i), tagLower, targets);
 }
-
 
 // Заменить тег в списке целиком без учета регистра.
 // Возвращает новый список, в changed было ли изменение.
@@ -794,7 +766,6 @@ QStringList TagsPanel::replaceTagInList(const QStringList &tags,
 
     return result;
 }
-
 
 // Убрать тег из списка целиком без учета регистра.
 // Возвращает новый список, в changed было ли изменение.

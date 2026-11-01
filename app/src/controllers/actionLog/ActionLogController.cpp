@@ -13,11 +13,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "models/actionLog/ActionLogModel.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 ActionLogController::ActionLogController(QObject *parent) : QObject(parent)
 {
@@ -34,19 +30,16 @@ ActionLogController::ActionLogController(QObject *parent) : QObject(parent)
   view->setModel(model);
 }
 
-
 ActionLogController::~ActionLogController()
 {
   delete view;
   delete model;
 }
 
-
 ActionLogView *ActionLogController::getView(void)
 {
   return view;
 }
-
 
 void ActionLogController::onCopyClicked()
 {

@@ -7,10 +7,7 @@
 #include "AppConfigPage_Search.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_Search::AppConfigPage_Search(QWidget *parent) : ConfigPage(parent)
 {
@@ -19,12 +16,10 @@ AppConfigPage_Search::AppConfigPage_Search(QWidget *parent) : ConfigPage(parent)
     assembly();
 }
 
-
 AppConfigPage_Search::~AppConfigPage_Search()
 {
 
 }
-
 
 void AppConfigPage_Search::setupUi()
 {
@@ -38,18 +33,16 @@ void AppConfigPage_Search::setupUi()
     findWindowRadio=new QRadioButton(this);
     findWindowRadio->setText(tr("Separate window"));
 
-    if(mytetraConfig.get_editorFindEmbedded())
+    if(AppContext::instance().appConfig()->get_editorFindEmbedded())
       findBarRadio->setChecked(true);
     else
       findWindowRadio->setChecked(true);
 }
 
-
 void AppConfigPage_Search::setupSignals()
 {
 
 }
-
 
 void AppConfigPage_Search::assembly()
 {
@@ -72,14 +65,12 @@ void AppConfigPage_Search::assembly()
     setLayout(centralLayout);
 }
 
-
 void AppConfigPage_Search::retranslateUi(void)
 {
   findBarRadio->setText(tr("Embedded bar in note"));
   findWindowRadio->setText(tr("Separate window"));
   findInNoteBox->setTitle(tr("Find in note"));
 }
-
 
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
@@ -92,8 +83,8 @@ int AppConfigPage_Search::applyChanges()
 
     // Сохраняется выбранный вариант поиска в заметке: полоска или окно
     bool embedded=findBarRadio->isChecked();
-    if(mytetraConfig.get_editorFindEmbedded()!=embedded)
-      mytetraConfig.set_editorFindEmbedded(embedded);
+    if(AppContext::instance().appConfig()->get_editorFindEmbedded()!=embedded)
+      AppContext::instance().appConfig()->set_editorFindEmbedded(embedded);
 
     return result;
 }

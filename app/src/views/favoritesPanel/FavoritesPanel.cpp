@@ -29,11 +29,7 @@
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
     treeMetadataConnected(false),
@@ -63,12 +59,10 @@ FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
     }
 }
 
-
 FavoritesPanel::~FavoritesPanel(void)
 {
 
 }
-
 
 void FavoritesPanel::setupUi(void)
 {
@@ -109,7 +103,6 @@ void FavoritesPanel::setupUi(void)
     setAcceptDrops(true);
 }
 
-
 void FavoritesPanel::assembly(void)
 {
     QHBoxLayout *headerLayout=new QHBoxLayout();
@@ -135,7 +128,6 @@ void FavoritesPanel::assembly(void)
     setLayout(panelLayout);
 }
 
-
 // Ручной драг границы: список наливается на всю выставленную
 // высоту вместо компактного содержимого. Обратно в компакт
 // только перезапуском: пересборки режим не трогают
@@ -158,7 +150,6 @@ void FavoritesPanel::setUserResized(void)
     setMaximumHeight(QWIDGETSIZE_MAX);
 }
 
-
 void FavoritesPanel::setupSignals(void)
 {
     // Одинарный клик прыгает: панель это лаунчер, а не таблица
@@ -175,14 +166,12 @@ void FavoritesPanel::setupSignals(void)
 
 }
 
-
 void FavoritesPanel::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
     refreshFavorites();
 }
-
 
 // Та же ноша что тащит дерево из таблицы записей.
 // Чужие данные (текст, файлы, ветки) панели не нужны
@@ -193,7 +182,6 @@ bool FavoritesPanel::canAcceptRecordsDrop(const QMimeData *mimeData) const
 
     return mimeData->hasFormat(FixedParameters::appTextId+QStringLiteral("/records"));
 }
-
 
 void FavoritesPanel::dragEnterEvent(QDragEnterEvent *event)
 {
@@ -206,7 +194,6 @@ void FavoritesPanel::dragEnterEvent(QDragEnterEvent *event)
     }
 }
 
-
 void FavoritesPanel::dragMoveEvent(QDragMoveEvent *event)
 {
     if(canAcceptRecordsDrop(event->mimeData()))
@@ -217,7 +204,6 @@ void FavoritesPanel::dragMoveEvent(QDragMoveEvent *event)
     else
         event->ignore();
 }
-
 
 // Брошенная запись становится избранной. Список пересобирается
 // сигналом хранилища, отдельное обновление не нужно
@@ -243,14 +229,12 @@ void FavoritesPanel::dropEvent(QDropEvent *event)
     event->acceptProposedAction();
 }
 
-
 // Обновить прямые тексты новым языком. Вызывается из
 // MainWindow::retranslateUi
 void FavoritesPanel::retranslateUi(void)
 {
     refreshFavorites();
 }
-
 
 // Любое сохранение метаданных пересобирает список. Видимость решает
 // сам refresh: скрытая пустая панель так сама показывается при
@@ -260,14 +244,12 @@ void FavoritesPanel::onTreeMetadataSaved(void)
     refreshFavorites();
 }
 
-
 // Звездочки из меню записей и настроек: список пересобирается,
 // сохранение дерева не требуется
 void FavoritesPanel::onFavoritesChanged(void)
 {
     refreshFavorites();
 }
-
 
 void FavoritesPanel::onNoteClicked(QListWidgetItem *item)
 {
@@ -281,14 +263,12 @@ void FavoritesPanel::onNoteClicked(QListWidgetItem *item)
     goToNote(item->data(Qt::UserRole).toString());
 }
 
-
 // Дабл-клик открывает заметку тем же прыжком что одинарный.
 // Мертвые и пустые отсекаются внутри onNoteClicked
 void FavoritesPanel::onNoteDoubleClicked(QListWidgetItem *item)
 {
     onNoteClicked(item);
 }
-
 
 // Прыжок к заметке через готовый механизм позиционирования
 void FavoritesPanel::goToNote(const QString &id)
@@ -310,7 +290,6 @@ void FavoritesPanel::goToNote(const QString &id)
 
     mainWindow->setTreeAndRecordtablePositions(path, id);
 }
-
 
 void FavoritesPanel::onFavoritesContextMenu(const QPoint &pos)
 {
@@ -342,7 +321,6 @@ void FavoritesPanel::onFavoritesContextMenu(const QPoint &pos)
         onRemoveFavorite();
 }
 
-
 void FavoritesPanel::onRemoveFavorite(void)
 {
     if(contextNoteId.isEmpty())
@@ -354,7 +332,6 @@ void FavoritesPanel::onRemoveFavorite(void)
     contextNoteId.clear();
 }
 
-
 // Высота строки списка. Намеренно от шрифта, а не от живой
 // строки: иначе пол прыгает в момент добавления первой записи
 // (эстимейт по шрифту и реальная строка почти никогда не равны,
@@ -364,7 +341,6 @@ int FavoritesPanel::favoritesRowHeight(void) const
 {
     return favoritesList->fontMetrics().height()+2;
 }
-
 
 // Пол панели: шапка плюс две строки списка. Сплиттер уважает
 // minimumHeight детей, поэтому границу выше двух строк поднять
@@ -381,7 +357,6 @@ void FavoritesPanel::updateMinimumHeight(void)
 
     setMinimumHeight(headerHeight+spacing+listMin);
 }
-
 
 // Высота списка ровно по строкам с потолком 180: пустого вьюпорта
 // не бывает ни при каком размере панели. Пол выступает полом
@@ -402,7 +377,6 @@ void FavoritesPanel::updateListHeight(void)
     favoritesList->setMaximumHeight(qMin(qMax(listHeight, favoritesList->minimumHeight()), 180));
 }
 
-
 // Высота панели ровно под контент: шапка плюс высота списка.
 // Иначе лишний простор забирает хвостовая распорка и между
 // списком и деревом висит серая полоса (видно при добавлении
@@ -418,7 +392,6 @@ void FavoritesPanel::updatePanelHeight(void)
 
     setMaximumHeight(headerHeight+spacing+favoritesList->maximumHeight());
 }
-
 
 // Посадка секции сплиттера ровно под панель. Сплиттер сам за
 // сменой min/max не следит: после ужимки потолка секция остается
@@ -485,7 +458,6 @@ void FavoritesPanel::syncSplitterToContent(void)
     m_syncingSplitter=false;
 }
 
-
 // Пересборка списка: id берутся из хранилища, названия и ветки
 // резолвятся вживую (ветку могли переименовать или переместить).
 // Мертвые id (запись не найдена: удалена или подменена база)
@@ -534,7 +506,7 @@ void FavoritesPanel::refreshFavorites(void)
 
                 if(branchItem!=nullptr &&
                    branchItem->getField(QStringLiteral("crypt"))==QStringLiteral("1") &&
-                   globalParameters.getCryptKey().length()==0)
+                   AppContext::instance().globalParameters()->getCryptKey().length()==0)
                 {
                     locked=true;
                     break;
@@ -609,7 +581,7 @@ void FavoritesPanel::refreshFavorites(void)
 
     // Панель видна всегда пока фича включена, даже пустая:
     // иначе непонятно куда делась звездочка из меню
-    if(!mytetraConfig.get_favoritesEnabled())
+    if(!AppContext::instance().appConfig()->get_favoritesEnabled())
         setVisible(false);
     else if(!isVisible())
         setVisible(true);

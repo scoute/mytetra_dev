@@ -6,9 +6,7 @@
 #include "monocypher.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
-
-extern DataBaseConfig dataBaseConfig;
-
+#include "libraries/AppContext.h"
 
 // Параметры KDF продакшена: 64 МБ памяти, 3 прохода, 1 поток.
 // Разовый лаг секунды на ввод пароля, перебору больно
@@ -24,14 +22,12 @@ static const int wrappedDekSize=48;
 static const int dataNonceSize=24;
 static const int tagSize=16;
 
-
 // KEK сессии: Argon2id считается раз, дальше кэш.
 // Сброс при смене пароля или мастер-соли
 static QByteArray sessionKekKey;
 static QByteArray sessionKekSalt;
 static unsigned char sessionKekBuf[32];
 static bool sessionKekValid=false;
-
 
 static QByteArray randomBytes(int size)
 {
@@ -49,7 +45,6 @@ static QByteArray randomBytes(int size)
     return out;
 }
 
-
 // Мастер-соль базы: генерируется один раз при первом шифровании,
 // сразу синкается (потеря после шифрования = потеря данных).
 // При расшифровке соль НЕ создается: иначе потерянная соль молча
@@ -57,7 +52,7 @@ static QByteArray randomBytes(int size)
 // createIfMissing=false -> пустой результат, вызывающий код обязан отказать.
 static QByteArray masterSalt(bool createIfMissing)
 {
-    QByteArray salt=QByteArray::fromBase64(dataBaseConfig.get_cryptSalt().toLatin1());
+    QByteArray salt=QByteArray::fromBase64(AppContext::instance().dataBaseConfig()->get_cryptSalt().toLatin1());
 
     if(salt.size()!=16)
     {
@@ -65,12 +60,11 @@ static QByteArray masterSalt(bool createIfMissing)
             return QByteArray();
 
         salt=randomBytes(16);
-        dataBaseConfig.set_cryptSalt(QString::fromLatin1(salt.toBase64()));
+        AppContext::instance().dataBaseConfig()->set_cryptSalt(QString::fromLatin1(salt.toBase64()));
     }
 
     return salt;
 }
-
 
 // KEK сессии: Argon2id считается раз на пару (ключ, соль).
 // Пустой ключ или отсутствующая соль при расшифровке - отказ,
@@ -118,12 +112,10 @@ static QByteArray sessionKek(const QByteArray &key, bool createSalt)
     return QByteArray(reinterpret_cast<char *>(sessionKekBuf), 32);
 }
 
-
 QString XChaChaCipherBackend::id(void) const
 {
     return QString::fromLatin1(CIPHER_XCHACHA);
 }
-
 
 QByteArray XChaChaCipherBackend::encryptBytes(const QByteArray &key,
                                               const QByteArray &data)
@@ -194,7 +186,6 @@ QByteArray XChaChaCipherBackend::encryptBytes(const QByteArray &key,
 
     return result;
 }
-
 
 QByteArray XChaChaCipherBackend::decryptBytes(const QByteArray &key,
                                               const QByteArray &data)

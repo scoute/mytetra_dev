@@ -8,16 +8,13 @@
 #include "libraries/wyedit/EditorConfig.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 EditorToolbarSettingsAvailableToolsModel::EditorToolbarSettingsAvailableToolsModel(QObject *parent) :
     EditorToolbarSettingsAbstractModel(parent)
 {
 
 }
-
 
 void EditorToolbarSettingsAvailableToolsModel::init()
 {
@@ -47,7 +44,7 @@ void EditorToolbarSettingsAvailableToolsModel::init()
             QStandardItem *item=new QStandardItem(command);
             item->setIcon( editorToolBarAssistant->getIcon(command) );
             item->setData( command, Qt::UserRole );
-            item->setData( shortcutManager.getDescription( "editor-"+command), Qt::DisplayRole );
+            item->setData( AppContext::instance().shortcutManager()->getDescription( "editor-"+command), Qt::DisplayRole );
             this->appendRow(item); // Элемент отдается во владение модели
         }
     }

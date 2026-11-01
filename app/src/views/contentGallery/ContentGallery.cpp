@@ -42,10 +42,7 @@
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 // Пункт списка с числовой сортировкой: размер и дата сортируются
 // по значению из UserRole, а не по отображаемому тексту
@@ -64,7 +61,6 @@ public:
         return data(Qt::UserRole).toLongLong() < other.data(Qt::UserRole).toLongLong();
     }
 };
-
 
 ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(parent),
     galleryMode(mode)
@@ -162,12 +158,10 @@ ContentGallery::ContentGallery(GalleryMode mode, QWidget *parent) : QDialog(pare
             this,      &ContentGallery::onListCellDoubleClicked);
 }
 
-
 ContentGallery::~ContentGallery(void)
 {
 
 }
-
 
 // Размер ячейки-места под картинку по позиции ползунка.
 // Слева крупные ячейки, справа мелкие. Сколько влезет в строку
@@ -186,7 +180,6 @@ int ContentGallery::tileSize(int sliderPos)
     return sizes[sliderPos];
 }
 
-
 void ContentGallery::showEvent(QShowEvent *event)
 {
     QDialog::showEvent(event);
@@ -194,14 +187,12 @@ void ContentGallery::showEvent(QShowEvent *event)
     refreshGallery();
 }
 
-
 void ContentGallery::resizeEvent(QResizeEvent *event)
 {
     QDialog::resizeEvent(event);
 
     layoutGrid();
 }
-
 
 void ContentGallery::onTileSizeChanged(int sliderPos)
 {
@@ -221,7 +212,6 @@ void ContentGallery::onTileSizeChanged(int sliderPos)
     layoutGrid();
 }
 
-
 // Переключение плитки и списка. Слайдер работает только в плитке
 void ContentGallery::onTilesViewSelected(bool checked)
 {
@@ -230,12 +220,10 @@ void ContentGallery::onTilesViewSelected(bool checked)
     tileCountLabel->setEnabled(checked);
 }
 
-
 void ContentGallery::onScrollChanged(void)
 {
     updateVisibleWindow();
 }
-
 
 // Перестроить сетку и подгрузить видимое окно. Размер ячейки
 // задает ползунок, заполнение строки берет на себя потоковая
@@ -257,7 +245,6 @@ void ContentGallery::layoutGrid(void)
 
     updateVisibleWindow();
 }
-
 
 // Собрать галерею заново проходом по базе
 void ContentGallery::refreshGallery(void)
@@ -304,7 +291,6 @@ void ContentGallery::refreshGallery(void)
     layoutGrid();
 }
 
-
 // Собрать картинки базы проходом по дереву в порядке веток.
 // Зашифрованные ветки без пароля пропускаются как в поиске
 void ContentGallery::collectGalleryImages(const TreeItem *curritem,
@@ -316,7 +302,7 @@ void ContentGallery::collectGalleryImages(const TreeItem *curritem,
 
     // Зашифрованная ветка без введенного пароля недоступна
     if(curritem->getField("crypt")=="1" &&
-       globalParameters.getCryptKey().length()==0)
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
         return;
 
     QStringList itemPath=branchPath;
@@ -331,7 +317,7 @@ void ContentGallery::collectGalleryImages(const TreeItem *curritem,
 
         for(int i=0; i<static_cast<int>(recordTable->size()); i++)
         {
-            const QString recordDir=mytetraConfig.get_tetradir()
+            const QString recordDir=AppContext::instance().appConfig()->get_tetradir()
                                     +"/base/"
                                     +recordTable->getField("dir", i);
 
@@ -354,7 +340,6 @@ void ContentGallery::collectGalleryImages(const TreeItem *curritem,
         collectGalleryImages(curritem->child(i), itemPath, images);
 }
 
-
 // Собрать прикрепленные файлы базы тем же проходом.
 // Только файлы на диске: ссылки без локального файла пропускаются.
 // Таблица берется указателем: копирование AttachTableData
@@ -368,7 +353,7 @@ void ContentGallery::collectAttachedFiles(const TreeItem *curritem,
 
     // Зашифрованная ветка без введенного пароля недоступна
     if(curritem->getField("crypt")=="1" &&
-       globalParameters.getCryptKey().length()==0)
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
         return;
 
     QStringList itemPath=branchPath;
@@ -413,7 +398,6 @@ void ContentGallery::collectAttachedFiles(const TreeItem *curritem,
         collectAttachedFiles(curritem->child(i), itemPath, images);
 }
 
-
 // Графические файлы каталога записи, кроме текста заметки.
 // Имена файлов на диске, а не отображаемые: у вставленных картинок
 // имена технические, их и показываем как есть
@@ -434,7 +418,6 @@ QStringList ContentGallery::recordImageFiles(const QString &recordDir)
 
     return files;
 }
-
 
 // Подгрузить [первый-20, последний+20], остальное выгрузить.
 // В памяти только видимое окно с запасом, старые выгружаются
@@ -505,7 +488,6 @@ void ContentGallery::updateVisibleWindow(void)
         }
     }
 }
-
 
 // Загрузить уменьшенную картинку в пункт.
 // Чтение идет через QImageReader сразу в размер плитки:
@@ -600,7 +582,6 @@ void ContentGallery::loadItemIcon(QListWidgetItem *item, int tile)
     item->setIcon(QIcon(tilePixmap));
 }
 
-
 // Клик прыгает в заметку с картинкой
 void ContentGallery::onItemClicked(QListWidgetItem *item)
 {
@@ -615,7 +596,6 @@ void ContentGallery::onItemClicked(QListWidgetItem *item)
     jumpToImage(galleryImages.at(index));
 }
 
-
 // Прыгнуть в заметку по данным пункта
 void ContentGallery::jumpToImage(const GalleryImage &image) const
 {
@@ -626,7 +606,6 @@ void ContentGallery::jumpToImage(const GalleryImage &image) const
 
     mainWindow->setTreeAndRecordtablePositions(image.branchPath, image.recordId);
 }
-
 
 // Клик в списке прыгает в заметку
 void ContentGallery::onListCellClicked(int row, int column)
@@ -641,7 +620,6 @@ void ContentGallery::onListCellClicked(int row, int column)
     jumpToImage(galleryImageFromItem(item));
 }
 
-
 // Двойной клик в списке открывает по режиму
 void ContentGallery::onListCellDoubleClicked(int row, int column)
 {
@@ -654,7 +632,6 @@ void ContentGallery::onListCellDoubleClicked(int row, int column)
 
     openGalleryImage(galleryImageFromItem(item));
 }
-
 
 // Собрать данные пункта списка обратно в структуру.
 // Индексы строк после сортировки не годятся, поэтому путь,
@@ -674,7 +651,6 @@ GalleryImage ContentGallery::galleryImageFromItem(QTableWidgetItem *item) const
     return image;
 }
 
-
 // Двойной клик: картинку крупно, файл открыть
 void ContentGallery::onItemDoubleClicked(QListWidgetItem *item)
 {
@@ -688,7 +664,6 @@ void ContentGallery::onItemDoubleClicked(QListWidgetItem *item)
 
     openGalleryImage(galleryImages.at(index));
 }
-
 
 // Открыть по режиму: картинку в просмотрщик, файл наружу.
 // Текстовый файл показывается встроенным просмотрщиком текста
@@ -709,7 +684,6 @@ void ContentGallery::openGalleryImage(const GalleryImage &image) const
         openAttachedFile(image);
 }
 
-
 // Открыть прикрепленный файл системным обработчиком.
 // Путь абсолютный: относительный file-URL файловый менеджер не открывает
 void ContentGallery::openAttachedFile(const GalleryImage &image) const
@@ -729,7 +703,6 @@ void ContentGallery::openAttachedFile(const GalleryImage &image) const
                                  tr("Can not open file: %1").arg(image.imagePath));
     }
 }
-
 
 // Показать текстовый файл встроенным просмотрщиком.
 // Читаются первые 200КБ как UTF-8: бинарные форматы (pdf, doc)
@@ -769,7 +742,6 @@ void ContentGallery::openTextViewer(const GalleryImage &image) const
     viewer->exec();
 }
 
-
 // Открыть картинку крупно в модальном просмотрщике с прокруткой
 void ContentGallery::openImageViewer(const GalleryImage &image) const
 {
@@ -807,7 +779,6 @@ void ContentGallery::openImageViewer(const GalleryImage &image) const
     viewer->setLayout(viewerLayout);
     viewer->exec();
 }
-
 
 // Заполнить список файлов: имя, размер, тип, дата. Сортировка
 // кликом по заголовку, числа и даты сортируются как числа.
@@ -855,7 +826,6 @@ void ContentGallery::fillFilesList(void)
     filesList->setSortingEnabled(true);
 }
 
-
 // Человекочитаемый размер файла
 QString ContentGallery::formatFileSize(qint64 bytes)
 {
@@ -867,7 +837,6 @@ QString ContentGallery::formatFileSize(qint64 bytes)
 
     return QString::number(bytes/(1024*1024))+QStringLiteral(" MB");
 }
-
 
 // Тумба текстового файла: белая страница с первыми строками содержимого.
 // Читаются первые 4КБ, строк влезает сколько влезает. Пустой pixmap

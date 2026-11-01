@@ -5,22 +5,17 @@
 
 #include "views/shortcutSettings/ShortcutSettingsView.h"
 #include "models/shortcutSettings/ShortcutSettingsModel.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 ShortcutSettingsController::ShortcutSettingsController(QObject *parent) : QObject(parent)
 {
 
 }
 
-
 ShortcutSettingsController::~ShortcutSettingsController()
 {
 
 }
-
 
 void ShortcutSettingsController::init()
 {
@@ -36,7 +31,6 @@ void ShortcutSettingsController::init()
     view->setModel(model);
     view->init(); // Инит вида должен вызываться после установки модели
 }
-
 
 void ShortcutSettingsController::applyChanges()
 {
@@ -54,21 +48,19 @@ void ShortcutSettingsController::applyChanges()
     model->save();
 
     // Переинициализация менеджера горячих клавиш
-    shortcutManager.init();
+    AppContext::instance().shortcutManager()->init();
 
     // Переинициализация всех шорткатов в программе
-    shortcutManager.updateShortcutInApplication();
+    AppContext::instance().shortcutManager()->updateShortcutInApplication();
 
     // Закрытие окна настроек горячих клавиш
     static_cast<QWidget *>( parent() )->close();
 }
 
-
 ShortcutSettingsView *ShortcutSettingsController::getView()
 {
     return view;
 }
-
 
 ShortcutSettingsController::ShortcutData ShortcutSettingsController::getShortcutData(const QModelIndex &index)
 {
@@ -83,7 +75,6 @@ ShortcutSettingsController::ShortcutData ShortcutSettingsController::getShortcut
     return shortcutData;
 }
 
-
 ShortcutSettingsController::ShortcutData ShortcutSettingsController::getEmptyShortcutData()
 {
     ShortcutData shortcutData;
@@ -97,14 +88,12 @@ ShortcutSettingsController::ShortcutData ShortcutSettingsController::getEmptySho
     return shortcutData;
 }
 
-
 void ShortcutSettingsController::setShortcut(QString shortcutFullName, QString sequenceText)
 {
     QModelIndex index=model->findShortcut( shortcutFullName );
 
     model->setData( index.sibling(index.row(), 2), sequenceText );
 }
-
 
 void ShortcutSettingsController::resetAllShortcutsToDefault()
 {

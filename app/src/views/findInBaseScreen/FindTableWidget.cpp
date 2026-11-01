@@ -22,13 +22,11 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/GestureHelper.h"
 #include "libraries/helpers/CssHelper.h"
+#include "libraries/AppContext.h"
 
 #define USER_ROLE_PATH      Qt::UserRole
 #define USER_ROLE_RECORD_ID Qt::UserRole+1
 #define USER_ROLE_IS_BRANCH Qt::UserRole+2
-
-extern AppConfig mytetraConfig;
-
 
 FindTableWidget::FindTableWidget(QWidget *parent) : QWidget(parent)
 {
@@ -43,12 +41,10 @@ FindTableWidget::FindTableWidget(QWidget *parent) : QWidget(parent)
     clearAll();
 }
 
-
 FindTableWidget::~FindTableWidget(void)
 {
 
 }
-
 
 void FindTableWidget::setupUI(void)
 {
@@ -62,10 +58,10 @@ void FindTableWidget::setupUI(void)
     // У таблицы есть вертикальные заголовки, для каждой строки, в которых отображается номер строки.
     // При задании высоты вертикального заголовка, высота применяется и для всех ячеек в строке.
     findTableView->verticalHeader()->setDefaultSectionSize ( findTableView->verticalHeader()->minimumSectionSize () );
-    int height=mytetraConfig.getUglyQssReplaceHeightForTableView();
+    int height=AppContext::instance().appConfig()->getUglyQssReplaceHeightForTableView();
     if(height!=0)
         findTableView->verticalHeader()->setDefaultSectionSize( height );
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
         findTableView->verticalHeader()->setDefaultSectionSize( CssHelper::getCalculateIconSizePx() );
 
     // Устанавливается режим что могут выделяться только строки
@@ -79,7 +75,6 @@ void FindTableWidget::setupUI(void)
     GestureHelper::setKineticScrollArea( qobject_cast<QAbstractItemView*>(findTableView) );
 }
 
-
 void FindTableWidget::setupModels(void)
 {
     // Создается модель табличных данных
@@ -89,12 +84,10 @@ void FindTableWidget::setupModels(void)
     findTableView->setModel(findTableModel);
 }
 
-
 void FindTableWidget::setupSignals(void)
 {
     connect(findTableView, &QTableView::activated, this, &FindTableWidget::selectCell);
 }
-
 
 void FindTableWidget::assembly(void)
 {
@@ -106,14 +99,12 @@ void FindTableWidget::assembly(void)
     this->setLayout(central_layout);
 }
 
-
 void FindTableWidget::updateColumnsWidth(void)
 {
     findTableView->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
     findTableView->hide();
     findTableView->show();
 }
-
 
 void FindTableWidget::clearAll(void)
 {
@@ -133,7 +124,6 @@ void FindTableWidget::clearAll(void)
     findTableView->horizontalHeader()->setStretchLastSection(true);
 }
 
-
 // Заголовки колонок новым языком. Строки результатов не трогаются
 void FindTableWidget::retranslateUi(void)
 {
@@ -141,7 +131,6 @@ void FindTableWidget::retranslateUi(void)
     list << tr("Title") << tr("Details");
     findTableModel->setHorizontalHeaderLabels(list);
 }
-
 
 void FindTableWidget::addRow(QString title, QString branchName, QString tags, QStringList path, QString recordId, bool isBranch)
 {
@@ -177,12 +166,10 @@ void FindTableWidget::addRow(QString title, QString branchName, QString tags, QS
     findTableModel->setItem(i, 1, item_info);
 }
 
-
 int FindTableWidget::getRowCount()
 {
     return findTableModel->rowCount();
 }
-
 
 void FindTableWidget::paintEvent(QPaintEvent *event)
 {
@@ -196,7 +183,6 @@ void FindTableWidget::paintEvent(QPaintEvent *event)
     }
 }
 
-
 void FindTableWidget::setOverdrawMessage(const QString iOverdrawMessage)
 {
     overdrawMessage=iOverdrawMessage;
@@ -209,7 +195,6 @@ void FindTableWidget::setOverdrawMessage(const QString iOverdrawMessage)
     // Обновляется внешний вид виджета
     update();
 }
-
 
 // void FindTableWidget::selectCell(int row, int column)
 void FindTableWidget::selectCell(const QModelIndex & index)

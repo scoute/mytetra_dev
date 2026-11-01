@@ -23,7 +23,6 @@
 #include "views/changeHistory/ChangeHistoryDialog.h"
 #include "libraries/VoiceNoteHelper.h"
 
-
 // Голосовое содержимое в живом документе: сырые ссылки
 // voicenote:// либо уже материализованные баблы-объекты.
 // Сырой toHtml ни то ни другое не round-trip'ит, поэтому
@@ -66,12 +65,7 @@ static bool hasVoiceContent(QTextDocument *doc)
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern WalkHistory walkHistory;
 #include "libraries/AppContext.h"
-
 
 RecordTableController::RecordTableController(QObject *parent) : QObject(parent)
 {
@@ -95,7 +89,6 @@ RecordTableController::RecordTableController(QObject *parent) : QObject(parent)
           EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowByIdVector,
           Qt::QueuedConnection);
 }
-
 
 RecordTableController::~RecordTableController()
 {
@@ -123,18 +116,15 @@ RecordTableController::~RecordTableController()
     }
 }
 
-
 void RecordTableController::init(void)
 {
   view->init();
 }
 
-
 RecordTableView *RecordTableController::getView(void)
 {
   return view;
 }
-
 
 // Действия при выборе записи. Метод принимает индекс Proxy модели
 void RecordTableController::clickToRecord(const QModelIndex &index)
@@ -149,7 +139,6 @@ void RecordTableController::clickToRecord(const QModelIndex &index)
   initMetaEditorAtClickToRecord(pos);
   initAttachTableAtClickToRecord(pos);
 }
-
 
 // Переприменить read-only редактора по текущей записи и глобальному
 // флагу режима только чтения (для переключения режима без смены засветки)
@@ -169,9 +158,8 @@ void RecordTableController::refreshEditorReadOnly(void)
   const int pos=table->getWorkPos();
   const bool blocked=(pos>=0 && pos<table->size() && table->getField("block", pos)=="1");
 
-  edView->setReadOnly(blocked || mytetraConfig.get_readOnly());
+  edView->setReadOnly(blocked || AppContext::instance().appConfig()->get_readOnly());
 }
-
 
 void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
 {
@@ -187,7 +175,7 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
 
   // Элементы управления редактором становятся доступными только при условии что запись не заблокирована на изменение
   // и не включен глобальный режим только чтения
-  if( table->getField("block", pos)=="1" || mytetraConfig.get_readOnly() )
+  if( table->getField("block", pos)=="1" || AppContext::instance().appConfig()->get_readOnly() )
     edView->setReadOnly(true);
   else
     edView->setReadOnly(false);
@@ -197,33 +185,29 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   // установилась на последнюю рабочую запись
   table->setWorkPos( pos );
 
-
   // Устанавливается функция обратного вызова для записи данных редактором на диск
   edView->setSaveCallback(table->editorSaveCallback);
 
   // Сохраняется текст и картинки в окне редактирования
   find_object<MainWindow>("mainwindow")->saveTextarea();
 
-
   // Для новой выбраной записи выясняется директория и основной файл
   QString currentDir =table->getField("dir", pos);
   QString currentFile=table->getField("file", pos);
-  QString fullDir=mytetraConfig.get_tetradir()+"/base/"+currentDir;
+  QString fullDir=AppContext::instance().appConfig()->get_tetradir()+"/base/"+currentDir;
   QString fullFileName=fullDir+"/"+currentFile;
   qDebug() << " File " << fullFileName << "\n";
-
 
   // В редактор заносится информация о приаттаченных к записи файлах
   // Это действие нужно сделать до проверки на открытие той же самой записи (см. далее), т. к. список приаттаченных файлов может измениться
   edView->setMiscField("attachFileNameList", table->getRecord(pos)->getAttachTable().getInnerFileNameOnDiskList().join(","));
   qDebug() << "Set attach file name list: " << edView->getMiscField("attachFileNameList");
 
-
   // Если в окне содержимого записи уже находится выбираемая запись
   if(edView->getWorkDirectory()==fullDir &&
      edView->getFileName()==currentFile)
   {
-    globalParameters.getWindowSwitcher()->switchFromRecordtableToRecord();
+    AppContext::instance().globalParameters()->getWindowSwitcher()->switchFromRecordtableToRecord();
     return;
   }
 
@@ -271,14 +255,14 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   QString path=qobject_cast<RecordTableScreen *>(parent())->getTreePath();
 
   // В мобильном интерфейсе редактор должен показывать путь до записи
-  if(mytetraConfig.getInterfaceMode()=="mobile")
+  if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
     edView->setTreePath( path );
 
   // В редакторе восстанавливается позиция курсора и прокрутки если это необходимо
-  if(mytetraConfig.getRememberCursorAtOrdinarySelection())
+  if(AppContext::instance().appConfig()->getRememberCursorAtOrdinarySelection())
   {
-    edView->setCursorPosition( walkHistory.getCursorPosition(id) );
-    edView->setScrollBarPosition( walkHistory.getScrollBarPosition(id) );
+    edView->setCursorPosition( AppContext::instance().walkHistory()->getCursorPosition(id) );
+    edView->setScrollBarPosition( AppContext::instance().walkHistory()->getScrollBarPosition(id) );
   }
 
   // Обновление иконки аттачей
@@ -287,7 +271,6 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   else
     edView->switchAttachIconExists(true); // Есть приаттаченные файлы
 }
-
 
 void RecordTableController::initAttachTableAtClickToRecord(const int pos)
 {
@@ -299,14 +282,13 @@ void RecordTableController::initAttachTableAtClickToRecord(const int pos)
   attachTableController->setAttachTableData( table->getRecord(pos)->getAttachTablePointer() );
 }
 
-
 void RecordTableController::switchMetaEditorToEditorOrAttach(QModelIndex index)
 {
   // Выясняется столбец, по которому был клик
   int column=index.column();
   qDebug() << "RecordTableController::switchMetaEditorToAttachLayoutIfNeed() : current column " << column;
 
-  QString fieldName=mytetraConfig.getRecordTableShowFields().at(column);
+  QString fieldName=AppContext::instance().appConfig()->getRecordTableShowFields().at(column);
 
   MetaEditor *edView=find_object<MetaEditor>("editorScreen");
   if(fieldName=="hasAttach" || fieldName=="attachCount") // Если это столбец с иконкой аттачей или количеством аттачей
@@ -315,7 +297,6 @@ void RecordTableController::switchMetaEditorToEditorOrAttach(QModelIndex index)
     edView->switchToEditorLayout(); // Если клик не по иконке аттачей в таблице, то открывается текст записи
 }
 
-
 bool RecordTableController::isTableNotExists(void)
 {
  if( recordSourceModel->getTableData()==NULL )
@@ -323,7 +304,6 @@ bool RecordTableController::isTableNotExists(void)
  else
    return false;
 }
-
 
 // Установка нового набора данных для списка записей
 void RecordTableController::setTableData(RecordTableData *rtData)
@@ -381,7 +361,6 @@ void RecordTableController::setTableData(RecordTableData *rtData)
   qDebug() << "In RecordTableView set new model stop";
 }
 
-
 // Заполнение переданного объекта буфера обмена данными из указанных записей
 // Индексы QModelIndexList передаются от Proxy модели
 void RecordTableController::addRecordsToClipboard(ClipboardRecords *clipboardRecords, QModelIndexList itemsForCopy)
@@ -401,12 +380,10 @@ void RecordTableController::addRecordsToClipboard(ClipboardRecords *clipboardRec
   }
 }
 
-
 int RecordTableController::getRowCount(void)
 {
   return recordProxyModel->rowCount();
 }
-
 
 // Получение номера первого выделенного элемента на экране
 int RecordTableController::getFirstSelectionPos(void)
@@ -414,19 +391,16 @@ int RecordTableController::getFirstSelectionPos(void)
   return view->getFirstSelectionPos();
 }
 
-
 // Получение ID первого выделенного элемента на экране
 QString RecordTableController::getFirstSelectionId(void)
 {
   return view->getFirstSelectionId();
 }
 
-
 void RecordTableController::setSelectionToPos(int pos)
 {
   view->setSelectionToPos(pos);
 }
-
 
 void RecordTableController::setSelectionToId(QString id)
 {
@@ -445,7 +419,6 @@ void RecordTableController::setSelectionToId(QString id)
   }
 }
 
-
 QModelIndex RecordTableController::convertIdToSourceIndex(QString id)
 {
   // Выясняется ссылка на таблицу конечных данных
@@ -456,7 +429,6 @@ QModelIndex RecordTableController::convertIdToSourceIndex(QString id)
 
   return convertPosToSourceIndex(sourcePos);
 }
-
 
 QModelIndex RecordTableController::convertIdToProxyIndex(QString id)
 {
@@ -470,7 +442,6 @@ QModelIndex RecordTableController::convertIdToProxyIndex(QString id)
   return convertPosToProxyIndex(proxyPos);
 }
 
-
 QModelIndex RecordTableController::convertPosToProxyIndex(int pos)
 {
   if(pos<0 || pos>=recordProxyModel->rowCount())
@@ -480,7 +451,6 @@ QModelIndex RecordTableController::convertPosToProxyIndex(int pos)
 
   return index;
 }
-
 
 QModelIndex RecordTableController::convertPosToSourceIndex(int pos)
 {
@@ -493,7 +463,6 @@ QModelIndex RecordTableController::convertPosToSourceIndex(int pos)
   return index;
 }
 
-
 // Преобразование Proxy индекса в позицию на экране (так, как это будет выглядеть при Proxy модели)
 int RecordTableController::convertProxyIndexToPos(QModelIndex index)
 {
@@ -503,7 +472,6 @@ int RecordTableController::convertProxyIndexToPos(QModelIndex index)
   return index.row();
 }
 
-
 // Преобразование Source индекса в позицию на экране (так, как это будет выглядеть при Source модели)
 int RecordTableController::convertSourceIndexToPos(QModelIndex index)
 {
@@ -512,7 +480,6 @@ int RecordTableController::convertSourceIndexToPos(QModelIndex index)
 
   return index.row();
 }
-
 
 QModelIndex RecordTableController::convertProxyIndexToSourceIndex(QModelIndex proxyIndex)
 {
@@ -524,7 +491,6 @@ QModelIndex RecordTableController::convertProxyIndexToSourceIndex(QModelIndex pr
   return index;
 }
 
-
 QModelIndex RecordTableController::convertSourceIndexToProxyIndex(QModelIndex sourceIndex)
 {
   if(!sourceIndex.isValid())
@@ -535,20 +501,17 @@ QModelIndex RecordTableController::convertSourceIndexToProxyIndex(QModelIndex so
   return index;
 }
 
-
 int RecordTableController::convertSourcePosToProxyPos(int sourcePos)
 {
   QModelIndex proxyIndex=recordProxyModel->mapFromSource( recordSourceModel->index(sourcePos, 0) );
   return proxyIndex.row();
 }
 
-
 int RecordTableController::convertProxyPosToSourcePos(int proxyPos)
 {
   QModelIndex sourceIndex=recordProxyModel->mapToSource( recordProxyModel->index(proxyPos, 0) );
   return sourceIndex.row();
 }
-
 
 // Копирование отмеченных записей в буфер обмена с удалением
 // из таблицы конечных записей
@@ -557,7 +520,6 @@ void RecordTableController::cut(void)
     copy();
     deleteRecords();
 }
-
 
 // Копирование отмеченных записей в буфер обмена
 void RecordTableController::copy(void)
@@ -570,7 +532,6 @@ void RecordTableController::copy(void)
     // Объект с записями помещается во внутренний буфер обмена
     AppContext::instance().internalClipboard()->setMimeData( view->getSelectedRecords() );
 }
-
 
 // Вставка записей из буфера обмена
 void RecordTableController::paste(void)
@@ -600,7 +561,6 @@ void RecordTableController::paste(void)
   find_object<TreeScreen>("treeScreen")->updateSelectedBranch();
 }
 
-
 // Слот для добавления новой записи в конец таблицы
 void RecordTableController::addNewToEndContext(void)
 {
@@ -608,7 +568,6 @@ void RecordTableController::addNewToEndContext(void)
 
   addNewRecord(GlobalParameters::AddNewRecordBehavior::ADD_TO_END);
 }
-
 
 // Слот для добавления новой записи перед выделенной строкой
 void RecordTableController::addNewBeforeContext(void)
@@ -618,7 +577,6 @@ void RecordTableController::addNewBeforeContext(void)
   addNewRecord(GlobalParameters::AddNewRecordBehavior::ADD_BEFORE);
 }
 
-
 // Слот для добавления новой записи после выделенной строки
 void RecordTableController::addNewAfterContext(void)
 {
@@ -626,7 +584,6 @@ void RecordTableController::addNewAfterContext(void)
 
   addNewRecord(GlobalParameters::AddNewRecordBehavior::ADD_AFTER);
 }
-
 
 // Вызов окна добавления данных в таблицу конечных записей
 void RecordTableController::addNewRecord(int mode)
@@ -672,7 +629,6 @@ void RecordTableController::addNewRecord(int mode)
   edView->switchToEditorLayout();
 }
 
-
 // Функция добавления новой записи в таблицу конечных записей
 // Принимает полный формат записи
 void RecordTableController::addNew(int mode, Record record)
@@ -703,12 +659,10 @@ void RecordTableController::addNew(int mode, Record record)
     }
 }
 
-
 void RecordTableController::onEditFieldContext(void)
 {
     view->editFieldContext();
 }
-
 
 // Звездочка избранного: пишется в активное хранилище (сайдкар
 // или поля XML, см. Favorites). Панель обновляется сигналом,
@@ -734,7 +688,6 @@ void RecordTableController::onFavoriteContext(void)
   view->updateRow(viewPos);
 }
 
-
 // Звездочка стоит на текущей записи
 bool RecordTableController::isCurrentRecordFavorite(void)
 {
@@ -747,7 +700,6 @@ bool RecordTableController::isCurrentRecordFavorite(void)
 
   return Favorites::instance().isFavorite(table->getField("id", sourceIndex.row()));
 }
-
 
 // При выборе пункта "Блокировка записи" в контекстном меню
 void RecordTableController::onBlockContext(void)
@@ -797,7 +749,6 @@ void RecordTableController::onBlockContext(void)
   this->clickToRecord(index);
 }
 
-
 // Действия при нажатии кнопки редактирования записи
 void RecordTableController::editFieldContext(QModelIndex proxyIndex)
 {
@@ -824,9 +775,9 @@ void RecordTableController::editFieldContext(QModelIndex proxyIndex)
 
   // Если запись заблокирована или включен глобальный режим только чтения.
   // Во втором случае диалог тоже не открывается: проверять нечего
-  if(table->getField("block",   pos)=="1" || mytetraConfig.get_readOnly())
+  if(table->getField("block",   pos)=="1" || AppContext::instance().appConfig()->get_readOnly())
     {
-     if(mytetraConfig.get_readOnly())
+     if(AppContext::instance().appConfig()->get_readOnly())
       return;
 
      editRecordWin.setReadOnly(true);
@@ -843,7 +794,6 @@ void RecordTableController::editFieldContext(QModelIndex proxyIndex)
             editRecordWin.getField("url"),
             editRecordWin.getField("tags"));
 }
-
 
 // Функция сохранения отредактированных полей записи в таблицу конечных записей
 void RecordTableController::editField(int pos,
@@ -882,7 +832,6 @@ void RecordTableController::editField(int pos,
   treeScreen->knowTreeModel->refreshRecordStats(table->getField("id", pos));
 }
 
-
 // Обработка клика по удалению записи в контекстном меню и по кнопке на панели
 void RecordTableController::deleteContext(void)
 {
@@ -903,7 +852,6 @@ void RecordTableController::deleteContext(void)
   }
 
 }
-
 
 // Удаление отмеченных записей
 void RecordTableController::deleteRecords(void)
@@ -947,7 +895,6 @@ void RecordTableController::deleteRecords(void)
       delRows.append( currIdx.row() );
     }
   }
-
 
   // Массив удаляемых номеров строк (в Proxy-нумерации) сортируется так чтоб вначале были индексы с наибольшим номером
   std::sort(delRows.begin(), delRows.end(), std::greater<int>());
@@ -1000,7 +947,6 @@ void RecordTableController::deleteRecords(void)
   qobject_cast<RecordTableScreen *>(parent())->toolsUpdate();
 }
 
-
 // Удаление одной записи по идентификатору
 void RecordTableController::removeRowById(QString delId)
 {
@@ -1008,7 +954,6 @@ void RecordTableController::removeRowById(QString delId)
   delIds.append( delId );
   removeRowsByIdList(delIds);
 }
-
 
 // Удаление записей по указанному списку идентификаторов
 void RecordTableController::removeRowsByIdList(QVector<QString> delIds)
@@ -1031,7 +976,6 @@ void RecordTableController::removeRowsByIdList(QVector<QString> delIds)
     recordProxyModel->removeRow(idx.row());
   }
 }
-
 
 // Перемещение записи вверх
 void RecordTableController::moveUp(void)
@@ -1065,7 +1009,6 @@ void RecordTableController::moveUp(void)
   treeScreen->knowTreeModel->invalidateStats();
 }
 
-
 // Перемещение записи вниз
 void RecordTableController::moveDn(void)
 {
@@ -1095,7 +1038,6 @@ void RecordTableController::moveDn(void)
   // редкий явный клик переживет один пересчет
   treeScreen->knowTreeModel->invalidateStats();
 }
-
 
 // Клик по пункту "Сортировка" в контекстном меню
 void RecordTableController::onSortClick(void)
@@ -1136,7 +1078,6 @@ void RecordTableController::onSortClick(void)
   qobject_cast<RecordTableScreen *>(parent())->toolsUpdate();
 }
 
-
 // Слот, срабатывающий при вызове настроек
 void RecordTableController::settings(void)
 {
@@ -1149,14 +1090,12 @@ void RecordTableController::settings(void)
   // this->setFocus();
 }
 
-
 void RecordTableController::onRecordTableConfigChange(void)
 {
   recordSourceModel->onRecordTableConfigChange();
   view->restoreColumnWidth();
   view->restoreHeaderState();
 }
-
 
 void RecordTableController::onPrintClick(void)
 {
@@ -1168,7 +1107,6 @@ void RecordTableController::onPrintClick(void)
   printDialog.setTitleToHtml( recordSourceModel->getTableData()->getItem()->getPathAsNameWithDelimeter(" / ") );
   printDialog.exec();
 }
-
 
 // История изменений записи: версии, diff, откат текстом в редактор.
 // Откат идет обычным сохранением и сам становится новой версией
@@ -1189,7 +1127,7 @@ void RecordTableController::onChangeHistoryClick(void)
   const QString id=table->getField("id", pos);
   const QString name=table->getField("name", pos);
 
-  if(!mytetraConfig.get_historyEnable())
+  if(!AppContext::instance().appConfig()->get_historyEnable())
   {
     QMessageBox::information(parentPointer,
                              tr("Change history"),
@@ -1215,7 +1153,7 @@ void RecordTableController::onChangeHistoryClick(void)
     return;
   }
 
-  const QString tetradir=mytetraConfig.get_tetradir();
+  const QString tetradir=AppContext::instance().appConfig()->get_tetradir();
 
   // Текущий текст: из открытого редактора если та же запись
   // (захватываются несохраненные правки), иначе из файла.
@@ -1303,12 +1241,10 @@ void RecordTableController::onChangeHistoryClick(void)
   edView->setTextareaModified(true);
 }
 
-
 void RecordTableController::onSwitchSelectionMode()
 {
   view->switchSelectionMode();
 }
-
 
 void RecordTableController::setFocusToBaseWidget()
 {

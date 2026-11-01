@@ -29,14 +29,11 @@
 
 #include <QFile>
 
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
-
+#include "libraries/AppContext.h"
 
 // Сайдкар избранного напрямую файлом: синглетон Favorites в
 // долгоживущем серверном процессе кэширует и протухает, а в
@@ -44,9 +41,8 @@ static const int MCP_SNIPPET_CONTEXT=100;
 // <favorites version="1"><note id="..."/>...</favorites>
 static QString favoritesSidecarPath(void)
 {
-  return QDir::cleanPath(mytetraConfig.get_tetradir()+"/favorites.xml");
+  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/favorites.xml");
 }
-
 
 static QSet<QString> favoritesSidecarRead(void)
 {
@@ -80,7 +76,6 @@ static QSet<QString> favoritesSidecarRead(void)
   return out;
 }
 
-
 static bool favoritesSidecarWrite(const QSet<QString> &ids)
 {
   QSaveFile file(favoritesSidecarPath());
@@ -110,12 +105,11 @@ static bool favoritesSidecarWrite(const QSet<QString> &ids)
   return file.commit();
 }
 
-
 QJsonObject McpTools::listFavorites(void)
 {
   QSet<QString> starIds;
 
-  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
   {
     // Флаги прямо в записях: проход по живой модели.
     // Шифрованные без ключа пропускаются: флаг нечитаем
@@ -167,7 +161,6 @@ QJsonObject McpTools::listFavorites(void)
   return result;
 }
 
-
 QJsonObject McpTools::applyFavoriteNote(KnowTreeModel *model,
                                         const QString &noteId,
                                         bool starred,
@@ -198,7 +191,7 @@ QJsonObject McpTools::applyFavoriteNote(KnowTreeModel *model,
     return result;
   }
 
-  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
   {
     QStringList path=model->getRecordPath(noteId);
 
@@ -269,7 +262,6 @@ QJsonObject McpTools::applyFavoriteNote(KnowTreeModel *model,
   return result;
 }
 
-
 QJsonObject McpTools::favoriteNoteDirect(const QString &noteId, QString &error)
 {
   QJsonObject result=applyFavoriteNote(m_model, noteId, true, error);
@@ -278,12 +270,11 @@ QJsonObject McpTools::favoriteNoteDirect(const QString &noteId, QString &error)
     return result;
 
   // XML-бэкенд меняет дерево: сайдкар уже записан внутри apply
-  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
     m_model->save();
 
   return result;
 }
-
 
 QJsonObject McpTools::unfavoriteNoteDirect(const QString &noteId, QString &error)
 {
@@ -292,18 +283,16 @@ QJsonObject McpTools::unfavoriteNoteDirect(const QString &noteId, QString &error
   if(!error.isEmpty())
     return result;
 
-  if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
     m_model->save();
 
   return result;
 }
 
-
 QSet<QString> McpTools::sidecarFavoriteIds(void)
 {
   return favoritesSidecarRead();
 }
-
 
 QJsonObject McpTools::listAttachments(const QString &noteId, QString &error)
 {
@@ -350,11 +339,9 @@ QJsonObject McpTools::listAttachments(const QString &noteId, QString &error)
   return result;
 }
 
-
 // Есть ли в поддереве шифр: ветки или записи с crypt=="1".
 // Ключа в серверном процессе нет, такое выгружать нельзя -
 // внутри выгрузки расшифровка пустым ключом дала бы мусор
-
 
 // Есть ли в поддереве шифр: ветки или записи с crypt=="1".
 // Ключа в серверном процессе нет, такое выгружать нельзя -
@@ -384,7 +371,6 @@ static bool subtreeHasLocked(TreeItem *item)
 
   return false;
 }
-
 
 QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
                                         const QString &branchId,
@@ -453,10 +439,8 @@ QJsonObject McpTools::applyExportBranch(KnowTreeModel *model,
   return result;
 }
 
-
 // Одиночное имя без разделителей, точек-вверх и диска:
 // то же правило что isSafeImportFileName внутри модели
-
 
 // Одиночное имя без разделителей, точек-вверх и диска:
 // то же правило что isSafeImportFileName внутри модели
@@ -470,7 +454,6 @@ static bool isSingleFileName(const QString &name)
 
   return true;
 }
-
 
 QString McpTools::checkImportDir(const QString &path)
 {
@@ -529,7 +512,6 @@ QString McpTools::checkImportDir(const QString &path)
   return QString();
 }
 
-
 QJsonObject McpTools::applyImportBranch(KnowTreeModel *model,
                                         const QString &parentId,
                                         const QString &path,
@@ -586,7 +568,6 @@ QJsonObject McpTools::applyImportBranch(KnowTreeModel *model,
 
   return result;
 }
-
 
 QJsonObject McpTools::importBranchDirect(const QString &parentId,
                                          const QString &path,

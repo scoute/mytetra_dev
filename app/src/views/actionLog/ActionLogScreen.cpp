@@ -11,10 +11,7 @@
 #include "controllers/actionLog/ActionLogController.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ActionHelper.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 ActionLogScreen::ActionLogScreen(QWidget *parent) : QDialog(parent)
 {
@@ -36,12 +33,10 @@ ActionLogScreen::ActionLogScreen(QWidget *parent) : QDialog(parent)
   actionLogView->init();
 }
 
-
 ActionLogScreen::~ActionLogScreen()
 {
 
 }
-
 
 void ActionLogScreen::setupUI(void)
 {
@@ -56,7 +51,6 @@ void ActionLogScreen::setupUI(void)
   buttonBox=new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 }
 
-
 void ActionLogScreen::setupActions(void)
 {
   actionCopy = new QAction(tr("Copy selected rows"), this);
@@ -64,24 +58,21 @@ void ActionLogScreen::setupActions(void)
   connect(actionCopy, &QAction::triggered, actionLogController, &ActionLogController::onCopyClicked);
 }
 
-
 void ActionLogScreen::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << staticMetaObject.className();
 
-    shortcutManager.initAction("actionLog-copy", actionCopy );
+    AppContext::instance().shortcutManager()->initAction("actionLog-copy", actionCopy );
 }
-
 
 void ActionLogScreen::setupSignals(void)
 {
   connect(buttonBox, &QDialogButtonBox::rejected, this, &ActionLogScreen::close);
 
   // Обновление горячих клавиш, если они были изменены
-  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &ActionLogScreen::setupShortcuts);
+  connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &ActionLogScreen::setupShortcuts);
 
 }
-
 
 void ActionLogScreen::assembly(void)
 {

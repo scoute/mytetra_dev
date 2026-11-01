@@ -13,10 +13,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 EditorConfigMathExpression::EditorConfigMathExpression(QWidget *parent) : ConfigPage(parent)
 {
@@ -27,7 +24,6 @@ EditorConfigMathExpression::EditorConfigMathExpression(QWidget *parent) : Config
   setupSignals();
   assembly();
 }
-
 
 void EditorConfigMathExpression::setupUi(void)
 {
@@ -41,12 +37,10 @@ void EditorConfigMathExpression::setupUi(void)
  updateFormulaTimeSpinBox->setValue(conf->getMathExpressionUpdateTime());
 }
 
-
 void EditorConfigMathExpression::setupSignals(void)
 {
 
 }
-
 
 void EditorConfigMathExpression::assembly(void)
 {
@@ -65,15 +59,13 @@ void EditorConfigMathExpression::assembly(void)
   setLayout(centralLayout);
 }
 
-
 void EditorConfigMathExpression::onClickedEditWyEditConfigFile(void)
 {
   // Сбрасываются в файл конфига все возможные изменения, которые, возможно еще не были записаны
   conf->sync();
 
-  ConfigEditorHelper::editConfigFile( globalParameters.getWorkDirectory()+"/editorconf.ini", 0.8f );
+  ConfigEditorHelper::editConfigFile( AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini", 0.8f );
 }
-
 
 int EditorConfigMathExpression::applyChanges(void)
 {

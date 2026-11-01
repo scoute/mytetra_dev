@@ -25,12 +25,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/MtComboBox.h"
 #include "views/record/MetaEditor.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-extern FixedParameters fixedParameters;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_Theme::AppConfigPage_Theme(QWidget *parent) : ConfigPage(parent)
 {
@@ -39,12 +34,10 @@ AppConfigPage_Theme::AppConfigPage_Theme(QWidget *parent) : ConfigPage(parent)
   assembly();
 }
 
-
 AppConfigPage_Theme::~AppConfigPage_Theme()
 {
 
 }
-
 
 // Квадратик-образец на кнопке выбора цвета
 void AppConfigPage_Theme::setColorForButton(QToolButton *button,
@@ -62,7 +55,6 @@ void AppConfigPage_Theme::setColorForButton(QToolButton *button,
 
   *color=value;
 }
-
 
 void AppConfigPage_Theme::setupUi(void)
 {
@@ -84,43 +76,43 @@ void AppConfigPage_Theme::setupUi(void)
   notePaperColorRadio=new QRadioButton(this);
   notePaperColorButton=new QToolButton(this);
   notePaperColor=new QColor();
-  notePaperColorIsTheme=mytetraConfig.get_notePaperColor().isEmpty();
+  notePaperColorIsTheme=AppContext::instance().appConfig()->get_notePaperColor().isEmpty();
   setColorForButton(notePaperColorButton, notePaperColor,
-    QColor(MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(),
-                                               mytetraConfig.get_notePaperColor())));
+    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(),
+                                               AppContext::instance().appConfig()->get_notePaperColor())));
   notePaperColorReset=new QPushButton(this);
 
   noteFontColorLabel=new QLabel(this);
   noteFontColorButton=new QToolButton(this);
   noteFontColor=new QColor();
-  noteFontColorIsTheme=mytetraConfig.get_noteFontColor().isEmpty();
+  noteFontColorIsTheme=AppContext::instance().appConfig()->get_noteFontColor().isEmpty();
   setColorForButton(noteFontColorButton, noteFontColor,
-    QColor(MetaEditor::effectiveNoteFontColor(mytetraConfig.getInterfaceTheme(),
-                                              mytetraConfig.get_noteFontColor())));
+    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->getInterfaceTheme(),
+                                              AppContext::instance().appConfig()->get_noteFontColor())));
   noteFontColorReset=new QPushButton(this);
 
   secretColorLabel=new QLabel(this);
   secretColorButton=new QToolButton(this);
   secretColor=new QColor();
   setColorForButton(secretColorButton, secretColor,
-                    QColor(mytetraConfig.get_secretColor()));
+                    QColor(AppContext::instance().appConfig()->get_secretColor()));
   secretColorReset=new QPushButton(this);
 
   notePaperTextureRadio=new QRadioButton(this);
-  notePaperTextureRadio->setChecked(mytetraConfig.get_themeCustomNotePaperMode()!="color");
-  notePaperColorRadio->setChecked(mytetraConfig.get_themeCustomNotePaperMode()=="color");
+  notePaperTextureRadio->setChecked(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()!="color");
+  notePaperColorRadio->setChecked(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()=="color");
   notePaperTileCombo=new MtComboBox(this);
 
-  foreach(const QString &tilePath, fixedParameters.defaultNotePaperTiles)
+  foreach(const QString &tilePath, AppContext::instance().fixedParameters()->defaultNotePaperTiles)
     notePaperTileCombo->addItem(QFileInfo(tilePath).fileName());
 
   notePaperImageLabel=new QLabel(this);
   notePaperImageLoad=new QPushButton(this);
   notePaperImageClear=new QPushButton(this);
-  notePaperImagePath=mytetraConfig.get_themeCustomNotePaperImage();
+  notePaperImagePath=AppContext::instance().appConfig()->get_themeCustomNotePaperImage();
 
   {
-    int tileIndex=mytetraConfig.get_themeCustomNotePaperBuiltin();
+    int tileIndex=AppContext::instance().appConfig()->get_themeCustomNotePaperBuiltin();
 
     if(tileIndex<0 || tileIndex>=notePaperTileCombo->count())
       tileIndex=0;
@@ -141,30 +133,30 @@ void AppConfigPage_Theme::setupUi(void)
   treeBackgroundLabel=new QLabel(this);
   treeBackgroundButton=new QToolButton(this);
   treeBackground=new QColor();
-  treeBackgroundIsTheme=mytetraConfig.get_themeCustomTreeBackground().isEmpty();
+  treeBackgroundIsTheme=AppContext::instance().appConfig()->get_themeCustomTreeBackground().isEmpty();
   setColorForButton(treeBackgroundButton, treeBackground,
-                    QColor(mytetraConfig.get_themeCustomTreeBackground()));
+                    QColor(AppContext::instance().appConfig()->get_themeCustomTreeBackground()));
   treeBackgroundReset=new QPushButton(this);
 
   treeTextLabel=new QLabel(this);
   treeTextButton=new QToolButton(this);
   treeText=new QColor();
-  treeTextIsTheme=mytetraConfig.get_themeCustomTreeText().isEmpty();
+  treeTextIsTheme=AppContext::instance().appConfig()->get_themeCustomTreeText().isEmpty();
   setColorForButton(treeTextButton, treeText,
-                    QColor(mytetraConfig.get_themeCustomTreeText()));
+                    QColor(AppContext::instance().appConfig()->get_themeCustomTreeText()));
   treeTextReset=new QPushButton(this);
 
   treeFontSizeLabel=new QLabel(this);
   treeFontSize=new QSpinBox(this);
   treeFontSize->setRange(-1, 48);
   treeFontSize->setSpecialValueText(tr("Theme"));
-  treeFontSize->setValue(mytetraConfig.get_themeCustomTreeFontSize());
+  treeFontSize->setValue(AppContext::instance().appConfig()->get_themeCustomTreeFontSize());
 
   treeIndentationLabel=new QLabel(this);
   treeIndentation=new QSpinBox(this);
   treeIndentation->setRange(-1, 80);
   treeIndentation->setSpecialValueText(tr("Theme"));
-  treeIndentation->setValue(mytetraConfig.get_themeCustomTreeIndentation());
+  treeIndentation->setValue(AppContext::instance().appConfig()->get_themeCustomTreeIndentation());
 
   // --- Список заметок ---
   tableBox=new QGroupBox(this);
@@ -172,46 +164,46 @@ void AppConfigPage_Theme::setupUi(void)
   tableBackgroundLabel=new QLabel(this);
   tableBackgroundButton=new QToolButton(this);
   tableBackground=new QColor();
-  tableBackgroundIsTheme=mytetraConfig.get_themeCustomTableBackground().isEmpty();
+  tableBackgroundIsTheme=AppContext::instance().appConfig()->get_themeCustomTableBackground().isEmpty();
   setColorForButton(tableBackgroundButton, tableBackground,
-                    QColor(mytetraConfig.get_themeCustomTableBackground()));
+                    QColor(AppContext::instance().appConfig()->get_themeCustomTableBackground()));
   tableBackgroundReset=new QPushButton(this);
 
   tableTextLabel=new QLabel(this);
   tableTextButton=new QToolButton(this);
   tableText=new QColor();
-  tableTextIsTheme=mytetraConfig.get_themeCustomTableText().isEmpty();
+  tableTextIsTheme=AppContext::instance().appConfig()->get_themeCustomTableText().isEmpty();
   setColorForButton(tableTextButton, tableText,
-                    QColor(mytetraConfig.get_themeCustomTableText()));
+                    QColor(AppContext::instance().appConfig()->get_themeCustomTableText()));
   tableTextReset=new QPushButton(this);
 
   tableAlternateLabel=new QLabel(this);
   tableAlternateButton=new QToolButton(this);
   tableAlternate=new QColor();
-  tableAlternateIsTheme=mytetraConfig.get_themeCustomTableAlternate().isEmpty();
+  tableAlternateIsTheme=AppContext::instance().appConfig()->get_themeCustomTableAlternate().isEmpty();
   setColorForButton(tableAlternateButton, tableAlternate,
-                    QColor(mytetraConfig.get_themeCustomTableAlternate()));
+                    QColor(AppContext::instance().appConfig()->get_themeCustomTableAlternate()));
   tableAlternateReset=new QPushButton(this);
 
   tableFontSizeLabel=new QLabel(this);
   tableFontSize=new QSpinBox(this);
   tableFontSize->setRange(-1, 48);
   tableFontSize->setSpecialValueText(tr("Theme"));
-  tableFontSize->setValue(mytetraConfig.get_themeCustomTableFontSize());
+  tableFontSize->setValue(AppContext::instance().appConfig()->get_themeCustomTableFontSize());
 
   tableRowHeightLabel=new QLabel(this);
   tableRowHeight=new QSpinBox(this);
   tableRowHeight->setRange(-1, 200);
   tableRowHeight->setSpecialValueText(tr("Theme"));
-  tableRowHeight->setValue(mytetraConfig.get_themeCustomTableRowHeight());
+  tableRowHeight->setValue(AppContext::instance().appConfig()->get_themeCustomTableRowHeight());
 
   // --- Шрифт интерфейса ---
   fontBox=new QGroupBox(this);
 
   interfaceFontLabel=new QLabel(this);
   interfaceFontButton=new QPushButton(this);
-  interfaceFontFamily=mytetraConfig.get_themeCustomInterfaceFontFamily();
-  interfaceFontSize=mytetraConfig.get_themeCustomInterfaceFontSize();
+  interfaceFontFamily=AppContext::instance().appConfig()->get_themeCustomInterfaceFontFamily();
+  interfaceFontSize=AppContext::instance().appConfig()->get_themeCustomInterfaceFontSize();
   refreshInterfaceFontButton();
   interfaceFontReset=new QPushButton(this);
 
@@ -229,7 +221,7 @@ void AppConfigPage_Theme::setupUi(void)
   baseThemeComboBox->addItem(tr("Midnight"));
 
   const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
-  const int baseIndex=baseThemes.indexOf(mytetraConfig.get_themeCustomBaseTheme());
+  const int baseIndex=baseThemes.indexOf(AppContext::instance().appConfig()->get_themeCustomBaseTheme());
   baseThemeComboBox->setCurrentIndex(baseIndex>=0 ? baseIndex : 0);
 
   // Группы кастома по текущей теме (группы уже созданы выше)
@@ -237,7 +229,6 @@ void AppConfigPage_Theme::setupUi(void)
 
   retranslateUi();
 }
-
 
 void AppConfigPage_Theme::refreshInterfaceFontButton(void)
 {
@@ -252,10 +243,8 @@ void AppConfigPage_Theme::refreshInterfaceFontButton(void)
       tr("%1, %2").arg(interfaceFontFamily).arg(interfaceFontSize));
 }
 
-
 // Выбор темы интерфейса убран со страницы: переключатель живёт
 // в меню Вид-Темы. Здесь только редактор Custom
-
 
 // Выбор размера иконок (переехало из Appearance)
 void AppConfigPage_Theme::setupIconSizeComboBox()
@@ -269,22 +258,21 @@ void AppConfigPage_Theme::setupIconSizeComboBox()
   int count = 0;
   int currentIndex = -1;
 
-  for ( auto sizeName : fixedParameters.interfaceIconSizeAvailableMap.keys() )
+  for ( auto sizeName : AppContext::instance().fixedParameters()->interfaceIconSizeAvailableMap.keys() )
   {
-    QString name = fixedParameters.interfaceIconSizeAvailableMap.at( sizeName ).first;
+    QString name = AppContext::instance().fixedParameters()->interfaceIconSizeAvailableMap.at( sizeName ).first;
     iconSizeComboBox->addItem( name );
 
     count++;
-    if ( sizeName == mytetraConfig.getInterfaceIconSize() )
+    if ( sizeName == AppContext::instance().appConfig()->getInterfaceIconSize() )
       currentIndex = count;
   }
 
-  if ( currentIndex==-1 or mytetraConfig.getInterfaceIconSize()=="" )
+  if ( currentIndex==-1 or AppContext::instance().appConfig()->getInterfaceIconSize()=="" )
     currentIndex = 0;
 
   iconSizeComboBox->setCurrentIndex( currentIndex );
 }
-
 
 void AppConfigPage_Theme::setupSignals(void)
 {
@@ -314,7 +302,6 @@ void AppConfigPage_Theme::setupSignals(void)
   connect(switchToCustomButton, &QPushButton::clicked, this, &AppConfigPage_Theme::onSwitchToCustom);
 }
 
-
 // Строка выбора цвета: подпись, образец, сброс
 static QHBoxLayout *colorRowLayout(QWidget *label, QWidget *button, QWidget *reset)
 {
@@ -326,7 +313,6 @@ static QHBoxLayout *colorRowLayout(QWidget *label, QWidget *button, QWidget *res
 
   return layout;
 }
-
 
 void AppConfigPage_Theme::assembly(void)
 {
@@ -435,7 +421,6 @@ void AppConfigPage_Theme::assembly(void)
   setLayout(centralLayout);
 }
 
-
 void AppConfigPage_Theme::onClickedNotePaperColor()
 {
   QColor selectedColor=QColorDialog::getColor(*notePaperColor, this);
@@ -447,15 +432,13 @@ void AppConfigPage_Theme::onClickedNotePaperColor()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedNotePaperColorReset()
 {
   notePaperColorIsTheme=true;
 
   setColorForButton(notePaperColorButton, notePaperColor,
-    QColor(MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
 }
-
 
 void AppConfigPage_Theme::onClickedNoteFontColor()
 {
@@ -468,15 +451,13 @@ void AppConfigPage_Theme::onClickedNoteFontColor()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedNoteFontColorReset()
 {
   noteFontColorIsTheme=true;
 
   setColorForButton(noteFontColorButton, noteFontColor,
-    QColor(MetaEditor::effectiveNoteFontColor(mytetraConfig.getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
 }
-
 
 void AppConfigPage_Theme::onClickedSecretColor()
 {
@@ -486,12 +467,10 @@ void AppConfigPage_Theme::onClickedSecretColor()
     setColorForButton(secretColorButton, secretColor, selectedColor);
 }
 
-
 void AppConfigPage_Theme::onClickedSecretColorReset()
 {
   setColorForButton(secretColorButton, secretColor, QColor("#77767b"));
 }
-
 
 void AppConfigPage_Theme::refreshNotePaperImageLabel(void)
 {
@@ -504,13 +483,11 @@ void AppConfigPage_Theme::refreshNotePaperImageLabel(void)
       tr("Texture: %1 (built-in)").arg(notePaperTileCombo->currentText()));
 }
 
-
 // Выпадашка доступна только без своего файла: свой приоритетнее
 void AppConfigPage_Theme::syncTileCombo(void)
 {
   notePaperTileCombo->setEnabled(notePaperImagePath.isEmpty());
 }
-
 
 void AppConfigPage_Theme::onTileComboChanged(int index)
 {
@@ -526,7 +503,6 @@ void AppConfigPage_Theme::onTileComboChanged(int index)
   refreshNotePaperImageLabel();
 }
 
-
 void AppConfigPage_Theme::onClickedNotePaperImageLoad(void)
 {
   const QString from=QFileDialog::getOpenFileName(
@@ -539,7 +515,7 @@ void AppConfigPage_Theme::onClickedNotePaperImageLoad(void)
 
   // Тайл копируется в рабочий каталог: исходник могут удалить,
   // а путь в конфиге должен жить всегда
-  QDir workDir(globalParameters.getWorkDirectory());
+  QDir workDir(AppContext::instance().globalParameters()->getWorkDirectory());
 
   if(!workDir.mkpath("custom-theme"))
     return;
@@ -558,7 +534,6 @@ void AppConfigPage_Theme::onClickedNotePaperImageLoad(void)
   refreshNotePaperImageLabel();
 }
 
-
 void AppConfigPage_Theme::onClickedNotePaperImageClear(void)
 {
   // Назад на встроенную из выпадашки. Свой файл из рабочего
@@ -571,7 +546,6 @@ void AppConfigPage_Theme::onClickedNotePaperImageClear(void)
   refreshNotePaperImageLabel();
 }
 
-
 void AppConfigPage_Theme::onClickedTreeBackground()
 {
   QColor selectedColor=QColorDialog::getColor(*treeBackground, this);
@@ -583,13 +557,11 @@ void AppConfigPage_Theme::onClickedTreeBackground()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedTreeBackgroundReset()
 {
   treeBackgroundIsTheme=true;
   setColorForButton(treeBackgroundButton, treeBackground, QColor());
 }
-
 
 void AppConfigPage_Theme::onClickedTreeText()
 {
@@ -602,13 +574,11 @@ void AppConfigPage_Theme::onClickedTreeText()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedTreeTextReset()
 {
   treeTextIsTheme=true;
   setColorForButton(treeTextButton, treeText, QColor());
 }
-
 
 void AppConfigPage_Theme::onClickedTableBackground()
 {
@@ -621,13 +591,11 @@ void AppConfigPage_Theme::onClickedTableBackground()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedTableBackgroundReset()
 {
   tableBackgroundIsTheme=true;
   setColorForButton(tableBackgroundButton, tableBackground, QColor());
 }
-
 
 void AppConfigPage_Theme::onClickedTableText()
 {
@@ -640,13 +608,11 @@ void AppConfigPage_Theme::onClickedTableText()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedTableTextReset()
 {
   tableTextIsTheme=true;
   setColorForButton(tableTextButton, tableText, QColor());
 }
-
 
 void AppConfigPage_Theme::onClickedTableAlternate()
 {
@@ -659,13 +625,11 @@ void AppConfigPage_Theme::onClickedTableAlternate()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedTableAlternateReset()
 {
   tableAlternateIsTheme=true;
   setColorForButton(tableAlternateButton, tableAlternate, QColor());
 }
-
 
 void AppConfigPage_Theme::onClickedInterfaceFont()
 {
@@ -688,7 +652,6 @@ void AppConfigPage_Theme::onClickedInterfaceFont()
   }
 }
 
-
 void AppConfigPage_Theme::onClickedInterfaceFontReset()
 {
   interfaceFontFamily.clear();
@@ -696,13 +659,12 @@ void AppConfigPage_Theme::onClickedInterfaceFontReset()
   refreshInterfaceFontButton();
 }
 
-
 // Группы кастома активны только на теме Custom: на базовых
 // темах настройки не действуют и контролы гаснут.
 // Гарды на null: вызывается и из конструктора до создания групп
 void AppConfigPage_Theme::updateCustomEnabled(void)
 {
-  const bool custom=(mytetraConfig.getInterfaceTheme()=="custom");
+  const bool custom=(AppContext::instance().appConfig()->getInterfaceTheme()=="custom");
 
   if(switchToCustomButton!=nullptr)
     switchToCustomButton->setVisible(!custom);
@@ -720,14 +682,13 @@ void AppConfigPage_Theme::updateCustomEnabled(void)
     fontBox->setEnabled(custom);
 }
 
-
 void AppConfigPage_Theme::onSwitchToCustom(void)
 {
   // Основа новой кастомной сессии: текущая тема. Дальше страница
   // правится уже под Custom без закрытия диалога
-  mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
+  AppContext::instance().appConfig()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->getInterfaceTheme());
 
-  if(mytetraConfig.setInterfaceTheme("custom"))
+  if(AppContext::instance().appConfig()->setInterfaceTheme("custom"))
     CssHelper::loadCurrentTheme();
 
   MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
@@ -738,16 +699,15 @@ void AppConfigPage_Theme::onSwitchToCustom(void)
   updateCustomEnabled();
 }
 
-
 void AppConfigPage_Theme::onClickedResetAll(void)
 {
   // Всё к теме: цвета чистятся, размеры в -1, шрифт в тему
   notePaperColorIsTheme=true;  setColorForButton(notePaperColorButton, notePaperColor,
-    QColor(MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
 
   noteFontColorIsTheme=true;
   setColorForButton(noteFontColorButton, noteFontColor,
-    QColor(MetaEditor::effectiveNoteFontColor(mytetraConfig.getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
 
   setColorForButton(secretColorButton, secretColor, QColor("#77767b"));
 
@@ -778,7 +738,6 @@ void AppConfigPage_Theme::onClickedResetAll(void)
 
   onClickedInterfaceFontReset();
 }
-
 
 void AppConfigPage_Theme::retranslateUi(void)
 {
@@ -836,7 +795,6 @@ void AppConfigPage_Theme::retranslateUi(void)
   resetAllButton->setText(tr("Reset all to theme"));
 }
 
-
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -848,12 +806,12 @@ int AppConfigPage_Theme::applyChanges(void)
   const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
   const QString baseName=baseThemes.value(baseThemeComboBox->currentIndex(), "default");
 
-  if(mytetraConfig.get_themeCustomBaseTheme()!=baseName)
+  if(AppContext::instance().appConfig()->get_themeCustomBaseTheme()!=baseName)
   {
-    mytetraConfig.set_themeCustomBaseTheme(baseName);
+    AppContext::instance().appConfig()->set_themeCustomBaseTheme(baseName);
 
     // Новая база видна сразу, но только на теме Custom
-    if(mytetraConfig.getInterfaceTheme()=="custom")
+    if(AppContext::instance().appConfig()->getInterfaceTheme()=="custom")
       CssHelper::loadCurrentTheme();
   }
 
@@ -861,106 +819,106 @@ int AppConfigPage_Theme::applyChanges(void)
   QString iconSizeName;
 
   if ( iconSizeComboBox->currentIndex()>0 )
-    iconSizeName = fixedParameters.interfaceIconSizeAvailableMap.keys()[ iconSizeComboBox->currentIndex()-1 ];
+    iconSizeName = AppContext::instance().fixedParameters()->interfaceIconSizeAvailableMap.keys()[ iconSizeComboBox->currentIndex()-1 ];
 
-  if ( mytetraConfig.getInterfaceIconSize() != iconSizeName )
+  if ( AppContext::instance().appConfig()->getInterfaceIconSize() != iconSizeName )
   {
-    mytetraConfig.setInterfaceIconSize( iconSizeName );
+    AppContext::instance().appConfig()->setInterfaceIconSize( iconSizeName );
     CssHelper::loadCurrentTheme();
   }
 
   // Цвета заметки: режим темы пишется пустотой
   if(notePaperColorIsTheme)
   {
-    if(!mytetraConfig.get_notePaperColor().isEmpty())
-      mytetraConfig.set_notePaperColor("");
+    if(!AppContext::instance().appConfig()->get_notePaperColor().isEmpty())
+      AppContext::instance().appConfig()->set_notePaperColor("");
   }
-  else if(mytetraConfig.get_notePaperColor()!=notePaperColor->name())
-    mytetraConfig.set_notePaperColor(notePaperColor->name());
+  else if(AppContext::instance().appConfig()->get_notePaperColor()!=notePaperColor->name())
+    AppContext::instance().appConfig()->set_notePaperColor(notePaperColor->name());
 
   if(noteFontColorIsTheme)
   {
-    if(!mytetraConfig.get_noteFontColor().isEmpty())
-      mytetraConfig.set_noteFontColor("");
+    if(!AppContext::instance().appConfig()->get_noteFontColor().isEmpty())
+      AppContext::instance().appConfig()->set_noteFontColor("");
   }
-  else if(mytetraConfig.get_noteFontColor()!=noteFontColor->name())
-    mytetraConfig.set_noteFontColor(noteFontColor->name());
+  else if(AppContext::instance().appConfig()->get_noteFontColor()!=noteFontColor->name())
+    AppContext::instance().appConfig()->set_noteFontColor(noteFontColor->name());
 
-  if(mytetraConfig.get_secretColor()!=secretColor->name())
-    mytetraConfig.set_secretColor(secretColor->name());
+  if(AppContext::instance().appConfig()->get_secretColor()!=secretColor->name())
+    AppContext::instance().appConfig()->set_secretColor(secretColor->name());
 
   // Мозаичный фон заметок: радио выбирает цвет или текстуру
   const QString paperMode=notePaperTextureRadio->isChecked() ? "texture" : "color";
 
-  if(mytetraConfig.get_themeCustomNotePaperMode()!=paperMode)
-    mytetraConfig.set_themeCustomNotePaperMode(paperMode);
+  if(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()!=paperMode)
+    AppContext::instance().appConfig()->set_themeCustomNotePaperMode(paperMode);
 
-  if(mytetraConfig.get_themeCustomNotePaperImage()!=notePaperImagePath)
-    mytetraConfig.set_themeCustomNotePaperImage(notePaperImagePath);
+  if(AppContext::instance().appConfig()->get_themeCustomNotePaperImage()!=notePaperImagePath)
+    AppContext::instance().appConfig()->set_themeCustomNotePaperImage(notePaperImagePath);
 
-  if(mytetraConfig.get_themeCustomNotePaperBuiltin()!=notePaperTileCombo->currentIndex())
-    mytetraConfig.set_themeCustomNotePaperBuiltin(notePaperTileCombo->currentIndex());
+  if(AppContext::instance().appConfig()->get_themeCustomNotePaperBuiltin()!=notePaperTileCombo->currentIndex())
+    AppContext::instance().appConfig()->set_themeCustomNotePaperBuiltin(notePaperTileCombo->currentIndex());
 
   // Цвета дерева и списка: пусто означает цвет темы
   if(treeBackgroundIsTheme)
   {
-    if(!mytetraConfig.get_themeCustomTreeBackground().isEmpty())
-      mytetraConfig.set_themeCustomTreeBackground("");
+    if(!AppContext::instance().appConfig()->get_themeCustomTreeBackground().isEmpty())
+      AppContext::instance().appConfig()->set_themeCustomTreeBackground("");
   }
-  else if(mytetraConfig.get_themeCustomTreeBackground()!=treeBackground->name())
-    mytetraConfig.set_themeCustomTreeBackground(treeBackground->name());
+  else if(AppContext::instance().appConfig()->get_themeCustomTreeBackground()!=treeBackground->name())
+    AppContext::instance().appConfig()->set_themeCustomTreeBackground(treeBackground->name());
 
   if(treeTextIsTheme)
   {
-    if(!mytetraConfig.get_themeCustomTreeText().isEmpty())
-      mytetraConfig.set_themeCustomTreeText("");
+    if(!AppContext::instance().appConfig()->get_themeCustomTreeText().isEmpty())
+      AppContext::instance().appConfig()->set_themeCustomTreeText("");
   }
-  else if(mytetraConfig.get_themeCustomTreeText()!=treeText->name())
-    mytetraConfig.set_themeCustomTreeText(treeText->name());
+  else if(AppContext::instance().appConfig()->get_themeCustomTreeText()!=treeText->name())
+    AppContext::instance().appConfig()->set_themeCustomTreeText(treeText->name());
 
   if(tableBackgroundIsTheme)
   {
-    if(!mytetraConfig.get_themeCustomTableBackground().isEmpty())
-      mytetraConfig.set_themeCustomTableBackground("");
+    if(!AppContext::instance().appConfig()->get_themeCustomTableBackground().isEmpty())
+      AppContext::instance().appConfig()->set_themeCustomTableBackground("");
   }
-  else if(mytetraConfig.get_themeCustomTableBackground()!=tableBackground->name())
-    mytetraConfig.set_themeCustomTableBackground(tableBackground->name());
+  else if(AppContext::instance().appConfig()->get_themeCustomTableBackground()!=tableBackground->name())
+    AppContext::instance().appConfig()->set_themeCustomTableBackground(tableBackground->name());
 
   if(tableTextIsTheme)
   {
-    if(!mytetraConfig.get_themeCustomTableText().isEmpty())
-      mytetraConfig.set_themeCustomTableText("");
+    if(!AppContext::instance().appConfig()->get_themeCustomTableText().isEmpty())
+      AppContext::instance().appConfig()->set_themeCustomTableText("");
   }
-  else if(mytetraConfig.get_themeCustomTableText()!=tableText->name())
-    mytetraConfig.set_themeCustomTableText(tableText->name());
+  else if(AppContext::instance().appConfig()->get_themeCustomTableText()!=tableText->name())
+    AppContext::instance().appConfig()->set_themeCustomTableText(tableText->name());
 
   if(tableAlternateIsTheme)
   {
-    if(!mytetraConfig.get_themeCustomTableAlternate().isEmpty())
-      mytetraConfig.set_themeCustomTableAlternate("");
+    if(!AppContext::instance().appConfig()->get_themeCustomTableAlternate().isEmpty())
+      AppContext::instance().appConfig()->set_themeCustomTableAlternate("");
   }
-  else if(mytetraConfig.get_themeCustomTableAlternate()!=tableAlternate->name())
-    mytetraConfig.set_themeCustomTableAlternate(tableAlternate->name());
+  else if(AppContext::instance().appConfig()->get_themeCustomTableAlternate()!=tableAlternate->name())
+    AppContext::instance().appConfig()->set_themeCustomTableAlternate(tableAlternate->name());
 
   // Шрифт интерфейса
-  if(mytetraConfig.get_themeCustomInterfaceFontFamily()!=interfaceFontFamily)
-    mytetraConfig.set_themeCustomInterfaceFontFamily(interfaceFontFamily);
+  if(AppContext::instance().appConfig()->get_themeCustomInterfaceFontFamily()!=interfaceFontFamily)
+    AppContext::instance().appConfig()->set_themeCustomInterfaceFontFamily(interfaceFontFamily);
 
-  if(mytetraConfig.get_themeCustomInterfaceFontSize()!=interfaceFontSize)
-    mytetraConfig.set_themeCustomInterfaceFontSize(interfaceFontSize);
+  if(AppContext::instance().appConfig()->get_themeCustomInterfaceFontSize()!=interfaceFontSize)
+    AppContext::instance().appConfig()->set_themeCustomInterfaceFontSize(interfaceFontSize);
 
   // Размеры дерева и списка (-1 означает размер темы)
-  if(mytetraConfig.get_themeCustomTreeFontSize()!=treeFontSize->value())
-    mytetraConfig.set_themeCustomTreeFontSize(treeFontSize->value());
+  if(AppContext::instance().appConfig()->get_themeCustomTreeFontSize()!=treeFontSize->value())
+    AppContext::instance().appConfig()->set_themeCustomTreeFontSize(treeFontSize->value());
 
-  if(mytetraConfig.get_themeCustomTreeIndentation()!=treeIndentation->value())
-    mytetraConfig.set_themeCustomTreeIndentation(treeIndentation->value());
+  if(AppContext::instance().appConfig()->get_themeCustomTreeIndentation()!=treeIndentation->value())
+    AppContext::instance().appConfig()->set_themeCustomTreeIndentation(treeIndentation->value());
 
-  if(mytetraConfig.get_themeCustomTableFontSize()!=tableFontSize->value())
-    mytetraConfig.set_themeCustomTableFontSize(tableFontSize->value());
+  if(AppContext::instance().appConfig()->get_themeCustomTableFontSize()!=tableFontSize->value())
+    AppContext::instance().appConfig()->set_themeCustomTableFontSize(tableFontSize->value());
 
-  if(mytetraConfig.get_themeCustomTableRowHeight()!=tableRowHeight->value())
-    mytetraConfig.set_themeCustomTableRowHeight(tableRowHeight->value());
+  if(AppContext::instance().appConfig()->get_themeCustomTableRowHeight()!=tableRowHeight->value())
+    AppContext::instance().appConfig()->set_themeCustomTableRowHeight(tableRowHeight->value());
 
   // Применение без перезапуска: кастом поверх темы и цвета заметки
   CssHelper::applyCustomDesign();

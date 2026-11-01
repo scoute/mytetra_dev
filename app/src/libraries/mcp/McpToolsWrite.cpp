@@ -29,21 +29,18 @@
 
 #include <QFile>
 
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
-
+#include "libraries/AppContext.h"
 
 // Корзина готова принять файлы: есть и пишемся. Иначе удаление
 // уперлось бы в criticalError с диалогом внутри, а в headless
 // это падение процесса. Создается при отсутствии как при установке
 static bool trashReady(QString &error)
 {
-  QString trashDir=mytetraConfig.get_trashdir();
+  QString trashDir=AppContext::instance().appConfig()->get_trashdir();
 
   if(!QDir(trashDir).exists())
   {
@@ -72,9 +69,7 @@ static bool trashReady(QString &error)
   return true;
 }
 
-
 // Корень модели: getRootItem отдает const, модель по факту живая
-
 
 // Id сиблинга с таким именем среди детей parent (без учёта регистра,
 // пробелы по краям долой). Пусто если свободно. excludeId пропускается:
@@ -104,10 +99,8 @@ static QString takenSiblingId(TreeItem *parent, const QString &name,
   return QString();
 }
 
-
 // Id заметки с таким именем внутри ветки (без учёта регистра).
 // Пусто если свободно. excludeId пропускается: своё же имя не дубль
-
 
 // Id заметки с таким именем внутри ветки (без учёта регистра).
 // Пусто если свободно. excludeId пропускается: своё же имя не дубль
@@ -136,9 +129,7 @@ static QString takenNoteId(RecordTableData *table, const QString &name,
   return QString();
 }
 
-
 // Ветка, содержащая запись: полный обход, первая найденная
-
 
 // Ветка, содержащая запись: полный обход, первая найденная
 static TreeItem *findBranchOfNote(TreeItem *item, const QString &noteId)
@@ -167,7 +158,6 @@ static TreeItem *findBranchOfNote(TreeItem *item, const QString &noteId)
 
   return nullptr;
 }
-
 
 QJsonObject McpTools::applyCreateBranch(KnowTreeModel *model,
                                         const QString &parentId,
@@ -247,7 +237,6 @@ QJsonObject McpTools::applyCreateBranch(KnowTreeModel *model,
 
   return result;
 }
-
 
 QJsonObject McpTools::applyCreateNote(KnowTreeModel *model,
                                       const QString &branchId,
@@ -348,7 +337,6 @@ QJsonObject McpTools::applyCreateNote(KnowTreeModel *model,
   return result;
 }
 
-
 bool McpTools::applyUpdateNote(KnowTreeModel *model,
                                const QString &noteId,
                                bool hasName, const QString &name,
@@ -439,7 +427,6 @@ bool McpTools::applyUpdateNote(KnowTreeModel *model,
   return true;
 }
 
-
 QJsonObject McpTools::createBranchDirect(const QString &parentId,
                                          const QString &branchId,
                                          const QString &name,
@@ -454,7 +441,6 @@ QJsonObject McpTools::createBranchDirect(const QString &parentId,
 
   return result;
 }
-
 
 QJsonObject McpTools::createNoteDirect(const QString &branchId,
                                        const QString &noteId,
@@ -472,7 +458,6 @@ QJsonObject McpTools::createNoteDirect(const QString &branchId,
 
   return result;
 }
-
 
 QJsonObject McpTools::updateNoteDirect(const QString &noteId,
                                        bool hasName, const QString &name,
@@ -496,7 +481,6 @@ QJsonObject McpTools::updateNoteDirect(const QString &noteId,
 
   return result;
 }
-
 
 bool McpTools::applyDeleteNote(KnowTreeModel *model,
                                const QString &noteId,
@@ -544,14 +528,13 @@ bool McpTools::applyDeleteNote(KnowTreeModel *model,
 
   // Сайдкар бэклинков: только если есть что чистить, иначе
   // ensureLoaded построит и сохранит пустой индекс без нужды
-  QString sidecar=QDir::cleanPath(mytetraConfig.get_tetradir()+"/backlinks.xml");
+  QString sidecar=QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/backlinks.xml");
 
   if(QFile::exists(sidecar))
     BacklinkIndex::instance().removeSources(QStringList() << noteId);
 
   return true;
 }
-
 
 QJsonObject McpTools::applyDeleteBranch(KnowTreeModel *model,
                                         const QString &branchId,
@@ -589,7 +572,6 @@ QJsonObject McpTools::applyDeleteBranch(KnowTreeModel *model,
   return result;
 }
 
-
 QJsonObject McpTools::deleteNoteDirect(const QString &noteId, QString &error)
 {
   QJsonObject result;
@@ -605,7 +587,6 @@ QJsonObject McpTools::deleteNoteDirect(const QString &noteId, QString &error)
   return result;
 }
 
-
 QJsonObject McpTools::deleteBranchDirect(const QString &branchId, QString &error)
 {
   QJsonObject result=applyDeleteBranch(m_model, branchId, error);
@@ -617,7 +598,6 @@ QJsonObject McpTools::deleteBranchDirect(const QString &branchId, QString &error
 
   return result;
 }
-
 
 QJsonObject McpTools::applyRenameBranch(KnowTreeModel *model,
                                         const QString &branchId,
@@ -658,7 +638,6 @@ QJsonObject McpTools::applyRenameBranch(KnowTreeModel *model,
 
   return result;
 }
-
 
 QJsonObject McpTools::applyMoveBranch(KnowTreeModel *model,
                                       const QString &sourceId,
@@ -728,7 +707,6 @@ QJsonObject McpTools::applyMoveBranch(KnowTreeModel *model,
 
   return result;
 }
-
 
 QJsonObject McpTools::applyMoveNote(KnowTreeModel *model,
                                     const QString &noteId,
@@ -827,7 +805,6 @@ QJsonObject McpTools::applyMoveNote(KnowTreeModel *model,
   return result;
 }
 
-
 QJsonObject McpTools::renameBranchDirect(const QString &branchId,
                                          const QString &name,
                                          QString &error)
@@ -841,7 +818,6 @@ QJsonObject McpTools::renameBranchDirect(const QString &branchId,
 
   return result;
 }
-
 
 QJsonObject McpTools::moveBranchDirect(const QString &sourceId,
                                        const QString &targetId,
@@ -858,7 +834,6 @@ QJsonObject McpTools::moveBranchDirect(const QString &sourceId,
   return result;
 }
 
-
 QJsonObject McpTools::moveNoteDirect(const QString &noteId,
                                      const QString &targetBranchId,
                                      QString &error)
@@ -872,7 +847,6 @@ QJsonObject McpTools::moveNoteDirect(const QString &noteId,
 
   return result;
 }
-
 
 bool McpTools::applyBatchOp(KnowTreeModel *model,
                                 const QString &tool,

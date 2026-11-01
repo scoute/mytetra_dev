@@ -14,10 +14,7 @@
 #include "controllers/attachTable/AttachTableController.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/GestureHelper.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 AttachTableTileView::AttachTableTileView(QWidget *parent) : QListView(parent)
 {
@@ -46,12 +43,10 @@ AttachTableTileView::AttachTableTileView(QWidget *parent) : QListView(parent)
   setAcceptDrops(true);
 }
 
-
 AttachTableTileView::~AttachTableTileView()
 {
 
 }
-
 
 void AttachTableTileView::init(void)
 {
@@ -61,12 +56,10 @@ void AttachTableTileView::init(void)
   setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
-
 void AttachTableTileView::setController(AttachTableController *pController)
 {
   controller=pController;
 }
-
 
 void AttachTableTileView::setupSignals(void)
 {
@@ -82,7 +75,6 @@ void AttachTableTileView::setupSignals(void)
   connect(this,       &AttachTableTileView::doubleClicked,
           controller, &AttachTableController::onOpenAttach);
 }
-
 
 void AttachTableTileView::assemblyContextMenu(void)
 {
@@ -101,13 +93,11 @@ void AttachTableTileView::assemblyContextMenu(void)
   contextMenu->addAction(screenPointer->actionShowAttachInfo);
 }
 
-
 void AttachTableTileView::onCustomContextMenuRequested(const QPoint &pos)
 {
   // Включение отображения меню на экране
   contextMenu->exec( viewport()->mapToGlobal(pos) );
 }
-
 
 // Обработчик событий, нужен только для QTapAndHoldGesture (долгое нажатие)
 bool AttachTableTileView::event(QEvent *event)
@@ -121,7 +111,6 @@ bool AttachTableTileView::event(QEvent *event)
   return QListView::event(event);
 }
 
-
 // Обработчик жестов
 // Вызывается из обработчика жестов event()
 bool AttachTableTileView::gestureEvent(QGestureEvent *event)
@@ -134,7 +123,6 @@ bool AttachTableTileView::gestureEvent(QGestureEvent *event)
   return true;
 }
 
-
 // Обработчик жеста TapAndHoldGesture
 // Вызывается из обработчика жестов gestureEvent()
 void AttachTableTileView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
@@ -142,10 +130,9 @@ void AttachTableTileView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture
   qDebug() << "In tapAndHoldGestureTriggered()" << gesture;
 
   if(gesture->state()==Qt::GestureFinished)
-    if(globalParameters.getTargetOs()=="android")
+    if(AppContext::instance().globalParameters()->getTargetOs()=="android")
       emit tapAndHoldGestureFinished( mapFromGlobal(gesture->position().toPoint()) );
 }
-
 
 // Принимаются только перетаскивания с локальными файлами:
 // такой mime дают файловые менеджеры
@@ -157,7 +144,6 @@ void AttachTableTileView::dragEnterEvent(QDragEnterEvent *event)
     event->ignore();
 }
 
-
 void AttachTableTileView::dragMoveEvent(QDragMoveEvent *event)
 {
   if(event->mimeData()!=nullptr && event->mimeData()->hasUrls())
@@ -165,7 +151,6 @@ void AttachTableTileView::dragMoveEvent(QDragMoveEvent *event)
   else
     event->ignore();
 }
-
 
 // Бросок файлов: локальные пути уходят в контроллер,
 // нелокальные ссылки молча пропускаются

@@ -8,17 +8,13 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 // Объект для работы с конфигурацией (с настройками) базы данных
 // Конфигурация базы данных хранится в файле database.ini
 
 // Под базой данных понимается совокупность файлов - корневой mytetra.xml 
 // и все директории и файлы с записями
-
 
 // Конструктор объекта настройки БД
 DataBaseConfig::DataBaseConfig(QObject *pobj)
@@ -27,7 +23,6 @@ DataBaseConfig::DataBaseConfig(QObject *pobj)
 
  is_init_flag=false;
 }
-
 
 // Деструктор объекта настройки БД
 DataBaseConfig::~DataBaseConfig()
@@ -39,12 +34,11 @@ DataBaseConfig::~DataBaseConfig()
   }
 }
 
-
 void DataBaseConfig::init(void)
 {
  // Создается имя файла конфигурации
- // QString configFileName=globalParameters.getWorkDirectory()+"/"+mytetraConfig.get_tetradir()+"/database.ini";
- QString configFileName=mytetraConfig.get_tetradir()+"/database.ini";
+ // QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->get_tetradir()+"/database.ini";
+ QString configFileName=AppContext::instance().appConfig()->get_tetradir()+"/database.ini";
 
  // Проверяется, есть ли файл конфигурации
  QFile confFile(configFileName);
@@ -77,12 +71,10 @@ void DataBaseConfig::init(void)
  is_init_flag=true;
 }
 
-
 bool DataBaseConfig::is_init(void)
 {
  return is_init_flag;
 }
-
 
 // Получение параметра по имени в виде строки с проверкой его существования
 QString DataBaseConfig::get_parameter(QString name)
@@ -95,30 +87,25 @@ QString DataBaseConfig::get_parameter(QString name)
  return t;
 }
 
-
 int DataBaseConfig::get_crypt_mode(void)
 {
  return conf->value("crypt_mode", 0).toInt();
 }
-
 
 void DataBaseConfig::set_crypt_mode(int mode)
 {
  conf->setValue("crypt_mode", mode);
 }
 
-
 QString DataBaseConfig::get_crypt_check_salt(void)
 {
  return get_parameter("crypt_check_salt");
 }
 
-
 void DataBaseConfig::set_crypt_check_salt(QString salt)
 {
  conf->setValue("crypt_check_salt", salt);
 }
-
 
 QString DataBaseConfig::get_crypt_check_hash(void)
 {
@@ -130,24 +117,20 @@ void DataBaseConfig::set_crypt_check_hash(QString hash)
  conf->setValue("crypt_check_hash", hash);
 }
 
-
 QString DataBaseConfig::get_middle_hash_check_data(void)
 {
  return get_parameter("middle_hash_check_data");
 }
-
 
 void DataBaseConfig::set_middle_hash_check_data(QString hash)
 {
  conf->setValue("middle_hash_check_data", hash);
 }
 
-
 QString DataBaseConfig::get_cryptSalt(void)
 {
  return conf->value("cryptSalt", "").toString();
 }
-
 
 void DataBaseConfig::set_cryptSalt(QString salt)
 {
@@ -155,12 +138,10 @@ void DataBaseConfig::set_cryptSalt(QString salt)
  conf->sync();
 }
 
-
 void DataBaseConfig::sync(void)
 {
  conf->sync();
 }
-
 
 // --------------------
 // Номер версии конфига
@@ -173,7 +154,6 @@ int DataBaseConfig::get_config_version(void)
  else
   return 0;
 }
-
 
 void DataBaseConfig::set_config_version(int i)
 {

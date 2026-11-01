@@ -7,10 +7,7 @@
 #include "ChangeHistory.h"
 #include "libraries/UnifiedDiff.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 static QString recordFileName(const QString &recordId)
 {
@@ -18,12 +15,10 @@ static QString recordFileName(const QString &recordId)
     return QFileInfo(recordId).fileName()+QStringLiteral(".html");
 }
 
-
 QString ChangeHistory::historyDir(const QString &tetradir)
 {
     return QDir(tetradir).absoluteFilePath(QStringLiteral(".notehistory"));
 }
-
 
 bool ChangeHistory::snapshot(const QString &tetradir, const QString &recordId,
                              const QString &recordName, const QString &html)
@@ -34,7 +29,7 @@ bool ChangeHistory::snapshot(const QString &tetradir, const QString &recordId,
     // История выключена мастер-тумблером: тихо ничего не делаем.
     // Гейт здесь, а не у вызывателей: безопасны все пути записи,
     // включая будущие
-    if(!mytetraConfig.get_historyEnable())
+    if(!AppContext::instance().appConfig()->get_historyEnable())
         return false;
 
     if(!GitHelper::isAvailable())
@@ -83,7 +78,6 @@ bool ChangeHistory::snapshot(const QString &tetradir, const QString &recordId,
     return true;
 }
 
-
 QList<ChangeHistory::Version> ChangeHistory::versions(const QString &tetradir,
                                                      const QString &recordId)
 {
@@ -115,7 +109,6 @@ QList<ChangeHistory::Version> ChangeHistory::versions(const QString &tetradir,
     return result;
 }
 
-
 QString ChangeHistory::contentAt(const QString &tetradir, const QString &recordId,
                                  const QString &rev)
 {
@@ -133,7 +126,6 @@ QString ChangeHistory::contentAt(const QString &tetradir, const QString &recordI
     return GitHelper::showFile(dir, rev, recordFileName(recordId));
 }
 
-
 QString ChangeHistory::diffToCurrent(const QString &tetradir, const QString &recordId,
                                      const QString &rev, const QString &currentHtml,
                                      const QString &title)
@@ -147,7 +139,6 @@ QString ChangeHistory::diffToCurrent(const QString &tetradir, const QString &rec
                                   UnifiedDiff::htmlToLines(currentHtml),
                                   title);
 }
-
 
 bool ChangeHistory::resetToVersion(const QString &tetradir, const QString &recordId,
                                    const QString &rev, QString *errorMessage)
@@ -178,7 +169,6 @@ bool ChangeHistory::resetToVersion(const QString &tetradir, const QString &recor
     return GitHelper::truncateFileHistory(dir, recordFileName(recordId),
                                           rev, errorMessage);
 }
-
 
 bool ChangeHistory::squashOldVersions(const QString &tetradir, const QString &recordId,
                                       int keepNewest, int mode, QString *errorMessage)

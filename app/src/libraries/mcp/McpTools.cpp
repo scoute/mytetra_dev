@@ -28,13 +28,10 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 
 #include <QFile>
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
+#include "libraries/AppContext.h"
 
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
-
 
 McpTools::McpTools(KnowTreeModel *model) : m_model(model)
 {

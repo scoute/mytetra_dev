@@ -8,10 +8,7 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/LinkHelper.h"
 #include "libraries/VoiceNoteHelper.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 EditorContextMenu::EditorContextMenu(QWidget *parent) : QMenu(parent)
 {
@@ -21,12 +18,10 @@ EditorContextMenu::EditorContextMenu(QWidget *parent) : QMenu(parent)
     setupMenu();
 }
 
-
 EditorContextMenu::~EditorContextMenu(void)
 {
 
 }
-
 
 void EditorContextMenu::setupActions(void)
 {
@@ -71,59 +66,57 @@ actionCopyCode->setIcon(QIcon(":/resource/pic/edit_code.svg"));
  actionUppercase=new QAction(this);
 }
 
-
 void EditorContextMenu::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->metaObject()->className();
 
-    shortcutManager.initAction("editor-undo", actionUndo );
-    shortcutManager.initAction("editor-redo", actionRedo );
-    shortcutManager.initAction("editor-cut", actionCut );
-    shortcutManager.initAction("editor-copy", actionCopy );
-    shortcutManager.initAction("editor-paste", actionPaste );
-    shortcutManager.initAction("editor-pasteAsPlainText", actionPasteAsPlainText );
-    shortcutManager.initAction("editor-selectAll", actionSelectAll );
+    AppContext::instance().shortcutManager()->initAction("editor-undo", actionUndo );
+    AppContext::instance().shortcutManager()->initAction("editor-redo", actionRedo );
+    AppContext::instance().shortcutManager()->initAction("editor-cut", actionCut );
+    AppContext::instance().shortcutManager()->initAction("editor-copy", actionCopy );
+    AppContext::instance().shortcutManager()->initAction("editor-paste", actionPaste );
+    AppContext::instance().shortcutManager()->initAction("editor-pasteAsPlainText", actionPasteAsPlainText );
+    AppContext::instance().shortcutManager()->initAction("editor-selectAll", actionSelectAll );
 
     // "Умное" действие Вставить изображение / Редактировать свойства изображения
-    shortcutManager.initAction("editor-insertImageFromFile", actionEditImageProperties );
+    AppContext::instance().shortcutManager()->initAction("editor-insertImageFromFile", actionEditImageProperties );
     actionEditImageProperties->setText(tr("Edit image properties")); // В контекстном меню это редактирование свойств изображения
 
     actionShowImageInFolder->setText(tr("Show in folder")); // Открыть каталог с файлом картинки
 
     // "Умное" действие открытия изображения во внешней программе
-    shortcutManager.initAction("editor-openImage", actionOpenImage );
+    AppContext::instance().shortcutManager()->initAction("editor-openImage", actionOpenImage );
     actionOpenImage->setText(tr("Open image"));
 
     // Открытие изображения в выбранной программе, без своего шортката
     actionOpenImageWith->setText(tr("Open image with..."));
 
     // "Умное" действие Вставить / Редактировать формулу
-    shortcutManager.initAction("editor-mathExpression", actionEditMathExpression );
+    AppContext::instance().shortcutManager()->initAction("editor-mathExpression", actionEditMathExpression );
     actionEditMathExpression->setText(tr("Edit math expression")); // В контекстном меню это редактирование формулы
 
-    shortcutManager.initAction("editor-gotoReference", actionGotoReference );
+    AppContext::instance().shortcutManager()->initAction("editor-gotoReference", actionGotoReference );
 
-    shortcutManager.initAction("editor-playVoice", actionPlayVoice );
-    shortcutManager.initAction("editor-renameVoice", actionRenameVoice );
-    shortcutManager.initAction("editor-moveVoice", actionMoveVoice );
-    shortcutManager.initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
-    shortcutManager.initAction("editor-deleteVoice", actionDeleteVoice );
+    AppContext::instance().shortcutManager()->initAction("editor-playVoice", actionPlayVoice );
+    AppContext::instance().shortcutManager()->initAction("editor-renameVoice", actionRenameVoice );
+    AppContext::instance().shortcutManager()->initAction("editor-moveVoice", actionMoveVoice );
+    AppContext::instance().shortcutManager()->initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
+    AppContext::instance().shortcutManager()->initAction("editor-deleteVoice", actionDeleteVoice );
 
-    shortcutManager.initAction("editor-editReference", actionEditReference );
+    AppContext::instance().shortcutManager()->initAction("editor-editReference", actionEditReference );
 
-    shortcutManager.initAction("editor-pasteNoteReference", actionPasteNoteReference );
+    AppContext::instance().shortcutManager()->initAction("editor-pasteNoteReference", actionPasteNoteReference );
 
-    shortcutManager.initAction("editor-insertNoteReference", actionInsertNoteReference );
+    AppContext::instance().shortcutManager()->initAction("editor-insertNoteReference", actionInsertNoteReference );
 
     actionCopySecret->setText(tr("Copy secret")); // Скопировать содержимое секрета
     actionCopyCode->setText(tr("Copy code")); // Скопировать код блока целиком
 
     actionChangeSecretColor->setText(tr("Change secret color...")); // Сменить глобальный цвет секретов
 
-    shortcutManager.initAction("editor-lowercase", actionLowercase );
-    shortcutManager.initAction("editor-uppercase", actionUppercase );
+    AppContext::instance().shortcutManager()->initAction("editor-lowercase", actionLowercase );
+    AppContext::instance().shortcutManager()->initAction("editor-uppercase", actionUppercase );
 }
-
 
 void EditorContextMenu::update(void)
 {
@@ -152,7 +145,6 @@ void EditorContextMenu::update(void)
             setFormatToUpperCase( false );
         }
     }
-
 
     // Если курсор находится на ссылке (URL)
     if(static_cast<Editor*>(this->parent())->cursorPositionDetector->isCursorOnReference()) {
@@ -200,7 +192,6 @@ void EditorContextMenu::update(void)
     }
 }
 
-
 QList<QAction *> EditorContextMenu::getActionsList()
 {
     QList<QAction *> list;
@@ -224,7 +215,6 @@ QList<QAction *> EditorContextMenu::getActionsList()
     return list;
 }
 
-
 // Показывать или нет пункт редактирования свойств изображения
 void EditorContextMenu::setImageProperties(bool flag)
 {
@@ -243,7 +233,6 @@ void EditorContextMenu::setImageProperties(bool flag)
     actionShowImageInFolder->setEnabled(flag);
 }
 
-
 // Показывать или нет пункт редактирования математического выражения
 void EditorContextMenu::setEditMathExpression(bool flag)
 {
@@ -254,14 +243,12 @@ void EditorContextMenu::setEditMathExpression(bool flag)
 
 }
 
-
 // Показывать или нет пункт перехода по ссылке
 void EditorContextMenu::setGotoReference(bool flag)
 {
   actionGotoReference->setVisible(flag);
   actionGotoReference->setEnabled(flag);
 }
-
 
 // Показывать или нет пункты голосовой заметки
 void EditorContextMenu::setPlayVoice(bool flag)
@@ -270,13 +257,11 @@ void EditorContextMenu::setPlayVoice(bool flag)
   actionPlayVoice->setEnabled(flag);
 }
 
-
 void EditorContextMenu::setRenameVoice(bool flag)
 {
   actionRenameVoice->setVisible(flag);
   actionRenameVoice->setEnabled(flag);
 }
-
 
 void EditorContextMenu::setMoveVoice(bool flag)
 {
@@ -284,20 +269,17 @@ void EditorContextMenu::setMoveVoice(bool flag)
   actionMoveVoice->setEnabled(flag);
 }
 
-
 void EditorContextMenu::setShowVoiceInFolder(bool flag)
 {
   actionShowVoiceInFolder->setVisible(flag);
   actionShowVoiceInFolder->setEnabled(flag);
 }
 
-
 void EditorContextMenu::setDeleteVoice(bool flag)
 {
   actionDeleteVoice->setVisible(flag);
   actionDeleteVoice->setEnabled(flag);
 }
-
 
 // Показывать или нет пункт редактирования ссылки под курсором
 void EditorContextMenu::setEditReference(bool flag)
@@ -306,14 +288,12 @@ void EditorContextMenu::setEditReference(bool flag)
   actionEditReference->setEnabled(flag);
 }
 
-
 // Показывать или нет пункт вставки ссылки на заметку из буфера
 void EditorContextMenu::setPasteNoteReference(bool flag)
 {
   actionPasteNoteReference->setVisible(flag);
   actionPasteNoteReference->setEnabled(flag);
 }
-
 
 // Показывать или нет пункт копирования секрета
 void EditorContextMenu::setCopySecret(bool flag)
@@ -324,14 +304,12 @@ void EditorContextMenu::setCopySecret(bool flag)
     actionCopySecret->setEnabled(flag);
 }
 
-
 // Показ пункта "Скопировать код"
 void EditorContextMenu::setCopyCode(bool flag)
 {
     actionCopyCode->setVisible(flag);
     actionCopyCode->setEnabled(flag);
 }
-
 
 // Показывать или нет пункт смены цвета секрета
 void EditorContextMenu::setChangeSecretColor(bool flag)
@@ -340,14 +318,12 @@ void EditorContextMenu::setChangeSecretColor(bool flag)
     actionChangeSecretColor->setEnabled(flag);
 }
 
-
 // Показывать или нет пункт "Вставить только текст"
 void EditorContextMenu::setPasteAsPlainText(bool flag)
 {
   actionPasteAsPlainText->setVisible(flag);
   actionPasteAsPlainText->setEnabled(flag);
 }
-
 
 // Показывать или нет пункт "Строчные"
 void EditorContextMenu::setFormatToLowerCase(bool flag)
@@ -356,14 +332,12 @@ void EditorContextMenu::setFormatToLowerCase(bool flag)
   actionLowercase->setEnabled(flag);
 }
 
-
 // Показывать или нет пункт "ПРОПИСНЫЕ"
 void EditorContextMenu::setFormatToUpperCase(bool flag)
 {
   actionUppercase->setVisible(flag);
   actionUppercase->setEnabled(flag);
 }
-
 
 void EditorContextMenu::setupSignals(void)
 {
@@ -397,9 +371,8 @@ void EditorContextMenu::setupSignals(void)
     connect(actionUppercase, &QAction::triggered, this, &EditorContextMenu::onActionUppercase);
 
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &EditorContextMenu::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &EditorContextMenu::setupShortcuts);
 }
-
 
 void EditorContextMenu::setupMenu(void)
 {
@@ -439,7 +412,6 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionCopySecret);
     this->addAction(actionChangeSecretColor);
 }
-
 
 void EditorContextMenu::onActionUndo()
 {

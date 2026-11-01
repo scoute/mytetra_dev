@@ -5,22 +5,17 @@
 #include "ActionLogModel.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/ActionLogger.h"
-
-extern AppConfig mytetraConfig;
-extern ActionLogger actionLogger;
-
+#include "libraries/AppContext.h"
 
 ActionLogModel::ActionLogModel(QObject *parent) : QAbstractTableModel(parent)
 {
-  doc.setContent( actionLogger.getXml() );
+  doc.setContent( AppContext::instance().actionLogger()->getXml() );
 }
-
 
 ActionLogModel::~ActionLogModel()
 {
 
 }
-
 
 // Число столбцов
 int ActionLogModel::columnCount(const QModelIndex & parent) const
@@ -30,7 +25,6 @@ int ActionLogModel::columnCount(const QModelIndex & parent) const
   return ACTIONLOG_COLUMNS;
 }
 
-
 // Число строк
 int ActionLogModel::rowCount(const QModelIndex& parent) const
 {
@@ -38,7 +32,6 @@ int ActionLogModel::rowCount(const QModelIndex& parent) const
 
   return doc.elementsByTagName("r").length();
 }
-
 
 // Получение данных
 QVariant ActionLogModel::data(const QModelIndex& index, int role) const
@@ -48,7 +41,6 @@ QVariant ActionLogModel::data(const QModelIndex& index, int role) const
 
   return QVariant();
 }
-
 
 // Получение значения ячейки, защищенный метод
 QVariant ActionLogModel::getCell(int row, int column, int role) const
@@ -68,10 +60,10 @@ QVariant ActionLogModel::getCell(int row, int column, int role) const
       if(role==Qt::DisplayRole)
       {
         QDateTime fieldDateTime=QDateTime::fromTime_t( element.attribute("t").toUInt() );
-        if(mytetraConfig.getEnableCustomDateTimeFormat()==false)
+        if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()==false)
           return fieldDateTime.toString(Qt::SystemLocaleDate);
         else
-          return fieldDateTime.toString( mytetraConfig.getCustomDateTimeFormat() );
+          return fieldDateTime.toString( AppContext::instance().appConfig()->getCustomDateTimeFormat() );
       }
       else
         return QVariant( element.attribute("t") ); // Время передается в сыром виде (формат TIMESTAMP), чтобы была возможность сортировки
@@ -80,7 +72,7 @@ QVariant ActionLogModel::getCell(int row, int column, int role) const
 
     case ACTIONLOG_COLUMN_ACTION:
       if(role==Qt::DisplayRole)
-        return QVariant( actionLogger.getFullDescription(element) );
+        return QVariant( AppContext::instance().actionLogger()->getFullDescription(element) );
 
       // Вывод иконок
       if(role==Qt::DecorationRole)
@@ -98,7 +90,6 @@ QVariant ActionLogModel::getCell(int row, int column, int role) const
   return QVariant();
 
 }
-
 
 QVariant ActionLogModel::headerData(int section, Qt::Orientation orientation, int role) const
 {

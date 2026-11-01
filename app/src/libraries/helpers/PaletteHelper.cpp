@@ -11,10 +11,7 @@
 
 #include "libraries/FixedParameters.h"
 #include "libraries/GlobalParameters.h"
-
-extern GlobalParameters globalParameters;
-extern FixedParameters fixedParameters;
-
+#include "libraries/AppContext.h"
 
 PaletteHelper::PaletteHelper()
 {
@@ -43,12 +40,10 @@ QMap<QString, QPalette::ColorRole> PaletteHelper::getColorMap()
     return colorMap;
 }
 
-
 QStringList PaletteHelper::getColorNameList()
 {
     return getColorMap().keys();
 }
-
 
 QString PaletteHelper::getNameByColorRole(QPalette::ColorRole role)
 {
@@ -65,7 +60,6 @@ QString PaletteHelper::getNameByColorRole(QPalette::ColorRole role)
     return "";
 }
 
-
 QPalette::ColorRole PaletteHelper::getColorRoleByName(const QString &name)
 {
     QMap<QString, QPalette::ColorRole> colorMap = getColorMap();
@@ -79,7 +73,6 @@ QPalette::ColorRole PaletteHelper::getColorRoleByName(const QString &name)
         return QPalette::NoRole;
     }
 }
-
 
 void PaletteHelper::applyCustomPalette(const QMap<QString, QColor> &colorMap)
 {
@@ -98,7 +91,6 @@ void PaletteHelper::applyCustomPalette(const QMap<QString, QColor> &colorMap)
     qApp->setPalette(palette);
 }
 
-
 QString PaletteHelper::getRgbaColorText(const QColor &color)
 {
     // Получение rgba-значения
@@ -115,7 +107,6 @@ QString PaletteHelper::getRgbaColorText(const QColor &color)
 
     return result;
 }
-
 
 QMap<QString, QColor> PaletteHelper::parseCustomPalette(const QString &cssText)
 {

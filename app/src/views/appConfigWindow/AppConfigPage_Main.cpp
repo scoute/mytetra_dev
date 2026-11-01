@@ -22,14 +22,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/mainWindow/MainWindow.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
-
-
-extern AppConfig mytetraConfig;
-extern ShortcutManager shortcutManager;
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_Main::AppConfigPage_Main(QWidget *parent) : ConfigPage(parent)
 {
@@ -37,7 +30,6 @@ AppConfigPage_Main::AppConfigPage_Main(QWidget *parent) : ConfigPage(parent)
   setupSignals();
   assembly();
 }
-
 
 void AppConfigPage_Main::setupUi(void)
 {
@@ -49,11 +41,10 @@ void AppConfigPage_Main::setupUi(void)
 
  tetradirInput=new QLineEdit(this);
  tetradirInput->setMinimumWidth(50);
- tetradirInput->setText(mytetraConfig.get_tetradir());
+ tetradirInput->setText(AppContext::instance().appConfig()->get_tetradir());
 
  tetradirButton=new QToolButton(this);
  tetradirButton->setText(tr("..."));
-
 
  // Блок работы с путем до корзины
  trashdirLabel=new QLabel(this);
@@ -61,7 +52,7 @@ void AppConfigPage_Main::setupUi(void)
 
  trashdirInput=new QLineEdit(this);
  trashdirInput->setMinimumWidth(50);
- trashdirInput->setText(mytetraConfig.get_trashdir());
+ trashdirInput->setText(AppContext::instance().appConfig()->get_trashdir());
 
  trashdirButton=new QToolButton(this);
  trashdirButton->setText(tr("..."));
@@ -73,11 +64,10 @@ void AppConfigPage_Main::setupUi(void)
  
  trashsizeInput=new QSpinBox(this);
  trashsizeInput->setRange(1,1000);
- trashsizeInput->setValue(mytetraConfig.get_trashsize());
+ trashsizeInput->setValue(AppContext::instance().appConfig()->get_trashsize());
  
  trashsizeFlexion=new QLabel(this);
  trashsizeFlexion->setText(tr("Mb"));
-
 
  // Блок работы с максимальным количеством файлов в корзине
  trashmaxfilecountLabel=new QLabel(this);
@@ -85,11 +75,10 @@ void AppConfigPage_Main::setupUi(void)
  
  trashmaxfilecountInput=new QSpinBox(this);
  trashmaxfilecountInput->setRange(1,3000);
- trashmaxfilecountInput->setValue(mytetraConfig.get_trashmaxfilecount());
+ trashmaxfilecountInput->setValue(AppContext::instance().appConfig()->get_trashmaxfilecount());
  
  trashmaxfilecountFlexion=new QLabel(this);
  trashmaxfilecountFlexion->setText(tr("files"));
-
 
  // Блок работы с выбором языка интерфейса
  interfaceLanguageLabel=new QLabel(this);
@@ -111,8 +100,7 @@ void AppConfigPage_Main::setupUi(void)
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/China.png"));
  interfaceLanguage->addItem("hy");
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Armenia.png"));
- interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(mytetraConfig.get_interfacelanguage(), Qt::MatchCaseSensitive));
-
+ interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(AppContext::instance().appConfig()->get_interfacelanguage(), Qt::MatchCaseSensitive));
 
  // Блок работы с отображением даты и времени
  dateTimeFormatBox=new QGroupBox(this);
@@ -126,7 +114,7 @@ void AppConfigPage_Main::setupUi(void)
  dateTimeFormatHelpButton->setIcon( styleHelp.standardIcon(QStyle::SP_MessageBoxQuestion) );
 
  // Точка устанавливается возле того пункта, который настроен в конфиге
- if(mytetraConfig.getEnableCustomDateTimeFormat()==false)
+ if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()==false)
  {
    disableCustomDateTimeFormat->setChecked(true);
    enableCustomDateTimeFormat->setChecked(false);
@@ -138,17 +126,15 @@ void AppConfigPage_Main::setupUi(void)
    disableCustomDateTimeFormat->setChecked(false);
    enableCustomDateTimeFormat->setChecked(true);
    customDateTimeFormat->setEnabled(true);
-   customDateTimeFormat->setText( mytetraConfig.getCustomDateTimeFormat() );
+   customDateTimeFormat->setText( AppContext::instance().appConfig()->getCustomDateTimeFormat() );
  }
 
 }
-
 
 AppConfigPage_Main::~AppConfigPage_Main(void)
 {
 
 }
-
 
 void AppConfigPage_Main::setupSignals(void)
 {
@@ -163,7 +149,6 @@ void AppConfigPage_Main::setupSignals(void)
   connect(interfaceLanguage, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &AppConfigPage_Main::onLanguageChanged);
 }
-
 
 void AppConfigPage_Main::assembly(void)
 {
@@ -191,7 +176,6 @@ void AppConfigPage_Main::assembly(void)
   QHBoxLayout *interfaceLanguageLayout=new QHBoxLayout();
   interfaceLanguageLayout->addWidget(interfaceLanguage);
 
-
   // Блок работы с отображением даты и времени
   QVBoxLayout *dateTimeFormatVBox = new QVBoxLayout();
   QHBoxLayout *dateTimeFormatHBox = new QHBoxLayout();
@@ -204,14 +188,12 @@ void AppConfigPage_Main::assembly(void)
   dateTimeFormatVBox->addLayout(dateTimeFormatHBox);
   dateTimeFormatBox->setLayout(dateTimeFormatVBox);
 
-
   // Сборка всех блоков
   QGridLayout *dirLayout=new QGridLayout();
   dirLayout->addWidget(tetradirLabel,0,0);
   dirLayout->addLayout(tetradirLayout,0,1);
   dirLayout->addWidget(trashdirLabel,1,0);
   dirLayout->addLayout(trashdirLayout,1,1);
-
 
   QGridLayout *otherSettingLayout=new QGridLayout();
 
@@ -226,7 +208,6 @@ void AppConfigPage_Main::assembly(void)
 
   otherSettingLayout->setColumnStretch(1,100);
 
-
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(dirLayout);
   centralLayout->addLayout(otherSettingLayout);
@@ -235,7 +216,6 @@ void AppConfigPage_Main::assembly(void)
 
   setLayout(centralLayout);
 }
-
 
 // Действия при нажатии кнопки выбора директории данных
 void AppConfigPage_Main::onClickedTetradirSelectDialog(void)
@@ -250,7 +230,6 @@ void AppConfigPage_Main::onClickedTetradirSelectDialog(void)
       tetradirInput->setText( tetradirSelectDialog.directory().absolutePath() );
 }
 
-
 // Действия при нажатии кнопки выбора директории корзины
 void AppConfigPage_Main::onClickedTrashdirSelectDialog(void)
 {
@@ -264,7 +243,6 @@ void AppConfigPage_Main::onClickedTrashdirSelectDialog(void)
       trashdirInput->setText( trashdirSelectDialog.directory().absolutePath() );
 }
 
-
 // Действия при нажатии на радиокнопку системных установок даты и времени
 void AppConfigPage_Main::onDisableCustomDateTimeFormatToggle(bool checked)
 {
@@ -277,7 +255,6 @@ void AppConfigPage_Main::onDisableCustomDateTimeFormatToggle(bool checked)
 
 }
 
-
 // Действия при нажатии на радиокнопку пользовательских установок даты и времени
 void AppConfigPage_Main::onEnableCustomDateTimeFormatToggle(bool checked)
 {
@@ -287,7 +264,6 @@ void AppConfigPage_Main::onEnableCustomDateTimeFormatToggle(bool checked)
     customDateTimeFormat->setEnabled(true);
 }
 
-
 // Язык применяется сразу по выбору в выпадашке: конфиг, переводчик,
 // все экраны и шорткаты. Порядок как в applyChanges: сначала прямые
 // тексты, потом тексты на шорткатах
@@ -295,10 +271,10 @@ void AppConfigPage_Main::onLanguageChanged(int index)
 {
   QString code=interfaceLanguage->itemText(index);
 
-  if(code.isEmpty() || mytetraConfig.get_interfacelanguage()==code)
+  if(code.isEmpty() || AppContext::instance().appConfig()->get_interfacelanguage()==code)
     return;
 
-  mytetraConfig.set_interfacelanguage(code);
+  AppContext::instance().appConfig()->set_interfacelanguage(code);
 
   LanguageHelper::switchLanguage(code);
 
@@ -311,9 +287,8 @@ void AppConfigPage_Main::onLanguageChanged(int index)
   foreach(AppConfigDialog *dialog, AppConfigDialog::openDialogs)
     dialog->retranslateUi();
 
-  shortcutManager.retranslate();
+  AppContext::instance().shortcutManager()->retranslate();
 }
-
 
 void AppConfigPage_Main::onDateTimeFormatHelpButton(void)
 {
@@ -337,7 +312,6 @@ Sample: dd.MM.yyyy - hh:mm:ss";
   msgBox.setText(text);
   msgBox.exec();
 }
-
 
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
@@ -363,7 +337,6 @@ void AppConfigPage_Main::retranslateUi(void)
   enableCustomDateTimeFormat->setText(tr("Custom format"));
 }
 
-
 int AppConfigPage_Main::applyChanges(void)
 {
  qDebug() << "Apply changes main";
@@ -371,7 +344,7 @@ int AppConfigPage_Main::applyChanges(void)
  int difficultChanges=0;
  
  // Если был изменен путь к базе, он запоминается в конфигфайл
- if(mytetraConfig.get_tetradir()!=tetradirInput->text())
+ if(AppContext::instance().appConfig()->get_tetradir()!=tetradirInput->text())
   {
    QDir dir(tetradirInput->text());
 
@@ -383,14 +356,14 @@ int AppConfigPage_Main::applyChanges(void)
    else
     { 
      // Новое имя запоминается в конфиг
-     mytetraConfig.set_tetradir( tetradirInput->text() );
+     AppContext::instance().appConfig()->set_tetradir( tetradirInput->text() );
      difficultChanges=1;
     } 
   } 
 
  
  // Если был изменен путь к корзине, он запоминается в конфигфайл
- if(mytetraConfig.get_trashdir()!=trashdirInput->text())
+ if(AppContext::instance().appConfig()->get_trashdir()!=trashdirInput->text())
   {
    QDir dir(trashdirInput->text());
 
@@ -402,44 +375,42 @@ int AppConfigPage_Main::applyChanges(void)
    else
     { 
      // Новое имя запоминается в конфиг
-     mytetraConfig.set_trashdir(trashdirInput->text());
+     AppContext::instance().appConfig()->set_trashdir(trashdirInput->text());
     } 
   } 
  
  
  // Если был изменен размер корзины
- if( (int)mytetraConfig.get_trashsize() != (int)trashsizeInput->text().toInt() )
+ if( (int)AppContext::instance().appConfig()->get_trashsize() != (int)trashsizeInput->text().toInt() )
   {
-   mytetraConfig.set_trashsize(trashsizeInput->text().toInt());
+   AppContext::instance().appConfig()->set_trashsize(trashsizeInput->text().toInt());
   }
 
  
  // Если было изменено максимально возможное количество файлов в корзине
- if(mytetraConfig.get_trashmaxfilecount()!=trashmaxfilecountInput->text().toInt())
+ if(AppContext::instance().appConfig()->get_trashmaxfilecount()!=trashmaxfilecountInput->text().toInt())
   {
-   mytetraConfig.set_trashmaxfilecount(trashmaxfilecountInput->text().toInt());
+   AppContext::instance().appConfig()->set_trashmaxfilecount(trashmaxfilecountInput->text().toInt());
   }
-
 
  // Если было изменено использование пользовательского формата даты и времени
- if(mytetraConfig.getEnableCustomDateTimeFormat()!=enableCustomDateTimeFormat->isChecked())
+ if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()!=enableCustomDateTimeFormat->isChecked())
   {
-   mytetraConfig.setEnableCustomDateTimeFormat(enableCustomDateTimeFormat->isChecked());
+   AppContext::instance().appConfig()->setEnableCustomDateTimeFormat(enableCustomDateTimeFormat->isChecked());
   }
 
-
  // Если было изменен пользовательский формат даты и времени
- if(mytetraConfig.getCustomDateTimeFormat()!=customDateTimeFormat->text())
+ if(AppContext::instance().appConfig()->getCustomDateTimeFormat()!=customDateTimeFormat->text())
   {
-   mytetraConfig.setCustomDateTimeFormat(customDateTimeFormat->text());
+   AppContext::instance().appConfig()->setCustomDateTimeFormat(customDateTimeFormat->text());
   }
 
  
  // Если был изменен язык: применяется на лету без перезапуска.
  // Порядок важен: сначала прямые тексты, потом тексты на шорткатах
- if(mytetraConfig.get_interfacelanguage()!=interfaceLanguage->currentText())
+ if(AppContext::instance().appConfig()->get_interfacelanguage()!=interfaceLanguage->currentText())
   {
-   mytetraConfig.set_interfacelanguage(interfaceLanguage->currentText());
+   AppContext::instance().appConfig()->set_interfacelanguage(interfaceLanguage->currentText());
 
    LanguageHelper::switchLanguage(interfaceLanguage->currentText());
 
@@ -448,7 +419,7 @@ int AppConfigPage_Main::applyChanges(void)
    if(mainWindow!=nullptr)
      mainWindow->retranslateUi();
 
-   shortcutManager.retranslate();
+   AppContext::instance().shortcutManager()->retranslate();
   }
 
  return difficultChanges;

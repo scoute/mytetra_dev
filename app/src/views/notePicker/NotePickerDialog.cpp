@@ -17,10 +17,7 @@
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
 #include "views/tree/KnowTreeView.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 NotePickerDialog::NotePickerDialog(QWidget *parent,
                                    const QString &excludeId) : QDialog(parent),
@@ -86,7 +83,6 @@ NotePickerDialog::NotePickerDialog(QWidget *parent,
   buildIndex();
 }
 
-
 QString NotePickerDialog::selectedRecordId(void) const
 {
   QTableWidgetItem *item=resultsTable->item(resultsTable->currentRow(), ColumnName);
@@ -95,7 +91,6 @@ QString NotePickerDialog::selectedRecordId(void) const
 
   return item->data(Qt::UserRole).toString();
 }
-
 
 QString NotePickerDialog::selectedRecordName(void) const
 {
@@ -106,7 +101,6 @@ QString NotePickerDialog::selectedRecordName(void) const
   return item->text();
 }
 
-
 void NotePickerDialog::applyFilter(const QString &text)
 {
   filterTimer->stop();
@@ -114,30 +108,25 @@ void NotePickerDialog::applyFilter(const QString &text)
   rebuildResults();
 }
 
-
 void NotePickerDialog::setCurrentRow(int row)
 {
   resultsTable->selectRow(row);
 }
-
 
 int NotePickerDialog::resultCount(void) const
 {
   return resultsTable->rowCount();
 }
 
-
 QString NotePickerDialog::counterText(void) const
 {
   return counterLabel->text();
 }
 
-
 void NotePickerDialog::scheduleFilter(void)
 {
   filterTimer->start();
 }
-
 
 void NotePickerDialog::onItemActivated(QTableWidgetItem *item)
 {
@@ -147,7 +136,6 @@ void NotePickerDialog::onItemActivated(QTableWidgetItem *item)
   resultsTable->setCurrentCell(item->row(), ColumnName);
   accept();
 }
-
 
 void NotePickerDialog::buildIndex(void)
 {
@@ -165,7 +153,6 @@ void NotePickerDialog::buildIndex(void)
 
   noteIndex=treeModel->getNoteIndex();
 }
-
 
 QList<NotePickerDialog::Hit> NotePickerDialog::searchHits(const QString &query) const
 {
@@ -205,7 +192,6 @@ QList<NotePickerDialog::Hit> NotePickerDialog::searchHits(const QString &query) 
 
   return hits;
 }
-
 
 void NotePickerDialog::rebuildResults(void)
 {

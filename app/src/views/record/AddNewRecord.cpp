@@ -18,12 +18,7 @@
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/DebugHelper.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 // Окно добавления новой записи
 
@@ -37,12 +32,10 @@ AddNewRecord::AddNewRecord( QWidget * parent, Qt::WindowFlags f) : QDialog(paren
   setupEventFilter();
 }
 
-
 AddNewRecord::~AddNewRecord()
 {
 
 }
-
 
 void AddNewRecord::setupUI(void)
 {
@@ -53,9 +46,9 @@ void AddNewRecord::setupUI(void)
 
   // Редактор текста записи
   recordTextEditor.initEnableAssembly(true);
-  recordTextEditor.initConfigFileName(globalParameters.getWorkDirectory()+"/editorconf.ini");
+  recordTextEditor.initConfigFileName(AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini");
   recordTextEditor.initEnableRandomSeed(false);
-  recordTextEditor.initDisableToolList( mytetraConfig.getHideEditorTools() + (QStringList() << "save" << "showText" << "toAttach" << "settings" << "expandEditArea") );
+  recordTextEditor.initDisableToolList( AppContext::instance().appConfig()->getHideEditorTools() + (QStringList() << "save" << "showText" << "toAttach" << "settings" << "expandEditArea") );
   recordTextEditor.init(Editor::WYEDIT_DESKTOP_MODE); // Так как это окно, в мобильном режиме его инициализировать не нужно, так как есть кнопка Отмена
   recordTextEditor.setObjectName("editorScreenInAddNewRecord");
 
@@ -82,17 +75,15 @@ void AddNewRecord::setupUI(void)
   CancelButton->setDefault(false);
 }
 
-
 void AddNewRecord::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << staticMetaObject.className();
 
     // На кнопку OK назначается комбинация клавиш Ctrl+Enter
     QPushButton *okButton=buttonBox.button(QDialogButtonBox::Ok); // Выясняется указатель на кнопку OK
-    okButton->setShortcut( shortcutManager.getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
-    okButton->setToolTip( shortcutManager.getKeySequenceAsText("misc-editConfirm") ); // ToolTip зависит от шортката
+    okButton->setShortcut( AppContext::instance().shortcutManager()->getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
+    okButton->setToolTip( AppContext::instance().shortcutManager()->getKeySequenceAsText("misc-editConfirm") ); // ToolTip зависит от шортката
 }
-
 
 void AddNewRecord::setupSignals(void)
 {
@@ -100,9 +91,8 @@ void AddNewRecord::setupSignals(void)
   connect(&buttonBox, &QDialogButtonBox::rejected, this, &AddNewRecord::reject);
 
   // Обновление горячих клавиш, если они были изменены
-  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &AddNewRecord::setupShortcuts);
+  connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &AddNewRecord::setupShortcuts);
 }
-
 
 void AddNewRecord::assembly(void)
 {
@@ -126,13 +116,11 @@ void AddNewRecord::assembly(void)
   // setCentralWidget(wdgt);
 }
 
-
 void AddNewRecord::setupEventFilter(void)
 {
   // Для области редактирования задается eventFilter (используется для отлова нажатия на ESC)
   recordTextEditor.installEventFilter(this);
 }
-
 
 bool AddNewRecord::eventFilter(QObject *object, QEvent *event)
 {
@@ -156,7 +144,6 @@ bool AddNewRecord::eventFilter(QObject *object, QEvent *event)
   return QDialog::eventFilter(object, event); // todo: тут подумать, возможно здесь надо возвращать false
 }
 
-
 void AddNewRecord::okClick(void)
 {
   QString message="";
@@ -166,7 +153,7 @@ void AddNewRecord::okClick(void)
     message=message+tr("Please enter the note's <b>title</b>. ");
 
   // Проверка наличия текста записи
-  if( !mytetraConfig.getEnableCreateEmptyRecord() ) // Если не разрешено создавать запись с пустым текстом
+  if( !AppContext::instance().appConfig()->getEnableCreateEmptyRecord() ) // Если не разрешено создавать запись с пустым текстом
   {
     QTextDocumentFragment i;
     QString j;
@@ -192,7 +179,6 @@ void AddNewRecord::okClick(void)
   emit(accept());
 }
 
-
 QString AddNewRecord::getImagesDirectory(void)
 {
   if(imagesDirName.length()==0)
@@ -203,7 +189,6 @@ QString AddNewRecord::getImagesDirectory(void)
 
   return imagesDirName;
 }
-
 
 // Получение полей, заполненных в окне добавления записи
 QString AddNewRecord::getField(QString name)

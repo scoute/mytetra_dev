@@ -20,10 +20,7 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/DiskHelper.h"
-
-extern GlobalParameters globalParameters;
-extern FixedParameters fixedParameters;
-
+#include "libraries/AppContext.h"
 
 // Конструктор объекта настройки программы
 AppConfig::AppConfig(QObject *pobj)
@@ -32,7 +29,6 @@ AppConfig::AppConfig(QObject *pobj)
 
     m_isInit=false;
 }
-
 
 // Деструктор объекта настройки программы
 AppConfig::~AppConfig()
@@ -44,12 +40,10 @@ AppConfig::~AppConfig()
     }
 }
 
-
-
 void AppConfig::init(void)
 {
     // Имя файла конфигурации
-    QString configFileName = globalParameters.getWorkDirectory()+"/conf.ini";
+    QString configFileName = AppContext::instance().globalParameters()->getWorkDirectory()+"/conf.ini";
 
     // Проверяется, есть ли файл конфигурации
     QFile confFile(configFileName);
@@ -79,13 +73,11 @@ void AppConfig::init(void)
     m_isInit = true;
 }
 
-
 // Создание первой при старте программы копии конфигов MyTetra в корзине
 // Это необходимо чтобы в корзине лежали актуальные копии конфигов при каждом старте программы
 // А так же если копии сделать невозможно, это значит что переписывать
 // или запускать sync() для конфигов нельзя, так как они могут обнулиться,
 // например если закончилось свободное место на диске, поэтому программу надо завершить
-
 
 // Создание первой при старте программы копии конфигов MyTetra в корзине
 // Это необходимо чтобы в корзине лежали актуальные копии конфигов при каждом старте программы
@@ -101,10 +93,10 @@ void AppConfig::createFirstAtStartConfigCopy()
     if (DiskHelper::isTrashDirectoryExists() )
     {
         QStringList fileNames = QStringList()
-                                << globalParameters.getWorkDirectory()+"/conf.ini"
-                                << globalParameters.getWorkDirectory()+"/editorconf.ini"
-                                << globalParameters.getWorkDirectory()+"/shortcut.ini"
-                                << globalParameters.getWorkDirectory()+"/knownbases.ini"
+                                << AppContext::instance().globalParameters()->getWorkDirectory()+"/conf.ini"
+                                << AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini"
+                                << AppContext::instance().globalParameters()->getWorkDirectory()+"/shortcut.ini"
+                                << AppContext::instance().globalParameters()->getWorkDirectory()+"/knownbases.ini"
                                 << get_tetradir()+"/database.ini";
 
         for (const auto& fileName : fileNames)
@@ -128,21 +120,17 @@ void AppConfig::createFirstAtStartConfigCopy()
     }
 }
 
-
 bool AppConfig::is_init(void)
 {
     return m_isInit;
 }
-
 
 void AppConfig::sync(void)
 {
     m_conf->sync();
 }
 
-
 // Получение имени файла конфига, с которым происходит работа
-
 
 // Получение имени файла конфига, с которым происходит работа
 QString AppConfig::getConfigFileName()
@@ -150,9 +138,7 @@ QString AppConfig::getConfigFileName()
     return m_conf->fileName();
 }
 
-
 // Получение параметра по имени в виде строки с проверкой его существования
-
 
 // Получение параметра по имени в виде строки с проверкой его существования
 QString AppConfig::get_parameter(QString name)
@@ -179,23 +165,18 @@ QString AppConfig::get_parameter(QString name)
     }
 }
 
-
-
 // Установка имени директории с данными (в которой находится mytetra.xml)
-
 
 bool AppConfig::get_printdebugmessages(void)
 {
     return m_conf->value("printdebugmessages").toBool();
 }
 
-
 bool AppConfig::set_printdebugmessages(bool isPrint)
 {
     m_conf->setValue("printdebugmessages", isPrint);
     return true;
 }
-
 
 QString AppConfig::get_interfacelanguage(void)
 {
@@ -204,19 +185,16 @@ QString AppConfig::get_interfacelanguage(void)
     return language;
 }
 
-
 bool AppConfig::set_interfacelanguage(QString language)
 {
     m_conf->setValue("interfacelanguage", language);
     return true;
 }
 
-
 QString AppConfig::get_addnewrecord_expand_info(void)
 {
     return this->get_parameter("addnewrecord_expand_info");
 }
-
 
 void AppConfig::set_addnewrecord_expand_info(QString state)
 {
@@ -230,18 +208,15 @@ void AppConfig::set_addnewrecord_expand_info(QString state)
     }
 }
 
-
 void AppConfig::setMcpUiLock(bool locked)
 {
     m_mcpUiLock=locked;
 }
 
-
 bool AppConfig::isMcpUiLocked(void)
 {
     return m_mcpUiLock;
 }
-
 
 int AppConfig::get_config_version(void)
 {
@@ -250,12 +225,10 @@ int AppConfig::get_config_version(void)
     return v;
 }
 
-
 void AppConfig::set_config_version(int i)
 {
     m_conf->setValue("version", i);
 }
-
 
 // P2: ленивые доступы к секциям. Бэкенд перепривязывается при
 // каждом обращении, поэтому фасады работают и без init()
@@ -356,7 +329,6 @@ AppConfigServices *AppConfig::servicesSection(void)
 
     return m_services;
 }
-
 
 // --------------------
 // Секция Storage (реализация в AppConfigStorage.cpp)
@@ -486,7 +458,6 @@ void AppConfig::set_attachNameMode(int mode)
 {
     storageSection()->set_attachNameMode(mode);
 }
-
 
 // --------------------
 // Секция Ui (реализация в AppConfigUi.cpp)
@@ -1101,7 +1072,6 @@ bool AppConfig::setInterfaceIconSize(QString sizeName)
     return uiSection()->setInterfaceIconSize(sizeName);
 }
 
-
 // --------------------
 // Секция Find (реализация в AppConfigFind.cpp)
 // --------------------
@@ -1156,7 +1126,6 @@ void AppConfig::set_findscreen_show(bool isShow)
 {
     findSection()->set_findscreen_show(isShow);
 }
-
 
 // --------------------
 // Секция Sync (реализация в AppConfigSync.cpp)
@@ -1326,7 +1295,6 @@ void AppConfig::setPeriodicSyncroPeriod(int period)
     syncSection()->setPeriodicSyncroPeriod(period);
 }
 
-
 // --------------------
 // Секция Crypto (реализация в AppConfigCrypto.cpp)
 // --------------------
@@ -1411,7 +1379,6 @@ void AppConfig::set_cryptMethod(const QString &method)
 {
     cryptoSection()->set_cryptMethod(method);
 }
-
 
 // --------------------
 // Секция RecordTable (реализация в AppConfigRecordTable.cpp)
@@ -1501,7 +1468,6 @@ void AppConfig::setEnableCreateEmptyRecord(bool state)
 {
     recordTableSection()->setEnableCreateEmptyRecord(state);
 }
-
 
 // --------------------
 // Секция Clipper (реализация в AppConfigClipper.cpp)
@@ -1605,7 +1571,6 @@ void AppConfig::set_clipperopendup(bool open)
 {
     clipperSection()->set_clipperopendup(open);
 }
-
 
 // --------------------
 // Секция Services (реализация в AppConfigServices.cpp)

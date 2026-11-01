@@ -18,11 +18,7 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-
-extern AppConfig mytetraConfig;
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 // Соответствие команды тулбара ключу горячих клавиш для подписи.
 // Пусто - подписи берутся с самого действия (у таких команд
@@ -47,13 +43,12 @@ static QString shortcutKeyFor(int panel, const QString &command)
   return QString("note-")+command;
 }
 
-
 MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(parent)
 {
     this->setWindowTitle(tr("Toolbar settings"));
 
     // Стартовые списки: конфиг, а если не настраивалось - дефолты экранов
-    QStringList treeOrder=mytetraConfig.getTreeToolbarOrder();
+    QStringList treeOrder=AppContext::instance().appConfig()->getTreeToolbarOrder();
 
     if(treeOrder.isEmpty())
       treeOrder=TreeScreen::defaultToolbarOrder();
@@ -61,7 +56,7 @@ MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(
     pendingUsed[TreePanel]=treeOrder;
     loadedUsed[TreePanel]=treeOrder;
 
-    QStringList notesOrder=mytetraConfig.getRecordToolbarOrder();
+    QStringList notesOrder=AppContext::instance().appConfig()->getRecordToolbarOrder();
 
     if(notesOrder.isEmpty())
       notesOrder=RecordTableScreen::defaultToolbarOrder();
@@ -69,7 +64,7 @@ MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(
     pendingUsed[NotesPanel]=notesOrder;
     loadedUsed[NotesPanel]=notesOrder;
 
-    QStringList extraOrder=mytetraConfig.getRecordExtraToolbarOrder();
+    QStringList extraOrder=AppContext::instance().appConfig()->getRecordExtraToolbarOrder();
 
     if(extraOrder.isEmpty())
       extraOrder=RecordTableScreen::defaultExtraToolbarOrder();
@@ -84,12 +79,10 @@ MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(
     selectPanelListWidget->setCurrentRow(0);
 }
 
-
 MainToolbarSettingsScreen::~MainToolbarSettingsScreen()
 {
 
 }
-
 
 void MainToolbarSettingsScreen::setupUI()
 {
@@ -169,7 +162,6 @@ void MainToolbarSettingsScreen::setupUI()
     loadPanel(TreePanel);
 }
 
-
 QAction *MainToolbarSettingsScreen::commandAction(int panel, const QString &command) const
 {
     if(panel==TreePanel)
@@ -190,7 +182,6 @@ QAction *MainToolbarSettingsScreen::commandAction(int panel, const QString &comm
     return nullptr;
 }
 
-
 QString MainToolbarSettingsScreen::commandText(int panel, const QString &command) const
 {
     if(command=="separator")
@@ -200,7 +191,7 @@ QString MainToolbarSettingsScreen::commandText(int panel, const QString &command
         return tr("<Spring>");
 
     const QString key=shortcutKeyFor(panel, command);
-    const QString description=key.isEmpty() ? QString() : shortcutManager.getDescription(key);
+    const QString description=key.isEmpty() ? QString() : AppContext::instance().shortcutManager()->getDescription(key);
 
     if(!description.isEmpty())
         return description;
@@ -213,7 +204,6 @@ QString MainToolbarSettingsScreen::commandText(int panel, const QString &command
     return command;
 }
 
-
 QIcon MainToolbarSettingsScreen::commandIcon(int panel, const QString &command) const
 {
     QAction *action=commandAction(panel, command);
@@ -223,7 +213,6 @@ QIcon MainToolbarSettingsScreen::commandIcon(int panel, const QString &command) 
 
     return QIcon();
 }
-
 
 QStandardItemModel *MainToolbarSettingsScreen::usedModel(void) const
 {
@@ -237,7 +226,6 @@ QStandardItemModel *MainToolbarSettingsScreen::usedModel(void) const
 
     return treeUsedModel;
 }
-
 
 void MainToolbarSettingsScreen::loadPanel(int panel)
 {
@@ -302,7 +290,6 @@ void MainToolbarSettingsScreen::loadPanel(int panel)
     applyModeVisibility(panel);
 }
 
-
 bool MainToolbarSettingsScreen::isCommandVisibleForMode(int panel, const QString &command) const
 {
     if(command=="separator")
@@ -318,14 +305,13 @@ bool MainToolbarSettingsScreen::isCommandVisibleForMode(int panel, const QString
     if(mode.isEmpty())
         return true;
 
-    const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+    const bool isMobile=(AppContext::instance().appConfig()->getInterfaceMode()=="mobile");
 
     if(mode=="mobile")
         return isMobile;
 
     return !isMobile;
 }
-
 
 void MainToolbarSettingsScreen::applyModeVisibility(int panel)
 {
@@ -345,7 +331,6 @@ void MainToolbarSettingsScreen::applyModeVisibility(int panel)
     }
 }
 
-
 QStringList MainToolbarSettingsScreen::usedCommands(void) const
 {
     QStringList result;
@@ -356,7 +341,6 @@ QStringList MainToolbarSettingsScreen::usedCommands(void) const
 
     return result;
 }
-
 
 void MainToolbarSettingsScreen::setupSignals()
 {
@@ -385,7 +369,6 @@ void MainToolbarSettingsScreen::setupSignals()
     connect(dialogButtonBox, &QDialogButtonBox::rejected,
             this, &MainToolbarSettingsScreen::close);
 }
-
 
 void MainToolbarSettingsScreen::assembly()
 {
@@ -427,7 +410,6 @@ void MainToolbarSettingsScreen::assembly()
     setLayout(screenLayout);
 }
 
-
 void MainToolbarSettingsScreen::onPanelChange(int row)
 {
     if(row<0)
@@ -451,7 +433,6 @@ void MainToolbarSettingsScreen::onPanelChange(int row)
     usedLabel->setText(text);
 }
 
-
 QStringList MainToolbarSettingsScreen::usedCommandsFor(int panel) const
 {
     QStringList result;
@@ -469,7 +450,6 @@ QStringList MainToolbarSettingsScreen::usedCommandsFor(int panel) const
 
     return result;
 }
-
 
 void MainToolbarSettingsScreen::onMoveAvailableToUsed()
 {
@@ -511,7 +491,6 @@ void MainToolbarSettingsScreen::onMoveAvailableToUsed()
         availableModel->removeRow(selectedAvailableIndex.row());
 }
 
-
 QTreeView *MainToolbarSettingsScreen::currentUsedView(void) const
 {
     const int row=selectPanelListWidget->currentRow();
@@ -524,7 +503,6 @@ QTreeView *MainToolbarSettingsScreen::currentUsedView(void) const
 
     return treeUsedView;
 }
-
 
 void MainToolbarSettingsScreen::onMoveUsedToAvailable()
 {
@@ -558,7 +536,6 @@ void MainToolbarSettingsScreen::onMoveUsedToAvailable()
     model->removeRow(selectedIndex.row());
 }
 
-
 void MainToolbarSettingsScreen::onMoveSelectedUp()
 {
     QTreeView *view=currentUsedView();
@@ -586,7 +563,6 @@ void MainToolbarSettingsScreen::onMoveSelectedUp()
     model->insertRow(target, items);
     view->setCurrentIndex(model->index(target, 0));
 }
-
 
 void MainToolbarSettingsScreen::onMoveSelectedDown()
 {
@@ -617,7 +593,6 @@ void MainToolbarSettingsScreen::onMoveSelectedDown()
     view->setCurrentIndex(model->index(target, 0));
 }
 
-
 void MainToolbarSettingsScreen::onInfoClick()
 {
     QString message = tr("<b>Information</b> for toolbar buttons setup:");
@@ -642,20 +617,19 @@ void MainToolbarSettingsScreen::onInfoClick()
     msgBox->exec();
 }
 
-
 void MainToolbarSettingsScreen::applyChanges()
 {
     // Запоминаем правки открытой панели
     pendingUsed[selectPanelListWidget->currentRow()]=usedCommands();
 
     if(pendingUsed[TreePanel]!=loadedUsed[TreePanel])
-        mytetraConfig.setTreeToolbarOrder(pendingUsed[TreePanel]);
+        AppContext::instance().appConfig()->setTreeToolbarOrder(pendingUsed[TreePanel]);
 
     if(pendingUsed[NotesPanel]!=loadedUsed[NotesPanel])
-        mytetraConfig.setRecordToolbarOrder(pendingUsed[NotesPanel]);
+        AppContext::instance().appConfig()->setRecordToolbarOrder(pendingUsed[NotesPanel]);
 
     if(pendingUsed[NotesExtraPanel]!=loadedUsed[NotesExtraPanel])
-        mytetraConfig.setRecordExtraToolbarOrder(pendingUsed[NotesExtraPanel]);
+        AppContext::instance().appConfig()->setRecordExtraToolbarOrder(pendingUsed[NotesExtraPanel]);
 
     // Живое перестроение тулбаров без перезапуска
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");

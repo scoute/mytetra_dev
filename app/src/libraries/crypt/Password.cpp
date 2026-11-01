@@ -19,22 +19,15 @@
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-extern DataBaseConfig dataBaseConfig;
-
+#include "libraries/AppContext.h"
 
 Password::Password(void)
 { 
 }
 
-
 Password::~Password(void)
 { 
 }
-
 
 // Установка пароля
 // Если пароль в системе еще не использовался, пароль преобразуется в ключ 
@@ -45,10 +38,10 @@ Password::~Password(void)
 bool Password::retrievePassword()
 {
     // Если пароль в данной сессии не вводился
-    if(globalParameters.getCryptKey().size()==0)
+    if(AppContext::instance().globalParameters()->getCryptKey().size()==0)
     {
         // Если в хранилище данных вообще не задан пароль
-        if(dataBaseConfig.get_crypt_mode()==0)
+        if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
         {
             // Запрашивается пароль
             EnterPassword enterPwd(ENTER_PASSWORD_MODE_DOUBLE);
@@ -77,10 +70,9 @@ bool Password::retrievePassword()
             // либо воспользоваться промежуточным хешем если пароль был запомнен,
             // либо запросить пароль
 
-
             // Проверяется, запомнен ли пароль в конфиге (точнее, промежуточный хеш)
-            if( mytetraConfig.getPasswordSaveFlag() and
-                mytetraConfig.getPasswordMiddleHash().length()>0)
+            if( AppContext::instance().appConfig()->getPasswordSaveFlag() and
+                AppContext::instance().appConfig()->getPasswordMiddleHash().length()>0)
             {
                 // Пароль хранится в системе
 
@@ -103,8 +95,8 @@ bool Password::retrievePassword()
                     // базы знаний пароль был изменен и база перешифрована, а в текущем инстансе остался старый пароль
                     // В этом случае хранимый пароль надо сбросить
 
-                    mytetraConfig.setPasswordMiddleHash(""); // Хранимый пароль сбрасывается
-                    mytetraConfig.setPasswordSaveFlag(false); // Помечается что пароль больше не хранится
+                    AppContext::instance().appConfig()->setPasswordMiddleHash(""); // Хранимый пароль сбрасывается
+                    AppContext::instance().appConfig()->setPasswordSaveFlag(false); // Помечается что пароль больше не хранится
 
                     QMessageBox msgBox;
                     msgBox.setWindowTitle(tr("Detect incorrect saved password"));
@@ -137,15 +129,13 @@ bool Password::retrievePassword()
     return true;
 }
 
-
 // Замена пароля
 bool Password::replacePassword(void)
 {
     // Если в хранилище данных вообще не задан пароль
     // Замена пароля невозможна
-    if(dataBaseConfig.get_crypt_mode()==0)
+    if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
         return false;
-
 
     // Запрашивается пароль
     EnterPassword enterPwd(ENTER_PASSWORD_MODE_WITH_PREVIOUS);
@@ -153,12 +143,10 @@ bool Password::replacePassword(void)
     if(i==QDialog::Rejected)
         return false; // Была нажата отмена, ничего не нужно делать
 
-
     // Здесь считается, что введен старый и новый пароль
     // и строки с паролями ненулевые
     QString previousPassword=enterPwd.getPreviousPassword();
     QString password=enterPwd.getPassword();
-
 
     // Проверяется, правильно ли введен старый пароль
     if(checkPasswordWithExists(previousPassword)==false)
@@ -170,7 +158,7 @@ bool Password::replacePassword(void)
         msgBox.exec();
 
         // В памяти сбрасывается возможно вводимый ранее правильно пароль
-        globalParameters.setCryptKey(QByteArray());
+        AppContext::instance().globalParameters()->setCryptKey(QByteArray());
 
         return false;
     }
@@ -184,7 +172,6 @@ bool Password::replacePassword(void)
 
     // Перешифрация
     dataModel->reEncrypt(previousPassword, password);
-
 
     // Вычисляется и запоминается в память ключ шифрования
     setCryptKeyToMemory(password);
@@ -203,7 +190,6 @@ bool Password::replacePassword(void)
     return true;
 }
 
-
 void Password::setCryptKeyToMemory(QString password)
 {
     QByteArray middleHash=calculateMiddleHash(password);
@@ -213,29 +199,27 @@ void Password::setCryptKeyToMemory(QString password)
     // qDebug() << "Password::setCryptKeyToMemory() : Set crypt key to:" << key.toHex();
 
     // Ключ запоминается в память
-    globalParameters.setCryptKey(key);
+    AppContext::instance().globalParameters()->setCryptKey(key);
 }
-
 
 void Password::setCryptKeyToMemoryFromMiddleHash(void)
 {
     // Из общего конфига считывается промежуточный хеш
-    QByteArray middleHash=QByteArray::fromBase64( mytetraConfig.getPasswordMiddleHash().toLatin1() );
+    QByteArray middleHash=QByteArray::fromBase64( AppContext::instance().appConfig()->getPasswordMiddleHash().toLatin1() );
 
     // Ключ в виде MD5
     QByteArray key=QCryptographicHash::hash(middleHash, QCryptographicHash::Md5);
     // qDebug() << "Set crypt key from middle hash to:" << key.toHex();
 
     // Ключ запоминается в память
-    globalParameters.setCryptKey(key);
+    AppContext::instance().globalParameters()->setCryptKey(key);
 }
-
 
 // Проверка правильности хранимого пароля (точнее промежуточного хеша)
 bool Password::checkMiddleHash(void)
 {
     // Из общего конфига считывается промежуточный хеш
-    QByteArray middleHash=QByteArray::fromBase64( mytetraConfig.getPasswordMiddleHash().toLatin1() );
+    QByteArray middleHash=QByteArray::fromBase64( AppContext::instance().appConfig()->getPasswordMiddleHash().toLatin1() );
     // qDebug() << "Password::checkMiddleHash() : middleHash :" << middleHash.toHex();
 
     // Промежуточный хеш преобразуется в ключ (MD5 сумма)
@@ -243,11 +227,10 @@ bool Password::checkMiddleHash(void)
     // qDebug() << "Password::checkMiddleHash() : Crypt key :" << key.toHex();
 
     // Из конфига базы данных считываются проверочные данные
-    QByteArray checkData=QByteArray::fromBase64( dataBaseConfig.get_middle_hash_check_data().toLatin1() );
+    QByteArray checkData=QByteArray::fromBase64( AppContext::instance().dataBaseConfig()->get_middle_hash_check_data().toLatin1() );
 
     // Проверочные данные расшифровыватся с помощью ключа
     QString line=CryptService::decryptStringFromByteArray(key, checkData);
-
 
     // Сравниватся проверочные данные
     if(line==SAVED_PASSWORD_CHECKING_LINE)
@@ -259,7 +242,6 @@ bool Password::checkMiddleHash(void)
         return false;
     }
 }
-
 
 QByteArray Password::calculateMiddleHash(QString password)
 {
@@ -278,19 +260,18 @@ QByteArray Password::calculateMiddleHash(QString password)
     return middleHash;
 }
 
-
 void Password::smartSaveMiddleHash(QString password)
 {
     // Если стоит настройка, что надо хранить пароль локально,
     // и пароль (точнее промежуточный хеш) еще не запомнен
-    if(mytetraConfig.getPasswordSaveFlag() &&
-            mytetraConfig.getPasswordMiddleHash().length()==0)
+    if(AppContext::instance().appConfig()->getPasswordSaveFlag() &&
+            AppContext::instance().appConfig()->getPasswordMiddleHash().length()==0)
     {
         QByteArray middleHash=calculateMiddleHash(password);
         // qDebug() << "Password::smartSaveMiddleHash() : middleHash " << middleHash.toHex();
 
         // В общий конфиг запоминается промежуточный хеш
-        mytetraConfig.setPasswordMiddleHash( QString(middleHash.toBase64().data()) );
+        AppContext::instance().appConfig()->setPasswordMiddleHash( QString(middleHash.toBase64().data()) );
 
         // В конфиг базы данных запоминаются проверочные данные
         // Эти данные нужны для последующей проверки промежуточного хеша
@@ -306,11 +287,10 @@ void Password::smartSaveMiddleHash(QString password)
     else
     {
         // В общем конфиге сбрасывается промежуточный хеш
-        mytetraConfig.setPasswordMiddleHash("");
+        AppContext::instance().appConfig()->setPasswordMiddleHash("");
     }
 
 }
-
 
 void Password::saveMiddleHashCheckData(QByteArray middleHash)
 {
@@ -319,9 +299,8 @@ void Password::saveMiddleHashCheckData(QByteArray middleHash)
     // qDebug() << "Password::saveMiddleHashCheckData() : checkData " << checkData.toHex();
 
     // Проверочные данные запоминаются в конфиг базы данных
-    dataBaseConfig.set_middle_hash_check_data( QString(checkData.toBase64().data()) );
+    AppContext::instance().dataBaseConfig()->set_middle_hash_check_data( QString(checkData.toBase64().data()) );
 }
-
 
 QByteArray Password::calculateMiddleHashCheckData(QByteArray middleHash)
 {
@@ -338,7 +317,6 @@ QByteArray Password::calculateMiddleHashCheckData(QByteArray middleHash)
 
     return checkData;
 }
-
 
 // Вычисляются и запоминаются в конфиг хранилища данных
 // соль и хеш пароля для последующей проверки пароля при вводе
@@ -360,19 +338,18 @@ void Password::saveCheckPasswordKey(QString password)
                               CRYPT_CHECK_ROUNDS,
                               CRYPT_CHECK_HASH_LEN);
 
-    dataBaseConfig.set_crypt_check_hash( QString(hash.toBase64().data()) );
-    dataBaseConfig.set_crypt_check_salt( QString(salt.toBase64().data()) );
-    dataBaseConfig.set_crypt_mode(1);
+    AppContext::instance().dataBaseConfig()->set_crypt_check_hash( QString(hash.toBase64().data()) );
+    AppContext::instance().dataBaseConfig()->set_crypt_check_salt( QString(salt.toBase64().data()) );
+    AppContext::instance().dataBaseConfig()->set_crypt_mode(1);
 
     smartSaveMiddleHash(password);
 
     // Пароль/соль/режим должны лежать на диске до первого шифрования.
     // Иначе сбой после установки пароля оставляет базу без проверочных
     // данных, и корректный пароль уже нечем подтвердить
-    dataBaseConfig.sync();
-    mytetraConfig.sync();
+    AppContext::instance().dataBaseConfig()->sync();
+    AppContext::instance().appConfig()->sync();
 }
-
 
 // Запрос пароля в случае, если в системе уже задавался пароль шифрования
 // Если пароль введен правильно, возвращается true, иначе false
@@ -382,9 +359,9 @@ bool Password::enterExistsPassword(void)
 
     // Запрашивается пароль
     EnterPassword enterPwd(ENTER_PASSWORD_MODE_SINGLE);
-    if(mytetraConfig.get_autoClosePasswordEnable())
+    if(AppContext::instance().appConfig()->get_autoClosePasswordEnable())
     {
-        enterPwd.setCancelDelay( mytetraConfig.get_autoClosePasswordDelay() );
+        enterPwd.setCancelDelay( AppContext::instance().appConfig()->get_autoClosePasswordDelay() );
     }
     int i=enterPwd.exec(); // Показывается окно с паролем
     if(i==QDialog::Rejected)
@@ -401,14 +378,12 @@ bool Password::enterExistsPassword(void)
         // В память запоминается шифрующий ключ
         setCryptKeyToMemory(password);
 
-
         // Дополнительно, если в общих настройках указано,
         // что пароль нужно запоминать, и он (точнее промежуточный хеш)
         // еще не запомнен
-        if(mytetraConfig.getPasswordSaveFlag() &&
-                mytetraConfig.getPasswordMiddleHash().length()==0)
+        if(AppContext::instance().appConfig()->getPasswordSaveFlag() &&
+                AppContext::instance().appConfig()->getPasswordMiddleHash().length()==0)
             smartSaveMiddleHash(password);
-
 
         // Дополнительно, очищаются сообщения о невозможности поиска в зашифрованных ветках базы
         find_object<FindTableWidget>("findTableWidget")->setOverdrawMessage("");
@@ -428,11 +403,10 @@ bool Password::enterExistsPassword(void)
     }
 }
 
-
 void Password::resetPassword(void)
 {
     // Если пароль небыл установлен, сбрасывать нечего
-    if(dataBaseConfig.get_crypt_mode()==0)
+    if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
         return;
 
     // Задается вопрос, не нужно ли сбросить (обнулить) пароль
@@ -446,28 +420,26 @@ void Password::resetPassword(void)
     // Если пользователь подтвердил удаление пароля
     if(messageBox.clickedButton() == resetButton)
     {
-        dataBaseConfig.set_crypt_mode(0);
-        dataBaseConfig.set_crypt_check_salt("");
-        dataBaseConfig.set_crypt_check_hash("");
-        dataBaseConfig.set_middle_hash_check_data("");
+        AppContext::instance().dataBaseConfig()->set_crypt_mode(0);
+        AppContext::instance().dataBaseConfig()->set_crypt_check_salt("");
+        AppContext::instance().dataBaseConfig()->set_crypt_check_hash("");
+        AppContext::instance().dataBaseConfig()->set_middle_hash_check_data("");
 
-        mytetraConfig.setPasswordMiddleHash("");
-        mytetraConfig.sync();
-        dataBaseConfig.sync();
+        AppContext::instance().appConfig()->setPasswordMiddleHash("");
+        AppContext::instance().appConfig()->sync();
+        AppContext::instance().dataBaseConfig()->sync();
 
         // Ключ в памяти удаляется
-        globalParameters.setCryptKey(QByteArray());
+        AppContext::instance().globalParameters()->setCryptKey(QByteArray());
     }
 }
-
 
 // Проверка переданного пароля на соответсвие запомненному хешу
 bool Password::checkPasswordWithExists(QString password)
 {
     // Из конфига хранилища даннных считывается соль и хеш пароля
-    QByteArray hash=QByteArray::fromBase64( dataBaseConfig.get_crypt_check_hash().toLatin1() );
-    QByteArray salt=QByteArray::fromBase64( dataBaseConfig.get_crypt_check_salt().toLatin1() );
-
+    QByteArray hash=QByteArray::fromBase64( AppContext::instance().dataBaseConfig()->get_crypt_check_hash().toLatin1() );
+    QByteArray salt=QByteArray::fromBase64( AppContext::instance().dataBaseConfig()->get_crypt_check_salt().toLatin1() );
 
     // Вычисляется хеш пароля с использованием считанной соли
     QByteArray passwordHash;
@@ -476,7 +448,6 @@ bool Password::checkPasswordWithExists(QString password)
                                       salt,
                                       CRYPT_CHECK_ROUNDS,
                                       CRYPT_CHECK_HASH_LEN);
-
 
     // Если хеши совпадают, значит пароль введен правильный
     if(hash==passwordHash)

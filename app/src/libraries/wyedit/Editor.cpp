@@ -26,7 +26,6 @@
 #include "EditorFloatToc.h"
 #include "libraries/ShortcutManager.h"
 
-extern ShortcutManager shortcutManager;
 #include "EditorConfigDialog.h"
 #include "EditorContextMenu.h"
 #include "EditorTextArea.h"
@@ -47,17 +46,13 @@ extern ShortcutManager shortcutManager;
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 // Максимально возможная длина выделения текста (в символах) при которой
 // происходит проверка, есть ли в выделенном тексте различные шрифты, размеры текста, BUI форматирование
 // с соответствующем изменением панели кнопок и другоих элементов форматированиятекста
 // Если выделено текста больше, такая проверка не происходит
 #define WYEDIT_MAX_SELECTION_SIZE_WHILE_CHECK_TOOLBAR_ITEM 4096
-
 
 Editor::Editor(QWidget *parent) : QWidget(parent)
 {
@@ -69,7 +64,6 @@ Editor::Editor(QWidget *parent) : QWidget(parent)
 
   dirFileEmptyReaction=DIRFILEEMPTY_REACTION_SHOW_ERROR;
 }
-
 
 Editor::~Editor(void)
 {
@@ -90,13 +84,11 @@ Editor::~Editor(void)
   delete secretFormatter;
 }
 
-
 const char *Editor::getVersion(void)
 {
   static const char *lib_version=WYEDIT_VERSION;
   return(lib_version);
 }
-
 
 // Настроечные методы, вызываемые перед init()
 
@@ -108,7 +100,6 @@ void Editor::initEnableAssembly(bool flag)
   initDataEnableAssembly=flag;
 }
 
-
 void Editor::initConfigFileName(QString name)
 {
   if(isInit)
@@ -116,7 +107,6 @@ void Editor::initConfigFileName(QString name)
 
   initDataConfigFileName=name;
 }
-
 
 // Должен ли редактор самостоятельно инициализировать генератор случайных чисел.
 // Случайные числа используются для назначения случайных имен файлов
@@ -131,7 +121,6 @@ void Editor::initEnableRandomSeed(bool flag)
   initDataEnableRandomSeed=flag;
 }
 
-
 void Editor::initDisableToolList(QStringList toolNames)
 {
   if(isInit)
@@ -139,7 +128,6 @@ void Editor::initDisableToolList(QStringList toolNames)
 
   initDataDisableToolList=toolNames;
 }
-
 
 // Инициализация редактора
 // Если mode=WYEDIT_DESKTOP_MODE - происходит обычная инициализация
@@ -172,16 +160,16 @@ void Editor::init(int mode)
   // addAction обязателен, иначе shortcut без виджета не сработает
   findNextAction=new QAction(this);
   findPrevAction=new QAction(this);
-  shortcutManager.initAction("editor-findNext", findNextAction);
-  shortcutManager.initAction("editor-findPrevious", findPrevAction);
+  AppContext::instance().shortcutManager()->initAction("editor-findNext", findNextAction);
+  AppContext::instance().shortcutManager()->initAction("editor-findPrevious", findPrevAction);
   addAction(findNextAction);
   addAction(findPrevAction);
 
   // Скрытые экшены прокрутки текста без перемещения курсора
   scrollUpAction=new QAction(this);
   scrollDownAction=new QAction(this);
-  shortcutManager.initAction("editor-scrollUp", scrollUpAction);
-  shortcutManager.initAction("editor-scrollDown", scrollDownAction);
+  AppContext::instance().shortcutManager()->initAction("editor-scrollUp", scrollUpAction);
+  AppContext::instance().shortcutManager()->initAction("editor-scrollDown", scrollDownAction);
   addAction(scrollUpAction);
   addAction(scrollDownAction);
 
@@ -222,7 +210,6 @@ void Editor::init(int mode)
   }
 }
 
-
 // Создание и настройка панели инструментов редактора
 void Editor::setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QStringList disableToolList)
 {
@@ -230,7 +217,6 @@ void Editor::setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QSt
   editorToolBarAssistant=new EditorToolBarAssistant(this, mode, textArea, disableToolList);
   editorToolBarAssistant->setObjectName("toolBarAssistant");
 }
-
 
 // Создание плавающего содержания: оверлей поверх текста,
 // показывается сам при наличии заголовков H1-H3
@@ -243,14 +229,12 @@ void Editor::setupFloatToc(void)
   floatToc->setTextArea(textArea);
 }
 
-
 // Создание и настройка ассистента линейки отступов
 void Editor::setupIndentSliderAssistant(void)
 {
   indentSliderAssistant=new EditorIndentSliderAssistant(qobject_cast<QObject *>(this), textArea);
   indentSliderAssistant->setObjectName("indentSliderAssistant");
 }
-
 
 // Создание и настройка области редактирования
 void Editor::setupEditorTextArea(void)
@@ -271,13 +255,11 @@ void Editor::setupEditorTextArea(void)
   setTabSize();
 }
 
-
 void Editor::setupCursorPositionDetector(void)
 {
   cursorPositionDetector=new EditorCursorPositionDetector();
   cursorPositionDetector->setTextArea(textArea);
 }
-
 
 void Editor::setupFormatters(void)
 {
@@ -331,7 +313,6 @@ void Editor::setupFormatters(void)
   secretFormatter->setTextArea(textArea);
 }
 
-
 void Editor::setupSignals(void)
 {
   setupToolsSignals();
@@ -384,7 +365,6 @@ void Editor::setupSignals(void)
           editorToolBarAssistant, &EditorToolBarAssistant::onChangeFontsizeOnDisplay,
           Qt::DirectConnection);
 
-
   connect(placementFormatter,    &PlacementFormatter::updateIndentsliderToActualFormat,
           indentSliderAssistant, &EditorIndentSliderAssistant::updateToActualFormat,
           Qt::DirectConnection);
@@ -392,14 +372,12 @@ void Editor::setupSignals(void)
           indentSliderAssistant, &EditorIndentSliderAssistant::updateToActualFormat,
           Qt::DirectConnection);
 
-
   connect(this,                   &Editor::updateAlignButtonHiglight,
           editorToolBarAssistant, &EditorToolBarAssistant::onUpdateAlignButtonHiglight,
           Qt::DirectConnection);
   connect(placementFormatter,     &PlacementFormatter::updateAlignButtonHiglight,
           editorToolBarAssistant, &EditorToolBarAssistant::onUpdateAlignButtonHiglight,
           Qt::DirectConnection);
-
 
   // Область редактирования текста
   connect(textArea, &EditorTextArea::cursorPositionChanged,
@@ -484,7 +462,6 @@ void Editor::setupSignals(void)
 
   // connect(textArea->document(), SIGNAL(modificationChanged (bool )),
   //         this, SLOT  (onModificationChanged(bool)));
-
 
   // Сигналы контекстного меню
   connect(textArea->document(), &QTextDocument::undoAvailable,
@@ -644,7 +621,6 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
 }
 
-
 void Editor::setupToolsSignals(void)
 {
     // Хоткеи скрытия/распахивания панели обязаны переживать скрытие
@@ -769,7 +745,6 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->dotList, &QAction::triggered,
             listFormatter,                   &ListFormatter::onDotlistClicked);
 
-
     // Кнопки работы с таблицами
     connect(editorToolBarAssistant->createTable, &QAction::triggered,
             tableFormatter,                      &TableFormatter::onCreatetableClicked);
@@ -829,7 +804,6 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->showFormatting, &QAction::toggled, // Это не клик а переключение
             this,                                   &Editor::onShowformattingClicked);
 
-
     // Прочие кнопки
     connect(editorToolBarAssistant->openImage, &QAction::triggered,
             imageFormatter,                    &ImageFormatter::openImage);
@@ -870,7 +844,6 @@ void Editor::setupToolsSignals(void)
 
 }
 
-
 // Сборка редактора и его активизация
 void Editor::assembly(void)
 {
@@ -890,7 +863,6 @@ void Editor::assembly(void)
   */
 
   // this->setStyleSheet("background-color: red;");
-
 
   // Добавляется виджет с кнопками редактора
   buttonsAndEditLayout->addWidget( editorToolBarAssistant );
@@ -928,7 +900,6 @@ void Editor::assembly(void)
   lt->setContentsMargins(0,2,0,0);
 }
 
-
 // Установка текста области редактирования
 void Editor::setTextarea(QString text)
 {
@@ -947,7 +918,6 @@ void Editor::setTextarea(QString text)
     secretFormatter->repaintSecrets();
 }
 
-
 void Editor::previewTextarea(const QString &text)
 {
   textArea->setHtml(text);
@@ -959,7 +929,6 @@ void Editor::previewTextarea(const QString &text)
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();
 }
-
 
 // Установка запрета или разрешения редактирования в области редактирования текста
 void Editor::setTextareaEditable(bool editable)
@@ -988,13 +957,11 @@ void Editor::setTextareaEditable(bool editable)
   */
 }
 
-
 // Получение текста области редактирования в формате HTML
 QString Editor::getTextarea(void)
 {
   return textArea->document()->toHtml("UTF-8");
 }
-
 
 QString Editor::getTextareaStable(void)
 {
@@ -1006,13 +973,10 @@ QString Editor::getTextareaStable(void)
   return textArea->document()->toHtml("UTF-8");
 }
 
-
-
 QTextDocument *Editor::getTextareaDocument(void)
 {
   return textArea->document();
 }
-
 
 QString Editor::voiceBubbleHrefAtCursor(void)
 {
@@ -1023,14 +987,12 @@ QString Editor::voiceBubbleHrefAtCursor(void)
                                        textArea->textCursor().position());
 }
 
-
 // Свой stylesheet области текста (цвета поля заметки из настроек).
 // Нужен окнам с собственным редактором вроде создания записи
 void Editor::setTextAreaStyleSheet(const QString &styleSheet)
 {
   textArea->setStyleSheet(styleSheet);
 }
-
 
 // Перекраска секретов открытого документа под глобальный цвет.
 // Вызывается из меню Вид после смены цвета в конфиге
@@ -1039,7 +1001,6 @@ void Editor::repaintSecrets(void)
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();
 }
-
 
 bool Editor::setWorkDirectory(QString dirName)
 {
@@ -1057,24 +1018,20 @@ bool Editor::setWorkDirectory(QString dirName)
   }
 }
 
-
 QString Editor::getWorkDirectory(void)
 {
   return workDirectory;
 }
-
 
 void Editor::setFileName(QString fileName)
 {
   workFileName=fileName;
 }
 
-
 QString Editor::getFileName(void)
 {
   return workFileName;
 }
-
 
 // Сохранение HTML кода документа в файл
 bool Editor::saveTextareaText()
@@ -1111,7 +1068,6 @@ bool Editor::saveTextareaText()
 
   return true;
 }
-
 
 // Сохранение картинок, которые присутствуют в документе,
 // в указанную директорию
@@ -1178,7 +1134,6 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
     textBlock = textBlock.next();
   }
 
-
   // Если при сохранении все лишние картинки должны удалиться в каталоге
   if(mode==SAVE_IMAGES_REMOVE_UNUSED)
   {
@@ -1202,13 +1157,12 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
   return true;
 }
 
-
 void Editor::saveTextarea(void)
 {
   qDebug() << "Save textarea...";
 
   // Глобальный режим только чтения: запись запрещена на последнем рубеже
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
     {
      qDebug() << "Save textarea blocked: read-only mode";
      return;
@@ -1257,7 +1211,6 @@ void Editor::saveTextarea(void)
   }
 }
 
-
 bool Editor::loadTextarea()
 {
   // Если не заданы директория или файл
@@ -1269,7 +1222,6 @@ bool Editor::loadTextarea()
       // скорее всего она останется просто пустой
       return true;
     }
-
 
   if(workFileName.length()==0)
   {
@@ -1366,20 +1318,17 @@ bool Editor::loadTextarea()
   return true;
 }
 
-
 void Editor::setTextareaModified(bool modify)
 {
   qDebug() << "Editor::set_textarea_modified() :" << modify;
   textArea->document()->setModified(modify);
 }
 
-
 bool Editor::getTextareaModified(void)
 {
   qDebug() << "Editor::get_textarea_modified() :" << textArea->document()->isModified();
   return textArea->document()->isModified();
 }
-
 
 // Умное преобразование имени шрифта
 QString Editor::smartFontFamily(QString fontName)
@@ -1398,7 +1347,6 @@ QString Editor::smartFontFamily(QString fontName)
     return fontName;
 }
 
-
 // Умное преобразование размера шрифта
 int Editor::smartFontSize(int fontSize)
 {
@@ -1409,11 +1357,9 @@ int Editor::smartFontSize(int fontSize)
     return fontSize;
 }
 
-
 /////////////////////////////////////////////////
 // Форматирование текста
 /////////////////////////////////////////////////
-
 
 // Слот вызывается при каждом движении курсора в момент выделения текста
 void Editor::onSelectionChanged(void)
@@ -1567,7 +1513,6 @@ void Editor::onSelectionChanged(void)
     emit updateAlignButtonHiglight(true);
 }
 
-
 // Слот вызывается при каждом перемещении курсора
 void Editor::onCursorPositionChanged(void)
 {
@@ -1582,7 +1527,6 @@ void Editor::onCursorPositionChanged(void)
 
   emit updateIndentsliderToActualFormat();
 }
-
 
 // Событие отлавливает нажатия клавиш
 void Editor::keyPressEvent(QKeyEvent *event)
@@ -1600,7 +1544,6 @@ void Editor::keyPressEvent(QKeyEvent *event)
 
   QWidget::keyPressEvent(event);
 }
-
 
 // Перехват Enter в заголовке раньше штатного сплита QTextEdit.
 // Остальные события идут штатным путем без изменений
@@ -1622,7 +1565,6 @@ bool Editor::eventFilter(QObject *object, QEvent *event)
   return QWidget::eventFilter(object, event);
 }
 
-
 // Событие отлавливает отжатия клавиш
 void Editor::keyReleaseEvent(QKeyEvent *event)
 {
@@ -1632,14 +1574,12 @@ void Editor::keyReleaseEvent(QKeyEvent *event)
   QWidget::keyReleaseEvent(event);
 }
 
-
 void Editor::onUndo(void)
 {
   qDebug() << "Undo slot normal running ";
   textArea->undo();
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
-
 
 void Editor::onRedo(void)
 {
@@ -1648,13 +1588,11 @@ void Editor::onRedo(void)
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
 
-
 void Editor::onCut(void)
 {
   textArea->cut();
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
-
 
 void Editor::onCopy(void)
 {
@@ -1685,7 +1623,6 @@ void Editor::onCopy(void)
 
         return; // Закончилась обработка что текущий виджет не основной виджет редактирования текста
     }
-
 
     // Если выбрана только картинка или курсор стоит на позиции картинки
     if(cursorPositionDetector->isImageSelect() || cursorPositionDetector->isCursorOnImage())
@@ -1719,7 +1656,6 @@ void Editor::onCopy(void)
     editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
 
-
 // Обработка команды Paste контекстного меню
 void Editor::onPaste(void)
 {
@@ -1732,7 +1668,6 @@ void Editor::onPaste(void)
   textArea->paste();
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
-
 
 // Обработка команды PasteAsPlainText контекстного меню
 void Editor::onPasteAsPlainText(void)
@@ -1747,13 +1682,11 @@ void Editor::onPasteAsPlainText(void)
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
 
-
 void Editor::onSelectAll(void)
 {
   textArea->selectAll();
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
-
 
 // Показывание окна с исходным текстом HTML
 void Editor::onShowhtmlClicked(void)
@@ -1772,7 +1705,6 @@ void Editor::onShowhtmlClicked(void)
   if(dialog.isModified())
     textArea->document()->setModified(true);
 }
-
 
 void Editor::onFindtextClicked(void)
 {
@@ -1802,7 +1734,7 @@ void Editor::onFindtextClicked(void)
                      .replace(QChar::ParagraphSeparator, '\n')
                      .section('\n', 0, 0).trimmed().left(256);
 
-  if(mytetraConfig.get_editorFindEmbedded())
+  if(AppContext::instance().appConfig()->get_editorFindEmbedded())
   {
     if(!seed.isEmpty())
       findBar->setSearchText(seed);
@@ -1821,7 +1753,6 @@ void Editor::onFindtextClicked(void)
     findDialog->activateWindow();
   }
 }
-
 
 // Хоткей F3: шаг вперёд по активному запросу. Активен запрос видимой
 // панели с непустым текстом; иначе открывается панель поиска (с сидом
@@ -1845,7 +1776,6 @@ void Editor::onFindNextHotkey(void)
   onFindtextClicked();
 }
 
-
 // Хоткей Shift+F3: симметрично вперёд, шаг назад
 void Editor::onFindPrevHotkey(void)
 {
@@ -1866,7 +1796,6 @@ void Editor::onFindPrevHotkey(void)
   onFindtextClicked();
 }
 
-
 // Прокрутка текста без перемещения курсора: двигается только
 // ползунок, курсор (и ensureCursorVisible) не трогается.
 // Шаг — три строки, чтобы движение чувствовалось сразу
@@ -1876,13 +1805,11 @@ void Editor::onScrollUpHotkey(void)
   bar->setValue(bar->value()-bar->singleStep()*3);
 }
 
-
 void Editor::onScrollDownHotkey(void)
 {
   QScrollBar *bar=textArea->verticalScrollBar();
   bar->setValue(bar->value()+bar->singleStep()*3);
 }
-
 
 // Слот, принимающий данные от окна поиска текста: искать вперед
 void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlags flags)
@@ -1898,7 +1825,6 @@ void Editor::onFindtextSignalDetect(const QString &text, QTextDocument::FindFlag
     showFindNotFound(text);
 }
 
-
 // Слот стрелки назад: искать назад
 void Editor::onFindPrevSignalDetect(const QString &text, QTextDocument::FindFlags flags)
 {
@@ -1913,7 +1839,6 @@ void Editor::onFindPrevSignalDetect(const QString &text, QTextDocument::FindFlag
     showFindNotFound(text);
 }
 
-
 // Совпадений нет: подсветка снимается, окно прячется, сообщение.
 // У полоски свой тихий путь через счетчик, сюда ходит только окно
 void Editor::showFindNotFound(const QString &text)
@@ -1926,7 +1851,6 @@ void Editor::showFindNotFound(const QString &text)
                            tr("String '<b>")+text+tr("</b>' not found"),
                            QMessageBox::Close);
 }
-
 
 // Собрать все совпадения вперед от начала документа.
 // Направление из прошлого поиска не наследуется: навигация идет по списку.
@@ -1965,7 +1889,6 @@ void Editor::collectFindMatches(const QString &text, QTextDocument::FindFlags fl
   paintFindMatches();
 }
 
-
 // Первое совпадение от курсора по направлению. Нет такого: -1.
 // Нужно для старта навигации когда текущего еще нет
 int Editor::indexFromCursor(bool backward) const
@@ -1992,7 +1915,6 @@ int Editor::indexFromCursor(bool backward) const
   return -1;
 }
 
-
 // Нарисовать подсветку: все желтым, текущее оранжевым. Счетчик обновляется
 void Editor::paintFindMatches(void)
 {
@@ -2018,7 +1940,6 @@ void Editor::paintFindMatches(void)
 
   updateFindCounter();
 }
-
 
 // Шаг к соседнему совпадению. Без wrap упирается в край и возвращает false
 bool Editor::goToFindMatch(bool backward, bool wrap)
@@ -2063,7 +1984,6 @@ bool Editor::goToFindMatch(bool backward, bool wrap)
   return true;
 }
 
-
 // Сбросить запрос, совпадения и подсветку
 void Editor::clearFindMatches(void)
 {
@@ -2076,7 +1996,6 @@ void Editor::clearFindMatches(void)
 
   updateFindCounter();
 }
-
 
 // Счетчик полоски: пусто пока нет запроса, дальше число,
 // нет совпадений или i из N. Окно счетчика не имеет
@@ -2095,7 +2014,6 @@ void Editor::updateFindCounter(void)
     findBar->setMatchCounter(tr("%1 of %2").arg(findCurrentIndex+1).arg(findMatches.size()));
 }
 
-
 // Документ правится: совпадения съезжают, пересчет откладывается
 // в очередь, недособранный документ в процессе setHtml не трогается
 void Editor::onFindDocumentChanged(void)
@@ -2108,7 +2026,6 @@ void Editor::onFindDocumentChanged(void)
   QTimer::singleShot(0, this, &Editor::rehighlightFindMatches);
 }
 
-
 void Editor::rehighlightFindMatches(void)
 {
   findRehighlightPending=false;
@@ -2118,7 +2035,6 @@ void Editor::rehighlightFindMatches(void)
 
   collectFindMatches(findQuery, findFlags);
 }
-
 
 // Полоска: найти вперед с зацикливанием
 void Editor::onFindBarFind(const QString &text, QTextDocument::FindFlags flags)
@@ -2134,7 +2050,6 @@ void Editor::onFindBarFind(const QString &text, QTextDocument::FindFlags flags)
 
   goToFindMatch(false, true);
 }
-
 
 // Полоска: шаги без текста в сигнале, запрос берется из полоски.
 // Совпадения не пересобираются если запрос не менялся: иначе повторный
@@ -2153,7 +2068,6 @@ void Editor::onFindBarPrevious(void)
   goToFindMatch(true, true);
 }
 
-
 void Editor::onFindBarNext(void)
 {
   const QString text=findBar->searchText();
@@ -2168,7 +2082,6 @@ void Editor::onFindBarNext(void)
   goToFindMatch(false, true);
 }
 
-
 // Полоска: живая подсветка при наборе, курсор не двигается
 void Editor::onFindBarHighlight(const QString &text, QTextDocument::FindFlags flags)
 {
@@ -2182,13 +2095,11 @@ void Editor::onFindBarHighlight(const QString &text, QTextDocument::FindFlags fl
   collectFindMatches(text, flags);
 }
 
-
 // Полоска спрятана: подсветка снимается
 void Editor::onFindBarHidden(void)
 {
   clearFindMatches();
 }
-
 
 // Полоска: заменить текущее и шагнуть дальше с зацикливанием
 void Editor::onFindBarReplaceOne(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags)
@@ -2211,7 +2122,6 @@ void Editor::onFindBarReplaceOne(const QString &text, const QString &replaceText
 
   goToFindMatch(false, true);
 }
-
 
 // Полоска: заменить все одним блоком отмены, счетчик вместо окна.
 // Окно в этом месте прячется и показывает сообщение, полоска остается
@@ -2251,7 +2161,6 @@ void Editor::onFindBarReplaceAll(const QString &text, const QString &replaceText
 
   findBar->setMatchCounter(tr("Replaced %1").arg(replaceCount));
 }
-
 
 // Полоска: уйти с запросом в глобальный поиск по базе
 void Editor::onFindBarInBase(const QString &text)
@@ -2306,7 +2215,7 @@ bool Editor::jumpToFirstMatch(const QStringList &words, bool firstWordOnly)
 
   QTextDocument::FindFlags flags;
 
-  if(mytetraConfig.get_editorFindEmbedded())
+  if(AppContext::instance().appConfig()->get_editorFindEmbedded())
   {
     findBar->setSearchText(best);
     findBar->showBar();
@@ -2323,7 +2232,6 @@ bool Editor::jumpToFirstMatch(const QStringList &words, bool firstWordOnly)
   return true;
 }
 
-
 // Окно просит прикрепиться полоской: запрос переезжает, режим запоминается
 void Editor::onAttachToBar(void)
 {
@@ -2336,9 +2244,8 @@ void Editor::onAttachToBar(void)
   findBar->setSearchText(text);
   findBar->showBar();
 
-  mytetraConfig.set_editorFindEmbedded(true);
+  AppContext::instance().appConfig()->set_editorFindEmbedded(true);
 }
-
 
 // Полоска просит открепиться окном: запрос переезжает, режим запоминается
 void Editor::onDetachToWindow(void)
@@ -2352,15 +2259,13 @@ void Editor::onDetachToWindow(void)
   findDialog->show();
   findDialog->activateWindow();
 
-  mytetraConfig.set_editorFindEmbedded(false);
+  AppContext::instance().appConfig()->set_editorFindEmbedded(false);
 }
-
 
 EditorFindBar *Editor::findBarWidget(void)
 {
   return findBar;
 }
-
 
 // Совпадает ли текущее выделение с искомой строкой при заданных флагах
 bool Editor::isSelectionMatch(const QString &text, QTextDocument::FindFlags flags) const
@@ -2377,7 +2282,6 @@ bool Editor::isSelectionMatch(const QString &text, QTextDocument::FindFlags flag
   else
     return selected.compare(text, Qt::CaseInsensitive)==0;
 }
-
 
 // Слот замены по кнопке Replace: если выделен подходящий фрагмент, он
 void Editor::onReplacetextSignalDetect(const QString &text, const QString &replaceText, QTextDocument::FindFlags flags)
@@ -2403,7 +2307,6 @@ void Editor::onReplacetextSignalDetect(const QString &text, const QString &repla
   if(!goToFindMatch(false, findDialog->isLoopSearch()))
     showFindNotFound(text);
 }
-
 
 // Слот замены по кнопке Replace all: все совпадения заменяются за один
 // проход с начала документа одной операцией отмены
@@ -2453,7 +2356,6 @@ void Editor::onReplaceAllSignalDetect(const QString &text, const QString &replac
                            QMessageBox::Close);
 }
 
-
 // Открытие контекстного меню в области редактирования
 void Editor::onCustomContextMenuRequested(const QPoint &pos)
 {
@@ -2476,7 +2378,6 @@ void Editor::onCustomContextMenuRequested(const QPoint &pos)
     editorContextMenu->exec(textArea->viewport()->mapToGlobal(pos));
 }
 
-
 void Editor::onSettingsClicked(void)
 {
   // Создается окно настроек, после выхода из этой функции окно удалится
@@ -2487,12 +2388,10 @@ void Editor::onSettingsClicked(void)
   setTabSize();
 }
 
-
 void Editor::onShowformattingClicked(bool ok)
 {
     textArea->setShowFormatting(ok);
 }
-
 
 void Editor::onExpandEditAreaClicked(void)
 {
@@ -2508,12 +2407,10 @@ void Editor::onExpandEditAreaClicked(void)
   }
 }
 
-
 void Editor::onSaveClicked(void)
 {
   saveTextarea();
 }
-
 
 void Editor::onBackClicked(void)
 {
@@ -2521,18 +2418,15 @@ void Editor::onBackClicked(void)
   backCallbackFunc();
 }
 
-
 void Editor::onToAttachClicked(void)
 {
   attachCallbackFunc();
 }
 
-
 void Editor::onFindInBaseClicked(void)
 {
   emit wyeditFindInBaseClicked();
 }
-
 
 // Горячая клавиша цвета текста: как клик по кнопке (последний цвет
 // без пикера), при выключенной настройке — открыть меню как раньше
@@ -2544,7 +2438,6 @@ void Editor::onFontcolorHotkey(void)
     editorToolBarAssistant->fontColor->showMenu();
 }
 
-
 // Горячая клавиша цвета фона: как клик по кнопке, иначе открыть меню
 void Editor::onBackgroundcolorHotkey(void)
 {
@@ -2553,7 +2446,6 @@ void Editor::onBackgroundcolorHotkey(void)
   else
     editorToolBarAssistant->backgroundColor->showMenu();
 }
-
 
 // Слот нажатия кнопки показа текста в отдельном открепляемом окне
 void Editor::onShowTextClicked(void)
@@ -2569,7 +2461,6 @@ void Editor::onShowTextClicked(void)
 
   EditorShowTextDispatcher::instance()->createWindow( this->getMiscField("id") );
 }
-
 
 void Editor::setTabSize()
 {
@@ -2593,36 +2484,30 @@ void Editor::setTabSize()
     // ) * editorConfig->get_tab_size() );
 }
 
-
 void Editor::setSaveCallback(void (*func)(QObject *editor, QString saveString))
 {
   saveCallbackFunc=func;
 }
-
 
 void Editor::setLoadCallback(void (*func)(QObject *editor, QString &String))
 {
   loadCallbackFunc=func;
 }
 
-
 void Editor::setBackCallback(void (*func)(void))
 {
   backCallbackFunc=func;
 }
-
 
 void Editor::setAttachCallback(void (*func)(void))
 {
   attachCallbackFunc=func;
 }
 
-
 void Editor::setMiscField(QString name, QString value)
 {
   miscFields[name]=value;
 }
-
 
 QString Editor::getMiscField(QString name)
 {
@@ -2632,12 +2517,10 @@ QString Editor::getMiscField(QString name)
     return QString();
 }
 
-
 void Editor::clearAllMiscField(void)
 {
   miscFields.clear();
 }
-
 
 void Editor::setDirFileEmptyReaction(int mode)
 {
@@ -2649,18 +2532,15 @@ void Editor::setDirFileEmptyReaction(int mode)
     criticalError("Editor::setDirFileEmptyReaction() : Unsupport mode "+QString::number(mode));
 }
 
-
 int Editor::getDirFileEmptyReaction(void)
 {
   return dirFileEmptyReaction;
 }
 
-
 int Editor::getCursorPosition(void)
 {
   return textArea->textCursor().position();
 }
-
 
 void Editor::setCursorPosition(int n)
 {
@@ -2671,22 +2551,18 @@ void Editor::setCursorPosition(int n)
   textArea->setTextCursor(cursor);
 }
 
-
 int Editor::getScrollBarPosition(void)
 {
   return textArea->verticalScrollBar()->value();
 }
-
 
 void Editor::setScrollBarPosition(int n)
 {
   textArea->verticalScrollBar()->setValue(n);
 }
 
-
 void Editor::switchAttachIconExists(bool isExists)
 {
   editorToolBarAssistant->switchAttachIconExists(isExists);
 }
-
 

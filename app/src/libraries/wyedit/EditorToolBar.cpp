@@ -12,22 +12,17 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/ActionHelper.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 EditorToolBar::EditorToolBar(QWidget *parent) : QWidget(parent)
 {
     isInit=false;
 }
 
-
 EditorToolBar::~EditorToolBar()
 {
 
 }
-
 
 // Установка списка имен инструментов для строки 1
 void EditorToolBar::initToolsLine1(QStringList toolsLine)
@@ -40,7 +35,6 @@ void EditorToolBar::initToolsLine1(QStringList toolsLine)
     toolsListInLine1=toolsLine;
 }
 
-
 // Установка списка имен инструментов для строки 2
 void EditorToolBar::initToolsLine2(QStringList toolsLine)
 {
@@ -52,7 +46,6 @@ void EditorToolBar::initToolsLine2(QStringList toolsLine)
     toolsListInLine2=toolsLine;
 }
 
-
 // Установка списка имен инструментов, которые не должны отображаться на панели инструментов
 void EditorToolBar::initDisableToolList(QStringList toolNames)
 {
@@ -63,7 +56,6 @@ void EditorToolBar::initDisableToolList(QStringList toolNames)
 
     disableToolList=toolNames;
 }
-
 
 // Инициализация панели инструментов
 // Ранее в этот метод передавался параметр mode
@@ -82,7 +74,6 @@ void EditorToolBar::init()
     this->assemblyButtons();
 }
 
-
 QAction* EditorToolBar::generateAction(QIcon icon)
 {
     actions.resize( actions.size()+1 );
@@ -95,11 +86,10 @@ QAction* EditorToolBar::generateAction(QIcon icon)
     return actions[currentIndex];
 }
 
-
 void EditorToolBar::setupSignals()
 {
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &EditorToolBar::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &EditorToolBar::setupShortcuts);
 
     // Контекстные меню линеек: только на пустом месте, там единственный
     // пункт перехода в настройки редактора
@@ -111,7 +101,6 @@ void EditorToolBar::setupSignals()
     connect(&toolsLine2, &QToolBar::customContextMenuRequested,
             this,          &EditorToolBar::onToolbarContextMenu);
 }
-
 
 void EditorToolBar::onToolbarContextMenu(const QPoint &pos)
 {
@@ -129,7 +118,6 @@ void EditorToolBar::onToolbarContextMenu(const QPoint &pos)
         EditorConfigDialog editorDialog(this);
     }
 }
-
 
 // Создание объектов для линейки форматирования текста
 void EditorToolBar::setupToolBarTools(void)
@@ -304,7 +292,6 @@ void EditorToolBar::setupToolBarTools(void)
     dotList->setIcon(QIcon(":/resource/pic/edit_listdot.svg"));
     dotList->setObjectName("editor_tb_dotList");
 
-
     // Кнопка увеличения отступа
     indentPlus=new QAction(this);
     indentPlus->setIcon(QIcon(":/resource/pic/edit_indentplus.svg"));
@@ -314,7 +301,6 @@ void EditorToolBar::setupToolBarTools(void)
     indentMinus=new QAction(this);
     indentMinus->setIcon(QIcon(":/resource/pic/edit_indentminus.svg"));
     indentMinus->setObjectName("editor_tb_indentMinus");
-
 
     // Кнопка выравнивания по левому краю
     alignLeft=new QAction(this);
@@ -340,7 +326,6 @@ void EditorToolBar::setupToolBarTools(void)
     alignWidth->setIcon(QIcon(":/resource/pic/edit_alignwidth.svg"));
     alignWidth->setObjectName("editor_tb_alignWidth");
 
-
     // Выбор шрифта
     fontSelect=new EditorFontFamilyComboBox(this);
     fontSelect->setObjectName("editor_tb_fontSelect");
@@ -348,7 +333,6 @@ void EditorToolBar::setupToolBarTools(void)
     // Выбор размера шрифта
     fontSize=new EditorFontSizeComboBox(this);
     fontSize->setObjectName("editor_tb_fontSize");
-
 
     // Кнопка выбора цвета шрифта
     fontColor=new EditorDropDownButton(this);
@@ -365,7 +349,6 @@ void EditorToolBar::setupToolBarTools(void)
     backgroundColorNoColorAction=new QAction(QIcon(":/resource/pic/edit_no_color.svg"), tr("No color"), this);
     backgroundColor->addAction(backgroundColorSelectAction);
     backgroundColor->addAction(backgroundColorNoColorAction);
-
 
     // Кнопка вызова виджета поиска текста
     findText=new QAction(this);
@@ -478,7 +461,6 @@ void EditorToolBar::setupToolBarTools(void)
     save->setIcon(QIcon(":/resource/pic/edit_save.svg"));
     save->setObjectName("editor_tb_save");
 
-
     // Кнопка редактора "назад", используется в мобильном интерфейсе, для нее не может быть горячей клавиши
     mobileBack=new QAction(this);
     mobileBack->setStatusTip(tr("Back"));
@@ -490,7 +472,6 @@ void EditorToolBar::setupToolBarTools(void)
     mobileFindInBase->setStatusTip(tr("Find in base"));
     mobileFindInBase->setIcon(QIcon(":/resource/pic/find_in_base.svg"));
     mobileFindInBase->setObjectName("editor_tb_findInBase");
-
 
     // Кнопка "показать текст" для просмотра текста в отдельном окне
     showText=new QAction(this);
@@ -508,91 +489,86 @@ void EditorToolBar::setupToolBarTools(void)
     this->hideAllToolsElements();
 }
 
-
 void EditorToolBar::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->metaObject()->className();
 
-    shortcutManager.initAction("editor-bold", bold );
-    shortcutManager.initAction("editor-italic", italic);
-    shortcutManager.initAction("editor-underline", underline);
-    shortcutManager.initAction("editor-strikeout", strikeout);
-    shortcutManager.initAction("editor-superscript", superscript);
-    shortcutManager.initAction("editor-subscript", subscript);
-    shortcutManager.initAction("editor-monospace", monospace);
-    shortcutManager.initAction("editor-code", code->toolPseudoButton.getSelectAction() );
-    code->setStatusTip( shortcutManager.getFullDescription("editor-code") );
-    code->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-code") );
-    shortcutManager.initAction("editor-heading1", headingH1Action);
-    shortcutManager.initAction("editor-heading2", headingH2Action);
-    shortcutManager.initAction("editor-heading3", headingH3Action);
-    shortcutManager.initAction("editor-clear", clear);
-    shortcutManager.initAction("editor-textOnly", textOnly);
-    shortcutManager.initAction("editor-fixBreakSymbol", fixBreakSymbol);
-    shortcutManager.initAction("editor-tabsToSpaces", tabsToSpaces);
-    shortcutManager.initAction("editor-undo", undo );
-    shortcutManager.initAction("editor-redo", redo );
-    shortcutManager.initAction("editor-numericList", numericList);
-    shortcutManager.initAction("editor-dotList", dotList);
-    shortcutManager.initAction("editor-indentPlus", indentPlus);
-    shortcutManager.initAction("editor-indentMinus", indentMinus);
-    shortcutManager.initAction("editor-alignLeft", alignLeft);
-    shortcutManager.initAction("editor-alignCenter", alignCenter);
-    shortcutManager.initAction("editor-alignRight", alignRight);
-    shortcutManager.initAction("editor-alignWidth", alignWidth);
+    AppContext::instance().shortcutManager()->initAction("editor-bold", bold );
+    AppContext::instance().shortcutManager()->initAction("editor-italic", italic);
+    AppContext::instance().shortcutManager()->initAction("editor-underline", underline);
+    AppContext::instance().shortcutManager()->initAction("editor-strikeout", strikeout);
+    AppContext::instance().shortcutManager()->initAction("editor-superscript", superscript);
+    AppContext::instance().shortcutManager()->initAction("editor-subscript", subscript);
+    AppContext::instance().shortcutManager()->initAction("editor-monospace", monospace);
+    AppContext::instance().shortcutManager()->initAction("editor-code", code->toolPseudoButton.getSelectAction() );
+    code->setStatusTip( AppContext::instance().shortcutManager()->getFullDescription("editor-code") );
+    code->setToolTip( AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-code") );
+    AppContext::instance().shortcutManager()->initAction("editor-heading1", headingH1Action);
+    AppContext::instance().shortcutManager()->initAction("editor-heading2", headingH2Action);
+    AppContext::instance().shortcutManager()->initAction("editor-heading3", headingH3Action);
+    AppContext::instance().shortcutManager()->initAction("editor-clear", clear);
+    AppContext::instance().shortcutManager()->initAction("editor-textOnly", textOnly);
+    AppContext::instance().shortcutManager()->initAction("editor-fixBreakSymbol", fixBreakSymbol);
+    AppContext::instance().shortcutManager()->initAction("editor-tabsToSpaces", tabsToSpaces);
+    AppContext::instance().shortcutManager()->initAction("editor-undo", undo );
+    AppContext::instance().shortcutManager()->initAction("editor-redo", redo );
+    AppContext::instance().shortcutManager()->initAction("editor-numericList", numericList);
+    AppContext::instance().shortcutManager()->initAction("editor-dotList", dotList);
+    AppContext::instance().shortcutManager()->initAction("editor-indentPlus", indentPlus);
+    AppContext::instance().shortcutManager()->initAction("editor-indentMinus", indentMinus);
+    AppContext::instance().shortcutManager()->initAction("editor-alignLeft", alignLeft);
+    AppContext::instance().shortcutManager()->initAction("editor-alignCenter", alignCenter);
+    AppContext::instance().shortcutManager()->initAction("editor-alignRight", alignRight);
+    AppContext::instance().shortcutManager()->initAction("editor-alignWidth", alignWidth);
 
+    // AppContext::instance().shortcutManager()->initAction("editor-fontColor", fontColor);
+    AppContext::instance().shortcutManager()->initAction("editor-fontColor", fontColor->toolPseudoButton.getSelectAction() );
+    fontColor->setStatusTip( AppContext::instance().shortcutManager()->getFullDescription("editor-fontColor") );
+    fontColor->setToolTip( AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-fontColor") );
 
-    // shortcutManager.initAction("editor-fontColor", fontColor);
-    shortcutManager.initAction("editor-fontColor", fontColor->toolPseudoButton.getSelectAction() );
-    fontColor->setStatusTip( shortcutManager.getFullDescription("editor-fontColor") );
-    fontColor->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-fontColor") );
-
-    // shortcutManager.initAction("editor-backgroundColor", backgroundColor);
-    shortcutManager.initAction("editor-backgroundColor", backgroundColor->toolPseudoButton.getSelectAction() );
-    backgroundColor->setStatusTip( shortcutManager.getFullDescription("editor-backgroundColor") );
-    backgroundColor->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-backgroundColor") );
-
+    // AppContext::instance().shortcutManager()->initAction("editor-backgroundColor", backgroundColor);
+    AppContext::instance().shortcutManager()->initAction("editor-backgroundColor", backgroundColor->toolPseudoButton.getSelectAction() );
+    backgroundColor->setStatusTip( AppContext::instance().shortcutManager()->getFullDescription("editor-backgroundColor") );
+    backgroundColor->setToolTip( AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-backgroundColor") );
 
     // Настраиваются скрытые кнопки действия, а надписи настраиваются для самого виджета
     // Скрытые кнопки нужны чтобы работал выбор виджета по грячим кнопкам
-    shortcutManager.initAction("editor-fontSelect", fontSelect->toolPseudoButton.getSelectAction() );
-    fontSelect->setStatusTip( shortcutManager.getFullDescription("editor-fontSelect") );
-    fontSelect->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-fontSelect") );
+    AppContext::instance().shortcutManager()->initAction("editor-fontSelect", fontSelect->toolPseudoButton.getSelectAction() );
+    fontSelect->setStatusTip( AppContext::instance().shortcutManager()->getFullDescription("editor-fontSelect") );
+    fontSelect->setToolTip( AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-fontSelect") );
 
-    shortcutManager.initAction("editor-fontSize", fontSize->toolPseudoButton.getSelectAction() );
-    fontSize->setStatusTip( shortcutManager.getFullDescription("editor-fontSize") );
-    fontSize->setToolTip( shortcutManager.getDescriptionWithShortcut("editor-fontSize") );
+    AppContext::instance().shortcutManager()->initAction("editor-fontSize", fontSize->toolPseudoButton.getSelectAction() );
+    fontSize->setStatusTip( AppContext::instance().shortcutManager()->getFullDescription("editor-fontSize") );
+    fontSize->setToolTip( AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-fontSize") );
 
-
-    shortcutManager.initAction("editor-findText", findText);
-    shortcutManager.initAction("editor-settings", settings);
-    shortcutManager.initAction("editor-reference", reference);
-    shortcutManager.initAction("editor-toc", toc);
-    shortcutManager.initAction("editor-secret", secret);
-    shortcutManager.initAction("editor-showHtml", showHtml);
-    shortcutManager.initAction("editor-showFormatting", showFormatting);
-    shortcutManager.initAction("editor-createTable", createTable);
-    shortcutManager.initAction("editor-tableRemoveRow", tableRemoveRow);
-    shortcutManager.initAction("editor-tableRemoveCol", tableRemoveCol);
-    shortcutManager.initAction("editor-tableAddRow", tableAddRow);
-    shortcutManager.initAction("editor-tableAddCol", tableAddCol);
-    shortcutManager.initAction("editor-tableMergeCells", tableMergeCells);
-    shortcutManager.initAction("editor-tableSplitCell", tableSplitCell);
-    shortcutManager.initAction("editor-tableProperties", tableProperties);
-    shortcutManager.initAction("editor-insertImageFromFile", insertImageFromFile);
-    shortcutManager.initAction("editor-openImage", openImage);
-    shortcutManager.initAction("editor-micRecord", micRecord);
-    shortcutManager.initAction("editor-insertHorizontalLine", insertHorizontalLine);
-    shortcutManager.initAction("editor-specialChar", specialChar);
-    shortcutManager.initAction("editor-mathExpression", mathExpression);
-    shortcutManager.initAction("editor-expandEditArea", expandEditArea);
-    shortcutManager.initAction("editor-expandToolsLines", expandToolsLines);
-    shortcutManager.initAction("editor-toggleTools", toggleTools);
-    shortcutManager.initAction("editor-save", save);
-    shortcutManager.initAction("editor-showText", showText);
-    shortcutManager.initAction("editor-toAttach", toAttach);
+    AppContext::instance().shortcutManager()->initAction("editor-findText", findText);
+    AppContext::instance().shortcutManager()->initAction("editor-settings", settings);
+    AppContext::instance().shortcutManager()->initAction("editor-reference", reference);
+    AppContext::instance().shortcutManager()->initAction("editor-toc", toc);
+    AppContext::instance().shortcutManager()->initAction("editor-secret", secret);
+    AppContext::instance().shortcutManager()->initAction("editor-showHtml", showHtml);
+    AppContext::instance().shortcutManager()->initAction("editor-showFormatting", showFormatting);
+    AppContext::instance().shortcutManager()->initAction("editor-createTable", createTable);
+    AppContext::instance().shortcutManager()->initAction("editor-tableRemoveRow", tableRemoveRow);
+    AppContext::instance().shortcutManager()->initAction("editor-tableRemoveCol", tableRemoveCol);
+    AppContext::instance().shortcutManager()->initAction("editor-tableAddRow", tableAddRow);
+    AppContext::instance().shortcutManager()->initAction("editor-tableAddCol", tableAddCol);
+    AppContext::instance().shortcutManager()->initAction("editor-tableMergeCells", tableMergeCells);
+    AppContext::instance().shortcutManager()->initAction("editor-tableSplitCell", tableSplitCell);
+    AppContext::instance().shortcutManager()->initAction("editor-tableProperties", tableProperties);
+    AppContext::instance().shortcutManager()->initAction("editor-insertImageFromFile", insertImageFromFile);
+    AppContext::instance().shortcutManager()->initAction("editor-openImage", openImage);
+    AppContext::instance().shortcutManager()->initAction("editor-micRecord", micRecord);
+    AppContext::instance().shortcutManager()->initAction("editor-insertHorizontalLine", insertHorizontalLine);
+    AppContext::instance().shortcutManager()->initAction("editor-specialChar", specialChar);
+    AppContext::instance().shortcutManager()->initAction("editor-mathExpression", mathExpression);
+    AppContext::instance().shortcutManager()->initAction("editor-expandEditArea", expandEditArea);
+    AppContext::instance().shortcutManager()->initAction("editor-expandToolsLines", expandToolsLines);
+    AppContext::instance().shortcutManager()->initAction("editor-toggleTools", toggleTools);
+    AppContext::instance().shortcutManager()->initAction("editor-save", save);
+    AppContext::instance().shortcutManager()->initAction("editor-showText", showText);
+    AppContext::instance().shortcutManager()->initAction("editor-toAttach", toAttach);
 }
-
 
 // Прямые тексты: пункты выпадашек цвета и подсказки без шорткатов.
 // Остальное освежает setupShortcuts по сигналу updateWidgetShortcut
@@ -643,7 +619,6 @@ void EditorToolBar::retranslateUi(void)
     mobileFindInBase->setStatusTip(tr("Find in base"));
 }
 
-
 // Список названий всех контролов (команд) панелей инструментов
 QStringList EditorToolBar::getCommandNameList()
 {
@@ -664,7 +639,6 @@ QStringList EditorToolBar::getCommandNameList()
     return controlsNameList;
 }
 
-
 // Выяснение иконки для инструмента панели управления по его имени
 QIcon EditorToolBar::getIcon(const QString &name)
 {
@@ -683,7 +657,6 @@ QIcon EditorToolBar::getIcon(const QString &name)
 
     return QIcon();
 }
-
 
 void EditorToolBar::hideAllToolsElements(void)
 {
@@ -704,7 +677,6 @@ void EditorToolBar::hideAllToolsElements(void)
         }
     }
 }
-
 
 // Установка или снятие доступности кнопок, модифицирующих текст
 void EditorToolBar::setEnableModifyTextButton(bool state)
@@ -746,7 +718,6 @@ void EditorToolBar::setEnableModifyTextButton(bool state)
 
 }
 
-
 // Сборка линейки редактирования текста в горизонтальную линейку
 void EditorToolBar::assemblyButtons(void)
 {
@@ -773,7 +744,6 @@ void EditorToolBar::assemblyButtons(void)
 
     lt->update();
 }
-
 
 // Убирание всех инструментов с тулбара (но не очистка списков имен элементов на тулбарах)
 void EditorToolBar::clearToolsLines(void)
@@ -812,7 +782,6 @@ void EditorToolBar::clearToolsLines(void)
     toolsLine2.clear();
 }
 
-
 // Засовывание инструментов на тулбары согласно спискам инструментов на тулбарах
 void EditorToolBar::updateToolsLines(void)
 {
@@ -830,7 +799,6 @@ void EditorToolBar::updateToolsLines(void)
         this->insertButtonToToolsLine(b, toolsLine2);
     }
 }
-
 
 // В линейку кнопок вставляется нужный инструмент
 // Метод принимает имя инструмента
@@ -872,7 +840,6 @@ void EditorToolBar::insertButtonToToolsLine(QString toolName, QToolBar &line)
             {
                 toolAsWidget->setVisible(true);
                 line.addWidget(toolAsWidget); // Инструмент добавляется на панель инструментов как виджет
-
 
                 // Для специальных классов добавляются действия активации виджета
                 // как невидимые кнопки
@@ -922,13 +889,12 @@ void EditorToolBar::insertButtonToToolsLine(QString toolName, QToolBar &line)
     }
 }
 
-
 // Действия с шорткатами добавляются к виджету EditorToolBar,
 // чтобы шорткаты срабатывали даже если нет кнопок на панелях редактора
 void EditorToolBar::registryActionsToToolBarWidget()
 {
     // Перебираются все инструменты редактора с шорткатами
-    for(auto toolName : shortcutManager.getActionsNameList("editor") )
+    for(auto toolName : AppContext::instance().shortcutManager()->getActionsNameList("editor") )
     {
         // Запрещенные действия добавляться не должны
         if( disableToolList.contains(toolName) )
@@ -946,7 +912,6 @@ void EditorToolBar::registryActionsToToolBarWidget()
         }
     }
 }
-
 
 void EditorToolBar::switchAttachIconExists(bool isExists)
 {

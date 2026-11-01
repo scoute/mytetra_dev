@@ -7,10 +7,7 @@
 
 #include "AppConfigPage_Voice.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 AppConfigPage_Voice::AppConfigPage_Voice(QWidget *parent) : ConfigPage(parent)
 {
@@ -19,12 +16,10 @@ AppConfigPage_Voice::AppConfigPage_Voice(QWidget *parent) : ConfigPage(parent)
   assembly();
 }
 
-
 AppConfigPage_Voice::~AppConfigPage_Voice()
 {
 
 }
-
 
 void AppConfigPage_Voice::setupUi(void)
 {
@@ -45,7 +40,7 @@ void AppConfigPage_Voice::setupUi(void)
   formatGroup->addButton(opusRadio);
   formatGroup->addButton(mp3Radio);
 
-  if(mytetraConfig.get_voiceNoteFormat()==QStringLiteral("mp3"))
+  if(AppContext::instance().appConfig()->get_voiceNoteFormat()==QStringLiteral("mp3"))
     mp3Radio->setChecked(true);
   else
     opusRadio->setChecked(true);
@@ -70,7 +65,7 @@ void AppConfigPage_Voice::setupUi(void)
   qualityGroup->addButton(qualityHighRadio);
   qualityGroup->addButton(qualityExtraRadio);
 
-  switch(mytetraConfig.get_voiceNoteQuality())
+  switch(AppContext::instance().appConfig()->get_voiceNoteQuality())
   {
   case 0:
     qualitySuperLowRadio->setChecked(true);
@@ -101,12 +96,10 @@ void AppConfigPage_Voice::setupUi(void)
   retranslateUi();
 }
 
-
 void AppConfigPage_Voice::setupSignals(void)
 {
 
 }
-
 
 void AppConfigPage_Voice::assembly(void)
 {
@@ -131,7 +124,6 @@ void AppConfigPage_Voice::assembly(void)
   setLayout(centralLayout);
 }
 
-
 // Прямые тексты новым языком
 void AppConfigPage_Voice::retranslateUi(void)
 {
@@ -149,7 +141,6 @@ void AppConfigPage_Voice::retranslateUi(void)
 
 }
 
-
 // Перезапуск не нужен: диалог записи читает дефолты при открытии
 int AppConfigPage_Voice::applyChanges(void)
 {
@@ -158,8 +149,8 @@ int AppConfigPage_Voice::applyChanges(void)
   const QString format=mp3Radio->isChecked() ? QStringLiteral("mp3")
                                              : QStringLiteral("opus");
 
-  if(mytetraConfig.get_voiceNoteFormat()!=format)
-    mytetraConfig.set_voiceNoteFormat(format);
+  if(AppContext::instance().appConfig()->get_voiceNoteFormat()!=format)
+    AppContext::instance().appConfig()->set_voiceNoteFormat(format);
 
   int quality=3;
 
@@ -174,8 +165,8 @@ int AppConfigPage_Voice::applyChanges(void)
   else if(qualityExtraRadio->isChecked())
     quality=5;
 
-  if(mytetraConfig.get_voiceNoteQuality()!=quality)
-    mytetraConfig.set_voiceNoteQuality(quality);
+  if(AppContext::instance().appConfig()->get_voiceNoteQuality()!=quality)
+    AppContext::instance().appConfig()->set_voiceNoteQuality(quality);
 
   return 0;
 }

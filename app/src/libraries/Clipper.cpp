@@ -59,11 +59,7 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/clipBranchDialog/ClipBranchDialog.h"
 #include "controllers/recordTable/RecordTableController.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 // Лимиты картинок из настроек. Клиппер фоновый (окно может быть скрыто),
 // поэтому вместо вопроса как при обычной вставке действуют лимиты,
@@ -73,7 +69,6 @@ static const qint64 defaultClipMaxImageSizeBytes=5*1024*1024;
 
 static int clipMaxImages=defaultClipMaxImages;
 static qint64 clipMaxImageBytes=defaultClipMaxImageSizeBytes;
-
 
 // Расширение новой картинки в клипере: настройка формата редактора,
 // картинки с прозрачностью всегда PNG (у JPG нет альфа-канала).
@@ -88,7 +83,6 @@ static QString clipImageExtension(const QImage &image)
     return editorConfig->imageExtensionFor(image);
 }
 
-
 // Ужатие картинки клипера до лимита длинной стороны из настройки.
 // Без конфига возвращается исходник
 static QImage clipLimitImageSize(const QImage &image)
@@ -100,7 +94,6 @@ static QImage clipLimitImageSize(const QImage &image)
 
     return editorConfig->limitImageSize(image);
 }
-
 
 #if defined(Q_OS_WIN)
 namespace {
@@ -215,7 +208,6 @@ void logSendInput(const char *what, UINT sent)
 
 } // namespace
 
-
 // Приёмник WM_HOTKEY из очереди потока GUI (без Q_OBJECT: дёргает слот напрямую)
 class ClipperWinFilter : public QAbstractNativeEventFilter
 {
@@ -242,22 +234,20 @@ private:
 };
 #endif // defined(Q_OS_WIN)
 
-
 void Clipper::reloadLimits(void)
 {
-    int maxImages=mytetraConfig.get_clipperMaxImages();
+    int maxImages=AppContext::instance().appConfig()->get_clipperMaxImages();
     if(maxImages>0)
         clipMaxImages=maxImages;
     else
         clipMaxImages=defaultClipMaxImages;
 
-    int maxSizeMb=mytetraConfig.get_clipperMaxImageSizeMb();
+    int maxSizeMb=AppContext::instance().appConfig()->get_clipperMaxImageSizeMb();
     if(maxSizeMb>0)
         clipMaxImageBytes=static_cast<qint64>(maxSizeMb)*1024*1024;
     else
         clipMaxImageBytes=defaultClipMaxImageSizeBytes;
 }
-
 
 void Clipper::setMaxImages(int count)
 {
@@ -265,13 +255,11 @@ void Clipper::setMaxImages(int count)
         clipMaxImages=count;
 }
 
-
 void Clipper::setMaxImageSizeBytes(qint64 bytes)
 {
     if(bytes>0)
         clipMaxImageBytes=bytes;
 }
-
 
 bool Clipper::looksLikeUrl(const QString &value)
 {
@@ -279,7 +267,6 @@ bool Clipper::looksLikeUrl(const QString &value)
 
     return trimmed.startsWith("http://") || trimmed.startsWith("https://");
 }
-
 
 QString Clipper::extractUrl(const QString &text)
 {
@@ -296,7 +283,6 @@ QString Clipper::extractUrl(const QString &text)
 
     return url;
 }
-
 
 // Адрес страницы из сырого Windows HTML Format (заголовок SourceURL).
 // Возвращается как есть, годность проверяет looksLikeUrl у вызывателя
@@ -315,7 +301,6 @@ QString Clipper::parseHtmlFormatSourceUrl(const QByteArray &raw)
     return QString();
 }
 
-
 QString Clipper::resolveUrl(const QString &urlHint, const QString &sourceUrl,
                               const QString &plainText)
 {
@@ -330,7 +315,6 @@ QString Clipper::resolveUrl(const QString &urlHint, const QString &sourceUrl,
 
     return QString();
 }
-
 
 QString Clipper::extractHtmlTitle(const QString &html)
 {
@@ -354,7 +338,6 @@ QString Clipper::extractHtmlTitle(const QString &html)
     return title.left(77)+"...";
 }
 
-
 // Суффикс браузера в шапке окна (" - Google Chrome" и т.п.).
 // Дефис, en dash, em dash и пара браузеров кириллицей — файл UTF-8,
 // поэтому литералами, а не hex-последовательностями
@@ -369,7 +352,6 @@ static const QRegularExpression &browserCaptionSuffix(void)
     return browserRe;
 }
 
-
 // Название самой веб-страницы из заголовка окна: отрезается суффикс
 // вида " - Google Chrome". Не браузер — заголовок как есть
 QString Clipper::cleanWindowCaption(const QString &caption)
@@ -381,7 +363,6 @@ QString Clipper::cleanWindowCaption(const QString &caption)
 
     return caption.trimmed();
 }
-
 
 // Заголовок окна именно браузера: название страницы без суффикса.
 // Пусто если суффикса известного браузера нет (терминал, редактор) —
@@ -398,7 +379,6 @@ QString Clipper::browserTitleFromCaption(const QString &caption)
 
     return trimmed.left(match.capturedStart()).trimmed();
 }
-
 
 QImage Clipper::imageFromDataUrl(const QString &url)
 {
@@ -425,31 +405,28 @@ QImage Clipper::imageFromDataUrl(const QString &url)
     return image;
 }
 
-
 void Clipper::setTestModel(KnowTreeModel *model)
 {
     testModel=model;
 }
-
 
 KnowTreeModel *Clipper::treeModel(void) const
 {
     if(testModel)
         return testModel;
 
-    TreeScreen *treeScreen=globalParameters.getTreeScreen();
+    TreeScreen *treeScreen=AppContext::instance().globalParameters()->getTreeScreen();
     if(!treeScreen)
         return nullptr;
     return treeScreen->knowTreeModel;
 }
-
 
 void Clipper::saveTree(void) const
 {
     if(testModel)
         return;
 
-    TreeScreen *treeScreen=globalParameters.getTreeScreen();
+    TreeScreen *treeScreen=AppContext::instance().globalParameters()->getTreeScreen();
     if(treeScreen)
     {
         treeScreen->saveKnowTree();
@@ -459,32 +436,27 @@ void Clipper::saveTree(void) const
     }
 }
 
-
-
-
 Clipper::Clipper(QObject *parent) : QObject(parent)
 {
 
 }
-
 
 Clipper::~Clipper()
 {
     stop();
 }
 
-
 void Clipper::start(void)
 {
     stop();
 
-    if(!mytetraConfig.get_clipperenable())
+    if(!AppContext::instance().appConfig()->get_clipperenable())
     {
         qDebug() << "Clipper: disabled in config";
         return;
     }
 
-    const QString sequence=mytetraConfig.get_clipperhotkey();
+    const QString sequence=AppContext::instance().appConfig()->get_clipperhotkey();
     if(sequence.isEmpty())
     {
         qDebug() << "Clipper: empty hotkey, disabled";
@@ -501,7 +473,6 @@ void Clipper::start(void)
     }
 }
 
-
 void Clipper::stop(void)
 {
     ungrabHotkey();
@@ -509,18 +480,15 @@ void Clipper::stop(void)
     hotkeyActiveSequence.clear();
 }
 
-
 void Clipper::rereadSettings(void)
 {
     start();
 }
 
-
 bool Clipper::isHotkeyAvailable(void) const
 {
     return hotkeyActive;
 }
-
 
 QString Clipper::backendStatus(void) const
 {
@@ -546,14 +514,13 @@ QString Clipper::backendStatus(void) const
                + QStringLiteral(" ")+sslInfo;
 #endif
 
-    if(!mytetraConfig.get_clipperenable())
+    if(!AppContext::instance().appConfig()->get_clipperenable())
         return tr("Clipper disabled in settings.")
                + QStringLiteral(" ")+sslInfo;
 
     return tr("Global hotkey unavailable.")
            + QStringLiteral(" ")+sslInfo;
 }
-
 
 QString Clipper::makeTitle(const QString &plainText)
 {
@@ -576,7 +543,6 @@ QString Clipper::makeTitle(const QString &plainText)
     return tr("Clipped note ")+QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
 }
 
-
 QByteArray Clipper::contentHash(const QString &normalizedHtml)
 {
     // Внутренние имена картинок случайны при каждом клипе — заменить их
@@ -588,7 +554,6 @@ QByteArray Clipper::contentHash(const QString &normalizedHtml)
 
     return QCryptographicHash::hash(canonical.toUtf8(), QCryptographicHash::Sha256);
 }
-
 
 QString Clipper::recordIdForHash(const QByteArray &hash)
 {
@@ -612,19 +577,17 @@ QString Clipper::recordIdForHash(const QByteArray &hash)
     return id;
 }
 
-
 void Clipper::clipNow(void)
 {
     clipNowWithUrl(QString());
 }
-
 
 void Clipper::clipNowWithUrl(const QString &urlHint)
 {
     qDebug() << "Clipper: clip requested";
 
     // Глобальный режим только чтения: записи не создаются
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
     {
         const QString message=tr("Read-only mode is enabled.");
         notify(tr("Web Clipper"), message);
@@ -651,7 +614,6 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
         emit clipFinished(false, clipData.errorMessage);
 }
 
-
 // Общий хвост вставки готового ClipData: ветка, дедуп, запись, трей.
 // Итоговое сообщение складывается в clipData.errorMessage
 bool Clipper::finishClip(ClipData &clipData)
@@ -668,11 +630,11 @@ bool Clipper::finishClip(ClipData &clipData)
     {
         if(!recordId.isEmpty() && model->isRecordIdExists(recordId))
         {
-            const QString message=mytetraConfig.get_clipperopendup()
+            const QString message=AppContext::instance().appConfig()->get_clipperopendup()
                 ? tr("Already clipped, opened existing note.")
                 : tr("Already clipped, skipped.");
             notify(tr("Web Clipper"), message);
-            if(mytetraConfig.get_clipperopendup())
+            if(AppContext::instance().appConfig()->get_clipperopendup())
                 openExistingRecord(recordId);
             clipData.errorMessage=message;
             return false;
@@ -682,7 +644,7 @@ bool Clipper::finishClip(ClipData &clipData)
     // Режим "спрашивать каждый раз": модальная плитка веток поверх
     // браузера. Отмена — тихий выход без записи и без мусора в базе
     QString askId;
-    if(mytetraConfig.get_clipperbranchmode()==2)
+    if(AppContext::instance().appConfig()->get_clipperbranchmode()==2)
     {
         askId=ClipBranchDialog::askBranch();
         if(askId.isEmpty())
@@ -704,11 +666,11 @@ bool Clipper::finishClip(ClipData &clipData)
     QString matchedId;
     if(isDuplicate(branchItem, recordId, newHash, &matchedId))
     {
-        const QString message=mytetraConfig.get_clipperopendup()
+        const QString message=AppContext::instance().appConfig()->get_clipperopendup()
             ? tr("Already clipped, opened existing note.")
             : tr("Already clipped, skipped.");
         notify(tr("Web Clipper"), message);
-        if(mytetraConfig.get_clipperopendup())
+        if(AppContext::instance().appConfig()->get_clipperopendup())
             openExistingRecord(matchedId.isEmpty() ? recordId : matchedId);
         clipData.errorMessage=message;
         return false;
@@ -759,7 +721,6 @@ bool Clipper::finishClip(ClipData &clipData)
     return true;
 }
 
-
 void Clipper::notify(const QString &title, const QString &text)
 {
     // Через invokeMethod, чтобы не линковать MainWindow (тесты, moc)
@@ -771,7 +732,6 @@ void Clipper::notify(const QString &title, const QString &text)
     else
         qDebug() << "Clipper notify:" << title << text;
 }
-
 
 #if defined(Q_OS_WIN)
 // Чтение сырого Windows HTML Format напрямую: Qt отдает только фрагмент,
@@ -808,7 +768,6 @@ QByteArray Clipper::readNativeHtmlFormat(void)
 
     return raw;
 }
-
 
 // Сведения о процессе для диагностики UIPI: ввод из менее
 // привилегированного процесса в более привилегированный режется молча
@@ -862,7 +821,6 @@ static WinProcInfo processInfo(DWORD pid)
     return info;
 }
 
-
 // Заголовок окна по хендлу для хоткея без выделения
 QString Clipper::windowCaption(void *hwnd)
 {
@@ -879,7 +837,6 @@ QString Clipper::windowCaption(void *hwnd)
     return QString::fromWCharArray(buffer, length);
 }
 #endif // defined(Q_OS_WIN)
-
 
 // Сбор материала из буфера обмена тем же движком, что ручная вставка:
 // HTML нормализуется через QTextDocument, внешние картинки скачиваются
@@ -998,7 +955,6 @@ bool Clipper::collectFromClipboard(ClipData &clipData)
     return true;
 }
 
-
 bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int alreadyHave)
 {
     // Замена внешних картинок на внутренние с докачкой (логика ImageFormatter:
@@ -1111,7 +1067,6 @@ bool Clipper::processDocument(QTextDocument &document, ClipData &clipData, int a
     return true;
 }
 
-
 // Скачивание по URL: http(s) через QNetworkAccessManager с таймаутом,
 // file:// — локальный файл по явному действию пользователя (клиппер
 // запускается вручную; вставка своей картинки — штатный сценарий).
@@ -1161,7 +1116,7 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
                      [](QNetworkReply *r, const QList<QSslError> &errors)
                      {
                          // Явно разрешенный небезопасный режим из настроек
-                         if(mytetraConfig.get_tlsIgnoreInvalidCertificates())
+                         if(AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates())
                          {
                              QStringList details;
 
@@ -1228,7 +1183,6 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
     return data;
 }
 
-
 // Ветка unsorted_notes: по запомненному id, иначе по имени среди корневых,
 // иначе создание + запоминание id (переживает переименования)
 bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
@@ -1258,7 +1212,7 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
         return true;
     }
 
-    const QString savedId=mytetraConfig.get_clipperbranchid();
+    const QString savedId=AppContext::instance().appConfig()->get_clipperbranchid();
     if(!savedId.isEmpty())
     {
         TreeItem *savedItem=model->getItemById(savedId);
@@ -1282,7 +1236,7 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
         if(rootItem->child(i)->getField("name")=="unsorted_notes")
         {
             branchItem=rootItem->child(i);
-            mytetraConfig.set_clipperbranchid(branchItem->getField("id"));
+            AppContext::instance().appConfig()->set_clipperbranchid(branchItem->getField("id"));
             return true;
         }
     }
@@ -1300,11 +1254,10 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
         return false;
     }
 
-    mytetraConfig.set_clipperbranchid(branchItem->getField("id"));
+    AppContext::instance().appConfig()->set_clipperbranchid(branchItem->getField("id"));
     saveTree();
     return true;
 }
-
 
 // Ветка в историю clipperrecent: пары id:count через ";", свежие впереди.
 // Один список кормит оба режима плиток: последние — как есть,
@@ -1316,7 +1269,7 @@ void Clipper::rememberRecentBranch(const QString &branchId)
 
     QMap<QString, int> counts;
     QStringList order;
-    const QStringList pairs=mytetraConfig.get_clipperrecent()
+    const QStringList pairs=AppContext::instance().appConfig()->get_clipperrecent()
                              .split(QChar(';'), Qt::SkipEmptyParts);
     for(const QString &pair : pairs)
     {
@@ -1350,9 +1303,8 @@ void Clipper::rememberRecentBranch(const QString &branchId)
     for(const QString &id : order)
         result << id+QChar(':')+QString::number(counts.value(id, 1));
 
-    mytetraConfig.set_clipperrecent(result.join(QChar(';')));
+    AppContext::instance().appConfig()->set_clipperrecent(result.join(QChar(';')));
 }
-
 
 // Защита от повторной вставки: быстрый путь — запись с id из хеша уже
 // есть в дереве; медленный — сравнение хешей текстов свежих 2000 записей
@@ -1391,7 +1343,7 @@ bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const Q
         if(dir.isEmpty())
             continue;
 
-        QFile textFile(mytetraConfig.get_tetradir()+"/base/"+dir+"/"+file);
+        QFile textFile(AppContext::instance().appConfig()->get_tetradir()+"/base/"+dir+"/"+file);
         if(!textFile.open(QIODevice::ReadOnly))
             continue;
 
@@ -1407,7 +1359,6 @@ bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const Q
 
     return false;
 }
-
 
 // Прыжок к уже вставленной заметке: путь резолвится вживую
 // (ветку могли переместить), окно поверх не тянем
@@ -1428,7 +1379,6 @@ void Clipper::openExistingRecord(const QString &recordId)
                                   Q_ARG(QStringList, path),
                                   Q_ARG(QString, recordId));
 }
-
 
 // Сохранение записи штатными средствами модели (как ручное создание):
 // FAT-запись -> insertNewRecord -> PNG картинок в каталог -> saveKnowTree.
@@ -1485,7 +1435,7 @@ bool Clipper::storeRecord(TreeItem *branchItem, const QString &recordId,
     }
 
     // Картинки — PNG-файлами в каталог записи (как saveTextareaImages)
-    const QString recordDir=mytetraConfig.get_tetradir()+"/base/"+storedRecord->getField("dir");
+    const QString recordDir=AppContext::instance().appConfig()->get_tetradir()+"/base/"+storedRecord->getField("dir");
     for(auto it=images.constBegin(); it!=images.constEnd(); ++it)
     {
         if(!it.value().save(recordDir+"/"+it.key(), "PNG"))
@@ -1496,7 +1446,6 @@ bool Clipper::storeRecord(TreeItem *branchItem, const QString &recordId,
 
     return true;
 }
-
 
 // --- Глобальный хоткей (X11 через dlopen, без новых зависимостей сборки) ---
 
@@ -1565,7 +1514,6 @@ typedef int (*XFlushFunc)(void *);
 
 #endif
 
-
 unsigned int Clipper::qtModsToX11(int qtModifiers)
 {
     unsigned int mask=0;
@@ -1579,7 +1527,6 @@ unsigned int Clipper::qtModsToX11(int qtModifiers)
         mask|=1 << 6;
     return mask;
 }
-
 
 unsigned long Clipper::qtKeyToKeysym(int qtKey)
 {
@@ -1610,7 +1557,6 @@ unsigned long Clipper::qtKeyToKeysym(int qtKey)
 
     return 0;
 }
-
 
 bool Clipper::grabHotkey(const QString &sequence)
 {
@@ -1728,7 +1674,6 @@ bool Clipper::grabHotkey(const QString &sequence)
 #endif
 }
 
-
 void Clipper::ungrabHotkey(void)
 {
 #if defined(Q_OS_WIN)
@@ -1775,7 +1720,6 @@ void Clipper::ungrabHotkey(void)
 #endif
 }
 
-
 void Clipper::onX11Activity(void)
 {
 #if defined(Q_OS_LINUX)
@@ -1816,7 +1760,6 @@ void Clipper::onX11Activity(void)
 #endif
 }
 
-
 // Слепок буфера: форматы+текст+html+флаг картинки. Сырые данные всех
 // форматов не годятся: метки времени меняются при каждом чтении
 // и "изменение" было бы всегда
@@ -1835,7 +1778,6 @@ QString Clipper::x11ClipSignature(void)
          + (mime->hasImage() ? QChar('I') : QChar('-'));
 #endif
 }
-
 
 // Эмуляция Ctrl+C через XTest (Display* и libXtst — opaque void*,
 // Xlib-заголовки не тянутся). Нет библиотеки или символов —
@@ -1891,7 +1833,6 @@ void Clipper::sendCopyKeysX11(void *x11Lib, void *xDisplay)
     qDebug() << "Clipper: X11 Ctrl+C sent";
 #endif
 }
-
 
 // Заголовок активного окна: _NET_WM_NAME (UTF-8), запасной XFetchName.
 // Вверх по родителям не выше двух колен (фокус бывает на дочернем)
@@ -1999,7 +1940,6 @@ QString Clipper::x11ActiveWindowCaption(void *x11Lib, void *xDisplay)
 #endif
 }
 
-
 // Сырая шапка окна под фокусом прямо сейчас. Для потоков без снимка
 // из момента хоткея: --control, кнопка проверки, сломанный граббер.
 // На X11 со своим соединением, чтобы не зависеть от граббера
@@ -2034,7 +1974,6 @@ QString Clipper::foregroundWindowCaption(void)
 #endif
 }
 
-
 void Clipper::clipX11AfterCopy(void)
 {
 #if defined(Q_OS_LINUX)
@@ -2051,7 +1990,6 @@ void Clipper::clipX11AfterCopy(void)
     QTimer::singleShot(250, this, &Clipper::clipX11WaitRetry);
 #endif
 }
-
 
 void Clipper::clipX11WaitRetry(void)
 {
@@ -2083,7 +2021,6 @@ void Clipper::clipX11WaitRetry(void)
     notify(tr("Web Clipper"), tr("No selection to clip."));
 #endif
 }
-
 
 #if defined(Q_OS_WIN)
 void Clipper::onWinHotkey(void)
@@ -2132,7 +2069,6 @@ void Clipper::onWinHotkey(void)
     QTimer::singleShot(300, this, &Clipper::clipNowAfterHotkey);
 }
 
-
 void Clipper::clipNowAfterHotkey(void)
 {
     // Ненулевой счетчик и тот же номер: буфер не тронут — выделения
@@ -2166,9 +2102,6 @@ void Clipper::clipNowAfterHotkey(void)
     m_copyWaitTries=0;
     QTimer::singleShot(250, this, &Clipper::clipWaitCopyRetry);
 }
-
-
-
 
 void Clipper::clipWaitCopyRetry(void)
 {

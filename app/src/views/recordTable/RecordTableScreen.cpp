@@ -25,12 +25,7 @@
 #include "models/recordTable/Record.h"
 #include "controllers/recordTable/RecordTableController.h"
 
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern ShortcutManager shortcutManager;
 #include "libraries/AppContext.h"
-
 
 // Виджет, который отображает список записей в ветке
 // c кнопками управления
@@ -50,12 +45,10 @@ RecordTableScreen::RecordTableScreen(QWidget *parent) : QWidget(parent)
   assembly();
 }
 
-
 RecordTableScreen::~RecordTableScreen()
 {
 
 }
-
 
 // Настройка возможных действий
 void RecordTableScreen::setupActions(void)
@@ -112,7 +105,7 @@ void RecordTableScreen::setupActions(void)
  actionMoveDn->setIcon(QIcon(":/resource/pic/move_dn.svg"));
 
  // Поиск по базе (клик связывается с действием в MainWindow)
- actionFindInBase=new QAction(shortcutManager.getDescription("misc-findInBase"), this);
+ actionFindInBase=new QAction(AppContext::instance().shortcutManager()->getDescription("misc-findInBase"), this);
  actionFindInBase->setIcon(QIcon(":/resource/pic/find_in_base.svg"));
 
  // Перемещение по истории посещаемых записей назад
@@ -176,7 +169,6 @@ void RecordTableScreen::setupActions(void)
  disableAllActions();
 }
 
-
 // Порядок кнопок первой линии по умолчанию. Объединение десктопного
 // и мобильного наборов: лишнее режется режимом в rebuildToolbars.
 // Скрытые shortcut-only кнопки (addNewBefore, addNewAfter, block)
@@ -197,7 +189,6 @@ QStringList RecordTableScreen::defaultToolbarOrder(void)
   << "syncro";
 }
 
-
 // Порядок кнопок второй линии по умолчанию.
 // Внешние кнопки (переключатели панелей) сюда не входят:
 // их докладывает addExtraToolAction() всегда в конец
@@ -207,7 +198,6 @@ QStringList RecordTableScreen::defaultExtraToolbarOrder(void)
   << "walkHistoryPrevious" << "walkHistoryNext"
   << "findInBase";
 }
-
 
 // Режим кнопки: desktop, mobile или обе (пусто - обе)
 QString RecordTableScreen::toolbarItemMode(const QString &command)
@@ -222,14 +212,12 @@ QString RecordTableScreen::toolbarItemMode(const QString &command)
  return QString();
 }
 
-
 // Скрытые shortcut-only кнопки первой линии: регистрируются всегда
 // нулевыми кнопками, как раньше, в диалог настройки не выносятся
 QSet<QString> RecordTableScreen::hiddenToolbarItems(void)
 {
  return QSet<QString>() << "addNewBefore" << "addNewAfter" << "block";
 }
-
 
 // Действие тулбаров по имени для построения из списков
 QAction *RecordTableScreen::toolAction(const QString &command)
@@ -260,7 +248,6 @@ QAction *RecordTableScreen::toolAction(const QString &command)
 
  return nullptr;
 }
-
 
 // Построение одной линии тулбара из списка. Ведущие и задвоенные
 // разделители давятся; неизвестные имена пропускаются с предупреждением
@@ -315,7 +302,6 @@ void RecordTableScreen::buildToolbarLine(QToolBar *line,
   }
 }
 
-
 // Перестроение обоих тулбаров из списков конфига (или дефолта).
 // Вызывается при старте и вживую из диалога настроек
 void RecordTableScreen::rebuildToolbars(void)
@@ -327,9 +313,9 @@ void RecordTableScreen::rebuildToolbars(void)
  toolsLine->clear();
  extraToolsLine->clear();
 
- const bool isMobile=(mytetraConfig.getInterfaceMode()=="mobile");
+ const bool isMobile=(AppContext::instance().appConfig()->getInterfaceMode()=="mobile");
 
- QStringList order=mytetraConfig.getRecordToolbarOrder();
+ QStringList order=AppContext::instance().appConfig()->getRecordToolbarOrder();
 
  if(order.isEmpty())
   order=defaultToolbarOrder();
@@ -347,7 +333,7 @@ void RecordTableScreen::rebuildToolbars(void)
     insertActionAsButton(toolsLine, action, false);
   }
 
- QStringList extraOrder=mytetraConfig.getRecordExtraToolbarOrder();
+ QStringList extraOrder=AppContext::instance().appConfig()->getRecordExtraToolbarOrder();
 
  if(extraOrder.isEmpty())
   extraOrder=defaultExtraToolbarOrder();
@@ -367,7 +353,6 @@ void RecordTableScreen::rebuildToolbars(void)
     insertActionAsButton(extraToolsLine, action);
   }
 }
-
 
 void RecordTableScreen::setupUI(void)
 {
@@ -390,10 +375,9 @@ void RecordTableScreen::setupUI(void)
 
  treePathLabel=new QLabel(this);
  treePathLabel->setWordWrap(true);
- if(mytetraConfig.getInterfaceMode()=="desktop")
+ if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
    treePathLabel->hide();
 }
-
 
 // Добавить кнопку во вторую линию инструментов (для внешних действий
 // вроде переключателя панели тегов). Кнопки запоминаются чтобы пережить
@@ -406,59 +390,56 @@ void RecordTableScreen::addExtraToolAction(QAction *action)
  insertActionAsButton(extraToolsLine, action);
 }
 
-
 void RecordTableScreen::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->metaObject()->className();
 
     // Добавление записи
-    shortcutManager.initAction("note-addNewToEnd", actionAddNewToEnd);
+    AppContext::instance().shortcutManager()->initAction("note-addNewToEnd", actionAddNewToEnd);
 
     // Добавление записи до
-    shortcutManager.initAction("note-addNewBefore", actionAddNewBefore);
+    AppContext::instance().shortcutManager()->initAction("note-addNewBefore", actionAddNewBefore);
 
     // Добавление записи после
-    shortcutManager.initAction("note-addNewAfter", actionAddNewAfter);
+    AppContext::instance().shortcutManager()->initAction("note-addNewAfter", actionAddNewAfter);
 
     // Редактирование свойств записи
-    shortcutManager.initAction("note-editField", actionEditField);
+    AppContext::instance().shortcutManager()->initAction("note-editField", actionEditField);
 
     // Блокировка/разблокировка записи
-    shortcutManager.initAction("note-block", actionBlock);
+    AppContext::instance().shortcutManager()->initAction("note-block", actionBlock);
 
     // Удаление записи (записей)
-    shortcutManager.initAction("note-delete", actionDelete);
+    AppContext::instance().shortcutManager()->initAction("note-delete", actionDelete);
 
     // Удаление записи с копированием в буфер обмена
-    shortcutManager.initAction("note-cut", actionCut);
+    AppContext::instance().shortcutManager()->initAction("note-cut", actionCut);
 
     // Копирование записи (записей)
-    shortcutManager.initAction("note-copy", actionCopy);
+    AppContext::instance().shortcutManager()->initAction("note-copy", actionCopy);
 
     // Вставка записи (записей)
-    shortcutManager.initAction("note-paste", actionPaste);
+    AppContext::instance().shortcutManager()->initAction("note-paste", actionPaste);
 
     // Перемещение записи вверх
-    shortcutManager.initAction("note-moveUp", actionMoveUp);
+    AppContext::instance().shortcutManager()->initAction("note-moveUp", actionMoveUp);
 
     // Перемещение записи вниз
-    shortcutManager.initAction("note-moveDn", actionMoveDn);
-
+    AppContext::instance().shortcutManager()->initAction("note-moveDn", actionMoveDn);
 
     // Переход на предыдущую запись в истории
-    shortcutManager.initAction("note-previousNote", actionWalkHistoryPrevious);
+    AppContext::instance().shortcutManager()->initAction("note-previousNote", actionWalkHistoryPrevious);
 
     // Переход на следующую запись в истории
-    shortcutManager.initAction("note-nextNote", actionWalkHistoryNext);
+    AppContext::instance().shortcutManager()->initAction("note-nextNote", actionWalkHistoryNext);
 
     // Синхронизация базы (кнопка на первой линии, после предпросмотра)
-    shortcutManager.initAction("misc-syncro", actionSyncro);
+    AppContext::instance().shortcutManager()->initAction("misc-syncro", actionSyncro);
 
     // Поиск по базе: шорткат регистрируется здесь, чтобы работал
     // везде и в меню показывался один раз в своей колонке
-    shortcutManager.initAction("misc-findInBase", actionFindInBase);
+    AppContext::instance().shortcutManager()->initAction("misc-findInBase", actionFindInBase);
 }
-
 
 void RecordTableScreen::setupSignals(void)
 {
@@ -548,9 +529,8 @@ void RecordTableScreen::setupSignals(void)
     connect(actionSwitchSelectionMode, &QAction::triggered, recordTableController, &RecordTableController::onSwitchSelectionMode);
 
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &RecordTableScreen::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &RecordTableScreen::setupShortcuts);
 }
-
 
 void RecordTableScreen::assembly(void)
 {
@@ -576,7 +556,6 @@ void RecordTableScreen::assembly(void)
  lt=layout();
  lt->setContentsMargins(0,1,0,0);
 }
-
 
 // Отключение всех действий над записями
 // (но не всех действий на панели инструментов,
@@ -609,13 +588,11 @@ void RecordTableScreen::disableAllActions(void)
  actionSwitchSelectionMode->setEnabled(false);
 }
 
-
 void RecordTableScreen::toolsUpdate(void)
 {
   toolsWidgetsUpdate();
   editorModesUpdate();
 }
-
 
 void RecordTableScreen::toolsWidgetsUpdate()
 {
@@ -670,7 +647,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
 
    // История выключена мастер-тумблером: пункт серый сразу,
    // а не вежливым отказом по клику
-   actionChangeHistory->setEnabled(mytetraConfig.get_historyEnable());
+   actionChangeHistory->setEnabled(AppContext::instance().appConfig()->get_historyEnable());
  }
 
  // Удаление записи
@@ -731,7 +708,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
 
  // Глобальный режим только чтения: мутирующие действия недоступны.
  // Копирование записей, печать, поиск и навигация разрешены
- if(mytetraConfig.get_readOnly())
+ if(AppContext::instance().appConfig()->get_readOnly())
   {
    actionAddNewToEnd->setEnabled(false);
    actionAddNewBefore->setEnabled(false);
@@ -748,9 +725,8 @@ void RecordTableScreen::toolsWidgetsUpdate()
   }
 
  // Перетаскивание записей запрещено, выбор работает
- recordTableController->getView()->setDragEnabled(!mytetraConfig.get_readOnly());
+ recordTableController->getView()->setDragEnabled(!AppContext::instance().appConfig()->get_readOnly());
 }
-
 
 // Обновление режимов редактора согласно состоянию записи в таблице
 void RecordTableScreen::editorModesUpdate()
@@ -766,13 +742,11 @@ void RecordTableScreen::editorModesUpdate()
  }
 }
 
-
 // Получение номера первого выделенного элемента в таблице записи на экране
 int RecordTableScreen::getFirstSelectionPos(void)
 {
   return recordTableController->getFirstSelectionPos();
 }
-
 
 // Получение ID первого выделенного элемента в таблице записи на экране
 QString RecordTableScreen::getFirstSelectionId(void)
@@ -780,13 +754,11 @@ QString RecordTableScreen::getFirstSelectionId(void)
   return recordTableController->getFirstSelectionId();
 }
 
-
 // Установка засветки в нужную строку в таблице записи на экране
 void RecordTableScreen::setSelectionToPos(int pos)
 {
   recordTableController->setSelectionToPos(pos);
 }
-
 
 // Установка засветки в нужную запись в таблице записей на экране
 void RecordTableScreen::setSelectionToId(QString id)
@@ -794,26 +766,21 @@ void RecordTableScreen::setSelectionToId(QString id)
   recordTableController->setSelectionToId(id);
 }
 
-
-
 void RecordTableScreen::onWalkHistoryPreviousClick(void)
 {
   find_object<MainWindow>("mainwindow")->goWalkHistoryPrevious();
 }
-
 
 void RecordTableScreen::onWalkHistoryNextClick(void)
 {
   find_object<MainWindow>("mainwindow")->goWalkHistoryNext();
 }
 
-
 // Возвращение к дереву разделов в мобильном интерфейсе
 void RecordTableScreen::onBackClick(void)
 {
-  globalParameters.getWindowSwitcher()->switchFromRecordtableToTree();
+  AppContext::instance().globalParameters()->getWindowSwitcher()->switchFromRecordtableToTree();
 }
-
 
 // Копирование в системный буфер обмена ссылки на запись
 void RecordTableScreen::onCopyRecordReference()
@@ -823,7 +790,6 @@ void RecordTableScreen::onCopyRecordReference()
   QClipboard *clipboard = QApplication::clipboard();
   clipboard->setText(reference);
 }
-
 
 // Готовая ссылка с заголовком: HTML-якорь для вставки в другую запись
 // (там сразу именованная ссылка) плюс голый href как plain-текст.
@@ -857,7 +823,6 @@ void RecordTableScreen::onCopyRecordLink()
   QApplication::clipboard()->setMimeData(mime);
 }
 
-
 // Клик по кнопке синхронизации: операция уровня базы, выполняется
 // главным окном
 void RecordTableScreen::onSyncroClick(void)
@@ -868,7 +833,6 @@ void RecordTableScreen::onSyncroClick(void)
     mainWindow->synchronization();
 }
 
-
 // Разблокировка кнопки синхронизации по окончании команды.
 // Подключено в MainWindow к завершению синхрокоманды
 void RecordTableScreen::onSyncroCommandFinishWork(void)
@@ -876,18 +840,15 @@ void RecordTableScreen::onSyncroCommandFinishWork(void)
   actionSyncro->setEnabled(true);
 }
 
-
 void RecordTableScreen::setSyncroEnabled(bool state)
 {
   actionSyncro->setEnabled(state);
 }
 
-
 bool RecordTableScreen::isSyncroEnabled(void) const
 {
   return actionSyncro->isEnabled();
 }
-
 
 // Контекстное меню тулбаров записей: единственный пункт открывает
 // диалог настройки кнопок. Показывается по ПКМ в любом месте тулбара:
@@ -910,19 +871,16 @@ void RecordTableScreen::onToolbarContextMenu(const QPoint &pos)
   }
 }
 
-
 void RecordTableScreen::setTreePath(QString path)
 {
   treePath=path; // Запоминается путь к ветке в виде строки
   treePathLabel->setText(tr("<b>Path:</b> ")+treePath);
 }
 
-
 QString RecordTableScreen::getTreePath(void)
 {
   return treePath;
 }
-
 
 // Прямые тексты действий и пути. Тексты на шорткатах освежает
 // setupShortcuts по сигналу updateWidgetShortcut
@@ -931,7 +889,7 @@ void RecordTableScreen::retranslateUi(void)
   actionSettings->setText(tr("View settings"));
   actionSettings->setStatusTip(tr("Setup table view settins"));
 
-  actionFindInBase->setText(shortcutManager.getDescription("misc-findInBase"));
+  actionFindInBase->setText(AppContext::instance().shortcutManager()->getDescription("misc-findInBase"));
 
   actionWalkHistoryPrevious->setText(tr("Previous viewing note"));
   actionWalkHistoryNext->setText(tr("Next viewing note"));
@@ -966,20 +924,17 @@ void RecordTableScreen::retranslateUi(void)
   treePathLabel->setText(tr("<b>Path:</b> ")+treePath);
 }
 
-
 // Установка фокуса на базовый виджет (на список веток дерева)
 void RecordTableScreen::setFocusToBaseWidget()
 {
     recordTableController->setFocusToBaseWidget();
 }
 
-
 // Переприменить read-only редактора (для глобального режима без смены засветки)
 void RecordTableScreen::refreshEditorReadOnly(void)
 {
  recordTableController->refreshEditorReadOnly();
 }
-
 
 // Звездочка текущей записи для меню
 bool RecordTableScreen::isCurrentRecordFavorite(void)

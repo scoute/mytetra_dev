@@ -29,14 +29,11 @@
 
 #include <QFile>
 
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
-
+#include "libraries/AppContext.h"
 
 static QJsonObject duplicateNoteObject(Record *record,
                                        const QString &branchId,
@@ -50,7 +47,6 @@ static QJsonObject duplicateNoteObject(Record *record,
 
   return note;
 }
-
 
 static void collectDuplicates(TreeItem *item,
                               QMap<QString, QList<QJsonObject>> &byName,
@@ -95,7 +91,6 @@ static void collectDuplicates(TreeItem *item,
   for(int i=0; i<item->childCount(); ++i)
     collectDuplicates(item->child(i), byName, byText);
 }
-
 
 QJsonObject McpTools::findDuplicates(int limit)
 {
@@ -168,7 +163,6 @@ QJsonObject McpTools::findDuplicates(int limit)
   return result;
 }
 
-
 void McpTools::collectFromModel(QMap<QString, QList<QJsonObject>> &byName,
                                 QMap<QString, QList<QJsonObject>> &byText)
 {
@@ -178,10 +172,8 @@ void McpTools::collectFromModel(QMap<QString, QList<QJsonObject>> &byName,
     collectDuplicates(root, byName, byText);
 }
 
-
 // Тот же разбор меток что в статистике и поиске по клику:
 // разделители запятая/точка с запятой, пробелы по краям долой
-
 
 // Тот же разбор меток что в статистике и поиске по клику:
 // разделители запятая/точка с запятой, пробелы по краям долой
@@ -202,9 +194,7 @@ static QStringList splitTags(const QString &tagsField)
   return result;
 }
 
-
 // Обход всех записей базы колбэком. Файлы не трогаются
-
 
 QJsonObject McpTools::listTags(void)
 {
@@ -264,7 +254,6 @@ QJsonObject McpTools::listTags(void)
   return result;
 }
 
-
 QJsonObject McpTools::tagNotes(const QString &tag, int limit, QString &error)
 {
   QJsonObject result;
@@ -310,7 +299,6 @@ QJsonObject McpTools::tagNotes(const QString &tag, int limit, QString &error)
   return result;
 }
 
-
 QJsonObject McpTools::untaggedNotes(int limit)
 {
   if(limit<1)
@@ -341,7 +329,6 @@ QJsonObject McpTools::untaggedNotes(int limit)
 
   return result;
 }
-
 
 bool McpTools::applyRenameTag(KnowTreeModel *model,
                               const QString &oldTag,
@@ -400,7 +387,6 @@ bool McpTools::applyRenameTag(KnowTreeModel *model,
   return true;
 }
 
-
 bool McpTools::applyDeleteTag(KnowTreeModel *model,
                               const QString &tag,
                               QString &error,
@@ -445,7 +431,6 @@ bool McpTools::applyDeleteTag(KnowTreeModel *model,
   return true;
 }
 
-
 int McpTools::countTagNotes(KnowTreeModel *model, const QString &tagLower)
 {
   int count=0;
@@ -467,7 +452,6 @@ int McpTools::countTagNotes(KnowTreeModel *model, const QString &tagLower)
   return count;
 }
 
-
 QJsonObject McpTools::renameTagDirect(const QString &oldTag,
                                       const QString &newTag,
                                       QString &error)
@@ -488,7 +472,6 @@ QJsonObject McpTools::renameTagDirect(const QString &oldTag,
   return result;
 }
 
-
 QJsonObject McpTools::deleteTagDirect(const QString &tag, QString &error)
 {
   QJsonObject result;
@@ -506,7 +489,6 @@ QJsonObject McpTools::deleteTagDirect(const QString &tag, QString &error)
 
   return result;
 }
-
 
 // Сайдкар избранного напрямую файлом: синглетон Favorites в
 // долгоживущем серверном процессе кэширует и протухает, а в

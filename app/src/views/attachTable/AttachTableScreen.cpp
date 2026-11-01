@@ -11,11 +11,7 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ActionHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern ShortcutManager shortcutManager;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 AttachTableScreen::AttachTableScreen(QWidget *parent) : QWidget(parent)
 {
@@ -35,12 +31,10 @@ AttachTableScreen::AttachTableScreen(QWidget *parent) : QWidget(parent)
   assembly();
 }
 
-
 AttachTableScreen::~AttachTableScreen()
 {
 
 }
-
 
 // Настройка возможных действий
 void AttachTableScreen::setupActions(void)
@@ -87,25 +81,23 @@ void AttachTableScreen::setupActions(void)
   viewModeTilesRadio=new QRadioButton(this);
 }
 
-
 void AttachTableScreen::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << staticMetaObject.className();
 
-    shortcutManager.initAction("attach-addAttach",        actionAddAttach );
-    shortcutManager.initAction("attach-addAttachFromUrl", actionAddAttachFromUrl );
-    shortcutManager.initAction("attach-addLink",          actionAddLink );
-    shortcutManager.initAction("attach-editFileName",     actionEditFileName );
-    shortcutManager.initAction("attach-deleteAttach",     actionDeleteAttach );
-    shortcutManager.initAction("attach-openAttach",       actionOpenAttach );
-    shortcutManager.initAction("attach-saveAsAttach",     actionSaveAsAttach );
-    shortcutManager.initAction("attach-showAttachInfo",   actionShowAttachInfo );
-    shortcutManager.initAction("attach-switchToEditor",   actionSwitchToEditor );
+    AppContext::instance().shortcutManager()->initAction("attach-addAttach",        actionAddAttach );
+    AppContext::instance().shortcutManager()->initAction("attach-addAttachFromUrl", actionAddAttachFromUrl );
+    AppContext::instance().shortcutManager()->initAction("attach-addLink",          actionAddLink );
+    AppContext::instance().shortcutManager()->initAction("attach-editFileName",     actionEditFileName );
+    AppContext::instance().shortcutManager()->initAction("attach-deleteAttach",     actionDeleteAttach );
+    AppContext::instance().shortcutManager()->initAction("attach-openAttach",       actionOpenAttach );
+    AppContext::instance().shortcutManager()->initAction("attach-saveAsAttach",     actionSaveAsAttach );
+    AppContext::instance().shortcutManager()->initAction("attach-showAttachInfo",   actionShowAttachInfo );
+    AppContext::instance().shortcutManager()->initAction("attach-switchToEditor",   actionSwitchToEditor );
 
     viewModeListRadio->setText(tr("List"));
     viewModeTilesRadio->setText(tr("Tiles"));
 }
-
 
 void AttachTableScreen::setupUI(void)
 {
@@ -135,7 +127,6 @@ void AttachTableScreen::setupUI(void)
   toolsLine->addWidget(viewModeTilesRadio);
 }
 
-
 void AttachTableScreen::setupSignals(void)
 {
   // Связывание действий
@@ -158,28 +149,26 @@ void AttachTableScreen::setupSignals(void)
           this,               &AttachTableScreen::onAttachViewModeChanged);
 
   // Обновление горячих клавиш, если они были изменены
-  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &AttachTableScreen::setupShortcuts);
+  connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &AttachTableScreen::setupShortcuts);
 }
-
 
 void AttachTableScreen::onAttachViewModeChanged(void)
 {
   // Слот зовется от обеих радиокнопок — реакция только на включение
   if(viewModeTilesRadio->isChecked())
-    mytetraConfig.set_attachViewMode("tiles");
+    AppContext::instance().appConfig()->set_attachViewMode("tiles");
   else if(viewModeListRadio->isChecked())
-    mytetraConfig.set_attachViewMode("list");
+    AppContext::instance().appConfig()->set_attachViewMode("list");
   else
     return;
 
-  mytetraConfig.sync();
+  AppContext::instance().appConfig()->sync();
   updateAttachViewVisibility();
 }
 
-
 void AttachTableScreen::updateAttachViewVisibility(void)
 {
-  const bool tilesMode=(mytetraConfig.get_attachViewMode()=="tiles");
+  const bool tilesMode=(AppContext::instance().appConfig()->get_attachViewMode()=="tiles");
 
   // Блокировка сигналов: checked выставляется программно
   viewModeListRadio->blockSignals(true);
@@ -192,7 +181,6 @@ void AttachTableScreen::updateAttachViewVisibility(void)
   attachTableController->getView()->setVisible(!tilesMode);
   attachTableController->getTileView()->setVisible(tilesMode);
 }
-
 
 void AttachTableScreen::assembly(void)
 {
@@ -214,7 +202,6 @@ void AttachTableScreen::assembly(void)
   lt->setContentsMargins(0,0,0,0);
 }
 
-
 // Очистка таблицы приаттаченных файлов
 // Список на экране должен быть пустой
 // Вызывается в моменты, когда ни одна запись не выбрана или содержимое записи недоступно
@@ -222,7 +209,6 @@ void AttachTableScreen::clear()
 {
   attachTableController->setAttachTableData(NULL);
 }
-
 
 void AttachTableScreen::setReadOnly(bool state)
 {

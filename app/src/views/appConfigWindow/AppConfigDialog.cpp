@@ -27,13 +27,9 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
 #include "libraries/wyedit/EditorConfigDialog.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 QList<AppConfigDialog *> AppConfigDialog::openDialogs;
-
 
 AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
 {
@@ -43,7 +39,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     configDialog->setAttribute(Qt::WA_DeleteOnClose);
     configDialog->setWindowTitle(QObject::tr("MyTetra settings"));
 
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
     {
         qDebug() << "Screen size X Y: " << ScreenHelper::getSizeX() << ScreenHelper::getSizeY();
         configDialog->setMinimumSize(ScreenHelper::getSizeX(), ScreenHelper::getSizeY());
@@ -85,7 +81,6 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
 
-
     configDialog->updateListWidth();
 
     // Кнопка перехода в настройки редактора слева внизу:
@@ -104,14 +99,12 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
         changePage(firstPageName);
 }
 
-
 AppConfigDialog::~AppConfigDialog()
 {
     qDebug() << Q_FUNC_INFO;
 
     openDialogs.removeAll(this);
 }
-
 
 void AppConfigDialog::exec()
 {
@@ -123,7 +116,6 @@ void AppConfigDialog::exec()
 
     qDebug() << "Config dialog exec finish";
 }
-
 
 // Прямые тексты новым языком: заголовок, пункты списка страниц
 // и все страницы. Вызывается при смене языка из страницы Main
@@ -158,7 +150,6 @@ void AppConfigDialog::retranslateUi(void)
         page->retranslateUi();
 }
 
-
 // Переход на нужную страницу настроек (переход совершается кодом извне)
 // Данный метод нужен для возможности вызова конкретного окна настроек из любого места программы
 void AppConfigDialog::changePage(QString name)
@@ -187,7 +178,6 @@ void AppConfigDialog::changePage(QString name)
     else
         qDebug() << "AppConfigDialog::changePage cant find item for name: " << name;
 }
-
 
 void AppConfigDialog::setMenuListVisible(bool visible)
 {

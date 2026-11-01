@@ -17,9 +17,7 @@
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/MessageHelper.h"
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 IconSelectDialog::IconSelectDialog()
 {
@@ -30,20 +28,18 @@ IconSelectDialog::IconSelectDialog()
   assembly();
 }
 
-
 IconSelectDialog::~IconSelectDialog()
 {
 
 }
 
-
 // Проверка наличия коллекции иконок, и создание иконок из ресурсов,
 // если иконки на диске отсутствовали
 void IconSelectDialog::iconsCollectionCheck()
 {
-  qDebug() << "In iconsCollectionCheck(). Mytetra XML dir is: " << mytetraConfig.get_tetradir();
+  qDebug() << "In iconsCollectionCheck(). Mytetra XML dir is: " << AppContext::instance().appConfig()->get_tetradir();
 
-  QString mytetraXmlDirName=mytetraConfig.get_tetradir();
+  QString mytetraXmlDirName=AppContext::instance().appConfig()->get_tetradir();
   QDir mytetraXmlDir( mytetraXmlDirName );
 
   QString iconsDirName="icons"; // Путь относительно каталога где лежит mytetra.xml
@@ -108,7 +104,6 @@ void IconSelectDialog::iconsCollectionCheck()
   Q_CLEANUP_RESOURCE(icons);
 }
 
-
 void IconSelectDialog::setupUI()
 {
   // Установка ширины и высоты окна
@@ -125,7 +120,7 @@ void IconSelectDialog::setupUI()
   m_sectionLabel.setText(tr("Section"));
 
   // В списке иконок устанавливается размер отображаемых иконок
-  int iconSize=mytetraConfig.getPreviewIconSize();
+  int iconSize=AppContext::instance().appConfig()->getPreviewIconSize();
   m_iconList.setIconSize(QSize(iconSize, iconSize));
 
   // Линейка наполяемости скрывается. Она должна быть видна только в процессе загрузки иконок
@@ -140,7 +135,6 @@ void IconSelectDialog::setupUI()
 
   m_buttonCancel.setText(tr("Cancel"));
 }
-
 
 void IconSelectDialog::setupSignals()
 {
@@ -168,7 +162,6 @@ void IconSelectDialog::setupSignals()
           this,          &IconSelectDialog::onCancelClick);
 }
 
-
 void IconSelectDialog::assembly()
 {
   QHBoxLayout *sectionLayout=new QHBoxLayout(); // Указывать this не нужно, так как он назначится в момент вставки в основной слой
@@ -191,7 +184,6 @@ void IconSelectDialog::assembly()
   setLayout(mainLayout);
 }
 
-
 int IconSelectDialog::exec()
 {
   // Обновление списка иконок разрешается непосредственно перед основным циклом, чтобы процесс загрузки иконок
@@ -204,7 +196,6 @@ int IconSelectDialog::exec()
   return QDialog::exec();
 }
 
-
 void IconSelectDialog::setPath(QString iPath)
 {
   // Если переданный путь не является директорией
@@ -213,7 +204,6 @@ void IconSelectDialog::setPath(QString iPath)
     criticalError("Cant set icon directory path for IconSelectDialog. Path is not directory: "+iPath);
     return;
   }
-
 
   // Если директорию по переданному пути невозможно прочитать
   if( !QFileInfo(iPath).isReadable() )
@@ -238,7 +228,6 @@ void IconSelectDialog::setPath(QString iPath)
     return;
   }
 
-
   // Заполняется перечень секций
   for(int i=0; i<subdirList.size(); ++i)
   {
@@ -248,7 +237,6 @@ void IconSelectDialog::setPath(QString iPath)
 
     m_sectionComboBox.addItem(subdirInfo.fileName());
   }
-
 
   // Если была установлена секция по-умолчанию
   if ( m_defaultSectionIndex != -1 )
@@ -260,7 +248,6 @@ void IconSelectDialog::setPath(QString iPath)
                        arg(m_sectionComboBox.itemText( m_defaultSectionIndex )));
   }
 }
-
 
 void IconSelectDialog::setDefaultSection(QString sectionName)
 {
@@ -286,12 +273,10 @@ void IconSelectDialog::setDefaultSection(QString sectionName)
   }
 }
 
-
 QString IconSelectDialog::getCurrentSection()
 {
   return m_sectionComboBox.itemText( m_currentSectionIndex );
 }
-
 
 // Обновление экранного списка иконок
 void IconSelectDialog::updateIcons()
@@ -301,7 +286,6 @@ void IconSelectDialog::updateIcons()
   else
     onSectionCurrentIndexChanged( 0 );
 }
-
 
 // Слот при изменении строки раздела в sectionComboBox
 void IconSelectDialog::onSectionCurrentIndexChanged(int idx)
@@ -329,7 +313,6 @@ void IconSelectDialog::onSectionCurrentIndexChanged(int idx)
   dir.setFilter(QDir::Files | QDir::Readable);
   dir.setNameFilters( (QStringList() << "*.svg" << "*.png") );
   QFileInfoList iconFileList=dir.entryInfoList();
-
 
   // Если в выбранной секции нет никаких иконок
   if(iconFileList.count()==0)
@@ -361,7 +344,6 @@ void IconSelectDialog::onSectionCurrentIndexChanged(int idx)
   m_progressBar.hide();
 }
 
-
 // Когда выбрана иконка
 void IconSelectDialog::onIconItemSelectionChanged()
 {
@@ -382,24 +364,20 @@ void IconSelectDialog::onIconItemSelectionChanged()
   m_currentFileName=m_path+"/"+this->getCurrentSection()+"/"+shortSelectFileName;
 }
 
-
 void IconSelectDialog::onRemoveIconClick()
 {
   done(RemoveIconCode);
 }
-
 
 void IconSelectDialog::onOkClick()
 {
   accept();
 }
 
-
 void IconSelectDialog::onCancelClick()
 {
   reject();
 }
-
 
 QString IconSelectDialog::getSelectFileName()
 {

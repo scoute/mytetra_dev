@@ -14,17 +14,13 @@
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/MessageHelper.h"
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 // Конструктор прикрепляемого файла
 Attach::Attach(AttachTableData *iParentTable)
 {
   init(iParentTable);
 }
-
 
 // Конструктор прикрепляемого файла с указанием типа прикрепления
 // в настоящий момент есть два типа прикрепления - просто файл "file" или линк на файл "link"
@@ -38,12 +34,10 @@ Attach::Attach(QString iType, AttachTableData *iParentTable)
   init(iParentTable);
 }
 
-
 Attach::~Attach()
 {
   fileContent.clear();
 }
-
 
 void Attach::init(AttachTableData *iParentTable)
 {
@@ -52,12 +46,10 @@ void Attach::init(AttachTableData *iParentTable)
   fileContent.clear();
 }
 
-
 void Attach::setParentTable(AttachTableData *iParentTable)
 {
   parentTable=iParentTable;
 }
-
 
 // Допустимые имена полей
 QStringList Attach::fieldAvailableList(void)
@@ -66,7 +58,6 @@ QStringList Attach::fieldAvailableList(void)
                        << "description" << "source";
 }
 
-
 // Имена полей, которые шифруются. Описание и происхождение файла
 // чувствительны так же как имя и ссылка, шифруются вместе с ними
 QStringList Attach::fieldCryptedList(void)
@@ -74,13 +65,11 @@ QStringList Attach::fieldCryptedList(void)
   return QStringList() << "fileName" << "link" << "description" << "source";
 }
 
-
 // Допустимые типы аттачей
 QStringList Attach::typeAvailableList(void)
 {
   return QStringList() << "file" << "link";
 }
-
 
 // На вход метода подается тег <file>
 void Attach::setupDataFromDom(QDomElement iDomElement)
@@ -89,7 +78,6 @@ void Attach::setupDataFromDom(QDomElement iDomElement)
   foreach( QString fieldName, fieldsName ) // Перебираются имена полей (XML-тегов)
     fields[fieldName]=iDomElement.attribute(fieldName); // Напрямую устанавливаются значения из XML файла
 }
-
 
 QDomElement Attach::exportDataToDom(QDomDocument *doc) const
 {
@@ -103,7 +91,6 @@ QDomElement Attach::exportDataToDom(QDomDocument *doc) const
   return elem;
 }
 
-
 void Attach::exportDataToStreamWriter(QXmlStreamWriter *xmlWriter) const
 {
   xmlWriter->writeStartElement("file");
@@ -116,7 +103,6 @@ void Attach::exportDataToStreamWriter(QXmlStreamWriter *xmlWriter) const
   xmlWriter->writeEndElement(); // Закрылся file
 }
 
-
 bool Attach::isEmpty() const
 {
   // Заполненный аттач не может содержать пустой id
@@ -126,12 +112,10 @@ bool Attach::isEmpty() const
     return false;
 }
 
-
 bool Attach::isLite() const
 {
   return liteFlag;
 }
-
 
 void Attach::switchToLite()
 {
@@ -144,7 +128,6 @@ void Attach::switchToLite()
   liteFlag=true;
 }
 
-
 void Attach::switchToFat()
 {
   // Переключение возможно только из легкого состояния
@@ -154,7 +137,6 @@ void Attach::switchToFat()
   liteFlag=false;
 }
 
-
 // Получение значения поля
 // Метод возвращает расшифрованные данные, если запись была зашифрована
 QString Attach::getField(QString name) const
@@ -162,7 +144,6 @@ QString Attach::getField(QString name) const
   // Если имя поля недопустимо
   if(fieldAvailableList().contains(name)==false)
     criticalError("Attach::getField() : get unavailable field "+name);
-
 
   // ------------------------------------------
   // Проверки и действия для разных типов полей
@@ -173,7 +154,6 @@ QString Attach::getField(QString name) const
     if(fields["type"]!="link") // И тип аттача не является линком
       criticalError("Attach::getField() : Can't get link from non-link attach.");
 
-
   // -----------------------
   // Получение значения поля
   // -----------------------
@@ -183,7 +163,7 @@ QString Attach::getField(QString name) const
   if(fieldCryptedList().contains(name))
     if(fields.contains("crypt"))
       if(fields["crypt"]=="1")
-        if(globalParameters.getCryptKey().length()==0)
+        if(AppContext::instance().globalParameters()->getCryptKey().length()==0)
           return QString();
 
   bool isCrypt=false;
@@ -202,9 +182,8 @@ QString Attach::getField(QString name) const
   if(isCrypt==false)
     return fields[name]; // Возвращается значение поля
   else
-    return CryptService::decryptString(globalParameters.getCryptKey(), fields[name]); // Поле расшифровывается
+    return CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), fields[name]); // Поле расшифровывается
 }
-
 
 // Установка значения поля
 // Метод принимает незашифрованные данные, и шфирует их если запись является зашифрованой
@@ -213,7 +192,6 @@ void Attach::setField(QString name, QString value)
   // Если имя поля недопустимо
   if(fieldAvailableList().contains(name)==false)
     criticalError("Attach::setField() : set unavailable field "+name);
-
 
   // ------------------------------------------
   // Проверки и действия для разных типов полей
@@ -247,7 +225,6 @@ void Attach::setField(QString name, QString value)
     }
   }
 
-
   // -----------------------
   // Установка значения поля
   // -----------------------
@@ -263,7 +240,7 @@ void Attach::setField(QString name, QString value)
       if(fields["crypt"]=="1")
         if(value.length()>0)
         {
-          if(globalParameters.getCryptKey().length()>0)
+          if(AppContext::instance().globalParameters()->getCryptKey().length()>0)
             isCrypt=true;
           else
             criticalError("In Attach::setField() can not set data to crypt field "+name+". Password not setted");
@@ -271,12 +248,11 @@ void Attach::setField(QString name, QString value)
 
   // Если нужно шифровать, значение поля шифруется
   if(isCrypt==true)
-    value=CryptService::encryptString(globalParameters.getCryptKey(), value);
+    value=CryptService::encryptString(AppContext::instance().globalParameters()->getCryptKey(), value);
 
   // Устанавливается значение поля
   fields.insert(name, value);
 }
-
 
 // Защищенный метод - Установка значения поля напрямую
 // Используеся при шифрации-дешифрации данных аттача
@@ -290,7 +266,6 @@ void Attach::setFieldSource(QString name, QString value)
   // Устанавливается значение поля
   fields.insert(name, value);
 }
-
 
 void Attach::pushFatDataToDisk()
 {
@@ -308,7 +283,6 @@ void Attach::pushFatDataToDisk()
   DiskHelper::saveFilesToDirectory(innerDirName, fileList);
 }
 
-
 // То же самое что и pushFatDataToDisk, только в нужную директорию
 void Attach::pushFatDataToDirectory(QString dirName)
 {
@@ -322,7 +296,6 @@ void Attach::pushFatDataToDirectory(QString dirName)
   fileList[ getInnerFileName() ]=fileContent;
   DiskHelper::saveFilesToDirectory(dirName, fileList);
 }
-
 
 // Втаскивание в объект содержимого файла с диска
 void Attach::popFatDataFromDisk()
@@ -339,7 +312,6 @@ void Attach::popFatDataFromDisk()
 
   fileContent.append( (DiskHelper::getFilesFromDirectory(innerDirName, innerFileName)).value(innerFileName) );
 }
-
 
 // fullFileName - имя файла с полным путем, который нужно скопировать в каталог записи
 bool Attach::copyFileToBase(QString iFileName)
@@ -370,7 +342,6 @@ bool Attach::copyFileToBase(QString iFileName)
   return result;
 }
 
-
 // Удаление файла с диска
 void Attach::removeFile()
 {
@@ -393,13 +364,12 @@ void Attach::removeFile()
   file.remove();
 }
 
-
 QString Attach::constructFileName(const QString type, const QString id, const QString fileName)
 {
     // Схема выбирается настройкой режима имен
     if(type=="file")
     {
-        int mode=mytetraConfig.get_attachNameMode();
+        int mode=AppContext::instance().appConfig()->get_attachNameMode();
         if(mode==AppConfig::AttachNameHybrid)
             return constructHumanFileName(type, id, fileName);
         if(mode==AppConfig::AttachNameOriginal)
@@ -408,7 +378,6 @@ QString Attach::constructFileName(const QString type, const QString id, const QS
 
     return constructLegacyFileName(type, id, fileName);
 }
-
 
 // Исходная схема: id.ext (расширение от видимого имени)
 QString Attach::constructLegacyFileName(const QString type, const QString id, const QString fileName)
@@ -443,7 +412,6 @@ QString Attach::constructLegacyFileName(const QString type, const QString id, co
 
     return "";
 }
-
 
 // Общая чистка видимого имени для подстановки в имя файла на диске.
 // Пробелы и табы становятся подчеркиваниями (удобно в консоли Linux,
@@ -483,7 +451,6 @@ QString Attach::sanitizeVisibleName(const QString name)
     return result;
 }
 
-
 // Видимая часть имени, пригодная для подстановки в имя файла на диске:
 // чистится общим хелпером, ведущие точки снимаются (чтобы не получались
 // скрытые файлы и ".."), остаток режется до разумной длины с сохранением
@@ -517,7 +484,6 @@ QString Attach::sanitizeHumanNamePart(const QString fileName)
 
     return result;
 }
-
 
 // Человеко-читаемая схема: id_видимоеИмя.ext. Префикс id сохраняет
 // уникальность (коллизии имен, регистрозависимость FS не страшны),
@@ -568,7 +534,6 @@ QString Attach::constructHumanFileName(const QString type, const QString id, con
     return "";
 }
 
-
 // Оригинальная схема: имя как при загрузке, с вычищенными опасными
 // символами (общий хелпер: пробелы в подчеркивания, без path traversal
 // и Windows-запрещенных символов). Уникальность префиксом не защищена:
@@ -608,7 +573,6 @@ QString Attach::sanitizeOriginalName(const QString fileName)
     return result;
 }
 
-
 // Оригинальная схема: вычищенное имя как при загрузке.
 // Если вычищать нечего (пусто, точки), возвращается исходная схема
 QString Attach::constructOriginalFileName(const QString type, const QString id, const QString fileName)
@@ -630,7 +594,6 @@ QString Attach::constructOriginalFileName(const QString type, const QString id, 
     return "";
 }
 
-
 // Все возможные имена файла на диске для данного вложения
 // (все три схемы без дублей). Порядок: системное, гибридное, оригинальное.
 // Используется поиском существующего файла и конвертацией между схемами
@@ -651,7 +614,6 @@ QStringList Attach::candidateFileNames(const QString type, const QString id, con
     return candidates;
 }
 
-
 // Имя файла по заданному режиму (для конвертации к выбранному виду)
 QString Attach::fileNameForMode(int mode, const QString type, const QString id, const QString fileName)
 {
@@ -665,7 +627,6 @@ QString Attach::fileNameForMode(int mode, const QString type, const QString id, 
 
     return constructLegacyFileName(type, id, fileName);
 }
-
 
 // Имя файла, реально лежащего на диске: перебираются все схемы
 // (база могла конвертироваться наполовину или быть открыта
@@ -688,14 +649,12 @@ QString Attach::getExistingInnerFileName() const
     return current;
 }
 
-
 // Внутрисистемное имя файла (без пути)
 // Внутрисистемное имя складывается из идентификатора аттача и расширения, взятого от имени файла
 QString Attach::getInnerFileName() const
 {
   return constructFileName(getField("type"), getField("id"), getField("fileName"));
 }
-
 
 // Внутрисистемное имя файла с путем
 QString Attach::getFullInnerFileName() const
@@ -714,7 +673,6 @@ QString Attach::getFullInnerFileName() const
   return "";
 }
 
-
 // Внутрисистемное имя файла с абсолютным путем
 QString Attach::getAbsoluteInnerFileName() const
 {
@@ -723,13 +681,11 @@ QString Attach::getAbsoluteInnerFileName() const
   return fileInfo.absoluteFilePath();
 }
 
-
 // Внутрисистемный путь к файлу (полный)
 QString Attach::getFullInnerDirName() const
 {
   return parentTable->record->getFullDirName();
 }
-
 
 // Размер аттача в байтах
 qint64 Attach::getFileSize() const
@@ -753,7 +709,6 @@ qint64 Attach::getFileSize() const
     return tempFile.size();
 }
 
-
 // Шифрация аттача на диске и в памяти
 void Attach::encrypt(unsigned int area)
 {
@@ -765,17 +720,15 @@ void Attach::encrypt(unsigned int area)
   if(getField("crypt")=="1")
     criticalError("Attach::encrypt() : Cant encrypt already encrypted attach.");
 
-
   // Шифруется файл
   if(area & areaFile)
     if(getField("type")=="file")
-      CryptService::encryptFile(globalParameters.getCryptKey(), getFullInnerFileName());
+      CryptService::encryptFile(AppContext::instance().globalParameters()->getCryptKey(), getFullInnerFileName());
 
   // Шифруется содержимое файла в памяти, если таковое есть
   if(area & areaMemory)
     if(liteFlag==false && fileContent.length()>0)
-      fileContent=CryptService::encryptByteArray(globalParameters.getCryptKey(), fileContent);
-
+      fileContent=CryptService::encryptByteArray(AppContext::instance().globalParameters()->getCryptKey(), fileContent);
 
   // Шифруются поля, которые подлежат шифрованию
   foreach( QString fieldName, fieldCryptedList() )
@@ -786,13 +739,12 @@ void Attach::encrypt(unsigned int area)
 
     // Если поле с указанным именем существует
     if(getField(fieldName).length()>0)
-      setFieldSource(fieldName, CryptService::encryptString( globalParameters.getCryptKey(), getField(fieldName)));
+      setFieldSource(fieldName, CryptService::encryptString( AppContext::instance().globalParameters()->getCryptKey(), getField(fieldName)));
   }
 
   // Устанавливается флаг, что запись зашифрована
   setField("crypt", "1");
 }
-
 
 // Расшифровка аттача на диске и в памяти
 void Attach::decrypt(unsigned int area)
@@ -804,12 +756,12 @@ void Attach::decrypt(unsigned int area)
   // Расшифровывается файл
   if(area & areaFile)
     if(getField("type")=="file")
-      CryptService::decryptFile(globalParameters.getCryptKey(), getFullInnerFileName());
+      CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), getFullInnerFileName());
 
   // Расшифровывается содержимое файла в памяти, если таковое есть
   if(area & areaMemory)
     if(liteFlag==false && fileContent.length()>0)
-      fileContent=CryptService::decryptByteArray(globalParameters.getCryptKey(), fileContent);
+      fileContent=CryptService::decryptByteArray(AppContext::instance().globalParameters()->getCryptKey(), fileContent);
 
   // Расшифровываются поля, которые подлежат шифрованию
   foreach( QString fieldName, fieldCryptedList() )
@@ -820,13 +772,12 @@ void Attach::decrypt(unsigned int area)
 
     // Если поле с указанным именем существует и содержит данные, оно расшифровывается из исходных зашифрованных данных
     if(getField(fieldName).length()>0)
-      setFieldSource(fieldName, CryptService::decryptString( globalParameters.getCryptKey(), fields[fieldName]));
+      setFieldSource(fieldName, CryptService::decryptString( AppContext::instance().globalParameters()->getCryptKey(), fields[fieldName]));
   }
 
   // Устанавливается флаг, что запись не зашифрована
   setField("crypt", ""); // Отсутствие значения предпочтительней, так как тогда в XML-данные не будет попадать атрибут crypt="0"
 }
-
 
 // Расшифровка переданного DOM-элемента
 // Метод статический, он не изменяет сам объект Attach
@@ -836,14 +787,13 @@ void Attach::decryptDomElement(QDomElement &iDomElement)
     foreach( QString fieldName, fieldCryptedList() ) // Перебираются зашифрованные поля
       if(iDomElement.hasAttribute(fieldName) && iDomElement.attribute(fieldName).length()>0)
       {
-        QString decryptAttribute=CryptService::decryptString( globalParameters.getCryptKey(), iDomElement.attribute(fieldName));
+        QString decryptAttribute=CryptService::decryptString( AppContext::instance().globalParameters()->getCryptKey(), iDomElement.attribute(fieldName));
 
         iDomElement.setAttribute(fieldName, decryptAttribute);
       }
 
   iDomElement.setAttribute("crypt", "0");
 }
-
 
 void Attach::renameFile(QString newFileName){
   if(newFileName.length()==0){

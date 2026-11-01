@@ -1,0 +1,168 @@
+// Opus-качество 409: комбо диалога, битрейт писателя, радиокнопки настроек
+#include <QApplication>
+#include <QTimer>
+#include <QDebug>
+#include <QSettings>
+#include <QDir>
+#include <QCheckBox>
+#include <QLabel>
+#include <QRadioButton>
+#include "libraries/MtComboBox.h"
+#include "views/voiceNote/VoiceRecorderDialog.h"
+#include "views/appConfigWindow/AppConfigPage_Voice.h"
+#include "libraries/OpusFileWriter.h"
+#include "models/appConfig/AppConfig.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigFind.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigCrypto.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigClipper.h"
+#include "models/appConfig/AppConfigServices.h"
+#include "models/appConfig/AppConfigGeneral.h"
+#include "libraries/AppContext.h"
+#include "libraries/GlobalParameters.h"
+#include "libraries/FixedParameters.h"
+#include "libraries/TrashMonitoring.h"
+#include "libraries/WalkHistory.h"
+#include "libraries/VisitHistory.h"
+#include "libraries/ActionLogger.h"
+#include "libraries/ShortcutManager.h"
+#include "libraries/PeriodicCheckBase.h"
+#include "libraries/PeriodicSyncro.h"
+#include "models/appConfig/AppFiles.h"
+#include "models/dataBaseConfig/DataBaseConfig.h"
+
+extern AppConfig mytetraConfig;
+extern GlobalParameters globalParameters;
+extern FixedParameters fixedParameters;
+extern AppFiles mytetraFiles;
+extern DataBaseConfig dataBaseConfig;
+extern TrashMonitoring trashMonitoring;
+extern WalkHistory walkHistory;
+extern VisitHistory visitHistory;
+extern ActionLogger actionLogger;
+extern ShortcutManager shortcutManager;
+extern PeriodicCheckBase periodicCheckBase;
+extern PeriodicSyncro periodicSyncro;
+
+static int fails=0;
+static void check(bool ok, const char *name)
+{
+    qDebug() << (ok ? "PASS" : "FAIL") << name;
+    if(!ok)
+        ++fails;
+}
+
+int main(int argc, char **argv)
+{
+    QApplication app(argc, argv);
+
+    mytetraConfig.m_conf=new QSettings(QStringLiteral("/tmp/opencode/probe.ini"),
+                                       QSettings::IniFormat);
+
+    // P1: диалог ходит в конфиг через AppContext - контекст как в main()
+    AppContext::instance().init(&fixedParameters,
+                                &globalParameters,
+                                &mytetraConfig,
+                                &mytetraFiles,
+                                &dataBaseConfig,
+                                &trashMonitoring,
+                                &walkHistory,
+                                &visitHistory,
+                                &actionLogger,
+                                &shortcutManager,
+                                &periodicCheckBase,
+                                &periodicSyncro,
+                                nullptr,
+                                nullptr,
+                                &globalParameters.cryptHolder());
+
+    AppContext::instance().appConfig()->servicesSection()->set_voiceNoteQuality(3);
+
+    QDir().mkpath(QStringLiteral("/tmp/opencode/voicedir"));
+
+    QWidget win;
+    win.show();
+
+    VoiceRecorderDialog *dlg=new VoiceRecorderDialog(
+        QStringLiteral("/tmp/opencode/voicedir"), &win);
+
+    QTimer::singleShot(800, [&]()
+    {
+        // Статика битрейтов
+        check(VoiceRecorderDialog::opusBitrateForQuality(0)==12000, "BITRATE-SUPERLOW");
+        check(VoiceRecorderDialog::opusBitrateForQuality(1)==16000, "BITRATE-16");
+        check(VoiceRecorderDialog::opusBitrateForQuality(2)==24000, "BITRATE-24");
+        check(VoiceRecorderDialog::opusBitrateForQuality(3)==32000, "BITRATE-32");
+        check(VoiceRecorderDialog::opusBitrateForQuality(4)==48000, "BITRATE-48");
+        check(VoiceRecorderDialog::opusBitrateForQuality(5)==64000, "BITRATE-64");
+        check(VoiceRecorderDialog::opusBitrateForQuality(99)==64000, "BITRATE-GARBAGE");
+
+        // Комбо: 4 пункта, дефолт из конфига
+        check(dlg->opusQuality->count()==6, "COMBO-COUNT");
+        check(dlg->opusQuality->currentIndex()==3, "COMBO-DEFAULT");
+
+        // Смена пункта: конфиг + подпись
+        dlg->opusQuality->setCurrentIndex(1);
+        QApplication::processEvents();
+        check(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality()==1, "COMBO-SAVED-1");
+        check(dlg->formatInfoLabel->text().contains(QStringLiteral("16")),
+              "INFO-16");
+        dlg->opusQuality->setCurrentIndex(5);
+        QApplication::processEvents();
+        check(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality()==5, "COMBO-SAVED");
+        check(dlg->formatInfoLabel->text().contains(QStringLiteral("64")),
+              "INFO-64");
+
+        // Писатель: профиль доходит до файла
+        OpusFileWriter w;
+        w.setTargetBitrate(
+            VoiceRecorderDialog::qualityProfile(
+                VoiceRecorderDialog::VoiceFormatOpus).bitRate);
+        if(w.open(QStringLiteral("/tmp/opencode/q64.opus"), 48000))
+        {
+            short buf[960]={0};
+            for(int f=0; f<50; ++f)
+                w.writePcm(buf, 960);
+            w.close();
+            check(true, "WRITER-64-OPEN");
+        }
+        else
+            check(false, "WRITER-64-OPEN");
+
+        // MP3 гасит выбор качества
+        dlg->mp3Radio->setChecked(true);
+        QApplication::processEvents();
+        check(!dlg->opusQuality->isEnabled(), "MP3-DISABLED");
+
+        // Настройки: радиокнопки пишут конфиг
+        AppConfigPage_Voice page;
+        auto findRadio=[&](const QString &text)
+        {
+            for(QRadioButton *r : page.findChildren<QRadioButton *>())
+                if(r->text()==text)
+                    return r;
+            return (QRadioButton *)nullptr;
+        };
+        QRadioButton *low=findRadio(QStringLiteral("Extra low (16 kbit/s)"));
+        QRadioButton *extra=findRadio(QStringLiteral("Extra high (64 kbit/s)"));
+        check(low!=nullptr && extra!=nullptr, "SETTINGS-RADIOS");
+        if(low!=nullptr && extra!=nullptr)
+        {
+            low->setChecked(true);
+            QApplication::processEvents();
+            page.applyChanges();
+            check(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality()==1, "SETTINGS-LOW");
+            extra->setChecked(true);
+            page.applyChanges();
+            check(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality()==5, "SETTINGS-EXTRA");
+        }
+
+        qDebug() << (fails==0 ? "VOICEQ-OK" : "VOICEQ-BAD");
+        qApp->quit();
+    });
+
+    return app.exec();
+}

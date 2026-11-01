@@ -12,6 +12,7 @@ class QCheckBox;
 class QLabel;
 class QKeyEvent;
 class HtmlSourceEdit;
+class HtmlTagTree;
 
 class EditorMultiLineInputDialog : public QDialog
 {
@@ -53,6 +54,7 @@ private:
 
     float sizeCoefficient;
     HtmlSourceEdit *textArea;
+    HtmlTagTree *tagTree;
     QDialogButtonBox *buttonBox;
 
     QWidget *findPanel;

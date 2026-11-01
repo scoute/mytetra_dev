@@ -31,4 +31,5 @@ export PATH=/media/user/m2data/Qt_deb11/5.15.2/gcc_64/bin:$PATH
 | `mcpcatprobe` | Каталог MCP-тулов: состав, категории `ro`/`rw`/`delete` |
 | `bridgewriteprobe` | Write-пути моста на живой `KnowTreeModel` (create/update/batch/delete) |
 | `voiceqprobe` | Opus-битрейты, комбо качества, радио настроек, MP3-блок |
-| `htmlprobe` | Движок `HtmlSourceEdit`: поиск с зацикливанием, подсветка, замена, переход к строке, гуттер |
+| `htmlprobe` | Движок `HtmlSourceEdit`: поиск с зацикливанием, подсветка, замена, переход к строке, гуттер, дерево тегов |
+| `splitprobe` | Сплит редактор+превью: живой `MetaEditor`, двусторонняя синхронизация исходника (фикстура из штатных конфигов) |

@@ -126,6 +126,9 @@ void MainWindow::syncViewMenu(void)
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)!=nullptr)
         menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)->setChecked(AppContext::instance().appConfig()->recordTableSection()->isGlobalReadOnly());
+
+    if(menuBuilder->action(MenuBuilder::ActionId::ViewHtmlSource)!=nullptr && editorScreen!=nullptr)
+        menuBuilder->action(MenuBuilder::ActionId::ViewHtmlSource)->setChecked(editorScreen->isHtmlSourceVisible());
 }
 
 void MainWindow::onViewHeaderToggled(bool checked)
@@ -184,6 +187,17 @@ void MainWindow::onViewReadOnlyToggled(bool checked)
     AppContext::instance().appConfig()->recordTableSection()->set_readOnly(checked);
 
     applyReadOnly();
+}
+
+
+// Живой исходник под заметкой: чекбокс только переключает панель,
+// состояние на сессию, в конфиг не пишется
+void MainWindow::onViewHtmlSourceToggled(bool checked)
+{
+    if(editorScreen==nullptr)
+        return;
+
+    editorScreen->setHtmlSourceVisible(checked);
 }
 
 // Применить глобальный режим только чтения ко всем экранам.

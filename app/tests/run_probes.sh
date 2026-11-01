@@ -16,7 +16,7 @@ QT=${QT_BIN%/bin}
 mkdir -p "$OUT" "$OUT/edprobe"
 
 if [ $# -eq 0 ]; then
-  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe
+  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe splitprobe
 fi
 
 # Актуальный список объектов (без main.o): main_renamed.o собирается отдельно
@@ -44,10 +44,20 @@ compile_probe() {
 }
 
 run_probe() {
-  local name=$1 out fails
+  local name=$1 out fails bindir=$OUT
   export LD_LIBRARY_PATH=$QT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
   export HOME=/tmp/opencode DISPLAY=:98 QT_QPA_PLATFORM=offscreen
-  out=$(timeout 120 "$OUT/${name}bin" 2>&1)
+  # splitprobe крутит живой MetaEditor: ему нужна рабочая директория
+  # (conf.ini + editorconf.ini) и запуск бинаря из нее (workdir
+  # резолвится из argv[0]). Фикстура собирается из штатных конфигов
+  if [ "$name" = "splitprobe" ]; then
+    mkdir -p "$OUT/splitdb"
+    cp "$APP/bin/resource/standartconfig/any/conf.ini" \
+       "$APP/bin/resource/standartconfig/any/editorconf.ini" "$OUT/splitdb/"
+    cp "$OUT/${name}bin" "$OUT/splitdb/"
+    bindir="$OUT/splitdb"
+  fi
+  out=$(cd "$bindir" && timeout 120 "./${name}bin" 2>&1)
   echo "$out" | grep -E "^(PASS|FAIL)|PROBE-OK|PROBE-BAD|VOICEQ" | tail -4
   fails=$(echo "$out" | grep -c "^FAIL" || true)
   bad=$(echo "$out" | grep -c "PROBE-BAD" || true)

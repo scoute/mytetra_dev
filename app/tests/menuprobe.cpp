@@ -81,6 +81,17 @@ int main(int argc, char **argv)
     check(builder.menu(M::Help)!=nullptr, "MENU-HELP");
     check(bar.actions().size()==5, "MENUBAR-COUNT");
 
+    // Порядок в баре: File, Tools, View, Themes, Help.
+    // Справка последняя по конвенции, Вид между Tools и Themes
+    {
+        const QList<QAction *> top=bar.actions();
+        check(top.value(0)->menu()==builder.menu(M::File), "ORDER-FILE");
+        check(top.value(1)->menu()==builder.menu(M::Tools), "ORDER-TOOLS");
+        check(top.value(2)->menu()==builder.menu(M::View), "ORDER-VIEW");
+        check(top.value(3)->menu()==builder.menu(M::Themes), "ORDER-THEMES");
+        check(top.value(4)->menu()==builder.menu(M::Help), "ORDER-HELP-LAST");
+    }
+
     check(builder.action(A::FileQuit)!=nullptr, "ACT-QUIT");
     check(builder.action(A::FilePrint)!=nullptr, "ACT-PRINT");
     check(builder.action(A::ToolsFindInBase)!=nullptr, "ACT-FIND");

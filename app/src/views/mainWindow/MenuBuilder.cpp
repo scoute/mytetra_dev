@@ -28,9 +28,9 @@ void MenuBuilder::buildAll(QAction *tagsToggle, QAction *historyToggle,
 {
     buildFileMenu();
     buildToolsMenu(tagsToggle, historyToggle, backlinksToggle, isDesktop);
-    buildHelpMenu();
-    buildThemesMenu();
     buildViewMenu();
+    buildThemesMenu();
+    buildHelpMenu();
 }
 
 QMenu *MenuBuilder::menu(MenuId id) const

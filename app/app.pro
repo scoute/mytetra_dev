@@ -377,6 +377,7 @@ HEADERS+=\
     src/libraries/Favorites.h \
     src/libraries/BacklinkIndex.h \
     src/libraries/Clipper.h \
+    src/libraries/ClipperPrivate.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
     src/libraries/crypt/Password.h \
@@ -493,6 +494,10 @@ SOURCES = src/main.cpp \
     src/views/record/AddNewRecord.cpp \
     src/libraries/ClipboardRecords.cpp \
     src/views/tree/TreeScreen.cpp \
+    src/views/tree/TreeScreenSetup.cpp \
+    src/views/tree/TreeScreenEdit.cpp \
+    src/views/tree/TreeScreenClipboard.cpp \
+    src/views/tree/TreeScreenView.cpp \
     src/views/findInBaseScreen/FindScreen.cpp \
     src/views/findInBaseScreen/FindTableWidget.cpp \
     src/views/appConfigWindow/AppConfigDialog.cpp \
@@ -631,6 +636,9 @@ SOURCES+=\
     src/libraries/Favorites.cpp \
     src/libraries/BacklinkIndex.cpp \
     src/libraries/Clipper.cpp \
+    src/libraries/ClipperParse.cpp \
+    src/libraries/ClipperPipeline.cpp \
+    src/libraries/ClipperHotkey.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \
     src/libraries/crypt/Password.cpp \

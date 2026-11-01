@@ -432,12 +432,14 @@ qint64 VoiceRecorderDialog::recordedDurationMs(void) const
 
 QMultimedia::EncodingMode VoiceRecorderDialog::encodingMode(void)
 {
-    return QMultimedia::ConstantBitRateEncoding;
+    // Средний битрейт (ABR): backend держит таргет из профиля,
+    // бит распределяется по содержимому как в constrained VBR писателя
+    return QMultimedia::AverageBitRateEncoding;
 }
 
 VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(VoiceFormat format)
 {
-    // Один профиль на формат: Opus 48 кГц/CBR по выбору качества,
+    // Один профиль на формат: Opus 48 кГц/CVBR по выбору качества,
     // MP3 32 кГц фикс (битрейт lame игнорит, catch-22 Qt 5.15)
     if(format==VoiceFormatMp3)
         return {QMultimedia::NormalQuality, 0, 32000};
@@ -477,8 +479,8 @@ void VoiceRecorderDialog::applyFormat(VoiceFormat format)
     QAudioEncoderSettings audioSettings;
     audioSettings.setChannelCount(1);
 
-    // VBR осознанно: переменный битрейт лучше держит качество
-    // голоса при том же размере. Битрейт-профиль идет таргетом
+    // CVBR/ABR осознанно: переменный битрейт лучше держит качество
+    // голоса при том же среднем размере. Битрейт-профиль идет таргетом
     const VoiceQualityProfile profile=qualityProfile(format);
 
     audioSettings.setEncodingMode(encodingMode());

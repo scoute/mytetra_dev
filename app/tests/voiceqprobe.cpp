@@ -100,7 +100,11 @@ int main(int argc, char **argv)
         check(VoiceRecorderDialog::opusBitrateForQuality(5)==64000, "BITRATE-64");
         check(VoiceRecorderDialog::opusBitrateForQuality(99)==64000, "BITRATE-GARBAGE");
 
-        // Комбо: 4 пункта, дефолт из конфига
+        // Режим кодирования: средний битрейт (ABR) - аналог
+        // constrained VBR ручного писателя, а не фиксированный CBR
+        check(VoiceRecorderDialog::encodingMode()==QMultimedia::AverageBitRateEncoding, "ENCODING-ABR");
+
+        // Комбо: 6 пунктов, дефолт из конфига
         check(dlg->opusQuality->count()==6, "COMBO-COUNT");
         check(dlg->opusQuality->currentIndex()==3, "COMBO-DEFAULT");
 

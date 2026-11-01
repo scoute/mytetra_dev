@@ -44,7 +44,7 @@ void ConfigDialog::setupUi(void)
     // Область переключения конфигурирующих виджетов
     pagesWidget = new QStackedWidget( this );
     pagesWidget->setMinimumWidth(250);
-    pagesWidget->setMinimumHeight(250);
+    pagesWidget->setMinimumHeight(300);
     pagesWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     // Кнопки закрытия диалога

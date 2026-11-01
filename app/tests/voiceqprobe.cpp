@@ -7,10 +7,14 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QRadioButton>
+#include <QTextBlock>
+#include <QTextDocument>
+#include <QTextFragment>
 #include "libraries/MtComboBox.h"
 #include "views/voiceNote/VoiceRecorderDialog.h"
 #include "views/appConfigWindow/AppConfigPage_Voice.h"
 #include "libraries/OpusFileWriter.h"
+#include "libraries/VoiceNoteHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/appConfig/AppConfigStorage.h"
 #include "models/appConfig/AppConfigUi.h"
@@ -135,6 +139,25 @@ int main(int argc, char **argv)
         }
         else
             check(false, "WRITER-64-OPEN");
+
+        // Баблы: round-trip ссылок для превью истории голосовых.
+        // Превью делает setHtml версии + materialize, отмена -
+        // setHtml исходника + materialize: обе опираются на это
+        {
+            QTextDocument doc;
+            doc.setHtml(QStringLiteral("<p>hi <a href=\"voicenote://v.opus\">[voice 0:10]</a></p>"));
+            check(VoiceNoteHelper::hasVoiceLinks(&doc), "VOICE-LINK-SEEN");
+            check(VoiceNoteHelper::materializeVoiceLinks(&doc)==1, "VOICE-MATERIALIZED");
+            bool bubble=false;
+            for(QTextBlock block=doc.firstBlock(); block.isValid(); block=block.next())
+                for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+                    if(it.fragment().isValid() &&
+                       it.fragment().charFormat().objectType()==VoiceNoteHelper::BubbleObjectType)
+                        bubble=true;
+            check(bubble, "VOICE-BUBBLE");
+            check(VoiceNoteHelper::dematerializeBubbles(&doc)==1, "VOICE-DEMATERIALIZED");
+            check(VoiceNoteHelper::hasVoiceLinks(&doc), "VOICE-LINK-BACK");
+        }
 
         // MP3 гасит выбор качества
         dlg->mp3Radio->setChecked(true);

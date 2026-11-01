@@ -223,7 +223,7 @@ void EditorFloatToc::paintEvent(QPaintEvent *event)
  QPainter painter(this);
  painter.setRenderHint(QPainter::Antialiasing, true);
  painter.setPen(QPen(QColor(255, 255, 255, 70), 1));
- painter.setBrush(QColor(32, 36, 44, 215));
+ painter.setBrush(QColor(32, 36, 44, 180));
  painter.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 6, 6);
 }
 

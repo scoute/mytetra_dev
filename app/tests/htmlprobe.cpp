@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QFile>
+#include <QKeyEvent>
 #include <QPalette>
 #include <QSettings>
 #include <QTextDocument>
@@ -160,6 +161,78 @@ int main(int argc, char **argv)
     const int wide=edit.lineNumberAreaWidth();
     check(narrow>0, "GUTTER-VISIBLE");
     check(wide>narrow, "GUTTER-GROWS");
+
+    // Пара тегов: курсор внутри <div> - подсвечены оба тега
+    edit.clearMatchHighlight();
+    edit.setPlainText(QStringLiteral("<div>\n<p>x</p>\n</div>"));
+    {
+        QTextCursor c(edit.document());
+        c.setPosition(1);
+        edit.setTextCursor(c);
+    }
+    check(edit.extraSelections().size()==2, "PAIR-FOUND");
+
+    // Без пары: тревожная подсветка одного тега
+    edit.setPlainText(QStringLiteral("<div>\n<p>"));
+    {
+        QTextCursor c(edit.document());
+        c.setPosition(1);
+        edit.setTextCursor(c);
+    }
+    check(edit.extraSelections().size()==1, "PAIR-MISMATCH");
+
+    // Вне тегов - пусто
+    edit.moveCursor(QTextCursor::End);
+    check(edit.extraSelections().size()==0, "PAIR-NONE");
+
+    // Enter раскрывает контейнер, курсор остается внутри
+    edit.setPlainText(QStringLiteral("<div>"));
+    edit.moveCursor(QTextCursor::End);
+    {
+        QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+        QApplication::sendEvent(&edit, &enter);
+    }
+    check(edit.toPlainText()==QStringLiteral("<div>\n    \n</div>"), "ENTER-SPLIT");
+    check(edit.textCursor().blockNumber()==1, "ENTER-CURSOR-MID");
+
+    // Enter копирует отступ обычной строки
+    edit.setPlainText(QStringLiteral("    abc"));
+    edit.moveCursor(QTextCursor::End);
+    {
+        QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+        QApplication::sendEvent(&edit, &enter);
+    }
+    check(edit.toPlainText()==QStringLiteral("    abc\n    "), "ENTER-INDENT");
+
+    // Автозакрытие: <div + > дает пару, курсор между
+    edit.setPlainText(QStringLiteral("<div"));
+    edit.moveCursor(QTextCursor::End);
+    {
+        QKeyEvent greater(QEvent::KeyPress, Qt::Key_Greater, Qt::NoModifier, QStringLiteral(">"));
+        QApplication::sendEvent(&edit, &greater);
+    }
+    check(edit.toPlainText()==QStringLiteral("<div></div>"), "AUTOCLOSE");
+    check(edit.textCursor().position()==5, "AUTOCLOSE-CURSOR");
+
+    // Закрывающий уже стоит - дубликата нет (лишний '>' остается как набран)
+    edit.setPlainText(QStringLiteral("<div></div>"));
+    {
+        QTextCursor c(edit.document());
+        c.setPosition(4);
+        edit.setTextCursor(c);
+        QKeyEvent greater(QEvent::KeyPress, Qt::Key_Greater, Qt::NoModifier, QStringLiteral(">"));
+        QApplication::sendEvent(&edit, &greater);
+    }
+    check(edit.toPlainText()==QStringLiteral("<div>></div>"), "AUTOCLOSE-NODUP");
+
+    // Пустые элементы не закрываются
+    edit.setPlainText(QStringLiteral("<br"));
+    edit.moveCursor(QTextCursor::End);
+    {
+        QKeyEvent greater(QEvent::KeyPress, Qt::Key_Greater, Qt::NoModifier, QStringLiteral(">"));
+        QApplication::sendEvent(&edit, &greater);
+    }
+    check(edit.toPlainText()==QStringLiteral("<br>"), "AUTOCLOSE-VOID");
 
     // Диалог: конструктор ходит в ShortcutManager через AppContext,
     // панель и движок связаны через findChild

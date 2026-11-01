@@ -8,9 +8,14 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigStorage.h"
 
-
-extern AppConfig mytetraConfig;
+void PeriodicCheckBase::setShowTextDispatcher(EditorShowTextDispatcher *dispatcher)
+{
+    m_dispatcher=dispatcher;
+}
 
 
 void PeriodicCheckBase::init()
@@ -18,16 +23,14 @@ void PeriodicCheckBase::init()
     TimerMonitoring::init();
 
     connect(this, &PeriodicCheckBase::doUpdateDetachedWindows,
-            EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowForNonExistentRecords,
+            m_dispatcher, &EditorShowTextDispatcher::closeWindowForNonExistentRecords,
             Qt::QueuedConnection);
 }
 
-
 bool PeriodicCheckBase::isStartEnabled()
 {
-    return mytetraConfig.getEnablePeriodicCheckBase();
+    return AppContext::instance().appConfig()->syncSection()->getEnablePeriodicCheckBase();
 }
-
 
 // Действия, происходящие по таймеру
 void PeriodicCheckBase::timerEvent(QTimerEvent *event)
@@ -47,7 +50,7 @@ void PeriodicCheckBase::timerEvent(QTimerEvent *event)
     QDateTime lastAccess = lastSave > lastLoad ? lastSave : lastLoad;
 
     // Время последнего изменения файла дерева
-    QString fileName=mytetraConfig.get_tetradir()+"/mytetra.xml";
+    QString fileName=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/mytetra.xml";
     QFileInfo fileInfo(fileName);
     QDateTime modifyDateTime=fileInfo.lastModified();
 
@@ -61,7 +64,7 @@ void PeriodicCheckBase::timerEvent(QTimerEvent *event)
         emit doUpdateDetachedWindows();
 
         // Если разрешена выдача сообщения о том, что база данных была изменена
-        if(mytetraConfig.getEnablePeriodicCheckMessage())
+        if(AppContext::instance().appConfig()->syncSection()->getEnablePeriodicCheckMessage())
             showMessageBox(tr("The database was changed by external application or services.\n"
                               "MyTetra reload the database tree to keep data consistency."));
     }

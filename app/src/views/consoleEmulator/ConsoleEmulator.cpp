@@ -12,11 +12,8 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/ActionLogger.h"
 #include "views/waitClock/WaitClock.h"
-
-
-extern AppConfig mytetraConfig;
-extern ActionLogger actionLogger;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
 
 ConsoleEmulator::ConsoleEmulator(QWidget *parent) : QDialog(parent)
 {
@@ -27,12 +24,10 @@ ConsoleEmulator::ConsoleEmulator(QWidget *parent) : QDialog(parent)
  assembly();
 }
 
-
 ConsoleEmulator::~ConsoleEmulator()
 {
 
 }
-
 
 void ConsoleEmulator::setupUI(void)
 {
@@ -48,14 +43,13 @@ void ConsoleEmulator::setupUI(void)
  consoleOutput=new QTextEdit(this);
  consoleOutput->setReadOnly(true);
  consoleOutput->setFontFamily("monospace");
- if(mytetraConfig.getSyncroConsoleDetails()==false)
+ if(AppContext::instance().appConfig()->syncSection()->getSyncroConsoleDetails()==false)
   consoleOutput->hide();
 
  waitClock=new WaitClock(this);
 
  escShortcut=new QShortcut(QKeySequence("Esc"),  this);
 }
-
 
 void ConsoleEmulator::setupSignals(void)
 {
@@ -64,7 +58,6 @@ void ConsoleEmulator::setupSignals(void)
 
  connect(escShortcut, &QShortcut::activated, this, &ConsoleEmulator::onCancelClick);
 }
-
 
 void ConsoleEmulator::assembly(void)
 {
@@ -75,7 +68,6 @@ void ConsoleEmulator::assembly(void)
  upToolbar->addWidget(buttonDetails);
  upToolbar->addWidget(buttonCancel);
 
-
  QVBoxLayout *vLayout = new QVBoxLayout;
  vLayout->addLayout(upToolbar);
  vLayout->addWidget(consoleOutput);
@@ -85,12 +77,10 @@ void ConsoleEmulator::assembly(void)
  setLayout(vLayout);
 }
 
-
 void ConsoleEmulator::setMessageText(QString text)
 {
  messageLabel->setText(text);
 }
-
 
 void ConsoleEmulator::setConsoleOutput(QString text)
 {
@@ -101,12 +91,10 @@ void ConsoleEmulator::setConsoleOutput(QString text)
  v->setValue(v->maximum());
 }
 
-
 void ConsoleEmulator::clearConsoleOutput(void)
 {
  consoleOutput->setPlainText("");
 }
-
 
 void ConsoleEmulator::addConsoleOutput(QString text)
 {
@@ -117,7 +105,6 @@ void ConsoleEmulator::addConsoleOutput(QString text)
  v->setValue(v->maximum());
 }
 
-
 void ConsoleEmulator::onCancelClick(void)
 {
  qDebug() << "ConsoleEmulator::onCancelClick() : Click cancel";
@@ -125,7 +112,6 @@ void ConsoleEmulator::onCancelClick(void)
  this->hide();
  this->close(); // Генерация события closeEvent
 }
-
 
 void ConsoleEmulator::closeEvent(QCloseEvent *event)
 {
@@ -135,7 +121,6 @@ void ConsoleEmulator::closeEvent(QCloseEvent *event)
 
  event->accept();
 }
-
 
 // Переопределенный метод, вызываемый для обработки событий
 bool ConsoleEmulator::event(QEvent *event)
@@ -151,23 +136,21 @@ bool ConsoleEmulator::event(QEvent *event)
   return QDialog::event(event);
 }
 
-
 void ConsoleEmulator::onDetailsClick(void)
 {
  if(consoleOutput->isHidden())
   {
    consoleOutput->show();
-   mytetraConfig.setSyncroConsoleDetails(true);
+   AppContext::instance().appConfig()->syncSection()->setSyncroConsoleDetails(true);
   }
  else
   {
    consoleOutput->hide();
-   mytetraConfig.setSyncroConsoleDetails(false);
+   AppContext::instance().appConfig()->syncSection()->setSyncroConsoleDetails(false);
   }
 
  this->adjustSize();
 }
-
 
 void ConsoleEmulator::switchToErrorView(void)
 {
@@ -175,7 +158,7 @@ void ConsoleEmulator::switchToErrorView(void)
 
  isErrorMode=true;
 
- actionLogger.addAction("syncroError");
+ AppContext::instance().actionLogger()->addAction("syncroError");
 
  // Верхняя строка скрывается
  // QLayoutItem *child;

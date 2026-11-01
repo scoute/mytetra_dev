@@ -11,10 +11,8 @@
 #include "ChangeHistoryDialog.h"
 #include "libraries/UnifiedDiff.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
                                          const QString &recordId,
@@ -67,18 +65,15 @@ ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
     updateDiff();
 }
 
-
 QString ChangeHistoryDialog::rollbackContent(void) const
 {
     return selectedContent;
 }
 
-
 bool ChangeHistoryDialog::hasHistory(void) const
 {
     return !versionList.isEmpty();
 }
-
 
 void ChangeHistoryDialog::onVersionSelected(int row)
 {
@@ -87,7 +82,6 @@ void ChangeHistoryDialog::onVersionSelected(int row)
     updateDiff();
     updatePreview();
 }
-
 
 void ChangeHistoryDialog::updatePreview(void)
 {
@@ -104,7 +98,6 @@ void ChangeHistoryDialog::updatePreview(void)
 
     emit previewRequested(content);
 }
-
 
 // Перечитать версии и перестроить список (после сжатия).
 // Выбранной становится новейшая, превью и diff обновляются следом
@@ -129,7 +122,6 @@ void ChangeHistoryDialog::refreshVersionList(void)
         versionsList->setCurrentRow(0);
     }
 }
-
 
 void ChangeHistoryDialog::onRollback(void)
 {
@@ -187,7 +179,6 @@ void ChangeHistoryDialog::onRollback(void)
     accept();
 }
 
-
 void ChangeHistoryDialog::updateDiff(void)
 {
     const int row=versionsList->currentRow();
@@ -211,7 +202,7 @@ void ChangeHistoryDialog::updateDiff(void)
     {
         // Темные темы (dark, midnight): светлая палитра диффа,
         // иначе служебные строки черным по темному не читаются
-        const QString theme=mytetraConfig.getInterfaceTheme();
+        const QString theme=AppContext::instance().appConfig()->uiSection()->getInterfaceTheme();
         const bool darkTheme=(theme==QStringLiteral("dark") ||
                               theme==QStringLiteral("midnight"));
 

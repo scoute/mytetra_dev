@@ -24,10 +24,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/GestureHelper.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 AttachTableView::AttachTableView(QWidget *parent) : QTableView(parent)
 {
@@ -50,12 +47,10 @@ AttachTableView::AttachTableView(QWidget *parent) : QTableView(parent)
   setAcceptDrops(true);
 }
 
-
 AttachTableView::~AttachTableView()
 {
 
 }
-
 
 void AttachTableView::init(void)
 {
@@ -64,7 +59,6 @@ void AttachTableView::init(void)
   assemblyContextMenu();
   setContextMenuPolicy(Qt::CustomContextMenu);
 }
-
 
 void AttachTableView::setupSignals(void)
 {
@@ -81,12 +75,10 @@ void AttachTableView::setupSignals(void)
           controller, &AttachTableController::onOpenAttach);
 }
 
-
 void AttachTableView::setController(AttachTableController *pController)
 {
   controller=pController;
 }
-
 
 void AttachTableView::assemblyContextMenu(void)
 {
@@ -106,7 +98,6 @@ void AttachTableView::assemblyContextMenu(void)
   contextMenu->addAction(screenPointer->actionOpenAttach);
   contextMenu->addAction(screenPointer->actionShowAttachInfo);
 }
-
 
 // Обработчик событий, нужен только для QTapAndHoldGesture (долгое нажатие)
 bool AttachTableView::event(QEvent *event)
@@ -133,7 +124,6 @@ bool AttachTableView::event(QEvent *event)
 
   return QTableView::event(event);
 }
-
 
 // HTML предпросмотра вложения для тултипа: картинка — миниатюра,
 // текст — первые строки, остальное — строка с размером.
@@ -171,7 +161,6 @@ QString AttachTableView::attachPreviewTooltip(const QModelIndex &index) const
   return QStringLiteral("<b>")+attach.getField("fileName").toHtmlEscaped()+QStringLiteral("</b><br>")+
          DiskHelper::formatFileSize(attach.getFileSize());
 }
-
 
 // HTML миниатюры картинки-вложения для тултипа: пусто если строка
 // не картинка. Размер читается из заголовка файла, вписывается
@@ -224,14 +213,12 @@ QString AttachTableView::attachImageTooltip(const QModelIndex &index) const
          QStringLiteral("\">");
 }
 
-
 void AttachTableView::resizeEvent(QResizeEvent *event)
 {
   // Ширины колонок больше не трогаются: имя тянется режимом Stretch,
   // остальные регулируются вручную и переживают ресайзы
   QTableView::resizeEvent(event);
 }
-
 
 void AttachTableView::paintEvent(QPaintEvent *event)
 {
@@ -248,7 +235,6 @@ void AttachTableView::paintEvent(QPaintEvent *event)
     }
 }
 
-
 // Обработчик жестов
 // Вызывается из обработчика событий event()
 bool AttachTableView::gestureEvent(QGestureEvent *event)
@@ -261,7 +247,6 @@ bool AttachTableView::gestureEvent(QGestureEvent *event)
   return true;
 }
 
-
 // Обработчик жеста TapAndHoldGesture
 // Вызывается из обработчика жестов gestureEvent()
 void AttachTableView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
@@ -269,10 +254,9 @@ void AttachTableView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
   qDebug() << "In tapAndHoldGestureTriggered()" << gesture;
 
   if(gesture->state()==Qt::GestureFinished)
-    if(globalParameters.getTargetOs()=="android")
+    if(AppContext::instance().globalParameters()->getTargetOs()=="android")
       emit tapAndHoldGestureFinished( mapFromGlobal(gesture->position().toPoint()) );
 }
-
 
 // Открытие контекстного меню в таблице приаттаченных файлов
 void AttachTableView::setModel(QAbstractItemModel *model)
@@ -287,13 +271,11 @@ void AttachTableView::setModel(QAbstractItemModel *model)
   this->horizontalHeader()->setSectionResizeMode( 3, QHeaderView::Interactive );
 }
 
-
 void AttachTableView::onCustomContextMenuRequested(const QPoint &pos)
 {
   // Включение отображения меню на экране
   contextMenu->exec( viewport()->mapToGlobal(pos) );
 }
-
 
 // Принимаются только перетаскивания с локальными файлами:
 // такой mime дают файловые менеджеры
@@ -305,7 +287,6 @@ void AttachTableView::dragEnterEvent(QDragEnterEvent *event)
     event->ignore();
 }
 
-
 void AttachTableView::dragMoveEvent(QDragMoveEvent *event)
 {
   if(event->mimeData()!=nullptr && event->mimeData()->hasUrls())
@@ -313,7 +294,6 @@ void AttachTableView::dragMoveEvent(QDragMoveEvent *event)
   else
     event->ignore();
 }
-
 
 // Бросок файлов: локальные пути уходят в контроллер,
 // нелокальные ссылки молча пропускаются
@@ -342,7 +322,6 @@ void AttachTableView::dropEvent(QDropEvent *event)
   if(controller!=nullptr)
     controller->addDroppedFiles(files);
 }
-
 
 // Получение номера первого выделенного элемента
 int AttachTableView::getFirstSelectionPos(void)

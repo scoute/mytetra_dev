@@ -9,10 +9,9 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 // Конструктор модели
 RecordTableModel::RecordTableModel(QObject *pobj) : QAbstractTableModel(pobj), table(nullptr)
@@ -20,13 +19,11 @@ RecordTableModel::RecordTableModel(QObject *pobj) : QAbstractTableModel(pobj), t
 
 }
 
-
 // Деструктор модели
 RecordTableModel::~RecordTableModel()
 {
 
 }
-
 
 // Предоставление данных табличной модели
 QVariant RecordTableModel::data(const QModelIndex &index, int role) const
@@ -48,14 +45,13 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     // Если запрашивается текст строки для отрисовки или для редактирования
     if(role==Qt::DisplayRole || role==Qt::EditRole || role==SORT_ROLE)
     {
-        QStringList showFields=mytetraConfig.getRecordTableShowFields();
+        QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
         // Если длина списка показываемых столбцов меньше или равна номеру запрашиваемого столбца
         if( index.column() < showFields.size() )
         {
             QString fieldName=showFields.value( index.column() );
             QString field=table->getField(fieldName, index.row());
-
 
             // Некоторые данные при отрисовке в таблице преобразуются в "экранные" представления
             // Преобразование возможно только для отображаемой в таблице информации
@@ -64,10 +60,10 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
             {
                 // Преобразование временного штампа в дату и время
                 QDateTime fieldDateTime=QDateTime::fromString(field, "yyyyMMddhhmmss");
-                if(mytetraConfig.getEnableCustomDateTimeFormat()==false)
+                if(AppContext::instance().appConfig()->uiSection()->getEnableCustomDateTimeFormat()==false)
                     return fieldDateTime.toString(Qt::SystemLocaleDate);
                 else
-                    return fieldDateTime.toString( mytetraConfig.getCustomDateTimeFormat() );
+                    return fieldDateTime.toString( AppContext::instance().appConfig()->uiSection()->getCustomDateTimeFormat() );
             }
 
             else if( role==Qt::DisplayRole && fieldName=="hasAttach") // Наличие аттачей
@@ -107,19 +103,18 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     // Подсветка заднего фона
     if(role==Qt::BackgroundRole)
     {
-        if( mytetraConfig.getEnableRecordWithAttachHighlight() )
+        if( AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight() )
             if( table->getField("hasAttach", index.row())=="1" )
             {
-                QColor color( mytetraConfig.getRecordWithAttachHighlightColor() );
+                QColor color( AppContext::instance().appConfig()->uiSection()->getRecordWithAttachHighlightColor() );
                 return QBrush(color);
             }
     }
 
-
     // Оформление иконками
     if(role == Qt::DecorationRole)
     {
-        QStringList showFields=mytetraConfig.getRecordTableShowFields();
+        QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
         QString fieldName=showFields.value( index.column() );
         QString field=table->getField(fieldName, index.row());
 
@@ -138,7 +133,6 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
             return QIcon(":/resource/pic/note_block.svg");
     }
 
-
     // Если происходит запрос ссылки на таблицу данных
     /*
   if(role==TABLE_DATA_ROLE)
@@ -152,7 +146,6 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     // Во всех остальных случаях
     return QVariant();
 }
-
 
 // Сохранение вводимых данных по указанному индексу
 bool RecordTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -173,7 +166,7 @@ bool RecordTableModel::setData(const QModelIndex &index, const QVariant &value, 
     if(role==Qt::EditRole)
     {
         // QStringList showFields=FixedParameters::recordFieldAvailableList(); // TODO: Заменить на показываемые поля
-        QStringList showFields=mytetraConfig.getRecordTableShowFields();
+        QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
         // Если длина списка показываемых столбцов меньше или равна номеру запрашиваемого столбца
         if( index.column() < showFields.size() )
@@ -213,12 +206,11 @@ bool RecordTableModel::setData(const QModelIndex &index, const QVariant &value, 
     return false;
 }
 
-
 // Получение заголовков столбцов и строк
 QVariant RecordTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     // QStringList showFields=FixedParameters::recordFieldAvailableList(); // TODO: Заменить на показываемые поля
-    QStringList showFields=mytetraConfig.getRecordTableShowFields();
+    QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
     QMap<QString, QString> descriptionFields=FixedParameters::recordFieldDescription( showFields );
 
@@ -238,15 +230,12 @@ QVariant RecordTableModel::headerData(int section, Qt::Orientation orientation, 
         return descriptionFields.value(fieldName);
     }
 
-
     // Если запрашивается заголовок строки
     if(orientation==Qt::Vertical && role==Qt::DisplayRole)
         return section+1;
 
-
     return QAbstractTableModel::headerData(section, orientation, role);
 }
-
 
 // Сколько записей в таблице
 int RecordTableModel::rowCount(const QModelIndex &parent) const
@@ -259,7 +248,6 @@ int RecordTableModel::rowCount(const QModelIndex &parent) const
     return static_cast<int>( table->size() );
 }
 
-
 // Сколько столбцов в таблице
 int RecordTableModel::columnCount(const QModelIndex &parent) const
 {
@@ -267,7 +255,7 @@ int RecordTableModel::columnCount(const QModelIndex &parent) const
 
     static int previousColumnCount=0;
 
-    int currentColumnCount=mytetraConfig.getRecordTableShowFields().size();
+    int currentColumnCount=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields().size();
 
     if( currentColumnCount!=previousColumnCount)
     {
@@ -277,7 +265,6 @@ int RecordTableModel::columnCount(const QModelIndex &parent) const
 
     return currentColumnCount;
 }
-
 
 // Удаление строк в таблице
 // note: Переопределение метода removeRows() влияет и на метод removeRow(),
@@ -310,7 +297,6 @@ bool RecordTableModel::removeRows(int row, int count, const QModelIndex &parent)
     return true;
 }
 
-
 // Установка данных в таблицу данных
 void RecordTableModel::setTableData(RecordTableData *rtData)
 {
@@ -321,14 +307,12 @@ void RecordTableModel::setTableData(RecordTableData *rtData)
     endResetModel();
 }
 
-
 // Получение ссылки на таблицу данных
 RecordTableData *RecordTableModel::getTableData(void)
 {
     // Возвращается ссылка на данные, с которыми в данный момент работает модель
     return table;
 }
-
 
 // Добавление данных
 // Функция возвращает позицию нового добавленного элемента
@@ -352,7 +336,6 @@ int RecordTableModel::addTableData(int mode,
 
     return selPos;
 }
-
 
 void RecordTableModel::onRecordTableConfigChange(void)
 {

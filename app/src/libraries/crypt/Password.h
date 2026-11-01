@@ -25,12 +25,15 @@
 
 #define SAVED_PASSWORD_CHECKING_LINE "This string is used for checking middle hash"
 
+class EditorShowTextDispatcher;
+
 class Password : public QObject
 {
  Q_OBJECT
 
 public:
- Password();
+ // P3: диспетчер внедряется (был EditorShowTextDispatcher::instance())
+ explicit Password(EditorShowTextDispatcher *dispatcher=nullptr, QObject *parent=nullptr);
  virtual ~Password();
 
  bool retrievePassword();
@@ -39,6 +42,9 @@ public:
  void resetPassword(void);
 
  void setCryptKeyToMemory(QString password);
+
+ // P3: диспетчер открепляемых окон внедряется (был ::instance())
+ EditorShowTextDispatcher *m_dispatcher=nullptr;
 
 private:
 

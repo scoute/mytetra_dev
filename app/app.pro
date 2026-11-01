@@ -171,7 +171,9 @@ HEADERS = src/main.h \
     src/libraries/helpers/SortHelper.h \
     src/libraries/helpers/UniqueIdHelper.h \
     src/libraries/mcp/McpServer.h \
+    src/libraries/mcp/McpServerPrivate.h \
     src/libraries/mcp/McpTools.h \
+    src/libraries/mcp/McpToolsPrivate.h \
     src/libraries/OpusFileWriter.h \
     src/libraries/OpusFileReader.h \
     src/libraries/OpusPlayer.h \
@@ -228,6 +230,9 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorFindBar.h \
     src/libraries/wyedit/EditorImageOpenDialog.h \
     src/views/mainWindow/MainWindow.h \
+    src/views/mainWindow/McpGuiBridge.h \
+    src/views/mainWindow/MenuBuilder.h \
+    src/views/mainWindow/TrayManager.h \
     src/views/printPreview/PrintPreview.h \
     src/views/printPreview/PreviewView.h \
     src/views/toolbarSettings/MainToolbarSettingsScreen.h \
@@ -352,7 +357,18 @@ HEADERS+=\
     src/libraries/ChangeHistory.h \
     src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
+    src/libraries/AppContext.h \
+    src/libraries/crypt/CryptKeyHolder.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
+    src/models/appConfig/AppConfigStorage.h \
+    src/models/appConfig/AppConfigUi.h \
+    src/models/appConfig/AppConfigFind.h \
+    src/models/appConfig/AppConfigSync.h \
+    src/models/appConfig/AppConfigGeneral.h \
+    src/models/appConfig/AppConfigCrypto.h \
+    src/models/appConfig/AppConfigRecordTable.h \
+    src/models/appConfig/AppConfigClipper.h \
+    src/models/appConfig/AppConfigServices.h \
     src/views/enterPassword/EnterPassword.h \
     src/views/consoleEmulator/ConsoleEmulator.h \
     src/views/waitClock/WaitClock.h \
@@ -361,6 +377,7 @@ HEADERS+=\
     src/libraries/Favorites.h \
     src/libraries/BacklinkIndex.h \
     src/libraries/Clipper.h \
+    src/libraries/ClipperPrivate.h \
     src/libraries/crypt/Pbkdf2Qt.h \
     src/libraries/crypt/RC5Simple.h \
     src/libraries/crypt/Password.h \
@@ -391,7 +408,15 @@ SOURCES = src/main.cpp \
     src/libraries/helpers/SortHelper.cpp \
     src/libraries/helpers/UniqueIdHelper.cpp \
     src/libraries/mcp/McpServer.cpp \
+    src/libraries/mcp/McpServerTools.cpp \
+    src/libraries/mcp/McpServerGui.cpp \
+    src/libraries/mcp/McpServerSession.cpp \
+    src/libraries/mcp/McpServerBatch.cpp \
     src/libraries/mcp/McpTools.cpp \
+    src/libraries/mcp/McpToolsRead.cpp \
+    src/libraries/mcp/McpToolsWrite.cpp \
+    src/libraries/mcp/McpToolsTags.cpp \
+    src/libraries/mcp/McpToolsAttach.cpp \
     src/libraries/OpusFileWriter.cpp \
     src/libraries/OpusFileReader.cpp \
     src/libraries/OpusPlayer.cpp \
@@ -448,6 +473,13 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorFindBar.cpp \
     src/libraries/wyedit/EditorImageOpenDialog.cpp \
     src/views/mainWindow/MainWindow.cpp \
+    src/views/mainWindow/MainWindowMenus.cpp \
+    src/views/mainWindow/MainWindowLayout.cpp \
+    src/views/mainWindow/MainWindowMcp.cpp \
+    src/views/mainWindow/MainWindowTray.cpp \
+    src/views/mainWindow/McpGuiBridge.cpp \
+    src/views/mainWindow/MenuBuilder.cpp \
+    src/views/mainWindow/TrayManager.cpp \
     src/views/printPreview/PrintPreview.cpp \
     src/views/printPreview/PreviewView.cpp \
     src/views/toolbarSettings/MainToolbarSettingsScreen.cpp \
@@ -462,6 +494,10 @@ SOURCES = src/main.cpp \
     src/views/record/AddNewRecord.cpp \
     src/libraries/ClipboardRecords.cpp \
     src/views/tree/TreeScreen.cpp \
+    src/views/tree/TreeScreenSetup.cpp \
+    src/views/tree/TreeScreenEdit.cpp \
+    src/views/tree/TreeScreenClipboard.cpp \
+    src/views/tree/TreeScreenView.cpp \
     src/views/findInBaseScreen/FindScreen.cpp \
     src/views/findInBaseScreen/FindTableWidget.cpp \
     src/views/appConfigWindow/AppConfigDialog.cpp \
@@ -509,6 +545,10 @@ SOURCES = src/main.cpp \
     src/libraries/crypt/XChaChaCipherBackend.cpp \
     src/libraries/wyedit/EditorToolBar.cpp \
     src/libraries/wyedit/formatters/TypefaceFormatter.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterCode.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterHeadings.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterFont.cpp \
+    src/libraries/wyedit/formatters/TypefaceFormatterCleanup.cpp \
     src/libraries/wyedit/formatters/Formatter.cpp \
     src/libraries/wyedit/formatters/PlacementFormatter.cpp \
     src/libraries/wyedit/formatters/ListFormatter.cpp \
@@ -575,7 +615,19 @@ SOURCES+=\
     src/libraries/ChangeHistory.cpp \
     src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
+    src/libraries/AppContext.cpp \
+    src/libraries/crypt/CryptKeyHolder.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
+    src/models/appConfig/AppConfigStorage.cpp \
+    src/models/appConfig/AppConfigUi.cpp \
+    src/models/appConfig/AppConfigFind.cpp \
+    src/models/appConfig/AppConfigSync.cpp \
+    src/models/appConfig/AppConfigGeneral.cpp \
+    src/models/appConfig/AppConfigCrypto.cpp \
+    src/models/appConfig/AppConfigRecordTable.cpp \
+    src/models/appConfig/AppConfigClipper.cpp \
+    src/models/appConfig/AppConfigServices.cpp \
+    src/models/appConfig/AppConfigTables.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \
     src/views/waitClock/WaitClock.cpp \
@@ -584,6 +636,9 @@ SOURCES+=\
     src/libraries/Favorites.cpp \
     src/libraries/BacklinkIndex.cpp \
     src/libraries/Clipper.cpp \
+    src/libraries/ClipperParse.cpp \
+    src/libraries/ClipperPipeline.cpp \
+    src/libraries/ClipperHotkey.cpp \
     src/libraries/crypt/Pbkdf2Qt.cpp \
     src/libraries/crypt/RC5Simple.cpp \
     src/libraries/crypt/Password.cpp \

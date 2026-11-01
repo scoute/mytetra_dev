@@ -24,14 +24,11 @@
 
 #include "models/appConfig/AppFiles.h"
 
-
 #ifdef Q_OS_WIN32
 #include "windows.h"
 #endif
 
-
-extern AppFiles mytetraFiles;
-
+#include "libraries/AppContext.h"
 
 GlobalParameters::GlobalParameters(QObject *pobj) : QObject(pobj)
 {
@@ -43,18 +40,15 @@ GlobalParameters::~GlobalParameters()
 
 }
 
-
 void GlobalParameters::setMainProgramFile(QString file)
 {
  m_mainProgramFile=file;
 }
 
-
 QString GlobalParameters::getMainProgramFile(void)
 {
  return m_mainProgramFile;
 }
-
 
 void GlobalParameters::init(void)
 {
@@ -73,7 +67,6 @@ void GlobalParameters::init(void)
 
  initWorkDirectory(); // Инициализация рабочей директории
 }
-
 
 // Бездиалоговая инициализация для headless-режимов (MCP-сервер):
 // кодеки и поиск рабочей директории без InstallDialog.
@@ -94,7 +87,6 @@ bool GlobalParameters::initHeadless(void)
  return findWorkDirectory();
 }
 
-
 QString GlobalParameters::getInitSystemCodepage()
 {
 #ifdef Q_OS_WIN32
@@ -108,7 +100,6 @@ QString GlobalParameters::getInitSystemCodepage()
     return "";
 }
 
-
 QString GlobalParameters::getInitConsoleCodepage()
 {
 #ifdef Q_OS_WIN32
@@ -121,7 +112,6 @@ QString GlobalParameters::getInitConsoleCodepage()
 
     return "";
 }
-
 
 void GlobalParameters::initCodepage(void)
 {
@@ -137,7 +127,6 @@ void GlobalParameters::initCodepage(void)
     }
 }
 
-
 // Системная кодировка, она же кодировка локали
 // В этой кодировке происходит работа с именами файлов и директорий
 QString GlobalParameters::getSystemCodepage()
@@ -145,13 +134,11 @@ QString GlobalParameters::getSystemCodepage()
     return m_systemCodepage;
 }
 
-
 // Кодировка консоли
 QString GlobalParameters::getConsoleCodepage()
 {
     return m_consoleCodepage;
 }
-
 
 // Инициализация рабочей директории
 // Если рабочая директория уже существует, она будет установлена как рабочая
@@ -189,7 +176,6 @@ void GlobalParameters::initWorkDirectory(void)
 
  QString dataDirName=".config/"+getApplicationName();
 
-
  InstallDialog installDialog;
  installDialog.setStandartData(dataDirName, QDir::homePath());
  installDialog.setPortableData(fullCurrentPath);
@@ -202,11 +188,11 @@ void GlobalParameters::initWorkDirectory(void)
      // Надо разобраться, какой режим инсталляции был выбран
      if( installDialog.getInstallType()==InstallDialog::InstallType::Standart)
      {
-        mytetraFiles.createStandartProgramFiles(); // Установка файлов рабочей директории в режиме Стандартного приложения
+        AppContext::instance().appFiles()->createStandartProgramFiles(); // Установка файлов рабочей директории в режиме Стандартного приложения
      }
      else
      {
-        mytetraFiles.createPortableProgramFiles(); // Установка файлов рабочей директории в режиме Переносимого приложения
+        AppContext::instance().appFiles()->createPortableProgramFiles(); // Установка файлов рабочей директории в режиме Переносимого приложения
      }
 
      // Запоминается автоопределенный язык
@@ -221,7 +207,6 @@ void GlobalParameters::initWorkDirectory(void)
  m_workDirectory="";
  findWorkDirectory();
 }
-
 
 // Автоопределение рабочей директории
 bool GlobalParameters::findWorkDirectory(void)
@@ -305,7 +290,6 @@ bool GlobalParameters::findWorkDirectory(void)
   }
 }
 
-
 // Проверка ini-файла
 bool GlobalParameters::isMytetraIniConfig(QString fileName)
 {
@@ -365,24 +349,20 @@ bool GlobalParameters::isMytetraIniConfig(QString fileName)
   return false; // Нет указанного файла
 }
 
-
 QString GlobalParameters::getWorkDirectory(void)
 {
     return m_workDirectory;
 }
-
 
 QString GlobalParameters::getActionLogFileName(void)
 {
     return m_workDirectory+"/actionLog.txt";
 }
 
-
 QString GlobalParameters::getActionLogPrevFileName(void)
 {
     return m_workDirectory+"/actionLogPrev.txt";
 }
-
 
 QString GlobalParameters::getTargetOs(void)
 {
@@ -398,7 +378,6 @@ QString GlobalParameters::getTargetOs(void)
     return "android";
 #endif
 }
-
 
 // Имя программы в системе
 // Используется для создания и поиска каталога с данными пользователя
@@ -421,7 +400,6 @@ QString GlobalParameters::getApplicationName(void)
     return appName;
 }
 
-
 void GlobalParameters::setTreeScreen(TreeScreen *point)
 {
     m_pointTreeScreen=point;
@@ -431,7 +409,6 @@ TreeScreen *GlobalParameters::getTreeScreen()
 {
     return m_pointTreeScreen;
 }
-
 
 void GlobalParameters::setRecordTableScreen(RecordTableScreen *point)
 {
@@ -443,7 +420,6 @@ RecordTableScreen *GlobalParameters::getRecordTableScreen()
     return m_pointRecordTableScreen;
 }
 
-
 void GlobalParameters::setFindScreen(FindScreen *point)
 {
     m_pointFindScreen=point;
@@ -453,7 +429,6 @@ FindScreen *GlobalParameters::getFindScreen()
 {
     return m_pointFindScreen;
 }
-
 
 void GlobalParameters::setMetaEditor(MetaEditor *point)
 {
@@ -465,7 +440,6 @@ MetaEditor *GlobalParameters::getMetaEditor()
     return m_pointMetaEditor;
 }
 
-
 void GlobalParameters::setStatusBar(QStatusBar *point)
 {
     m_pointStatusBar=point;
@@ -476,46 +450,49 @@ QStatusBar *GlobalParameters::getStatusBar()
     return m_pointStatusBar;
 }
 
-
 void GlobalParameters::setWindowSwitcher(WindowSwitcher *point)
 {
     m_windowSwitcher=point;
 }
-
 
 WindowSwitcher *GlobalParameters::getWindowSwitcher()
 {
     return m_windowSwitcher;
 }
 
-
 void GlobalParameters::setSyncroCommandRunner(CommandRunner *point)
 {
     m_syncroCommandRunner=point;
 }
-
 
 CommandRunner *GlobalParameters::getSyncroCommandRunnner()
 {
     return m_syncroCommandRunner;
 }
 
-
 void GlobalParameters::setCryptKey(QByteArray hash)
 {
+    m_cryptHolder.setKey(hash);
     passwordHash=hash;
 }
 
-
 QByteArray GlobalParameters::getCryptKey(void)
 {
-    return passwordHash;
+    return m_cryptHolder.key();
 }
 
+CryptKeyHolder &GlobalParameters::cryptHolder(void)
+{
+    return m_cryptHolder;
+}
+
+const CryptKeyHolder &GlobalParameters::cryptHolder(void) const
+{
+    return m_cryptHolder;
+}
 
 QString GlobalParameters::getInstallAutodetectLang()
 {
     return m_installAutodetectLang;
 }
-
 

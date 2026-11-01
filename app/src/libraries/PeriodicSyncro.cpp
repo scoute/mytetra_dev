@@ -4,17 +4,14 @@
 #include "models/appConfig/AppConfig.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
 
 // Переопределяемый метод
 bool PeriodicSyncro::isStartEnabled()
 {
-  return mytetraConfig.getEnablePeriodicSyncro();
+  return AppContext::instance().appConfig()->syncSection()->getEnablePeriodicSyncro();
 }
-
 
 // Действия, происходящие по таймеру
 void PeriodicSyncro::timerEvent(QTimerEvent *event)
@@ -24,7 +21,7 @@ void PeriodicSyncro::timerEvent(QTimerEvent *event)
   qDebug() << "In timer PeriodicSyncro working method";
 
   // Если команда синхронизации пуста, нечего выполнять
-  if(mytetraConfig.get_synchrocommand().trimmed().length()==0)
+  if(AppContext::instance().appConfig()->syncSection()->get_synchrocommand().trimmed().length()==0)
     return;
 
   // Запуск синхронизации в скрытом режиме

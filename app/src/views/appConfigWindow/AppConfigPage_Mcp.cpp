@@ -17,11 +17,8 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/mcp/McpServer.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 AppConfigPage_Mcp::AppConfigPage_Mcp(QWidget *parent) : ConfigPage(parent)
 {
@@ -30,12 +27,10 @@ AppConfigPage_Mcp::AppConfigPage_Mcp(QWidget *parent) : ConfigPage(parent)
   assembly();
 }
 
-
 AppConfigPage_Mcp::~AppConfigPage_Mcp()
 {
 
 }
-
 
 void AppConfigPage_Mcp::setupUi(void)
 {
@@ -45,7 +40,7 @@ void AppConfigPage_Mcp::setupUi(void)
   // а GUI игнорирует внешние mcp-команды
   mcpAllowCheck=new QCheckBox(this);
   mcpAllowCheck->setText(tr("Allow MCP access"));
-  mcpAllowCheck->setChecked(mytetraConfig.get_mcpAllow());
+  mcpAllowCheck->setChecked(AppContext::instance().appConfig()->servicesSection()->get_mcpAllow());
 
   // Знак вопроса: тултип короткий, диалог по клику подробный
   mcpHelpButton=new QToolButton(this);
@@ -99,14 +94,12 @@ void AppConfigPage_Mcp::setupUi(void)
   retranslateTools();
 }
 
-
 void AppConfigPage_Mcp::setupSignals(void)
 {
   connect(mcpHelpButton, &QToolButton::clicked, this, &AppConfigPage_Mcp::onHelpButton);
   connect(opencodeCopy, &QPushButton::clicked, this, &AppConfigPage_Mcp::onCopyOpencode);
   connect(claudeCopy, &QPushButton::clicked, this, &AppConfigPage_Mcp::onCopyClaude);
 }
-
 
 void AppConfigPage_Mcp::assembly(void)
 {
@@ -155,7 +148,6 @@ void AppConfigPage_Mcp::assembly(void)
   setLayout(centralLayout);
 }
 
-
 // Текст секции каталога: по строке на тул. Вызывается и при
 // построении, и при смене языка (заголовки со счетчиками)
 QString AppConfigPage_Mcp::toolsSectionText(const QString &category)
@@ -170,7 +162,6 @@ QString AppConfigPage_Mcp::toolsSectionText(const QString &category)
   return lines.join(QStringLiteral("<br/>"));
 }
 
-
 int AppConfigPage_Mcp::toolsSectionCount(const QString &category)
 {
   int count=0;
@@ -181,7 +172,6 @@ int AppConfigPage_Mcp::toolsSectionCount(const QString &category)
 
   return count;
 }
-
 
 void AppConfigPage_Mcp::retranslateTools(void)
 {
@@ -196,11 +186,10 @@ void AppConfigPage_Mcp::retranslateTools(void)
   deleteBody->setText(toolsSectionText(QStringLiteral("delete")));
 }
 
-
 // Путь к бинарнику в JSON: обратные слэши ломают JSON, меняются на прямые
 static QString mcpBinaryPath(void)
 {
-  QString path=globalParameters.getMainProgramFile();
+  QString path=AppContext::instance().globalParameters()->getMainProgramFile();
 
   if(path.isEmpty())
     path="/path/to/mytetra";
@@ -209,7 +198,6 @@ static QString mcpBinaryPath(void)
 
   return path;
 }
-
 
 QString AppConfigPage_Mcp::opencodeExample(void)
 {
@@ -225,7 +213,6 @@ QString AppConfigPage_Mcp::opencodeExample(void)
          "}";
 }
 
-
 QString AppConfigPage_Mcp::claudeExample(void)
 {
   return "{\n"
@@ -238,13 +225,11 @@ QString AppConfigPage_Mcp::claudeExample(void)
          "}";
 }
 
-
 void AppConfigPage_Mcp::retranslateExamples(void)
 {
   opencodeText->setPlainText(opencodeExample());
   claudeText->setPlainText(claudeExample());
 }
-
 
 void AppConfigPage_Mcp::onHelpButton(void)
 {
@@ -271,18 +256,15 @@ void AppConfigPage_Mcp::onHelpButton(void)
   msgBox.exec();
 }
 
-
 void AppConfigPage_Mcp::onCopyOpencode(void)
 {
   QApplication::clipboard()->setText(opencodeText->toPlainText());
 }
 
-
 void AppConfigPage_Mcp::onCopyClaude(void)
 {
   QApplication::clipboard()->setText(claudeText->toPlainText());
 }
-
 
 void AppConfigPage_Mcp::retranslateUi(void)
 {
@@ -299,15 +281,14 @@ void AppConfigPage_Mcp::retranslateUi(void)
   retranslateTools();
 }
 
-
 // Перезапуск не нужен: сервер читает галочку при каждом старте,
 // GUI проверяет ее в момент команды
 int AppConfigPage_Mcp::applyChanges(void)
 {
   qDebug() << "Apply changes mcp";
 
-  if(mytetraConfig.get_mcpAllow()!=mcpAllowCheck->isChecked())
-    mytetraConfig.set_mcpAllow(mcpAllowCheck->isChecked());
+  if(AppContext::instance().appConfig()->servicesSection()->get_mcpAllow()!=mcpAllowCheck->isChecked())
+    AppContext::instance().appConfig()->servicesSection()->set_mcpAllow(mcpAllowCheck->isChecked());
 
   return 0;
 }

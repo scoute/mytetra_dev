@@ -7,10 +7,8 @@
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 // TreeModel - Это модель данных, которая работает с видом TreeScreen
 // От него наследуется класс KnowTreeModel
@@ -51,9 +49,9 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
      // Кастомный цвет дерева: модельный Foreground перебивает
      // stylesheet, поэтому без этого возврата custom красил бы
      // только треугольники, а текст оставался бы палитровым
-     if(mytetraConfig.getInterfaceTheme()=="custom")
+     if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()=="custom")
      {
-       const QColor custom(mytetraConfig.get_themeCustomTreeText());
+       const QColor custom(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText());
 
        if(custom.isValid())
        {
@@ -84,14 +82,12 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
      }
     }
 
-
     // Если запрашивается окраска фона элемента
     if(role==Qt::BackgroundRole)
     {
      if(index==cursorOverIndex)
       return QColor(Qt::gray);
     }
-
 
     // Если запрашивается содержимое текста элемента
     if(role==Qt::DisplayRole || role== Qt::EditRole)
@@ -116,7 +112,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
       if(item->getField("crypt")=="1")
       {
         // Если пароль не введен, доступа к ветке нет
-        if(globalParameters.getCryptKey().length()==0)
+        if(AppContext::instance().globalParameters()->getCryptKey().length()==0)
          return QIcon(":/resource/pic/branch_closed.svg");
         else
          return QIcon(":/resource/pic/branch_opened.svg");
@@ -126,7 +122,6 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-
 Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
 {
   if (!index.isValid())
@@ -134,7 +129,6 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
 
   return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
-
 
 // Получение указателя на Item-злемент связанный с заданным QModelIndex
 TreeItem *TreeModel::getItem(const QModelIndex &index) const
@@ -160,7 +154,6 @@ TreeItem *TreeModel::getItem(const QModelIndex &index) const
   return rootItem;
 }
 
-
 QModelIndex TreeModel::getIndexByItem(TreeItem *item)
 {
     // Инициализация рекурсивной функции
@@ -168,7 +161,6 @@ QModelIndex TreeModel::getIndexByItem(TreeItem *item)
 
     return getIndexRecurse(QModelIndex(), item, 1);
 }
-
 
 QModelIndex TreeModel::getIndexRecurse(QModelIndex modelIndex, TreeItem *item, int mode)
 {
@@ -204,7 +196,6 @@ QModelIndex TreeModel::getIndexRecurse(QModelIndex modelIndex, TreeItem *item, i
     return QModelIndex();
 }
 
-
 // Получение указателя на Item-злемент с указанным путем
 TreeItem *TreeModel::getItem(QStringList path) const
 {
@@ -232,7 +223,6 @@ TreeItem *TreeModel::getItem(QStringList path) const
 
  return curritem;
 }
-
 
 bool TreeModel::isItemValid(QStringList path) const
 {
@@ -267,12 +257,10 @@ bool TreeModel::isItemValid(QStringList path) const
   return true;
 }
 
-
 void TreeModel::emitSignalDataChanged(const QModelIndex &index)
 {
     emit dataChanged(index, index);
 }
-
 
 // Получение заголовка столбца
 // Заголовки хранятся в корневом Item элементе просто в виде значений 
@@ -297,7 +285,6 @@ QVariant TreeModel::headerData(int section, Qt::Orientation orientation,
  */
 }
 
-
 // Получение индекса элемента, который задан через parent и 
 // номер строки и столбца относительно parent (нумерация с нуля)
 // Загадочный метод, надо еще подумать что он делает на самом деле
@@ -314,7 +301,6 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex &parent) con
   else
     return QModelIndex();
 }
-
 
 // Вставка пустых строк с позиции position в количестве rows
 bool TreeModel::insertRows(int position, int rows, const QModelIndex &parent)
@@ -333,7 +319,6 @@ bool TreeModel::insertRows(int position, int rows, const QModelIndex &parent)
   return success;
 }
 
-
 QModelIndex TreeModel::parent(const QModelIndex &index) const
 {
   if(!index.isValid())
@@ -348,7 +333,6 @@ QModelIndex TreeModel::parent(const QModelIndex &index) const
   return createIndex(static_cast<int>( parentItem->childNumber() ), 0, parentItem);
 }
 
-
 bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
   TreeItem *parentItem = getItem(parent);
@@ -361,13 +345,11 @@ bool TreeModel::removeRows(int position, int rows, const QModelIndex &parent)
   return success;
 }
 
-
 int TreeModel::rowCount(const QModelIndex &itemIndex) const
 {
  TreeItem *item = getItem(itemIndex);
   return static_cast<int>( item->childCount() );
 }
-
 
 // Установка значений в Item элементе, связанного с указанным QModelIndex 
 bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
@@ -408,7 +390,6 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int rol
   return false;
 }
 
-
 bool TreeModel::setHeaderData(int section, Qt::Orientation orientation,
                               const QVariant &value, int role)
 {
@@ -420,7 +401,6 @@ bool TreeModel::setHeaderData(int section, Qt::Orientation orientation,
   rootItem->setField("name", value.toString());
   return true;
 }
-
 
 const TreeItem* TreeModel::getRootItem() const
 {

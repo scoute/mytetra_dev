@@ -6,11 +6,7 @@
 #include "libraries/crypt/CryptService.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/HtmlHelper.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 ActionLogger::ActionLogger(QObject *pobj)
 {
@@ -54,16 +50,18 @@ ActionLogger::ActionLogger(QObject *pobj)
 
   actionStructure["criticalError"] =(QStringList() << "errorMessage" );
 
+  // Утраченный ключ конфига: первое срабатывание фолбэка get_parameter
+  // на известное таблице имя (дальше только счетчик, без спама)
+  actionStructure["configFallback"] =(QStringList() << "name" << "defaultValue" );
+
   // По-умолчанию логирование запрещено
   enableLogging=false;
 }
-
 
 ActionLogger::~ActionLogger()
 {
   closeLogFile();
 }
-
 
 void ActionLogger::init()
 {
@@ -73,12 +71,11 @@ void ActionLogger::init()
     openLogFileForWrite();
 }
 
-
 void ActionLogger::openLogFileForWrite()
 {
   // Подготавливается лог-файл
-  logFileName=globalParameters.getActionLogFileName();
-  logPrevFileName=globalParameters.getActionLogPrevFileName();
+  logFileName=AppContext::instance().globalParameters()->getActionLogFileName();
+  logPrevFileName=AppContext::instance().globalParameters()->getActionLogPrevFileName();
 
   logFile.setFileName(logFileName); // Открывается файл лога
   bool result=logFile.open(QIODevice::Append | QIODevice::Text);
@@ -90,12 +87,11 @@ void ActionLogger::openLogFileForWrite()
   QFile::setPermissions(logFileName, QFile::ReadUser | QFile::WriteUser);
 }
 
-
 void ActionLogger::openLogFileForRead()
 {
   // Подготавливается лог-файл
-  logFileName=globalParameters.getActionLogFileName();
-  logPrevFileName=globalParameters.getActionLogPrevFileName();
+  logFileName=AppContext::instance().globalParameters()->getActionLogFileName();
+  logPrevFileName=AppContext::instance().globalParameters()->getActionLogPrevFileName();
 
   logFile.setFileName(logFileName); // Открывается файл лога
   bool result=logFile.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -103,12 +99,10 @@ void ActionLogger::openLogFileForRead()
     criticalError("Cant open log file "+logFileName+" for readind data");
 }
 
-
 void ActionLogger::closeLogFile()
 {
   logFile.close();
 }
-
 
 // Укорачивание лог-файла
 void ActionLogger::trimLogFile()
@@ -120,8 +114,8 @@ void ActionLogger::trimLogFile()
     }
 
     // Копирование необходимого количества строк во временный файл
-    QString logFileName=globalParameters.getActionLogFileName();
-    QString tempFileName=globalParameters.getActionLogFileName()+".tmp";
+    QString logFileName=AppContext::instance().globalParameters()->getActionLogFileName();
+    QString tempFileName=AppContext::instance().globalParameters()->getActionLogFileName()+".tmp";
 
     QFile logFile(logFileName);
     QFile tempFile(tempFileName);
@@ -146,17 +140,15 @@ void ActionLogger::trimLogFile()
     logFile.close();
     tempFile.close();
 
-
     logFile.remove(); // Лог-файл удаляется
     QFile::rename ( tempFileName, logFileName ); // Временный файл сохраняется как лог-файл
     tempFile.remove(); // Временный файл удаляется
 }
 
-
 // Выяснение количества строк в лог-файле
 int ActionLogger::getLinesCount()
 {
-    QString logFileName=globalParameters.getActionLogFileName();
+    QString logFileName=AppContext::instance().globalParameters()->getActionLogFileName();
 
     QFile file(logFileName);
 
@@ -174,12 +166,10 @@ int ActionLogger::getLinesCount()
     return count;
 }
 
-
 void ActionLogger::setEnableLogging(bool flag)
 {
   enableLogging=flag;
 }
-
 
 // Получение текста лог-файла в виде XML-кода
 QString ActionLogger::getXml()
@@ -205,7 +195,6 @@ QString ActionLogger::getXml()
   return xmlText;
 }
 
-
 QString ActionLogger::getFullDescription(QDomElement element)
 {
   QMap<QString, QString> data;
@@ -219,7 +208,6 @@ QString ActionLogger::getFullDescription(QDomElement element)
 
   return getFullDescription(data);
 }
-
 
 // Получение текстового описания действия
 // iData содержит полные атрибуты записи, взятые из лога, включая "v" - версия, "t" - время, "a" - наименование действия
@@ -243,15 +231,15 @@ QString ActionLogger::getFullDescription(QMap<QString, QString> iData)
   else if( iData["a"] == "createCryptRecord")
   {
     // Если пароль не введен, зашифрованные данные не расшифровываются и не показываются
-    if(globalParameters.getCryptKey().length()==0)
+    if(AppContext::instance().globalParameters()->getCryptKey().length()==0)
     {
       iData["recordName"]="***";
       iData["branchName"]="***";
     }
     else
     {
-      iData["recordName"]=CryptService::decryptString(globalParameters.getCryptKey(), iData["recordName"]);
-      iData["branchName"]=CryptService::decryptString(globalParameters.getCryptKey(), iData["branchName"]);
+      iData["recordName"]=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), iData["recordName"]);
+      iData["branchName"]=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), iData["branchName"]);
     }
 
     line=tr("Create crypt note \"%1\" with ID %2 in tree item \"%3\" with ID %4").arg( iData["recordName"] ).
@@ -267,15 +255,14 @@ QString ActionLogger::getFullDescription(QMap<QString, QString> iData)
   else if( iData["a"] == "editCryptRecord")
   {
     // Если пароль не введен, зашифрованные данные не расшифровываются и не показываются
-    if(globalParameters.getCryptKey().length()==0)
+    if(AppContext::instance().globalParameters()->getCryptKey().length()==0)
       iData["recordName"]="***";
     else
-      iData["recordName"]=CryptService::decryptString(globalParameters.getCryptKey(), iData["recordName"]);
+      iData["recordName"]=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), iData["recordName"]);
 
     line=tr("Edit fields of crypt note \"%1\" with ID %2").arg( iData["recordName"] ).
                                                            arg( iData["recordId"]);
   }
-
 
   else if( iData["a"] == "editRecordText")
     line=tr("Edit text of note \"%1\" with ID %2").arg( iData["recordName"] ).
@@ -284,15 +271,14 @@ QString ActionLogger::getFullDescription(QMap<QString, QString> iData)
   else if( iData["a"] == "editCryptRecordText")
   {
     // Если пароль не введен, зашифрованные данные не расшифровываются и не показываются
-    if(globalParameters.getCryptKey().length()==0)
+    if(AppContext::instance().globalParameters()->getCryptKey().length()==0)
       iData["recordName"]="***";
     else
-      iData["recordName"]=CryptService::decryptString(globalParameters.getCryptKey(), iData["recordName"]);
+      iData["recordName"]=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), iData["recordName"]);
 
     line=tr("Edit text of crypt note \"%1\" with ID %2").arg( iData["recordName"] ).
                                                          arg( iData["recordId"]);
   }
-
 
   else if( iData["a"] == "moveRecordUp")
     line=tr("Move up note \"%1\" with ID %2").arg( iData["recordName"] ).
@@ -345,12 +331,14 @@ QString ActionLogger::getFullDescription(QMap<QString, QString> iData)
   else if( iData["a"] == "criticalError")
     line=tr("Critical error: %1").arg( iData["errorMessage"] );
 
+  else if( iData["a"] == "configFallback")
+    line=tr("Config key \"%1\" is missing, fallback to default value \"%2\"").arg( iData["name"] ).arg( iData["defaultValue"] );
+
   else
     line=tr("Unavailable action %1").arg( iData["a"] );
 
   return line;
 }
-
 
 // Добавление действия в лог
 // iName - наименование действия
@@ -382,7 +370,6 @@ void ActionLogger::addAction(QString iName, QMap<QString, QString> iData)
   // Атрибуты с недопустимым именем убираются из списка сохранения
   foreach (QString excludeAttName, unavailableAttName)
     iData.remove(excludeAttName);
-
 
   // Конструируется строка лога
   QString line="<r ";

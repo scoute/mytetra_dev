@@ -6,22 +6,19 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/DiskHelper.h"
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 AppFiles::AppFiles()
 {
 
 }
 
-
 void AppFiles::createStandartProgramFiles(void)
 {
     qDebug() << "Create standard program files";
 
     QDir userDir=QDir::home();
-    QString dataDirName=".config/"+globalParameters.getApplicationName();
+    QString dataDirName=".config/"+AppContext::instance().globalParameters()->getApplicationName();
 
     // Если директория либо успешно создалась, либо уже существовала (проверяется одним вызовом mkpath)
     if( userDir.mkpath(dataDirName) )
@@ -40,18 +37,16 @@ void AppFiles::createStandartProgramFiles(void)
     }
 }
 
-
 void AppFiles::createPortableProgramFiles(void)
 {
     qDebug() << "Create portable program files";
 
     // Путь к директории, где лежит бинарник
-    QFileInfo mainProgramFileInfo( globalParameters.getMainProgramFile() );
+    QFileInfo mainProgramFileInfo( AppContext::instance().globalParameters()->getMainProgramFile() );
     QString path=mainProgramFileInfo.absolutePath();
 
     this->createFirstAppFiles(path);
 }
-
 
 // Создание первоначального набора файлов в указанной директории
 // Значение flags по умолчанию - создание всех возможных файлов
@@ -75,7 +70,7 @@ void AppFiles::createFirstAppFiles(QString dirName,
     // Создаются основные файлы конфигурации
     if ( flags & CreateFirstAppFilesFlags::APP_CONFIG )
     {
-        QString targetOs=globalParameters.getTargetOs(); // "any" или "meego" или "android"
+        QString targetOs=AppContext::instance().globalParameters()->getTargetOs(); // "any" или "meego" или "android"
 
         QFile::copy(":/resource/standartconfig/"+targetOs+"/conf.ini", dirName+"/conf.ini");
         QFile::setPermissions(dirName+"/conf.ini", QFile::ReadUser | QFile::WriteUser);
@@ -118,10 +113,9 @@ void AppFiles::createFirstAppFiles(QString dirName,
 #endif
 }
 
-
 void AppFiles::createThemesFiles(const QString &dirName, const QString &themeName)
 {
-    QString targetOs = globalParameters.getTargetOs();
+    QString targetOs = AppContext::instance().globalParameters()->getTargetOs();
 
     // Если имя темы не указано
     if ( themeName.isEmpty() )

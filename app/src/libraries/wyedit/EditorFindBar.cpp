@@ -10,10 +10,7 @@
 #include "EditorConfig.h"
 #include "EditorFindBar.h"
 #include "libraries/ShortcutManager.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 EditorFindBar::EditorFindBar(QWidget *parent) : QWidget(parent)
 {
@@ -25,7 +22,6 @@ EditorFindBar::EditorFindBar(QWidget *parent) : QWidget(parent)
   lineEdit->installEventFilter(this);
   replaceEdit->installEventFilter(this);
 }
-
 
 void EditorFindBar::setup_ui(void)
 {
@@ -125,7 +121,6 @@ void EditorFindBar::setup_ui(void)
   detachButton->setToolTip(tr("Open as separate window"));
 }
 
-
 void EditorFindBar::setup_signals(void)
 {
   connect(lineEdit, &QLineEdit::textChanged,
@@ -166,21 +161,19 @@ void EditorFindBar::setup_signals(void)
           this,         &EditorFindBar::detach_clicked);
 
   // Подсказки зависят от горячих клавиш: освежать при их смене
-  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut,
+  connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut,
           this,             &EditorFindBar::setupShortcuts);
 
   setupShortcuts();
 }
 
-
 // Подсказки стрелок с актуальными горячими клавишами
 // (F3 и Shift+F3 по умолчанию, могут переназначаться)
 void EditorFindBar::setupShortcuts(void)
 {
-  prevButton->setToolTip(shortcutManager.getDescriptionWithShortcut("editor-findPrevious"));
-  nextButton->setToolTip(shortcutManager.getDescriptionWithShortcut("editor-findNext"));
+  prevButton->setToolTip(AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-findPrevious"));
+  nextButton->setToolTip(AppContext::instance().shortcutManager()->getDescriptionWithShortcut("editor-findNext"));
 }
-
 
 void EditorFindBar::assembly(void)
 {
@@ -210,13 +203,11 @@ void EditorFindBar::assembly(void)
   this->setLayout(centralLayout);
 }
 
-
 // Действия при нажатии кнопки Find: подсветить все и перейти к следующему
 void EditorFindBar::find_clicked(void)
 {
   emit find_text(lineEdit->text(), collectFlags());
 }
-
 
 // Переход к соседним совпадениям. Редактор сам разберется
 // что делать если совпадений нет или запрос пуст
@@ -225,12 +216,10 @@ void EditorFindBar::prev_clicked(void)
   emit find_previous();
 }
 
-
 void EditorFindBar::next_clicked(void)
 {
   emit find_next();
 }
-
 
 // Замена текущего совпадения или всех совпадений.
 // Редактор сам разберется что делать если совпадений нет
@@ -239,12 +228,10 @@ void EditorFindBar::replace_clicked(void)
   emit replace_one(lineEdit->text(), replaceEdit->text(), collectFlags());
 }
 
-
 void EditorFindBar::replace_all_clicked(void)
 {
   emit replace_all(lineEdit->text(), replaceEdit->text(), collectFlags());
 }
-
 
 // Уход в глобальный поиск: запрос передается наружу как есть.
 // Флаги не передаются: в глобальном поиске свои режимы (целые слова
@@ -254,20 +241,17 @@ void EditorFindBar::inbase_clicked(void)
   emit find_in_base(lineEdit->text());
 }
 
-
 // Крестик: спрятать полоску, редактор снимет подсветку по сигналу
 void EditorFindBar::close_clicked(void)
 {
   hideBar();
 }
 
-
 // Открепление: редактор перенесет запрос в окно и спрячет полоску
 void EditorFindBar::detach_clicked(void)
 {
   emit detach_to_window();
 }
-
 
 // Флаги поиска, собранные из состояния чекбоксов
 QTextDocument::FindFlags EditorFindBar::collectFlags(void) const
@@ -279,13 +263,11 @@ QTextDocument::FindFlags EditorFindBar::collectFlags(void) const
   return flags;
 }
 
-
 // Текст или опции изменились: попросить подсветить, курсор не двигать
 void EditorFindBar::emit_highlight(void)
 {
   emit highlight_text(lineEdit->text(), collectFlags());
 }
-
 
 // Текущий текст поиска и флаги для обновления подсветки при показе полоски
 QString EditorFindBar::searchText(void) const
@@ -293,12 +275,10 @@ QString EditorFindBar::searchText(void) const
   return lineEdit->text();
 }
 
-
 QTextDocument::FindFlags EditorFindBar::searchFlags(void) const
 {
   return collectFlags();
 }
-
 
 // Установить текст и флаги извне. Изменение текста само обновляет
 // подсветку через textChanged, двигать курсор не надо
@@ -306,7 +286,6 @@ void EditorFindBar::setSearchText(const QString &text)
 {
   lineEdit->setText(text);
 }
-
 
 void EditorFindBar::setSearchFlags(QTextDocument::FindFlags flags)
 {
@@ -316,12 +295,10 @@ void EditorFindBar::setSearchFlags(QTextDocument::FindFlags flags)
   wholeWords->setChecked(flags & QTextDocument::FindWholeWords);
 }
 
-
 void EditorFindBar::setMatchCounter(const QString &text)
 {
   matchCounter->setText(text);
 }
-
 
 void EditorFindBar::showBar(void)
 {
@@ -331,7 +308,6 @@ void EditorFindBar::showBar(void)
   lineEdit->setFocus();
   lineEdit->selectAll();
 }
-
 
 // Квадратные кнопки в размер поля ввода. Вызывается при каждом показе:
 // sizeHint поля посчитан под текущий стиль и шрифт, а собственная
@@ -358,7 +334,6 @@ void EditorFindBar::fixSquareButtons(void)
   detachButton->setIconSize(QSize(iconSide, iconSide));
 }
 
-
 void EditorFindBar::hideBar(void)
 {
   // Полоска спрятана: редактор должен снять подсветку совпадений
@@ -366,7 +341,6 @@ void EditorFindBar::hideBar(void)
 
   emit find_bar_hidden();
 }
-
 
 // Кнопки поиска, перехода, замены и ухода в базу активны только тогда,
 // когда есть текст для поиска. Текст замены при этом может быть пустым:
@@ -382,7 +356,6 @@ void EditorFindBar::enable_find_button(const QString &text)
   replaceAllButton->setEnabled(enable);
   inbaseButton->setEnabled(enable);
 }
-
 
 bool EditorFindBar::eventFilter(QObject *watched, QEvent *event)
 {

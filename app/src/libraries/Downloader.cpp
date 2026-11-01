@@ -21,10 +21,8 @@
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 Downloader::Downloader()
 {
@@ -52,12 +50,10 @@ Downloader::Downloader()
   assembly();
 }
 
-
 Downloader::~Downloader()
 {
 
 }
-
 
 void Downloader::setupUI()
 {
@@ -74,12 +70,10 @@ void Downloader::setupUI()
   table->horizontalHeader()->setSectionResizeMode(downloadReferenceCol, QHeaderView::Stretch);
   table->setColumnWidth(downloadPercentCol, 128);
 
-
   // Создается кнопка отмены загрузки
   cancelButton=new QPushButton(this);
   cancelButton->setText(tr("Cancel"));
 }
-
 
 void Downloader::setupSignals()
 {
@@ -93,7 +87,6 @@ void Downloader::setupSignals()
           this,         &Downloader::onCancelClicked);
 }
 
-
 void Downloader::assembly()
 {
   QVBoxLayout *mainLayout=new QVBoxLayout();
@@ -105,24 +98,20 @@ void Downloader::assembly()
   setLayout(mainLayout);
 }
 
-
 void Downloader::setDownloadMode(int iMode)
 {
   downloadMode=iMode;
 }
-
 
 void Downloader::setSaveDirectory(QString iDir)
 {
   saveDirectory=iDir;
 }
 
-
 QString Downloader::getSaveDirectory()
 {
   return saveDirectory;
 }
-
 
 // Установка списка ссылок для закачивания
 void Downloader::setReferencesList(QStringList iReferencesList)
@@ -172,7 +161,6 @@ void Downloader::setReferencesList(QStringList iReferencesList)
   }
 }
 
-
 void Downloader::setAboutText(QString iAboutText)
 {
   aboutLabel->setText(iAboutText);
@@ -183,12 +171,10 @@ void Downloader::setAboutText(QString iAboutText)
     aboutLabel->hide();
 }
 
-
 QString Downloader::getAboutText()
 {
   return aboutLabel->text();
 }
-
 
 QVector<QByteArray> Downloader::getMemoryFiles() const
 {
@@ -197,7 +183,6 @@ QVector<QByteArray> Downloader::getMemoryFiles() const
 
   return memoryFiles;
 }
-
 
 QMap<QString, QByteArray> Downloader::getReferencesAndMemoryFiles() const
 {
@@ -212,7 +197,6 @@ QMap<QString, QByteArray> Downloader::getReferencesAndMemoryFiles() const
   return tempReferencesAndMemoryFiles;
 }
 
-
 QMap<QString, QString> Downloader::getReferencesAndFileNames() const
 {
   if(downloadMode==memory)
@@ -226,7 +210,6 @@ QMap<QString, QString> Downloader::getReferencesAndFileNames() const
   return tempReferencesAndFileNames;
 }
 
-
 QStringList Downloader::getDiskFilesList() const
 {
   if(downloadMode==memory)
@@ -235,12 +218,10 @@ QStringList Downloader::getDiskFilesList() const
   return QStringList();
 }
 
-
 QStringList Downloader::getReferencesList() const
 {
   return referencesList;
 }
-
 
 void Downloader::run()
 {
@@ -254,18 +235,15 @@ void Downloader::run()
     criticalError("Running downloader with empty references list.");
 }
 
-
 bool Downloader::isSuccess()
 {
   return isSuccessFlag;
 }
 
-
 QString Downloader::getErrorLog()
 {
   return errorLog;
 }
-
 
 void Downloader::reconnectSignalsNetworkReply(QNetworkReply *networkReply)
 {
@@ -275,7 +253,6 @@ void Downloader::reconnectSignalsNetworkReply(QNetworkReply *networkReply)
   disconnect(this, &Downloader::cancelDownload, 0, 0 );
   connect(   this, &Downloader::cancelDownload, networkReply, &QNetworkReply::abort);
 }
-
 
 // Запуск загрузки очередной ссылки
 void Downloader::startNextDownload()
@@ -297,7 +274,6 @@ void Downloader::startNextDownload()
   networkReply=webManager.get(request);
   reconnectSignalsNetworkReply(networkReply);
 }
-
 
 // Слот, вызываемый в конце загрузки очередного файла
 void Downloader::onFileDownloadFinished(QNetworkReply *reply)
@@ -371,7 +347,6 @@ void Downloader::onFileDownloadFinished(QNetworkReply *reply)
     downloadHasErrors=true;
   }
 
-
   // Если разрешена загрузка следующей ссылки
   if(enableNextDownload)
   {
@@ -403,7 +378,6 @@ void Downloader::onFileDownloadFinished(QNetworkReply *reply)
   reply->deleteLater();
 }
 
-
 void Downloader::onDownloadProgress(qint64 read, qint64 total)
 {
   qint64 percent=0;
@@ -414,7 +388,6 @@ void Downloader::onDownloadProgress(qint64 read, qint64 total)
   // На экране изменяется процент загрузки ссылки
   qobject_cast<QProgressBar *>(table->cellWidget(currentReferenceNum, downloadPercentCol))->setValue(percent);
 }
-
 
 // Метод, отбрасывающий повторяющиеся и недопустимые ссылки при редиректе.
 // Разрешаются только http и https: другие схемы (в частности file) никогда
@@ -435,7 +408,6 @@ QUrl Downloader::checkedRedirectUrl(const QUrl& possibleRedirectUrl)
   return redirectUrl;
 }
 
-
 // Некоторые серверы при возобновлении TLS-сессии не присылают
 // сертификат повторно, и Qt сообщает NoPeerCertificate, хотя сессия
 // уже была проверена при полном handshake. Это не подмена сертификата:
@@ -453,7 +425,6 @@ static bool isOnlyMissingPeerCertificate(const QList<QSslError> &errors)
   return true;
 }
 
-
 void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
   QStringList details;
@@ -463,7 +434,7 @@ void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &error
 
   // Явно разрешенный небезопасный режим из настроек: принимаем
   // невалидные/самоподписанные сертификаты, но громко предупреждаем
-  if(mytetraConfig.get_tlsIgnoreInvalidCertificates())
+  if(AppContext::instance().appConfig()->servicesSection()->get_tlsIgnoreInvalidCertificates())
   {
     qWarning() << "Downloader: TLS errors ignored by setting:"
                << details.join("; ");
@@ -495,7 +466,6 @@ void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &error
   reply->abort();
 }
 
-
 void Downloader::onCancelClicked()
 {
   emit cancelDownload();
@@ -506,7 +476,6 @@ void Downloader::onCancelClicked()
 
   reject();
 }
-
 
 void Downloader::addErrorLog(const QString text)
 {

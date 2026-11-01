@@ -15,44 +15,30 @@
 #include "views/tree/TreeScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 const QString Favorites::StorageSidecar=QStringLiteral("sidecar");
 const QString Favorites::StorageXml=QStringLiteral("xml");
-
-
-Favorites &Favorites::instance(void)
-{
-  static Favorites inst;
-
-  return inst;
-}
-
 
 Favorites::Favorites(QObject *parent) : QObject(parent)
 {
 
 }
 
-
 QString Favorites::sidecarFileName(void) const
 {
-  return QDir::cleanPath(mytetraConfig.get_tetradir()+"/favorites.xml");
+  return QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/favorites.xml");
 }
-
 
 QString Favorites::storage(void) const
 {
-  if(mytetraConfig.get_favoritesStorage()==StorageXml)
+  if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==StorageXml)
     return StorageXml;
 
   return StorageSidecar;
 }
-
 
 void Favorites::setStorage(const QString &mode)
 {
@@ -79,11 +65,10 @@ void Favorites::setStorage(const QString &mode)
     xmlWriteAll(QStringList());
   }
 
-  mytetraConfig.set_favoritesStorage(target);
+  AppContext::instance().appConfig()->uiSection()->set_favoritesStorage(target);
 
   emit favoritesChanged();
 }
-
 
 QStringList Favorites::ids(void) const
 {
@@ -97,7 +82,6 @@ QStringList Favorites::ids(void) const
 
   return out;
 }
-
 
 bool Favorites::isFavorite(const QString &id) const
 {
@@ -123,7 +107,6 @@ bool Favorites::isFavorite(const QString &id) const
 
   return m_sidecarIds.contains(id);
 }
-
 
 void Favorites::setFavorite(const QString &id, bool on)
 {
@@ -191,7 +174,6 @@ void Favorites::setFavorite(const QString &id, bool on)
   emit favoritesChanged();
 }
 
-
 int Favorites::purgeDead(void)
 {
   sidecarEnsureLoaded();
@@ -219,7 +201,6 @@ int Favorites::purgeDead(void)
   return before-m_sidecarIds.size();
 }
 
-
 void Favorites::removeIdsSilent(const QStringList &dead)
 {
   if(dead.isEmpty())
@@ -236,7 +217,6 @@ void Favorites::removeIdsSilent(const QStringList &dead)
     sidecarSave();
 }
 
-
 void Favorites::sidecarEnsureLoaded(void) const
 {
   if(m_sidecarLoaded)
@@ -246,7 +226,6 @@ void Favorites::sidecarEnsureLoaded(void) const
   const_cast<Favorites *>(this)->sidecarLoad();
   m_sidecarLoaded=true;
 }
-
 
 bool Favorites::sidecarLoad(void)
 {
@@ -284,7 +263,6 @@ bool Favorites::sidecarLoad(void)
 
   return true;
 }
-
 
 bool Favorites::sidecarSave(void) const
 {
@@ -326,7 +304,6 @@ bool Favorites::sidecarSave(void) const
   return true;
 }
 
-
 void Favorites::sidecarReplace(const QSet<QString> &fresh)
 {
   sidecarEnsureLoaded();
@@ -334,7 +311,6 @@ void Favorites::sidecarReplace(const QSet<QString> &fresh)
   m_sidecarIds=fresh;
   sidecarSave();
 }
-
 
 // Все id с флагом favorite по дереву. Зашифрованные ветки без ключа
 // пропускаются: читать их записи нельзя
@@ -369,7 +345,7 @@ QSet<QString> Favorites::xmlIdSet(void) const
 
       if(branchItem!=nullptr &&
          branchItem->getField(QStringLiteral("crypt"))==QStringLiteral("1") &&
-         globalParameters.getCryptKey().length()==0)
+         AppContext::instance().globalParameters()->getCryptKey().length()==0)
       {
         locked=true;
         break;
@@ -388,7 +364,6 @@ QSet<QString> Favorites::xmlIdSet(void) const
 
   return out;
 }
-
 
 // Полная перезапись флагов: выставляются только переданные id,
 // остальные чистятся. Одно сохранение дерева в конце

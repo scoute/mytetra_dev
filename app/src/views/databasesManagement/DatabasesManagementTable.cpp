@@ -14,22 +14,18 @@
 #include "libraries/helpers/GestureHelper.h"
 #include "models/databasesManagement/DatabasesManagementModel.h"
 #include "DatabasesManagementPathDelegate.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DatabasesManagementTable::DatabasesManagementTable(QWidget *parent) : QTableView(parent)
 {
 
 }
 
-
 DatabasesManagementTable::~DatabasesManagementTable()
 {
 
 }
-
 
 void DatabasesManagementTable::init()
 {
@@ -59,7 +55,6 @@ void DatabasesManagementTable::init()
   setupSignals();
 }
 
-
 void DatabasesManagementTable::setupSignals(void)
 {
   // Сигнал чтобы показать контекстное меню по правому клику на списке записей
@@ -77,12 +72,10 @@ void DatabasesManagementTable::setupSignals(void)
           controller, &DatabasesManagementController::onDoubleClicked);
 }
 
-
 void DatabasesManagementTable::setController(DatabasesManagementController *pController)
 {
     controller=pController;
 }
-
 
 void DatabasesManagementTable::setModel(QAbstractItemModel *model)
 {
@@ -109,7 +102,6 @@ void DatabasesManagementTable::setModel(QAbstractItemModel *model)
                                    new DatabasesManagementPathDelegate(this));
 }
 
-
 void DatabasesManagementTable::resizeEvent(QResizeEvent *event)
 {
   // Второй столбец должен занимать 80% ширины при любом размере таблицы
@@ -121,14 +113,13 @@ void DatabasesManagementTable::resizeEvent(QResizeEvent *event)
   QTableView::resizeEvent(event);
 }
 
-
 void DatabasesManagementTable::paintEvent(QPaintEvent *event)
 {
   QTableView::paintEvent(event);
 
   // Если нет записей лога
   if(model()!=nullptr)
-    if(model()->rowCount()==0 && mytetraConfig.getEnableLogging()==false)
+    if(model()->rowCount()==0 && AppContext::instance().appConfig()->storageSection()->getEnableLogging()==false)
     {
       QPainter painter(viewport());
       painter.setPen( QApplication::palette().color(QPalette::ToolTipText) ); // Qt::gray
@@ -137,14 +128,12 @@ void DatabasesManagementTable::paintEvent(QPaintEvent *event)
     }
 }
 
-
 void DatabasesManagementTable::assemblyContextMenu()
 {
   DatabasesManagementScreen *parentPointer=qobject_cast<DatabasesManagementScreen *>(parent());
 
   contextMenu.addAction( parentPointer->actionCopy );
 }
-
 
 // Открытие контекстного меню в таблице записей лога
 void DatabasesManagementTable::onCustomContextMenuRequested(const QPoint &pos)

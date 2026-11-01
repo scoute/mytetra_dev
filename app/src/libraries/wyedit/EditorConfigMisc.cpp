@@ -14,9 +14,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 EditorConfigMisc::EditorConfigMisc(QWidget *parent) : ConfigPage(parent)
 {
@@ -27,7 +25,6 @@ EditorConfigMisc::EditorConfigMisc(QWidget *parent) : ConfigPage(parent)
   setupSignals();
   assembly();
 }
-
 
 void EditorConfigMisc::setupUi(void)
 {
@@ -114,13 +111,11 @@ void EditorConfigMisc::setupUi(void)
  editWyEditConfigFile->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
 }
 
-
 void EditorConfigMisc::setupSignals(void)
 {
   connect(editWyEditConfigFile, &QPushButton::clicked,
           this,                 &EditorConfigMisc::onClickedEditWyEditConfigFile);
 }
-
 
 void EditorConfigMisc::assembly(void)
 {
@@ -154,7 +149,6 @@ void EditorConfigMisc::assembly(void)
   dangerLayout->addWidget(allowTrueImageResizeCheckBox);
   dangerBox->setLayout(dangerLayout);
 
-
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addLayout(configLayout);
   centralLayout->addWidget(specialCharCloseOnInsertCheckBox);
@@ -164,15 +158,13 @@ void EditorConfigMisc::assembly(void)
   setLayout(centralLayout);
 }
 
-
 void EditorConfigMisc::onClickedEditWyEditConfigFile(void)
 {
   // Сбрасываются в файл конфига все возможные изменения, которые, возможно еще не были записаны
   conf->sync();
 
-  ConfigEditorHelper::editConfigFile( globalParameters.getWorkDirectory()+"/editorconf.ini", 0.8f );
+  ConfigEditorHelper::editConfigFile( AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini", 0.8f );
 }
-
 
 int EditorConfigMisc::applyChanges(void)
 {

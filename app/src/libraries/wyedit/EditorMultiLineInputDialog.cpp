@@ -9,10 +9,7 @@
 
 #include "EditorMultiLineInputDialog.h"
 #include "libraries/ShortcutManager.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 EditorMultiLineInputDialog::EditorMultiLineInputDialog(QWidget *parent) : QDialog(parent)
 {
@@ -24,7 +21,6 @@ EditorMultiLineInputDialog::EditorMultiLineInputDialog(QWidget *parent) : QDialo
   assembly();
 }
 
-
 EditorMultiLineInputDialog::~EditorMultiLineInputDialog()
 {
   if(textArea!=NULL)
@@ -33,7 +29,6 @@ EditorMultiLineInputDialog::~EditorMultiLineInputDialog()
   if(buttonBox!=NULL)
     delete buttonBox;
 }
-
 
 void EditorMultiLineInputDialog::setupUi()
 {
@@ -54,13 +49,11 @@ void EditorMultiLineInputDialog::setupUi()
   OkButton->setAutoDefault(true);
   OkButton->setDefault(true);
 
-
   // С кнопки Cancel снимается флаг срабатывания по умолчанию,
   // это нужно для тулкитов основанных на GTK и прочих подобных библиотеках
   QPushButton *CancelButton=buttonBox->button(QDialogButtonBox::Cancel); // Выясняется указатель на кнопку Cancel
   CancelButton->setAutoDefault(false);
   CancelButton->setDefault(false);
-
 
   // Устанавливается размер окна, основанный на размере виджета, из которого
   // этот виджет был вызван
@@ -69,16 +62,14 @@ void EditorMultiLineInputDialog::setupUi()
         updateSize();
 }
 
-
 void EditorMultiLineInputDialog::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << staticMetaObject.className();
 
     QPushButton *okButton=buttonBox->button(QDialogButtonBox::Ok); // Выясняется указатель на кнопку OK
-    okButton->setShortcut( shortcutManager.getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
-    okButton->setToolTip(shortcutManager.getKeySequenceAsText("misc-editConfirm")); // ToolTip зависит от шортката
+    okButton->setShortcut( AppContext::instance().shortcutManager()->getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
+    okButton->setToolTip(AppContext::instance().shortcutManager()->getKeySequenceAsText("misc-editConfirm")); // ToolTip зависит от шортката
 }
-
 
 void EditorMultiLineInputDialog::setupSignals()
 {
@@ -86,9 +77,8 @@ void EditorMultiLineInputDialog::setupSignals()
     connect(buttonBox, &QDialogButtonBox::rejected, this, &EditorMultiLineInputDialog::reject);
 
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &EditorMultiLineInputDialog::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &EditorMultiLineInputDialog::setupShortcuts);
 }
-
 
 void EditorMultiLineInputDialog::assembly()
 {
@@ -101,18 +91,15 @@ void EditorMultiLineInputDialog::assembly()
   mainLayout->addWidget(buttonBox);
 }
 
-
 void EditorMultiLineInputDialog::setText(QString text)
 {
   textArea->setPlainText(text);
 }
 
-
 QString EditorMultiLineInputDialog::getText()
 {
   return textArea->toPlainText();
 }
-
 
 // Выясняется, был ли изменен текст, показанный в диалоге
 bool EditorMultiLineInputDialog::isModified() 
@@ -120,12 +107,10 @@ bool EditorMultiLineInputDialog::isModified()
   return textArea->document()->isModified();
 }
 
-
 void EditorMultiLineInputDialog::setWordWrapMode(QTextOption::WrapMode mode)
 {
   textArea->setWordWrapMode(mode);
 }
-
 
 void EditorMultiLineInputDialog::setSizeCoefficient(float f)
 {
@@ -133,7 +118,6 @@ void EditorMultiLineInputDialog::setSizeCoefficient(float f)
 
   updateSize();
 }
-
 
 void EditorMultiLineInputDialog::updateSize()
 {

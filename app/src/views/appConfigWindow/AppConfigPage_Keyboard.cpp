@@ -8,10 +8,8 @@
 #include "models/appConfig/AppConfig.h"
 #include "views/shortcutSettings/ShortcutSettingsScreen.h"
 #include "libraries/GlobalParameters.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigGeneral.h"
 
 AppConfigPage_Keyboard::AppConfigPage_Keyboard(QWidget *parent) : ConfigPage(parent)
 {
@@ -20,12 +18,10 @@ AppConfigPage_Keyboard::AppConfigPage_Keyboard(QWidget *parent) : ConfigPage(par
   assembly();
 }
 
-
 AppConfigPage_Keyboard::~AppConfigPage_Keyboard()
 {
 
 }
-
 
 void AppConfigPage_Keyboard::setupUi(void)
 {
@@ -37,12 +33,10 @@ void AppConfigPage_Keyboard::setupUi(void)
   editShortcutConfigFile->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
 }
 
-
 void AppConfigPage_Keyboard::setupSignals(void)
 {
   connect(editShortcutConfigFile, &QPushButton::clicked, this, &AppConfigPage_Keyboard::onClickedEditShortcutConfigFile);
 }
-
 
 void AppConfigPage_Keyboard::assembly(void)
 {
@@ -64,7 +58,6 @@ void AppConfigPage_Keyboard::assembly(void)
   setLayout(centralLayout);
 }
 
-
 void AppConfigPage_Keyboard::onClickedEditShortcutConfigFile(void)
 {
     ShortcutSettingsScreen shortcutSettingsScreen;
@@ -73,13 +66,11 @@ void AppConfigPage_Keyboard::onClickedEditShortcutConfigFile(void)
     shortcutSettingsScreen.exec();
 }
 
-
 void AppConfigPage_Keyboard::retranslateUi(void)
 {
   editShortcutConfigFile->setText(tr("Edit shortcuts"));
   shortcutBox->setTitle(tr("Keyboard preferences"));
 }
-
 
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
@@ -91,8 +82,8 @@ int AppConfigPage_Keyboard::applyChanges(void)
   int result=0;
 
   // Сохраняется настройка отображения отладочных сообщений в консоли
-//  if(mytetraConfig.get_printdebugmessages()!=printDebugMessages->isChecked())
-//    mytetraConfig.set_printdebugmessages(printDebugMessages->isChecked());
+//  if(AppContext::instance().appConfig()->generalSection()->get_printdebugmessages()!=printDebugMessages->isChecked())
+//    AppContext::instance().appConfig()->generalSection()->set_printdebugmessages(printDebugMessages->isChecked());
 
   return result;
 }

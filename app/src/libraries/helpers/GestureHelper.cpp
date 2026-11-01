@@ -5,15 +5,12 @@
 
 #include "GestureHelper.h"
 #include "libraries/GlobalParameters.h"
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 GestureHelper::GestureHelper()
 {
 
 }
-
 
 void GestureHelper::setKineticScrollArea(QAbstractItemView *object)
 {
@@ -27,7 +24,7 @@ void GestureHelper::setKineticScrollArea(QAbstractItemView *object)
   if(object==nullptr)
     return;
 
-  if(globalParameters.getTargetOs()=="android")
+  if(AppContext::instance().globalParameters()->getTargetOs()=="android")
   {
     // Настройка жестов прокрутки
     QScroller *scroller = QScroller::scroller(object);
@@ -56,8 +53,6 @@ void GestureHelper::setKineticScrollArea(QAbstractItemView *object)
     object->verticalScrollBar()->setStyleSheet("QScrollBar:vertical {width:3px; border: none; background: transparent; margin: 0;}"
                                                "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {width: 0px; height: 0px; border: none;  background: transparent; image: url(:/resource/pic/transparent_dot.png); }"
                                                "QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical { image: url(:/resource/pic/transparent_dot.png); }");
-
-
 
     /*
     object->horizontalScrollBar()->setStyleSheet("QScrollBar:horizontal {border: 2px solid black; background: grey; height: 15px;}"

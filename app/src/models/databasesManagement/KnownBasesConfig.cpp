@@ -9,15 +9,13 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 const QString KnownBasesConfig::m_sectionPrefix="num";
 const QStringList KnownBasesConfig::m_availableFields={"dbPath",
                                                        "trashPath",
                                                        "descript"};
-
 
 // Конструктор объекта настройки БД
 KnownBasesConfig::KnownBasesConfig(QObject *pobj)
@@ -26,7 +24,6 @@ KnownBasesConfig::KnownBasesConfig(QObject *pobj)
 
     isInitFlag=false;
 }
-
 
 // Деструктор объекта настройки БД
 KnownBasesConfig::~KnownBasesConfig()
@@ -37,7 +34,6 @@ KnownBasesConfig::~KnownBasesConfig()
         m_conf->sync();
     }
 }
-
 
 void KnownBasesConfig::init(void)
 {
@@ -53,19 +49,16 @@ void KnownBasesConfig::init(void)
     isInitFlag=true;
 }
 
-
 bool KnownBasesConfig::isInit(void)
 {
     return isInitFlag;
 }
 
-
 QString KnownBasesConfig::getConfigFileName()
 {
-    // QString configFileName=globalParameters.getWorkDirectory()+"/"+mytetraConfig.get_tetradir()+"/database.ini";
-    return globalParameters.getWorkDirectory()+"/knownbases.ini";
+    // QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/database.ini";
+    return AppContext::instance().globalParameters()->getWorkDirectory()+"/knownbases.ini";
 }
-
 
 bool KnownBasesConfig::updateVersion_1()
 {
@@ -88,7 +81,6 @@ bool KnownBasesConfig::updateVersion_1()
 
     return true;
 }
-
 
 bool KnownBasesConfig::updateVersion_2()
 {
@@ -124,7 +116,6 @@ bool KnownBasesConfig::updateVersion_2()
     return true;
 }
 
-
 QString KnownBasesConfig::getParameter(const QString &name)
 {
     QString t=m_conf->value(name).toString();
@@ -134,7 +125,6 @@ QString KnownBasesConfig::getParameter(const QString &name)
 
     return t;
 }
-
 
 void KnownBasesConfig::removeSection(const QString &sectionName)
 {
@@ -153,12 +143,10 @@ void KnownBasesConfig::removeSection(const QString &sectionName)
     m_conf->endGroup();
 }
 
-
 void KnownBasesConfig::renumSections()
 {
     // Количество секций
     int count = this->getDbCount();
-
 
     // Перечень номеров секций, в котором могут быть "дырки" в нумерации
     QList<int> currentSectionNums;
@@ -175,7 +163,6 @@ void KnownBasesConfig::renumSections()
         }
     }
 
-
     // Перечень номеров секций без дырок в нумерации
     QList<int> correctSectionNums;
     for (int i=0; i<count; ++i)
@@ -183,14 +170,12 @@ void KnownBasesConfig::renumSections()
         correctSectionNums << i;
     }
 
-
     // Проверка что в получившихся списках одинаковое кол-во элементов
     if (currentSectionNums.size() != correctSectionNums.size() )
     {
         qWarning() << "Error: Not equal currentSectionNums and correctSectionNums";
         return;
     }
-
 
     // Переименование секций
     for (int i=0; i<count; ++i)
@@ -202,7 +187,6 @@ void KnownBasesConfig::renumSections()
         }
     }
 }
-
 
 void KnownBasesConfig::renameSection(const QString &oldSection,
                                      const QString &newSection)
@@ -219,7 +203,6 @@ void KnownBasesConfig::renameSection(const QString &oldSection,
 
     m_conf->endGroup();
 
-
     // Данные записываются в новую секцию
     m_conf->beginGroup(newSection);
 
@@ -229,11 +212,9 @@ void KnownBasesConfig::renameSection(const QString &oldSection,
 
     m_conf->endGroup();
 
-
     // Удаляется старая секция
     m_conf->remove(oldSection);
 }
-
 
 /*
 int KnownBasesConfig::get_crypt_mode(void)
@@ -241,13 +222,11 @@ int KnownBasesConfig::get_crypt_mode(void)
  return conf->value("crypt_mode", 0).toInt();
 }
 
-
 void KnownBasesConfig::set_crypt_mode(int mode)
 {
  conf->setValue("crypt_mode", mode);
 }
 */
-
 
 // --------------------
 // Номер версии конфига
@@ -261,12 +240,10 @@ int KnownBasesConfig::getConfigVersion(void)
         return 0;
 }
 
-
 void KnownBasesConfig::setConfigVersion(int i)
 {
     m_conf->setValue("version", i);
 }
-
 
 int KnownBasesConfig::getDbCount()
 {
@@ -297,7 +274,6 @@ int KnownBasesConfig::getDbCount()
     return i;
 }
 
-
 QString KnownBasesConfig::getDbParameter(const int &num, const QString &name)
 {
     if ( !m_availableFields.contains(name) )
@@ -318,12 +294,10 @@ QString KnownBasesConfig::getDbParameter(const int &num, const QString &name)
     }
 }
 
-
 void KnownBasesConfig::setDbParameter(const int &num, const QString &name, const QString &value)
 {
     m_conf->setValue(m_sectionPrefix+QString::number(num)+"/"+name, value);
 }
-
 
 bool KnownBasesConfig::isDbParameterExists(const QString &name, const QString &value)
 {
@@ -340,7 +314,6 @@ bool KnownBasesConfig::isDbParameterExists(const QString &name, const QString &v
     return false;
 }
 
-
 int KnownBasesConfig::getDbParameterExistsNum(const QString &name, const QString &value)
 {
     for (int i=0; i<KNOWN_BASES_MAX_COUNT; ++i)
@@ -355,7 +328,6 @@ int KnownBasesConfig::getDbParameterExistsNum(const QString &name, const QString
 
     return -1;
 }
-
 
 void KnownBasesConfig::removeDb(const int &num)
 {

@@ -5,22 +5,37 @@
 #include "models/tree/KnowTreeModel.h"
 #include "views/tree/KnowTreeView.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "libraries/AppContext.h"
 
+void WalkHistory::setVisitHistory(VisitHistory *visitHistory)
+{
+    m_visitHistory=visitHistory;
+}
 
-extern VisitHistory visitHistory;
+VisitHistory *WalkHistory::visitHistory(void)
+{
+    return m_visitHistory;
+}
 
+static VisitHistory *resolveVisitHistory(WalkHistory *self)
+{
+    // Предпочитается внедренный журнал, глобалка только для совместимости
+    // пока не все вызовы идут через AppContext
+    if(self->visitHistory()!=nullptr)
+        return self->visitHistory();
+
+    return AppContext::instance().visitHistory();
+}
 
 WalkHistory::WalkHistory(void)
 {
  clear();
 }
 
-
 WalkHistory::~WalkHistory(void)
 {
  
 }
-
 
 void WalkHistory::clear(void)
 {
@@ -33,7 +48,6 @@ void WalkHistory::clear(void)
  leaveMarkPoint=-1;
  dropFlag=false;
 }
-
 
 void WalkHistory::add(QString id,
                       int cursorPosition,
@@ -70,7 +84,6 @@ void WalkHistory::add(QString id,
       leaveMarkPoint=leaveMarkPoint-1;
   }
 
-
   // Если происходит просто запоминание нового ID без движения по истории
   if(mode==WALK_HISTORY_GO_NONE)
   {
@@ -93,7 +106,7 @@ void WalkHistory::add(QString id,
     leaveMarkPoint=-1;
 
     // Факт посещения уходит в журнал панели истории
-    visitHistory.logVisit(id);
+    resolveVisitHistory(this)->logVisit(id);
 
     print();
     return;
@@ -115,7 +128,6 @@ void WalkHistory::add(QString id,
     return;
   }
 
-
   // Если добавляемый идентификатор не равен последнему в истории, его нужно добавить (даже если идет движение назад или вперед по истории)
   if(id!=historyId.last())
   {
@@ -129,13 +141,12 @@ void WalkHistory::add(QString id,
     historyId << id;
 
     // Факт посещения уходит в журнал панели истории
-    visitHistory.logVisit(id);
+    resolveVisitHistory(this)->logVisit(id);
 
     qDebug() << "WalkHistory add id: " << id;
     qDebug() << "WalkHistory pointer: " << historyPoint;
     qDebug() << "WalkHistory lenght: " << historyId.length();
   }
-
 
   // Если происходит запоминание с движением назад по истории
   if(mode==WALK_HISTORY_GO_PREVIOUS)
@@ -157,7 +168,6 @@ void WalkHistory::add(QString id,
     if(historyPoint>0)
       historyPoint--;
   } // Закончилось условие что происходит запоминание с движением назад по истории
-
 
   // Если происходит запоминание с движением вперед по истории
   if(mode==WALK_HISTORY_GO_NEXT)
@@ -191,10 +201,8 @@ void WalkHistory::add(QString id,
 
   } // Закончилось условие что происходит запоминание с движением вперед по истории
 
-
   print();
 }
-
 
 /*
 void WalkHistory::switchToPrevious(void)
@@ -206,7 +214,6 @@ void WalkHistory::switchToPrevious(void)
  // print();
 }
 
-
 void WalkHistory::switchToNext(void)
 {
  if( historyPoint < (historyId.length()-1) )
@@ -217,7 +224,6 @@ void WalkHistory::switchToNext(void)
 }
 */
 
-
 QString WalkHistory::getId()
 {
  if(historyPoint>=0 && historyPoint<=(historyId.length()-1))
@@ -225,7 +231,6 @@ QString WalkHistory::getId()
  else
   return QString();
 }
-
 
 int WalkHistory::getCursorPosition(QString id)
 {
@@ -235,7 +240,6 @@ int WalkHistory::getCursorPosition(QString id)
   return 0;
 }
 
-
 int WalkHistory::getScrollBarPosition(QString id)
 {
  if(data.contains(id))
@@ -244,13 +248,11 @@ int WalkHistory::getScrollBarPosition(QString id)
   return 0;
 }
 
-
 void WalkHistory::removeHistoryData(QString id)
 {
  if(data.contains(id))
   data.remove(id);
 }
-
 
 void WalkHistory::print(void)
 {
@@ -268,12 +270,10 @@ void WalkHistory::print(void)
   qDebug() << "WalkHistory table ---^";
 }
 
-
 void WalkHistory::setDrop(bool flag)
 {
  dropFlag=flag;
 }
-
 
 // Проверка наличия идентификатора в базе, и его исключение из истории, если
 // идентификатор не обнаружен
@@ -285,7 +285,6 @@ void WalkHistory::checkId(QString id)
  // Если запись с указанным идентификатором существует
  if(dataModel->getRecordPath(id).length()>0)
   return; // Ничего делать не нужно
-
 
  // Здесь запись с указанным идентификатором не существует, и его надо
  // удалить из истории

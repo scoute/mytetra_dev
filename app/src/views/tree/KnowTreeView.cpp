@@ -30,10 +30,7 @@
 #include "views/recordTable/RecordTableView.h"
 #include "views/record/MetaEditor.h"
 #include "controllers/recordTable/RecordTableController.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 KnowTreeView::KnowTreeView(QWidget *parent) : QTreeView(parent)
 {
@@ -54,12 +51,10 @@ KnowTreeView::KnowTreeView(QWidget *parent) : QTreeView(parent)
     isDragHappeningNow=false;
 }
 
-
 KnowTreeView::~KnowTreeView()
 {
 
 }
-
 
 // Обработчик событий, нужен только для QTapAndHoldGesture (долгое нажатие)
 bool KnowTreeView::event(QEvent *event)
@@ -72,7 +67,6 @@ bool KnowTreeView::event(QEvent *event)
 
     return QTreeView::event(event);
 }
-
 
 // Обработчик жестов
 // Вызывается из обработчика событий
@@ -88,7 +82,6 @@ bool KnowTreeView::gestureEvent(QGestureEvent *event)
     return true;
 }
 
-
 // Обработчик жеста TapAndHoldGesture
 // Вызывается из обработчика жестов
 void KnowTreeView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
@@ -97,13 +90,12 @@ void KnowTreeView::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
 
     if(gesture->state()==Qt::GestureFinished)
     {
-        if(globalParameters.getTargetOs()=="android")
+        if(AppContext::instance().globalParameters()->getTargetOs()=="android")
         {
             emit tapAndHoldGestureFinished( mapFromGlobal(gesture->position().toPoint()) );
         }
     }
 }
-
 
 // Начало перетаскивания, вызывается ОДИН РАЗ
 // когда курсор с перетаскиваемым объектом ВПЕРВЫЕ входит в виджет
@@ -115,7 +107,6 @@ void KnowTreeView::dragEnterEvent(QDragEnterEvent *event)
         event->accept();
     }
 }
-
 
 // Движение мышкой при перетаскивании, вызывается МНОГОКРАТНО
 // при каждом перемещении курсора ВНУТРИ виджета
@@ -148,7 +139,6 @@ void KnowTreeView::dragMoveEvent(QDragMoveEvent *event)
     }
 }
 
-
 template <class X>
 bool KnowTreeView::isDragableData(X *event)
 {
@@ -180,7 +170,6 @@ bool KnowTreeView::isDragableData(X *event)
 
     return false;
 }
-
 
 void KnowTreeView::dropEvent(QDropEvent *event)
 {
@@ -253,7 +242,7 @@ void KnowTreeView::dropEvent(QDropEvent *event)
         // а пароль не установлен
         if(treeItemDrag->getField("crypt")!="1" &&
                 treeItemDrop->getField("crypt")=="1" &&
-                globalParameters.getCryptKey().length()==0)
+                AppContext::instance().globalParameters()->getCryptKey().length()==0)
         {
             // Выводится уведомление что невозможен перенос без пароля
             QMessageBox msgBox;
@@ -264,7 +253,6 @@ void KnowTreeView::dropEvent(QDropEvent *event)
 
             return;
         }
-
 
         // Перенос записей, хранящихся в MimeData
         // В настоящий момент в MimeData попадает только одна запись,
@@ -336,8 +324,6 @@ void KnowTreeView::dropEvent(QDropEvent *event)
     }
 }
 
-
-
 // Реакция на нажатие кнопок мышки
 // Индекс запоминается по координатам, так как событие приходит
 // до выделения ветки под курсором
@@ -363,7 +349,6 @@ void KnowTreeView::mousePressEvent(QMouseEvent *event)
 
     QTreeView::mousePressEvent(event);
 }
-
 
 // Реакция на движение мышкой
 void KnowTreeView::mouseMoveEvent(QMouseEvent *event)
@@ -393,7 +378,6 @@ void KnowTreeView::mouseMoveEvent(QMouseEvent *event)
     QTreeView::mouseMoveEvent(event);
 }
 
-
 // Реакция на отпускание кнопки мышки
 void KnowTreeView::mouseReleaseEvent(QMouseEvent *event)
 {
@@ -404,7 +388,6 @@ void KnowTreeView::mouseReleaseEvent(QMouseEvent *event)
     // Индекс перетаскиваемой ветки очищается в любом случае
     startDragIndex=QModelIndex();
 }
-
 
 // Картинка перетаскивания: иконка и имя ветки едут за курсором.
 // Цвета из палитры подсветки: читается в любой теме
@@ -460,7 +443,6 @@ QPixmap KnowTreeView::makeBranchDragPixmap(const QIcon &icon,
 
     return pixmap;
 }
-
 
 // Начало переноса ветки
 void KnowTreeView::customStartDrag(void)
@@ -524,7 +506,6 @@ void KnowTreeView::customStartDrag(void)
     isDragHappeningNow=false;
     startDragIndex=QModelIndex();
 }
-
 
 // Завершение перетаскивания ветки: ветка становится подветкой цели.
 // Проверки совпадения и зацикливания внутри moveBranch

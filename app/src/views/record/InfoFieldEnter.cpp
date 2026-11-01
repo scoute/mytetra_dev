@@ -21,11 +21,10 @@
 #include "models/tree/TreeItem.h"
 #include "views/tree/KnowTreeView.h"
 #include "views/findInBaseScreen/FindScreen.h"
-
-extern AppConfig mytetraConfig;
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigGeneral.h"
 
 // Виджет ввода инфополей
-
 
 InfoFieldEnter::InfoFieldEnter(QWidget *parent) : QWidget(parent)
 {
@@ -35,7 +34,6 @@ InfoFieldEnter::InfoFieldEnter(QWidget *parent) : QWidget(parent)
 
     setupTagsCompleter();
 }
-
 
 void InfoFieldEnter::showEvent(QShowEvent *event)
 {
@@ -103,7 +101,7 @@ void InfoFieldEnter::setup_ui(void)
     expandInfo->setMinimumSize(x,x);
     expandInfo->setMaximumSize(x,x);
     expandInfo->resize(x,x);
-    if (mytetraConfig.get_addnewrecord_expand_info()=="0")
+    if (AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info()=="0")
     {
         expandInfo->setIcon(QIcon(":/resource/pic/triangl_dn.svg"));
         // expandInfo->setIcon(this->style()->standardIcon(QStyle::SP_ArrowDown));
@@ -115,12 +113,10 @@ void InfoFieldEnter::setup_ui(void)
     }
 }
 
-
 void InfoFieldEnter::setup_signals(void)
 {
     connect(expandInfo, &QToolButton::pressed, this, &InfoFieldEnter::expandInfoClick);
 }
-
 
 // Создание подсказки автодополнения для поля тегов.
 // Словарь подставится позже в refreshTagsCompleter
@@ -169,14 +165,12 @@ void InfoFieldEnter::setupTagsCompleter(void)
     treeMetadataConnected=false;
 }
 
-
 // Метаданные дерева изменились: пересборка словаря откладывается,
 // чтобы пакетная операция не пересобирала его на каждый шаг
 void InfoFieldEnter::onTreeMetadataSaved(void)
 {
     tagsCompleterRefreshTimer->start();
 }
-
 
 // Пересборка словаря подсказок по всем тегам базы
 void InfoFieldEnter::refreshTagsCompleter(void)
@@ -226,7 +220,6 @@ void InfoFieldEnter::refreshTagsCompleter(void)
         onTagsEdited(recordTags->text());
 }
 
-
 // Последний недопечатанный тег: хвост после крайней запятой
 // или точки с запятой. Разделитель в конце значит тег допечатан
 QString InfoFieldEnter::lastTagToken(const QString &text)
@@ -254,7 +247,6 @@ QString InfoFieldEnter::lastTagToken(const QString &text)
     return text.mid(start, end-start);
 }
 
-
 // Подставить выбранное дополнение вместо последнего тега.
 // В конец добавляется запятая с пробелом для следующего тега
 QString InfoFieldEnter::applyTagCompletion(const QString &text, const QString &completion)
@@ -281,7 +273,6 @@ QString InfoFieldEnter::applyTagCompletion(const QString &text, const QString &c
     return text.left(start)+completion+", ";
 }
 
-
 // Срезать висячий хвост разделителей в конце строки
 QString InfoFieldEnter::trimTagTail(const QString &text)
 {
@@ -290,7 +281,6 @@ QString InfoFieldEnter::trimTagTail(const QString &text)
 
     return trimmed;
 }
-
 
 // Дополняется только последний недопечатанный тег. Выпадашка
 // появляется начиная с двух букв, при отсутствии совпадений
@@ -319,12 +309,10 @@ void InfoFieldEnter::onTagsEdited(const QString &text)
     tagsCompleter->complete();
 }
 
-
 void InfoFieldEnter::onTagCompletion(const QString &completion)
 {
     recordTags->setText(applyTagCompletion(recordTags->text(), completion));
 }
-
 
 // Enter в поле тегов срезает висячий хвост разделителей.
 // Сохранение через другие пути чистится в getField
@@ -332,7 +320,6 @@ void InfoFieldEnter::onTagsReturn(void)
 {
     recordTags->setText(trimTagTail(recordTags->text()));
 }
-
 
 // Элементы собираются в размещалку
 void InfoFieldEnter::assembly(void)
@@ -366,7 +353,7 @@ void InfoFieldEnter::assembly(void)
     infoFieldLayout->addWidget(dirName,y,1);
 
     // Устанавливается видимость или невидимость полей author, url, tags...
-    expandInfoOnDisplay( mytetraConfig.get_addnewrecord_expand_info() );
+    expandInfoOnDisplay( AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info() );
 
     // Полученый набор элементов устанавливается для текущего виджета
     setLayout(infoFieldLayout);
@@ -379,7 +366,6 @@ void InfoFieldEnter::assembly(void)
 
     // setSizePolicy(QSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum));
 }
-
 
 void InfoFieldEnter::expandInfoOnDisplay(QString expand)
 {
@@ -402,16 +388,15 @@ void InfoFieldEnter::expandInfoOnDisplay(QString expand)
     updateReadOnlyFieldsVisibility(i);
 }
 
-
 void InfoFieldEnter::expandInfoClick(void)
 {
     // Если в данный момент информация "свернута"
-    if (mytetraConfig.get_addnewrecord_expand_info()=="0")
+    if (AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info()=="0")
     {
         // Надо информацию развернуть
         expandInfoOnDisplay("1");
 
-        mytetraConfig.set_addnewrecord_expand_info("1");
+        AppContext::instance().appConfig()->generalSection()->set_addnewrecord_expand_info("1");
 
         expandInfo->setIcon(QIcon(":/resource/pic/triangl_up.svg"));
     }
@@ -420,12 +405,11 @@ void InfoFieldEnter::expandInfoClick(void)
         // Надо информацию свернуть
         expandInfoOnDisplay("0");
 
-        mytetraConfig.set_addnewrecord_expand_info("0");
+        AppContext::instance().appConfig()->generalSection()->set_addnewrecord_expand_info("0");
 
         expandInfo->setIcon(QIcon(":/resource/pic/triangl_dn.svg"));
     }
 }
-
 
 void InfoFieldEnter::setFocusToStart(void)
 {
@@ -441,7 +425,6 @@ void InfoFieldEnter::setFocusToStart(void)
     });
 }
 
-
 bool InfoFieldEnter::checkFieldName(QString name)
 {
     if (name=="name" ||
@@ -454,7 +437,6 @@ bool InfoFieldEnter::checkFieldName(QString name)
     else
         return false;
 }
-
 
 QString InfoFieldEnter::getField(QString name)
 {
@@ -470,7 +452,6 @@ QString InfoFieldEnter::getField(QString name)
 
     return QString();
 }
-
 
 void InfoFieldEnter::setField(QString name,QString value)
 {
@@ -489,16 +470,14 @@ void InfoFieldEnter::setField(QString name,QString value)
         criticalError("Can not set field "+name+" in InfoFieldEnter method set_field");
 }
 
-
 // Показывать только редактируемые поля. Служебные id и каталог
 // прячутся: нужно для окна создания записи
 void InfoFieldEnter::setDisplayOnlyEditableFields(bool value)
 {
     isDisplayOnlyEditableFields=value;
 
-    updateReadOnlyFieldsVisibility(mytetraConfig.get_addnewrecord_expand_info()!="0");
+    updateReadOnlyFieldsVisibility(AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info()!="0");
 }
-
 
 // Видимость служебных полей: скрыты в свернутом виде и в режиме
 // только редактируемых полей
@@ -513,7 +492,6 @@ void InfoFieldEnter::updateReadOnlyFieldsVisibility(bool infoExpanded)
     dirName->setVisible(visible);
 }
 
-
 void InfoFieldEnter::setReadOnly(bool state)
 {
     recordName->setReadOnly(state);
@@ -521,7 +499,6 @@ void InfoFieldEnter::setReadOnly(bool state)
     recordUrl->setReadOnly(state);
     recordTags->setReadOnly(state);
 }
-
 
 bool InfoFieldEnter::isReadOnly()
 {

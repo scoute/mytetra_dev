@@ -8,10 +8,8 @@
 #include "models/recordTable/Record.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 EditorShowTextDispatcher::EditorShowTextDispatcher(QObject *parent) : QObject(parent)
 {
@@ -20,7 +18,6 @@ EditorShowTextDispatcher::EditorShowTextDispatcher(QObject *parent) : QObject(pa
 
     mThread->start();
 }
-
 
 EditorShowTextDispatcher::~EditorShowTextDispatcher()
 {
@@ -36,14 +33,6 @@ EditorShowTextDispatcher::~EditorShowTextDispatcher()
         delete mThread;
     }
 }
-
-
-EditorShowTextDispatcher *EditorShowTextDispatcher::instance()
-{
-    static EditorShowTextDispatcher inst;
-    return &inst;
-}
-
 
 void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y, int w, int h, int vScroll)
 {
@@ -71,7 +60,6 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
         return;
     }
 
-
     // Создается открепленное окно
     // Отсутствие родителя будет приводить к отдельному управлению
     // окном виджета при сворачивании/разворачивании.
@@ -81,15 +69,14 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
     // станет неактивным (например, когда запись не выбрана)
     // то данное окно тоже станет неактивным, и невозможно будет выделить в нем текст
     QPointer<EditorShowText> editorShowText;
-    if(mytetraConfig.getDockableWindowsBehavior()=="single")
+    if(AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior()=="single")
     {
         editorShowText=new EditorShowText(nullptr, Qt::Window);
     }
-    else if(mytetraConfig.getDockableWindowsBehavior()=="together")
+    else if(AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior()=="together")
     {
         editorShowText=new EditorShowText( find_object<MainWindow>("mainwindow"), Qt::Dialog );
     }
-
 
     // Устанавливается идентификатор записи, которое отображает данное окно
     editorShowText->setNoteId( noteId );
@@ -100,11 +87,9 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
     // Новое окно запоминается в список окон
     mWindowsList.insert( noteId, editorShowText );
 
-
     // Создается соединение, обрабатывающее закрытие окна
     connect(editorShowText.data(), &EditorShowText::editorShowTextClose,
             this, &EditorShowTextDispatcher::onCloseWindow);
-
 
     // Выясняется ссылка на объект записи
     Record *note=dataModel->getRecord(noteId);
@@ -129,7 +114,6 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
 
     this->saveOpenWindows();
 }
-
 
 // Обновление содержимого открепляемого окна, содержащего запись с указанным ID
 void EditorShowTextDispatcher::updateWindow(const QString &noteId)
@@ -163,7 +147,6 @@ void EditorShowTextDispatcher::updateWindow(const QString &noteId)
     }
 }
 
-
 // Обновление содержимого всех открепляемых окон
 void EditorShowTextDispatcher::updateAllWindows()
 {
@@ -172,7 +155,6 @@ void EditorShowTextDispatcher::updateAllWindows()
         this->updateWindow( noteId );
     }
 }
-
 
 // Закрытие указанного окна
 void EditorShowTextDispatcher::closeWindow(const QString &noteId)
@@ -183,7 +165,6 @@ void EditorShowTextDispatcher::closeWindow(const QString &noteId)
         mWindowsList.remove( noteId );
     }
 }
-
 
 // Закрытие окон по списку
 // Метод сделан в виде слота, чтобы он мог выполняться в отдельном потоке
@@ -196,7 +177,6 @@ void EditorShowTextDispatcher::closeWindowByIdVector(const QVector<QString> &ids
     }
 }
 
-
 // Закрытие окон по списку
 // Метод сделан в виде слота, чтобы он мог выполняться в отдельном потоке
 // Так как списки могут быть длинными
@@ -208,7 +188,6 @@ void EditorShowTextDispatcher::closeWindowByIdList(const QStringList &ids)
     }
 }
 
-
 // Закрытие окон по списку в виде множества
 // Метод сделан в виде слота, чтобы он мог выполняться в отдельном потоке
 // Так как списки могут быть длинными
@@ -219,7 +198,6 @@ void EditorShowTextDispatcher::closeWindowByIdSet(const QSet<QString> &ids)
         this->closeWindow(id);
     }
 }
-
 
 // Закрытие окон, для которых не существует записи
 // Используется при синхронизации, т.к. после синхронизации может оказаться
@@ -241,7 +219,6 @@ void EditorShowTextDispatcher::closeWindowForNonExistentRecords()
     }
 }
 
-
 // Закрытие всех открепляемых окон
 void EditorShowTextDispatcher::closeAllWindows()
 {
@@ -260,7 +237,6 @@ void EditorShowTextDispatcher::closeAllWindows()
     mWindowsList.clear();
 }
 
-
 // Закрытие всех открепляемых окон без сохранения списка удаляемых окон.
 // Используется при закрытии программы, чтобы само закрытие открепляемых окон
 // не повлияло на список открепляемых окон, сохраненный при выполнении предыдущих
@@ -276,13 +252,11 @@ void EditorShowTextDispatcher::closeAllWindowsForExit()
     mWindowsList.clear();
 }
 
-
 // Существует ли открепляемое окно с указанной записью
 bool EditorShowTextDispatcher::isWindowPresent(const QString &noteId)
 {
     return mWindowsList.contains( noteId );
 }
-
 
 // Сохранение списка ID записей, для которых открыты открепляемые окна с их координатами
 void EditorShowTextDispatcher::saveOpenWindows()
@@ -306,15 +280,14 @@ void EditorShowTextDispatcher::saveOpenWindows()
 
     // Формат запоминаемых данных
     // "IDокна1,x1,y1,w1,h1;IDокна2,x2,y2,w2,h2" и т. д.
-    mytetraConfig.setDockableWindowsState( windowsState.join(";") );
+    AppContext::instance().appConfig()->uiSection()->setDockableWindowsState( windowsState.join(";") );
 }
-
 
 // Восстановление открепляемых окон с записями
 void EditorShowTextDispatcher::restoreOpenWindows()
 {
     // Строка со всеми окнами
-    QString state=mytetraConfig.getDockableWindowsState();
+    QString state=AppContext::instance().appConfig()->uiSection()->getDockableWindowsState();
 
     // Строка со всеми окнами разделяется на подстроки с описанием одного окна
     QStringList windowsState=state.split(";");
@@ -335,7 +308,6 @@ void EditorShowTextDispatcher::restoreOpenWindows()
         }
     }
 }
-
 
 // Установка поведения окон, которое запускается при сворачивании/разворачивании
 void EditorShowTextDispatcher::switchBehavior(const QString &mode)
@@ -399,18 +371,16 @@ void EditorShowTextDispatcher::switchBehavior(const QString &mode)
     mBehavior=mode;
 }
 
-
 // Обновление поведения окон согласно настройкам
 // метод вызывается после разворачивания основного окна MyTetra из иконки трея
 // так как при сворачивании окна MyTetra, все открепляемые окна
 // теряют указатель на родителя, и, соответственно меняют свое поведение
 void EditorShowTextDispatcher::restoreBehavior()
 {
-    this->switchBehavior( mytetraConfig.getDockableWindowsBehavior() );
+    this->switchBehavior( AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior() );
 
     qDebug() << "Restore detached window behavior";
 }
-
 
 // При обнаружении события что одно из открепляемых окон закрывается
 void EditorShowTextDispatcher::onCloseWindow(const QString &noteId)

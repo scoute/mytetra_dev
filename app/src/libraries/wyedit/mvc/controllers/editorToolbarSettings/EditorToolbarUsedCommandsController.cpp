@@ -1,16 +1,13 @@
 #include <QMessageBox>
 
 #include "EditorToolbarUsedCommandsController.h"
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 EditorToolbarUsedCommandsController::EditorToolbarUsedCommandsController(GlobalParameters::EditorToolbar tb, QObject *parent) : QObject(parent)
 {
     // указание на обрабатываемую панель
     this->tb = tb;
 }
-
 
 EditorToolbarUsedCommandsController::~EditorToolbarUsedCommandsController()
 {

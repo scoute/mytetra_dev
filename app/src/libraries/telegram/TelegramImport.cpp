@@ -25,10 +25,8 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Длинная сторона картинки в заметке: больше 1280 не держим
 // (у Telegram почти все в 1280 и меньше). Один файл без дублей:
@@ -49,7 +47,6 @@ static QSize telegramDisplaySize(const QString &srcPath)
   return size;
 }
 
-
 // Лексическая проверка: путь остался внутри каталога.
 // Для целей, которых еще нет на диске (canonicalFilePath пуст)
 static bool isPathInside(const QString &root, const QString &path)
@@ -60,7 +57,6 @@ static bool isPathInside(const QString &root, const QString &path)
   return cleanPath!=cleanRoot &&
          cleanPath.startsWith(cleanRoot+QLatin1Char('/'));
 }
-
 
 // Медиа из чужого экспорта: href относительный и обязан остаться
 // внутри каталога экспорта. Иначе messages.html с href="../../.ssh/id_rsa"
@@ -108,7 +104,6 @@ static QString safeExportMediaPath(const QDir &exportDir, const QString &href)
   return canonicalFile;
 }
 
-
 // Имя файла внутри каталога заметки: только базовое имя, без
 // разделителей и управляющих символов. Имя из <div class="title">
 // или поля file_name недоверенное и иначе увело бы запись за пределы
@@ -137,7 +132,6 @@ static QString safeMediaFileName(const QString &source)
   return name;
 }
 
-
 // Ссылка в тексте заметки: только явно безопасные схемы.
 // javascript:, data:, file: из чужого экспорта не должны стать
 // кликабельными действиями в редакторе
@@ -154,7 +148,6 @@ static bool isSafeTelegramHref(const QString &href)
          lower.startsWith(QStringLiteral("tel:")) ||
          lower.startsWith(QStringLiteral("tg://"));
 }
-
 
 // Одна сущность в HTML. text заранее экранирован вызывателем
 static QString entityToHtml(const QString &type, const QString &text,
@@ -212,7 +205,6 @@ static QString entityToHtml(const QString &type, const QString &text,
   return text;
 }
 
-
 QString telegramTextToHtml(const QJsonValue &textValue)
 {
   if(textValue.isString())
@@ -249,7 +241,6 @@ QString telegramTextToHtml(const QJsonValue &textValue)
   return html;
 }
 
-
 static QString telegramPlainText(const QJsonValue &textValue)
 {
   if(textValue.isString())
@@ -272,7 +263,6 @@ static QString telegramPlainText(const QJsonValue &textValue)
 
   return plain;
 }
-
 
 // Сущности плейнтекста HTML-экспорта: имена чатов и авторов.
 // Порядок важен: &amp; последним, иначе двойное декодирование
@@ -307,7 +297,6 @@ static QString decodeTelegramEntities(QString text)
 
   return text;
 }
-
 
 // Внутренний HTML текста сообщения в HTML-экспорте уже экранирован.
 // Оставляются ссылки и простая разметка, остальное вычищается.
@@ -383,7 +372,6 @@ static QString sanitizeTelegramHtmlFragment(const QString &inner)
   return result;
 }
 
-
 // Извлечение сбалансированного <div>...</div> с позиции открывающего.
 // Возвращает внутренность (без внешних тегов), endPos за закрывающим
 static QString extractBalancedDiv(const QString &html, int openPos, int &endPos)
@@ -424,7 +412,6 @@ static QString extractBalancedDiv(const QString &html, int openPos, int &endPos)
   return QString();
 }
 
-
 // Дата заголовка сообщения: "17.10.2026 20:34:48 GMT+04:00".
 // Смещение вычитается: unixtime всегда UTC
 static qint64 parseTelegramHtmlDate(const QString &title)
@@ -452,7 +439,6 @@ static qint64 parseTelegramHtmlDate(const QString &title)
   return utc.toSecsSinceEpoch()-(match.captured(7)==QStringLiteral("+") ? offsetSecs : -offsetSecs);
 }
 
-
 // Размер для карточки файла в стиле Telegram: "21.4 KB"
 static QString formatTelegramSize(qint64 bytes)
 {
@@ -469,7 +455,6 @@ static QString formatTelegramSize(qint64 bytes)
 
   return QString::number(kb/1024.0, 'f', 1)+QStringLiteral(" MB");
 }
-
 
 static QString imageMimeByExtension(const QString &fileName)
 {
@@ -492,7 +477,6 @@ static QString imageMimeByExtension(const QString &fileName)
 
   return QString();
 }
-
 
 bool parseTelegramHtml(const QString &fileName,
                        TelegramChat &chat,
@@ -720,7 +704,6 @@ bool parseTelegramHtml(const QString &fileName,
   return true;
 }
 
-
 bool parseTelegramExport(const QString &fileName,
                          TelegramChat &chat,
                          QString &error)
@@ -731,7 +714,6 @@ bool parseTelegramExport(const QString &fileName,
 
   return parseTelegramJson(fileName, chat, error);
 }
-
 
 bool parseTelegramJson(const QString &fileName,
                        TelegramChat &chat,
@@ -864,7 +846,6 @@ bool parseTelegramJson(const QString &fileName,
   return true;
 }
 
-
 // Ветка с именем среди детей родителя, иначе nullptr
 static TreeItem *findChildBranch(TreeItem *parent, const QString &name)
 {
@@ -878,7 +859,6 @@ static TreeItem *findChildBranch(TreeItem *parent, const QString &name)
 
   return nullptr;
 }
-
 
 // Найти или создать ветку с именем. Счетчик результата растет
 // только при создании
@@ -900,7 +880,6 @@ static TreeItem *ensureBranch(KnowTreeModel *model, TreeItem *parent,
   return findChildBranch(parent, name);
 }
 
-
 // Один файл медиа в заметке: инлайн, ужатый или аттач.
 // Имена резолвятся до построения HTML: takeUniqueName вызывается
 // при сборке строки, ссылка и файл не разъедутся
@@ -912,7 +891,6 @@ struct TelegramPendingFile
   QString fileName; // дисковое имя в каталоге заметки
   QString attachId; // id аттача для kind=attach (inner-имя от него)
 };
-
 
 // Уникальное имя в пределах набора. Каталог записи свежак,
 // занятость только внутри заметки (месяца или дня)
@@ -941,7 +919,6 @@ static QString takeUniqueName(QSet<QString> &used, const QString &wanted)
 
   return target;
 }
-
 
 // Пузырек одного сообщения: шапка, пересланное, ответ, текст, медиа.
 // Без пилюли дня и заголовка месяца: их добавляет вызыватель
@@ -1075,7 +1052,6 @@ static QString telegramMessageBubble(const TelegramMessage &message,
   return line;
 }
 
-
 // Запись заметки в ветку: текст, ctime, автор, файлы.
 // Каталог берется у вставленной записи: insert может
 // перегенерировать dir, предвычисленному верить нельзя
@@ -1127,7 +1103,7 @@ static bool writeTelegramNote(TreeItem *branch,
     return false;
   }
 
-  const QString recordDir=mytetraConfig.get_tetradir()+QStringLiteral("/base/")+
+  const QString recordDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+QStringLiteral("/base/")+
                           stored->getField(QStringLiteral("dir"));
   AttachTableData *attachTable=stored->getAttachTablePointer();
 
@@ -1196,7 +1172,6 @@ static bool writeTelegramNote(TreeItem *branch,
   return true;
 }
 
-
 TelegramLayout telegramLayoutForMode(const QString &mode)
 {
   if(mode==QStringLiteral("message"))
@@ -1210,7 +1185,6 @@ TelegramLayout telegramLayoutForMode(const QString &mode)
 
   return TelegramLayout::Month;
 }
-
 
 bool importTelegramChat(KnowTreeModel *model,
                         const TelegramChat &chat,

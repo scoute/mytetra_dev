@@ -24,11 +24,8 @@
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "views/record/MetaEditor.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 AttachTableController::AttachTableController(QObject *parent, QObject *iMetaEditor) : QObject(parent)
 {
@@ -62,7 +59,6 @@ AttachTableController::AttachTableController(QObject *parent, QObject *iMetaEdit
   tileView->setSelectionModel(selectionModel);
 }
 
-
 AttachTableController::~AttachTableController()
 {
   delete view;
@@ -70,18 +66,15 @@ AttachTableController::~AttachTableController()
   delete model;
 }
 
-
 AttachTableView *AttachTableController::getView(void)
 {
   return view;
 }
 
-
 AttachTableTileView *AttachTableController::getTileView(void)
 {
   return tileView;
 }
-
 
 // Видимый сейчас вид (таблица или плитка): родитель диалогов,
 // ширина и прочие виджетные нужды
@@ -93,31 +86,26 @@ QWidget *AttachTableController::currentView(void) const
   return view;
 }
 
-
 // Основной метод установки указателя на данные
 void AttachTableController::setAttachTableData(AttachTableData *attachTableData)
 {
   model->setData(QModelIndex(), QVariant::fromValue(attachTableData), ATTACHTABLE_ROLE_TABLE_DATA);
 }
 
-
 AttachTableData *AttachTableController::getAttachTableData()
 {
   return (model->data(QModelIndex(), ATTACHTABLE_ROLE_TABLE_DATA)).value<AttachTableData *>();
 }
-
 
 void AttachTableController::onAddAttach(void)
 {
   addSmart("file");
 }
 
-
 void AttachTableController::onAddLink()
 {
   addSmart("link");
 }
-
 
 void AttachTableController::onAddAttachFromUrl(void)
 {
@@ -198,7 +186,6 @@ void AttachTableController::onAddAttachFromUrl(void)
   saveState();
 }
 
-
 void AttachTableController::addSmart(QString attachType)
 {
   QStringList files=selectFilesForAdding(attachType);
@@ -208,7 +195,6 @@ void AttachTableController::addSmart(QString attachType)
 
   addFileList(attachType, files);
 }
-
 
 // Файлы из drag'n'drop: тот же движок что у пикера, но без диалога.
 // Несохраненная запись (нет данных таблицы) — вежливый отказ вместо
@@ -226,7 +212,6 @@ void AttachTableController::addDroppedFiles(const QStringList &files)
 
   addFileList("file", files);
 }
-
 
 void AttachTableController::addFileList(QString attachType, const QStringList &files)
 {
@@ -272,7 +257,6 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
   updateAttachListInEditor();
 }
 
-
 bool AttachTableController::addAttach(QString attachType, QString currFullFileName, QString currShortFileName, const QString &source)
 {
   // Выясняется указатель на данные таблицы приаттаченных файлов
@@ -301,11 +285,9 @@ bool AttachTableController::addAttach(QString attachType, QString currFullFileNa
   else
     criticalError("Unsupport adding mode");
 
-
   // Если запись, к которой добавляется аттач, зашифрована
   if( attachTableData->isRecordCrypt() )
     attach.encrypt();
-
 
   if(result)
   {
@@ -320,13 +302,11 @@ bool AttachTableController::addAttach(QString attachType, QString currFullFileNa
   }
 }
 
-
 void AttachTableController::saveState()
 {
   // Сохранение дерева веток
   TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
   treeScreen->saveKnowTree();
-
 
   // Указатель на данные таблицы приаттаченных файлов, чтобы обновить иконку аттачей в редакторе
   AttachTableData *attachTableData=getAttachTableData();
@@ -349,7 +329,6 @@ void AttachTableController::saveState()
     mainWindow->updateStats();
 }
 
-
 QStringList AttachTableController::selectFilesForAdding(QString attachType)
 {
   // Диалог выбора файлов
@@ -368,7 +347,7 @@ QStringList AttachTableController::selectFilesForAdding(QString attachType)
   fileSelectDialog.setDirectory(QDir::homePath());
 
   // Если существует каталог, открытый при предыдущем выборе файла
-  QDir appendDir( mytetraConfig.getAttachAppendDir() );
+  QDir appendDir( AppContext::instance().appConfig()->storageSection()->getAttachAppendDir() );
   if( appendDir.exists() )
     fileSelectDialog.setDirectory( appendDir );
 
@@ -384,11 +363,10 @@ QStringList AttachTableController::selectFilesForAdding(QString attachType)
 
   // Запоминается директория, в которой был сделан выбор
   if(files.size()>0)
-    mytetraConfig.setAttachAppendDir( fileSelectDialog.directory().absolutePath() );
+    AppContext::instance().appConfig()->storageSection()->setAttachAppendDir( fileSelectDialog.directory().absolutePath() );
 
   return files;
 }
-
 
 // Выбрано действие "Сохранить как..."
 void AttachTableController::onSaveAsAttach(void)
@@ -414,7 +392,7 @@ void AttachTableController::onSaveAsAttach(void)
     fileSelectDialog.setFileMode(QFileDialog::AnyFile); // Чтобы кнопка "Сохранить" была активной
 
     // Если существует каталог, открытый при предыдущем сохранении
-    QDir saveAsDir( mytetraConfig.getAttachSaveAsDir() );
+    QDir saveAsDir( AppContext::instance().appConfig()->storageSection()->getAttachSaveAsDir() );
     if( saveAsDir.exists() )
       fileSelectDialog.setDirectory( saveAsDir );
 
@@ -431,10 +409,8 @@ void AttachTableController::onSaveAsAttach(void)
     if(dialogResult==QDialog::Rejected)
       return;
 
-
     // Запоминается директория, в которой был сделан выбор
-    mytetraConfig.setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
-
+    AppContext::instance().appConfig()->storageSection()->setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
 
     // Выясняется список выбранных файлов
     QStringList selectFiles=fileSelectDialog.selectedFiles();
@@ -461,7 +437,7 @@ void AttachTableController::onSaveAsAttach(void)
     fileSelectDialog.setDirectory(QDir::homePath());
 
     // Если существует каталог, открытый при предыдущем сохранении
-    QDir saveAsDir( mytetraConfig.getAttachSaveAsDir() );
+    QDir saveAsDir( AppContext::instance().appConfig()->storageSection()->getAttachSaveAsDir() );
     if( saveAsDir.exists() )
       fileSelectDialog.setDirectory( saveAsDir );
 
@@ -470,10 +446,8 @@ void AttachTableController::onSaveAsAttach(void)
     if(dialogResult==QDialog::Rejected)
       return;
 
-
     // Запоминается директория, в которой был сделан выбор
-    mytetraConfig.setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
-
+    AppContext::instance().appConfig()->storageSection()->setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
 
     // Выбранная директория
     QString toDir=fileSelectDialog.directory().absolutePath();
@@ -494,7 +468,6 @@ void AttachTableController::onSaveAsAttach(void)
     }
   }
 }
-
 
 void AttachTableController::saveAttachToUserPlace(QString fromFullFileName, QString toFullFileName, QString attachType, bool isAttachCrypt)
 {
@@ -518,9 +491,8 @@ void AttachTableController::saveAttachToUserPlace(QString fromFullFileName, QStr
 
   // Расшифровка файла, если он был зашифрован и данные хранились в базе (то есть, это именно тип file, а не линк на файл)
   if(isAttachCrypt && attachType=="file")
-    CryptService::decryptFile(globalParameters.getCryptKey(), toFullFileName);
+    CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), toFullFileName);
 }
-
 
 void AttachTableController::onEditFileName(void)
 {
@@ -574,7 +546,6 @@ void AttachTableController::onEditFileName(void)
     treeScreen->knowTreeModel->refreshRecordStats(metaEditor->getMiscField("id"));
 }
 
-
 void AttachTableController::onDeleteAttach(void)
 {
   QList<QString> selectedId=getSelectedId();
@@ -596,13 +567,11 @@ void AttachTableController::onDeleteAttach(void)
   if(ret!=QMessageBox::Ok)
     return;
 
-
   // Удаление выбранных аттачей
   AttachTableData *attachTableData=getAttachTableData();
 
   foreach( QString id, selectedId )
     attachTableData->deleteAttach(id);
-
 
   // Сохранение дерева веток
   TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
@@ -623,7 +592,6 @@ void AttachTableController::onDeleteAttach(void)
     mainWindow->updateStats();
 }
 
-
 // Открытие аттача (аттачей) на просмотр
 void AttachTableController::onOpenAttach(void)
 {
@@ -638,10 +606,10 @@ void AttachTableController::onOpenAttach(void)
     // Если запись зашифрована и открывается файл (не линк), аттач надо скопировать в директорию корзины и расшифровать
     if( attachTableData->isRecordCrypt() && attachTableData->getAttach(id).getField("type")=="file")
     {
-      if(mytetraConfig.getEnableDecryptFileToTrashDirectory())
+      if(AppContext::instance().appConfig()->storageSection()->getEnableDecryptFileToTrashDirectory())
       {
         fullFileName=DiskHelper::copyFileToTrash(fullFileName); // Копирование
-        CryptService::decryptFile(globalParameters.getCryptKey(), fullFileName); // Расшифровка
+        CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), fullFileName); // Расшифровка
       }
       else
       {
@@ -657,7 +625,6 @@ void AttachTableController::onOpenAttach(void)
     QDesktopServices::openUrl(urlFile);
   }
 }
-
 
 void AttachTableController::onShowAttachInfo(void)
 {
@@ -695,7 +662,6 @@ void AttachTableController::onShowAttachInfo(void)
   messageBox.exec();
 }
 
-
 void AttachTableController::onSwitchToEditor(void)
 {
     updateAttachListInEditor();
@@ -703,14 +669,12 @@ void AttachTableController::onSwitchToEditor(void)
     metaEditor->switchToEditorLayout();
 }
 
-
 void AttachTableController::updateAttachListInEditor(void)
 {
     // В редакторе обновляется информация о приаттаченных к записи файлах
     metaEditor->setMiscField("attachFileNameList", getAttachTableData()->getInnerFileNameOnDiskList().join(","));
     qDebug() << "Set attach file name list to editor: " << metaEditor->getMiscField("attachFileNameList");
 }
-
 
 // Получение списка идентификаторов аттачей, выделенных в представлении
 QList<QString> AttachTableController::getSelectedId(void)

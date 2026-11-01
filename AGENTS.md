@@ -47,10 +47,10 @@ cd mytetra-dev/build/Desktop_Qt_5_15_2_GCC_64bit/app && make -j12
 - `QTextCursor::selectedText()` separates lines with U+2029.
 - Headless probes segfault at teardown — verify via output text, never via exit code.
 
-## Headless verification (probes)
+## Headless verification (probes live in `app/tests/`, runner: `app/tests/run_probes.sh [name...]`; volatile artifacts stay in `/tmp/opencode`)
 
 - Stands live in `/tmp/opencode` (volatile — rebuild as needed, never link its `.o` on Windows shadows).
-- Probe recipe: `internalClipboard`, `RandomInitter::init`, `dataBaseConfig.init()`, `mytetraConfig.init()`; link `$BLD/*.o` minus `main.o` with `-Dprivate=public -Dprotected=protected`.
+- Probe recipe: `internalClipboard`, `RandomInitter::init`, `dataBaseConfig.init()`, `mytetraConfig.init()`; link `$BLD/*.o` minus `main.o` with `-Dprivate=public -Dprotected=protected`. Since P1/batch1: ported code goes through `AppContext` — init it in the probe with stack doubles (see `refprobe.cpp`/`menuprobe.cpp`), else null deref; rebuild `edprobe/main_renamed.o` (`-Dmain=main_renamed`) whenever headers change.
 - Fixture `conf.ini` needs matching conf version + `programm=mytetra` + absolute `tetradir`/`trashdir`. Binary resolves workdir from `argv[0]` — copy binary into fixture, run via `cd` + `./`. Env: `QT_QPA_PLATFORM=offscreen`, `GIT_CONFIG_NOSYSTEM=1`, `HOME=/tmp/opencode`.
 - `cp` over a running binary fails (ETXTBSY); kill by `/proc` exe match, never self-matching `pkill -f`.
 

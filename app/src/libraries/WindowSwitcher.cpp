@@ -6,10 +6,8 @@
 #include "views/record/MetaEditor.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/findInBaseScreen/FindScreen.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 WindowSwitcher::WindowSwitcher(QObject *parent) : QObject(parent)
 {
@@ -17,15 +15,14 @@ WindowSwitcher::WindowSwitcher(QObject *parent) : QObject(parent)
 
  // Редактор является встраиваемым, поэтому работа кнопки Back у него идет через callback функцию
  // MetaEditor *edView=find_object<MetaEditor>("editorScreen"); // Выясняется указатель на объект редактирования текста записи
- MetaEditor *metaEditor=globalParameters.getMetaEditor();
+ MetaEditor *metaEditor=AppContext::instance().globalParameters()->getMetaEditor();
  metaEditor->setBackCallback( this->switchFromRecordToRecordtable ); // Устанавливается функция обратного вызова при клике на кнопку Back
 }
-
 
 void WindowSwitcher::enableSwitch(void)
 {
  // Для десктопа переключение окон виджетов вообще не должно включаться
- if(mytetraConfig.getInterfaceMode()=="desktop")
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
  {
    enableSwitcher=false;
    return;
@@ -34,18 +31,15 @@ void WindowSwitcher::enableSwitch(void)
  enableSwitcher=true;
 }
 
-
 void WindowSwitcher::disableSwitch(void)
 {
  enableSwitcher=false;
 }
 
-
 bool WindowSwitcher::getSwitchStatus(void)
 {
  return enableSwitcher;
 }
-
 
 void WindowSwitcher::switchFromTreeToRecordtable(void)
 {
@@ -53,15 +47,14 @@ void WindowSwitcher::switchFromTreeToRecordtable(void)
    return;
 
  // Скрываются все прочие области
- globalParameters.getTreeScreen()->hide();
- globalParameters.getMetaEditor()->hide();
- // globalParameters.getFindScreen()->hide();
+ AppContext::instance().globalParameters()->getTreeScreen()->hide();
+ AppContext::instance().globalParameters()->getMetaEditor()->hide();
+ // AppContext::instance().globalParameters()->getFindScreen()->hide();
 
- QWidget *object=static_cast<QWidget *>( globalParameters.getRecordTableScreen() );
+ QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getRecordTableScreen() );
  object->show();
- mytetraConfig.setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
-
 
 void WindowSwitcher::switchFromTreeToFindInBase(void)
 {
@@ -70,30 +63,28 @@ void WindowSwitcher::switchFromTreeToFindInBase(void)
 
 }
 
-
 // Статическая функция, используется редактором как callback функция при нажатии кнопки back в редакторе конечной записи
 void WindowSwitcher::switchFromRecordToRecordtable(void)
 {
- if(globalParameters.getWindowSwitcher()==NULL)
+ if(AppContext::instance().globalParameters()->getWindowSwitcher()==NULL)
    return;
 
  // Если переключение запрещено
- if(!globalParameters.getWindowSwitcher()->getSwitchStatus())
+ if(!AppContext::instance().globalParameters()->getWindowSwitcher()->getSwitchStatus())
    return;
 
- if(mytetraConfig.getInterfaceMode()!="mobile") // В статическом методе использовать нестатическую переменну enableSwitcher нельзя
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()!="mobile") // В статическом методе использовать нестатическую переменну enableSwitcher нельзя
    return;
 
  // Скрываются все прочие области
- globalParameters.getTreeScreen()->hide();
- globalParameters.getMetaEditor()->hide();
- // globalParameters.getFindScreen()->hide();
+ AppContext::instance().globalParameters()->getTreeScreen()->hide();
+ AppContext::instance().globalParameters()->getMetaEditor()->hide();
+ // AppContext::instance().globalParameters()->getFindScreen()->hide();
 
- QWidget *object=static_cast<QWidget *>( globalParameters.getRecordTableScreen() );
+ QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getRecordTableScreen() );
  object->show();
- mytetraConfig.setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
-
 
 void WindowSwitcher::switchFromRecordToFindInBase(void)
 {
@@ -102,22 +93,20 @@ void WindowSwitcher::switchFromRecordToFindInBase(void)
 
 }
 
-
 void WindowSwitcher::switchFromRecordtableToRecord(void)
 {
  if(!enableSwitcher)
    return;
 
  // Скрываются все прочие области
- globalParameters.getTreeScreen()->hide();
- globalParameters.getRecordTableScreen()->hide();
- // globalParameters.getFindScreen()->hide();
+ AppContext::instance().globalParameters()->getTreeScreen()->hide();
+ AppContext::instance().globalParameters()->getRecordTableScreen()->hide();
+ // AppContext::instance().globalParameters()->getFindScreen()->hide();
 
- QWidget *object=static_cast<QWidget *>( globalParameters.getMetaEditor() );
+ QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getMetaEditor() );
  object->show();
- mytetraConfig.setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
-
 
 void WindowSwitcher::switchFromRecordtableToFindInBase(void)
 {
@@ -126,22 +115,20 @@ void WindowSwitcher::switchFromRecordtableToFindInBase(void)
 
 }
 
-
 void WindowSwitcher::switchFromRecordtableToTree(void)
 {
  if(!enableSwitcher)
    return;
 
  // Скрываются все прочие области
- globalParameters.getMetaEditor()->hide();
- globalParameters.getRecordTableScreen()->hide();
- // globalParameters.getFindScreen()->hide();
+ AppContext::instance().globalParameters()->getMetaEditor()->hide();
+ AppContext::instance().globalParameters()->getRecordTableScreen()->hide();
+ // AppContext::instance().globalParameters()->getFindScreen()->hide();
 
- QWidget *object=static_cast<QWidget *>( globalParameters.getTreeScreen() );
+ QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getTreeScreen() );
  object->show();
- mytetraConfig.setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
-
 
 void WindowSwitcher::restoreFocusWidget()
 {
@@ -149,45 +136,44 @@ void WindowSwitcher::restoreFocusWidget()
     return;
 
   // Скрываются все прочие области
-  globalParameters.getTreeScreen()->hide();
-  globalParameters.getRecordTableScreen()->hide();
-  globalParameters.getMetaEditor()->hide();
-  // globalParameters.getFindScreen()->hide();
+  AppContext::instance().globalParameters()->getTreeScreen()->hide();
+  AppContext::instance().globalParameters()->getRecordTableScreen()->hide();
+  AppContext::instance().globalParameters()->getMetaEditor()->hide();
+  // AppContext::instance().globalParameters()->getFindScreen()->hide();
 
-  QString widgetName=mytetraConfig.getFocusWidget();
+  QString widgetName=AppContext::instance().appConfig()->uiSection()->getFocusWidget();
 
   // Оформить через case
   if(widgetName=="treeScreen")
   {
-    globalParameters.getTreeScreen()->show();
-    globalParameters.getTreeScreen()->setFocus();
+    AppContext::instance().globalParameters()->getTreeScreen()->show();
+    AppContext::instance().globalParameters()->getTreeScreen()->setFocus();
     return;
   }
 
   if(widgetName=="recordTableScreen")
   {
-    globalParameters.getRecordTableScreen()->show();
-    globalParameters.getRecordTableScreen()->setFocus();
+    AppContext::instance().globalParameters()->getRecordTableScreen()->show();
+    AppContext::instance().globalParameters()->getRecordTableScreen()->setFocus();
     return;
   }
 
   if(widgetName=="editorScreen")
   {
-    globalParameters.getMetaEditor()->show();
-    globalParameters.getMetaEditor()->setFocus();
+    AppContext::instance().globalParameters()->getMetaEditor()->show();
+    AppContext::instance().globalParameters()->getMetaEditor()->setFocus();
     return;
   }
 
   // Доработать
   if(widgetName=="findTableView")
   {
-    globalParameters.getFindScreen()->show();
-    globalParameters.getFindScreen()->setFocus();
+    AppContext::instance().globalParameters()->getFindScreen()->show();
+    AppContext::instance().globalParameters()->getFindScreen()->setFocus();
     return;
   }
 
-
   // Остальные случаи - активируется дерево записей
-  globalParameters.getTreeScreen()->show();
-  globalParameters.getTreeScreen()->setFocus();
+  AppContext::instance().globalParameters()->getTreeScreen()->show();
+  AppContext::instance().globalParameters()->getTreeScreen()->setFocus();
 }

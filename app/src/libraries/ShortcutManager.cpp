@@ -6,26 +6,21 @@
 
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 const QStringList ShortcutManager::availableSection={"note", "tree", "editor", "actionLog", "attach", "misc"};
 
 const QStringList ShortcutManager::overloadSection={"actionLog:*", "attach:editor"};
-
 
 ShortcutManager::ShortcutManager(QObject *parent) : QObject(parent)
 {
 
 }
 
-
 ShortcutManager::~ShortcutManager()
 {
 
 }
-
 
 ShortcutManager &ShortcutManager::operator=(const ShortcutManager &obj)
 {
@@ -39,10 +34,9 @@ ShortcutManager &ShortcutManager::operator=(const ShortcutManager &obj)
     return *this;
 }
 
-
 void ShortcutManager::init()
 {
-    configFileName=globalParameters.getWorkDirectory()+"/shortcut.ini";
+    configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/shortcut.ini";
 
     initDefaultKeyTable();
 
@@ -51,19 +45,16 @@ void ShortcutManager::init()
     initKeyTable();
 }
 
-
 void ShortcutManager::save()
 {
     saveConfig(keyTable);
 }
-
 
 void ShortcutManager::updateShortcutInApplication()
 {
     qDebug() << "Update shortcut in application";
     emit updateWidgetShortcut();
 }
-
 
 void ShortcutManager::retranslate(void)
 {
@@ -72,7 +63,6 @@ void ShortcutManager::retranslate(void)
 
     updateShortcutInApplication();
 }
-
 
 void ShortcutManager::initDefaultKeyTable()
 {
@@ -218,7 +208,6 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("misc-quit",        Data{ QKeySequence("Ctrl+Q"), tr("Quit"), tr("") });
 }
 
-
 void ShortcutManager::checkConfigFile()
 {
     // Если конфиг-файла не существует, создается стандартный
@@ -226,7 +215,6 @@ void ShortcutManager::checkConfigFile()
         saveConfig(defaultKeyTable);
     }
 }
-
 
 // Инициализация таблицы горячих клавиш из конфига
 void ShortcutManager::initKeyTable()
@@ -287,7 +275,6 @@ void ShortcutManager::initKeyTable()
     config.sync();
 }
 
-
 // Запись всех шорткатов в виде конфиг-файла
 void ShortcutManager::saveConfig(QMap<QString, Data> table)
 {
@@ -318,7 +305,6 @@ void ShortcutManager::saveConfig(QMap<QString, Data> table)
     config.sync();
 }
 
-
 // Список коротких имен действий в разделе
 QStringList ShortcutManager::getActionsNameList(QString sectionName)
 {
@@ -341,7 +327,6 @@ QStringList ShortcutManager::getActionsNameList(QString sectionName)
     return list;
 }
 
-
 QKeySequence ShortcutManager::getKeySequence(QString actionName)
 {
     if(keyTable.contains(actionName)) {
@@ -350,7 +335,6 @@ QKeySequence ShortcutManager::getKeySequence(QString actionName)
         return QKeySequence();
     }
 }
-
 
 // Установка клавиатурной последовательности в памяти, без записи на диск
 void ShortcutManager::setKeySequence(QString actionName, QString keySequence)
@@ -369,7 +353,6 @@ void ShortcutManager::setKeySequence(QString actionName, QString keySequence)
     }
 }
 
-
 QString ShortcutManager::getDescription(QString actionName)
 {
     if(keyTable.contains(actionName)) {
@@ -378,7 +361,6 @@ QString ShortcutManager::getDescription(QString actionName)
         return "";
     }
 }
-
 
 QString ShortcutManager::getExplanation(QString actionName)
 {
@@ -389,7 +371,6 @@ QString ShortcutManager::getExplanation(QString actionName)
     }
 }
 
-
 QString ShortcutManager::getDescriptionWithShortcut(QString actionName)
 {
     if(keyTable.contains(actionName)) {
@@ -398,7 +379,6 @@ QString ShortcutManager::getDescriptionWithShortcut(QString actionName)
         return "";
     }
 }
-
 
 QString ShortcutManager::getFullDescription(QString actionName)
 {
@@ -414,7 +394,6 @@ QString ShortcutManager::getFullDescription(QString actionName)
         return "";
     }
 }
-
 
 // Описание шортката в таком виде, который отображается в интерфейсе для пользователя
 QString ShortcutManager::getKeySequenceAsText(QString actionName, stringRepresentation mode)
@@ -438,7 +417,6 @@ QString ShortcutManager::getKeySequenceAsText(QString actionName, stringRepresen
     return "";
 }
 
-
 QKeySequence ShortcutManager::getDefaultKeySequence(QString actionName)
 {
     if(defaultKeyTable.contains(actionName)) {
@@ -448,12 +426,10 @@ QKeySequence ShortcutManager::getDefaultKeySequence(QString actionName)
     return QKeySequence();
 }
 
-
 QString ShortcutManager::getDefaultKeySequenceAsText(QString actionName)
 {
     return getDefaultKeySequence(actionName).toString();
 }
-
 
 void ShortcutManager::initAction(QString actionName, QAction *action)
 {
@@ -471,7 +447,6 @@ void ShortcutManager::initAction(QString actionName, QAction *action)
 
 }
 
-
 void ShortcutManager::initToolButton(QString actionName, QToolButton *action)
 {
     if(keyTable.contains(actionName)) {
@@ -484,7 +459,6 @@ void ShortcutManager::initToolButton(QString actionName, QToolButton *action)
     }
 
 }
-
 
 // Проверка имен секций, допустимо ли одно и то же сочетание клавиш
 // для указанных двух секций
@@ -510,7 +484,6 @@ bool ShortcutManager::isOverloadEnable(QString sectionNameA, QString sectionName
 
     return false;
 }
-
 
 bool ShortcutManager::isDirectOverloadEnable(QString sectionNameA, QString sectionNameB)
 {

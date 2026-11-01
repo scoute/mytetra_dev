@@ -13,12 +13,15 @@ class QSpinBox;
 class MtComboBox;
 class QPushButton;
 
+class EditorShowTextDispatcher;
+
 class AppConfigPage_Crypt : public ConfigPage
 {
  Q_OBJECT
 
 public:
-  AppConfigPage_Crypt(QWidget *parent = nullptr);
+  // P3: диспетчер для Password внедряется диалогом (был ::instance())
+  explicit AppConfigPage_Crypt(EditorShowTextDispatcher *dispatcher, QWidget *parent = nullptr);
   virtual ~AppConfigPage_Crypt();
 
   int applyChanges(void);
@@ -43,6 +46,8 @@ protected:
   void setupSignals(void);
   void assembly(void);
 
+  // P3: диспетчер для Password (DI вместо синглтона)
+  EditorShowTextDispatcher *m_dispatcher=nullptr;
 
   QGroupBox *passRetrieveBox;
   QLabel *passRetrieveStatus;

@@ -28,15 +28,12 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 ImageFormatter::ImageFormatter()
 {
 
 }
-
 
 // Формат картинки, которая выделена (если выделена единственная картинка)
 QTextImageFormat ImageFormatter::imageFormatOnSelect(void)
@@ -48,7 +45,6 @@ QTextImageFormat ImageFormatter::imageFormatOnSelect(void)
 
     return QTextImageFormat();
 }
-
 
 // Формат картинки на которой находится курсор
 QTextImageFormat ImageFormatter::imageFormatOnCursor(void)
@@ -64,7 +60,6 @@ QTextImageFormat ImageFormatter::imageFormatOnCursor(void)
 
   return QTextImageFormat();
 }
-
 
 void ImageFormatter::editImageProperties(void)
 {
@@ -134,7 +129,6 @@ void ImageFormatter::editImageProperties(void)
 
     dialog.update_percent();
 
-
     // Запуск диалога на выполнение
     if(dialog.exec()!=QDialog::Accepted)
         return;
@@ -197,7 +191,6 @@ void ImageFormatter::editImageProperties(void)
             helpCursor.setCharFormat(imageFormat);
         }
 
-
         // Если изображение не выбрано, но курсор находится в позиции изображения
         if(editor->cursorPositionDetector->isCursorOnImage())
         {
@@ -217,7 +210,6 @@ void ImageFormatter::editImageProperties(void)
     }
 
 }
-
 
 // Обработка клавиши добавления картинки
 void ImageFormatter::onInsertImageFromFileClicked(void)
@@ -294,7 +286,6 @@ void ImageFormatter::onInsertImageFromFileClicked(void)
 
 }
 
-
 // Вызов окна настройки свойств изображения
 void ImageFormatter::onContextMenuEditImageProperties()
 {
@@ -314,12 +305,10 @@ void ImageFormatter::onContextMenuEditImageProperties()
   }
 }
 
-
 void ImageFormatter::onDoubleClickOnImage(void)
 {
     onContextMenuEditImageProperties();
 }
-
 
 // Открыть в файловом менеджере каталог с файлом картинки под курсором.
 // Без shell: только QDesktopServices. Если каталог записи еще неизвестен,
@@ -362,7 +351,6 @@ void ImageFormatter::onShowImageInFolder(void)
     }
 }
 
-
 // Путь к файлу картинки под курсором. Пусто если курсор не на
 // картинке (подсказка в строке статуса) или файла нет на диске
 // (предупреждение). Вызывает только проверку, без открытия
@@ -380,7 +368,7 @@ QString ImageFormatter::resolveImageFilePath(void)
     imageFormat=imageFormatOnCursor();
   }
   else {
-    globalParameters.getStatusBar()->showMessage(tr("Place the cursor on the image to open it"));
+    AppContext::instance().globalParameters()->getStatusBar()->showMessage(tr("Place the cursor on the image to open it"));
     return QString();
   }
 
@@ -400,7 +388,6 @@ QString ImageFormatter::resolveImageFilePath(void)
 
   return fullFileName;
 }
-
 
 // Открыть картинку под курсором во внешней программе ОС.
 // Если программа файл не открыла, показывается предупреждение
@@ -422,7 +409,6 @@ void ImageFormatter::openImage(void)
                          tr("Can not open image file:\n%1").arg(fullFileName));
   }
 }
-
 
 // Открыть картинку под курсором в программе, выбранной через диалог
 void ImageFormatter::openImageWith(void)
@@ -461,7 +447,6 @@ void ImageFormatter::openImageWith(void)
   }
 }
 
-
 // Вызов открытия изображения из контекстного меню
 void ImageFormatter::onContextMenuOpenImage(void)
 {
@@ -480,7 +465,6 @@ void ImageFormatter::onContextMenuOpenImage(void)
     openImage();
   }
 }
-
 
 // Вызов открытия изображения в выбранной программе из контекстного меню
 void ImageFormatter::onContextMenuOpenImageWith(void)
@@ -501,13 +485,11 @@ void ImageFormatter::onContextMenuOpenImageWith(void)
   }
 }
 
-
 // Открытие картинки по одинарному Ctrl+клику
 void ImageFormatter::onClickOnImage(void)
 {
   openImage();
 }
-
 
 void ImageFormatter::onDownloadImages(const QString html)
 {
@@ -662,7 +644,6 @@ void ImageFormatter::onDownloadImages(const QString html)
     else
       textBlock = textBlock.next();
   }
-
 
   // Если есть изображения, которые надо скачать
   if(downloadReferences.count()>0)

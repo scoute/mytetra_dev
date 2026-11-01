@@ -10,22 +10,18 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/GestureHelper.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 ActionLogView::ActionLogView(QWidget *parent) : QTableView(parent)
 {
 
 }
 
-
 ActionLogView::~ActionLogView()
 {
 
 }
-
 
 void ActionLogView::init()
 {
@@ -54,7 +50,6 @@ void ActionLogView::init()
   setupSignals();
 }
 
-
 void ActionLogView::setupSignals(void)
 {
   // Сигнал чтобы показать контекстное меню по правому клику на списке записей
@@ -67,12 +62,10 @@ void ActionLogView::setupSignals(void)
           this, SLOT(onCustomContextMenuRequested(const QPoint &)));
 }
 
-
 void ActionLogView::setController(ActionLogController *pController)
 {
   controller=pController;
 }
-
 
 void ActionLogView::resizeEvent(QResizeEvent *event)
 {
@@ -85,14 +78,13 @@ void ActionLogView::resizeEvent(QResizeEvent *event)
   QTableView::resizeEvent(event);
 }
 
-
 void ActionLogView::paintEvent(QPaintEvent *event)
 {
   QTableView::paintEvent(event);
 
   // Если нет записей лога
   if(model()!=nullptr)
-    if(model()->rowCount()==0 && mytetraConfig.getEnableLogging()==false)
+    if(model()->rowCount()==0 && AppContext::instance().appConfig()->storageSection()->getEnableLogging()==false)
     {
       QPainter painter(viewport());
       painter.setPen( QApplication::palette().color(QPalette::ToolTipText) ); // Qt::gray
@@ -101,14 +93,12 @@ void ActionLogView::paintEvent(QPaintEvent *event)
     }
 }
 
-
 void ActionLogView::assemblyContextMenu()
 {
   ActionLogScreen *parentPointer=qobject_cast<ActionLogScreen *>(parent());
 
   contextMenu.addAction( parentPointer->actionCopy );
 }
-
 
 // Открытие контекстного меню в таблице записей лога
 void ActionLogView::onCustomContextMenuRequested(const QPoint &pos)

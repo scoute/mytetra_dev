@@ -9,24 +9,20 @@
 
 #include "libraries/helpers/DebugHelper.h"
 #include "models/appConfig/AppConfig.h"
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigCrypto.h"
 
 using std::vector;
-
 
 CryptService::CryptService()
 {
 
 }
 
-
 CryptService::~CryptService()
 {
 
 }
-
 
 void CryptService::convertByteArrayToVector(const QByteArray &qba, std::vector<unsigned char> &vec)
 {
@@ -41,7 +37,6 @@ void CryptService::convertByteArrayToVector(const QByteArray &qba, std::vector<u
   vec.resize(size, 0);
   memcpy(&vec[0], qba.constData(), size*sizeof(unsigned char));
 }
-
 
 void CryptService::convertVectorToByteArray(const std::vector<unsigned char> &vec, QByteArray &qba)
 {
@@ -69,7 +64,6 @@ void CryptService::convertVectorToByteArray(const std::vector<unsigned char> &ve
   */
 }
 
-
 // Выбор бэкенда: шифрование по настройке cryptMethod,
 // расшифровка по магии блоба (MTENC1 -> новый, иначе RC5)
 QString CryptService::detectMethod(const QByteArray &data)
@@ -79,7 +73,6 @@ QString CryptService::detectMethod(const QByteArray &data)
 
     return QString::fromLatin1(CIPHER_RC5);
 }
-
 
 CipherBackend *CryptService::backend(const QString &method)
 {
@@ -96,7 +89,6 @@ CipherBackend *CryptService::backend(const QString &method)
     return nullptr;
 }
 
-
 // Шифрация строки
 // Результирующая зашифрованная строка - это набор шифрованных байт,
 // представленный в кодировке Base64
@@ -110,7 +102,6 @@ QString CryptService::encryptString(QByteArray key, QString line)
 
  return resultLine;
 }
-
 
 // Расшифровка строки
 // Принимаемая зашифрованная строка - это набор шифрованных байт,
@@ -133,20 +124,18 @@ QString CryptService::decryptString(QByteArray key, QString line)
  return resultLine;
 }
 
-
 QByteArray CryptService::encryptByteArray(QByteArray key, QByteArray data)
 {
   if(data.size()==0)
     return QByteArray();
 
-  CipherBackend *cipher=backend(mytetraConfig.get_cryptMethod());
+  CipherBackend *cipher=backend(AppContext::instance().appConfig()->cryptoSection()->get_cryptMethod());
 
   if(cipher==nullptr)
     criticalError("CryptService::encryptByteArray() : Unknown cipher method.");
 
   return cipher->encryptBytes(key, data);
 }
-
 
 QByteArray CryptService::decryptByteArray(QByteArray key, QByteArray data)
 {
@@ -161,7 +150,6 @@ QByteArray CryptService::decryptByteArray(QByteArray key, QByteArray data)
   return cipher->decryptBytes(key, data);
 }
 
-
 QByteArray CryptService::encryptStringToByteArray(QByteArray key, QString line)
 {
  if(line=="")
@@ -169,7 +157,6 @@ QByteArray CryptService::encryptStringToByteArray(QByteArray key, QString line)
 
  return encryptByteArray(key, line.toUtf8());
 }
-
 
 QString CryptService::decryptStringFromByteArray(QByteArray key, QByteArray data)
 {
@@ -186,20 +173,17 @@ QString CryptService::decryptStringFromByteArray(QByteArray key, QByteArray data
  return resultLine;
 }
 
-
 // Шифрование файла на диске, вместо незашифрованного файла появляется зашифрованный
 void CryptService::encryptFile(QByteArray key, QString fileName)
 {
  encDecFileSmart(key, fileName, 0);
 }
 
-
 // Расшифровка файла на диске, вместо зашифрованного файла появляется нешифрованный
 void CryptService::decryptFile(QByteArray key, QString fileName)
 {
  encDecFileSmart(key, fileName, 1);
 }
-
 
 void CryptService::encDecFileSmart(QByteArray key, QString fileName, int mode)
 {

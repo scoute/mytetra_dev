@@ -10,12 +10,16 @@ class RecordTableData;
 class RecordTableModel;
 class RecordTableProxyModel;
 class ClipboardRecords;
+class Favorites;
+class BacklinkIndex;
+class EditorShowTextDispatcher;
 
 class RecordTableController : public QObject
 {
   Q_OBJECT
 public:
-  RecordTableController(QObject *parent = nullptr);
+  // P3: избранное/индекс/диспетчер внедряются (были ::instance())
+  RecordTableController(Favorites *favorites, BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QObject *parent = nullptr);
   virtual ~RecordTableController();
 
   void init(void);
@@ -130,6 +134,13 @@ protected:
                  QString author,
                  QString url,
                  QString tags);
+
+private:
+
+  // P3: внедренные зависимости (DI вместо синглтонов)
+  Favorites *m_favorites=nullptr;
+  BacklinkIndex *m_backlinks=nullptr;
+  EditorShowTextDispatcher *m_dispatcher=nullptr;
 
 };
 

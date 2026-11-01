@@ -17,11 +17,8 @@
 #include "views/tree/TreeScreen.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigClipper.h"
 
 ClipBranchFilter::ClipBranchFilter(QObject *parent) : QSortFilterProxyModel(parent)
 {
@@ -29,13 +26,11 @@ ClipBranchFilter::ClipBranchFilter(QObject *parent) : QSortFilterProxyModel(pare
   setRecursiveFilteringEnabled(true);
 }
 
-
 void ClipBranchFilter::setFilterText(const QString &text)
 {
   m_text=text;
   invalidateFilter();
 }
-
 
 bool ClipBranchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
@@ -47,18 +42,15 @@ bool ClipBranchFilter::filterAcceptsRow(int sourceRow, const QModelIndex &source
   return index.data(Qt::DisplayRole).toString().contains(m_text, Qt::CaseInsensitive);
 }
 
-
 ClipBranchDialog::ClipBranchDialog(QWidget *parent) : QDialog(parent)
 {
   setupUi();
 }
 
-
 ClipBranchDialog::~ClipBranchDialog(void)
 {
 
 }
-
 
 // Ветка закрыта: шифрована сама или любой предок, а пароль не введен.
 // Путь наверх обязателен: дети зашифрованной ветки сами флага
@@ -68,7 +60,7 @@ bool ClipBranchDialog::isLocked(const TreeItem *item)
   if(item==nullptr)
     return true;
 
-  if(!globalParameters.getCryptKey().isEmpty())
+  if(!AppContext::instance().globalParameters()->getCryptKey().isEmpty())
     return false;
 
   for(const TreeItem *it=item; it!=nullptr; it=it->parent())
@@ -77,7 +69,6 @@ bool ClipBranchDialog::isLocked(const TreeItem *item)
 
   return false;
 }
-
 
 // Корневые + два уровня вложений. Три плоских цикла вместо рекурсии:
 // глубина фиксирована, читать проще, ошибиться негде.
@@ -126,7 +117,6 @@ QList< QPair<QString, QString> > ClipBranchDialog::collectBranches(KnowTreeModel
   return result;
 }
 
-
 // Поверх всех: в момент хоткея в фокусе браузер, обычное модальное окно
 // за ним бы потерялось. StayOnTop + raise + activateWindow вытягивают
 // вопрос на передний фон
@@ -144,12 +134,10 @@ QString ClipBranchDialog::askBranch(QWidget *parent)
   return dialog.selectedBranchId();
 }
 
-
 QString ClipBranchDialog::selectedBranchId(void) const
 {
   return m_selectedId;
 }
-
 
 void ClipBranchDialog::onTileClicked(void)
 {
@@ -160,7 +148,6 @@ void ClipBranchDialog::onTileClicked(void)
   m_selectedId=tile->property("branchId").toString();
   accept();
 }
-
 
 // Фильтр режет оба вида: плитки прячутся по подстроке пути,
 // дерево — через прокси (предки совпадений остаются на месте)
@@ -175,14 +162,13 @@ void ClipBranchDialog::onFilterChanged(const QString &text)
     m_treeFilter->setFilterText(text);
 }
 
-
 void ClipBranchDialog::onTreeDoubleClicked(const QModelIndex &index)
 {
   if(!index.isValid() || m_treeFilter==nullptr)
     return;
 
   KnowTreeModel *model=nullptr;
-  if(TreeScreen *treeScreen=globalParameters.getTreeScreen())
+  if(TreeScreen *treeScreen=AppContext::instance().globalParameters()->getTreeScreen())
     model=treeScreen->knowTreeModel;
 
   if(!model)
@@ -196,7 +182,6 @@ void ClipBranchDialog::onTreeDoubleClicked(const QModelIndex &index)
   accept();
 }
 
-
 void ClipBranchDialog::onTreeSelectionChanged(void)
 {
   bool hasSelection=false;
@@ -208,7 +193,6 @@ void ClipBranchDialog::onTreeSelectionChanged(void)
     okButton->setEnabled(hasSelection);
 }
 
-
 void ClipBranchDialog::onOkClicked(void)
 {
   if(m_treeView->selectionModel()==nullptr)
@@ -216,7 +200,6 @@ void ClipBranchDialog::onOkClicked(void)
 
   onTreeDoubleClicked(m_treeView->selectionModel()->currentIndex());
 }
-
 
 void ClipBranchDialog::setupUi(void)
 {
@@ -233,14 +216,14 @@ void ClipBranchDialog::setupUi(void)
   connect(m_searchEdit, &QLineEdit::textChanged, this, &ClipBranchDialog::onFilterChanged);
 
   KnowTreeModel *model=nullptr;
-  if(TreeScreen *treeScreen=globalParameters.getTreeScreen())
+  if(TreeScreen *treeScreen=AppContext::instance().globalParameters()->getTreeScreen())
     model=treeScreen->knowTreeModel;
 
   setupTree(model);
   setupTiles();
 
   m_tilesLabel=new QLabel(this);
-  if(mytetraConfig.get_clippertilemode()==1)
+  if(AppContext::instance().appConfig()->clipperSection()->get_clippertilemode()==1)
     m_tilesLabel->setText(tr("Frequent branches:"));
   else
     m_tilesLabel->setText(tr("Recent branches:"));
@@ -263,13 +246,12 @@ void ClipBranchDialog::setupUi(void)
   resize(640, 620);
 }
 
-
 // Внизу — 16 плиток: последние или частые по настройке (история одна,
 // с счетчиками). Пусто или ветки удалены — полный список как раньше
 void ClipBranchDialog::setupTiles(void)
 {
   KnowTreeModel *model=nullptr;
-  if(TreeScreen *treeScreen=globalParameters.getTreeScreen())
+  if(TreeScreen *treeScreen=AppContext::instance().globalParameters()->getTreeScreen())
     model=treeScreen->knowTreeModel;
 
   m_grid=new QGridLayout;
@@ -279,7 +261,7 @@ void ClipBranchDialog::setupTiles(void)
   // обратный порядок по счетчику, связи рвутся стабильной сортировкой
   QMap<QString, int> counts;
   QStringList order;
-  const QStringList pairs=mytetraConfig.get_clipperrecent()
+  const QStringList pairs=AppContext::instance().appConfig()->clipperSection()->get_clipperrecent()
                            .split(QChar(';'), Qt::SkipEmptyParts);
   for(const QString &pair : pairs)
   {
@@ -303,7 +285,7 @@ void ClipBranchDialog::setupTiles(void)
     order << id;
   }
 
-  if(mytetraConfig.get_clippertilemode()==1)
+  if(AppContext::instance().appConfig()->clipperSection()->get_clippertilemode()==1)
     std::stable_sort(order.begin(), order.end(),
                      [&](const QString &first, const QString &second)
                      { return counts.value(first, 0)>counts.value(second, 0); });
@@ -349,7 +331,6 @@ void ClipBranchDialog::setupTiles(void)
   m_tilesScroll->setWidgetResizable(true);
   m_tilesScroll->setWidget(tilesWidget);
 }
-
 
 // Дерево на живой модели: иерархия видна как есть, глубина любая.
 // Раскрыто на два уровня — дальнее раскрывается руками

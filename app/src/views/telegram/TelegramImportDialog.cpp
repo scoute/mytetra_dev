@@ -19,10 +19,8 @@
 #include "models/tree/KnowTreeModel.h"
 #include "views/tree/TreeScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
 {
@@ -53,7 +51,7 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
 
   retranslateUi();
 
-  const QString savedMode=mytetraConfig.get_telegramImportMode();
+  const QString savedMode=AppContext::instance().appConfig()->servicesSection()->get_telegramImportMode();
   yearNote->setChecked(savedMode==QStringLiteral("year"));
   monthNote->setChecked(savedMode!=QStringLiteral("message") &&
                         savedMode!=QStringLiteral("day") &&
@@ -106,11 +104,9 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
   importButton->setEnabled(false);
 }
 
-
 TelegramImportDialog::~TelegramImportDialog(void)
 {
 }
-
 
 void TelegramImportDialog::retranslateUi(void)
 {
@@ -127,7 +123,6 @@ void TelegramImportDialog::retranslateUi(void)
   layoutBox->setTitle(tr("Notes layout"));
 }
 
-
 void TelegramImportDialog::onLayoutToggle(void)
 {
   QString mode=QStringLiteral("month");
@@ -139,10 +134,9 @@ void TelegramImportDialog::onLayoutToggle(void)
   else if(yearNote->isChecked())
     mode=QStringLiteral("year");
 
-  if(mytetraConfig.get_telegramImportMode()!=mode)
-    mytetraConfig.set_telegramImportMode(mode);
+  if(AppContext::instance().appConfig()->servicesSection()->get_telegramImportMode()!=mode)
+    AppContext::instance().appConfig()->servicesSection()->set_telegramImportMode(mode);
 }
-
 
 void TelegramImportDialog::onSelectFile(void)
 {
@@ -200,7 +194,6 @@ void TelegramImportDialog::onSelectFile(void)
   progressBar->setValue(0);
 }
 
-
 void TelegramImportDialog::onImport(void)
 {
   if(!chatLoaded)
@@ -222,7 +215,7 @@ void TelegramImportDialog::onImport(void)
   TelegramImportResult result;
   QString error;
 
-  const TelegramLayout layout=telegramLayoutForMode(mytetraConfig.get_telegramImportMode());
+  const TelegramLayout layout=telegramLayoutForMode(AppContext::instance().appConfig()->servicesSection()->get_telegramImportMode());
 
   const bool ok=importTelegramChat(treeScreen->knowTreeModel, chat,
                                    result, error, layout,

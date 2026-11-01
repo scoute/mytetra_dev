@@ -20,9 +20,9 @@
 #include "models/attachTable/AttachTableData.h"
 #include "views/tree/TreeScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 AppConfigPage_Attach::AppConfigPage_Attach(QWidget *parent) : ConfigPage(parent)
 {
@@ -31,12 +31,10 @@ AppConfigPage_Attach::AppConfigPage_Attach(QWidget *parent) : ConfigPage(parent)
     assembly();
 }
 
-
 AppConfigPage_Attach::~AppConfigPage_Attach()
 {
     qDebug() << Q_FUNC_INFO;
 }
-
 
 void AppConfigPage_Attach::setupUi(void)
 {
@@ -45,7 +43,7 @@ void AppConfigPage_Attach::setupUi(void)
     // Галка разрешения/запрещения подсветки записи с прикрепленными файлами
     enableRecordWithAttachHighlight=new QCheckBox(this);
     enableRecordWithAttachHighlight->setText( tr("Enable highlight notes with attachments") );
-    enableRecordWithAttachHighlight->setChecked( mytetraConfig.getEnableRecordWithAttachHighlight() );
+    enableRecordWithAttachHighlight->setChecked( AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight() );
 
     // Выбор цвета для записи с прикрепленными файлами
     labelHighlightColor=new QLabel(this);
@@ -53,10 +51,10 @@ void AppConfigPage_Attach::setupUi(void)
 
     buttonHighlightColor=new QToolButton(this);
     highlightColor=new QColor();
-    this->setColorForButtonHighlightColor( QColor( mytetraConfig.getRecordWithAttachHighlightColor() ) );
+    this->setColorForButtonHighlightColor( QColor( AppContext::instance().appConfig()->uiSection()->getRecordWithAttachHighlightColor() ) );
 
     // Начальный выбор цвета активируется или отключается в зависимости от галки
-    this->onEnableRecordWithAttachHighlight( mytetraConfig.getEnableRecordWithAttachHighlight() );
+    this->onEnableRecordWithAttachHighlight( AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight() );
 
     // Пояснение про схему имен файлов на диске
     fileNamesInfo=new QLabel(this);
@@ -71,7 +69,7 @@ void AppConfigPage_Attach::setupUi(void)
     attachNameModeCombo->addItem( tr("System names (id.extension)"), AppConfig::AttachNameSystem );
     attachNameModeCombo->addItem( tr("System + original names (id_name.extension)"), AppConfig::AttachNameHybrid );
     attachNameModeCombo->addItem( tr("Original names (as uploaded)"), AppConfig::AttachNameOriginal );
-    attachNameModeCombo->setCurrentIndex( attachNameModeCombo->findData(mytetraConfig.get_attachNameMode()) );
+    attachNameModeCombo->setCurrentIndex( attachNameModeCombo->findData(AppContext::instance().appConfig()->storageSection()->get_attachNameMode()) );
 
     // Кнопка приведения всех вложений к выбранному виду
     convertAttachesButton=new QPushButton(this);
@@ -83,14 +81,12 @@ void AppConfigPage_Attach::setupUi(void)
     fileNamesWarning->setText( tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped.") );
 }
 
-
 void AppConfigPage_Attach::setupSignals(void)
 {
     connect( enableRecordWithAttachHighlight, &QCheckBox::toggled, this, &AppConfigPage_Attach::onEnableRecordWithAttachHighlight);
     connect( buttonHighlightColor, &QToolButton::clicked, this, &AppConfigPage_Attach::onClickedHighlightColor);
     connect( convertAttachesButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertAttaches);
 }
-
 
 void AppConfigPage_Attach::assembly(void)
 {
@@ -136,7 +132,6 @@ void AppConfigPage_Attach::assembly(void)
     setLayout( centralLayout );
 }
 
-
 void AppConfigPage_Attach::setColorForButtonHighlightColor(QColor iColor)
 {
     // Квадратик на кнопке выбора цвета кода
@@ -147,13 +142,11 @@ void AppConfigPage_Attach::setColorForButtonHighlightColor(QColor iColor)
     *highlightColor=iColor;
 }
 
-
 void AppConfigPage_Attach::onEnableRecordWithAttachHighlight(bool state)
 {
     labelHighlightColor->setEnabled(state);
     buttonHighlightColor->setEnabled(state);
 }
-
 
 void AppConfigPage_Attach::onClickedHighlightColor()
 {
@@ -164,7 +157,6 @@ void AppConfigPage_Attach::onClickedHighlightColor()
     if(selectedColor.isValid())
         setColorForButtonHighlightColor(selectedColor);
 }
-
 
 void AppConfigPage_Attach::retranslateUi(void)
 {
@@ -181,7 +173,6 @@ void AppConfigPage_Attach::retranslateUi(void)
   fileNamesWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped."));
 }
 
-
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -192,22 +183,21 @@ int AppConfigPage_Attach::applyChanges(void)
     int result=0;
 
     // Сохраняется настройка разрешения/запрещения подсветки записи с прикрепленными файлами
-    if(mytetraConfig.getEnableRecordWithAttachHighlight()!=enableRecordWithAttachHighlight->isChecked())
-        mytetraConfig.setEnableRecordWithAttachHighlight(enableRecordWithAttachHighlight->isChecked());
+    if(AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight()!=enableRecordWithAttachHighlight->isChecked())
+        AppContext::instance().appConfig()->uiSection()->setEnableRecordWithAttachHighlight(enableRecordWithAttachHighlight->isChecked());
 
     // Сохраняется цвет подсветки
-    if(mytetraConfig.getRecordWithAttachHighlightColor()!=highlightColor->name())
-        mytetraConfig.setRecordWithAttachHighlightColor(highlightColor->name());
+    if(AppContext::instance().appConfig()->uiSection()->getRecordWithAttachHighlightColor()!=highlightColor->name())
+        AppContext::instance().appConfig()->uiSection()->setRecordWithAttachHighlightColor(highlightColor->name());
 
     // Сохраняется режим имен новых вложений (без переименования
     // существующих, это делает только кнопка конвертации)
     int selectedMode=attachNameModeCombo->currentData().toInt();
-    if(mytetraConfig.get_attachNameMode()!=selectedMode)
-        mytetraConfig.set_attachNameMode(selectedMode);
+    if(AppContext::instance().appConfig()->storageSection()->get_attachNameMode()!=selectedMode)
+        AppContext::instance().appConfig()->storageSection()->set_attachNameMode(selectedMode);
 
     return result;
 }
-
 
 // Приведение всех вложений базы к заданному виду имен.
 // Проход идет только по метаданным (id, видимое имя, тип) и файлам на диске,
@@ -312,7 +302,6 @@ int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &notFound
     return renamedCount;
 }
 
-
 void AppConfigPage_Attach::onClickedConvertAttaches()
 {
     int targetMode=attachNameModeCombo->currentData().toInt();
@@ -338,8 +327,8 @@ void AppConfigPage_Attach::onClickedConvertAttaches()
     // вложения сразу сохранялись в заданном виде
     if(errors.isEmpty())
     {
-        mytetraConfig.set_attachNameMode(targetMode);
-        mytetraConfig.sync();
+        AppContext::instance().appConfig()->storageSection()->set_attachNameMode(targetMode);
+        AppContext::instance().appConfig()->sync();
     }
 
     QString resultText=tr("Converted files: %1.").arg(renamedCount);

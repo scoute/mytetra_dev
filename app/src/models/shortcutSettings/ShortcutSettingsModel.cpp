@@ -1,12 +1,9 @@
 #include "ShortcutSettingsModel.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 ShortcutSettingsModel::ShortcutSettingsModel(QObject *parent) : QStandardItemModel(parent)
 {
-    copyShortcutManager=shortcutManager;
+    copyShortcutManager=*AppContext::instance().shortcutManager();
 
     // Создание разделов
     int i=0;
@@ -44,12 +41,10 @@ ShortcutSettingsModel::ShortcutSettingsModel(QObject *parent) : QStandardItemMod
 
 }
 
-
 ShortcutSettingsModel::~ShortcutSettingsModel()
 {
     this->clear();
 }
-
 
 // Индекс первой ячейки с записью о шорткате
 QModelIndex ShortcutSettingsModel::findShortcut(const QString &shortcutFullName)
@@ -80,31 +75,26 @@ QModelIndex ShortcutSettingsModel::findShortcut(const QString &shortcutFullName)
     return QModelIndex(); // Возвращается пустой индекс
 }
 
-
 void ShortcutSettingsModel::save()
 {
     this->updateShortcutManager();
     this->copyShortcutManager.save();
 }
 
-
 void ShortcutSettingsModel::updateShortcutManager()
 {
     this->smartUpdate(updateMode::updateManager);
 }
-
 
 void ShortcutSettingsModel::resetAllShortcutsToDefault()
 {
     this->smartUpdate(updateMode::resetToDefaultKeySequence);
 }
 
-
 bool ShortcutSettingsModel::checkShortcutDuplicate()
 {
     return this->smartUpdate(updateMode::checkDuplicate);
 }
-
 
 bool ShortcutSettingsModel::smartUpdate(updateMode mode)
 {
@@ -128,7 +118,6 @@ bool ShortcutSettingsModel::smartUpdate(updateMode mode)
             // Сочетание клавиш
             QModelIndex keysIndex=this->index(j, 2, sectionIndex);
             QString keysName=this->data( keysIndex ).toString();
-
 
             // Обновление copyShortcutManager значениями из текущей модели дерева
             if(mode==updateMode::updateManager) {
@@ -196,7 +185,6 @@ bool ShortcutSettingsModel::smartUpdate(updateMode mode)
     return true;
 }
 
-
 // Получение заголовка столбца
 QVariant ShortcutSettingsModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
@@ -229,14 +217,12 @@ QVariant ShortcutSettingsModel::headerData(int section, Qt::Orientation orientat
     return QVariant();
 }
 
-
 int ShortcutSettingsModel::columnCount(const QModelIndex &itemIndex) const
 {
     Q_UNUSED(itemIndex)
 
     return 4;
 }
-
 
 Qt::ItemFlags ShortcutSettingsModel::flags(const QModelIndex &index) const
 {
@@ -247,7 +233,6 @@ Qt::ItemFlags ShortcutSettingsModel::flags(const QModelIndex &index) const
     // Для строк с шорткатами
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
-
 
 const QString &ShortcutSettingsModel::getDuplicateError() const
 {

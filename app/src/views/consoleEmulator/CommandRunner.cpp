@@ -7,10 +7,7 @@
 #include "libraries/ActionLogger.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-extern ActionLogger actionLogger;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 CommandRunner::CommandRunner(QObject *parent) : QObject(parent)
 {
@@ -35,11 +32,9 @@ CommandRunner::CommandRunner(QObject *parent) : QObject(parent)
         criticalError("Can't detect sh, bash or cmd shell.");
     }
 
-
     // Определяется кодек для вывода текста терминального потока
-    m_outputCodec = QTextCodec::codecForName(globalParameters.getConsoleCodepage().toLatin1());
+    m_outputCodec = QTextCodec::codecForName(AppContext::instance().globalParameters()->getConsoleCodepage().toLatin1());
 }
-
 
 CommandRunner::~CommandRunner()
 {
@@ -57,7 +52,6 @@ CommandRunner::~CommandRunner()
     }
 }
 
-
 QString CommandRunner::getOsFamily()
 {
     QString os="unix";
@@ -69,24 +63,20 @@ QString CommandRunner::getOsFamily()
     return os;
 }
 
-
 void CommandRunner::setCommand(QString cmd)
 {
     m_command=cmd;
 }
-
 
 void CommandRunner::setWindowTitle(QString title)
 {
     m_windowTitle=title;
 }
 
-
 void CommandRunner::setMessageText(QString text)
 {
     m_messageText=text;
 }
-
 
 // Создание процесса, в котором будут выполняться команды
 void CommandRunner::createProcessAndConsole()
@@ -103,7 +93,6 @@ void CommandRunner::createProcessAndConsole()
 
     // Создается процесс
     m_process=new QProcess();
-
 
     // Для процесса создается эмулятор консоли, где будет отображаться ход процесса
     if(m_console)
@@ -127,7 +116,6 @@ void CommandRunner::createProcessAndConsole()
     qDebug() << "Run shell" << m_shell;
     qDebug() << "Run command" << m_command;
 }
-
 
 // Удаление процесса, в котором выполнялись команды
 void CommandRunner::removeProcessAndConsole(void)
@@ -165,13 +153,11 @@ void CommandRunner::removeProcessAndConsole(void)
     emit finishWork();
 }
 
-
 // Команда, которая должна запускаться в процессе
 QString CommandRunner::getCommandForProcessExecute()
 {
     return m_shell+" \""+m_command+"\"";
 }
-
 
 // Простой запуск консольных команд на исполнение с ожиданием завершения,
 // Метод возвращет код возврата выполняемой команды.
@@ -192,12 +178,10 @@ int CommandRunner::runSimple()
     return result;
 }
 
-
 bool CommandRunner::isRun()
 {
     return m_isRun;
 }
-
 
 // Запуск процесса выполнения команды
 void CommandRunner::run(bool visible)
@@ -214,10 +198,8 @@ void CommandRunner::run(bool visible)
     if (visible)
         m_console->show();
 
-
     // Объединение вывода стандартного канала и канала ошибок
     m_process->setProcessChannelMode(QProcess::MergedChannels);
-
 
     // Обработка кнопки Cancel в виджете эмулятора консоли
     connect(m_console, &ConsoleEmulator::cancelConsole,
@@ -246,7 +228,6 @@ void CommandRunner::run(bool visible)
     m_process->start( program, args );
 }
 
-
 // Слот, срабатывающий когда пользователь нажал Cancel в эмуляторе консоли
 void CommandRunner::onManualCloseProcess(void)
 {
@@ -257,12 +238,10 @@ void CommandRunner::onManualCloseProcess(void)
     m_isRun = false;
 }
 
-
 void CommandRunner::onReadyReadStandardOutput()
 {
     this->printOutput();
 }
-
 
 // Данный слот вызывается когда выполнение процесса завершено,
 // и процесс уже неактивный
@@ -290,20 +269,18 @@ void CommandRunner::onProcessFinish(int exitCode, QProcess::ExitStatus exitStatu
     m_isRun = false;
 }
 
-
 void CommandRunner::onProcessError(QProcess::ProcessError error)
 {
     qDebug() << "Execute command detect error! Error code: " << error;
 
     QMap<QString, QString> data;
     data["errCode"]=QString::number(error);
-    actionLogger.addAction("syncroProcessError", data);
+    AppContext::instance().actionLogger()->addAction("syncroProcessError", data);
 
     m_isError=true;
 
     m_isRun = false;
 }
-
 
 // Вывод стандартного вывода процесса в эмулятор консоли
 void CommandRunner::printOutput() const

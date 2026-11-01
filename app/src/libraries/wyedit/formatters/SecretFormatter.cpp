@@ -13,40 +13,34 @@
 #include "../EditorCursorPositionDetector.h"
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
-
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 QString SecretFormatter::secretHref(void)
 {
   return QStringLiteral("secret");
 }
 
-
 bool SecretFormatter::isSecretFormat(const QTextCharFormat &format)
 {
   return format.isAnchor() && format.anchorHref()==secretHref();
 }
-
 
 QColor SecretFormatter::secretColor(void)
 {
   // Цвет из настроек: пользователь выбирает любой, по умолчанию серый.
   // Уже закрашенное хранит свой цвет в документе и не перекрашивается.
   // Действует только на теме Custom: базовые темы как есть
-  if(mytetraConfig.getInterfaceTheme()!="custom")
+  if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()!="custom")
     return QColor(0x77, 0x76, 0x7b);
 
-  const QColor configuredColor(mytetraConfig.get_secretColor());
+  const QColor configuredColor(AppContext::instance().appConfig()->uiSection()->get_secretColor());
 
   if(configuredColor.isValid())
     return configuredColor;
 
   return QColor(0x77, 0x76, 0x7b);
 }
-
 
 // Закрасить выделение — или открыть секрет под курсором (тоггл).
 // Без выделения и вне секрета только подсказка в статусной строке:
@@ -124,7 +118,7 @@ void SecretFormatter::onSecretClicked(void)
     cursor.setPosition(savedPosition);
     textArea->setTextCursor(cursor);
 
-    QStatusBar *statusBar=globalParameters.getStatusBar();
+    QStatusBar *statusBar=AppContext::instance().globalParameters()->getStatusBar();
 
     if(statusBar!=nullptr)
       statusBar->showMessage(tr("Secret revealed"));
@@ -136,7 +130,7 @@ void SecretFormatter::onSecretClicked(void)
   {
     qDebug() << "Secret toggle: no selection outside secret, hint shown";
 
-    QStatusBar *statusBar=globalParameters.getStatusBar();
+    QStatusBar *statusBar=AppContext::instance().globalParameters()->getStatusBar();
 
     if(statusBar!=nullptr)
       statusBar->showMessage(tr("Select text to hide as secret"));
@@ -155,7 +149,6 @@ void SecretFormatter::onSecretClicked(void)
 
   cursor.mergeCharFormat(charFormat);
 }
-
 
 // Есть ли хоть один секрет внутри выделения [start, end).
 // Секретом считается и якорь secret, и просто пара секретных красок
@@ -179,7 +172,6 @@ bool SecretFormatter::selectionContainsSecret(int start, int end) const
   return false;
 }
 
-
 // Похож ли формат на секрет: якорь secret либо пара секретных красок
 // без якоря (остаток старых версий, чистится тем же reveal)
 bool SecretFormatter::isSecretLikeFormat(const QTextCharFormat &format)
@@ -192,7 +184,6 @@ bool SecretFormatter::isSecretLikeFormat(const QTextCharFormat &format)
   return format.foreground().color()==secret &&
          format.background().color()==secret;
 }
-
 
 // Снять закраску с диапазона: якорь убирается, краски ставятся
 // в обычные (явно, через палитру: clearForeground/clearBackground
@@ -215,7 +206,6 @@ void SecretFormatter::revealSecretRange(int left, int right)
 
   cursor.mergeCharFormat(clearFormat);
 }
-
 
 // Скопировать содержимое секрета под курсором в буфер.
 // Границы берутся по метке соседних символов, курсор возвращается как был
@@ -269,7 +259,6 @@ void SecretFormatter::onContextMenuCopySecret(void)
   textArea->setTextCursor(cursor);
 }
 
-
 // Сменить глобальный цвет секретов: диалог, запись в конфиг,
 // живая перекраска текущей заметки
 void SecretFormatter::onContextMenuChangeSecretColor(void)
@@ -282,15 +271,14 @@ void SecretFormatter::onContextMenuChangeSecretColor(void)
   if(!chosenColor.isValid())
     return;
 
-  mytetraConfig.set_secretColor(chosenColor.name());
+  AppContext::instance().appConfig()->uiSection()->set_secretColor(chosenColor.name());
 
   // Сразу на диск: иначе смена живет только до выхода
   // (или до первой потери фокуса окном)
-  mytetraConfig.sync();
+  AppContext::instance().appConfig()->sync();
 
   repaintSecrets();
 }
-
 
 // Перекрасить все секреты документа глобальным цветом.
 // Идут только несовпадающие: уже conforming документ не трогается

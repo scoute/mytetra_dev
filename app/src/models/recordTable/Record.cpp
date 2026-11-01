@@ -14,11 +14,8 @@
 #include "libraries/crypt/CryptService.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/DebugHelper.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Атомарная запись файла с текстом записи: данные пишутся во временный
 // файл в том же каталоге, затем temp атомарно переименовывается поверх
@@ -59,12 +56,10 @@ static void atomicWriteRecordFile(const QString &fileName, const QByteArray &dat
   QFile::setPermissions(fileName, permissions);
 }
 
-
 Record::Record() : attachTableData(this)
 {
   liteFlag=true; // По-умолчанию объект легкий
 }
-
 
 // Конструктор копирования
 Record::Record(const Record &obj)
@@ -80,7 +75,6 @@ Record::Record(const Record &obj)
   attachTableData.setRecord(this);
   attachTableData.updateAttachTableBackLink();
 }
-
 
 // Оператор присваивания повторяет конструктор копирования:
 // копируется каждый кусочек класса, обратный указатель таблицы
@@ -102,12 +96,10 @@ Record &Record::operator=(const Record &obj)
   return *this;
 }
 
-
 Record::~Record()
 {
 
 }
-
 
 // На вход этой функции подается элемент <record>
 void Record::setupDataFromDom(QDomElement iDomElement)
@@ -140,7 +132,6 @@ void Record::setupDataFromDom(QDomElement iDomElement)
     attachTableData.setupDataFromDom( iDomElement.firstChildElement("files") ); // Заполнение таблицы приаттаченных файлов
 }
 
-
 QDomElement Record::exportDataToDom(QDomDocument *doc) const
 {
   QDomElement elem=doc->createElement("record");
@@ -170,7 +161,6 @@ QDomElement Record::exportDataToDom(QDomDocument *doc) const
   return elem;
 }
 
-
 void Record::exportDataToStreamWriter(QXmlStreamWriter *xmlWriter) const
 {
   xmlWriter->writeStartElement("record");
@@ -199,7 +189,6 @@ void Record::exportDataToStreamWriter(QXmlStreamWriter *xmlWriter) const
   xmlWriter->writeEndElement(); // Закрылся record
 }
 
-
 bool Record::isEmpty() const
 {
   // Заполненная запись не может содержать пустые свойства
@@ -209,12 +198,10 @@ bool Record::isEmpty() const
     return false;
 }
 
-
 bool Record::isLite() const
 {
   return liteFlag;
 }
-
 
 void Record::switchToLite()
 {
@@ -230,7 +217,6 @@ void Record::switchToLite()
   liteFlag=true;
 }
 
-
 // Метод используется только при следующих действиях:
 // - добавление новой записи
 // - помещение записи в буфер обмена
@@ -245,7 +231,6 @@ void Record::switchToFat()
   liteFlag=false;
 }
 
-
 // Метод используется только при выводе сообщений об ошибке
 QString Record::getIdAndNameAsString() const
 {
@@ -259,7 +244,6 @@ QString Record::getIdAndNameAsString() const
 
   return "Record ID: "+id+" Name: "+name;
 }
-
 
 // Получение значения поля
 // Метод возвращает расшифрованные данные, если запись была зашифрована
@@ -280,7 +264,6 @@ QString Record::getField(const QString &name) const
   return "";
 }
 
-
 // Защищенная функция
 // Проверка допустимости имени происходит в вызывающем коде
 QString Record::getNaturalField(QString name) const
@@ -292,9 +275,8 @@ QString Record::getNaturalField(QString name) const
   if(FixedParameters::recordFieldCryptedList.contains(name))
     if(fieldList.contains("crypt"))
       if(fieldList["crypt"]=="1")
-        if(globalParameters.getCryptKey().length()==0)
+        if(AppContext::instance().globalParameters()->getCryptKey().length()==0)
           return QString();
-
 
   // Если поле с таким названием есть
   if(fieldList.contains(name))
@@ -319,7 +301,7 @@ QString Record::getNaturalField(QString name) const
     else
     {
       // Поле расшифровывается
-      result=CryptService::decryptString(globalParameters.getCryptKey(), fieldList[name]);
+      result=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), fieldList[name]);
     }
   }
 
@@ -327,7 +309,6 @@ QString Record::getNaturalField(QString name) const
 
   return result;
 }
-
 
 // Защищенная функция
 // Проверка допустимости имени происходит в вызывающем коде (необходимо для оптимизации)
@@ -348,7 +329,6 @@ QString Record::getCalculableField(QString name) const
 
   return "";
 }
-
 
 void Record::setField(const QString &name, const QString &value)
 {
@@ -373,7 +353,7 @@ void Record::setField(const QString &name, const QString &value)
       if(fieldList["crypt"]=="1")
         if(cleanValue.length()>0)
         {
-          if(globalParameters.getCryptKey().length()>0)
+          if(AppContext::instance().globalParameters()->getCryptKey().length()>0)
             isCrypt=true;
           else
             criticalError("In RecordTableData::setField() can not set data to crypt field "+name+". Password not setted");
@@ -387,16 +367,14 @@ void Record::setField(const QString &name, const QString &value)
   else
   {
       // Если нужно шифровать, поле шифруется
-      fieldList.insert(name, CryptService::encryptString(globalParameters.getCryptKey(), cleanValue) );
+      fieldList.insert(name, CryptService::encryptString(AppContext::instance().globalParameters()->getCryptKey(), cleanValue) );
   }
 }
-
 
 bool Record::isNaturalFieldExists(const QString &name) const
 {
   return fieldList.contains(name);
 }
-
 
 QString Record::getNaturalFieldSource(QString name) const
 {
@@ -410,7 +388,6 @@ QString Record::getNaturalFieldSource(QString name) const
   else
     return QString();
 }
-
 
 void Record::setNaturalFieldSource(QString name, QString value)
 {
@@ -437,7 +414,6 @@ void Record::setNaturalFieldSource(QString name, QString value)
   fieldList.insert(name, value);
 }
 
-
 // Получение значений всех натуральных (невычислимых) полей
 // Поля, которые могут быть у записи, но не заданы, не передаются
 // Поля, которые зашифрованы, расшифровываются
@@ -454,7 +430,6 @@ QMap<QString, QString> Record::getNaturalFieldList() const
   if(fieldList.contains("crypt"))
     if(fieldList["crypt"]=="1")
       isCrypt=true;
-
 
   // Перебираются названия полей
   for(int i=0;i<fieldNames.size();++i)
@@ -476,9 +451,9 @@ QMap<QString, QString> Record::getNaturalFieldList() const
         if(FixedParameters::recordFieldCryptedList.contains(currName)==false)
           result=fieldList[currName]; // Напрямую значение поля
         else
-          if(globalParameters.getCryptKey().length()>0 &&
+          if(AppContext::instance().globalParameters()->getCryptKey().length()>0 &&
              FixedParameters::recordFieldCryptedList.contains(currName))
-            result=CryptService::decryptString(globalParameters.getCryptKey(), fieldList[currName]); // Расшифровывается значение поля
+            result=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), fieldList[currName]); // Расшифровывается значение поля
       }
 
       resultFieldList[currName]=result;
@@ -490,7 +465,6 @@ QMap<QString, QString> Record::getNaturalFieldList() const
   return resultFieldList;
 }
 
-
 AttachTableData Record::getAttachTable() const
 {
   if(this->isLite()!=attachTableData.isLite())
@@ -498,7 +472,6 @@ AttachTableData Record::getAttachTable() const
 
   return attachTableData;
 }
-
 
 AttachTableData *Record::getAttachTablePointer()
 {
@@ -508,7 +481,6 @@ AttachTableData *Record::getAttachTablePointer()
   return &attachTableData;
 }
 
-
 void Record::setAttachTable(AttachTableData iAttachTable)
 {
   if(this->isLite()!=attachTableData.isLite())
@@ -516,7 +488,6 @@ void Record::setAttachTable(AttachTableData iAttachTable)
 
   attachTableData=iAttachTable;
 }
-
 
 // Получение текста записи из памяти
 // Если запись зашифрована, возвращаемый текст будет расшифрован
@@ -529,7 +500,7 @@ QString Record::getText() const
   // Если запись зашифрована, но ключ не установлен (т.е. человек не вводил пароль)
   // то расшифровка невозможна
   if(fieldList.value("crypt")=="1" &&
-     globalParameters.getCryptKey().length()==0)
+     AppContext::instance().globalParameters()->getCryptKey().length()==0)
     return "";
 
   // Если шифровать не нужно
@@ -544,13 +515,12 @@ QString Record::getText() const
     return result; // Текст просто преобразуется из QByteArray
   }
   else if(fieldList.value("crypt")=="1") // Если нужно шифровать
-    return CryptService::decryptStringFromByteArray(globalParameters.getCryptKey(), text);
+    return CryptService::decryptStringFromByteArray(AppContext::instance().globalParameters()->getCryptKey(), text);
   else
     criticalError("Record::getText() : Unavailable crypt field value \""+fieldList.value("crypt")+"\"");
 
   return "";
 }
-
 
 // Получение текста для подсчета статистики: без диалогов о битой базе
 // и без создания недостающих файлов. Нет пути, нет файла или закрытый
@@ -559,7 +529,7 @@ QString Record::getTextForStats() const
 {
   // Если запись зашифрована, но ключ не установлен - расшифровка невозможна
   if(fieldList.value("crypt")=="1" &&
-     globalParameters.getCryptKey().length()==0)
+     AppContext::instance().globalParameters()->getCryptKey().length()==0)
     return "";
 
   // Без пути к файлу - пусто, без criticalError:
@@ -576,14 +546,13 @@ QString Record::getTextForStats() const
 
   // Зашифрованный текст при установленном ключе
   if(fieldList.value("crypt")=="1")
-    return CryptService::decryptStringFromByteArray(globalParameters.getCryptKey(), rawData);
+    return CryptService::decryptStringFromByteArray(AppContext::instance().globalParameters()->getCryptKey(), rawData);
 
   QString result=QString::fromUtf8(rawData.constData(), rawData.size());
   result.remove(QChar('\0'));
 
   return result;
 }
-
 
 // Получение значения текста напрямую из файла, без заполнения свойства text
 QString Record::getTextDirect() const
@@ -595,7 +564,7 @@ QString Record::getTextDirect() const
   // Если запись зашифрована, но ключ не установлен (т.е. человек не вводил пароль)
   // то расшифровка невозможна
   if(fieldList.value("crypt")=="1" &&
-     globalParameters.getCryptKey().length()==0)
+     AppContext::instance().globalParameters()->getCryptKey().length()==0)
     return "";
 
   // Выясняется полное имя файла с текстом записи
@@ -623,12 +592,11 @@ QString Record::getTextDirect() const
   else
   {
     qDebug() << "Record::getTextDirect() : return direct data after decrypt";
-    return CryptService::decryptStringFromByteArray(globalParameters.getCryptKey(), f.readAll()); // Если зашифровано
+    return CryptService::decryptStringFromByteArray(AppContext::instance().globalParameters()->getCryptKey(), f.readAll()); // Если зашифровано
   }
 
   return "";
 }
-
 
 // Тип QTextDocument является унаследованным от QObject, а QObject
 // нельзя передавать по значению, т.к. у него нет конструктора копирования,
@@ -653,7 +621,6 @@ QSharedPointer<QTextDocument> Record::getTextDocument() const
     return textDocument; // Возвращается умный указатель на текстовый документ в куче
 }
 
-
 // Установка текста записи как свойства объекта
 // Принимает незашифрованные данные, сохраняет их в памяти, при записи шифрует если запись шифрованная
 void Record::setText(const QString &iText)
@@ -666,11 +633,10 @@ void Record::setText(const QString &iText)
   if(fieldList.value("crypt").length()==0 || fieldList.value("crypt")=="0")
     text=iText.toUtf8(); // Текст просто запоминается в виде QByteArray
   else if(fieldList.value("crypt")=="1") // Если нужно шифровать
-    text=CryptService::encryptStringToByteArray(globalParameters.getCryptKey(), iText);
+    text=CryptService::encryptStringToByteArray(AppContext::instance().globalParameters()->getCryptKey(), iText);
   else
     criticalError("Record::setText() : Unavailable crypt field value \""+fieldList.value("crypt")+"\"");
 }
-
 
 // Сохранение текста записи на диск без установки текста записи как свойства
 // Принимает незашифрованные данные, сохраняет в файл, при записи шифрует если запись зашифрована
@@ -688,7 +654,7 @@ void Record::saveTextDirect(QString iText) const
   else if(fieldList.value("crypt")=="1")
   {
     // Текст шифруется
-    QByteArray encryptData=CryptService::encryptStringToByteArray(globalParameters.getCryptKey(), iText);
+    QByteArray encryptData=CryptService::encryptStringToByteArray(AppContext::instance().globalParameters()->getCryptKey(), iText);
 
     // В файл сохраняются зашифрованные данные, атомарно
     atomicWriteRecordFile(fileName, encryptData, false);
@@ -696,7 +662,6 @@ void Record::saveTextDirect(QString iText) const
   else
     criticalError("Record::saveTextDirect() : Unavailable crypt field value \""+fieldList.value("crypt")+"\"");
 }
-
 
 // Запись текста записи, хранимого в памяти, на диск.
 // Атомарно через временный файл: параллельный читатель никогда
@@ -709,7 +674,6 @@ void Record::saveText()
   atomicWriteRecordFile(fileName, text, false);
 }
 
-
 QMap<QString, QByteArray> Record::getPictureFiles() const
 {
   // У легкого объекта невозможно запросить картинки, если так происходит - это ошибка вызывающей логики
@@ -718,7 +682,6 @@ QMap<QString, QByteArray> Record::getPictureFiles() const
 
   return pictureFiles;
 }
-
 
 // todo: Переделать на копирование по ссылке
 void Record::setPictureFiles(QMap<QString, QByteArray> iPictureFiles)
@@ -729,7 +692,6 @@ void Record::setPictureFiles(QMap<QString, QByteArray> iPictureFiles)
 
   pictureFiles=iPictureFiles;
 }
-
 
 // Приватная функция, шифрует только поля
 void Record::switchToEncryptFields(void)
@@ -755,7 +717,6 @@ void Record::switchToEncryptFields(void)
   }
 }
 
-
 // Приватная функция, расшифровывает только поля
 void Record::switchToDecryptFields(void)
 {
@@ -763,7 +724,7 @@ void Record::switchToDecryptFields(void)
   if(fieldList.value("crypt")!="1")
     return;
 
-  if(globalParameters.getCryptKey().isEmpty())
+  if(AppContext::instance().globalParameters()->getCryptKey().isEmpty())
     criticalError("Record::switchToDecryptFields() : Password not setted.");
 
   // Выбираются поля, разрешенные для шифрования
@@ -792,7 +753,6 @@ void Record::switchToDecryptFields(void)
   fieldList["crypt"]="0";
 }
 
-
 // Шифрование записи с легкими данными
 void Record::switchToEncryptAndSaveLite(void)
 {
@@ -810,7 +770,7 @@ void Record::switchToEncryptAndSaveLite(void)
   QString dirName;
   QString fileName;
   checkAndFillFileDir(dirName, fileName);
-  CryptService::encryptFile(globalParameters.getCryptKey(), fileName);
+  CryptService::encryptFile(AppContext::instance().globalParameters()->getCryptKey(), fileName);
 
   // Шифрование приаттаченных файлов на диске
   attachTableData.encrypt(Attach::areaFile);
@@ -818,7 +778,6 @@ void Record::switchToEncryptAndSaveLite(void)
   // Зашифровываются поля записи (здесь же устанавливается флаг crypt)
   switchToEncryptFields();
 }
-
 
 // Шифрование записи с полновесными данными
 void Record::switchToEncryptAndSaveFat(void)
@@ -832,7 +791,7 @@ void Record::switchToEncryptAndSaveFat(void)
     criticalError("Cant call switchToEncryptAndSaveFat() for crypt record object "+getIdAndNameAsString());
 
   // Зашифровывается текст записи в памяти
-  text=CryptService::encryptByteArray(globalParameters.getCryptKey(), text);
+  text=CryptService::encryptByteArray(AppContext::instance().globalParameters()->getCryptKey(), text);
 
   // Зашифровываются аттачи в памяти
   attachTableData.encrypt(Attach::areaMemory);
@@ -843,7 +802,6 @@ void Record::switchToEncryptAndSaveFat(void)
   // Тяжелые данные записываются в хранилище
   pushFatAttributes();
 }
-
 
 // Расшифровка записи с легкими данными
 void Record::switchToDecryptAndSaveLite(void)
@@ -860,7 +818,7 @@ void Record::switchToDecryptAndSaveLite(void)
   QString dirName;
   QString fileName;
   checkAndFillFileDir(dirName, fileName);
-  CryptService::decryptFile(globalParameters.getCryptKey(), fileName);
+  CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), fileName);
 
   // Расшифровка приаттаченных файлов на диске
   attachTableData.decrypt(Attach::areaFile);
@@ -871,7 +829,6 @@ void Record::switchToDecryptAndSaveLite(void)
   // Устанавливается флаг что шифрации нет
   // fieldList["crypt"]="0"; // Похоже, что команда не нужна, так как в switchToDecryptFields() флаг уже установлен
 }
-
 
 void Record::switchToDecryptAndSaveFat(void)
 {
@@ -887,7 +844,7 @@ void Record::switchToDecryptAndSaveFat(void)
   if(!text.isEmpty())
   {
     const QByteArray cipherText=text;
-    const QByteArray plainText=CryptService::decryptByteArray(globalParameters.getCryptKey(), cipherText);
+    const QByteArray plainText=CryptService::decryptByteArray(AppContext::instance().globalParameters()->getCryptKey(), cipherText);
 
     if(plainText.isEmpty() && cipherText.startsWith(MTENC1_MAGIC))
       criticalError("Record::switchToDecryptAndSaveFat() : Can not decrypt text. Wrong password or corrupted data.");
@@ -905,7 +862,6 @@ void Record::switchToDecryptAndSaveFat(void)
   pushFatAttributes();
 }
 
-
 // Запись "тяжелых" атрибутов (текста, картинок и приаттаченных файлов) на диск
 // Запись происходит в явном виде, то, что хранится в Fat-атрибутах, без шифрации-дешифрации
 void Record::pushFatAttributes()
@@ -917,7 +873,7 @@ void Record::pushFatAttributes()
   // Если запись зашифрована, но ключ не установлен (т.е. человек не вводил пароль)
   // то зашифровать текст невозможно
   if(fieldList.value("crypt")=="1" &&
-     globalParameters.getCryptKey().length()==0)
+     AppContext::instance().globalParameters()->getCryptKey().length()==0)
     criticalError("Record::pushFatAttributes() : Try save text for crypt record while password not setted.");
 
   // Заполняются имена директории и полей
@@ -938,7 +894,6 @@ void Record::pushFatAttributes()
     attachTableData.saveAttachFilesToDirectory(dirName);
 }
 
-
 // Статический метод, заменяет в переданном файле записи внутренние ссылки вида "mytetra:" согласно таблице перекодировки
 // Используется при импорте, когда идентификаторы записей могут поменяться, следовательно должны поменяться и ссылки
 void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QMap<QString, QString> idRecordTranslate)
@@ -956,7 +911,6 @@ void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QM
 
   file.close();
 
-
   // Подготавливается регулярное выражение
   QRegExp rx("href=\""+FixedParameters::appTextId+":\\/\\/note/(.*)\"");
   rx.setMinimal(true); // Регулярка делается ленивой (ленивые квантификаторы в строке регвыра в Qt не поддерживаются)
@@ -970,7 +924,6 @@ void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QM
     pos += rx.matchedLength();
   }
 
-
   // Перебираются найденные внутри mytetra-ссылок идентификаторы
   bool isIdReplace=false;
   foreach(QString currentId, internalIdList)
@@ -980,7 +933,6 @@ void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QM
                     "href=\""+FixedParameters::appTextId+"://note/"+idRecordTranslate[currentId]+"\"");
       isIdReplace=true;
     }
-
 
   // Запись в файл, если были заменены идентификаторы во внутренних ссылках
   if(isIdReplace)
@@ -995,16 +947,14 @@ void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QM
   }
 }
 
-
 // Полное имя директории записи
 QString Record::getFullDirName() const
 {
  if(fieldList.contains("dir")==false)
    criticalError("Record::getFullDirName() : Not present dir field");
 
- return mytetraConfig.get_tetradir()+"/base/"+fieldList.value("dir");
+ return AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+fieldList.value("dir");
 }
-
 
 // Короткое имя директории записи
 QString Record::getShortDirName() const
@@ -1015,7 +965,6 @@ QString Record::getShortDirName() const
  return fieldList.value("dir");
 }
 
-
 // Полное имя файла с текстом записи
 QString Record::getFullTextFileName() const
 {
@@ -1025,13 +974,11 @@ QString Record::getFullTextFileName() const
   return getFullDirName()+"/"+fieldList.value("file");
 }
 
-
 // Полное имя произвольного файла в каталоге записи
 QString Record::getFullFileName(QString fileName) const
 {
   return getFullDirName()+"/"+fileName;
 }
-
 
 // Функция проверяет наличие полей dir и file (они используются для текста записи)
 // проверяет их правильность и заполняет в переданных параметрах полные имена директории и файла
@@ -1055,14 +1002,13 @@ void Record::checkAndFillFileDir(QString &iDirName, QString &iFileName)
  if(!recordDir.exists())
   {
    // Создается новая директория в директории base
-   QDir directory(mytetraConfig.get_tetradir()+"/base");
+   QDir directory(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base");
    bool result=directory.mkdir( getShortDirName() );
 
    if(!result)
      criticalError("Record::checkAndFillFileDir() : Can't create directory '"+getShortDirName()+"'");
   }
 }
-
 
 // В функцию должно передаваться полное имя файла
 void Record::checkAndCreateTextFile() const

@@ -6,16 +6,13 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
-
-extern AppConfig mytetraConfig;
-extern TrashMonitoring trashMonitoring;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DiskHelper::DiskHelper()
 {
 
 }
-
 
 // Удаление директории с копированием содержимого в корзину
 void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
@@ -23,7 +20,7 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
   QDir dirFrom(nameDirFrom);
   QStringList fileList=dirFrom.entryList();
 
-  QString nameDirTo=mytetraConfig.get_trashdir();
+  QString nameDirTo=AppContext::instance().appConfig()->storageSection()->get_trashdir();
 
   // Перебор всех файлов в удаляемой директории
   for(int i=0;i<fileList.size();i++)
@@ -50,17 +47,15 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 
     // Перенос файла в корзину
     if( QFile::rename(fileNameFrom, fileNameTo)==true )
-      trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
+      AppContext::instance().trashMonitoring()->addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
     else
       criticalError("Can not remove file\n"+fileNameFrom+"\nto directory\n"+nameDirTo+"\nwith new name\n"+fileNameTo);
   }
-
 
   // Проверка наличия файлов внутри очищенной директории через новый временный объект директории
   // QDir tempDirFrom(nameDirFrom);
   // foreach(QString fileInDir, tempDirFrom.entryList())
   //   qDebug() << "File in empty dir with temp dir object: " << fileInDir;
-
 
   // Удаление директории
   // Если в rmdir() передать относительный путь, то будет удалена директория относительно директории бинарника.
@@ -72,7 +67,6 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
     qDebug() << "Directory " << nameDirFrom << " delete succesfull";
 }
 
-
 // Удаление файла с копированием его копии в корзину
 // Функция возвращает полное имя файла копии, если копирование прошло успешно
 bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
@@ -83,14 +77,14 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
 
   // Получение имени файла для сохранения в корзине
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
-  QString fileNameTo     =mytetraConfig.get_trashdir()+"/"+fileNameToShort;
+  QString fileNameTo     =AppContext::instance().appConfig()->storageSection()->get_trashdir()+"/"+fileNameToShort;
 
   qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
   // Файл перемещается в корзину
   if( QFile::rename(fileNameFrom,fileNameTo)==true )
   {
-    trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
+    AppContext::instance().trashMonitoring()->addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
   }
   else
   {
@@ -109,7 +103,6 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
   return true;
 }
 
-
 // Копирование файла в корзину
 // Функция возвращает полное имя файла копии, если копирование прошло успешно
 // Или пустое имя файла если при копировании были ошибки
@@ -121,14 +114,14 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
 
   // Получение имени файла для сохранения в корзине
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
-  QString fileNameTo     =mytetraConfig.get_trashdir()+"/"+fileNameToShort;
+  QString fileNameTo     =AppContext::instance().appConfig()->storageSection()->get_trashdir()+"/"+fileNameToShort;
 
   qDebug() << "Copy file from " << fileNameFrom << " to " << fileNameTo;
 
   // Файл копируется в корзину
   if( QFile::copy(fileNameFrom, fileNameTo)==true )
   {
-    trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
+    AppContext::instance().trashMonitoring()->addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
   }
   else
   {
@@ -148,17 +141,15 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
   return fileInfoTo.absoluteFilePath();
 }
 
-
 // Проверка существования директории корзины
 bool DiskHelper::isTrashDirectoryExists()
 {
-    QString dirName = mytetraConfig.get_trashdir();
+    QString dirName = AppContext::instance().appConfig()->storageSection()->get_trashdir();
 
     QDir dir(dirName);
 
     return dir.exists();
 }
-
 
 // Создание временной директории
 // Результат создания проверяется: раньше игнорировался, и при коллизии имени
@@ -190,7 +181,6 @@ QString DiskHelper::createTempDirectory(void)
   return QString();
 }
 
-
 // Удаление директории вместе со всеми поддиректориями и файлами
 bool DiskHelper::removeDirectory(const QString &dirName)
 {
@@ -215,7 +205,6 @@ bool DiskHelper::removeDirectory(const QString &dirName)
 
   return result;
 }
-
 
 // Копирование содержимого директории
 // Копируются только файлы
@@ -295,7 +284,6 @@ bool DiskHelper::copyDirectory(const QString &fromName, const QString &toName)
     return true;
 }
 
-
 // Копирование содержимого директории
 // Рекурсивно вместе с подкаталогами
 bool DiskHelper::copyDirectoryRecursively(const QString &fromName,
@@ -335,13 +323,11 @@ bool DiskHelper::copyDirectoryRecursively(const QString &fromName,
     return true;
 }
 
-
 // Получение списка файлов с их содержимым в указанной директории
 QMap<QString, QByteArray> DiskHelper::getFilesFromDirectory(QString dirName, QString fileMask)
 {
   return getFilesFromDirectory(dirName, QStringList() << fileMask);
 }
-
 
 // Получение списка файлов с их содержимым в указанной директории.
 // Нужно списком, потому что внутренние картинки бывают и png, и jpg,
@@ -372,7 +358,6 @@ QMap<QString, QByteArray> DiskHelper::getFilesFromDirectory(QString dirName, con
 
   return result;
 }
-
 
 // Запись в директорию файлов, переданных в виде ассоциативного массива fileList
 bool DiskHelper::saveFilesToDirectory(QString dirName, QMap<QString, QByteArray> fileList)
@@ -410,7 +395,6 @@ bool DiskHelper::saveFilesToDirectory(QString dirName, QMap<QString, QByteArray>
   }
 }
 
-
 // Проверка директории, является ли она пустой
 bool DiskHelper::isDirectoryEmpty(QString dirName)
 {
@@ -419,7 +403,6 @@ bool DiskHelper::isDirectoryEmpty(QString dirName)
   else
       return false;
 }
-
 
 // Человекочитаемый размер файла: байты, KB, MB
 QString DiskHelper::formatFileSize(qint64 bytes)
@@ -432,7 +415,6 @@ QString DiskHelper::formatFileSize(qint64 bytes)
 
   return QString::number(bytes/(1024*1024))+QStringLiteral(" MB");
 }
-
 
 // Похож ли файл на текст: читается начало, бинарный маркер — NUL-байт.
 // Пустой и отсутствующий файлы — не текст
@@ -451,7 +433,6 @@ bool DiskHelper::fileLooksLikeText(const QString &fileName, int probeBytes)
 
   return !head.contains('\0');
 }
-
 
 // Первые строки текстового файла для предпросмотра (экранированные).
 // Пусто если файл не читается
@@ -472,14 +453,12 @@ QString DiskHelper::readTextSnippet(const QString &fileName, int maxLines, int m
   return snippet.join(QStringLiteral("\n"));
 }
 
-
 // Копирование содержимого каталога ресурсов QRC в каталог на диске
 // Копирование происходит рекурсивно со всеми файлами и подкаталогами
 bool DiskHelper::copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath)
 {
     return copyQrcToDirectoryRecurse(resourcePath, targetDirPath, false);
 }
-
 
 bool DiskHelper::copyQrcToDirectoryRecurse(const QString &resourcePath,
                                            const QString &targetDirPath,

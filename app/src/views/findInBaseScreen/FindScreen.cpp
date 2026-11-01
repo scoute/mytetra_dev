@@ -37,10 +37,9 @@
 #include "models/attachTable/AttachTableData.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/CssHelper.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigFind.h"
 
 FindScreen::FindScreen(QWidget *parent) : QWidget(parent),
     exactTagMode(false)
@@ -65,12 +64,10 @@ FindScreen::FindScreen(QWidget *parent) : QWidget(parent),
     setupFieldCompleter();
 }
 
-
 FindScreen::~FindScreen(void)
 {
 
 }
-
 
 // Текст поиска и кнопка "Поиск"
 void FindScreen::setupFindTextAndButton(void)
@@ -90,7 +87,6 @@ void FindScreen::setupFindTextAndButton(void)
     toolsExpand->setEnabled(true);
 }
 
-
 // Текст поиска и кнопка "Поиск"
 void FindScreen::assemblyFindTextAndButton(void)
 {
@@ -105,7 +101,6 @@ void FindScreen::assemblyFindTextAndButton(void)
     toolsAreaFindTextAndButton->setContentsMargins(leftMargin, 0, 0, 0);
 }
 
-
 // Набор опций поиска в виде выпадающих списков
 void FindScreen::setupComboOption(void)
 {
@@ -113,21 +108,21 @@ void FindScreen::setupComboOption(void)
     wordRegard=new MtComboBox();
     wordRegard->addItem(QIcon(":/resource/pic/find_in_base_any.svg"), tr("Any word"));
     wordRegard->addItem(QIcon(":/resource/pic/find_in_base_all.svg"), tr("All words"));
-    wordRegard->setCurrentIndex(mytetraConfig.get_findscreen_wordregard());
+    wordRegard->setCurrentIndex(AppContext::instance().appConfig()->findSection()->get_findscreen_wordregard());
 
     // Выбор "Только целые слова" - "Подстрока"
     howExtract=new MtComboBox();
     howExtract->addItem(QIcon(":/resource/pic/find_in_base_separate.svg"), tr("Whole words"));
     howExtract->addItem(QIcon(":/resource/pic/find_in_base_substring.svg"), tr("Substring"));
-    howExtract->setCurrentIndex(mytetraConfig.get_findscreen_howextract());
+    howExtract->setCurrentIndex(AppContext::instance().appConfig()->findSection()->get_findscreen_howextract());
 
     // Выбор "Во всей базе" - "В текущей ветке"
     treeSearchArea=new MtComboBox();
     treeSearchArea->addItem(QIcon(":/resource/pic/find_in_base_search_all.svg"), tr("Entire base")); // Вся база
     treeSearchArea->addItem(QIcon(":/resource/pic/find_in_base_search_branch.svg"), tr("Current tree item")); // Текущая ветка
-    treeSearchArea->setCurrentIndex(mytetraConfig.getFindScreenTreeSearchArea());
+    treeSearchArea->setCurrentIndex(AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea());
 
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         // wordRegard->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
         // howExtract->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
@@ -154,7 +149,6 @@ void FindScreen::setupComboOption(void)
     }
 }
 
-
 // Набор опций поиска в виде выпадающих списков
 void FindScreen::assemblyComboOption(void)
 {
@@ -164,7 +158,6 @@ void FindScreen::assemblyComboOption(void)
     toolsAreaComboOption->addWidget(treeSearchArea);
     toolsAreaComboOption->addStretch();
 }
-
 
 void FindScreen::setupCloseButton(void)
 {
@@ -178,7 +171,6 @@ void FindScreen::setupCloseButton(void)
     closeButton->setObjectName("findbarSquareButton");
     closeButton->setToolTip(tr("Close find widget"));
 }
-
 
 // Квадратная кнопка в размер поля ввода. Значку оставляется запас
 // на внутренние отступы, иначе стиль его обрежет
@@ -195,7 +187,6 @@ void FindScreen::fixCloseButtonSize(void)
     closeButton->setIconSize(QSize(iconSide, iconSide));
 }
 
-
 void FindScreen::assemblyCloseButton(void)
 {
     // Вертикальная область с кнопкой закрытия и распорками
@@ -211,7 +202,6 @@ void FindScreen::assemblyCloseButton(void)
     int rightMargin = qApp->style()->pixelMetric(QStyle::PM_LayoutRightMargin)/2;
     toolsAreaCloseButton->setContentsMargins(0, 0, rightMargin, 0);
 }
-
 
 // Обновление прямых текстов новым языком. Индексы комбобоксов
 // не трогаются: setItemText выбор не меняет
@@ -243,49 +233,47 @@ void FindScreen::retranslateUi(void)
     findTable->retranslateUi();
 }
 
-
 void FindScreen::setupWhereFindLine(void)
 {
     whereFindLabel=new QLabel(tr("Find in: "));
 
     findInName=new QCheckBox(tr("Title"));
-    findInName->setChecked(mytetraConfig.get_findscreen_find_in_field("name"));
+    findInName->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("name"));
 
     findInAuthor=new QCheckBox(tr("Author(s)"));
-    findInAuthor->setChecked(mytetraConfig.get_findscreen_find_in_field("author"));
+    findInAuthor->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("author"));
 
     findInUrl=new QCheckBox(tr("Url"));
-    findInUrl->setChecked(mytetraConfig.get_findscreen_find_in_field("url"));
+    findInUrl->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("url"));
 
     findInTags=new QCheckBox(tr("Tags"));
-    findInTags->setChecked(mytetraConfig.get_findscreen_find_in_field("tags"));
+    findInTags->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("tags"));
 
     findInText=new QCheckBox(tr("Text"));
-    findInText->setChecked(mytetraConfig.get_findscreen_find_in_field("text"));
+    findInText->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("text"));
 
     findInNameItem=new QCheckBox(tr("Name tree item"));
-    findInNameItem->setChecked(mytetraConfig.get_findscreen_find_in_field("nameItem"));
+    findInNameItem->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("nameItem"));
 
     findInAttach=new QCheckBox(tr("Attach files"));
-    findInAttach->setChecked(mytetraConfig.get_findscreen_find_in_field("attach"));
+    findInAttach->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("attach"));
 
     jumpToNote=new QCheckBox(tr("Jump to note text"));
-    jumpToNote->setChecked(mytetraConfig.get_findscreen_find_in_field("jumpToNote"));
+    jumpToNote->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("jumpToNote"));
 
     jumpFirstWord=new QCheckBox(tr("Jump by first word only"));
-    jumpFirstWord->setChecked(mytetraConfig.get_findscreen_find_in_field("jumpFirstWord"));
+    jumpFirstWord->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("jumpFirstWord"));
     jumpFirstWord->setEnabled(jumpToNote->isChecked());
 }
-
 
 void FindScreen::assemblyWhereFindLine(void)
 {
     whereFindLine=new QHBoxLayout();
 
-    if(mytetraConfig.getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
         whereFindLine->addWidget(whereFindLabel);
 
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         whereFindLabel->hide();
 
     whereFindLine->addWidget(findInName);
@@ -309,7 +297,6 @@ void FindScreen::assemblyWhereFindLine(void)
     whereFindLine->setContentsMargins(3,0,0,0); // Устанавливаются границы
 }
 
-
 void FindScreen::setupSignals(void)
 {
     // При каждом изменении текста в строке запроса
@@ -320,7 +307,6 @@ void FindScreen::setupSignals(void)
     // Он вырабатывается в слоте setFindText()
     connect(this, &FindScreen::textChangedFromAnother,
             this, &FindScreen::enableFindButton);
-
 
     // При нажатии Enter в строке запроса
     connect(findText, &QLineEdit::returnPressed,
@@ -337,7 +323,6 @@ void FindScreen::setupSignals(void)
     // После установки текста извне, вырабатывается этот сигнал
     connect(this, &FindScreen::findClickedAfterAnotherTextChanged,
             this, &FindScreen::findClicked);
-
 
     // При нажатии кнопки закрытия
     connect(closeButton, &QPushButton::clicked,
@@ -381,18 +366,16 @@ void FindScreen::setupSignals(void)
             this,         &FindScreen::changedJumpFirstWord);
 }
 
-
 void FindScreen::setupUI(void)
 {
     findTable=new FindTableWidget();
 }
 
-
 void FindScreen::assembly(void)
 {
     centralDesktopLayout=new QVBoxLayout();
 
-    if(mytetraConfig.getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
     {
         toolsLine=new QHBoxLayout();
         toolsLine->addLayout(toolsAreaFindTextAndButton);
@@ -402,7 +385,7 @@ void FindScreen::assembly(void)
         centralDesktopLayout->addLayout(toolsLine);
     }
 
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         toolsGrid=new QGridLayout();
         toolsGrid->addLayout(toolsAreaFindTextAndButton, 0, 0);
@@ -422,18 +405,15 @@ void FindScreen::assembly(void)
     // whereFindLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     // findTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-
     this->setLayout(centralDesktopLayout);
 
-    switchToolsExpand(mytetraConfig.getFindInBaseExpand());
+    switchToolsExpand(AppContext::instance().appConfig()->uiSection()->getFindInBaseExpand());
 }
-
 
 void FindScreen::enableFindButton(const QString &text)
 {
     findStartButton->setEnabled(!text.isEmpty());
 }
-
 
 // Слот, с помощью которого другие виджеты могут устанавливать
 // текст для поиска
@@ -444,7 +424,6 @@ void FindScreen::setFindText(QString text)
     emit textChangedFromAnother(text);
     emit findClickedAfterAnotherTextChanged();
 }
-
 
 // Поиск кликнутого тега только в поле тегов.
 // Галки пользователя запоминаются, на время поиска остается только
@@ -513,7 +492,6 @@ void FindScreen::setFindTag(QString tag)
     findInAttach->blockSignals(false);
 }
 
-
 // Разбить поле тегов записи на отдельные теги: разделители запятая
 // и точка с запятой, пробелы по краям отбрасываются.
 // Регулярка статическая: иначе компиляция паттерна на каждую
@@ -531,7 +509,6 @@ QStringList FindScreen::splitRecordTags(const QString &tagsField)
 
     return tags;
 }
-
 
 // Точное совпадение тега без выделения списка: проход по полю
 // без аллокаций QStringList на каждую запись. Нужен только факт
@@ -575,14 +552,11 @@ bool FindScreen::recordHasTag(const QString &tagsField, const QString &exactTag)
     return false;
 }
 
-
 // Слова запроса текущего поиска для моста в редактор
 QStringList FindScreen::getSearchWordList(void) const
 {
     return searchWordList;
 }
-
-
 
 // Включен ли прыжок в текст заметки для моста в редактор
 bool FindScreen::isJumpToNoteEnabled(void) const
@@ -590,13 +564,11 @@ bool FindScreen::isJumpToNoteEnabled(void) const
     return jumpToNote->isChecked();
 }
 
-
 // Прыгать только по первому слову для моста в редактор
 bool FindScreen::isJumpFirstWordOnly(void) const
 {
     return jumpFirstWord->isChecked();
 }
-
 
 // Слот, срабатывающий при нажатии на кнопку начала поиска
 void FindScreen::findClicked(void)
@@ -645,7 +617,6 @@ void FindScreen::findClicked(void)
     findStart();
 }
 
-
 void FindScreen::findStart(void)
 {
     // Сохраняется текущая редактируемая запись, чтобы и в ней
@@ -661,12 +632,11 @@ void FindScreen::findStart(void)
     // Выясняется ссылка на модель дерева данных
     KnowTreeModel *searchModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
 
-
     // Выясняется стартовый элемент в дереве, с которого будет начат поиск
     // Выясняется сколько всего конечных записей
     TreeItem const *startItem=0;
     int totalRec=0;
-    if(mytetraConfig.getFindScreenTreeSearchArea()==0) // Если нужен поиск во всем дереве
+    if(AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea()==0) // Если нужен поиск во всем дереве
     {
         // Корневой элемент дерева
         startItem=searchModel->getRootItem(); // searchModel->rootItem
@@ -674,7 +644,7 @@ void FindScreen::findStart(void)
         // Количество конечных записей во всем дереве
         totalRec=searchModel->getAllRecordCount();
     }
-    else if (mytetraConfig.getFindScreenTreeSearchArea()==1) // Если нужен поиск в текущей ветке
+    else if (AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea()==1) // Если нужен поиск в текущей ветке
     {
         // Индекс текущей выбранной ветки
         QModelIndex currentItemIndex=find_object<TreeScreen>("treeScreen")->getCurrentItemIndex();
@@ -687,7 +657,6 @@ void FindScreen::findStart(void)
     }
 
     qDebug() << "Start finding in " << totalRec << " records";
-
 
     // Если стартовый элемент не был установлен
     if(startItem==0)
@@ -738,12 +707,11 @@ void FindScreen::findStart(void)
             findTable->setOverdrawMessage(tr("No search results.\nHint: encrypted items has been detected. For searching in encrypted items you have to enter the password.")); // Ничего не найдено. При поиске обнаружены зашифрованные ветки. Однако пароль не был введен, поэтому поиск в них не проводился
 
         // Иначе если поиск проводился не во всей базе
-        else if(mytetraConfig.getFindScreenTreeSearchArea()!=0)
+        else if(AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea()!=0)
             findTable->setOverdrawMessage(tr("No search results.\nHint: search produced in current tree item.\nTry to search for entire database.")); // Ничего не найдено. Поиск производился внутри одной ветки. Попробуйте искать во всей базе.
     }
 
 }
-
 
 void FindScreen::findRecurse(const TreeItem* curritem)
 {
@@ -752,12 +720,11 @@ void FindScreen::findRecurse(const TreeItem* curritem)
 
     // Если ветка зашифрована, и пароль не был введен
     if(curritem->getField("crypt")=="1" &&
-            globalParameters.getCryptKey().length()==0)
+            AppContext::instance().globalParameters()->getCryptKey().length()==0)
     {
         isUnsearchCryptBranchPresent=true;
         return;
     }
-
 
     // Имя ветки и путь одни на всю ветку: кэшируются здесь для
     // проверки имени ветки и ниже для строк результатов, чтобы не
@@ -788,7 +755,6 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                               true);
         }
     }
-
 
     // Если в ветке присутсвует таблица конечных записей
     if(curritem->recordtableGetRowCount() > 0)
@@ -929,13 +895,11 @@ void FindScreen::findRecurse(const TreeItem* curritem)
         } // Закрылся цикл перебора записей в таблице конечных записей
     } // Закрылось условие что в ветке есть таблица конечных записей
 
-
     // Рекурсивная обработка каждой подчиненной ветки
     for(int i=0; i<curritem->childCount(); i++)
         findRecurse(curritem->child(i));
 
 }
-
 
 // Поиск в переданном тексте
 // Учитываются состояния переключателей wordregard и howextract
@@ -985,48 +949,40 @@ bool FindScreen::findInTextProcess(const QString& text)
 
 }
 
-
 void FindScreen::changedWordRegard(int pos)
 {
-    mytetraConfig.set_findscreen_wordregard(pos);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_wordregard(pos);
 }
-
 
 void FindScreen::changedHowExtract(int pos)
 {
-    mytetraConfig.set_findscreen_howextract(pos);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_howextract(pos);
 }
-
 
 void FindScreen::changedTreeSearchArea(int pos)
 {
-    mytetraConfig.setFindScreenTreeSearchArea(pos);
+    AppContext::instance().appConfig()->findSection()->setFindScreenTreeSearchArea(pos);
 }
-
 
 void FindScreen::changedFindInName(int state)
 {
     changedFindInField("name",state);
 }
 
-
 void FindScreen::changedFindInAuthor(int state)
 {
     changedFindInField("author",state);
 }
-
 
 void FindScreen::changedFindInUrl(int state)
 {
     changedFindInField("url",state);
 }
 
-
 void FindScreen::changedFindInTags(int state)
 {
     changedFindInField("tags",state);
 }
-
 
 void FindScreen::changedFindInText(int state)
 {
@@ -1038,12 +994,10 @@ void FindScreen::changedFindInNameItem(int state)
     changedFindInField("nameItem",state);
 }
 
-
 void FindScreen::changedFindInAttach(int state)
 {
     changedFindInField("attach",state);
 }
-
 
 void FindScreen::changedJumpToNote(int state)
 {
@@ -1053,12 +1007,10 @@ void FindScreen::changedJumpToNote(int state)
     jumpFirstWord->setEnabled(jumpToNote->isChecked());
 }
 
-
 void FindScreen::changedJumpFirstWord(int state)
 {
     changedFindInField("jumpFirstWord",state);
 }
-
 
 void FindScreen::changedFindInField(QString fieldname, int state)
 {
@@ -1066,16 +1018,15 @@ void FindScreen::changedFindInField(QString fieldname, int state)
     if(state==Qt::Checked) i=true;
     else i=false;
 
-    mytetraConfig.set_findscreen_find_in_field(fieldname,i);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_find_in_field(fieldname,i);
 
     // Набор полей для подсказок зависит от галочек
     refreshFieldCompleter();
 }
 
-
 void FindScreen::widgetShow(void)
 {
-    mytetraConfig.set_findscreen_show(true);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_show(true);
     this->show();
 
     fixCloseButtonSize();
@@ -1083,7 +1034,6 @@ void FindScreen::widgetShow(void)
     // При появлении виджета курсор должен сразу стоять на поле ввода
     findText->setFocus();
 }
-
 
 void FindScreen::showEvent(QShowEvent *event)
 {
@@ -1096,19 +1046,17 @@ void FindScreen::showEvent(QShowEvent *event)
     refreshFieldCompleter();
 }
 
-
 // Полное сокрытие виджета
 void FindScreen::widgetHide(void)
 {
     // Запоминается размер сплиттера перед скрытием виджета
     QSplitter *findSplitterRel=find_object<QSplitter>("findsplitter");
-    mytetraConfig.set_findsplitter_size_list(findSplitterRel->sizes());
+    AppContext::instance().appConfig()->uiSection()->set_findsplitter_size_list(findSplitterRel->sizes());
 
     // Виджет скрывается
-    mytetraConfig.set_findscreen_show(false);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_show(false);
     this->close();
 }
-
 
 // Слот, срабатывающий при клике на кнопку expand
 void FindScreen::toolsExpandClicked(void)
@@ -1117,15 +1065,14 @@ void FindScreen::toolsExpandClicked(void)
     if(findInName->isVisible())
     {
         switchToolsExpand(false);
-        mytetraConfig.setFindInBaseExpand(false);
+        AppContext::instance().appConfig()->uiSection()->setFindInBaseExpand(false);
     }
     else
     {
         switchToolsExpand(true);
-        mytetraConfig.setFindInBaseExpand(true);
+        AppContext::instance().appConfig()->uiSection()->setFindInBaseExpand(true);
     }
 }
-
 
 void FindScreen::switchToolsExpand(bool flag)
 {
@@ -1133,7 +1080,7 @@ void FindScreen::switchToolsExpand(bool flag)
     // whereFindLine->setVisible(flag);
 
     // Выпадающие списки скрываются в мобильном интерфейсе, так как они на отдельной строке
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         wordRegard->setVisible(flag);
         howExtract->setVisible(flag);
@@ -1141,7 +1088,7 @@ void FindScreen::switchToolsExpand(bool flag)
     }
 
     // Надпись Find in видна и управляется только в desktop режиме интерфейса
-    if(mytetraConfig.getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
         whereFindLabel->setVisible(flag);
 
     // Флаги поиска скрываются для любого интерфейса, так как они всегда находятся на отдельной строке
@@ -1173,7 +1120,6 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
  return list;
 }
 */
-
 
 QStringList FindScreen::textDelimiterDecompose(QString text)
 {
@@ -1216,7 +1162,6 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
 
     return list;
 }
-
 
 // Создание подсказки автодополнения для строки запроса.
 // Словарь подставится позже в refreshFieldCompleter
@@ -1263,14 +1208,12 @@ void FindScreen::setupFieldCompleter(void)
             this,          &FindScreen::onFieldCompletion);
 }
 
-
 // Метаданные дерева изменились: пересборка словаря откладывается,
 // чтобы пакетная операция не пересобирала его на каждый шаг
 void FindScreen::onTreeMetadataSaved(void)
 {
     completerRefreshTimer->start();
 }
-
 
 // Пересборка словаря подсказок по всем значениям полей,
 // отмеченных галочками. Полнотекстовое поле Text не участвует:
@@ -1375,7 +1318,6 @@ void FindScreen::refreshFieldCompleter(void)
         onFindTextEdited(findText->text());
 }
 
-
 // Рекурсивный сбор значений полей ветки и всех подветок в словари.
 // Ключи словарей совпадают с именами полей поиска
 void FindScreen::collectBranchValues(const TreeItem *curritem,
@@ -1388,7 +1330,7 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
     // Зашифрованная ветка без введенного пароля недоступна
     // так же как для самого поиска
     if(curritem->getField("crypt")=="1" &&
-       globalParameters.getCryptKey().length()==0)
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
         return;
 
     // Имя самой ветки
@@ -1427,7 +1369,6 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
         collectBranchValues(curritem->child(i), dictionaries, seen);
 }
 
-
 // Добавить слово в словарь поля. Пустые значения отбрасываются,
 // повторы без учета регистра тоже: пишется первое встречное
 // написание. Дедуп в пределах поля: одно и то же слово из разных
@@ -1450,7 +1391,6 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
     seen.insert(key);
     dictionaries[field].append(trimmed);
 }
-
 
 // Иконка типа значения для выпадашки. Рисуется из ресурсов,
 // от шрифтов системы не зависит
@@ -1483,7 +1423,6 @@ QIcon FindScreen::completionTypeIcon(const QString &field)
     return icon;
 }
 
-
 // Дополняется весь ввод целиком: фишка подсказки найти полное совпадение
 // с именем заметки. Выпадашка появляется начиная с двух букв,
 // при отсутствии совпадений прячется а не висит пустой
@@ -1510,7 +1449,6 @@ void FindScreen::onFindTextEdited(const QString &text)
 
     fieldCompleter->complete();
 }
-
 
 void FindScreen::onFieldCompletion(const QString &completion)
 {

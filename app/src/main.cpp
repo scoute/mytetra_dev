@@ -38,16 +38,22 @@
 #include "libraries/PeriodicSyncro.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
+#include "libraries/AppContext.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/CssHelper.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigCrypto.h"
+#include "models/appConfig/AppConfigGeneral.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 
 
 using namespace std;
 
-// todo: Разгрести объекты глобальной области, переделать все
-// на синглтоны, сделать объект ядра, поместить объекты глабальной
-// области в ядро как в единую центральную точку доступа
+// Ядро доступно через AppContext::instance() (P1).
+// Файловые глобалы ниже остаются как шимы совместимости,
+// новый код ходит через AppContext
 
 
 // Фиксированные параметры программы (жестко заданные в текущей версии MyTetra)
@@ -84,11 +90,10 @@ ShortcutManager shortcutManager;
 PeriodicCheckBase periodicCheckBase;
 PeriodicSyncro periodicSyncro;
 
-// Указатель на внутренний буфер обмена
-InternalClipboard *internalClipboard;
+// Указатель на внутренний буфер обмена. Владелец - QApplication
+// (родитель задается при создании, P0: раньше был голый new без delete)
+InternalClipboard *internalClipboard=nullptr;
 
-// Указатель на основное окно программы
-QObject *pMainWindow;
 
 
 void printHelp()
@@ -249,19 +254,13 @@ void parseConsoleOption(QtSingleApplication &app)
 
 int main(int argc, char ** argv)
 {
-    // MCP-режимы раньше всего остального: ни GUI, ни single-instance,
-    // ни вывод в stdout (он отдан протоколу) здесь не нужны.
+    // MCP-режимы раньше GUI и single-instance, но ПОСЛЕ AppContext::init:
+    // серверный тракт ходит в конфиг через контекст (P3), а файловая
+    // инициализация ядра лишь запоминает указатели - ни GUI, ни вывод
+    // в stdout (он отдан протоколу) здесь не затрагиваются.
     // --mcp оставлен для совместимости и означает read-only
-    for(int i=1; i<argc; ++i)
-    {
-        QString arg=QString::fromLocal8Bit(argv[i]);
-
-        if(arg=="--mcp" || arg=="--mcp-ro" ||
-           arg=="--mcp-rw" || arg=="--mcp-rw-with-delete")
-            return runMcpServer(argc, argv);
-    }
-
-    printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
+    // (сам ранний возврат ниже, сразу за AppContext::init, но ДО баннера
+    // версии в stdout - протокол NDJSON не терпит лишнего вывода)
 
     // Разрешение масштабирования в высоком DPI, вызывается перед подгрузкой ресурсов с графикой
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -277,6 +276,39 @@ int main(int argc, char ** argv)
     // а кодек еще не установлен
     QString mainProgramFile=QString::fromLocal8Bit( argv[0] ); // Данные запоминаются в сыром виде и никак не интерпретируются до использования
     globalParameters.setMainProgramFile(mainProgramFile);
+
+    // P3: ядро доступно с первой строки main, до setDebugMessageHandler:
+    // ранние qDebug (миграция конфига, кодеки) идут через AppContext,
+    // указатели валидны потому что глобалы уже сконструированы.
+    // Буфер и окно привяжутся позже (setInternalClipboard/setMainWindow)
+    AppContext::instance().init(&fixedParameters,
+                                &globalParameters,
+                                &mytetraConfig,
+                                &mytetraFiles,
+                                &dataBaseConfig,
+                                &trashMonitoring,
+                                &walkHistory,
+                                &visitHistory,
+                                &actionLogger,
+                                &shortcutManager,
+                                &periodicCheckBase,
+                                &periodicSyncro,
+                                nullptr,
+                                nullptr,
+                                &globalParameters.cryptHolder());
+
+    // MCP-режимы раньше GUI и single-instance (см. коммент выше):
+    // ядро уже инициализировано, runMcpServer сразу работает
+    for(int i=1; i<argc; ++i)
+    {
+        QString arg=QString::fromLocal8Bit(argv[i]);
+
+        if(arg=="--mcp" || arg=="--mcp-ro" ||
+           arg=="--mcp-rw" || arg=="--mcp-rw-with-delete")
+            return runMcpServer(argc, argv);
+    }
+
+    printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
 
     // Перехват отладочных сообщений
     setDebugMessageHandler();
@@ -302,7 +334,7 @@ int main(int argc, char ** argv)
     if ( !globalParameters.getInstallAutodetectLang().isEmpty() )
     {
         // Если была процедура инсталляции, в конфиг записывается автоопределенный язык
-        mytetraConfig.set_interfacelanguage( globalParameters.getInstallAutodetectLang() );
+        AppContext::instance().appConfig()->generalSection()->set_interfacelanguage( globalParameters.getInstallAutodetectLang() );
     }
 
 
@@ -319,20 +351,20 @@ int main(int argc, char ** argv)
 
     // Инициализация логирования действий над данными
     actionLogger.init();
-    actionLogger.setEnableLogging( mytetraConfig.getEnableLogging() ); // Установка или запрещение логирования согласно конфигурации
+    actionLogger.setEnableLogging( AppContext::instance().appConfig()->storageSection()->getEnableLogging() ); // Установка или запрещение логирования согласно конфигурации
     actionLogger.addAction("startProgram"); // Запись в лог старта программы
 
 
     // Экран загрузки, показывается только в Андроид версии (так как загрузка идет ~10 сек, и без сплешскрина непонятно что происходит)
     QSplashScreen splash(QPixmap(":/resource/pic/mytetra_splash.png"));
-    if (mytetraConfig.getShowSplashScreen())
+    if (AppContext::instance().appConfig()->uiSection()->getShowSplashScreen())
     {
         splash.show();
     }
 
 
     // Подключение перевода интерфейса
-    LanguageHelper::switchLanguage(mytetraConfig.get_interfacelanguage());
+    LanguageHelper::switchLanguage(AppContext::instance().appConfig()->generalSection()->get_interfacelanguage());
 
     //Загрузка переводов стандартных диалогов и кнопок
     QTranslator qtTranslator;
@@ -347,11 +379,22 @@ int main(int argc, char ** argv)
     // чтобы были переведены все действия по горячим клавишам
     shortcutManager.init();
 
-    // Инициализация указателя на внутренний буфер обмена
-    internalClipboard = new InternalClipboard();
+    // P0: буфер с Qt-родителем, удалится вместе с QApplication.
+    // Раньше был голый new без delete
+    internalClipboard=new InternalClipboard(&app);
+
+    // P1: разрыв WalkHistory -> extern visitHistory, внедрение зависимости
+    walkHistory.setVisitHistory(&visitHistory);
 
     // Создание объекта главного окна
     MainWindow win;
+
+    // P1+P3: центральная точка доступа. Тройка бывших синглтонов уже
+    // создана в конструкторе AppContext; setParent переподчиняет их
+    // приложению вместе с самим ядром. Окно привязано из конструктора
+    // (setMainWindow), буфер - здесь после создания
+    AppContext::instance().setParent(&app);
+    AppContext::instance().setInternalClipboard(internalClipboard);
 
     // Сразу восстанавливается вид окна в предыдущий запуск
     // Эти действия нельзя делать в конструкторе главного окна, т.к. окно еще не создано
@@ -365,7 +408,7 @@ int main(int argc, char ** argv)
         win.show(); // В Андроиде нет десктопа, на нем нельзя сворачивать окно
     else
     {
-        if (mytetraConfig.get_runinminimizedwindow()==false)
+        if (AppContext::instance().appConfig()->uiSection()->get_runinminimizedwindow()==false)
             win.show();
         else
             win.hide();
@@ -379,7 +422,7 @@ int main(int argc, char ** argv)
     CssHelper::applyCustomDesign();
 
     // Восстановление видимости виджета, который был активный, для мобильного интерфейса
-    if (mytetraConfig.getInterfaceMode()=="mobile")
+    if (AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         globalParameters.getWindowSwitcher()->restoreFocusWidget();
 
     qDebug() << "Restore session succesfull";
@@ -392,15 +435,15 @@ int main(int argc, char ** argv)
 
     // Если в конфиге настроено, что нужно синхронизироваться при старте
     // И задана команда синхронизации
-    if (mytetraConfig.get_synchroonstartup())
-        if (mytetraConfig.get_synchrocommand().trimmed().length()>0)
+    if (AppContext::instance().appConfig()->syncSection()->get_synchroonstartup())
+        if (AppContext::instance().appConfig()->syncSection()->get_synchrocommand().trimmed().length()>0)
             win.synchronization();
 
 
     // Если настроено в конфиге, сразу запрашивается пароль доступа
     // к зашифрованным данным
     // И если есть хоть какие-то зашифрованные данные
-    if (mytetraConfig.get_howpassrequest()=="atStartProgram")
+    if (AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atStartProgram")
         if (globalParameters.getCryptKey().length()==0)
             if (dataBaseConfig.get_crypt_mode()>0)
             {
@@ -409,7 +452,7 @@ int main(int argc, char ** argv)
                 // Если ветка зашифрована, пароль и так будет запрошен автоматически
                 if (win.isTreePositionCrypt()==false)
                 {
-                    Password password;
+                    Password password(AppContext::instance().dispatcher());
                     password.retrievePassword();
                 }
             }
@@ -419,12 +462,12 @@ int main(int argc, char ** argv)
     // И хранимый пароль (точнее его хеш) заполнен
     if (globalParameters.getCryptKey().length()==0)
         if (dataBaseConfig.get_crypt_mode()>0)
-            if (mytetraConfig.getPasswordSaveFlag())
-                if (mytetraConfig.getPasswordMiddleHash().length()>0)
+            if (AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag())
+                if (AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()>0)
                 {
                     // При запросе пароля ключ шифрования будет восстановлен автоматически,
                     // если он правильный и подходит для текущих данных
-                    Password password;
+                    Password password(AppContext::instance().dispatcher());
                     password.retrievePassword();
                 }
 
@@ -442,13 +485,14 @@ int main(int argc, char ** argv)
     */
 
     // Инициалиация периодической проверки изменения базы сторонними программами
+    periodicCheckBase.setShowTextDispatcher(AppContext::instance().dispatcher());
     periodicCheckBase.init();
-    periodicCheckBase.setDelay( mytetraConfig.getCheckBasePeriod() );
+    periodicCheckBase.setDelay( AppContext::instance().appConfig()->syncSection()->getCheckBasePeriod() );
     periodicCheckBase.start();
 
     // Инициалиация периодической синхронизации
     periodicSyncro.init();
-    periodicSyncro.setDelay( mytetraConfig.getPeriodicSyncroPeriod() );
+    periodicSyncro.setDelay( AppContext::instance().appConfig()->syncSection()->getPeriodicSyncroPeriod() );
     periodicSyncro.start();
 
     // При закрытии окна не выходить из программы.
@@ -469,7 +513,7 @@ int main(int argc, char ** argv)
     });
 
     // Окно сплеш-скрина скрывается
-    if (mytetraConfig.getShowSplashScreen())
+    if (AppContext::instance().appConfig()->uiSection()->getShowSplashScreen())
         splash.finish(&win);
 
     return app.exec();

@@ -21,14 +21,12 @@
 #include "libraries/GlobalParameters.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/crypt/Password.h"
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigCrypto.h"
 
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-extern DataBaseConfig dataBaseConfig;
-
-
-AppConfigPage_Crypt::AppConfigPage_Crypt(QWidget *parent) : ConfigPage(parent)
+AppConfigPage_Crypt::AppConfigPage_Crypt(EditorShowTextDispatcher *dispatcher, QWidget *parent) : ConfigPage(parent),
+  m_dispatcher(dispatcher)
 {
   qDebug() << "Create crypt config page";
 
@@ -38,12 +36,10 @@ AppConfigPage_Crypt::AppConfigPage_Crypt(QWidget *parent) : ConfigPage(parent)
   assembly();
 }
 
-
 AppConfigPage_Crypt::~AppConfigPage_Crypt()
 {
  
 }
-
 
 void AppConfigPage_Crypt::setupUi(void)
 {
@@ -70,7 +66,6 @@ void AppConfigPage_Crypt::setupUi(void)
   passRetrieveLayout->addWidget(passRetrieveAnnotation);
   passRetrieveBox->setLayout(passRetrieveLayout);
 
-
   // Группировщик виджетов выбора, как запрашивать пароль
   howPassRequestBox=new QGroupBox(this);
   howPassRequestBox->setTitle(tr("Access to encrypted data"));
@@ -79,11 +74,10 @@ void AppConfigPage_Crypt::setupUi(void)
   howPassRequestRadio2=new QRadioButton(tr("Ask the password at MyTetra startup"));
 
   // Точка устанавливается возле того пункта, который настроен в конфиге
-  if(mytetraConfig.get_howpassrequest()=="atClickOnCryptBranch")
+  if(AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atClickOnCryptBranch")
    howPassRequestRadio1->setChecked(true);
   else
    howPassRequestRadio2->setChecked(true);
-
 
   storePassRequestBox=new QGroupBox(this);
   storePassRequestBox->setTitle(tr("Store password"));
@@ -92,7 +86,7 @@ void AppConfigPage_Crypt::setupUi(void)
 
   passwordSaveAnnotation=new QLabel(tr("Password will be saved at first next entered.<br>Stored password will be cleared if uncheck this checkbox."));
 
-  if(mytetraConfig.getPasswordSaveFlag())
+  if(AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag())
    {
     howPassRequestRadio1->setEnabled(false);
     howPassRequestRadio2->setEnabled(false);
@@ -105,7 +99,6 @@ void AppConfigPage_Crypt::setupUi(void)
     passwordSaveEnable->setChecked(false);
    }
 
-
   // Виджеты вставляются в группировщики
   QVBoxLayout *howPassRequestLayout=new QVBoxLayout;
   howPassRequestLayout->addWidget(howPassRequestRadio1);
@@ -113,13 +106,10 @@ void AppConfigPage_Crypt::setupUi(void)
   howPassRequestLayout->addWidget(passwordSaveEnable);
   howPassRequestBox->setLayout(howPassRequestLayout);
 
-
   QVBoxLayout *storePassRequestLayout=new QVBoxLayout;
   storePassRequestLayout->addWidget(passwordSaveEnable);
   storePassRequestLayout->addWidget(passwordSaveAnnotation);
   storePassRequestBox->setLayout(storePassRequestLayout);
-
-
 
   // Группировщик настойки автозакрытия окна пароля
   autoClosePasswordBox=new QGroupBox(this);
@@ -128,11 +118,11 @@ void AppConfigPage_Crypt::setupUi(void)
   autoClosePasswordEnable=new QCheckBox(tr("Enable auto closing password window, sec"), this);
   
   autoClosePasswordDelay=new QSpinBox(this);
-  autoClosePasswordDelay->setValue(mytetraConfig.get_autoClosePasswordDelay());
+  autoClosePasswordDelay->setValue(AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordDelay());
   autoClosePasswordDelay->setRange(1, 999);
 
   // Устанавливается галка и активность виджета выбора задержки
-  onAutoClosePasswordEnableToggle( mytetraConfig.get_autoClosePasswordEnable() );
+  onAutoClosePasswordEnableToggle( AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordEnable() );
 
   // Виджеты вставляются в группировщик
   QHBoxLayout *autoClosePasswordLayout=new QHBoxLayout;
@@ -141,7 +131,6 @@ void AppConfigPage_Crypt::setupUi(void)
   autoClosePasswordLayout->addStretch();
   autoClosePasswordBox->setLayout(autoClosePasswordLayout);
 
-
   // Разрешать ли расшифровывать зашифрованные файлы аттачей в каталог корзины при предпросмотре
   decryptFileToTrashDirectoryBox=new QGroupBox(this);
   decryptFileToTrashDirectoryBox->setTitle(tr("File decrypt method for attach preview"));
@@ -149,13 +138,12 @@ void AppConfigPage_Crypt::setupUi(void)
   decryptFileToTrashDirectoryEnable=new QCheckBox(tr("Enable temporary decrypt attach file to trash directory"));
 
   // Устанавливается галка согласно настройке из файла конфигурации
-  decryptFileToTrashDirectoryEnable->setChecked( mytetraConfig.getEnableDecryptFileToTrashDirectory() );
+  decryptFileToTrashDirectoryEnable->setChecked( AppContext::instance().appConfig()->storageSection()->getEnableDecryptFileToTrashDirectory() );
 
   // Виджеты вставляются в группировщик
   QHBoxLayout *decryptFileToTrashDirectoryLayout=new QHBoxLayout;
   decryptFileToTrashDirectoryLayout->addWidget(decryptFileToTrashDirectoryEnable);
   decryptFileToTrashDirectoryBox->setLayout(decryptFileToTrashDirectoryLayout);
-
 
   // Группировщик выбора шифра новых данных.
   // Старые данные читаются всегда: расшифровка отличает шифры
@@ -187,7 +175,6 @@ void AppConfigPage_Crypt::setupUi(void)
   cryptMethodBox->setLayout(cryptMethodLayout);
 }
 
-
 void AppConfigPage_Crypt::updateUi(void)
 {
   // Строка состояния пароля
@@ -200,13 +187,12 @@ void AppConfigPage_Crypt::updateUi(void)
   passRetrieveAnnotation->setText(getRetrieveAnnotationText());
 
   // Выбранный шифр из конфига
-  const int methodIndex=cryptMethodCombo->findData(mytetraConfig.get_cryptMethod());
+  const int methodIndex=cryptMethodCombo->findData(AppContext::instance().appConfig()->cryptoSection()->get_cryptMethod());
 
   cryptMethodCombo->blockSignals(true);
   cryptMethodCombo->setCurrentIndex(methodIndex>=0 ? methodIndex : 0);
   cryptMethodCombo->blockSignals(false);
 }
-
 
 void AppConfigPage_Crypt::setupSignals(void)
 {
@@ -229,7 +215,6 @@ void AppConfigPage_Crypt::setupSignals(void)
          this, &AppConfigPage_Crypt::onReencryptButtonClicked);
 }
 
-
 void AppConfigPage_Crypt::assembly(void)
 {
   // Метод шифрования — самый верх: выбор шифра важнее
@@ -248,55 +233,51 @@ void AppConfigPage_Crypt::assembly(void)
   setLayout(central_layout);
 }
 
-
 QString AppConfigPage_Crypt::getRetrieveStatusText(void)
 {
  QString status=tr("<b>Status:</b> ");
 
  // Если в хранилище данных вообще не задан пароль
- if(dataBaseConfig.get_crypt_mode()==0)
+ if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
   status=status+tr("No password is set. ");
  else
   status=status+tr("Password is set. ");
 
  // Если пароль (точнее хеш пароля) хранится локально
- if(mytetraConfig.getPasswordSaveFlag() &&
-    mytetraConfig.getPasswordMiddleHash().length()>0)
+ if(AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag() &&
+    AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()>0)
   status=status+tr("Password is saved locally. ");
 
  return status;
 }
 
-
 QString AppConfigPage_Crypt::getRetrieveButtonText(void)
 {
  // Если в хранилище данных вообще не задан пароль
- if(dataBaseConfig.get_crypt_mode()==0)
+ if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
   return tr("Set a password");
  else
   return tr("Change password");
 }
 
-
 QString AppConfigPage_Crypt::getRetrieveAnnotationText(void)
 {
  // Если в хранилище данных вообще не задан пароль
- if(dataBaseConfig.get_crypt_mode()==0)
+ if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
   return tr("A password will be used to encrypt the item that you selected. Use \"Encrypt item\" or \"Decrypt item\" in context menu.");
  else
   return tr("If you change your password all encrypted item will be re-encrypted with a new password.");
 }
 
-
 // Действия при нажатии кнопки работы с паролем
 void AppConfigPage_Crypt::onPassRetrieveButtonClicked(void)
 {
  // Если в хранилище данных вообще не задан пароль
- if(dataBaseConfig.get_crypt_mode()==0)
+ if(AppContext::instance().dataBaseConfig()->get_crypt_mode()==0)
   {
    // Включается диалог запроса пароля "с нуля"
 
-   Password password;
+   Password password(m_dispatcher);
 
    if(password.retrievePassword()==false) return;
 
@@ -306,13 +287,12 @@ void AppConfigPage_Crypt::onPassRetrieveButtonClicked(void)
  else
   {
    // Включается диалог изменения пароля
-   Password password;
+   Password password(m_dispatcher);
 
    password.replacePassword();
   }
  
 }
-
 
 void AppConfigPage_Crypt::onPasswordSaveEnableToggle(bool checked)
 {
@@ -327,7 +307,6 @@ void AppConfigPage_Crypt::onPasswordSaveEnableToggle(bool checked)
    howPassRequestRadio2->setEnabled(true);
   }
 }
-
 
 // Действие при клике на галку настройки автоматического закрытия окна пароля
 void AppConfigPage_Crypt::onAutoClosePasswordEnableToggle(bool checked)
@@ -345,19 +324,17 @@ void AppConfigPage_Crypt::onAutoClosePasswordEnableToggle(bool checked)
   }
 }
 
-
 void AppConfigPage_Crypt::onCryptMethodChanged(int index)
 {
   const QString method=cryptMethodCombo->itemData(index).toString();
 
   if(!method.isEmpty())
-    mytetraConfig.set_cryptMethod(method);
+    AppContext::instance().appConfig()->cryptoSection()->set_cryptMethod(method);
 }
-
 
 void AppConfigPage_Crypt::onReencryptButtonClicked(void)
 {
-  if(globalParameters.getCryptKey().isEmpty())
+  if(AppContext::instance().globalParameters()->getCryptKey().isEmpty())
   {
     QMessageBox::information(this,
                              tr("Re-encrypt data"),
@@ -405,7 +382,6 @@ void AppConfigPage_Crypt::onReencryptButtonClicked(void)
                              tr("Done. Re-encrypted branches: %1.").arg(result.branches));
 }
 
-
 void AppConfigPage_Crypt::retranslateUi(void)
 {
   passRetrieveBox->setTitle(tr("Password settings"));
@@ -433,7 +409,6 @@ void AppConfigPage_Crypt::retranslateUi(void)
   updateUi();
 }
 
-
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -442,33 +417,33 @@ int AppConfigPage_Crypt::applyChanges(void)
  qDebug() << "Apply changes crypt";
 
  if(howPassRequestRadio1->isChecked() &&
-    mytetraConfig.get_howpassrequest()=="atStartProgram")
-  mytetraConfig.set_howpassrequest("atClickOnCryptBranch");
+    AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atStartProgram")
+  AppContext::instance().appConfig()->cryptoSection()->set_howpassrequest("atClickOnCryptBranch");
 
  if(howPassRequestRadio2->isChecked() &&
-    mytetraConfig.get_howpassrequest()=="atClickOnCryptBranch")
-  mytetraConfig.set_howpassrequest("atStartProgram");
+    AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atClickOnCryptBranch")
+  AppContext::instance().appConfig()->cryptoSection()->set_howpassrequest("atStartProgram");
 
- if(autoClosePasswordEnable->isChecked()!=mytetraConfig.get_autoClosePasswordEnable())
-  mytetraConfig.set_autoClosePasswordEnable( autoClosePasswordEnable->isChecked() );
+ if(autoClosePasswordEnable->isChecked()!=AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordEnable())
+  AppContext::instance().appConfig()->cryptoSection()->set_autoClosePasswordEnable( autoClosePasswordEnable->isChecked() );
 
- if(autoClosePasswordDelay->value()!=mytetraConfig.get_autoClosePasswordDelay())
-  mytetraConfig.set_autoClosePasswordDelay( autoClosePasswordDelay->value() );
+ if(autoClosePasswordDelay->value()!=AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordDelay())
+  AppContext::instance().appConfig()->cryptoSection()->set_autoClosePasswordDelay( autoClosePasswordDelay->value() );
 
- if(passwordSaveEnable->isChecked()!=mytetraConfig.getPasswordSaveFlag())
+ if(passwordSaveEnable->isChecked()!=AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag())
   {
-   mytetraConfig.setPasswordSaveFlag( passwordSaveEnable->isChecked() );
+   AppContext::instance().appConfig()->cryptoSection()->setPasswordSaveFlag( passwordSaveEnable->isChecked() );
    
    // Если галка установлена что хранить локально пароль не нужно
    if(!passwordSaveEnable->isChecked())
     {
      // Промежуточный хеш пароля удаляется 
-     mytetraConfig.setPasswordMiddleHash("");
+     AppContext::instance().appConfig()->cryptoSection()->setPasswordMiddleHash("");
     }
   }
 
- if(decryptFileToTrashDirectoryEnable->isChecked()!=mytetraConfig.getEnableDecryptFileToTrashDirectory())
-   mytetraConfig.setEnableDecryptFileToTrashDirectory( decryptFileToTrashDirectoryEnable->isChecked() );
+ if(decryptFileToTrashDirectoryEnable->isChecked()!=AppContext::instance().appConfig()->storageSection()->getEnableDecryptFileToTrashDirectory())
+   AppContext::instance().appConfig()->storageSection()->setEnableDecryptFileToTrashDirectory( decryptFileToTrashDirectoryEnable->isChecked() );
 
  return 0;
 }

@@ -5,10 +5,8 @@
 #include "DatabasesManagementModel.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DatabasesManagementModel::DatabasesManagementModel(QObject *parent) : QAbstractTableModel(parent)
 {
@@ -16,12 +14,10 @@ DatabasesManagementModel::DatabasesManagementModel(QObject *parent) : QAbstractT
     this->initData();
 }
 
-
 DatabasesManagementModel::~DatabasesManagementModel()
 {
 
 }
-
 
 void DatabasesManagementModel::initData()
 {
@@ -31,10 +27,9 @@ void DatabasesManagementModel::initData()
     this->scanDirectoriesFromConfig();
     this->scanDirectoriesFromKnownbasesConfig();
 
-    this->selectDirectories(mytetraConfig.get_tetradir(),
-                            mytetraConfig.get_trashdir());
+    this->selectDirectories(AppContext::instance().appConfig()->storageSection()->get_tetradir(),
+                            AppContext::instance().appConfig()->storageSection()->get_trashdir());
 }
-
 
 // Поиск возможных каталогов баз данных напрямую в известных местах
 void DatabasesManagementModel::scanDirectoriesDirect()
@@ -44,7 +39,7 @@ void DatabasesManagementModel::scanDirectoriesDirect()
     QString workingPath;
 
     // Каталог БД относительно бинарника программы
-    QFileInfo mainProgramFileInfo( globalParameters.getMainProgramFile() );
+    QFileInfo mainProgramFileInfo( AppContext::instance().globalParameters()->getMainProgramFile() );
     workingPath=mainProgramFileInfo.absolutePath();
     dbDirInfo.dbPath   =workingPath+"/data";
     dbDirInfo.trashPath=workingPath+"/trash";
@@ -53,7 +48,7 @@ void DatabasesManagementModel::scanDirectoriesDirect()
     dbDirs << dbDirInfo;
 
     // Каталог БД в пользовательском каталоге в директории ~/.имяПрограммы
-    workingPath=QDir::homePath()+"/."+globalParameters.getApplicationName();
+    workingPath=QDir::homePath()+"/."+AppContext::instance().globalParameters()->getApplicationName();
     dbDirInfo.dbPath   =workingPath+"/data";
     dbDirInfo.trashPath=workingPath+"/trash";
     dbDirInfo.descript =tr("Knowledge base in user directory %1").arg(workingPath);
@@ -61,7 +56,7 @@ void DatabasesManagementModel::scanDirectoriesDirect()
     dbDirs << dbDirInfo;
 
     // Каталог БД в пользовательском каталоге в директории ~/.config/имяПрограммы
-    workingPath=QDir::homePath()+"/.config/"+globalParameters.getApplicationName();
+    workingPath=QDir::homePath()+"/.config/"+AppContext::instance().globalParameters()->getApplicationName();
     dbDirInfo.dbPath   =workingPath+"/data";
     dbDirInfo.trashPath=workingPath+"/trash";
     dbDirInfo.descript =tr("Knowledge base in user directory %1").arg(workingPath);
@@ -70,7 +65,6 @@ void DatabasesManagementModel::scanDirectoriesDirect()
 
     this->scanDirectories(dbDirs);
 }
-
 
 // Поиск возможных каталогов БД по путям, прописанных в возможных файлах conf.ini
 void DatabasesManagementModel::scanDirectoriesFromConfig()
@@ -82,14 +76,14 @@ void DatabasesManagementModel::scanDirectoriesFromConfig()
     QString configFileName;
 
     // Данные из текущего конфига
-    dbDirsInfo.dbPath   =mytetraConfig.get_tetradir();
-    dbDirsInfo.trashPath=mytetraConfig.get_trashdir();
-    dbDirsInfo.descript =tr("Knowledge base from current config file %1").arg(mytetraConfig.getConfigFileName());
+    dbDirsInfo.dbPath   =AppContext::instance().appConfig()->storageSection()->get_tetradir();
+    dbDirsInfo.trashPath=AppContext::instance().appConfig()->storageSection()->get_trashdir();
+    dbDirsInfo.descript =tr("Knowledge base from current config file %1").arg(AppContext::instance().appConfig()->getConfigFileName());
     dbDirsInfo.isInConfigData=true;
     dbDirs << dbDirsInfo;
 
     // Данные из возможного конфига в директории ~/.имяПрограммы
-    configFileName=QDir::homePath()+"/."+globalParameters.getApplicationName()+"/conf.ini";
+    configFileName=QDir::homePath()+"/."+AppContext::instance().globalParameters()->getApplicationName()+"/conf.ini";
     dbDirsInfo.dbPath   =this->getDirectoriesFromConfigFile( configFileName ).first;
     dbDirsInfo.trashPath=this->getDirectoriesFromConfigFile( configFileName ).second;
     dbDirsInfo.descript =tr("Knowledge base from config file in user directory %1").arg(dbDirsInfo.dbPath);
@@ -97,7 +91,7 @@ void DatabasesManagementModel::scanDirectoriesFromConfig()
     dbDirs << dbDirsInfo;
 
     // Данные из возможного конфига в директории ~/.config/имяПрограммы
-    configFileName=QDir::homePath()+"/.config/"+globalParameters.getApplicationName()+"/conf.ini";
+    configFileName=QDir::homePath()+"/.config/"+AppContext::instance().globalParameters()->getApplicationName()+"/conf.ini";
     dbDirsInfo.dbPath   =this->getDirectoriesFromConfigFile( configFileName ).first;
     dbDirsInfo.trashPath=this->getDirectoriesFromConfigFile( configFileName ).second;
     dbDirsInfo.descript =tr("Knowledge base from config file in user directory %1").arg(dbDirsInfo.dbPath);
@@ -106,7 +100,6 @@ void DatabasesManagementModel::scanDirectoriesFromConfig()
 
     this->scanDirectories(dbDirs);
 }
-
 
 QPair<QString, QString> DatabasesManagementModel::getDirectoriesFromConfigFile(const QString &path)
 {
@@ -128,7 +121,6 @@ QPair<QString, QString> DatabasesManagementModel::getDirectoriesFromConfigFile(c
 
     return QPair<QString, QString>("", "");
 }
-
 
 // Поиск возможных каталогов БД по путям, прописанных в файле knownbases.ini
 void DatabasesManagementModel::scanDirectoriesFromKnownbasesConfig()
@@ -186,7 +178,6 @@ void DatabasesManagementModel::scanDirectoriesFromKnownbasesConfig()
         }
         */
 
-
         // Если в списке баз уже есть база с таким же путем к БД и корзине
         // то такая запись удаляется, а новая запись из knownbases.ini добавляется
         // Это нужно чтобы возле путей были осмысленные названия, заданные пользователем
@@ -210,7 +201,6 @@ void DatabasesManagementModel::scanDirectoriesFromKnownbasesConfig()
         m_TableData << tableLine;
     }
 }
-
 
 // Проверка переданных в списке директорий, являются ли они директориям с базой данных MyTetra
 // Если какая-либо переданная директория существует, но ее нет в списке возможных каталогов БД
@@ -285,7 +275,6 @@ void DatabasesManagementModel::scanDirectories(const QList< DatabaseDirInfo > &d
     }
 }
 
-
 void DatabasesManagementModel::clearSelection()
 {
     for (auto& tableDataLine : m_TableData)
@@ -293,7 +282,6 @@ void DatabasesManagementModel::clearSelection()
         tableDataLine[DBMANAGEMENT_COLUMN_ISSELECT]="";
     }
 }
-
 
 // Выставление пометки что директории базы и корзины выбраны в качестве рабочих
 void DatabasesManagementModel::selectDirectories(const QString &dbPath,
@@ -311,7 +299,6 @@ void DatabasesManagementModel::selectDirectories(const QString &dbPath,
         }
     }
 }
-
 
 // Проверка, что каталог является каталогом с базой данных
 bool DatabasesManagementModel::isDbDirectory(const QString &path)
@@ -349,7 +336,6 @@ bool DatabasesManagementModel::isDbDirectory(const QString &path)
     return true;
 }
 
-
 // Проверка, что каталог является каталогом корзины
 bool DatabasesManagementModel::isTrashDirectory(const QString &path)
 {
@@ -369,7 +355,6 @@ bool DatabasesManagementModel::isTrashDirectory(const QString &path)
     return true;
 }
 
-
 // Проверка что БД с указанным путем и путем к корзине прописана в knownbases.ini
 bool DatabasesManagementModel::isDbInKnownBasesConfig(const QString &dbPath,
                                                       const QString &trashPath)
@@ -385,7 +370,6 @@ bool DatabasesManagementModel::isDbInKnownBasesConfig(const QString &dbPath,
     return true;
 }
 
-
 // Число столбцов
 int DatabasesManagementModel::columnCount(const QModelIndex & parent) const
 {
@@ -393,7 +377,6 @@ int DatabasesManagementModel::columnCount(const QModelIndex & parent) const
 
   return DBMANAGEMENT_COLUMNS;
 }
-
 
 // Число строк
 int DatabasesManagementModel::rowCount(const QModelIndex& parent) const
@@ -403,7 +386,6 @@ int DatabasesManagementModel::rowCount(const QModelIndex& parent) const
   return m_TableData.size();
 }
 
-
 QVariant DatabasesManagementModel::data(const QModelIndex& index, int role) const
 {
   if (index.isValid() && (role == Qt::DisplayRole || role == Qt::DecorationRole))
@@ -412,14 +394,12 @@ QVariant DatabasesManagementModel::data(const QModelIndex& index, int role) cons
   return QVariant();
 }
 
-
 QString DatabasesManagementModel::getCellValue(const int &row,
                                                const int &column,
                                                const int &role) const
 {
     return this->getCell(row, column, role).toString();
 }
-
 
 // Получение значения ячейки, защищенный метод
 QVariant DatabasesManagementModel::getCell(int row, int column, int role) const
@@ -503,7 +483,6 @@ QVariant DatabasesManagementModel::getCell(int row, int column, int role) const
     return QVariant();
 }
 
-
 QVariant DatabasesManagementModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role != Qt::DisplayRole)
@@ -529,7 +508,6 @@ QVariant DatabasesManagementModel::headerData(int section, Qt::Orientation orien
             return QVariant();
         }
 }
-
 
 bool DatabasesManagementModel::isDbPathExists(const QString &path)
 {
@@ -593,7 +571,6 @@ void DatabasesManagementModel::deleteDatabaseByUser(const QString &dbPath, const
         return;
     }
 
-
     // Номер БД в конфиг-файле известных баз данных
     int dbNum   = m_KnownBasesConfig.getDbParameterExistsNum("dbPath", dbPath);
     int pathNum = m_KnownBasesConfig.getDbParameterExistsNum("trashPath", trashPath);
@@ -603,7 +580,6 @@ void DatabasesManagementModel::deleteDatabaseByUser(const QString &dbPath, const
         return;
     }
 
-
     // Удаление в модели
     this->beginResetModel();
     m_TableData.removeAt(modelDbNum);
@@ -612,7 +588,6 @@ void DatabasesManagementModel::deleteDatabaseByUser(const QString &dbPath, const
     // Удаление в файле
     m_KnownBasesConfig.removeDb(dbNum);
 }
-
 
 void DatabasesManagementModel::selectDatabase(const int &row)
 {
@@ -625,7 +600,6 @@ void DatabasesManagementModel::selectDatabase(const int &row)
     m_TableData[row] = line;
     this->endResetModel();
 }
-
 
 // Редактирование описания
 bool DatabasesManagementModel::editDatabaseDescript(const int &row,
@@ -647,7 +621,6 @@ bool DatabasesManagementModel::editDatabaseDescript(const int &row,
     m_TableData[row] = line;
     this->endResetModel();
 
-
     // Изменение в файле knownbases.ini
     int numForDbPath = m_KnownBasesConfig.getDbParameterExistsNum("dbPath", dbPath);
     int numForTrashPath = m_KnownBasesConfig.getDbParameterExistsNum("trashPath", trashPath);
@@ -661,6 +634,4 @@ bool DatabasesManagementModel::editDatabaseDescript(const int &row,
 
     return true;
 }
-
-
 

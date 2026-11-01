@@ -10,10 +10,9 @@
 #include "libraries/crypt/CryptService.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
-
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 TreeItem::TreeItem(const QMap<QString, QString> &data, TreeItem *parent)
 {
@@ -22,7 +21,6 @@ TreeItem::TreeItem(const QMap<QString, QString> &data, TreeItem *parent)
   parentItem = parent;
   fieldsTable = data;
 }
-
 
 TreeItem::~TreeItem()
 {
@@ -35,7 +33,6 @@ TreeItem::~TreeItem()
  empty();
 }
 
-
 // Возвращение ссылки на потомка, который хранится в списке childItems
 // под указанным номером
 TreeItem *TreeItem::child(int number) const
@@ -43,13 +40,11 @@ TreeItem *TreeItem::child(int number) const
  return childItems.value(number);
 }
 
-
 // Возвращение количества потомков (т.е. количество записей в списке childItems)
 int TreeItem::childCount() const
 {
     return childItems.count();
 }
-
 
 // Возвращает номер, под которым данный объект хранится
 // в массиве childItems своего родителя
@@ -60,7 +55,6 @@ int TreeItem::childNumber() const
 
     return 0;
 }
-
 
 // Метод мягкого удаления всех данных из узла
 // При таком удалении полностью очищается сам узел, 
@@ -78,12 +72,10 @@ void TreeItem::empty(void)
     parentItem=nullptr;
 }
 
-
 int TreeItem::fieldCount() const
 {
  return fieldsTable.count();
 }
-
 
 QString TreeItem::getField(QString name) const
 {
@@ -98,8 +90,8 @@ QString TreeItem::getField(QString name) const
         if(fieldsTable.contains("crypt"))
             if(fieldsTable["crypt"]=="1")
             {
-                if(globalParameters.getCryptKey().length()>0)
-                    itemName=CryptService::decryptString(globalParameters.getCryptKey(), itemName);
+                if(AppContext::instance().globalParameters()->getCryptKey().length()>0)
+                    itemName=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), itemName);
                 else
                     itemName=QString(QObject::tr("Closed"));
             }
@@ -114,7 +106,7 @@ QString TreeItem::getField(QString name) const
         if(totalCount==0)
             return itemName;
 
-        if(mytetraConfig.get_showSubtreeCount()==false)
+        if(AppContext::instance().appConfig()->uiSection()->get_showSubtreeCount()==false)
         {
             if(recordCount==0)
                 return itemName;
@@ -131,7 +123,6 @@ QString TreeItem::getField(QString name) const
         }
     }
 
-
     // Если имя поля допустимо
     if(FixedParameters::itemFieldAvailableList.contains(name))
     {
@@ -146,9 +137,9 @@ QString TreeItem::getField(QString name) const
                 if(fieldsTable["crypt"]=="1")
                     if(FixedParameters::itemFieldCryptedList.contains(name))
                     {
-                        if(globalParameters.getCryptKey().length()>0 &&
+                        if(AppContext::instance().globalParameters()->getCryptKey().length()>0 &&
                                 value!="")
-                            value=CryptService::decryptString(globalParameters.getCryptKey(), value);
+                            value=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), value);
                         else
                             value="";
                     }
@@ -165,7 +156,6 @@ QString TreeItem::getField(QString name) const
 
     return "";
 }
-
 
 // Получение всех установленных полей "имя_поля"->"значение"
 QMap<QString, QString> TreeItem::getAllFields()
@@ -186,14 +176,12 @@ QMap<QString, QString> TreeItem::getAllFields()
   return result;
 }
 
-
 // Получение всех установленных полей "имя_поля"->"значение"
 // Напрямую, без преобразований, без расшифровки
 QMap<QString, QString> TreeItem::getAllFieldsDirect()
 {
   return fieldsTable;
 }
-
 
 // Установка данных
 // Первый параметр - имя поля
@@ -211,7 +199,7 @@ void TreeItem::setField(QString name, QString value)
     if(name=="icon")
     {
       if(value.length()>0)
-        icon=QIcon(mytetraConfig.get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+value); // Изображение иконки кешируется
+        icon=QIcon(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+value); // Изображение иконки кешируется
       else
         icon=QIcon(); // Изображение иконки обнуляется
     }
@@ -221,11 +209,11 @@ void TreeItem::setField(QString name, QString value)
       if(FixedParameters::itemFieldCryptedList.contains(name))
       {
         // Если установлен пароль
-        if(globalParameters.getCryptKey().length()>0)
+        if(AppContext::instance().globalParameters()->getCryptKey().length()>0)
         {
           // Если поле непустое, поле зашифровывается
           if(value!="")
-            value=CryptService::encryptString(globalParameters.getCryptKey(), value);
+            value=CryptService::encryptString(AppContext::instance().globalParameters()->getCryptKey(), value);
         }
         else // Иначе пароль не установлен
           criticalError("TreeItem::setField() : Can not encrypt field \""+name+"\". Password not setted.");
@@ -237,7 +225,6 @@ void TreeItem::setField(QString name, QString value)
   else
     criticalError("TreeItem::setField() : Set unavailable field \""+ name +"\" to tree item");
 }
-
 
 // Установка данных напрямую - какие данные переданы, те и запомнятся
 // без всяких преобразований, без шифрации
@@ -257,12 +244,11 @@ void TreeItem::setAllFieldDirect(const QMap<QString, QString> nameAndValue)
   // Если есть иконка и нет шифрования, изображение иконки кешируется
   if(nameAndValue.value("icon").length()>0 &&
      nameAndValue.value("crypt")!="1")
-    icon=QIcon(mytetraConfig.get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+nameAndValue.value("icon"));
+    icon=QIcon(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+nameAndValue.value("icon"));
 
   if(nameAndValue.value("icon").length()==0)
     icon=QIcon();
 }
-
 
 QIcon TreeItem::getIcon()
 {
@@ -281,13 +267,13 @@ QIcon TreeItem::getIcon()
       // Иначе иконка не закеширована
 
       // Если есть возможность закешировать (введен пароль и он правильный)
-      if(globalParameters.getCryptKey().length()>0)
+      if(AppContext::instance().globalParameters()->getCryptKey().length()>0)
       {
         QString iconFileName=getField("icon");
 
         // Если иконка была задана
         if(iconFileName.length()>0)
-          icon=QIcon(mytetraConfig.get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+iconFileName);
+          icon=QIcon(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+iconFileName);
       }
 
       return icon;
@@ -295,12 +281,10 @@ QIcon TreeItem::getIcon()
   }
 }
 
-
 TreeItem *TreeItem::parent() const
 {
   return parentItem;
 }
-
 
 QString TreeItem::getId()
 {
@@ -312,7 +296,6 @@ QString TreeItem::getId()
     return "";
 }
 
-
 QString TreeItem::getParentId()
 {
   if(parentItem!=nullptr)
@@ -322,7 +305,6 @@ QString TreeItem::getParentId()
   else
     return "";
 }
-
 
 // Добавление новых подчиненных элементов
 // position - позиция в списке подчиненных элементов для вставки элементов
@@ -345,7 +327,6 @@ bool TreeItem::insertChildren(int position, int count, int columns)
   return true;
 }
 
-
 // Добавление нового пустого подчиненного элемента
 // в конец списка подчиненных элементов
 bool TreeItem::addChildrenEmpty(void)
@@ -359,14 +340,12 @@ bool TreeItem::addChildrenEmpty(void)
   return true;
 }
 
-
 // Добавление уже существующего Item-элемента
 bool TreeItem::addChildrenItem(TreeItem *item)
 {
   childItems << item; // Добавление item в конец массива childItems
   return true;
 }
-
 
 // Перемещение подчиненного элемента к другому родителю с сохранением
 // идентификатора и всех данных. Файлы записей не трогаются, так как
@@ -396,7 +375,6 @@ bool TreeItem::moveChildTo(int position, TreeItem *newParent, int newPosition)
  return true;
 }
 
-
 bool TreeItem::removeChildren(int position, int count)
 {
   if(position < 0 || position + count > childItems.size())
@@ -408,13 +386,11 @@ bool TreeItem::removeChildren(int position, int count)
   return true;
 }
 
-
 void TreeItem::removeAllChildren()
 {
   for(int i=0; i< childItems.size(); i++)
     delete childItems.takeAt(0);
 }
-
 
 bool TreeItem::removeChildrenLink(int position, int count)
 {
@@ -427,7 +403,6 @@ bool TreeItem::removeChildrenLink(int position, int count)
 
   return true;
 }
-
 
 bool TreeItem::moveUp(void)
 {
@@ -446,7 +421,6 @@ bool TreeItem::moveUp(void)
 
   return true;
 }
-
 
 bool TreeItem::moveDn(void)
 {
@@ -467,20 +441,17 @@ bool TreeItem::moveDn(void)
     return true;
 }
 
-
 // Путь к элементу (список идентификаторов от корня до текущего элемента)
 QStringList TreeItem::getPath(void) const
 {
   return getPathAsField("id");
 }
 
-
 // Путь к элементу (в виде списка названий веток)
 QStringList TreeItem::getPathAsName(void)
 {
   return getPathAsField("name");
 }
-
 
 // Путь к элементу в виде строки, разделенной указанным разделителем
 QString TreeItem::getPathAsNameWithDelimeter(QString delimeter)
@@ -493,7 +464,6 @@ QString TreeItem::getPathAsNameWithDelimeter(QString delimeter)
 
   return path.join(delimeter);
 }
-
 
 QStringList TreeItem::getPathAsField(QString fieldName) const
 {
@@ -514,7 +484,6 @@ QStringList TreeItem::getPathAsField(QString fieldName) const
     return path;
 }
 
-
 // Возвращает массив путей всех подветок, которые содержит ветка
 QList<QStringList> TreeItem::getAllChildrenPath(void)
 {
@@ -527,7 +496,6 @@ QList<QStringList> TreeItem::getAllChildrenPath(void)
     return pathList;
 }
 
-
 QList<QStringList> TreeItem::getAllChildrenPathAsField(QString fieldName)
 {
     // Очищение списка путей
@@ -538,7 +506,6 @@ QList<QStringList> TreeItem::getAllChildrenPathAsField(QString fieldName)
 
     return pathList;
 }
-
 
 /*
 // Возвращает массив путей всех подветок, которые содержит ветка
@@ -566,7 +533,6 @@ QList<QStringList> TreeItem::get_all_children_path_recurse(TreeItem *item,int mo
 }
 */
 
-
 // Возвращает массив указанных полей всех подветок, которые содержит ветка
 // Внутренняя рекурсивная функция
 QList<QStringList> TreeItem::getAllChildrenPathAsFieldRecurse(TreeItem *item, QString fieldName, int mode)
@@ -591,7 +557,6 @@ QList<QStringList> TreeItem::getAllChildrenPathAsFieldRecurse(TreeItem *item, QS
   else return QList<QStringList>();
 }
 
-
 // Переключение ветки и всех подветок в зашифрованное состояние
 void TreeItem::switchToEncrypt(void)
 {
@@ -606,17 +571,15 @@ void TreeItem::switchToEncrypt(void)
 
   // Шифруются поля ветки, подлежащие шифрованию
   foreach(QString fieldName, FixedParameters::itemFieldCryptedList)
-    fieldsTable[fieldName]=CryptService::encryptString(globalParameters.getCryptKey(), fieldsTable[fieldName]);
+    fieldsTable[fieldName]=CryptService::encryptString(AppContext::instance().globalParameters()->getCryptKey(), fieldsTable[fieldName]);
 
   // Шифрация конечных записей для этой ветки
   recordsTable.switchToEncrypt();
-
 
   // Шифрация подветок
   for(int i=0; i<childCount(); i++)
     child(i)->switchToEncrypt();
 }
-
 
 // Переключение ветки и всех подветок в расшифрованное состояние
 void TreeItem::switchToDecrypt(void)
@@ -634,14 +597,14 @@ void TreeItem::switchToDecrypt(void)
   // Без ключа расшифровка даст пустоту, и сохранение затрет данные.
   // Современный шифр аутентифицирован: непустой блоб, из которого
   // не получилось текста, - это неверный ключ или порча
-  if(globalParameters.getCryptKey().isEmpty())
+  if(AppContext::instance().globalParameters()->getCryptKey().isEmpty())
     criticalError("TreeItem::switchToDecrypt() : Password not setted.");
 
   // Расшифровка полей ветки, подлежащих шифрованию
   foreach(QString fieldName, FixedParameters::itemFieldCryptedList)
   {
     const QString cipherText=fieldsTable.value(fieldName);
-    const QString plainText=CryptService::decryptString(globalParameters.getCryptKey(), cipherText);
+    const QString plainText=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), cipherText);
 
     if(plainText.isEmpty() && !cipherText.isEmpty() &&
        QByteArray::fromBase64(cipherText.toLatin1()).startsWith(MTENC1_MAGIC))
@@ -653,36 +616,30 @@ void TreeItem::switchToDecrypt(void)
   // Дешифрация конечных записей для этой ветки
   recordsTable.switchToDecrypt();
 
-
   // Дешифрация подветок
   for(int i=0; i<childCount(); i++)
     child(i)->switchToDecrypt();
 }
-
 
 void TreeItem::recordtableInit(QDomElement domModel)
 {
   recordsTable.init(this, domModel);
 }
 
-
 int TreeItem::recordtableGetRowCount(void) const
 {
   return recordsTable.size();
 }
-
 
 int TreeItem::subtreeRecordCount(void) const
 {
   return subtreeRecords;
 }
 
-
 void TreeItem::setSubtreeTotal(int total)
 {
   subtreeRecords=(total>0) ? total : 0;
 }
-
 
 void TreeItem::addSubtreeDelta(int delta)
 {
@@ -702,24 +659,20 @@ void TreeItem::addSubtreeDelta(int delta)
   }
 }
 
-
 QDomElement TreeItem::recordtableExportDataToDom(QDomDocument *doc)
 {
   return recordsTable.exportDataToDom( doc );
 }
-
 
 void TreeItem::recordtableExportDataToStreamWriter(QXmlStreamWriter *xmlWriter)
 {
   recordsTable.exportDataToStreamWriter( xmlWriter );
 }
 
-
 void TreeItem::recordtableDeleteAllRecords(void)
 {
   recordsTable.deleteAllRecords();
 }
-
 
 // Константный вариант взятия указателя на данные таблицы конечных записей
 const RecordTableData *TreeItem::recordtableGetTableData() const
@@ -727,19 +680,16 @@ const RecordTableData *TreeItem::recordtableGetTableData() const
     return &recordsTable;
 }
 
-
 // Обычный вариант взятия указателя на данные таблицы конечных записей
 RecordTableData *TreeItem::recordtableGetTableData()
 {
     return &recordsTable;
 }
 
-
 void TreeItem::setDetached(bool state)
 {
   detachedState=state;
 }
-
 
 bool TreeItem::isDetached()
 {

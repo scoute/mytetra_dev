@@ -29,12 +29,8 @@
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-
-extern VisitHistory visitHistory;
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Пункт с числовой сортировкой: даты, счетчики и размеры сортируются
 // по значению из UserRole, а не по отображаемому тексту
@@ -54,7 +50,6 @@ public:
     }
 };
 
-
 HistoryPanel::HistoryPanel(QWidget *parent) : QWidget(parent),
     treeMetadataConnected(false),
     resizingProgrammatically(false)
@@ -66,12 +61,10 @@ HistoryPanel::HistoryPanel(QWidget *parent) : QWidget(parent),
     refreshHistory();
 }
 
-
 HistoryPanel::~HistoryPanel(void)
 {
 
 }
-
 
 void HistoryPanel::setupUi(void)
 {
@@ -115,7 +108,6 @@ void HistoryPanel::setupUi(void)
     refreshDebounce->setSingleShot(true);
 }
 
-
 void HistoryPanel::assembly(void)
 {
     QHBoxLayout *topLayout=new QHBoxLayout();
@@ -128,7 +120,6 @@ void HistoryPanel::assembly(void)
 
     setLayout(panelLayout);
 }
-
 
 void HistoryPanel::setupSignals(void)
 {
@@ -147,7 +138,7 @@ void HistoryPanel::setupSignals(void)
     connect(clearButton, &QPushButton::clicked,
             this,        &HistoryPanel::onClearHistory);
 
-    connect(&visitHistory, &VisitHistory::visitLogged,
+    connect(AppContext::instance().visitHistory(), &VisitHistory::visitLogged,
             this,          &HistoryPanel::onVisitLogged);
 
     connect(refreshDebounce, &QTimer::timeout,
@@ -157,14 +148,12 @@ void HistoryPanel::setupSignals(void)
             this,                             &HistoryPanel::onSectionResized);
 }
 
-
 void HistoryPanel::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
     refreshHistory();
 }
-
 
 void HistoryPanel::onVisitLogged(const QString &id)
 {
@@ -174,7 +163,6 @@ void HistoryPanel::onVisitLogged(const QString &id)
         refreshDebounce->start(400);
 }
 
-
 // Метаданные дерева изменились (удаление, переименование):
 // мертвые id пропадают из таблицы при следующей пересборке
 void HistoryPanel::onTreeMetadataSaved(void)
@@ -182,7 +170,6 @@ void HistoryPanel::onTreeMetadataSaved(void)
     if(isVisible())
         refreshHistory();
 }
-
 
 // Прыжок к заметке через готовый механизм позиционирования.
 // Путь резолвится вживую: ветку могли переместить после визита
@@ -203,7 +190,6 @@ void HistoryPanel::goToNote(const QString &id)
     mainWindow->setTreeAndRecordtablePositions(path, id);
 }
 
-
 void HistoryPanel::onNoteDoubleClicked(int row, int column)
 {
     Q_UNUSED(column);
@@ -218,7 +204,6 @@ void HistoryPanel::onNoteDoubleClicked(int row, int column)
 
     goToNote(id);
 }
-
 
 // Контекстное меню строки: прыжок, забыть заметку
 void HistoryPanel::onHistoryContextMenu(const QPoint &pos)
@@ -251,7 +236,6 @@ void HistoryPanel::onHistoryContextMenu(const QPoint &pos)
         onForgetNote();
 }
 
-
 void HistoryPanel::onClearHistory(void)
 {
     const int answer=QMessageBox::question(this,
@@ -262,21 +246,19 @@ void HistoryPanel::onClearHistory(void)
     if(answer!=QMessageBox::Yes)
         return;
 
-    visitHistory.clear();
+    AppContext::instance().visitHistory()->clear();
     refreshHistory();
 }
-
 
 void HistoryPanel::onForgetNote(void)
 {
     if(contextNoteId.isEmpty())
         return;
 
-    visitHistory.forget(contextNoteId);
+    AppContext::instance().visitHistory()->forget(contextNoteId);
     contextNoteId.clear();
     refreshHistory();
 }
-
 
 // Пользователь подвигал границу колонки: ширина запоминается
 // чтобы пересборка ее не сбрасывала
@@ -289,7 +271,6 @@ void HistoryPanel::onSectionResized(int logicalIndex, int oldSize, int newSize)
 
     userColumnWidths[logicalIndex]=newSize;
 }
-
 
 // Относительное время для колонки: "только что", "5 мин назад"...
 QString HistoryPanel::formatVisitTime(qint64 msecs)
@@ -314,7 +295,6 @@ QString HistoryPanel::formatVisitTime(qint64 msecs)
     return QDateTime::fromMSecsSinceEpoch(msecs).date().toString(Qt::DefaultLocaleShortDate);
 }
 
-
 // Суммарный размер файлов каталога записи в байтах.
 // Каталоги записей плоские, рекурсия не нужна
 qint64 HistoryPanel::recordDirSize(const QString &recordDir)
@@ -332,7 +312,6 @@ qint64 HistoryPanel::recordDirSize(const QString &recordDir)
     return totalSize;
 }
 
-
 // Прямые тексты новым языком. Полная пересборка заодно освежает
 // относительные времена в строках
 void HistoryPanel::retranslateUi(void)
@@ -346,7 +325,6 @@ void HistoryPanel::retranslateUi(void)
 
     refreshHistory();
 }
-
 
 // Пересборка таблицы из журнала: агрегат, фильтр, сортировка заголовком.
 // Мертвые id (удаленные заметки) отбрасываются, шифрованные без пароля
@@ -370,7 +348,7 @@ void HistoryPanel::refreshHistory(void)
 
     KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
 
-    const QList<VisitStat> visitStats=visitHistory.stats();
+    const QList<VisitStat> visitStats=AppContext::instance().visitHistory()->stats();
 
     const QString filter=filterEdit->text().toLower();
 
@@ -417,7 +395,7 @@ void HistoryPanel::refreshHistory(void)
             TreeItem *item=state.item;
 
             if(item->getField(QStringLiteral("crypt"))!=QStringLiteral("1") ||
-               globalParameters.getCryptKey().length()>0)
+               AppContext::instance().globalParameters()->getCryptKey().length()>0)
             {
                 RecordTableData *recordTable=item->recordtableGetTableData();
                 if(recordTable!=nullptr)
@@ -433,7 +411,7 @@ void HistoryPanel::refreshHistory(void)
                         info.branch=state.branchNames.join(QStringLiteral(" / "));
                         AttachTableData *attachTable=record->getAttachTablePointer();
                         info.attachCount=(attachTable!=nullptr) ? attachTable->size() : 0;
-                        info.recordDir=mytetraConfig.get_tetradir()
+                        info.recordDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()
                                         +QStringLiteral("/base/")
                                         +recordTable->getField(QStringLiteral("dir"), row);
                         noteInfo[recordTable->getField(QStringLiteral("id"), row)]=info;
@@ -488,7 +466,7 @@ void HistoryPanel::refreshHistory(void)
 
             // Шифрованная ветка без введенного пароля: содержимое недоступно
             if(branchItem->getField(QStringLiteral("crypt"))==QStringLiteral("1") &&
-               globalParameters.getCryptKey().length()==0)
+               AppContext::instance().globalParameters()->getCryptKey().length()==0)
             {
                 noteName=tr("(encrypted note)");
                 branchPath=tr("(encrypted)");

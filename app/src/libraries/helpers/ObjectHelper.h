@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+#include "libraries/AppContext.h"
+
 #include "libraries/helpers/DebugHelper.h"
 
 // Функции для работы с объектами QObject
@@ -11,12 +13,13 @@
 // Поиск объекта от корня по имени
 template <class X> inline X *find_object(QString objectName)
 {
+    // P3: корень из AppContext вместо файлового extern-глобала.
+    // До setMainWindow (пробы без GUI) root null - как и раньше
     QObject *findObj;
-
-    extern QObject *pMainWindow;
+    QObject *root=reinterpret_cast<QObject *>(AppContext::instance().mainWindow());
 
     // Если в момент обращения основного окна еще нет
-    if (!pMainWindow)
+    if (!root)
     {
         return nullptr;
     }
@@ -24,9 +27,9 @@ template <class X> inline X *find_object(QString objectName)
     // Если запрошен сам корень
     if(objectName=="mainwindow")
     {
-        QObject *mvp=qobject_cast<X *>(pMainWindow);
+        QObject *mvp=qobject_cast<X *>(root);
 
-        if(mvp->metaObject()->className()!=pMainWindow->metaObject()->className())
+        if(mvp->metaObject()->className()!=root->metaObject()->className())
         {
             // Если запрошенный класс объекта не является классом главного окна
             printf("find_object(): Can't find mainwindow object. Check <type> in function call\n");
@@ -34,12 +37,12 @@ template <class X> inline X *find_object(QString objectName)
             return nullptr;
         }
         else
-            return qobject_cast<X *>(pMainWindow);
+            return qobject_cast<X *>(root);
     }
 
     // Запрошен обычный объект, надо его найти
-    // findObj=qFindChild<X *>(pMainWindow, objectName);
-    findObj=pMainWindow->findChild<X *>(objectName);
+    // findObj=qFindChild<X *>(root, objectName);
+    findObj=root->findChild<X *>(objectName);
 
     if(!findObj)
     {
@@ -50,7 +53,7 @@ template <class X> inline X *find_object(QString objectName)
         printObjectTree();
 
         /*
-        QList<QWidget *> widgets = pMainWindow->findChildren<QWidget *>();
+        QList<QWidget *> widgets = root->findChildren<QWidget *>();
         foreach (QWidget* b, widgets)
             printf("Obj: %s\n", qPrintable( b->objectName() ) );
         */

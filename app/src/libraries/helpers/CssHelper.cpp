@@ -22,18 +22,13 @@
 #include "models/appConfig/AppFiles.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/PaletteHelper.h"
-
-extern GlobalParameters globalParameters;
-extern FixedParameters fixedParameters;
-extern AppConfig mytetraConfig;
-extern AppFiles mytetraFiles;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 CssHelper::CssHelper()
 {
 
 }
-
 
 qreal CssHelper::getCalculateIconSizePx(void)
 {
@@ -54,18 +49,17 @@ qreal CssHelper::getCalculateIconSizePx(void)
     return iconSizePx;
 }
 
-
 // Замена в CSS-стиле все вхождения подстроки META_ICON_SIZE на вычисленный размер иконки в пикселях
 QString CssHelper::replaceCssMetaIconSize(const QString &styleText)
 {
     QMap<QString, qreal> table;
 
     // Перебираются имена названий размеров иконок
-    for ( auto sizeName : fixedParameters.interfaceIconSizeAvailableMap.keys() )
+    for ( auto sizeName : AppContext::instance().fixedParameters()->interfaceIconSizeAvailableMap.keys() )
     {
         // Во втором аргументе значения QMap-таблицы хранится коэффициент масштабирования
         table[sizeName] = getCalculateIconSizePx() *
-                          fixedParameters.interfaceIconSizeAvailableMap.at( sizeName ).second;
+                          AppContext::instance().fixedParameters()->interfaceIconSizeAvailableMap.at( sizeName ).second;
     }
 
     QString resultText = styleText;
@@ -78,7 +72,6 @@ QString CssHelper::replaceCssMetaIconSize(const QString &styleText)
 
     return resultText;
 }
-
 
 QString CssHelper::removeCssComments(const QString& input)
 {
@@ -121,7 +114,6 @@ QString CssHelper::removeCssComments(const QString& input)
     return result;
 }
 
-
 void CssHelper::extractCssStyles()
 {
     // Удаление устаревших стилей, которые размещались по устаревшим соглашениям
@@ -130,21 +122,20 @@ void CssHelper::extractCssStyles()
     // Удаление устаревших стилей, которые имеют более старую версию чем те что хранятся в ресурсах
     removePreviousThemes();
 
-
-    QString dirName=globalParameters.getWorkDirectory();
+    QString dirName=AppContext::instance().globalParameters()->getWorkDirectory();
 
     // Если в рабочей директории нет каталога с темами
     QDir themesDir(dirName+"/themes");
     if ( !themesDir.exists() )
     {
         // Каталог с темами распаковывается из ресурсов
-        mytetraFiles.createThemesFiles( dirName+"/themes" );
+        AppContext::instance().appFiles()->createThemesFiles( dirName+"/themes" );
     }
     else // Иначе есть каталог с темами
     {
         // Надо проверить все ли каталоги тем существуют.
         // custom пропускается: своих файлов у неё нет, она на основе Default
-        for ( const auto &themeName : fixedParameters.themesAvailableList )
+        for ( const auto &themeName : AppContext::instance().fixedParameters()->themesAvailableList )
         {
             if(themeName=="custom")
                 continue;
@@ -153,17 +144,16 @@ void CssHelper::extractCssStyles()
             if ( !themeDir.exists() )
             {
                 // Каталог с темой распаковывается из ресурсов
-                mytetraFiles.createThemesFiles( dirName+"/themes", themeName );
+                AppContext::instance().appFiles()->createThemesFiles( dirName+"/themes", themeName );
             }
         }
     }
 }
 
-
 // Удаление устаревших стилей, размещаемых по устаревшим соглашениям
 void CssHelper::removeVeryOldCssStyles()
 {
-    QString dirName=globalParameters.getWorkDirectory();
+    QString dirName=AppContext::instance().globalParameters()->getWorkDirectory();
 
     // Устаревший файл стиля, который ранее находился рядом с конфиг-файлами
     // а не в отдельной директории, удаляется
@@ -181,11 +171,10 @@ void CssHelper::removeVeryOldCssStyles()
     }
 }
 
-
 // Удаление стилей с более старой версией чем хранимой в ресурсах
 void CssHelper::removePreviousThemes()
 {
-    for ( const auto &themeName : fixedParameters.themesAvailableList )
+    for ( const auto &themeName : AppContext::instance().fixedParameters()->themesAvailableList )
     {
         // Своя тема не имеет эталона в ресурсах: сравнивать не с чем
         if(themeName=="custom")
@@ -217,13 +206,12 @@ void CssHelper::removePreviousThemes()
 
         if ( doRemove )
         {
-            QString dirName = globalParameters.getWorkDirectory()+"/themes/"+themeName;
+            QString dirName = AppContext::instance().globalParameters()->getWorkDirectory()+"/themes/"+themeName;
 
             DiskHelper::removeDirectory(dirName);
         }
     }
 }
-
 
 // Получение номера версии из строки вида
 // /* <MyTetraStyle name="dark" version="1" about="QDarkStyleSheet"/> */
@@ -250,20 +238,19 @@ int CssHelper::getMyTetraStyleVersion(const QString& text)
     return 0;
 }
 
-
 void CssHelper::loadCurrentTheme()
 {
-    QString themeName=mytetraConfig.getInterfaceTheme();
+    QString themeName=AppContext::instance().appConfig()->uiSection()->getInterfaceTheme();
 
     // Тема из конфига может отсутствовать в сборке (удалена
     // или конфиг пришел из другой ветки): откат на default
     // вместо неоформленного Fusion
-    if( !fixedParameters.themesAvailableList.contains(themeName) )
+    if( !AppContext::instance().fixedParameters()->themesAvailableList.contains(themeName) )
     {
         qWarning() << "Unknown interface theme in config:" << themeName
                    << ", fallback to default";
         themeName="default";
-        mytetraConfig.setInterfaceTheme(themeName);
+        AppContext::instance().appConfig()->uiSection()->setInterfaceTheme(themeName);
     }
 
     applyTheme( themeName );
@@ -273,10 +260,9 @@ void CssHelper::loadCurrentTheme()
     applyCustomDesign();
 }
 
-
 QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool fromResources)
 {
-    if ( !fixedParameters.themesAvailableList.contains(themeName) )
+    if ( !AppContext::instance().fixedParameters()->themesAvailableList.contains(themeName) )
     {
         qWarning() << "Incorrect interface theme name: " << themeName;
         return QString();
@@ -287,7 +273,7 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
 
     if(themeName=="custom")
     {
-        cssName=mytetraConfig.get_themeCustomBaseTheme();
+        cssName=AppContext::instance().appConfig()->uiSection()->get_themeCustomBaseTheme();
 
         if(cssName!="default" && cssName!="dark" &&
            cssName!="modern" && cssName!="midnight")
@@ -298,17 +284,16 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
 
     if (fromResources)
     {
-        QString targetOs = globalParameters.getTargetOs();
+        QString targetOs = AppContext::instance().globalParameters()->getTargetOs();
         QString qrcPath = QString(":/resource/standartconfig/")+targetOs+QString("/themes");
 
         fileName = qrcPath+"/"+cssName+"/stylesheet.css";
     }
     else
     {
-        QString dirName = globalParameters.getWorkDirectory();
+        QString dirName = AppContext::instance().globalParameters()->getWorkDirectory();
         fileName = dirName+"/themes/"+cssName+"/stylesheet.css";
     }
-
 
     QFile cssFile( fileName );
 
@@ -329,7 +314,6 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
     return styleText;
 }
 
-
 bool CssHelper::applyTheme(const QString &themeName)
 {
     QString styleText = getCssFileContentForTheme(themeName);
@@ -349,17 +333,17 @@ bool CssHelper::applyTheme(const QString &themeName)
     // После подмены обе темы универсально описываются одним CSS-файлом,
     // а картинки всегда берутся из ресурсов программы
     const QString qrcThemesPrefix=QStringLiteral(":/resource/standartconfig/")
-                                 +globalParameters.getTargetOs()
+                                 +AppContext::instance().globalParameters()->getTargetOs()
                                  +QStringLiteral("/themes/");
     styleText.replace(QStringLiteral("url(\"themes/"), QStringLiteral("url(\"")+qrcThemesPrefix);
     styleText.replace(QStringLiteral("url('themes/"), QStringLiteral("url('")+qrcThemesPrefix);
     styleText.replace(QStringLiteral("url(themes/"), QStringLiteral("url(")+qrcThemesPrefix);
 
     // Добавляется CSS-правило, влияющее на размер иконок
-    if ( mytetraConfig.getInterfaceIconSize()!="" )
+    if ( AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize()!="" )
     {
         QString cssIconSizeRules = QString("\nQToolBar, QToolButton, QPushButton { icon-size: %1px; }").
-                                   arg( mytetraConfig.getInterfaceIconSize() );
+                                   arg( AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize() );
         styleText += cssIconSizeRules;
     }
 
@@ -377,13 +361,11 @@ bool CssHelper::applyTheme(const QString &themeName)
     return true;
 }
 
-
 void CssHelper::loadPalette(const QString &cssText)
 {
     // Применяются цвета из CSS-правила CustomPalette
     PaletteHelper::applyCustomPalette( PaletteHelper::parseCustomPalette(cssText) );
 }
-
 
 void CssHelper::updateInterface()
 {
@@ -417,7 +399,6 @@ void CssHelper::updateInterface()
 
     QApplication::processEvents();
 
-
     // Уровень 2: Отложенная перерисовка через 10мс
     QTimer::singleShot(10, []() {
         foreach (QWidget *widget, QApplication::allWidgets()) {
@@ -426,7 +407,6 @@ void CssHelper::updateInterface()
         QApplication::processEvents();
     });
 
-
     // Уровень 3: Финальное обновление через 50мс
     QTimer::singleShot(50, []() {
         foreach (QWidget *widget, QApplication::allWidgets()) {
@@ -434,7 +414,6 @@ void CssHelper::updateInterface()
         }
         QApplication::sendPostedEvents(nullptr, QEvent::UpdateRequest);
     });
-
 
     // После сброса интерфейса слетают курсоры на таблицах и в деревьях,
     // их надо восстановить. Однако установка CSS возможна до того,
@@ -450,8 +429,6 @@ void CssHelper::updateInterface()
     }
     */
 }
-
-
 
 // Кастомный дизайн поверх темы. Работает ТОЛЬКО на теме Custom:
 // базовые темы всегда выглядят как есть. При уходе с Custom
@@ -470,7 +447,7 @@ void CssHelper::applyCustomDesign(void)
     static int tableRowHeightOrig=30;
     static bool tableAlternatingOrig=false;
 
-    const bool customActive=(mytetraConfig.getInterfaceTheme()=="custom");
+    const bool customActive=(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()=="custom");
 
     KnowTreeView *tree=find_object<KnowTreeView>("knowTreeView");
     RecordTableView *table=find_object<RecordTableView>("recordTableView");
@@ -523,8 +500,8 @@ void CssHelper::applyCustomDesign(void)
     }
 
     // Шрифт интерфейса: пусто означает шрифт темы
-    const QString family=mytetraConfig.get_themeCustomInterfaceFontFamily();
-    const int size=mytetraConfig.get_themeCustomInterfaceFontSize();
+    const QString family=AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontFamily();
+    const int size=AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontSize();
 
     if(qApp!=nullptr)
     {
@@ -549,16 +526,16 @@ void CssHelper::applyCustomDesign(void)
     {
         QString treeStyle;
 
-        if(!mytetraConfig.get_themeCustomTreeBackground().isEmpty())
-            treeStyle+="background: "+mytetraConfig.get_themeCustomTreeBackground()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground().isEmpty())
+            treeStyle+="background: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground()+"; ";
 
-        if(!mytetraConfig.get_themeCustomTreeText().isEmpty())
-            treeStyle+="color: "+mytetraConfig.get_themeCustomTreeText()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText().isEmpty())
+            treeStyle+="color: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText()+"; ";
 
         tree->setStyleSheet(treeStyle.isEmpty() ? QString() :
                             QString("QTreeView { %1 }").arg(treeStyle));
 
-        const int treeSize=mytetraConfig.get_themeCustomTreeFontSize();
+        const int treeSize=AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeFontSize();
 
         if(treeSize>0)
         {
@@ -569,7 +546,7 @@ void CssHelper::applyCustomDesign(void)
         else
             tree->setFont(treeFontOrig);
 
-        const int indent=mytetraConfig.get_themeCustomTreeIndentation();
+        const int indent=AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeIndentation();
         tree->setIndentation(indent>=0 ? indent : treeIndentOrig);
     }
 
@@ -578,13 +555,13 @@ void CssHelper::applyCustomDesign(void)
     {
         QString tableStyle;
 
-        if(!mytetraConfig.get_themeCustomTableBackground().isEmpty())
-            tableStyle+="background: "+mytetraConfig.get_themeCustomTableBackground()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground().isEmpty())
+            tableStyle+="background: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground()+"; ";
 
-        if(!mytetraConfig.get_themeCustomTableText().isEmpty())
-            tableStyle+="color: "+mytetraConfig.get_themeCustomTableText()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText().isEmpty())
+            tableStyle+="color: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText()+"; ";
 
-        const QString alternate=mytetraConfig.get_themeCustomTableAlternate();
+        const QString alternate=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableAlternate();
 
         if(!alternate.isEmpty())
         {
@@ -597,7 +574,7 @@ void CssHelper::applyCustomDesign(void)
         table->setStyleSheet(tableStyle.isEmpty() ? QString() :
                              QString("QTableView { %1 }").arg(tableStyle));
 
-        const int tableSize=mytetraConfig.get_themeCustomTableFontSize();
+        const int tableSize=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableFontSize();
 
         if(tableSize>0)
         {
@@ -608,7 +585,7 @@ void CssHelper::applyCustomDesign(void)
         else
             table->setFont(tableFontOrig);
 
-        const int rowHeight=mytetraConfig.get_themeCustomTableRowHeight();
+        const int rowHeight=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableRowHeight();
         table->verticalHeader()->setDefaultSectionSize(
             rowHeight>=0 ? rowHeight : tableRowHeightOrig);
     }

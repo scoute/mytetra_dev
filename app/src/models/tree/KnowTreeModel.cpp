@@ -30,11 +30,8 @@
 #include "libraries/helpers/SortHelper.h"
 #include "libraries/BacklinkIndex.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
-
-
-extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Проверка имени файла или директории, взятого из импортируемых данных.
 // Импортируемый XML считается недоверенным, поэтому имя обязано быть
@@ -60,18 +57,30 @@ static bool isSafeImportFileName(const QString &name)
     return true;
 }
 
-
 // Конструктор модели дерева, состоящего из Item элементов
-KnowTreeModel::KnowTreeModel(QObject *parent) : TreeModel(parent)
+KnowTreeModel::KnowTreeModel(BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QObject *parent) : TreeModel(parent),
+  m_backlinks(backlinks),
+  m_dispatcher(dispatcher)
 {
   m_xmlFileName="";
   rootItem=nullptr;
 
   connect(this, &KnowTreeModel::doCloseDetachedWindowByIdSet,
-          EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowByIdSet,
+          m_dispatcher, &EditorShowTextDispatcher::closeWindowByIdSet,
           Qt::QueuedConnection);
 }
 
+
+BacklinkIndex *KnowTreeModel::backlinkIndex(void) const
+{
+  return m_backlinks;
+}
+
+
+EditorShowTextDispatcher *KnowTreeModel::showTextDispatcher(void) const
+{
+  return m_dispatcher;
+}
 
 // Деструктор Item модели.
 // По-хорошему деструктор перед удалением корневого элемента должен пробежать по
@@ -80,7 +89,6 @@ KnowTreeModel::~KnowTreeModel()
 {
   delete rootItem;
 }
-
 
 void KnowTreeModel::initFromXML(QString fileName)
 {
@@ -96,7 +104,6 @@ void KnowTreeModel::initFromXML(QString fileName)
   m_lastLoadDateTime=QDateTime::currentDateTime();
 }
 
-
 void KnowTreeModel::init(QDomDocument *domModel)
 {
   // Проверка формата XML-файла
@@ -105,14 +112,12 @@ void KnowTreeModel::init(QDomDocument *domModel)
     criticalError(tr("Unsupported version of the database format.\nYou need to update MyTetra."));
   }
 
-
   QMap<QString, QString> rootData;
 
   // Определяется одно поле в корневом объекте
   // то есть на экране будет один столбец
   rootData["id"] = "0";
   rootData["name"] = "";
-
 
   beginResetModel();
 
@@ -135,7 +140,6 @@ void KnowTreeModel::init(QDomDocument *domModel)
 
   endResetModel();
 }
-
 
 bool KnowTreeModel::checkFormat(QDomElement elementFormat)
 {
@@ -168,7 +172,6 @@ bool KnowTreeModel::checkFormat(QDomElement elementFormat)
   return true;
 }
 
-
 bool KnowTreeModel::updateSubVersionFrom1To2(void)
 {
   // Формат 1.2 только расширяет формат 1.1 (т. е. только добавляет данные, но не исключает никакие устаревшие)
@@ -176,12 +179,10 @@ bool KnowTreeModel::updateSubVersionFrom1To2(void)
   return true;
 }
 
-
 void KnowTreeModel::reload(void)
 {
     this->initFromXML(m_xmlFileName);
 }
-
 
 void KnowTreeModel::clear()
 {
@@ -193,7 +194,6 @@ void KnowTreeModel::clear()
 
     endResetModel(); // Уведомление представления о завершении перезагрузки модели
 }
-
 
 // Разбор DOM модели и преобразование ее в Item модель
 void KnowTreeModel::setupModelData(QDomDocument *dommodel, TreeItem *parent)
@@ -210,7 +210,6 @@ void KnowTreeModel::setupModelData(QDomDocument *dommodel, TreeItem *parent)
 
   return;
 }
-
 
 // Рекурсивный обход DOM дерева и извлечение из него узлов
 void KnowTreeModel::parseNodeElement(QDomElement domElement, TreeItem *iParent)
@@ -263,7 +262,6 @@ void KnowTreeModel::parseNodeElement(QDomElement domElement, TreeItem *iParent)
 
 }
 
-
 // Генерирование полного DOM дерева хранимых данных
 QDomElement KnowTreeModel::exportFullModelDataToDom(TreeItem *root)
 {
@@ -282,7 +280,6 @@ QDomElement KnowTreeModel::exportFullModelDataToDom(TreeItem *root)
   return elm;
 }
 
-
 // Генерирование полного дерева хранимых данных в поток XML
 void KnowTreeModel::exportFullModelDataToStreamWriter(QXmlStreamWriter *xmlWriter, TreeItem *root)
 {
@@ -293,15 +290,12 @@ void KnowTreeModel::exportFullModelDataToStreamWriter(QXmlStreamWriter *xmlWrite
   xmlWriter->writeEndElement(); // Закрылся content
 }
 
-
-
 // Выгрузка ветки и ее подветок в отдельную директорию
 // todo: Подумать, и сделать выгрузку через режим StreamWriter. Похоже, что пока что мешает расшифровка выгружаемых данных
 bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportDir)
 {
   // Полный путь до создаваемого файла с деревом
   QString mytetraXmlFile=exportDir+"/mytetra.xml";
-
 
   // -----------------------------
   // Подготовка корневого элемента
@@ -315,7 +309,6 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
 
   // Стартовый подузел размещается во временном корневом элементе
   tempRootItem->addChildrenItem(startItem);
-
 
   // -------------------------------------
   // Подготовка выгружаемого DOM-документа
@@ -345,7 +338,6 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
     return false;
   }
 
-
   // Запись DOM данных в файл
   QFile wfile(mytetraXmlFile);
   if (!wfile.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -359,7 +351,6 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
   out.setCodec("UTF-8");
   out << doc.toString();
 
-
   // Удаление временного корневого элемента
   tempRootItem->setDetached(true); // Временный корневой элемент помечается как оторванный, чтобы не удалялись подчиненные элементы, используемые в основной программе
   delete tempRootItem; // Удаляется корневой элемент
@@ -367,14 +358,12 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
   return true;
 }
 
-
 bool KnowTreeModel::exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString exportDir)
 {
   QDomElement contentRootNode=doc.documentElement().firstChildElement("content").firstChildElement("node");
 
   return exportRelatedDataAndDecryptIfNeedRecurse(contentRootNode, exportDir);
 }
-
 
 // Выгрузка в директорию выгрузки связанных с записью данных + расшифровка переданного элемента
 // Связанные с записью данные это:
@@ -401,7 +390,7 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
       if(element.hasAttribute(cryptFieldName))
       {
         const QString cipherText=element.attribute(cryptFieldName);
-        const QString plainText=CryptService::decryptString(globalParameters.getCryptKey(), cipherText);
+        const QString plainText=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), cipherText);
 
         // Аутентифицированный блоб без открытого текста: неверный
         // ключ или порча. В обменник нельзя писать пустоту
@@ -414,7 +403,6 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
 
         element.setAttribute(cryptFieldName, plainText);
       }
-
 
    // Если это запись, надо скопировать связанные данные (с расшифровкой, если это необходимо)
    if(element.nodeName()=="record")
@@ -437,7 +425,7 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
        return false;
      }
 
-     QString fromDir=mytetraConfig.get_tetradir()+"/base/"+recordDirName;
+     QString fromDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+recordDirName;
      QString toDir=exportDir+"/base/"+recordDirName;
 
      // Создание директории
@@ -460,7 +448,7 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
      if(element.attribute("crypt")=="1")
      {
        // Расшифровка текста записи
-       CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+recordFileName);
+       CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), toDir+"/"+recordFileName);
 
        // Расшифровка приаттаченных файлов
        QDomNodeList list=element.elementsByTagName("file");
@@ -488,7 +476,7 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
                if(isSafeImportFileName(candidateFileName) &&
                   QFile::exists(toDir+"/"+candidateFileName))
                {
-                 CryptService::decryptFile(globalParameters.getCryptKey(), toDir+"/"+candidateFileName);
+                 CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), toDir+"/"+candidateFileName);
                  break;
                }
            }
@@ -514,7 +502,6 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
   return true;
 }
 
-
 // Импорт ветки из указанной дирекотрии
 // Метод возвращает ID новой созданной при импорте ветки или пустую строку, если импорт не произошел
 QString KnowTreeModel::importBranchFromDirectory(TreeItem *startItem, QString importDir)
@@ -533,7 +520,6 @@ QString KnowTreeModel::importBranchFromDirectory(TreeItem *startItem, QString im
   XmlTree xmlt;
   if(!xmlt.load( importXmlFileName ))
     return "";
-
 
   // Создаются таблицы перекодировки идентификаторов веток, записей, имен директорий
   // Если в импортируемых данных есть ID ветки или записи, который уже есть в основной базе,
@@ -572,14 +558,12 @@ QString KnowTreeModel::importBranchFromDirectory(TreeItem *startItem, QString im
     importItem->switchToEncrypt(); // Шифрация импортируемой ветки и всех подветок
   }
 
-
   // После завершения экспорта дерево знаний записывается
   save();
 
   // Возвращается идентификатор только что импортированной ветки
   return importItemId;
 }
-
 
 // Копирование директорий импортируемой ветки в основную базу
 bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
@@ -618,7 +602,7 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
         shortToDir=dirRecordTranslate[shortFromDir]; // Директория назначения изменяется согласно таблице кодировки
 
       QString fullFromDir=importDir+"/base/"+shortFromDir;
-      QString fullToDir=mytetraConfig.get_tetradir()+"/base/"+shortToDir;
+      QString fullToDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+shortToDir;
 
       // Каталог-источник может быть симлинком на /etc или на домашний
       // каталог: копирование утащило бы чужие файлы в базу. Проверяется
@@ -634,7 +618,7 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
       }
 
       // Приемник тоже обязан остаться внутри base текущей базы
-      const QString targetBase=QDir::cleanPath(mytetraConfig.get_tetradir()+"/base");
+      const QString targetBase=QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base");
       const QString targetDir=QDir::cleanPath(fullToDir);
 
       if(!targetDir.startsWith(targetBase+QLatin1Char('/')))
@@ -673,7 +657,6 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
   return true;
 }
 
-
 void KnowTreeModel::translateImportDomData( QDomDocument &doc ,
                                             QString elementName,
                                             QString elementAttribute,
@@ -690,7 +673,6 @@ void KnowTreeModel::translateImportDomData( QDomDocument &doc ,
         element.setAttribute(elementAttribute, translateTable[attributeValue]);
   }
 }
-
 
 // Находятся совпадающие ID в импортируемых данных и в основной базе для веток
 QMap<QString, QString> KnowTreeModel::getAttributeTranslateTable(QDomDocument &doc,
@@ -733,7 +715,6 @@ QMap<QString, QString> KnowTreeModel::getAttributeTranslateTable(QDomDocument &d
   return translateTable;
 }
 
-
 // Рекурсивное преобразование Item-элементов в Dom дерево
 void KnowTreeModel::parseTreeToDom(QDomDocument *doc, QDomElement *xmlData, TreeItem *currItem)
 {
@@ -773,7 +754,6 @@ void KnowTreeModel::parseTreeToDom(QDomDocument *doc, QDomElement *xmlData, Tree
      tempElement.setAttribute(fields_iterator.key(), fields_iterator.value());
     }
 
-
    // Добавление временного элемента к основному документу
    xmlData->appendChild(tempElement);
 
@@ -785,7 +765,6 @@ void KnowTreeModel::parseTreeToDom(QDomDocument *doc, QDomElement *xmlData, Tree
   }
 
 }
-
 
 // Рекурсивное преобразование Item-элементов в поток XML-элементов
 void KnowTreeModel::parseTreeToStreamWriter( QXmlStreamWriter *xmlWriter, TreeItem *currItem)
@@ -819,7 +798,6 @@ void KnowTreeModel::parseTreeToStreamWriter( QXmlStreamWriter *xmlWriter, TreeIt
     xmlWriter->writeEndElement(); // Закрылся node
    }
 }
-
 
 // Запись всех данных в XML файл
 void KnowTreeModel::save()
@@ -885,18 +863,15 @@ void KnowTreeModel::save()
   m_lastSaveDateTime=QDateTime::currentDateTime();
 }
 
-
 QDateTime KnowTreeModel::getLastSaveDateTime()
 {
   return m_lastSaveDateTime;
 }
 
-
 QDateTime KnowTreeModel::getLastLoadDateTime()
 {
   return m_lastLoadDateTime;
 }
-
 
 QDomDocument KnowTreeModel::createStandartDocument()
 {
@@ -907,7 +882,6 @@ QDomDocument KnowTreeModel::createStandartDocument()
 
   return doc;
 }
-
 
 QDomElement KnowTreeModel::createStandartRootElement(QDomDocument &doc)
 {
@@ -923,7 +897,6 @@ QDomElement KnowTreeModel::createStandartRootElement(QDomDocument &doc)
   return rootElement;
 }
 
-
 // Добавление новой подветки к указанной ветке
 void KnowTreeModel::addNewChildBranch(const QModelIndex &index, QMap<QString, QString> branchFields)
 {
@@ -934,7 +907,6 @@ void KnowTreeModel::addNewChildBranch(const QModelIndex &index, QMap<QString, QS
   addNewBranch(parent, branchFields);
   endInsertRows();
 }
-
 
 // Добавление новой ветки после указанной ветки
 void KnowTreeModel::addNewSiblingBranch(const QModelIndex &index, QMap<QString, QString> branchFields)
@@ -947,7 +919,6 @@ void KnowTreeModel::addNewSiblingBranch(const QModelIndex &index, QMap<QString, 
   addNewBranch(parent, branchFields);
   endInsertRows();
 }
-
 
 // Добавление новой подветки к Item элементу
 void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branchFields)
@@ -990,7 +961,6 @@ void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branch
   }
 }
 
-
 // Добавление новой подветки к указанной ветке из буфера обмена
 QString KnowTreeModel::pasteNewChildBranch(const QModelIndex &index, ClipboardBranch *subbranch)
 {
@@ -1005,7 +975,6 @@ QString KnowTreeModel::pasteNewChildBranch(const QModelIndex &index, ClipboardBr
 
   return pasted_branch_id;
 }
-
 
 QString KnowTreeModel::pasteNewSiblingBranch(const QModelIndex &index, ClipboardBranch *subbranch)
 {
@@ -1022,20 +991,17 @@ QString KnowTreeModel::pasteNewSiblingBranch(const QModelIndex &index, Clipboard
   return pasted_branch_id;
 }
 
-
 // Перемещение ветки вверх
 QModelIndex KnowTreeModel::moveUpBranch(const QModelIndex &index)
 {
   return moveUpDownBranch(index,1);
 }
 
-
 // Перемещение ветки вниз
 QModelIndex KnowTreeModel::moveDownBranch(const QModelIndex &index)
 {
   return moveUpDownBranch(index,-1);
 }
-
 
 // Перемещение ветки вверх или вниз
 QModelIndex KnowTreeModel::moveUpDownBranch(const QModelIndex &index,int direction)
@@ -1075,7 +1041,6 @@ QModelIndex KnowTreeModel::moveUpDownBranch(const QModelIndex &index,int directi
   if(moveok) return this->index(swpidx_row, swpidx_column, swpidx_parent);
   else return QModelIndex(); // Возвращается пустой указатель
 }
-
 
 // Перемещение ветки к другой ветке с сохранением идентификатора.
 // В отличие от копирования со вставкой здесь не генерируются новые ID
@@ -1143,7 +1108,6 @@ bool KnowTreeModel::moveBranch(const QString &sourceId, const QString &targetId,
     return moveok;
 }
 
-
 // Данные для вида. Вырезанная ветка красится приглушенным цветом,
 // остальное отдается базовой реализации
 QVariant KnowTreeModel::data(const QModelIndex &index, int role) const
@@ -1163,12 +1127,10 @@ QVariant KnowTreeModel::data(const QModelIndex &index, int role) const
     return TreeModel::data(index, role);
 }
 
-
 QString KnowTreeModel::cutBranchId(void) const
 {
     return cutBranchIdValue;
 }
-
 
 void KnowTreeModel::setCutBranchId(const QString &id)
 {
@@ -1189,7 +1151,6 @@ void KnowTreeModel::setCutBranchId(const QString &id)
       emit dataChanged(newIndex, newIndex);
 }
 
-
 void KnowTreeModel::clearCutBranchId(void)
 {
     if(cutBranchIdValue.isEmpty())
@@ -1202,7 +1163,6 @@ void KnowTreeModel::clearCutBranchId(void)
     if(oldIndex.isValid())
       emit dataChanged(oldIndex, oldIndex);
 }
-
 
 // Получение индекса подчиненного элемента с указанным номером
 // Нумерация элементов считается что идет с нуля
@@ -1245,7 +1205,6 @@ QModelIndex KnowTreeModel::indexChildren(const QModelIndex &parent, int n) const
   }
 }
 
-
 // Получение QModelIndex по известному TreeItem
 QModelIndex KnowTreeModel::getIndexByItem(TreeItem *item)
 {
@@ -1266,7 +1225,6 @@ QModelIndex KnowTreeModel::getIndexByItem(TreeItem *item)
   }
 }
 
-
 // Возвращает общее количество записей, хранимых в дереве
 int KnowTreeModel::getAllRecordCount(void)
 {
@@ -1276,13 +1234,11 @@ int KnowTreeModel::getAllRecordCount(void)
   return getAllRecordCountRecurse(rootItem, 1);
 }
 
-
 // Возвращает общее количество веток в дереве (невидимый корень не считается)
 int KnowTreeModel::getBranchCount(void) const
 {
   return getBranchCountRecurse(rootItem);
 }
-
 
 int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
 {
@@ -1296,7 +1252,6 @@ int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
 
   return n;
 }
-
 
 // Общая статистика базы: считается один раз, дальше кеш
 void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags)
@@ -1320,7 +1275,6 @@ void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &i
   tags=m_tagRefs.size();
 }
 
-
 // Построчная детализация статистики: из кеша в порядке дерева
 QList<BaseStatRow> KnowTreeModel::getBaseStatRows(void)
 {
@@ -1339,12 +1293,10 @@ QList<BaseStatRow> KnowTreeModel::getBaseStatRows(void)
   return rows;
 }
 
-
 void KnowTreeModel::invalidateStats(void)
 {
   m_statsDirty=true;
 }
-
 
 // Одна запись из кеша вон: distinct-наборы через счетчики
 void KnowTreeModel::removeRecordStats(const QString &recordId)
@@ -1359,7 +1311,6 @@ void KnowTreeModel::removeRecordStats(const QString &recordId)
   m_statsRows.remove(recordId);
   m_statsOrder.removeAll(recordId);
 }
-
 
 // Одна запись пересчитывается: текст, метки, аттачи. Нет записи -
 // выкидывается как при удалении. Полного прохода нет, distinct
@@ -1417,7 +1368,6 @@ void KnowTreeModel::refreshRecordStats(const QString &recordId)
 
   refStatsSets(noteLinks, noteTags);
 }
-
 
 void KnowTreeModel::ensureStats(void)
 {
@@ -1487,7 +1437,6 @@ void KnowTreeModel::ensureStats(void)
   m_statsDirty=false;
 }
 
-
 void KnowTreeModel::refStatsSets(const QSet<QString> &links, const QSet<QString> &tags)
 {
   for(const QString &url : links)
@@ -1496,7 +1445,6 @@ void KnowTreeModel::refStatsSets(const QSet<QString> &links, const QSet<QString>
   for(const QString &tag : tags)
     m_tagRefs[tag]++;
 }
-
 
 void KnowTreeModel::unrefStatsRow(const QString &recordId)
 {
@@ -1526,7 +1474,6 @@ void KnowTreeModel::unrefStatsRow(const QString &recordId)
   m_statsRowTags.remove(recordId);
 }
 
-
 // Строка одной записи: тихий подсчет (имена, файлы, картинки с диска,
 // ссылки, метки)
 BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
@@ -1553,7 +1500,7 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
   // файлы оставляют висячие ссылки - отсюда расхождение)
   if(record->getField("dir").length()>0)
   {
-    QDir recordDir(mytetraConfig.get_tetradir()+"/base/"+record->getField("dir"));
+    QDir recordDir(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+record->getField("dir"));
 
     if(recordDir.exists())
     {
@@ -1610,7 +1557,6 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
   return row;
 }
 
-
 // Возвращает количество записей в ветке и всех подветках
 int KnowTreeModel::getRecordCountForItem(TreeItem const *item)
 {
@@ -1619,7 +1565,6 @@ int KnowTreeModel::getRecordCountForItem(TreeItem const *item)
 
   return getAllRecordCountRecurse(item, 1);
 }
-
 
 int KnowTreeModel::getAllRecordCountRecurse(TreeItem const *item, int mode) const
 {
@@ -1642,7 +1587,6 @@ int KnowTreeModel::getAllRecordCountRecurse(TreeItem const *item, int mode) cons
   return n;
 }
 
-
 // Проверка наличия идентификатора ветки во всем дереве
 bool KnowTreeModel::isItemIdExists(QString findId) const
 {
@@ -1651,7 +1595,6 @@ bool KnowTreeModel::isItemIdExists(QString findId) const
 
   return isItemIdExistsRecurse(rootItem, findId, 1);
 }
-
 
 bool KnowTreeModel::isItemIdExistsRecurse(TreeItem *item, QString findId, int mode) const
 {
@@ -1682,7 +1625,6 @@ bool KnowTreeModel::isItemIdExistsRecurse(TreeItem *item, QString findId, int mo
   return isExists;
 }
 
-
 // Проверка наличия идентификатора записи во всем дереве
 bool KnowTreeModel::isRecordIdExists(QString findId) const
 {
@@ -1691,7 +1633,6 @@ bool KnowTreeModel::isRecordIdExists(QString findId) const
 
   return isRecordIdExistsRecurse(rootItem, findId, 1);
 }
-
 
 bool KnowTreeModel::isRecordIdExistsRecurse(TreeItem *item, QString findId, int mode) const
 {
@@ -1722,7 +1663,6 @@ bool KnowTreeModel::isRecordIdExistsRecurse(TreeItem *item, QString findId, int 
   return isExists;
 }
 
-
 // Получение списка всех идентификаторов записей в ветке и ее подветках
 QSharedPointer< QSet<QString> > KnowTreeModel::getRecordsIdList(TreeItem *item) const
 {
@@ -1732,7 +1672,6 @@ QSharedPointer< QSet<QString> > KnowTreeModel::getRecordsIdList(TreeItem *item) 
 
     return idListPointer;
 }
-
 
 // Получение списка всех идентификаторов записей в базе
 QSharedPointer< QSet<QString> > KnowTreeModel::getAllRecordsIdList() const
@@ -1744,13 +1683,11 @@ QSharedPointer< QSet<QString> > KnowTreeModel::getAllRecordsIdList() const
     return idListPointer;
 }
 
-
 void KnowTreeModel::refreshDisplayNames(void)
 {
   emit layoutAboutToBeChanged();
   emit layoutChanged();
 }
-
 
 void KnowTreeModel::recountSubtreeTotals(void)
 {
@@ -1789,12 +1726,11 @@ void KnowTreeModel::recountSubtreeTotals(void)
   }
 }
 
-
 QList<NoteIndexEntry> KnowTreeModel::getNoteIndex(void)
 {
   QList<NoteIndexEntry> index;
 
-  const bool noKey=globalParameters.getCryptKey().length()==0;
+  const bool noKey=AppContext::instance().globalParameters()->getCryptKey().length()==0;
 
   struct Frame
   {
@@ -1868,7 +1804,6 @@ QList<NoteIndexEntry> KnowTreeModel::getNoteIndex(void)
   return index;
 }
 
-
 void KnowTreeModel::getAllRecordsIdListRecurse(TreeItem *item, QSet<QString> *ids) const
 {
     // Множество идентификаторов записей текущей ветки добавляется в итоговое множество
@@ -1878,7 +1813,6 @@ void KnowTreeModel::getAllRecordsIdListRecurse(TreeItem *item, QSet<QString> *id
     for(int i=0; i < item->childCount(); i++)
       getAllRecordsIdListRecurse(item->child(i), ids);
 }
-
 
 void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 {
@@ -1917,9 +1851,8 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
     emit doCloseDetachedWindowByIdSet( deleteResordsId );
 
     // Чистка обратного индекса: записи веток ушли в корзину
-    BacklinkIndex::instance().removeSources(deleteResordsId.toList());
+    m_backlinks->removeSources(deleteResordsId.toList());
 }
-
 
 // Удаление одной ветки и её подветок
 void KnowTreeModel::deleteOneBranch(QModelIndex index)
@@ -1976,7 +1909,6 @@ void KnowTreeModel::deleteOneBranch(QModelIndex index)
  */
 }
 
-
 // Проверка наличия имени директории записи во всем дереве
 bool KnowTreeModel::isRecordDirExists(QString findDir) const
 {
@@ -1985,7 +1917,6 @@ bool KnowTreeModel::isRecordDirExists(QString findDir) const
 
   return isRecordDirExistsRecurse(rootItem, findDir, 1);
 }
-
 
 bool KnowTreeModel::isRecordDirExistsRecurse(TreeItem *item, QString findDir, int mode) const
 {
@@ -2017,7 +1948,6 @@ bool KnowTreeModel::isRecordDirExistsRecurse(TreeItem *item, QString findDir, in
   return isExists;
 }
 
-
 // Добавление подветки из буфера обмена относительно указанного элемента
 // Функция возвращает новый идентификатор стартовой добавленной подветки
 QString KnowTreeModel::pasteSubbranch(TreeItem *item, ClipboardBranch *subbranch)
@@ -2032,7 +1962,6 @@ QString KnowTreeModel::pasteSubbranch(TreeItem *item, ClipboardBranch *subbranch
 
   return pasteSubbranchRecurse(item, start_branch_id, subbranch);
 }
-
 
 // Рекурсивное добавление дерева
 // item - элемент главного дерева, к которому добавляется ветка
@@ -2063,7 +1992,6 @@ QString KnowTreeModel::pasteSubbranchRecurse(TreeItem *item,
 
   // Выясняется указатель на эту добавленную ветку
   TreeItem *newitem=getItemById(id);
-
 
   qDebug() << "KnowTreeModel::paste_subbranch_recurse() : create tree item with field" << newitem->getAllFields();
 
@@ -2101,7 +2029,6 @@ QString KnowTreeModel::pasteSubbranchRecurse(TreeItem *item,
   return id;
 }
 
-
 // Перешифрование базы с новым паролем
 void KnowTreeModel::reEncrypt(QString previousPassword, QString currentPassword)
 {
@@ -2119,7 +2046,7 @@ void KnowTreeModel::reEncrypt(QString previousPassword, QString currentPassword)
     if(currBranch->getField("crypt")=="1" &&
        currBranchParent->getField("crypt")!="1")
     {
-      Password pwd;
+      Password pwd(m_dispatcher);
 
       pwd.setCryptKeyToMemory(previousPassword);
       currBranch->switchToDecrypt();
@@ -2130,11 +2057,9 @@ void KnowTreeModel::reEncrypt(QString previousPassword, QString currentPassword)
     
   } // Закончился перебор подветок
 
-
   // Сохранение дерева веток
   find_object<TreeScreen>("treeScreen")->saveKnowTree();
 }
-
 
 // Функция ищет ветку с указанным ID и возвращает ссылку не неё в виде TreeItem *
 // Если ветка с указанным ID не будет найдена, возвращается NULL
@@ -2146,7 +2071,6 @@ TreeItem *KnowTreeModel::getItemById(const QString &id)
     // Запуск поиска и возврат результата
     return getItemByIdRecurse(rootItem, id, 1);
 }
-
 
 TreeItem *KnowTreeModel::getItemByIdRecurse(TreeItem *item, const QString &id, int mode)
 {
@@ -2176,7 +2100,6 @@ TreeItem *KnowTreeModel::getItemByIdRecurse(TreeItem *item, const QString &id, i
     return findItem;
 }
 
-
 // Получение указателя на запись по известному идентификатору записи
 Record *KnowTreeModel::getRecord(const QString &recordId)
 {
@@ -2184,7 +2107,6 @@ Record *KnowTreeModel::getRecord(const QString &recordId)
 
     return getItem(path)->recordtableGetTableData()->getRecordById(recordId);
 }
-
 
 // Получение пути к ветке, где находится запись
 QStringList KnowTreeModel::getRecordPath(const QString &recordId)
@@ -2195,7 +2117,6 @@ QStringList KnowTreeModel::getRecordPath(const QString &recordId)
 
     return getRecordPathRecurse(rootItem, path, recordId, 1);
 }
-
 
 QStringList KnowTreeModel::getRecordPathRecurse(TreeItem *item,
                                                 QStringList &currentPath,
@@ -2236,7 +2157,6 @@ QStringList KnowTreeModel::getRecordPathRecurse(TreeItem *item,
     return findPath;
 }
 
-
 // Метод определяющий есть ли в дереве зашифрованные ветки
 bool KnowTreeModel::isContainsCryptBranches(void)
 {
@@ -2245,7 +2165,6 @@ bool KnowTreeModel::isContainsCryptBranches(void)
   return isContainsCryptBranchesRecurse(rootItem, 1);
 }
 
-
 // Метод определяющий есть ли в элементе зашифрованные ветки или подветки
 bool KnowTreeModel::isItemContainsCryptBranches(TreeItem *item)
 {
@@ -2253,7 +2172,6 @@ bool KnowTreeModel::isItemContainsCryptBranches(TreeItem *item)
 
   return isContainsCryptBranchesRecurse(item, 1);
 }
-
 
 bool KnowTreeModel::isContainsCryptBranchesRecurse(TreeItem *item, int mode)
 {
@@ -2277,7 +2195,6 @@ bool KnowTreeModel::isContainsCryptBranchesRecurse(TreeItem *item, int mode)
   return isCrypt;
 }
 
-
 // Метод определяющий есть ли в элементе и подэлементах заблокированные записи
 bool KnowTreeModel::isItemContainsBlockRecords(TreeItem *item)
 {
@@ -2285,7 +2202,6 @@ bool KnowTreeModel::isItemContainsBlockRecords(TreeItem *item)
 
   return isContainsBlockRecordsRecurse(item, 1);
 }
-
 
 bool KnowTreeModel::isContainsBlockRecordsRecurse(TreeItem *item, int mode)
 {
@@ -2310,12 +2226,10 @@ bool KnowTreeModel::isContainsBlockRecordsRecurse(TreeItem *item, int mode)
   return isBlock;
 }
 
-
 QString KnowTreeModel::getXmlFileName() const
 {
   return m_xmlFileName;
 }
-
 
 // Старый вариант поиска QModelIndex по известному TreeItem закомментирован,
 // но алгоритм может пригодиться для поиска других данных
@@ -2350,7 +2264,6 @@ QModelIndex knowtreemodel::get_item_index(TreeItem *item)
  // Если ничего не было найдено, возвращается пустой индекс
  return QModelIndex();
 }
-
 
 QModelIndex knowtreemodel::get_item_index_recurse(QModelIndex currindex, TreeItem *finditem, int mode)
 {

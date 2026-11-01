@@ -9,12 +9,10 @@
 #include "controllers/databasesManagement/DatabasesManagementController.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ActionHelper.h"
+#include "libraries/AppContext.h"
 
-
-extern ShortcutManager shortcutManager;
-
-
-DatabasesManagementScreen::DatabasesManagementScreen(QWidget *parent) : QDialog(parent)
+DatabasesManagementScreen::DatabasesManagementScreen(BacklinkIndex *backlinks, QWidget *parent) : QDialog(parent),
+  m_backlinks(backlinks)
 {
   // По факту объект этого класса имеется в единичном экземпляре. Такой объект сам задает себе имя
   this->setObjectName("databasesManagementScreen");
@@ -22,7 +20,7 @@ DatabasesManagementScreen::DatabasesManagementScreen(QWidget *parent) : QDialog(
   this->setWindowTitle(tr("Databases management"));
 
   // Инициализируется контроллер отображения записей лога
-  databasesManagementController=new DatabasesManagementController(this);
+  databasesManagementController=new DatabasesManagementController(m_backlinks, this);
   databasesManagementController->setObjectName("DatabasesManagementController");
 
   setupActions();
@@ -34,12 +32,10 @@ DatabasesManagementScreen::DatabasesManagementScreen(QWidget *parent) : QDialog(
   databasesManagementTable->init();
 }
 
-
 DatabasesManagementScreen::~DatabasesManagementScreen()
 {
 
 }
-
 
 void DatabasesManagementScreen::setupActions(void)
 {
@@ -74,7 +70,6 @@ void DatabasesManagementScreen::setupActions(void)
           databasesManagementController, &DatabasesManagementController::onCopyClicked);
 }
 
-
 void DatabasesManagementScreen::setupUI(void)
 {
   // Экранная таблица с отображением лога действий
@@ -94,25 +89,22 @@ void DatabasesManagementScreen::setupUI(void)
   buttonBox=new QDialogButtonBox(QDialogButtonBox::Close, this);
 }
 
-
 void DatabasesManagementScreen::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << staticMetaObject.className();
 
-    shortcutManager.initAction("actionLog-copy", actionCopy );
+    AppContext::instance().shortcutManager()->initAction("actionLog-copy", actionCopy );
 }
-
 
 void DatabasesManagementScreen::setupSignals(void)
 {
   connect(buttonBox, &QDialogButtonBox::rejected, this, &DatabasesManagementScreen::close);
 
   // Обновление горячих клавиш, если они были изменены
-  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut,
+  connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut,
           this, &DatabasesManagementScreen::setupShortcuts);
 
 }
-
 
 void DatabasesManagementScreen::assembly(void)
 {

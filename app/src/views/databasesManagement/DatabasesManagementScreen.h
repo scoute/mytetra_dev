@@ -9,6 +9,7 @@
 
 class DatabasesManagementTable;
 class DatabasesManagementController;
+class BacklinkIndex;
 class QDialogButtonBox;
 class QToolBar;
 class QAction;
@@ -19,7 +20,8 @@ class DatabasesManagementScreen : public QDialog
   Q_OBJECT
 
 public:
-  DatabasesManagementScreen(QWidget *parent = nullptr);
+  // P3: индекс для контроллера внедряется (был BacklinkIndex::instance())
+  DatabasesManagementScreen(BacklinkIndex *backlinks, QWidget *parent = nullptr);
   virtual ~DatabasesManagementScreen();
 
   // Действия, используемые как на тулбаре, так и в контекстном меню
@@ -43,6 +45,9 @@ protected:
   DatabasesManagementTable *databasesManagementTable;
 
   // Экранные элементы
+  // P3: индекс для контроллера (DI, дает MainWindow)
+  BacklinkIndex *m_backlinks=nullptr;
+
   QToolBar *toolBar;
   QDialogButtonBox *buttonBox;
   QVBoxLayout *screenLayout;

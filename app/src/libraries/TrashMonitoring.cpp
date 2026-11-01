@@ -4,24 +4,22 @@
 #include <QMessageBox>
 
 #include "TrashMonitoring.h"
+#include "views/mainWindow/MainWindow.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 
-extern AppConfig mytetraConfig;
-extern QObject *pMainWindow;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 TrashMonitoring::TrashMonitoring(void)
 {
  
 }
 
-
 TrashMonitoring::~TrashMonitoring(void)
 {
 
 }
-
 
 void TrashMonitoring::init(const QString trashPath)
 {
@@ -62,7 +60,6 @@ void TrashMonitoring::init(const QString trashPath)
     // qDebug() << "In init trash " << filesTable.size() << "files";
 }
 
-
 // Функция должна вызываться после фактического добавления файла в корзину
 // принимает имя файла без пути к директории
 void TrashMonitoring::addFile(const QString fileName)
@@ -80,14 +77,13 @@ void TrashMonitoring::addFile(const QString fileName)
  update();
 }
 
-
 void TrashMonitoring::update(void)
 {
     // Исключается наиболее старый файл пока выполняется
     // условие что количество файлов слишком велико или
     // суммарный размер файлов превышает предельно допустимый размер корзины
-    while(m_filesList.size() > mytetraConfig.get_trashmaxfilecount() ||
-          m_dirSize > mytetraConfig.get_trashsize()*1000000)
+    while(m_filesList.size() > AppContext::instance().appConfig()->storageSection()->get_trashmaxfilecount() ||
+          m_dirSize > AppContext::instance().appConfig()->storageSection()->get_trashsize()*1000000)
     {
         if(m_filesList.size()==1)
         {
@@ -99,7 +95,6 @@ void TrashMonitoring::update(void)
         }
     }
 }
-
 
 void TrashMonitoring::appendFileToList(const QString fileName,
                                        const unsigned int fileTime,
@@ -143,7 +138,6 @@ void TrashMonitoring::appendFileToList(const QString fileName,
     }
 }
 
-
 void TrashMonitoring::removeOldesFile(void)
 {
   QString fileName=m_path+"/"+m_filesList.last().fileName;
@@ -167,7 +161,7 @@ void TrashMonitoring::removeOldesFile(void)
   {
     // Не удаление файла в корзине - это не повод останавливать работу программы,
     // Просто выводится сообщение что нужно о проблеме оповестить разработчиков
-    QMessageBox::information(qobject_cast<QWidget *>(pMainWindow),
+    QMessageBox::information(AppContext::instance().mainWindow(),
         QObject::tr("Important information"),
         QObject::tr("In trash monitoring can not delete file:\n\n"
                     "%1\n\n"

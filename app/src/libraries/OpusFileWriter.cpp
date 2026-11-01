@@ -7,7 +7,7 @@
 #include "OpusFileWriter.h"
 
 
-// Фиксированный профиль голоса: CBR 32 кбит, кадр 20 мс
+// Профиль голоса: constrained VBR, средний битрейт 32 кбит, кадр 20 мс
 static const int OPUS_VOICE_BITRATE=32000;
 static const int OPUS_VOICE_FRAME_MS=20;
 
@@ -76,7 +76,8 @@ bool OpusFileWriter::open(const QString &filePath, int inputSampleRate)
     }
 
     opus_encoder_ctl(encoder, OPUS_SET_BITRATE(targetBitrate));
-    opus_encoder_ctl(encoder, OPUS_SET_VBR(0));
+    opus_encoder_ctl(encoder, OPUS_SET_VBR(1));
+    opus_encoder_ctl(encoder, OPUS_SET_VBR_CONSTRAINT(1));
 
     // Задержка энкодера пишется в OpusHead, плеер обрежет ее при чтении
     int lookahead=0;

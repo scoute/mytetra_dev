@@ -15,10 +15,9 @@
 #include "views/record/MetaEditor.h"
 #include "views/mainWindow/MainWindow.h"
 #include "views/toolbarSettings/MainToolbarSettingsScreen.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPage(parent)
 {
@@ -26,7 +25,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
 
   QStringList allFieldNames=FixedParameters::recordFieldAvailableList;
   QMap<QString, QString> descriptionFields=FixedParameters::recordFieldDescription( allFieldNames );
-  QStringList showFields=mytetraConfig.getRecordTableShowFields();
+  QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
   // Создаются чекбоксы для каждого поля, хранимого в записи.
   // Без подписи (служебные вроде favorite) не создаются:
@@ -46,16 +45,15 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
       fields[ name ]->setCheckState( Qt::Checked );
   }
 
-
   // Область настройки видимости заголовков
   showHorizontalHeader=new QCheckBox(this);
   showHorizontalHeader->setText( tr("Show horisontal header") );
-  if(mytetraConfig.getRecordTableShowHorizontalHeaders())
+  if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowHorizontalHeaders())
     showHorizontalHeader->setCheckState( Qt::Checked );
 
   showVerticalHeader=new QCheckBox(this);
   showVerticalHeader->setText( tr("Show row number") );
-  if(mytetraConfig.getRecordTableShowVerticalHeaders())
+  if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowVerticalHeaders())
     showVerticalHeader->setCheckState( Qt::Checked );
 
   QVBoxLayout *vboxVisibleHeaders = new QVBoxLayout;
@@ -65,12 +63,11 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   groupBoxVisibleHeaders = new QGroupBox(tr("Headers and numbers visible"));
   groupBoxVisibleHeaders->setLayout(vboxVisibleHeaders);
 
-
   // Шапка заметки над редактором: название и автор отъедают место,
   // отключаются здесь
   showRecordHeader=new QCheckBox(this);
   showRecordHeader->setText( tr("Show note header (name and author)") );
-  if(mytetraConfig.get_recordHeaderVisible())
+  if(AppContext::instance().appConfig()->uiSection()->get_recordHeaderVisible())
     showRecordHeader->setCheckState( Qt::Checked );
 
   QVBoxLayout *vboxNoteHeader = new QVBoxLayout;
@@ -78,7 +75,6 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
 
   QGroupBox *groupBoxNoteHeader = new QGroupBox(tr("Note header"));
   groupBoxNoteHeader->setLayout(vboxNoteHeader);
-
 
   // Положение списка записей: справа от дерева либо под деревом
   // в левой колонке. Радио стоит первым на странице по просьбе пользователей
@@ -88,7 +84,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   positionUnder=new QRadioButton(this);
   positionUnder->setText(tr("Under the tree"));
 
-  if(mytetraConfig.get_recordTableUnderTree())
+  if(AppContext::instance().appConfig()->uiSection()->get_recordTableUnderTree())
     positionUnder->setChecked(true);
   else
     positionRight->setChecked(true);
@@ -100,7 +96,6 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   groupBoxPosition = new QGroupBox(tr("Notes list position"));
   groupBoxPosition->setLayout(vboxPosition);
 
-
   // Область настройки видимости столбцов
   QVBoxLayout *vboxVisibleColumns = new QVBoxLayout;
   foreach(QCheckBox *currentCheckBox, fields)
@@ -108,7 +103,6 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
 
   groupBoxVisibleColumns = new QGroupBox(tr("Columns visible"));
   groupBoxVisibleColumns->setLayout(vboxVisibleColumns);
-
 
   // Собирается основной слой
   QVBoxLayout *central_layout=new QVBoxLayout();
@@ -132,7 +126,6 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   setupSignals();
 }
 
-
 void AppConfigPage_RecordTable::setupSignals(void)
 {
   QMapIterator<QString, QCheckBox *> i(fields);
@@ -142,7 +135,6 @@ void AppConfigPage_RecordTable::setupSignals(void)
     connect(i.value(), &QCheckBox::toggled,
             this,      &AppConfigPage_RecordTable::onFieldToggle);
   }
-
 
   // Указатель на контроллер таблицы конечных записей
   RecordTableController *recordTableController=find_object<RecordTableController>("recordTableController");
@@ -155,13 +147,11 @@ void AppConfigPage_RecordTable::setupSignals(void)
           this,              &AppConfigPage_RecordTable::onClickedEditToolbarButtons);
 }
 
-
 void AppConfigPage_RecordTable::onClickedEditToolbarButtons(void)
 {
   MainToolbarSettingsScreen toolbuttonsScreen(this);
   toolbuttonsScreen.exec();
 }
-
 
 // Слот, срабатывающий каждый раз когда изменяется чекбокс любого поля
 void AppConfigPage_RecordTable::onFieldToggle(bool flag)
@@ -179,7 +169,6 @@ void AppConfigPage_RecordTable::onFieldToggle(bool flag)
       count++;
   }
 
-
   // Если пользователь снял флажки со всех полей
   if(count==0)
   {
@@ -191,7 +180,6 @@ void AppConfigPage_RecordTable::onFieldToggle(bool flag)
   }
 
 }
-
 
 void AppConfigPage_RecordTable::retranslateUi(void)
 {
@@ -219,7 +207,6 @@ void AppConfigPage_RecordTable::retranslateUi(void)
   editToolbarButtons->setText(tr("Edit toolbar buttons"));
 }
 
-
 // Метод должен возвращать уровень сложности сделанных изменений
 // 0 - изменения не требуют перезапуска программы
 // 1 - изменения требуют перезапуска программы
@@ -230,44 +217,41 @@ int AppConfigPage_RecordTable::applyChanges(void)
  // Запоминается ширина полей
  // Это надо сделать в первую очередь, потому что в дальнейшем после перечитывания модели и
  // установки заголовков таблицы конечных записей слетают ширины полей (устанавливаюся в 100 px самим Qt)
- QStringList showFields=mytetraConfig.getRecordTableShowFields();
- QStringList fieldsWidth=mytetraConfig.getRecordTableFieldsWidth();
+ QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
+ QStringList fieldsWidth=AppContext::instance().appConfig()->recordTableSection()->getRecordTableFieldsWidth();
  qDebug() << "showFields" << showFields;
  qDebug() << "fieldsWidth" << fieldsWidth;
 
-
  // Запоминание в конфигурацию отображения горизонтальных заголовков
- if(mytetraConfig.getRecordTableShowHorizontalHeaders()!=showHorizontalHeader->isChecked())
-   mytetraConfig.setRecordTableShowHorizontalHeaders(showHorizontalHeader->isChecked());
+ if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowHorizontalHeaders()!=showHorizontalHeader->isChecked())
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowHorizontalHeaders(showHorizontalHeader->isChecked());
 
  // Запоминание в конфигурацию отображения нумерации строк
- if(mytetraConfig.getRecordTableShowVerticalHeaders()!=showVerticalHeader->isChecked())
-   mytetraConfig.setRecordTableShowVerticalHeaders(showVerticalHeader->isChecked());
+ if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowVerticalHeaders()!=showVerticalHeader->isChecked())
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowVerticalHeaders(showVerticalHeader->isChecked());
 
  // Шапка заметки: пишется в конфиг и применяется живьем
  // к открытой записи без перезапуска
- if(mytetraConfig.get_recordHeaderVisible()!=showRecordHeader->isChecked())
+ if(AppContext::instance().appConfig()->uiSection()->get_recordHeaderVisible()!=showRecordHeader->isChecked())
  {
-   mytetraConfig.set_recordHeaderVisible(showRecordHeader->isChecked());
+   AppContext::instance().appConfig()->uiSection()->set_recordHeaderVisible(showRecordHeader->isChecked());
 
    MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
    if(metaEditor!=nullptr)
      metaEditor->updateRecordHeaderVisibility();
  }
 
-
  // Положение списка записей: пишется в конфиг и применяется живьем
  // перестановкой виджетов без перезапуска
- if(mytetraConfig.get_recordTableUnderTree()!=positionUnder->isChecked())
+ if(AppContext::instance().appConfig()->uiSection()->get_recordTableUnderTree()!=positionUnder->isChecked())
  {
-   mytetraConfig.set_recordTableUnderTree(positionUnder->isChecked());
+   AppContext::instance().appConfig()->uiSection()->set_recordTableUnderTree(positionUnder->isChecked());
 
    MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
 
    if(mainWindow!=nullptr)
      mainWindow->applyRecordTablePosition();
  }
-
 
  QStringList addFieldsList; // Список полей, которые добавились в результате настройки
  QStringList removeFieldsList; // Список полей, которые должны удалиться в результате настройки
@@ -303,8 +287,7 @@ int AppConfigPage_RecordTable::applyChanges(void)
  qDebug() << "newShowFields" << newShowFields;
 
  // Установка имен полей в конфигурацию
- mytetraConfig.setRecordTableShowFields(newShowFields);
-
+ AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowFields(newShowFields);
 
  // Если полей становится больше чем было
  if( newShowFields.size() > showFields.size() )
@@ -337,9 +320,8 @@ int AppConfigPage_RecordTable::applyChanges(void)
    qDebug() << "newFieldsWidth" << newFieldsWidth;
 
    // Новые ширины полей запомниаются в конфигурацию
-   mytetraConfig.setRecordTableFieldsWidth(newFieldsWidth);
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth(newFieldsWidth);
  }
-
 
  // Если полей становится меньше чем было
  if( newShowFields.size() < showFields.size() )
@@ -356,9 +338,8 @@ int AppConfigPage_RecordTable::applyChanges(void)
    qDebug() << "newFieldsWidth in result" << newFieldsWidth;
 
    // Установка новых ширин полей в конфигурацию
-   mytetraConfig.setRecordTableFieldsWidth(newFieldsWidth);
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth(newFieldsWidth);
  }
-
 
  // Если полей столько же сколько и было
  if( newShowFields.size() == showFields.size() )
@@ -367,7 +348,7 @@ int AppConfigPage_RecordTable::applyChanges(void)
 
    // Установка запомненных ширин полей в конфигурацию
    // Так как это значение в конфигурации было искажено в момент переподключения модели
-   mytetraConfig.setRecordTableFieldsWidth(fieldsWidth);
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth(fieldsWidth);
  }
 
  emit recordTableConfigChange();

@@ -207,6 +207,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Критическая ошибка: %1</translation>
     </message>
     <message>
+        <source>Config key "%1" is missing, fallback to default value "%2"</source>
+        <translation>Ключ конфига "%1" отсутствует, подставлено значение по умолчанию "%2"</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ActionLogger.cpp" line="345"/>
         <source>Unavailable action %1</source>
         <translation>Неизвестное действие %1</translation>
@@ -5051,6 +5055,248 @@ You need to update MyTetra.</source>
         <location filename="../../../src/models/databasesManagement/KnownBasesConfig.cpp" line="305"/>
         <source>Incorrect parameter name:</source>
         <translation>Неправильное имя параметра:</translation>
+    </message>
+</context>
+<context>
+    <name>TrayManager</name>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="40"/>
+        <source>&amp;Restore window</source>
+        <translation>Показать окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="44"/>
+        <source>Ma&amp;ximize window</source>
+        <translation>Развернуть окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="48"/>
+        <source>Mi&amp;nimize window</source>
+        <translation>Свернуть окно</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/TrayManager.cpp" line="52"/>
+        <source>&amp;Quit</source>
+        <translation>Выход</translation>
+    </message>
+</context>
+<context>
+    <name>MenuBuilder</name>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;File</source>
+        <translation>Файл</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Databases management</source>
+        <translation>Управление базами данных</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Export tree item</source>
+        <translation>Экспорт ветки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Import tree item</source>
+        <translation>Импорт ветки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Import Telegram chat...</source>
+        <translation>Импорт чата Telegram...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Print...</source>
+        <translation>Печать...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Print Preview...</source>
+        <translation>Предварительный просмотр</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Export PDF...</source>
+        <translation>Экспорт в PDF...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Quit</source>
+        <translation>Выход</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Tools</source>
+        <translation>Инструменты</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Images &amp;gallery</source>
+        <translation>Галерея картинок</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Attached &amp;files</source>
+        <translation>Прикрепленные файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Action &amp;log</source>
+        <translation>Журнал действий</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Preferences</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Main</source>
+        <translation>Основные</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Appearance</source>
+        <translation>Внешний вид</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Crypt</source>
+        <translation>Шифрование</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Syncro</source>
+        <translation>Синхронизация</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Notes Area</source>
+        <translation>Список записей</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Attaches</source>
+        <translation>Прикрепленные файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Keyboard</source>
+        <translation>Клавиатура</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>History</source>
+        <translation>История</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Misc</source>
+        <translation>Разное</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Help</source>
+        <translation>Справка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>About MyTetra</source>
+        <translation>О программе MyTetra</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>About Qt</source>
+        <translation>О фреймворке Qt</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Technical info</source>
+        <translation>Техническая информация</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;Themes</source>
+        <translation>Темы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Default</source>
+        <translation>Основная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Dark</source>
+        <translation>Темная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Modern</source>
+        <translation>Современная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Midnight</source>
+        <translation>Полуночная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Custom</source>
+        <translation>Настраиваемая тема</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Configure theme...</source>
+        <translation>Настроить тему...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>&amp;View</source>
+        <translation>Вид</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Show note header</source>
+        <translation>Показывать шапку заметки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Show favorites panel</source>
+        <translation>Показывать панель избранного</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Show branch filter</source>
+        <translation>Показывать фильтр веток</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Show editor toolbar</source>
+        <translation>Показывать панель инструментов редактора</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Change secret color...</source>
+        <translation>Изменить цвет секретов...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MenuBuilder.cpp" line="1"/>
+        <source>Change note background color...</source>
+        <translation>Изменить цвет фона заметки...</translation>
+    </message>
+</context>
+<context>
+    <name>McpGuiBridge</name>
+    <message>
+        <source>MCP session is active%1, MyTetra works in read-only mode</source>
+        <translation>MCP-сессия активна%1, MyTetra работает в режиме только чтения</translation>
+    </message>
+    <message>
+        <source>; peers: %1</source>
+        <translation>; пиры: %1</translation>
     </message>
 </context>
 <context>

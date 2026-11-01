@@ -19,6 +19,7 @@
 #include "AppConfigPage_History.h"
 #include "AppConfigPage_Search.h"
 #include "AppConfigPage_Favorites.h"
+#include "libraries/AppContext.h"
 #include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Mcp.h"
 #include "AppConfigPage_Voice.h"
@@ -27,13 +28,10 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
 #include "libraries/wyedit/EditorConfigDialog.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 QList<AppConfigDialog *> AppConfigDialog::openDialogs;
-
 
 AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
 {
@@ -43,7 +41,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     configDialog->setAttribute(Qt::WA_DeleteOnClose);
     configDialog->setWindowTitle(QObject::tr("MyTetra settings"));
 
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         qDebug() << "Screen size X Y: " << ScreenHelper::getSizeX() << ScreenHelper::getSizeY();
         configDialog->setMinimumSize(ScreenHelper::getSizeX(), ScreenHelper::getSizeY());
@@ -54,11 +52,11 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     // В качестве родителя надо указывать parent а не configDialog (разобраться почему)
     pageMain       =configDialog->addWidget(new AppConfigPage_Main( parent ),
                                             QObject::tr("Main"));
-    pageAppearance=configDialog->addWidget(new AppConfigPage_Appearance( parent ),
+    pageAppearance=configDialog->addWidget(new AppConfigPage_Appearance( AppContext::instance().dispatcher(), parent ),
                                             QObject::tr("Appearance"));
     pageTheme      =configDialog->addWidget(new AppConfigPage_Theme( parent ),
                                             QObject::tr("Themes"));
-    pageCrypt      =configDialog->addWidget(new AppConfigPage_Crypt( parent ),
+    pageCrypt      =configDialog->addWidget(new AppConfigPage_Crypt( AppContext::instance().dispatcher(), parent ),
                                             QObject::tr("Crypt"));
     pageSynchro    =configDialog->addWidget(new AppConfigPage_Synchro( parent ),
                                             QObject::tr("Synchro"));
@@ -74,7 +72,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("History"));
     pageSearch     =configDialog->addWidget(new AppConfigPage_Search( parent ),
                                             QObject::tr("Search"));
-    pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( parent ),
+    pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( AppContext::instance().favorites(), parent ),
                                             QObject::tr("Favorites"));
     pageClipper    =configDialog->addWidget(new AppConfigPage_Clipper( parent ),
                                             QObject::tr("Clipper"));
@@ -84,7 +82,6 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("Voice notes"));
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
-
 
     configDialog->updateListWidth();
 
@@ -104,14 +101,12 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
         changePage(firstPageName);
 }
 
-
 AppConfigDialog::~AppConfigDialog()
 {
     qDebug() << Q_FUNC_INFO;
 
     openDialogs.removeAll(this);
 }
-
 
 void AppConfigDialog::exec()
 {
@@ -123,7 +118,6 @@ void AppConfigDialog::exec()
 
     qDebug() << "Config dialog exec finish";
 }
-
 
 // Прямые тексты новым языком: заголовок, пункты списка страниц
 // и все страницы. Вызывается при смене языка из страницы Main
@@ -158,7 +152,6 @@ void AppConfigDialog::retranslateUi(void)
         page->retranslateUi();
 }
 
-
 // Переход на нужную страницу настроек (переход совершается кодом извне)
 // Данный метод нужен для возможности вызова конкретного окна настроек из любого места программы
 void AppConfigDialog::changePage(QString name)
@@ -187,7 +180,6 @@ void AppConfigDialog::changePage(QString name)
     else
         qDebug() << "AppConfigDialog::changePage cant find item for name: " << name;
 }
-
 
 void AppConfigDialog::setMenuListVisible(bool visible)
 {

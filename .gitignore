@@ -44,6 +44,7 @@ build-*-Release/*
 
 # Ignore bash files
 *.sh
+!app/tests/*.sh
 
 # Ignore php tech files
 /app/src/*.php

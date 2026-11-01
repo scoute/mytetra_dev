@@ -6,18 +6,13 @@
 #include "views/record/MetaEditor.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ObjectHelper.h"
-
-
-extern ShortcutManager shortcutManager;
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 EditorToolbarSettingsUsedToolsModel::EditorToolbarSettingsUsedToolsModel(QObject *parent) :
     EditorToolbarSettingsAbstractModel(parent)
 {
 
 }
-
 
 void EditorToolbarSettingsUsedToolsModel::init(GlobalParameters::EditorToolbar tb)
 {
@@ -43,7 +38,7 @@ void EditorToolbarSettingsUsedToolsModel::init(GlobalParameters::EditorToolbar t
         }
         else
         {
-            newItem->setData( shortcutManager.getDescription( "editor-"+command ), Qt::DisplayRole );
+            newItem->setData( AppContext::instance().shortcutManager()->getDescription( "editor-"+command ), Qt::DisplayRole );
         }
 
         newItem->setIcon( editorToolBarAssistant->getIcon(command) );

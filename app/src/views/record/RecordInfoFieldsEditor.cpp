@@ -10,10 +10,7 @@
 #include "RecordInfoFieldsEditor.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/DebugHelper.h"
-
-
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 #if QT_VERSION < 0x050000
 RecordInfoFieldsEditor::RecordInfoFieldsEditor( QWidget * parent, Qt::WFlags f) : QDialog(parent, f)
@@ -27,12 +24,10 @@ RecordInfoFieldsEditor::RecordInfoFieldsEditor( QWidget * parent, Qt::WindowFlag
   assembly();
 }
 
-
 RecordInfoFieldsEditor::~RecordInfoFieldsEditor()
 {
 
 }
-
 
 void RecordInfoFieldsEditor::setupUI(void)
 {
@@ -45,7 +40,6 @@ void RecordInfoFieldsEditor::setupUI(void)
  buttonBox->setStandardButtons(QDialogButtonBox::Ok|QDialogButtonBox::NoButton|QDialogButtonBox::Cancel);
 }
 
-
 // Может вызваться повторно при изменении схемы горячих клавиш
 void RecordInfoFieldsEditor::setupShortcuts(void)
 {
@@ -53,10 +47,9 @@ void RecordInfoFieldsEditor::setupShortcuts(void)
 
     // На кнопку OK назначается комбинация клавиш Ctrl+Enter
     QPushButton *okButton=buttonBox->button(QDialogButtonBox::Ok); // Выясняется указатель на кнопку OK
-    okButton->setShortcut( shortcutManager.getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
-    okButton->setToolTip( shortcutManager.getKeySequenceAsText("misc-editConfirm") ); // ToolTip зависит от шортката
+    okButton->setShortcut( AppContext::instance().shortcutManager()->getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
+    okButton->setToolTip( AppContext::instance().shortcutManager()->getKeySequenceAsText("misc-editConfirm") ); // ToolTip зависит от шортката
 }
-
 
 void RecordInfoFieldsEditor::setupSignals(void)
 {
@@ -64,9 +57,8 @@ void RecordInfoFieldsEditor::setupSignals(void)
     connect(buttonBox, &QDialogButtonBox::rejected, this, &RecordInfoFieldsEditor::reject);
 
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &RecordInfoFieldsEditor::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &RecordInfoFieldsEditor::setupShortcuts);
 }
-
 
 void RecordInfoFieldsEditor::assembly(void)
 {
@@ -89,7 +81,6 @@ void RecordInfoFieldsEditor::assembly(void)
  infoField->setFocusToStart();
 }
 
-
 void RecordInfoFieldsEditor::okClick(void)
 {
  QString message="";
@@ -111,7 +102,6 @@ void RecordInfoFieldsEditor::okClick(void)
   }
 }
 
-
 QString RecordInfoFieldsEditor::getField(QString name)
 {
  if(infoField->checkFieldName(name)==true)
@@ -122,7 +112,6 @@ QString RecordInfoFieldsEditor::getField(QString name)
  return QString();
 }
 
-
 void RecordInfoFieldsEditor::setField(QString name, QString value)
 {
  if(infoField->checkFieldName(name)==true)
@@ -131,12 +120,10 @@ void RecordInfoFieldsEditor::setField(QString name, QString value)
   criticalError("Can not set field "+name+" in editrecord method set_field");
 }
 
-
 void RecordInfoFieldsEditor::setReadOnly(bool state)
 {
   infoField->setReadOnly(state);
 }
-
 
 bool RecordInfoFieldsEditor::isReadOnly()
 {

@@ -28,10 +28,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "EditorConfig.h"
 #include "formatters/TypefaceFormatter.h"
-
-
-extern GlobalParameters globalParameters;
-
+#include "libraries/AppContext.h"
 
 EditorTextArea::EditorTextArea(QWidget *parent) : QTextEdit(parent)
 {
@@ -54,18 +51,15 @@ EditorTextArea::EditorTextArea(QWidget *parent) : QTextEdit(parent)
     grabGesture(Qt::TapAndHoldGesture);
 }
 
-
 EditorTextArea::~EditorTextArea(void)
 {
 
 }
 
-
 bool EditorTextArea::getShowFormatting(void)
 {
     return m_flagShowFormatting;
 }
-
 
 void EditorTextArea::setShowFormatting(bool i)
 {
@@ -73,7 +67,6 @@ void EditorTextArea::setShowFormatting(bool i)
 
     viewport()->update();
 }
-
 
 // Обработчик событий, нужен только для QTapAndHoldGesture (долгое нажатие)
 bool EditorTextArea::event(QEvent *event)
@@ -87,7 +80,6 @@ bool EditorTextArea::event(QEvent *event)
     return QTextEdit::event(event);
 }
 
-
 // Обработчик жестов
 // Вызывается из обработчика событий
 bool EditorTextArea::gestureEvent(QGestureEvent *event)
@@ -100,7 +92,6 @@ bool EditorTextArea::gestureEvent(QGestureEvent *event)
     return true;
 }
 
-
 // Обработчик жеста TapAndHoldGesture
 // Вызывается из обработчика жестов
 void EditorTextArea::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
@@ -108,10 +99,9 @@ void EditorTextArea::tapAndHoldGestureTriggered(QTapAndHoldGesture *gesture)
     // qDebug() << "In tapAndHoldGestureTriggered()" << gesture;
 
     if(gesture->state()==Qt::GestureFinished)
-        if(globalParameters.getTargetOs()=="android")
+        if(AppContext::instance().globalParameters()->getTargetOs()=="android")
             emit tapAndHoldGestureFinished( mapFromGlobal(gesture->position().toPoint()) );
 }
-
 
 bool EditorTextArea::eventFilter(QObject *o, QEvent *e)
 {
@@ -122,7 +112,6 @@ bool EditorTextArea::eventFilter(QObject *o, QEvent *e)
 
     return QTextEdit::eventFilter(o, e); // Продолжать обработку событий дальше
 }
-
 
 // Cлот отлавливает нажатия клавиш внутри виджета когда он активен (в фокусе)
 void EditorTextArea::keyPressEvent(QKeyEvent *event)
@@ -164,7 +153,6 @@ void EditorTextArea::keyPressEvent(QKeyEvent *event)
         QTextEdit::keyPressEvent(event);
     }
 }
-
 
 // Shift+Tab снимает один уровень отступа в начале строки:
 // символ табуляции либо пробелы шириной в один размер табуляции.
@@ -221,7 +209,6 @@ void EditorTextArea::unindentCurrentLine(void)
     }
     setTextCursor(cursor);
 }
-
 
 // Tab/Shift+Tab с многострочным выделением: отступ всего блока.
 // Каждая затронутая строка получает (или лишается) один таб в начале.
@@ -346,7 +333,6 @@ bool EditorTextArea::indentSelectedLines(bool indent)
     return true;
 }
 
-
 // Cлот отлавливает отжатия клавиш внутри виджета когда он активен (в фокусе)
 void EditorTextArea::keyReleaseEvent(QKeyEvent *event)
 {
@@ -357,7 +343,6 @@ void EditorTextArea::keyReleaseEvent(QKeyEvent *event)
     QTextEdit::keyReleaseEvent(event);
 }
 
-
 // Слот принимает глобальные нажатия клавиш. Это позволяет отслеживать нажатия даже если виджет неактивени (не в фокусе)
 void EditorTextArea::onGlobalPressKey(int key)
 {
@@ -366,7 +351,6 @@ void EditorTextArea::onGlobalPressKey(int key)
         switchReferenceClickMode(true);
 }
 
-
 // Слот принимает глобальные отжатия клавиш. Это позволяет отслеживать отжатия даже если виджет неактивени (не в фокусе)
 void EditorTextArea::onGlobalReleaseKey(int key)
 {
@@ -374,7 +358,6 @@ void EditorTextArea::onGlobalReleaseKey(int key)
     if( key == Qt::Key_Control )
         switchReferenceClickMode(false);
 }
-
 
 void EditorTextArea::switchReferenceClickMode(bool flag)
 {
@@ -387,7 +370,7 @@ void EditorTextArea::switchReferenceClickMode(bool flag)
             qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
             m_mouseCursorOverriden = true;
 
-            globalParameters.getStatusBar()->showMessage(href);
+            AppContext::instance().globalParameters()->getStatusBar()->showMessage(href);
             qDebug() << "Cursor href in key event: " << href;
         }
     }
@@ -399,12 +382,11 @@ void EditorTextArea::switchReferenceClickMode(bool flag)
 
         m_mouseCursorOverriden = false;
 
-        globalParameters.getStatusBar()->showMessage("");
+        AppContext::instance().globalParameters()->getStatusBar()->showMessage("");
     }
 
     qDebug() << "switchReferenceClickMode: " << flag;
 }
-
 
 void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
 {
@@ -422,7 +404,7 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
             {
                 qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor)); // Меняется форма курсора на указатель клика по ссылке
                 m_mouseCursorOverriden = true;
-                globalParameters.getStatusBar()->showMessage(href); // Ссылка отображается в строке статуса
+                AppContext::instance().globalParameters()->getStatusBar()->showMessage(href); // Ссылка отображается в строке статуса
                 qDebug() << "Cursor href in mouse event: " << href;
             }
         }
@@ -432,7 +414,7 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
             {
                 qApp->restoreOverrideCursor(); // Воостанавливается обычный курсор
                 m_mouseCursorOverriden = false;
-                globalParameters.getStatusBar()->showMessage("");
+                AppContext::instance().globalParameters()->getStatusBar()->showMessage("");
             }
         }
     }
@@ -464,7 +446,7 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
             {
                 qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
                 m_mouseCursorOverriden = true;
-                globalParameters.getStatusBar()->showMessage(actionHref);
+                AppContext::instance().globalParameters()->getStatusBar()->showMessage(actionHref);
             }
         }
         else if(!imageName.isEmpty())
@@ -473,7 +455,7 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
             {
                 qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
                 m_mouseCursorOverriden = true;
-                globalParameters.getStatusBar()->showMessage(imageName);
+                AppContext::instance().globalParameters()->getStatusBar()->showMessage(imageName);
             }
         }
         else if(!voiceHref.isEmpty())
@@ -482,7 +464,7 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
             {
                 qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
                 m_mouseCursorOverriden = true;
-                globalParameters.getStatusBar()->showMessage(
+                AppContext::instance().globalParameters()->getStatusBar()->showMessage(
                     VoiceNoteHelper::fileNameFromHref(voiceHref));
             }
         }
@@ -490,13 +472,12 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
         {
             qApp->restoreOverrideCursor();
             m_mouseCursorOverriden = false;
-            globalParameters.getStatusBar()->showMessage("");
+            AppContext::instance().globalParameters()->getStatusBar()->showMessage("");
         }
     }
 
     QTextEdit::mouseMoveEvent(event);
 }
-
 
 void EditorTextArea::mousePressEvent(QMouseEvent *event)
 {
@@ -590,7 +571,6 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
     QTextEdit::mousePressEvent(event);
 }
 
-
 void EditorTextArea::mouseDoubleClickEvent(QMouseEvent *event)
 {
     // Если происходит двойной клик по картинке
@@ -601,7 +581,6 @@ void EditorTextArea::mouseDoubleClickEvent(QMouseEvent *event)
     QTextEdit::mouseDoubleClickEvent(event);
 }
 
-
 void EditorTextArea::paintEvent(QPaintEvent *event)
 {
     // Отрисовка родительского класса
@@ -610,7 +589,6 @@ void EditorTextArea::paintEvent(QPaintEvent *event)
     // В заблокированном виджете ничего дополнительного не рисуется
     if(isEnabled()==false)
         return;
-
 
     // Если нужно нарисовать линию какого-нибудь отступа
     if(m_flagShowIndentEdge==true)
@@ -626,7 +604,6 @@ void EditorTextArea::paintEvent(QPaintEvent *event)
         p.drawLine(m_posIndentEdge, 1,
                    m_posIndentEdge, this->height()-1);
     }
-
 
     // Если символы форматирования не нужно рисовать
     if(m_flagShowFormatting==false)
@@ -768,7 +745,6 @@ void EditorTextArea::paintEvent(QPaintEvent *event)
             p.drawLine(rect.left(), y2, rect.left()+w/2, y2+h/2);
         }
 
-
         // Проверяется, можно ли сдвинуть дальше курсор
         // проверять нужно, так как movePosition иногда зависает при
         // перемещении курсора
@@ -779,7 +755,6 @@ void EditorTextArea::paintEvent(QPaintEvent *event)
     while( !cur.isNull() );
 }
 
-
 void EditorTextArea::resizeEvent(QResizeEvent *event)
 {
     // Отрисовка родительского класса
@@ -789,14 +764,12 @@ void EditorTextArea::resizeEvent(QResizeEvent *event)
     emit updateIndentlineGeometry();
 }
 
-
 // Метод возвращает X-координату курсора в "нуливой" позиции слева
 // Это значение используется для работы линейки отступов
 int EditorTextArea::getIndentStartedLeft(void)
 {
     return this->lineWidth() + (int)this->document()->documentMargin() + 1;
 }
-
 
 // Метод возвращает X-координату курсора в самой крайней правой позиции
 // Это значение используется для работы линейки отступов
@@ -805,7 +778,6 @@ int EditorTextArea::getIndentStartedRight(void)
     return this->lineWidth() + this->viewport()->width() + 1 - (int)this->document()->documentMargin();
 }
 
-
 // Установка видимости линии настройки отступа
 void EditorTextArea::showIndentEdge(bool i)
 {
@@ -813,14 +785,12 @@ void EditorTextArea::showIndentEdge(bool i)
     viewport()->update();
 }
 
-
 //! Установка X-координаты линии настройки отступа
 void EditorTextArea::setIndentEdgePos(int i)
 {
     m_posIndentEdge=i;
     viewport()->update();
 }
-
 
 // Мягкая перерисовка содержимого области редактирования
 // Нужна для устранения бага QTextEdit, в рендере которого появляются
@@ -852,7 +822,6 @@ void EditorTextArea::softRedraw()
     QTextDocument temporaryDoc;
     temporaryDoc.setHtml(originalFragment.toHtml());
 
-
     // Редактируется временный документ
     QTextCursor temporaryCursor(&temporaryDoc);
 
@@ -868,7 +837,6 @@ void EditorTextArea::softRedraw()
 
     temporaryCursor.endEditBlock();
 
-
     // Создаем новый фрагмент из отредактированного документа
     QTextDocumentFragment newFragment(&temporaryDoc);
 
@@ -883,7 +851,6 @@ void EditorTextArea::softRedraw()
 
 }
 
-
 //! Метод, определяющий какие типы данных можно вставлять в текст
 //! Нужен для того, чтоб сделать вставку картинок
 bool EditorTextArea::canInsertFromMimeData(const QMimeData *source) const
@@ -893,7 +860,6 @@ bool EditorTextArea::canInsertFromMimeData(const QMimeData *source) const
     else
         return QTextEdit::canInsertFromMimeData(source); // Это не рекурсия, это вызов метода базового класса
 }
-
 
 // Переопределенная функция, срабатывает при вставке (paste) текста/объектов из буфера обмена
 void EditorTextArea::insertFromMimeData(const QMimeData *source)
@@ -967,7 +933,6 @@ void EditorTextArea::insertFromMimeData(const QMimeData *source)
     }
 }
 
-
 EditorTextArea::MimeDataFormat EditorTextArea::detectMimeDataFormat(const QMimeData *source)
 {
     qDebug() << "DetectMimeDataFormat";
@@ -999,7 +964,6 @@ EditorTextArea::MimeDataFormat EditorTextArea::detectMimeDataFormat(const QMimeD
     // В оставшихся случаях
     return MimeDataHtml;
 }
-
 
 // Обработка момента после загрузки всех картинок при вставке HTML-кода
 void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
@@ -1074,7 +1038,6 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
         finishVoicePaste(pendingVoiceMimes.takeFirst());
 }
 
-
 void EditorTextArea::recolorAnchorsInRange(int startPos, int endPos)
 {
     if(endPos<=startPos)
@@ -1148,7 +1111,6 @@ void EditorTextArea::recolorAnchorsInRange(int startPos, int endPos)
     }
 }
 
-
 QStringList EditorTextArea::voiceHrefsInRange(int from, int to) const
 {
     QStringList hrefs;
@@ -1190,7 +1152,6 @@ QStringList EditorTextArea::voiceHrefsInRange(int from, int to) const
     return hrefs;
 }
 
-
 QString EditorTextArea::voiceWorkDirectory(void) const
 {
     const Editor *editor=qobject_cast<const Editor*>(parent());
@@ -1200,7 +1161,6 @@ QString EditorTextArea::voiceWorkDirectory(void) const
 
     return const_cast<Editor*>(editor)->getWorkDirectory();
 }
-
 
 QString EditorTextArea::uniqueVoiceFileName(const QString &dir, const QString &baseName)
 {
@@ -1221,7 +1181,6 @@ QString EditorTextArea::uniqueVoiceFileName(const QString &dir, const QString &b
 
     return QString();
 }
-
 
 QMimeData *EditorTextArea::createMimeDataFromSelection(void) const
 {
@@ -1267,7 +1226,6 @@ QMimeData *EditorTextArea::createMimeDataFromSelection(void) const
 
     return mime;
 }
-
 
 void EditorTextArea::finishVoicePaste(const QByteArray &voiceMime)
 {
@@ -1374,7 +1332,6 @@ void EditorTextArea::finishVoicePaste(const QByteArray &voiceMime)
 
     cursor.endEditBlock();
 }
-
 
 // Имя картинки под точкой документа. Координаты мыши переводятся
 // в координаты документа с учетом прокрутки

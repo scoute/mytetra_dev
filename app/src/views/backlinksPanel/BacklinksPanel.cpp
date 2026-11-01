@@ -20,12 +20,10 @@
 #include "views/tree/KnowTreeView.h"
 #include "views/record/MetaEditor.h"
 #include "views/mainWindow/MainWindow.h"
+#include "libraries/AppContext.h"
 
-
-extern VisitHistory visitHistory;
-
-
-BacklinksPanel::BacklinksPanel(QWidget *parent) : QWidget(parent)
+BacklinksPanel::BacklinksPanel(BacklinkIndex *backlinks, QWidget *parent) : QWidget(parent),
+  m_backlinks(backlinks)
 {
   incomingHeaderLabel=new QLabel(this);
   incomingList=new QListWidget(this);
@@ -72,15 +70,13 @@ BacklinksPanel::BacklinksPanel(QWidget *parent) : QWidget(parent)
     showContextMenu(outgoingList, pos);
   });
 
-  connect(&BacklinkIndex::instance(), &BacklinkIndex::backlinksChanged,
+  connect(m_backlinks, &BacklinkIndex::backlinksChanged,
           this,                       &BacklinksPanel::refreshDeferred);
 }
-
 
 BacklinksPanel::~BacklinksPanel(void)
 {
 }
-
 
 void BacklinksPanel::showEvent(QShowEvent *event)
 {
@@ -89,7 +85,6 @@ void BacklinksPanel::showEvent(QShowEvent *event)
   setupLazySignals();
   refreshBacklinks();
 }
-
 
 void BacklinksPanel::setupLazySignals(void)
 {
@@ -107,12 +102,11 @@ void BacklinksPanel::setupLazySignals(void)
           this,        &BacklinksPanel::refreshDeferred);
 
   // Смена записи: читаем id отложенно, редактор подгружается чуть позже
-  connect(&visitHistory, &VisitHistory::visitLogged,
+  connect(AppContext::instance().visitHistory(), &VisitHistory::visitLogged,
           this,          &BacklinksPanel::refreshDeferred);
 
   setupLiveDocument();
 }
-
 
 void BacklinksPanel::setupLiveDocument(void)
 {
@@ -132,7 +126,6 @@ void BacklinksPanel::setupLiveDocument(void)
           this,    &BacklinksPanel::onLiveDocumentChanged);
 }
 
-
 void BacklinksPanel::onLiveDocumentChanged(void)
 {
   if(!isVisible())
@@ -146,7 +139,6 @@ void BacklinksPanel::onLiveDocumentChanged(void)
   outgoingPending=true;
   QTimer::singleShot(400, this, &BacklinksPanel::refreshOutgoingLive);
 }
-
 
 QSet<QString> BacklinksPanel::liveOutgoing(bool *ok) const
 {
@@ -171,7 +163,6 @@ QSet<QString> BacklinksPanel::liveOutgoing(bool *ok) const
   return BacklinkIndex::parseOutgoing(recordId, doc->toHtml());
 }
 
-
 void BacklinksPanel::refreshOutgoingLive(void)
 {
   outgoingPending=false;
@@ -195,7 +186,6 @@ void BacklinksPanel::refreshOutgoingLive(void)
   fillList(outgoingList, targets);
 }
 
-
 void BacklinksPanel::refreshDeferred(void)
 {
   if(!isVisible())
@@ -203,7 +193,6 @@ void BacklinksPanel::refreshDeferred(void)
 
   QTimer::singleShot(150, this, &BacklinksPanel::refreshBacklinks);
 }
-
 
 QString BacklinksPanel::currentRecordId(void) const
 {
@@ -214,12 +203,10 @@ QString BacklinksPanel::currentRecordId(void) const
   return metaEditor->getMiscField(QStringLiteral("id"));
 }
 
-
 void BacklinksPanel::retranslateUi(void)
 {
   refreshBacklinks();
 }
-
 
 void BacklinksPanel::refreshBacklinks(void)
 {
@@ -238,9 +225,9 @@ void BacklinksPanel::refreshBacklinks(void)
   }
 
   // Доидексировать новые записи (импорт, синхро): только отсутствующие
-  BacklinkIndex::instance().ensureIndexed();
+  m_backlinks->ensureIndexed();
 
-  KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
+  KnowTreeModel *treeModel=m_backlinks->treeModel();
   if(treeModel==nullptr)
   {
     incomingHeaderLabel->setText(tr("Incoming links")+QStringLiteral(" \u21d0"));
@@ -248,7 +235,7 @@ void BacklinksPanel::refreshBacklinks(void)
     return;
   }
 
-  QSet<QString> sources=BacklinkIndex::instance().backlinksOf(recordId);
+  QSet<QString> sources=m_backlinks->backlinksOf(recordId);
   incomingHeaderLabel->setText(tr("Incoming links (%1)").arg(sources.size())+QStringLiteral(" \u21d0"));
   fillList(incomingList, sources);
 
@@ -257,18 +244,17 @@ void BacklinksPanel::refreshBacklinks(void)
   bool liveOk=false;
   QSet<QString> targets=liveOutgoing(&liveOk);
   if(!liveOk)
-    targets=BacklinkIndex::instance().outgoingOf(recordId);
+    targets=m_backlinks->outgoingOf(recordId);
   outgoingHeaderLabel->setText(tr("Outgoing links (%1)").arg(targets.size())+QStringLiteral(" \u21d2"));
   fillList(outgoingList, targets);
 }
-
 
 // Общая отрисовка списка: живые строки с именем и веткой,
 // призраки красным без прыжка. Одинаково для входящих и исходящих
 void BacklinksPanel::fillList(QListWidget *list,
                               const QSet<QString> &ids)
 {
-  KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
+  KnowTreeModel *treeModel=m_backlinks->treeModel();
   if(treeModel==nullptr)
     return;
 
@@ -309,11 +295,10 @@ void BacklinksPanel::fillList(QListWidget *list,
     if(!hint.isEmpty())
       item->setToolTip(hint);
 
-    if(stale || BacklinkIndex::instance().isSourceStale(linkId))
+    if(stale || m_backlinks->isSourceStale(linkId))
       item->setForeground(QBrush(Qt::red));
   }
 }
-
 
 void BacklinksPanel::onItemActivated(QListWidgetItem *item)
 {
@@ -322,7 +307,7 @@ void BacklinksPanel::onItemActivated(QListWidgetItem *item)
 
   const QString linkId=item->data(Qt::UserRole).toString();
 
-  KnowTreeModel *treeModel=BacklinkIndex::instance().treeModel();
+  KnowTreeModel *treeModel=m_backlinks->treeModel();
   if(treeModel==nullptr)
     return;
 
@@ -334,16 +319,14 @@ void BacklinksPanel::onItemActivated(QListWidgetItem *item)
   find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, linkId);
 }
 
-
 void BacklinksPanel::onCleanupStale(void)
 {
-  BacklinkIndex::instance().purgeMissing();
+  m_backlinks->purgeMissing();
   refreshBacklinks();
 }
 
-
 void BacklinksPanel::onRebuildAll(void)
 {
-  BacklinkIndex::instance().buildFull();
+  m_backlinks->buildFull();
   refreshBacklinks();
 }

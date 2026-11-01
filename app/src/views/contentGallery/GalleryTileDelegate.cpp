@@ -4,10 +4,8 @@
 #include "GalleryTileDelegate.h"
 
 #include "models/appConfig/AppConfig.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 GalleryTileDelegate::GalleryTileDelegate(QObject *parent) : QStyledItemDelegate(parent),
     tileSize(160)
@@ -15,45 +13,39 @@ GalleryTileDelegate::GalleryTileDelegate(QObject *parent) : QStyledItemDelegate(
 
 }
 
-
 GalleryTileDelegate::~GalleryTileDelegate(void)
 {
 
 }
-
 
 void GalleryTileDelegate::setTile(int tile)
 {
     tileSize=tile;
 }
 
-
 QColor GalleryTileDelegate::cellColor(void)
 {
-    if(mytetraConfig.getInterfaceTheme()==QStringLiteral("dark"))
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()==QStringLiteral("dark"))
         return QColor(QStringLiteral("#232c36"));
 
     return QColor(QStringLiteral("#eceff1"));
 }
 
-
 QColor GalleryTileDelegate::frameColor(void) const
 {
-    if(mytetraConfig.getInterfaceTheme()==QStringLiteral("dark"))
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()==QStringLiteral("dark"))
         return QColor(QStringLiteral("#4a545f"));
 
     return QColor(QStringLiteral("#b9bfc7"));
 }
 
-
 QColor GalleryTileDelegate::selectedCellColor(void) const
 {
-    if(mytetraConfig.getInterfaceTheme()==QStringLiteral("dark"))
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()==QStringLiteral("dark"))
         return QColor(QStringLiteral("#2b3f52"));
 
     return QColor(QStringLiteral("#d9e9f8"));
 }
-
 
 QSize GalleryTileDelegate::sizeHint(const QStyleOptionViewItem &option,
                                     const QModelIndex &index) const
@@ -65,7 +57,6 @@ QSize GalleryTileDelegate::sizeHint(const QStyleOptionViewItem &option,
     // совпадение гарантировано конструкцией а не подбором
     return QSize(tileSize+8, tileSize+8+24);
 }
-
 
 void GalleryTileDelegate::paint(QPainter *painter,
                                 const QStyleOptionViewItem &option,

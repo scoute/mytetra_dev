@@ -37,6 +37,9 @@ class BacklinksPanel;
 class TagsPanel;
 class WindowSwitcher;
 class CommandRunner;
+class TrayManager;
+class MenuBuilder;
+class McpGuiBridge;
 
 class MainWindow : public QMainWindow
 {
@@ -67,8 +70,6 @@ public:
     QLabel *mcpBanner=nullptr;
     QTimer *mcpBannerTimer=nullptr;
 
-    // Живые MCP-пиры: pid -> последнее Hello (мсек). Пусто = сессия кончилась
-    QMap<QString, qint64> mcpPeers;
 
     // Умное автосохранение: single-shot цепочка, интервал перечитывается
     // из конфига при каждом срабатывании. Только при реальных правках:
@@ -76,12 +77,7 @@ public:
     // отката и прочие) сохранение на этот круг пропускает
     QTimer *autosaveTimer=nullptr;
 
-    // Режимы пиров: pid -> флаг (--mcp-ro и т.п.). Показывается в баннере
-    QMap<QString, QString> mcpPeerModes;
 
-    // История действий сессии: только в памяти, на диск не пишется,
-    // при дисконнекте чистится. Окно показывается на старт сессии
-    QList<McpHistoryEntry> mcpHistory;
     McpHistoryDialog *mcpHistoryDialog=nullptr;
     WindowSwitcher *windowSwitcher=nullptr;
 
@@ -134,17 +130,11 @@ public slots:
     // из проб и внешних мест (aboutToShow зовет сам)
     void syncViewMenu(void);
 
-    // Синхронный ответ на mcp-команду для протокола запрос-ответ:
-    // компактный JSON {"ok":true,...} или {"ok":false,"error":"..."}.
-    // Вызывается из сокетного респондера (тот же поток GUI)
+    // Синхронный ответ на mcp-команду: фасад над McpGuiBridge
+    // (дергает сокетный респондер из main). P3: тело уехало в мост
     QByteArray handleMcpMessage(const QString &message);
 
-    // Применение одной mcp-команды к живой модели с возвратом итога.
-    // Используется и респондером, и легаси-путём messageHandler
-    bool handleMcpCommand(const QString &command,
-                          const QJsonObject &args,
-                          QJsonObject &result,
-                          QString &error);
+    // P3: слот старта сессии от моста: обновить диалог и показать
 
     void toolsFindInBase(void);
 
@@ -175,20 +165,9 @@ public slots:
     // Вызывается по сигналам модели
     void updateStats(void);
 
-    // Подтверждение внешней MCP-правки: баннер и так висит всю
-    // сессию, здесь только пересчёт видимости и блокировки
-    void flashMcpWrite(void);
-
-    // Текст баннера: сессия активна + режимы пиров
-    QString mcpBannerText(void);
-
     // Пересчитать баннер и блокировку по пирам:
     // пиры есть — баннер виден и UI заблокирован, нет — всё снято
     void updateMcpBanner(void);
-
-    // Минутный пинг пиров: мертвые процессы выкидываются, живые
-    // остаются независимо от пауз
-    void onMcpPeerTick(void);
 
     // Срабатывание умного автосохранения
     void onAutosaveTimeout(void);
@@ -202,13 +181,12 @@ public slots:
     // Идемпотентна: повторный вызов с тем же состоянием ничего не делает
     void setMcpUiLock(bool locked);
 
-    // Накопить действие в историю сессии (с обрезкой) и обновить окно
-    void addMcpHistoryEntry(const QString &kind,
-                            const QString &tool,
-                            const QString &summary);
-
     // Передать окну текущий список (с его фильтром)
     void updateMcpHistoryDialog(void);
+
+    // P3: первая Hello-сессия от моста: обновить диалог и показать.
+    // Раньше было инлайн в mcpHello-ветке handleMcpCommand
+    void onMcpSessionStarted(void);
 
     // Таблица разбивки статистики для проверки без модального окна
     QTableWidget *buildStatsTableWidget(QWidget *parent);
@@ -271,7 +249,7 @@ private slots:
 
     void onSyncroCommandFinishWork(void);
 
-    void iconActivated(QSystemTrayIcon::ActivationReason reason);
+    // P3: клик по иконке обрабатывает TrayManager::onIconActivated
 
     void onFocusChanged(QWidget *, QWidget *);
 
@@ -281,29 +259,21 @@ private:
     void setupSignals(void);
     void assembly(void);
 
-    void initFileMenu(void);
-    void initToolsMenu(void);
-    void initPreferencesMenu(QMenu *menu);
-    void initHelpMenu(void);
     void initHiddenActions(void);
 
     // Меню быстрого переключения темы и пометка в нем текущей темы.
     // Пометка обновляется при каждом открытии меню, так как тему можно
     // сменить и из диалога настроек
-    void initThemesMenu(void);
-    void syncThemeMenu(void);
 
     // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
     // Пометка обновляется при каждом открытии, так как все меняется
     // и из других мест (диалог настроек, контекстное меню).
     // Слот чтобы дергать из проб и внешних мест
-    void initViewMenu(void);
 
     void initRecordTableActions(void);
 
-    void setupIconActions(void);
-    void createTrayIcon(void);
-    void setIcon(void);
+    // P3: трей живет в TrayManager (DI через QWidget-хост).
+    // Здесь только владение и два фасада ниже
 
     // Отложенное применение размеров левой колонки после её показа
     void applyRecordTableSizes(void);
@@ -318,67 +288,14 @@ private:
     void reloadLoadStage(bool isLongTimeReload);
 
 
-    QAction *actionFileMenuDatabasesManagement;
-    QAction *actionFileMenuExportTreeItem;
-    QAction *actionFileMenuImportTreeItem;
-    QAction *actionFileMenuImportTelegram;
-    QAction *actionFileMenuPrint;
-    QAction *actionFileMenuPrintPreview;
-    QAction *actionFileMenuExportPdf;
-    QAction *actionFileMenuQuit;
 
-    QAction *actionToolsMenuFindInBase;
-    QAction *actionToolsMenuImagesGallery;
-    QAction *actionToolsMenuFilesGallery;
-    QAction *actionToolsMenuActionLog;
-    QAction *actionToolsMenuClipFromClipboard;
-    QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
-
-    // Напрямую вызываемые настройки, используются в мобильном интерфейсе
-    QAction *actionDirectPreferencesMain       =nullptr;
-    QAction *actionDirectPreferencesAppearance =nullptr;
-    QAction *actionDirectPreferencesCrypt      =nullptr;
-    QAction *actionDirectPreferencesSyncro     =nullptr;
-    QAction *actionDirectPreferencesRecordTable=nullptr;
-    QAction *actionDirectPreferencesAttach     =nullptr;
-    QAction *actionDirectPreferencesKeyboard   =nullptr;
-    QAction *actionDirectPreferencesHistory    =nullptr;
-    QAction *actionDirectPreferencesMisc       =nullptr;
-
-    QAction *actionHelpMenuAboutMyTetra;
-    QAction *actionHelpMenuAboutQt;
-    QAction *actionHelpMenuTechnicalInfo;
-
-    QAction *actionTrayRestore;
-    QAction *actionTrayMaximize;
-    QAction *actionTrayMinimize;
-    QAction *actionTrayQuit;
+    // P3: действия трея переехали в TrayManager
 
     QAction *actionFocusTree;
     QAction *actionFocusNoteTable;
     QAction *actionFocusEditor;
 
-    // Меню Темы в menubar: один клик вместо похода в настройки
-    QMenu *themesMenu=nullptr;
-    QAction *themeConfigureAction=nullptr;
-
-    // Меню Вид в menubar между Tools и Themes: шапка, избранное,
-    // цвет секрета, бумага
-    QMenu *viewMenu=nullptr;
-    QAction *viewHeaderAction=nullptr;
-    QAction *viewFavoritesAction=nullptr;
-    QAction *viewTreeFilterAction=nullptr;
-    QAction *viewToolsAction=nullptr;
-    QAction *viewReadOnlyAction=nullptr;
-    QAction *viewSecretColorAction=nullptr;
-    QAction *viewPaperColorAction=nullptr;
-
-    // Корневые меню: указатели нужны для перевода названий на лету
-    QMenu *fileMenu=nullptr;
-    QMenu *toolsMenu=nullptr;
-    QMenu *helpMenu=nullptr;
-    QMenu *preferencesSubMenu=nullptr;
-
+    // P3: меню и их пункты переехали в MenuBuilder
     // Панель истории посещений. Переключается из меню Tools и горячей
     // клавишей, в закрытом виде место не занимает
     HistoryPanel *historyPanel=nullptr;
@@ -394,8 +311,12 @@ private:
     TagsPanel *tagsPanel=nullptr;
     QDockWidget *tagsPanelDock=nullptr;
 
-    QSystemTrayIcon *trayIcon;
-    QMenu           *trayIconMenu;
+    TrayManager *trayManager=nullptr;
+    MenuBuilder *menuBuilder=nullptr;
+
+    // P3: мост MCP-сервер -> живой GUI (модель, пиры, история, баннер).
+    // MainWindow держит виджеты/диалог/таймер и рендерит по сигналам
+    McpGuiBridge *mcpBridge=nullptr;
 
     // Веб-клиппер (глобальный хоткей -> unsorted_notes)
     Clipper clipper;

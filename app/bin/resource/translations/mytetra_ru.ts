@@ -5285,6 +5285,17 @@ You need to update MyTetra.</source>
     </message>
 </context>
 <context>
+    <name>McpGuiBridge</name>
+    <message>
+        <source>MCP session is active%1, MyTetra works in read-only mode</source>
+        <translation>MCP-сессия активна%1, MyTetra работает в режиме только чтения</translation>
+    </message>
+    <message>
+        <source>; peers: %1</source>
+        <translation>; пиры: %1</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1225"/>

@@ -68,6 +68,7 @@ public:
 #include "libraries/AppContext.h"
 #include "TrayManager.h"
 #include "MenuBuilder.h"
+#include "McpGuiBridge.h"
 #include "views/printPreview/PrintPreview.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
@@ -135,6 +136,17 @@ MainWindow::MainWindow() : QMainWindow()
     // Начальная пометка пунктов Вид до коннектов: setChecked с тем же
     // значением toggled не дергает (как было внутри initViewMenu)
     syncViewMenu();
+
+    // P3: мост MCP-сервер -> живой GUI. DI: модель из дерева, read-only
+    // и mcp-флаг из конфига, сброс редактора как было через find_object
+    mcpBridge=new McpGuiBridge(treeScreen->knowTreeModel, this);
+    mcpBridge->isReadOnly=[]() { return mytetraConfig.isGlobalReadOnly(); };
+    mcpBridge->mcpAllowed=[]() { return mytetraConfig.get_mcpAllow(); };
+    mcpBridge->clearEditor=[]() { find_object<MetaEditor>("editorScreen")->clearAll(); };
+    connect(mcpBridge, &McpGuiBridge::sessionChanged, this, &MainWindow::updateMcpBanner);
+    connect(mcpBridge, &McpGuiBridge::historyChanged, this, &MainWindow::updateMcpHistoryDialog);
+    connect(mcpBridge, &McpGuiBridge::sessionStarted, this, &MainWindow::onMcpSessionStarted);
+    connect(mcpBannerTimer, &QTimer::timeout, mcpBridge, &McpGuiBridge::checkPeers);
 
     initHiddenActions();
     setupSignals();
@@ -470,7 +482,6 @@ void MainWindow::assembly(void)
     // Минутный пинг пиров: мертвые процессы выкидываются,
     // живые остаются независимо от пауз нейронки
     mcpBannerTimer=new QTimer(this);
-    connect(mcpBannerTimer, &QTimer::timeout, this, &MainWindow::onMcpPeerTick);
     mcpBannerTimer->start(60000);
 
     QWidget *centralContainer=new QWidget(this);
@@ -645,7 +656,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpCreateNote")
@@ -653,7 +664,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpUpdateNote")
@@ -661,7 +672,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Удаление из-под AI: тот же состав что ручное удаление записи,
@@ -673,7 +684,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpDeleteBranch")
@@ -681,7 +692,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpRenameBranch")
@@ -689,7 +700,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpMoveBranch")
@@ -697,7 +708,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpMoveNote")
@@ -705,7 +716,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Звездочка от внешнего AI: тот же состав что клик по звезде,
@@ -716,7 +727,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpUnfavoriteNote")
@@ -724,7 +735,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Ввоз ветки из обменника от внешнего AI: проверки те же что
@@ -735,7 +746,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpRenameTag")
@@ -743,7 +754,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpDeleteTag")
@@ -751,7 +762,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Пакетное применение от внешнего AI: те же applyXxx что
@@ -765,7 +776,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Присутствие MCP: не правки, только Hello/Bye. В read-only тоже
@@ -775,7 +786,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     else if(command=="mcpBye")
@@ -783,7 +794,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 
     // Строка истории действий MCP: только накопление в памяти,
@@ -793,7 +804,7 @@ void MainWindow::messageHandler(QString message)
         // Легаси-путь (респондер не задан): тот же обработчик, итог игнорируется
         QJsonObject dummyResult;
         QString dummyError;
-        handleMcpCommand(command, parseMcpCommandArgs(message), dummyResult, dummyError);
+        mcpBridge->handleMcpCommand(command, McpGuiBridge::parseMcpCommandArgs(message), dummyResult, dummyError);
     }
 }
 
@@ -999,7 +1010,7 @@ void MainWindow::retranslateUi(void)
 
     // Видимый баннер MCP — тоже
     if(mcpBanner!=nullptr && mcpBanner->isVisible())
-        mcpBanner->setText(mcpBannerText());
+        mcpBanner->setText(mcpBridge->bannerText());
 
     if(mcpHistoryDialog!=nullptr)
         mcpHistoryDialog->retranslateUi();

@@ -5,9 +5,15 @@
 #include <QPushButton>
 #include <QWidget>
 #include <QDialogButtonBox>
-#include <QTextEdit>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QLabel>
+#include <QShortcut>
+#include <QKeyEvent>
+#include <QTextDocument>
 
 #include "EditorMultiLineInputDialog.h"
+#include "libraries/wyedit/HtmlSourceEdit.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/AppContext.h"
 
@@ -36,8 +42,8 @@ void EditorMultiLineInputDialog::setupUi()
   sizePolicy.setHorizontalPolicy(QSizePolicy::Expanding);
   sizePolicy.setVerticalPolicy(QSizePolicy::Expanding);
 
-  textArea=new QTextEdit(this);
-  textArea->setAcceptRichText(false);
+  // Исходник с подсветкой тегов, гуттером и движком поиска/замены
+  textArea=new HtmlSourceEdit(this);
   textArea->setSizePolicy(sizePolicy);
 
   buttonBox=new QDialogButtonBox(Qt::Horizontal);
@@ -55,6 +61,73 @@ void EditorMultiLineInputDialog::setupUi()
   CancelButton->setAutoDefault(false);
   CancelButton->setDefault(false);
 
+  // Панель поиска и замены, скрыта пока не позовут Ctrl+F / Ctrl+H
+  findPanel=new QWidget(this);
+  findPanel->setVisible(false);
+
+  QLabel *findLabel=new QLabel(tr("Find:"), findPanel);
+  findEdit=new QLineEdit(findPanel);
+
+  QPushButton *prevButton=new QPushButton(tr("Prev"), findPanel);
+  QPushButton *nextButton=new QPushButton(tr("Next"), findPanel);
+
+  QLabel *replaceLabel=new QLabel(tr("Replace:"), findPanel);
+  replaceEdit=new QLineEdit(findPanel);
+
+  QPushButton *replaceButton=new QPushButton(tr("Replace"), findPanel);
+  QPushButton *replaceAllButton=new QPushButton(tr("All"), findPanel);
+
+  caseCheck=new QCheckBox(tr("Aa"), findPanel);
+  caseCheck->setToolTip(tr("Case sensitive"));
+
+  matchLabel=new QLabel(findPanel);
+  matchLabel->setMinimumWidth(110);
+
+  QPushButton *closeFindButton=new QPushButton(tr("x"), findPanel);
+  closeFindButton->setMaximumWidth(28);
+
+  QGridLayout *findLayout=new QGridLayout(findPanel);
+  findLayout->setContentsMargins(0, 4, 0, 0);
+  findLayout->addWidget(findLabel, 0, 0);
+  findLayout->addWidget(findEdit, 0, 1);
+  findLayout->addWidget(prevButton, 0, 2);
+  findLayout->addWidget(nextButton, 0, 3);
+  findLayout->addWidget(caseCheck, 0, 4);
+  findLayout->addWidget(matchLabel, 0, 5);
+  findLayout->addWidget(closeFindButton, 0, 6);
+  findLayout->addWidget(replaceLabel, 1, 0);
+  findLayout->addWidget(replaceEdit, 1, 1);
+  findLayout->addWidget(replaceButton, 1, 2);
+  findLayout->addWidget(replaceAllButton, 1, 3);
+  findLayout->setColumnStretch(1, 1);
+
+  connect(prevButton, &QPushButton::clicked, this, &EditorMultiLineInputDialog::onFindPrevious);
+  connect(nextButton, &QPushButton::clicked, this, &EditorMultiLineInputDialog::onFindNext);
+  connect(replaceButton, &QPushButton::clicked, this, &EditorMultiLineInputDialog::onReplaceOne);
+  connect(replaceAllButton, &QPushButton::clicked, this, &EditorMultiLineInputDialog::onReplaceAll);
+  connect(closeFindButton, &QPushButton::clicked, this, &EditorMultiLineInputDialog::hideFindPanel);
+  connect(findEdit, &QLineEdit::textChanged, this, &EditorMultiLineInputDialog::onFindTextChanged);
+  connect(findEdit, &QLineEdit::returnPressed, this, &EditorMultiLineInputDialog::onFindNext);
+  connect(replaceEdit, &QLineEdit::returnPressed, this, &EditorMultiLineInputDialog::onReplaceOne);
+
+  // F3 шагает по вхождениям, Shift+F3 - назад. Только при видимой
+  // панели: иначе F3 уходит в глобальные хоткеи редактора
+  QShortcut *findNextShortcut=new QShortcut(QKeySequence(Qt::Key_F3), this);
+  findNextShortcut->setContext(Qt::WindowShortcut);
+  connect(findNextShortcut, &QShortcut::activated, [&]()
+  {
+      if(findPanel->isVisible())
+          onFindNext();
+  });
+
+  QShortcut *findPrevShortcut=new QShortcut(QKeySequence(Qt::ShiftModifier | Qt::Key_F3), this);
+  findPrevShortcut->setContext(Qt::WindowShortcut);
+  connect(findPrevShortcut, &QShortcut::activated, [&]()
+  {
+      if(findPanel->isVisible())
+          onFindPrevious();
+  });
+
   // Устанавливается размер окна, основанный на размере виджета, из которого
   // этот виджет был вызван
   if(this->parent()!=nullptr)
@@ -69,6 +142,16 @@ void EditorMultiLineInputDialog::setupShortcuts(void)
     QPushButton *okButton=buttonBox->button(QDialogButtonBox::Ok); // Выясняется указатель на кнопку OK
     okButton->setShortcut( AppContext::instance().shortcutManager()->getKeySequence("misc-editConfirm") ); // Устанавливается шорткат
     okButton->setToolTip(AppContext::instance().shortcutManager()->getKeySequenceAsText("misc-editConfirm")); // ToolTip зависит от шортката
+
+    // Поиск и замена по исходнику: диалог модальный, шорткаты
+    // оконные, глобальные хоткеи редактора не задевают
+    QShortcut *findShortcut=new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this);
+    findShortcut->setContext(Qt::WindowShortcut);
+    connect(findShortcut, &QShortcut::activated, this, &EditorMultiLineInputDialog::showFindPanel);
+
+    QShortcut *replaceShortcut=new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_H), this);
+    replaceShortcut->setContext(Qt::WindowShortcut);
+    connect(replaceShortcut, &QShortcut::activated, this, &EditorMultiLineInputDialog::showReplacePanel);
 }
 
 void EditorMultiLineInputDialog::setupSignals()
@@ -87,8 +170,124 @@ void EditorMultiLineInputDialog::assembly()
   // Добавляется область текста
   mainLayout->addWidget(textArea);
 
+  // Панель поиска между текстом и кнопками
+  mainLayout->addWidget(findPanel);
+
   // Добавляется линейка кнопок OK и Cancel
   mainLayout->addWidget(buttonBox);
+}
+
+void EditorMultiLineInputDialog::keyPressEvent(QKeyEvent *event)
+{
+  // Esc при видимой панели поиска только прячет ее, фокус
+  // возвращается в текст. Диалог отменяется обычным путем
+  if(event->key()==Qt::Key_Escape && findPanel->isVisible())
+  {
+      hideFindPanel();
+      event->accept();
+
+      return;
+  }
+
+  QDialog::keyPressEvent(event);
+}
+
+void EditorMultiLineInputDialog::showFindPanel(void)
+{
+  findPanel->setVisible(true);
+
+  // Сид из выделения, как в основном редакторе: первая строка,
+  // не длиннее поля. Только если поле пустое - набранное вручную
+  // дороже выделенного
+  if(findEdit->text().isEmpty())
+  {
+      const QString seed=textArea->textCursor().selectedText()
+                         .replace(QChar::ParagraphSeparator, '\n')
+                         .section('\n', 0, 0).trimmed().left(256);
+
+      if(!seed.isEmpty())
+          findEdit->setText(seed);
+  }
+
+  onFindTextChanged(findEdit->text());
+  findEdit->setFocus();
+  findEdit->selectAll();
+}
+
+void EditorMultiLineInputDialog::showReplacePanel(void)
+{
+  showFindPanel();
+  replaceEdit->setFocus();
+  replaceEdit->selectAll();
+}
+
+void EditorMultiLineInputDialog::hideFindPanel(void)
+{
+  findPanel->setVisible(false);
+  textArea->clearMatchHighlight();
+  matchLabel->clear();
+  textArea->setFocus();
+}
+
+void EditorMultiLineInputDialog::onFindTextChanged(const QString &text)
+{
+  if(text.isEmpty())
+  {
+      textArea->clearMatchHighlight();
+      matchLabel->clear();
+
+      return;
+  }
+
+  const int count=textArea->highlightMatches(text, currentFlags());
+  matchLabel->setText(count>0 ? tr("%n match(es)", "", count) : tr("Not found"));
+}
+
+void EditorMultiLineInputDialog::onFindNext(void)
+{
+  if(findEdit->text().isEmpty())
+      return;
+
+  if(!textArea->findNext(findEdit->text(), currentFlags()))
+      matchLabel->setText(tr("Not found"));
+}
+
+void EditorMultiLineInputDialog::onFindPrevious(void)
+{
+  if(findEdit->text().isEmpty())
+      return;
+
+  if(!textArea->findPrevious(findEdit->text(), currentFlags()))
+      matchLabel->setText(tr("Not found"));
+}
+
+void EditorMultiLineInputDialog::onReplaceOne(void)
+{
+  if(findEdit->text().isEmpty())
+      return;
+
+  textArea->replaceCurrent(findEdit->text(), replaceEdit->text(), currentFlags());
+  onFindTextChanged(findEdit->text());
+  findEdit->setFocus();
+}
+
+void EditorMultiLineInputDialog::onReplaceAll(void)
+{
+  if(findEdit->text().isEmpty())
+      return;
+
+  const int count=textArea->replaceAll(findEdit->text(), replaceEdit->text(), currentFlags());
+  matchLabel->setText(tr("Replaced %n time(s)", "", count));
+  onFindTextChanged(findEdit->text());
+  findEdit->setFocus();
+}
+
+QTextDocument::FindFlags EditorMultiLineInputDialog::currentFlags(void) const
+{
+  if(caseCheck->isChecked())
+      return QTextDocument::FindCaseSensitively;
+
+  return QTextDocument::FindFlags();
 }
 
 void EditorMultiLineInputDialog::setText(QString text)
@@ -102,14 +301,19 @@ QString EditorMultiLineInputDialog::getText()
 }
 
 // Выясняется, был ли изменен текст, показанный в диалоге
-bool EditorMultiLineInputDialog::isModified() 
-{ 
+bool EditorMultiLineInputDialog::isModified()
+{
   return textArea->document()->isModified();
 }
 
 void EditorMultiLineInputDialog::setWordWrapMode(QTextOption::WrapMode mode)
 {
-  textArea->setWordWrapMode(mode);
+  // Перенос по умолчанию как раньше у QTextEdit: все кроме NoWrap
+  // тянется по ширине виджета
+  if(mode==QTextOption::NoWrap)
+      textArea->setLineWrapMode(QPlainTextEdit::NoWrap);
+  else
+      textArea->setLineWrapMode(QPlainTextEdit::WidgetWidth);
 }
 
 void EditorMultiLineInputDialog::setSizeCoefficient(float f)
@@ -131,4 +335,3 @@ void EditorMultiLineInputDialog::updateSize()
 
   setMinimumSize(geom.width(), geom.height());
 }
-

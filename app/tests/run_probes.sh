@@ -16,7 +16,7 @@ QT=${QT_BIN%/bin}
 mkdir -p "$OUT" "$OUT/edprobe"
 
 if [ $# -eq 0 ]; then
-  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe
+  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe
 fi
 
 # Актуальный список объектов (без main.o): main_renamed.o собирается отдельно
@@ -31,7 +31,7 @@ compile_probe() {
     -I$QT/include/QtCore -I$QT/include/QtWidgets -I$QT/include/QtGui \
     -I$QT/include/QtXml -I$QT/include/QtNetwork -I$QT/include/QtMultimedia \
     -I$APP/../thirdParty/ogg/include -I$APP/../thirdParty/opus/include \
-    -I$APP/../thirdParty/monocypher \
+    -I$APP/../thirdParty/monocypher -I$APP/../thirdParty/qcodeeditor/include \
     -c "$APP/tests/$name.cpp" -o "$OUT/$name.o" || return 1
   g++ -o "$OUT/${name}bin" "$OUT/$name.o" "$OUT/edprobe/main_renamed.o" $(cat "$OUT/objs_tests.txt") \
     -L$APP/../thirdParty/opus/build/lib -lopus \

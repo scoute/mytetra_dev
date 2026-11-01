@@ -13,10 +13,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/tree/KnowTreeView.h"
-
-
-extern AppConfig mytetraConfig;
-
+#include "libraries/AppContext.h"
 
 BacklinkIndex &BacklinkIndex::instance(void)
 {
@@ -24,17 +21,14 @@ BacklinkIndex &BacklinkIndex::instance(void)
   return inst;
 }
 
-
 BacklinkIndex::BacklinkIndex(QObject *parent) : QObject(parent)
 {
 }
-
 
 void BacklinkIndex::setTreeModel(KnowTreeModel *model)
 {
   m_treeModel=model;
 }
-
 
 KnowTreeModel *BacklinkIndex::treeModel(void)
 {
@@ -49,18 +43,15 @@ KnowTreeModel *BacklinkIndex::treeModel(void)
   return m_treeModel;
 }
 
-
 QString BacklinkIndex::sidecarFileName(void)
 {
-  return QDir::cleanPath(mytetraConfig.get_tetradir()+"/backlinks.xml");
+  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/backlinks.xml");
 }
-
 
 bool BacklinkIndex::isLoaded(void) const
 {
   return m_loaded;
 }
-
 
 void BacklinkIndex::ensureLoaded(void)
 {
@@ -77,7 +68,6 @@ void BacklinkIndex::ensureLoaded(void)
 
   m_loaded=true;
 }
-
 
 bool BacklinkIndex::load(void)
 {
@@ -116,7 +106,6 @@ bool BacklinkIndex::load(void)
   return true;
 }
 
-
 bool BacklinkIndex::save(void) const
 {
   QSaveFile file(sidecarFileName());
@@ -153,12 +142,10 @@ bool BacklinkIndex::save(void) const
   return true;
 }
 
-
 void BacklinkIndex::loadOrBuild(void)
 {
   ensureLoaded();
 }
-
 
 void BacklinkIndex::rebuildReverse(void)
 {
@@ -168,7 +155,6 @@ void BacklinkIndex::rebuildReverse(void)
     for(const QString &target : it.value())
       m_reverse[target].insert(it.key());
 }
-
 
 QSet<QString> BacklinkIndex::parseOutgoing(const QString &selfId,
                                           const QString &text)
@@ -193,7 +179,6 @@ QSet<QString> BacklinkIndex::parseOutgoing(const QString &selfId,
   return result;
 }
 
-
 bool BacklinkIndex::recordExists(const QString &recordId) const
 {
   KnowTreeModel *model=const_cast<BacklinkIndex *>(this)->treeModel();
@@ -202,7 +187,6 @@ bool BacklinkIndex::recordExists(const QString &recordId) const
 
   return model->isRecordIdExists(recordId);
 }
-
 
 QString BacklinkIndex::recordTextFileName(const QString &recordId) const
 {
@@ -220,11 +204,10 @@ QString BacklinkIndex::recordTextFileName(const QString &recordId) const
   if(dir.isEmpty() || file.isEmpty())
     return QString();
 
-  return QDir::cleanPath(mytetraConfig.get_tetradir()+
+  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+
                          QStringLiteral("/base/")+dir+
                          QStringLiteral("/")+file);
 }
-
 
 void BacklinkIndex::updateSource(const QString &recordId)
 {
@@ -263,7 +246,6 @@ void BacklinkIndex::updateSource(const QString &recordId)
   emit backlinksChanged();
 }
 
-
 void BacklinkIndex::removeSources(const QStringList &ids)
 {
   if(ids.isEmpty())
@@ -293,7 +275,6 @@ void BacklinkIndex::removeSources(const QStringList &ids)
 
   emit backlinksChanged();
 }
-
 
 int BacklinkIndex::purgeMissing(void)
 {
@@ -340,7 +321,6 @@ int BacklinkIndex::purgeMissing(void)
   return removed;
 }
 
-
 void BacklinkIndex::collectAllRecordIds(QSet<QString> &ids) const
 {
   KnowTreeModel *model=const_cast<BacklinkIndex *>(this)->treeModel();
@@ -351,7 +331,6 @@ void BacklinkIndex::collectAllRecordIds(QSet<QString> &ids) const
   if(!all.isNull())
     ids.unite(*all.data());
 }
-
 
 void BacklinkIndex::buildFull(void)
 {
@@ -380,7 +359,6 @@ void BacklinkIndex::buildFull(void)
 
   emit backlinksChanged();
 }
-
 
 int BacklinkIndex::ensureIndexed(void)
 {
@@ -423,24 +401,20 @@ int BacklinkIndex::ensureIndexed(void)
   return added;
 }
 
-
 QSet<QString> BacklinkIndex::backlinksOf(const QString &recordId) const
 {
   return m_reverse.value(recordId);
 }
-
 
 QSet<QString> BacklinkIndex::outgoingOf(const QString &recordId) const
 {
   return m_forward.value(recordId);
 }
 
-
 bool BacklinkIndex::isSourceStale(const QString &sourceId) const
 {
   return !recordExists(sourceId);
 }
-
 
 QStringList BacklinkIndex::staleSources(void) const
 {

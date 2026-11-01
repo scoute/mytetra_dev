@@ -281,6 +281,26 @@ int main(int argc, char ** argv)
     QString mainProgramFile=QString::fromLocal8Bit( argv[0] ); // Данные запоминаются в сыром виде и никак не интерпретируются до использования
     globalParameters.setMainProgramFile(mainProgramFile);
 
+    // P3: ядро доступно с первой строки main, до setDebugMessageHandler:
+    // ранние qDebug (миграция конфига, кодеки) идут через AppContext,
+    // указатели валидны потому что глобалы уже сконструированы.
+    // Буфер и окно привяжутся позже (setInternalClipboard/setMainWindow)
+    AppContext::instance().init(&fixedParameters,
+                                &globalParameters,
+                                &mytetraConfig,
+                                &mytetraFiles,
+                                &dataBaseConfig,
+                                &trashMonitoring,
+                                &walkHistory,
+                                &visitHistory,
+                                &actionLogger,
+                                &shortcutManager,
+                                &periodicCheckBase,
+                                &periodicSyncro,
+                                nullptr,
+                                nullptr,
+                                &globalParameters.cryptHolder());
+
     // Перехват отладочных сообщений
     setDebugMessageHandler();
 
@@ -366,24 +386,10 @@ int main(int argc, char ** argv)
     // Создание объекта главного окна
     MainWindow win;
 
-    // P1: центральная точка доступа. Новый код ходит через
-    // AppContext::instance().mainWindow() и др. вместо extern
+    // P1: центральная точка доступа. Окно уже привязано из конструктора
+    // (setMainWindow), буфер - здесь после создания
     AppContext::instance().setParent(&app);
-    AppContext::instance().init(&fixedParameters,
-                                &globalParameters,
-                                &mytetraConfig,
-                                &mytetraFiles,
-                                &dataBaseConfig,
-                                &trashMonitoring,
-                                &walkHistory,
-                                &visitHistory,
-                                &actionLogger,
-                                &shortcutManager,
-                                &periodicCheckBase,
-                                &periodicSyncro,
-                                internalClipboard,
-                                &win,
-                                &globalParameters.cryptHolder());
+    AppContext::instance().setInternalClipboard(internalClipboard);
     AppContext::instance().registerSingletons(&Favorites::instance(),
                                               &BacklinkIndex::instance(),
                                               EditorShowTextDispatcher::instance());

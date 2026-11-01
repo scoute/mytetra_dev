@@ -39,18 +39,12 @@
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
 
-extern FixedParameters fixedParameters;
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern DataBaseConfig dataBaseConfig;
-
-
 // Версии протокола MCP которые понимает сервер.
 // Запрошенная клиентом поддерживаемая версия эхомится назад,
 // незнакомая сводится к самой старой стабильной
 
 #include "McpServerPrivate.h"
-
+#include "libraries/AppContext.h"
 
 // Проверка свежести структуры: mytetra.xml перезаписали
 // (сохранились из GUI) - модель перечитывается
@@ -67,11 +61,9 @@ static void refreshModelIfNeeded(KnowTreeModel &model,
   }
 }
 
-
 // --- Маршрутизация записи: через работающий GUI или напрямую ---
 // Имя сокета single-instance повторяет QtLocalPeer: GUI слушает,
 // MCP только подключается и отправляет
-
 
 // --- Маршрутизация записи: через работающий GUI или напрямую ---
 // Имя сокета single-instance повторяет QtLocalPeer: GUI слушает,
@@ -111,14 +103,12 @@ static QString socketNameForId(const QString &id)
   return name;
 }
 
-
 // Кандидаты имени сокета: applicationFilePath (та же функция что
 // у GUI) плюс canonical argv[0]. Пробуются по порядку: относительный
 // argv[0] резолвится от чужого cwd и для сокета ненадежен, поэтому
 // одного кандидата мало. Какой коннектится - тот и живой GUI из
 // того же файла. Разные файлы (копия бинарника) дают другое имя:
 // безопасное падение в прямой путь
-
 
 // Кандидаты имени сокета: applicationFilePath (та же функция что
 // у GUI) плюс canonical argv[0]. Пробуются по порядку: относительный
@@ -148,10 +138,6 @@ static QStringList controlSocketCandidates(const QString &argvPath)
   return names;
 }
 
-
-
-
-
 // Отправка команды живому GUI по control-каналу. Два протокола ответа:
 // - новый GUI: фрейм с JSON {"ok":true,...} или {"ok":false,"error":"..."}.
 //   Итог применения известен сразу: APPLIED (применено и сохранено) или
@@ -161,7 +147,6 @@ static QStringList controlSocketCandidates(const QString &argvPath)
 // Таймаут ответа покрывает применение с сейвом большой базы. Его истечение
 // означает что нить GUI заблокирована (модальный диалог, синхронизация):
 // изменение НЕ применено, повторять тот же вызов можно, дубли не грозят
-
 
 // Отправка команды живому GUI по control-каналу. Два протокола ответа:
 // - новый GUI: фрейм с JSON {"ok":true,...} или {"ok":false,"error":"..."}.
@@ -285,11 +270,9 @@ GuiWriteState sendGuiCommand(const QString &binaryPath,
   return GUI_REFUSED;
 }
 
-
 // Присутствие MCP для GUI-баннера: Hello при старте и при каждой записи
 // (дешевый локальный IPC), Bye при чистом выходе. GUI держит TTL:
 // убитый -9 сервер гаснет сам
-
 
 // Присутствие MCP для GUI-баннера: Hello при старте и при каждой записи
 // (дешевый локальный IPC), Bye при чистом выходе. GUI держит TTL:
@@ -306,12 +289,10 @@ void notifyMcpPresence(const QString &binaryPath, McpMode mode,
   sendGuiCommand(binaryPath, command, payload, error);
 }
 
-
 // История действий для GUI-окна: чтение и запись, итог каждого
 // tools/call. Без ожидания ack (иначе каждое чтение висло бы под
 // модальным диалогом GUI): сообщение ждёт обработки в буфере сокета.
 // GUI нет - тихий пропуск
-
 
 // История действий для GUI-окна: чтение и запись, итог каждого
 // tools/call. Без ожидания ack (иначе каждое чтение висло бы под
@@ -354,7 +335,6 @@ static void notifyMcpHistory(const QString &binaryPath,
   ds.writeBytes(uMsg.constData(), uMsg.size());
   socket.waitForBytesWritten(2000);
 }
-
 
 bool McpSession::handleMessage(const QByteArray &line, QByteArray &response)
   {

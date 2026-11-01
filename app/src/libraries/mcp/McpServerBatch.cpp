@@ -39,18 +39,12 @@
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
 
-extern FixedParameters fixedParameters;
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern DataBaseConfig dataBaseConfig;
-
-
 // Версии протокола MCP которые понимает сервер.
 // Запрошенная клиентом поддерживаемая версия эхомится назад,
 // незнакомая сводится к самой старой стабильной
 
 #include "McpServerPrivate.h"
-
+#include "libraries/AppContext.h"
 
 QJsonObject McpSession::writeRenameTag(const QString &oldTag,
                                        const QString &newTag,
@@ -58,7 +52,7 @@ QJsonObject McpSession::writeRenameTag(const QString &oldTag,
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -139,12 +133,11 @@ QJsonObject McpSession::writeRenameTag(const QString &oldTag,
   return result;
 }
 
-
 QJsonObject McpSession::writeDeleteTag(const QString &tag, QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -224,7 +217,6 @@ QJsonObject McpSession::writeDeleteTag(const QString &tag, QString &toolError)
   return result;
 }
 
-
 bool McpSession::waitGuiSave(int timeoutMs)
 {
   QElapsedTimer timer;
@@ -241,13 +233,11 @@ bool McpSession::waitGuiSave(int timeoutMs)
   return QFileInfo(m_xmlPath).lastModified()!=m_xmlMtime;
 }
 
-
 void McpSession::resyncModel(void)
 {
   m_model.reload();
   m_xmlMtime=QFileInfo(m_xmlPath).lastModified();
 }
-
 
 QString McpSession::freshBranchId(void)
 {
@@ -258,7 +248,6 @@ QString McpSession::freshBranchId(void)
   return id;
 }
 
-
 QString McpSession::freshNoteId(void)
 {
   QString id;
@@ -268,7 +257,6 @@ QString McpSession::freshNoteId(void)
   return id;
 }
 
-
 QJsonObject McpSession::writeBranch(const QString &id,
                                     const QString &parentId,
                                     const QString &name,
@@ -276,7 +264,7 @@ QJsonObject McpSession::writeBranch(const QString &id,
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -379,7 +367,6 @@ QJsonObject McpSession::writeBranch(const QString &id,
   return result;
 }
 
-
 QJsonObject McpSession::writeNote(const QString &id,
                                   const QString &branchId,
                                   const QString &name,
@@ -389,7 +376,7 @@ QJsonObject McpSession::writeNote(const QString &id,
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -491,7 +478,6 @@ QJsonObject McpSession::writeNote(const QString &id,
   return result;
 }
 
-
 QJsonObject McpSession::writeNoteUpdate(const QString &id,
                                         bool hasName, const QString &name,
                                         bool hasHtml, const QString &html,
@@ -500,7 +486,7 @@ QJsonObject McpSession::writeNoteUpdate(const QString &id,
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -641,12 +627,11 @@ QJsonObject McpSession::writeNoteUpdate(const QString &id,
   return result;
 }
 
-
 QJsonObject McpSession::writeDeleteNote(const QString &id, QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -727,12 +712,11 @@ QJsonObject McpSession::writeDeleteNote(const QString &id, QString &toolError)
   return result;
 }
 
-
 QJsonObject McpSession::writeDeleteBranch(const QString &id, QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -813,11 +797,9 @@ QJsonObject McpSession::writeDeleteBranch(const QString &id, QString &toolError)
   return result;
 }
 
-
 // Проверка одной пакетной операции по свежему состоянию модели.
 // Семантика по состоянию, а не по факту исполнения: ok значит
 // конечное состояние совпало с желаемым
-
 
 // Проверка одной пакетной операции по свежему состоянию модели.
 // Семантика по состоянию, а не по факту исполнения: ok значит
@@ -942,7 +924,7 @@ static bool verifyBatchOp(KnowTreeModel &model,
     const QString id=args.value("note_id").toString();
     bool ok=false;
 
-    if(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"))
+    if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
     {
       Record *record=model.isRecordIdExists(id) ? model.getRecord(id) : nullptr;
       ok=(record!=nullptr && (record->getField("favorite")=="1")==starred);
@@ -981,9 +963,7 @@ static bool verifyBatchOp(KnowTreeModel &model,
   return false;
 }
 
-
 static const int MCP_BATCH_MAX_OPS=200;
-
 
 static const QSet<QString> &mcpBatchableTools(void)
 {
@@ -999,13 +979,12 @@ static const QSet<QString> &mcpBatchableTools(void)
   return batchable;
 }
 
-
 QJsonObject McpSession::writeApplyBatch(const QJsonArray &operations,
                                         QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -1241,7 +1220,6 @@ QJsonObject McpSession::writeApplyBatch(const QJsonArray &operations,
 
   return result;
 }
-
 
 // Pre-валидация базы до initFromXML: в headless-режиме диалоги
 // XmlTree::load и criticalError формата роняют процесс,

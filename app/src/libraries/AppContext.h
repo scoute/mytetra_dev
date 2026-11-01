@@ -72,6 +72,10 @@ public:
     // (полный init() вызывается позже, когда win уже существует)
     void setMainWindow(MainWindow *mainWindow);
 
+    // Привязка буфера после создания (ранний init() видит nullptr,
+    // полный указатель появляется только вместе с QApplication)
+    void setInternalClipboard(InternalClipboard *internalClipboard);
+
     // Типизированные доступы. Null пока init() не вызван
     FixedParameters *fixedParameters(void) const;
     GlobalParameters *globalParameters(void) const;

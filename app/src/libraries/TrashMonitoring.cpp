@@ -8,22 +8,17 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 
-extern AppConfig mytetraConfig;
-
 #include "libraries/AppContext.h"
-
 
 TrashMonitoring::TrashMonitoring(void)
 {
  
 }
 
-
 TrashMonitoring::~TrashMonitoring(void)
 {
 
 }
-
 
 void TrashMonitoring::init(const QString trashPath)
 {
@@ -64,7 +59,6 @@ void TrashMonitoring::init(const QString trashPath)
     // qDebug() << "In init trash " << filesTable.size() << "files";
 }
 
-
 // Функция должна вызываться после фактического добавления файла в корзину
 // принимает имя файла без пути к директории
 void TrashMonitoring::addFile(const QString fileName)
@@ -82,14 +76,13 @@ void TrashMonitoring::addFile(const QString fileName)
  update();
 }
 
-
 void TrashMonitoring::update(void)
 {
     // Исключается наиболее старый файл пока выполняется
     // условие что количество файлов слишком велико или
     // суммарный размер файлов превышает предельно допустимый размер корзины
-    while(m_filesList.size() > mytetraConfig.get_trashmaxfilecount() ||
-          m_dirSize > mytetraConfig.get_trashsize()*1000000)
+    while(m_filesList.size() > AppContext::instance().appConfig()->get_trashmaxfilecount() ||
+          m_dirSize > AppContext::instance().appConfig()->get_trashsize()*1000000)
     {
         if(m_filesList.size()==1)
         {
@@ -101,7 +94,6 @@ void TrashMonitoring::update(void)
         }
     }
 }
-
 
 void TrashMonitoring::appendFileToList(const QString fileName,
                                        const unsigned int fileTime,
@@ -144,7 +136,6 @@ void TrashMonitoring::appendFileToList(const QString fileName,
             break;
     }
 }
-
 
 void TrashMonitoring::removeOldesFile(void)
 {

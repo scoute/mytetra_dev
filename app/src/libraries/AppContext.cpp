@@ -73,6 +73,12 @@ void AppContext::setMainWindow(MainWindow *mainWindow)
 }
 
 
+void AppContext::setInternalClipboard(InternalClipboard *internalClipboard)
+{
+    m_internalClipboard=internalClipboard;
+}
+
+
 FixedParameters *AppContext::fixedParameters(void) const
 {
     return m_fixedParameters;

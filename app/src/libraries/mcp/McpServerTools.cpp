@@ -39,17 +39,12 @@
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
 
-extern FixedParameters fixedParameters;
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern DataBaseConfig dataBaseConfig;
-
-
 // Версии протокола MCP которые понимает сервер.
 // Запрошенная клиентом поддерживаемая версия эхомится назад,
 // незнакомая сводится к самой старой стабильной
 
 #include "McpServerPrivate.h"
+#include "libraries/AppContext.h"
 
 static const char *MCP_SUPPORTED_VERSIONS[]={
   "2024-11-05",
@@ -60,14 +55,12 @@ static const char *MCP_SUPPORTED_VERSIONS[]={
 static const int MCP_SUPPORTED_VERSIONS_COUNT=3;
 static const char *MCP_FALLBACK_VERSION="2024-11-05";
 
-
 QString serverVersionString(void)
 {
   return QString("%1.%2.%3").arg(APPLICATION_RELEASE_VERSION)
                             .arg(APPLICATION_RELEASE_SUBVERSION)
                             .arg(APPLICATION_RELEASE_MICROVERSION);
 }
-
 
 QString negotiateVersion(const QString &asked)
 {
@@ -78,7 +71,6 @@ QString negotiateVersion(const QString &asked)
   return MCP_FALLBACK_VERSION;
 }
 
-
 QJsonObject errorObject(int code, const QString &message)
 {
   QJsonObject error;
@@ -87,7 +79,6 @@ QJsonObject errorObject(int code, const QString &message)
 
   return error;
 }
-
 
 static QJsonObject toolDescription(const QString &name,
                                    const QString &description,
@@ -100,7 +91,6 @@ static QJsonObject toolDescription(const QString &name,
 
   return tool;
 }
-
 
 static QJsonObject objectSchema(const QJsonObject &properties,
                                 const QJsonArray &required)
@@ -117,10 +107,8 @@ static QJsonObject objectSchema(const QJsonObject &properties,
   return schema;
 }
 
-
 // Режимы сервера: read-only, read-write, read-write с удалением.
 // Флаг --mcp оставлен для совместимости и означает read-only
-
 
 McpMode mcpModeFromArgs(int argc, char **argv)
 {
@@ -162,7 +150,6 @@ McpMode mcpModeFromArgs(int argc, char **argv)
   return McpMode::ReadOnly;
 }
 
-
 QString mcpModeName(McpMode mode)
 {
   if(mode==McpMode::ReadWriteDelete)
@@ -174,10 +161,8 @@ QString mcpModeName(McpMode mode)
   return "--mcp-ro";
 }
 
-
 // Доступность инструмента в режиме. Чтение везде, запись кроме ro,
 // удаление только в старшем режиме
-
 
 // Доступность инструмента в режиме. Чтение везде, запись кроме ro,
 // удаление только в старшем режиме
@@ -211,10 +196,8 @@ bool toolAllowed(McpMode mode, const QString &toolName)
   return false;
 }
 
-
 // Опциональный список ключей выдачи (get_note, list_notes).
 // Пусто или нет поля = весь объект целиком
-
 
 // Опциональный список ключей выдачи (get_note, list_notes).
 // Пусто или нет поля = весь объект целиком
@@ -232,7 +215,6 @@ QStringList readFields(const QJsonObject &arguments)
 
   return fields;
 }
-
 
 bool isKnownTool(const QString &toolName)
 {
@@ -256,10 +238,8 @@ bool isKnownTool(const QString &toolName)
   return false;
 }
 
-
 // Пишущий инструмент (для присутствия: чтения GUI не дёргают,
 // иначе каждое чтение ждало бы ack event loop и висло под модалкой)
-
 
 // Пишущий инструмент (для присутствия: чтения GUI не дёргают,
 // иначе каждое чтение ждало бы ack event loop и висло под модалкой)
@@ -275,7 +255,6 @@ bool isWriteTool(const QString &toolName)
          toolName=="rename_tag" || toolName=="delete_tag" ||
          toolName=="delete_note" || toolName=="delete_branch";
 }
-
 
 QJsonArray buildToolsList(McpMode mode)
 {
@@ -827,7 +806,6 @@ QJsonArray buildToolsList(McpMode mode)
 
   return filtered;
 }
-
 
 // Проверка свежести структуры: mytetra.xml перезаписали
 // (сохранились из GUI) - модель перечитывается

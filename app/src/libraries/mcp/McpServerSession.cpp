@@ -39,18 +39,12 @@
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
 
-extern FixedParameters fixedParameters;
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern DataBaseConfig dataBaseConfig;
-
-
 // Версии протокола MCP которые понимает сервер.
 // Запрошенная клиентом поддерживаемая версия эхомится назад,
 // незнакомая сводится к самой старой стабильной
 
 #include "McpServerPrivate.h"
-
+#include "libraries/AppContext.h"
 
 // Дети ветки-родителя (пустой parentId - корень). Только id строками:
 // указатели модели после resync инвалидируются и не хранятся
@@ -79,10 +73,8 @@ static QSet<QString> branchChildIds(KnowTreeModel &model, const QString &parentI
   return out;
 }
 
-
 // Имя верхнего узла обменника: по нему после ввоза находится
 // новая ветка в diff детей родителя
-
 
 // Имя верхнего узла обменника: по нему после ввоза находится
 // новая ветка в diff детей родителя
@@ -103,9 +95,7 @@ static QString importTopNodeName(const QString &path)
   return content.firstChildElement("node").attribute("name");
 }
 
-
 // Ожидаемый родитель после move_branch: внутрь цели или соседство
-
 
 // Ожидаемый родитель после move_branch: внутрь цели или соседство
 QString expectedMoveParent(KnowTreeModel &model,
@@ -128,14 +118,13 @@ QString expectedMoveParent(KnowTreeModel &model,
   return QString();
 }
 
-
 QJsonObject McpSession::writeRenameBranch(const QString &id,
                                           const QString &name,
                                           QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -225,7 +214,6 @@ QJsonObject McpSession::writeRenameBranch(const QString &id,
   return result;
 }
 
-
 QJsonObject McpSession::writeMoveBranch(const QString &id,
                                         const QString &targetId,
                                         bool asChild,
@@ -233,7 +221,7 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -336,14 +324,13 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
   return result;
 }
 
-
 QJsonObject McpSession::writeMoveNote(const QString &id,
                                       const QString &branchId,
                                       QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -435,10 +422,8 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
   return result;
 }
 
-
 // Ожидание звездочки в сайдкаре после живой записи: GUI пишет
 // файл сам, mtime базы при этом не сдвигается
-
 
 // Ожидание звездочки в сайдкаре после живой записи: GUI пишет
 // файл сам, mtime базы при этом не сдвигается
@@ -458,14 +443,13 @@ static bool waitSidecarFavorite(const QString &id, bool starred, int timeoutMs)
   return McpTools::sidecarFavoriteIds().contains(id)==starred;
 }
 
-
 QJsonObject McpSession::writeFavoriteNote(const QString &id,
                                           bool starred,
                                           QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -497,7 +481,7 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
     }
   }
 
-  const bool xmlStorage=(mytetraConfig.get_favoritesStorage()==QStringLiteral("xml"));
+  const bool xmlStorage=(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"));
 
   QJsonObject payload;
   payload["id"]=id;
@@ -587,14 +571,13 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
   return result;
 }
 
-
 QJsonObject McpSession::writeImportBranch(const QString &parentId,
                                             const QString &path,
                                             QString &toolError)
 {
   QJsonObject result;
 
-  if(mytetraConfig.get_readOnly())
+  if(AppContext::instance().appConfig()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 

@@ -39,18 +39,12 @@
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
 
-extern FixedParameters fixedParameters;
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
-extern DataBaseConfig dataBaseConfig;
-
-
 // Версии протокола MCP которые понимает сервер.
 // Запрошенная клиентом поддерживаемая версия эхомится назад,
 // незнакомая сводится к самой старой стабильной
 
 #include "McpServerPrivate.h"
-
+#include "libraries/AppContext.h"
 
 // Pre-валидация базы до initFromXML: в headless-режиме диалоги
 // XmlTree::load и criticalError формата роняют процесс,
@@ -95,11 +89,9 @@ bool validateDatabase(const QString &xmlPath)
   return true;
 }
 
-
 // Каталог тулов для страницы настроек. Категории отвечают режимам:
 // ro виден в --mcp-ro, rw добавляется в --mcp-rw,
 // delete только в --mcp-rw-with-delete
-
 
 // Каталог тулов для страницы настроек. Категории отвечают режимам:
 // ro виден в --mcp-ro, rw добавляется в --mcp-rw,
@@ -132,43 +124,42 @@ QList<McpToolInfo> mcpToolCatalog(void)
   return catalog;
 }
 
-
 int runMcpServer(int argc, char **argv)
 {
   QCoreApplication app(argc, argv);
 
-  globalParameters.setMainProgramFile(QString::fromLocal8Bit(argv[0]));
+  AppContext::instance().globalParameters()->setMainProgramFile(QString::fromLocal8Bit(argv[0]));
 
-  // ГПСЧ первым: trash-бэкап в mytetraConfig.init() уже зовёт rand()
+  // ГПСЧ первым: trash-бэкап в AppContext::instance().appConfig()->init() уже зовёт rand()
   // для имён копий, а сдвиг pid разводит одновременно стартовавшие
   // серверы по разным сериям (иначе одинаковые имена и id)
   RandomInitter::init(static_cast<long>(QCoreApplication::applicationPid()));
 
   // Headless boot: initHeadless never opens InstallDialog,
   // missing conf.ini is a clean exit instead of a crash
-  if(!globalParameters.initHeadless())
+  if(!AppContext::instance().globalParameters()->initHeadless())
   {
     fprintf(stderr, "mcp: conf.ini not found, can not locate MyTetra data\n");
     return 2;
   }
 
-  mytetraConfig.init();
+  AppContext::instance().appConfig()->init();
 
   // Доступ закрыт галочкой на странице MCP: сервер не стартует.
   // Код 4 чтобы отличать от отсутствия conf.ini (2) и битой базы (3)
-  if(!mytetraConfig.get_mcpAllow())
+  if(!AppContext::instance().appConfig()->get_mcpAllow())
   {
     fprintf(stderr, "mcp: access is disabled, allow it on the MCP settings page\n");
     return 4;
   }
 
-  dataBaseConfig.init();
+  AppContext::instance().dataBaseConfig()->init();
 
-  QString xmlPath=mytetraConfig.get_tetradir()+"/mytetra.xml";
+  QString xmlPath=AppContext::instance().appConfig()->get_tetradir()+"/mytetra.xml";
 
   // Какая база обслужвается: при расхождении цифр с GUI первым делом
   // сверить этот путь с tetradir в conf.ini запущенной программы
-  fprintf(stderr, "mcp: base %s\n", mytetraConfig.get_tetradir().toUtf8().constData());
+  fprintf(stderr, "mcp: base %s\n", AppContext::instance().appConfig()->get_tetradir().toUtf8().constData());
 
   if(!validateDatabase(xmlPath))
     return 3;

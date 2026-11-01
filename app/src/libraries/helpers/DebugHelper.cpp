@@ -14,15 +14,9 @@
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
 
-
-extern ActionLogger actionLogger;
-
 #include "libraries/AppContext.h"
-extern GlobalParameters globalParameters;
-extern AppConfig mytetraConfig;
 
 using namespace std;
-
 
 void logPrint(char *lpszText, ...)
 {
@@ -54,12 +48,11 @@ void logPrint(char *lpszText, ...)
   return;
 }
 
-
 void criticalError(QString message)
 {
   QMap<QString, QString> data;
   data["errorMessage"]=message;
-  actionLogger.addAction("criticalError", data);
+  AppContext::instance().actionLogger()->addAction("criticalError", data);
 
   qDebug() << " ";
   qDebug() << "---------------";
@@ -76,11 +69,10 @@ void criticalError(QString message)
   exit(1);
 }
 
-
 void smartPrintDebugMessage(QString msg)
 {
-    if(globalParameters.getTargetOs()=="any" ||
-       globalParameters.getTargetOs()=="meego")
+    if(AppContext::instance().globalParameters()->getTargetOs()=="any" ||
+       AppContext::instance().globalParameters()->getTargetOs()=="meego")
     {
         QTime currTime = QTime::currentTime();
         QString timeText=currTime.toString("hh:mm:ss");
@@ -90,24 +82,23 @@ void smartPrintDebugMessage(QString msg)
         // fwrite(msg.toLocal8Bit().data(), sizeof(char), messageLen, stderr);
 
         // Установка кодека для нормальной работы консоли
-        if(globalParameters.getConsoleCodepage()!=globalParameters.getSystemCodepage() &&
-           globalParameters.getConsoleCodepage().size()>0) {
-            QTextCodec::setCodecForLocale(QTextCodec::codecForName( globalParameters.getConsoleCodepage().toLatin1() ));
+        if(AppContext::instance().globalParameters()->getConsoleCodepage()!=AppContext::instance().globalParameters()->getSystemCodepage() &&
+           AppContext::instance().globalParameters()->getConsoleCodepage().size()>0) {
+            QTextCodec::setCodecForLocale(QTextCodec::codecForName( AppContext::instance().globalParameters()->getConsoleCodepage().toLatin1() ));
         }
 
         cout << msg.toLocal8Bit().data();
 
         // Установка кодека для дальнейшей нормальной работы файловых инструкций
-        if(globalParameters.getConsoleCodepage()!=globalParameters.getSystemCodepage() &&
-           globalParameters.getSystemCodepage().size()>0) {
-            QTextCodec::setCodecForLocale(QTextCodec::codecForName( globalParameters.getSystemCodepage().toLatin1() ));
+        if(AppContext::instance().globalParameters()->getConsoleCodepage()!=AppContext::instance().globalParameters()->getSystemCodepage() &&
+           AppContext::instance().globalParameters()->getSystemCodepage().size()>0) {
+            QTextCodec::setCodecForLocale(QTextCodec::codecForName( AppContext::instance().globalParameters()->getSystemCodepage().toLatin1() ));
         }
 
     }
 
     // В Android пока неясно, как смотреть поток ошибок, для андроида qDebug() не переопределяется
 }
-
 
 // Обработчик (хендлер) вызовов qDebug()
 // Внутри этого обработчика нельзя использовать вызовы qDebug(), т. к. получится рекурсия
@@ -137,21 +128,19 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
                    arg(QString(function));
  #endif
 
-
  #if QT_VERSION < 0x050000
     QString msgText( QString::fromUtf8(msg) );
  #endif
 
-
  // Пока идет инициализация конфигурации программы
- if(!mytetraConfig.is_init())
+ if(!AppContext::instance().appConfig()->is_init())
  {
   smartPrintDebugMessage("[INI] "+msgText+"\n");
   return;
  }
 
  // Если в конфигурации запрещен вывод отладочных сообщений
- if(!mytetraConfig.get_printdebugmessages())
+ if(!AppContext::instance().appConfig()->get_printdebugmessages())
   return;
 
  QString printText = msgText + additionInfo; // msgText + additionInfo
@@ -179,15 +168,14 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
  // #endif
 }
 
-
 void setDebugMessageHandler()
 {
- qDebug() << "Debug message before set message handler for target OS: " << globalParameters.getTargetOs();
+ qDebug() << "Debug message before set message handler for target OS: " << AppContext::instance().globalParameters()->getTargetOs();
 
  // Для десктопных операционок можно переустановить обработчик qDebug()
  // Для Андроида переустановка qDebug() приводит к невозможности получения отладочных сообщений в удаленном отладчике
- if(globalParameters.getTargetOs()=="any" ||
-    globalParameters.getTargetOs()=="meego")
+ if(AppContext::instance().globalParameters()->getTargetOs()=="any" ||
+    AppContext::instance().globalParameters()->getTargetOs()=="meego")
   {
    qDebug() << "Set alternative handler myMessageOutput() for debug message";
 
@@ -200,7 +188,6 @@ void setDebugMessageHandler()
 
  qDebug() << "Debug message after set message handler";
 }
-
 
 // Функция-помощник при отладке генерации XML-кода. Преобразует узел DOM в строку
 QString xmlNodeToString(QDomNode xmlData)
@@ -228,7 +215,6 @@ QString xmlNodeToString(QDomNode xmlData)
     return xmlcode;
   }
 }
-
 
 // Рекурсивная печать дерева объектов, т.к. dumpObjectInfo() и dumpObjectTree() не работают
 void printObjectTreeRecurse(QObject *pobj)
@@ -261,7 +247,6 @@ void printObjectTreeRecurse(QObject *pobj)
   }
 }
 
-
 // Печать дерева объектов, основная функция
 void printObjectTree(void)
 {
@@ -269,7 +254,6 @@ void printObjectTree(void)
 
   printObjectTreeRecurse(AppContext::instance().mainWindow());
 }
-
 
 //DebugHelper::DebugHelper()
 //{

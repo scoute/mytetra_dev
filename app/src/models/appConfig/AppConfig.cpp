@@ -170,8 +170,11 @@ QString AppConfig::get_parameter(QString name)
         // Страховка вместо жёсткого падения: если параметр известен
         // актуальной таблице, вернуть его дефолт (ключ мог потеряться
         // из-за усечённых лимитом миграций или чужого conf.ini).
-        // Неизвестное имя по-прежнему роняет программу — это ошибка программиста
-        QStringList actualTable=get_parameter_table_60(true);
+        // Неизвестное имя по-прежнему роняет программу - это ошибка программиста.
+        // Таблица берётся через get_actual_parameter_table(), а не по
+        // захардкоженному номеру: иначе ключи новых миграций (как
+        // attachViewMode из 61-й при проверке по 60-й) роняли бы старт
+        QStringList actualTable=get_actual_parameter_table(true);
         if(!getParameterTypeFromTable(name, actualTable).isEmpty())
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);

@@ -394,6 +394,12 @@ private:
     QStringList get_parameter_table_60(bool withEndSignature=true);
     QStringList get_parameter_table_61(bool withEndSignature=true);
 
+    // Актуальная таблица параметров (полный список известных ключей).
+    // Единственное место, знающее номер последней версии: при добавлении
+    // get_parameter_table_N поменять здесь один вызов. Фолбэк
+    // get_parameter() и проверки опираются на неё, а не на конкретный номер
+    QStringList get_actual_parameter_table(bool withEndSignature=true);
+
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;
 

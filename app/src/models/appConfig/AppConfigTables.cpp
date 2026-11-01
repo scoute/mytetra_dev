@@ -1388,3 +1388,11 @@ QStringList AppConfig::get_parameter_table_61(bool withEndSignature)
 
     return table;
 }
+
+
+QStringList AppConfig::get_actual_parameter_table(bool withEndSignature)
+{
+    // Актуальная таблица = последняя по номеру версии.
+    // При добавлении get_parameter_table_N поменять здесь один вызов
+    return get_parameter_table_61(withEndSignature);
+}

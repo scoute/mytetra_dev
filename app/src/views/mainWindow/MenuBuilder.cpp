@@ -9,7 +9,6 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/ShortcutManager.h"
-#include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
 

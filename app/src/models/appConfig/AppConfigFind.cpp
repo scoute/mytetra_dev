@@ -1,5 +1,4 @@
 #include "AppConfigFind.h"
-#include "AppConfig.h"
 
 
 AppConfigFind::AppConfigFind(QObject *parent) : QObject(parent)

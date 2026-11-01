@@ -45,22 +45,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-// Элемент таблицы с числовой сортировкой: по клику на заголовок
-// QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
-class NumberTableItem : public QTableWidgetItem
-{
-public:
-  explicit NumberTableItem(int value) : QTableWidgetItem(QString::number(value))
-  {
-    setData(Qt::UserRole, value);
-  }
-
-  bool operator<(const QTableWidgetItem &other) const override
-  {
-    return data(Qt::UserRole).toInt() < other.data(Qt::UserRole).toInt();
-  }
-};
-
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"

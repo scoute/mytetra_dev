@@ -45,57 +45,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
-// Элемент таблицы с числовой сортировкой: по клику на заголовок
-// QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
-class NumberTableItem : public QTableWidgetItem
-{
-public:
-  explicit NumberTableItem(int value) : QTableWidgetItem(QString::number(value))
-  {
-    setData(Qt::UserRole, value);
-  }
-
-  bool operator<(const QTableWidgetItem &other) const override
-  {
-    return data(Qt::UserRole).toInt() < other.data(Qt::UserRole).toInt();
-  }
-};
-
-#include "main.h"
-#include "models/appConfig/AppConfig.h"
-#include "MainWindow.h"
-#include "views/printPreview/PrintPreview.h"
-#include "views/appConfigWindow/AppConfigDialog.h"
-#include "libraries/TrashMonitoring.h"
-#include "views/tree/TreeScreen.h"
-#include "views/telegram/TelegramImportDialog.h"
-#include "views/record/MetaEditor.h"
-#include "libraries/wyedit/EditorToolBarAssistant.h"
-#include "libraries/wyedit/EditorConfig.h"
-#include "views/recordTable/RecordTableScreen.h"
-#include "views/historyPanel/HistoryPanel.h"
-#include "views/favoritesPanel/FavoritesPanel.h"
-#include "views/backlinksPanel/BacklinksPanel.h"
-#include "libraries/BacklinkIndex.h"
-#include "views/tagsPanel/TagsPanel.h"
-#include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
-#include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
-#include "libraries/GlobalParameters.h"
-#include "views/consoleEmulator/CommandRunner.h"
-#include "libraries/WalkHistory.h"
-#include "libraries/ActionLogger.h"
-#include "libraries/WindowSwitcher.h"
-#include "views/actionLog/ActionLogScreen.h"
-#include "views/databasesManagement/DatabasesManagementScreen.h"
-#include "libraries/ShortcutManager.h"
-#include "libraries/RandomInitter.h"
-#include "libraries/helpers/ObjectHelper.h"
-#include "libraries/wyedit/EditorShowTextDispatcher.h"
-#include "libraries/FixedParameters.h"
-#include "libraries/helpers/CssHelper.h"
 #include "libraries/mcp/McpTools.h"
 #include "libraries/Favorites.h"
 #include "models/recordTable/Record.h"
@@ -110,30 +61,25 @@ McpGuiBridge::McpGuiBridge(KnowTreeModel *model, QObject *parent) : QObject(pare
 
 }
 
-
 McpGuiBridge::~McpGuiBridge(void)
 {
 
 }
-
 
 void McpGuiBridge::setModel(KnowTreeModel *model)
 {
     m_model=model;
 }
 
-
 bool McpGuiBridge::hasPeers(void) const
 {
     return !m_mcpPeers.isEmpty();
 }
 
-
 const QList<McpHistoryEntry> &McpGuiBridge::history(void) const
 {
     return m_mcpHistory;
 }
-
 
 void McpGuiBridge::clearHistory(void)
 {
@@ -168,10 +114,8 @@ QJsonObject McpGuiBridge::parseMcpCommandArgs(const QString &message)
   return doc.object();
 }
 
-
 // Синхронный ответ на mcp-команду для протокола запрос-ответ.
 // Упаковка итога handleMcpCommand в компактный JSON
-
 
 // Синхронный ответ на mcp-команду для протокола запрос-ответ.
 // Упаковка итога handleMcpCommand в компактный JSON
@@ -180,12 +124,10 @@ void McpGuiBridge::setFavorites(Favorites *favorites)
     m_favorites=favorites;
 }
 
-
 void McpGuiBridge::setBacklinkIndex(BacklinkIndex *backlinks)
 {
     m_backlinks=backlinks;
 }
-
 
 QByteArray McpGuiBridge::handleMcpMessage(const QString &message)
 {
@@ -215,18 +157,15 @@ QByteArray McpGuiBridge::handleMcpMessage(const QString &message)
   return QJsonDocument(result).toJson(QJsonDocument::Compact);
 }
 
-
 // Применение одной mcp-команды к живой модели с возвратом итога.
 // Тела веток - те же applyXxx что были в messageHandler, но тихие
 // return заменены на текст ошибки: сервер отдаёт её агенту как есть,
 // вместо гадания "did not apply... retry"
 
-
 // Применение одной mcp-команды к живой модели с возвратом итога.
 // Тела веток - те же applyXxx что были в messageHandler, но тихие
 // return заменены на текст ошибки: сервер отдаёт её агенту как есть,
 // вместо гадания "did not apply... retry"
-
 
 // Применение одной mcp-команды к живой модели с возвратом итога.
 // Тела веток - те же applyXxx что были в messageHandler, но тихие
@@ -914,13 +853,10 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
   return false;
 }
 
-
 // Восстанавливается геометрия окна и позиции основных разделителей
-
 
 // Внешняя MCP-правка: баннер и так висит всю сессию, здесь только
 // пересчёт (текст с режимами, видимость, блокировка)
-
 
 // Текст баннера: сессия активна и режимы пиров в скобках сразу
 // после «активна». UI заблокирован всегда пока висит баннер,
@@ -955,7 +891,6 @@ QString McpGuiBridge::bannerText(void)
     return text;
 }
 
-
 // Баннер MCP-сессии: висит всё время пока жив хоть один пир.
 // TTL-килла нет осознанно: долгие нейронные сессии с паузами
 // убивались бы на ровном месте вместе с историей. Пир уходит
@@ -965,7 +900,6 @@ QString McpGuiBridge::bannerText(void)
 // Имя своего бинаря: MCP-сервер это та же программа, так что
 // чужой процесс под recycled pid опознается по имени
 
-
 // Баннер MCP-сессии: висит всё время пока жив хоть один пир.
 // TTL-килла нет осознанно: долгие нейронные сессии с паузами
 // убивались бы на ровном месте вместе с историей. Пир уходит
@@ -974,7 +908,6 @@ QString McpGuiBridge::bannerText(void)
 // виден и UI заблокирован на запись до конца сессии
 // Имя своего бинаря: MCP-сервер это та же программа, так что
 // чужой процесс под recycled pid опознается по имени
-
 
 // Внешняя MCP-правка: баннер и так висит всю сессию, здесь только
 // пересчёт (текст с режимами, видимость, блокировка)
@@ -983,18 +916,15 @@ void McpGuiBridge::flashMcpWrite(void)
     emit sessionChanged();
 }
 
-
 // Текст баннера: сессия активна и режимы пиров в скобках сразу
 // после «активна». UI заблокирован всегда пока висит баннер,
 // независимо от режима сервера: его записи идут мимо блокировки
 // своим каналом
 
-
 // Текст баннера: сессия активна и режимы пиров в скобках сразу
 // после «активна». UI заблокирован всегда пока висит баннер,
 // независимо от режима сервера: его записи идут мимо блокировки
 // своим каналом
-
 
 // Накопление истории действий MCP-сессии. Хвост обрезан до трёхсот:
 // окну нужен обзор, а не архив. На диск ничего не пишется
@@ -1018,7 +948,6 @@ void McpGuiBridge::addMcpHistoryEntry(const QString &kind,
     emit historyChanged();
 }
 
-
 void McpGuiBridge::checkPeers(void)
 {
   QList<QString> dead;
@@ -1036,7 +965,6 @@ void McpGuiBridge::checkPeers(void)
   emit sessionChanged();
 }
 
-
 // Баннер MCP-сессии: висит всё время пока жив хоть один пир.
 // TTL-килла нет осознанно: долгие нейронные сессии с паузами
 // убивались бы на ровном месте вместе с историей. Пир уходит
@@ -1049,7 +977,6 @@ static QString mcpOwnAppName(void)
 {
   return QFileInfo(QCoreApplication::applicationFilePath()).baseName();
 }
-
 
 // Жив ли пир: процесс с таким pid существует И это наша программа.
 // Имя сверяется чтобы переиспользованный pid чужого процесса не
@@ -1101,14 +1028,12 @@ static bool mcpPeerAlive(const QString &pid)
 #endif
 }
 
-
 bool McpGuiBridge::readOnly(void) const
 {
     // Хук не задан (пробы без конфига): записи запрещены.
     // Fail-closed: лучше отклонить, чем писать без спроса
     return isReadOnly ? isReadOnly() : true;
 }
-
 
 bool McpGuiBridge::mcpAllowedCheck(void) const
 {

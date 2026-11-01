@@ -32,18 +32,10 @@
 #include <QSyntaxStyle>
 #include <QXMLHighlighter>
 
-#include "TypefaceFormatter.h"
 
 #include "../Editor.h"
 #include "../EditorConfig.h"
 #include "../EditorTextArea.h"
-#include "../EditorToolBarAssistant.h"
-#include "../EditorFontFamilyComboBox.h"
-#include "../EditorSpecialCharDialog.h"
-#include "../EditorCursorPositionDetector.h"
-#include "../EditorFontSizeComboBox.h"
-#include "../../TraceLogger.h"
-#include "libraries/helpers/MessageHelper.h"
 
 
 // Масштабный коэффициент размера заголовка: во сколько раз h1/h2/h3

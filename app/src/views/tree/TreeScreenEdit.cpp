@@ -14,35 +14,16 @@
 
 #include "TreeScreen.h"
 #include "KnowTreeView.h"
-#include "KnowTreeDelegate.h"
 
-#include "models/recordTable/RecordTableData.h"
-#include "views/recordTable/RecordTableScreen.h"
 #include "models/appConfig/AppConfig.h"
 #include "views/mainWindow/MainWindow.h"
-#include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "models/tree/TreeItem.h"
 #include "models/tree/KnowTreeModel.h"
-#include "libraries/ClipboardBranch.h"
-#include "views/record/MetaEditor.h"
-#include "views/favoritesPanel/FavoritesPanel.h"
 #include "libraries/GlobalParameters.h"
-#include "libraries/FixedParameters.h"
-#include "libraries/crypt/Password.h"
-#include "libraries/WindowSwitcher.h"
-#include "libraries/helpers/DiskHelper.h"
-#include "controllers/recordTable/RecordTableController.h"
-#include "libraries/IconSelectDialog.h"
-#include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ObjectHelper.h"
-#include "libraries/helpers/ActionHelper.h"
-#include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
-#include "libraries/InternalClipboard.h"
 
-#include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
-#include "models/appConfig/AppConfigStorage.h"
 
 
 void TreeScreen::expandAllSubbranch(void)

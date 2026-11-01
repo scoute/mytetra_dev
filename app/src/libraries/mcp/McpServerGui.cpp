@@ -26,25 +26,14 @@
 #endif
 #include <cstdio>
 
-#include "McpServer.h"
 #include "McpTools.h"
-#include "main.h"
-#include "libraries/GlobalParameters.h"
-#include "libraries/FixedParameters.h"
-#include "libraries/RandomInitter.h"
-#include "libraries/helpers/UniqueIdHelper.h"
-#include "models/appConfig/AppConfig.h"
-#include "models/dataBaseConfig/DataBaseConfig.h"
 #include "models/tree/KnowTreeModel.h"
-#include "models/tree/TreeItem.h"
-#include "models/recordTable/Record.h"
 
 // Версии протокола MCP которые понимает сервер.
 // Запрошенная клиентом поддерживаемая версия эхомится назад,
 // незнакомая сводится к самой старой стабильной
 
 #include "McpServerPrivate.h"
-#include "libraries/AppContext.h"
 
 // Проверка свежести структуры: mytetra.xml перезаписали
 // (сохранились из GUI) - модель перечитывается

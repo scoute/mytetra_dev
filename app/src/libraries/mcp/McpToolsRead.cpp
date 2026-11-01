@@ -20,19 +20,15 @@
 #include "main.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
-#include "models/recordTable/RecordTableData.h"
 #include "models/recordTable/Record.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
-#include "libraries/BacklinkIndex.h"
-#include "libraries/helpers/UniqueIdHelper.h"
 
 #include <QFile>
 
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
 
-#include "McpToolsPrivate.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigStorage.h"
 

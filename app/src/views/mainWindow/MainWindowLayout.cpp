@@ -45,63 +45,21 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-// Элемент таблицы с числовой сортировкой: по клику на заголовок
-// QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
-class NumberTableItem : public QTableWidgetItem
-{
-public:
-  explicit NumberTableItem(int value) : QTableWidgetItem(QString::number(value))
-  {
-    setData(Qt::UserRole, value);
-  }
-
-  bool operator<(const QTableWidgetItem &other) const override
-  {
-    return data(Qt::UserRole).toInt() < other.data(Qt::UserRole).toInt();
-  }
-};
-
-#include "main.h"
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"
-#include "views/printPreview/PrintPreview.h"
-#include "views/appConfigWindow/AppConfigDialog.h"
-#include "libraries/TrashMonitoring.h"
 #include "views/tree/TreeScreen.h"
-#include "views/telegram/TelegramImportDialog.h"
 #include "views/record/MetaEditor.h"
-#include "libraries/wyedit/EditorToolBarAssistant.h"
-#include "libraries/wyedit/EditorConfig.h"
 #include "views/recordTable/RecordTableScreen.h"
-#include "views/historyPanel/HistoryPanel.h"
-#include "views/favoritesPanel/FavoritesPanel.h"
-#include "views/backlinksPanel/BacklinksPanel.h"
-#include "libraries/BacklinkIndex.h"
-#include "views/tagsPanel/TagsPanel.h"
 #include "models/appConfig/AppConfigFind.h"
 #include "models/appConfig/AppConfigRecordTable.h"
 #include "models/appConfig/AppConfigUi.h"
-#include "libraries/AppContext.h"
-#include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/GlobalParameters.h"
-#include "views/consoleEmulator/CommandRunner.h"
-#include "libraries/WalkHistory.h"
-#include "libraries/ActionLogger.h"
 #include "libraries/WindowSwitcher.h"
-#include "views/actionLog/ActionLogScreen.h"
-#include "views/databasesManagement/DatabasesManagementScreen.h"
-#include "libraries/ShortcutManager.h"
-#include "libraries/RandomInitter.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
-#include "libraries/FixedParameters.h"
-#include "libraries/helpers/CssHelper.h"
-#include "libraries/mcp/McpTools.h"
-#include "libraries/Favorites.h"
-#include "models/recordTable/Record.h"
 
 // Восстанавливается геометрия окна и позиции основных разделителей
 void MainWindow::restoreWindowGeometry(void)

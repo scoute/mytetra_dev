@@ -17,15 +17,9 @@
 #include <algorithm>
 
 #include "McpTools.h"
-#include "main.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
-#include "models/recordTable/RecordTableData.h"
 #include "models/recordTable/Record.h"
-#include "models/appConfig/AppConfig.h"
-#include "libraries/GlobalParameters.h"
-#include "libraries/BacklinkIndex.h"
-#include "libraries/helpers/UniqueIdHelper.h"
 
 #include <QFile>
 
@@ -33,7 +27,6 @@
 static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
-#include "libraries/AppContext.h"
 
 static QJsonObject duplicateNoteObject(Record *record,
                                        const QString &branchId,

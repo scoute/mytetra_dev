@@ -48,28 +48,16 @@
 #include "Clipper.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
-#include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/wyedit/EditorConfig.h"
 #include "models/appConfig/AppConfig.h"
-#include "models/recordTable/Record.h"
-#include "models/recordTable/RecordTableData.h"
 #include "models/tree/KnowTreeModel.h"
-#include "models/tree/TreeItem.h"
 #include "views/tree/TreeScreen.h"
-#include "views/recordTable/RecordTableScreen.h"
-#include "views/clipBranchDialog/ClipBranchDialog.h"
-#include "controllers/recordTable/RecordTableController.h"
-#include "libraries/AppContext.h"
-#include "models/appConfig/AppConfigStorage.h"
-#include "models/appConfig/AppConfigServices.h"
-#include "models/appConfig/AppConfigRecordTable.h"
 #include "models/appConfig/AppConfigClipper.h"
 
 // Лимиты картинок из настроек. Клиппер фоновый (окно может быть скрыто),
 // поэтому вместо вопроса как при обычной вставке действуют лимиты,
 // а о пропусках сообщается сразу трей-уведомлением
 
-#include "ClipperPrivate.h"
 
 
 static const int defaultClipMaxImages=20;

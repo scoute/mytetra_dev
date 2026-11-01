@@ -1161,7 +1161,7 @@ QJsonObject McpSession::writeApplyBatch(const QJsonArray &operations,
       QString error;
       QJsonObject applyResult;
 
-      if(!McpTools::applyBatchOp(&m_model, op.tool, op.args, applyResult, error))
+      if(!McpTools::applyBatchOp(&m_model, m_backlinks, op.tool, op.args, applyResult, error))
         break;
 
       QJsonObject effArgs=op.args;

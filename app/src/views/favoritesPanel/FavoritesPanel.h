@@ -21,6 +21,7 @@ class QDropEvent;
 class QMimeData;
 class QVBoxLayout;
 class TreeScreen;
+class Favorites;
 
 class FavoritesPanel : public QWidget
 {
@@ -28,7 +29,8 @@ class FavoritesPanel : public QWidget
 
 public:
 
-    FavoritesPanel(QWidget *parent=nullptr);
+    // P3: хранилище избранного внедряется (было Favorites::instance())
+    explicit FavoritesPanel(Favorites *favorites, QWidget *parent=nullptr);
     virtual ~FavoritesPanel(void);
 
 public slots:
@@ -117,6 +119,9 @@ private:
     // TreeScreen захватывается в конструкторе: позже панель
     // переедет в сплиттер и parentWidget им уже не будет
     TreeScreen *treeScreenRef=nullptr;
+
+    // P3: внедренное хранилище избранного (DI вместо синглтона)
+    Favorites *m_favorites=nullptr;
 
     // Строка контекстного меню для пункта "убрать"
     QString contextNoteId;

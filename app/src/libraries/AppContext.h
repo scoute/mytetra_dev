@@ -58,13 +58,6 @@ public:
               MainWindow *mainWindow,
               CryptKeyHolder *cryptKeyHolder);
 
-    // Ленивая подвязка синглтонов-библиотек.
-    // Вызывается из main() после init(), чтобы задать им
-    // Qt-родителя и единый жизненный цикл
-    void registerSingletons(Favorites *favorites,
-                            BacklinkIndex *backlinkIndex,
-                            EditorShowTextDispatcher *dispatcher);
-
     bool isInitialized(void) const;
 
     // Ранняя привязка главного окна из конструктора MainWindow.
@@ -100,6 +93,7 @@ public:
 private:
 
     explicit AppContext(QObject *parent=nullptr);
+    ~AppContext(void) override;
 
     bool m_initialized=false;
 

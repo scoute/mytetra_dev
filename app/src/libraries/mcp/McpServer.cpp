@@ -168,11 +168,15 @@ int runMcpServer(int argc, char **argv)
 
   McpMode mode=mcpModeFromArgs(argc, argv);
 
-  KnowTreeModel model;
+  // P3: индекс и диспетчер внедряются из контекста (были ::instance()).
+  // AppContext::init уже вызван в main() до раннего возврата сюда
+  KnowTreeModel model(AppContext::instance().backlinkIndex(),
+                      AppContext::instance().dispatcher());
   model.initFromXML(xmlPath);
 
-  McpTools tools(&model);
+  McpTools tools(&model, AppContext::instance().backlinkIndex());
   McpSession session(model, xmlPath, tools,
+                     AppContext::instance().backlinkIndex(),
                      QString::fromLocal8Bit(argv[0]), mode);
 
   // GUI-баннер: я жив. Парный Bye — в конце цикла

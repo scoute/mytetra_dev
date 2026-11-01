@@ -25,7 +25,8 @@
 #include "models/appConfig/AppConfigStorage.h"
 #include "models/appConfig/AppConfigCrypto.h"
 
-AppConfigPage_Crypt::AppConfigPage_Crypt(QWidget *parent) : ConfigPage(parent)
+AppConfigPage_Crypt::AppConfigPage_Crypt(EditorShowTextDispatcher *dispatcher, QWidget *parent) : ConfigPage(parent),
+  m_dispatcher(dispatcher)
 {
   qDebug() << "Create crypt config page";
 
@@ -276,7 +277,7 @@ void AppConfigPage_Crypt::onPassRetrieveButtonClicked(void)
   {
    // Включается диалог запроса пароля "с нуля"
 
-   Password password;
+   Password password(m_dispatcher);
 
    if(password.retrievePassword()==false) return;
 
@@ -286,7 +287,7 @@ void AppConfigPage_Crypt::onPassRetrieveButtonClicked(void)
  else
   {
    // Включается диалог изменения пароля
-   Password password;
+   Password password(m_dispatcher);
 
    password.replacePassword();
   }

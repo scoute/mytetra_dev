@@ -45,6 +45,7 @@ class EditorTextArea;
 class EditorIndentSliderAssistant;
 class EditorToolBarAssistant;
 class EditorFloatToc;
+class EditorShowTextDispatcher;
 class Formatter;
 class MetaEditor;
 class EditorCursorPositionDetector;
@@ -89,6 +90,10 @@ public:
  EditorContextMenu *editorContextMenu=nullptr;
 
  EditorCursorPositionDetector *cursorPositionDetector=nullptr;
+
+ // P3: диспетчер открепляемых окон внедряется MainWindow
+ // (был EditorShowTextDispatcher::instance())
+ EditorShowTextDispatcher *showTextDispatcher=nullptr;
 
  const char *getVersion(void);
 

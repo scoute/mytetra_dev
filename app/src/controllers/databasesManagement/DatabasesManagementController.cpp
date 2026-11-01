@@ -30,7 +30,8 @@
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigStorage.h"
 
-DatabasesManagementController::DatabasesManagementController(QObject *parent) : QObject(parent)
+DatabasesManagementController::DatabasesManagementController(BacklinkIndex *backlinks, QObject *parent) : QObject(parent),
+  m_backlinks(backlinks)
 {
     // Создается область со списком записей лога
     view=new DatabasesManagementTable( qobject_cast<QWidget *>(parent) ); // Вид размещается внутри виджета Screen
@@ -180,8 +181,8 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
         tagsPanel->refreshTags();
 
     // Обратный индекс перечитывается под новое хранилище
-    BacklinkIndex::instance().setTreeModel(knowTreeModel);
-    BacklinkIndex::instance().loadOrBuild();
+    m_backlinks->setTreeModel(knowTreeModel);
+    m_backlinks->loadOrBuild();
 
     BacklinksPanel *backlinksPanel=find_object<BacklinksPanel>("backlinksPanel");
 

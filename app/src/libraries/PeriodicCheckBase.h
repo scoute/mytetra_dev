@@ -13,11 +13,15 @@
 // получаемый через AppContext::instance().appConfig()->syncSection()->getEnablePeriodicCheckBase()
 
 
+class EditorShowTextDispatcher;
+
 class PeriodicCheckBase : public TimerMonitoring
 {
     Q_OBJECT
 
 public:
+    // P3: диспетчер внедряется из main() (был ::instance())
+    void setShowTextDispatcher(EditorShowTextDispatcher *dispatcher);
 
     void init();
 
@@ -29,6 +33,9 @@ protected:
 
     bool isStartEnabled();
     void timerEvent(QTimerEvent *event);
+
+    // P3: внедренный диспетчер (DI вместо синглтона)
+    EditorShowTextDispatcher *m_dispatcher=nullptr;
 
 };
 

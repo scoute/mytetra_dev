@@ -12,12 +12,18 @@
 #include "models/appConfig/AppConfigSync.h"
 #include "models/appConfig/AppConfigStorage.h"
 
+void PeriodicCheckBase::setShowTextDispatcher(EditorShowTextDispatcher *dispatcher)
+{
+    m_dispatcher=dispatcher;
+}
+
+
 void PeriodicCheckBase::init()
 {
     TimerMonitoring::init();
 
     connect(this, &PeriodicCheckBase::doUpdateDetachedWindows,
-            EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowForNonExistentRecords,
+            m_dispatcher, &EditorShowTextDispatcher::closeWindowForNonExistentRecords,
             Qt::QueuedConnection);
 }
 

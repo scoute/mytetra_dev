@@ -19,6 +19,8 @@
 class ClipboardBranch;
 class Record;
 class QXmlStreamWriter;
+class BacklinkIndex;
+class EditorShowTextDispatcher;
 
 // Легкий снимок для выбора заметки: имя, ветка, метки.
 // Один проход по дереву, только поля из памяти, без чтения файлов.
@@ -54,7 +56,11 @@ class KnowTreeModel : public TreeModel
     Q_OBJECT
 
 public:
-    KnowTreeModel(QObject *parent = nullptr); // KnowTreeModel(const QStringList &headers, QDomDocument domModel, QObject *parent = 0);
+    // P3: индекс и диспетчер внедряются (были BacklinkIndex/EditorShowTextDispatcher::instance())
+    KnowTreeModel(BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QObject *parent = nullptr);
+
+ BacklinkIndex *backlinkIndex(void) const;
+ EditorShowTextDispatcher *showTextDispatcher(void) const;
     ~KnowTreeModel();
 
     //! Загрузка данных из файла формата mytetra.xml
@@ -217,6 +223,10 @@ signals:
 private:
 
     QString m_xmlFileName;
+
+    // P3: внедренные индекс и диспетчер (DI вместо синглтонов)
+    BacklinkIndex *m_backlinks=nullptr;
+    EditorShowTextDispatcher *m_dispatcher=nullptr;
 
     // ID вырезанной ветки, см. cutBranchId(). Не поле данных, не сохраняется
     QString cutBranchIdValue;

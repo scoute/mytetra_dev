@@ -16,11 +16,13 @@ class KnowTreeModel;
 class TreeItem;
 class QModelIndex;
 class QJsonArray;
+class BacklinkIndex;
 
 class McpTools
 {
 public:
-  explicit McpTools(KnowTreeModel *model);
+  // P3: индекс бэклинков внедряется (был BacklinkIndex::instance())
+  explicit McpTools(KnowTreeModel *model, BacklinkIndex *backlinks);
 
   // Лимиты ответов: экономия токенов, обрезка с флагом truncated
   static const int DEFAULT_LIST_LIMIT=50;
@@ -117,7 +119,9 @@ public:
   // Удаление записи: файлы в корзину, запись из XML долой, сайдкар
   // бэклинков чистится. Возвращает {id, deleted}. Шифр не мешает:
   // для перемещения в корзину ключ не нужен
+  // P3: индекс бэклинков внедряется параметром (был BacklinkIndex::instance())
   static bool applyDeleteNote(KnowTreeModel *model,
+                              BacklinkIndex *backlinks,
                               const QString &noteId,
                               QString &error);
 
@@ -236,7 +240,7 @@ static QJsonObject applyFavoriteNote(KnowTreeModel *model,
   // НОРМАЛИЗОВАННЫЕ: id сгенерирован вызывающим, html готов, флаги
   // has_* выставлены. result по форме одиночных тулов. false = отказ.
   // import/export не поддерживаются (свой сейв и файловые эффекты)
-  static bool applyBatchOp(KnowTreeModel *model,
+  static bool applyBatchOp(KnowTreeModel *model, BacklinkIndex *backlinks,
                            const QString &tool,
                            const QJsonObject &args,
                            QJsonObject &result,
@@ -283,6 +287,7 @@ QJsonObject importBranchDirect(const QString &parentId,
 
 private:
   KnowTreeModel *m_model;
+  BacklinkIndex *m_backlinks=nullptr;
 
   void appendBranches(const QModelIndex &parent, const QString &parentId, QJsonArray &out);
   void collectBranchNotes(TreeItem *item, bool recursive, QJsonArray &out);

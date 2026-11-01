@@ -16,12 +16,6 @@
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigStorage.h"
 
-BacklinkIndex &BacklinkIndex::instance(void)
-{
-  static BacklinkIndex inst;
-  return inst;
-}
-
 BacklinkIndex::BacklinkIndex(QObject *parent) : QObject(parent)
 {
 }

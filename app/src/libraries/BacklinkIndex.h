@@ -24,7 +24,8 @@ class BacklinkIndex : public QObject
 
 public:
 
-  static BacklinkIndex &instance(void);
+  // P3: синглтон убран, владелец - AppContext (DI)
+  explicit BacklinkIndex(QObject *parent=nullptr);
 
   // Модель дерева для проверки существования записей и чтения файлов.
   // Лениво подхватывается из knowTreeView, если не задана явно
@@ -88,8 +89,6 @@ signals:
   void backlinksChanged(void);
 
 private:
-
-  explicit BacklinkIndex(QObject *parent=nullptr);
 
   void rebuildReverse(void);
   bool recordExists(const QString &recordId) const;

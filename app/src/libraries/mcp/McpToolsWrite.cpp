@@ -484,6 +484,7 @@ QJsonObject McpTools::updateNoteDirect(const QString &noteId,
 }
 
 bool McpTools::applyDeleteNote(KnowTreeModel *model,
+                               BacklinkIndex *backlinks,
                                const QString &noteId,
                                QString &error)
 {
@@ -532,7 +533,7 @@ bool McpTools::applyDeleteNote(KnowTreeModel *model,
   QString sidecar=QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/backlinks.xml");
 
   if(QFile::exists(sidecar))
-    BacklinkIndex::instance().removeSources(QStringList() << noteId);
+    backlinks->removeSources(QStringList() << noteId);
 
   return true;
 }
@@ -577,7 +578,7 @@ QJsonObject McpTools::deleteNoteDirect(const QString &noteId, QString &error)
 {
   QJsonObject result;
 
-  if(!applyDeleteNote(m_model, noteId, error))
+  if(!applyDeleteNote(m_model, m_backlinks, noteId, error))
     return result;
 
   m_model->save();
@@ -850,6 +851,7 @@ QJsonObject McpTools::moveNoteDirect(const QString &noteId,
 }
 
 bool McpTools::applyBatchOp(KnowTreeModel *model,
+                                BacklinkIndex *backlinks,
                                 const QString &tool,
                                 const QJsonObject &args,
                                 QJsonObject &result,
@@ -904,6 +906,7 @@ bool McpTools::applyBatchOp(KnowTreeModel *model,
   if(tool==QStringLiteral("delete_note"))
   {
     if(!applyDeleteNote(model,
+                        backlinks,
                         args.value("note_id").toString(),
                         error))
       return false;

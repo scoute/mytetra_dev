@@ -15,7 +15,8 @@
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
 
-AppConfigPage_Favorites::AppConfigPage_Favorites(QWidget *parent) : ConfigPage(parent)
+AppConfigPage_Favorites::AppConfigPage_Favorites(Favorites *favorites, QWidget *parent) : ConfigPage(parent),
+    m_favorites(favorites)
 {
     setupUi();
     setupSignals();
@@ -127,7 +128,7 @@ int AppConfigPage_Favorites::applyChanges()
                                                       : Favorites::StorageSidecar;
 
     if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()!=wantedStorage)
-        Favorites::instance().setStorage(wantedStorage);
+        m_favorites->setStorage(wantedStorage);
 
     return result;
 }

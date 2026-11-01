@@ -5,6 +5,7 @@
 
 class DatabasesManagementTable;
 class DatabasesManagementModel;
+class BacklinkIndex;
 
 class DatabasesManagementController : public QObject
 {
@@ -12,7 +13,8 @@ class DatabasesManagementController : public QObject
 
 public:
 
-  DatabasesManagementController(QObject *parent = nullptr);
+  // P3: индекс внедряется (был BacklinkIndex::instance())
+  DatabasesManagementController(BacklinkIndex *backlinks, QObject *parent = nullptr);
   virtual ~DatabasesManagementController();
 
   DatabasesManagementTable *getView(void);
@@ -38,6 +40,9 @@ protected:
 
   DatabasesManagementTable *view;
   DatabasesManagementModel *model;
+
+  // P3: внедренный индекс (DI вместо синглтона)
+  BacklinkIndex *m_backlinks=nullptr;
 
 };
 

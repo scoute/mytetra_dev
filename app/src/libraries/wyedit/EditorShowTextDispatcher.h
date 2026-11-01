@@ -17,8 +17,10 @@ class EditorShowTextDispatcher : public QObject
     Q_OBJECT
 public:
 
-    //! Класс в виде синглтона
-    static EditorShowTextDispatcher *instance();
+    // P3: синглтон убран, владелец - AppContext (DI).
+    // Создается один раз в AppContext, живет весь рантайм
+    explicit EditorShowTextDispatcher(QObject *parent = nullptr);
+    ~EditorShowTextDispatcher() override;
 
     void createWindow(const QString &noteId, int x=-1, int y=-1, int w=-1, int h=-1, int vScroll=0);
 
@@ -51,8 +53,7 @@ public slots:
 
 protected:
 
-    explicit EditorShowTextDispatcher(QObject *parent = nullptr);
-    virtual ~EditorShowTextDispatcher();
+    // Код диспетчера должен выполняться в отдельном треде,
 
     // Код диспетчера должен выполняться в отдельном треде,
     // как минимум методы закрытия окошек по списку

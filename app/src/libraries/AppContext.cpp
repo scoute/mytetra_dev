@@ -1,4 +1,7 @@
 #include "AppContext.h"
+#include "libraries/Favorites.h"
+#include "libraries/BacklinkIndex.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 
 
 AppContext &AppContext::instance(void)
@@ -11,7 +14,23 @@ AppContext &AppContext::instance(void)
 
 AppContext::AppContext(QObject *parent) : QObject(parent)
 {
+    // P3: тройка бывших синглтонов живет весь рантайм под этим объектом.
+    // Создаются при первом instance() в main() (после QApplication).
+    // Диспетчер - без родителя: он сразу уезжает в свой QThread,
+    // а moveToThread запрещен для объектов с родителем
+    // (см. EditorShowTextDispatcher::EditorShowTextDispatcher).
+    // Удаляется вручную в деструкторе, как раньше удалялся
+    // бессмертный Meyers-static при выходе
+    m_favorites=new Favorites(this);
+    m_backlinkIndex=new BacklinkIndex(this);
+    m_dispatcher=new EditorShowTextDispatcher(nullptr);
+}
 
+
+AppContext::~AppContext(void)
+{
+    delete m_dispatcher;
+    m_dispatcher=nullptr;
 }
 
 
@@ -48,16 +67,6 @@ void AppContext::init(FixedParameters *fixedParameters,
     m_cryptKeyHolder=cryptKeyHolder;
 
     m_initialized=true;
-}
-
-
-void AppContext::registerSingletons(Favorites *favorites,
-                                    BacklinkIndex *backlinkIndex,
-                                    EditorShowTextDispatcher *dispatcher)
-{
-    m_favorites=favorites;
-    m_backlinkIndex=backlinkIndex;
-    m_dispatcher=dispatcher;
 }
 
 

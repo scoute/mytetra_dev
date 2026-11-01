@@ -11,7 +11,8 @@
 #include "libraries/helpers/ActionHelper.h"
 #include "libraries/AppContext.h"
 
-DatabasesManagementScreen::DatabasesManagementScreen(QWidget *parent) : QDialog(parent)
+DatabasesManagementScreen::DatabasesManagementScreen(BacklinkIndex *backlinks, QWidget *parent) : QDialog(parent),
+  m_backlinks(backlinks)
 {
   // По факту объект этого класса имеется в единичном экземпляре. Такой объект сам задает себе имя
   this->setObjectName("databasesManagementScreen");
@@ -19,7 +20,7 @@ DatabasesManagementScreen::DatabasesManagementScreen(QWidget *parent) : QDialog(
   this->setWindowTitle(tr("Databases management"));
 
   // Инициализируется контроллер отображения записей лога
-  databasesManagementController=new DatabasesManagementController(this);
+  databasesManagementController=new DatabasesManagementController(m_backlinks, this);
   databasesManagementController->setObjectName("DatabasesManagementController");
 
   setupActions();

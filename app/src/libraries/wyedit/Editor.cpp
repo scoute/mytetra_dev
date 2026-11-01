@@ -1205,7 +1205,7 @@ void Editor::saveTextarea(void)
     }
 
     // Обновляется открепляемое окно с текстом записи, если таковое открыто
-    EditorShowTextDispatcher::instance()->updateWindow( this->getMiscField("id") );
+    showTextDispatcher->updateWindow( this->getMiscField("id") );
 
     // Так как произошло сохранение,
     // отмечается что новый текст небыл еще изменен
@@ -2461,7 +2461,7 @@ void Editor::onShowTextClicked(void)
     return;
   }
 
-  EditorShowTextDispatcher::instance()->createWindow( this->getMiscField("id") );
+  showTextDispatcher->createWindow( this->getMiscField("id") );
 }
 
 void Editor::setTabSize()

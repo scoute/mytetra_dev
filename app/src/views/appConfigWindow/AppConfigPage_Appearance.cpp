@@ -14,7 +14,8 @@
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
 
-AppConfigPage_Appearance::AppConfigPage_Appearance(QWidget *parent) : ConfigPage(parent)
+AppConfigPage_Appearance::AppConfigPage_Appearance(EditorShowTextDispatcher *dispatcher, QWidget *parent) : ConfigPage(parent),
+    m_dispatcher(dispatcher)
 {
     setupUi();
     setupSignals();
@@ -95,7 +96,7 @@ int AppConfigPage_Appearance::applyChanges()
     {
         AppContext::instance().appConfig()->uiSection()->setDockableWindowsBehavior(mode);
 
-        EditorShowTextDispatcher::instance()->switchBehavior(mode);
+        m_dispatcher->switchBehavior(mode);
     }
 
     return result;

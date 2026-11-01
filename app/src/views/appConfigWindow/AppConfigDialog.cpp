@@ -19,6 +19,7 @@
 #include "AppConfigPage_History.h"
 #include "AppConfigPage_Search.h"
 #include "AppConfigPage_Favorites.h"
+#include "libraries/AppContext.h"
 #include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Mcp.h"
 #include "AppConfigPage_Voice.h"
@@ -51,11 +52,11 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     // В качестве родителя надо указывать parent а не configDialog (разобраться почему)
     pageMain       =configDialog->addWidget(new AppConfigPage_Main( parent ),
                                             QObject::tr("Main"));
-    pageAppearance=configDialog->addWidget(new AppConfigPage_Appearance( parent ),
+    pageAppearance=configDialog->addWidget(new AppConfigPage_Appearance( AppContext::instance().dispatcher(), parent ),
                                             QObject::tr("Appearance"));
     pageTheme      =configDialog->addWidget(new AppConfigPage_Theme( parent ),
                                             QObject::tr("Themes"));
-    pageCrypt      =configDialog->addWidget(new AppConfigPage_Crypt( parent ),
+    pageCrypt      =configDialog->addWidget(new AppConfigPage_Crypt( AppContext::instance().dispatcher(), parent ),
                                             QObject::tr("Crypt"));
     pageSynchro    =configDialog->addWidget(new AppConfigPage_Synchro( parent ),
                                             QObject::tr("Synchro"));
@@ -71,7 +72,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
                                             QObject::tr("History"));
     pageSearch     =configDialog->addWidget(new AppConfigPage_Search( parent ),
                                             QObject::tr("Search"));
-    pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( parent ),
+    pageFavorites  =configDialog->addWidget(new AppConfigPage_Favorites( AppContext::instance().favorites(), parent ),
                                             QObject::tr("Favorites"));
     pageClipper    =configDialog->addWidget(new AppConfigPage_Clipper( parent ),
                                             QObject::tr("Clipper"));

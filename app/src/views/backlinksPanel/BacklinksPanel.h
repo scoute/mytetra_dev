@@ -8,6 +8,7 @@ class QLabel;
 class QListWidget;
 class QListWidgetItem;
 class QTextDocument;
+class BacklinkIndex;
 
 
 // Док-панель входящих и исходящих ссылок mytetra://note/.
@@ -22,7 +23,8 @@ class BacklinksPanel : public QWidget
 
 public:
 
-  BacklinksPanel(QWidget *parent=nullptr);
+  // P3: индекс внедряется (был BacklinkIndex::instance())
+  explicit BacklinksPanel(BacklinkIndex *backlinks, QWidget *parent=nullptr);
   virtual ~BacklinksPanel(void);
 
 public slots:
@@ -69,6 +71,9 @@ private:
   // Указатель стабилен: loadTextarea делает setHtml в тот же документ
   QTextDocument *liveDoc=nullptr;
   bool outgoingPending=false;
+
+  // P3: внедренный индекс обратных ссылок (DI вместо синглтона)
+  BacklinkIndex *m_backlinks=nullptr;
 };
 
 #endif // BACKLINKSPANEL_H

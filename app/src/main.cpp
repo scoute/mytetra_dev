@@ -39,9 +39,6 @@
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
 #include "libraries/AppContext.h"
-#include "libraries/Favorites.h"
-#include "libraries/BacklinkIndex.h"
-#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/CssHelper.h"
 #include "models/appConfig/AppConfigUi.h"
@@ -257,19 +254,13 @@ void parseConsoleOption(QtSingleApplication &app)
 
 int main(int argc, char ** argv)
 {
-    // MCP-режимы раньше всего остального: ни GUI, ни single-instance,
-    // ни вывод в stdout (он отдан протоколу) здесь не нужны.
+    // MCP-режимы раньше GUI и single-instance, но ПОСЛЕ AppContext::init:
+    // серверный тракт ходит в конфиг через контекст (P3), а файловая
+    // инициализация ядра лишь запоминает указатели - ни GUI, ни вывод
+    // в stdout (он отдан протоколу) здесь не затрагиваются.
     // --mcp оставлен для совместимости и означает read-only
-    for(int i=1; i<argc; ++i)
-    {
-        QString arg=QString::fromLocal8Bit(argv[i]);
-
-        if(arg=="--mcp" || arg=="--mcp-ro" ||
-           arg=="--mcp-rw" || arg=="--mcp-rw-with-delete")
-            return runMcpServer(argc, argv);
-    }
-
-    printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
+    // (сам ранний возврат ниже, сразу за AppContext::init, но ДО баннера
+    // версии в stdout - протокол NDJSON не терпит лишнего вывода)
 
     // Разрешение масштабирования в высоком DPI, вызывается перед подгрузкой ресурсов с графикой
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -305,6 +296,19 @@ int main(int argc, char ** argv)
                                 nullptr,
                                 nullptr,
                                 &globalParameters.cryptHolder());
+
+    // MCP-режимы раньше GUI и single-instance (см. коммент выше):
+    // ядро уже инициализировано, runMcpServer сразу работает
+    for(int i=1; i<argc; ++i)
+    {
+        QString arg=QString::fromLocal8Bit(argv[i]);
+
+        if(arg=="--mcp" || arg=="--mcp-ro" ||
+           arg=="--mcp-rw" || arg=="--mcp-rw-with-delete")
+            return runMcpServer(argc, argv);
+    }
+
+    printf("\n\rStart MyTetra v.%d.%d.%d\n\r", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
 
     // Перехват отладочных сообщений
     setDebugMessageHandler();
@@ -382,22 +386,15 @@ int main(int argc, char ** argv)
     // P1: разрыв WalkHistory -> extern visitHistory, внедрение зависимости
     walkHistory.setVisitHistory(&visitHistory);
 
-    // P1: синглтоны-библиотеки получают Qt-родителя и единый жизненный цикл.
-    // Раньше были бессмертные Meyers static без владельца
-    Favorites::instance().setParent(&app);
-    BacklinkIndex::instance().setParent(&app);
-    EditorShowTextDispatcher::instance()->setParent(&app);
-
     // Создание объекта главного окна
     MainWindow win;
 
-    // P1: центральная точка доступа. Окно уже привязано из конструктора
+    // P1+P3: центральная точка доступа. Тройка бывших синглтонов уже
+    // создана в конструкторе AppContext; setParent переподчиняет их
+    // приложению вместе с самим ядром. Окно привязано из конструктора
     // (setMainWindow), буфер - здесь после создания
     AppContext::instance().setParent(&app);
     AppContext::instance().setInternalClipboard(internalClipboard);
-    AppContext::instance().registerSingletons(&Favorites::instance(),
-                                              &BacklinkIndex::instance(),
-                                              EditorShowTextDispatcher::instance());
 
     // Сразу восстанавливается вид окна в предыдущий запуск
     // Эти действия нельзя делать в конструкторе главного окна, т.к. окно еще не создано
@@ -455,7 +452,7 @@ int main(int argc, char ** argv)
                 // Если ветка зашифрована, пароль и так будет запрошен автоматически
                 if (win.isTreePositionCrypt()==false)
                 {
-                    Password password;
+                    Password password(AppContext::instance().dispatcher());
                     password.retrievePassword();
                 }
             }
@@ -470,7 +467,7 @@ int main(int argc, char ** argv)
                 {
                     // При запросе пароля ключ шифрования будет восстановлен автоматически,
                     // если он правильный и подходит для текущих данных
-                    Password password;
+                    Password password(AppContext::instance().dispatcher());
                     password.retrievePassword();
                 }
 
@@ -488,6 +485,7 @@ int main(int argc, char ** argv)
     */
 
     // Инициалиация периодической проверки изменения базы сторонними программами
+    periodicCheckBase.setShowTextDispatcher(AppContext::instance().dispatcher());
     periodicCheckBase.init();
     periodicCheckBase.setDelay( AppContext::instance().appConfig()->syncSection()->getCheckBasePeriod() );
     periodicCheckBase.start();

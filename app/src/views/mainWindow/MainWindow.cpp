@@ -137,6 +137,8 @@ MainWindow::MainWindow() : QMainWindow()
     mcpBridge=new McpGuiBridge(treeScreen->knowTreeModel, this);
     mcpBridge->isReadOnly=[]() { return AppContext::instance().appConfig()->recordTableSection()->isGlobalReadOnly(); };
     mcpBridge->mcpAllowed=[]() { return AppContext::instance().appConfig()->servicesSection()->get_mcpAllow(); };
+    mcpBridge->setFavorites(AppContext::instance().favorites());
+    mcpBridge->setBacklinkIndex(AppContext::instance().backlinkIndex());
     mcpBridge->clearEditor=[]() { find_object<MetaEditor>("editorScreen")->clearAll(); };
     connect(mcpBridge, &McpGuiBridge::sessionChanged, this, &MainWindow::updateMcpBanner);
     connect(mcpBridge, &McpGuiBridge::historyChanged, this, &MainWindow::updateMcpHistoryDialog);
@@ -198,11 +200,15 @@ void MainWindow::setupUI(void)
 {
     // При создании объектов не указывается parent, так как он буден задан в момент вставки в layout в методе assembly()
 
-    treeScreen=new TreeScreen( this );
+    treeScreen=new TreeScreen(AppContext::instance().favorites(),
+                                   AppContext::instance().backlinkIndex(),
+                                   AppContext::instance().dispatcher(), this );
     treeScreen->setObjectName("treeScreen");
     AppContext::instance().globalParameters()->setTreeScreen(treeScreen);
 
-    recordTableScreen=new RecordTableScreen( this );
+    recordTableScreen=new RecordTableScreen(AppContext::instance().favorites(),
+                                                       AppContext::instance().backlinkIndex(),
+                                                       AppContext::instance().dispatcher(), this );
     recordTableScreen->setObjectName("recordTableScreen");
     AppContext::instance().globalParameters()->setRecordTableScreen(recordTableScreen);
 
@@ -212,6 +218,7 @@ void MainWindow::setupUI(void)
 
     editorScreen=new MetaEditor( this );
     editorScreen->setObjectName("editorScreen");
+    editorScreen->showTextDispatcher=AppContext::instance().dispatcher();
     AppContext::instance().globalParameters()->setMetaEditor(editorScreen);
 
     statusBar=new QStatusBar( this );
@@ -259,7 +266,7 @@ void MainWindow::setupUI(void)
 
     // Панель входящих ссылок в доке справа. По умолчанию скрыта,
     // переключается из меню Tools
-    backlinksPanel=new BacklinksPanel(this);
+    backlinksPanel=new BacklinksPanel(AppContext::instance().backlinkIndex(), this);
     backlinksPanel->setObjectName("backlinksPanel");
 
     backlinksPanelDock=new QDockWidget(tr("Backlinks"), this);
@@ -387,7 +394,7 @@ void MainWindow::setupSignals(void)
     // Связывание сигнала вызова обработки открепляемых окон на предмет того,
     // что они отображают существующие записи
     connect(this, &MainWindow::doUpdateDetachedWindows,
-            EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowForNonExistentRecords,
+            AppContext::instance().dispatcher(), &EditorShowTextDispatcher::closeWindowForNonExistentRecords,
             Qt::QueuedConnection);
 
     // Обновление горячих клавиш, если они были изменены
@@ -484,7 +491,7 @@ void MainWindow::assembly(void)
 
     // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
     // при первом запуске строится полным сканом базы
-    BacklinkIndex::instance().loadOrBuild();
+    AppContext::instance().backlinkIndex()->loadOrBuild();
 }
 
 void MainWindow::saveAllState(void)
@@ -1065,7 +1072,7 @@ void MainWindow::filePrintPdf(void)
 // Раздел меню File, управление базами данных
 void MainWindow::fileDatabasesManagement(void)
 {
-    DatabasesManagementScreen databasesManagementScreen(this);
+    DatabasesManagementScreen databasesManagementScreen(AppContext::instance().backlinkIndex(), this);
     databasesManagementScreen.exec();
 }
 
@@ -1450,7 +1457,7 @@ void MainWindow::onSyncroCommandFinishWork()
 
     // После того, как дерево перечитано, содержимое открепляемых окон обновляется,
     // так как содержимое записей могло поменяться (т. к. получены новые изменения)
-    EditorShowTextDispatcher::instance()->updateAllWindows();
+    AppContext::instance().dispatcher()->updateAllWindows();
 
     // Возможно, что после обновления имеются открепляемые окна, показывающие
     // записи, которые были удалены при синхронизации. Такие окна должны быть закрыты.
@@ -1499,12 +1506,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
         // данное действие нельзя делать в saveAllState(), вызываемое из деструктора, так как если
         // все открепляемые окна не будут закрыты (см. следующею команду), то деструктор
         // главного окна не будет вызываться объектом приложения
-        EditorShowTextDispatcher::instance()->saveOpenWindows();
+        AppContext::instance().dispatcher()->saveOpenWindows();
 
         // Закрытие открепляемых окон, даже если главное окно не является родителем для
         // открепляемых окон, чтобы не осталось "висячих" открепляемых окон, которые
         // не будут давать закрыться приложению
-        EditorShowTextDispatcher::instance()->closeAllWindowsForExit();
+        AppContext::instance().dispatcher()->closeAllWindowsForExit();
 
         exitCounter++;
     }
@@ -1673,7 +1680,7 @@ void MainWindow::saveTextarea(void)
 
     // Текст на диске обновился: перепарсить исходящие ссылки записи
     if(!id.isEmpty())
-      BacklinkIndex::instance().updateSource(id);
+      AppContext::instance().backlinkIndex()->updateSource(id);
 
     // Текст мог принести/убрать картинки и ссылки: одна строка
     // в кеше без полного прохода, подпись из него же

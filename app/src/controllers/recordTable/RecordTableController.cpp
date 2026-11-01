@@ -72,7 +72,10 @@ static bool hasVoiceContent(QTextDocument *doc)
 #include "models/appConfig/AppConfigSync.h"
 #include "models/appConfig/AppConfigStorage.h"
 
-RecordTableController::RecordTableController(QObject *parent) : QObject(parent)
+RecordTableController::RecordTableController(Favorites *favorites, BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QObject *parent) : QObject(parent),
+  m_favorites(favorites),
+  m_backlinks(backlinks),
+  m_dispatcher(dispatcher)
 {
   // Инициализируется область со списком записей
   view=new RecordTableView( qobject_cast<QWidget *>(parent) ); // Вид размещается внутри виджета Screen
@@ -91,7 +94,7 @@ RecordTableController::RecordTableController(QObject *parent) : QObject(parent)
   view->setModel(recordProxyModel);
 
   connect(this, &RecordTableController::doCloseDetachedWindowsByIdVector,
-          EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowByIdVector,
+          m_dispatcher, &EditorShowTextDispatcher::closeWindowByIdVector,
           Qt::QueuedConnection);
 }
 
@@ -687,7 +690,7 @@ void RecordTableController::onFavoriteContext(void)
 
   const QString id=table->getField("id", pos);
 
-  Favorites::instance().setFavorite(id, !Favorites::instance().isFavorite(id));
+  m_favorites->setFavorite(id, !m_favorites->isFavorite(id));
 
   int viewPos=index.row();
   view->updateRow(viewPos);
@@ -703,7 +706,7 @@ bool RecordTableController::isCurrentRecordFavorite(void)
   QModelIndex sourceIndex=convertProxyIndexToSourceIndex(selectItems.at(0));
   RecordTableData *table=recordSourceModel->getTableData();
 
-  return Favorites::instance().isFavorite(table->getField("id", sourceIndex.row()));
+  return m_favorites->isFavorite(table->getField("id", sourceIndex.row()));
 }
 
 // При выборе пункта "Блокировка записи" в контекстном меню
@@ -920,7 +923,7 @@ void RecordTableController::deleteRecords(void)
   removeRowsByIdList(delIds);
 
   // Чистка обратного индекса: источники ушли в корзину
-  BacklinkIndex::instance().removeSources(delIds.toList());
+  m_backlinks->removeSources(delIds.toList());
 
   // Сохранение дерева веток
   TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");

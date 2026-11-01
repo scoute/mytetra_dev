@@ -17,6 +17,7 @@
 
 class KnowTreeModel;
 class McpTools;
+class BacklinkIndex;
 
 // Режимы сервера: read-only, read-write, read-write с удалением.
 enum class McpMode { ReadOnly=0, ReadWrite=1, ReadWriteDelete=2 };
@@ -51,8 +52,9 @@ class McpSession
 {
 public:
   McpSession(KnowTreeModel &model, const QString &xmlPath, McpTools &tools,
+             BacklinkIndex *backlinks,
              const QString &binaryPath, McpMode mode)
-    : m_model(model), m_xmlPath(xmlPath), m_tools(tools),
+    : m_model(model), m_xmlPath(xmlPath), m_tools(tools), m_backlinks(backlinks),
       m_binaryPath(binaryPath), m_mode(mode)
   {
     m_xmlMtime=QFileInfo(xmlPath).lastModified();
@@ -66,6 +68,7 @@ private:
   KnowTreeModel &m_model;
   QString m_xmlPath;
   McpTools &m_tools;
+  BacklinkIndex *m_backlinks=nullptr;
   QString m_binaryPath;
   McpMode m_mode;
   QDateTime m_xmlMtime;

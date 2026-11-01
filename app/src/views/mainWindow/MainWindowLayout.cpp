@@ -462,7 +462,7 @@ void MainWindow::restoreAllWindowState(void)
 void MainWindow::restoreDockableWindowsState()
 {
     // Восстанавливаются открепляемые окна
-    EditorShowTextDispatcher::instance()->restoreOpenWindows();
+    AppContext::instance().dispatcher()->restoreOpenWindows();
 }
 
 // Создание раздела меню File

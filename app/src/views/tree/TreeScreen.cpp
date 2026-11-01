@@ -44,7 +44,10 @@
 #include "models/appConfig/AppConfigUi.h"
 #include "models/appConfig/AppConfigStorage.h"
 
-TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
+TreeScreen::TreeScreen(Favorites *favorites, BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QWidget *parent) : QWidget(parent),
+  m_favorites(favorites),
+  m_backlinks(backlinks),
+  m_dispatcher(dispatcher)
 {
   lastKnowTreeModifyDateTime=QDateTime();
   lastKnowTreeSize=0;
@@ -189,7 +192,7 @@ void TreeScreen::setupActions(void)
  // Панель избранного между кнопками веток и деревом. Создается здесь,
  // а не в MainWindow, чтобы лежать ровно под тулбаром. Скрыта пока
  // пусто или фича выключена: дизайн не ломается
- favoritesPanel=new FavoritesPanel(this);
+ favoritesPanel=new FavoritesPanel(m_favorites, this);
  favoritesPanel->setObjectName("favoritesPanel");
  favoritesPanel->hide();
 
@@ -532,7 +535,7 @@ void TreeScreen::setupUI(void)
 void TreeScreen::setupModels(void)
 {
  // Создание и первичная настройка модели
- knowTreeModel = new KnowTreeModel(this);
+ knowTreeModel = new KnowTreeModel(m_backlinks, m_dispatcher, this);
 
  // Установка заголовка
  // QStringList headers;
@@ -1522,7 +1525,7 @@ void TreeScreen::encryptBranch(void)
  if(AppContext::instance().globalParameters()->getCryptKey().size()==0)
   {
    // Запрашивается пароль
-   Password password;
+   Password password(m_dispatcher);
    if(password.retrievePassword()==true) // Если пароль введен правильно
     encryptBranchItem(); // Ветка шифруется
   }
@@ -1541,7 +1544,7 @@ void TreeScreen::decryptBranch(void)
  if(AppContext::instance().globalParameters()->getCryptKey().size()==0)
   {
    // Запрашивается пароль
-   Password password;
+   Password password(m_dispatcher);
    if(password.retrievePassword()==true) // Если пароль введен правильно
     decryptBranchItem(); // Ветка расшифровывается
   }
@@ -1689,7 +1692,7 @@ void TreeScreen::exportBranchToDirectory(QString exportDir)
     showMessageBox(tr("Exported tree item contains encrypted data.\nPlease click OK and enter the password.\nAll data will be exported unencrypted."));
 
     // Запрашивается пароль
-    Password password;
+    Password password(m_dispatcher);
     if(password.enterExistsPassword()==false) // Если пароль введен неверно, выгрузка работать не должна
       return;
   }
@@ -1724,7 +1727,7 @@ void TreeScreen::importBranchFromDirectory(QString importDir)
     showMessageBox(tr("You are importing into an encrypted item.\nPlease click Ok and enter the password.\nAll data imported will be encrypted."));
 
     // Запрашивается пароль
-    Password password;
+    Password password(m_dispatcher);
     if(password.enterExistsPassword()==false) // Если пароль введен неверно, импорт работать не должен
       return;
   }
@@ -1902,7 +1905,7 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         find_object<RecordTableController>("recordTableController")->setTableData(nullptr);
 
         // Запрашивается пароль
-        Password password;
+        Password password(m_dispatcher);
         if ( password.retrievePassword() ) // Если пароль введен верно
         {
             // Инструменты работы с веткой включаются
@@ -2096,7 +2099,7 @@ void TreeScreen::treeCryptControl(void)
  if(knowTreeModel->isContainsCryptBranches()==false)
   {
    // Запускается диалог сброса пароля шифрования
-   Password pwd;
+   Password pwd(m_dispatcher);
    pwd.resetPassword();
   }
 }

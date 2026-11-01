@@ -58,14 +58,28 @@ static bool isSafeImportFileName(const QString &name)
 }
 
 // Конструктор модели дерева, состоящего из Item элементов
-KnowTreeModel::KnowTreeModel(QObject *parent) : TreeModel(parent)
+KnowTreeModel::KnowTreeModel(BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QObject *parent) : TreeModel(parent),
+  m_backlinks(backlinks),
+  m_dispatcher(dispatcher)
 {
   m_xmlFileName="";
   rootItem=nullptr;
 
   connect(this, &KnowTreeModel::doCloseDetachedWindowByIdSet,
-          EditorShowTextDispatcher::instance(), &EditorShowTextDispatcher::closeWindowByIdSet,
+          m_dispatcher, &EditorShowTextDispatcher::closeWindowByIdSet,
           Qt::QueuedConnection);
+}
+
+
+BacklinkIndex *KnowTreeModel::backlinkIndex(void) const
+{
+  return m_backlinks;
+}
+
+
+EditorShowTextDispatcher *KnowTreeModel::showTextDispatcher(void) const
+{
+  return m_dispatcher;
 }
 
 // Деструктор Item модели.
@@ -1837,7 +1851,7 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
     emit doCloseDetachedWindowByIdSet( deleteResordsId );
 
     // Чистка обратного индекса: записи веток ушли в корзину
-    BacklinkIndex::instance().removeSources(deleteResordsId.toList());
+    m_backlinks->removeSources(deleteResordsId.toList());
 }
 
 // Удаление одной ветки и её подветок
@@ -2032,7 +2046,7 @@ void KnowTreeModel::reEncrypt(QString previousPassword, QString currentPassword)
     if(currBranch->getField("crypt")=="1" &&
        currBranchParent->getField("crypt")!="1")
     {
-      Password pwd;
+      Password pwd(m_dispatcher);
 
       pwd.setCryptKeyToMemory(previousPassword);
       currBranch->switchToDecrypt();

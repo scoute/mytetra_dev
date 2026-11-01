@@ -32,9 +32,10 @@
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
 
-FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
+FavoritesPanel::FavoritesPanel(Favorites *favorites, QWidget *parent) : QWidget(parent),
     treeMetadataConnected(false),
-    treeScreenRef(qobject_cast<TreeScreen *>(parent))
+    treeScreenRef(qobject_cast<TreeScreen *>(parent)),
+    m_favorites(favorites)
 {
     setupUi();
     assembly();
@@ -46,8 +47,8 @@ FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
 
     // Хранилище-синглтон уже есть: звездочки из меню и настроек
     // сами дергают пересборку
-    connect(&Favorites::instance(), &Favorites::favoritesChanged,
-            this,                   &FavoritesPanel::onFavoritesChanged);
+    connect(m_favorites, &Favorites::favoritesChanged,
+            this,        &FavoritesPanel::onFavoritesChanged);
 
     // Подписка сразу через родителя: скрытая панель не получит showEvent,
     // а find_object() в конструкторе завершил бы программу (TreeScreen
@@ -223,7 +224,7 @@ void FavoritesPanel::dropEvent(QDropEvent *event)
         QString id=clipboardRecords->getRecord(i).getField(QStringLiteral("id"));
 
         if(!id.isEmpty())
-            Favorites::instance().setFavorite(id, true);
+            m_favorites->setFavorite(id, true);
     }
 
     event->setDropAction(Qt::CopyAction);
@@ -328,7 +329,7 @@ void FavoritesPanel::onRemoveFavorite(void)
         return;
 
     // Хранилище само сохраняется и дергает пересборку сигналом
-    Favorites::instance().setFavorite(contextNoteId, false);
+    m_favorites->setFavorite(contextNoteId, false);
 
     contextNoteId.clear();
 }
@@ -486,7 +487,7 @@ void FavoritesPanel::refreshFavorites(void)
     QStringList dead;
 
     if(dataModel!=nullptr)
-        for(const QString &id : Favorites::instance().ids())
+        for(const QString &id : m_favorites->ids())
         {
             const QStringList path=dataModel->getRecordPath(id);
 

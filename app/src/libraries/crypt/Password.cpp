@@ -22,7 +22,8 @@
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigCrypto.h"
 
-Password::Password(void)
+Password::Password(EditorShowTextDispatcher *dispatcher, QObject *parent) : QObject(parent),
+  m_dispatcher(dispatcher)
 { 
 }
 
@@ -61,7 +62,8 @@ bool Password::retrievePassword()
             saveCheckPasswordKey(password);
 
             // Содержимое открепляемых окон обновляется, чтобы было показано зашифрованное содержимое
-            EditorShowTextDispatcher::instance()->updateAllWindows();
+            if(m_dispatcher!=nullptr)
+                m_dispatcher->updateAllWindows();
 
             return true;
         }
@@ -83,7 +85,8 @@ bool Password::retrievePassword()
                     setCryptKeyToMemoryFromMiddleHash();
 
                     // Содержимое открепляемых окон обновляется, чтобы было показано зашифрованное содержимое
-                    EditorShowTextDispatcher::instance()->updateAllWindows();
+                    if(m_dispatcher!=nullptr)
+                        m_dispatcher->updateAllWindows();
 
                     // И пароль у пользователя запрашивать не нужно
                     return true;
@@ -116,7 +119,8 @@ bool Password::retrievePassword()
                 if(result)
                 {
                     // Содержимое открепляемых окон обновляется, чтобы было показано зашифрованное содержимое
-                    EditorShowTextDispatcher::instance()->updateAllWindows();
+                    if(m_dispatcher!=nullptr)
+        m_dispatcher->updateAllWindows();
                 }
 
                 return result;

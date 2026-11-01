@@ -119,5 +119,5 @@ void MainWindow::showWindow()
     raise();
 
     // Восстанавливается поведение открепляемых окон
-    EditorShowTextDispatcher::instance()->restoreBehavior();
+    AppContext::instance().dispatcher()->restoreBehavior();
 }

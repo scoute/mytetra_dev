@@ -33,6 +33,6 @@
 // Контекст сниппета поиска с каждой стороны от совпадения
 static const int MCP_SNIPPET_CONTEXT=100;
 
-McpTools::McpTools(KnowTreeModel *model) : m_model(model)
+McpTools::McpTools(KnowTreeModel *model, BacklinkIndex *backlinks) : m_model(model), m_backlinks(backlinks)
 {
 }

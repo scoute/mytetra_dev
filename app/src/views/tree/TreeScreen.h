@@ -17,16 +17,25 @@ class KnowTreeModel;
 class KnowTreeView;
 class ClipboardBranch;
 class FavoritesPanel;
+class Favorites;
+class BacklinkIndex;
+class EditorShowTextDispatcher;
 
 class TreeScreen : public QWidget
 {
  Q_OBJECT
 
 public:
- TreeScreen(QWidget *parent=nullptr);
+  // P3: зависимости панелей/модели пробрасываются (см. ниже)
+ TreeScreen(Favorites *favorites, BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QWidget *parent=nullptr);
  virtual ~TreeScreen();
 
  KnowTreeModel *knowTreeModel;
+
+ // P3: внедренные зависимости для панели/модели/паролей (DI)
+ Favorites *m_favorites=nullptr;
+ BacklinkIndex *m_backlinks=nullptr;
+ EditorShowTextDispatcher *m_dispatcher=nullptr;
 
  void saveKnowTree(void);
  bool reloadKnowTree(void);

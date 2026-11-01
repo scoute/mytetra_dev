@@ -17,8 +17,6 @@ class Favorites : public QObject
 
  public:
 
-  static Favorites &instance(void);
-
   static const QString StorageSidecar; // "sidecar"
   static const QString StorageXml;     // "xml"
 
@@ -45,9 +43,11 @@ class Favorites : public QObject
 
   void favoritesChanged(void);
 
- private:
+ public:
 
   explicit Favorites(QObject *parent=nullptr);
+
+ private:
 
   QString sidecarFileName(void) const;
 

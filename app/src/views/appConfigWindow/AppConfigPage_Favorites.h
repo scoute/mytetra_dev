@@ -8,13 +8,15 @@ class QGroupBox;
 class QCheckBox;
 class QRadioButton;
 class QLabel;
+class Favorites;
 
 class AppConfigPage_Favorites : public ConfigPage
 {
     Q_OBJECT
 
 public:
-    AppConfigPage_Favorites(QWidget *parent = nullptr);
+    // P3: хранилище внедряется диалогом (было Favorites::instance())
+    explicit AppConfigPage_Favorites(Favorites *favorites, QWidget *parent = nullptr);
     virtual ~AppConfigPage_Favorites();
 
     void retranslateUi(void);
@@ -27,6 +29,9 @@ public:
     void assembly(void);
 
     // Объединяющая рамка
+    // P3: внедренное хранилище (DI вместо синглтона)
+    Favorites *m_favorites=nullptr;
+
     QGroupBox *favoritesBox;
 
     // Показывать панель избранного, включена по умолчанию

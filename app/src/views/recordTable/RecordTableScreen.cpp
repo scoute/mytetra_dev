@@ -33,12 +33,15 @@
 // Виджет, который отображает список записей в ветке
 // c кнопками управления
 
-RecordTableScreen::RecordTableScreen(QWidget *parent) : QWidget(parent)
+RecordTableScreen::RecordTableScreen(Favorites *favorites, BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QWidget *parent) : QWidget(parent),
+  m_favorites(favorites),
+  m_backlinks(backlinks),
+  m_dispatcher(dispatcher)
 {
   setupActions();
 
   // Инициализируется контроллер списка записей
-  recordTableController=new RecordTableController(this);
+  recordTableController=new RecordTableController(m_favorites, m_backlinks, m_dispatcher, this);
   recordTableController->setObjectName("recordTableController");
   recordTableController->init();
 

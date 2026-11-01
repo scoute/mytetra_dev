@@ -175,6 +175,18 @@ QJsonObject McpGuiBridge::parseMcpCommandArgs(const QString &message)
 
 // Синхронный ответ на mcp-команду для протокола запрос-ответ.
 // Упаковка итога handleMcpCommand в компактный JSON
+void McpGuiBridge::setFavorites(Favorites *favorites)
+{
+    m_favorites=favorites;
+}
+
+
+void McpGuiBridge::setBacklinkIndex(BacklinkIndex *backlinks)
+{
+    m_backlinks=backlinks;
+}
+
+
 QByteArray McpGuiBridge::handleMcpMessage(const QString &message)
 {
   QStringList messageParts=message.split(" ");
@@ -375,7 +387,7 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
       return false;
     }
 
-    if(!McpTools::applyDeleteNote(m_model, id, error))
+    if(!McpTools::applyDeleteNote(m_model, m_backlinks, id, error))
     {
       if(error.isEmpty())
         error="Note was not deleted";
@@ -574,9 +586,9 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
       return false;
     }
 
-    Favorites::instance().setFavorite(id, true);
+    m_favorites->setFavorite(id, true);
 
-    if(!Favorites::instance().isFavorite(id))
+    if(!m_favorites->isFavorite(id))
     {
       error="Note was not starred";
       return false;
@@ -611,9 +623,9 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
       return false;
     }
 
-    Favorites::instance().setFavorite(id, false);
+    m_favorites->setFavorite(id, false);
 
-    if(Favorites::instance().isFavorite(id))
+    if(m_favorites->isFavorite(id))
     {
       error="Note is still starred";
       return false;
@@ -805,6 +817,7 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
       QJsonObject dummy;
 
       if(!McpTools::applyBatchOp(m_model,
+                                 m_backlinks,
                                  tool, opArgs, dummy, error))
         break;
 

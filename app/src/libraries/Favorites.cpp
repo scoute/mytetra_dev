@@ -22,13 +22,6 @@
 const QString Favorites::StorageSidecar=QStringLiteral("sidecar");
 const QString Favorites::StorageXml=QStringLiteral("xml");
 
-Favorites &Favorites::instance(void)
-{
-  static Favorites inst;
-
-  return inst;
-}
-
 Favorites::Favorites(QObject *parent) : QObject(parent)
 {
 

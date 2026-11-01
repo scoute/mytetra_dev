@@ -31,6 +31,8 @@
 // диалога при первой сессии. MainWindow лишь рендерит
 
 class KnowTreeModel;
+class Favorites;
+class BacklinkIndex;
 
 class McpGuiBridge : public QObject
 {
@@ -74,6 +76,10 @@ public:
     // против recycled pid). При чистке - сигнал sessionChanged
     void checkPeers(void);
 
+    // DI-сеттеры. MainWindow ставит после создания моста
+    void setFavorites(Favorites *favorites);
+    void setBacklinkIndex(BacklinkIndex *backlinks);
+
 signals:
 
     // Пиры/история поменялись: MainWindow перерисовывает баннер
@@ -104,6 +110,10 @@ private:
     bool mcpAllowedCheck(void) const;
 
     KnowTreeModel *m_model=nullptr;
+
+    // P3: внедренные зависимости (были ::instance())
+    Favorites *m_favorites=nullptr;
+    BacklinkIndex *m_backlinks=nullptr;
 
     QMap<QString, qint64> m_mcpPeers;
     QMap<QString, QString> m_mcpPeerModes;

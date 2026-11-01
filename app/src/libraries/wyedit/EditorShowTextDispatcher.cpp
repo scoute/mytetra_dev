@@ -34,12 +34,6 @@ EditorShowTextDispatcher::~EditorShowTextDispatcher()
     }
 }
 
-EditorShowTextDispatcher *EditorShowTextDispatcher::instance()
-{
-    static EditorShowTextDispatcher inst;
-    return &inst;
-}
-
 void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y, int w, int h, int vScroll)
 {
     // Уже созданное окно не должно открываться дважды

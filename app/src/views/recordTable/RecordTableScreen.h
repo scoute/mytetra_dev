@@ -16,12 +16,17 @@ class QAction;
 
 class RecordTableController;
 
+class Favorites;
+class BacklinkIndex;
+class EditorShowTextDispatcher;
+
 class RecordTableScreen : public QWidget
 {
  Q_OBJECT
 
 public:
- RecordTableScreen(QWidget *parent=nullptr);
+ // P3: зависимости контроллера пробрасываются (см. RecordTableController)
+ RecordTableScreen(Favorites *favorites, BacklinkIndex *backlinks, EditorShowTextDispatcher *dispatcher, QWidget *parent=nullptr);
  virtual ~RecordTableScreen();
 
  int     getFirstSelectionPos(void);
@@ -130,6 +135,11 @@ private:
  QString treePath;
  
  RecordTableController *recordTableController;
+
+ // P3: зависимости контроллера (DI, проброс из MainWindow)
+ Favorites *m_favorites=nullptr;
+ BacklinkIndex *m_backlinks=nullptr;
+ EditorShowTextDispatcher *m_dispatcher=nullptr;
 
  QHBoxLayout *recordTableToolsLayout;
  QVBoxLayout *recordTableScreenLayout;

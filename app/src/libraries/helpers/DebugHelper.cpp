@@ -15,6 +15,7 @@
 #include "models/appConfig/AppConfig.h"
 
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigGeneral.h"
 
 using namespace std;
 
@@ -140,7 +141,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
  }
 
  // Если в конфигурации запрещен вывод отладочных сообщений
- if(!AppContext::instance().appConfig()->get_printdebugmessages())
+ if(!AppContext::instance().appConfig()->generalSection()->get_printdebugmessages())
   return;
 
  QString printText = msgText + additionInfo; // msgText + additionInfo

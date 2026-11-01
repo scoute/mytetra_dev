@@ -12,6 +12,7 @@
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 AppConfigPage_Appearance::AppConfigPage_Appearance(QWidget *parent) : ConfigPage(parent)
 {
@@ -32,12 +33,12 @@ void AppConfigPage_Appearance::setupUi()
     // Настройка запуска MyTetra в свернутом окне
     runInMinimizedWindow=new QCheckBox(this);
     runInMinimizedWindow->setText(tr("Run MyTetra in a minimized window"));
-    runInMinimizedWindow->setChecked( AppContext::instance().appConfig()->get_runinminimizedwindow() );
+    runInMinimizedWindow->setChecked( AppContext::instance().appConfig()->uiSection()->get_runinminimizedwindow() );
 
     // Настройка поведения открепляемых окон, как они будут сворачиваться и разворачитьваться
     dockableWindowsBehavior=new QCheckBox(this);
     dockableWindowsBehavior->setText(tr("Hide detached windows if close main window"));
-    dockableWindowsBehavior->setChecked( AppContext::instance().appConfig()->getDockableWindowsBehavior()=="together" );
+    dockableWindowsBehavior->setChecked( AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior()=="together" );
 }
 
 void AppConfigPage_Appearance::setupSignals()
@@ -83,16 +84,16 @@ int AppConfigPage_Appearance::applyChanges()
     int result=0;
 
     // Сохраняется настройка режима запуска MyTetra - обычный или свернутый
-    if(AppContext::instance().appConfig()->get_runinminimizedwindow()!=runInMinimizedWindow->isChecked())
+    if(AppContext::instance().appConfig()->uiSection()->get_runinminimizedwindow()!=runInMinimizedWindow->isChecked())
     {
-        AppContext::instance().appConfig()->set_runinminimizedwindow(runInMinimizedWindow->isChecked());
+        AppContext::instance().appConfig()->uiSection()->set_runinminimizedwindow(runInMinimizedWindow->isChecked());
     }
 
     // Сохраняется настройка поведения открепляемых окон
     QString mode=dockableWindowsBehavior->isChecked() ? "together" : "single";
-    if(AppContext::instance().appConfig()->getDockableWindowsBehavior()!=mode)
+    if(AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior()!=mode)
     {
-        AppContext::instance().appConfig()->setDockableWindowsBehavior(mode);
+        AppContext::instance().appConfig()->uiSection()->setDockableWindowsBehavior(mode);
 
         EditorShowTextDispatcher::instance()->switchBehavior(mode);
     }

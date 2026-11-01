@@ -6,6 +6,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/ActionLogger.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 ActionLogModel::ActionLogModel(QObject *parent) : QAbstractTableModel(parent)
 {
@@ -60,10 +61,10 @@ QVariant ActionLogModel::getCell(int row, int column, int role) const
       if(role==Qt::DisplayRole)
       {
         QDateTime fieldDateTime=QDateTime::fromTime_t( element.attribute("t").toUInt() );
-        if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()==false)
+        if(AppContext::instance().appConfig()->uiSection()->getEnableCustomDateTimeFormat()==false)
           return fieldDateTime.toString(Qt::SystemLocaleDate);
         else
-          return fieldDateTime.toString( AppContext::instance().appConfig()->getCustomDateTimeFormat() );
+          return fieldDateTime.toString( AppContext::instance().appConfig()->uiSection()->getCustomDateTimeFormat() );
       }
       else
         return QVariant( element.attribute("t") ); // Время передается в сыром виде (формат TIMESTAMP), чтобы была возможность сортировки

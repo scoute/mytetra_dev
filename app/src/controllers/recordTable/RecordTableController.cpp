@@ -66,6 +66,11 @@ static bool hasVoiceContent(QTextDocument *doc)
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigCrypto.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 RecordTableController::RecordTableController(QObject *parent) : QObject(parent)
 {
@@ -158,7 +163,7 @@ void RecordTableController::refreshEditorReadOnly(void)
   const int pos=table->getWorkPos();
   const bool blocked=(pos>=0 && pos<table->size() && table->getField("block", pos)=="1");
 
-  edView->setReadOnly(blocked || AppContext::instance().appConfig()->get_readOnly());
+  edView->setReadOnly(blocked || AppContext::instance().appConfig()->recordTableSection()->get_readOnly());
 }
 
 void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
@@ -175,7 +180,7 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
 
   // Элементы управления редактором становятся доступными только при условии что запись не заблокирована на изменение
   // и не включен глобальный режим только чтения
-  if( table->getField("block", pos)=="1" || AppContext::instance().appConfig()->get_readOnly() )
+  if( table->getField("block", pos)=="1" || AppContext::instance().appConfig()->recordTableSection()->get_readOnly() )
     edView->setReadOnly(true);
   else
     edView->setReadOnly(false);
@@ -194,7 +199,7 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   // Для новой выбраной записи выясняется директория и основной файл
   QString currentDir =table->getField("dir", pos);
   QString currentFile=table->getField("file", pos);
-  QString fullDir=AppContext::instance().appConfig()->get_tetradir()+"/base/"+currentDir;
+  QString fullDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+currentDir;
   QString fullFileName=fullDir+"/"+currentFile;
   qDebug() << " File " << fullFileName << "\n";
 
@@ -255,11 +260,11 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   QString path=qobject_cast<RecordTableScreen *>(parent())->getTreePath();
 
   // В мобильном интерфейсе редактор должен показывать путь до записи
-  if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+  if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     edView->setTreePath( path );
 
   // В редакторе восстанавливается позиция курсора и прокрутки если это необходимо
-  if(AppContext::instance().appConfig()->getRememberCursorAtOrdinarySelection())
+  if(AppContext::instance().appConfig()->cryptoSection()->getRememberCursorAtOrdinarySelection())
   {
     edView->setCursorPosition( AppContext::instance().walkHistory()->getCursorPosition(id) );
     edView->setScrollBarPosition( AppContext::instance().walkHistory()->getScrollBarPosition(id) );
@@ -288,7 +293,7 @@ void RecordTableController::switchMetaEditorToEditorOrAttach(QModelIndex index)
   int column=index.column();
   qDebug() << "RecordTableController::switchMetaEditorToAttachLayoutIfNeed() : current column " << column;
 
-  QString fieldName=AppContext::instance().appConfig()->getRecordTableShowFields().at(column);
+  QString fieldName=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields().at(column);
 
   MetaEditor *edView=find_object<MetaEditor>("editorScreen");
   if(fieldName=="hasAttach" || fieldName=="attachCount") // Если это столбец с иконкой аттачей или количеством аттачей
@@ -775,9 +780,9 @@ void RecordTableController::editFieldContext(QModelIndex proxyIndex)
 
   // Если запись заблокирована или включен глобальный режим только чтения.
   // Во втором случае диалог тоже не открывается: проверять нечего
-  if(table->getField("block",   pos)=="1" || AppContext::instance().appConfig()->get_readOnly())
+  if(table->getField("block",   pos)=="1" || AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
     {
-     if(AppContext::instance().appConfig()->get_readOnly())
+     if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
       return;
 
      editRecordWin.setReadOnly(true);
@@ -1127,7 +1132,7 @@ void RecordTableController::onChangeHistoryClick(void)
   const QString id=table->getField("id", pos);
   const QString name=table->getField("name", pos);
 
-  if(!AppContext::instance().appConfig()->get_historyEnable())
+  if(!AppContext::instance().appConfig()->syncSection()->get_historyEnable())
   {
     QMessageBox::information(parentPointer,
                              tr("Change history"),
@@ -1153,7 +1158,7 @@ void RecordTableController::onChangeHistoryClick(void)
     return;
   }
 
-  const QString tetradir=AppContext::instance().appConfig()->get_tetradir();
+  const QString tetradir=AppContext::instance().appConfig()->storageSection()->get_tetradir();
 
   // Текущий текст: из открытого редактора если та же запись
   // (захватываются несохраненные правки), иначе из файла.

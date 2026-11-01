@@ -31,6 +31,7 @@
 #include "views/notePicker/NotePickerDialog.h"
 #include "views/tree/KnowTreeView.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 AudioFormatter::AudioFormatter()
 {
@@ -1003,7 +1004,7 @@ void AudioFormatter::onMoveVoiceClicked(void)
         return;
     }
 
-    const QString dstDir=AppContext::instance().appConfig()->get_tetradir()+
+    const QString dstDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+
         QStringLiteral("/base/")+
         target->getField(QStringLiteral("dir"));
     const QString dstTextFile=dstDir+

@@ -78,6 +78,12 @@ public:
 #include "libraries/wyedit/EditorConfig.h"
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/historyPanel/HistoryPanel.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigServices.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigCrypto.h"
+#include "models/appConfig/AppConfigUi.h"
 #include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
@@ -120,7 +126,7 @@ MainWindow::MainWindow() : QMainWindow()
     menuBuilder->buildAll(tagsPanelDock->toggleViewAction(),
                           historyPanelDock->toggleViewAction(),
                           backlinksPanelDock->toggleViewAction(),
-                          AppContext::instance().appConfig()->getInterfaceMode()==QStringLiteral("desktop"));
+                          AppContext::instance().appConfig()->uiSection()->getInterfaceMode()==QStringLiteral("desktop"));
 
     // Начальная пометка пунктов Вид до коннектов: setChecked с тем же
     // значением toggled не дергает (как было внутри initViewMenu)
@@ -129,8 +135,8 @@ MainWindow::MainWindow() : QMainWindow()
     // P3: мост MCP-сервер -> живой GUI. DI: модель из дерева, read-only
     // и mcp-флаг из конфига, сброс редактора как было через find_object
     mcpBridge=new McpGuiBridge(treeScreen->knowTreeModel, this);
-    mcpBridge->isReadOnly=[]() { return AppContext::instance().appConfig()->isGlobalReadOnly(); };
-    mcpBridge->mcpAllowed=[]() { return AppContext::instance().appConfig()->get_mcpAllow(); };
+    mcpBridge->isReadOnly=[]() { return AppContext::instance().appConfig()->recordTableSection()->isGlobalReadOnly(); };
+    mcpBridge->mcpAllowed=[]() { return AppContext::instance().appConfig()->servicesSection()->get_mcpAllow(); };
     mcpBridge->clearEditor=[]() { find_object<MetaEditor>("editorScreen")->clearAll(); };
     connect(mcpBridge, &McpGuiBridge::sessionChanged, this, &MainWindow::updateMcpBanner);
     connect(mcpBridge, &McpGuiBridge::historyChanged, this, &MainWindow::updateMcpHistoryDialog);
@@ -155,7 +161,7 @@ MainWindow::MainWindow() : QMainWindow()
     trayManager->show();
 
     // Инициализируется объект слежения за корзиной
-    AppContext::instance().trashMonitoring()->init(AppContext::instance().appConfig()->get_trashdir());
+    AppContext::instance().trashMonitoring()->init(AppContext::instance().appConfig()->storageSection()->get_trashdir());
     AppContext::instance().trashMonitoring()->update();
 
     // Старт веб-клиппера (перехват глобального хоткея по настройкам)
@@ -298,7 +304,7 @@ void MainWindow::setupSignals(void)
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsFindInBase), &QAction::triggered, this, &MainWindow::toolsFindInBase);
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsImagesGallery), &QAction::triggered, this, &MainWindow::toolsImagesGallery);
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsFilesGallery), &QAction::triggered, this, &MainWindow::toolsFilesGallery);
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         // Кнопка поиска по базе в меню дерева разделов для мобильного интерфейса
         connect(treeScreen, &TreeScreen::treeScreenFindInBaseClicked, this, &MainWindow::toolsFindInBase);
@@ -318,7 +324,7 @@ void MainWindow::setupSignals(void)
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsClipFromClipboard), &QAction::triggered, this, &MainWindow::runClipperNow);
 
     // Вызов окна настроек
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
     {
         connect(menuBuilder->action(MenuBuilder::ActionId::ToolsPreferences), &QAction::triggered, this, &MainWindow::toolsPreferences);
     }
@@ -535,7 +541,7 @@ void MainWindow::messageHandler(QString message)
 
     // MCP выключен в настройках: все внешние mcp-команды игнорируются.
     // Отдельный if до цепочки чтобы не рвать else if
-    if(command.startsWith("mcp") && !AppContext::instance().appConfig()->get_mcpAllow())
+    if(command.startsWith("mcp") && !AppContext::instance().appConfig()->servicesSection()->get_mcpAllow())
         return;
 
     if(command=="show")
@@ -573,7 +579,7 @@ void MainWindow::messageHandler(QString message)
     else if(command=="addNoteDialog")
     {
         // Глобальный режим только чтения: создание записей запрещено
-        if(AppContext::instance().appConfig()->get_readOnly())
+        if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
             return;
         // Определение, было ли окно MyTetra скрыто при обработке сообщения
         bool isHidden=this->isHidden();
@@ -614,7 +620,7 @@ void MainWindow::messageHandler(QString message)
     else if(command=="clipboard")
     {
         // Глобальный режим только чтения: клиппер не создаёт записи
-        if(AppContext::instance().appConfig()->get_readOnly())
+        if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
             return;
 
         // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
@@ -819,9 +825,9 @@ void MainWindow::restartAutosaveTimer(void)
     if(autosaveTimer==nullptr)
         return;
 
-    const int minutes=AppContext::instance().appConfig()->get_autosaveInterval();
+    const int minutes=AppContext::instance().appConfig()->syncSection()->get_autosaveInterval();
 
-    if(!AppContext::instance().appConfig()->get_autosaveEnable() || minutes<1)
+    if(!AppContext::instance().appConfig()->syncSection()->get_autosaveEnable() || minutes<1)
     {
         autosaveTimer->stop();
         return;
@@ -1082,7 +1088,7 @@ void MainWindow::fileExportBranch(void)
 void MainWindow::fileImportTelegram(void)
 {
     // Глобальный режим только чтения: импорт меняет базу
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
         return;
 
     TelegramImportDialog dialog(this);
@@ -1092,7 +1098,7 @@ void MainWindow::fileImportTelegram(void)
 void MainWindow::fileImportBranch(void)
 {
     // Глобальный режим только чтения: импорт меняет базу
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
         return;
 
     // Создается окно выбора директории, откуда необходимо сделать импорт
@@ -1117,8 +1123,8 @@ void MainWindow::applicationExit(void)
     // И если в конфиге настроено, что нужно синхронизироваться при выходе
     // И задана команда синхронизации
     if(enableRealClose==false)
-        if(AppContext::instance().appConfig()->get_synchroonexit())
-            if(AppContext::instance().appConfig()->get_synchrocommand().trimmed().length()>0)
+        if(AppContext::instance().appConfig()->syncSection()->get_synchroonexit())
+            if(AppContext::instance().appConfig()->syncSection()->get_synchrocommand().trimmed().length()>0)
             {
                 enableRealClose=true;
                 synchronization(); // В конце синхронизации будет вызван слот onSyncroCommandFinishWork()
@@ -1387,7 +1393,7 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
 void MainWindow::synchronization(bool visible)
 {
     // Глобальный режим только чтения: синхронизация может менять базу
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
         return;
 
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
@@ -1402,7 +1408,7 @@ void MainWindow::synchronization(bool visible)
     reloadSaveStage();
 
     // Считывается команда синхронизации
-    QString command=AppContext::instance().appConfig()->get_synchrocommand();
+    QString command=AppContext::instance().appConfig()->syncSection()->get_synchrocommand();
 
     // Если команда синхронизации пуста
     if(command.trimmed().length()==0)
@@ -1419,8 +1425,8 @@ void MainWindow::synchronization(bool visible)
     }
 
     // Макрос %a заменяется на путь к директории базы данных
-    // QString databasePath=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->get_tetradir();
-    QDir databaseDir( AppContext::instance().appConfig()->get_tetradir() );
+    // QString databasePath=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->storageSection()->get_tetradir();
+    QDir databaseDir( AppContext::instance().appConfig()->storageSection()->get_tetradir() );
     QString databasePath=databaseDir.canonicalPath();
 
     command.replace("%a", databasePath);
@@ -1627,7 +1633,7 @@ void MainWindow::goWalkHistory(void)
     // Установка позиции в дереве и в таблице конечных записей
     this->setTreeAndRecordtablePositions(path, id);
 
-    if(AppContext::instance().appConfig()->getRememberCursorAtHistoryNavigation())
+    if(AppContext::instance().appConfig()->cryptoSection()->getRememberCursorAtHistoryNavigation())
     {
         editorScreen->setCursorPosition( AppContext::instance().walkHistory()->getCursorPosition(id) );
         editorScreen->setScrollBarPosition( AppContext::instance().walkHistory()->getScrollBarPosition(id) );
@@ -1644,7 +1650,7 @@ void MainWindow::goWalkHistory(void)
 void MainWindow::saveTextarea(void)
 {
     // Глобальный режим только чтения
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
         return;
 
     QString id=editorScreen->getMiscField("id");

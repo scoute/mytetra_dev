@@ -43,6 +43,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Пункт списка с числовой сортировкой: размер и дата сортируются
 // по значению из UserRole, а не по отображаемому тексту
@@ -317,7 +318,7 @@ void ContentGallery::collectGalleryImages(const TreeItem *curritem,
 
         for(int i=0; i<static_cast<int>(recordTable->size()); i++)
         {
-            const QString recordDir=AppContext::instance().appConfig()->get_tetradir()
+            const QString recordDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()
                                     +"/base/"
                                     +recordTable->getField("dir", i);
 

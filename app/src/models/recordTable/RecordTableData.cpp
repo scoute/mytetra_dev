@@ -25,6 +25,8 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Это набор данных конечной таблицы, с которыми удобно работать
 
@@ -217,7 +219,7 @@ void RecordTableData::editorSaveCallback(QObject *editor,
         // Ротация по лимиту: раз лимит выставлен, сжатие идет
         // всегда, авто после снапшота.
         // Отдельной галочки нет осознанно
-        if(ChangeHistory::snapshot(AppContext::instance().appConfig()->get_tetradir(),
+        if(ChangeHistory::snapshot(AppContext::instance().appConfig()->storageSection()->get_tetradir(),
                                    currEditor->getMiscField("id"),
                                    currEditor->getMiscField("title"),
                                    saveText))
@@ -225,10 +227,10 @@ void RecordTableData::editorSaveCallback(QObject *editor,
             // Авточка по лимиту. Тихая: сохранение обязано
             // проходить при любом исходе
             QString squashError;
-            ChangeHistory::squashOldVersions(AppContext::instance().appConfig()->get_tetradir(),
+            ChangeHistory::squashOldVersions(AppContext::instance().appConfig()->storageSection()->get_tetradir(),
                                              currEditor->getMiscField("id"),
-                                             qMax(2, AppContext::instance().appConfig()->get_historySquashKeep()),
-                                             qBound(0, AppContext::instance().appConfig()->get_historySquashMode(), 2),
+                                             qMax(2, AppContext::instance().appConfig()->syncSection()->get_historySquashKeep()),
+                                             qBound(0, AppContext::instance().appConfig()->syncSection()->get_historySquashMode(), 2),
                                              &squashError);
 
             if(!squashError.isEmpty())
@@ -272,7 +274,7 @@ Record RecordTableData::getRecordFat(int pos)
     resultRecord.setText( getText(pos) );
 
     // Добавление бинарных образов файлов картинок
-    QString directory=AppContext::instance().appConfig()->get_tetradir()+"/base/"+resultRecord.getField("dir");
+    QString directory=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+resultRecord.getField("dir");
     resultRecord.setPictureFiles( DiskHelper::getFilesFromDirectory(directory, QStringList() << QStringLiteral("*.png") << QStringLiteral("*.jpg")) );
 
     return resultRecord;
@@ -587,7 +589,7 @@ void RecordTableData::deleteRecord(int i)
     {
         // Путь к директории записи должен оставаться внутри директории base,
         // иначе значение поля dir вида ".." уведет удаление за пределы базы
-        QString baseDirName=QDir::cleanPath( AppContext::instance().appConfig()->get_tetradir()+"/base" );
+        QString baseDirName=QDir::cleanPath( AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base" );
         QString dirForDelete=QDir::cleanPath( baseDirName+"/"+recordDirName );
 
         if(dirForDelete==baseDirName || !dirForDelete.startsWith(baseDirName+"/"))

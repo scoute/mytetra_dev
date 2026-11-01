@@ -16,6 +16,8 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 const QString Favorites::StorageSidecar=QStringLiteral("sidecar");
 const QString Favorites::StorageXml=QStringLiteral("xml");
@@ -34,12 +36,12 @@ Favorites::Favorites(QObject *parent) : QObject(parent)
 
 QString Favorites::sidecarFileName(void) const
 {
-  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/favorites.xml");
+  return QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/favorites.xml");
 }
 
 QString Favorites::storage(void) const
 {
-  if(AppContext::instance().appConfig()->get_favoritesStorage()==StorageXml)
+  if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==StorageXml)
     return StorageXml;
 
   return StorageSidecar;
@@ -70,7 +72,7 @@ void Favorites::setStorage(const QString &mode)
     xmlWriteAll(QStringList());
   }
 
-  AppContext::instance().appConfig()->set_favoritesStorage(target);
+  AppContext::instance().appConfig()->uiSection()->set_favoritesStorage(target);
 
   emit favoritesChanged();
 }

@@ -25,6 +25,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigClipper.h"
 
 AppConfigPage_Clipper::AppConfigPage_Clipper(QWidget *parent) : ConfigPage(parent)
 {
@@ -49,11 +50,11 @@ void AppConfigPage_Clipper::setupUi(void)
   clipperEnable=new QCheckBox(this);
   clipperEnable->setText(tr("Web Clipper (global hotkey)"));
   clipperEnable->setToolTip(tr("Paste clipboard to unsorted_notes by global hotkey (X11, Windows)"));
-  clipperEnable->setChecked(AppContext::instance().appConfig()->get_clipperenable());
+  clipperEnable->setChecked(AppContext::instance().appConfig()->clipperSection()->get_clipperenable());
 
   clipperHotkeyEdit=new QKeySequenceEdit(this);
   clipperHotkeyEdit->setToolTip(tr("Global hotkey, for example Ctrl+Alt+V. Latin keys only."));
-  clipperHotkeyEdit->setKeySequence(QKeySequence(AppContext::instance().appConfig()->get_clipperhotkey()));
+  clipperHotkeyEdit->setKeySequence(QKeySequence(AppContext::instance().appConfig()->clipperSection()->get_clipperhotkey()));
 
   // Статус переносится и не раздвигает форму: ширина берется
   // по остатку, а не по длине текста (статус бывает длинным)
@@ -72,14 +73,14 @@ void AppConfigPage_Clipper::setupUi(void)
   clipperMaxImages=new QSpinBox(this);
   clipperMaxImages->setMinimum(1);
   clipperMaxImages->setMaximum(1000);
-  clipperMaxImages->setValue(AppContext::instance().appConfig()->get_clipperMaxImages());
+  clipperMaxImages->setValue(AppContext::instance().appConfig()->clipperSection()->get_clipperMaxImages());
   clipperMaxImages->setWhatsThis(tr("How many clipboard images go into one note. Extra images stay as external links, the clipper reports them at once."));
   clipperMaxImages->setToolTip(tr("Images per note, the rest stay as links"));
 
   clipperMaxImageSizeMb=new QSpinBox(this);
   clipperMaxImageSizeMb->setMinimum(1);
   clipperMaxImageSizeMb->setMaximum(100);
-  clipperMaxImageSizeMb->setValue(AppContext::instance().appConfig()->get_clipperMaxImageSizeMb());
+  clipperMaxImageSizeMb->setValue(AppContext::instance().appConfig()->clipperSection()->get_clipperMaxImageSizeMb());
   clipperMaxImageSizeMb->setSuffix(tr(" MB"));
   clipperMaxImageSizeMb->setWhatsThis(tr("Images larger than this stay as external links instead of files."));
   clipperMaxImageSizeMb->setToolTip(tr("Larger images stay as links, not files"));
@@ -105,9 +106,9 @@ void AppConfigPage_Clipper::setupUi(void)
   clipperBranchCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
   rebuildBranchList();
 
-  const QString savedId=AppContext::instance().appConfig()->get_clipperbranchid();
+  const QString savedId=AppContext::instance().appConfig()->clipperSection()->get_clipperbranchid();
   int savedIndex=!savedId.isEmpty() ? clipperBranchCombo->findData(savedId) : -1;
-  if(AppContext::instance().appConfig()->get_clipperbranchmode()==2)
+  if(AppContext::instance().appConfig()->clipperSection()->get_clipperbranchmode()==2)
     clipperBranchAsk->setChecked(true);
   else if(savedIndex>=0)
   {
@@ -146,7 +147,7 @@ void AppConfigPage_Clipper::setupUi(void)
   tilesGroup->addButton(clipperTilesRecent);
   tilesGroup->addButton(clipperTilesFrequent);
 
-  if(AppContext::instance().appConfig()->get_clippertilemode()==1)
+  if(AppContext::instance().appConfig()->clipperSection()->get_clippertilemode()==1)
     clipperTilesFrequent->setChecked(true);
   else
     clipperTilesRecent->setChecked(true);
@@ -206,7 +207,7 @@ void AppConfigPage_Clipper::assembly(void)
   // Строка выше целевой ветки: выбор ветки уже не нужен при дубле
   clipperOpenDup=new QCheckBox(this);
   clipperOpenDup->setText(tr("Open original note on duplicate clip"));
-  clipperOpenDup->setChecked(AppContext::instance().appConfig()->get_clipperopendup());
+  clipperOpenDup->setChecked(AppContext::instance().appConfig()->clipperSection()->get_clipperopendup());
   clipperFormLayout->addRow(clipperOpenDup);
 
   // Все три варианта ветки — одной колонкой справа от подписи:
@@ -299,7 +300,7 @@ void AppConfigPage_Clipper::rebuildBranchList(void)
   // Сохраненная ветка глубже третьего уровня: дописать отдельно,
   // иначе выбор молча сбросится на значение по умолчанию.
   // Закрытая (шифр без пароля) не дописывается: вставить туда нельзя
-  const QString savedId=AppContext::instance().appConfig()->get_clipperbranchid();
+  const QString savedId=AppContext::instance().appConfig()->clipperSection()->get_clipperbranchid();
   if(!savedId.isEmpty() && clipperBranchCombo->findData(savedId)<0 && model!=nullptr)
     if(TreeItem *savedItem=model->getItemById(savedId))
       if(!ClipBranchDialog::isLocked(savedItem))
@@ -387,45 +388,45 @@ int AppConfigPage_Clipper::applyChanges(void)
   int result=0;
 
   // Сохраняются лимиты клиппера
-  if(AppContext::instance().appConfig()->get_clipperMaxImages()!=clipperMaxImages->value())
-    AppContext::instance().appConfig()->set_clipperMaxImages(clipperMaxImages->value());
+  if(AppContext::instance().appConfig()->clipperSection()->get_clipperMaxImages()!=clipperMaxImages->value())
+    AppContext::instance().appConfig()->clipperSection()->set_clipperMaxImages(clipperMaxImages->value());
 
-  if(AppContext::instance().appConfig()->get_clipperMaxImageSizeMb()!=clipperMaxImageSizeMb->value())
-    AppContext::instance().appConfig()->set_clipperMaxImageSizeMb(clipperMaxImageSizeMb->value());
+  if(AppContext::instance().appConfig()->clipperSection()->get_clipperMaxImageSizeMb()!=clipperMaxImageSizeMb->value())
+    AppContext::instance().appConfig()->clipperSection()->set_clipperMaxImageSizeMb(clipperMaxImageSizeMb->value());
 
   // Веб-клиппер: включение и комбинация хоткея (перехват обновится
   // при закрытии настроек через Clipper::rereadSettings)
-  if(AppContext::instance().appConfig()->get_clipperenable()!=clipperEnable->isChecked())
-    AppContext::instance().appConfig()->set_clipperenable(clipperEnable->isChecked());
+  if(AppContext::instance().appConfig()->clipperSection()->get_clipperenable()!=clipperEnable->isChecked())
+    AppContext::instance().appConfig()->clipperSection()->set_clipperenable(clipperEnable->isChecked());
 
-  if(AppContext::instance().appConfig()->get_clipperhotkey()!=clipperHotkeyEdit->keySequence().toString())
-    AppContext::instance().appConfig()->set_clipperhotkey(clipperHotkeyEdit->keySequence().toString());
+  if(AppContext::instance().appConfig()->clipperSection()->get_clipperhotkey()!=clipperHotkeyEdit->keySequence().toString())
+    AppContext::instance().appConfig()->clipperSection()->set_clipperhotkey(clipperHotkeyEdit->keySequence().toString());
 
   // Целевая ветка: "по умолчанию" хранится пустым clipperbranchid
   // (ensureBranch сам найдет или создаст unsorted_notes),
   // выбранная — своим id. Режим "спрашивать" ветку не меняет
   if(clipperBranchAsk->isChecked())
-    AppContext::instance().appConfig()->set_clipperbranchmode(2);
+    AppContext::instance().appConfig()->clipperSection()->set_clipperbranchmode(2);
   else if(clipperBranchDefault->isChecked())
   {
-    AppContext::instance().appConfig()->set_clipperbranchmode(0);
-    if(!AppContext::instance().appConfig()->get_clipperbranchid().isEmpty())
-      AppContext::instance().appConfig()->set_clipperbranchid(QString());
+    AppContext::instance().appConfig()->clipperSection()->set_clipperbranchmode(0);
+    if(!AppContext::instance().appConfig()->clipperSection()->get_clipperbranchid().isEmpty())
+      AppContext::instance().appConfig()->clipperSection()->set_clipperbranchid(QString());
   }
   else
   {
-    AppContext::instance().appConfig()->set_clipperbranchmode(1);
+    AppContext::instance().appConfig()->clipperSection()->set_clipperbranchmode(1);
     const QString selectedId=clipperBranchCombo->currentData().toString();
-    if(!selectedId.isEmpty() && AppContext::instance().appConfig()->get_clipperbranchid()!=selectedId)
-      AppContext::instance().appConfig()->set_clipperbranchid(selectedId);
+    if(!selectedId.isEmpty() && AppContext::instance().appConfig()->clipperSection()->get_clipperbranchid()!=selectedId)
+      AppContext::instance().appConfig()->clipperSection()->set_clipperbranchid(selectedId);
   }
 
   // Нижние плитки опроса: последние или частые 16
-  AppContext::instance().appConfig()->set_clippertilemode(clipperTilesFrequent->isChecked() ? 1 : 0);
+  AppContext::instance().appConfig()->clipperSection()->set_clippertilemode(clipperTilesFrequent->isChecked() ? 1 : 0);
 
   // Дубль: открыть оригинал или молча пропустить
-  if(AppContext::instance().appConfig()->get_clipperopendup()!=clipperOpenDup->isChecked())
-    AppContext::instance().appConfig()->set_clipperopendup(clipperOpenDup->isChecked());
+  if(AppContext::instance().appConfig()->clipperSection()->get_clipperopendup()!=clipperOpenDup->isChecked())
+    AppContext::instance().appConfig()->clipperSection()->set_clipperopendup(clipperOpenDup->isChecked());
 
   return result;
 }

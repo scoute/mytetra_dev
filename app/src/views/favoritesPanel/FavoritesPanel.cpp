@@ -30,6 +30,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 FavoritesPanel::FavoritesPanel(QWidget *parent) : QWidget(parent),
     treeMetadataConnected(false),
@@ -581,7 +582,7 @@ void FavoritesPanel::refreshFavorites(void)
 
     // Панель видна всегда пока фича включена, даже пустая:
     // иначе непонятно куда делась звездочка из меню
-    if(!AppContext::instance().appConfig()->get_favoritesEnabled())
+    if(!AppContext::instance().appConfig()->uiSection()->get_favoritesEnabled())
         setVisible(false);
     else if(!isVisible())
         setVisible(true);

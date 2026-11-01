@@ -10,6 +10,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 const QString KnownBasesConfig::m_sectionPrefix="num";
 const QStringList KnownBasesConfig::m_availableFields={"dbPath",
@@ -55,7 +56,7 @@ bool KnownBasesConfig::isInit(void)
 
 QString KnownBasesConfig::getConfigFileName()
 {
-    // QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->get_tetradir()+"/database.ini";
+    // QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/database.ini";
     return AppContext::instance().globalParameters()->getWorkDirectory()+"/knownbases.ini";
 }
 

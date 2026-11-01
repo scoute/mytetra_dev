@@ -30,6 +30,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Пункт с числовой сортировкой: даты, счетчики и размеры сортируются
 // по значению из UserRole, а не по отображаемому тексту
@@ -410,7 +411,7 @@ void HistoryPanel::refreshHistory(void)
                         info.branch=state.branchNames.join(QStringLiteral(" / "));
                         AttachTableData *attachTable=record->getAttachTablePointer();
                         info.attachCount=(attachTable!=nullptr) ? attachTable->size() : 0;
-                        info.recordDir=AppContext::instance().appConfig()->get_tetradir()
+                        info.recordDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()
                                         +QStringLiteral("/base/")
                                         +recordTable->getField(QStringLiteral("dir"), row);
                         noteInfo[recordTable->getField(QStringLiteral("id"), row)]=info;

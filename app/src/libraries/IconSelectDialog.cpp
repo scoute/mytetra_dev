@@ -18,6 +18,8 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 IconSelectDialog::IconSelectDialog()
 {
@@ -37,9 +39,9 @@ IconSelectDialog::~IconSelectDialog()
 // если иконки на диске отсутствовали
 void IconSelectDialog::iconsCollectionCheck()
 {
-  qDebug() << "In iconsCollectionCheck(). Mytetra XML dir is: " << AppContext::instance().appConfig()->get_tetradir();
+  qDebug() << "In iconsCollectionCheck(). Mytetra XML dir is: " << AppContext::instance().appConfig()->storageSection()->get_tetradir();
 
-  QString mytetraXmlDirName=AppContext::instance().appConfig()->get_tetradir();
+  QString mytetraXmlDirName=AppContext::instance().appConfig()->storageSection()->get_tetradir();
   QDir mytetraXmlDir( mytetraXmlDirName );
 
   QString iconsDirName="icons"; // Путь относительно каталога где лежит mytetra.xml
@@ -120,7 +122,7 @@ void IconSelectDialog::setupUI()
   m_sectionLabel.setText(tr("Section"));
 
   // В списке иконок устанавливается размер отображаемых иконок
-  int iconSize=AppContext::instance().appConfig()->getPreviewIconSize();
+  int iconSize=AppContext::instance().appConfig()->uiSection()->getPreviewIconSize();
   m_iconList.setIconSize(QSize(iconSize, iconSize));
 
   // Линейка наполяемости скрывается. Она должна быть видна только в процессе загрузки иконок

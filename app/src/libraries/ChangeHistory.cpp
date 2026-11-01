@@ -8,6 +8,7 @@
 #include "libraries/UnifiedDiff.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
 
 static QString recordFileName(const QString &recordId)
 {
@@ -29,7 +30,7 @@ bool ChangeHistory::snapshot(const QString &tetradir, const QString &recordId,
     // История выключена мастер-тумблером: тихо ничего не делаем.
     // Гейт здесь, а не у вызывателей: безопасны все пути записи,
     // включая будущие
-    if(!AppContext::instance().appConfig()->get_historyEnable())
+    if(!AppContext::instance().appConfig()->syncSection()->get_historyEnable())
         return false;
 
     if(!GitHelper::isAvailable())

@@ -10,6 +10,8 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 // Конструктор модели
 RecordTableModel::RecordTableModel(QObject *pobj) : QAbstractTableModel(pobj), table(nullptr)
@@ -43,7 +45,7 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     // Если запрашивается текст строки для отрисовки или для редактирования
     if(role==Qt::DisplayRole || role==Qt::EditRole || role==SORT_ROLE)
     {
-        QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
+        QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
         // Если длина списка показываемых столбцов меньше или равна номеру запрашиваемого столбца
         if( index.column() < showFields.size() )
@@ -58,10 +60,10 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
             {
                 // Преобразование временного штампа в дату и время
                 QDateTime fieldDateTime=QDateTime::fromString(field, "yyyyMMddhhmmss");
-                if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()==false)
+                if(AppContext::instance().appConfig()->uiSection()->getEnableCustomDateTimeFormat()==false)
                     return fieldDateTime.toString(Qt::SystemLocaleDate);
                 else
-                    return fieldDateTime.toString( AppContext::instance().appConfig()->getCustomDateTimeFormat() );
+                    return fieldDateTime.toString( AppContext::instance().appConfig()->uiSection()->getCustomDateTimeFormat() );
             }
 
             else if( role==Qt::DisplayRole && fieldName=="hasAttach") // Наличие аттачей
@@ -101,10 +103,10 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     // Подсветка заднего фона
     if(role==Qt::BackgroundRole)
     {
-        if( AppContext::instance().appConfig()->getEnableRecordWithAttachHighlight() )
+        if( AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight() )
             if( table->getField("hasAttach", index.row())=="1" )
             {
-                QColor color( AppContext::instance().appConfig()->getRecordWithAttachHighlightColor() );
+                QColor color( AppContext::instance().appConfig()->uiSection()->getRecordWithAttachHighlightColor() );
                 return QBrush(color);
             }
     }
@@ -112,7 +114,7 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     // Оформление иконками
     if(role == Qt::DecorationRole)
     {
-        QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
+        QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
         QString fieldName=showFields.value( index.column() );
         QString field=table->getField(fieldName, index.row());
 
@@ -164,7 +166,7 @@ bool RecordTableModel::setData(const QModelIndex &index, const QVariant &value, 
     if(role==Qt::EditRole)
     {
         // QStringList showFields=FixedParameters::recordFieldAvailableList(); // TODO: Заменить на показываемые поля
-        QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
+        QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
         // Если длина списка показываемых столбцов меньше или равна номеру запрашиваемого столбца
         if( index.column() < showFields.size() )
@@ -208,7 +210,7 @@ bool RecordTableModel::setData(const QModelIndex &index, const QVariant &value, 
 QVariant RecordTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     // QStringList showFields=FixedParameters::recordFieldAvailableList(); // TODO: Заменить на показываемые поля
-    QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
+    QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
     QMap<QString, QString> descriptionFields=FixedParameters::recordFieldDescription( showFields );
 
@@ -253,7 +255,7 @@ int RecordTableModel::columnCount(const QModelIndex &parent) const
 
     static int previousColumnCount=0;
 
-    int currentColumnCount=AppContext::instance().appConfig()->getRecordTableShowFields().size();
+    int currentColumnCount=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields().size();
 
     if( currentColumnCount!=previousColumnCount)
     {

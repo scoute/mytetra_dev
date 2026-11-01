@@ -22,6 +22,8 @@
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/crypt/Password.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigCrypto.h"
 
 AppConfigPage_Crypt::AppConfigPage_Crypt(QWidget *parent) : ConfigPage(parent)
 {
@@ -71,7 +73,7 @@ void AppConfigPage_Crypt::setupUi(void)
   howPassRequestRadio2=new QRadioButton(tr("Ask the password at MyTetra startup"));
 
   // Точка устанавливается возле того пункта, который настроен в конфиге
-  if(AppContext::instance().appConfig()->get_howpassrequest()=="atClickOnCryptBranch")
+  if(AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atClickOnCryptBranch")
    howPassRequestRadio1->setChecked(true);
   else
    howPassRequestRadio2->setChecked(true);
@@ -83,7 +85,7 @@ void AppConfigPage_Crypt::setupUi(void)
 
   passwordSaveAnnotation=new QLabel(tr("Password will be saved at first next entered.<br>Stored password will be cleared if uncheck this checkbox."));
 
-  if(AppContext::instance().appConfig()->getPasswordSaveFlag())
+  if(AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag())
    {
     howPassRequestRadio1->setEnabled(false);
     howPassRequestRadio2->setEnabled(false);
@@ -115,11 +117,11 @@ void AppConfigPage_Crypt::setupUi(void)
   autoClosePasswordEnable=new QCheckBox(tr("Enable auto closing password window, sec"), this);
   
   autoClosePasswordDelay=new QSpinBox(this);
-  autoClosePasswordDelay->setValue(AppContext::instance().appConfig()->get_autoClosePasswordDelay());
+  autoClosePasswordDelay->setValue(AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordDelay());
   autoClosePasswordDelay->setRange(1, 999);
 
   // Устанавливается галка и активность виджета выбора задержки
-  onAutoClosePasswordEnableToggle( AppContext::instance().appConfig()->get_autoClosePasswordEnable() );
+  onAutoClosePasswordEnableToggle( AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordEnable() );
 
   // Виджеты вставляются в группировщик
   QHBoxLayout *autoClosePasswordLayout=new QHBoxLayout;
@@ -135,7 +137,7 @@ void AppConfigPage_Crypt::setupUi(void)
   decryptFileToTrashDirectoryEnable=new QCheckBox(tr("Enable temporary decrypt attach file to trash directory"));
 
   // Устанавливается галка согласно настройке из файла конфигурации
-  decryptFileToTrashDirectoryEnable->setChecked( AppContext::instance().appConfig()->getEnableDecryptFileToTrashDirectory() );
+  decryptFileToTrashDirectoryEnable->setChecked( AppContext::instance().appConfig()->storageSection()->getEnableDecryptFileToTrashDirectory() );
 
   // Виджеты вставляются в группировщик
   QHBoxLayout *decryptFileToTrashDirectoryLayout=new QHBoxLayout;
@@ -184,7 +186,7 @@ void AppConfigPage_Crypt::updateUi(void)
   passRetrieveAnnotation->setText(getRetrieveAnnotationText());
 
   // Выбранный шифр из конфига
-  const int methodIndex=cryptMethodCombo->findData(AppContext::instance().appConfig()->get_cryptMethod());
+  const int methodIndex=cryptMethodCombo->findData(AppContext::instance().appConfig()->cryptoSection()->get_cryptMethod());
 
   cryptMethodCombo->blockSignals(true);
   cryptMethodCombo->setCurrentIndex(methodIndex>=0 ? methodIndex : 0);
@@ -241,8 +243,8 @@ QString AppConfigPage_Crypt::getRetrieveStatusText(void)
   status=status+tr("Password is set. ");
 
  // Если пароль (точнее хеш пароля) хранится локально
- if(AppContext::instance().appConfig()->getPasswordSaveFlag() &&
-    AppContext::instance().appConfig()->getPasswordMiddleHash().length()>0)
+ if(AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag() &&
+    AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()>0)
   status=status+tr("Password is saved locally. ");
 
  return status;
@@ -326,7 +328,7 @@ void AppConfigPage_Crypt::onCryptMethodChanged(int index)
   const QString method=cryptMethodCombo->itemData(index).toString();
 
   if(!method.isEmpty())
-    AppContext::instance().appConfig()->set_cryptMethod(method);
+    AppContext::instance().appConfig()->cryptoSection()->set_cryptMethod(method);
 }
 
 void AppConfigPage_Crypt::onReencryptButtonClicked(void)
@@ -414,33 +416,33 @@ int AppConfigPage_Crypt::applyChanges(void)
  qDebug() << "Apply changes crypt";
 
  if(howPassRequestRadio1->isChecked() &&
-    AppContext::instance().appConfig()->get_howpassrequest()=="atStartProgram")
-  AppContext::instance().appConfig()->set_howpassrequest("atClickOnCryptBranch");
+    AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atStartProgram")
+  AppContext::instance().appConfig()->cryptoSection()->set_howpassrequest("atClickOnCryptBranch");
 
  if(howPassRequestRadio2->isChecked() &&
-    AppContext::instance().appConfig()->get_howpassrequest()=="atClickOnCryptBranch")
-  AppContext::instance().appConfig()->set_howpassrequest("atStartProgram");
+    AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atClickOnCryptBranch")
+  AppContext::instance().appConfig()->cryptoSection()->set_howpassrequest("atStartProgram");
 
- if(autoClosePasswordEnable->isChecked()!=AppContext::instance().appConfig()->get_autoClosePasswordEnable())
-  AppContext::instance().appConfig()->set_autoClosePasswordEnable( autoClosePasswordEnable->isChecked() );
+ if(autoClosePasswordEnable->isChecked()!=AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordEnable())
+  AppContext::instance().appConfig()->cryptoSection()->set_autoClosePasswordEnable( autoClosePasswordEnable->isChecked() );
 
- if(autoClosePasswordDelay->value()!=AppContext::instance().appConfig()->get_autoClosePasswordDelay())
-  AppContext::instance().appConfig()->set_autoClosePasswordDelay( autoClosePasswordDelay->value() );
+ if(autoClosePasswordDelay->value()!=AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordDelay())
+  AppContext::instance().appConfig()->cryptoSection()->set_autoClosePasswordDelay( autoClosePasswordDelay->value() );
 
- if(passwordSaveEnable->isChecked()!=AppContext::instance().appConfig()->getPasswordSaveFlag())
+ if(passwordSaveEnable->isChecked()!=AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag())
   {
-   AppContext::instance().appConfig()->setPasswordSaveFlag( passwordSaveEnable->isChecked() );
+   AppContext::instance().appConfig()->cryptoSection()->setPasswordSaveFlag( passwordSaveEnable->isChecked() );
    
    // Если галка установлена что хранить локально пароль не нужно
    if(!passwordSaveEnable->isChecked())
     {
      // Промежуточный хеш пароля удаляется 
-     AppContext::instance().appConfig()->setPasswordMiddleHash("");
+     AppContext::instance().appConfig()->cryptoSection()->setPasswordMiddleHash("");
     }
   }
 
- if(decryptFileToTrashDirectoryEnable->isChecked()!=AppContext::instance().appConfig()->getEnableDecryptFileToTrashDirectory())
-   AppContext::instance().appConfig()->setEnableDecryptFileToTrashDirectory( decryptFileToTrashDirectoryEnable->isChecked() );
+ if(decryptFileToTrashDirectoryEnable->isChecked()!=AppContext::instance().appConfig()->storageSection()->getEnableDecryptFileToTrashDirectory())
+   AppContext::instance().appConfig()->storageSection()->setEnableDecryptFileToTrashDirectory( decryptFileToTrashDirectoryEnable->isChecked() );
 
  return 0;
 }

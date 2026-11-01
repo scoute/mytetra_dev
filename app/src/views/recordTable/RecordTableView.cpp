@@ -29,6 +29,8 @@
 #include "controllers/recordTable/RecordTableController.h"
 
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 // Виджет, отображащий список записей в ветке
 
@@ -114,12 +116,12 @@ void RecordTableView::init(void)
     // У таблицы есть вертикальные заголовки, для каждой строки, в которых отображается номер строки.
     // При задании высоты вертикального заголовка, высота применяется и для всех ячеек в строке.
     verticalHeader()->setDefaultSectionSize ( verticalHeader()->minimumSectionSize () );
-    int height=AppContext::instance().appConfig()->getUglyQssReplaceHeightForTableView();
+    int height=AppContext::instance().appConfig()->uiSection()->getUglyQssReplaceHeightForTableView();
     if(height!=0)
     {
         verticalHeader()->setDefaultSectionSize( height );
     }
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         verticalHeader()->setDefaultSectionSize( static_cast<int>( CssHelper::getCalculateIconSizePx() ) );
     }
@@ -193,7 +195,7 @@ void RecordTableView::setupSignals(void)
 void RecordTableView::restoreHeaderState( void )
 {
     // Видимость горизонтальных заголовков
-    if(AppContext::instance().appConfig()->getRecordTableShowHorizontalHeaders()==false)
+    if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowHorizontalHeaders()==false)
     {
         horizontalHeader()->hide();
     }
@@ -203,7 +205,7 @@ void RecordTableView::restoreHeaderState( void )
     }
 
     // Видимость вертикальных заголовков
-    if(AppContext::instance().appConfig()->getRecordTableShowVerticalHeaders()==false)
+    if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowVerticalHeaders()==false)
     {
         verticalHeader()->hide();
     }
@@ -265,7 +267,7 @@ void RecordTableView::onPressToRecord(const QModelIndex &index)
     // В десктопном режиме запись становится видна из-за обрабоки сигнала listSelectionChanged,
     // Поэтому здесь нужно только отработать клик по иконке аттача в столбце hasAttach
     // (Так как если курсор уже стоит на строке, то клик по иконке аттача не вызывает listSelectionChanged, ибо смены строки нет)
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
     {
         controller->switchMetaEditorToEditorOrAttach( index );
         return;
@@ -278,7 +280,7 @@ void RecordTableView::onClickToRecord(const QModelIndex &index)
 {
     // В мобильном режиме, как если засветка уже стоит на строке с записью, должна открыться запись
     // (а в десктопном режиме этого не должно происходить, потому что запись уже видна на экране из-за обрабоки сигнала listSelectionChanged)
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         clickToRecord(index);
         return;
@@ -358,7 +360,7 @@ void RecordTableView::onCustomContextMenuRequested(const QPoint &mousePos)
 
     // Звездочка избранного: надпись по состоянию, пункт скрыт
     // при выключенной фиче в настройках
-    if(AppContext::instance().appConfig()->get_favoritesEnabled() && selectItem.isValid())
+    if(AppContext::instance().appConfig()->uiSection()->get_favoritesEnabled() && selectItem.isValid())
     {
         parentPointer->actionFavorite->setVisible(true);
 
@@ -516,7 +518,7 @@ void RecordTableView::setSelectionToPos(int iPos)
 
   // В мобильной версии реакции на выбор записи нет (не обрабатывается сигнал смены строки в модели выбора)
   // Поэтому по записи должен быть сделан виртуальный клик, чтобы заполнилась таблица конечных записей
-  if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+  if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     emit this->clicked(index); // QModelIndex selIdx=recordSourceModel->index(pos, 0);
 
   scrollTo( currentIndex() ); // QAbstractItemView::PositionAtCenter
@@ -879,9 +881,9 @@ void RecordTableView::onSectionMoved( int logicalIndex, int oldVisualIndex, int 
   int newVisualWidth=horizontalHeader()->sectionSize(newVisualIndex);
 
   // В настройках последовательность полей меняется
-  QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
+  QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
   showFields.move(oldVisualIndex, newVisualIndex);
-  AppContext::instance().appConfig()->setRecordTableShowFields(showFields);
+  AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowFields(showFields);
 
   qDebug() << "New show field sequence" << showFields;
 
@@ -920,7 +922,7 @@ void RecordTableView::onSectionResized( int logicalIndex, int oldSize, int newSi
 void RecordTableView::saveColumnWidth(void)
 {
   // Выясняется количество полей
-  int count=AppContext::instance().appConfig()->getRecordTableShowFields().size();
+  int count=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields().size();
 
   QStringList columnWidthList;
 
@@ -931,7 +933,7 @@ void RecordTableView::saveColumnWidth(void)
     columnWidthList << width;
   }
 
-  AppContext::instance().appConfig()->setRecordTableFieldsWidth( columnWidthList );
+  AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth( columnWidthList );
 
   // qDebug() << "Save column width " << columnWidthList;
 }
@@ -939,7 +941,7 @@ void RecordTableView::saveColumnWidth(void)
 // Восстановление ширины колонок из конфигфайла
 void RecordTableView::restoreColumnWidth(void)
 {
-  QStringList columnWidthList=AppContext::instance().appConfig()->getRecordTableFieldsWidth();
+  QStringList columnWidthList=AppContext::instance().appConfig()->recordTableSection()->getRecordTableFieldsWidth();
 
   // qDebug() << "Restore column width " << columnWidthList;
 

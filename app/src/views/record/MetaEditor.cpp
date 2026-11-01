@@ -29,6 +29,7 @@
 #include "libraries/helpers/LinkHelper.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
 {
@@ -36,15 +37,15 @@ MetaEditor::MetaEditor(QWidget *parent) : Editor(parent)
     Editor::initEnableAssembly(false); // Стандартная сборка интерфейса редактора отключается
     Editor::initConfigFileName(AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini");
     Editor::initEnableRandomSeed(false);
-    Editor::initDisableToolList( AppContext::instance().appConfig()->getHideEditorTools() );
+    Editor::initDisableToolList( AppContext::instance().appConfig()->uiSection()->getHideEditorTools() );
 
     // Инициализация редатора
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
         Editor::init(Editor::WYEDIT_DESKTOP_MODE);
-    else if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    else if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         Editor::init(Editor::WYEDIT_MOBILE_MODE);
     else
-        criticalError("In MetaEditor constructor unknown interface mode: "+AppContext::instance().appConfig()->getInterfaceMode());
+        criticalError("In MetaEditor constructor unknown interface mode: "+AppContext::instance().appConfig()->uiSection()->getInterfaceMode());
 
     setupLabels();
     setupUI();
@@ -86,7 +87,7 @@ void MetaEditor::setupLabels(void)
   treePath=new QLabel(this);
   treePath->setTextInteractionFlags(Qt::TextSelectableByMouse |
                                     Qt::TextSelectableByKeyboard);
-  if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+  if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
     treePath->setVisible(false);
   else
     treePath->setVisible(true);
@@ -303,7 +304,7 @@ void MetaEditor::setAuthor(QString author)
 // Видимость шапки из настроек. Пустой автор скрыт всегда
 void MetaEditor::updateRecordHeaderVisibility(void)
 {
-  const bool show=AppContext::instance().appConfig()->get_recordHeaderVisible();
+  const bool show=AppContext::instance().appConfig()->uiSection()->get_recordHeaderVisible();
 
   recordName->setVisible(show);
   recordAuthor->setVisible(show && !recordAuthor->text().isEmpty());
@@ -583,16 +584,16 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
 
     // Цвета и мозаика заметок живут только на теме Custom:
     // базовые темы всегда выглядят как есть
-    if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()!="custom")
         return "";
 
-    QString paperSetting=AppContext::instance().appConfig()->get_notePaperColor();
+    QString paperSetting=AppContext::instance().appConfig()->uiSection()->get_notePaperColor();
     QColor paperColor(paperSetting);
 
     if(!paperSetting.isEmpty() && paperColor.isValid())
         declarations << QString("background-color: %1;").arg(paperColor.name());
 
-    QString fontSetting=AppContext::instance().appConfig()->get_noteFontColor();
+    QString fontSetting=AppContext::instance().appConfig()->uiSection()->get_noteFontColor();
     QColor fontColor(fontSetting);
 
     if(!fontSetting.isEmpty() && fontColor.isValid())
@@ -601,13 +602,13 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
     // Фон заметок: или цвет, или мозаика. Свой файл имеет приоритет,
     // иначе встроенный тайл по индексу (0 - tx_fabric.jpg).
     // Битый свой файл откатывается на встроенный
-    if(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()=="texture")
+    if(AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperMode()=="texture")
     {
-        QString tile=AppContext::instance().appConfig()->get_themeCustomNotePaperImage();
+        QString tile=AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperImage();
 
         if(tile.isEmpty() || !QFileInfo(tile).isReadable())
             tile=AppContext::instance().fixedParameters()->defaultNotePaperTiles.value(
-                AppContext::instance().appConfig()->get_themeCustomNotePaperBuiltin(),
+                AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperBuiltin(),
                 AppContext::instance().fixedParameters()->defaultNotePaperTiles.value(0));
 
         declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(tile);

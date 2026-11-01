@@ -7,6 +7,7 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DiskHelper::DiskHelper()
 {
@@ -19,7 +20,7 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
   QDir dirFrom(nameDirFrom);
   QStringList fileList=dirFrom.entryList();
 
-  QString nameDirTo=AppContext::instance().appConfig()->get_trashdir();
+  QString nameDirTo=AppContext::instance().appConfig()->storageSection()->get_trashdir();
 
   // Перебор всех файлов в удаляемой директории
   for(int i=0;i<fileList.size();i++)
@@ -76,7 +77,7 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
 
   // Получение имени файла для сохранения в корзине
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
-  QString fileNameTo     =AppContext::instance().appConfig()->get_trashdir()+"/"+fileNameToShort;
+  QString fileNameTo     =AppContext::instance().appConfig()->storageSection()->get_trashdir()+"/"+fileNameToShort;
 
   qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
@@ -113,7 +114,7 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
 
   // Получение имени файла для сохранения в корзине
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
-  QString fileNameTo     =AppContext::instance().appConfig()->get_trashdir()+"/"+fileNameToShort;
+  QString fileNameTo     =AppContext::instance().appConfig()->storageSection()->get_trashdir()+"/"+fileNameToShort;
 
   qDebug() << "Copy file from " << fileNameFrom << " to " << fileNameTo;
 
@@ -143,7 +144,7 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
 // Проверка существования директории корзины
 bool DiskHelper::isTrashDirectoryExists()
 {
-    QString dirName = AppContext::instance().appConfig()->get_trashdir();
+    QString dirName = AppContext::instance().appConfig()->storageSection()->get_trashdir();
 
     QDir dir(dirName);
 

@@ -28,6 +28,7 @@
 #include "libraries/helpers/ScreenHelper.h"
 #include "libraries/wyedit/EditorConfigDialog.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 QList<AppConfigDialog *> AppConfigDialog::openDialogs;
 
@@ -39,7 +40,7 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     configDialog->setAttribute(Qt::WA_DeleteOnClose);
     configDialog->setWindowTitle(QObject::tr("MyTetra settings"));
 
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         qDebug() << "Screen size X Y: " << ScreenHelper::getSizeX() << ScreenHelper::getSizeY();
         configDialog->setMinimumSize(ScreenHelper::getSizeX(), ScreenHelper::getSizeY());

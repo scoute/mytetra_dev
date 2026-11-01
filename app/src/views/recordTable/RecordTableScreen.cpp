@@ -26,6 +26,9 @@
 #include "controllers/recordTable/RecordTableController.h"
 
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigUi.h"
 
 // Виджет, который отображает список записей в ветке
 // c кнопками управления
@@ -313,9 +316,9 @@ void RecordTableScreen::rebuildToolbars(void)
  toolsLine->clear();
  extraToolsLine->clear();
 
- const bool isMobile=(AppContext::instance().appConfig()->getInterfaceMode()=="mobile");
+ const bool isMobile=(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile");
 
- QStringList order=AppContext::instance().appConfig()->getRecordToolbarOrder();
+ QStringList order=AppContext::instance().appConfig()->uiSection()->getRecordToolbarOrder();
 
  if(order.isEmpty())
   order=defaultToolbarOrder();
@@ -333,7 +336,7 @@ void RecordTableScreen::rebuildToolbars(void)
     insertActionAsButton(toolsLine, action, false);
   }
 
- QStringList extraOrder=AppContext::instance().appConfig()->getRecordExtraToolbarOrder();
+ QStringList extraOrder=AppContext::instance().appConfig()->uiSection()->getRecordExtraToolbarOrder();
 
  if(extraOrder.isEmpty())
   extraOrder=defaultExtraToolbarOrder();
@@ -375,7 +378,7 @@ void RecordTableScreen::setupUI(void)
 
  treePathLabel=new QLabel(this);
  treePathLabel->setWordWrap(true);
- if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
    treePathLabel->hide();
 }
 
@@ -647,7 +650,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
 
    // История выключена мастер-тумблером: пункт серый сразу,
    // а не вежливым отказом по клику
-   actionChangeHistory->setEnabled(AppContext::instance().appConfig()->get_historyEnable());
+   actionChangeHistory->setEnabled(AppContext::instance().appConfig()->syncSection()->get_historyEnable());
  }
 
  // Удаление записи
@@ -708,7 +711,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
 
  // Глобальный режим только чтения: мутирующие действия недоступны.
  // Копирование записей, печать, поиск и навигация разрешены
- if(AppContext::instance().appConfig()->get_readOnly())
+ if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
   {
    actionAddNewToEnd->setEnabled(false);
    actionAddNewBefore->setEnabled(false);
@@ -725,7 +728,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
   }
 
  // Перетаскивание записей запрещено, выбор работает
- recordTableController->getView()->setDragEnabled(!AppContext::instance().appConfig()->get_readOnly());
+ recordTableController->getView()->setDragEnabled(!AppContext::instance().appConfig()->recordTableSection()->get_readOnly());
 }
 
 // Обновление режимов редактора согласно состоянию записи в таблице

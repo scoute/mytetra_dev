@@ -15,6 +15,7 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Конструктор прикрепляемого файла
 Attach::Attach(AttachTableData *iParentTable)
@@ -369,7 +370,7 @@ QString Attach::constructFileName(const QString type, const QString id, const QS
     // Схема выбирается настройкой режима имен
     if(type=="file")
     {
-        int mode=AppContext::instance().appConfig()->get_attachNameMode();
+        int mode=AppContext::instance().appConfig()->storageSection()->get_attachNameMode();
         if(mode==AppConfig::AttachNameHybrid)
             return constructHumanFileName(type, id, fileName);
         if(mode==AppConfig::AttachNameOriginal)

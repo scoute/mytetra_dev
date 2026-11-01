@@ -13,6 +13,7 @@
 #include "libraries/ActionLogger.h"
 #include "views/waitClock/WaitClock.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
 
 ConsoleEmulator::ConsoleEmulator(QWidget *parent) : QDialog(parent)
 {
@@ -42,7 +43,7 @@ void ConsoleEmulator::setupUI(void)
  consoleOutput=new QTextEdit(this);
  consoleOutput->setReadOnly(true);
  consoleOutput->setFontFamily("monospace");
- if(AppContext::instance().appConfig()->getSyncroConsoleDetails()==false)
+ if(AppContext::instance().appConfig()->syncSection()->getSyncroConsoleDetails()==false)
   consoleOutput->hide();
 
  waitClock=new WaitClock(this);
@@ -140,12 +141,12 @@ void ConsoleEmulator::onDetailsClick(void)
  if(consoleOutput->isHidden())
   {
    consoleOutput->show();
-   AppContext::instance().appConfig()->setSyncroConsoleDetails(true);
+   AppContext::instance().appConfig()->syncSection()->setSyncroConsoleDetails(true);
   }
  else
   {
    consoleOutput->hide();
-   AppContext::instance().appConfig()->setSyncroConsoleDetails(false);
+   AppContext::instance().appConfig()->syncSection()->setSyncroConsoleDetails(false);
   }
 
  this->adjustSize();

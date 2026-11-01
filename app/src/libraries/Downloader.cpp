@@ -22,6 +22,7 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 Downloader::Downloader()
 {
@@ -433,7 +434,7 @@ void Downloader::onSslErrors(QNetworkReply *reply, const QList<QSslError> &error
 
   // Явно разрешенный небезопасный режим из настроек: принимаем
   // невалидные/самоподписанные сертификаты, но громко предупреждаем
-  if(AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates())
+  if(AppContext::instance().appConfig()->servicesSection()->get_tlsIgnoreInvalidCertificates())
   {
     qWarning() << "Downloader: TLS errors ignored by setting:"
                << details.join("; ");

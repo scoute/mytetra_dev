@@ -12,6 +12,9 @@
 #include <QJsonArray>
 
 #include "views/mcpHistory/McpHistoryDialog.h"
+#include "models/appConfig/AppConfigServices.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "libraries/AppContext.h"
 
 // Мост "MCP-сервер -> живой GUI". Третье классовое выделение (P3):
 // handleMcpMessage/handleMcpCommand (~800 строк) уезжают из
@@ -19,8 +22,8 @@
 // Зависимости внутрь:
 // - KnowTreeModel*: живая модель (указатель стабилен: reload in-place,
 //   смена базы - тот же объект через initFromXML). Передается в ctor
-// - isReadOnly: mytetraConfig.isGlobalReadOnly (меняется рантаймом)
-// - mcpAllowed: mytetraConfig.get_mcpAllow (переключается настройками)
+// - isReadOnly: AppContext::instance().appConfig()->recordTableSection()->isGlobalReadOnly(меняется рантаймом)
+// - mcpAllowed: AppContext::instance().appConfig()->servicesSection()->get_mcpAllow(переключается настройками)
 // - clearEditor: сброс MetaEditor при move_note (иначе висячий указатель
 //   в таблицу-источник). MainWindow передает лямбду с find_object
 // Состояние сессии (пиры, режимы, история) живет здесь, а не в окне.

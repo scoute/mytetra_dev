@@ -24,6 +24,7 @@
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 TagsPanel::TagsPanel(QWidget *parent) : QWidget(parent),
     treeMetadataConnected(false),
@@ -495,7 +496,7 @@ void TagsPanel::onTagsContextMenu(const QPoint &pos)
 void TagsPanel::onRenameTag(void)
 {
     // Глобальный режим только чтения: теги не переименовываются
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
         return;
 
     int row=tagsTable->currentRow();
@@ -588,7 +589,7 @@ void TagsPanel::onRenameTag(void)
 void TagsPanel::onDeleteTag(void)
 {
     // Глобальный режим только чтения: теги не удаляются
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
         return;
 
     int row=tagsTable->currentRow();

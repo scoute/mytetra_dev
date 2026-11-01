@@ -6,6 +6,7 @@
 
 #include "AppConfig.h"
 #include "AppConfigUpdater.h"
+#include "AppConfigGeneral.h"
 
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
@@ -117,7 +118,7 @@ void AppConfig::update_version_process(void)
     updater.setConfigFile(configFileName);
 
     // Номер версии текущего конфига, который есть на начало обновления
-    int fromVersion=get_config_version();
+    int fromVersion=generalSection()->get_config_version();
 
     // Эта строка компилируется нормально, сделать на ее основе список указателей на функцию
     // std::function< QStringList(AppConfig&, bool) > pFunction=&AppConfig::get_parameter_table_1;

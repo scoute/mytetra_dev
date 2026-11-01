@@ -12,6 +12,7 @@
 #include "libraries/helpers/ActionHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 AttachTableScreen::AttachTableScreen(QWidget *parent) : QWidget(parent)
 {
@@ -156,9 +157,9 @@ void AttachTableScreen::onAttachViewModeChanged(void)
 {
   // Слот зовется от обеих радиокнопок — реакция только на включение
   if(viewModeTilesRadio->isChecked())
-    AppContext::instance().appConfig()->set_attachViewMode("tiles");
+    AppContext::instance().appConfig()->uiSection()->set_attachViewMode("tiles");
   else if(viewModeListRadio->isChecked())
-    AppContext::instance().appConfig()->set_attachViewMode("list");
+    AppContext::instance().appConfig()->uiSection()->set_attachViewMode("list");
   else
     return;
 
@@ -168,7 +169,7 @@ void AttachTableScreen::onAttachViewModeChanged(void)
 
 void AttachTableScreen::updateAttachViewVisibility(void)
 {
-  const bool tilesMode=(AppContext::instance().appConfig()->get_attachViewMode()=="tiles");
+  const bool tilesMode=(AppContext::instance().appConfig()->uiSection()->get_attachViewMode()=="tiles");
 
   // Блокировка сигналов: checked выставляется программно
   viewModeListRadio->blockSignals(true);

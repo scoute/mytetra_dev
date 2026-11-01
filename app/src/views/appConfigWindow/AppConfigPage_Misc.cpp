@@ -12,6 +12,11 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigGeneral.h"
+#include "models/appConfig/AppConfigServices.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 AppConfigPage_Misc::AppConfigPage_Misc(QWidget *parent) : ConfigPage(parent)
 {
@@ -32,27 +37,27 @@ void AppConfigPage_Misc::setupUi(void)
   // Блок настройки отображения отладочных сообщений в консоли
   printDebugMessages=new QCheckBox(this);
   printDebugMessages->setText(tr("Print debug messages to console"));
-  printDebugMessages->setChecked(AppContext::instance().appConfig()->get_printdebugmessages());
+  printDebugMessages->setChecked(AppContext::instance().appConfig()->generalSection()->get_printdebugmessages());
 
   // Разрешение/запрещение лога действий
   enableActionLog=new QCheckBox(this);
   enableActionLog->setText(tr("Enable action logging (experimental)"));
-  enableActionLog->setChecked(AppContext::instance().appConfig()->getEnableLogging());
+  enableActionLog->setChecked(AppContext::instance().appConfig()->storageSection()->getEnableLogging());
 
   // Разрешение/запрещение создавать пустую запись (без текста)
   enableCreateEmptyRecord=new QCheckBox(this);
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
-  enableCreateEmptyRecord->setChecked(AppContext::instance().appConfig()->getEnableCreateEmptyRecord());
+  enableCreateEmptyRecord->setChecked(AppContext::instance().appConfig()->recordTableSection()->getEnableCreateEmptyRecord());
 
   // Умное автосохранение: срабатывает только при реальных правках
   autosaveBox=new QGroupBox(this);
   autosaveBox->setTitle(tr("Autosave"));
   autosaveEnable=new QCheckBox(tr("Enable autosave, min"), this);
-  autosaveEnable->setChecked(AppContext::instance().appConfig()->get_autosaveEnable());
+  autosaveEnable->setChecked(AppContext::instance().appConfig()->syncSection()->get_autosaveEnable());
   autosaveInterval=new QSpinBox(this);
-  autosaveInterval->setValue(AppContext::instance().appConfig()->get_autosaveInterval());
+  autosaveInterval->setValue(AppContext::instance().appConfig()->syncSection()->get_autosaveInterval());
   autosaveInterval->setRange(1, 999);
-  autosaveInterval->setEnabled(AppContext::instance().appConfig()->get_autosaveEnable());
+  autosaveInterval->setEnabled(AppContext::instance().appConfig()->syncSection()->get_autosaveEnable());
 
   // Сетевые загрузки: ослабление проверки TLS только по явному согласию.
   // По умолчанию невалидный/самоподписанный сертификат отклоняется
@@ -62,7 +67,7 @@ void AppConfigPage_Misc::setupUi(void)
   tlsIgnoreInvalidCertificates->setText(
     tr("Allow loading with invalid or self-signed TLS certificates"));
   tlsIgnoreInvalidCertificates->setChecked(
-    AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates());
+    AppContext::instance().appConfig()->servicesSection()->get_tlsIgnoreInvalidCertificates());
   tlsIgnoreInvalidCertificates->setToolTip(
     tr("Disables certificate verification for images and files downloaded "
        "from the network. This reduces protection against traffic "
@@ -165,32 +170,32 @@ int AppConfigPage_Misc::applyChanges(void)
   int result=0;
 
   // Сохраняется настройка отображения отладочных сообщений в консоли
-  if(AppContext::instance().appConfig()->get_printdebugmessages()!=printDebugMessages->isChecked())
-    AppContext::instance().appConfig()->set_printdebugmessages(printDebugMessages->isChecked());
+  if(AppContext::instance().appConfig()->generalSection()->get_printdebugmessages()!=printDebugMessages->isChecked())
+    AppContext::instance().appConfig()->generalSection()->set_printdebugmessages(printDebugMessages->isChecked());
 
   // Сохраняется настройка разрешения/запрещения лога действий
-  if(AppContext::instance().appConfig()->getEnableLogging()!=enableActionLog->isChecked())
+  if(AppContext::instance().appConfig()->storageSection()->getEnableLogging()!=enableActionLog->isChecked())
   {
-    AppContext::instance().appConfig()->setEnableLogging(enableActionLog->isChecked());
+    AppContext::instance().appConfig()->storageSection()->setEnableLogging(enableActionLog->isChecked());
     result=1;
   }
 
   // Сохраняется настройка возможности создания записи, не содержащей текст
-  if(AppContext::instance().appConfig()->getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
-    AppContext::instance().appConfig()->setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
+  if(AppContext::instance().appConfig()->recordTableSection()->getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())
+    AppContext::instance().appConfig()->recordTableSection()->setEnableCreateEmptyRecord(enableCreateEmptyRecord->isChecked());
 
   // Умное автосохранение: интервал подхватится сам на следующем
   // срабатывании (таймер перечитывает конфиг каждый раз)
-  if(AppContext::instance().appConfig()->get_autosaveEnable()!=autosaveEnable->isChecked())
-    AppContext::instance().appConfig()->set_autosaveEnable(autosaveEnable->isChecked());
+  if(AppContext::instance().appConfig()->syncSection()->get_autosaveEnable()!=autosaveEnable->isChecked())
+    AppContext::instance().appConfig()->syncSection()->set_autosaveEnable(autosaveEnable->isChecked());
 
-  if(AppContext::instance().appConfig()->get_autosaveInterval()!=autosaveInterval->value())
-    AppContext::instance().appConfig()->set_autosaveInterval(autosaveInterval->value());
+  if(AppContext::instance().appConfig()->syncSection()->get_autosaveInterval()!=autosaveInterval->value())
+    AppContext::instance().appConfig()->syncSection()->set_autosaveInterval(autosaveInterval->value());
 
   // Сетевые загрузки: значение читается при каждом запросе,
   // перезапуск не нужен
-  if(AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates()!=tlsIgnoreInvalidCertificates->isChecked())
-    AppContext::instance().appConfig()->set_tlsIgnoreInvalidCertificates(tlsIgnoreInvalidCertificates->isChecked());
+  if(AppContext::instance().appConfig()->servicesSection()->get_tlsIgnoreInvalidCertificates()!=tlsIgnoreInvalidCertificates->isChecked())
+    AppContext::instance().appConfig()->servicesSection()->set_tlsIgnoreInvalidCertificates(tlsIgnoreInvalidCertificates->isChecked());
 
   return result;
 }

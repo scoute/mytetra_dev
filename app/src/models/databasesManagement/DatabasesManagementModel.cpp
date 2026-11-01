@@ -6,6 +6,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DatabasesManagementModel::DatabasesManagementModel(QObject *parent) : QAbstractTableModel(parent)
 {
@@ -26,8 +27,8 @@ void DatabasesManagementModel::initData()
     this->scanDirectoriesFromConfig();
     this->scanDirectoriesFromKnownbasesConfig();
 
-    this->selectDirectories(AppContext::instance().appConfig()->get_tetradir(),
-                            AppContext::instance().appConfig()->get_trashdir());
+    this->selectDirectories(AppContext::instance().appConfig()->storageSection()->get_tetradir(),
+                            AppContext::instance().appConfig()->storageSection()->get_trashdir());
 }
 
 // Поиск возможных каталогов баз данных напрямую в известных местах
@@ -75,8 +76,8 @@ void DatabasesManagementModel::scanDirectoriesFromConfig()
     QString configFileName;
 
     // Данные из текущего конфига
-    dbDirsInfo.dbPath   =AppContext::instance().appConfig()->get_tetradir();
-    dbDirsInfo.trashPath=AppContext::instance().appConfig()->get_trashdir();
+    dbDirsInfo.dbPath   =AppContext::instance().appConfig()->storageSection()->get_tetradir();
+    dbDirsInfo.trashPath=AppContext::instance().appConfig()->storageSection()->get_trashdir();
     dbDirsInfo.descript =tr("Knowledge base from current config file %1").arg(AppContext::instance().appConfig()->getConfigFileName());
     dbDirsInfo.isInConfigData=true;
     dbDirs << dbDirsInfo;

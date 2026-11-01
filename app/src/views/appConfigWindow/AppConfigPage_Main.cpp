@@ -23,6 +23,9 @@
 #include "views/mainWindow/MainWindow.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigGeneral.h"
 
 AppConfigPage_Main::AppConfigPage_Main(QWidget *parent) : ConfigPage(parent)
 {
@@ -41,7 +44,7 @@ void AppConfigPage_Main::setupUi(void)
 
  tetradirInput=new QLineEdit(this);
  tetradirInput->setMinimumWidth(50);
- tetradirInput->setText(AppContext::instance().appConfig()->get_tetradir());
+ tetradirInput->setText(AppContext::instance().appConfig()->storageSection()->get_tetradir());
 
  tetradirButton=new QToolButton(this);
  tetradirButton->setText(tr("..."));
@@ -52,7 +55,7 @@ void AppConfigPage_Main::setupUi(void)
 
  trashdirInput=new QLineEdit(this);
  trashdirInput->setMinimumWidth(50);
- trashdirInput->setText(AppContext::instance().appConfig()->get_trashdir());
+ trashdirInput->setText(AppContext::instance().appConfig()->storageSection()->get_trashdir());
 
  trashdirButton=new QToolButton(this);
  trashdirButton->setText(tr("..."));
@@ -64,7 +67,7 @@ void AppConfigPage_Main::setupUi(void)
  
  trashsizeInput=new QSpinBox(this);
  trashsizeInput->setRange(1,1000);
- trashsizeInput->setValue(AppContext::instance().appConfig()->get_trashsize());
+ trashsizeInput->setValue(AppContext::instance().appConfig()->storageSection()->get_trashsize());
  
  trashsizeFlexion=new QLabel(this);
  trashsizeFlexion->setText(tr("Mb"));
@@ -75,7 +78,7 @@ void AppConfigPage_Main::setupUi(void)
  
  trashmaxfilecountInput=new QSpinBox(this);
  trashmaxfilecountInput->setRange(1,3000);
- trashmaxfilecountInput->setValue(AppContext::instance().appConfig()->get_trashmaxfilecount());
+ trashmaxfilecountInput->setValue(AppContext::instance().appConfig()->storageSection()->get_trashmaxfilecount());
  
  trashmaxfilecountFlexion=new QLabel(this);
  trashmaxfilecountFlexion->setText(tr("files"));
@@ -100,7 +103,7 @@ void AppConfigPage_Main::setupUi(void)
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/China.png"));
  interfaceLanguage->addItem("hy");
  interfaceLanguage->setItemIcon(interfaceLanguage->count()-1, QIcon(":/resource/pic/countryFlags/Armenia.png"));
- interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(AppContext::instance().appConfig()->get_interfacelanguage(), Qt::MatchCaseSensitive));
+ interfaceLanguage->setCurrentIndex(interfaceLanguage->findText(AppContext::instance().appConfig()->generalSection()->get_interfacelanguage(), Qt::MatchCaseSensitive));
 
  // Блок работы с отображением даты и времени
  dateTimeFormatBox=new QGroupBox(this);
@@ -114,7 +117,7 @@ void AppConfigPage_Main::setupUi(void)
  dateTimeFormatHelpButton->setIcon( styleHelp.standardIcon(QStyle::SP_MessageBoxQuestion) );
 
  // Точка устанавливается возле того пункта, который настроен в конфиге
- if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()==false)
+ if(AppContext::instance().appConfig()->uiSection()->getEnableCustomDateTimeFormat()==false)
  {
    disableCustomDateTimeFormat->setChecked(true);
    enableCustomDateTimeFormat->setChecked(false);
@@ -126,7 +129,7 @@ void AppConfigPage_Main::setupUi(void)
    disableCustomDateTimeFormat->setChecked(false);
    enableCustomDateTimeFormat->setChecked(true);
    customDateTimeFormat->setEnabled(true);
-   customDateTimeFormat->setText( AppContext::instance().appConfig()->getCustomDateTimeFormat() );
+   customDateTimeFormat->setText( AppContext::instance().appConfig()->uiSection()->getCustomDateTimeFormat() );
  }
 
 }
@@ -271,10 +274,10 @@ void AppConfigPage_Main::onLanguageChanged(int index)
 {
   QString code=interfaceLanguage->itemText(index);
 
-  if(code.isEmpty() || AppContext::instance().appConfig()->get_interfacelanguage()==code)
+  if(code.isEmpty() || AppContext::instance().appConfig()->generalSection()->get_interfacelanguage()==code)
     return;
 
-  AppContext::instance().appConfig()->set_interfacelanguage(code);
+  AppContext::instance().appConfig()->generalSection()->set_interfacelanguage(code);
 
   LanguageHelper::switchLanguage(code);
 
@@ -344,7 +347,7 @@ int AppConfigPage_Main::applyChanges(void)
  int difficultChanges=0;
  
  // Если был изменен путь к базе, он запоминается в конфигфайл
- if(AppContext::instance().appConfig()->get_tetradir()!=tetradirInput->text())
+ if(AppContext::instance().appConfig()->storageSection()->get_tetradir()!=tetradirInput->text())
   {
    QDir dir(tetradirInput->text());
 
@@ -356,14 +359,14 @@ int AppConfigPage_Main::applyChanges(void)
    else
     { 
      // Новое имя запоминается в конфиг
-     AppContext::instance().appConfig()->set_tetradir( tetradirInput->text() );
+     AppContext::instance().appConfig()->storageSection()->set_tetradir( tetradirInput->text() );
      difficultChanges=1;
     } 
   } 
 
  
  // Если был изменен путь к корзине, он запоминается в конфигфайл
- if(AppContext::instance().appConfig()->get_trashdir()!=trashdirInput->text())
+ if(AppContext::instance().appConfig()->storageSection()->get_trashdir()!=trashdirInput->text())
   {
    QDir dir(trashdirInput->text());
 
@@ -375,42 +378,42 @@ int AppConfigPage_Main::applyChanges(void)
    else
     { 
      // Новое имя запоминается в конфиг
-     AppContext::instance().appConfig()->set_trashdir(trashdirInput->text());
+     AppContext::instance().appConfig()->storageSection()->set_trashdir(trashdirInput->text());
     } 
   } 
  
  
  // Если был изменен размер корзины
- if( (int)AppContext::instance().appConfig()->get_trashsize() != (int)trashsizeInput->text().toInt() )
+ if( (int)AppContext::instance().appConfig()->storageSection()->get_trashsize() != (int)trashsizeInput->text().toInt() )
   {
-   AppContext::instance().appConfig()->set_trashsize(trashsizeInput->text().toInt());
+   AppContext::instance().appConfig()->storageSection()->set_trashsize(trashsizeInput->text().toInt());
   }
 
  
  // Если было изменено максимально возможное количество файлов в корзине
- if(AppContext::instance().appConfig()->get_trashmaxfilecount()!=trashmaxfilecountInput->text().toInt())
+ if(AppContext::instance().appConfig()->storageSection()->get_trashmaxfilecount()!=trashmaxfilecountInput->text().toInt())
   {
-   AppContext::instance().appConfig()->set_trashmaxfilecount(trashmaxfilecountInput->text().toInt());
+   AppContext::instance().appConfig()->storageSection()->set_trashmaxfilecount(trashmaxfilecountInput->text().toInt());
   }
 
  // Если было изменено использование пользовательского формата даты и времени
- if(AppContext::instance().appConfig()->getEnableCustomDateTimeFormat()!=enableCustomDateTimeFormat->isChecked())
+ if(AppContext::instance().appConfig()->uiSection()->getEnableCustomDateTimeFormat()!=enableCustomDateTimeFormat->isChecked())
   {
-   AppContext::instance().appConfig()->setEnableCustomDateTimeFormat(enableCustomDateTimeFormat->isChecked());
+   AppContext::instance().appConfig()->uiSection()->setEnableCustomDateTimeFormat(enableCustomDateTimeFormat->isChecked());
   }
 
  // Если было изменен пользовательский формат даты и времени
- if(AppContext::instance().appConfig()->getCustomDateTimeFormat()!=customDateTimeFormat->text())
+ if(AppContext::instance().appConfig()->uiSection()->getCustomDateTimeFormat()!=customDateTimeFormat->text())
   {
-   AppContext::instance().appConfig()->setCustomDateTimeFormat(customDateTimeFormat->text());
+   AppContext::instance().appConfig()->uiSection()->setCustomDateTimeFormat(customDateTimeFormat->text());
   }
 
  
  // Если был изменен язык: применяется на лету без перезапуска.
  // Порядок важен: сначала прямые тексты, потом тексты на шорткатах
- if(AppContext::instance().appConfig()->get_interfacelanguage()!=interfaceLanguage->currentText())
+ if(AppContext::instance().appConfig()->generalSection()->get_interfacelanguage()!=interfaceLanguage->currentText())
   {
-   AppContext::instance().appConfig()->set_interfacelanguage(interfaceLanguage->currentText());
+   AppContext::instance().appConfig()->generalSection()->set_interfacelanguage(interfaceLanguage->currentText());
 
    LanguageHelper::switchLanguage(interfaceLanguage->currentText());
 

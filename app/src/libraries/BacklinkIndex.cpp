@@ -14,6 +14,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/tree/KnowTreeView.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 BacklinkIndex &BacklinkIndex::instance(void)
 {
@@ -45,7 +46,7 @@ KnowTreeModel *BacklinkIndex::treeModel(void)
 
 QString BacklinkIndex::sidecarFileName(void)
 {
-  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/backlinks.xml");
+  return QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/backlinks.xml");
 }
 
 bool BacklinkIndex::isLoaded(void) const
@@ -204,7 +205,7 @@ QString BacklinkIndex::recordTextFileName(const QString &recordId) const
   if(dir.isEmpty() || file.isEmpty())
     return QString();
 
-  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+
+  return QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+
                          QStringLiteral("/base/")+dir+
                          QStringLiteral("/")+file);
 }

@@ -34,6 +34,7 @@ static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 QString McpTools::branchPathOf(TreeItem *item)
 {
@@ -293,7 +294,7 @@ QString McpTools::readTextWithRetry(Record *record)
 
   if(!dir.isEmpty() && !file.isEmpty())
   {
-    fullName=AppContext::instance().appConfig()->get_tetradir()+"/base/"+dir+"/"+file;
+    fullName=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+dir+"/"+file;
     before=QFileInfo(fullName).lastModified();
   }
 
@@ -648,7 +649,7 @@ QJsonObject McpTools::debugInfo(void)
                     QString::number(APPLICATION_RELEASE_SUBVERSION)+"."+
                     QString::number(APPLICATION_RELEASE_MICROVERSION);
 
-  const QString tetradir=AppContext::instance().appConfig()->get_tetradir();
+  const QString tetradir=AppContext::instance().appConfig()->storageSection()->get_tetradir();
   const QString xmlPath=tetradir+"/mytetra.xml";
   const QFileInfo xmlInfo(xmlPath);
 

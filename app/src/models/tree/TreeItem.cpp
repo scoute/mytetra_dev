@@ -11,6 +11,8 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 TreeItem::TreeItem(const QMap<QString, QString> &data, TreeItem *parent)
 {
@@ -104,7 +106,7 @@ QString TreeItem::getField(QString name) const
         if(totalCount==0)
             return itemName;
 
-        if(AppContext::instance().appConfig()->get_showSubtreeCount()==false)
+        if(AppContext::instance().appConfig()->uiSection()->get_showSubtreeCount()==false)
         {
             if(recordCount==0)
                 return itemName;
@@ -197,7 +199,7 @@ void TreeItem::setField(QString name, QString value)
     if(name=="icon")
     {
       if(value.length()>0)
-        icon=QIcon(AppContext::instance().appConfig()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+value); // Изображение иконки кешируется
+        icon=QIcon(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+value); // Изображение иконки кешируется
       else
         icon=QIcon(); // Изображение иконки обнуляется
     }
@@ -242,7 +244,7 @@ void TreeItem::setAllFieldDirect(const QMap<QString, QString> nameAndValue)
   // Если есть иконка и нет шифрования, изображение иконки кешируется
   if(nameAndValue.value("icon").length()>0 &&
      nameAndValue.value("crypt")!="1")
-    icon=QIcon(AppContext::instance().appConfig()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+nameAndValue.value("icon"));
+    icon=QIcon(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+nameAndValue.value("icon"));
 
   if(nameAndValue.value("icon").length()==0)
     icon=QIcon();
@@ -271,7 +273,7 @@ QIcon TreeItem::getIcon()
 
         // Если иконка была задана
         if(iconFileName.length()>0)
-          icon=QIcon(AppContext::instance().appConfig()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+iconFileName);
+          icon=QIcon(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory+"/"+iconFileName);
       }
 
       return icon;

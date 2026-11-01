@@ -23,6 +23,7 @@
 #include "libraries/helpers/GestureHelper.h"
 #include "libraries/helpers/CssHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 #define USER_ROLE_PATH      Qt::UserRole
 #define USER_ROLE_RECORD_ID Qt::UserRole+1
@@ -58,10 +59,10 @@ void FindTableWidget::setupUI(void)
     // У таблицы есть вертикальные заголовки, для каждой строки, в которых отображается номер строки.
     // При задании высоты вертикального заголовка, высота применяется и для всех ячеек в строке.
     findTableView->verticalHeader()->setDefaultSectionSize ( findTableView->verticalHeader()->minimumSectionSize () );
-    int height=AppContext::instance().appConfig()->getUglyQssReplaceHeightForTableView();
+    int height=AppContext::instance().appConfig()->uiSection()->getUglyQssReplaceHeightForTableView();
     if(height!=0)
         findTableView->verticalHeader()->setDefaultSectionSize( height );
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         findTableView->verticalHeader()->setDefaultSectionSize( CssHelper::getCalculateIconSizePx() );
 
     // Устанавливается режим что могут выделяться только строки

@@ -44,6 +44,11 @@
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/CssHelper.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigCrypto.h"
+#include "models/appConfig/AppConfigGeneral.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 
 
@@ -325,7 +330,7 @@ int main(int argc, char ** argv)
     if ( !globalParameters.getInstallAutodetectLang().isEmpty() )
     {
         // Если была процедура инсталляции, в конфиг записывается автоопределенный язык
-        mytetraConfig.set_interfacelanguage( globalParameters.getInstallAutodetectLang() );
+        AppContext::instance().appConfig()->generalSection()->set_interfacelanguage( globalParameters.getInstallAutodetectLang() );
     }
 
 
@@ -342,20 +347,20 @@ int main(int argc, char ** argv)
 
     // Инициализация логирования действий над данными
     actionLogger.init();
-    actionLogger.setEnableLogging( mytetraConfig.getEnableLogging() ); // Установка или запрещение логирования согласно конфигурации
+    actionLogger.setEnableLogging( AppContext::instance().appConfig()->storageSection()->getEnableLogging() ); // Установка или запрещение логирования согласно конфигурации
     actionLogger.addAction("startProgram"); // Запись в лог старта программы
 
 
     // Экран загрузки, показывается только в Андроид версии (так как загрузка идет ~10 сек, и без сплешскрина непонятно что происходит)
     QSplashScreen splash(QPixmap(":/resource/pic/mytetra_splash.png"));
-    if (mytetraConfig.getShowSplashScreen())
+    if (AppContext::instance().appConfig()->uiSection()->getShowSplashScreen())
     {
         splash.show();
     }
 
 
     // Подключение перевода интерфейса
-    LanguageHelper::switchLanguage(mytetraConfig.get_interfacelanguage());
+    LanguageHelper::switchLanguage(AppContext::instance().appConfig()->generalSection()->get_interfacelanguage());
 
     //Загрузка переводов стандартных диалогов и кнопок
     QTranslator qtTranslator;
@@ -406,7 +411,7 @@ int main(int argc, char ** argv)
         win.show(); // В Андроиде нет десктопа, на нем нельзя сворачивать окно
     else
     {
-        if (mytetraConfig.get_runinminimizedwindow()==false)
+        if (AppContext::instance().appConfig()->uiSection()->get_runinminimizedwindow()==false)
             win.show();
         else
             win.hide();
@@ -420,7 +425,7 @@ int main(int argc, char ** argv)
     CssHelper::applyCustomDesign();
 
     // Восстановление видимости виджета, который был активный, для мобильного интерфейса
-    if (mytetraConfig.getInterfaceMode()=="mobile")
+    if (AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         globalParameters.getWindowSwitcher()->restoreFocusWidget();
 
     qDebug() << "Restore session succesfull";
@@ -433,15 +438,15 @@ int main(int argc, char ** argv)
 
     // Если в конфиге настроено, что нужно синхронизироваться при старте
     // И задана команда синхронизации
-    if (mytetraConfig.get_synchroonstartup())
-        if (mytetraConfig.get_synchrocommand().trimmed().length()>0)
+    if (AppContext::instance().appConfig()->syncSection()->get_synchroonstartup())
+        if (AppContext::instance().appConfig()->syncSection()->get_synchrocommand().trimmed().length()>0)
             win.synchronization();
 
 
     // Если настроено в конфиге, сразу запрашивается пароль доступа
     // к зашифрованным данным
     // И если есть хоть какие-то зашифрованные данные
-    if (mytetraConfig.get_howpassrequest()=="atStartProgram")
+    if (AppContext::instance().appConfig()->cryptoSection()->get_howpassrequest()=="atStartProgram")
         if (globalParameters.getCryptKey().length()==0)
             if (dataBaseConfig.get_crypt_mode()>0)
             {
@@ -460,8 +465,8 @@ int main(int argc, char ** argv)
     // И хранимый пароль (точнее его хеш) заполнен
     if (globalParameters.getCryptKey().length()==0)
         if (dataBaseConfig.get_crypt_mode()>0)
-            if (mytetraConfig.getPasswordSaveFlag())
-                if (mytetraConfig.getPasswordMiddleHash().length()>0)
+            if (AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag())
+                if (AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()>0)
                 {
                     // При запросе пароля ключ шифрования будет восстановлен автоматически,
                     // если он правильный и подходит для текущих данных
@@ -484,12 +489,12 @@ int main(int argc, char ** argv)
 
     // Инициалиация периодической проверки изменения базы сторонними программами
     periodicCheckBase.init();
-    periodicCheckBase.setDelay( mytetraConfig.getCheckBasePeriod() );
+    periodicCheckBase.setDelay( AppContext::instance().appConfig()->syncSection()->getCheckBasePeriod() );
     periodicCheckBase.start();
 
     // Инициалиация периодической синхронизации
     periodicSyncro.init();
-    periodicSyncro.setDelay( mytetraConfig.getPeriodicSyncroPeriod() );
+    periodicSyncro.setDelay( AppContext::instance().appConfig()->syncSection()->getPeriodicSyncroPeriod() );
     periodicSyncro.start();
 
     // При закрытии окна не выходить из программы.
@@ -510,7 +515,7 @@ int main(int argc, char ** argv)
     });
 
     // Окно сплеш-скрина скрывается
-    if (mytetraConfig.getShowSplashScreen())
+    if (AppContext::instance().appConfig()->uiSection()->getShowSplashScreen())
         splash.finish(&win);
 
     return app.exec();

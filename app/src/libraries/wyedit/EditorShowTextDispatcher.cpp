@@ -9,6 +9,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 EditorShowTextDispatcher::EditorShowTextDispatcher(QObject *parent) : QObject(parent)
 {
@@ -74,11 +75,11 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
     // станет неактивным (например, когда запись не выбрана)
     // то данное окно тоже станет неактивным, и невозможно будет выделить в нем текст
     QPointer<EditorShowText> editorShowText;
-    if(AppContext::instance().appConfig()->getDockableWindowsBehavior()=="single")
+    if(AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior()=="single")
     {
         editorShowText=new EditorShowText(nullptr, Qt::Window);
     }
-    else if(AppContext::instance().appConfig()->getDockableWindowsBehavior()=="together")
+    else if(AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior()=="together")
     {
         editorShowText=new EditorShowText( find_object<MainWindow>("mainwindow"), Qt::Dialog );
     }
@@ -285,14 +286,14 @@ void EditorShowTextDispatcher::saveOpenWindows()
 
     // Формат запоминаемых данных
     // "IDокна1,x1,y1,w1,h1;IDокна2,x2,y2,w2,h2" и т. д.
-    AppContext::instance().appConfig()->setDockableWindowsState( windowsState.join(";") );
+    AppContext::instance().appConfig()->uiSection()->setDockableWindowsState( windowsState.join(";") );
 }
 
 // Восстановление открепляемых окон с записями
 void EditorShowTextDispatcher::restoreOpenWindows()
 {
     // Строка со всеми окнами
-    QString state=AppContext::instance().appConfig()->getDockableWindowsState();
+    QString state=AppContext::instance().appConfig()->uiSection()->getDockableWindowsState();
 
     // Строка со всеми окнами разделяется на подстроки с описанием одного окна
     QStringList windowsState=state.split(";");
@@ -382,7 +383,7 @@ void EditorShowTextDispatcher::switchBehavior(const QString &mode)
 // теряют указатель на родителя, и, соответственно меняют свое поведение
 void EditorShowTextDispatcher::restoreBehavior()
 {
-    this->switchBehavior( AppContext::instance().appConfig()->getDockableWindowsBehavior() );
+    this->switchBehavior( AppContext::instance().appConfig()->uiSection()->getDockableWindowsBehavior() );
 
     qDebug() << "Restore detached window behavior";
 }

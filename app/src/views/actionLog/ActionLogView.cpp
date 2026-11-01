@@ -11,6 +11,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/GestureHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 ActionLogView::ActionLogView(QWidget *parent) : QTableView(parent)
 {
@@ -83,7 +84,7 @@ void ActionLogView::paintEvent(QPaintEvent *event)
 
   // Если нет записей лога
   if(model()!=nullptr)
-    if(model()->rowCount()==0 && AppContext::instance().appConfig()->getEnableLogging()==false)
+    if(model()->rowCount()==0 && AppContext::instance().appConfig()->storageSection()->getEnableLogging()==false)
     {
       QPainter painter(viewport());
       painter.setPen( QApplication::palette().color(QPalette::ToolTipText) ); // Qt::gray

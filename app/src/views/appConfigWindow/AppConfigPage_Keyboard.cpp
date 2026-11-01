@@ -9,6 +9,7 @@
 #include "views/shortcutSettings/ShortcutSettingsScreen.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigGeneral.h"
 
 AppConfigPage_Keyboard::AppConfigPage_Keyboard(QWidget *parent) : ConfigPage(parent)
 {
@@ -81,8 +82,8 @@ int AppConfigPage_Keyboard::applyChanges(void)
   int result=0;
 
   // Сохраняется настройка отображения отладочных сообщений в консоли
-//  if(AppContext::instance().appConfig()->get_printdebugmessages()!=printDebugMessages->isChecked())
-//    AppContext::instance().appConfig()->set_printdebugmessages(printDebugMessages->isChecked());
+//  if(AppContext::instance().appConfig()->generalSection()->get_printdebugmessages()!=printDebugMessages->isChecked())
+//    AppContext::instance().appConfig()->generalSection()->set_printdebugmessages(printDebugMessages->isChecked());
 
   return result;
 }

@@ -11,6 +11,7 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 MenuBuilder::MenuBuilder(QMenuBar *menuBar, QObject *parent) : QObject(parent),
     m_menuBar(menuBar)
@@ -225,7 +226,7 @@ void MenuBuilder::syncThemeMenu(void)
     if(themesMenu==nullptr)
         return;
 
-    QString currentTheme=AppContext::instance().appConfig()->getInterfaceTheme();
+    QString currentTheme=AppContext::instance().appConfig()->uiSection()->getInterfaceTheme();
 
     for(QAction *themeAction : themesMenu->actions())
     {

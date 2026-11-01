@@ -18,6 +18,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/mcp/McpServer.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 AppConfigPage_Mcp::AppConfigPage_Mcp(QWidget *parent) : ConfigPage(parent)
 {
@@ -39,7 +40,7 @@ void AppConfigPage_Mcp::setupUi(void)
   // а GUI игнорирует внешние mcp-команды
   mcpAllowCheck=new QCheckBox(this);
   mcpAllowCheck->setText(tr("Allow MCP access"));
-  mcpAllowCheck->setChecked(AppContext::instance().appConfig()->get_mcpAllow());
+  mcpAllowCheck->setChecked(AppContext::instance().appConfig()->servicesSection()->get_mcpAllow());
 
   // Знак вопроса: тултип короткий, диалог по клику подробный
   mcpHelpButton=new QToolButton(this);
@@ -286,8 +287,8 @@ int AppConfigPage_Mcp::applyChanges(void)
 {
   qDebug() << "Apply changes mcp";
 
-  if(AppContext::instance().appConfig()->get_mcpAllow()!=mcpAllowCheck->isChecked())
-    AppContext::instance().appConfig()->set_mcpAllow(mcpAllowCheck->isChecked());
+  if(AppContext::instance().appConfig()->servicesSection()->get_mcpAllow()!=mcpAllowCheck->isChecked())
+    AppContext::instance().appConfig()->servicesSection()->set_mcpAllow(mcpAllowCheck->isChecked());
 
   return 0;
 }

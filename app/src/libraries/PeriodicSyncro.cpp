@@ -5,11 +5,12 @@
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
 
 // Переопределяемый метод
 bool PeriodicSyncro::isStartEnabled()
 {
-  return AppContext::instance().appConfig()->getEnablePeriodicSyncro();
+  return AppContext::instance().appConfig()->syncSection()->getEnablePeriodicSyncro();
 }
 
 // Действия, происходящие по таймеру
@@ -20,7 +21,7 @@ void PeriodicSyncro::timerEvent(QTimerEvent *event)
   qDebug() << "In timer PeriodicSyncro working method";
 
   // Если команда синхронизации пуста, нечего выполнять
-  if(AppContext::instance().appConfig()->get_synchrocommand().trimmed().length()==0)
+  if(AppContext::instance().appConfig()->syncSection()->get_synchrocommand().trimmed().length()==0)
     return;
 
   // Запуск синхронизации в скрытом режиме

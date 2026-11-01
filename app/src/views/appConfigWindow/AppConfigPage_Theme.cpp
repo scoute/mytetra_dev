@@ -26,6 +26,7 @@
 #include "libraries/MtComboBox.h"
 #include "views/record/MetaEditor.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 AppConfigPage_Theme::AppConfigPage_Theme(QWidget *parent) : ConfigPage(parent)
 {
@@ -76,31 +77,31 @@ void AppConfigPage_Theme::setupUi(void)
   notePaperColorRadio=new QRadioButton(this);
   notePaperColorButton=new QToolButton(this);
   notePaperColor=new QColor();
-  notePaperColorIsTheme=AppContext::instance().appConfig()->get_notePaperColor().isEmpty();
+  notePaperColorIsTheme=AppContext::instance().appConfig()->uiSection()->get_notePaperColor().isEmpty();
   setColorForButton(notePaperColorButton, notePaperColor,
-    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(),
-                                               AppContext::instance().appConfig()->get_notePaperColor())));
+    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(),
+                                               AppContext::instance().appConfig()->uiSection()->get_notePaperColor())));
   notePaperColorReset=new QPushButton(this);
 
   noteFontColorLabel=new QLabel(this);
   noteFontColorButton=new QToolButton(this);
   noteFontColor=new QColor();
-  noteFontColorIsTheme=AppContext::instance().appConfig()->get_noteFontColor().isEmpty();
+  noteFontColorIsTheme=AppContext::instance().appConfig()->uiSection()->get_noteFontColor().isEmpty();
   setColorForButton(noteFontColorButton, noteFontColor,
-    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->getInterfaceTheme(),
-                                              AppContext::instance().appConfig()->get_noteFontColor())));
+    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(),
+                                              AppContext::instance().appConfig()->uiSection()->get_noteFontColor())));
   noteFontColorReset=new QPushButton(this);
 
   secretColorLabel=new QLabel(this);
   secretColorButton=new QToolButton(this);
   secretColor=new QColor();
   setColorForButton(secretColorButton, secretColor,
-                    QColor(AppContext::instance().appConfig()->get_secretColor()));
+                    QColor(AppContext::instance().appConfig()->uiSection()->get_secretColor()));
   secretColorReset=new QPushButton(this);
 
   notePaperTextureRadio=new QRadioButton(this);
-  notePaperTextureRadio->setChecked(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()!="color");
-  notePaperColorRadio->setChecked(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()=="color");
+  notePaperTextureRadio->setChecked(AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperMode()!="color");
+  notePaperColorRadio->setChecked(AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperMode()=="color");
   notePaperTileCombo=new MtComboBox(this);
 
   foreach(const QString &tilePath, AppContext::instance().fixedParameters()->defaultNotePaperTiles)
@@ -109,10 +110,10 @@ void AppConfigPage_Theme::setupUi(void)
   notePaperImageLabel=new QLabel(this);
   notePaperImageLoad=new QPushButton(this);
   notePaperImageClear=new QPushButton(this);
-  notePaperImagePath=AppContext::instance().appConfig()->get_themeCustomNotePaperImage();
+  notePaperImagePath=AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperImage();
 
   {
-    int tileIndex=AppContext::instance().appConfig()->get_themeCustomNotePaperBuiltin();
+    int tileIndex=AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperBuiltin();
 
     if(tileIndex<0 || tileIndex>=notePaperTileCombo->count())
       tileIndex=0;
@@ -133,30 +134,30 @@ void AppConfigPage_Theme::setupUi(void)
   treeBackgroundLabel=new QLabel(this);
   treeBackgroundButton=new QToolButton(this);
   treeBackground=new QColor();
-  treeBackgroundIsTheme=AppContext::instance().appConfig()->get_themeCustomTreeBackground().isEmpty();
+  treeBackgroundIsTheme=AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground().isEmpty();
   setColorForButton(treeBackgroundButton, treeBackground,
-                    QColor(AppContext::instance().appConfig()->get_themeCustomTreeBackground()));
+                    QColor(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground()));
   treeBackgroundReset=new QPushButton(this);
 
   treeTextLabel=new QLabel(this);
   treeTextButton=new QToolButton(this);
   treeText=new QColor();
-  treeTextIsTheme=AppContext::instance().appConfig()->get_themeCustomTreeText().isEmpty();
+  treeTextIsTheme=AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText().isEmpty();
   setColorForButton(treeTextButton, treeText,
-                    QColor(AppContext::instance().appConfig()->get_themeCustomTreeText()));
+                    QColor(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText()));
   treeTextReset=new QPushButton(this);
 
   treeFontSizeLabel=new QLabel(this);
   treeFontSize=new QSpinBox(this);
   treeFontSize->setRange(-1, 48);
   treeFontSize->setSpecialValueText(tr("Theme"));
-  treeFontSize->setValue(AppContext::instance().appConfig()->get_themeCustomTreeFontSize());
+  treeFontSize->setValue(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeFontSize());
 
   treeIndentationLabel=new QLabel(this);
   treeIndentation=new QSpinBox(this);
   treeIndentation->setRange(-1, 80);
   treeIndentation->setSpecialValueText(tr("Theme"));
-  treeIndentation->setValue(AppContext::instance().appConfig()->get_themeCustomTreeIndentation());
+  treeIndentation->setValue(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeIndentation());
 
   // --- Список заметок ---
   tableBox=new QGroupBox(this);
@@ -164,46 +165,46 @@ void AppConfigPage_Theme::setupUi(void)
   tableBackgroundLabel=new QLabel(this);
   tableBackgroundButton=new QToolButton(this);
   tableBackground=new QColor();
-  tableBackgroundIsTheme=AppContext::instance().appConfig()->get_themeCustomTableBackground().isEmpty();
+  tableBackgroundIsTheme=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground().isEmpty();
   setColorForButton(tableBackgroundButton, tableBackground,
-                    QColor(AppContext::instance().appConfig()->get_themeCustomTableBackground()));
+                    QColor(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground()));
   tableBackgroundReset=new QPushButton(this);
 
   tableTextLabel=new QLabel(this);
   tableTextButton=new QToolButton(this);
   tableText=new QColor();
-  tableTextIsTheme=AppContext::instance().appConfig()->get_themeCustomTableText().isEmpty();
+  tableTextIsTheme=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText().isEmpty();
   setColorForButton(tableTextButton, tableText,
-                    QColor(AppContext::instance().appConfig()->get_themeCustomTableText()));
+                    QColor(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText()));
   tableTextReset=new QPushButton(this);
 
   tableAlternateLabel=new QLabel(this);
   tableAlternateButton=new QToolButton(this);
   tableAlternate=new QColor();
-  tableAlternateIsTheme=AppContext::instance().appConfig()->get_themeCustomTableAlternate().isEmpty();
+  tableAlternateIsTheme=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableAlternate().isEmpty();
   setColorForButton(tableAlternateButton, tableAlternate,
-                    QColor(AppContext::instance().appConfig()->get_themeCustomTableAlternate()));
+                    QColor(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableAlternate()));
   tableAlternateReset=new QPushButton(this);
 
   tableFontSizeLabel=new QLabel(this);
   tableFontSize=new QSpinBox(this);
   tableFontSize->setRange(-1, 48);
   tableFontSize->setSpecialValueText(tr("Theme"));
-  tableFontSize->setValue(AppContext::instance().appConfig()->get_themeCustomTableFontSize());
+  tableFontSize->setValue(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableFontSize());
 
   tableRowHeightLabel=new QLabel(this);
   tableRowHeight=new QSpinBox(this);
   tableRowHeight->setRange(-1, 200);
   tableRowHeight->setSpecialValueText(tr("Theme"));
-  tableRowHeight->setValue(AppContext::instance().appConfig()->get_themeCustomTableRowHeight());
+  tableRowHeight->setValue(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableRowHeight());
 
   // --- Шрифт интерфейса ---
   fontBox=new QGroupBox(this);
 
   interfaceFontLabel=new QLabel(this);
   interfaceFontButton=new QPushButton(this);
-  interfaceFontFamily=AppContext::instance().appConfig()->get_themeCustomInterfaceFontFamily();
-  interfaceFontSize=AppContext::instance().appConfig()->get_themeCustomInterfaceFontSize();
+  interfaceFontFamily=AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontFamily();
+  interfaceFontSize=AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontSize();
   refreshInterfaceFontButton();
   interfaceFontReset=new QPushButton(this);
 
@@ -221,7 +222,7 @@ void AppConfigPage_Theme::setupUi(void)
   baseThemeComboBox->addItem(tr("Midnight"));
 
   const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
-  const int baseIndex=baseThemes.indexOf(AppContext::instance().appConfig()->get_themeCustomBaseTheme());
+  const int baseIndex=baseThemes.indexOf(AppContext::instance().appConfig()->uiSection()->get_themeCustomBaseTheme());
   baseThemeComboBox->setCurrentIndex(baseIndex>=0 ? baseIndex : 0);
 
   // Группы кастома по текущей теме (группы уже созданы выше)
@@ -264,11 +265,11 @@ void AppConfigPage_Theme::setupIconSizeComboBox()
     iconSizeComboBox->addItem( name );
 
     count++;
-    if ( sizeName == AppContext::instance().appConfig()->getInterfaceIconSize() )
+    if ( sizeName == AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize() )
       currentIndex = count;
   }
 
-  if ( currentIndex==-1 or AppContext::instance().appConfig()->getInterfaceIconSize()=="" )
+  if ( currentIndex==-1 or AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize()=="" )
     currentIndex = 0;
 
   iconSizeComboBox->setCurrentIndex( currentIndex );
@@ -437,7 +438,7 @@ void AppConfigPage_Theme::onClickedNotePaperColorReset()
   notePaperColorIsTheme=true;
 
   setColorForButton(notePaperColorButton, notePaperColor,
-    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(), "")));
 }
 
 void AppConfigPage_Theme::onClickedNoteFontColor()
@@ -456,7 +457,7 @@ void AppConfigPage_Theme::onClickedNoteFontColorReset()
   noteFontColorIsTheme=true;
 
   setColorForButton(noteFontColorButton, noteFontColor,
-    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(), "")));
 }
 
 void AppConfigPage_Theme::onClickedSecretColor()
@@ -664,7 +665,7 @@ void AppConfigPage_Theme::onClickedInterfaceFontReset()
 // Гарды на null: вызывается и из конструктора до создания групп
 void AppConfigPage_Theme::updateCustomEnabled(void)
 {
-  const bool custom=(AppContext::instance().appConfig()->getInterfaceTheme()=="custom");
+  const bool custom=(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()=="custom");
 
   if(switchToCustomButton!=nullptr)
     switchToCustomButton->setVisible(!custom);
@@ -686,9 +687,9 @@ void AppConfigPage_Theme::onSwitchToCustom(void)
 {
   // Основа новой кастомной сессии: текущая тема. Дальше страница
   // правится уже под Custom без закрытия диалога
-  AppContext::instance().appConfig()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->getInterfaceTheme());
+  AppContext::instance().appConfig()->uiSection()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme());
 
-  if(AppContext::instance().appConfig()->setInterfaceTheme("custom"))
+  if(AppContext::instance().appConfig()->uiSection()->setInterfaceTheme("custom"))
     CssHelper::loadCurrentTheme();
 
   MetaEditor *editorScreen=find_object<MetaEditor>("editorScreen");
@@ -703,11 +704,11 @@ void AppConfigPage_Theme::onClickedResetAll(void)
 {
   // Всё к теме: цвета чистятся, размеры в -1, шрифт в тему
   notePaperColorIsTheme=true;  setColorForButton(notePaperColorButton, notePaperColor,
-    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(), "")));
 
   noteFontColorIsTheme=true;
   setColorForButton(noteFontColorButton, noteFontColor,
-    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->getInterfaceTheme(), "")));
+    QColor(MetaEditor::effectiveNoteFontColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(), "")));
 
   setColorForButton(secretColorButton, secretColor, QColor("#77767b"));
 
@@ -806,12 +807,12 @@ int AppConfigPage_Theme::applyChanges(void)
   const QStringList baseThemes=QStringList() << "default" << "dark" << "modern" << "midnight";
   const QString baseName=baseThemes.value(baseThemeComboBox->currentIndex(), "default");
 
-  if(AppContext::instance().appConfig()->get_themeCustomBaseTheme()!=baseName)
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomBaseTheme()!=baseName)
   {
-    AppContext::instance().appConfig()->set_themeCustomBaseTheme(baseName);
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomBaseTheme(baseName);
 
     // Новая база видна сразу, но только на теме Custom
-    if(AppContext::instance().appConfig()->getInterfaceTheme()=="custom")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()=="custom")
       CssHelper::loadCurrentTheme();
   }
 
@@ -821,104 +822,104 @@ int AppConfigPage_Theme::applyChanges(void)
   if ( iconSizeComboBox->currentIndex()>0 )
     iconSizeName = AppContext::instance().fixedParameters()->interfaceIconSizeAvailableMap.keys()[ iconSizeComboBox->currentIndex()-1 ];
 
-  if ( AppContext::instance().appConfig()->getInterfaceIconSize() != iconSizeName )
+  if ( AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize() != iconSizeName )
   {
-    AppContext::instance().appConfig()->setInterfaceIconSize( iconSizeName );
+    AppContext::instance().appConfig()->uiSection()->setInterfaceIconSize( iconSizeName );
     CssHelper::loadCurrentTheme();
   }
 
   // Цвета заметки: режим темы пишется пустотой
   if(notePaperColorIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_notePaperColor().isEmpty())
-      AppContext::instance().appConfig()->set_notePaperColor("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_notePaperColor().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_notePaperColor("");
   }
-  else if(AppContext::instance().appConfig()->get_notePaperColor()!=notePaperColor->name())
-    AppContext::instance().appConfig()->set_notePaperColor(notePaperColor->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_notePaperColor()!=notePaperColor->name())
+    AppContext::instance().appConfig()->uiSection()->set_notePaperColor(notePaperColor->name());
 
   if(noteFontColorIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_noteFontColor().isEmpty())
-      AppContext::instance().appConfig()->set_noteFontColor("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_noteFontColor().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_noteFontColor("");
   }
-  else if(AppContext::instance().appConfig()->get_noteFontColor()!=noteFontColor->name())
-    AppContext::instance().appConfig()->set_noteFontColor(noteFontColor->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_noteFontColor()!=noteFontColor->name())
+    AppContext::instance().appConfig()->uiSection()->set_noteFontColor(noteFontColor->name());
 
-  if(AppContext::instance().appConfig()->get_secretColor()!=secretColor->name())
-    AppContext::instance().appConfig()->set_secretColor(secretColor->name());
+  if(AppContext::instance().appConfig()->uiSection()->get_secretColor()!=secretColor->name())
+    AppContext::instance().appConfig()->uiSection()->set_secretColor(secretColor->name());
 
   // Мозаичный фон заметок: радио выбирает цвет или текстуру
   const QString paperMode=notePaperTextureRadio->isChecked() ? "texture" : "color";
 
-  if(AppContext::instance().appConfig()->get_themeCustomNotePaperMode()!=paperMode)
-    AppContext::instance().appConfig()->set_themeCustomNotePaperMode(paperMode);
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperMode()!=paperMode)
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomNotePaperMode(paperMode);
 
-  if(AppContext::instance().appConfig()->get_themeCustomNotePaperImage()!=notePaperImagePath)
-    AppContext::instance().appConfig()->set_themeCustomNotePaperImage(notePaperImagePath);
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperImage()!=notePaperImagePath)
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomNotePaperImage(notePaperImagePath);
 
-  if(AppContext::instance().appConfig()->get_themeCustomNotePaperBuiltin()!=notePaperTileCombo->currentIndex())
-    AppContext::instance().appConfig()->set_themeCustomNotePaperBuiltin(notePaperTileCombo->currentIndex());
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomNotePaperBuiltin()!=notePaperTileCombo->currentIndex())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomNotePaperBuiltin(notePaperTileCombo->currentIndex());
 
   // Цвета дерева и списка: пусто означает цвет темы
   if(treeBackgroundIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_themeCustomTreeBackground().isEmpty())
-      AppContext::instance().appConfig()->set_themeCustomTreeBackground("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_themeCustomTreeBackground("");
   }
-  else if(AppContext::instance().appConfig()->get_themeCustomTreeBackground()!=treeBackground->name())
-    AppContext::instance().appConfig()->set_themeCustomTreeBackground(treeBackground->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground()!=treeBackground->name())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTreeBackground(treeBackground->name());
 
   if(treeTextIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_themeCustomTreeText().isEmpty())
-      AppContext::instance().appConfig()->set_themeCustomTreeText("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_themeCustomTreeText("");
   }
-  else if(AppContext::instance().appConfig()->get_themeCustomTreeText()!=treeText->name())
-    AppContext::instance().appConfig()->set_themeCustomTreeText(treeText->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText()!=treeText->name())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTreeText(treeText->name());
 
   if(tableBackgroundIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_themeCustomTableBackground().isEmpty())
-      AppContext::instance().appConfig()->set_themeCustomTableBackground("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_themeCustomTableBackground("");
   }
-  else if(AppContext::instance().appConfig()->get_themeCustomTableBackground()!=tableBackground->name())
-    AppContext::instance().appConfig()->set_themeCustomTableBackground(tableBackground->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground()!=tableBackground->name())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTableBackground(tableBackground->name());
 
   if(tableTextIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_themeCustomTableText().isEmpty())
-      AppContext::instance().appConfig()->set_themeCustomTableText("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_themeCustomTableText("");
   }
-  else if(AppContext::instance().appConfig()->get_themeCustomTableText()!=tableText->name())
-    AppContext::instance().appConfig()->set_themeCustomTableText(tableText->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText()!=tableText->name())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTableText(tableText->name());
 
   if(tableAlternateIsTheme)
   {
-    if(!AppContext::instance().appConfig()->get_themeCustomTableAlternate().isEmpty())
-      AppContext::instance().appConfig()->set_themeCustomTableAlternate("");
+    if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableAlternate().isEmpty())
+      AppContext::instance().appConfig()->uiSection()->set_themeCustomTableAlternate("");
   }
-  else if(AppContext::instance().appConfig()->get_themeCustomTableAlternate()!=tableAlternate->name())
-    AppContext::instance().appConfig()->set_themeCustomTableAlternate(tableAlternate->name());
+  else if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableAlternate()!=tableAlternate->name())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTableAlternate(tableAlternate->name());
 
   // Шрифт интерфейса
-  if(AppContext::instance().appConfig()->get_themeCustomInterfaceFontFamily()!=interfaceFontFamily)
-    AppContext::instance().appConfig()->set_themeCustomInterfaceFontFamily(interfaceFontFamily);
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontFamily()!=interfaceFontFamily)
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomInterfaceFontFamily(interfaceFontFamily);
 
-  if(AppContext::instance().appConfig()->get_themeCustomInterfaceFontSize()!=interfaceFontSize)
-    AppContext::instance().appConfig()->set_themeCustomInterfaceFontSize(interfaceFontSize);
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontSize()!=interfaceFontSize)
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomInterfaceFontSize(interfaceFontSize);
 
   // Размеры дерева и списка (-1 означает размер темы)
-  if(AppContext::instance().appConfig()->get_themeCustomTreeFontSize()!=treeFontSize->value())
-    AppContext::instance().appConfig()->set_themeCustomTreeFontSize(treeFontSize->value());
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeFontSize()!=treeFontSize->value())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTreeFontSize(treeFontSize->value());
 
-  if(AppContext::instance().appConfig()->get_themeCustomTreeIndentation()!=treeIndentation->value())
-    AppContext::instance().appConfig()->set_themeCustomTreeIndentation(treeIndentation->value());
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeIndentation()!=treeIndentation->value())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTreeIndentation(treeIndentation->value());
 
-  if(AppContext::instance().appConfig()->get_themeCustomTableFontSize()!=tableFontSize->value())
-    AppContext::instance().appConfig()->set_themeCustomTableFontSize(tableFontSize->value());
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableFontSize()!=tableFontSize->value())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTableFontSize(tableFontSize->value());
 
-  if(AppContext::instance().appConfig()->get_themeCustomTableRowHeight()!=tableRowHeight->value())
-    AppContext::instance().appConfig()->set_themeCustomTableRowHeight(tableRowHeight->value());
+  if(AppContext::instance().appConfig()->uiSection()->get_themeCustomTableRowHeight()!=tableRowHeight->value())
+    AppContext::instance().appConfig()->uiSection()->set_themeCustomTableRowHeight(tableRowHeight->value());
 
   // Применение без перезапуска: кастом поверх темы и цвета заметки
   CssHelper::applyCustomDesign();

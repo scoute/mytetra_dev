@@ -15,6 +15,7 @@
 #include "models/databasesManagement/DatabasesManagementModel.h"
 #include "DatabasesManagementPathDelegate.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DatabasesManagementTable::DatabasesManagementTable(QWidget *parent) : QTableView(parent)
 {
@@ -118,7 +119,7 @@ void DatabasesManagementTable::paintEvent(QPaintEvent *event)
 
   // Если нет записей лога
   if(model()!=nullptr)
-    if(model()->rowCount()==0 && AppContext::instance().appConfig()->getEnableLogging()==false)
+    if(model()->rowCount()==0 && AppContext::instance().appConfig()->storageSection()->getEnableLogging()==false)
     {
       QPainter painter(viewport());
       painter.setPen( QApplication::palette().color(QPalette::ToolTipText) ); // Qt::gray

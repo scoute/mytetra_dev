@@ -78,6 +78,8 @@ public:
 #include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigUi.h"
 #include "libraries/AppContext.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/contentGallery/ContentGallery.h"
@@ -151,13 +153,13 @@ void MainWindow::runDirectPreferences(QAction *action)
 void MainWindow::syncViewMenu(void)
 {
     if(menuBuilder->action(MenuBuilder::ActionId::ViewHeader)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewHeader)->setChecked(AppContext::instance().appConfig()->get_recordHeaderVisible());
+        menuBuilder->action(MenuBuilder::ActionId::ViewHeader)->setChecked(AppContext::instance().appConfig()->uiSection()->get_recordHeaderVisible());
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewFavorites)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewFavorites)->setChecked(AppContext::instance().appConfig()->get_favoritesEnabled());
+        menuBuilder->action(MenuBuilder::ActionId::ViewFavorites)->setChecked(AppContext::instance().appConfig()->uiSection()->get_favoritesEnabled());
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewTreeFilter)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewTreeFilter)->setChecked(AppContext::instance().appConfig()->get_treeFilterVisible());
+        menuBuilder->action(MenuBuilder::ActionId::ViewTreeFilter)->setChecked(AppContext::instance().appConfig()->uiSection()->get_treeFilterVisible());
 
     // Панель может прятаться мимо меню (кнопка toggleTools, хоткей):
     // пометка подтягивается при каждом открытии
@@ -166,12 +168,12 @@ void MainWindow::syncViewMenu(void)
         menuBuilder->action(MenuBuilder::ActionId::ViewTools)->setChecked(!editorScreen->editorConfig->get_hide_tools_lines());
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)->setChecked(AppContext::instance().appConfig()->isGlobalReadOnly());
+        menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)->setChecked(AppContext::instance().appConfig()->recordTableSection()->isGlobalReadOnly());
 }
 
 void MainWindow::onViewHeaderToggled(bool checked)
 {
-    AppContext::instance().appConfig()->set_recordHeaderVisible(checked);
+    AppContext::instance().appConfig()->uiSection()->set_recordHeaderVisible(checked);
 
     if(editorScreen!=nullptr)
         editorScreen->updateRecordHeaderVisibility();
@@ -179,7 +181,7 @@ void MainWindow::onViewHeaderToggled(bool checked)
 
 void MainWindow::onViewFavoritesToggled(bool checked)
 {
-    AppContext::instance().appConfig()->set_favoritesEnabled(checked);
+    AppContext::instance().appConfig()->uiSection()->set_favoritesEnabled(checked);
 
     // Сам refresh решит показать или спрятать по наличию звездочек
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
@@ -189,7 +191,7 @@ void MainWindow::onViewFavoritesToggled(bool checked)
 
 void MainWindow::onViewTreeFilterToggled(bool checked)
 {
-    AppContext::instance().appConfig()->set_treeFilterVisible(checked);
+    AppContext::instance().appConfig()->uiSection()->set_treeFilterVisible(checked);
 
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
     if(treeScreen!=nullptr)
@@ -222,7 +224,7 @@ void MainWindow::onViewToolsToggled(bool checked)
 // разрешены, любые изменения базы запрещены
 void MainWindow::onViewReadOnlyToggled(bool checked)
 {
-    AppContext::instance().appConfig()->set_readOnly(checked);
+    AppContext::instance().appConfig()->recordTableSection()->set_readOnly(checked);
 
     applyReadOnly();
 }
@@ -237,7 +239,7 @@ void MainWindow::onViewReadOnlyToggled(bool checked)
 // Вызывается при переключении и при старте программы
 void MainWindow::applyReadOnly(void)
 {
-    const bool readOnly=AppContext::instance().appConfig()->get_readOnly();
+    const bool readOnly=AppContext::instance().appConfig()->recordTableSection()->get_readOnly();
 
     if(treeScreen!=nullptr)
         treeScreen->setReadOnly(readOnly);
@@ -266,24 +268,24 @@ void MainWindow::applyReadOnly(void)
 
 void MainWindow::onViewSecretColor(void)
 {
-    const QColor current(AppContext::instance().appConfig()->get_secretColor());
+    const QColor current(AppContext::instance().appConfig()->uiSection()->get_secretColor());
     const QColor chosen=QColorDialog::getColor(current, this);
 
     if(!chosen.isValid() || chosen==current)
         return;
 
-    AppContext::instance().appConfig()->set_secretColor(chosen.name());
+    AppContext::instance().appConfig()->uiSection()->set_secretColor(chosen.name());
 
     // Сразу на диск как в контекстном меню секрета
     AppContext::instance().appConfig()->sync();
 
     // Цвет действует только на Custom: быстрый выбор сам переводит
     // туда с текущей темой как базой, иначе клик ничего не меняет
-    if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()!="custom")
     {
-        AppContext::instance().appConfig()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->getInterfaceTheme());
+        AppContext::instance().appConfig()->uiSection()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme());
 
-        if(AppContext::instance().appConfig()->setInterfaceTheme("custom"))
+        if(AppContext::instance().appConfig()->uiSection()->setInterfaceTheme("custom"))
             CssHelper::loadCurrentTheme();
     }
 
@@ -294,25 +296,25 @@ void MainWindow::onViewSecretColor(void)
 void MainWindow::onViewPaperColor(void)
 {
     const QColor current(
-        MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(),
-                                           AppContext::instance().appConfig()->get_notePaperColor()));
+        MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme(),
+                                           AppContext::instance().appConfig()->uiSection()->get_notePaperColor()));
     const QColor chosen=QColorDialog::getColor(current, this);
 
     if(!chosen.isValid() || chosen==current)
         return;
 
-    AppContext::instance().appConfig()->set_notePaperColor(chosen.name());
+    AppContext::instance().appConfig()->uiSection()->set_notePaperColor(chosen.name());
 
     // Сразу на диск как в соседнем пункте про цвет секрета
     AppContext::instance().appConfig()->sync();
 
     // Бумага действует только на Custom: быстрый выбор сам переводит
     // туда с текущей темой как базой, иначе клик ничего не меняет
-    if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()!="custom")
     {
-        AppContext::instance().appConfig()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->getInterfaceTheme());
+        AppContext::instance().appConfig()->uiSection()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme());
 
-        if(AppContext::instance().appConfig()->setInterfaceTheme("custom"))
+        if(AppContext::instance().appConfig()->uiSection()->setInterfaceTheme("custom"))
             CssHelper::loadCurrentTheme();
     }
 
@@ -332,10 +334,10 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
 
     QString themeName=action->data().toString();
 
-    if(themeName==AppContext::instance().appConfig()->getInterfaceTheme())
+    if(themeName==AppContext::instance().appConfig()->uiSection()->getInterfaceTheme())
         return;
 
-    if(AppContext::instance().appConfig()->setInterfaceTheme(themeName))
+    if(AppContext::instance().appConfig()->uiSection()->setInterfaceTheme(themeName))
     {
         CssHelper::loadCurrentTheme();
 

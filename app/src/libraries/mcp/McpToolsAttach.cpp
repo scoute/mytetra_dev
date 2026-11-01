@@ -34,6 +34,8 @@ static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Сайдкар избранного напрямую файлом: синглетон Favorites в
 // долгоживущем серверном процессе кэширует и протухает, а в
@@ -41,7 +43,7 @@ static const int MCP_SNIPPET_CONTEXT=100;
 // <favorites version="1"><note id="..."/>...</favorites>
 static QString favoritesSidecarPath(void)
 {
-  return QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/favorites.xml");
+  return QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/favorites.xml");
 }
 
 static QSet<QString> favoritesSidecarRead(void)
@@ -109,7 +111,7 @@ QJsonObject McpTools::listFavorites(void)
 {
   QSet<QString> starIds;
 
-  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==QStringLiteral("xml"))
   {
     // Флаги прямо в записях: проход по живой модели.
     // Шифрованные без ключа пропускаются: флаг нечитаем
@@ -191,7 +193,7 @@ QJsonObject McpTools::applyFavoriteNote(KnowTreeModel *model,
     return result;
   }
 
-  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==QStringLiteral("xml"))
   {
     QStringList path=model->getRecordPath(noteId);
 
@@ -270,7 +272,7 @@ QJsonObject McpTools::favoriteNoteDirect(const QString &noteId, QString &error)
     return result;
 
   // XML-бэкенд меняет дерево: сайдкар уже записан внутри apply
-  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==QStringLiteral("xml"))
     m_model->save();
 
   return result;
@@ -283,7 +285,7 @@ QJsonObject McpTools::unfavoriteNoteDirect(const QString &noteId, QString &error
   if(!error.isEmpty())
     return result;
 
-  if(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"))
+  if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==QStringLiteral("xml"))
     m_model->save();
 
   return result;

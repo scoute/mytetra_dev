@@ -19,6 +19,8 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 // Окно добавления новой записи
 
@@ -48,7 +50,7 @@ void AddNewRecord::setupUI(void)
   recordTextEditor.initEnableAssembly(true);
   recordTextEditor.initConfigFileName(AppContext::instance().globalParameters()->getWorkDirectory()+"/editorconf.ini");
   recordTextEditor.initEnableRandomSeed(false);
-  recordTextEditor.initDisableToolList( AppContext::instance().appConfig()->getHideEditorTools() + (QStringList() << "save" << "showText" << "toAttach" << "settings" << "expandEditArea") );
+  recordTextEditor.initDisableToolList( AppContext::instance().appConfig()->uiSection()->getHideEditorTools() + (QStringList() << "save" << "showText" << "toAttach" << "settings" << "expandEditArea") );
   recordTextEditor.init(Editor::WYEDIT_DESKTOP_MODE); // Так как это окно, в мобильном режиме его инициализировать не нужно, так как есть кнопка Отмена
   recordTextEditor.setObjectName("editorScreenInAddNewRecord");
 
@@ -153,7 +155,7 @@ void AddNewRecord::okClick(void)
     message=message+tr("Please enter the note's <b>title</b>. ");
 
   // Проверка наличия текста записи
-  if( !AppContext::instance().appConfig()->getEnableCreateEmptyRecord() ) // Если не разрешено создавать запись с пустым текстом
+  if( !AppContext::instance().appConfig()->recordTableSection()->getEnableCreateEmptyRecord() ) // Если не разрешено создавать запись с пустым текстом
   {
     QTextDocumentFragment i;
     QString j;

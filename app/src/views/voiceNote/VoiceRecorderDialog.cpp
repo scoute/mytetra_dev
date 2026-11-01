@@ -29,6 +29,7 @@
 #include "libraries/VoiceNoteHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 // Сколько мусора прогрева аналогового входа можно пропустить за
 // одну запись (мс). Потолок на случай, если за мусор принят
@@ -160,7 +161,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // Подавление фона по галочке: период, на котором говорят,
     // записывается с цепочкой фильтров и гейтом. Настройка
     // хранится в конфиге, включено по умолчанию
-    noiseSuppress->setChecked(AppContext::instance().appConfig()->get_voiceNoteNoiseSuppress());
+    noiseSuppress->setChecked(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteNoiseSuppress());
     noiseSuppressOn=noiseSuppress->isChecked();
 
     // Свои группы: иначе autoExclusive сиблингов сбрасывает
@@ -188,7 +189,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     opusQuality->addItem(tr("Middle (32 kbit/s)"));
     opusQuality->addItem(tr("High (48 kbit/s)"));
     opusQuality->addItem(tr("Extra high (64 kbit/s)"));
-    opusQuality->setCurrentIndex(AppContext::instance().appConfig()->get_voiceNoteQuality());
+    opusQuality->setCurrentIndex(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality());
 
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);
     deviceCombo=new MtComboBox(this);
@@ -284,7 +285,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
 
     // Предвыбор из настроек, недоступный бэкенду сбрасывается.
     // По умолчанию Opus
-    const QString defaultFormat=AppContext::instance().appConfig()->get_voiceNoteFormat();
+    const QString defaultFormat=AppContext::instance().appConfig()->servicesSection()->get_voiceNoteFormat();
 
     if(defaultFormat==QStringLiteral("mp3") && mp3Available)
     {
@@ -442,7 +443,7 @@ VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(Voi
         return {QMultimedia::NormalQuality, 0, 32000};
 
     return {QMultimedia::NormalQuality,
-            opusBitrateForQuality(AppContext::instance().appConfig()->get_voiceNoteQuality()),
+            opusBitrateForQuality(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality()),
             48000};
 }
 
@@ -908,7 +909,7 @@ QAudioDeviceInfo VoiceRecorderDialog::currentInputDevice(void) const
 void VoiceRecorderDialog::onNoiseSuppressToggled(bool checked)
 {
     noiseSuppressOn=checked;
-    AppContext::instance().appConfig()->set_voiceNoteNoiseSuppress(checked);
+    AppContext::instance().appConfig()->servicesSection()->set_voiceNoteNoiseSuppress(checked);
 }
 
 // Доступность выбора качества Opus: битрейт MP3 задает бэкенд,
@@ -935,7 +936,7 @@ void VoiceRecorderDialog::updateOpusQualityAvailable(void)
 // Писатель берет битрейт при старте записи, на ходу не применяется
 void VoiceRecorderDialog::onOpusQualityChanged(int index)
 {
-    AppContext::instance().appConfig()->set_voiceNoteQuality(index);
+    AppContext::instance().appConfig()->servicesSection()->set_voiceNoteQuality(index);
     updateFormatInfo();
 }
 

@@ -9,6 +9,7 @@
 #include "libraries/helpers/DebugHelper.h"
 
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 TrashMonitoring::TrashMonitoring(void)
 {
@@ -81,8 +82,8 @@ void TrashMonitoring::update(void)
     // Исключается наиболее старый файл пока выполняется
     // условие что количество файлов слишком велико или
     // суммарный размер файлов превышает предельно допустимый размер корзины
-    while(m_filesList.size() > AppContext::instance().appConfig()->get_trashmaxfilecount() ||
-          m_dirSize > AppContext::instance().appConfig()->get_trashsize()*1000000)
+    while(m_filesList.size() > AppContext::instance().appConfig()->storageSection()->get_trashmaxfilecount() ||
+          m_dirSize > AppContext::instance().appConfig()->storageSection()->get_trashsize()*1000000)
     {
         if(m_filesList.size()==1)
         {

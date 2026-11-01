@@ -20,6 +20,7 @@
 #include "views/tree/TreeScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigServices.h"
 
 TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
 {
@@ -50,7 +51,7 @@ TelegramImportDialog::TelegramImportDialog(QWidget *parent) : QDialog(parent)
 
   retranslateUi();
 
-  const QString savedMode=AppContext::instance().appConfig()->get_telegramImportMode();
+  const QString savedMode=AppContext::instance().appConfig()->servicesSection()->get_telegramImportMode();
   yearNote->setChecked(savedMode==QStringLiteral("year"));
   monthNote->setChecked(savedMode!=QStringLiteral("message") &&
                         savedMode!=QStringLiteral("day") &&
@@ -133,8 +134,8 @@ void TelegramImportDialog::onLayoutToggle(void)
   else if(yearNote->isChecked())
     mode=QStringLiteral("year");
 
-  if(AppContext::instance().appConfig()->get_telegramImportMode()!=mode)
-    AppContext::instance().appConfig()->set_telegramImportMode(mode);
+  if(AppContext::instance().appConfig()->servicesSection()->get_telegramImportMode()!=mode)
+    AppContext::instance().appConfig()->servicesSection()->set_telegramImportMode(mode);
 }
 
 void TelegramImportDialog::onSelectFile(void)
@@ -214,7 +215,7 @@ void TelegramImportDialog::onImport(void)
   TelegramImportResult result;
   QString error;
 
-  const TelegramLayout layout=telegramLayoutForMode(AppContext::instance().appConfig()->get_telegramImportMode());
+  const TelegramLayout layout=telegramLayoutForMode(AppContext::instance().appConfig()->servicesSection()->get_telegramImportMode());
 
   const bool ok=importTelegramChat(treeScreen->knowTreeModel, chat,
                                    result, error, layout,

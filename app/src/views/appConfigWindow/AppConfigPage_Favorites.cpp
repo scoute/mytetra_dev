@@ -13,6 +13,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "views/favoritesPanel/FavoritesPanel.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 AppConfigPage_Favorites::AppConfigPage_Favorites(QWidget *parent) : ConfigPage(parent)
 {
@@ -33,7 +34,7 @@ void AppConfigPage_Favorites::setupUi()
     // Панель избранного между тулбаром веток и деревом
     enableFavoritesPanel=new QCheckBox(this);
     enableFavoritesPanel->setText(tr("Show favorites panel"));
-    enableFavoritesPanel->setChecked(AppContext::instance().appConfig()->get_favoritesEnabled());
+    enableFavoritesPanel->setChecked(AppContext::instance().appConfig()->uiSection()->get_favoritesEnabled());
 
     // Хранилище звездочек: сайдкар data/favorites.xml (по умолчанию)
     // или поля favorite прямо в mytetra.xml
@@ -43,7 +44,7 @@ void AppConfigPage_Favorites::setupUi()
     xmlRadio=new QRadioButton(this);
     xmlRadio->setText(tr("Main file (mytetra.xml)"));
 
-    if(AppContext::instance().appConfig()->get_favoritesStorage()==Favorites::StorageXml)
+    if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==Favorites::StorageXml)
       xmlRadio->setChecked(true);
     else
       sidecarRadio->setChecked(true);
@@ -110,9 +111,9 @@ int AppConfigPage_Favorites::applyChanges()
     int result=0;
 
     // Сохраняется показ панели избранного
-    if(AppContext::instance().appConfig()->get_favoritesEnabled()!=enableFavoritesPanel->isChecked())
+    if(AppContext::instance().appConfig()->uiSection()->get_favoritesEnabled()!=enableFavoritesPanel->isChecked())
     {
-        AppContext::instance().appConfig()->set_favoritesEnabled(enableFavoritesPanel->isChecked());
+        AppContext::instance().appConfig()->uiSection()->set_favoritesEnabled(enableFavoritesPanel->isChecked());
 
         // Панель применяется живьем без перезапуска. Сам refresh решит
         // показать или спрятать по наличию звездочек
@@ -125,7 +126,7 @@ int AppConfigPage_Favorites::applyChanges()
     const QString wantedStorage=xmlRadio->isChecked() ? Favorites::StorageXml
                                                       : Favorites::StorageSidecar;
 
-    if(AppContext::instance().appConfig()->get_favoritesStorage()!=wantedStorage)
+    if(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()!=wantedStorage)
         Favorites::instance().setStorage(wantedStorage);
 
     return result;

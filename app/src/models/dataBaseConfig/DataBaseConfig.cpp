@@ -9,6 +9,7 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Объект для работы с конфигурацией (с настройками) базы данных
 // Конфигурация базы данных хранится в файле database.ini
@@ -37,8 +38,8 @@ DataBaseConfig::~DataBaseConfig()
 void DataBaseConfig::init(void)
 {
  // Создается имя файла конфигурации
- // QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->get_tetradir()+"/database.ini";
- QString configFileName=AppContext::instance().appConfig()->get_tetradir()+"/database.ini";
+ // QString configFileName=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/database.ini";
+ QString configFileName=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/database.ini";
 
  // Проверяется, есть ли файл конфигурации
  QFile confFile(configFileName);

@@ -31,6 +31,7 @@
 #include "libraries/BacklinkIndex.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Проверка имени файла или директории, взятого из импортируемых данных.
 // Импортируемый XML считается недоверенным, поэтому имя обязано быть
@@ -410,7 +411,7 @@ bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
        return false;
      }
 
-     QString fromDir=AppContext::instance().appConfig()->get_tetradir()+"/base/"+recordDirName;
+     QString fromDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+recordDirName;
      QString toDir=exportDir+"/base/"+recordDirName;
 
      // Создание директории
@@ -587,7 +588,7 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
         shortToDir=dirRecordTranslate[shortFromDir]; // Директория назначения изменяется согласно таблице кодировки
 
       QString fullFromDir=importDir+"/base/"+shortFromDir;
-      QString fullToDir=AppContext::instance().appConfig()->get_tetradir()+"/base/"+shortToDir;
+      QString fullToDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+shortToDir;
 
       // Каталог-источник может быть симлинком на /etc или на домашний
       // каталог: копирование утащило бы чужие файлы в базу. Проверяется
@@ -603,7 +604,7 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
       }
 
       // Приемник тоже обязан остаться внутри base текущей базы
-      const QString targetBase=QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/base");
+      const QString targetBase=QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base");
       const QString targetDir=QDir::cleanPath(fullToDir);
 
       if(!targetDir.startsWith(targetBase+QLatin1Char('/')))
@@ -1485,7 +1486,7 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
   // файлы оставляют висячие ссылки - отсюда расхождение)
   if(record->getField("dir").length()>0)
   {
-    QDir recordDir(AppContext::instance().appConfig()->get_tetradir()+"/base/"+record->getField("dir"));
+    QDir recordDir(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+record->getField("dir"));
 
     if(recordDir.exists())
     {

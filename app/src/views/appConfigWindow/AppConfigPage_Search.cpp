@@ -8,6 +8,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 AppConfigPage_Search::AppConfigPage_Search(QWidget *parent) : ConfigPage(parent)
 {
@@ -33,7 +34,7 @@ void AppConfigPage_Search::setupUi()
     findWindowRadio=new QRadioButton(this);
     findWindowRadio->setText(tr("Separate window"));
 
-    if(AppContext::instance().appConfig()->get_editorFindEmbedded())
+    if(AppContext::instance().appConfig()->uiSection()->get_editorFindEmbedded())
       findBarRadio->setChecked(true);
     else
       findWindowRadio->setChecked(true);
@@ -83,8 +84,8 @@ int AppConfigPage_Search::applyChanges()
 
     // Сохраняется выбранный вариант поиска в заметке: полоска или окно
     bool embedded=findBarRadio->isChecked();
-    if(AppContext::instance().appConfig()->get_editorFindEmbedded()!=embedded)
-      AppContext::instance().appConfig()->set_editorFindEmbedded(embedded);
+    if(AppContext::instance().appConfig()->uiSection()->get_editorFindEmbedded()!=embedded)
+      AppContext::instance().appConfig()->uiSection()->set_editorFindEmbedded(embedded);
 
     return result;
 }

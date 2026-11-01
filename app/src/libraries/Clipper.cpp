@@ -60,6 +60,10 @@
 #include "views/clipBranchDialog/ClipBranchDialog.h"
 #include "controllers/recordTable/RecordTableController.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigServices.h"
+#include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigClipper.h"
 
 // Лимиты картинок из настроек. Клиппер фоновый (окно может быть скрыто),
 // поэтому вместо вопроса как при обычной вставке действуют лимиты,
@@ -236,13 +240,13 @@ private:
 
 void Clipper::reloadLimits(void)
 {
-    int maxImages=AppContext::instance().appConfig()->get_clipperMaxImages();
+    int maxImages=AppContext::instance().appConfig()->clipperSection()->get_clipperMaxImages();
     if(maxImages>0)
         clipMaxImages=maxImages;
     else
         clipMaxImages=defaultClipMaxImages;
 
-    int maxSizeMb=AppContext::instance().appConfig()->get_clipperMaxImageSizeMb();
+    int maxSizeMb=AppContext::instance().appConfig()->clipperSection()->get_clipperMaxImageSizeMb();
     if(maxSizeMb>0)
         clipMaxImageBytes=static_cast<qint64>(maxSizeMb)*1024*1024;
     else
@@ -450,13 +454,13 @@ void Clipper::start(void)
 {
     stop();
 
-    if(!AppContext::instance().appConfig()->get_clipperenable())
+    if(!AppContext::instance().appConfig()->clipperSection()->get_clipperenable())
     {
         qDebug() << "Clipper: disabled in config";
         return;
     }
 
-    const QString sequence=AppContext::instance().appConfig()->get_clipperhotkey();
+    const QString sequence=AppContext::instance().appConfig()->clipperSection()->get_clipperhotkey();
     if(sequence.isEmpty())
     {
         qDebug() << "Clipper: empty hotkey, disabled";
@@ -514,7 +518,7 @@ QString Clipper::backendStatus(void) const
                + QStringLiteral(" ")+sslInfo;
 #endif
 
-    if(!AppContext::instance().appConfig()->get_clipperenable())
+    if(!AppContext::instance().appConfig()->clipperSection()->get_clipperenable())
         return tr("Clipper disabled in settings.")
                + QStringLiteral(" ")+sslInfo;
 
@@ -587,7 +591,7 @@ void Clipper::clipNowWithUrl(const QString &urlHint)
     qDebug() << "Clipper: clip requested";
 
     // Глобальный режим только чтения: записи не создаются
-    if(AppContext::instance().appConfig()->get_readOnly())
+    if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
     {
         const QString message=tr("Read-only mode is enabled.");
         notify(tr("Web Clipper"), message);
@@ -630,11 +634,11 @@ bool Clipper::finishClip(ClipData &clipData)
     {
         if(!recordId.isEmpty() && model->isRecordIdExists(recordId))
         {
-            const QString message=AppContext::instance().appConfig()->get_clipperopendup()
+            const QString message=AppContext::instance().appConfig()->clipperSection()->get_clipperopendup()
                 ? tr("Already clipped, opened existing note.")
                 : tr("Already clipped, skipped.");
             notify(tr("Web Clipper"), message);
-            if(AppContext::instance().appConfig()->get_clipperopendup())
+            if(AppContext::instance().appConfig()->clipperSection()->get_clipperopendup())
                 openExistingRecord(recordId);
             clipData.errorMessage=message;
             return false;
@@ -644,7 +648,7 @@ bool Clipper::finishClip(ClipData &clipData)
     // Режим "спрашивать каждый раз": модальная плитка веток поверх
     // браузера. Отмена — тихий выход без записи и без мусора в базе
     QString askId;
-    if(AppContext::instance().appConfig()->get_clipperbranchmode()==2)
+    if(AppContext::instance().appConfig()->clipperSection()->get_clipperbranchmode()==2)
     {
         askId=ClipBranchDialog::askBranch();
         if(askId.isEmpty())
@@ -666,11 +670,11 @@ bool Clipper::finishClip(ClipData &clipData)
     QString matchedId;
     if(isDuplicate(branchItem, recordId, newHash, &matchedId))
     {
-        const QString message=AppContext::instance().appConfig()->get_clipperopendup()
+        const QString message=AppContext::instance().appConfig()->clipperSection()->get_clipperopendup()
             ? tr("Already clipped, opened existing note.")
             : tr("Already clipped, skipped.");
         notify(tr("Web Clipper"), message);
-        if(AppContext::instance().appConfig()->get_clipperopendup())
+        if(AppContext::instance().appConfig()->clipperSection()->get_clipperopendup())
             openExistingRecord(matchedId.isEmpty() ? recordId : matchedId);
         clipData.errorMessage=message;
         return false;
@@ -1116,7 +1120,7 @@ QByteArray Clipper::fetchUrl(const QString &url, bool *ok)
                      [](QNetworkReply *r, const QList<QSslError> &errors)
                      {
                          // Явно разрешенный небезопасный режим из настроек
-                         if(AppContext::instance().appConfig()->get_tlsIgnoreInvalidCertificates())
+                         if(AppContext::instance().appConfig()->servicesSection()->get_tlsIgnoreInvalidCertificates())
                          {
                              QStringList details;
 
@@ -1212,7 +1216,7 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
         return true;
     }
 
-    const QString savedId=AppContext::instance().appConfig()->get_clipperbranchid();
+    const QString savedId=AppContext::instance().appConfig()->clipperSection()->get_clipperbranchid();
     if(!savedId.isEmpty())
     {
         TreeItem *savedItem=model->getItemById(savedId);
@@ -1236,7 +1240,7 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
         if(rootItem->child(i)->getField("name")=="unsorted_notes")
         {
             branchItem=rootItem->child(i);
-            AppContext::instance().appConfig()->set_clipperbranchid(branchItem->getField("id"));
+            AppContext::instance().appConfig()->clipperSection()->set_clipperbranchid(branchItem->getField("id"));
             return true;
         }
     }
@@ -1254,7 +1258,7 @@ bool Clipper::ensureBranch(    TreeItem* &branchItem, QString *errorMessage,
         return false;
     }
 
-    AppContext::instance().appConfig()->set_clipperbranchid(branchItem->getField("id"));
+    AppContext::instance().appConfig()->clipperSection()->set_clipperbranchid(branchItem->getField("id"));
     saveTree();
     return true;
 }
@@ -1269,7 +1273,7 @@ void Clipper::rememberRecentBranch(const QString &branchId)
 
     QMap<QString, int> counts;
     QStringList order;
-    const QStringList pairs=AppContext::instance().appConfig()->get_clipperrecent()
+    const QStringList pairs=AppContext::instance().appConfig()->clipperSection()->get_clipperrecent()
                              .split(QChar(';'), Qt::SkipEmptyParts);
     for(const QString &pair : pairs)
     {
@@ -1303,7 +1307,7 @@ void Clipper::rememberRecentBranch(const QString &branchId)
     for(const QString &id : order)
         result << id+QChar(':')+QString::number(counts.value(id, 1));
 
-    AppContext::instance().appConfig()->set_clipperrecent(result.join(QChar(';')));
+    AppContext::instance().appConfig()->clipperSection()->set_clipperrecent(result.join(QChar(';')));
 }
 
 // Защита от повторной вставки: быстрый путь — запись с id из хеша уже
@@ -1343,7 +1347,7 @@ bool Clipper::isDuplicate(TreeItem *branchItem, const QString &recordId, const Q
         if(dir.isEmpty())
             continue;
 
-        QFile textFile(AppContext::instance().appConfig()->get_tetradir()+"/base/"+dir+"/"+file);
+        QFile textFile(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+dir+"/"+file);
         if(!textFile.open(QIODevice::ReadOnly))
             continue;
 
@@ -1435,7 +1439,7 @@ bool Clipper::storeRecord(TreeItem *branchItem, const QString &recordId,
     }
 
     // Картинки — PNG-файлами в каталог записи (как saveTextareaImages)
-    const QString recordDir=AppContext::instance().appConfig()->get_tetradir()+"/base/"+storedRecord->getField("dir");
+    const QString recordDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+storedRecord->getField("dir");
     for(auto it=images.constBegin(); it!=images.constEnd(); ++it)
     {
         if(!it.value().save(recordDir+"/"+it.key(), "PNG"))

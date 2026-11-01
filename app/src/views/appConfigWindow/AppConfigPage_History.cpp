@@ -16,6 +16,8 @@
 #include "libraries/GlobalParameters.h"
 #include "libraries/GitHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigSync.h"
+#include "models/appConfig/AppConfigCrypto.h"
 
 AppConfigPage_History::AppConfigPage_History(QWidget *parent) : ConfigPage(parent)
 {
@@ -36,17 +38,17 @@ void AppConfigPage_History::setupUi()
     // Настройки курсора при навигации по истории
     rememberAtHistoryNavigationCheckBox=new QCheckBox(this);
     rememberAtHistoryNavigationCheckBox->setText(tr("Remember cursor position at history navigation"));
-    rememberAtHistoryNavigationCheckBox->setChecked(AppContext::instance().appConfig()->getRememberCursorAtHistoryNavigation());
+    rememberAtHistoryNavigationCheckBox->setChecked(AppContext::instance().appConfig()->cryptoSection()->getRememberCursorAtHistoryNavigation());
 
     rememberAtOrdinarySelectionCheckBox=new QCheckBox(this);
     rememberAtOrdinarySelectionCheckBox->setText(tr("Try remember cursor position at ordinary selection"));
-    rememberAtOrdinarySelectionCheckBox->setChecked(AppContext::instance().appConfig()->getRememberCursorAtOrdinarySelection());
+    rememberAtOrdinarySelectionCheckBox->setChecked(AppContext::instance().appConfig()->cryptoSection()->getRememberCursorAtOrdinarySelection());
 
     // Мастер-тумблер истории заметок: без него ни снапшотов,
     // ни диалога. По умолчанию история ведется
     historyEnable=new QCheckBox(this);
     historyEnable->setText(tr("Enable note history (git must be installed)"));
-    historyEnable->setChecked(AppContext::instance().appConfig()->get_historyEnable());
+    historyEnable->setChecked(AppContext::instance().appConfig()->syncSection()->get_historyEnable());
 
     squashKeepLabel=new QLabel(tr("Keep versions:"), this);
 
@@ -61,13 +63,13 @@ void AppConfigPage_History::setupUi()
     squashKeep->addItem(QStringLiteral("500"), 500);
     squashKeep->addItem(QStringLiteral("1000"), 1000);
 
-    const int keepIndex=squashKeep->findData(AppContext::instance().appConfig()->get_historySquashKeep());
+    const int keepIndex=squashKeep->findData(AppContext::instance().appConfig()->syncSection()->get_historySquashKeep());
     squashKeep->setCurrentIndex(keepIndex>=0 ? keepIndex : squashKeep->findData(100));
 
     // Все сквош-виджеты серые без мастер-тумблера.
     // Отдельной галочки автосжатия нет: раз лимит выставлен,
     // ротация идет всегда, авто после снапшота
-    const bool squashActive=AppContext::instance().appConfig()->get_historyEnable();
+    const bool squashActive=AppContext::instance().appConfig()->syncSection()->get_historyEnable();
     squashKeep->setEnabled(squashActive);
     squashKeepLabel->setEnabled(squashActive);
 
@@ -83,7 +85,7 @@ void AppConfigPage_History::setupUi()
     squashModeGroup->addButton(squashSmartMerge, 1);
     squashModeGroup->addButton(squashBundle10, 2);
 
-    const int modeIndex=qBound(0, AppContext::instance().appConfig()->get_historySquashMode(), 2);
+    const int modeIndex=qBound(0, AppContext::instance().appConfig()->syncSection()->get_historySquashMode(), 2);
     squashModeGroup->button(modeIndex)->setChecked(true);
 
     squashModeLabel->setEnabled(squashActive);
@@ -205,26 +207,26 @@ int AppConfigPage_History::applyChanges()
 
     // Сохраняется настройка нужно ли вспоминать позицию курсора при перемещении
     // по истории
-    if(AppContext::instance().appConfig()->getRememberCursorAtHistoryNavigation()!=rememberAtHistoryNavigationCheckBox->isChecked())
-      AppContext::instance().appConfig()->setRememberCursorAtHistoryNavigation(rememberAtHistoryNavigationCheckBox->isChecked());
+    if(AppContext::instance().appConfig()->cryptoSection()->getRememberCursorAtHistoryNavigation()!=rememberAtHistoryNavigationCheckBox->isChecked())
+      AppContext::instance().appConfig()->cryptoSection()->setRememberCursorAtHistoryNavigation(rememberAtHistoryNavigationCheckBox->isChecked());
 
     // Сохраняется настройка нужно ли пытаться вспоминать позицию курсора при
     // обычном выборе записи
-    if(AppContext::instance().appConfig()->getRememberCursorAtOrdinarySelection()!=rememberAtOrdinarySelectionCheckBox->isChecked())
-      AppContext::instance().appConfig()->setRememberCursorAtOrdinarySelection(rememberAtOrdinarySelectionCheckBox->isChecked());
+    if(AppContext::instance().appConfig()->cryptoSection()->getRememberCursorAtOrdinarySelection()!=rememberAtOrdinarySelectionCheckBox->isChecked())
+      AppContext::instance().appConfig()->cryptoSection()->setRememberCursorAtOrdinarySelection(rememberAtOrdinarySelectionCheckBox->isChecked());
 
     // Мастер-тумблер истории: выключенная история не ведется,
     // сквош-настройки при ней не при делах (серые в UI)
-    if(AppContext::instance().appConfig()->get_historyEnable()!=historyEnable->isChecked())
-      AppContext::instance().appConfig()->set_historyEnable(historyEnable->isChecked());
+    if(AppContext::instance().appConfig()->syncSection()->get_historyEnable()!=historyEnable->isChecked())
+      AppContext::instance().appConfig()->syncSection()->set_historyEnable(historyEnable->isChecked());
 
     // Сквош-лимит и стратегия. Подхватятся сами при следующем
     // снапшоте
-    if(AppContext::instance().appConfig()->get_historySquashKeep()!=squashKeep->currentData().toInt())
-      AppContext::instance().appConfig()->set_historySquashKeep(squashKeep->currentData().toInt());
+    if(AppContext::instance().appConfig()->syncSection()->get_historySquashKeep()!=squashKeep->currentData().toInt())
+      AppContext::instance().appConfig()->syncSection()->set_historySquashKeep(squashKeep->currentData().toInt());
 
-    if(AppContext::instance().appConfig()->get_historySquashMode()!=squashModeGroup->checkedId())
-      AppContext::instance().appConfig()->set_historySquashMode(qBound(0, squashModeGroup->checkedId(), 2));
+    if(AppContext::instance().appConfig()->syncSection()->get_historySquashMode()!=squashModeGroup->checkedId())
+      AppContext::instance().appConfig()->syncSection()->set_historySquashMode(qBound(0, squashModeGroup->checkedId(), 2));
 
     return result;
 }

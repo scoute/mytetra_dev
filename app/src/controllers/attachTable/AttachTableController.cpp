@@ -25,6 +25,7 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "views/record/MetaEditor.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 AttachTableController::AttachTableController(QObject *parent, QObject *iMetaEditor) : QObject(parent)
 {
@@ -346,7 +347,7 @@ QStringList AttachTableController::selectFilesForAdding(QString attachType)
   fileSelectDialog.setDirectory(QDir::homePath());
 
   // Если существует каталог, открытый при предыдущем выборе файла
-  QDir appendDir( AppContext::instance().appConfig()->getAttachAppendDir() );
+  QDir appendDir( AppContext::instance().appConfig()->storageSection()->getAttachAppendDir() );
   if( appendDir.exists() )
     fileSelectDialog.setDirectory( appendDir );
 
@@ -362,7 +363,7 @@ QStringList AttachTableController::selectFilesForAdding(QString attachType)
 
   // Запоминается директория, в которой был сделан выбор
   if(files.size()>0)
-    AppContext::instance().appConfig()->setAttachAppendDir( fileSelectDialog.directory().absolutePath() );
+    AppContext::instance().appConfig()->storageSection()->setAttachAppendDir( fileSelectDialog.directory().absolutePath() );
 
   return files;
 }
@@ -391,7 +392,7 @@ void AttachTableController::onSaveAsAttach(void)
     fileSelectDialog.setFileMode(QFileDialog::AnyFile); // Чтобы кнопка "Сохранить" была активной
 
     // Если существует каталог, открытый при предыдущем сохранении
-    QDir saveAsDir( AppContext::instance().appConfig()->getAttachSaveAsDir() );
+    QDir saveAsDir( AppContext::instance().appConfig()->storageSection()->getAttachSaveAsDir() );
     if( saveAsDir.exists() )
       fileSelectDialog.setDirectory( saveAsDir );
 
@@ -409,7 +410,7 @@ void AttachTableController::onSaveAsAttach(void)
       return;
 
     // Запоминается директория, в которой был сделан выбор
-    AppContext::instance().appConfig()->setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
+    AppContext::instance().appConfig()->storageSection()->setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
 
     // Выясняется список выбранных файлов
     QStringList selectFiles=fileSelectDialog.selectedFiles();
@@ -436,7 +437,7 @@ void AttachTableController::onSaveAsAttach(void)
     fileSelectDialog.setDirectory(QDir::homePath());
 
     // Если существует каталог, открытый при предыдущем сохранении
-    QDir saveAsDir( AppContext::instance().appConfig()->getAttachSaveAsDir() );
+    QDir saveAsDir( AppContext::instance().appConfig()->storageSection()->getAttachSaveAsDir() );
     if( saveAsDir.exists() )
       fileSelectDialog.setDirectory( saveAsDir );
 
@@ -446,7 +447,7 @@ void AttachTableController::onSaveAsAttach(void)
       return;
 
     // Запоминается директория, в которой был сделан выбор
-    AppContext::instance().appConfig()->setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
+    AppContext::instance().appConfig()->storageSection()->setAttachSaveAsDir( fileSelectDialog.directory().absolutePath() );
 
     // Выбранная директория
     QString toDir=fileSelectDialog.directory().absolutePath();
@@ -605,7 +606,7 @@ void AttachTableController::onOpenAttach(void)
     // Если запись зашифрована и открывается файл (не линк), аттач надо скопировать в директорию корзины и расшифровать
     if( attachTableData->isRecordCrypt() && attachTableData->getAttach(id).getField("type")=="file")
     {
-      if(AppContext::instance().appConfig()->getEnableDecryptFileToTrashDirectory())
+      if(AppContext::instance().appConfig()->storageSection()->getEnableDecryptFileToTrashDirectory())
       {
         fullFileName=DiskHelper::copyFileToTrash(fullFileName); // Копирование
         CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), fullFileName); // Расшифровка

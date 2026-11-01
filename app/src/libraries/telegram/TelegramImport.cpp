@@ -26,6 +26,7 @@
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Длинная сторона картинки в заметке: больше 1280 не держим
 // (у Telegram почти все в 1280 и меньше). Один файл без дублей:
@@ -1102,7 +1103,7 @@ static bool writeTelegramNote(TreeItem *branch,
     return false;
   }
 
-  const QString recordDir=AppContext::instance().appConfig()->get_tetradir()+QStringLiteral("/base/")+
+  const QString recordDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+QStringLiteral("/base/")+
                           stored->getField(QStringLiteral("dir"));
   AttachTableData *attachTable=stored->getAttachTablePointer();
 

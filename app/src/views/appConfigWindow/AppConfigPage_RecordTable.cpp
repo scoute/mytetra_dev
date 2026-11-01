@@ -16,6 +16,8 @@
 #include "views/mainWindow/MainWindow.h"
 #include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPage(parent)
 {
@@ -23,7 +25,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
 
   QStringList allFieldNames=FixedParameters::recordFieldAvailableList;
   QMap<QString, QString> descriptionFields=FixedParameters::recordFieldDescription( allFieldNames );
-  QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
+  QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
 
   // Создаются чекбоксы для каждого поля, хранимого в записи.
   // Без подписи (служебные вроде favorite) не создаются:
@@ -46,12 +48,12 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   // Область настройки видимости заголовков
   showHorizontalHeader=new QCheckBox(this);
   showHorizontalHeader->setText( tr("Show horisontal header") );
-  if(AppContext::instance().appConfig()->getRecordTableShowHorizontalHeaders())
+  if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowHorizontalHeaders())
     showHorizontalHeader->setCheckState( Qt::Checked );
 
   showVerticalHeader=new QCheckBox(this);
   showVerticalHeader->setText( tr("Show row number") );
-  if(AppContext::instance().appConfig()->getRecordTableShowVerticalHeaders())
+  if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowVerticalHeaders())
     showVerticalHeader->setCheckState( Qt::Checked );
 
   QVBoxLayout *vboxVisibleHeaders = new QVBoxLayout;
@@ -65,7 +67,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   // отключаются здесь
   showRecordHeader=new QCheckBox(this);
   showRecordHeader->setText( tr("Show note header (name and author)") );
-  if(AppContext::instance().appConfig()->get_recordHeaderVisible())
+  if(AppContext::instance().appConfig()->uiSection()->get_recordHeaderVisible())
     showRecordHeader->setCheckState( Qt::Checked );
 
   QVBoxLayout *vboxNoteHeader = new QVBoxLayout;
@@ -82,7 +84,7 @@ AppConfigPage_RecordTable::AppConfigPage_RecordTable(QWidget *parent) : ConfigPa
   positionUnder=new QRadioButton(this);
   positionUnder->setText(tr("Under the tree"));
 
-  if(AppContext::instance().appConfig()->get_recordTableUnderTree())
+  if(AppContext::instance().appConfig()->uiSection()->get_recordTableUnderTree())
     positionUnder->setChecked(true);
   else
     positionRight->setChecked(true);
@@ -215,24 +217,24 @@ int AppConfigPage_RecordTable::applyChanges(void)
  // Запоминается ширина полей
  // Это надо сделать в первую очередь, потому что в дальнейшем после перечитывания модели и
  // установки заголовков таблицы конечных записей слетают ширины полей (устанавливаюся в 100 px самим Qt)
- QStringList showFields=AppContext::instance().appConfig()->getRecordTableShowFields();
- QStringList fieldsWidth=AppContext::instance().appConfig()->getRecordTableFieldsWidth();
+ QStringList showFields=AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowFields();
+ QStringList fieldsWidth=AppContext::instance().appConfig()->recordTableSection()->getRecordTableFieldsWidth();
  qDebug() << "showFields" << showFields;
  qDebug() << "fieldsWidth" << fieldsWidth;
 
  // Запоминание в конфигурацию отображения горизонтальных заголовков
- if(AppContext::instance().appConfig()->getRecordTableShowHorizontalHeaders()!=showHorizontalHeader->isChecked())
-   AppContext::instance().appConfig()->setRecordTableShowHorizontalHeaders(showHorizontalHeader->isChecked());
+ if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowHorizontalHeaders()!=showHorizontalHeader->isChecked())
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowHorizontalHeaders(showHorizontalHeader->isChecked());
 
  // Запоминание в конфигурацию отображения нумерации строк
- if(AppContext::instance().appConfig()->getRecordTableShowVerticalHeaders()!=showVerticalHeader->isChecked())
-   AppContext::instance().appConfig()->setRecordTableShowVerticalHeaders(showVerticalHeader->isChecked());
+ if(AppContext::instance().appConfig()->recordTableSection()->getRecordTableShowVerticalHeaders()!=showVerticalHeader->isChecked())
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowVerticalHeaders(showVerticalHeader->isChecked());
 
  // Шапка заметки: пишется в конфиг и применяется живьем
  // к открытой записи без перезапуска
- if(AppContext::instance().appConfig()->get_recordHeaderVisible()!=showRecordHeader->isChecked())
+ if(AppContext::instance().appConfig()->uiSection()->get_recordHeaderVisible()!=showRecordHeader->isChecked())
  {
-   AppContext::instance().appConfig()->set_recordHeaderVisible(showRecordHeader->isChecked());
+   AppContext::instance().appConfig()->uiSection()->set_recordHeaderVisible(showRecordHeader->isChecked());
 
    MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");
    if(metaEditor!=nullptr)
@@ -241,9 +243,9 @@ int AppConfigPage_RecordTable::applyChanges(void)
 
  // Положение списка записей: пишется в конфиг и применяется живьем
  // перестановкой виджетов без перезапуска
- if(AppContext::instance().appConfig()->get_recordTableUnderTree()!=positionUnder->isChecked())
+ if(AppContext::instance().appConfig()->uiSection()->get_recordTableUnderTree()!=positionUnder->isChecked())
  {
-   AppContext::instance().appConfig()->set_recordTableUnderTree(positionUnder->isChecked());
+   AppContext::instance().appConfig()->uiSection()->set_recordTableUnderTree(positionUnder->isChecked());
 
    MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
 
@@ -285,7 +287,7 @@ int AppConfigPage_RecordTable::applyChanges(void)
  qDebug() << "newShowFields" << newShowFields;
 
  // Установка имен полей в конфигурацию
- AppContext::instance().appConfig()->setRecordTableShowFields(newShowFields);
+ AppContext::instance().appConfig()->recordTableSection()->setRecordTableShowFields(newShowFields);
 
  // Если полей становится больше чем было
  if( newShowFields.size() > showFields.size() )
@@ -318,7 +320,7 @@ int AppConfigPage_RecordTable::applyChanges(void)
    qDebug() << "newFieldsWidth" << newFieldsWidth;
 
    // Новые ширины полей запомниаются в конфигурацию
-   AppContext::instance().appConfig()->setRecordTableFieldsWidth(newFieldsWidth);
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth(newFieldsWidth);
  }
 
  // Если полей становится меньше чем было
@@ -336,7 +338,7 @@ int AppConfigPage_RecordTable::applyChanges(void)
    qDebug() << "newFieldsWidth in result" << newFieldsWidth;
 
    // Установка новых ширин полей в конфигурацию
-   AppContext::instance().appConfig()->setRecordTableFieldsWidth(newFieldsWidth);
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth(newFieldsWidth);
  }
 
  // Если полей столько же сколько и было
@@ -346,7 +348,7 @@ int AppConfigPage_RecordTable::applyChanges(void)
 
    // Установка запомненных ширин полей в конфигурацию
    // Так как это значение в конфигурации было искажено в момент переподключения модели
-   AppContext::instance().appConfig()->setRecordTableFieldsWidth(fieldsWidth);
+   AppContext::instance().appConfig()->recordTableSection()->setRecordTableFieldsWidth(fieldsWidth);
  }
 
  emit recordTableConfigChange();

@@ -364,6 +364,7 @@ HEADERS+=\
     src/models/appConfig/AppConfigUi.h \
     src/models/appConfig/AppConfigFind.h \
     src/models/appConfig/AppConfigSync.h \
+    src/models/appConfig/AppConfigGeneral.h \
     src/models/appConfig/AppConfigCrypto.h \
     src/models/appConfig/AppConfigRecordTable.h \
     src/models/appConfig/AppConfigClipper.h \
@@ -616,6 +617,7 @@ SOURCES+=\
     src/models/appConfig/AppConfigUi.cpp \
     src/models/appConfig/AppConfigFind.cpp \
     src/models/appConfig/AppConfigSync.cpp \
+    src/models/appConfig/AppConfigGeneral.cpp \
     src/models/appConfig/AppConfigCrypto.cpp \
     src/models/appConfig/AppConfigRecordTable.cpp \
     src/models/appConfig/AppConfigClipper.cpp \

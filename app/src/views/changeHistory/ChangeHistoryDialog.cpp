@@ -12,6 +12,7 @@
 #include "libraries/UnifiedDiff.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 ChangeHistoryDialog::ChangeHistoryDialog(const QString &tetradir,
                                          const QString &recordId,
@@ -201,7 +202,7 @@ void ChangeHistoryDialog::updateDiff(void)
     {
         // Темные темы (dark, midnight): светлая палитра диффа,
         // иначе служебные строки черным по темному не читаются
-        const QString theme=AppContext::instance().appConfig()->getInterfaceTheme();
+        const QString theme=AppContext::instance().appConfig()->uiSection()->getInterfaceTheme();
         const bool darkTheme=(theme==QStringLiteral("dark") ||
                               theme==QStringLiteral("midnight"));
 

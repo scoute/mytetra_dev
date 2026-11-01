@@ -28,6 +28,7 @@
 #include "controllers/recordTable/RecordTableController.h"
 #include "views/consoleEmulator/CommandRunner.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 DatabasesManagementController::DatabasesManagementController(QObject *parent) : QObject(parent)
 {
@@ -161,8 +162,8 @@ bool DatabasesManagementController::switchToDatabase(const QString &dbPath,
     find_object<RecordTableController>("recordTableController")->setTableData(nullptr);
 
     // Изменяются пути к БД в conf.ini файле
-    AppContext::instance().appConfig()->set_tetradir(dbPath);
-    AppContext::instance().appConfig()->set_trashdir(trashPath);
+    AppContext::instance().appConfig()->storageSection()->set_tetradir(dbPath);
+    AppContext::instance().appConfig()->storageSection()->set_trashdir(trashPath);
 
     // Инициализация переменных, отвечающих за хранилище данных
     AppContext::instance().dataBaseConfig()->init();

@@ -45,6 +45,8 @@
 
 #include "McpServerPrivate.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 // Дети ветки-родителя (пустой parentId - корень). Только id строками:
 // указатели модели после resync инвалидируются и не хранятся
@@ -124,7 +126,7 @@ QJsonObject McpSession::writeRenameBranch(const QString &id,
 {
   QJsonObject result;
 
-  if(AppContext::instance().appConfig()->get_readOnly())
+  if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -221,7 +223,7 @@ QJsonObject McpSession::writeMoveBranch(const QString &id,
 {
   QJsonObject result;
 
-  if(AppContext::instance().appConfig()->get_readOnly())
+  if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -330,7 +332,7 @@ QJsonObject McpSession::writeMoveNote(const QString &id,
 {
   QJsonObject result;
 
-  if(AppContext::instance().appConfig()->get_readOnly())
+  if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -449,7 +451,7 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
 {
   QJsonObject result;
 
-  if(AppContext::instance().appConfig()->get_readOnly())
+  if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 
@@ -481,7 +483,7 @@ QJsonObject McpSession::writeFavoriteNote(const QString &id,
     }
   }
 
-  const bool xmlStorage=(AppContext::instance().appConfig()->get_favoritesStorage()==QStringLiteral("xml"));
+  const bool xmlStorage=(AppContext::instance().appConfig()->uiSection()->get_favoritesStorage()==QStringLiteral("xml"));
 
   QJsonObject payload;
   payload["id"]=id;
@@ -577,7 +579,7 @@ QJsonObject McpSession::writeImportBranch(const QString &parentId,
 {
   QJsonObject result;
 
-  if(AppContext::instance().appConfig()->get_readOnly())
+  if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
   {
     toolError="Database is in global read-only mode, writes refused";
 

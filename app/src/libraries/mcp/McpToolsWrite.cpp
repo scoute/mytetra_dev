@@ -34,13 +34,14 @@ static const int MCP_SNIPPET_CONTEXT=100;
 
 #include "McpToolsPrivate.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Корзина готова принять файлы: есть и пишемся. Иначе удаление
 // уперлось бы в criticalError с диалогом внутри, а в headless
 // это падение процесса. Создается при отсутствии как при установке
 static bool trashReady(QString &error)
 {
-  QString trashDir=AppContext::instance().appConfig()->get_trashdir();
+  QString trashDir=AppContext::instance().appConfig()->storageSection()->get_trashdir();
 
   if(!QDir(trashDir).exists())
   {
@@ -528,7 +529,7 @@ bool McpTools::applyDeleteNote(KnowTreeModel *model,
 
   // Сайдкар бэклинков: только если есть что чистить, иначе
   // ensureLoaded построит и сохранит пустой индекс без нужды
-  QString sidecar=QDir::cleanPath(AppContext::instance().appConfig()->get_tetradir()+"/backlinks.xml");
+  QString sidecar=QDir::cleanPath(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/backlinks.xml");
 
   if(QFile::exists(sidecar))
     BacklinkIndex::instance().removeSources(QStringList() << noteId);

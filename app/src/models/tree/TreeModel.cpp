@@ -8,6 +8,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 // TreeModel - Это модель данных, которая работает с видом TreeScreen
 // От него наследуется класс KnowTreeModel
@@ -48,9 +49,9 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
      // Кастомный цвет дерева: модельный Foreground перебивает
      // stylesheet, поэтому без этого возврата custom красил бы
      // только треугольники, а текст оставался бы палитровым
-     if(AppContext::instance().appConfig()->getInterfaceTheme()=="custom")
+     if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()=="custom")
      {
-       const QColor custom(AppContext::instance().appConfig()->get_themeCustomTreeText());
+       const QColor custom(AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText());
 
        if(custom.isValid())
        {

@@ -45,6 +45,8 @@
 
 #include "McpServerPrivate.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigServices.h"
 
 // Pre-валидация базы до initFromXML: в headless-режиме диалоги
 // XmlTree::load и criticalError формата роняют процесс,
@@ -147,7 +149,7 @@ int runMcpServer(int argc, char **argv)
 
   // Доступ закрыт галочкой на странице MCP: сервер не стартует.
   // Код 4 чтобы отличать от отсутствия conf.ini (2) и битой базы (3)
-  if(!AppContext::instance().appConfig()->get_mcpAllow())
+  if(!AppContext::instance().appConfig()->servicesSection()->get_mcpAllow())
   {
     fprintf(stderr, "mcp: access is disabled, allow it on the MCP settings page\n");
     return 4;
@@ -155,11 +157,11 @@ int runMcpServer(int argc, char **argv)
 
   AppContext::instance().dataBaseConfig()->init();
 
-  QString xmlPath=AppContext::instance().appConfig()->get_tetradir()+"/mytetra.xml";
+  QString xmlPath=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/mytetra.xml";
 
   // Какая база обслужвается: при расхождении цифр с GUI первым делом
   // сверить этот путь с tetradir в conf.ini запущенной программы
-  fprintf(stderr, "mcp: base %s\n", AppContext::instance().appConfig()->get_tetradir().toUtf8().constData());
+  fprintf(stderr, "mcp: base %s\n", AppContext::instance().appConfig()->storageSection()->get_tetradir().toUtf8().constData());
 
   if(!validateDatabase(xmlPath))
     return 3;

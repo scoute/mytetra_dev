@@ -11,6 +11,7 @@
 #include "views/tree/TreeScreen.h"
 #include "views/toolbarSettings/MainToolbarSettingsScreen.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 AppConfigPage_Tree::AppConfigPage_Tree(QWidget *parent) : ConfigPage(parent)
 {
@@ -36,7 +37,7 @@ void AppConfigPage_Tree::setupUi(void)
   subtreeCount=new QRadioButton(this);
   subtreeCount->setText(tr("Its own and sub-branch notes [n][m]"));
 
-  if(AppContext::instance().appConfig()->get_showSubtreeCount()==false)
+  if(AppContext::instance().appConfig()->uiSection()->get_showSubtreeCount()==false)
   {
     ownCountOnly->setChecked(true);
     subtreeCount->setChecked(false);
@@ -104,9 +105,9 @@ int AppConfigPage_Tree::applyChanges(void)
 
   // Выбор пишется в конфиг и применяется живьем:
   // отображаемые имена перечитываются без перезапуска
-  if(AppContext::instance().appConfig()->get_showSubtreeCount()!=subtreeCount->isChecked())
+  if(AppContext::instance().appConfig()->uiSection()->get_showSubtreeCount()!=subtreeCount->isChecked())
   {
-    AppContext::instance().appConfig()->set_showSubtreeCount(subtreeCount->isChecked());
+    AppContext::instance().appConfig()->uiSection()->set_showSubtreeCount(subtreeCount->isChecked());
 
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
 

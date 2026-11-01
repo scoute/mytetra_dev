@@ -18,6 +18,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigClipper.h"
 
 ClipBranchFilter::ClipBranchFilter(QObject *parent) : QSortFilterProxyModel(parent)
 {
@@ -222,7 +223,7 @@ void ClipBranchDialog::setupUi(void)
   setupTiles();
 
   m_tilesLabel=new QLabel(this);
-  if(AppContext::instance().appConfig()->get_clippertilemode()==1)
+  if(AppContext::instance().appConfig()->clipperSection()->get_clippertilemode()==1)
     m_tilesLabel->setText(tr("Frequent branches:"));
   else
     m_tilesLabel->setText(tr("Recent branches:"));
@@ -260,7 +261,7 @@ void ClipBranchDialog::setupTiles(void)
   // обратный порядок по счетчику, связи рвутся стабильной сортировкой
   QMap<QString, int> counts;
   QStringList order;
-  const QStringList pairs=AppContext::instance().appConfig()->get_clipperrecent()
+  const QStringList pairs=AppContext::instance().appConfig()->clipperSection()->get_clipperrecent()
                            .split(QChar(';'), Qt::SkipEmptyParts);
   for(const QString &pair : pairs)
   {
@@ -284,7 +285,7 @@ void ClipBranchDialog::setupTiles(void)
     order << id;
   }
 
-  if(AppContext::instance().appConfig()->get_clippertilemode()==1)
+  if(AppContext::instance().appConfig()->clipperSection()->get_clippertilemode()==1)
     std::stable_sort(order.begin(), order.end(),
                      [&](const QString &first, const QString &second)
                      { return counts.value(first, 0)>counts.value(second, 0); });

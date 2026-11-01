@@ -20,6 +20,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigCrypto.h"
 
 Password::Password(void)
 { 
@@ -71,8 +72,8 @@ bool Password::retrievePassword()
             // либо запросить пароль
 
             // Проверяется, запомнен ли пароль в конфиге (точнее, промежуточный хеш)
-            if( AppContext::instance().appConfig()->getPasswordSaveFlag() and
-                AppContext::instance().appConfig()->getPasswordMiddleHash().length()>0)
+            if( AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag() and
+                AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()>0)
             {
                 // Пароль хранится в системе
 
@@ -95,8 +96,8 @@ bool Password::retrievePassword()
                     // базы знаний пароль был изменен и база перешифрована, а в текущем инстансе остался старый пароль
                     // В этом случае хранимый пароль надо сбросить
 
-                    AppContext::instance().appConfig()->setPasswordMiddleHash(""); // Хранимый пароль сбрасывается
-                    AppContext::instance().appConfig()->setPasswordSaveFlag(false); // Помечается что пароль больше не хранится
+                    AppContext::instance().appConfig()->cryptoSection()->setPasswordMiddleHash(""); // Хранимый пароль сбрасывается
+                    AppContext::instance().appConfig()->cryptoSection()->setPasswordSaveFlag(false); // Помечается что пароль больше не хранится
 
                     QMessageBox msgBox;
                     msgBox.setWindowTitle(tr("Detect incorrect saved password"));
@@ -205,7 +206,7 @@ void Password::setCryptKeyToMemory(QString password)
 void Password::setCryptKeyToMemoryFromMiddleHash(void)
 {
     // Из общего конфига считывается промежуточный хеш
-    QByteArray middleHash=QByteArray::fromBase64( AppContext::instance().appConfig()->getPasswordMiddleHash().toLatin1() );
+    QByteArray middleHash=QByteArray::fromBase64( AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().toLatin1() );
 
     // Ключ в виде MD5
     QByteArray key=QCryptographicHash::hash(middleHash, QCryptographicHash::Md5);
@@ -219,7 +220,7 @@ void Password::setCryptKeyToMemoryFromMiddleHash(void)
 bool Password::checkMiddleHash(void)
 {
     // Из общего конфига считывается промежуточный хеш
-    QByteArray middleHash=QByteArray::fromBase64( AppContext::instance().appConfig()->getPasswordMiddleHash().toLatin1() );
+    QByteArray middleHash=QByteArray::fromBase64( AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().toLatin1() );
     // qDebug() << "Password::checkMiddleHash() : middleHash :" << middleHash.toHex();
 
     // Промежуточный хеш преобразуется в ключ (MD5 сумма)
@@ -264,14 +265,14 @@ void Password::smartSaveMiddleHash(QString password)
 {
     // Если стоит настройка, что надо хранить пароль локально,
     // и пароль (точнее промежуточный хеш) еще не запомнен
-    if(AppContext::instance().appConfig()->getPasswordSaveFlag() &&
-            AppContext::instance().appConfig()->getPasswordMiddleHash().length()==0)
+    if(AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag() &&
+            AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()==0)
     {
         QByteArray middleHash=calculateMiddleHash(password);
         // qDebug() << "Password::smartSaveMiddleHash() : middleHash " << middleHash.toHex();
 
         // В общий конфиг запоминается промежуточный хеш
-        AppContext::instance().appConfig()->setPasswordMiddleHash( QString(middleHash.toBase64().data()) );
+        AppContext::instance().appConfig()->cryptoSection()->setPasswordMiddleHash( QString(middleHash.toBase64().data()) );
 
         // В конфиг базы данных запоминаются проверочные данные
         // Эти данные нужны для последующей проверки промежуточного хеша
@@ -287,7 +288,7 @@ void Password::smartSaveMiddleHash(QString password)
     else
     {
         // В общем конфиге сбрасывается промежуточный хеш
-        AppContext::instance().appConfig()->setPasswordMiddleHash("");
+        AppContext::instance().appConfig()->cryptoSection()->setPasswordMiddleHash("");
     }
 
 }
@@ -359,9 +360,9 @@ bool Password::enterExistsPassword(void)
 
     // Запрашивается пароль
     EnterPassword enterPwd(ENTER_PASSWORD_MODE_SINGLE);
-    if(AppContext::instance().appConfig()->get_autoClosePasswordEnable())
+    if(AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordEnable())
     {
-        enterPwd.setCancelDelay( AppContext::instance().appConfig()->get_autoClosePasswordDelay() );
+        enterPwd.setCancelDelay( AppContext::instance().appConfig()->cryptoSection()->get_autoClosePasswordDelay() );
     }
     int i=enterPwd.exec(); // Показывается окно с паролем
     if(i==QDialog::Rejected)
@@ -381,8 +382,8 @@ bool Password::enterExistsPassword(void)
         // Дополнительно, если в общих настройках указано,
         // что пароль нужно запоминать, и он (точнее промежуточный хеш)
         // еще не запомнен
-        if(AppContext::instance().appConfig()->getPasswordSaveFlag() &&
-                AppContext::instance().appConfig()->getPasswordMiddleHash().length()==0)
+        if(AppContext::instance().appConfig()->cryptoSection()->getPasswordSaveFlag() &&
+                AppContext::instance().appConfig()->cryptoSection()->getPasswordMiddleHash().length()==0)
             smartSaveMiddleHash(password);
 
         // Дополнительно, очищаются сообщения о невозможности поиска в зашифрованных ветках базы
@@ -425,7 +426,7 @@ void Password::resetPassword(void)
         AppContext::instance().dataBaseConfig()->set_crypt_check_hash("");
         AppContext::instance().dataBaseConfig()->set_middle_hash_check_data("");
 
-        AppContext::instance().appConfig()->setPasswordMiddleHash("");
+        AppContext::instance().appConfig()->cryptoSection()->setPasswordMiddleHash("");
         AppContext::instance().appConfig()->sync();
         AppContext::instance().dataBaseConfig()->sync();
 

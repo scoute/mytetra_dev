@@ -23,6 +23,7 @@
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/PaletteHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 CssHelper::CssHelper()
 {
@@ -239,7 +240,7 @@ int CssHelper::getMyTetraStyleVersion(const QString& text)
 
 void CssHelper::loadCurrentTheme()
 {
-    QString themeName=AppContext::instance().appConfig()->getInterfaceTheme();
+    QString themeName=AppContext::instance().appConfig()->uiSection()->getInterfaceTheme();
 
     // Тема из конфига может отсутствовать в сборке (удалена
     // или конфиг пришел из другой ветки): откат на default
@@ -249,7 +250,7 @@ void CssHelper::loadCurrentTheme()
         qWarning() << "Unknown interface theme in config:" << themeName
                    << ", fallback to default";
         themeName="default";
-        AppContext::instance().appConfig()->setInterfaceTheme(themeName);
+        AppContext::instance().appConfig()->uiSection()->setInterfaceTheme(themeName);
     }
 
     applyTheme( themeName );
@@ -272,7 +273,7 @@ QString CssHelper::getCssFileContentForTheme(const QString &themeName, bool from
 
     if(themeName=="custom")
     {
-        cssName=AppContext::instance().appConfig()->get_themeCustomBaseTheme();
+        cssName=AppContext::instance().appConfig()->uiSection()->get_themeCustomBaseTheme();
 
         if(cssName!="default" && cssName!="dark" &&
            cssName!="modern" && cssName!="midnight")
@@ -339,10 +340,10 @@ bool CssHelper::applyTheme(const QString &themeName)
     styleText.replace(QStringLiteral("url(themes/"), QStringLiteral("url(")+qrcThemesPrefix);
 
     // Добавляется CSS-правило, влияющее на размер иконок
-    if ( AppContext::instance().appConfig()->getInterfaceIconSize()!="" )
+    if ( AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize()!="" )
     {
         QString cssIconSizeRules = QString("\nQToolBar, QToolButton, QPushButton { icon-size: %1px; }").
-                                   arg( AppContext::instance().appConfig()->getInterfaceIconSize() );
+                                   arg( AppContext::instance().appConfig()->uiSection()->getInterfaceIconSize() );
         styleText += cssIconSizeRules;
     }
 
@@ -446,7 +447,7 @@ void CssHelper::applyCustomDesign(void)
     static int tableRowHeightOrig=30;
     static bool tableAlternatingOrig=false;
 
-    const bool customActive=(AppContext::instance().appConfig()->getInterfaceTheme()=="custom");
+    const bool customActive=(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()=="custom");
 
     KnowTreeView *tree=find_object<KnowTreeView>("knowTreeView");
     RecordTableView *table=find_object<RecordTableView>("recordTableView");
@@ -499,8 +500,8 @@ void CssHelper::applyCustomDesign(void)
     }
 
     // Шрифт интерфейса: пусто означает шрифт темы
-    const QString family=AppContext::instance().appConfig()->get_themeCustomInterfaceFontFamily();
-    const int size=AppContext::instance().appConfig()->get_themeCustomInterfaceFontSize();
+    const QString family=AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontFamily();
+    const int size=AppContext::instance().appConfig()->uiSection()->get_themeCustomInterfaceFontSize();
 
     if(qApp!=nullptr)
     {
@@ -525,16 +526,16 @@ void CssHelper::applyCustomDesign(void)
     {
         QString treeStyle;
 
-        if(!AppContext::instance().appConfig()->get_themeCustomTreeBackground().isEmpty())
-            treeStyle+="background: "+AppContext::instance().appConfig()->get_themeCustomTreeBackground()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground().isEmpty())
+            treeStyle+="background: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeBackground()+"; ";
 
-        if(!AppContext::instance().appConfig()->get_themeCustomTreeText().isEmpty())
-            treeStyle+="color: "+AppContext::instance().appConfig()->get_themeCustomTreeText()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText().isEmpty())
+            treeStyle+="color: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeText()+"; ";
 
         tree->setStyleSheet(treeStyle.isEmpty() ? QString() :
                             QString("QTreeView { %1 }").arg(treeStyle));
 
-        const int treeSize=AppContext::instance().appConfig()->get_themeCustomTreeFontSize();
+        const int treeSize=AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeFontSize();
 
         if(treeSize>0)
         {
@@ -545,7 +546,7 @@ void CssHelper::applyCustomDesign(void)
         else
             tree->setFont(treeFontOrig);
 
-        const int indent=AppContext::instance().appConfig()->get_themeCustomTreeIndentation();
+        const int indent=AppContext::instance().appConfig()->uiSection()->get_themeCustomTreeIndentation();
         tree->setIndentation(indent>=0 ? indent : treeIndentOrig);
     }
 
@@ -554,13 +555,13 @@ void CssHelper::applyCustomDesign(void)
     {
         QString tableStyle;
 
-        if(!AppContext::instance().appConfig()->get_themeCustomTableBackground().isEmpty())
-            tableStyle+="background: "+AppContext::instance().appConfig()->get_themeCustomTableBackground()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground().isEmpty())
+            tableStyle+="background: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTableBackground()+"; ";
 
-        if(!AppContext::instance().appConfig()->get_themeCustomTableText().isEmpty())
-            tableStyle+="color: "+AppContext::instance().appConfig()->get_themeCustomTableText()+"; ";
+        if(!AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText().isEmpty())
+            tableStyle+="color: "+AppContext::instance().appConfig()->uiSection()->get_themeCustomTableText()+"; ";
 
-        const QString alternate=AppContext::instance().appConfig()->get_themeCustomTableAlternate();
+        const QString alternate=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableAlternate();
 
         if(!alternate.isEmpty())
         {
@@ -573,7 +574,7 @@ void CssHelper::applyCustomDesign(void)
         table->setStyleSheet(tableStyle.isEmpty() ? QString() :
                              QString("QTableView { %1 }").arg(tableStyle));
 
-        const int tableSize=AppContext::instance().appConfig()->get_themeCustomTableFontSize();
+        const int tableSize=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableFontSize();
 
         if(tableSize>0)
         {
@@ -584,7 +585,7 @@ void CssHelper::applyCustomDesign(void)
         else
             table->setFont(tableFontOrig);
 
-        const int rowHeight=AppContext::instance().appConfig()->get_themeCustomTableRowHeight();
+        const int rowHeight=AppContext::instance().appConfig()->uiSection()->get_themeCustomTableRowHeight();
         table->verticalHeader()->setDefaultSectionSize(
             rowHeight>=0 ? rowHeight : tableRowHeightOrig);
     }

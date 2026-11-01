@@ -19,6 +19,7 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 // Соответствие команды тулбара ключу горячих клавиш для подписи.
 // Пусто - подписи берутся с самого действия (у таких команд
@@ -48,7 +49,7 @@ MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(
     this->setWindowTitle(tr("Toolbar settings"));
 
     // Стартовые списки: конфиг, а если не настраивалось - дефолты экранов
-    QStringList treeOrder=AppContext::instance().appConfig()->getTreeToolbarOrder();
+    QStringList treeOrder=AppContext::instance().appConfig()->uiSection()->getTreeToolbarOrder();
 
     if(treeOrder.isEmpty())
       treeOrder=TreeScreen::defaultToolbarOrder();
@@ -56,7 +57,7 @@ MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(
     pendingUsed[TreePanel]=treeOrder;
     loadedUsed[TreePanel]=treeOrder;
 
-    QStringList notesOrder=AppContext::instance().appConfig()->getRecordToolbarOrder();
+    QStringList notesOrder=AppContext::instance().appConfig()->uiSection()->getRecordToolbarOrder();
 
     if(notesOrder.isEmpty())
       notesOrder=RecordTableScreen::defaultToolbarOrder();
@@ -64,7 +65,7 @@ MainToolbarSettingsScreen::MainToolbarSettingsScreen(QWidget *parent) : QDialog(
     pendingUsed[NotesPanel]=notesOrder;
     loadedUsed[NotesPanel]=notesOrder;
 
-    QStringList extraOrder=AppContext::instance().appConfig()->getRecordExtraToolbarOrder();
+    QStringList extraOrder=AppContext::instance().appConfig()->uiSection()->getRecordExtraToolbarOrder();
 
     if(extraOrder.isEmpty())
       extraOrder=RecordTableScreen::defaultExtraToolbarOrder();
@@ -305,7 +306,7 @@ bool MainToolbarSettingsScreen::isCommandVisibleForMode(int panel, const QString
     if(mode.isEmpty())
         return true;
 
-    const bool isMobile=(AppContext::instance().appConfig()->getInterfaceMode()=="mobile");
+    const bool isMobile=(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile");
 
     if(mode=="mobile")
         return isMobile;
@@ -623,13 +624,13 @@ void MainToolbarSettingsScreen::applyChanges()
     pendingUsed[selectPanelListWidget->currentRow()]=usedCommands();
 
     if(pendingUsed[TreePanel]!=loadedUsed[TreePanel])
-        AppContext::instance().appConfig()->setTreeToolbarOrder(pendingUsed[TreePanel]);
+        AppContext::instance().appConfig()->uiSection()->setTreeToolbarOrder(pendingUsed[TreePanel]);
 
     if(pendingUsed[NotesPanel]!=loadedUsed[NotesPanel])
-        AppContext::instance().appConfig()->setRecordToolbarOrder(pendingUsed[NotesPanel]);
+        AppContext::instance().appConfig()->uiSection()->setRecordToolbarOrder(pendingUsed[NotesPanel]);
 
     if(pendingUsed[NotesExtraPanel]!=loadedUsed[NotesExtraPanel])
-        AppContext::instance().appConfig()->setRecordExtraToolbarOrder(pendingUsed[NotesExtraPanel]);
+        AppContext::instance().appConfig()->uiSection()->setRecordExtraToolbarOrder(pendingUsed[NotesExtraPanel]);
 
     // Живое перестроение тулбаров без перезапуска
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");

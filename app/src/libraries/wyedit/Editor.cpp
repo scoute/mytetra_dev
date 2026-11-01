@@ -47,6 +47,8 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 
 // Максимально возможная длина выделения текста (в символах) при которой
 // происходит проверка, есть ли в выделенном тексте различные шрифты, размеры текста, BUI форматирование
@@ -1162,7 +1164,7 @@ void Editor::saveTextarea(void)
   qDebug() << "Save textarea...";
 
   // Глобальный режим только чтения: запись запрещена на последнем рубеже
-  if(AppContext::instance().appConfig()->get_readOnly())
+  if(AppContext::instance().appConfig()->recordTableSection()->get_readOnly())
     {
      qDebug() << "Save textarea blocked: read-only mode";
      return;
@@ -1734,7 +1736,7 @@ void Editor::onFindtextClicked(void)
                      .replace(QChar::ParagraphSeparator, '\n')
                      .section('\n', 0, 0).trimmed().left(256);
 
-  if(AppContext::instance().appConfig()->get_editorFindEmbedded())
+  if(AppContext::instance().appConfig()->uiSection()->get_editorFindEmbedded())
   {
     if(!seed.isEmpty())
       findBar->setSearchText(seed);
@@ -2215,7 +2217,7 @@ bool Editor::jumpToFirstMatch(const QStringList &words, bool firstWordOnly)
 
   QTextDocument::FindFlags flags;
 
-  if(AppContext::instance().appConfig()->get_editorFindEmbedded())
+  if(AppContext::instance().appConfig()->uiSection()->get_editorFindEmbedded())
   {
     findBar->setSearchText(best);
     findBar->showBar();
@@ -2244,7 +2246,7 @@ void Editor::onAttachToBar(void)
   findBar->setSearchText(text);
   findBar->showBar();
 
-  AppContext::instance().appConfig()->set_editorFindEmbedded(true);
+  AppContext::instance().appConfig()->uiSection()->set_editorFindEmbedded(true);
 }
 
 // Полоска просит открепиться окном: запрос переезжает, режим запоминается
@@ -2259,7 +2261,7 @@ void Editor::onDetachToWindow(void)
   findDialog->show();
   findDialog->activateWindow();
 
-  AppContext::instance().appConfig()->set_editorFindEmbedded(false);
+  AppContext::instance().appConfig()->uiSection()->set_editorFindEmbedded(false);
 }
 
 EditorFindBar *Editor::findBarWidget(void)

@@ -7,6 +7,7 @@
 #include "views/recordTable/RecordTableScreen.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 WindowSwitcher::WindowSwitcher(QObject *parent) : QObject(parent)
 {
@@ -21,7 +22,7 @@ WindowSwitcher::WindowSwitcher(QObject *parent) : QObject(parent)
 void WindowSwitcher::enableSwitch(void)
 {
  // Для десктопа переключение окон виджетов вообще не должно включаться
- if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
  {
    enableSwitcher=false;
    return;
@@ -52,7 +53,7 @@ void WindowSwitcher::switchFromTreeToRecordtable(void)
 
  QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getRecordTableScreen() );
  object->show();
- AppContext::instance().appConfig()->setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
 
 void WindowSwitcher::switchFromTreeToFindInBase(void)
@@ -72,7 +73,7 @@ void WindowSwitcher::switchFromRecordToRecordtable(void)
  if(!AppContext::instance().globalParameters()->getWindowSwitcher()->getSwitchStatus())
    return;
 
- if(AppContext::instance().appConfig()->getInterfaceMode()!="mobile") // В статическом методе использовать нестатическую переменну enableSwitcher нельзя
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()!="mobile") // В статическом методе использовать нестатическую переменну enableSwitcher нельзя
    return;
 
  // Скрываются все прочие области
@@ -82,7 +83,7 @@ void WindowSwitcher::switchFromRecordToRecordtable(void)
 
  QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getRecordTableScreen() );
  object->show();
- AppContext::instance().appConfig()->setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
 
 void WindowSwitcher::switchFromRecordToFindInBase(void)
@@ -104,7 +105,7 @@ void WindowSwitcher::switchFromRecordtableToRecord(void)
 
  QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getMetaEditor() );
  object->show();
- AppContext::instance().appConfig()->setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
 
 void WindowSwitcher::switchFromRecordtableToFindInBase(void)
@@ -126,7 +127,7 @@ void WindowSwitcher::switchFromRecordtableToTree(void)
 
  QWidget *object=static_cast<QWidget *>( AppContext::instance().globalParameters()->getTreeScreen() );
  object->show();
- AppContext::instance().appConfig()->setFocusWidget(object->objectName());
+ AppContext::instance().appConfig()->uiSection()->setFocusWidget(object->objectName());
 }
 
 void WindowSwitcher::restoreFocusWidget()
@@ -140,7 +141,7 @@ void WindowSwitcher::restoreFocusWidget()
   AppContext::instance().globalParameters()->getMetaEditor()->hide();
   // AppContext::instance().globalParameters()->getFindScreen()->hide();
 
-  QString widgetName=AppContext::instance().appConfig()->getFocusWidget();
+  QString widgetName=AppContext::instance().appConfig()->uiSection()->getFocusWidget();
 
   // Оформить через case
   if(widgetName=="treeScreen")

@@ -21,6 +21,8 @@
 #include "views/tree/TreeScreen.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 AppConfigPage_Attach::AppConfigPage_Attach(QWidget *parent) : ConfigPage(parent)
 {
@@ -41,7 +43,7 @@ void AppConfigPage_Attach::setupUi(void)
     // Галка разрешения/запрещения подсветки записи с прикрепленными файлами
     enableRecordWithAttachHighlight=new QCheckBox(this);
     enableRecordWithAttachHighlight->setText( tr("Enable highlight notes with attachments") );
-    enableRecordWithAttachHighlight->setChecked( AppContext::instance().appConfig()->getEnableRecordWithAttachHighlight() );
+    enableRecordWithAttachHighlight->setChecked( AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight() );
 
     // Выбор цвета для записи с прикрепленными файлами
     labelHighlightColor=new QLabel(this);
@@ -49,10 +51,10 @@ void AppConfigPage_Attach::setupUi(void)
 
     buttonHighlightColor=new QToolButton(this);
     highlightColor=new QColor();
-    this->setColorForButtonHighlightColor( QColor( AppContext::instance().appConfig()->getRecordWithAttachHighlightColor() ) );
+    this->setColorForButtonHighlightColor( QColor( AppContext::instance().appConfig()->uiSection()->getRecordWithAttachHighlightColor() ) );
 
     // Начальный выбор цвета активируется или отключается в зависимости от галки
-    this->onEnableRecordWithAttachHighlight( AppContext::instance().appConfig()->getEnableRecordWithAttachHighlight() );
+    this->onEnableRecordWithAttachHighlight( AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight() );
 
     // Пояснение про схему имен файлов на диске
     fileNamesInfo=new QLabel(this);
@@ -67,7 +69,7 @@ void AppConfigPage_Attach::setupUi(void)
     attachNameModeCombo->addItem( tr("System names (id.extension)"), AppConfig::AttachNameSystem );
     attachNameModeCombo->addItem( tr("System + original names (id_name.extension)"), AppConfig::AttachNameHybrid );
     attachNameModeCombo->addItem( tr("Original names (as uploaded)"), AppConfig::AttachNameOriginal );
-    attachNameModeCombo->setCurrentIndex( attachNameModeCombo->findData(AppContext::instance().appConfig()->get_attachNameMode()) );
+    attachNameModeCombo->setCurrentIndex( attachNameModeCombo->findData(AppContext::instance().appConfig()->storageSection()->get_attachNameMode()) );
 
     // Кнопка приведения всех вложений к выбранному виду
     convertAttachesButton=new QPushButton(this);
@@ -181,18 +183,18 @@ int AppConfigPage_Attach::applyChanges(void)
     int result=0;
 
     // Сохраняется настройка разрешения/запрещения подсветки записи с прикрепленными файлами
-    if(AppContext::instance().appConfig()->getEnableRecordWithAttachHighlight()!=enableRecordWithAttachHighlight->isChecked())
-        AppContext::instance().appConfig()->setEnableRecordWithAttachHighlight(enableRecordWithAttachHighlight->isChecked());
+    if(AppContext::instance().appConfig()->uiSection()->getEnableRecordWithAttachHighlight()!=enableRecordWithAttachHighlight->isChecked())
+        AppContext::instance().appConfig()->uiSection()->setEnableRecordWithAttachHighlight(enableRecordWithAttachHighlight->isChecked());
 
     // Сохраняется цвет подсветки
-    if(AppContext::instance().appConfig()->getRecordWithAttachHighlightColor()!=highlightColor->name())
-        AppContext::instance().appConfig()->setRecordWithAttachHighlightColor(highlightColor->name());
+    if(AppContext::instance().appConfig()->uiSection()->getRecordWithAttachHighlightColor()!=highlightColor->name())
+        AppContext::instance().appConfig()->uiSection()->setRecordWithAttachHighlightColor(highlightColor->name());
 
     // Сохраняется режим имен новых вложений (без переименования
     // существующих, это делает только кнопка конвертации)
     int selectedMode=attachNameModeCombo->currentData().toInt();
-    if(AppContext::instance().appConfig()->get_attachNameMode()!=selectedMode)
-        AppContext::instance().appConfig()->set_attachNameMode(selectedMode);
+    if(AppContext::instance().appConfig()->storageSection()->get_attachNameMode()!=selectedMode)
+        AppContext::instance().appConfig()->storageSection()->set_attachNameMode(selectedMode);
 
     return result;
 }
@@ -325,7 +327,7 @@ void AppConfigPage_Attach::onClickedConvertAttaches()
     // вложения сразу сохранялись в заданном виде
     if(errors.isEmpty())
     {
-        AppContext::instance().appConfig()->set_attachNameMode(targetMode);
+        AppContext::instance().appConfig()->storageSection()->set_attachNameMode(targetMode);
         AppContext::instance().appConfig()->sync();
     }
 

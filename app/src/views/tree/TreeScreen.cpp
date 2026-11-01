@@ -41,6 +41,8 @@
 #include "libraries/InternalClipboard.h"
 
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
 {
@@ -196,7 +198,7 @@ void TreeScreen::setupActions(void)
  treeFilterEdit->setObjectName(QStringLiteral("treeFilterEdit"));
  treeFilterEdit->setPlaceholderText(tr("Filter branches..."));
  treeFilterEdit->setClearButtonEnabled(true);
- treeFilterEdit->setVisible(AppContext::instance().appConfig()->get_treeFilterVisible());
+ treeFilterEdit->setVisible(AppContext::instance().appConfig()->uiSection()->get_treeFilterVisible());
 }
 
 void TreeScreen::setupShortcuts(void)
@@ -369,7 +371,7 @@ void TreeScreen::rebuildToolbar(void)
 
  toolsLine->clear();
 
- QStringList order=AppContext::instance().appConfig()->getTreeToolbarOrder();
+ QStringList order=AppContext::instance().appConfig()->uiSection()->getTreeToolbarOrder();
 
  // Разовая миграция: кнопка синхронизации переехала с тулбара веток
  // на тулбар записей вместе со своим разделителем. Старый сохраненный
@@ -393,9 +395,9 @@ void TreeScreen::rebuildToolbar(void)
    if(!order.isEmpty() && order.last()=="separator")
     order.removeLast();
 
-   AppContext::instance().appConfig()->setTreeToolbarOrder(order);
+   AppContext::instance().appConfig()->uiSection()->setTreeToolbarOrder(order);
 
-   QStringList recordOrder=AppContext::instance().appConfig()->getRecordToolbarOrder();
+   QStringList recordOrder=AppContext::instance().appConfig()->uiSection()->getRecordToolbarOrder();
 
    if(!recordOrder.isEmpty() && !recordOrder.contains("syncro"))
     {
@@ -421,7 +423,7 @@ void TreeScreen::rebuildToolbar(void)
        recordOrder.append("syncro");
       }
 
-     AppContext::instance().appConfig()->setRecordToolbarOrder(recordOrder);
+     AppContext::instance().appConfig()->uiSection()->setRecordToolbarOrder(recordOrder);
     }
 
    // Миграция должна пережить даже аварийное завершение сразу после старта
@@ -431,7 +433,7 @@ void TreeScreen::rebuildToolbar(void)
  if(order.isEmpty())
   order=defaultToolbarOrder();
 
- const bool isMobile=(AppContext::instance().appConfig()->getInterfaceMode()=="mobile");
+ const bool isMobile=(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile");
  bool lastSeparator=true; // Ведущие разделители давятся
 
  foreach(const QString &command, order)
@@ -538,7 +540,7 @@ void TreeScreen::setupModels(void)
  // knowTreeModel->setHeaders(headers);
 
  // Загрузка данных
- knowTreeModel->initFromXML( AppContext::instance().appConfig()->get_tetradir()+"/mytetra.xml" );
+ knowTreeModel->initFromXML( AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/mytetra.xml" );
 
  // Модель подключется к виду
  knowTreeView->setModel(knowTreeModel);
@@ -686,13 +688,13 @@ void TreeScreen::setupSignals(void)
 
  // Сигнал что ветка выбрана мышкой или стрелками на клавиатуре
  // через selection-модель. Реакция происходит на перемещение курсора по дереву
- if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
  {
    connect(knowTreeView->selectionModel(), &QItemSelectionModel::currentRowChanged,
            this,                           &TreeScreen::onKnowtreeClicked);
  }
  
- if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+ if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
  {
    connect(knowTreeView, &KnowTreeView::clicked,
            this,         &TreeScreen::onKnowtreeClicked);
@@ -1143,7 +1145,7 @@ void TreeScreen::delBranch(QString mode)
    text=tr("Are you sure you wish to cut item <b>") + branchesName.join(", ") + tr("</b> and all sub items?");
    del_button=tr("Cut");
 
-   if(AppContext::instance().appConfig()->get_cutbranchconfirm()) enable_question=true;
+   if(AppContext::instance().appConfig()->uiSection()->get_cutbranchconfirm()) enable_question=true;
    else enable_question=false;
   }
 
@@ -1602,12 +1604,12 @@ void TreeScreen::decryptBranchItem(void)
 // Установка иконки для ветки
 void TreeScreen::setIcon(void)
 {
-  QString startDirectory=AppContext::instance().appConfig()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory;
+  QString startDirectory=AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/"+FixedParameters::iconsRelatedDirectory;
   qDebug() << "Set start directory for select icon: " << startDirectory;
 
   // Создается окно выбора файла иконки
   IconSelectDialog iconSelectDialog;
-  iconSelectDialog.setDefaultSection( AppContext::instance().appConfig()->getIconCurrentSectionName() );
+  iconSelectDialog.setDefaultSection( AppContext::instance().appConfig()->uiSection()->getIconCurrentSectionName() );
   iconSelectDialog.setPath( startDirectory );
 
   int result=iconSelectDialog.exec();
@@ -1648,8 +1650,8 @@ void TreeScreen::setIcon(void)
 
   // Если текущая секция изменилась, ее имя запоминается чтобы в последующем открывать виджет с этой секцией
   if(iconSelectDialog.getCurrentSection()!="" &&
-     iconSelectDialog.getCurrentSection()!=AppContext::instance().appConfig()->getIconCurrentSectionName())
-   AppContext::instance().appConfig()->setIconCurrentSectionName( iconSelectDialog.getCurrentSection() );
+     iconSelectDialog.getCurrentSection()!=AppContext::instance().appConfig()->uiSection()->getIconCurrentSectionName())
+   AppContext::instance().appConfig()->uiSection()->setIconCurrentSectionName( iconSelectDialog.getCurrentSection() );
 }
 
 void TreeScreen::exportBranchToDirectory(QString exportDir)
@@ -1923,7 +1925,7 @@ void TreeScreen::processKnowtreeClicked(const QModelIndex &index)
         find_object<RecordTableController>("recordTableController")->setTableData(rtdata);
 
         // Устанавливается текстовый путь в таблице конечных записей для мобильного варианта интерфейса
-        if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+        if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         {
             QStringList path=item->getPathAsName();
 
@@ -2008,7 +2010,7 @@ void TreeScreen::setCursorToIndex(QModelIndex index)
   // Поэтому по ветке должен быть сделан виртуальный клик, чтобы заполнилась таблица конечных записей
   // Метод clicked() публичный начиная с Qt5 (мобильный интерфейс возможен только в Qt5)
 #if QT_VERSION >= 0x050000 && QT_VERSION < 0x060000
-  if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+  if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     emit knowTreeView->clicked(index);
 #endif
 }

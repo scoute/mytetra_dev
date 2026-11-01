@@ -10,6 +10,7 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigCrypto.h"
 
 using std::vector;
 
@@ -128,7 +129,7 @@ QByteArray CryptService::encryptByteArray(QByteArray key, QByteArray data)
   if(data.size()==0)
     return QByteArray();
 
-  CipherBackend *cipher=backend(AppContext::instance().appConfig()->get_cryptMethod());
+  CipherBackend *cipher=backend(AppContext::instance().appConfig()->cryptoSection()->get_cryptMethod());
 
   if(cipher==nullptr)
     criticalError("CryptService::encryptByteArray() : Unknown cipher method.");

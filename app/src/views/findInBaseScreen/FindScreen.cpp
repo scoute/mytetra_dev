@@ -38,6 +38,8 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/CssHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigFind.h"
 
 FindScreen::FindScreen(QWidget *parent) : QWidget(parent),
     exactTagMode(false)
@@ -106,21 +108,21 @@ void FindScreen::setupComboOption(void)
     wordRegard=new MtComboBox();
     wordRegard->addItem(QIcon(":/resource/pic/find_in_base_any.svg"), tr("Any word"));
     wordRegard->addItem(QIcon(":/resource/pic/find_in_base_all.svg"), tr("All words"));
-    wordRegard->setCurrentIndex(AppContext::instance().appConfig()->get_findscreen_wordregard());
+    wordRegard->setCurrentIndex(AppContext::instance().appConfig()->findSection()->get_findscreen_wordregard());
 
     // Выбор "Только целые слова" - "Подстрока"
     howExtract=new MtComboBox();
     howExtract->addItem(QIcon(":/resource/pic/find_in_base_separate.svg"), tr("Whole words"));
     howExtract->addItem(QIcon(":/resource/pic/find_in_base_substring.svg"), tr("Substring"));
-    howExtract->setCurrentIndex(AppContext::instance().appConfig()->get_findscreen_howextract());
+    howExtract->setCurrentIndex(AppContext::instance().appConfig()->findSection()->get_findscreen_howextract());
 
     // Выбор "Во всей базе" - "В текущей ветке"
     treeSearchArea=new MtComboBox();
     treeSearchArea->addItem(QIcon(":/resource/pic/find_in_base_search_all.svg"), tr("Entire base")); // Вся база
     treeSearchArea->addItem(QIcon(":/resource/pic/find_in_base_search_branch.svg"), tr("Current tree item")); // Текущая ветка
-    treeSearchArea->setCurrentIndex(AppContext::instance().appConfig()->getFindScreenTreeSearchArea());
+    treeSearchArea->setCurrentIndex(AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea());
 
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         // wordRegard->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
         // howExtract->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
@@ -236,31 +238,31 @@ void FindScreen::setupWhereFindLine(void)
     whereFindLabel=new QLabel(tr("Find in: "));
 
     findInName=new QCheckBox(tr("Title"));
-    findInName->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("name"));
+    findInName->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("name"));
 
     findInAuthor=new QCheckBox(tr("Author(s)"));
-    findInAuthor->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("author"));
+    findInAuthor->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("author"));
 
     findInUrl=new QCheckBox(tr("Url"));
-    findInUrl->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("url"));
+    findInUrl->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("url"));
 
     findInTags=new QCheckBox(tr("Tags"));
-    findInTags->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("tags"));
+    findInTags->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("tags"));
 
     findInText=new QCheckBox(tr("Text"));
-    findInText->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("text"));
+    findInText->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("text"));
 
     findInNameItem=new QCheckBox(tr("Name tree item"));
-    findInNameItem->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("nameItem"));
+    findInNameItem->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("nameItem"));
 
     findInAttach=new QCheckBox(tr("Attach files"));
-    findInAttach->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("attach"));
+    findInAttach->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("attach"));
 
     jumpToNote=new QCheckBox(tr("Jump to note text"));
-    jumpToNote->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("jumpToNote"));
+    jumpToNote->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("jumpToNote"));
 
     jumpFirstWord=new QCheckBox(tr("Jump by first word only"));
-    jumpFirstWord->setChecked(AppContext::instance().appConfig()->get_findscreen_find_in_field("jumpFirstWord"));
+    jumpFirstWord->setChecked(AppContext::instance().appConfig()->findSection()->get_findscreen_find_in_field("jumpFirstWord"));
     jumpFirstWord->setEnabled(jumpToNote->isChecked());
 }
 
@@ -268,10 +270,10 @@ void FindScreen::assemblyWhereFindLine(void)
 {
     whereFindLine=new QHBoxLayout();
 
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
         whereFindLine->addWidget(whereFindLabel);
 
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         whereFindLabel->hide();
 
     whereFindLine->addWidget(findInName);
@@ -373,7 +375,7 @@ void FindScreen::assembly(void)
 {
     centralDesktopLayout=new QVBoxLayout();
 
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
     {
         toolsLine=new QHBoxLayout();
         toolsLine->addLayout(toolsAreaFindTextAndButton);
@@ -383,7 +385,7 @@ void FindScreen::assembly(void)
         centralDesktopLayout->addLayout(toolsLine);
     }
 
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         toolsGrid=new QGridLayout();
         toolsGrid->addLayout(toolsAreaFindTextAndButton, 0, 0);
@@ -405,7 +407,7 @@ void FindScreen::assembly(void)
 
     this->setLayout(centralDesktopLayout);
 
-    switchToolsExpand(AppContext::instance().appConfig()->getFindInBaseExpand());
+    switchToolsExpand(AppContext::instance().appConfig()->uiSection()->getFindInBaseExpand());
 }
 
 void FindScreen::enableFindButton(const QString &text)
@@ -634,7 +636,7 @@ void FindScreen::findStart(void)
     // Выясняется сколько всего конечных записей
     TreeItem const *startItem=0;
     int totalRec=0;
-    if(AppContext::instance().appConfig()->getFindScreenTreeSearchArea()==0) // Если нужен поиск во всем дереве
+    if(AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea()==0) // Если нужен поиск во всем дереве
     {
         // Корневой элемент дерева
         startItem=searchModel->getRootItem(); // searchModel->rootItem
@@ -642,7 +644,7 @@ void FindScreen::findStart(void)
         // Количество конечных записей во всем дереве
         totalRec=searchModel->getAllRecordCount();
     }
-    else if (AppContext::instance().appConfig()->getFindScreenTreeSearchArea()==1) // Если нужен поиск в текущей ветке
+    else if (AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea()==1) // Если нужен поиск в текущей ветке
     {
         // Индекс текущей выбранной ветки
         QModelIndex currentItemIndex=find_object<TreeScreen>("treeScreen")->getCurrentItemIndex();
@@ -705,7 +707,7 @@ void FindScreen::findStart(void)
             findTable->setOverdrawMessage(tr("No search results.\nHint: encrypted items has been detected. For searching in encrypted items you have to enter the password.")); // Ничего не найдено. При поиске обнаружены зашифрованные ветки. Однако пароль не был введен, поэтому поиск в них не проводился
 
         // Иначе если поиск проводился не во всей базе
-        else if(AppContext::instance().appConfig()->getFindScreenTreeSearchArea()!=0)
+        else if(AppContext::instance().appConfig()->findSection()->getFindScreenTreeSearchArea()!=0)
             findTable->setOverdrawMessage(tr("No search results.\nHint: search produced in current tree item.\nTry to search for entire database.")); // Ничего не найдено. Поиск производился внутри одной ветки. Попробуйте искать во всей базе.
     }
 
@@ -949,17 +951,17 @@ bool FindScreen::findInTextProcess(const QString& text)
 
 void FindScreen::changedWordRegard(int pos)
 {
-    AppContext::instance().appConfig()->set_findscreen_wordregard(pos);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_wordregard(pos);
 }
 
 void FindScreen::changedHowExtract(int pos)
 {
-    AppContext::instance().appConfig()->set_findscreen_howextract(pos);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_howextract(pos);
 }
 
 void FindScreen::changedTreeSearchArea(int pos)
 {
-    AppContext::instance().appConfig()->setFindScreenTreeSearchArea(pos);
+    AppContext::instance().appConfig()->findSection()->setFindScreenTreeSearchArea(pos);
 }
 
 void FindScreen::changedFindInName(int state)
@@ -1016,7 +1018,7 @@ void FindScreen::changedFindInField(QString fieldname, int state)
     if(state==Qt::Checked) i=true;
     else i=false;
 
-    AppContext::instance().appConfig()->set_findscreen_find_in_field(fieldname,i);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_find_in_field(fieldname,i);
 
     // Набор полей для подсказок зависит от галочек
     refreshFieldCompleter();
@@ -1024,7 +1026,7 @@ void FindScreen::changedFindInField(QString fieldname, int state)
 
 void FindScreen::widgetShow(void)
 {
-    AppContext::instance().appConfig()->set_findscreen_show(true);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_show(true);
     this->show();
 
     fixCloseButtonSize();
@@ -1049,10 +1051,10 @@ void FindScreen::widgetHide(void)
 {
     // Запоминается размер сплиттера перед скрытием виджета
     QSplitter *findSplitterRel=find_object<QSplitter>("findsplitter");
-    AppContext::instance().appConfig()->set_findsplitter_size_list(findSplitterRel->sizes());
+    AppContext::instance().appConfig()->uiSection()->set_findsplitter_size_list(findSplitterRel->sizes());
 
     // Виджет скрывается
-    AppContext::instance().appConfig()->set_findscreen_show(false);
+    AppContext::instance().appConfig()->findSection()->set_findscreen_show(false);
     this->close();
 }
 
@@ -1063,12 +1065,12 @@ void FindScreen::toolsExpandClicked(void)
     if(findInName->isVisible())
     {
         switchToolsExpand(false);
-        AppContext::instance().appConfig()->setFindInBaseExpand(false);
+        AppContext::instance().appConfig()->uiSection()->setFindInBaseExpand(false);
     }
     else
     {
         switchToolsExpand(true);
-        AppContext::instance().appConfig()->setFindInBaseExpand(true);
+        AppContext::instance().appConfig()->uiSection()->setFindInBaseExpand(true);
     }
 }
 
@@ -1078,7 +1080,7 @@ void FindScreen::switchToolsExpand(bool flag)
     // whereFindLine->setVisible(flag);
 
     // Выпадающие списки скрываются в мобильном интерфейсе, так как они на отдельной строке
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
     {
         wordRegard->setVisible(flag);
         howExtract->setVisible(flag);
@@ -1086,7 +1088,7 @@ void FindScreen::switchToolsExpand(bool flag)
     }
 
     // Надпись Find in видна и управляется только в desktop режиме интерфейса
-    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="desktop")
         whereFindLabel->setVisible(flag);
 
     // Флаги поиска скрываются для любого интерфейса, так как они всегда находятся на отдельной строке

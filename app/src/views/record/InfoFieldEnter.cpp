@@ -22,6 +22,7 @@
 #include "views/tree/KnowTreeView.h"
 #include "views/findInBaseScreen/FindScreen.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigGeneral.h"
 
 // Виджет ввода инфополей
 
@@ -100,7 +101,7 @@ void InfoFieldEnter::setup_ui(void)
     expandInfo->setMinimumSize(x,x);
     expandInfo->setMaximumSize(x,x);
     expandInfo->resize(x,x);
-    if (AppContext::instance().appConfig()->get_addnewrecord_expand_info()=="0")
+    if (AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info()=="0")
     {
         expandInfo->setIcon(QIcon(":/resource/pic/triangl_dn.svg"));
         // expandInfo->setIcon(this->style()->standardIcon(QStyle::SP_ArrowDown));
@@ -352,7 +353,7 @@ void InfoFieldEnter::assembly(void)
     infoFieldLayout->addWidget(dirName,y,1);
 
     // Устанавливается видимость или невидимость полей author, url, tags...
-    expandInfoOnDisplay( AppContext::instance().appConfig()->get_addnewrecord_expand_info() );
+    expandInfoOnDisplay( AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info() );
 
     // Полученый набор элементов устанавливается для текущего виджета
     setLayout(infoFieldLayout);
@@ -390,12 +391,12 @@ void InfoFieldEnter::expandInfoOnDisplay(QString expand)
 void InfoFieldEnter::expandInfoClick(void)
 {
     // Если в данный момент информация "свернута"
-    if (AppContext::instance().appConfig()->get_addnewrecord_expand_info()=="0")
+    if (AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info()=="0")
     {
         // Надо информацию развернуть
         expandInfoOnDisplay("1");
 
-        AppContext::instance().appConfig()->set_addnewrecord_expand_info("1");
+        AppContext::instance().appConfig()->generalSection()->set_addnewrecord_expand_info("1");
 
         expandInfo->setIcon(QIcon(":/resource/pic/triangl_up.svg"));
     }
@@ -404,7 +405,7 @@ void InfoFieldEnter::expandInfoClick(void)
         // Надо информацию свернуть
         expandInfoOnDisplay("0");
 
-        AppContext::instance().appConfig()->set_addnewrecord_expand_info("0");
+        AppContext::instance().appConfig()->generalSection()->set_addnewrecord_expand_info("0");
 
         expandInfo->setIcon(QIcon(":/resource/pic/triangl_dn.svg"));
     }
@@ -475,7 +476,7 @@ void InfoFieldEnter::setDisplayOnlyEditableFields(bool value)
 {
     isDisplayOnlyEditableFields=value;
 
-    updateReadOnlyFieldsVisibility(AppContext::instance().appConfig()->get_addnewrecord_expand_info()!="0");
+    updateReadOnlyFieldsVisibility(AppContext::instance().appConfig()->generalSection()->get_addnewrecord_expand_info()!="0");
 }
 
 // Видимость служебных полей: скрыты в свернутом виде и в режиме

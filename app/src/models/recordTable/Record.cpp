@@ -15,6 +15,7 @@
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigStorage.h"
 
 // Атомарная запись файла с текстом записи: данные пишутся во временный
 // файл в том же каталоге, затем temp атомарно переименовывается поверх
@@ -952,7 +953,7 @@ QString Record::getFullDirName() const
  if(fieldList.contains("dir")==false)
    criticalError("Record::getFullDirName() : Not present dir field");
 
- return AppContext::instance().appConfig()->get_tetradir()+"/base/"+fieldList.value("dir");
+ return AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base/"+fieldList.value("dir");
 }
 
 // Короткое имя директории записи
@@ -1001,7 +1002,7 @@ void Record::checkAndFillFileDir(QString &iDirName, QString &iFileName)
  if(!recordDir.exists())
   {
    // Создается новая директория в директории base
-   QDir directory(AppContext::instance().appConfig()->get_tetradir()+"/base");
+   QDir directory(AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/base");
    bool result=directory.mkdir( getShortDirName() );
 
    if(!result)

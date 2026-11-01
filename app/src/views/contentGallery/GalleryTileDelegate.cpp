@@ -5,6 +5,7 @@
 
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 GalleryTileDelegate::GalleryTileDelegate(QObject *parent) : QStyledItemDelegate(parent),
     tileSize(160)
@@ -24,7 +25,7 @@ void GalleryTileDelegate::setTile(int tile)
 
 QColor GalleryTileDelegate::cellColor(void)
 {
-    if(AppContext::instance().appConfig()->getInterfaceTheme()==QStringLiteral("dark"))
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()==QStringLiteral("dark"))
         return QColor(QStringLiteral("#232c36"));
 
     return QColor(QStringLiteral("#eceff1"));
@@ -32,7 +33,7 @@ QColor GalleryTileDelegate::cellColor(void)
 
 QColor GalleryTileDelegate::frameColor(void) const
 {
-    if(AppContext::instance().appConfig()->getInterfaceTheme()==QStringLiteral("dark"))
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()==QStringLiteral("dark"))
         return QColor(QStringLiteral("#4a545f"));
 
     return QColor(QStringLiteral("#b9bfc7"));
@@ -40,7 +41,7 @@ QColor GalleryTileDelegate::frameColor(void) const
 
 QColor GalleryTileDelegate::selectedCellColor(void) const
 {
-    if(AppContext::instance().appConfig()->getInterfaceTheme()==QStringLiteral("dark"))
+    if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()==QStringLiteral("dark"))
         return QColor(QStringLiteral("#2b3f52"));
 
     return QColor(QStringLiteral("#d9e9f8"));

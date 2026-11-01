@@ -14,6 +14,7 @@
 #include "libraries/GlobalParameters.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfigUi.h"
 
 QString SecretFormatter::secretHref(void)
 {
@@ -30,10 +31,10 @@ QColor SecretFormatter::secretColor(void)
   // Цвет из настроек: пользователь выбирает любой, по умолчанию серый.
   // Уже закрашенное хранит свой цвет в документе и не перекрашивается.
   // Действует только на теме Custom: базовые темы как есть
-  if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
+  if(AppContext::instance().appConfig()->uiSection()->getInterfaceTheme()!="custom")
     return QColor(0x77, 0x76, 0x7b);
 
-  const QColor configuredColor(AppContext::instance().appConfig()->get_secretColor());
+  const QColor configuredColor(AppContext::instance().appConfig()->uiSection()->get_secretColor());
 
   if(configuredColor.isValid())
     return configuredColor;
@@ -270,7 +271,7 @@ void SecretFormatter::onContextMenuChangeSecretColor(void)
   if(!chosenColor.isValid())
     return;
 
-  AppContext::instance().appConfig()->set_secretColor(chosenColor.name());
+  AppContext::instance().appConfig()->uiSection()->set_secretColor(chosenColor.name());
 
   // Сразу на диск: иначе смена живет только до выхода
   // (или до первой потери фокуса окном)

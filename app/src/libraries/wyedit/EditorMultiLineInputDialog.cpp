@@ -13,9 +13,11 @@
 #include <QTextDocument>
 #include <QInputDialog>
 #include <QPlainTextEdit>
+#include <QSplitter>
 
 #include "EditorMultiLineInputDialog.h"
 #include "libraries/wyedit/HtmlSourceEdit.h"
+#include "libraries/wyedit/HtmlTagTree.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/AppContext.h"
 
@@ -47,6 +49,11 @@ void EditorMultiLineInputDialog::setupUi()
   // Исходник с подсветкой тегов, гуттером и движком поиска/замены
   textArea=new HtmlSourceEdit(this);
   textArea->setSizePolicy(sizePolicy);
+
+  // Дерево тегов слева: структура документа, клик прыгает к тегу
+  tagTree=new HtmlTagTree(this);
+  tagTree->setSizePolicy(sizePolicy);
+  tagTree->setEditor(textArea);
 
   buttonBox=new QDialogButtonBox(Qt::Horizontal);
   buttonBox->setOrientation(Qt::Horizontal);
@@ -183,8 +190,20 @@ void EditorMultiLineInputDialog::assembly()
 {
   QVBoxLayout *mainLayout=new QVBoxLayout(this);
 
-  // Добавляется область текста
-  mainLayout->addWidget(textArea);
+  // Слева дерево тегов, справа исходник. Дерево сворачивается
+  // разделителем, если структура не нужна
+  QSplitter *splitter=new QSplitter(Qt::Horizontal, this);
+  splitter->addWidget(tagTree);
+  splitter->addWidget(textArea);
+  splitter->setStretchFactor(0, 0);
+  splitter->setStretchFactor(1, 1);
+  splitter->setCollapsible(0, true);
+  QList<int> sizes;
+  sizes << 200 << 560;
+  splitter->setSizes(sizes);
+
+  // Добавляется область текста с деревом тегов
+  mainLayout->addWidget(splitter, 1);
 
   // Панель поиска между текстом и кнопками
   mainLayout->addWidget(findPanel);

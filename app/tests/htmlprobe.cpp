@@ -13,6 +13,7 @@
 #include <QSyntaxStyle>
 
 #include "libraries/wyedit/HtmlSourceEdit.h"
+#include "libraries/wyedit/HtmlTagTree.h"
 #include "libraries/wyedit/EditorMultiLineInputDialog.h"
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
@@ -161,6 +162,30 @@ int main(int argc, char **argv)
     const int wide=edit.lineNumberAreaWidth();
     check(narrow>0, "GUTTER-VISIBLE");
     check(wide>narrow, "GUTTER-GROWS");
+
+    // Дерево тегов: структура, подписи, прыжок, синхронизация.
+    // Комментарий со span внутрь не попадает, br - лист без детей
+    edit.setPlainText(QStringLiteral("<div id=\"a\"><p>x</p><br></div><!-- <span>no</span> -->"));
+    HtmlTagTree tree;
+    tree.setEditor(&edit);
+    check(tree.topLevelItemCount()==1, "TREE-TOP");
+    QTreeWidgetItem *divNode=tree.topLevelItem(0);
+    check(divNode->text(0).contains(QStringLiteral("div"))
+          && divNode->text(0).contains(QStringLiteral("#a")), "TREE-LABEL");
+    check(divNode->childCount()==2, "TREE-CHILDREN");
+    check(tree.itemForPosition(1)==divNode, "TREE-AT-DIV");
+    QTreeWidgetItem *pNode=divNode->child(0);
+    check(pNode->text(0)==QStringLiteral("p"), "TREE-P-LABEL");
+    check(tree.itemForPosition(13)==pNode, "TREE-AT-P");
+    tree.jumpToItem(pNode);
+    check(edit.textCursor().position()==12, "TREE-JUMP");
+    {
+        QTextCursor c(edit.document());
+        c.setPosition(1);
+        edit.setTextCursor(c);
+    }
+    tree.syncToCursor();
+    check(tree.currentItem()==divNode, "TREE-SYNC");
 
     // Пара тегов: курсор внутри <div> - подсвечены оба тега
     edit.clearMatchHighlight();

@@ -29,7 +29,7 @@
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
 extern ShortcutManager shortcutManager;
-extern InternalClipboard *internalClipboard;
+#include "libraries/AppContext.h"
 
 
 // Виджет, который отображает список записей в ветке
@@ -698,7 +698,7 @@ void RecordTableScreen::toolsWidgetsUpdate()
      recordTableController->getView()->selectionModel()->hasSelection()==false ||
      recordTableController->getView()->model()->rowCount()==0)
   {
-   const QMimeData *mimeData = internalClipboard->mimeData();
+   const QMimeData *mimeData = AppContext::instance().internalClipboard()->mimeData();
    if(mimeData!=nullptr and
       mimeData->hasFormat(FixedParameters::appTextId+"/records"))
    {

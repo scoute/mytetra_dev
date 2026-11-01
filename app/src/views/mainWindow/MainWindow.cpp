@@ -65,6 +65,7 @@ public:
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"
+#include "libraries/AppContext.h"
 #include "TrayManager.h"
 #include "MenuBuilder.h"
 #include "views/printPreview/PrintPreview.h"
@@ -110,13 +111,13 @@ extern GlobalParameters globalParameters;
 extern WalkHistory walkHistory;
 extern ActionLogger actionLogger;
 extern ShortcutManager shortcutManager;
-extern MainWindow *pMainWindow;
 
 
 MainWindow::MainWindow() : QMainWindow()
 {
-    // P0: pMainWindow типизирован как MainWindow*, extern вверху файла
-    ::pMainWindow=this;
+    // P3: корень для find_object - через AppContext, без файлового глобала.
+    // Вызов первым делом: setupUI ниже уже ищет объекты от корня
+    AppContext::instance().setMainWindow(this);
     setObjectName("mainwindow");
 
     installEventFilter(this);

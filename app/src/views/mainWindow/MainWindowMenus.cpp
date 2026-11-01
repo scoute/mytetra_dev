@@ -109,7 +109,6 @@ extern GlobalParameters globalParameters;
 extern WalkHistory walkHistory;
 extern ActionLogger actionLogger;
 extern ShortcutManager shortcutManager;
-extern MainWindow *pMainWindow;
 
 
 // Создание раздела меню File

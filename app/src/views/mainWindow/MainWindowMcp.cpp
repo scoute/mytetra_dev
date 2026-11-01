@@ -108,7 +108,6 @@ extern GlobalParameters globalParameters;
 extern WalkHistory walkHistory;
 extern ActionLogger actionLogger;
 extern ShortcutManager shortcutManager;
-extern MainWindow *pMainWindow;
 
 
 // Слот, обрабатывающий внешние сообщения

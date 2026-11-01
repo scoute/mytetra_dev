@@ -44,7 +44,7 @@
 extern AppConfig mytetraConfig;
 extern GlobalParameters globalParameters;
 extern ShortcutManager shortcutManager;
-extern InternalClipboard *internalClipboard;
+#include "libraries/AppContext.h"
 
 
 TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
@@ -632,7 +632,7 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
     // или есть вырезанная ветка, ожидающая вставки-перемещения,
     // соответсвующие пункты становятся активными
     bool isBranch=false;
-    const QMimeData *mimeData = internalClipboard->mimeData();
+    const QMimeData *mimeData = AppContext::instance().internalClipboard()->mimeData();
      if(mimeData!=nullptr and
         mimeData->hasFormat(FixedParameters::appTextId+"/branch"))
      {
@@ -1347,7 +1347,7 @@ bool TreeScreen::copyBranch(void)
     qDebug() << "Tree item copy to buffer";
 
     // Данные в буфере обмена очищаются
-    internalClipboard->clear();
+    AppContext::instance().internalClipboard()->clear();
 
     // Создается объект с данными для заполнения буфера обмена
     ClipboardBranch *branch_clipboard_data=new ClipboardBranch();
@@ -1363,7 +1363,7 @@ bool TreeScreen::copyBranch(void)
 
     // Объект с ветками помещается в буфер обмена, владение указателем передается
     // глобальному объекту буфера обмена, поэтому утечки нет
-    internalClipboard->setMimeData(branch_clipboard_data);
+    AppContext::instance().internalClipboard()->setMimeData(branch_clipboard_data);
 
     return true;
 }
@@ -1429,7 +1429,7 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
   }
 
  // Проверяется, содержит ли внутренний буфер обмена данные нужного формата
- const QMimeData *mimeData = internalClipboard->mimeData();
+ const QMimeData *mimeData = AppContext::instance().internalClipboard()->mimeData();
 
  if(mimeData==nullptr)
   return;
@@ -1458,7 +1458,7 @@ void TreeScreen::pasteBranchSmart(bool is_branch)
 
  // Извлечение объекта из внутреннего буфера обмена
  const ClipboardBranch *branch;
- branch=qobject_cast<const ClipboardBranch *>(internalClipboard->mimeData());
+ branch=qobject_cast<const ClipboardBranch *>(AppContext::instance().internalClipboard()->mimeData());
  branch->print();
  branch->printIdTree();
 

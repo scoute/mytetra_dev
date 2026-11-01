@@ -67,6 +67,11 @@ public:
 
     bool isInitialized(void) const;
 
+    // Ранняя привязка главного окна из конструктора MainWindow.
+    // Нужна чтобы find_object работал уже во время setupUI
+    // (полный init() вызывается позже, когда win уже существует)
+    void setMainWindow(MainWindow *mainWindow);
+
     // Типизированные доступы. Null пока init() не вызван
     FixedParameters *fixedParameters(void) const;
     GlobalParameters *globalParameters(void) const;

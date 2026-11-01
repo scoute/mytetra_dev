@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class MainWindow;
+#include "libraries/AppContext.h"
 
 #include "libraries/helpers/DebugHelper.h"
 
@@ -13,10 +13,10 @@ class MainWindow;
 // Поиск объекта от корня по имени
 template <class X> inline X *find_object(QString objectName)
 {
-    extern MainWindow *pMainWindow;
-
+    // P3: корень из AppContext вместо файлового extern-глобала.
+    // До setMainWindow (пробы без GUI) root null - как и раньше
     QObject *findObj;
-    QObject *root=reinterpret_cast<QObject *>(pMainWindow);
+    QObject *root=reinterpret_cast<QObject *>(AppContext::instance().mainWindow());
 
     // Если в момент обращения основного окна еще нет
     if (!root)
@@ -41,7 +41,7 @@ template <class X> inline X *find_object(QString objectName)
     }
 
     // Запрошен обычный объект, надо его найти
-    // findObj=qFindChild<X *>(pMainWindow, objectName);
+    // findObj=qFindChild<X *>(root, objectName);
     findObj=root->findChild<X *>(objectName);
 
     if(!findObj)
@@ -53,7 +53,7 @@ template <class X> inline X *find_object(QString objectName)
         printObjectTree();
 
         /*
-        QList<QWidget *> widgets = pMainWindow->findChildren<QWidget *>();
+        QList<QWidget *> widgets = root->findChildren<QWidget *>();
         foreach (QWidget* b, widgets)
             printf("Obj: %s\n", qPrintable( b->objectName() ) );
         */

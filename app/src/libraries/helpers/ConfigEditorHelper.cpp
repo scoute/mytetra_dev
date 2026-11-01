@@ -9,8 +9,7 @@
 #include "libraries/helpers/DebugHelper.h"
 
 
-class MainWindow;
-extern MainWindow *pMainWindow;
+#include "libraries/AppContext.h"
 
 
 ConfigEditorHelper::ConfigEditorHelper()
@@ -23,7 +22,7 @@ ConfigEditorHelper::ConfigEditorHelper()
 void ConfigEditorHelper::editConfigFile( QString fileName, float sizeCoefficient )
 {
   // Окно диалога для редактирования файла конфига
-  EditorMultiLineInputDialog dialog( qobject_cast<QWidget *>(pMainWindow) );
+  EditorMultiLineInputDialog dialog( AppContext::instance().mainWindow() );
   dialog.setWordWrapMode(QTextOption::NoWrap);
   dialog.setWindowTitle(QObject::tr("Edit config file (Be careful!)"));
   dialog.setSizeCoefficient( sizeCoefficient );
@@ -63,7 +62,7 @@ void ConfigEditorHelper::editConfigFile( QString fileName, float sizeCoefficient
   file.close();
 
   // Для принятия изменений требуется перезапустить программу
-  QMessageBox::warning(qobject_cast<QWidget *>(pMainWindow),
+  QMessageBox::warning(AppContext::instance().mainWindow(),
                        QObject::tr("Warning"),
                        QObject::tr("The program will have to be restarted for changes to take effect."),
                        QMessageBox::Ok);

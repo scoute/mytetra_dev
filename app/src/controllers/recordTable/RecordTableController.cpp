@@ -70,7 +70,7 @@ static bool hasVoiceContent(QTextDocument *doc)
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
 extern WalkHistory walkHistory;
-extern InternalClipboard *internalClipboard;
+#include "libraries/AppContext.h"
 
 
 RecordTableController::RecordTableController(QObject *parent) : QObject(parent)
@@ -568,7 +568,7 @@ void RecordTableController::copy(void)
     find_object<MetaEditor>("editorScreen")->saveTextarea();
 
     // Объект с записями помещается во внутренний буфер обмена
-    internalClipboard->setMimeData( view->getSelectedRecords() );
+    AppContext::instance().internalClipboard()->setMimeData( view->getSelectedRecords() );
 }
 
 
@@ -576,7 +576,7 @@ void RecordTableController::copy(void)
 void RecordTableController::paste(void)
 {
   // Проверяется, содержит ли буфер обмена данные нужного формата
-  const QMimeData *mimeData=internalClipboard->mimeData();
+  const QMimeData *mimeData=AppContext::instance().internalClipboard()->mimeData();
   if(mimeData==nullptr)
     return;
   if( ! (mimeData->hasFormat(FixedParameters::appTextId+"/records")) )
@@ -585,7 +585,7 @@ void RecordTableController::paste(void)
   // Извлечение объекта из буфера обмена
   // const clipboardrecords *rcd=new clipboardrecords();
   const ClipboardRecords *clipboardRecords;
-  clipboardRecords=qobject_cast<const ClipboardRecords *>( internalClipboard->mimeData() );
+  clipboardRecords=qobject_cast<const ClipboardRecords *>( AppContext::instance().internalClipboard()->mimeData() );
   // clipboardRecords->print();
 
   // Выясняется количество записей в буфере

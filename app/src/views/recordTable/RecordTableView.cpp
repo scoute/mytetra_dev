@@ -32,7 +32,7 @@
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
 extern ShortcutManager shortcutManager;
-extern InternalClipboard *internalClipboard;
+#include "libraries/AppContext.h"
 
 
 // Виджет, отображащий список записей в ветке
@@ -190,7 +190,7 @@ void RecordTableView::setupSignals(void)
             parentPointer, &RecordTableScreen::toolsUpdate);
     connect(this,          &RecordTableView::pressed,
             parentPointer, &RecordTableScreen::toolsUpdate);
-    connect(internalClipboard, &InternalClipboard::dataChanged,
+    connect(AppContext::instance().internalClipboard(), &InternalClipboard::dataChanged,
             parentPointer,     &RecordTableScreen::toolsUpdate);
 
     connect(this->horizontalHeader(), &QHeaderView::sectionMoved,

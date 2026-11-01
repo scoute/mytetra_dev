@@ -92,9 +92,6 @@ PeriodicSyncro periodicSyncro;
 // (родитель задается при создании, P0: раньше был голый new без delete)
 InternalClipboard *internalClipboard=nullptr;
 
-// Указатель на основное окно программы. Типизирован (P0):
-// раньше был QObject*, что прятало ошибки кастов до рантайма
-MainWindow *pMainWindow=nullptr;
 
 
 void printHelp()

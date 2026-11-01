@@ -9,8 +9,8 @@
 #include "libraries/helpers/DebugHelper.h"
 
 extern AppConfig mytetraConfig;
-class MainWindow;
-extern MainWindow *pMainWindow;
+
+#include "libraries/AppContext.h"
 
 
 TrashMonitoring::TrashMonitoring(void)
@@ -169,7 +169,7 @@ void TrashMonitoring::removeOldesFile(void)
   {
     // Не удаление файла в корзине - это не повод останавливать работу программы,
     // Просто выводится сообщение что нужно о проблеме оповестить разработчиков
-    QMessageBox::information(qobject_cast<QWidget *>(pMainWindow),
+    QMessageBox::information(AppContext::instance().mainWindow(),
         QObject::tr("Important information"),
         QObject::tr("In trash monitoring can not delete file:\n\n"
                     "%1\n\n"

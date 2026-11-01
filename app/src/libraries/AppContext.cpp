@@ -67,6 +67,12 @@ bool AppContext::isInitialized(void) const
 }
 
 
+void AppContext::setMainWindow(MainWindow *mainWindow)
+{
+    m_mainWindow=mainWindow;
+}
+
+
 FixedParameters *AppContext::fixedParameters(void) const
 {
     return m_fixedParameters;

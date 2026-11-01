@@ -16,8 +16,8 @@
 
 
 extern ActionLogger actionLogger;
-class MainWindow;
-extern MainWindow *pMainWindow;
+
+#include "libraries/AppContext.h"
 extern GlobalParameters globalParameters;
 extern AppConfig mytetraConfig;
 
@@ -69,7 +69,7 @@ void criticalError(QString message)
   qDebug() << "---------------";
   qDebug() << " ";
 
-  QMessageBox::critical(qobject_cast<QWidget *>(pMainWindow), "Critical error",
+  QMessageBox::critical(AppContext::instance().mainWindow(), "Critical error",
                         message+"\n\nProgramm was closed.",
                         QMessageBox::Ok);
 
@@ -267,7 +267,7 @@ void printObjectTree(void)
 {
   qDebug() << "Object tree";
 
-  printObjectTreeRecurse(pMainWindow);
+  printObjectTreeRecurse(AppContext::instance().mainWindow());
 }
 
 

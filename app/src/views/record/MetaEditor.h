@@ -10,8 +10,10 @@ class QGridLayout;
 class QScrollArea;
 class QSplitter;
 class QLabel;
+class QTimer;
 
 class AttachTableScreen;
+class HtmlSourceEdit;
 
 class MetaEditor: public Editor
 {
@@ -48,6 +50,11 @@ public:
  void setReadOnly(bool state);
 
  void setFocusToBaseWidget();
+
+ // Живой исходник HTML под заметкой (режим редактор+превью).
+ // Верх сплиттера - текст заметки, низ - HtmlSourceEdit в паре
+ void setHtmlSourceVisible(bool visible);
+ bool isHtmlSourceVisible(void) const;
 
 public:
 
@@ -108,6 +115,21 @@ private:
 
  // Группировалка виджетов всех слоев (слоя редактирования и слоя прикрепляемых файлов)
  QVBoxLayout *m_metaEditorJoinLayer;
+
+ // Живой исходник HTML: сплиттер в ячейке текста, низ - панель.
+ // Синхронизация двусторонняя с дебаунсом, sourceSyncing гасит эхо
+ // программных правок. Состояние на сессию, в конфиг не пишется
+ QSplitter *sourceSplitter=nullptr;
+ HtmlSourceEdit *htmlSourcePane=nullptr;
+ QTimer *noteToSourceTimer=nullptr;
+ QTimer *sourceToNoteTimer=nullptr;
+ bool sourceSyncing=false;
+
+ void refreshSourcePane(void);
+ void onNoteTextChanged(void);
+ void onSourceTextChanged(void);
+ void syncNoteToSource(void);
+ void syncSourceToNote(void);
 
 };
 

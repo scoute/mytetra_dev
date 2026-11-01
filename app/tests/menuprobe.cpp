@@ -100,6 +100,8 @@ int main(int argc, char **argv)
     check(builder.action(A::HelpTechnicalInfo)!=nullptr, "ACT-TECH");
     check(builder.action(A::ThemeConfigure)!=nullptr, "ACT-THEMECONF");
     check(builder.action(A::ViewHeader)!=nullptr, "ACT-VIEWHEADER");
+    check(builder.action(A::ViewHtmlSource)!=nullptr, "ACT-HTMLSRC");
+    check(builder.action(A::ViewHtmlSource)->isCheckable(), "ACT-HTMLSRC-CHECK");
     check(builder.action(A::ViewReadOnly)!=nullptr, "ACT-READONLY");
     check(builder.action(A::ViewSecretColor)!=nullptr, "ACT-SECRETCOLOR");
     check(builder.action(A::ViewHeader)->isCheckable(), "ACT-CHECKABLE");
@@ -112,13 +114,16 @@ int main(int argc, char **argv)
     check(builder2.action(A::DirectMain)!=nullptr, "MOBILE-DIRECT");
 
     // Сигналы вида/темы
-    bool hdr=false, theme=false, shown=false, conf=false;
+    bool hdr=false, theme=false, shown=false, conf=false, htmlsrc=false;
     QObject::connect(&builder, &MenuBuilder::viewHeaderToggled, [&](bool){ hdr=true; });
+    QObject::connect(&builder, &MenuBuilder::viewHtmlSourceToggled, [&](bool){ htmlsrc=true; });
     QObject::connect(&builder, &MenuBuilder::themeChosen, [&](QAction*){ theme=true; });
     QObject::connect(&builder, &MenuBuilder::viewMenuShown, [&](){ shown=true; });
     QObject::connect(&builder, &MenuBuilder::themeConfigureRequested, [&](){ conf=true; });
     builder.action(A::ViewHeader)->toggle();
     check(hdr, "SIG-VIEWHEADER");
+    builder.action(A::ViewHtmlSource)->toggle();
+    check(htmlsrc, "SIG-HTMLSRC");
     builder.action(A::ThemeConfigure)->trigger();
     check(conf, "SIG-THEMECONF");
     builder.menu(M::View)->aboutToShow();

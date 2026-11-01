@@ -5731,6 +5731,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Показывать панель инструментов редактора</translation>
     </message>
     <message>
+        <source>Show HTML source</source>
+        <translation>Показывать исходник HTML</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="212"/>
         <source>Backlinks</source>
         <translation>Обратные ссылки</translation>

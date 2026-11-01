@@ -42,7 +42,7 @@ public:
         DirectRecordTable, DirectAttach, DirectKeyboard, DirectHistory, DirectMisc,
         HelpAboutMyTetra, HelpAboutQt, HelpTechnicalInfo,
         ThemeConfigure,
-        ViewHeader, ViewFavorites, ViewTreeFilter, ViewTools, ViewReadOnly,
+        ViewHeader, ViewFavorites, ViewTreeFilter, ViewTools, ViewHtmlSource, ViewReadOnly,
         ViewSecretColor, ViewPaperColor
     };
 
@@ -75,6 +75,7 @@ signals:
     void viewFavoritesToggled(bool checked);
     void viewTreeFilterToggled(bool checked);
     void viewToolsToggled(bool checked);
+    void viewHtmlSourceToggled(bool checked);
     void viewReadOnlyToggled(bool checked);
 
     // "Change secret color..."/"Change note background color..."

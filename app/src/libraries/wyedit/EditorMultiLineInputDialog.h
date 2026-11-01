@@ -2,11 +2,16 @@
 #define	EDITORMULTILINEINPUTDIALOG_H
 
 #include <QDialog>
+#include <QTextDocument>
 #include <QTextOption>
 
 class QWidget;
 class QDialogButtonBox;
-class QTextEdit;
+class QLineEdit;
+class QCheckBox;
+class QLabel;
+class QKeyEvent;
+class HtmlSourceEdit;
 
 class EditorMultiLineInputDialog : public QDialog
 {
@@ -27,18 +32,40 @@ public slots:
 
     void setupShortcuts(void);
 
+protected:
+    // Esc при видимой панели поиска только прячет ее (не отменяет диалог)
+    void keyPressEvent(QKeyEvent *event) override;
+
+private slots:
+
+    void showFindPanel(void);
+    void showReplacePanel(void);
+    void hideFindPanel(void);
+    void onFindNext(void);
+    void onFindPrevious(void);
+    void onReplaceOne(void);
+    void onReplaceAll(void);
+    void onFindTextChanged(const QString &text);
+
 private:
 
     float sizeCoefficient;
-    QTextEdit *textArea;
+    HtmlSourceEdit *textArea;
     QDialogButtonBox *buttonBox;
+
+    QWidget *findPanel;
+    QLineEdit *findEdit;
+    QLineEdit *replaceEdit;
+    QCheckBox *caseCheck;
+    QLabel *matchLabel;
 
     void setupUi(void);
     void setupSignals(void);
     void assembly(void);
 
     void updateSize();
+
+    QTextDocument::FindFlags currentFlags(void) const;
 };
 
 #endif // EDITORMULTILINEINPUTDIALOG_H
-

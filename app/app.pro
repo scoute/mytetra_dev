@@ -272,6 +272,7 @@ HEADERS = src/main.h \
     src/libraries/wyedit/EditorImageProperties.h \
     src/libraries/wyedit/EditorSpecialCharDialog.h \
     src/libraries/wyedit/EditorMultiLineInputDialog.h \
+    src/libraries/wyedit/HtmlSourceEdit.h \
     src/libraries/FixedParameters.h \
     src/libraries/WindowSwitcher.h \
     src/libraries/wyedit/EditorShowText.h \
@@ -523,6 +524,7 @@ SOURCES = src/main.cpp \
     src/libraries/wyedit/EditorImageProperties.cpp \
     src/libraries/wyedit/EditorSpecialCharDialog.cpp \
     src/libraries/wyedit/EditorMultiLineInputDialog.cpp \
+    src/libraries/wyedit/HtmlSourceEdit.cpp \
     src/libraries/FixedParameters.cpp \
     src/libraries/WindowSwitcher.cpp \
     src/libraries/wyedit/EditorShowText.cpp \

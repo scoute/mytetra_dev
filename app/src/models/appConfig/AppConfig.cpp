@@ -22,6 +22,7 @@
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/AppContext.h"
+#include "libraries/ActionLogger.h"
 
 // Конструктор объекта настройки программы
 AppConfig::AppConfig(QObject *pobj)
@@ -175,11 +176,35 @@ QString AppConfig::get_parameter(QString name)
         {
             QString defValue=getParameterDefaultValueFromTable(name, actualTable);
             qWarning() << "In config not found parameter" << name << ", using default value:" << defValue;
+
+            // Счетчик гниения конфига: первое срабатывание по имени уходит
+            // в actionLog (дальше только счетчик, чтобы не спамить).
+            // addAction безопасен до init() логгера: молча ничего не пишет
+            ++m_fallbackTotal;
+            const bool firstHit=!m_fallbackHits.contains(name);
+            m_fallbackHits[name]=m_fallbackHits.value(name, 0)+1;
+            if(firstHit)
+                AppContext::instance().actionLogger()->addAction(
+                    QStringLiteral("configFallback"),
+                    {{"name", name}, {"defaultValue", defValue}});
+
             return defValue;
         }
 
         criticalError("In config not found parameter " + name);
     }
+}
+
+
+int AppConfig::get_configFallbackCount(void) const
+{
+    return m_fallbackTotal;
+}
+
+
+QMap<QString, int> AppConfig::get_configFallbackHits(void) const
+{
+    return m_fallbackHits;
 }
 
 // Установка имени директории с данными (в которой находится mytetra.xml)

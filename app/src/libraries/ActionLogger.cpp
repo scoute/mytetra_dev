@@ -50,6 +50,10 @@ ActionLogger::ActionLogger(QObject *pobj)
 
   actionStructure["criticalError"] =(QStringList() << "errorMessage" );
 
+  // Утраченный ключ конфига: первое срабатывание фолбэка get_parameter
+  // на известное таблице имя (дальше только счетчик, без спама)
+  actionStructure["configFallback"] =(QStringList() << "name" << "defaultValue" );
+
   // По-умолчанию логирование запрещено
   enableLogging=false;
 }
@@ -326,6 +330,9 @@ QString ActionLogger::getFullDescription(QMap<QString, QString> iData)
 
   else if( iData["a"] == "criticalError")
     line=tr("Critical error: %1").arg( iData["errorMessage"] );
+
+  else if( iData["a"] == "configFallback")
+    line=tr("Config key \"%1\" is missing, fallback to default value \"%2\"").arg( iData["name"] ).arg( iData["defaultValue"] );
 
   else
     line=tr("Unavailable action %1").arg( iData["a"] );

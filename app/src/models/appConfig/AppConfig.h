@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QDir>
+#include <QMap>
 #include <QSettings>
 #include <QDebug>
 
@@ -312,6 +313,12 @@ public:
     // Публичный чтобы секции конфига ходили через хост
     QString get_parameter(QString name);
 
+    // Счетчик срабатываний фолбэка get_parameter (утраченные ключи).
+    // Растет только на известных таблице ключах; неизвестные имена
+    // по-прежнему роняют программу через criticalError
+    int get_configFallbackCount(void) const;
+    QMap<QString, int> get_configFallbackHits(void) const;
+
 private:
 
     QStringList removeParameterFromTable(QString removeName, QStringList table);
@@ -403,6 +410,11 @@ private:
     // Блокировка UI на время MCP-сессии. Только рантайм: в QSettings
     // не пишется, после перезапуска всегда false
     bool m_mcpUiLock=false;
+
+    // Счетчик срабатываний фолбэка get_parameter: всего и по именам.
+    // Только рантайм, никуда не сохраняется
+    int m_fallbackTotal=0;
+    QMap<QString, int> m_fallbackHits;
 };
 
 #endif // __APPCONFIG_H__

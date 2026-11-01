@@ -207,6 +207,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Критическая ошибка: %1</translation>
     </message>
     <message>
+        <source>Config key "%1" is missing, fallback to default value "%2"</source>
+        <translation>Ключ конфига "%1" отсутствует, подставлено значение по умолчанию "%2"</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ActionLogger.cpp" line="345"/>
         <source>Unavailable action %1</source>
         <translation>Неизвестное действие %1</translation>

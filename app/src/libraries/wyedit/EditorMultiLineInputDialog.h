@@ -41,6 +41,8 @@ private slots:
     void showFindPanel(void);
     void showReplacePanel(void);
     void hideFindPanel(void);
+    void showGoToLine(void);
+    void updateCursorPosition(void);
     void onFindNext(void);
     void onFindPrevious(void);
     void onReplaceOne(void);
@@ -58,6 +60,7 @@ private:
     QLineEdit *replaceEdit;
     QCheckBox *caseCheck;
     QLabel *matchLabel;
+    QLabel *posLabel;
 
     void setupUi(void);
     void setupSignals(void);

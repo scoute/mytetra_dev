@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Per-language style for MyTetra code blocks (html), dark variant.
+     Same style names as html.xml; colors brightened for dark background.
+     Loaded by HtmlSourceEdit when the app palette base is dark. -->
+<style-scheme version="1.0" name="Mytetra-html-dark">
+    <style name="Keyword" foreground="#4DD0E1"/>
+    <style name="Decl" foreground="#7CB342"/>
+    <style name="Package" foreground="#4DD0E1"/>
+    <style name="Flow" foreground="#CE93D8"/>
+    <style name="PrimitiveType" foreground="#DCCB6F"/>
+    <style name="Type" foreground="#C792EA"/>
+    <style name="Function" foreground="#4DD0E1"/>
+    <style name="Number" foreground="#7986CB"/>
+    <style name="String" foreground="#C3E88D"/>
+    <style name="Comment" foreground="#7A7A7A"/>
+    <style name="Preprocessor" foreground="#7986CB"/>
+    <style name="Global" foreground="#FFB74D"/>
+    <style name="Field" foreground="#EF9A9A"/>
+    <style name="Text" foreground="#F07178"/>
+    <style name="Operator" foreground="#E8E8E8"/>
+    <style name="Literal" foreground="#F07178"/>
+    <style name="Property" foreground="#82AAFF"/>
+</style-scheme>

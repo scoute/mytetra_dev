@@ -4,6 +4,8 @@
 #include <QPaintEvent>
 #include <QResizeEvent>
 #include <QTextBlock>
+#include <QApplication>
+#include <QPalette>
 
 #include <QXMLHighlighter>
 #include <QStyleSyntaxHighlighter>
@@ -49,7 +51,15 @@ HtmlSourceEdit::HtmlSourceEdit(QWidget *parent) : QPlainTextEdit(parent)
     xmlHighlighter=new QXMLHighlighter(document());
     QSyntaxStyle *style=new QSyntaxStyle(xmlHighlighter);
 
-    QFile styleFile(QStringLiteral(":/styles/html.xml"));
+    // Тема подсветки по палитре приложения: темная база - светлые
+    // цвета, иначе приглушенные под светлый фон (как в блоках кода).
+    // Работает и для кастомных тем: смотрится именно итоговая палитра
+    const QColor base=qApp->palette().color(QPalette::Active, QPalette::Base);
+    const QString stylePath=(base.lightness()<128)
+        ? QStringLiteral(":/styles/html-dark.xml")
+        : QStringLiteral(":/styles/html.xml");
+
+    QFile styleFile(stylePath);
 
     if(styleFile.open(QIODevice::ReadOnly))
         style->load(styleFile.readAll());
@@ -235,6 +245,15 @@ void HtmlSourceEdit::goToLine(int line)
     // лэйауте (setPlainText без показа/покраски) падает внутри Qt
     // в QTextLine::naturalTextRect
     ensureCursorVisible();
+}
+
+
+QString HtmlSourceEdit::syntaxStyleName(void) const
+{
+    if(xmlHighlighter==nullptr || xmlHighlighter->syntaxStyle()==nullptr)
+        return QString();
+
+    return xmlHighlighter->syntaxStyle()->name();
 }
 
 

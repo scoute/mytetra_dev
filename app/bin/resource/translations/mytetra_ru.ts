@@ -3581,6 +3581,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
             <numerusform>%n замен</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Go to line</source>
+        <translation>Перейти к строке</translation>
+    </message>
+    <message>
+        <source>Line:</source>
+        <translation>Строка:</translation>
+    </message>
+    <message>
+        <source>Ln %1, Col %2</source>
+        <translation>Стр %1, Стб %2</translation>
+    </message>
 </context>
 <context>
     <name>EditorShowTextContextMenu</name>

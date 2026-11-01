@@ -45,7 +45,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 // Элемент таблицы с числовой сортировкой: по клику на заголовок
 // QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
 class NumberTableItem : public QTableWidgetItem
@@ -79,6 +78,7 @@ public:
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
 #include "views/tagsPanel/TagsPanel.h"
+#include "libraries/AppContext.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
@@ -100,42 +100,30 @@ public:
 #include "libraries/Favorites.h"
 #include "models/recordTable/Record.h"
 
-
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-extern TrashMonitoring trashMonitoring;
-extern GlobalParameters globalParameters;
-extern WalkHistory walkHistory;
-extern ActionLogger actionLogger;
-extern ShortcutManager shortcutManager;
-
-
 // Восстанавливается геометрия окна и позиции основных разделителей
 void MainWindow::restoreWindowGeometry(void)
 {
-    if(globalParameters.getTargetOs()=="android")
+    if(AppContext::instance().globalParameters()->getTargetOs()=="android")
         setWindowState(Qt::WindowMaximized); // Для Андроида окно просто разворачивается на весь экран
     else
-        restoreGeometry( mytetraConfig.get_mainwingeometry() );
+        restoreGeometry( AppContext::instance().appConfig()->get_mainwingeometry() );
 
     // Размеры применяются только при совпадении числа виджетов:
     // в режиме "список под деревом" у vSplitter один виджет, списки
     // из другого режима сюда не подходят
-    if(mytetraConfig.get_vspl_size_list().size()==vSplitter->count())
-        vSplitter->setSizes(mytetraConfig.get_vspl_size_list());
+    if(AppContext::instance().appConfig()->get_vspl_size_list().size()==vSplitter->count())
+        vSplitter->setSizes(AppContext::instance().appConfig()->get_vspl_size_list());
 
-    if(mytetraConfig.get_hspl_size_list().size()==hSplitter->count())
-        hSplitter->setSizes(mytetraConfig.get_hspl_size_list());
+    if(AppContext::instance().appConfig()->get_hspl_size_list().size()==hSplitter->count())
+        hSplitter->setSizes(AppContext::instance().appConfig()->get_hspl_size_list());
 
-    findSplitter->setSizes(mytetraConfig.get_findsplitter_size_list());
+    findSplitter->setSizes(AppContext::instance().appConfig()->get_findsplitter_size_list());
 }
-
 
 // Перестановка списка записей: справа от дерева (дефолт) либо под
 // деревом в левой колонке. Вызывается при старте после восстановления
 // геометрии и вживую из настроек. Существующие высоты виджетов
 // сохраняются как есть, поэтому переключение туда-обратно не прыгает
-
 
 // Перестановка списка записей: справа от дерева (дефолт) либо под
 // деревом в левой колонке. Вызывается при старте после восстановления
@@ -143,7 +131,7 @@ void MainWindow::restoreWindowGeometry(void)
 // сохраняются как есть, поэтому переключение туда-обратно не прыгает
 void MainWindow::applyRecordTablePosition(void)
 {
-    const bool under=mytetraConfig.get_recordTableUnderTree();
+    const bool under=AppContext::instance().appConfig()->get_recordTableUnderTree();
     const bool isUnder=(leftColumnSplitter!=nullptr);
 
     if(under==isUnder)
@@ -206,14 +194,12 @@ void MainWindow::applyRecordTablePosition(void)
     recordTableScreen->toolsUpdate();
 }
 
-
 // Отложенное применение размеров после перестановки списка записей.
 // Вызывается через singleShot(0): setSizes сразу после replaceWidget
 // сплиттер игнорирует, а до show() раздавать некому. К моменту вызова
 // окно уже показано, размеры живые. Идемпотентно: при повторных
 // вызовах и смене режима туда-сюда пересчитывает текущее состояние,
 // сохранённые списки имеют приоритет
-
 
 // Отложенное применение размеров после перестановки списка записей.
 // Вызывается через singleShot(0): setSizes сразу после replaceWidget
@@ -246,7 +232,7 @@ void MainWindow::applyRecordTableSizes(void)
     hSplitter->setSizes(QList<int>() << leftW << (hSplitter->width()-leftW>0 ? hSplitter->width()-leftW : leftW*2));
 
     // Высота дерева и списка внутри колонки: сохранённые, иначе поровну
-    const QList<int> saved=mytetraConfig.get_leftspl_size_list();
+    const QList<int> saved=AppContext::instance().appConfig()->get_leftspl_size_list();
 
     if(saved.size()==leftColumnSplitter->count())
         leftColumnSplitter->setSizes(saved);
@@ -272,28 +258,25 @@ void MainWindow::applyRecordTableSizes(void)
         recordTableSizesRetry=0;
 }
 
-
 // Запоминается геометрия окна и позиции основных разделителей
-
 
 // Запоминается геометрия окна и позиции основных разделителей
 void MainWindow::saveWindowGeometry(void)
 {
     qDebug() << "Save window geometry and splitter sizes";
 
-    mytetraConfig.set_mainwingeometry( saveGeometry() );
+    AppContext::instance().appConfig()->set_mainwingeometry( saveGeometry() );
 
     // Размеры vSplitter осмысленны только с двумя виджетами
     // (в режиме "список под деревом" там один редактор)
     if(vSplitter->count()==2)
-        mytetraConfig.set_vspl_size_list(vSplitter->sizes());
+        AppContext::instance().appConfig()->set_vspl_size_list(vSplitter->sizes());
 
-    mytetraConfig.set_hspl_size_list(hSplitter->sizes());
+    AppContext::instance().appConfig()->set_hspl_size_list(hSplitter->sizes());
 
     // Размеры левой колонки (дерево над списком) - только в этом режиме
     if(leftColumnSplitter!=nullptr)
-        mytetraConfig.set_leftspl_size_list(leftColumnSplitter->sizes());
-
+        AppContext::instance().appConfig()->set_leftspl_size_list(leftColumnSplitter->sizes());
 
     // Запоминается размер сплиттера только при видимом виджете поиска,
     // т.к. если виджета поиска невидно, будет запомнен нуливой размер
@@ -302,21 +285,19 @@ void MainWindow::saveWindowGeometry(void)
     // данный метод вызывается из декструктора главного окна, и к этому моменту
     // виджет уже невиден
 
-    if(mytetraConfig.get_findscreen_show())
-        mytetraConfig.set_findsplitter_size_list(findSplitter->sizes());
+    if(AppContext::instance().appConfig()->get_findscreen_show())
+        AppContext::instance().appConfig()->set_findsplitter_size_list(findSplitter->sizes());
 }
-
 
 void MainWindow::restoreTreePosition(void)
 {
     // Путь к последнему выбранному в дереве элементу
-    QStringList path=mytetraConfig.get_tree_position();
+    QStringList path=AppContext::instance().appConfig()->get_tree_position();
 
     qDebug() << "MainWindow::restoreTreePosition() : " << path;
 
     this->setTreePosition(path);
 }
-
 
 void MainWindow::saveTreePosition(void)
 {
@@ -327,9 +308,8 @@ void MainWindow::saveTreePosition(void)
     TreeItem *item =treeScreen->knowTreeModel->getItem(index);
 
     // Сохраняем путь к элементу item
-    mytetraConfig.set_tree_position(item->getPath());
+    AppContext::instance().appConfig()->set_tree_position(item->getPath());
 }
-
 
 void MainWindow::setTreePosition(QStringList path)
 {
@@ -348,10 +328,9 @@ void MainWindow::setTreePosition(QStringList path)
     treeScreen->setCursorToIndex(setto);
 }
 
-
 bool MainWindow::isTreePositionCrypt()
 {
-    QStringList path=mytetraConfig.get_tree_position();
+    QStringList path=AppContext::instance().appConfig()->get_tree_position();
 
     if(treeScreen->knowTreeModel->isItemValid(path)==false)
         return false;
@@ -365,29 +344,25 @@ bool MainWindow::isTreePositionCrypt()
         return false;
 }
 
-
 void MainWindow::restoreRecordTablePosition(void)
 {
-    QString id=mytetraConfig.get_recordtable_selected_record_id();
+    QString id=AppContext::instance().appConfig()->get_recordtable_selected_record_id();
 
     if(id.length()>0)
         this->setRecordtablePositionById(id);
 }
 
-
 void MainWindow::saveRecordTablePosition(void)
 {
     QString id=recordTableScreen->getFirstSelectionId();
 
-    mytetraConfig.set_recordtable_selected_record_id(id);
+    AppContext::instance().appConfig()->set_recordtable_selected_record_id(id);
 }
-
 
 void MainWindow::setRecordtablePositionById(QString id)
 {
     recordTableScreen->setSelectionToId(id);
 }
-
 
 void MainWindow::setTreeAndRecordtablePositions(QStringList treePath, QString recordId)
 {
@@ -412,42 +387,37 @@ void MainWindow::setTreeAndRecordtablePositions(QStringList treePath, QString re
     this->setRecordtablePositionById(recordId);
 }
 
-
 void MainWindow::saveEditorCursorPosition(void)
 {
     int n=editorScreen->getCursorPosition();
 
-    mytetraConfig.setEditorCursorPosition(n);
+    AppContext::instance().appConfig()->setEditorCursorPosition(n);
 }
-
 
 void MainWindow::restoreEditorCursorPosition(void)
 {
-    int n=mytetraConfig.getEditorCursorPosition();
+    int n=AppContext::instance().appConfig()->getEditorCursorPosition();
 
     editorScreen->setCursorPosition(n);
 }
-
 
 void MainWindow::saveEditorScrollBarPosition(void)
 {
     int n=editorScreen->getScrollBarPosition();
 
-    mytetraConfig.setEditorScrollBarPosition(n);
+    AppContext::instance().appConfig()->setEditorScrollBarPosition(n);
 }
-
 
 void MainWindow::restoreEditorScrollBarPosition(void)
 {
-    int n=mytetraConfig.getEditorScrollBarPosition();
+    int n=AppContext::instance().appConfig()->getEditorScrollBarPosition();
 
     editorScreen->setScrollBarPosition(n);
 }
 
-
 void MainWindow::restoreFindOnBaseVisible(void)
 {
-    bool n=mytetraConfig.get_findscreen_show();
+    bool n=AppContext::instance().appConfig()->get_findscreen_show();
 
     // Определяется ссылка на виджет поиска
     FindScreen *findScreenRel=find_object<FindScreen>("findScreenDisp");
@@ -458,10 +428,9 @@ void MainWindow::restoreFindOnBaseVisible(void)
         findScreenRel->hide();
 }
 
-
 void MainWindow::restoreAllWindowState(void)
 {
-    globalParameters.getWindowSwitcher()->disableSwitch();
+    AppContext::instance().globalParameters()->getWindowSwitcher()->disableSwitch();
 
     restoreFindOnBaseVisible();
     restoreWindowGeometry();
@@ -481,19 +450,16 @@ void MainWindow::restoreAllWindowState(void)
 
     restoreRecordTablePosition();
 
-
     restoreEditorCursorPosition();
     restoreEditorScrollBarPosition();
 
-    globalParameters.getWindowSwitcher()->enableSwitch();
+    AppContext::instance().globalParameters()->getWindowSwitcher()->enableSwitch();
 }
-
 
 void MainWindow::restoreDockableWindowsState()
 {
     // Восстанавливаются открепляемые окна
     EditorShowTextDispatcher::instance()->restoreOpenWindows();
 }
-
 
 // Создание раздела меню File

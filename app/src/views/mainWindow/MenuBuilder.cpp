@@ -10,11 +10,7 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/DebugHelper.h"
-
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-extern ShortcutManager shortcutManager;
-
+#include "libraries/AppContext.h"
 
 MenuBuilder::MenuBuilder(QMenuBar *menuBar, QObject *parent) : QObject(parent),
     m_menuBar(menuBar)
@@ -22,12 +18,10 @@ MenuBuilder::MenuBuilder(QMenuBar *menuBar, QObject *parent) : QObject(parent),
 
 }
 
-
 MenuBuilder::~MenuBuilder(void)
 {
 
 }
-
 
 void MenuBuilder::buildAll(QAction *tagsToggle, QAction *historyToggle,
                            QAction *backlinksToggle, bool isDesktop)
@@ -39,18 +33,15 @@ void MenuBuilder::buildAll(QAction *tagsToggle, QAction *historyToggle,
     buildViewMenu();
 }
 
-
 QMenu *MenuBuilder::menu(MenuId id) const
 {
     return m_menus.value(id, nullptr);
 }
 
-
 QAction *MenuBuilder::action(ActionId id) const
 {
     return m_actions.value(id, nullptr);
 }
-
 
 void MenuBuilder::buildFileMenu(void)
 {
@@ -81,7 +72,6 @@ void MenuBuilder::buildFileMenu(void)
 
     add(ActionId::FileQuit, tr("&Quit"));
 }
-
 
 void MenuBuilder::buildToolsMenu(QAction *tagsToggle, QAction *historyToggle,
                                  QAction *backlinksToggle, bool isDesktop)
@@ -115,15 +105,15 @@ void MenuBuilder::buildToolsMenu(QAction *tagsToggle, QAction *historyToggle,
     // билдер их не ищет, только оформляет и кладет в меню
     tagsToggle->setIcon(QIcon(":/resource/pic/tag.svg"));
     toolsMenu->addAction(tagsToggle);
-    shortcutManager.initAction("misc-tagsPanel", tagsToggle);
+    AppContext::instance().shortcutManager()->initAction("misc-tagsPanel", tagsToggle);
 
     historyToggle->setIcon(QIcon(":/resource/pic/history.svg"));
     toolsMenu->addAction(historyToggle);
-    shortcutManager.initAction("misc-historyPanel", historyToggle);
+    AppContext::instance().shortcutManager()->initAction("misc-historyPanel", historyToggle);
 
     backlinksToggle->setIcon(QIcon(":/resource/pic/backlinks.svg"));
     toolsMenu->addAction(backlinksToggle);
-    shortcutManager.initAction("misc-backlinksPanel", backlinksToggle);
+    AppContext::instance().shortcutManager()->initAction("misc-backlinksPanel", backlinksToggle);
 
     toolsMenu->addSeparator();
 
@@ -141,7 +131,6 @@ void MenuBuilder::buildToolsMenu(QAction *tagsToggle, QAction *historyToggle,
         toolsMenu->addMenu(m_preferencesSubMenu);
     }
 }
-
 
 void MenuBuilder::buildPreferencesSubMenu(QMenu *menu)
 {
@@ -165,7 +154,6 @@ void MenuBuilder::buildPreferencesSubMenu(QMenu *menu)
     }
 }
 
-
 void MenuBuilder::buildHelpMenu(void)
 {
     QMenu *helpMenu=new QMenu(tr("&Help"), m_menuBar);
@@ -185,7 +173,6 @@ void MenuBuilder::buildHelpMenu(void)
     add(ActionId::HelpTechnicalInfo, tr("Technical info"));
 }
 
-
 void MenuBuilder::buildThemesMenu(void)
 {
     QMenu *themesMenu=new QMenu(tr("&Themes"), m_menuBar);
@@ -203,7 +190,7 @@ void MenuBuilder::buildThemesMenu(void)
     QActionGroup *themeGroup=new QActionGroup(themesMenu);
     themeGroup->setExclusive(true);
 
-    for(auto name : fixedParameters.themesAvailableList)
+    for(auto name : AppContext::instance().fixedParameters()->themesAvailableList)
     {
         QAction *themeAction=new QAction(translateNames.value(name, "Unknown"), themesMenu);
         themeAction->setData(name);
@@ -232,14 +219,13 @@ void MenuBuilder::buildThemesMenu(void)
             this, &MenuBuilder::syncThemeMenu);
 }
 
-
 void MenuBuilder::syncThemeMenu(void)
 {
     QMenu *themesMenu=m_menus.value(MenuId::Themes, nullptr);
     if(themesMenu==nullptr)
         return;
 
-    QString currentTheme=mytetraConfig.getInterfaceTheme();
+    QString currentTheme=AppContext::instance().appConfig()->getInterfaceTheme();
 
     for(QAction *themeAction : themesMenu->actions())
     {
@@ -251,7 +237,6 @@ void MenuBuilder::syncThemeMenu(void)
         themeAction->setChecked(themeAction->data().toString()==currentTheme);
     }
 }
-
 
 void MenuBuilder::buildViewMenu(void)
 {
@@ -312,11 +297,10 @@ void MenuBuilder::buildViewMenu(void)
             this, &MenuBuilder::viewMenuShown);
 }
 
-
 void MenuBuilder::retranslate(void)
 {
     // Зеркало MainWindow::retranslateUi (вызывается до
-    // shortcutManager.retranslate()): прямой setText только там,
+    // AppContext::instance().shortcutManager()->retranslate()): прямой setText только там,
     // где его делал оригинал, иначе затрутся тексты на шорткатах
     QMenu *fileMenu=m_menus.value(MenuId::File, nullptr);
     if(fileMenu!=nullptr)

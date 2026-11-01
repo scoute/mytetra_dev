@@ -45,7 +45,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 // Элемент таблицы с числовой сортировкой: по клику на заголовок
 // QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
 class NumberTableItem : public QTableWidgetItem
@@ -104,16 +103,6 @@ public:
 #include "libraries/Favorites.h"
 #include "models/recordTable/Record.h"
 
-
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-extern TrashMonitoring trashMonitoring;
-extern GlobalParameters globalParameters;
-extern WalkHistory walkHistory;
-extern ActionLogger actionLogger;
-extern ShortcutManager shortcutManager;
-
-
 MainWindow::MainWindow() : QMainWindow()
 {
     // P3: корень для find_object - через AppContext, без файлового глобала.
@@ -131,7 +120,7 @@ MainWindow::MainWindow() : QMainWindow()
     menuBuilder->buildAll(tagsPanelDock->toggleViewAction(),
                           historyPanelDock->toggleViewAction(),
                           backlinksPanelDock->toggleViewAction(),
-                          mytetraConfig.getInterfaceMode()==QStringLiteral("desktop"));
+                          AppContext::instance().appConfig()->getInterfaceMode()==QStringLiteral("desktop"));
 
     // Начальная пометка пунктов Вид до коннектов: setChecked с тем же
     // значением toggled не дергает (как было внутри initViewMenu)
@@ -140,8 +129,8 @@ MainWindow::MainWindow() : QMainWindow()
     // P3: мост MCP-сервер -> живой GUI. DI: модель из дерева, read-only
     // и mcp-флаг из конфига, сброс редактора как было через find_object
     mcpBridge=new McpGuiBridge(treeScreen->knowTreeModel, this);
-    mcpBridge->isReadOnly=[]() { return mytetraConfig.isGlobalReadOnly(); };
-    mcpBridge->mcpAllowed=[]() { return mytetraConfig.get_mcpAllow(); };
+    mcpBridge->isReadOnly=[]() { return AppContext::instance().appConfig()->isGlobalReadOnly(); };
+    mcpBridge->mcpAllowed=[]() { return AppContext::instance().appConfig()->get_mcpAllow(); };
     mcpBridge->clearEditor=[]() { find_object<MetaEditor>("editorScreen")->clearAll(); };
     connect(mcpBridge, &McpGuiBridge::sessionChanged, this, &MainWindow::updateMcpBanner);
     connect(mcpBridge, &McpGuiBridge::historyChanged, this, &MainWindow::updateMcpHistoryDialog);
@@ -166,8 +155,8 @@ MainWindow::MainWindow() : QMainWindow()
     trayManager->show();
 
     // Инициализируется объект слежения за корзиной
-    trashMonitoring.init(mytetraConfig.get_trashdir());
-    trashMonitoring.update();
+    AppContext::instance().trashMonitoring()->init(AppContext::instance().appConfig()->get_trashdir());
+    AppContext::instance().trashMonitoring()->update();
 
     // Старт веб-клиппера (перехват глобального хоткея по настройкам)
     clipper.start();
@@ -191,15 +180,13 @@ MainWindow::MainWindow() : QMainWindow()
     RandomInitter::init( static_cast<long>( x * y + (x % (y==0 ? 1 : y)) + x + y ) );
 }
 
-
 MainWindow::~MainWindow()
 {
     saveAllState();
 
     // В лог записывается событие остановки программы
-    actionLogger.addAction("stopProgram");
+    AppContext::instance().actionLogger()->addAction("stopProgram");
 }
-
 
 void MainWindow::setupUI(void)
 {
@@ -207,24 +194,24 @@ void MainWindow::setupUI(void)
 
     treeScreen=new TreeScreen( this );
     treeScreen->setObjectName("treeScreen");
-    globalParameters.setTreeScreen(treeScreen);
+    AppContext::instance().globalParameters()->setTreeScreen(treeScreen);
 
     recordTableScreen=new RecordTableScreen( this );
     recordTableScreen->setObjectName("recordTableScreen");
-    globalParameters.setRecordTableScreen(recordTableScreen);
+    AppContext::instance().globalParameters()->setRecordTableScreen(recordTableScreen);
 
     findScreenDisp=new FindScreen( this );
     findScreenDisp->setObjectName("findScreenDisp");
-    globalParameters.setFindScreen(findScreenDisp);
+    AppContext::instance().globalParameters()->setFindScreen(findScreenDisp);
 
     editorScreen=new MetaEditor( this );
     editorScreen->setObjectName("editorScreen");
-    globalParameters.setMetaEditor(editorScreen);
+    AppContext::instance().globalParameters()->setMetaEditor(editorScreen);
 
     statusBar=new QStatusBar( this );
     statusBar->setObjectName("statusBar");
     setStatusBar(statusBar);
-    globalParameters.setStatusBar(statusBar);
+    AppContext::instance().globalParameters()->setStatusBar(statusBar);
 
     // Статистика базы справа. Постоянный виджет: showMessage
     // его не затирает
@@ -248,11 +235,11 @@ void MainWindow::setupUI(void)
     // Вспомогательный объект переключения окон, используется в мобильном интерфейсе
     windowSwitcher=new WindowSwitcher( this );
     windowSwitcher->setObjectName("windowSwitcher");
-    globalParameters.setWindowSwitcher(windowSwitcher);
+    AppContext::instance().globalParameters()->setWindowSwitcher(windowSwitcher);
 
     // Вспомогательный объект с виджетом синхронизации базы знаний
     syncroCommandRun=new CommandRunner( this );
-    globalParameters.setSyncroCommandRunner( syncroCommandRun );
+    AppContext::instance().globalParameters()->setSyncroCommandRunner( syncroCommandRun );
 
     // Панель истории посещений в доке справа. По умолчанию скрыта,
     // переключается из меню Tools и горячей клавишей
@@ -288,7 +275,6 @@ void MainWindow::setupUI(void)
     // MetaEditor *edView=find_object<MetaEditor>("editorScreen");
 }
 
-
 void MainWindow::setupSignals(void)
 {
     connect(editorScreen, &MetaEditor::send_expand_edit_area, this, &MainWindow::onExpandEditArea);
@@ -297,7 +283,6 @@ void MainWindow::setupSignals(void)
     connect(qApp, &QApplication::commitDataRequest, this, &MainWindow::commitData);
 
     connect(qApp, &QApplication::focusChanged, this, &MainWindow::onFocusChanged);
-
 
     // Сигналы пунктов меню
     connect(menuBuilder->action(MenuBuilder::ActionId::FileDatabases), &QAction::triggered, this, &MainWindow::fileDatabasesManagement);
@@ -309,12 +294,11 @@ void MainWindow::setupSignals(void)
     connect(menuBuilder->action(MenuBuilder::ActionId::FileExportPdf), &QAction::triggered, this, &MainWindow::filePrintPdf);
     connect(menuBuilder->action(MenuBuilder::ActionId::FileQuit), &QAction::triggered, this, &MainWindow::applicationExit);
 
-
     // Поиск по базе в стандартном меню
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsFindInBase), &QAction::triggered, this, &MainWindow::toolsFindInBase);
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsImagesGallery), &QAction::triggered, this, &MainWindow::toolsImagesGallery);
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsFilesGallery), &QAction::triggered, this, &MainWindow::toolsFilesGallery);
-    if(mytetraConfig.getInterfaceMode()=="mobile")
+    if(AppContext::instance().appConfig()->getInterfaceMode()=="mobile")
     {
         // Кнопка поиска по базе в меню дерева разделов для мобильного интерфейса
         connect(treeScreen, &TreeScreen::treeScreenFindInBaseClicked, this, &MainWindow::toolsFindInBase);
@@ -334,7 +318,7 @@ void MainWindow::setupSignals(void)
     connect(menuBuilder->action(MenuBuilder::ActionId::ToolsClipFromClipboard), &QAction::triggered, this, &MainWindow::runClipperNow);
 
     // Вызов окна настроек
-    if(mytetraConfig.getInterfaceMode()=="desktop")
+    if(AppContext::instance().appConfig()->getInterfaceMode()=="desktop")
     {
         connect(menuBuilder->action(MenuBuilder::ActionId::ToolsPreferences), &QAction::triggered, this, &MainWindow::toolsPreferences);
     }
@@ -401,7 +385,7 @@ void MainWindow::setupSignals(void)
             Qt::QueuedConnection);
 
     // Обновление горячих клавиш, если они были изменены
-    connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &MainWindow::setupShortcuts);
+    connect(AppContext::instance().shortcutManager(), &ShortcutManager::updateWidgetShortcut, this, &MainWindow::setupShortcuts);
 
     // Статистика в статусбаре: ветки (структура) и записи
     // обновляются сигналами модели
@@ -416,7 +400,6 @@ void MainWindow::setupSignals(void)
         connect(treeModel, &QAbstractItemModel::layoutChanged, this, &MainWindow::updateStats);
     }
 }
-
 
 void MainWindow::assembly(void)
 {
@@ -498,7 +481,6 @@ void MainWindow::assembly(void)
     BacklinkIndex::instance().loadOrBuild();
 }
 
-
 void MainWindow::saveAllState(void)
 {
     // Сохранение данных в поле редактирования
@@ -512,12 +494,10 @@ void MainWindow::saveAllState(void)
     saveEditorScrollBarPosition();
 
     // Синхронизируется с диском конфиг программы
-    mytetraConfig.sync();
+    AppContext::instance().appConfig()->sync();
 }
 
-
 // Слот, срабатывающий когда происходит выход из оконной системы
-
 
 // Слот, срабатывающий когда происходит выход из оконной системы
 void MainWindow::commitData(QSessionManager& manager)
@@ -528,12 +508,10 @@ void MainWindow::commitData(QSessionManager& manager)
     applicationFastExit();
 }
 
-
 // Слот, обрабатывающий внешние сообщения
 // Используется для обработки ссобщений, приходящих от других экземпляров MyTetra
 // Разбор аргумента MCP-команд: весь текст после первого пробела это
 // компактный JSON (пробелы внутри допустимы, переводов строк нет)
-
 
 void MainWindow::messageHandler(QString message)
 {
@@ -557,7 +535,7 @@ void MainWindow::messageHandler(QString message)
 
     // MCP выключен в настройках: все внешние mcp-команды игнорируются.
     // Отдельный if до цепочки чтобы не рвать else if
-    if(command.startsWith("mcp") && !mytetraConfig.get_mcpAllow())
+    if(command.startsWith("mcp") && !AppContext::instance().appConfig()->get_mcpAllow())
         return;
 
     if(command=="show")
@@ -595,7 +573,7 @@ void MainWindow::messageHandler(QString message)
     else if(command=="addNoteDialog")
     {
         // Глобальный режим только чтения: создание записей запрещено
-        if(mytetraConfig.get_readOnly())
+        if(AppContext::instance().appConfig()->get_readOnly())
             return;
         // Определение, было ли окно MyTetra скрыто при обработке сообщения
         bool isHidden=this->isHidden();
@@ -636,7 +614,7 @@ void MainWindow::messageHandler(QString message)
     else if(command=="clipboard")
     {
         // Глобальный режим только чтения: клиппер не создаёт записи
-        if(mytetraConfig.get_readOnly())
+        if(AppContext::instance().appConfig()->get_readOnly())
             return;
 
         // Клиппер: заметка из буфера обмена в ветку unsorted_notes.
@@ -808,10 +786,8 @@ void MainWindow::messageHandler(QString message)
     }
 }
 
-
 // Синхронный ответ на mcp-команду для протокола запрос-ответ.
 // Упаковка итога handleMcpCommand в компактный JSON
-
 
 // Пересчитать и показать статистику базы в статусбаре.
 // Вызывается по сигналам модели и точечно после правок
@@ -834,10 +810,8 @@ void MainWindow::updateStats(void)
     statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details."));
 }
 
-
 // Внешняя MCP-правка: баннер и так висит всю сессию, здесь только
 // пересчёт (текст с режимами, видимость, блокировка)
-
 
 // Перезапуск цепочки умного автосохранения с текущим конфигом
 void MainWindow::restartAutosaveTimer(void)
@@ -845,9 +819,9 @@ void MainWindow::restartAutosaveTimer(void)
     if(autosaveTimer==nullptr)
         return;
 
-    const int minutes=mytetraConfig.get_autosaveInterval();
+    const int minutes=AppContext::instance().appConfig()->get_autosaveInterval();
 
-    if(!mytetraConfig.get_autosaveEnable() || minutes<1)
+    if(!AppContext::instance().appConfig()->get_autosaveEnable() || minutes<1)
     {
         autosaveTimer->stop();
         return;
@@ -856,12 +830,10 @@ void MainWindow::restartAutosaveTimer(void)
     autosaveTimer->start(minutes*60*1000);
 }
 
-
 // Срабатывание умного автосохранения: сохраняется только реально
 // правленная запись (флаг редактора), а снапшот истории дедуплицирует
 // по тексту. Без правок ни файла ни коммита. Открытый модальный диалог
 // круг пропускает: иначе сохранился бы промежуточный предпросмотр
-
 
 // Срабатывание умного автосохранения: сохраняется только реально
 // правленная запись (флаг редактора), а снапшот истории дедуплицирует
@@ -876,12 +848,10 @@ void MainWindow::onAutosaveTimeout(void)
     restartAutosaveTimer();
 }
 
-
 // Блокировка UI на время MCP-сессии поверх глобального read-only.
 // Своё досохраняется до блокировки, иначе потеряется на навигации.
 // MCP-записи смотрят сырой флаг и продолжают писать.
 // Идемпотентна: повтор не дёргает сохранение и перераскладку
-
 
 // Разбивка статистики по заметкам: кто сколько ссылок держит.
 // Двойной клик прыгает к заметке
@@ -922,50 +892,47 @@ void MainWindow::showStatsDetails(void)
     dialog.exec();
 }
 
-
 void MainWindow::setupShortcuts(void)
 {
     qDebug() << "Setup shortcut for" << this->objectName();
 
     // Ctrl+P открывает предпросмотр печати (там же кнопка прямой печати).
     // Прямая печать без предпросмотра висит на misc-printDirect
-    shortcutManager.initAction("misc-print", menuBuilder->action(MenuBuilder::ActionId::FilePrintPreview) );
-    shortcutManager.initAction("misc-printDirect", menuBuilder->action(MenuBuilder::ActionId::FilePrint) );
-    shortcutManager.initAction("misc-exportPdf", menuBuilder->action(MenuBuilder::ActionId::FileExportPdf) );
-    shortcutManager.initAction("misc-quit", menuBuilder->action(MenuBuilder::ActionId::FileQuit) );
+    AppContext::instance().shortcutManager()->initAction("misc-print", menuBuilder->action(MenuBuilder::ActionId::FilePrintPreview) );
+    AppContext::instance().shortcutManager()->initAction("misc-printDirect", menuBuilder->action(MenuBuilder::ActionId::FilePrint) );
+    AppContext::instance().shortcutManager()->initAction("misc-exportPdf", menuBuilder->action(MenuBuilder::ActionId::FileExportPdf) );
+    AppContext::instance().shortcutManager()->initAction("misc-quit", menuBuilder->action(MenuBuilder::ActionId::FileQuit) );
 
-    shortcutManager.initAction("misc-findInBase", menuBuilder->action(MenuBuilder::ActionId::ToolsFindInBase) );
+    AppContext::instance().shortcutManager()->initAction("misc-findInBase", menuBuilder->action(MenuBuilder::ActionId::ToolsFindInBase) );
 
-    shortcutManager.initAction("misc-imagesGallery", menuBuilder->action(MenuBuilder::ActionId::ToolsImagesGallery) );
+    AppContext::instance().shortcutManager()->initAction("misc-imagesGallery", menuBuilder->action(MenuBuilder::ActionId::ToolsImagesGallery) );
 
-    shortcutManager.initAction("misc-clipFromClipboard", menuBuilder->action(MenuBuilder::ActionId::ToolsClipFromClipboard) );
+    AppContext::instance().shortcutManager()->initAction("misc-clipFromClipboard", menuBuilder->action(MenuBuilder::ActionId::ToolsClipFromClipboard) );
 
-    shortcutManager.initAction("misc-readOnly", menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly) );
+    AppContext::instance().shortcutManager()->initAction("misc-readOnly", menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly) );
 
-    shortcutManager.initAction("misc-focusTree", actionFocusTree );
-    shortcutManager.initAction("misc-focusNoteTable", actionFocusNoteTable );
-    shortcutManager.initAction("misc-focusEditor", actionFocusEditor );
+    AppContext::instance().shortcutManager()->initAction("misc-focusTree", actionFocusTree );
+    AppContext::instance().shortcutManager()->initAction("misc-focusNoteTable", actionFocusNoteTable );
+    AppContext::instance().shortcutManager()->initAction("misc-focusEditor", actionFocusEditor );
 }
 
-
 // Перевести статичные тексты новым языком. Вызывается до
-// shortcutManager.retranslate(): тексты на шорткатах освежит сигнал,
+// AppContext::instance().shortcutManager()->retranslate(): тексты на шорткатах освежит сигнал,
 // а прямой setText их бы затер
 
-
 // Перевести статичные тексты новым языком. Вызывается до
-// shortcutManager.retranslate(): тексты на шорткатах освежит сигнал,
+// AppContext::instance().shortcutManager()->retranslate(): тексты на шорткатах освежит сигнал,
 // а прямой setText их бы затер
 void MainWindow::retranslateUi(void)
 {
     // P3: меню и пункты переводит билдер (зеркало старого кода).
-    // Вызывается до shortcutManager.retranslate() как раньше
+    // Вызывается до AppContext::instance().shortcutManager()->retranslate() как раньше
     menuBuilder->retranslate();
 
     // Переключатели доков истории и меток: текст тоже идет через шорткаты,
     // но initAction для них звался один раз при построении (как было)
-    shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
-    shortcutManager.initAction("misc-tagsPanel", tagsPanelDock->toggleViewAction());
+    AppContext::instance().shortcutManager()->initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
+    AppContext::instance().shortcutManager()->initAction("misc-tagsPanel", tagsPanelDock->toggleViewAction());
 
     // Пометки checkable-пунктов Вид (было в конце view-блока retranslateUi)
     syncViewMenu();
@@ -1016,9 +983,7 @@ void MainWindow::retranslateUi(void)
         mcpHistoryDialog->retranslateUi();
 }
 
-
 // Сохранить текущую статью
-
 
 // Сохранить текущую статью
 bool MainWindow::fileSave(void)
@@ -1028,9 +993,7 @@ bool MainWindow::fileSave(void)
     return true;
 }
 
-
 // Сохранить текущую статью как файл
-
 
 // Сохранить текущую статью как файл
 bool MainWindow::fileSaveAs(void)
@@ -1039,9 +1002,7 @@ bool MainWindow::fileSaveAs(void)
     return true;
 }
 
-
 // Напечатать текущую статью
-
 
 // Напечатать текущую статью
 void MainWindow::filePrint(void)
@@ -1060,9 +1021,7 @@ void MainWindow::filePrint(void)
 #endif
 }
 
-
 // Предпросмотр печати текущей статьи
-
 
 // Предпросмотр печати текущей статьи
 void MainWindow::filePrintPreview(void)
@@ -1074,9 +1033,7 @@ void MainWindow::filePrintPreview(void)
     preview->show();
 }
 
-
 // Вывод текущей статьи в PDF файл
-
 
 // Вывод текущей статьи в PDF файл
 void MainWindow::filePrintPdf(void)
@@ -1097,9 +1054,7 @@ void MainWindow::filePrintPdf(void)
 #endif
 }
 
-
 // Раздел меню File, управление базами данных
-
 
 // Раздел меню File, управление базами данных
 void MainWindow::fileDatabasesManagement(void)
@@ -1108,9 +1063,7 @@ void MainWindow::fileDatabasesManagement(void)
     databasesManagementScreen.exec();
 }
 
-
 // Раздел меню File, экспорт текущей ветки и всех ее подветок
-
 
 // Раздел меню File, экспорт текущей ветки и всех ее подветок
 void MainWindow::fileExportBranch(void)
@@ -1126,22 +1079,20 @@ void MainWindow::fileExportBranch(void)
             treeScreen->exportBranchToDirectory( directorySelectDialog.directory().absolutePath() );
 }
 
-
 void MainWindow::fileImportTelegram(void)
 {
     // Глобальный режим только чтения: импорт меняет базу
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
         return;
 
     TelegramImportDialog dialog(this);
     dialog.exec();
 }
 
-
 void MainWindow::fileImportBranch(void)
 {
     // Глобальный режим только чтения: импорт меняет базу
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
         return;
 
     // Создается окно выбора директории, откуда необходимо сделать импорт
@@ -1155,9 +1106,7 @@ void MainWindow::fileImportBranch(void)
             treeScreen->importBranchFromDirectory( directorySelectDialog.directory().absolutePath() );
 }
 
-
 // Слот - Нормальный выход из программы
-
 
 // Слот - Нормальный выход из программы
 void MainWindow::applicationExit(void)
@@ -1168,8 +1117,8 @@ void MainWindow::applicationExit(void)
     // И если в конфиге настроено, что нужно синхронизироваться при выходе
     // И задана команда синхронизации
     if(enableRealClose==false)
-        if(mytetraConfig.get_synchroonexit())
-            if(mytetraConfig.get_synchrocommand().trimmed().length()>0)
+        if(AppContext::instance().appConfig()->get_synchroonexit())
+            if(AppContext::instance().appConfig()->get_synchrocommand().trimmed().length()>0)
             {
                 enableRealClose=true;
                 synchronization(); // В конце синхронизации будет вызван слот onSyncroCommandFinishWork()
@@ -1180,9 +1129,7 @@ void MainWindow::applicationExit(void)
     emit close();
 }
 
-
 // Быстрый выход из программы, без возможности синхронизации
-
 
 // Быстрый выход из программы, без возможности синхронизации
 void MainWindow::applicationFastExit(void)
@@ -1193,7 +1140,6 @@ void MainWindow::applicationFastExit(void)
     enableRealClose=true;
     emit close();
 }
-
 
 void MainWindow::toolsFindInBase(void)
 {
@@ -1206,9 +1152,7 @@ void MainWindow::toolsFindInBase(void)
         findScreenRel->widgetHide();
 }
 
-
 // Уход из полоски поиска в заметке в глобальный поиск с текстом запроса
-
 
 // Уход из полоски поиска в заметке в глобальный поиск с текстом запроса
 void MainWindow::toolsFindInBaseWithText(const QString &text)
@@ -1221,7 +1165,6 @@ void MainWindow::toolsFindInBaseWithText(const QString &text)
     findScreenRel->setFindText(text);
 }
 
-
 void MainWindow::toolsImagesGallery(void)
 {
     ContentGallery *gallery=new ContentGallery(ContentGallery::GalleryMode::Images, this);
@@ -1229,14 +1172,12 @@ void MainWindow::toolsImagesGallery(void)
     gallery->show();
 }
 
-
 void MainWindow::toolsFilesGallery(void)
 {
     ContentGallery *gallery=new ContentGallery(ContentGallery::GalleryMode::Attaches, this);
     gallery->setAttribute(Qt::WA_DeleteOnClose);
     gallery->show();
 }
-
 
 void MainWindow::toolsPreferences(void)
 {
@@ -1247,18 +1188,15 @@ void MainWindow::toolsPreferences(void)
     clipper.rereadSettings();
 }
 
-
 void MainWindow::onActionLogClicked()
 {
     ActionLogScreen actionLogScreen(this);
     actionLogScreen.exec();
 }
 
-
 // Показ всплывающего сообщения в системном трее.
 // Используется фоновыми задачами (клиппер), которым некого спросить,
 // но надо сообщить пользователю о результате
-
 
 // Клиппер из меню Tools: вставка из буфера в unsorted_notes сейчас.
 // Ссылка на источник ищется в самом тексте буфера
@@ -1267,18 +1205,15 @@ void MainWindow::runClipperNow(void)
     clipper.clipNow();
 }
 
-
 Clipper *MainWindow::getClipper(void)
 {
     return &clipper;
 }
 
-
 // Слот, срабатывающий при нажатии в редакторе кнопки "распахнуть"
 // Флаг показывает, что нужно сделать
 // true - распахнуть область отводимую редактору
 // false - сделать область, отводимую редактору, обычной
-
 
 // Слот, срабатывающий при нажатии в редакторе кнопки "распахнуть"
 // Флаг показывает, что нужно сделать
@@ -1288,16 +1223,15 @@ void MainWindow::onExpandEditArea(bool flag)
 {
     if(flag)
     {
-        globalParameters.getTreeScreen()->hide();
-        globalParameters.getRecordTableScreen()->hide();
+        AppContext::instance().globalParameters()->getTreeScreen()->hide();
+        AppContext::instance().globalParameters()->getRecordTableScreen()->hide();
     }
     else
     {
-        globalParameters.getTreeScreen()->show();
-        globalParameters.getRecordTableScreen()->show();
+        AppContext::instance().globalParameters()->getTreeScreen()->show();
+        AppContext::instance().globalParameters()->getRecordTableScreen()->show();
     }
 }
-
 
 void MainWindow::onClickHelpAboutMyTetra(void)
 {
@@ -1326,12 +1260,10 @@ void MainWindow::onClickHelpAboutMyTetra(void)
                        info);
 }
 
-
 void MainWindow::onClickHelpAboutQt(void)
 {
     QMessageBox::aboutQt(this);
 }
-
 
 void MainWindow::onClickHelpTechnicalInfo(void)
 {
@@ -1343,9 +1275,9 @@ void MainWindow::onClickHelpTechnicalInfo(void)
     QString infoPhysicalDpiX;
     QString infoPhysicalDpiY;
 
-    infoTargetOs="Target OS: "+globalParameters.getTargetOs()+"<br/>";
-    infoProgramFile="Program file: "+globalParameters.getMainProgramFile()+"<br/>";
-    infoWorkDirectory="Work directory: "+globalParameters.getWorkDirectory()+"<br/>";
+    infoTargetOs="Target OS: "+AppContext::instance().globalParameters()->getTargetOs()+"<br/>";
+    infoProgramFile="Program file: "+AppContext::instance().globalParameters()->getMainProgramFile()+"<br/>";
+    infoWorkDirectory="Work directory: "+AppContext::instance().globalParameters()->getWorkDirectory()+"<br/>";
 
 #if QT_VERSION >= 0x050000 && QT_VERSION < 0x060000
     infoDevicePixelRatio="Device pixel ratio: "+(QString::number( qApp->devicePixelRatio(), 'f', 2 ))+"<br/>";
@@ -1371,27 +1303,22 @@ void MainWindow::onClickHelpTechnicalInfo(void)
     msgBox->exec();
 }
 
-
 void MainWindow::onClickFocusTree(void)
 {
     treeScreen->setFocusToBaseWidget();
 }
-
 
 void MainWindow::onClickFocusNoteTable(void)
 {
     recordTableScreen->setFocusToBaseWidget();
 }
 
-
 void MainWindow::onClickFocusEditor(void)
 {
     editorScreen->setFocusToBaseWidget();
 }
 
-
 // Перечитывание всей базы знаний
-
 
 // Перечитывание всей базы знаний
 void MainWindow::reload(void)
@@ -1402,9 +1329,7 @@ void MainWindow::reload(void)
   reloadLoadStage(false);
 }
 
-
 // Перечитывание дерева знаний, стадия Save
-
 
 // Перечитывание дерева знаний, стадия Save
 void MainWindow::reloadSaveStage(void)
@@ -1419,15 +1344,13 @@ void MainWindow::reloadSaveStage(void)
   saveEditorScrollBarPosition();
 }
 
-
 // Перечитывание дерева знаний, стадия Load
-
 
 // Перечитывание дерева знаний, стадия Load
 void MainWindow::reloadLoadStage(bool isLongTimeReload)
 {
     // Блокируется история
-    walkHistory.setDrop(true);
+    AppContext::instance().walkHistory()->setDrop(true);
 
     // Стадия Load может запуститься сильно позже по времени после стадии Save.
     // И пользователь можейт уйти с записи, которую он редактировал на стадии Save.
@@ -1455,18 +1378,16 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
     }
 
     // Разблокируется история посещений элементов
-    walkHistory.setDrop(false);
+    AppContext::instance().walkHistory()->setDrop(false);
 }
 
-
 // Старт синхронизации
-
 
 // Старт синхронизации
 void MainWindow::synchronization(bool visible)
 {
     // Глобальный режим только чтения: синхронизация может менять базу
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
         return;
 
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
@@ -1476,12 +1397,12 @@ void MainWindow::synchronization(bool visible)
     // Блокируется кнопка синхронизации, чтобы два раза случайно не нажать синхронизацию (окно синхронизации не модально)
     recordTableScreen->setSyncroEnabled(false);
 
-    actionLogger.addAction("startSyncro");
+    AppContext::instance().actionLogger()->addAction("startSyncro");
 
     reloadSaveStage();
 
     // Считывается команда синхронизации
-    QString command=mytetraConfig.get_synchrocommand();
+    QString command=AppContext::instance().appConfig()->get_synchrocommand();
 
     // Если команда синхронизации пуста
     if(command.trimmed().length()==0)
@@ -1497,25 +1418,22 @@ void MainWindow::synchronization(bool visible)
         return;
     }
 
-
     // Макрос %a заменяется на путь к директории базы данных
-    // QString databasePath=globalParameters.getWorkDirectory()+"/"+mytetraConfig.get_tetradir();
-    QDir databaseDir( mytetraConfig.get_tetradir() );
+    // QString databasePath=AppContext::instance().globalParameters()->getWorkDirectory()+"/"+AppContext::instance().appConfig()->get_tetradir();
+    QDir databaseDir( AppContext::instance().appConfig()->get_tetradir() );
     QString databasePath=databaseDir.canonicalPath();
 
     command.replace("%a", databasePath);
 
     // Запуск команды синхронизации
-    auto runner = globalParameters.getSyncroCommandRunnner();
+    auto runner = AppContext::instance().globalParameters()->getSyncroCommandRunnner();
     runner->setWindowTitle(tr("MyTetra synchronization"));
     runner->setMessageText(tr("Synchronization in progress, please wait..."));
     runner->setCommand(command);
     runner->run(visible);
 }
 
-
 // Завершение синхронизации
-
 
 // Завершение синхронизации
 void MainWindow::onSyncroCommandFinishWork()
@@ -1534,7 +1452,7 @@ void MainWindow::onSyncroCommandFinishWork()
     // делается через сингнал-слот
     emit doUpdateDetachedWindows();
 
-    actionLogger.addAction("stopSyncro");
+    AppContext::instance().actionLogger()->addAction("stopSyncro");
 
     // В конце синхронизации нужно проверить, не происходит ли выход из программы
     if(enableRealClose==true)
@@ -1542,7 +1460,6 @@ void MainWindow::onSyncroCommandFinishWork()
         this->applicationExit();
     }
 }
-
 
 // Слот закрытия окна
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -1589,7 +1506,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-
 bool MainWindow::eventFilter( QObject *o, QEvent * e )
 {
     // Q_UNUSED(o);
@@ -1632,9 +1548,7 @@ bool MainWindow::eventFilter( QObject *o, QEvent * e )
     return QMainWindow::eventFilter(o, e);
 }    
 
-
 // Обработчик отлавливает нажатия клавиш
-
 
 // Обработчик отлавливает нажатия клавиш
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -1647,9 +1561,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     QMainWindow::keyPressEvent(event);
 }
 
-
 // Обработчик отлавливает отжатия клавиш
-
 
 // Обработчик отлавливает отжатия клавиш
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
@@ -1662,14 +1574,13 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     QMainWindow::keyReleaseEvent(event);
 }
 
-
 void MainWindow::goWalkHistoryPrevious(void)
 {
     editorScreen->saveTextarea();
 
     // Идентификатор текущей записи запоминается в историю
     QString id=editorScreen->getMiscField("id");
-    walkHistory.add(id,
+    AppContext::instance().walkHistory()->add(id,
                     editorScreen->getCursorPosition(),
                     editorScreen->getScrollBarPosition(),
                     WALK_HISTORY_GO_PREVIOUS);
@@ -1677,14 +1588,13 @@ void MainWindow::goWalkHistoryPrevious(void)
     goWalkHistory();
 }
 
-
 void MainWindow::goWalkHistoryNext(void)
 {
     editorScreen->saveTextarea();
 
     // Идентификатор текущей записи запоминается в историю
     QString id=editorScreen->getMiscField("id");
-    walkHistory.add(id,
+    AppContext::instance().walkHistory()->add(id,
                     editorScreen->getCursorPosition(),
                     editorScreen->getScrollBarPosition(),
                     WALK_HISTORY_GO_NEXT);
@@ -1692,11 +1602,10 @@ void MainWindow::goWalkHistoryNext(void)
     goWalkHistory();
 }
 
-
 void MainWindow::goWalkHistory(void)
 {
     // Выясняется идентификатор записи, на которую надо переключиться
-    QString id=walkHistory.getId();
+    QString id=AppContext::instance().walkHistory()->getId();
 
     if(id.length()==0)
         return;
@@ -1708,7 +1617,6 @@ void MainWindow::goWalkHistory(void)
     if(treeScreen->knowTreeModel->isItemValid(path)==false)
         return;
 
-
     // Выясняется позицию записи в таблице конечных записей
     TreeItem *item =treeScreen->knowTreeModel->getItem(path);
 
@@ -1719,18 +1627,16 @@ void MainWindow::goWalkHistory(void)
     // Установка позиции в дереве и в таблице конечных записей
     this->setTreeAndRecordtablePositions(path, id);
 
-    if(mytetraConfig.getRememberCursorAtHistoryNavigation())
+    if(AppContext::instance().appConfig()->getRememberCursorAtHistoryNavigation())
     {
-        editorScreen->setCursorPosition( walkHistory.getCursorPosition(id) );
-        editorScreen->setScrollBarPosition( walkHistory.getScrollBarPosition(id) );
+        editorScreen->setCursorPosition( AppContext::instance().walkHistory()->getCursorPosition(id) );
+        editorScreen->setScrollBarPosition( AppContext::instance().walkHistory()->getScrollBarPosition(id) );
     }
 }
-
 
 // Метод, вызываемый из всех точек интерфейса, в которых происходит
 // переход к другой записи. Метод вызывается до перехода, чтобы сохранить
 // текст редактируемой записи
-
 
 // Метод, вызываемый из всех точек интерфейса, в которых происходит
 // переход к другой записи. Метод вызывается до перехода, чтобы сохранить
@@ -1738,7 +1644,7 @@ void MainWindow::goWalkHistory(void)
 void MainWindow::saveTextarea(void)
 {
     // Глобальный режим только чтения
-    if(mytetraConfig.get_readOnly())
+    if(AppContext::instance().appConfig()->get_readOnly())
         return;
 
     QString id=editorScreen->getMiscField("id");
@@ -1752,7 +1658,7 @@ void MainWindow::saveTextarea(void)
 
     editorScreen->saveTextarea();
 
-    walkHistory.add(id,
+    AppContext::instance().walkHistory()->add(id,
                     editorScreen->getCursorPosition(),
                     editorScreen->getScrollBarPosition());
 
@@ -1771,9 +1677,7 @@ void MainWindow::saveTextarea(void)
     updateStats();
 }
 
-
 // Слот, обрабатывающий смену фокуса на виджетах
-
 
 // Слот, обрабатывающий смену фокуса на виджетах
 void MainWindow::onFocusChanged(QWidget *widgetFrom, QWidget *widgetTo)

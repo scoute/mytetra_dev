@@ -45,7 +45,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 // Элемент таблицы с числовой сортировкой: по клику на заголовок
 // QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
 class NumberTableItem : public QTableWidgetItem
@@ -79,6 +78,7 @@ public:
 #include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
+#include "libraries/AppContext.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
@@ -101,18 +101,7 @@ public:
 #include "libraries/Favorites.h"
 #include "models/recordTable/Record.h"
 
-
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-extern TrashMonitoring trashMonitoring;
-extern GlobalParameters globalParameters;
-extern WalkHistory walkHistory;
-extern ActionLogger actionLogger;
-extern ShortcutManager shortcutManager;
-
-
 // Создание раздела меню File
-
 
 void MainWindow::runDirectPreferences(QAction *action)
 {
@@ -153,25 +142,22 @@ void MainWindow::runDirectPreferences(QAction *action)
     delete dialog;
 }
 
-
 // Создание раздела меню Help
 
-
 // Создание раздела меню Help
-
 
 // Пометка текущих состояний при каждом открытии: все меняется
 // и мимо меню (диалог настроек, контекстное меню секрета)
 void MainWindow::syncViewMenu(void)
 {
     if(menuBuilder->action(MenuBuilder::ActionId::ViewHeader)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewHeader)->setChecked(mytetraConfig.get_recordHeaderVisible());
+        menuBuilder->action(MenuBuilder::ActionId::ViewHeader)->setChecked(AppContext::instance().appConfig()->get_recordHeaderVisible());
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewFavorites)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewFavorites)->setChecked(mytetraConfig.get_favoritesEnabled());
+        menuBuilder->action(MenuBuilder::ActionId::ViewFavorites)->setChecked(AppContext::instance().appConfig()->get_favoritesEnabled());
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewTreeFilter)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewTreeFilter)->setChecked(mytetraConfig.get_treeFilterVisible());
+        menuBuilder->action(MenuBuilder::ActionId::ViewTreeFilter)->setChecked(AppContext::instance().appConfig()->get_treeFilterVisible());
 
     // Панель может прятаться мимо меню (кнопка toggleTools, хоткей):
     // пометка подтягивается при каждом открытии
@@ -180,22 +166,20 @@ void MainWindow::syncViewMenu(void)
         menuBuilder->action(MenuBuilder::ActionId::ViewTools)->setChecked(!editorScreen->editorConfig->get_hide_tools_lines());
 
     if(menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)!=nullptr)
-        menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)->setChecked(mytetraConfig.isGlobalReadOnly());
+        menuBuilder->action(MenuBuilder::ActionId::ViewReadOnly)->setChecked(AppContext::instance().appConfig()->isGlobalReadOnly());
 }
-
 
 void MainWindow::onViewHeaderToggled(bool checked)
 {
-    mytetraConfig.set_recordHeaderVisible(checked);
+    AppContext::instance().appConfig()->set_recordHeaderVisible(checked);
 
     if(editorScreen!=nullptr)
         editorScreen->updateRecordHeaderVisibility();
 }
 
-
 void MainWindow::onViewFavoritesToggled(bool checked)
 {
-    mytetraConfig.set_favoritesEnabled(checked);
+    AppContext::instance().appConfig()->set_favoritesEnabled(checked);
 
     // Сам refresh решит показать или спрятать по наличию звездочек
     FavoritesPanel *favoritesPanel=find_object<FavoritesPanel>("favoritesPanel");
@@ -203,24 +187,20 @@ void MainWindow::onViewFavoritesToggled(bool checked)
         favoritesPanel->refreshFavorites();
 }
 
-
 void MainWindow::onViewTreeFilterToggled(bool checked)
 {
-    mytetraConfig.set_treeFilterVisible(checked);
+    AppContext::instance().appConfig()->set_treeFilterVisible(checked);
 
     TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
     if(treeScreen!=nullptr)
         treeScreen->setTreeFilterVisible(checked);
 }
 
-
 // Возврат спрятанной панели инструментов: чекбокс Вид всегда доступен,
 // в отличие от кнопки toggleTools, которая уезжает вместе с панелью
 
-
 // Возврат спрятанной панели инструментов: чекбокс Вид всегда доступен,
 // в отличие от кнопки toggleTools, которая уезжает вместе с панелью
-
 
 // Возврат спрятанной панели инструментов: чекбокс Вид всегда доступен,
 // в отличие от кнопки toggleTools, которая уезжает вместе с панелью
@@ -232,38 +212,32 @@ void MainWindow::onViewToolsToggled(bool checked)
     editorScreen->editorToolBarAssistant->switchToolsVisibility(checked ? 1 : -1);
 }
 
-
 // Переключение глобального режима только чтения: навигация и просмотр
 // разрешены, любые изменения базы запрещены
 
-
 // Переключение глобального режима только чтения: навигация и просмотр
 // разрешены, любые изменения базы запрещены
-
 
 // Переключение глобального режима только чтения: навигация и просмотр
 // разрешены, любые изменения базы запрещены
 void MainWindow::onViewReadOnlyToggled(bool checked)
 {
-    mytetraConfig.set_readOnly(checked);
+    AppContext::instance().appConfig()->set_readOnly(checked);
 
     applyReadOnly();
 }
 
-
 // Применить глобальный режим только чтения ко всем экранам.
 // Вызывается при переключении и при старте программы
 
-
 // Применить глобальный режим только чтения ко всем экранам.
 // Вызывается при переключении и при старте программы
-
 
 // Применить глобальный режим только чтения ко всем экранам.
 // Вызывается при переключении и при старте программы
 void MainWindow::applyReadOnly(void)
 {
-    const bool readOnly=mytetraConfig.get_readOnly();
+    const bool readOnly=AppContext::instance().appConfig()->get_readOnly();
 
     if(treeScreen!=nullptr)
         treeScreen->setReadOnly(readOnly);
@@ -290,27 +264,26 @@ void MainWindow::applyReadOnly(void)
         menuBuilder->action(MenuBuilder::ActionId::FileDatabases)->setEnabled(!readOnly);
 }
 
-
 void MainWindow::onViewSecretColor(void)
 {
-    const QColor current(mytetraConfig.get_secretColor());
+    const QColor current(AppContext::instance().appConfig()->get_secretColor());
     const QColor chosen=QColorDialog::getColor(current, this);
 
     if(!chosen.isValid() || chosen==current)
         return;
 
-    mytetraConfig.set_secretColor(chosen.name());
+    AppContext::instance().appConfig()->set_secretColor(chosen.name());
 
     // Сразу на диск как в контекстном меню секрета
-    mytetraConfig.sync();
+    AppContext::instance().appConfig()->sync();
 
     // Цвет действует только на Custom: быстрый выбор сам переводит
     // туда с текущей темой как базой, иначе клик ничего не меняет
-    if(mytetraConfig.getInterfaceTheme()!="custom")
+    if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
     {
-        mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
+        AppContext::instance().appConfig()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->getInterfaceTheme());
 
-        if(mytetraConfig.setInterfaceTheme("custom"))
+        if(AppContext::instance().appConfig()->setInterfaceTheme("custom"))
             CssHelper::loadCurrentTheme();
     }
 
@@ -318,29 +291,28 @@ void MainWindow::onViewSecretColor(void)
         editorScreen->repaintSecrets();
 }
 
-
 void MainWindow::onViewPaperColor(void)
 {
     const QColor current(
-        MetaEditor::effectiveNotePaperColor(mytetraConfig.getInterfaceTheme(),
-                                           mytetraConfig.get_notePaperColor()));
+        MetaEditor::effectiveNotePaperColor(AppContext::instance().appConfig()->getInterfaceTheme(),
+                                           AppContext::instance().appConfig()->get_notePaperColor()));
     const QColor chosen=QColorDialog::getColor(current, this);
 
     if(!chosen.isValid() || chosen==current)
         return;
 
-    mytetraConfig.set_notePaperColor(chosen.name());
+    AppContext::instance().appConfig()->set_notePaperColor(chosen.name());
 
     // Сразу на диск как в соседнем пункте про цвет секрета
-    mytetraConfig.sync();
+    AppContext::instance().appConfig()->sync();
 
     // Бумага действует только на Custom: быстрый выбор сам переводит
     // туда с текущей темой как базой, иначе клик ничего не меняет
-    if(mytetraConfig.getInterfaceTheme()!="custom")
+    if(AppContext::instance().appConfig()->getInterfaceTheme()!="custom")
     {
-        mytetraConfig.set_themeCustomBaseTheme(mytetraConfig.getInterfaceTheme());
+        AppContext::instance().appConfig()->set_themeCustomBaseTheme(AppContext::instance().appConfig()->getInterfaceTheme());
 
-        if(mytetraConfig.setInterfaceTheme("custom"))
+        if(AppContext::instance().appConfig()->setInterfaceTheme("custom"))
             CssHelper::loadCurrentTheme();
     }
 
@@ -348,12 +320,9 @@ void MainWindow::onViewPaperColor(void)
         editorScreen->applyNoteColors();
 }
 
-
 // Клик по пункту меню Темы: применить выбранную тему сразу
 
-
 // Клик по пункту меню Темы: применить выбранную тему сразу
-
 
 // Клик по пункту меню Темы: применить выбранную тему сразу
 void MainWindow::onThemeMenuTriggered(QAction *action)
@@ -363,10 +332,10 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
 
     QString themeName=action->data().toString();
 
-    if(themeName==mytetraConfig.getInterfaceTheme())
+    if(themeName==AppContext::instance().appConfig()->getInterfaceTheme())
         return;
 
-    if(mytetraConfig.setInterfaceTheme(themeName))
+    if(AppContext::instance().appConfig()->setInterfaceTheme(themeName))
     {
         CssHelper::loadCurrentTheme();
 
@@ -377,16 +346,13 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
     }
 }
 
-
 // Пункт «Настроить тему»: то же окно, что страница Themes
 // в диалоге настроек. Пометка меню обновится при следующем
 // открытии через aboutToShow
 
-
 // Пункт «Настроить тему»: то же окно, что страница Themes
 // в диалоге настроек. Пометка меню обновится при следующем
 // открытии через aboutToShow
-
 
 // Пункт «Настроить тему»: то же окно, что страница Themes
 // в диалоге настроек. Пометка меню обновится при следующем
@@ -397,12 +363,9 @@ void MainWindow::onThemeConfigure(void)
     dialog.exec();
 }
 
-
 // Создание скрытых действий для работы прочих шорткатов уровня приложения
 
-
 // Создание скрытых действий для работы прочих шорткатов уровня приложения
-
 
 // Создание скрытых действий для работы прочих шорткатов уровня приложения
 void MainWindow::initHiddenActions(void)
@@ -418,7 +381,6 @@ void MainWindow::initHiddenActions(void)
     actionFocusEditor = new QAction(this);
     this->addAction(actionFocusEditor);
 }
-
 
 // Пересчитать и показать статистику базы в статусбаре.
 // Вызывается по сигналам модели и точечно после правок

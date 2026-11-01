@@ -45,7 +45,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 // Элемент таблицы с числовой сортировкой: по клику на заголовок
 // QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
 class NumberTableItem : public QTableWidgetItem
@@ -79,6 +78,7 @@ public:
 #include "views/favoritesPanel/FavoritesPanel.h"
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
+#include "libraries/AppContext.h"
 #include "views/tagsPanel/TagsPanel.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
@@ -101,20 +101,9 @@ public:
 #include "libraries/Favorites.h"
 #include "models/recordTable/Record.h"
 
-
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-extern TrashMonitoring trashMonitoring;
-extern GlobalParameters globalParameters;
-extern WalkHistory walkHistory;
-extern ActionLogger actionLogger;
-extern ShortcutManager shortcutManager;
-
-
 // Показ всплывающего сообщения в системном трее.
 // Используется фоновыми задачами (клиппер), которым некого спросить,
 // но надо сообщить пользователю о результате
-
 
 // Показ всплывающего сообщения в системном трее.
 // P3: фасад над TrayManager (вызывает и Clipper через invokeMethod)
@@ -122,7 +111,6 @@ void MainWindow::showTrayMessage(const QString &title, const QString &text)
 {
     trayManager->showMessage(title, text);
 }
-
 
 void MainWindow::showWindow()
 {

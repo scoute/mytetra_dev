@@ -45,7 +45,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 // Элемент таблицы с числовой сортировкой: по клику на заголовок
 // QTableWidget сравнивает operator<, текст "156" < "20" строкой бы врал
 class NumberTableItem : public QTableWidgetItem
@@ -79,6 +78,7 @@ public:
 #include "views/backlinksPanel/BacklinksPanel.h"
 #include "libraries/BacklinkIndex.h"
 #include "views/tagsPanel/TagsPanel.h"
+#include "libraries/AppContext.h"
 #include "views/contentGallery/ContentGallery.h"
 #include "models/tree/TreeItem.h"
 #include "views/findInBaseScreen/FindScreen.h"
@@ -100,22 +100,11 @@ public:
 #include "libraries/Favorites.h"
 #include "models/recordTable/Record.h"
 
-
-extern AppConfig mytetraConfig;
-extern FixedParameters fixedParameters;
-extern TrashMonitoring trashMonitoring;
-extern GlobalParameters globalParameters;
-extern WalkHistory walkHistory;
-extern ActionLogger actionLogger;
-extern ShortcutManager shortcutManager;
-
-
 // Слот, обрабатывающий внешние сообщения
 // Используется для обработки ссобщений, приходящих от других экземпляров MyTetra
 // Разбор аргумента MCP-команд: весь текст после первого пробела это
 // компактный JSON (пробелы внутри допустимы, переводов строк нет)
 #include "McpGuiBridge.h"
-
 
 // Пересчитать баннер и блокировку по пирам:
 // пиры есть — баннер виден и UI заблокирован, нет — всё снято.
@@ -145,31 +134,27 @@ void MainWindow::updateMcpBanner(void)
     }
 }
 
-
 // Блокировка UI на время MCP-сессии поверх глобального read-only.
 // Своё досохраняется до блокировки, иначе потеряется на навигации.
 // MCP-записи смотрят сырой флаг и продолжают писать.
 // Идемпотентна: повтор не дёргает сохранение и перераскладку
 void MainWindow::setMcpUiLock(bool locked)
 {
-    if(mytetraConfig.isMcpUiLocked()==locked)
+    if(AppContext::instance().appConfig()->isMcpUiLocked()==locked)
         return;
 
     if(locked)
         saveTextarea();
 
-    mytetraConfig.setMcpUiLock(locked);
+    AppContext::instance().appConfig()->setMcpUiLock(locked);
     applyReadOnly();
 }
 
-
 // Накопление истории действий MCP-сессии. Хвост обрезан до трёхсот:
 // окну нужен обзор, а не архив. На диск ничего не пишется
 
-
 // Накопление истории действий MCP-сессии. Хвост обрезан до трёхсот:
 // окну нужен обзор, а не архив. На диск ничего не пишется
-
 
 // Передать окну текущий список (с его фильтром)
 void MainWindow::updateMcpHistoryDialog(void)
@@ -177,7 +162,6 @@ void MainWindow::updateMcpHistoryDialog(void)
     if(mcpHistoryDialog!=nullptr)
         mcpHistoryDialog->setHistory(mcpBridge->history());
 }
-
 
 void MainWindow::onMcpSessionStarted(void)
 {
@@ -188,14 +172,12 @@ void MainWindow::onMcpSessionStarted(void)
         mcpHistoryDialog->show();
 }
 
-
 // Синхронный ответ на mcp-команду: фасад над McpGuiBridge
 // (дергает сокетный респондер из main)
 QByteArray MainWindow::handleMcpMessage(const QString &message)
 {
     return mcpBridge->handleMcpMessage(message);
 }
-
 
 // Таблица разбивки статистики: строится отдельно чтобы сортировку
 // можно было проверить без модального окна
@@ -260,7 +242,6 @@ QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
 
     return table;
 }
-
 
 // Разбивка статистики по заметкам: кто сколько ссылок держит.
 // Двойной клик прыгает к заметке

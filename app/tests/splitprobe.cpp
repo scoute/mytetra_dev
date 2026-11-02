@@ -137,6 +137,32 @@ int main(int argc, char **argv)
     }
     check(ed->textArea->textCursor().blockNumber()==1, "CURSOR-SOURCE-TO-NOTE");
 
+    // Зеркало выделения: диапазон заметки -> диапазон исходника
+    ed->setTextarea(QStringLiteral("<p>one</p>\n<p>two</p>\n<p>three</p>"));
+    ed->syncNoteToSource();
+    {
+        QTextCursor c(ed->textArea->document());
+        const int start=ed->textArea->document()->toPlainText().indexOf(QStringLiteral("two"));
+        c.setPosition(start);
+        c.setPosition(start+3, QTextCursor::KeepAnchor);
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(pane->textCursor().hasSelection(), "SEL-NOTE-HAS");
+    check(pane->textCursor().selectedText().contains(QStringLiteral("two")), "SEL-NOTE-TO-SOURCE");
+
+    // Обратно: диапазон исходника -> диапазон заметки
+    {
+        const int at=pane->toPlainText().indexOf(QStringLiteral("three"));
+        QTextCursor c(pane->document());
+        c.setPosition(at);
+        c.setPosition(at+5, QTextCursor::KeepAnchor);
+        pane->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(ed->textArea->textCursor().hasSelection(), "SEL-SOURCE-HAS");
+    check(ed->textArea->textCursor().selectedText().contains(QStringLiteral("three")), "SEL-SOURCE-TO-NOTE");
+
     ed->setHtmlSourceVisible(false);
     check(!ed->isHtmlSourceVisible(), "SPLIT-HIDE");
 

@@ -309,42 +309,6 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Search</source>
         <translation type="vanished">Поиск</translation>
     </message>
-    <message>
-        <source>Export settings...</source>
-        <translation>Экспорт настроек...</translation>
-    </message>
-    <message>
-        <source>Import settings...</source>
-        <translation>Импорт настроек...</translation>
-    </message>
-    <message>
-        <source>Export settings</source>
-        <translation>Экспорт настроек</translation>
-    </message>
-    <message>
-        <source>Import settings</source>
-        <translation>Импорт настроек</translation>
-    </message>
-    <message>
-        <source>MyTetra settings (*.ini)</source>
-        <translation>Настройки MyTetra (*.ini)</translation>
-    </message>
-    <message>
-        <source>Editor settings are unavailable</source>
-        <translation>Настройки редактора недоступны</translation>
-    </message>
-    <message>
-        <source>Settings were exported to %1</source>
-        <translation>Настройки выгружены в %1</translation>
-    </message>
-    <message>
-        <source>Settings from the file will replace the current ones. A backup copy will be created. Unsaved changes on the tabs will be discarded. Continue?</source>
-        <translation>Настройки из файла заменят текущие. Будет создана резервная копия. Несохранённые изменения на вкладках будут отброшены. Продолжить?</translation>
-    </message>
-    <message>
-        <source>Settings were imported. Please restart the program.</source>
-        <translation>Настройки импортированы. Перезапустите программу.</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -5391,6 +5355,10 @@ You need to update MyTetra.</source>
         <source>Change note background color...</source>
         <translation>Изменить цвет фона заметки...</translation>
     </message>
+    <message>
+        <source>Show HTML source</source>
+        <translation>Показывать исходник HTML</translation>
+    </message>
 </context>
 <context>
     <name>McpGuiBridge</name>
@@ -6778,6 +6746,42 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="90"/>
         <source>Editor settings...</source>
         <translation>Настройки редактора...</translation>
+    </message>
+    <message>
+        <source>Export settings...</source>
+        <translation>Экспорт настроек...</translation>
+    </message>
+    <message>
+        <source>Import settings...</source>
+        <translation>Импорт настроек...</translation>
+    </message>
+    <message>
+        <source>Export settings</source>
+        <translation>Экспорт настроек</translation>
+    </message>
+    <message>
+        <source>Import settings</source>
+        <translation>Импорт настроек</translation>
+    </message>
+    <message>
+        <source>MyTetra settings (*.ini)</source>
+        <translation>Настройки MyTetra (*.ini)</translation>
+    </message>
+    <message>
+        <source>Editor settings are unavailable</source>
+        <translation>Настройки редактора недоступны</translation>
+    </message>
+    <message>
+        <source>Settings were exported to %1</source>
+        <translation>Настройки выгружены в %1</translation>
+    </message>
+    <message>
+        <source>Settings from the file will replace the current ones. A backup copy will be created. Unsaved changes on the tabs will be discarded. Continue?</source>
+        <translation>Настройки из файла заменят текущие. Будет создана резервная копия. Несохранённые изменения на вкладках будут отброшены. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Settings were imported. Please restart the program.</source>
+        <translation>Настройки импортированы. Перезапустите программу.</translation>
     </message>
 </context>
 <context>

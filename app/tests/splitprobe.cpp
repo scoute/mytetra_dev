@@ -163,6 +163,34 @@ int main(int argc, char **argv)
     check(ed->textArea->textCursor().hasSelection(), "SEL-SOURCE-HAS");
     check(ed->textArea->textCursor().selectedText().contains(QStringLiteral("three")), "SEL-SOURCE-TO-NOTE");
 
+    // Слово из середины строки: якоря first/last указывают на то же
+    // вхождение, начало последнего лежит раньше старта первого.
+    // Без запаса назад поиск last его пропускал и диапазон не строился
+    ed->setTextarea(QStringLiteral("<p>This program release uder GPL v.3 and BSD licenses.</p>"));
+    ed->syncNoteToSource();
+    {
+        const int at=ed->textArea->document()->toPlainText().indexOf(QStringLiteral("program"));
+        QTextCursor c(ed->textArea->document());
+        c.setPosition(at);
+        c.setPosition(at+7, QTextCursor::KeepAnchor);
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(pane->textCursor().hasSelection(), "SEL-MID-HAS");
+    check(pane->textCursor().selectedText().contains(QStringLiteral("program")), "SEL-MID-TO-SOURCE");
+
+    // Обратно из середины строки исходника
+    {
+        const int at=pane->toPlainText().indexOf(QStringLiteral("release"));
+        QTextCursor c(pane->document());
+        c.setPosition(at);
+        c.setPosition(at+7, QTextCursor::KeepAnchor);
+        pane->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(ed->textArea->textCursor().hasSelection(), "SEL-MID-SOURCE-HAS");
+    check(ed->textArea->textCursor().selectedText().contains(QStringLiteral("release")), "SEL-MID-SOURCE-TO-NOTE");
+
     // URL документа переживает применение исходника: иначе
     // относительные картинки гасли бы до перезахода в заметку
     ed->textArea->document()->setMetaInformation(QTextDocument::DocumentUrl,

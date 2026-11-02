@@ -363,6 +363,7 @@ HEADERS+=\
     src/libraries/crypt/CryptKeyHolder.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/models/appConfig/AppConfigStorage.h \
+    src/models/appConfig/SettingsTransfer.h \
     src/models/appConfig/AppConfigUi.h \
     src/models/appConfig/AppConfigFind.h \
     src/models/appConfig/AppConfigSync.h \
@@ -623,6 +624,7 @@ SOURCES+=\
     src/libraries/crypt/CryptKeyHolder.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/models/appConfig/AppConfigStorage.cpp \
+    src/models/appConfig/SettingsTransfer.cpp \
     src/models/appConfig/AppConfigUi.cpp \
     src/models/appConfig/AppConfigFind.cpp \
     src/models/appConfig/AppConfigSync.cpp \

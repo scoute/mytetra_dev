@@ -9,6 +9,7 @@
 class ConfigDialog;
 class QListWidgetItem;
 class QWidget;
+class QPushButton;
 
 class AppConfigDialog
 {
@@ -27,8 +28,15 @@ public:
     // Открытые диалоги настроек: смена языка из страницы Main
     // переводит их на лету через retranslateUi
     static QList<AppConfigDialog *> openDialogs;
-    
+
 private:
+
+    // Выгрузка настроек в файл
+    void onExportSettings(void);
+
+    // Загрузка настроек из файла с резервной копией
+    void onImportSettings(void);
+
     ConfigDialog *configDialog;
 
     QListWidgetItem *pageMain;
@@ -47,6 +55,10 @@ private:
     QListWidgetItem *pageMcp;
     QListWidgetItem *pageVoice;
     QListWidgetItem *pageMisc;
+
+    // Кнопки переноса настроек в нижнем ряду диалога
+    QPushButton *exportSettingsButton=nullptr;
+    QPushButton *importSettingsButton=nullptr;
 
     void changePage(QString name);
 };

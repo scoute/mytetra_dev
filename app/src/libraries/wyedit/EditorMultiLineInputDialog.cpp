@@ -23,7 +23,10 @@
 
 EditorMultiLineInputDialog::EditorMultiLineInputDialog(QWidget *parent) : QDialog(parent)
 {
-  sizeCoefficient=1.0;
+  // Окно компактнее родителя: коэффициент 1.0 давал диалог
+  // в полный размер заметки, 0.7 - минус 30% по каждой стороне.
+  // Правки конфигов свой коэффициент передают явно
+  sizeCoefficient=0.7;
 
   setupUi();
   setupShortcuts();

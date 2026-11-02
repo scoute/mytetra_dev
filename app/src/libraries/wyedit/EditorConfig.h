@@ -18,6 +18,11 @@ public:
 
     void sync(void);
 
+    // Живой QSettings конфига редактора. Нужен пакетным операциям
+    // (перенос настроек): память и файл остаются согласованы,
+    // писать только через движок SettingsTransfer
+    QSettings *settingsHandle(void);
+
     // Настройка стандартного шрифта
     QString get_default_font(void);
     void set_default_font(QString fontName);

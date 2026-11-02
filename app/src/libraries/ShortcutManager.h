@@ -39,6 +39,11 @@ public:
     void save();
     void updateShortcutInApplication();
 
+    // Перечитать shortcut.ini с диска в память. Нужно после
+    // внешней правки файла (перенос настроек): иначе таблицы
+    // останутся старыми до перезапуска
+    void reload(void);
+
     QKeySequence getKeySequence(QString actionName);
     void setKeySequence(QString actionName, QString keySequence);
     QString getDescription(QString actionName);

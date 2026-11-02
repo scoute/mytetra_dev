@@ -54,6 +54,13 @@ void EditorConfig::sync(void)
 }
 
 
+// Живой QSettings конфига редактора для пакетных операций
+QSettings *EditorConfig::settingsHandle(void)
+{
+    return conf;
+}
+
+
 // Получение параметра по имени в виде строки с проверкой его существования
 QString EditorConfig::get_parameter(QString name)
 {

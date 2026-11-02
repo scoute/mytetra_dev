@@ -83,6 +83,16 @@ void ConfigDialog::setAlterSettingsButton(const QString &text)
 }
 
 
+void ConfigDialog::addFooterButton(QWidget *button)
+{
+    if(buttonsLayout==nullptr || button==nullptr)
+        return;
+
+    buttonsLayout->insertWidget(footerInsertPos, button);
+    footerInsertPos++;
+}
+
+
 void ConfigDialog::applyAndClose(void)
 {
     applyChanges();
@@ -98,7 +108,7 @@ void ConfigDialog::assembly(void)
     // scrollArea->setWidget(pagesWidget);
     // scrollArea->adjustSize();
 
-    QHBoxLayout *buttonsLayout = new QHBoxLayout;
+    buttonsLayout = new QHBoxLayout;
     buttonsLayout->addWidget(alterSettingsButton);
     buttonsLayout->addStretch(1);
     buttonsLayout->addWidget(confirmButtons);

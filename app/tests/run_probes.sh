@@ -16,7 +16,7 @@ QT=${QT_BIN%/bin}
 mkdir -p "$OUT" "$OUT/edprobe"
 
 if [ $# -eq 0 ]; then
-  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe splitprobe attachcutprobe settingstransferprobe
+  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe splitprobe attachcutprobe settingstransferprobe attachmoveprobe
 fi
 
 # Актуальный список объектов (без main.o): main_renamed.o собирается отдельно

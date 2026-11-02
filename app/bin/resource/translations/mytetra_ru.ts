@@ -7274,6 +7274,66 @@ Enable it in Settings on the History page.</source>
         <source>Insert anyway</source>
         <translation>Вставить всё равно</translation>
     </message>
+    <message>
+        <source>Empty attach badge</source>
+        <translation>Пустая метка вложения</translation>
+    </message>
+    <message>
+        <source>Target note text file unknown</source>
+        <translation>Текстовый файл целевой заметки неизвестен</translation>
+    </message>
+    <message>
+        <source>Can not write target note: %1</source>
+        <translation>Не удаётся записать целевую заметку: %1</translation>
+    </message>
+    <message>
+        <source>Can not read target note: %1</source>
+        <translation>Не удаётся прочитать целевую заметку: %1</translation>
+    </message>
+    <message>
+        <source>Move attachment</source>
+        <translation>Перемещение вложения</translation>
+    </message>
+    <message>
+        <source>Attachments are unavailable</source>
+        <translation>Вложения недоступны</translation>
+    </message>
+    <message>
+        <source>Attachment not found</source>
+        <translation>Вложение не найдено</translation>
+    </message>
+    <message>
+        <source>Attachment file not found</source>
+        <translation>Файл вложения не найден</translation>
+    </message>
+    <message>
+        <source>Notes tree unavailable</source>
+        <translation>Дерево заметок недоступно</translation>
+    </message>
+    <message>
+        <source>Target note not found</source>
+        <translation>Целевая заметка не найдена</translation>
+    </message>
+    <message>
+        <source>Can not move into encrypted note</source>
+        <translation>Нельзя переместить в зашифрованную заметку</translation>
+    </message>
+    <message>
+        <source>Unlock the database first</source>
+        <translation>Сначала разблокируйте базу</translation>
+    </message>
+    <message>
+        <source>Move attachment %1 to note "%2"? Badge will be removed from current note.</source>
+        <translation>Переместить вложение %1 в заметку "%2"? Метка будет удалена из текущей заметки.</translation>
+    </message>
+    <message>
+        <source>Can not decrypt attachment file</source>
+        <translation>Не удаётся расшифровать файл вложения</translation>
+    </message>
+    <message>
+        <source>Moved to "%1"</source>
+        <translation>Перемещено в "%1"</translation>
+    </message>
 </context>
 <context>
     <name>SecretFormatter</name>
@@ -7320,6 +7380,14 @@ Enable it in Settings on the History page.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="81"/>
         <source>Add a new note</source>
         <translation>Добавить новую запись</translation>
+    </message>
+    <message>
+        <source>Move attachment to another note</source>
+        <translation>Переместить вложение в другую заметку</translation>
+    </message>
+    <message>
+        <source>Move attach file and badge into another note</source>
+        <translation>Переместить файл и метку вложения в другую заметку</translation>
     </message>
     <message>
         <source>Odd a new note</source>

@@ -793,6 +793,31 @@ void MetaEditor::onSourceTextChanged(void)
 }
 
 
+// Число вхождений сниппета (больше одного - якорь неоднозначен,
+// диапазон по нему не строится, только курсорный фолбэк)
+static int snippetOccurrences(QTextDocument *doc, const QString &snippet)
+{
+  if(snippet.isEmpty())
+    return 0;
+
+  int count=0;
+  int from=0;
+
+  while(count<2)
+  {
+    QTextCursor found=doc->find(snippet, from);
+
+    if(found.isNull())
+      break;
+
+    ++count;
+    from=found.selectionEnd();
+  }
+
+  return count;
+}
+
+
 void MetaEditor::refreshSourcePane(void)
 {
   if(htmlSourcePane==nullptr)
@@ -899,17 +924,24 @@ void MetaEditor::mirrorNoteCursorToSource(void)
   const int selEnd=noteCursor.selectionEnd();
   QTextDocument *sourceDoc=htmlSourcePane->document();
 
-  // Первый кусок: от начала выделения, в пределах своего блока
-  QTextBlock startBlock=textArea->document()->findBlock(selStart);
-  const QString first=startBlock.text().mid(selStart-startBlock.position(), 40);
+  // Первый кусок: от начала выделения, в пределах своего блока.
+  // Краевые пробелы небрежного выделения отбрасываются: в исходнике
+  // отступы хранятся как &nbsp; и точного совпадения не будет
+  const QTextBlock startBlock=textArea->document()->findBlock(selStart);
+  const QString first=startBlock.text().mid(selStart-startBlock.position(), 40).trimmed();
 
   // Последний кусок: до конца выделения, в пределах своего блока
-  QTextBlock endBlock=textArea->document()->findBlock(selEnd);
+  const QTextBlock endBlock=textArea->document()->findBlock(selEnd);
   const int endOff=selEnd-endBlock.position();
-  const QString last=endBlock.text().mid(qMax(0, endOff-40), qMin(40, endOff));
+  const QString last=endBlock.text().mid(qMax(0, endOff-40), qMin(40, endOff)).trimmed();
 
   QTextCursor foundFirst=first.isEmpty() ? QTextCursor()
                                         : sourceDoc->find(first);
+
+  // Короткий кусок встречается не раз - якорь неоднозначен,
+  // диапазоном не зеркалим (ниже будет курсорный фолбэк)
+  if(!foundFirst.isNull() && snippetOccurrences(sourceDoc, first)>1)
+    foundFirst=QTextCursor();
 
   QTextCursor foundLast;
   if(!last.isEmpty())
@@ -918,6 +950,9 @@ void MetaEditor::mirrorNoteCursorToSource(void)
     // указывают на то же вхождение, поиск с конца его бы пропустил
     const int from=foundFirst.isNull() ? 0 : foundFirst.selectionStart();
     foundLast=sourceDoc->find(last, from);
+
+    if(!foundLast.isNull() && snippetOccurrences(sourceDoc, last)>1)
+      foundLast=QTextCursor();
   }
 
   cursorSyncing=true;
@@ -1028,6 +1063,10 @@ void MetaEditor::mirrorSourceCursorToNote(void)
   QTextCursor foundFirst=first.isEmpty() ? QTextCursor()
                                         : noteDoc->find(first);
 
+  // Короткий кусок встречается не раз - якорь неоднозначен
+  if(!foundFirst.isNull() && snippetOccurrences(noteDoc, first)>1)
+    foundFirst=QTextCursor();
+
   QTextCursor foundLast;
   if(!last.isEmpty())
   {
@@ -1035,6 +1074,9 @@ void MetaEditor::mirrorSourceCursorToNote(void)
     // указывают на то же вхождение, поиск с конца его бы пропустил
     const int from=foundFirst.isNull() ? 0 : foundFirst.selectionStart();
     foundLast=noteDoc->find(last, from);
+
+    if(!foundLast.isNull() && snippetOccurrences(noteDoc, last)>1)
+      foundLast=QTextCursor();
   }
 
   cursorSyncing=true;

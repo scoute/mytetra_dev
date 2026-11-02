@@ -1,13 +1,17 @@
-// Сплит редактор+превью: двусторонняя синхронизация MetaEditor.
+// Сплит редактор+превью: живой MetaEditor, двусторонняя синхронизация
+// исходника и зеркало курсора. Нужна рабочая директория (conf.ini +
+// editorconf.ini) и запуск бинаря из нее: раннер стейджит фикстуру
+// из штатных конфигов, см. run_probes.sh
 #include <QApplication>
 #include <QWidget>
 #include <QDebug>
 #include <QSettings>
-#include <QTimer>
-#include <QEventLoop>
+#include <QTextCursor>
+#include <QTextBlock>
 
 #include "views/record/MetaEditor.h"
 #include "libraries/wyedit/HtmlSourceEdit.h"
+#include "libraries/wyedit/EditorTextArea.h"
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
@@ -47,10 +51,6 @@ int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
 
-    QFile::remove(QStringLiteral("/tmp/opencode/probesplit.ini"));
-    mytetraConfig.m_conf=new QSettings(QStringLiteral("/tmp/opencode/probesplit.ini"),
-                                       QSettings::IniFormat);
-
     globalParameters.setMainProgramFile(QString::fromLocal8Bit(argv[0]));
 
     if(!globalParameters.initHeadless())
@@ -58,6 +58,10 @@ int main(int argc, char **argv)
         qDebug() << QStringLiteral("NOWORKDIR");
         return 1;
     }
+
+    QFile::remove(QStringLiteral("/tmp/opencode/probesplit.ini"));
+    mytetraConfig.m_conf=new QSettings(QStringLiteral("/tmp/opencode/probesplit.ini"),
+                                       QSettings::IniFormat);
 
     AppContext::instance().init(&fixedParameters,
                                 &globalParameters,
@@ -110,6 +114,28 @@ int main(int argc, char **argv)
     ed->syncSourceToNote();
     ed->syncNoteToSource();
     check(ed->getTextareaStable().contains(QStringLiteral("frompane")), "SPLIT-IDEMPOTENT");
+
+    // Зеркало курсора: блок заметки -> позиция сниппета в исходнике
+    ed->setTextarea(QStringLiteral("<p>one</p>\n<p>two</p>\n<p>three</p>"));
+    ed->syncNoteToSource();
+    {
+        QTextCursor c(ed->textArea->document());
+        c.setPosition(ed->textArea->document()->findBlockByNumber(2).position());
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(pane->toPlainText().mid(pane->textCursor().position(), 5)==QStringLiteral("three"),
+          "CURSOR-NOTE-TO-SOURCE");
+
+    // Обратно: строка исходника -> блок заметки
+    {
+        const int at=pane->toPlainText().indexOf(QStringLiteral("two"));
+        QTextCursor c(pane->document());
+        c.setPosition(at);
+        pane->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(ed->textArea->textCursor().blockNumber()==1, "CURSOR-SOURCE-TO-NOTE");
 
     ed->setHtmlSourceVisible(false);
     check(!ed->isHtmlSourceVisible(), "SPLIT-HIDE");

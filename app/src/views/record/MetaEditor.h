@@ -125,11 +125,19 @@ private:
  QTimer *sourceToNoteTimer=nullptr;
  bool sourceSyncing=false;
 
+ // Зеркало курсора редактор<->исходник: связь через текстовые
+ // сниппеты (шапка toHtml не дает прямого блок<->строка).
+ // Фокус не трогается, только позиция. cursorSyncing гасит эхо
+ // программных сдвигов
+ bool cursorSyncing=false;
+
  void refreshSourcePane(void);
  void onNoteTextChanged(void);
  void onSourceTextChanged(void);
  void syncNoteToSource(void);
  void syncSourceToNote(void);
+ void mirrorNoteCursorToSource(void);
+ void mirrorSourceCursorToNote(void);
 
 };
 

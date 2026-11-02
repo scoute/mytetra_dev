@@ -78,6 +78,9 @@ void MetaEditor::setupSignals(void)
     connect(textArea, &QTextEdit::cursorPositionChanged,
             this,    &MetaEditor::updateCursorLabel);
 
+    connect(textArea, &QTextEdit::cursorPositionChanged,
+            this,    &MetaEditor::mirrorNoteCursorToSource);
+
     connect(textArea->document(), &QTextDocument::contentsChanged,
             this,                  &MetaEditor::onNoteTextChanged);
 
@@ -102,6 +105,9 @@ void MetaEditor::setupSignals(void)
   {
     connect(htmlSourcePane->document(), &QTextDocument::contentsChanged,
             this,                        &MetaEditor::onSourceTextChanged);
+
+    connect(htmlSourcePane, &QPlainTextEdit::cursorPositionChanged,
+            this,            &MetaEditor::mirrorSourceCursorToNote);
   }
 }
 
@@ -839,6 +845,8 @@ void MetaEditor::syncSourceToNote(void)
   if(html==getTextareaStable())
     return;
 
+  const int savedNotePos=textArea->textCursor().position();
+
   sourceSyncing=true;
 
   // Как загрузка заметки: setHtml плюс оживление секретов и баблов.
@@ -848,7 +856,106 @@ void MetaEditor::syncSourceToNote(void)
   if(audioFormatter!=nullptr)
     audioFormatter->materializeBubbles();
 
+  // setHtml сбрасывает курсор заметки: вернуть best-effort, пока
+  // молчат зеркала (sourceSyncing еще держится)
+  {
+    QTextCursor noteCursor(textArea->document());
+    noteCursor.setPosition(qBound(0, savedNotePos,
+                                 qMax(0, textArea->document()->characterCount()-1)));
+    textArea->setTextCursor(noteCursor);
+  }
+
   setTextareaModified(true);
 
   sourceSyncing=false;
+}
+
+
+// Зеркало курсора: позиция заметки <-> позиция исходника.
+// Прямое блок<->строка не работает: toHtml добавляет шапку
+// (DOCTYPE, CSS), поэтому связь идет через текст: сниппет блока
+// ищется в исходнике и наоборот. Совпадения не единственны -
+// берется первое, пустые строки - пропорциональным фолбэком.
+// Фокус не трогается: двигается только позиция чужой панели
+void MetaEditor::mirrorNoteCursorToSource(void)
+{
+  if(cursorSyncing || sourceSyncing || htmlSourcePane==nullptr || textArea==nullptr)
+    return;
+
+  if(!htmlSourcePane->isVisible())
+    return;
+
+  const QString snippet=textArea->textCursor().block().text().simplified().left(40);
+  int sourcePos=-1;
+
+  if(!snippet.isEmpty())
+  {
+    QTextCursor found=htmlSourcePane->document()->find(snippet);
+
+    if(!found.isNull())
+      sourcePos=found.selectionStart();
+  }
+
+  if(sourcePos<0)
+  {
+    // Фолбэк для пустых блоков: пропорционально
+    const int noteBlocks=qMax(1, textArea->document()->blockCount());
+    const int sourceLines=qMax(1, htmlSourcePane->document()->blockCount());
+    const int line=textArea->textCursor().blockNumber()*(sourceLines-1)/noteBlocks;
+    sourcePos=htmlSourcePane->document()->findBlockByNumber(qBound(0, line, sourceLines-1)).position();
+  }
+
+  if(sourcePos==htmlSourcePane->textCursor().position())
+    return;
+
+  cursorSyncing=true;
+  QTextCursor cursor(htmlSourcePane->document());
+  cursor.setPosition(sourcePos);
+  htmlSourcePane->setTextCursor(cursor);
+  htmlSourcePane->ensureCursorVisible();
+  cursorSyncing=false;
+}
+
+
+void MetaEditor::mirrorSourceCursorToNote(void)
+{
+  if(cursorSyncing || sourceSyncing || htmlSourcePane==nullptr || textArea==nullptr)
+    return;
+
+  if(!htmlSourcePane->isVisible())
+    return;
+
+  static QRegularExpression tagRx(QStringLiteral("<[^>]*>"));
+  QString snippet=htmlSourcePane->textCursor().block().text();
+  snippet.remove(tagRx);
+  snippet=snippet.simplified().left(40);
+
+  int notePos=-1;
+
+  if(!snippet.isEmpty())
+  {
+    QTextCursor found=textArea->document()->find(snippet);
+
+    if(!found.isNull())
+      notePos=found.selectionStart();
+  }
+
+  if(notePos<0)
+  {
+    // Фолбэк для строк без текста (чистая разметка): пропорционально
+    const int sourceLines=qMax(1, htmlSourcePane->document()->blockCount());
+    const int noteBlocks=qMax(1, textArea->document()->blockCount());
+    const int block=htmlSourcePane->textCursor().blockNumber()*(noteBlocks-1)/sourceLines;
+    notePos=textArea->document()->findBlockByNumber(qBound(0, block, noteBlocks-1)).position();
+  }
+
+  if(notePos==textArea->textCursor().position())
+    return;
+
+  cursorSyncing=true;
+  QTextCursor cursor(textArea->document());
+  cursor.setPosition(notePos);
+  textArea->setTextCursor(cursor);
+  textArea->ensureCursorVisible();
+  cursorSyncing=false;
 }

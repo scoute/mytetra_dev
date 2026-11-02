@@ -27,6 +27,22 @@ public slots:
     void onClickedGotoReference(QString href);
     void onTextChanged(void);
 
+    // Метка брошенного файла: иконка скрепки + видимое имя
+    // с расширением, href вида attach://<внутреннее имя>.
+    // Вставляется как обычная titled-ссылка со своим цветом
+    void insertAttachBadge(const QString &innerFileName,
+                           const QString &displayFileName);
+
+    // Метка аттача: свой канал attach://<внутреннее имя>.
+    // Отдельно от относительных ссылок, чтобы клик без Ctrl
+    // открывал только метки, а не любой относительный файл
+    static bool isAttachHref(const QString &href);
+    static QString attachInnerFromHref(const QString &href);
+
+    // Имя MIME для переноса меток аттачей между заметками.
+    // Пары href-абсолютный путь, как голосовой MIME у баблов
+    static const char *attachMimeTypeName(void);
+
 private:
 
     // Выделить ссылку под курсором если она там есть.

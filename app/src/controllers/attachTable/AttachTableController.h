@@ -48,6 +48,13 @@ public slots:
   // Файлы из drag'n'drop (вид дергает напрямую, без диалога)
   void addDroppedFiles(const QStringList &files);
 
+  // Один файл из дропа в текст: тот же движок что addFileList,
+  // но возвращает имена для вставки кликабельной метки.
+  // Пусто в innerFileName если файл не добавился
+  bool addSingleFileAsAttach(const QString &filePath,
+                             QString &innerFileName,
+                             QString &displayFileName);
+
 protected:
 
   void addSmart(QString attachType);

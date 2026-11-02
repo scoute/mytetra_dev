@@ -333,12 +333,31 @@ bool Attach::copyFileToBase(QString iFileName)
 
   qDebug() << "Before real copy file.";
 
-  bool result=file.copy( getFullInnerFileName() );
+  QString targetFileName=getFullInnerFileName();
+
+  // Оригинальная схема: видимое имя может совпасть с уже лежащим
+  // в записи файлом (тот же документ из другой папки). Чтобы не
+  // ронять вставку ошибкой, дубль пишется по гибридной схеме
+  // (id_имя): детерминировано и находится поиском по всем схемам
+  // через getExistingInnerFileName. Системной и гибридной схемам
+  // коллизия не грозит (префикс id уникален), для них дубль
+  // равен цели и поведение прежнее
+  if(QFile::exists(targetFileName))
+  {
+    const QString fallbackFileName=getFullInnerDirName()+"/"+
+      fileNameForMode(AppConfig::AttachNameHybrid, getField("type"),
+                       getField("id"), getField("fileName"));
+
+    if(fallbackFileName!=targetFileName && !QFile::exists(fallbackFileName))
+      targetFileName=fallbackFileName;
+  }
+
+  bool result=file.copy( targetFileName );
 
   qDebug() << "After real copy file.";
 
   if(result==false)
-    showMessageBox(QObject::tr("Can't copy file %1. Maybe directory %2 not writable, or target file %3 already exists.").arg(iFileName).arg(getFullInnerDirName()).arg(getFullInnerFileName()));
+    showMessageBox(QObject::tr("Can't copy file %1. Maybe directory %2 not writable, or target file %3 already exists.").arg(iFileName).arg(getFullInnerDirName()).arg(targetFileName));
 
   return result;
 }

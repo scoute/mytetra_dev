@@ -242,6 +242,14 @@ private slots:
  void onShowTextClicked(void);
  void onToAttachClicked(void);
 
+ // Файлы брошенные в текст: оформить как аттачи и вставить
+ // кликабельные метки в позицию курсора. Путь в текст не пишется
+ void onFileUrlsDropped(const QStringList &files);
+
+ // Метки аттачей вставленные из другой заметки: докопировать файлы,
+ // завести аттачи и починить ссылки на новые внутренние имена
+ void onAttachBadgesPasted(const QByteArray &attachMime);
+
  void onCursorPositionChanged(void); // Слот, контролирущий перемещение курсора
  void onSelectionChanged(void);
 

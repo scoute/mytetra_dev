@@ -192,6 +192,30 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
     mkdir -p "${SOURCE_DIR}/thirdParty/mimetex/build/obj" \
              "${SOURCE_DIR}/thirdParty/mimetex/build/bin"
 
+    # Штамп версии в win.rc из app/src/main.h (единственный источник).
+    # Без FILEVERSION/CompanyName дефендер чаще ругается на безымянный
+    # exe (Bearfoos ML). Идемпотентно: при совпадении версии содержимое
+    # не меняется, git остается чистым
+    {
+        MAJ=$(sed -n 's/^#define APPLICATION_RELEASE_VERSION[[:space:]]*//p' "${SOURCE_DIR}/app/src/main.h" | awk '{print $1}')
+        SUB=$(sed -n 's/^#define APPLICATION_RELEASE_SUBVERSION[[:space:]]*//p' "${SOURCE_DIR}/app/src/main.h" | awk '{print $1}')
+        MIC=$(sed -n 's/^#define APPLICATION_RELEASE_MICROVERSION[[:space:]]*//p' "${SOURCE_DIR}/app/src/main.h" | awk '{print $1}')
+
+        if [[ -z "${MAJ}" || -z "${SUB}" || -z "${MIC}" ]]; then
+            echo "ОШИБКА: не прочиталась версия из app/src/main.h" >&2
+            exit 1
+        fi
+
+        sed -i -E \
+            -e "s/^(FILEVERSION )[0-9]+,[0-9]+,[0-9]+,[0-9]+/\1${MAJ},${SUB},${MIC},0/" \
+            -e "s/^(PRODUCTVERSION )[0-9]+,[0-9]+,[0-9]+,[0-9]+/\1${MAJ},${SUB},${MIC},0/" \
+            -e "s/^([[:space:]]+VALUE \"FileVersion\",[[:space:]]+\")[^\"]*\"/\1${MAJ}.${SUB}.${MIC}\"/" \
+            -e "s/^([[:space:]]+VALUE \"ProductVersion\",[[:space:]]+\")[^\"]*\"/\1${MAJ}.${SUB}.${MIC}\"/" \
+            "${SOURCE_DIR}/app/desktop/win.rc"
+
+        echo "Версия в win.rc: ${MAJ}.${SUB}.${MIC}"
+    }
+
     # Тулчейн виден windows-процессам через WINEPATH (аналог PATH
     # внутри Wine): нужен и qmake (проверка компилятора), и make
     export WINEPATH="${MINGW_DIR}/bin"

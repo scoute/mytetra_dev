@@ -1,1 +1,35 @@
 IDI_ICON1 ICON DISCARDABLE "mytetra.ico"
+
+// Метаданные бинаря: без CompanyName/FileDescription/OriginalFilename
+// эвристики антивирусов (Defender Bearfoos ML) чаще ругаются на
+// безымянный exe. Версии ниже штампуются сборкой из src/main.h
+// (единственный источник, см. stamp_win_version в
+// build_portable_windows.sh), руками не править
+1 VERSIONINFO
+FILEVERSION 1,197,2,0
+PRODUCTVERSION 1,197,2,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",      "MyTetra"
+            VALUE "FileDescription",  "MyTetra knowledge base"
+            VALUE "FileVersion",      "1.197.2"
+            VALUE "InternalName",     "mytetra"
+            VALUE "LegalCopyright",   "Stepanov S. M. et al 2010-2026"
+            VALUE "OriginalFilename", "mytetra.exe"
+            VALUE "ProductName",      "MyTetra"
+            VALUE "ProductVersion",   "1.197.2"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

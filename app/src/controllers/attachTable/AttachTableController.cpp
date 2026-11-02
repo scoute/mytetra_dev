@@ -213,6 +213,59 @@ void AttachTableController::addDroppedFiles(const QStringList &files)
   addFileList("file", files);
 }
 
+// Один файл из дропа в текст заметки: добавляет как аттач
+// и отдает внутреннее имя (для href метки) и видимое имя
+// (для текста метки). Добавление идет тем же движком что пикер:
+// копия в базу, сохранение дерева, обновление списка в редакторе
+bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
+                                                 QString &innerFileName,
+                                                 QString &displayFileName)
+{
+  innerFileName.clear();
+  displayFileName.clear();
+
+  if(filePath.isEmpty())
+    return false;
+
+  if(getAttachTableData()==NULL)
+  {
+    showMessageBox(tr("Save the note first"));
+    return false;
+  }
+
+  QFileInfo fileInfo(filePath);
+
+  if(fileInfo.isDir())
+  {
+    showMessageBox(tr("Cannot add a directory. Please select a file(s)."));
+    return false;
+  }
+
+  QString shortFileName=fileInfo.fileName();
+  QString sourceFileName=fileInfo.absoluteFilePath();
+
+  if(fileInfo.isSymLink() && !fileInfo.symLinkTarget().isEmpty())
+    sourceFileName=fileInfo.symLinkTarget();
+
+  if(!addAttach(QStringLiteral("file"), filePath, shortFileName, sourceFileName))
+    return false;
+
+  saveState();
+  updateAttachListInEditor();
+
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(attachTableData==NULL || attachTableData->size()==0)
+    return false;
+
+  // Добавленный аттач в конце списка: addAttach дописывает в хвост
+  const int lastRow=attachTableData->size()-1;
+  innerFileName=attachTableData->getInnerFileName(lastRow);
+  displayFileName=attachTableData->getFileName(lastRow);
+
+  return !innerFileName.isEmpty();
+}
+
 void AttachTableController::addFileList(QString attachType, const QStringList &files)
 {
   // Перебираются файлы (из диалога или из drag'n'drop)

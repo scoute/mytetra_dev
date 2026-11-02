@@ -45,6 +45,7 @@
 #include "libraries/VoiceNoteHelper.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "controllers/attachTable/AttachTableController.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
@@ -416,6 +417,16 @@ void Editor::setupSignals(void)
   // Клик по ссылке при зажатой клавише Ctrl
   connect(textArea,           &EditorTextArea::clickedOnReference,
           referenceFormatter, &ReferenceFormatter::onClickedGotoReference,
+          Qt::DirectConnection);
+
+  // Файлы брошенные в текст: аттачи + кликабельные метки
+  connect(textArea, &EditorTextArea::fileUrlsDropped,
+          this,     &Editor::onFileUrlsDropped,
+          Qt::DirectConnection);
+
+  // Метки аттачей из другой заметки: файлы + аттачи + починка ссылок
+  connect(textArea, &EditorTextArea::attachBadgesPasted,
+          this,     &Editor::onAttachBadgesPasted,
           Qt::DirectConnection);
 
   // Клик по баблу голосовой заметки: play/pause на месте
@@ -2428,6 +2439,172 @@ void Editor::onBackClicked(void)
 void Editor::onToAttachClicked(void)
 {
   attachCallbackFunc();
+}
+
+// Файлы брошенные в текст заметки: каждый оформляется как аттач,
+// в позицию дропа вставляется метка attach:// с видимым именем.
+// Абсолютный путь в текст не пишется. Без таблицы аттачей
+// (несохраненная запись) вежливый отказ уже показал контроллер
+void Editor::onFileUrlsDropped(const QStringList &files)
+{
+  if(files.isEmpty())
+    return;
+
+  if(textArea==nullptr || textArea->isReadOnly())
+    return;
+
+  AttachTableController *attachController=find_object<AttachTableController>(
+    QStringLiteral("attachTableController"));
+
+  // Контроллера или данных нет (чужой редактор без аттачей,
+  // несохраненная запись): отказ показывает контроллер, путь
+  // в текст не вставляется чтобы не плодить мусор
+  if(attachController==nullptr || attachController->getAttachTableData()==nullptr)
+  {
+    if(attachController!=nullptr)
+      attachController->addDroppedFiles(files);
+
+    return;
+  }
+
+  foreach(const QString &filePath, files)
+  {
+    QString innerFileName;
+    QString displayFileName;
+
+    if(!attachController->addSingleFileAsAttach(filePath, innerFileName, displayFileName))
+      continue;
+
+    referenceFormatter->insertAttachBadge(innerFileName, displayFileName);
+  }
+}
+
+// Метки аттачей приехавшие вставкой из другой заметки: файлы
+// докопируются, каждая получает свой аттач, ссылки правятся
+// на новые внутренние имена. Свои файлы на месте и вставка
+// внутри своей заметки ничего не делают, битые метки без
+// источника остаются как есть. Как доделка голосовой вставки
+void Editor::onAttachBadgesPasted(const QByteArray &attachMime)
+{
+  // Пары href-путь из буфера обмена
+  QMap<QString, QString> srcPaths;
+  const QStringList lines=QString::fromUtf8(attachMime).split(
+    QStringLiteral("\n"), Qt::SkipEmptyParts);
+
+  for(int i=0; i+1<lines.size(); i+=2)
+    srcPaths.insert(lines.at(i), lines.at(i+1));
+
+  if(textArea==nullptr || textArea->isReadOnly())
+    return;
+
+  const QString workDir=getWorkDirectory();
+
+  if(workDir.isEmpty() || !QDir(workDir).exists())
+    return;
+
+  AttachTableController *attachController=find_object<AttachTableController>(
+    QStringLiteral("attachTableController"));
+
+  if(attachController==nullptr || attachController->getAttachTableData()==nullptr)
+    return;
+
+  // Позиции меток собираются заранее: правка href во время
+  // итерации сбивает итератор и пропускает фрагменты
+  struct AttachLinkPos
+  {
+    int pos;
+    int len;
+    QString href;
+  };
+
+  QList<AttachLinkPos> linkPositions;
+  QTextDocument *doc=textArea->document();
+
+  for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+    for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+    {
+      const QTextFragment fragment=it.fragment();
+
+      if(!fragment.isValid())
+        continue;
+
+      const QString href=fragment.charFormat().anchorHref();
+
+      if(ReferenceFormatter::isAttachHref(href))
+        linkPositions.append({fragment.position(), fragment.length(), href});
+    }
+
+  if(linkPositions.isEmpty())
+    return;
+
+  const QString cleanWorkDir=QDir::cleanPath(QDir(workDir).absolutePath());
+
+  // Уже заведенные в этой вставке аттачи: старый href -> новое имя.
+  // Повторные метки одного файла переиспользуют один аттач,
+  // иначе каждая копия плодила бы свой файл и легко запутаться
+  QMap<QString, QString> fixedHrefs;
+
+  QTextCursor cursor=textArea->textCursor();
+  cursor.beginEditBlock();
+
+  for(const AttachLinkPos &link : linkPositions)
+  {
+    // Дубликат метки в текущей вставке: аттач уже заведен выше,
+    // ссылка правится на то же новое имя без нового файла
+    QString newInnerName=fixedHrefs.value(link.href);
+
+    if(newInnerName.isEmpty())
+    {
+      const QString innerName=ReferenceFormatter::attachInnerFromHref(link.href);
+
+      if(innerName.isEmpty())
+        continue;
+
+      // Только внутрь каталога записи, без выхода наверх
+      const QString dstPath=QDir::cleanPath(QDir(workDir).absoluteFilePath(innerName));
+
+      if(!dstPath.startsWith(cleanWorkDir+QLatin1Char('/')))
+        continue;
+
+      const QString srcPath=srcPaths.value(link.href);
+      const bool dstExists=QFileInfo(dstPath).isFile();
+      const bool srcExists=!srcPath.isEmpty() && QFileInfo(srcPath).isFile();
+
+      if(dstExists)
+      {
+        // Свой файл на месте или источник неизвестен: делать нечего
+        if(!srcExists)
+          continue;
+
+        if(QFileInfo(srcPath).absoluteFilePath()==
+           QFileInfo(dstPath).absoluteFilePath())
+          continue;
+      }
+      else if(!srcExists)
+        continue;
+
+      // Файла нет в каталоге значит приехал из другой заметки:
+      // свой аттач, чужое внутреннее имя занято чужим файлом
+      // значит тоже свой аттач. Ссылка правится на новое имя
+      QString displayFileName;
+
+      if(!attachController->addSingleFileAsAttach(srcPath, newInnerName, displayFileName))
+        continue;
+
+      fixedHrefs.insert(link.href, newInnerName);
+    }
+
+    QTextCharFormat fixFormat;
+    fixFormat.setAnchor(true);
+    fixFormat.setAnchorHref(QStringLiteral("attach://")+newInnerName);
+
+    QTextCursor fix(doc);
+    fix.setPosition(link.pos);
+    fix.setPosition(link.pos+link.len, QTextCursor::KeepAnchor);
+    fix.mergeCharFormat(fixFormat);
+  }
+
+  cursor.endEditBlock();
 }
 
 void Editor::onFindInBaseClicked(void)

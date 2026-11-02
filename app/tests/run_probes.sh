@@ -16,7 +16,7 @@ QT=${QT_BIN%/bin}
 mkdir -p "$OUT" "$OUT/edprobe"
 
 if [ $# -eq 0 ]; then
-  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe splitprobe
+  set -- confprobe refprobe trayprobe menuprobe mcpbridgeprobe typefaceprobe mcpcatprobe bridgewriteprobe voiceqprobe htmlprobe splitprobe attachcutprobe
 fi
 
 # Актуальный список объектов (без main.o): main_renamed.o собирается отдельно
@@ -47,15 +47,16 @@ run_probe() {
   local name=$1 out fails bindir=$OUT
   export LD_LIBRARY_PATH=$QT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
   export HOME=/tmp/opencode DISPLAY=:98 QT_QPA_PLATFORM=offscreen
-  # splitprobe крутит живой MetaEditor: ему нужна рабочая директория
-  # (conf.ini + editorconf.ini) и запуск бинаря из нее (workdir
-  # резолвится из argv[0]). Фикстура собирается из штатных конфигов
-  if [ "$name" = "splitprobe" ]; then
-    mkdir -p "$OUT/splitdb"
+  # splitprobe и attachcutprobe крутят живой MetaEditor: им нужна
+  # рабочая директория (conf.ini + editorconf.ini) и запуск бинаря
+  # из нее (workdir резолвится из argv[0]). Фикстура собирается
+  # из штатных конфигов
+  if [ "$name" = "splitprobe" ] || [ "$name" = "attachcutprobe" ]; then
+    mkdir -p "$OUT/${name}db"
     cp "$APP/bin/resource/standartconfig/any/conf.ini" \
-       "$APP/bin/resource/standartconfig/any/editorconf.ini" "$OUT/splitdb/"
-    cp "$OUT/${name}bin" "$OUT/splitdb/"
-    bindir="$OUT/splitdb"
+       "$APP/bin/resource/standartconfig/any/editorconf.ini" "$OUT/${name}db/"
+    cp "$OUT/${name}bin" "$OUT/${name}db/"
+    bindir="$OUT/${name}db"
   fi
   out=$(cd "$bindir" && timeout 120 "./${name}bin" 2>&1)
   echo "$out" | grep -E "^(PASS|FAIL)|PROBE-OK|PROBE-BAD|VOICEQ" | tail -4

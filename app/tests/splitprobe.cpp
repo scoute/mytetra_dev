@@ -173,6 +173,35 @@ int main(int argc, char **argv)
           ==QStringLiteral("file:/tmp/opencode/"), "SPLIT-URL-KEPT");
     check(ed->getTextareaStable().contains(QStringLiteral("urlcheck")), "SPLIT-URL-APPLIED");
 
+    // Небрежное выделение с пробелами по краям все равно зеркалится
+    // (в исходнике отступы - &nbsp;, точного совпадения не будет)
+    ed->setTextarea(QStringLiteral("<p>    indented line here</p>"));
+    ed->syncNoteToSource();
+    {
+        const int at=ed->textArea->document()->toPlainText().indexOf(QStringLiteral("indented"));
+        QTextCursor c(ed->textArea->document());
+        c.setPosition(at-2);
+        c.setPosition(at+8, QTextCursor::KeepAnchor);
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(pane->textCursor().selectedText().contains(QStringLiteral("indented")),
+          "SEL-TRIMMED");
+
+    // Дубли: якорь неоднозначен - вместо неверного диапазона
+    // только курсор (выделения в чужой панели нет)
+    ed->setTextarea(QStringLiteral("<p>aaa</p>\n<p>aaa</p>"));
+    ed->syncNoteToSource();
+    {
+        QTextBlock second=ed->textArea->document()->findBlockByNumber(1);
+        QTextCursor c(ed->textArea->document());
+        c.setPosition(second.position());
+        c.setPosition(second.position()+3, QTextCursor::KeepAnchor);
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(!pane->textCursor().hasSelection(), "SEL-AMBIGUOUS-NO-RANGE");
+
     ed->setHtmlSourceVisible(false);
     check(!ed->isHtmlSourceVisible(), "SPLIT-HIDE");
 

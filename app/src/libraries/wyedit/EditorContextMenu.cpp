@@ -8,6 +8,7 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/LinkHelper.h"
 #include "libraries/VoiceNoteHelper.h"
+#include "formatters/ReferenceFormatter.h"
 #include "libraries/AppContext.h"
 
 EditorContextMenu::EditorContextMenu(QWidget *parent) : QMenu(parent)
@@ -47,6 +48,7 @@ void EditorContextMenu::setupActions(void)
  actionPlayVoice=new QAction(this);
  actionRenameVoice=new QAction(this);
 actionMoveVoice=new QAction(this);
+actionMoveAttach=new QAction(this);
  actionShowVoiceInFolder=new QAction(this);
  actionDeleteVoice=new QAction(this);
  actionEditReference=new QAction(this);
@@ -100,6 +102,7 @@ void EditorContextMenu::setupShortcuts(void)
     AppContext::instance().shortcutManager()->initAction("editor-playVoice", actionPlayVoice );
     AppContext::instance().shortcutManager()->initAction("editor-renameVoice", actionRenameVoice );
     AppContext::instance().shortcutManager()->initAction("editor-moveVoice", actionMoveVoice );
+    AppContext::instance().shortcutManager()->initAction("editor-moveAttach", actionMoveAttach );
     AppContext::instance().shortcutManager()->initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
     AppContext::instance().shortcutManager()->initAction("editor-deleteVoice", actionDeleteVoice );
 
@@ -157,6 +160,7 @@ void EditorContextMenu::update(void)
         setPlayVoice( voiceLink );
         setRenameVoice( voiceLink );
         setMoveVoice( voiceLink );
+        setMoveAttach( ReferenceFormatter::isAttachHref(href) );
         setShowVoiceInFolder( voiceLink );
         setDeleteVoice( voiceLink );
         setEditReference( true );
@@ -169,6 +173,7 @@ void EditorContextMenu::update(void)
         setPlayVoice( voiceBubble );
         setRenameVoice( voiceBubble );
         setMoveVoice( voiceBubble );
+        setMoveAttach( false );
         setShowVoiceInFolder( voiceBubble );
         setDeleteVoice( voiceBubble );
         setEditReference( false );
@@ -269,6 +274,12 @@ void EditorContextMenu::setMoveVoice(bool flag)
   actionMoveVoice->setEnabled(flag);
 }
 
+void EditorContextMenu::setMoveAttach(bool flag)
+{
+  actionMoveAttach->setVisible(flag);
+  actionMoveAttach->setEnabled(flag);
+}
+
 void EditorContextMenu::setShowVoiceInFolder(bool flag)
 {
   actionShowVoiceInFolder->setVisible(flag);
@@ -358,6 +369,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionPlayVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPlayVoice);
     connect(actionRenameVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuRenameVoice);
     connect(actionMoveVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveVoice);
+    connect(actionMoveAttach,         &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveAttach);
     connect(actionShowVoiceInFolder,  &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowVoiceInFolder);
     connect(actionDeleteVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuDeleteVoice);
     connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
@@ -404,6 +416,7 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionPlayVoice);
     this->addAction(actionRenameVoice);
     this->addAction(actionMoveVoice);
+    this->addAction(actionMoveAttach);
     this->addAction(actionShowVoiceInFolder);
     this->addAction(actionDeleteVoice);
     this->addAction(actionEditReference);
@@ -538,6 +551,14 @@ void EditorContextMenu::onActionContextMenuMoveVoice()
     update();
     if(actionMoveVoice->isEnabled()) {
         emit contextMenuMoveVoice();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuMoveAttach()
+{
+    update();
+    if(actionMoveAttach->isEnabled()) {
+        emit contextMenuMoveAttach();
     }
 }
 

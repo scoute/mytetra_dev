@@ -9,7 +9,9 @@
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
+#include <QTextBlock>
 #include <QUrl>
 #include <QApplication>
 #include <QClipboard>
@@ -29,6 +31,7 @@
 #include "libraries/helpers/LinkHelper.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/crypt/CryptService.h"
+#include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
@@ -36,6 +39,7 @@
 #include "models/appConfig/AppConfigStorage.h"
 #include "views/voiceNote/VoicePlayerDialog.h"
 #include "views/notePicker/NotePickerDialog.h"
+#include "views/tree/TreeScreen.h"
 #include "../Editor.h"
 #include "../EditorConfig.h"
 #include "../EditorTextArea.h"
@@ -490,6 +494,394 @@ const char *ReferenceFormatter::attachMimeTypeName(void)
     static const char *attachMimeType="application/x-mytetra-attach";
 
     return attachMimeType;
+}
+
+// Абзац метки для дописки в текст закрытой заметки.
+// Тот же вид что у insertAttachBadge: ссылка плюс [EXT] имя
+QString ReferenceFormatter::badgeParagraphHtml(const QString &innerName,
+                                              const QString &displayName)
+{
+    if(innerName.isEmpty() || displayName.isEmpty())
+        return QString();
+
+    QString ext=QFileInfo(displayName).suffix().toUpper();
+
+    if(ext.isEmpty())
+        ext=QStringLiteral("FILE");
+
+    const QString href=QStringLiteral("attach://")+innerName;
+    const QString title=QStringLiteral("[")+ext+QStringLiteral("] ")+displayName;
+
+    return QStringLiteral("<p><a href=\"")+
+        href.toHtmlEscaped()+QStringLiteral("\">")+
+        title.toHtmlEscaped()+QStringLiteral("</a></p>");
+}
+
+
+// Дописка метки в текстовый файл закрытой заметки: вставка перед
+// </body>, файла нет — минимальный каркас. Как голосовые ссылки
+bool ReferenceFormatter::appendAttachBadgeToTextFile(const QString &textFileName,
+                                                     const QString &innerName,
+                                                     const QString &displayName,
+                                                     QString *error)
+{
+    const QString paragraph=badgeParagraphHtml(innerName, displayName);
+
+    if(paragraph.isEmpty())
+    {
+        if(error!=nullptr)
+            *error=tr("Empty attach badge");
+
+        return false;
+    }
+
+    if(textFileName.isEmpty())
+    {
+        if(error!=nullptr)
+            *error=tr("Target note text file unknown");
+
+        return false;
+    }
+
+    if(!QFileInfo(textFileName).isFile())
+    {
+        QFile out(textFileName);
+
+        if(!out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            if(error!=nullptr)
+                *error=tr("Can not write target note: %1").arg(textFileName);
+
+            return false;
+        }
+
+        out.write((QStringLiteral("<html><body>")+paragraph+
+                   QStringLiteral("</body></html>")).toUtf8());
+
+        return true;
+    }
+
+    QFile in(textFileName);
+
+    if(!in.open(QIODevice::ReadOnly))
+    {
+        if(error!=nullptr)
+            *error=tr("Can not read target note: %1").arg(textFileName);
+
+        return false;
+    }
+
+    QString html=QString::fromUtf8(in.readAll());
+    in.close();
+    html.remove(QChar('\0'));
+
+    int pos=html.lastIndexOf(QStringLiteral("</body>"), -1, Qt::CaseInsensitive);
+
+    if(pos<0)
+        pos=html.lastIndexOf(QStringLiteral("</html>"), -1, Qt::CaseInsensitive);
+
+    if(pos>=0)
+        html.insert(pos, paragraph);
+    else
+        html+=paragraph;
+
+    QFile out(textFileName);
+
+    if(!out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        if(error!=nullptr)
+            *error=tr("Can not write target note: %1").arg(textFileName);
+
+        return false;
+    }
+
+    out.write(html.toUtf8());
+
+    return true;
+}
+
+
+// Метка аттача под курсором, пусто если курсор не на метке
+QString ReferenceFormatter::attachHrefUnderCursor(void)
+{
+  if(editor->cursorPositionDetector->isCursorOnReference())
+  {
+    const QString href=editor->cursorPositionDetector->referenceHref();
+
+    if(isAttachHref(href))
+      return href;
+  }
+
+  return QString();
+}
+
+
+// Выделить первую метку с href в документе для удаления из исходника.
+// Поиск по всему документу, а не от курсора: между открытием меню
+// и срабатыванием пункта каретка могла уехать
+bool ReferenceFormatter::selectAttachBadgeRange(const QString &href)
+{
+  if(href.isEmpty())
+    return false;
+
+  QTextDocument *doc=textArea->document();
+
+  for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+    for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+    {
+      const QTextFragment fragment=it.fragment();
+
+      if(!fragment.isValid())
+        continue;
+
+      if(fragment.charFormat().anchorHref()!=href)
+        continue;
+
+      int end=fragment.position()+fragment.length();
+
+      // Хвостовой пробел от вставки забирается тоже чтобы не мусорить
+      if(end<doc->characterCount()-1 && doc->characterAt(end)==QLatin1Char(' '))
+        ++end;
+
+      QTextCursor select(doc);
+      select.setPosition(fragment.position());
+      select.setPosition(end, QTextCursor::KeepAnchor);
+      textArea->setTextCursor(select);
+
+      return true;
+    }
+
+  return false;
+}
+
+
+// Перемещение метки аттача в другую заметку: файл копируется
+// в каталог приемника и заводится в его таблице, ссылка дописывается
+// в текст приемника, из исходника метка и аттач удаляются.
+// Как перенос голосовой: отказ в шифрованный приемник (прямая
+// дописка сломала бы шифротекст), подтверждение, откат дописки
+void ReferenceFormatter::onMoveAttachClicked(void)
+{
+  const QString href=attachHrefUnderCursor();
+
+  if(href.isEmpty())
+    return;
+
+  AttachTableController *srcController=find_object<AttachTableController>(
+    QStringLiteral("attachTableController"));
+
+  AttachTableData *srcTable=(srcController!=nullptr)
+    ? srcController->getAttachTableData() : nullptr;
+
+  if(srcTable==nullptr)
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Attachments are unavailable"));
+    return;
+  }
+
+  const QString innerName=attachInnerFromHref(href);
+
+  QString rowId;
+
+  for(int row=0; row<srcTable->size(); ++row)
+  {
+    const QString candidateId=srcTable->getIdByRow(row);
+
+    if(srcTable->getInnerFileName(row)==innerName ||
+       srcTable->getAttach(candidateId).getExistingInnerFileName()==innerName)
+    {
+      rowId=candidateId;
+      break;
+    }
+  }
+
+  if(rowId.isEmpty())
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Attachment not found"));
+    return;
+  }
+
+  const QString displayName=srcTable->getFileNameById(rowId);
+  const QString srcDir=editor->getWorkDirectory();
+  const QString srcPath=QDir::cleanPath(QDir(srcDir).absoluteFilePath(
+    srcTable->getAttach(rowId).getExistingInnerFileName()));
+
+  if(srcDir.isEmpty() || !QFileInfo(srcPath).isFile())
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Attachment file not found"));
+    return;
+  }
+
+  const QString currentId=editor->getMiscField(QStringLiteral("id"));
+
+  NotePickerDialog picker(editor, currentId);
+
+  if(picker.exec()!=QDialog::Accepted)
+    return;
+
+  const QString pickedId=picker.selectedRecordId();
+
+  if(pickedId.isEmpty())
+    return;
+
+  KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+  if(treeView==nullptr)
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Notes tree unavailable"));
+    return;
+  }
+
+  Record *target=static_cast<KnowTreeModel *>(treeView->model())->getRecord(pickedId);
+
+  if(target==nullptr)
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Target note not found"));
+    return;
+  }
+
+  // Шифрованный приемник правится только через редактор с ключом:
+  // прямая дописка в файл сломала бы шифротекст
+  if(target->getField(QStringLiteral("crypt"))==QStringLiteral("1"))
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Can not move into encrypted note"));
+    return;
+  }
+
+  // Шифрованный источник: нужны открытые байты, значит разблокированная база
+  const bool srcCrypt=srcTable->isRecordCrypt();
+
+  if(srcCrypt && AppContext::instance().globalParameters()->getCryptKey().isEmpty())
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Unlock the database first"));
+    return;
+  }
+
+  const QString targetName=target->getField(QStringLiteral("name"));
+
+  if(QMessageBox::question(editor,
+                           tr("Move attachment"),
+                           tr("Move attachment %1 to note \"%2\"? Badge will be removed from current note.").arg(displayName).arg(targetName),
+                           QMessageBox::Yes | QMessageBox::No,
+                           QMessageBox::No)!=QMessageBox::Yes)
+    return;
+
+  if(target->getField(QStringLiteral("dir")).isEmpty() ||
+     target->getField(QStringLiteral("file")).isEmpty())
+  {
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             tr("Target note text file unknown"));
+    return;
+  }
+
+  const QString targetDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+
+    QStringLiteral("/base/")+
+    target->getField(QStringLiteral("dir"));
+  const QString targetTextFile=targetDir+
+    QStringLiteral("/")+target->getField(QStringLiteral("file"));
+
+  // Открытые байты для копии: из шифрованного источника через
+  // расшифровку во временный файл
+  QString copyFrom=srcPath;
+  QString tmpDecrypted;
+
+  if(srcCrypt)
+  {
+    tmpDecrypted=DiskHelper::copyFileToTrash(srcPath);
+    CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(),
+                              tmpDecrypted);
+
+    if(!QFileInfo(tmpDecrypted).isFile())
+    {
+      QMessageBox::information(editor,
+                               tr("Move attachment"),
+                               tr("Can not decrypt attachment file"));
+      return;
+    }
+
+    copyFrom=tmpDecrypted;
+  }
+
+  // Запись в таблице приемника тем же порядком что пикер:
+  // копия в базу, затем строка. Коллизия оригинала уводит
+  // файл в гибрид через copyFileToBase
+  AttachTableData *targetTable=target->getAttachTablePointer();
+  Attach newAttach(QStringLiteral("file"), targetTable);
+  newAttach.setField("id", getUniqueId());
+  newAttach.setField("fileName", displayName);
+  newAttach.setField("source", srcPath);
+
+  const bool copyOk=newAttach.copyFileToBase(copyFrom);
+
+  if(!tmpDecrypted.isEmpty())
+    QFile::remove(tmpDecrypted);
+
+  if(!copyOk)
+    return;
+
+  targetTable->addAttach(newAttach);
+
+  const QString newInner=newAttach.getExistingInnerFileName();
+
+  // Ссылка дописывается в закрытую заметку напрямую.
+  // Не влезла: запись из таблицы приемника удаляется назад,
+  // источник и его текст не тронуты
+  QString error;
+
+  if(!appendAttachBadgeToTextFile(targetTextFile, newInner, displayName, &error))
+  {
+    targetTable->deleteAttach(newAttach.getField(QStringLiteral("id")));
+
+    TreeScreen *rollbackScreen=find_object<TreeScreen>("treeScreen");
+
+    if(rollbackScreen!=nullptr)
+      rollbackScreen->saveKnowTree();
+
+    QMessageBox::information(editor,
+                             tr("Move attachment"),
+                             error);
+    return;
+  }
+
+  // Дерево сохраняется, статистика и статусбар как в контроллере
+  TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+  if(treeScreen!=nullptr)
+  {
+    treeScreen->saveKnowTree();
+    treeScreen->knowTreeModel->refreshRecordStats(pickedId);
+  }
+
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->updateStats();
+
+  // Источник чистится последним: метка из текста, затем аттач.
+  // Явное подтвержденное действие, отмена Ctrl+Z его не возвращает
+  if(selectAttachBadgeRange(href))
+    textArea->textCursor().removeSelectedText();
+
+  srcController->removeAttachByInnerName(innerName);
+
+  if(AppContext::instance().globalParameters()->getStatusBar()!=nullptr)
+    AppContext::instance().globalParameters()->getStatusBar()->showMessage(
+      tr("Moved to \"%1\"").arg(targetName), 3000);
 }
 
 

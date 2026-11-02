@@ -163,6 +163,16 @@ int main(int argc, char **argv)
     check(ed->textArea->textCursor().hasSelection(), "SEL-SOURCE-HAS");
     check(ed->textArea->textCursor().selectedText().contains(QStringLiteral("three")), "SEL-SOURCE-TO-NOTE");
 
+    // URL документа переживает применение исходника: иначе
+    // относительные картинки гасли бы до перезахода в заметку
+    ed->textArea->document()->setMetaInformation(QTextDocument::DocumentUrl,
+                                                 QStringLiteral("file:/tmp/opencode/"));
+    pane->setPlainText(QStringLiteral("<p>urlcheck</p>"));
+    ed->syncSourceToNote();
+    check(ed->textArea->document()->metaInformation(QTextDocument::DocumentUrl)
+          ==QStringLiteral("file:/tmp/opencode/"), "SPLIT-URL-KEPT");
+    check(ed->getTextareaStable().contains(QStringLiteral("urlcheck")), "SPLIT-URL-APPLIED");
+
     ed->setHtmlSourceVisible(false);
     check(!ed->isHtmlSourceVisible(), "SPLIT-HIDE");
 

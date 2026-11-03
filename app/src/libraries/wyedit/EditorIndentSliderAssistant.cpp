@@ -64,11 +64,22 @@ void EditorIndentSliderAssistant::onUpdateGeometry()
   // Синхронизируется ширина виджета линейки отступов
   indentSlider->set_widget_width(textArea->width());
 
+  // Линейка лежит в сетке на всю ширину, а текст при боковом исходнике
+  // уже: координаты сдвигаются на смещение текста относительно линейки,
+  // иначе шкала рисуется над HTML-панелью. Мышь сверяется с теми же
+  // координатами, поэтому перетаскивание движков тоже чинится
+  int shift=0;
+
+  QWidget *sliderParent=indentSlider->parentWidget();
+
+  if(sliderParent!=nullptr)
+    shift=textArea->mapTo(sliderParent, QPoint(0, 0)).x()-indentSlider->x();
+
   // Синхронизируется геометрия линейки отступов
   int leftPos=textArea->getIndentStartedLeft();
   int rightPos=textArea->getIndentStartedRight();
-  indentSlider->set_indentline_left_pos(leftPos);
-  indentSlider->set_indentline_right_pos(rightPos);
+  indentSlider->set_indentline_left_pos(leftPos+shift);
+  indentSlider->set_indentline_right_pos(rightPos+shift);
 
   indentSlider->update();
 }

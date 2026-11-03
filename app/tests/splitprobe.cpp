@@ -239,7 +239,7 @@ int main(int argc, char **argv)
     // Теги не якоря: текст "H6" не путается с тегом <h6> (поиск Qt
     // по умолчанию регистронезависим), диапазон строится по тексту,
     // а не встает курсором на тег
-    ed->setTextarea(QStringLiteral("<h1>H1</h1>\n<h6>H6</h6>\n<p style=\"margin-top:0px;margin-bottom:0px;\">Plain text</p>"));
+    ed->setTextarea(QStringLiteral("<h1>H1</h1>\n<h6>H6</h6>\n<p style=\"margin-top:5px;\">Plain text</p>"));
     ed->syncNoteToSource();
     {
         QTextCursor c(ed->textArea->document()->find(QStringLiteral("H6")));
@@ -590,6 +590,52 @@ int main(int argc, char **argv)
         // Короткий класс виден всегда, не схлопывается фолдингом
         check(HtmlSourceEdit::isFoldableLine(QStringLiteral("<p class=\"mtempty\"><br /></p>"))==false,
               "NORM-CLASS-NOT-FOLDED");
+
+        // Непустые абзацы с ровно нулевыми верхом/низом: общий класс
+        // в шапке вместо инлайна margin-top:0px;margin-bottom:0px
+        {
+            const QString zhead=QStringLiteral("<html><head><style type=\"text/css\">\np, li { white-space: pre-wrap; }\n</style></head><body>");
+            const QString ztail=QStringLiteral("</body></html>");
+            const QString zpara=QStringLiteral("<p style=\"margin-top:0px;margin-bottom:0px;\">Text</p>");
+            const QString znorm=Editor::normalizeEmptyParagraphs(zhead+zpara+ztail);
+
+            check(znorm.contains(QStringLiteral("<p class=\"mt0\">Text</p>")),
+                  "NORM-MT0-CLASS");
+            check(znorm.count(QStringLiteral(".mt0{"))==1,
+                  "NORM-MT0-RULE-ONCE");
+            check(Editor::normalizeEmptyParagraphs(znorm)==znorm,
+                  "NORM-MT0-IDEMPOTENT");
+
+            // Ненулевой отступ - исключение, остается инлайном
+            const QString nonzero=Editor::normalizeEmptyParagraphs(
+                zhead+QStringLiteral("<p style=\"margin-top:5px;margin-bottom:0px;\">Text</p>")+ztail);
+            check(nonzero.contains(QStringLiteral("margin-top:5px")) &&
+                  !nonzero.contains(QStringLiteral("class=\"mt0\"")),
+                  "NORM-MT0-NONZERO-INLINE");
+
+            // Посторонние атрибуты тега целы: класс не лепится поверх
+            check(!Editor::normalizeEmptyParagraphs(
+                      zhead+QStringLiteral("<p align=\"center\" style=\"margin-top:0px;margin-bottom:0px;\">Text</p>")+ztail)
+                      .contains(QStringLiteral("class=\"mt0\"")),
+                  "NORM-MT0-ATTR-KEPT");
+
+            // Несколько нулевых - класс на каждом, правило одно
+            const QString zmulti=Editor::normalizeEmptyParagraphs(zhead+zpara+zpara+ztail);
+            check(zmulti.count(QStringLiteral("class=\"mt0\""))==2 &&
+                  zmulti.count(QStringLiteral(".mt0{"))==1,
+                  "NORM-MT0-MULTI");
+
+            // Рендер: класс грузится в те же отступы, что инлайн
+            QTextDocument docC, docI;
+            docC.setHtml(znorm);
+            docI.setHtml(zhead+zpara+ztail);
+            const QTextBlockFormat fc=docC.firstBlock().blockFormat();
+            const QTextBlockFormat fi=docI.firstBlock().blockFormat();
+            check(fc.topMargin()==fi.topMargin() &&
+                  fc.bottomMargin()==fi.bottomMargin() &&
+                  docC.toPlainText()==docI.toPlainText(),
+                  "NORM-MT0-SAME-FORMAT");
+        }
     }
 
 

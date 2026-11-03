@@ -10,9 +10,14 @@
 #include <QMediaContent>
 
 #include "libraries/OpusPlayer.h"
+#include "libraries/MtComboBox.h"
+#include "models/appConfig/AppConfig.h"
 
 #include "VoicePlayerDialog.h"
 #include "libraries/VoiceNoteHelper.h"
+
+
+extern AppConfig mytetraConfig;
 
 
 VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &title,
@@ -32,14 +37,33 @@ VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &tit
     statusLabel=new QLabel(this);
     closeButton=new QPushButton(tr("Close"), this);
 
+    // Скорость проигрывания 0.5x..2x шагом 0.25, дефолт из конфига.
+    // Работает только на бэкенде Qt (MP3): у QMediaPlayer нет темпа
+    // с компенсацией тона, а собственный Opus-декодер темпа не имеет
+    // вовсе (gstreamer-пайплайн v1 сюда не переносится: он убил бы
+    // проигрывание opus на Wine). Для opus выпадашка гаснет
+    speedLabel=new QLabel(tr("Speed:"), this);
+    speedCombo=new MtComboBox(this);
+
+    for(double step : speedSteps())
+        speedCombo->addItem(QString::number(step)+QStringLiteral("x"), step);
+
+    currentSpeed=snapSpeed(mytetraConfig.get_voiceNoteSpeed());
+    speedCombo->setCurrentIndex(speedCombo->findData(currentSpeed));
+
     QHBoxLayout *playerLayout=new QHBoxLayout();
     playerLayout->addWidget(playButton);
     playerLayout->addWidget(positionSlider, 1);
     playerLayout->addWidget(timeLabel);
 
+    QHBoxLayout *speedLayout=new QHBoxLayout();
+    speedLayout->addWidget(speedLabel);
+    speedLayout->addWidget(speedCombo, 1);
+
     QVBoxLayout *centralLayout=new QVBoxLayout(this);
     centralLayout->addWidget(titleLabel);
     centralLayout->addLayout(playerLayout);
+    centralLayout->addLayout(speedLayout);
     centralLayout->addWidget(statusLabel);
     centralLayout->addWidget(closeButton);
     setLayout(centralLayout);
@@ -79,6 +103,8 @@ VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &tit
     }
     connect(positionSlider, &QSlider::sliderMoved,
             this,           &VoicePlayerDialog::onSliderMoved);
+    connect(speedCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,       &VoicePlayerDialog::onSpeedChanged);
     connect(closeButton, &QPushButton::clicked,
             this,        &VoicePlayerDialog::accept);
 
@@ -109,7 +135,58 @@ VoicePlayerDialog::VoicePlayerDialog(const QString &filePath, const QString &tit
         }
     }
     else
+    {
         player->setMedia(QUrl::fromLocalFile(absolutePath));
+        player->setPlaybackRate(currentSpeed);
+    }
+
+    // Скорость только для бэкенда Qt: Opus-декодер темпа не имеет
+    if(useOpusPlayer)
+    {
+        speedLabel->setEnabled(false);
+        speedCombo->setEnabled(false);
+        speedCombo->setToolTip(tr("Speed applies to MP3 format"));
+    }
+}
+
+
+QList<double> VoicePlayerDialog::speedSteps(void)
+{
+    // Ступени выпадашки: 0.5..2.0 шаг 0.25
+    return QList<double>() << 0.5 << 0.75 << 1.0 << 1.25
+                           << 1.5 << 1.75 << 2.0;
+}
+
+
+double VoicePlayerDialog::snapSpeed(double speed)
+{
+    // Ближайшая ступень к значению
+    double best=1.0;
+    double bestDiff=qAbs(speed-best);
+
+    foreach(double step, speedSteps())
+    {
+        const double diff=qAbs(speed-step);
+
+        if(diff<bestDiff)
+        {
+            best=step;
+            bestDiff=diff;
+        }
+    }
+
+    return best;
+}
+
+
+void VoicePlayerDialog::onSpeedChanged(int index)
+{
+    currentSpeed=speedCombo->itemData(index).toDouble();
+
+    // Скорость уходит в бэкенд Qt на ходу. Opus-декодер темпа
+    // не имеет, его выпадашка заблокирована выше
+    if(!useOpusPlayer)
+        player->setPlaybackRate(currentSpeed);
 }
 
 

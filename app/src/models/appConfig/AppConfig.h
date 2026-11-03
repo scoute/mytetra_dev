@@ -504,6 +504,10 @@ public:
     int get_voiceNoteQuality(void);
     void set_voiceNoteQuality(int quality);
 
+    // Скорость проигрывания голосовых по умолчанию: 0.5..2.0
+    double get_voiceNoteSpeed(void);
+    void set_voiceNoteSpeed(double speed);
+
     // Профиль команды для SyncTetra: имя, почта, идентификатор,
     // каталог обмена. Прямые значения в конфиге, без таблицы версий:
     // пустая строка - легальное "не задано"

@@ -571,8 +571,10 @@ QString TypefaceFormatter::codeMarkerName(int language)
     case CodeIni:     return QStringLiteral("INI");
     case CodeJava:    return QStringLiteral("Java");
     case CodeJs:      return QStringLiteral("JavaScript");
+    case CodeJson:    return QStringLiteral("JSON");
     case CodeLua:     return QStringLiteral("Lua");
     case CodeMake:    return QStringLiteral("Make");
+    case CodePhp:     return QStringLiteral("PHP");
     case CodePython:  return QStringLiteral("Python");
     case CodeQml:     return QStringLiteral("QML");
     case CodeReact:   return QStringLiteral("React");
@@ -667,14 +669,12 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
     if(name.isEmpty())
         return -1;
 
-    // JSON маркеров не имеет, его имя здесь не опознается
+    // JSON маркер имеет: копирование идет строками под маркером,
+    // сам маркер в буфер не попадает, поэтому настоящий комментарий
+    // в языке не требуется
     for(int lang=CodeAngular; lang<CodeCount; ++lang)
-    {
-        if(lang==CodeJson)
-            continue;
         if(codeMarkerName(lang)==name)
             return lang;
-    }
 
     return -1;
 }
@@ -682,7 +682,7 @@ int TypefaceFormatter::codeMarkerLanguage(const QString &line)
 
 // Обеспечить маркер языка в начале выделения: заменить наш маркер
 // (в выделении или строкой выше) на новый, вставить новый сверху
-// или убрать маркер для языка без маркера (Plain, JSON).
+// или убрать маркер для языка без маркера (Plain).
 // Вызывается внутри edit-блока formatCodeWithLanguage.
 // Возвращает false, если после обработки выделять нечего
 bool TypefaceFormatter::normalizeCodeMarker(int language)
@@ -800,6 +800,7 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.insertText(fullMarker);
 
         applyCopyLinkFormat(markerPos, newMarker.length());
+        unlinkMarkerText(markerPos, newMarker.length());
 
         int delta=fullMarker.length()-markerLen;
         if(markerAbove)
@@ -821,6 +822,7 @@ bool TypefaceFormatter::normalizeCodeMarker(int language)
         edit.insertText(fullMarker+QStringLiteral("\n"));
 
         applyCopyLinkFormat(insertPos, newMarker.length());
+        unlinkMarkerText(insertPos, newMarker.length());
 
         int inserted=fullMarker.length()+1;
 
@@ -932,6 +934,24 @@ void TypefaceFormatter::applyCopyLinkFormat(int lineStart, int markerLen)
     linkFormat.setAnchorHref(copyCodeHref());
 
     linkCursor.mergeCharFormat(linkFormat);
+}
+
+
+// Снять ссылку с текста маркера и пробела после него: insertText
+// при замене маркера наследует формат конца выделения (ссылку
+// [copy]), и вся строка сохраняется одной ссылкой. Суффикс
+// [copy] не трогается. Вызывается внутри edit-блока
+void TypefaceFormatter::unlinkMarkerText(int lineStart, int markerLen)
+{
+    QTextCursor edit(textArea->document());
+    edit.setPosition(lineStart);
+    edit.setPosition(lineStart+markerLen+1, QTextCursor::KeepAnchor);
+
+    QTextCharFormat plainFormat;
+    plainFormat.setAnchor(false);
+    plainFormat.setAnchorHref(QString());
+
+    edit.mergeCharFormat(plainFormat);
 }
 
 
@@ -1848,6 +1868,9 @@ void TypefaceFormatter::onTocClicked(void)
 
 // Снять подчеркивание со ссылок-кнопок [copy]: HTML-импортер ставит
 // его всем ссылкам по умолчанию, а свежие ссылки идут без него.
+// Заодно чинятся старые целые ссылки-строки: insertText при замене
+// маркера наследовал ссылку конца выделения, такие строки уже
+// сохранены - якорь остается только на суффиксе [copy].
 // Снимается merge с явным false (setCharFormat на выделении в этой
 // версии Qt замечен в непересчете раскладки)
 void TypefaceFormatter::normalizeCopyLinkUnderline(void)
@@ -1862,7 +1885,56 @@ void TypefaceFormatter::normalizeCopyLinkUnderline(void)
             if(it.fragment().charFormat().anchorHref()==copyCodeHref())
                 linkRanges << qMakePair(it.fragment().position(), it.fragment().length());
 
-    if(linkRanges.isEmpty())
+    // Диапазоны снятия якоря: текст маркера и пробел после него,
+    // сам суффикс [copy] ссылку сохраняет. Без суффикса в строке
+    // якорю делать нечего - снимается со всей строки
+    QList<QPair<int, int> > stripRanges;
+
+    for(QTextBlock block=doc->begin(); block.isValid(); block=block.next())
+    {
+        if(codeMarkerLanguage(block.text())<0)
+            continue;
+
+        const QString text=block.text();
+        const int copyAt=text.lastIndexOf(copyCodeSuffix());
+
+        const int keepStart=copyAt>=0 ? block.position()+copyAt : -1;
+        const int keepEnd=keepStart>=0 ?
+                          keepStart+copyCodeSuffix().length() : -1;
+
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid() || fragment.length()==0)
+                continue;
+
+            if(fragment.charFormat().anchorHref()!=copyCodeHref())
+                continue;
+
+            const int fragStart=fragment.position();
+            const int fragEnd=fragStart+fragment.length();
+
+            if(keepStart>=0)
+            {
+                // Кусок суффикса [copy] живет дальше со ссылкой
+                if(fragStart>=keepStart && fragEnd<=keepEnd)
+                    continue;
+
+                if(fragStart<keepStart)
+                    stripRanges << qMakePair(fragStart,
+                                             qMin(fragEnd, keepStart)-fragStart);
+
+                if(fragEnd>keepEnd)
+                    stripRanges << qMakePair(qMax(fragStart, keepEnd),
+                                             fragEnd-qMax(fragStart, keepEnd));
+            }
+            else
+                stripRanges << qMakePair(fragStart, fragment.length());
+        }
+    }
+
+    if(linkRanges.isEmpty() && stripRanges.isEmpty())
         return;
 
     QTextCursor edit(doc);
@@ -1875,6 +1947,17 @@ void TypefaceFormatter::normalizeCopyLinkUnderline(void)
 
         QTextCharFormat format;
         format.setFontUnderline(false);
+        edit.mergeCharFormat(format);
+    }
+
+    for(int i=0; i<stripRanges.size(); ++i)
+    {
+        edit.setPosition(stripRanges[i].first);
+        edit.setPosition(stripRanges[i].first+stripRanges[i].second, QTextCursor::KeepAnchor);
+
+        QTextCharFormat format;
+        format.setAnchor(false);
+        format.setAnchorHref(QString());
         edit.mergeCharFormat(format);
     }
 

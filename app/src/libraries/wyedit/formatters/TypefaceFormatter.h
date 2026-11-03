@@ -178,8 +178,7 @@ private:
     void formatCodeWithLanguage(int language);
 
     // Каноническое имя языка для маркера блока кода. Без перевода:
-    // маркер в тексте заметки всегда на английском. Пусто для Plain и JSON
-    // (у JSON нет комментариев, маркер вставлять не во что)
+    // маркер в тексте заметки всегда на английском. Пусто для Plain
     static QString codeMarkerName(int language);
 
     // Строка-маркер языка для вставки в текст. Пусто - у языка нет маркера
@@ -236,6 +235,12 @@ private:
     // lineStart - начало строки, markerLen - длина текста маркера
     // без суффикса. Вызывается внутри edit-блока
     void applyCopyLinkFormat(int lineStart, int markerLen);
+
+    // Снять ссылку с текста маркера и пробела после него: insertText
+    // при замене маркера наследует формат конца выделения (ссылку
+    // [copy]), и вся строка сохраняется одной ссылкой. Суффикс
+    // [copy] не трогается. Вызывается внутри edit-блока
+    void unlinkMarkerText(int lineStart, int markerLen);
 
     void doChangeFontcolor(const QColor &selectedColor);
     void doChangeBackgroundColor(const QColor &selectedColor);

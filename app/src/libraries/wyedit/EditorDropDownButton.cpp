@@ -8,9 +8,82 @@
 #include <QPointer>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QStyledItemDelegate>
 #include <QDebug>
 
 #include "EditorDropDownButton.h"
+
+
+// Роль пометки текущего пункта в списке языков (Qt::UserRole занят
+// индексом меню). CheckStateRole не используется специально: по нему
+// базовый делегат нарисовал бы квадратный чекбокс, а нужен кружок
+static const int RadioCheckedRole=Qt::UserRole+1;
+
+
+// Делегат-радио для всплывающего списка языков: слева рисуется
+// кружок выбора (нативный примитив стиля, виден в любой теме),
+// остальное - фон, иконка, текст - штатно через базовый класс.
+// Поведение списка (клики, клавиатура) не меняется
+class CodeRadioDelegate : public QStyledItemDelegate
+{
+public:
+
+    explicit CodeRadioDelegate(QObject *parent=nullptr)
+        : QStyledItemDelegate(parent)
+    {
+    }
+
+    void paint(QPainter *painter,
+               const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override
+    {
+        QStyle *style=nullptr;
+
+        if(option.widget!=nullptr)
+            style=option.widget->style();
+
+        if(style==nullptr)
+            style=QApplication::style();
+
+        QStyleOptionViewItem opt(option);
+        initStyleOption(&opt, index);
+
+        // Фон на всю строку, включая полосу кружка
+        style->drawPrimitive(QStyle::PE_PanelItemViewItem,
+                             &opt, painter, opt.widget);
+
+        // Кружок слева по вертикальному центру
+        const int radioWidth=
+            style->pixelMetric(QStyle::PM_ExclusiveIndicatorWidth,
+                               nullptr, opt.widget);
+        const int radioHeight=
+            style->pixelMetric(QStyle::PM_ExclusiveIndicatorHeight,
+                               nullptr, opt.widget);
+        QRect radioRect(opt.rect.left()+4,
+                        opt.rect.top()+
+                        (opt.rect.height()-radioHeight)/2,
+                        radioWidth, radioHeight);
+
+        QStyleOptionButton radioOpt;
+        radioOpt.rect=radioRect;
+        radioOpt.state=opt.state & ~(QStyle::State_On |
+                                     QStyle::State_Off);
+        radioOpt.state|=index.data(RadioCheckedRole).toBool() ?
+                        QStyle::State_On : QStyle::State_Off;
+
+        if((opt.state & QStyle::State_Enabled)==0)
+            radioOpt.state&=~QStyle::State_Enabled;
+
+        style->drawPrimitive(QStyle::PE_IndicatorRadioButton,
+                             &radioOpt, painter, opt.widget);
+
+        // Остальное штатно, со сдвигом за кружок
+        QStyleOptionViewItem rest(opt);
+        rest.rect.setLeft(radioRect.right()+4);
+        QStyledItemDelegate::paint(painter, rest, index);
+    }
+};
 
 
 EditorDropDownButton::EditorDropDownButton(QWidget *parent)
@@ -109,6 +182,12 @@ void EditorDropDownButton::setMaxVisibleItems(int count)
 }
 
 
+void EditorDropDownButton::setPreselectRow(int row)
+{
+    m_preselectRow=row;
+}
+
+
 // Показать всплывающий список языков (list-режим). Пункты берутся
 // из действий меню, индекс пункта совпадает с menuIndex действия,
 // поэтому сигнал menuItemClicked работает как для QMenu
@@ -158,7 +237,30 @@ void EditorDropDownButton::showListMenu(void)
 
     QPoint popupPos=m_button->mapToGlobal(QPoint(0, m_button->height()));
     list->move(popupPos);
-    list->setCurrentRow(0);
+
+    // Предвыбор строки: язык блока под курсором (кнопка кода),
+    // иначе первая. Невалидный номер игнорируется
+    if(m_preselectRow>=0 && m_preselectRow<rowCount)
+        list->setCurrentRow(m_preselectRow);
+    else
+        list->setCurrentRow(0);
+
+    // Текущий язык помечается кружком-радио у всех строк списка:
+    // одного current-подсвечивания в чужой теме может быть не видно,
+    // а примитив стиля рисуется всегда. Без языка под курсором
+    // все кружки пустые
+    for(int row=0; row<rowCount; ++row)
+    {
+        QListWidgetItem *item=list->item(row);
+
+        if(item!=nullptr)
+            item->setData(RadioCheckedRole,
+                          row==m_preselectRow &&
+                          m_preselectRow>=0 &&
+                          m_preselectRow<rowCount);
+    }
+
+    list->setItemDelegate(new CodeRadioDelegate(list));
 
     // Текущий открытый список запоминается, чтобы фильтр событий
     // мог двигать текущую строку за мышью. Прошлый список, если вдруг
@@ -200,6 +302,12 @@ void EditorDropDownButton::showListMenu(void)
 
     list->show();
     list->setFocus();
+
+    // Явный захват мыши: голый QWidget с Qt::Popup сам граб не ставит
+    // (в отличие от QMenu), и клики вне списка до него не доходят —
+    // без граба закрыть кликом мимо невозможно. Клик вне прямоугольника
+    // гасится в фильтре событий ниже, граб снимается скрытием
+    list->grabMouse();
 }
 
 
@@ -210,6 +318,18 @@ bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
 {
     if(m_listMode && watched==m_button)
     {
+        // Повторный клик по кнопке закрывает открытый список (тоггл).
+        // Без этого пресс сначала гасит Qt::Popup, а потом тут же
+        // открывает список заново — закрыть кликом невозможно.
+        // Проверка только на press: release при открытом списке
+        // относится ему же, а не кнопке
+        if(event->type()==QEvent::MouseButtonPress &&
+           m_list!=nullptr && m_list->isVisible())
+        {
+            m_list->close();
+            return true;
+        }
+
         if(event->type()==QEvent::MouseButtonPress)
         {
             showListMenu();
@@ -248,6 +368,21 @@ bool EditorDropDownButton::eventFilter(QObject *watched, QEvent *event)
     {
         int key=static_cast<QKeyEvent *>(event)->key();
         if(key==Qt::Key_Escape)
+        {
+            m_list->close();
+            return true;
+        }
+    }
+
+    // Клик мимо списка при активном грабе мыши: пресса приходит
+    // в сам список с координатами вне его прямоугольника.
+    // Закрыть и съесть, иначе клик провалится дальше
+    if(m_list!=nullptr && watched==m_list &&
+            event->type()==QEvent::MouseButtonPress)
+    {
+        QMouseEvent *mouseEvent=static_cast<QMouseEvent *>(event);
+
+        if(!m_list->rect().contains(mouseEvent->pos()))
         {
             m_list->close();
             return true;

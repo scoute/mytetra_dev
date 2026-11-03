@@ -45,6 +45,10 @@ public:
     // Публичный: используется контекстным меню для показа пункта копирования
     bool isCursorInCodeBlock(void);
 
+    // Язык блока кода под курсором (индекс CodeLanguage) или -1.
+    // Публичный: предвыбор языка в списке кнопки кода
+    int codeLanguageAtCursor(void);
+
 signals:
 
     void updateOutlineButtonHiglight();

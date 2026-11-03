@@ -249,6 +249,43 @@ int main(int argc, char **argv)
         }
     }
 
+    // Кругооборот через HTML (сценарий рестарта): сохраненный <h1>
+    // с явным font-size обязан отрисоваться тем же кеглем после setHtml.
+    // Разбор <h1> кидает в фрагмент FontSizeAdjustment, который глушит
+    // явный font-size (44pt рисуются мелко) - снимается при загрузке
+    {
+        const QString stored=QStringLiteral(
+            "<html><head><meta name=\"qrichtext\" content=\"1\" />"
+            "<style type=\"text/css\">p, li { white-space: pre-wrap; }</style></head>"
+            "<body style=\" font-family:'DejaVu Sans'; font-size:11pt; font-weight:400; font-style:normal;\">"
+            "<h1><span style=\" font-size:44pt; font-weight:600;\">H1</span></h1>"
+            "<h2><span style=\" font-weight:600;\">H2</span></h2>"
+            "<h6><span style=\" font-size:11pt; font-weight:600;\">H6</span></h6>"
+            "</body></html>");
+
+        doc->setDefaultFont(QFont(QStringLiteral("DejaVu Sans"), 11)); // база как в редакторе
+        doc->setHtml(stored);
+        fmt.normalizeHeadingFontSizes(); // как при загрузке заметки
+
+        const QTextCharFormat f1=doc->firstBlock().begin().fragment().charFormat();
+        const QTextCharFormat f2=doc->firstBlock().next().begin().fragment().charFormat();
+        const QTextCharFormat f6=doc->lastBlock().begin().fragment().charFormat();
+        qDebug() << "ROUNDTRIP h1 pt:" << f1.fontPointSize()
+                 << "adj:" << f1.property(QTextFormat::FontSizeAdjustment)
+                 << "h2 pt:" << f2.fontPointSize()
+                 << "h6 pt:" << f6.fontPointSize();
+        check(f1.fontPointSize()==44.0, "HEADING-ROUNDTRIP-H1");
+        check(!f1.hasProperty(QTextFormat::FontSizeAdjustment), "HEADING-NO-ADJ-H1");
+        // Заголовок без явного кегля: лесенка 11*(8/3)=29.333, не мелкий
+        check(f2.fontPointSize()>29.0 && f2.fontPointSize()<29.7, "HEADING-ROUNDTRIP-H2-LADDER");
+        check(!f2.hasProperty(QTextFormat::FontSizeAdjustment), "HEADING-NO-ADJ-H2");
+        check(f6.fontPointSize()==11.0, "HEADING-ROUNDTRIP-H6");
+        check(!f6.hasProperty(QTextFormat::FontSizeAdjustment), "HEADING-NO-ADJ-H6");
+        // Убывание H1>H2>H6
+        check(f1.fontPointSize()>f2.fontPointSize() && f2.fontPointSize()>f6.fontPointSize(),
+              "HEADING-ROUNDTRIP-DECREASING");
+    }
+
     qDebug() << (fails==0 ? "TYPEFACEPROBE-OK" : "TYPEFACEPROBE-BAD");
     return fails;
 }

@@ -140,12 +140,12 @@ void AppConfigPage_Voice::retranslateUi(void)
   mp3Radio->setText(tr("MP3 (.mp3)"));
 
   qualityBox->setTitle(tr("Default Opus quality"));
-  qualitySuperLowRadio->setText(tr("Super low (12 kbit/s)"));
-  qualityExtraLowRadio->setText(tr("Extra low (16 kbit/s)"));
-  qualityLowRadio->setText(tr("Low (24 kbit/s)"));
-  qualityMiddleRadio->setText(tr("Middle (32 kbit/s)"));
-  qualityHighRadio->setText(tr("High (48 kbit/s)"));
-  qualityExtraRadio->setText(tr("Extra high (64 kbit/s)"));
+  qualitySuperLowRadio->setText(tr("Super low (12 kbit/s), 1 minute ~ 90 KB"));
+  qualityExtraLowRadio->setText(tr("Extra low (16 kbit/s), 1 minute ~ 120 KB"));
+  qualityLowRadio->setText(tr("Low (24 kbit/s), 1 minute ~ 180 KB"));
+  qualityMiddleRadio->setText(tr("Middle (32 kbit/s), 1 minute ~ 240 KB"));
+  qualityHighRadio->setText(tr("High (48 kbit/s), 1 minute ~ 360 KB"));
+  qualityExtraRadio->setText(tr("Extra high (64 kbit/s), 1 minute ~ 480 KB"));
 
 }
 

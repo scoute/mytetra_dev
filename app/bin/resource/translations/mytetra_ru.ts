@@ -9042,28 +9042,28 @@ Git-история в общем каталоге будет расти с ка�
         <translation>Качество:</translation>
     </message>
     <message>
-        <source>Super low (12 kbit/s)</source>
-        <translation>Сверхнизкое (12 кбит/с)</translation>
+        <source>Super low (12 kbit/s), 1 minute ~ 90 KB</source>
+        <translation>Сверхнизкое (12 кбит/с), 1 минута ~ 90 Кбайт</translation>
     </message>
     <message>
-        <source>Extra low (16 kbit/s)</source>
-        <translation>Минимальное (16 кбит/с)</translation>
+        <source>Extra low (16 kbit/s), 1 minute ~ 120 KB</source>
+        <translation>Минимальное (16 кбит/с), 1 минута ~ 120 Кбайт</translation>
     </message>
     <message>
-        <source>Low (24 kbit/s)</source>
-        <translation>Низкое (24 кбит/с)</translation>
+        <source>Low (24 kbit/s), 1 minute ~ 180 KB</source>
+        <translation>Низкое (24 кбит/с), 1 минута ~ 180 Кбайт</translation>
     </message>
     <message>
-        <source>Middle (32 kbit/s)</source>
-        <translation>Среднее (32 кбит/с)</translation>
+        <source>Middle (32 kbit/s), 1 minute ~ 240 KB</source>
+        <translation>Среднее (32 кбит/с), 1 минута ~ 240 Кбайт</translation>
     </message>
     <message>
-        <source>High (48 kbit/s)</source>
-        <translation>Высокое (48 кбит/с)</translation>
+        <source>High (48 kbit/s), 1 minute ~ 360 KB</source>
+        <translation>Высокое (48 кбит/с), 1 минута ~ 360 Кбайт</translation>
     </message>
     <message>
-        <source>Extra high (64 kbit/s)</source>
-        <translation>Максимальное (64 кбит/с)</translation>
+        <source>Extra high (64 kbit/s), 1 minute ~ 480 KB</source>
+        <translation>Максимальное (64 кбит/с), 1 минута ~ 480 Кбайт</translation>
     </message>
     <message>
         <source>Quality applies to Opus format</source>
@@ -9145,28 +9145,28 @@ Git-история в общем каталоге будет расти с ка�
         <translation>Качество Opus по умолчанию</translation>
     </message>
     <message>
-        <source>Super low (12 kbit/s)</source>
-        <translation>Сверхнизкое (12 кбит/с)</translation>
+        <source>Super low (12 kbit/s), 1 minute ~ 90 KB</source>
+        <translation>Сверхнизкое (12 кбит/с), 1 минута ~ 90 Кбайт</translation>
     </message>
     <message>
-        <source>Extra low (16 kbit/s)</source>
-        <translation>Минимальное (16 кбит/с)</translation>
+        <source>Extra low (16 kbit/s), 1 minute ~ 120 KB</source>
+        <translation>Минимальное (16 кбит/с), 1 минута ~ 120 Кбайт</translation>
     </message>
     <message>
-        <source>Low (24 kbit/s)</source>
-        <translation>Низкое (24 кбит/с)</translation>
+        <source>Low (24 kbit/s), 1 minute ~ 180 KB</source>
+        <translation>Низкое (24 кбит/с), 1 минута ~ 180 Кбайт</translation>
     </message>
     <message>
-        <source>Middle (32 kbit/s)</source>
-        <translation>Среднее (32 кбит/с)</translation>
+        <source>Middle (32 kbit/s), 1 minute ~ 240 KB</source>
+        <translation>Среднее (32 кбит/с), 1 минута ~ 240 Кбайт</translation>
     </message>
     <message>
-        <source>High (48 kbit/s)</source>
-        <translation>Высокое (48 кбит/с)</translation>
+        <source>High (48 kbit/s), 1 minute ~ 360 KB</source>
+        <translation>Высокое (48 кбит/с), 1 минута ~ 360 Кбайт</translation>
     </message>
     <message>
-        <source>Extra high (64 kbit/s)</source>
-        <translation>Максимальное (64 кбит/с)</translation>
+        <source>Extra high (64 kbit/s), 1 minute ~ 480 KB</source>
+        <translation>Максимальное (64 кбит/с), 1 минута ~ 480 Кбайт</translation>
     </message>
 </context>
 <context>

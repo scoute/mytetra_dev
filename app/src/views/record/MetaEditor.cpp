@@ -18,6 +18,7 @@
 
 #include "libraries/wyedit/Editor.h"
 #include "libraries/wyedit/EditorTextArea.h"
+#include "libraries/wyedit/HtmlSourceEdit.h"
 #include "libraries/wyedit/EditorIndentSliderAssistant.h"
 #include "libraries/wyedit/EditorToolBarAssistant.h"
 #include "libraries/wyedit/indentslider/IndentSlider.h"
@@ -83,7 +84,30 @@ void MetaEditor::setupSignals(void)
     connect(textArea, &QTextEdit::cursorPositionChanged,
             this,    &MetaEditor::updateCursorLabel);
 
+    connect(textArea->document(), &QTextDocument::contentsChanged,
+            this,                  &MetaEditor::onNoteTextChanged);
+
     updateCursorLabel();
+  }
+
+  // Живой исходник: дебаунс правок в обе стороны, таймеры
+  // перезапускаются каждой клавишей
+  noteToSourceTimer=new QTimer(this);
+  noteToSourceTimer->setSingleShot(true);
+  noteToSourceTimer->setInterval(400);
+  connect(noteToSourceTimer, &QTimer::timeout,
+          this,              &MetaEditor::syncNoteToSource);
+
+  sourceToNoteTimer=new QTimer(this);
+  sourceToNoteTimer->setSingleShot(true);
+  sourceToNoteTimer->setInterval(400);
+  connect(sourceToNoteTimer, &QTimer::timeout,
+          this,              &MetaEditor::syncSourceToNote);
+
+  if(htmlSourcePane!=nullptr)
+  {
+    connect(htmlSourcePane->document(), &QTextDocument::contentsChanged,
+            this,                        &MetaEditor::onSourceTextChanged);
   }
 }
 
@@ -188,7 +212,18 @@ void MetaEditor::metaAssembly(void)
   if(findBarWidget()!=nullptr)
     gridLayout->addWidget(findBarWidget(),                       5,0, 1,2);
 
-  gridLayout->addWidget(textArea,                                 6,0, 1,2);
+  // Живой исходник под заметкой: верх сплиттера - текст,
+  // низ - HtmlSourceEdit в паре. Панель скрыта пока не позовут
+  // из меню Вид, скрытый виджет места не занимает
+  sourceSplitter=new QSplitter(Qt::Vertical, m_extendEditorScreen);
+  sourceSplitter->addWidget(textArea);
+  htmlSourcePane=new HtmlSourceEdit(sourceSplitter);
+  htmlSourcePane->setVisible(false);
+  sourceSplitter->setStretchFactor(0, 3);
+  sourceSplitter->setStretchFactor(1, 1);
+  sourceSplitter->setCollapsible(0, false);
+  sourceSplitter->setCollapsible(1, true);
+  gridLayout->addWidget(sourceSplitter,                         6,0, 1,2);
 
   gridLayout->addWidget(labelUrl,             7,0);
   gridLayout->addWidget(recordUrl,            7,1);
@@ -557,6 +592,10 @@ void MetaEditor::setReadOnly(bool state)
 
   textArea->setReadOnly(state); // textArea->setEnabled(false);
 
+  // Исходник зеркалит запрет: правки в него при readOnly откатываются
+  if(htmlSourcePane!=nullptr)
+    htmlSourcePane->setReadOnly(state);
+
   // Слой прикрепленных файлов
   m_attachTableScreen->setReadOnly(state);
 }
@@ -732,4 +771,122 @@ void MetaEditor::retranslateUi(void)
   updateCursorLabel();
 
   editorToolBarAssistant->retranslateUi();
+}
+
+
+// Живой исходник HTML под заметкой (режим редактор+превью).
+// Верх сплиттера - текст, низ - HtmlSourceEdit в паре, правки
+// летят в обе стороны с дебаунсом. Состояние на сессию
+void MetaEditor::setHtmlSourceVisible(bool visible)
+{
+  if(htmlSourcePane==nullptr || sourceSplitter==nullptr)
+    return;
+
+  if(htmlSourcePane->isVisible()==visible)
+    return;
+
+  htmlSourcePane->setVisible(visible);
+  htmlSourcePane->setReadOnly(textArea->isReadOnly());
+
+  if(visible)
+  {
+    refreshSourcePane();
+
+    // Две трети текста, треть исходника
+    const int height=sourceSplitter->height();
+
+    if(height>0)
+      sourceSplitter->setSizes(QList<int>() << height*2/3 << height-height*2/3);
+  }
+}
+
+
+bool MetaEditor::isHtmlSourceVisible(void) const
+{
+  return htmlSourcePane!=nullptr && htmlSourcePane->isVisible();
+}
+
+
+void MetaEditor::onNoteTextChanged(void)
+{
+  if(sourceSyncing || htmlSourcePane==nullptr || !htmlSourcePane->isVisible())
+    return;
+
+  noteToSourceTimer->start(400);
+}
+
+
+void MetaEditor::onSourceTextChanged(void)
+{
+  if(sourceSyncing)
+    return;
+
+  sourceToNoteTimer->start(400);
+}
+
+
+void MetaEditor::refreshSourcePane(void)
+{
+  if(htmlSourcePane==nullptr)
+    return;
+
+  const QString stable=getTextareaStable();
+
+  if(stable==htmlSourcePane->toPlainText())
+    return;
+
+  sourceSyncing=true;
+
+  const int pos=htmlSourcePane->textCursor().position();
+  htmlSourcePane->setPlainText(stable);
+
+  QTextCursor cursor(htmlSourcePane->document());
+  cursor.setPosition(qBound(0, pos, qMax(0, htmlSourcePane->document()->characterCount()-1)));
+  htmlSourcePane->setTextCursor(cursor);
+
+  sourceSyncing=false;
+}
+
+
+void MetaEditor::syncNoteToSource(void)
+{
+  if(sourceSyncing || htmlSourcePane==nullptr || !htmlSourcePane->isVisible())
+    return;
+
+  // Зеркалить запрет правок: мало ли переключали мимо setReadOnly
+  htmlSourcePane->setReadOnly(textArea->isReadOnly());
+
+  refreshSourcePane();
+}
+
+
+void MetaEditor::syncSourceToNote(void)
+{
+  if(sourceSyncing || htmlSourcePane==nullptr || textArea==nullptr)
+    return;
+
+  // Режим только чтения: правки исходника откатываются к заметке
+  if(textArea->isReadOnly())
+  {
+    refreshSourcePane();
+    return;
+  }
+
+  const QString html=htmlSourcePane->toPlainText();
+
+  if(html==getTextareaStable())
+    return;
+
+  sourceSyncing=true;
+
+  // Как загрузка заметки: setHtml плюс оживление секретов и баблов.
+  // Откат - обычное undo заметки, коммитов панель не создает
+  setTextarea(html);
+
+  if(audioFormatter!=nullptr)
+    audioFormatter->materializeBubbles();
+
+  setTextareaModified(true);
+
+  sourceSyncing=false;
 }

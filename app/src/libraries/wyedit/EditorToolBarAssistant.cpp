@@ -525,6 +525,9 @@ void EditorToolBarAssistant::onUpdateOutlineButtonHiglight(void)
     headingH1Action->setChecked(false);
     headingH2Action->setChecked(false);
     headingH3Action->setChecked(false);
+    headingH4Action->setChecked(false);
+    headingH5Action->setChecked(false);
+    headingH6Action->setChecked(false);
     headingNormalAction->setChecked(false);
 
     if(m_textArea->fontWeight()==QFont::Bold) bold->setChecked(true);
@@ -549,6 +552,12 @@ void EditorToolBarAssistant::onUpdateOutlineButtonHiglight(void)
         headingH2Action->setChecked(true);
     else if(headingLevel==3)
         headingH3Action->setChecked(true);
+    else if(headingLevel==4)
+        headingH4Action->setChecked(true);
+    else if(headingLevel==5)
+        headingH5Action->setChecked(true);
+    else if(headingLevel==6)
+        headingH6Action->setChecked(true);
     else
         headingNormalAction->setChecked(true);
 }

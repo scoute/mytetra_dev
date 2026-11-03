@@ -91,7 +91,7 @@ static int inkedHeight(const QImage &image)
 
 static double headingScaleFactor(int level)
 {
-    static double factors[4]={0.0, 0.0, 0.0, 0.0};
+    static double factors[7]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     static bool measured=false;
 
     if(!measured)
@@ -123,22 +123,31 @@ static double headingScaleFactor(int level)
             const int h1=renderTag(QStringLiteral("<h1>Hg</h1>"));
             const int h2=renderTag(QStringLiteral("<h2>Hg</h2>"));
             const int h3=renderTag(QStringLiteral("<h3>Hg</h3>"));
+            const int h4=renderTag(QStringLiteral("<h4>Hg</h4>"));
+            const int h5=renderTag(QStringLiteral("<h5>Hg</h5>"));
+            const int h6=renderTag(QStringLiteral("<h6>Hg</h6>"));
             if(h1>0)
                 factors[1]=double(h1)/double(plainHeight);
             if(h2>0)
                 factors[2]=double(h2)/double(plainHeight);
             if(h3>0)
                 factors[3]=double(h3)/double(plainHeight);
+            if(h4>0)
+                factors[4]=double(h4)/double(plainHeight);
+            if(h5>0)
+                factors[5]=double(h5)/double(plainHeight);
+            if(h6>0)
+                factors[6]=double(h6)/double(plainHeight);
         }
 
-        for(int i=0; i<4; ++i)
+        for(int i=0; i<7; ++i)
             if(factors[i]<=0.0)
                 factors[i]=1.0;
 
-        qDebug() << "Heading scale factors H1/H2/H3:" << factors[1] << factors[2] << factors[3];
+        qDebug() << "Heading scale factors H1-H6:" << factors[1] << factors[2] << factors[3] << factors[4] << factors[5] << factors[6];
     }
 
-    if(level<0 || level>3)
+    if(level<0 || level>6)
         return 1.0;
 
     return factors[level];
@@ -158,6 +167,12 @@ static void headingProbeMargins(int level, QTextBlockFormat &blockFormat)
         probe.setHtml(QStringLiteral("<h2>x</h2>"));
     else if(level==3)
         probe.setHtml(QStringLiteral("<h3>x</h3>"));
+    else if(level==4)
+        probe.setHtml(QStringLiteral("<h4>x</h4>"));
+    else if(level==5)
+        probe.setHtml(QStringLiteral("<h5>x</h5>"));
+    else if(level==6)
+        probe.setHtml(QStringLiteral("<h6>x</h6>"));
     else
         probe.setHtml(QStringLiteral("<p>x</p>"));
 
@@ -430,7 +445,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
 void TypefaceFormatter::onHeadingClicked(int index)
 {
-    // Пункты меню: 0-H1, 1-H2, 2-H3, 3-обычный текст
+    // Пункты меню: 0-H1, 1-H2, 2-H3, 3-H4, 4-H5, 5-H6, 6-обычный текст
     if(index==0)
         applyHeadingLevel(1);
     else if(index==1)
@@ -438,6 +453,12 @@ void TypefaceFormatter::onHeadingClicked(int index)
     else if(index==2)
         applyHeadingLevel(3);
     else if(index==3)
+        applyHeadingLevel(4);
+    else if(index==4)
+        applyHeadingLevel(5);
+    else if(index==5)
+        applyHeadingLevel(6);
+    else if(index==6)
         applyHeadingLevel(0);
 }
 

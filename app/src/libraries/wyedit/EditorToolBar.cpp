@@ -241,7 +241,7 @@ void EditorToolBar::setupToolBarTools(void)
     code->setListMode(true);
     code->setMaxVisibleItems(15);
 
-    // Кнопка заголовков: одна выпадашка на 4 пункта (H1, H2, H3,
+    // Кнопка заголовков: одна выпадашка на 7 пунктов (H1-H6,
     // обычный текст). Места на тулбаре мало, два отдельных H1/H2
     // раздували линейку. Клик сразу открывает меню (InstantPopup),
     // актуальный уровень помечается галкой из onUpdateOutlineButtonHiglight
@@ -252,14 +252,23 @@ void EditorToolBar::setupToolBarTools(void)
     headingH1Action=new QAction(QIcon(":/resource/pic/edit_heading1.svg"), tr("Heading 1"), this);
     headingH2Action=new QAction(QIcon(":/resource/pic/edit_heading2.svg"), tr("Heading 2"), this);
     headingH3Action=new QAction(QIcon(":/resource/pic/edit_heading3.svg"), tr("Heading 3"), this);
+    headingH4Action=new QAction(QIcon(":/resource/pic/edit_heading4.svg"), tr("Heading 4"), this);
+    headingH5Action=new QAction(QIcon(":/resource/pic/edit_heading5.svg"), tr("Heading 5"), this);
+    headingH6Action=new QAction(QIcon(":/resource/pic/edit_heading6.svg"), tr("Heading 6"), this);
     headingNormalAction=new QAction(tr("Normal text"), this);
     headingH1Action->setCheckable(true);
     headingH2Action->setCheckable(true);
     headingH3Action->setCheckable(true);
+    headingH4Action->setCheckable(true);
+    headingH5Action->setCheckable(true);
+    headingH6Action->setCheckable(true);
     headingNormalAction->setCheckable(true);
     heading->addAction(headingH1Action);
     heading->addAction(headingH2Action);
     heading->addAction(headingH3Action);
+    heading->addAction(headingH4Action);
+    heading->addAction(headingH5Action);
+    heading->addAction(headingH6Action);
     heading->addAction(headingNormalAction);
 
     // Кнопка Clear
@@ -506,6 +515,9 @@ void EditorToolBar::setupShortcuts(void)
     AppContext::instance().shortcutManager()->initAction("editor-heading1", headingH1Action);
     AppContext::instance().shortcutManager()->initAction("editor-heading2", headingH2Action);
     AppContext::instance().shortcutManager()->initAction("editor-heading3", headingH3Action);
+    AppContext::instance().shortcutManager()->initAction("editor-heading4", headingH4Action);
+    AppContext::instance().shortcutManager()->initAction("editor-heading5", headingH5Action);
+    AppContext::instance().shortcutManager()->initAction("editor-heading6", headingH6Action);
     AppContext::instance().shortcutManager()->initAction("editor-clear", clear);
     AppContext::instance().shortcutManager()->initAction("editor-textOnly", textOnly);
     AppContext::instance().shortcutManager()->initAction("editor-fixBreakSymbol", fixBreakSymbol);

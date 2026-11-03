@@ -134,6 +134,36 @@ int main(int argc, char **argv)
     check(!TypefaceFormatter::tocGoPrefix().isEmpty(), "TOC-GOPREFIX");
     check(!TypefaceFormatter::tocAnchorHref().isEmpty(), "TOC-ANCHOR");
 
+    // Выпадашка заголовков: индексы 3/4/5 -> H4/H5/H6 с эталонными
+    // отступами, индекс 6 -> обычный текст. Связка менюACTION-порядок
+    // (addAction) и onHeadingClicked рвется молча, ловим здесь
+    doc->clear();
+    {
+        QTextCursor c(doc);
+        c.insertText(QStringLiteral("Deep"));
+        QTextCursor sel(doc);
+        sel.select(QTextCursor::Document);
+        area.setTextCursor(sel);
+
+        fmt.onHeadingClicked(3);
+        QTextBlockFormat f4=doc->firstBlock().blockFormat();
+        check(f4.headingLevel()==4, "HEADING-H4-LEVEL");
+        check(f4.topMargin()==12 && f4.bottomMargin()==12, "HEADING-H4-MARGINS");
+
+        fmt.onHeadingClicked(4);
+        QTextBlockFormat f5=doc->firstBlock().blockFormat();
+        check(f5.headingLevel()==5, "HEADING-H5-LEVEL");
+        check(f5.topMargin()==12 && f5.bottomMargin()==4, "HEADING-H5-MARGINS");
+
+        fmt.onHeadingClicked(5);
+        QTextBlockFormat f6=doc->firstBlock().blockFormat();
+        check(f6.headingLevel()==6, "HEADING-H6-LEVEL");
+        check(f6.topMargin()==0 && f6.bottomMargin()==0, "HEADING-H6-MARGINS");
+
+        fmt.onHeadingClicked(6);
+        check(doc->firstBlock().blockFormat().headingLevel()==0, "HEADING-NORMAL-OFF");
+    }
+
     qDebug() << (fails==0 ? "TYPEFACEPROBE-OK" : "TYPEFACEPROBE-BAD");
     return fails;
 }

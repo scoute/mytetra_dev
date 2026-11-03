@@ -4094,6 +4094,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Заголовок 3</translation>
     </message>
     <message>
+        <source>Heading 4</source>
+        <translation>Заголовок 4</translation>
+    </message>
+    <message>
+        <source>Heading 5</source>
+        <translation>Заголовок 5</translation>
+    </message>
+    <message>
+        <source>Heading 6</source>
+        <translation>Заголовок 6</translation>
+    </message>
+    <message>
         <source>Normal text</source>
         <translation>Обычный текст</translation>
     </message>
@@ -7768,6 +7780,31 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <source>Format paragraphs as third-level heading</source>
+        <translation>Оформить абзацы как заголовок третьего уровня</translation>
+    </message>
+    <message>
+        <source>Heading 4</source>
+        <translation>Заголовок 4</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as fourth-level heading</source>
+        <translation>Оформить абзацы как заголовок четвёртого уровня</translation>
+    </message>
+    <message>
+        <source>Heading 5</source>
+        <translation>Заголовок 5</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as fifth-level heading</source>
+        <translation>Оформить абзацы как заголовок пятого уровня</translation>
+    </message>
+    <message>
+        <source>Heading 6</source>
+        <translation>Заголовок 6</translation>
+    </message>
+    <message>
+        <source>Format paragraphs as sixth-level heading</source>
+        <translation>Оформить абзацы как заголовок шестого уровня</translation>
         <translation>Оформить абзацы как заголовок третьего уровня</translation>
     </message>
     <message>

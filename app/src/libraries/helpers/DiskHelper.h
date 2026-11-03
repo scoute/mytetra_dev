@@ -29,6 +29,9 @@ public:
 
   static bool isDirectoryEmpty(QString dirName);
 
+  // Человекочитаемый размер файла: байты, KB, MB
+  static QString formatFileSize(qint64 bytes);
+
   static bool copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath);
 
 private:

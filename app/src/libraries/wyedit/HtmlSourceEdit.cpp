@@ -8,6 +8,7 @@
 #include <QApplication>
 #include <QPalette>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QRegularExpression>
 #include <QSet>
 
@@ -36,6 +37,12 @@ protected:
     void paintEvent(QPaintEvent *event) override
     {
         codeEditor->paintLineNumberArea(event);
+    }
+
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        if(event->button()==Qt::LeftButton)
+            codeEditor->toggleFoldAt(event->pos().y());
     }
 
 private:
@@ -116,6 +123,16 @@ bool HtmlSourceEdit::findInternal(const QString &text,
 
     if(found.isNull())
         return false;
+
+    // Вхождение могло попасть в свернутый пустой абзац:
+    // показать блок, иначе курсор останется невидимым
+    if(!found.block().isVisible())
+    {
+        QTextBlock unhideBlock=found.block();
+        unhideBlock.setVisible(true);
+        document()->markContentsDirty(unhideBlock.position(),
+                                      unhideBlock.length());
+    }
 
     setTextCursor(found);
     ensureCursorVisible();
@@ -257,12 +274,143 @@ void HtmlSourceEdit::goToLine(int line)
     const int target=qBound(1, line, qMax(1, lastLine));
 
     QTextCursor cursor(document()->findBlockByNumber(target-1));
+
+    if(!cursor.block().isVisible())
+    {
+        QTextBlock unhideBlock=cursor.block();
+        unhideBlock.setVisible(true);
+        document()->markContentsDirty(unhideBlock.position(),
+                                      unhideBlock.length());
+    }
+
     setTextCursor(cursor);
 
     // Именно ensure, не centerCursor: center на еще не раскатанном
     // лэйауте (setPlainText без показа/покраски) падает внутри Qt
     // в QTextLine::naturalTextRect
     ensureCursorVisible();
+}
+
+
+// Пустой абзац toHtml: <p ...><br /></p> в одну строку.
+// Атрибуты любые (Qt всегда пишет полный набор), важен только
+// вид: открывающий p, одиночный br, закрывающий p
+bool HtmlSourceEdit::isEmptyParagraphLine(const QString &line)
+{
+    static const QRegularExpression emptyPara(
+        QStringLiteral("^\\s*<p(\\s[^<>]*)?>\\s*<br\\s*/?>\\s*</p>\\s*$"),
+        QRegularExpression::CaseInsensitiveOption);
+
+    return emptyPara.match(line).hasMatch();
+}
+
+bool HtmlSourceEdit::isFoldableLine(const QString &line)
+{
+    return isEmptyParagraphLine(line) &&
+           line.contains(QStringLiteral("style="));
+}
+
+
+// Свернуть все пустые абзацы после полной замены текста.
+// Ручные развороты сбрасываются: вызывается только из refreshSourcePane
+void HtmlSourceEdit::updateEmptyFolds(void)
+{
+    bool any=false;
+    int visibleCount=0;
+
+    for(QTextBlock block=document()->firstBlock(); block.isValid(); block=block.next())
+    {
+        // Сворачиваются только развесистые инлайн-варианты: короткий
+        // класс уже компактен и остается видимым якорем
+        if(isFoldableLine(block.text()))
+        {
+            block.setVisible(false);
+            any=true;
+        }
+        else
+        {
+            block.setVisible(true);
+            ++visibleCount;
+        }
+    }
+
+    // Все строки пустые (пустая заметка): первую оставить видимой,
+    // иначе панель станет полностью пустой и непонятной
+    if(any && visibleCount==0)
+    {
+        QTextBlock first=document()->firstBlock();
+
+        if(first.isValid())
+            first.setVisible(true);
+    }
+
+    document()->markContentsDirty(0, document()->characterCount());
+
+    m_hasEmptyFolds=any;
+    updateLineNumberAreaWidth(0);
+    viewport()->update();
+    lineNumberArea->update();
+}
+
+
+// Клик в гуттере: развернуть свернутый кусок после строки
+// или свернуть пустой абзац под кликом
+bool HtmlSourceEdit::toggleFoldAt(int gutterY)
+{
+    QTextCursor probe=cursorForPosition(QPoint(5, gutterY));
+
+    if(probe.isNull())
+        return false;
+
+    QTextBlock block=probe.block();
+
+    if(!block.isValid())
+        return false;
+
+    // После строки свернутый кусок: показать его целиком
+    QTextBlock next=block.next();
+
+    if(next.isValid() && !next.isVisible())
+    {
+        int from=next.position();
+        int to=from;
+
+        for(QTextBlock b=next; b.isValid() && !b.isVisible(); b=b.next())
+        {
+            b.setVisible(true);
+            to=b.position()+b.length();
+        }
+
+        document()->markContentsDirty(from, to-from);
+        viewport()->update();
+        lineNumberArea->update();
+        return true;
+    }
+
+    // Сама строка - пустой абзац: свернуть весь смежный кусок,
+    // чтобы пачкой пустых строк не кликать по одной
+    if(!isFoldableLine(block.text()))
+        return false;
+
+    QTextBlock first=block;
+
+    while(first.previous().isValid() &&
+          isFoldableLine(first.previous().text()))
+        first=first.previous();
+
+    int from=first.position();
+    int to=from;
+
+    for(QTextBlock b=first; b.isValid() && isFoldableLine(b.text()); b=b.next())
+    {
+        b.setVisible(false);
+        to=b.position()+b.length();
+    }
+
+    document()->markContentsDirty(from, to-from);
+    viewport()->update();
+    lineNumberArea->update();
+    return true;
 }
 
 
@@ -286,7 +434,14 @@ int HtmlSourceEdit::lineNumberAreaWidth(void) const
         ++digits;
     }
 
-    return 6+fontMetrics().horizontalAdvance(QLatin1Char('9'))*digits;
+    const int digitWidth=fontMetrics().horizontalAdvance(QLatin1Char('9'));
+
+    // При свертках слева рисуются маркеры [-] и [+N]: им своя зона,
+    // номера как раньше прижаты вправо
+    if(m_hasEmptyFolds)
+        return 6+digitWidth*digits+digitWidth*5;
+
+    return 6+digitWidth*digits;
 }
 
 
@@ -353,6 +508,32 @@ void HtmlSourceEdit::paintLineNumberArea(QPaintEvent *event)
             {
                 painter.drawText(0, top, lineNumberArea->width()-3, fontMetrics().height(),
                                  Qt::AlignRight, QString::number(blockNumber+1));
+            }
+
+            // Маркеры сверток слева: [-] сворачивает пустой абзац,
+            // [+N] разворачивает N спрятанных строк за ним
+            if(m_hasEmptyFolds)
+            {
+                int hiddenRun=0;
+
+                for(QTextBlock ahead=block.next();
+                    ahead.isValid() && !ahead.isVisible() && hiddenRun<100;
+                    ahead=ahead.next())
+                    ++hiddenRun;
+
+                if(hiddenRun>0)
+                {
+                    painter.drawText(2, top, lineNumberArea->width()-3, fontMetrics().height(),
+                                     Qt::AlignLeft,
+                                     QStringLiteral("[+")+
+                                     (hiddenRun>99 ? QStringLiteral("99") : QString::number(hiddenRun))+
+                                     QStringLiteral("]"));
+                }
+                else if(isFoldableLine(block.text()))
+                {
+                    painter.drawText(2, top, lineNumberArea->width()-3, fontMetrics().height(),
+                                     Qt::AlignLeft, QStringLiteral("[-]"));
+                }
             }
         }
 

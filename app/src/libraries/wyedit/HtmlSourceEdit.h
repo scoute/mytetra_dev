@@ -43,6 +43,24 @@ public:
     // Строка 1-based с клампом, курсор в ее начало
     void goToLine(int line);
 
+    // Пустая строка-абзац вида <p ...><br /></p>: мусор toHtml.
+    // Проверка по тексту блока, регистр не важен
+    static bool isEmptyParagraphLine(const QString &line);
+
+    // Сворачиваемый пустой абзац: развесистый инлайн-вариант.
+    // Короткий класс уже компактен и остается видимым якорем
+    static bool isFoldableLine(const QString &line);
+
+    // Свернуть все пустые абзацы (после полной замены текста).
+    // Ручные развороты при этом сбрасываются: вызывается только
+    // из refreshSourcePane, набор под курсором не трогается.
+    // Файл и документ не меняются - прячутся только строки вида
+    void updateEmptyFolds(void);
+
+    // Клик в гуттере: развернуть свернутый кусок после строки
+    // или свернуть пустой абзац под кликом. Возвращает, сработало ли
+    bool toggleFoldAt(int gutterY);
+
     // Имя загруженного стиля подсветки (для проб)
     QString syntaxStyleName(void) const;
 
@@ -75,7 +93,10 @@ private:
 
     LineNumberArea *lineNumberArea;
     QStyleSyntaxHighlighter *xmlHighlighter;
-    QList<QTextEdit::ExtraSelection> matchSelections;
+
+    // Есть ли сворачиваемые пустые абзацы: под них гуттер шире
+    // на зону маркеров, маркеры рисуются слева, номера справа
+    bool m_hasEmptyFolds=false;   QList<QTextEdit::ExtraSelection> matchSelections;
     QList<QTextEdit::ExtraSelection> pairSelections;
 
     bool findInternal(const QString &text, QTextDocument::FindFlags flags, bool backward);

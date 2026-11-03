@@ -3943,6 +3943,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation type="vanished">Показать прикрепленные файлы</translation>
     </message>
     <message>
+        <source>Editor settings...</source>
+        <translation>Настройки редактора...</translation>
+    </message>
+    <message>
         <source>Heading 1</source>
         <translation>Заголовок 1</translation>
     </message>

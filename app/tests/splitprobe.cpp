@@ -421,6 +421,68 @@ int main(int argc, char **argv)
               QStringLiteral("<p align=\"center\" style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px;\"><br /></p>"),
               "NORM-ATTR-KEPT");
 
+        // Заголовки: свои дефолты у каждого (h1 18/12, h2 16/12,
+        // h3 14/12, h4 12/12, h5 12/4, h6 0/0) - сносятся в голый тег
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h1 style=\" margin-top:18px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h1>"))==
+              QStringLiteral("<h1>T</h1>"),
+              "NORM-H1-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h2 style=\" margin-top:16px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h2>"))==
+              QStringLiteral("<h2>T</h2>"),
+              "NORM-H2-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h3 style=\" margin-top:14px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h3>"))==
+              QStringLiteral("<h3>T</h3>"),
+              "NORM-H3-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h4 style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h4>"))==
+              QStringLiteral("<h4>T</h4>"),
+              "NORM-H4-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h5 style=\" margin-top:12px; margin-bottom:4px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h5>"))==
+              QStringLiteral("<h5>T</h5>"),
+              "NORM-H5-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h6 style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h6>"))==
+              QStringLiteral("<h6>T</h6>"),
+              "NORM-H6-STRIP");
+
+        // Частые блоки: li, pre (12/12), div (0/0), blockquote (12/12+40px бока)
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<ul><li style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</li></ul>"))==
+              QStringLiteral("<ul><li>T</li></ul>"),
+              "NORM-LI-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<pre style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</pre>"))==
+              QStringLiteral("<pre>T</pre>"),
+              "NORM-PRE-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<div style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</div>"))==
+              QStringLiteral("<div>T</div>"),
+              "NORM-DIV-STRIP");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<blockquote style=\" margin-top:12px; margin-bottom:12px; margin-left:40px; margin-right:40px; -qt-block-indent:0; text-indent:0px;\">T</blockquote>"))==
+              QStringLiteral("<blockquote>T</blockquote>"),
+              "NORM-BQ-STRIP");
+
+        // Пустой заголовок: маркер хранится инлайн, остальное сносится
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h1 style=\"-qt-paragraph-type:empty; margin-top:18px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></h1>"))==
+              QStringLiteral("<h1 style=\"-qt-paragraph-type:empty\"><br /></h1>"),
+              "NORM-H1-EMPTY-MARKER");
+
+        // Чужие отступы у заголовка остаются, дефолтные рядом выкидываются
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<h1 style=\"margin-top:5px; margin-bottom:12px; -qt-block-indent:0;\">T</h1>"))==
+              QStringLiteral("<h1 style=\"margin-top:5px\">T</h1>"),
+              "NORM-H1-NONZERO-KEPT");
+
+        // Рендер заголовка: голый тег грузится в те же отступы и текст
+        {
+            QTextDocument docV, docB;
+            docV.setHtml(QStringLiteral("<h1 style=\" margin-top:18px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">T</h1>"));
+            docB.setHtml(QStringLiteral("<h1>T</h1>"));
+
+            const QTextBlockFormat fv=docV.firstBlock().blockFormat();
+            const QTextBlockFormat fb=docB.firstBlock().blockFormat();
+
+            check(fv.topMargin()==fb.topMargin() &&
+                  fv.bottomMargin()==fb.bottomMargin() &&
+                  fv.leftMargin()==fb.leftMargin() &&
+                  fv.rightMargin()==fb.rightMargin() &&
+                  docV.toPlainText()==docB.toPlainText(),
+                  "NORM-H1-SAME-FORMAT");
+        }
+
         // Эквивалентность рендера: класс с маркером в правиле грузится
         // в побайтово тот же пустой блок (без маркера в правиле был бы
         // фантомный перевод строки, без br абзац вообще пропадал бы)

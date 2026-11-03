@@ -200,6 +200,7 @@ HEADERS = src/main.h \
     src/views/subscriptions/ChangeViewDialog.h \
     src/views/subscriptions/TextDiffDialog.h \
     src/views/appConfigWindow/AppConfigPage_Voice.h \
+    src/views/tree/PublishedBadgeDelegate.h \
     src/views/appConfigWindow/AppConfigPage_Theme.h \
     src/views/mcpHistory/McpHistoryDialog.h \
     src/views/consoleEmulator/CommandRunner.h \
@@ -352,13 +353,13 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
     src/libraries/GitHelper.h \
+    src/libraries/BranchDiffEngine.h \
     src/libraries/BranchPublisher.h \
     src/libraries/SharedDirWatcher.h \
+    src/libraries/TextDiff.h \
     src/libraries/SubscriptionImportEngine.h \
     src/libraries/UnifiedDiff.h \
     src/libraries/ChangeHistory.h \
-    src/libraries/BranchDiffEngine.h \
-    src/libraries/TextDiff.h \
     src/libraries/VoiceNoteHelper.h \
     src/libraries/GlobalParameters.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
@@ -377,7 +378,6 @@ HEADERS+=\
     src/libraries/MtTableWidget.h \
     src/views/tree/KnowTreeView.h \
     src/views/tree/KnowTreeDelegate.h \
-    src/views/tree/PublishedBadgeDelegate.h \
     src/libraries/MtStyledItemDelegate.h
 
 SOURCES = src/main.cpp \
@@ -430,6 +430,7 @@ SOURCES = src/main.cpp \
     src/views/subscriptions/ChangeViewDialog.cpp \
     src/views/subscriptions/TextDiffDialog.cpp \
     src/views/appConfigWindow/AppConfigPage_Voice.cpp \
+    src/views/tree/PublishedBadgeDelegate.cpp \
     src/views/appConfigWindow/AppConfigPage_Theme.cpp \
     src/views/mcpHistory/McpHistoryDialog.cpp \
     src/views/consoleEmulator/CommandRunner.cpp \
@@ -470,11 +471,11 @@ SOURCES = src/main.cpp \
     src/models/tree/TreeItem.cpp \
     src/models/tree/KnowTreeModel.cpp \
     src/models/recordTable/RecordTableData.cpp \
+    src/models/teamProfile/TeamProfile.cpp \
+    src/models/subscription/SubscriptionRegistry.cpp \
     src/models/recordTable/RecordTableModel.cpp \
     src/models/recordTable/RecordTableProxyModel.cpp \
     src/models/appConfig/AppConfig.cpp \
-    src/models/teamProfile/TeamProfile.cpp \
-    src/models/subscription/SubscriptionRegistry.cpp \
     src/views/record/AddNewRecord.cpp \
     src/libraries/ClipboardRecords.cpp \
     src/views/tree/TreeScreen.cpp \
@@ -585,13 +586,13 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
     src/libraries/GitHelper.cpp \
+    src/libraries/BranchDiffEngine.cpp \
     src/libraries/BranchPublisher.cpp \
     src/libraries/SharedDirWatcher.cpp \
+    src/libraries/TextDiff.cpp \
     src/libraries/SubscriptionImportEngine.cpp \
     src/libraries/UnifiedDiff.cpp \
     src/libraries/ChangeHistory.cpp \
-    src/libraries/BranchDiffEngine.cpp \
-    src/libraries/TextDiff.cpp \
     src/libraries/VoiceNoteHelper.cpp \
     src/libraries/GlobalParameters.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
@@ -610,7 +611,6 @@ SOURCES+=\
     src/libraries/MtTableWidget.cpp \
     src/views/tree/KnowTreeView.cpp \
     src/views/tree/KnowTreeDelegate.cpp \
-    src/views/tree/PublishedBadgeDelegate.cpp \
     src/libraries/MtStyledItemDelegate.cpp
 
 # Вендоренные статические библиотеки для голосовых заметок:

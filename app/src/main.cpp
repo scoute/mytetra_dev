@@ -106,20 +106,20 @@ QObject *pMainWindow;
 void printHelp()
 {
     printf("\n");
-    printf("./synctetra --mcp-rw-with-delete - Run MCP server with delete tools, files go to trash\n");
-    printf("./synctetra --mcp-rw - Run read-write MCP server (create and update, no delete)\n");
-    printf("./synctetra --mcp-ro - Run read-only MCP server over stdio for AI clients\n");
-    printf("./synctetra --mcp - Run read-only MCP server (as --mcp-ro)\n");
-    printf("./synctetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
-    printf("./synctetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
-    printf("./synctetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
-    printf("./synctetra --control --openNote <noteId> - Jump to note with <noteId>\n");
-    printf("./synctetra --control --reload - Reload database\n");
-    printf("./synctetra --control --quit - Quit from SyncTetra\n");
-    printf("./synctetra --control --hide - Hide SyncTetra window\n");
-    printf("./synctetra --control --show - Show and activate SyncTetra window\n");
-    printf("For use control mode, run by standard way SyncTetra for show GUI interface, and next use command:\n");
     printf("SyncTetra v.%d.%d.%d\n", APPLICATION_RELEASE_VERSION, APPLICATION_RELEASE_SUBVERSION, APPLICATION_RELEASE_MICROVERSION);
+    printf("For use control mode, run by standard way SyncTetra for show GUI interface, and next use command:\n");
+    printf("./synctetra --control --show - Show and activate SyncTetra window\n");
+    printf("./synctetra --control --hide - Hide SyncTetra window\n");
+    printf("./synctetra --control --quit - Quit from SyncTetra\n");
+    printf("./synctetra --control --reload - Reload database\n");
+    printf("./synctetra --control --openNote <noteId> - Jump to note with <noteId>\n");
+    printf("./synctetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
+    printf("./synctetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
+    printf("./synctetra --control --clipboard [--url <url>] - Create note in unsorted_notes branch from clipboard content\n");
+    printf("./synctetra --mcp - Run read-only MCP server (as --mcp-ro)\n");
+    printf("./synctetra --mcp-ro - Run read-only MCP server over stdio for AI clients\n");
+    printf("./synctetra --mcp-rw - Run read-write MCP server (create and update, no delete)\n");
+    printf("./synctetra --mcp-rw-with-delete - Run MCP server with delete tools, files go to trash\n");
     printf("MCP server requires Allow MCP enabled on the MCP settings page\n");
     printf("\n");
 }

@@ -26,7 +26,7 @@ bool GitHelper::isAvailable(void)
 
         if(probe.exitStatus()==QProcess::NormalExit && probe.exitCode()==0)
         {
-            out=QString::fromUtf8(probe.readAllStandardOutput()).trimmed();
+            out=QString::fromLocal8Bit(probe.readAllStandardOutput()).trimmed();
 
             // "git version 2.43.0" -> "2.43.0"
             const QString prefix=QStringLiteral("git version ");
@@ -61,17 +61,9 @@ int GitHelper::run(const QString &workDir, const QStringList &args,
     if(!isAvailable())
         return -1;
 
-    // Git везде отдает UTF-8 (сообщения коммитов, diff, содержимое файлов),
-    // а читаем мы через fromUtf8 ниже. core.quotePath=false отключает
-    // октальное квочение не-ASCII путей, иначе кириллица в путях видна
-    // как \320\222... и ломает подмену путей на заголовок в diff
-    QStringList fullArgs;
-    fullArgs << QStringLiteral("-c") << QStringLiteral("core.quotePath=false");
-    fullArgs+=args;
-
     QProcess git;
     git.setWorkingDirectory(workDir);
-    git.start(QStringLiteral("git"), fullArgs);
+    git.start(QStringLiteral("git"), args);
 
     if(!git.waitForStarted(10000))
         return -1;
@@ -91,10 +83,10 @@ int GitHelper::run(const QString &workDir, const QStringList &args,
     }
 
     if(stdoutText!=nullptr)
-        *stdoutText=QString::fromUtf8(git.readAllStandardOutput());
+        *stdoutText=QString::fromLocal8Bit(git.readAllStandardOutput());
 
     if(stderrText!=nullptr)
-        *stderrText=QString::fromUtf8(git.readAllStandardError());
+        *stderrText=QString::fromLocal8Bit(git.readAllStandardError());
 
     if(git.exitStatus()!=QProcess::NormalExit)
         return -1;
@@ -290,8 +282,8 @@ bool GitHelper::addPaths(const QString &dir, const QStringList &paths)
 bool GitHelper::commitStaged(const QString &dir, const QString &message)
 {
     QStringList args;
-    args << QStringLiteral("-c") << QStringLiteral("user.name=MyTetra")
-         << QStringLiteral("-c") << QStringLiteral("user.email=mytetra@local")
+    args << QStringLiteral("-c") << QStringLiteral("user.name=SyncTetra")
+         << QStringLiteral("-c") << QStringLiteral("user.email=synctetra@local")
          << QStringLiteral("commit") << QStringLiteral("-m") << message;
 
     return run(dir, args)==0;
@@ -347,10 +339,10 @@ bool GitHelper::commitPathIfChanged(const QString &dir, const QString &message,
     }
 
     QStringList addArgs;
-    addArgs << QStringLiteral("add");
+    addArgs << QStringLiteral("add") << QStringLiteral("--");
 
     if(!relPath.isEmpty())
-        addArgs << QStringLiteral("--") << relPath;
+        addArgs << relPath;
     else
         addArgs << QStringLiteral("-A");
 
@@ -512,6 +504,7 @@ bool GitHelper::archiveHistory(const QString &repo, const QString &message,
 
     return true;
 }
+
 
 bool GitHelper::truncateFileHistory(const QString &dir, const QString &file,
                                     const QString &targetRev,

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Сборка портабельной версии SyncTetra для Windows через Wine.
+# Сборка портабельной версии MyTetra для Windows через Wine.
 # Qt для Windows (mingw81_32) и тулчейн берутся из обычной Qt-установки,
 # сборка идет вызовом windows-qmake и mingw32-make под Wine.
 # Медленно (сам Wine нетороплив), зато без виртуалки.
@@ -14,19 +14,17 @@
 #   ./build_portable_windows.sh            без параметров: исходники откуда
 #                                          запущен скрипт, сборка из каталога
 #                                          Qt Creator (если есть), Qt из него,
-#                                          результат рядом в SyncTetra-win-portable
+#                                          результат рядом в MyTetra-win-portable
 #   ./build_portable_windows.sh --clean    очистить сборочный каталог
 #   ./build_portable_windows.sh --jobs 2   потоки сборки (под Wine больше
 #                                          4 обычно только хуже)
 #   ./build_portable_windows.sh --portable-dir /путь/к/папке
 #   ./build_portable_windows.sh --qt /путь/к/Qt-mingw81_32
-#   ./build_portable_windows.sh --mingw /путь/к/mingw810_32
+#   ./build_portable_windows.sh --mingw /путь/к/mingw730_32
 #   ./build_portable_windows.sh --src /путь/к/исходникам
 #   ./build_portable_windows.sh --build-dir /путь/к/сборке
 #   ./build_portable_windows.sh --no-build  только упаковать готовое
 #   ./build_portable_windows.sh --strip / --no-strip
-#   ./build_portable_windows.sh --map      link map рядом с бинарем
-#                                          (по адресу падения найти функцию)
 #   ./build_portable_windows.sh --smoke    тестовый запуск в offscreen под Wine
 #
 # WINEPREFIX пробрасывается как есть (по умолчанию ~/.wine).
@@ -38,18 +36,17 @@ set -euo pipefail
 # --------------------------------------------------------------------------
 
 # Qt для Windows: предсобранный mingw81_32
-QT_SDK="/media/user/big_data/soft/windows/Qt_installed/5.15.2/mingw81_32"
+QT_SDK="/media/user/big_data/soft/windows/QT_installed/5.15.2/5.15.2/mingw81_32"
 
 # Тулчейн MinGW: разрядность обязана совпадать с Qt (32 бита).
-# mingw810_32 это ровно тот gcc 8.1 (posix-seh), которым собран сам Qt
-MINGW_DIR="/media/user/big_data/soft/windows/Qt_installed/Tools/mingw810_32"
+# Несовпадение версий gcc (7.3 против 8.1 у Qt) на практике линкуется,
+# libstdc++ обратно совместима. Строго по науке нужен mingw810_32
+###MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/Tools/mingw730_32"
+MINGW_DIR="/media/user/big_data/soft/windows/QT_installed/5.15/Tools/mingw810_32"
 
 # OpenSSL 1.1 32 бита для Qt 5.15 (https-качалки). Лежит в QtCreator:
-# отдельный OpenSSL Toolkit в эту установку не ставился.
-# Внимание: сейчас 32-битного OpenSSL в SDK нет (в mingw1310_64/opt
-# только 64-битный, он не подходит) — будет предупреждение, https
-# работать не будет, пока DLL не подложат в этот каталог
-SSL_DIR="/media/user/big_data/soft/windows/Qt_installed/Tools/QtCreator/bin"
+# отдельный OpenSSL Toolkit в эту установку не ставился
+SSL_DIR="/media/user/big_data/soft/windows/QT_installed/Tools/QtCreator/bin"
 
 # Исходники: корень репозитория от места скрипта
 SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"
@@ -68,7 +65,6 @@ JOBS="4"
 CLEAN_BUILD=0
 DO_BUILD=1
 DO_STRIP=1
-DO_MAP=0
 DO_SMOKE=0
 
 # --------------------------------------------------------------------------
@@ -96,7 +92,6 @@ while [[ $# -gt 0 ]]; do
         --no-build) DO_BUILD=0; shift;;
         --strip) DO_STRIP=1; shift;;
         --no-strip) DO_STRIP=0; shift;;
-        --map) DO_MAP=1; shift;;
         --smoke) DO_SMOKE=1; shift;;
         --help) sed -n '2,32p' "$0"; exit 0;;
         *) echo "Неизвестный аргумент: $1" >&2; exit 4;;
@@ -107,8 +102,8 @@ done
 # Проверки окружения
 # --------------------------------------------------------------------------
 
-if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
-    echo "ОШИБКА: в SOURCE_DIR нет mytetra.pro: ${SOURCE_DIR}" >&2
+if [[ ! -f "${SOURCE_DIR}/synctetra.pro" ]]; then
+    echo "ОШИБКА: в SOURCE_DIR нет synctetra.pro: ${SOURCE_DIR}" >&2
     exit 2
 fi
 
@@ -197,13 +192,8 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
     export WINEPATH="${MINGW_DIR}/bin"
 
     # qmake под Wine: пути в windows-виде через winepath.
-    # shadow-сборка вне исходников, как в Linux.
-    # --map: link map для разбора адресов падения (nm/addr2line).
-    QMAKE_ARGS=()
-    if [[ "${DO_MAP}" -eq 1 ]]; then
-        QMAKE_ARGS+=("QMAKE_LFLAGS+=-Wl,-Map -Wl,link.map")
-    fi
-    wine "${QMAKE}" "$(to_winpath "${SOURCE_DIR}/mytetra.pro")" "${QMAKE_ARGS[@]}"
+    # shadow-сборка вне исходников, как в Linux
+    wine "${QMAKE}" "$(to_winpath "${SOURCE_DIR}/synctetra.pro")"
 
     # make с тулчейном в WINEPATH: так windows-процессы находят g++
     wine "${MINGW_MAKE}" -j"${JOBS}"
@@ -228,17 +218,6 @@ if [[ -z "${BUILT_DIR}" ]]; then
 fi
 
 echo "Бинари из: ${BUILT_DIR}"
-
-# link.map кладется линкером рядом с местом линковки
-if [[ "${DO_MAP}" -eq 1 ]]; then
-    MAP_FILE="$(find "${BUILD_DIR}/app" -maxdepth 2 -name link.map 2>/dev/null | head -1)"
-    if [[ -n "${MAP_FILE}" ]]; then
-        echo "Link map: ${MAP_FILE}"
-        cp "${MAP_FILE}" "${PORTABLE_DIR}/link.map"
-    else
-        echo "ПРЕДУПРЕЖДЕНИЕ: link.map не создан" >&2
-    fi
-fi
 
 # mimetex обязателен: без него молча не рисуются формулы в заметках
 if [[ ! -f "${BUILT_DIR}/mimetex.exe" ]]; then
@@ -333,7 +312,7 @@ Plugins=plugins
 EOF
 
 cat > "${PORTABLE_DIR}/PORTABLE.txt" <<'EOF'
-SyncTetra portable для Windows
+MyTetra portable для Windows
 ============================
 Запуск: synctetra.exe (двойной клик, DLL рядом подхватываются сами)
 
@@ -343,7 +322,7 @@ SyncTetra portable для Windows
 
 Глобальный хоткей клиппера вешается средствами Windows на команду:
   "путь\synctetra.exe" --control --clipboard
-SyncTetra при этом должна быть запущена.
+MyTetra при этом должна быть запущена.
 EOF
 
 # --------------------------------------------------------------------------
@@ -371,7 +350,7 @@ if [[ "${DO_SMOKE}" -eq 1 ]]; then
     SMOKE_DIR="$(mktemp -d)"
     cp -r "${PORTABLE_DIR}/." "${SMOKE_DIR}/"
     mkdir -p "${SMOKE_DIR}/data/base/seed00000000000001"
-    cp "${SOURCE_DIR}/app/bin/resource/standartdata/synctetra.xml" "${SMOKE_DIR}/data/" 2>/dev/null || true
+    cp "${SOURCE_DIR}/app/bin/resource/standartdata/mytetra.xml" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/database.ini" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/base/1300000000aaaaaaaaa2/text.html" "${SMOKE_DIR}/data/base/seed00000000000001/" 2>/dev/null || true
     printf '[General]\nprintdebugmessages=true\n' > "${SMOKE_DIR}/conf.ini"

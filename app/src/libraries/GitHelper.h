@@ -71,7 +71,7 @@ public:
     // Закоммитить индекс с сообщением
     static bool commitStaged(const QString &dir, const QString &message);
 
-    // Локальная подпись репозитория (не трогает глобальный конфиг git)
+    // Локальная подпись репозитория (не трогает глобальный конфит git)
     static bool setLocalIdentity(const QString &dir, const QString &name,
                                  const QString &email);
 

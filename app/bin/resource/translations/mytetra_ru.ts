@@ -269,7 +269,11 @@ This can happen if there is no free space left on the hard disk or it is impossi
 </context>
 <context>
     <name>AppConfigDialog</name>
-        <message>
+    <message>
+        <source>SyncTetra settings</source>
+        <translation type="vanished">Настройки SyncTetra</translation>
+    </message>
+    <message>
         <source>Main</source>
         <translation type="vanished">Основные</translation>
     </message>
@@ -301,10 +305,6 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Search</source>
         <translation type="vanished">Поиск</translation>
     </message>
-    <message>
-        <source>SyncTetra settings</source>
-        <translation type="vanished">Настройки SyncTetra</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_Appearance</name>
@@ -328,7 +328,13 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Midnight</source>
         <translation type="vanished">Полуночная</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation>Запускать SyncTetra в свернутом окне</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="47"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="86"/>
         <source>Hide detached windows if close main window</source>
@@ -355,12 +361,6 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="88"/>
         <source>Windows behavior</source>
         <translation>Поведение окон</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="41"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Appearance.cpp" line="85"/>
-        <source>Run SyncTetra in a minimized window</source>
-        <translation>Запускать SyncTetra в свернутом окне</translation>
     </message>
 </context>
 <context>
@@ -548,16 +548,22 @@ This can happen if there is no free space left on the hard disk or it is impossi
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
-        <source>Web Clipper: in the browser, select all or part of the page text, then press the global hotkey. The clip is saved to the target branch note.
-Run: mytetra --control --clipboard [--url]
+        <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
+Run: synctetra --control --clipboard [--url]
 Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
-MyTetra must be running.</source>
-        <translation>Веб-клиппер: выделите в браузере весь текст страницы или его часть, затем нажмите глобальный хоткей. Вырезка сохраняется в заметку целевой ветки.
-Запуск: mytetra --control --clipboard [--url]
+SyncTetra must be running.</source>
+        <translation>Клиппер сохраняет буфер обмена ОС в заметку ветки unsorted_notes.
+Запуск: synctetra --control --clipboard [--url]
 Назначьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
-MyTetra должна быть запущена.</translation>
+SyncTetra должна быть запущена.</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
+        <source>Saves the OS clipboard into a note: synctetra --control --clipboard [--url]</source>
+        <translation>Сохраняет буфер обмена ОС в заметку: synctetra --control --clipboard [--url]</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="105"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="198"/>
         <source>Maximum images per note:</source>
@@ -588,86 +594,9 @@ MyTetra должна быть запущена.</translation>
         <translation>Статус:</translation>
     </message>
     <message>
-        <source>Target branch:</source>
-        <translation>Целевая ветка:</translation>
-    </message>
-    <message>
-        <source>To default branch (unsorted_notes)</source>
-        <translation>В ветку по умолчанию (unsorted_notes)</translation>
-    </message>
-    <message>
-        <source>To selected branch:</source>
-        <translation>В выбранную ветку:</translation>
-    </message>
-    <message>
-        <source>Root branches with two nesting levels</source>
-        <translation>Корневые ветки с двумя уровнями вложений</translation>
-    </message>
-    <message>
-        <source>Tiles:</source>
-        <translation>Плитки:</translation>
-    </message>
-    <message>
-        <source>Last 16</source>
-        <translation>Последние 16</translation>
-    </message>
-    <message>
-        <source>Most frequent 16</source>
-        <translation>Частые 16</translation>
-    </message>
-    <message>
-        <source>Open original note on duplicate clip</source>
-        <translation>Открывать оригинал при дубле клипа</translation>
-    </message>
-    <message>
-        <source>Ask every time (popup window)</source>
-        <translation>Спрашивать каждый раз (всплывающее окно)</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="161"/>
         <source>Clipper status is unavailable.</source>
         <translation>Статус клиппера недоступен.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
-        <source>Clipper saves the OS clipboard into an unsorted_notes branch note.
-Run: synctetra --control --clipboard [--url]
-Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
-SyncTetra must be running.</source>
-        <translation>Клиппер сохраняет буфер обмена ОС в заметку ветки unsorted_notes.
-Запуск: synctetra --control --clipboard [--url]
-Назначьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
-SyncTetra должна быть запущена.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="92"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="196"/>
-        <source>Saves the OS clipboard into a note: synctetra --control --clipboard [--url]</source>
-        <translation>Сохраняет буфер обмена ОС в заметку: synctetra --control --clipboard [--url]</translation>
-    </message>
-</context>
-<context>
-    <name>ClipBranchDialog</name>
-    <message>
-        <source>Where to save the clip?</source>
-        <translation>Куда сохранить вырезку?</translation>
-    </message>
-    <message>
-        <source>Where do you want to paste?</source>
-        <translation>Куда хотите вставить?</translation>
-    </message>
-    <message>
-        <source>Filter branches...</source>
-        <translation>Фильтр веток...</translation>
-    </message>
-    <message>
-        <source>Recent branches:</source>
-        <translation>Недавние ветки:</translation>
-    </message>
-    <message>
-        <source>Frequent branches:</source>
-        <translation>Частые ветки:</translation>
     </message>
 </context>
 <context>
@@ -690,7 +619,13 @@ SyncTetra должна быть запущена.</translation>
         <source>Ask the password when you click on an encrypted item</source>
         <translation>Спрашивать пароль при клике на зашифрованную ветку</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
+        <source>Ask the password at SyncTetra startup</source>
+        <translation>Спрашивать пароль при старте SyncTetra</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="82"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="304"/>
         <source>Store password</source>
@@ -739,18 +674,6 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <translation>Разрешить расшифровку во временный файл в директории корзины</translation>
     </message>
     <message>
-        <source>Encryption method</source>
-        <translation>Метод шифрования</translation>
-    </message>
-    <message>
-        <source>RC5 (compatible)</source>
-        <translation>RC5 (совместимый)</translation>
-    </message>
-    <message>
-        <source>XChaCha20-Poly1305 (modern)</source>
-        <translation>XChaCha20-Poly1305 (современный)</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="201"/>
         <source>&lt;b&gt;Status:&lt;/b&gt; </source>
         <translation>&lt;b&gt;Статус:&lt;/b&gt; </translation>
@@ -797,44 +720,6 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="234"/>
         <source>If you change your password all encrypted item will be re-encrypted with a new password.</source>
         <translation>При смене пароля все зашифрованные ветки будут заново зашифрованы с новым паролем.</translation>
-    </message>
-    <message>
-        <source>Re-encrypt data with selected method</source>
-        <translation>Перешифровать данные выбранным методом</translation>
-    </message>
-    <message>
-        <source>Re-encrypt data</source>
-        <translation>Перешифровка данных</translation>
-    </message>
-    <message>
-        <source>Crypt is locked. Enter the password first.</source>
-        <translation>Крипта закрыта. Сначала введите пароль.</translation>
-    </message>
-    <message>
-        <source>All encrypted data will be re-encrypted with the selected method "%1". Back up your database directory first. Continue?</source>
-        <translation>Все зашифрованные данные будут перешифрованы выбранным методом "%1". Сначала сделайте резервную копию каталога базы. Продолжить?</translation>
-    </message>
-    <message>
-        <source>Re-encrypting...</source>
-        <translation>Перешифровка...</translation>
-    </message>
-    <message>
-        <source>Database tree is unavailable.</source>
-        <translation>Дерево базы недоступно.</translation>
-    </message>
-    <message>
-        <source>Re-encryption canceled, converted branches: %1.</source>
-        <translation>Перешифровка отменена, преобразовано веток: %1.</translation>
-    </message>
-    <message>
-        <source>Done. Re-encrypted branches: %1.</source>
-        <translation>Готово. Перешифровано веток: %1.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="72"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="302"/>
-        <source>Ask the password at SyncTetra startup</source>
-        <translation>Спрашивать пароль при старте SyncTetra</translation>
     </message>
 </context>
 <context>
@@ -1110,31 +995,6 @@ Linux: поставьте пакет git. Windows: https://git-scm.com.</transla
         <source>Claude Code (.mcp.json):</source>
         <translation>Claude Code (.mcp.json):</translation>
     </message>
-        <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="195"/>
-        <source>MCP help</source>
-        <translation>Справка MCP</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="188"/>
-        <source>Available tools</source>
-        <translation>Доступные инструменты</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="190"/>
-        <source>Read-only (ro) — %1 tools</source>
-        <translation>Только чтение (ro): %1</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="191"/>
-        <source>Read-write (rw) — %1 tools</source>
-        <translation>Чтение и запись (rw): %1</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="192"/>
-        <source>Delete — %1 tools</source>
-        <translation>Удаление: %1</translation>
-    </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="177"/>
         <source>MCP lets an AI client (opencode, Claude Code) read and search SyncTetra notes.
@@ -1164,6 +1024,31 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</source>
 Claude Code через терминал:
 claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="195"/>
+        <source>MCP help</source>
+        <translation>Справка MCP</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="188"/>
+        <source>Available tools</source>
+        <translation>Доступные инструменты</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="190"/>
+        <source>Read-only (ro) — %1 tools</source>
+        <translation>Только чтение (ro): %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="191"/>
+        <source>Read-write (rw) — %1 tools</source>
+        <translation>Чтение и запись (rw): %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Mcp.cpp" line="192"/>
+        <source>Delete — %1 tools</source>
+        <translation>Удаление: %1</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Misc</name>
@@ -1181,7 +1066,11 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <source>Print debug messages to console</source>
         <translation>Выводить отладочные сообщения в консоль</translation>
     </message>
-        <message>
+    <message>
+        <source>Run SyncTetra in a minimized window</source>
+        <translation type="vanished">Запускать SyncTetra в свернутом окне</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="43"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Misc.cpp" line="101"/>
         <source>Enable action logging (experimental)</source>
@@ -1249,26 +1138,6 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <source>Enable autosave, min</source>
         <translation>Включить автосохранение, мин</translation>
     </message>
-    <message>
-        <source>Network and certificates</source>
-        <translation>Сеть и сертификаты</translation>
-    </message>
-    <message>
-        <source>Allow loading with invalid or self-signed TLS certificates</source>
-        <translation>Разрешать загрузку с невалидными или самоподписанными TLS-сертификатами</translation>
-    </message>
-    <message>
-        <source>Disables certificate verification for images and files downloaded from the network. This reduces protection against traffic substitution. Enable only if you understand the risk.</source>
-        <translation>Отключает проверку сертификата для картинок и файлов, загружаемых из сети. Это снижает защиту от подмены трафика. Включайте только если понимаете риск.</translation>
-    </message>
-    <message>
-        <source>Normally a site with an expired, self-signed or otherwise invalid TLS certificate is refused. This option allows downloading images and files from such sites anyway, but an attacker on the network could substitute the content. Default: off.</source>
-        <translation>Обычно сайт с просроченным, самоподписанным или иным невалидным TLS-сертификатом отклоняется. Эта опция разрешает всё равно скачивать с него картинки и файлы, но злоумышленник в сети может подменить содержимое. По умолчанию выключено.</translation>
-    </message>
-    <message>
-        <source>Run SyncTetra in a minimized window</source>
-        <translation type="vanished">Запускать SyncTetra в свернутом окне</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_Tree</name>
@@ -1300,243 +1169,9 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
 <context>
     <name>TreeScreen</name>
     <message>
-        <source>Filter branches...</source>
-        <translation>Фильтр веток...</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
-    </message>
-    <message>
-        <source>Revoke publication...</source>
-        <translation>Отозвать публикацию...</translation>
-    </message>
-    <message>
-        <source>Publish branch</source>
-        <translation>Опубликовать ветку</translation>
-    </message>
-    <message>
-        <source>Shared directory is not defined. Set it in the settings.</source>
-        <translation>Общий каталог не задан. Задайте его в настройках.</translation>
-    </message>
-    <message>
-        <source>Can't create shared directory:\n</source>
-        <translation>Не удаётся создать общий каталог:
-</translation>
-    </message>
-    <message>
-        <source>The branch is nested in an already published branch or contains published sub-branches.\nPublishing nested branches is not supported.</source>
-        <translation>Ветка вложена в уже опубликованную ветку или содержит опубликованные подветки.
-Публикация вложенных веток не поддерживается.</translation>
-    </message>
-    <message>
-        <source>The branch contains encrypted content.\nEncrypted data is not stored in the common directory; the publication will be in decrypted form.\n\nContinue?</source>
-        <translation>Ветка содержит шифрованное содержимое.
-Шифрованные данные не хранятся в общем каталоге; публикация будет в расшифрованном виде.
-
-Продолжить?</translation>
-    </message>
-    <message>
-        <source>The branch is already published at:\n%1\n\nUpdate the publication?</source>
-        <translation>Ветка уже опубликована здесь:
-%1
-
-Обновить публикацию?</translation>
-    </message>
-    <message>
-        <source>Update publication</source>
-        <translation>Обновить публикацию</translation>
-    </message>
-    <message>
-        <source>Publication of the branch was not found.</source>
-        <translation>Публикация ветки не найдена.</translation>
-    </message>
-    <message>
-        <source>Publication failed:\n%1</source>
-        <translation>Публикация не удалась:
-%1</translation>
-    </message>
-    <message>
-        <source>The published content is large (more than 20 MB).\nThe git-history in the common directory will grow with each publication.</source>
-        <translation>Публикуемый контент большой (больше 20 МБ).
-Git-история в общем каталоге будет расти с каждой публикацией.</translation>
-    </message>
-    <message>
-        <source>Branch \"%1\" successfully %2.\nPublication directory:\n%3\nPublish version: %4\n\nThe update will travel to colleagues via Syncthing (shared folder = sync/).</source>
-        <translation>Ветка "%1" успешно %2.
-Каталог публикации:
-%3
-Версия публикации: %4
-
-Обновление доедет до коллег через Syncthing (общая папка = sync/).</translation>
-    </message>
-    <message>
-        <source>updated</source>
-        <translation>обновлена</translation>
-    </message>
-    <message>
-        <source>published</source>
-        <translation>опубликована</translation>
-    </message>
-    <message>
-        <source>\n\nJournal is unavailable (git not found in PATH):\nrecovery from the journal is disabled.</source>
-        <translation>
-
-Журнал недоступен (git не найден в PATH):
-восстановление из журнала отключено.</translation>
-    </message>
-    <message>
-        <source>Settings...</source>
-        <translation>Настройки...</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Закрыть</translation>
-    </message>
-    <message>
-        <source>Revoke publication</source>
-        <translation>Отозвать публикацию</translation>
-    </message>
-    <message>
-        <source>Revoke the publication at:\n%1\n\nThe publication directory will be moved to the trash.</source>
-        <translation>Отозвать публикацию здесь:
-%1
-
-Каталог публикации будет перемещён в корзину.</translation>
-    </message>
-    <message>
-        <source>Publication revoked.</source>
-        <translation>Публикация отозвана.</translation>
-    </message>
-    <message>
-        <source>Branch</source>
-        <translation>Ветка</translation>
-    </message>
-    <message>
-        <source>Source branch is not found in the database.</source>
-        <translation>Исходная ветка не найдена в базе.</translation>
-    </message>
-    <message>
-        <source>Force branch update</source>
-        <translation>Принудительно обновить ветку</translation>
-    </message>
-    <message>
-        <source>Import</source>
-        <translation>Импорт</translation>
-    </message>
-    <message>
-        <source>Changes</source>
-        <translation>Изменения</translation>
-    </message>
-    <message>
-        <source>Update is still on the way: publication data has not fully arrived. Diff and import run only on a consistent version — retry after synchronization completes (check that Syncthing syncs the sync/ folder on both devices and has converged).</source>
-        <translation>Обновление ещё в пути: данные публикации доехали не полностью. Diff и импорт выполняются только по целостной версии — попробуйте после завершения синхронизации (проверьте, что Syncthing синхронизирует папку sync/ и сошёлся).</translation>
-    </message>
-    <message>
-        <source>Check status</source>
-        <translation>Проверить статус</translation>
-    </message>
-    <message>
-        <source>Publication metadata is broken (meta.json without branchId).</source>
-        <translation>Метаданные публикации повреждены (meta.json без branchId).</translation>
-    </message>
-    <message>
-        <source>Subtree \"%1\" is imported into section\n%2</source>
-        <translation>Поддерево "%1" импортировано в раздел
-%2</translation>
-    </message>
-    <message>
-        <source>imported/%1/%2</source>
-        <translation>imported/%1/%2</translation>
-    </message>
-    <message>
-        <source>Local copy of the publication is not found.</source>
-        <translation>Локальная копия публикации не найдена.</translation>
-    </message>
-    <message>
-        <source>Target branch is not found in the tree.</source>
-        <translation>Ветка-приёмник не найдена в дереве.</translation>
-    </message>
-    <message>
-        <source>Target branch is encrypted. Open it with the password before import.</source>
-        <translation>Ветка-приёмник зашифрована. Откройте её паролем перед импортом.</translation>
-    </message>
-    <message>
-        <source>There are no new changes in the publication.</source>
-        <translation>Новых изменений в публикации нет.</translation>
-    </message>
-    <message>
-        <source>Changes: %1</source>
-        <translation>Изменения: %1</translation>
-    </message>
-    <message>
-        <source>Import conflict</source>
-        <translation>Конфликт импорта</translation>
-    </message>
-    <message>
-        <source>Record \"%1\" was changed locally.\nImport the owner version?</source>
-        <translation>Запись "%1» была изменена локально.
-Импортировать версию владельца?</translation>
-    </message>
-    <message>
-        <source>Replace with owner version</source>
-        <translation>Заменить версией владельца</translation>
-    </message>
-    <message>
-        <source>Keep both</source>
-        <translation>Сохранить обе</translation>
-    </message>
-    <message>
-        <source>Skip</source>
-        <translation>Пропустить</translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation>Восстановить</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>Позже</translation>
-    </message>
-    <message>
-        <source>Restore from local</source>
-        <translation>Восстановление из local</translation>
-    </message>
-    <message>
-        <source>The sync/ area is empty or contains incomplete data.\nThe local/ authority contains consistent owner publications.\n\nRestore the sync/ mirror from local/?</source>
-        <translation>Область sync/ пуста или содержит неполные данные.
-Авторитет local/ содержит целостные публикации владельца.
-
-Восстановить зеркало sync/ из local/?</translation>
-    </message>
-    <message>
-        <source>Restore from journal</source>
-        <translation>Восстановление из журнала</translation>
-    </message>
-    <message>
-        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
-        <translation>В журнале %1 снимков(а) области sync/.</translation>
-    </message>
-    <message>
-        <source>The sync/ area is empty or contains incomplete data.\nThe unified journal contains %1 snapshot(s) with the last known state of publications.\n\nRestore publications from the journal?</source>
-        <translation>Область sync/ пуста или содержит неполные данные.
-Единый журнал содержит %1 снимков(а) с последним известным состоянием публикаций.
-
-Восстановить публикации из журнала?</translation>
-    </message>
-    <message>
-        <source>Journal size</source>
-        <translation>Размер журнала</translation>
-    </message>
-    <message>
-        <source>Exchange journal has grown: %1 snapshots (%2 MB).\nOld snapshots are only needed to restore long-deleted data. Archiving will keep only the current state (irreversibly). Archive now?</source>
-        <translation>Журнал обмена разросся: %1 снимков (%2 МБ).
-Старые снимки нужны только для восстановления давно удалённого. Архивирование оставит только текущее состояние (необратимо). Архивировать сейчас?</translation>
-    </message>
-    <message>
-        <source>Archive now</source>
-        <translation>Архивировать сейчас</translation>
     </message>
 </context>
 <context>
@@ -1604,14 +1239,6 @@ Git-история в общем каталоге будет расти с ка�
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
     </message>
-    <message>
-        <source>Synchronization</source>
-        <translation>Синхронизация</translation>
-    </message>
-    <message>
-        <source>Run synchronization</source>
-        <translation>Запустить синхронизацию</translation>
-    </message>
 </context>
 <context>
     <name>AppConfigPage_Search</name>
@@ -1636,7 +1263,19 @@ Git-история в общем каталоге будет расти с ка�
 </context>
 <context>
     <name>AppConfigPage_Synchro</name>
-            <message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
+        <source>Synchronize at SyncTetra startup</source>
+        <translation>Синхронизировать при старте SyncTetra</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
+        <source>Synchronize when exit from SyncTetra</source>
+        <translation>Синхронизировать при выходе из SyncTetra</translation>
+    </message>
+    <message>
         <source>Enable periodic synchronize</source>
         <translation type="vanished">Включить периодическую синхронизацию</translation>
     </message>
@@ -1711,18 +1350,6 @@ Git-история в общем каталоге будет расти с ка�
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="257"/>
         <source>The first background &lt;b&gt;checking base&lt;/b&gt; starting.&lt;br/&gt;Maybe a slight delay or freezing window...</source>
         <translation>Первый фоновый запуск &lt;b&gt;проверки базы на изменение сторонней программой&lt;/b&gt;.&lt;br/&gt;Возможна небольшая задержка или &quot;замерзание&quot; окна программы...</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="40"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="174"/>
-        <source>Synchronize at SyncTetra startup</source>
-        <translation>Синхронизировать при старте SyncTetra</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="44"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Synchro.cpp" line="175"/>
-        <source>Synchronize when exit from SyncTetra</source>
-        <translation>Синхронизировать при выходе из SyncTetra</translation>
     </message>
 </context>
 <context>
@@ -2230,12 +1857,9 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Клиппер выключен в настройках.</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/Clipper.cpp" line="399"/>
         <source>Global hotkey unavailable.</source>
         <translation>Глобальный хоткей недоступен.</translation>
-    </message>
-    <message>
-        <source>SSL unavailable</source>
-        <translation>SSL недоступен</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="421"/>
@@ -2253,28 +1877,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Веб-клиппер</translation>
     </message>
     <message>
+        <location filename="../../../src/libraries/Clipper.cpp" line="506"/>
         <source>Already clipped, skipped.</source>
         <translation>Уже вставлено, пропущено.</translation>
     </message>
     <message>
-        <source>Already clipped, opened existing note.</source>
-        <translation>Уже вставлено, открыта существующая заметка.</translation>
-    </message>
-    <message>
-        <source>No selection to clip.</source>
-        <translation>Нет выделения для вставки.</translation>
-    </message>
-    <message>
-        <source>Saved to %1: %2</source>
-        <translation>Сохранено в %1: %2</translation>
-    </message>
-    <message>
-        <source>Selected branch is gone.</source>
-        <translation>Выбранная ветка исчезла.</translation>
-    </message>
-    <message>
-        <source>Cancelled, nothing saved.</source>
-        <translation>Отменено, ничего не сохранено.</translation>
+        <location filename="../../../src/libraries/Clipper.cpp" line="520"/>
+        <source>Saved to unsorted_notes: %1</source>
+        <translation>Сохранено в unsorted_notes: %1</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/Clipper.cpp" line="526"/>
@@ -2584,7 +2194,14 @@ This directory should contain the file mytetra.xml.</source>
         <source>&lt;b&gt;Second step:&lt;/b&gt; select trash directiory</source>
         <translation>&lt;b&gt;Шаг второй:&lt;/b&gt; выбор директории корзины</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
+        <source>For database append please select trash directory.
+SyncTetra will put changed notes file copies and changed item tree copies to this directory</source>
+        <translation>Чтобы добавть базу данных, пожалуйста, выберите директорию корзины.
+SyncTetra будет складывать копии файлов редактируемых записей и дерева записей в эту директорию</translation>
+    </message>
+    <message>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="395"/>
         <source>Select trash directory</source>
         <translation>Выбор директории корзины</translation>
@@ -2681,13 +2298,6 @@ This directory should contain the file mytetra.xml.</source>
         <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="555"/>
         <source>Write &quot;yes&quot; to confirm:</source>
         <translation>Напишите &quot;yes&quot; для подтверждения действия:</translation>
-    </message>
-    <message>
-        <location filename="../../../src/controllers/databasesManagement/DatabasesManagementController.cpp" line="378"/>
-        <source>For database append please select trash directory.
-SyncTetra will put changed notes file copies and changed item tree copies to this directory</source>
-        <translation>Чтобы добавть базу данных, пожалуйста, выберите директорию корзины.
-SyncTetra будет складывать копии файлов редактируемых записей и дерева записей в эту директорию</translation>
     </message>
 </context>
 <context>
@@ -3124,11 +2734,6 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Misc</source>
         <translation>Разное</translation>
     </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorConfigDialog.cpp" line="29"/>
-        <source>MyTetra settings...</source>
-        <translation>Настройки MyTetra...</translation>
-    </message>
 </context>
 <context>
     <name>EditorConfigFont</name>
@@ -3335,11 +2940,6 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="104"/>
         <source>Copy secret</source>
         <translation>Скопировать секрет</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="118"/>
-        <source>Copy code</source>
-        <translation>Скопировать код</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="106"/>
@@ -4062,160 +3662,12 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Найти в базе</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="170"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="559"/>
-        <source>Plain code</source>
-        <translation>Обычный код</translation>
+        <source>Show text in detached window</source>
+        <translation type="vanished">Показать текст в открепляемом окне</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="171"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="560"/>
-        <source>Angular</source>
-        <translation>Angular</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="172"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="561"/>
-        <source>Bash</source>
-        <translation>Bash</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="173"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="562"/>
-        <source>C</source>
-        <translation>C</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="174"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="563"/>
-        <source>CMake</source>
-        <translation>CMake</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="175"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="564"/>
-        <source>CSS</source>
-        <translation>CSS</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="176"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="565"/>
-        <source>C++</source>
-        <translation>C++</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="177"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="566"/>
-        <source>C#</source>
-        <translation>C#</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="178"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="567"/>
-        <source>GLSL</source>
-        <translation>GLSL</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="179"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="568"/>
-        <source>Go</source>
-        <translation>Go</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="180"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="569"/>
-        <source>HTML</source>
-        <translation>HTML</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="181"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="570"/>
-        <source>INI</source>
-        <translation>INI</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="182"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="571"/>
-        <source>Java</source>
-        <translation>Java</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="183"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="572"/>
-        <source>JavaScript</source>
-        <translation>JavaScript</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="184"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="573"/>
-        <source>JSON</source>
-        <translation>JSON</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="185"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="574"/>
-        <source>Lua</source>
-        <translation>Lua</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="186"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="575"/>
-        <source>Make</source>
-        <translation>Make</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="187"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="576"/>
-        <source>PHP</source>
-        <translation>PHP</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="188"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="577"/>
-        <source>Python</source>
-        <translation>Python</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="189"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="578"/>
-        <source>QML</source>
-        <translation>QML</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="190"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="579"/>
-        <source>React</source>
-        <translation>React</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="191"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="580"/>
-        <source>Rust</source>
-        <translation>Rust</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="192"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="581"/>
-        <source>SQL</source>
-        <translation>SQL</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="193"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="582"/>
-        <source>TypeScript</source>
-        <translation>TypeScript</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="194"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="583"/>
-        <source>XML</source>
-        <translation>XML</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="195"/>
-        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="584"/>
-        <source>YAML</source>
-        <translation>YAML</translation>
+        <source>Show attach files</source>
+        <translation type="vanished">Показать прикрепленные файлы</translation>
     </message>
     <message>
         <source>Heading 1</source>
@@ -4244,19 +3696,6 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <source>Normal text</source>
         <translation>Обычный текст</translation>
-    </message>
-    <message>
-        <source>Heading</source>
-        <translation>Заголовок</translation>
-    </message>
-
-    <message>
-        <source>Show text in detached window</source>
-        <translation type="vanished">Показать текст в открепляемом окне</translation>
-    </message>
-    <message>
-        <source>Show attach files</source>
-        <translation type="vanished">Показать прикрепленные файлы</translation>
     </message>
 </context>
 <context>
@@ -4493,7 +3932,12 @@ Enter your old password and new password.
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
+        <source>SyncTetra: Password</source>
+        <translation>SyncTetra: Пароль</translation>
+    </message>
+    <message>
         <source>Password</source>
         <translation type="obsolete">Пароль</translation>
     </message>
@@ -4532,11 +3976,6 @@ Enter your old password and new password.
     <message>
         <source>Passwords not equal!</source>
         <translation type="obsolete">Пароли не совпадают!</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/enterPassword/EnterPassword.cpp" line="85"/>
-        <source>SyncTetra: Password</source>
-        <translation>SyncTetra: Пароль</translation>
     </message>
 </context>
 <context>
@@ -4658,14 +4097,6 @@ Enter your old password and new password.
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="266"/>
         <source>Attach files</source>
         <translation>Файлы</translation>
-    </message>
-    <message>
-        <source>Jump to note text</source>
-        <translation>Прыжок в текст заметки</translation>
-    </message>
-    <message>
-        <source>Jump by first word only</source>
-        <translation>Прыжок только по первому слову</translation>
     </message>
     <message>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="529"/>
@@ -5161,7 +4592,12 @@ Try to search for entire database.</source>
         <source>Portable text</source>
         <translation>Текст портабельного режима</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
+        <source>Welcome to SyncTetra v.</source>
+        <translation>Вас приветствует SyncTetra v.</translation>
+    </message>
+    <message>
         <source>Please, select application mode:</source>
         <translation type="vanished">Пожалуйста, выберите режим установки программы:</translation>
     </message>
@@ -5187,26 +4623,27 @@ and create application files in it.</source>
 in current directory &quot;%1&quot;.</source>
         <translation>Файлы приложения будут созданы в текущей директории &quot;%1&quot; рядом с исполняемым файлом SyncTetra.</translation>
     </message>
-        <message>
-        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="142"/>
-        <source>Please select one of install mode.</source>
-        <translation>Пожалуйста, выберите один из режимов инсталляции.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="23"/>
-        <source>Welcome to SyncTetra v.</source>
-        <translation>Вас приветствует SyncTetra v.</translation>
-    </message>
     <message>
         <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="114"/>
         <source>Can&apos;t create portable version.
 Сan&apos;t write data to SyncTetra binary file directory &quot;%1&quot;.</source>
         <translation>Невозможно установить портабельную версию. Невозможно создать файлы в текущей директории &quot;%1&quot; рядом с исполняемым файлом SyncTetra.</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/installDialog/InstallDialog.cpp" line="142"/>
+        <source>Please select one of install mode.</source>
+        <translation>Пожалуйста, выберите один из режимов инсталляции.</translation>
+    </message>
 </context>
 <context>
     <name>KnowTreeModel</name>
-        <message>
+    <message>
+        <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
+        <source>Unsupported version of the database format.
+You need to update SyncTetra.</source>
+        <translation>Неподдерживаемый формат базы данных. Пожалуйста, обновите версию SyncTetra.</translation>
+    </message>
+    <message>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="335"/>
         <source>The exporting file %1 is not writable.</source>
         <translation>Невозможно открыть экспортируемый файл %1 для записи.</translation>
@@ -5240,12 +4677,6 @@ in current directory &quot;%1&quot;.</source>
         <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="579"/>
         <source>Import error: unable to copy record data from %1 to %2.</source>
         <translation>Ошибка импорта: не могу скопировать данные записи из %1 в %2.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/models/tree/KnowTreeModel.cpp" line="100"/>
-        <source>Unsupported version of the database format.
-You need to update SyncTetra.</source>
-        <translation>Неподдерживаемый формат базы данных. Пожалуйста, обновите версию SyncTetra.</translation>
     </message>
 </context>
 <context>
@@ -5390,7 +4821,13 @@ You need to update SyncTetra.</source>
         <source>&amp;Help</source>
         <translation>Справка</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
+        <source>About SyncTetra</source>
+        <translation>О программе SyncTetra</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1383"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
         <source>About Qt</source>
@@ -5462,7 +4899,12 @@ You need to update SyncTetra.</source>
         <source>&lt;b&gt;Technical info&lt;/b&gt;</source>
         <translation>&lt;b&gt;Техническая информация&lt;/b&gt;</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
+        <source>SyncTetra: can&apos;t synchronization</source>
+        <translation>SyncTetra: Синхронизация невозможна</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2502"/>
         <source>Do not set synchronization command.&lt;br&gt;Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Не задана команда синхронизации.&lt;br&gt;Проверьте меню &quot;Инструменты&quot;, &quot;Настройки&quot;, раздел &quot;Синхронизация&quot;.</translation>
@@ -5472,7 +4914,12 @@ You need to update SyncTetra.</source>
 Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation type="obsolete">Не задана команда синхронизации.\nПроверьте меню \&quot;Инструменты\&quot;, \&quot;Настройки\&quot;, раздел \&quot;Синхронизация\&quot;.</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
+        <source>SyncTetra synchronization</source>
+        <translation>Синхронизация SyncTetra</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2522"/>
         <source>Synchronization in progress, please wait...</source>
         <translation>Происходит синхронизация. Пожалуйста, подождите...</translation>
@@ -5483,7 +4930,12 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>&amp;Restore window</source>
         <translation>Показать окно</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
+        <source>MCP session is active%1, SyncTetra works in read-only mode</source>
+        <translation>MCP-сессия активна%1, SyncTetra работает в режиме только чтения</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2032"/>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2560"/>
         <source>Ma&amp;ximize window</source>
@@ -5604,10 +5056,6 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Показывать панель избранного</translation>
     </message>
     <message>
-        <source>Show branch filter</source>
-        <translation>Показывать фильтр веток</translation>
-    </message>
-    <message>
         <source>Show editor toolbar</source>
         <translation>Показывать панель инструментов редактора</translation>
     </message>
@@ -5646,31 +5094,6 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Configure theme...</source>
         <translation>Настроить тему...</translation>
     </message>
-
-    <message>
-        <source>; peers: %1</source>
-        <translation>; пиры: %1</translation>
-    </message>    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1380"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
-        <source>About SyncTetra</source>
-        <translation>О программе SyncTetra</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2501"/>
-        <source>SyncTetra: can&apos;t synchronization</source>
-        <translation>SyncTetra: Синхронизация невозможна</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2521"/>
-        <source>SyncTetra synchronization</source>
-        <translation>Синхронизация SyncTetra</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1710"/>
-        <source>MCP session is active%1, SyncTetra works in read-only mode</source>
-        <translation>MCP-сессия активна%1, SyncTetra работает в режиме только чтения</translation>
-    </message>
     <message>
         <source>&lt;b&gt;SyncTetra&lt;/b&gt; - fork MyTetra,&lt;br/&gt;smart manager for information collecting,&lt;br/&gt;с возможностью делиться базой знаний через syncthing/etc.&lt;br/&gt;&lt;br/&gt;</source>
         <translation>&lt;b&gt;SyncTetra&lt;/b&gt; — форк MyTetra,&lt;br/&gt;умный менеджер для сбора информации,&lt;br/&gt;с возможностью делиться базой знаний через syncthing/etc.&lt;br/&gt;&lt;br/&gt;</translation>
@@ -5687,7 +5110,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</source>
         <translation>GNU General Public License v.3.0&lt;br/&gt;&lt;br/&gt;</translation>
     </message>
-</context>
+
+    <message>
+        <source>; peers: %1</source>
+        <translation>; пиры: %1</translation>
+    </message></context>
 <context>
     <name>MathExpressionFormatter</name>
     <message>
@@ -5772,11 +5199,6 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <location filename="../../../src/views/record/MetaEditor.cpp" line="685"/>
         <source>Cursor: line %1, position %2</source>
         <translation>Курсор: строка %1, позиция %2</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/record/MetaEditor.cpp" line="193"/>
-        <source>Outline</source>
-        <translation>Оглавление</translation>
     </message>
 </context>
 <context>
@@ -5910,7 +5332,7 @@ in application settings in Crypt section.</source>
 </context>
 <context>
     <name>PeriodicCheckBase</name>
-            <message>
+    <message>
         <source>The database was changed by external application.
 SyncTetra needs to reload the database tree to keep data consistency.</source>
         <translation type="vanished">База данных была изменена сторонней программой.
@@ -5934,7 +5356,12 @@ SyncTetra перечитает дерево для продолжения раб
 </context>
 <context>
     <name>PrintPreview</name>
-        <message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
+        <source>SyncTetra - Print Preview</source>
+        <translation>SyncTetra — Предпросмотр страницы</translation>
+    </message>
+    <message>
         <source>&amp;Print...</source>
         <translation type="vanished">Печать...</translation>
     </message>
@@ -5970,11 +5397,6 @@ SyncTetra перечитает дерево для продолжения раб
     <message>
         <source>&amp;Close</source>
         <translation type="vanished">Закрыть [x]</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="40"/>
-        <source>SyncTetra - Print Preview</source>
-        <translation>SyncTetra — Предпросмотр страницы</translation>
     </message>
 </context>
 <context>
@@ -6032,13 +5454,31 @@ SyncTetra перечитает дерево для продолжения раб
         <source>Unable to rename the file %1 from disk: file not found.</source>
         <translation>Невозможно переименовать файл %1 на диске: файл не найден</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
+        <source>The database is not consistent.
+The directory %1 is not found.
+SyncTetra will try to create a blank entry to fix it.</source>
+        <translation>Целостность базы данных нарушена.
+Директория %1 не найдена.
+Чтобы исправить ошибку, SyncTetra создаст пустую запись.</translation>
+    </message>
+    <message>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1061"/>
         <location filename="../../../src/models/recordTable/Record.cpp" line="1080"/>
         <source>Warning!</source>
         <translation>Внимание!</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
+        <source>The database is not consistent.
+The file %1 is not found.
+SyncTetra will try to create a blank entry to fix it.</source>
+        <translation>Целостность базы данных нарушена.
+Файл %1 не найден.
+Чтобы исправить ошибку, SyncTetra создаст пустую запись.</translation>
+    </message>
+    <message>
         <source>Edit config file (dangerous!)</source>
         <translation type="vanished">Редактирование конфиг-файла (Аккуратно!)</translation>
     </message>
@@ -6361,7 +5801,13 @@ SyncTetra перечитает дерево для продолжения раб
         <source>Print</source>
         <translation type="obsolete">Печать</translation>
     </message>
-        <message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
+        <source>SyncTetra settings</source>
+        <translation>Настройки SyncTetra</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="53"/>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="120"/>
         <source>Main</source>
@@ -6446,6 +5892,10 @@ SyncTetra перечитает дерево для продолжения раб
     <message>
         <source>Voice notes</source>
         <translation>Голосовые заметки</translation>
+    </message>
+    <message>
+        <source>Teamwork</source>
+        <translation>Работа в команде</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="79"/>
@@ -6568,7 +6018,17 @@ Please report about this problem to the developers.</source>
         <source>Unstar a note. For 2+ operations in a row use apply_batch instead of separate calls.</source>
         <translation>Снять звезду с заметки. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
     </message>
-            <message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="613"/>
+        <source>Export a branch subtree to a directory in SyncTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Выгрузить поддерево ветки в каталог в обменном формате SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="632"/>
+        <source>Import a branch subtree from a SyncTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.</source>
+        <translation>Вгрузить поддерево ветки из обменного каталога SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="648"/>
         <source>Same-name or same-text note groups.</source>
         <translation>Группы заметок с одинаковым именем или текстом.</translation>
@@ -6617,49 +6077,6 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="777"/>
         <source>Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.</source>
         <translation>Удалить тег везде. Необратимо. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="90"/>
-        <source>Editor settings...</source>
-        <translation>Настройки редактора...</translation>
-    </message>
-    <message>
-        <location filename="../../../src/models/recordTable/Record.cpp" line="1055"/>
-        <source>The database is not consistent.
-The directory %1 is not found.
-SyncTetra will try to create a blank entry to fix it.</source>
-        <translation>Целостность базы данных нарушена.
-Директория %1 не найдена.
-Чтобы исправить ошибку, SyncTetra создаст пустую запись.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/models/recordTable/Record.cpp" line="1074"/>
-        <source>The database is not consistent.
-The file %1 is not found.
-SyncTetra will try to create a blank entry to fix it.</source>
-        <translation>Целостность базы данных нарушена.
-Файл %1 не найден.
-Чтобы исправить ошибку, SyncTetra создаст пустую запись.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="41"/>
-        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="118"/>
-        <source>SyncTetra settings</source>
-        <translation>Настройки SyncTetra</translation>
-    </message>
-    <message>
-        <source>Teamwork</source>
-        <translation>Работа в команде</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="613"/>
-        <source>Export a branch subtree to a directory in SyncTetra exchange format. For 2+ operations in a row use apply_batch instead of separate calls.</source>
-        <translation>Выгрузить поддерево ветки в каталог в обменном формате SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/mcp/McpServer.cpp" line="632"/>
-        <source>Import a branch subtree from a SyncTetra exchange directory. For 2+ operations in a row use apply_batch instead of separate calls.</source>
-        <translation>Вгрузить поддерево ветки из обменного каталога SyncTetra. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
     </message>
 </context>
 <context>
@@ -7494,8 +6911,8 @@ Enable it in Settings on the History page.</source>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="126"/>
-        <source>Format text as code with a choice of highlighting language</source>
-        <translation>Форматировать текст как код с выбором языка подсветки</translation>
+        <source>Select a whole paragraphs to format text as code</source>
+        <translation>Требуется целиком выделить абзац(ы) для полного форматирования в код</translation>
     </message>
     <message>
         <source>Heading 1</source>
@@ -7544,22 +6961,6 @@ Enable it in Settings on the History page.</source>
     <message>
         <source>Format paragraphs as sixth-level heading</source>
         <translation>Оформить абзацы как заголовок шестого уровня</translation>
-    </message>
-    <message>
-        <source>Structure</source>
-        <translation>Структура</translation>
-    </message>
-    <message>
-        <source>Show headings outline with jump to section</source>
-        <translation>Показать оглавление с переходом в раздел</translation>
-    </message>
-    <message>
-        <source>Table of contents</source>
-        <translation>Оглавление</translation>
-    </message>
-    <message>
-        <source>Insert or refresh the table of contents snapshot</source>
-        <translation>Вставить снимок оглавления или обновить его</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="127"/>
@@ -7903,17 +7304,17 @@ Enable it in Settings on the History page.</source>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="184"/>
         <source>Set focus to items tree</source>
-        <translation>Установить фокус на дереве</translation>
+        <translation>Устновить фокус на дереве</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="185"/>
         <source>Set focus to notes table</source>
-        <translation>Установить фокус на списке записей</translation>
+        <translation>Устновить фокус на списке записей</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="186"/>
         <source>Set focus to editor</source>
-        <translation>Установить фокус на редакторе</translation>
+        <translation>Устновить фокус на редакторе</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="187"/>
@@ -8063,22 +7464,6 @@ Enable it in Settings on the History page.</source>
         <translation>Убрать ссылку и переместить файл в корзину</translation>
     </message>
     <message>
-        <source>Rename voice note</source>
-        <translation>Переименовать голосовую заметку</translation>
-    </message>
-    <message>
-        <source>Rename voice file under cursor</source>
-        <translation>Переименовать файл голосовой заметки под курсором</translation>
-    </message>
-    <message>
-        <source>Move voice note to another note</source>
-        <translation>Переместить голосовую заметку в другую заметку</translation>
-    </message>
-    <message>
-        <source>Move voice file and link into another note</source>
-        <translation>Переместить файл и ссылку голосовой заметки в другую заметку</translation>
-    </message>
-    <message>
         <source>Publish branch to shared directory</source>
         <translation>Опубликовать ветку в общий каталог</translation>
     </message>
@@ -8101,6 +7486,22 @@ Enable it in Settings on the History page.</source>
     <message>
         <source>Revoke branch publication to trash</source>
         <translation>Отозвать публикацию ветки в корзину</translation>
+    </message>
+    <message>
+        <source>Rename voice note</source>
+        <translation>Переименовать голосовую заметку</translation>
+    </message>
+    <message>
+        <source>Rename voice file under cursor</source>
+        <translation>Переименовать файл голосовой заметки под курсором</translation>
+    </message>
+    <message>
+        <source>Move voice note to another note</source>
+        <translation>Переместить голосовую заметку в другую заметку</translation>
+    </message>
+    <message>
+        <source>Move voice file and link into another note</source>
+        <translation>Переместить файл и ссылку голосовой заметки в другую заметку</translation>
     </message>
 </context>
 <context>
@@ -8198,7 +7599,7 @@ Enable it in Settings on the History page.</source>
         <source>&lt;b&gt;Warning:&lt;/b&gt; Some keys sequences are bindings as global hot keys in your OS. </source>
         <translation>&lt;b&gt;Внимание&lt;/b&gt; Некоторые сочетания клавиш закреплены в вашей ОС как глобальные горячие клавиши. </translation>
     </message>
-        <message>
+    <message>
         <location filename="../../../src/views/shortcutSettings/ShortcutSettingsScreen.cpp" line="227"/>
         <source>Do not use these shortcuts in SyncTetra.</source>
         <translation>Не используйте такие сочетания клавиш в SyncTetra.</translation>
@@ -8329,10 +7730,6 @@ Enable it in Settings on the History page.</source>
 </context>
 <context>
     <name>TreeScreen</name>
-    <message>
-        <source>Filter branches...</source>
-        <translation>Фильтр веток...</translation>
-    </message>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="599"/>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="638"/>
@@ -8671,6 +8068,236 @@ Please select single item for enabling edit operation.</source>
         <source>Rename me</source>
         <translation>Переименуй меня</translation>
     </message>
+    <message>
+        <source>Revoke publication...</source>
+        <translation>Отозвать публикацию...</translation>
+    </message>
+    <message>
+        <source>Publish branch</source>
+        <translation>Опубликовать ветку</translation>
+    </message>
+    <message>
+        <source>Shared directory is not defined. Set it in the settings.</source>
+        <translation>Общий каталог не задан. Задайте его в настройках.</translation>
+    </message>
+    <message>
+        <source>Can't create shared directory:\n</source>
+        <translation>Не удаётся создать общий каталог:
+</translation>
+    </message>
+    <message>
+        <source>The branch is nested in an already published branch or contains published sub-branches.\nPublishing nested branches is not supported.</source>
+        <translation>Ветка вложена в уже опубликованную ветку или содержит опубликованные подветки.
+Публикация вложенных веток не поддерживается.</translation>
+    </message>
+    <message>
+        <source>The branch contains encrypted content.\nEncrypted data is not stored in the common directory; the publication will be in decrypted form.\n\nContinue?</source>
+        <translation>Ветка содержит шифрованное содержимое.
+Шифрованные данные не хранятся в общем каталоге; публикация будет в расшифрованном виде.
+
+Продолжить?</translation>
+    </message>
+    <message>
+        <source>The branch is already published at:\n%1\n\nUpdate the publication?</source>
+        <translation>Ветка уже опубликована здесь:
+%1
+
+Обновить публикацию?</translation>
+    </message>
+    <message>
+        <source>Update publication</source>
+        <translation>Обновить публикацию</translation>
+    </message>
+    <message>
+        <source>Publication of the branch was not found.</source>
+        <translation>Публикация ветки не найдена.</translation>
+    </message>
+    <message>
+        <source>Publication failed:\n%1</source>
+        <translation>Публикация не удалась:
+%1</translation>
+    </message>
+    <message>
+        <source>The published content is large (more than 20 MB).\nThe git-history in the common directory will grow with each publication.</source>
+        <translation>Публикуемый контент большой (больше 20 МБ).
+Git-история в общем каталоге будет расти с каждой публикацией.</translation>
+    </message>
+    <message>
+        <source>Branch \"%1\" successfully %2.\nPublication directory:\n%3\nPublish version: %4\n\nThe update will travel to colleagues via Syncthing (shared folder = sync/).</source>
+        <translation>Ветка "%1" успешно %2.
+Каталог публикации:
+%3
+Версия публикации: %4
+
+Обновление доедет до коллег через Syncthing (общая папка = sync/).</translation>
+    </message>
+    <message>
+        <source>updated</source>
+        <translation>обновлена</translation>
+    </message>
+    <message>
+        <source>published</source>
+        <translation>опубликована</translation>
+    </message>
+    <message>
+        <source>\n\nJournal is unavailable (git not found in PATH):\nrecovery from the journal is disabled.</source>
+        <translation>
+
+Журнал недоступен (git не найден в PATH):
+восстановление из журнала отключено.</translation>
+    </message>
+    <message>
+        <source>Settings...</source>
+        <translation>Настройки...</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Revoke publication</source>
+        <translation>Отозвать публикацию</translation>
+    </message>
+    <message>
+        <source>Revoke the publication at:\n%1\n\nThe publication directory will be moved to the trash.</source>
+        <translation>Отозвать публикацию здесь:
+%1
+
+Каталог публикации будет перемещён в корзину.</translation>
+    </message>
+    <message>
+        <source>Publication revoked.</source>
+        <translation>Публикация отозвана.</translation>
+    </message>
+    <message>
+        <source>Branch</source>
+        <translation>Ветка</translation>
+    </message>
+    <message>
+        <source>Source branch is not found in the database.</source>
+        <translation>Исходная ветка не найдена в базе.</translation>
+    </message>
+    <message>
+        <source>Force branch update</source>
+        <translation>Принудительно обновить ветку</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Импорт</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Изменения</translation>
+    </message>
+    <message>
+        <source>Update is still on the way: publication data has not fully arrived. Diff and import run only on a consistent version — retry after synchronization completes (check that Syncthing syncs the sync/ folder on both devices and has converged).</source>
+        <translation>Обновление ещё в пути: данные публикации доехали не полностью. Diff и импорт выполняются только по целостной версии — попробуйте после завершения синхронизации (проверьте, что Syncthing синхронизирует папку sync/ и сошёлся).</translation>
+    </message>
+    <message>
+        <source>Check status</source>
+        <translation>Проверить статус</translation>
+    </message>
+    <message>
+        <source>Publication metadata is broken (meta.json without branchId).</source>
+        <translation>Метаданные публикации повреждены (meta.json без branchId).</translation>
+    </message>
+    <message>
+        <source>Subtree \"%1\" is imported into section\n%2</source>
+        <translation>Поддерево "%1" импортировано в раздел
+%2</translation>
+    </message>
+    <message>
+        <source>imported/%1/%2</source>
+        <translation>imported/%1/%2</translation>
+    </message>
+    <message>
+        <source>Local copy of the publication is not found.</source>
+        <translation>Локальная копия публикации не найдена.</translation>
+    </message>
+    <message>
+        <source>Target branch is not found in the tree.</source>
+        <translation>Ветка-приёмник не найдена в дереве.</translation>
+    </message>
+    <message>
+        <source>Target branch is encrypted. Open it with the password before import.</source>
+        <translation>Ветка-приёмник зашифрована. Откройте её паролем перед импортом.</translation>
+    </message>
+    <message>
+        <source>There are no new changes in the publication.</source>
+        <translation>Новых изменений в публикации нет.</translation>
+    </message>
+    <message>
+        <source>Changes: %1</source>
+        <translation>Изменения: %1</translation>
+    </message>
+    <message>
+        <source>Import conflict</source>
+        <translation>Конфликт импорта</translation>
+    </message>
+    <message>
+        <source>Record \"%1\" was changed locally.\nImport the owner version?</source>
+        <translation>Запись "%1» была изменена локально.
+Импортировать версию владельца?</translation>
+    </message>
+    <message>
+        <source>Replace with owner version</source>
+        <translation>Заменить версией владельца</translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation>Сохранить обе</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Пропустить</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Восстановить</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Позже</translation>
+    </message>
+    <message>
+        <source>Restore from local</source>
+        <translation>Восстановление из local</translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe local/ authority contains consistent owner publications.\n\nRestore the sync/ mirror from local/?</source>
+        <translation>Область sync/ пуста или содержит неполные данные.
+Авторитет local/ содержит целостные публикации владельца.
+
+Восстановить зеркало sync/ из local/?</translation>
+    </message>
+    <message>
+        <source>Restore from journal</source>
+        <translation>Восстановление из журнала</translation>
+    </message>
+    <message>
+        <source>Journal has %1 snapshot(s) of the sync/ area.</source>
+        <translation>В журнале %1 снимков(а) области sync/.</translation>
+    </message>
+    <message>
+        <source>The sync/ area is empty or contains incomplete data.\nThe unified journal contains %1 snapshot(s) with the last known state of publications.\n\nRestore publications from the journal?</source>
+        <translation>Область sync/ пуста или содержит неполные данные.
+Единый журнал содержит %1 снимков(а) с последним известным состоянием публикаций.
+
+Восстановить публикации из журнала?</translation>
+    </message>
+    <message>
+        <source>Journal size</source>
+        <translation>Размер журнала</translation>
+    </message>
+    <message>
+        <source>Exchange journal has grown: %1 snapshots (%2 MB).\nOld snapshots are only needed to restore long-deleted data. Archiving will keep only the current state (irreversibly). Archive now?</source>
+        <translation>Журнал обмена разросся: %1 снимков (%2 МБ).
+Старые снимки нужны только для восстановления давно удалённого. Архивирование оставит только текущее состояние (необратимо). Архивировать сейчас?</translation>
+    </message>
+    <message>
+        <source>Archive now</source>
+        <translation>Архивировать сейчас</translation>
+    </message>
 </context>
 <context>
     <name>TypefaceFormatter</name>
@@ -8680,11 +8307,6 @@ Please select single item for enabling edit operation.</source>
         <translation>Слишком сложное форматирование текста.
 Невозможно правильно обработать выбранный текст.
 Возможно  искажение в форматировании.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1013"/>
-        <source>Code copied to clipboard</source>
-        <translation>Код скопирован в буфер обмена</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1299"/>
@@ -8895,14 +8517,6 @@ Please select single item for enabling edit operation.</source>
         <translation>Запись</translation>
     </message>
     <message>
-        <source>Re-record</source>
-        <translation>Перезаписать</translation>
-    </message>
-    <message>
-        <source>Old recording will be overwritten</source>
-        <translation>Старая запись будет перезаписана</translation>
-    </message>
-    <message>
         <source>Insert</source>
         <translation>Вставить</translation>
     </message>
@@ -9037,187 +8651,6 @@ This cannot be undone.</source>
 %1</source>
         <translation>Не удается уничтожить более новые версии:
 %1</translation>
-    </message>
-</context>
-<context>
-    <name>TelegramImportDialog</name>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="78"/>
-        <source>Import Telegram chat</source>
-        <translation>Импорт чата Telegram</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="79"/>
-        <source>Import</source>
-        <translation>Импортировать</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="80"/>
-        <source>Close</source>
-        <translation>Закрыть</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="81"/>
-        <source>Select Telegram Desktop export file (result.json or messages.html).</source>
-        <translation>Выбери файл экспорта Telegram Desktop (result.json или messages.html).</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="94"/>
-        <source>Telegram export (result.json, messages.html)</source>
-        <translation>Экспорт Telegram (result.json, messages.html)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="95"/>
-        <source>Select Telegram export file</source>
-        <translation>Выбери файл экспорта Telegram</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="112"/>
-        <source>Parse error: </source>
-        <translation>Ошибка разбора: </translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="136"/>
-        <source>Chat: %1. Messages: %2, months: %3, media files: %4.</source>
-        <translation>Чат: %1. Сообщений: %2, месяцев: %3, медиафайлов: %4.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="151"/>
-        <source>Warning</source>
-        <translation>Предупреждение</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="152"/>
-        <source>Database tree is unavailable.</source>
-        <translation>Дерево базы недоступно.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="174"/>
-        <source>Import failed: </source>
-        <translation>Импорт не удался: </translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="183"/>
-        <source>Done. Branches: %1, notes: %2, attached files: %3, missing: %4.</source>
-        <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="123"/>
-        <source>One note per year: chat</source>
-        <translation>Одна заметка на год: чат</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="122"/>
-        <source>One note per month: chat - year (default)</source>
-        <translation>Одна заметка на месяц: чат — год (по умолчанию)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="124"/>
-        <source>One note per day: chat - year - month</source>
-        <translation>Одна заметка на день: чат — год — месяц</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="125"/>
-        <source>One note per message: chat - year - month - day</source>
-        <translation>Заметка на каждое сообщение: чат — год — месяц — день</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="127"/>
-        <source>Notes layout</source>
-        <translation>Раскладка заметок</translation>
-    </message>
-</context>
-<context>
-    <name>MainToolbarSettingsScreen</name>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="29"/>
-        <source>Toolbar settings</source>
-        <translation>Настройка панелей инструментов</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="62"/>
-        <source>Branches</source>
-        <translation>Ветки</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="63"/>
-        <source>Notes</source>
-        <translation>Записи</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="64"/>
-        <source>Notes second line</source>
-        <translation>Записи, вторая линия</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="56"/>
-        <source>Available buttons</source>
-        <translation>Доступные кнопки</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="83"/>
-        <source>Current buttons</source>
-        <translation>Задействованные кнопки</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="234"/>
-        <source>&lt;Separator&gt;</source>
-        <translation>&lt;Разделитель&gt;</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="248"/>
-        <source>&lt;Spring&gt;</source>
-        <translation>&lt;Пружина&gt;</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="330"/>
-        <source>&lt;b&gt;%1&lt;/b&gt; is already on this toolbar.</source>
-        <translation>&lt;b&gt;%1&lt;/b&gt; уже есть на этой панели.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="533"/>
-        <source>&lt;b&gt;Information&lt;/b&gt; for toolbar buttons setup:</source>
-        <translation>&lt;b&gt;Информация&lt;/b&gt; по настройке кнопок панелей:</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="536"/>
-        <source>The command is inserted &lt;b&gt;above the cursor&lt;/b&gt; in the used commands list.</source>
-        <translation>Команда вставляется &lt;b&gt;над курсором&lt;/b&gt; в списке задействованных команд.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="538"/>
-        <source>Panel toggle buttons (tags, history, backlinks) always stay at the end of the second notes line and are not listed here. Hidden shortcut-only buttons stay active too.</source>
-        <translation>Кнопки-переключатели панелей (метки, история, обратные ссылки) всегда остаются в конце второй линии записей и здесь не показываются. Скрытые кнопки только для горячих клавиш тоже продолжают работать.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="541"/>
-        <source>&lt;b&gt;Shortcuts:&lt;/b&gt;</source>
-        <translation>&lt;b&gt;Горячие клавиши:&lt;/b&gt;</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="548"/>
-        <source>Information</source>
-        <translation>Информация</translation>
-    </message>
-</context>
-<context>
-    <name>EditorStructurePanel</name>
-    <message>
-        <source>No H1-H3 headings</source>
-        <translation type="obsolete">Нет заголовков H1–H3</translation>
-    </message>
-    <message>
-        <source>No H1-H6 headings</source>
-        <translation>Нет заголовков H1–H6</translation>
-    </message>
-    <message>
-        <source>(empty heading)</source>
-        <translation>(пустой заголовок)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/EditorStructurePanel.cpp" line="23"/>
-        <source>Outline</source>
-        <translation>Оглавление</translation>
     </message>
 </context>
 <context>
@@ -9980,6 +9413,167 @@ This cannot be undone.</source>
     <message>
         <source>Profile</source>
         <translation>Профиль</translation>
+    </message>
+</context>
+<context>
+    <name>TelegramImportDialog</name>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="78"/>
+        <source>Import Telegram chat</source>
+        <translation>Импорт чата Telegram</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="79"/>
+        <source>Import</source>
+        <translation>Импортировать</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="80"/>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="81"/>
+        <source>Select Telegram Desktop export file (result.json or messages.html).</source>
+        <translation>Выбери файл экспорта Telegram Desktop (result.json или messages.html).</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="94"/>
+        <source>Telegram export (result.json, messages.html)</source>
+        <translation>Экспорт Telegram (result.json, messages.html)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="95"/>
+        <source>Select Telegram export file</source>
+        <translation>Выбери файл экспорта Telegram</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="112"/>
+        <source>Parse error: </source>
+        <translation>Ошибка разбора: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="136"/>
+        <source>Chat: %1. Messages: %2, months: %3, media files: %4.</source>
+        <translation>Чат: %1. Сообщений: %2, месяцев: %3, медиафайлов: %4.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="151"/>
+        <source>Warning</source>
+        <translation>Предупреждение</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="152"/>
+        <source>Database tree is unavailable.</source>
+        <translation>Дерево базы недоступно.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="174"/>
+        <source>Import failed: </source>
+        <translation>Импорт не удался: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="183"/>
+        <source>Done. Branches: %1, notes: %2, attached files: %3, missing: %4.</source>
+        <translation>Готово. Веток: %1, заметок: %2, прикреплено файлов: %3, пропущено: %4.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="123"/>
+        <source>One note per year: chat</source>
+        <translation>Одна заметка на год: чат</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="122"/>
+        <source>One note per month: chat - year (default)</source>
+        <translation>Одна заметка на месяц: чат — год (по умолчанию)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="124"/>
+        <source>One note per day: chat - year - month</source>
+        <translation>Одна заметка на день: чат — год — месяц</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="125"/>
+        <source>One note per message: chat - year - month - day</source>
+        <translation>Заметка на каждое сообщение: чат — год — месяц — день</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/telegram/TelegramImportDialog.cpp" line="127"/>
+        <source>Notes layout</source>
+        <translation>Раскладка заметок</translation>
+    </message>
+</context>
+<context>
+    <name>MainToolbarSettingsScreen</name>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="29"/>
+        <source>Toolbar settings</source>
+        <translation>Настройка панелей инструментов</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="62"/>
+        <source>Branches</source>
+        <translation>Ветки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="63"/>
+        <source>Notes</source>
+        <translation>Записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="64"/>
+        <source>Notes second line</source>
+        <translation>Записи, вторая линия</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="56"/>
+        <source>Available buttons</source>
+        <translation>Доступные кнопки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="83"/>
+        <source>Current buttons</source>
+        <translation>Задействованные кнопки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="234"/>
+        <source>&lt;Separator&gt;</source>
+        <translation>&lt;Разделитель&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="248"/>
+        <source>&lt;Spring&gt;</source>
+        <translation>&lt;Пружина&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="330"/>
+        <source>&lt;b&gt;%1&lt;/b&gt; is already on this toolbar.</source>
+        <translation>&lt;b&gt;%1&lt;/b&gt; уже есть на этой панели.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="533"/>
+        <source>&lt;b&gt;Information&lt;/b&gt; for toolbar buttons setup:</source>
+        <translation>&lt;b&gt;Информация&lt;/b&gt; по настройке кнопок панелей:</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="536"/>
+        <source>The command is inserted &lt;b&gt;above the cursor&lt;/b&gt; in the used commands list.</source>
+        <translation>Команда вставляется &lt;b&gt;над курсором&lt;/b&gt; в списке задействованных команд.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="538"/>
+        <source>Panel toggle buttons (tags, history, backlinks) always stay at the end of the second notes line and are not listed here. Hidden shortcut-only buttons stay active too.</source>
+        <translation>Кнопки-переключатели панелей (метки, история, обратные ссылки) всегда остаются в конце второй линии записей и здесь не показываются. Скрытые кнопки только для горячих клавиш тоже продолжают работать.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="541"/>
+        <source>&lt;b&gt;Shortcuts:&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Горячие клавиши:&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/toolbarSettings/MainToolbarSettingsScreen.cpp" line="548"/>
+        <source>Information</source>
+        <translation>Информация</translation>
     </message>
 </context>
 </TS>

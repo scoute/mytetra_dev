@@ -21,13 +21,12 @@
 #include "AppConfigPage_Favorites.h"
 #include "AppConfigPage_Clipper.h"
 #include "AppConfigPage_Mcp.h"
-#include "AppConfigPage_Team.h"
 #include "AppConfigPage_Voice.h"
+#include "AppConfigPage_Team.h"
 #include "AppConfigPage_Appearance.h"
 #include "AppConfigPage_Theme.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
-#include "libraries/wyedit/EditorConfigDialog.h"
 
 
 extern AppConfig mytetraConfig;
@@ -91,16 +90,6 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
 
     configDialog->updateListWidth();
 
-    // Кнопка перехода в настройки редактора слева внизу:
-    // текущие правки применяются как по OK, затем открывается
-    // диалог редактора
-    configDialog->setAlterSettingsButton(QObject::tr("Editor settings..."));
-    QObject::connect(configDialog, &ConfigDialog::alterSettingsRequested,
-                     configDialog, [this]() {
-                         configDialog->applyAndClose();
-                         EditorConfigDialog editorDialog;
-                     });
-
     // Если указано имя виджета настроек, происходит переключение на него,
     // иначе будет выбран первый виджет (pageMain)
     if(firstPageName.size()>0)
@@ -136,7 +125,6 @@ void AppConfigDialog::retranslateUi(void)
         return;
 
     configDialog->setWindowTitle(QObject::tr("SyncTetra settings"));
-    configDialog->setAlterSettingsButton(QObject::tr("Editor settings..."));
 
     pageMain->setText(QObject::tr("Main"));
     pageAppearance->setText(QObject::tr("Appearance"));

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Сборка портабельной версии SyncTetra для Linux.
+# Сборка портабельной версии MyTetra для Linux.
 # Все компоненты складываются в одну папку: бинарь synctetra, бинарь
 # mimetex для формул, копии библиотек Qt и ее зависимостей в lib,
 # плагины Qt в plugins, qt.conf и скрипт запуска start.sh.
@@ -15,7 +15,7 @@
 #   ./build_portable_linux.sh            без параметров: исходники откуда
 #                                        запущен скрипт, сборка из каталога
 #                                        Qt Creator, Qt SDK из его Makefile,
-#                                        результат рядом в SyncTetra-lin-portable
+#                                        результат рядом в MyTetra-lin-portable
 #   ./build_portable_linux.sh --clean    предварительно очистить сборочный каталог
 #   ./build_portable_linux.sh --jobs 4   число потоков сборки
 #   ./build_portable_linux.sh --portable-dir /путь/к/папке   куда сложить сборку
@@ -41,7 +41,7 @@ set -euo pipefail
 QT_SDK="/media/user/data/Qt_installed/5.15.2/gcc_64"
 QT_SDK_FALLBACK="/media/user/m2data/Qt_deb11/5.15.2/gcc_64"
 
-# Исходники проекта с файлом mytetra.pro. По умолчанию корень репозитория,
+# Исходники проекта с файлом synctetra.pro. По умолчанию корень репозитория,
 # посчитанный от места скрипта: работает из любой копии без параметров
 SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"
 SOURCE_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
@@ -143,8 +143,8 @@ done
 # Проверки окружения
 # --------------------------------------------------------------------------
 
-if [[ ! -f "${SOURCE_DIR}/mytetra.pro" ]]; then
-    echo "ОШИБКА: в SOURCE_DIR нет mytetra.pro: ${SOURCE_DIR}" >&2
+if [[ ! -f "${SOURCE_DIR}/synctetra.pro" ]]; then
+    echo "ОШИБКА: в SOURCE_DIR нет synctetra.pro: ${SOURCE_DIR}" >&2
     exit 2
 fi
 
@@ -230,8 +230,8 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
              "${SOURCE_DIR}/thirdParty/mimetex/build/bin"
 
     # qmake создает Makefile, make собирает. mimetex собирается как отдельный
-    # проект и копируется рядом с synctetra, поэтому собирается весь mytetra.pro
-    "${QMAKE}" "${SOURCE_DIR}/mytetra.pro"
+    # проект и копируется рядом с synctetra, поэтому собирается весь synctetra.pro
+    "${QMAKE}" "${SOURCE_DIR}/synctetra.pro"
     "${MAKE_BIN}" -j"${JOBS}"
 fi
 
@@ -444,7 +444,7 @@ fi
 # с Multimedia) виден здесь, а не падением на чужой машине. Плагины
 # тоже проверяются: у них свои зависимости от Qt
 NOTFOUND=0
-for target in "${PORTABLE_DIR}/synctetra" "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
+for target in "${PORTABLE_DIR}/mytetra" "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
     [[ -f "${target}" ]] || continue
     MISSING="$(LD_LIBRARY_PATH="${LIB_DIR}" ldd "${target}" 2>/dev/null | grep "not found" || true)"
     if [[ -n "${MISSING}" ]]; then
@@ -477,7 +477,7 @@ LAUNCHER="${PORTABLE_DIR}/start.sh"
 
 cat > "${LAUNCHER}" <<EOF
 #!/usr/bin/env bash
-# Запуск портабельной версии SyncTetra.
+# Запуск портабельной версии MyTetra.
 # Пути к библиотекам и плагинам рядом с программой заданы вручную,
 # поэтому Qt берется из этой папки, а не из системы
 
@@ -498,7 +498,7 @@ EOF
 chmod +x "${LAUNCHER}"
 
 cat > "${PORTABLE_DIR}/PORTABLE.txt" <<'EOF'
-SyncTetra portable для Linux
+MyTetra portable для Linux
 ==========================
 Запуск: ./start.sh
 
@@ -509,7 +509,7 @@ SyncTetra portable для Linux
 Глобальный хоткей клиппера (пример Ctrl+Q) вешается средствами
 рабочего стола на команду:
   /путь/к/start.sh --control --clipboard
-SyncTetra при этом должна быть запущена.
+MyTetra при этом должна быть запущена.
 EOF
 
 # --------------------------------------------------------------------------
@@ -539,7 +539,7 @@ if [[ "${DO_SMOKE}" -eq 1 ]]; then
     SMOKE_DIR="$(mktemp -d)"
     cp -r "${PORTABLE_DIR}/." "${SMOKE_DIR}/"
     mkdir -p "${SMOKE_DIR}/data/base/seed00000000000001"
-    cp "${SOURCE_DIR}/app/bin/resource/standartdata/synctetra.xml" "${SMOKE_DIR}/data/" 2>/dev/null || true
+    cp "${SOURCE_DIR}/app/bin/resource/standartdata/mytetra.xml" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/database.ini" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/base/1300000000aaaaaaaaa2/text.html" "${SMOKE_DIR}/data/base/seed00000000000001/" 2>/dev/null || true
     printf '[General]\nprintdebugmessages=true\n' > "${SMOKE_DIR}/conf.ini"

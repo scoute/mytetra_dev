@@ -171,8 +171,8 @@ void AppConfigPage_Synchro::onEnablePeriodicSyncro(bool state)
 
 void AppConfigPage_Synchro::retranslateUi(void)
 {
-  synchroOnExit->setText(tr("Synchronize when exit from SyncTetra"));
   synchroOnStartup->setText(tr("Synchronize at SyncTetra startup"));
+  synchroOnExit->setText(tr("Synchronize when exit from SyncTetra"));
   synchroOnPeriodic->setText(tr("Enable periodic background synchronize"));
 
   commandText->setText(tr("Synchronization command"));

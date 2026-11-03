@@ -161,6 +161,7 @@ void AppConfigPage_Clipper::setupUi(void)
   clipperBox->setTitle(QString());
   clipperBox->setWhatsThis(tr("Web Clipper: in the browser, select all or part of the page text, then press the global hotkey. The clip is saved to the target branch note.\nRun: synctetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nSyncTetra must be running."));
   clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: synctetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nSyncTetra must be running."));
+  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: synctetra --control --clipboard [--url]"));
 }
 
 
@@ -343,6 +344,7 @@ void AppConfigPage_Clipper::retranslateUi(void)
 
   clipperBox->setWhatsThis(tr("Web Clipper: in the browser, select all or part of the page text, then press the global hotkey. The clip is saved to the target branch note.\nRun: synctetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nSyncTetra must be running."));
   clipperBox->setWhatsThis(tr("Clipper saves the OS clipboard into an unsorted_notes branch note.\nRun: synctetra --control --clipboard [--url]\nBind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard\nSyncTetra must be running."));
+  clipperBox->setToolTip(tr("Saves the OS clipboard into a note: synctetra --control --clipboard [--url]"));
 
   clipperMaxImagesLabel->setText(tr("Maximum images per note:"));
   clipperMaxImageSizeLabel->setText(tr("Maximum size of one image:"));

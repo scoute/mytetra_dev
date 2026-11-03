@@ -158,7 +158,13 @@ void EditorToolBarAssistant::onChangeFontselectOnDisplay(QString fontName)
     fontSelect->setIsProgrammChanged(true);
     if(fontName.size()>0)
     {
-        int n=fontSelect->findText(fontName);
+        // Если шрифт есть среди недавних — выделяется строка сверху,
+        // а не дубль из общего списка (иначе список открывается
+        // прокрученным вниз и недавние не видно)
+        int n=fontSelect->recentRowForFamily(fontName);
+
+        if(n<0)
+            n=fontSelect->findText(fontName);
 
         // Если шрифт с заданным названием найден в списке шрифтов (в комбобоксе)
         if(n>=0)
@@ -607,8 +613,16 @@ void EditorToolBarAssistant::updateToActualFormat(void)
 {
     // Текущий шрифт позиции, где находится курсор
     QString actualFontFamily=m_editor->smartFontFamily( m_textArea->fontFamily() );
-    if(m_currentFontFamily!=actualFontFamily)
+    if(m_currentFontFamily!=actualFontFamily) {
         this->onChangeFontselectOnDisplay(actualFontFamily);
+
+        // Встреченный шрифт — в историю использования: топ-10 частых
+        // вверху списка, текущий выбирается из недавних (см. 363).
+        // Перестройка только при смене шрифта, а не на каждый курсор
+        m_editor->editorConfig->noteFontUsed(actualFontFamily);
+        fontSelect->reloadRecentFonts(m_editor->editorConfig->get_recentFonts(),
+                                      actualFontFamily);
+    }
 
     // Размер
     int actualFontPointSize=m_editor->smartFontSize( static_cast<int>(m_textArea->fontPointSize()) );

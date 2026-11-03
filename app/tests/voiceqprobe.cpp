@@ -112,6 +112,10 @@ int main(int argc, char **argv)
         check(dlg->opusQuality->count()==6, "COMBO-COUNT");
         check(dlg->opusQuality->currentIndex()==3, "COMBO-DEFAULT");
 
+        // Хвост пунктов - прикидка веса минуты (кбит/с*60/8): 90..480 Кбайт
+        check(dlg->opusQuality->itemText(0).contains(QStringLiteral("90")), "COMBO-SIZE-12");
+        check(dlg->opusQuality->itemText(5).contains(QStringLiteral("480")), "COMBO-SIZE-64");
+
         // Смена пункта: конфиг + подпись
         dlg->opusQuality->setCurrentIndex(1);
         QApplication::processEvents();
@@ -173,8 +177,8 @@ int main(int argc, char **argv)
                     return r;
             return (QRadioButton *)nullptr;
         };
-        QRadioButton *low=findRadio(QStringLiteral("Extra low (16 kbit/s)"));
-        QRadioButton *extra=findRadio(QStringLiteral("Extra high (64 kbit/s)"));
+        QRadioButton *low=findRadio(QStringLiteral("Extra low (16 kbit/s), 1 minute ~ 120 KB"));
+        QRadioButton *extra=findRadio(QStringLiteral("Extra high (64 kbit/s), 1 minute ~ 480 KB"));
         check(low!=nullptr && extra!=nullptr, "SETTINGS-RADIOS");
         if(low!=nullptr && extra!=nullptr)
         {

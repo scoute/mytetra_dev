@@ -196,6 +196,58 @@ void AttachTableController::addDroppedFiles(const QStringList &files)
   addFileList("file", files);
 }
 
+// Один файл из дропа в текст: тот же движок что addFileList,
+// но возвращает имена для вставки кликабельной метки.
+// Пусто в innerFileName если файл не добавился
+bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
+                                                 QString &innerFileName,
+                                                 QString &displayFileName)
+{
+  innerFileName.clear();
+  displayFileName.clear();
+
+  if(filePath.isEmpty())
+    return false;
+
+  if(getAttachTableData()==NULL)
+  {
+    showMessageBox(tr("Save the note first"));
+    return false;
+  }
+
+  QFileInfo fileInfo(filePath);
+
+  if(fileInfo.isDir())
+  {
+    showMessageBox(tr("Cannot add a directory. Please select a file(s)."));
+    return false;
+  }
+
+  QString shortFileName=fileInfo.fileName();
+  QString sourceFileName=fileInfo.absoluteFilePath();
+
+  if(fileInfo.isSymLink() && !fileInfo.symLinkTarget().isEmpty())
+    sourceFileName=fileInfo.symLinkTarget();
+
+  if(!addAttach(QStringLiteral("file"), filePath, shortFileName, sourceFileName))
+    return false;
+
+  saveState();
+  updateAttachListInEditor();
+
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(attachTableData==NULL || attachTableData->size()==0)
+    return false;
+
+  // Добавленный аттач в конце списка: addAttach дописывает в хвост
+  const int lastRow=attachTableData->size()-1;
+  innerFileName=attachTableData->getInnerFileName(lastRow);
+  displayFileName=attachTableData->getFileName(lastRow);
+
+  return !innerFileName.isEmpty();
+}
+
 
 void AttachTableController::addFileList(QString attachType, const QStringList &files)
 {

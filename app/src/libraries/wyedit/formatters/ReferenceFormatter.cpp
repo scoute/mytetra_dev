@@ -22,9 +22,16 @@
 #include "views/tree/KnowTreeView.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/recordTable/Record.h"
+#include "models/attachTable/AttachTableData.h"
+#include "models/attachTable/Attach.h"
+#include "controllers/attachTable/AttachTableController.h"
+#include "libraries/GlobalParameters.h"
+#include "models/appConfig/AppConfig.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/helpers/LinkHelper.h"
+#include "libraries/helpers/DiskHelper.h"
+#include "libraries/crypt/CryptService.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "views/voiceNote/VoicePlayerDialog.h"
 #include "views/notePicker/NotePickerDialog.h"
@@ -34,6 +41,10 @@
 #include "../EditorToolBarAssistant.h"
 #include "../EditorCursorPositionDetector.h"
 #include "../../TraceLogger.h"
+
+
+extern GlobalParameters globalParameters;
+extern AppConfig mytetraConfig;
 
 
 ReferenceFormatter::ReferenceFormatter()
@@ -420,6 +431,54 @@ void ReferenceFormatter::insertTitledLink(const QString &internalHref,
 }
 
 
+// Метка брошенного в текст файла: [EXT] видимое имя.
+// Только ASCII: шрифт заметки настраивается, эмодзи-скрепка
+// в DejaVu Sans отсутствует и рисуется tofu-квадратом.
+// Расширение верхним регистром, без него метка [FILE]
+void ReferenceFormatter::insertAttachBadge(const QString &innerFileName,
+                                          const QString &displayFileName)
+{
+    if(innerFileName.isEmpty() || displayFileName.isEmpty())
+        return;
+
+    QString ext=QFileInfo(displayFileName).suffix().toUpper();
+
+    if(ext.isEmpty())
+        ext=QStringLiteral("FILE");
+
+    const QString href=QStringLiteral("attach://")+innerFileName;
+    const QString title=QStringLiteral("[")+ext+QStringLiteral("] ")+displayFileName;
+
+    insertTitledLink(href, title);
+}
+
+
+// Метка аттача: attach://<внутреннее имя на диске>
+bool ReferenceFormatter::isAttachHref(const QString &href)
+{
+    return href.startsWith(QStringLiteral("attach://"));
+}
+
+
+// Внутреннее имя из метки аттача, пусто если не метка
+QString ReferenceFormatter::attachInnerFromHref(const QString &href)
+{
+    if(!isAttachHref(href))
+        return QString();
+
+    return href.mid(static_cast<int>(sizeof("attach://")-1));
+}
+
+
+// Имя MIME для переноса меток аттачей между заметками
+const char *ReferenceFormatter::attachMimeTypeName(void)
+{
+    static const char *attachMimeType="application/x-mytetra-attach";
+
+    return attachMimeType;
+}
+
+
 // Действия при выборе контекстного меню редактора "Перейти по ссылке"
 void ReferenceFormatter::onContextMenuGotoReference()
 {
@@ -446,6 +505,93 @@ void ReferenceFormatter::onClickedGotoReference(QString href)
     // Метка живет в том же anchor-канале что ссылки
     if(href==SecretFormatter::secretHref())
       return;
+
+    // Метка аттача из дропа в текст: внутреннее имя в каталоге записи.
+    // Шифрованная запись открывается как в таблице аттачей: копия
+    // в корзину с расшифровкой, иначе откроется шифрованный blob
+    if(isAttachHref(href))
+    {
+      const QString innerName=attachInnerFromHref(href);
+      const QString workDir=editor->getWorkDirectory();
+
+      if(innerName.isEmpty() || workDir.isEmpty())
+        return;
+
+      const QString cleanWorkDir=QDir::cleanPath(QDir(workDir).absolutePath());
+
+      AttachTableController *attachController=find_object<AttachTableController>(
+        QStringLiteral("attachTableController"));
+
+      AttachTableData *attachTableData=(attachController!=nullptr)
+        ? attachController->getAttachTableData() : nullptr;
+
+      // Строка аттача: прямое внутреннее имя либо любая схема
+      // из кандидатов (режим имен сменили после вставки, коллизия
+      // оригинала увела файл в гибрид). Только файлы, не линки
+      QString rowId;
+
+      if(attachTableData!=nullptr)
+      {
+        for(int row=0; row<attachTableData->size(); ++row)
+        {
+          const QString candidateId=attachTableData->getIdByRow(row);
+          const Attach candidateAttach=attachTableData->getAttach(candidateId);
+
+          if(candidateAttach.getField(QStringLiteral("type"))!=QStringLiteral("file"))
+            continue;
+
+          if(attachTableData->getInnerFileName(row)==innerName ||
+             Attach::candidateFileNames(QStringLiteral("file"),
+               candidateAttach.getField(QStringLiteral("id")),
+               candidateAttach.getField(QStringLiteral("fileName"))).contains(innerName))
+          {
+            rowId=candidateId;
+            break;
+          }
+        }
+      }
+
+      // Реальный файл: прямой путь, иначе найденная строка.
+      // getExistingInnerFileName сам ищет по всем схемам
+      QString absolutePath=QDir::cleanPath(QDir(workDir).absoluteFilePath(innerName));
+
+      if(!QFileInfo(absolutePath).isFile() && !rowId.isEmpty())
+        absolutePath=QDir::cleanPath(QDir(workDir).absoluteFilePath(
+          attachTableData->getAttach(rowId).getExistingInnerFileName()));
+
+      if(!QFileInfo(absolutePath).isFile())
+        return;
+
+      // Только внутрь каталога записи, без выхода наверх.
+      // Проверка до расшифровки: копия в корзину лежит уже вне записи
+      if(!absolutePath.startsWith(cleanWorkDir+QLatin1Char('/')))
+        return;
+
+      if(!rowId.isEmpty())
+      {
+        const Attach rowAttach=attachTableData->getAttach(rowId);
+
+        if(attachTableData->isRecordCrypt() &&
+           rowAttach.getField(QStringLiteral("type"))==QStringLiteral("file"))
+        {
+          if(mytetraConfig.getEnableDecryptFileToTrashDirectory())
+          {
+            absolutePath=DiskHelper::copyFileToTrash(absolutePath);
+            CryptService::decryptFile(globalParameters.getCryptKey(), absolutePath);
+          }
+          else
+          {
+            QMessageBox msgBox;
+            msgBox.setText(tr("Unable to preview the encrypted attached file.\nPlease, use «Save As...» button, or\nenable «Decrypt to a temporary file» option in Settings."));
+            msgBox.exec();
+            return;
+          }
+        }
+      }
+
+      QDesktopServices::openUrl(QUrl::fromLocalFile(absolutePath));
+      return;
+    }
 
     // Относительная ссылка без схемы: файл рядом с текстом записи
     // (картинки, аттачи из импорта). Раскрывается относительно

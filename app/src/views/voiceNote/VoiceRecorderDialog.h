@@ -15,7 +15,7 @@
 class QLabel;
 class QPushButton;
 class QCheckBox;
-class QComboBox;
+class MtComboBox;
 class MtComboBox;
 class QRadioButton;
 class QLineEdit;
@@ -201,7 +201,7 @@ private:
     QLabel *opusQualityLabel;
     MtComboBox *opusQuality;
     QLineEdit *fileNameEdit;
-    QComboBox *deviceCombo;
+    MtComboBox *deviceCombo;
     QPushButton *recordButton;
     QPushButton *insertButton;
     QPushButton *cancelButton;

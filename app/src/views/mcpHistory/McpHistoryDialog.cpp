@@ -1,6 +1,7 @@
 #include <QBrush>
 #include <QColor>
 #include <QComboBox>
+#include "libraries/MtComboBox.h"
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QScrollBar>
@@ -25,7 +26,7 @@ McpHistoryDialog::McpHistoryDialog(QWidget *parent) : QDialog(parent)
   filterLabel->setObjectName("mcpHistoryFilterLabel");
   filterLabel->setText(tr("Show:"));
 
-  m_filterBox=new QComboBox(this);
+  m_filterBox=new MtComboBox(this);
   m_filterBox->addItem(tr("All"), QStringLiteral("all"));
   m_filterBox->addItem(tr("Reads"), QStringLiteral("read"));
   m_filterBox->addItem(tr("Writes"), QStringLiteral("write"));

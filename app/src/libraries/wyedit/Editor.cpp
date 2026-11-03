@@ -20,6 +20,7 @@
 #include <QtGlobal>
 #include <QApplication>
 #include <QTimer>
+#include <QRegularExpression>
 
 #include "Editor.h"
 #include "EditorConfig.h"
@@ -1090,6 +1091,334 @@ QString Editor::getFileName(void)
 
 
 // Сохранение HTML кода документа в файл
+// Дефолты блочных тегов в Qt 5.15 (замерено стендом на bare-тегах:
+// голый тег грузится ровно в эти отступы, toHtml их же и печатает).
+// Снос таких деклараций побайтово не меняет документ
+struct BlockTagDefaults
+{
+  const char *tag;
+  const char *top;
+  const char *bottom;
+  const char *side; // margin-left/right по умолчанию (у blockquote 40px)
+};
+
+static const BlockTagDefaults blockTagDefaultsTable[]=
+{
+  {"p",          "12px", "12px", "0"},
+  {"h1",         "18px", "12px", "0"},
+  {"h2",         "16px", "12px", "0"},
+  {"h3",         "14px", "12px", "0"},
+  {"h4",         "12px", "12px", "0"},
+  {"h5",         "12px", "4px",  "0"},
+  {"h6",         "0",    "0",    "0"},
+  {"li",         "12px", "12px", "0"},
+  {"pre",        "12px", "12px", "0"},
+  {"div",        "0",    "0",    "0"},
+  {"blockquote", "12px", "12px", "40px"}
+};
+
+static bool tagDefaults(const QString &tagName, QString &defTop, QString &defBottom, QString &defSide)
+{
+  const QString lower=tagName.toLower();
+
+  for(size_t i=0; i<sizeof(blockTagDefaultsTable)/sizeof(blockTagDefaultsTable[0]); ++i)
+    if(lower==QLatin1String(blockTagDefaultsTable[i].tag))
+    {
+      defTop=QLatin1String(blockTagDefaultsTable[i].top);
+      defBottom=QLatin1String(blockTagDefaultsTable[i].bottom);
+      defSide=QLatin1String(blockTagDefaultsTable[i].side);
+      return true;
+    }
+
+  return false;
+}
+
+// Разбор style блочного тега относительно его дефолтов: маркер
+// пустоты, нулевые верха/низы, ужатый вариант. Пусто = выкинуто
+// всё (атрибут style не нужен)
+struct ParagraphStyleInfo
+{
+  bool hasStyle=false;
+  bool hasMarker=false;
+  QString top;
+  QString bottom;
+  QStringList kept;
+  bool dropped=false;
+};
+
+static ParagraphStyleInfo parseParagraphStyle(const QString &styleInner,
+                                              const QString &defTop,
+                                              const QString &defBottom,
+                                              const QString &defSide)
+{
+  ParagraphStyleInfo info;
+  info.hasStyle=true;
+
+  foreach(QString declaration, styleInner.split(QLatin1Char(';')))
+  {
+    const QString trimmed=declaration.trimmed();
+
+    if(trimmed.isEmpty())
+      continue;
+
+    const int colon=trimmed.indexOf(QLatin1Char(':'));
+
+    if(colon<0)
+    {
+      info.kept << trimmed;
+      continue;
+    }
+
+    const QString name=trimmed.left(colon).trimmed().toLower();
+    const QString value=trimmed.mid(colon+1).trimmed();
+
+    // Маркер пустого блока - не дефолт, хранится всегда
+    if(name==QStringLiteral("-qt-paragraph-type") &&
+       value.compare(QStringLiteral("empty"), Qt::CaseInsensitive)==0)
+    {
+      info.hasMarker=true;
+      info.kept << QStringLiteral("-qt-paragraph-type:empty");
+      continue;
+    }
+
+    bool isDefault=false;
+
+    if(name==QStringLiteral("margin-top"))
+      isDefault=(value==defTop || (defTop==QStringLiteral("0") && value==QStringLiteral("0px")));
+    else if(name==QStringLiteral("margin-bottom"))
+      isDefault=(value==defBottom || (defBottom==QStringLiteral("0") && value==QStringLiteral("0px")));
+    else if(name==QStringLiteral("margin-left") ||
+            name==QStringLiteral("margin-right"))
+      isDefault=(value==defSide || (defSide==QStringLiteral("0") && value==QStringLiteral("0px")));
+    else if(name==QStringLiteral("text-indent") ||
+            name==QStringLiteral("-qt-block-indent"))
+      isDefault=(value==QStringLiteral("0") || value==QStringLiteral("0px"));
+
+    if(isDefault)
+    {
+      info.dropped=true;
+      continue;
+    }
+
+    if(name==QStringLiteral("margin-top"))
+      info.top=value;
+    else if(name==QStringLiteral("margin-bottom"))
+      info.bottom=value;
+
+    info.kept << name+QStringLiteral(":")+value;
+  }
+
+  return info;
+}
+
+// Голый тег без атрибутов: то, что осталось после вырезания style.
+// Сравнение без пробелов: <h1>, <h1 > одно и то же
+static bool isBareBlockTag(const QString &tag, const QString &tagName)
+{
+  QString plain=tag;
+  plain.remove(QChar::fromLatin1(' '));
+  plain.remove(QChar::fromLatin1('\t'));
+
+  return plain.compare(QStringLiteral("<%1>").arg(tagName), Qt::CaseInsensitive)==0;
+}
+
+// Минимум мета-информации в HTML насколько позволяет Qt.
+// Общее выносится один раз, исключения пишутся точечно:
+// - пустой абзац с нулевыми отступами -> <p class="mtempty"><br /></p>
+//   плюс одно правило в <style> (вместо ~150 символов на каждый);
+// - из остальных блочных тегов (p, h1-h6, li, pre, div, blockquote)
+//   выкидываются декларации со значениями по умолчанию Qt для этого
+//   тега (верх/низ свои у каждого, бока у всех нули кроме blockquote);
+//   неизвестные свойства и ненулевые значения остаются как были.
+//   Пустым заголовкам маркер -qt-paragraph-type:empty хранится инлайн
+//   (без него Qt кладет фантомный перевод строки, проверено стендом).
+// Стендом проверено: загрузка нормализованного HTML дает побайтово
+// тот же документ (форматы блоков, текст). toHtml класс не переживает
+// (пишет инлайн назад), поэтому нормализация крутится при каждом
+// сохранении и показе
+QString Editor::normalizeEmptyParagraphs(const QString &html)
+{
+  if(!html.contains(QLatin1String("<p")) &&
+     !html.contains(QLatin1String("<h")) &&
+     !html.contains(QLatin1String("<li")) &&
+     !html.contains(QLatin1String("<pre")) &&
+     !html.contains(QLatin1String("<div")) &&
+     !html.contains(QLatin1String("<blockquote")))
+    return html;
+
+  if(!html.contains(QLatin1String("style=")))
+    return html;
+
+  static const QRegularExpression openTagRx(
+    QStringLiteral("<(p|h[1-6]|li|pre|div|blockquote)(\\s[^<>]*)?>"),
+    QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression styleAttrRx(
+    QStringLiteral("style\\s*=\\s*\"([^\"]*)\""),
+    QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression trailingSpaceRx(
+    QStringLiteral("\\s+>$"));
+  static const QString ruleText=
+    QStringLiteral("p.mtempty{-qt-paragraph-type:empty;margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0px;-qt-block-indent:0;text-indent:0px;}");
+  // Непустые блоки с нулевыми верхом/низом: общий класс вместо
+  // инлайн margin-top:0px;margin-bottom:0px на каждом (см. ниже)
+  static const QString tightRuleText=
+    QStringLiteral(".mt0{margin-top:0px;margin-bottom:0px;}");
+
+  QString result;
+  result.reserve(html.size());
+
+  int pos=0;
+  bool changed=false;
+  bool needRule=false;
+  bool needTightRule=false;
+  QRegularExpressionMatchIterator it=openTagRx.globalMatch(html);
+
+  while(it.hasNext())
+  {
+    const QRegularExpressionMatch match=it.next();
+
+    // Совпадение внутри уже обработанного куска: пропускаем,
+    // иначе испортим вставку (минусовая длина у mid)
+    if(match.capturedStart()<pos)
+      continue;
+
+    result+=html.mid(pos, match.capturedStart()-pos);
+    pos=match.capturedEnd();
+
+    const QString tag=match.captured(0);
+    const QString tagName=match.captured(1).toLower();
+    const QRegularExpressionMatch styleMatch=styleAttrRx.match(tag);
+
+    if(!styleMatch.hasMatch())
+    {
+      result+=tag;
+      continue;
+    }
+
+    QString defTop;
+    QString defBottom;
+    QString defSide;
+
+    if(!tagDefaults(tagName, defTop, defBottom, defSide))
+    {
+      result+=tag;
+      continue;
+    }
+
+    const ParagraphStyleInfo info=parseParagraphStyle(styleMatch.captured(1),
+                                                      defTop, defBottom, defSide);
+
+    // Хвост пустого блока: <br /></tag>. Строится под текущий тег,
+    // общий класс при этом положен только абзацу <p>
+    const QRegularExpression emptyTailRx(
+      QStringLiteral("\\G\\s*<br\\s*/?>\\s*</")+tagName+QStringLiteral(">"),
+      QRegularExpression::CaseInsensitiveOption);
+
+    // Пустой блок целиком: тег + одиночный br
+    bool isEmptyPara=false;
+
+    if(emptyTailRx.match(html, match.capturedEnd()).hasMatch())
+      isEmptyPara=true;
+
+    // Общий класс: только <p>, маркер есть, отступы нулевые,
+    // атрибутов кроме style нет. Без маркера пустота не гарантируется
+    // (Qt кладет фантомный перевод строки), без нулей меняется геометрия
+    if(tagName==QLatin1String("p") && isEmptyPara && info.hasMarker &&
+       (info.top==QStringLiteral("0") || info.top==QStringLiteral("0px")) &&
+       (info.bottom==QStringLiteral("0") || info.bottom==QStringLiteral("0px")))
+    {
+      QString opener=tag;
+      opener.remove(styleMatch.captured(0));
+
+      if(isBareBlockTag(opener, tagName))
+      {
+        result+=QStringLiteral("<p class=\"mtempty\"><br /></p>");
+
+        QRegularExpressionMatch tail=emptyTailRx.match(html, match.capturedEnd());
+        pos=tail.capturedEnd();
+
+        needRule=true;
+        changed=true;
+        continue;
+      }
+    }
+
+    // Непустой блок с ровно нулевыми верхом/низом (kept.size()==2):
+    // общий класс в шапке вместо инлайна margin-top:0px;margin-bottom:0px
+    // на каждом. Пустые (br/маркер) идут mtempty выше или остаются как
+    // были (фолдинг). Прочие свойства и ненулевые отступы - точечно
+    // инлайном (исключения)
+    if(!isEmptyPara && !info.hasMarker && info.kept.size()==2 &&
+       (info.top==QStringLiteral("0") || info.top==QStringLiteral("0px")) &&
+       (info.bottom==QStringLiteral("0") || info.bottom==QStringLiteral("0px")))
+    {
+      QString opener=tag;
+      opener.remove(styleMatch.captured(0));
+
+      if(isBareBlockTag(opener, tagName))
+      {
+        result+=QStringLiteral("<")+tagName+QStringLiteral(" class=\"mt0\">");
+
+        needTightRule=true;
+        changed=true;
+        continue;
+      }
+    }
+
+    // Обычный инлайн-стрип: выкинуть дефолты, остальное как было
+    if(!info.dropped)
+    {
+      result+=tag;
+      continue;
+    }
+
+    if(info.kept.isEmpty())
+    {
+      QString shortened=tag;
+      shortened.remove(styleMatch.captured(0));
+      shortened.replace(trailingSpaceRx, QStringLiteral(">"));
+      result+=shortened;
+    }
+    else
+    {
+      QString shortened=tag;
+      shortened.replace(styleMatch.captured(0),
+                        QStringLiteral("style=\"")+info.kept.join(QStringLiteral(";"))+QStringLiteral("\""));
+      result+=shortened;
+    }
+
+    changed=true;
+  }
+
+  result+=html.mid(pos);
+
+  if(!changed)
+    return html;
+
+  // Правила в <style>: классы без правил висят в воздухе,
+  // поэтому без <style> - откат
+  QString rules;
+
+  if(needRule && !result.contains(ruleText))
+    rules+=QStringLiteral("\n")+ruleText+QStringLiteral("\n");
+
+  if(needTightRule && !result.contains(tightRuleText))
+    rules+=QStringLiteral("\n")+tightRuleText+QStringLiteral("\n");
+
+  if(!rules.isEmpty())
+  {
+    const int styleEnd=result.indexOf(QStringLiteral("</style>"));
+
+    if(styleEnd<0)
+      return html;
+
+    result.insert(styleEnd, rules);
+  }
+
+  return result;
+}
+
+
 bool Editor::saveTextareaText()
 {
   if(workFileName.length()==0)
@@ -1119,6 +1448,10 @@ bool Editor::saveTextareaText()
   // останавливается на первом 0x00 и обрезает остаток текста (баг #134:
   // такой байт попадает в документ при вставке из браузера)
   content.remove(QChar('\0'));
+
+  // Пустые абзацы в компактный класс вместо инлайн-простыни
+  content=normalizeEmptyParagraphs(content);
+
   out.setCodec("UTF-8");
   out << content;
 
@@ -1778,7 +2111,7 @@ void Editor::onShowhtmlClicked(void)
 {
   EditorMultiLineInputDialog dialog(this);
 
-  dialog.setText(textArea->toHtml());
+  dialog.setText(normalizeEmptyParagraphs(textArea->toHtml()));
   dialog.setWindowTitle(tr("Edit HTML source"));
 
   if(dialog.exec()!=QDialog::Accepted)

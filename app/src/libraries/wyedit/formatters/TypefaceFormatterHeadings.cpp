@@ -37,11 +37,12 @@
 #include "../EditorTextArea.h"
 
 
-// Масштабный коэффициент размера заголовка: во сколько раз h1/h2/h3
+// Масштабный коэффициент размера заголовка: во сколько раз h1-h6
 // крупнее обычного текста. Qt хранит крупность в свойстве
 // FontSizeAdjustment, а оно не откатывается undo и плодит мусор,
-// поэтому в работу берутся абсолютные размеры. Коэффициент замеряется
-// один раз за сессию рендером эталона: допущений о внутренностях Qt нет
+// поэтому в работу берутся абсолютные размеры. Лесенка фиксирована:
+// 48/32/24/20/16/12 при базе 12 (замер рендера Qt тут не годится:
+// Qt рисует h6 кеглем обычного текста, а h5 - small)
 
 // P3: хелперы заголовков (были file-static в общем файле)
 // Запомненное оформление абзаца до первого превращения в заголовок:
@@ -117,6 +118,27 @@ static void headingProbeMargins(int level, QTextBlockFormat &blockFormat)
 // абзаца без выделения). Повторный клик по своему уровню снимает
 // его в обычный текст. Символьное форматирование не трогается:
 // уровень заголовка живёт в блочном формате и в HTML едет как <h1>
+// Ступень FontSizeAdjustment глушит явный кегль: пока свойство есть,
+// размер берется из внутренней таблицы шагов Qt (44pt рисуются мелко).
+// Стендом проверено: снять ее через mergeCharFormat нельзя
+// (clearProperty в источнике слияния игнорируется), только полной
+// заменой формата. Своим же форматом без ступени: позиции и длина не едут
+static void stripFontSizeAdjustment(QTextDocument *doc, int position, int length,
+                                    const QTextCharFormat &fragmentFormat)
+{
+  if(!fragmentFormat.hasProperty(QTextFormat::FontSizeAdjustment))
+    return;
+
+  QTextCursor fragmentCursor(doc);
+  fragmentCursor.setPosition(position);
+  fragmentCursor.setPosition(position+length, QTextCursor::KeepAnchor);
+
+  QTextCharFormat stripped=fragmentFormat;
+  stripped.clearProperty(QTextFormat::FontSizeAdjustment);
+  fragmentCursor.setCharFormat(stripped);
+}
+
+
 void TypefaceFormatter::applyHeadingLevel(int level)
 {
     QTextCursor cursor=textArea->textCursor();
@@ -288,6 +310,14 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
             const double absoluteSize=baseSize*headingScaleFactor(target);
 
+            // Наследство старых билдов: ступень FontSizeAdjustment
+            // глушит явный кегль (размер едет из таблицы шагов Qt).
+            // Снять по-настоящему до выставления размера, иначе 44pt
+            // рисуются мелко. merge снятие не умеет (проверено стендом)
+            for(const FragmentSnapshot &snap : snapshots)
+                stripFontSizeAdjustment(textArea->document(), snap.position,
+                                        snap.length, snap.format);
+
             for(const FragmentSnapshot &snap : snapshots)
             {
                 QTextCursor fragmentCursor(textArea->document());
@@ -297,26 +327,27 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                 // Только merge явными значениями: судьба каждого
                 // свойства предсказуема (ничего лишнего не задевается),
                 // а полный setCharFormat на выделении в этой версии Qt
-                // замечен в непересчете вида. Ступень FontSizeAdjustment
-                // только снимается где есть: само ее присутствие
-                // переключает раскладку на свой путь и глушит явный
-                // размер, а выставление не откатывается undo.
-                // Свежим фрагментам она не ставится
+                // замечен в непересчете вида. Свежим фрагментам ступень
+                // не ставится, наследие снято выше
                 QTextCharFormat fragmentFormat;
                 fragmentFormat.setFontPointSize(absoluteSize);
                 fragmentFormat.setFontWeight(QFont::Bold);
-                if(snap.format.hasProperty(QTextFormat::FontSizeAdjustment))
-                    fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                 fragmentCursor.mergeCharFormat(fragmentFormat);
             }
         }
         else
         {
             // Назад в обычный. Был обычным - вернуть свое из stash,
-            // был загруженным заголовком - нормализовать: свой размер
-            // (если задан), обычная жирность, ступень снимается.
-            // Везде только merge явными значениями: снятий свойств,
-            // кроме чужой ступени, нет, нейтральный ноль не пишется
+            // был загруженным заголовком - нормализовать: базовый
+            // размер, обычная жирность. Ступень FontSizeAdjustment
+            // снята заранее (глушит явный кегль, merge ее не снимает):
+            // восстанавливать ее из stash нельзя, иначе размер снова
+            // поедет из таблицы шагов Qt. Везде только merge явными
+            // значениями
+            for(const FragmentSnapshot &snap : snapshots)
+                stripFontSizeAdjustment(textArea->document(), snap.position,
+                                        snap.length, snap.format);
+
             if(stash!=nullptr && stash->hasData && stash->stashedLevel==0)
             {
                 format.setTopMargin(stash->topMargin);
@@ -332,10 +363,6 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                     QTextCharFormat fragmentFormat;
                     fragmentFormat.setFontPointSize(stash->pointSize);
                     fragmentFormat.setFontWeight(stash->weight);
-                    if(stash->sizeAdjustment.isValid())
-                        fragmentFormat.setProperty(QTextFormat::FontSizeAdjustment, stash->sizeAdjustment);
-                    else
-                        fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                     fragmentCursor.mergeCharFormat(fragmentFormat);
                 }
             }
@@ -354,7 +381,6 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                     QTextCharFormat fragmentFormat;
                     fragmentFormat.setFontPointSize(baseNormalSize);
                     fragmentFormat.setFontWeight(QFont::Normal);
-                    fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                     fragmentCursor.mergeCharFormat(fragmentFormat);
                 }
             }

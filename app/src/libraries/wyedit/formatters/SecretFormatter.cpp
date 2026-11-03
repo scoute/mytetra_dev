@@ -48,13 +48,84 @@ QColor SecretFormatter::secretColor(void)
 }
 
 
-// Закрасить выделение. Без выделения только подсказка в статусной строке:
+// Закрасить выделение — или открыть секрет под курсором (тоггл).
+// Без выделения и вне секрета только подсказка в статусной строке:
 // красить нечего, а слово под курсором угадывать не надо
 void SecretFormatter::onSecretClicked(void)
 {
+  // Решение "открывать": секрет под курсором без выделения —
+  // штатный детектор; в выделении достаточно ХОТЬ ОДНОГО секрета
+  // (строгое "все выделение внутри" требует ювелирного выделения
+  // без захвата соседних символов и молча перекрашивает поверх)
+  bool reveal=false;
   QTextCursor cursor=textArea->textCursor();
 
-  if(!cursor.hasSelection())
+  if(cursor.hasSelection())
+    reveal=selectionContainsSecret(cursor.selectionStart(),
+                                   cursor.selectionEnd());
+  else
+  {
+    reveal=editor->cursorPositionDetector->isCursorOnSecret();
+
+    // Осиротевшая закраска без якоря (остаток старых версий):
+    // секретом считается и просто пара секретных красок
+    if(!reveal)
+    {
+      QTextCursor probeCursor=textArea->textCursor();
+      reveal=isSecretLikeFormat(probeCursor.charFormat());
+
+      if(!reveal && probeCursor.movePosition(QTextCursor::Right))
+        reveal=isSecretLikeFormat(probeCursor.charFormat());
+    }
+  }
+
+  if(reveal)
+  {
+    const int savedPosition=cursor.position();
+
+    // Границы секрета как в копировании: метка соседних символов
+    // (или секретные краски), выделение расширяется до целого секрета.
+    // Правая граница упирается в конец документа: setPosition за
+    // границей игнорируется, а не клиппится
+    QTextCursor probeCursor(cursor);
+    QTextDocument *document=textArea->document();
+    const int docEnd=document->characterCount()-1;
+
+    int left=cursor.hasSelection() ? cursor.selectionStart() : cursor.position();
+    int right=cursor.hasSelection() ? cursor.selectionEnd() : cursor.position();
+
+    while(left>0)
+    {
+      probeCursor.setPosition(left);
+      if(!isSecretLikeFormat(probeCursor.charFormat()))
+        break;
+      left--;
+    }
+
+    while(right<docEnd)
+    {
+      probeCursor.setPosition(right+1);
+      if(!isSecretLikeFormat(probeCursor.charFormat()))
+        break;
+      right++;
+    }
+
+    revealSecretRange(left, right);
+
+    cursor.setPosition(savedPosition);
+    textArea->setTextCursor(cursor);
+
+    QStatusBar *statusBar=globalParameters.getStatusBar();
+
+    if(statusBar!=nullptr)
+      statusBar->showMessage(tr("Secret revealed"));
+
+    return;
+  }
+
+  QTextCursor hideCursor=textArea->textCursor();
+
+  if(!hideCursor.hasSelection())
   {
     QStatusBar *statusBar=globalParameters.getStatusBar();
 
@@ -71,7 +142,67 @@ void SecretFormatter::onSecretClicked(void)
   charFormat.setBackground(secretColor());
   charFormat.setFontUnderline(false);
 
-  cursor.mergeCharFormat(charFormat);
+  hideCursor.mergeCharFormat(charFormat);
+}
+
+
+// Есть ли хоть один секрет внутри выделения [start, end).
+// Секретом считается и якорь secret, и просто пара секретных красок
+// (осиротевшая закраска). Проверка строгая (без захвата соседей):
+// формат символа i читается позицией i+1. Пустой диапазон - false
+bool SecretFormatter::selectionContainsSecret(int start, int end) const
+{
+  if(end<=start)
+    return false;
+
+  QTextCursor probeCursor(textArea->document());
+
+  for(int i=start; i<end; ++i)
+  {
+    probeCursor.setPosition(i+1);
+
+    if(isSecretLikeFormat(probeCursor.charFormat()))
+      return true;
+  }
+
+  return false;
+}
+
+
+// Похож ли формат на секрет: якорь secret либо пара секретных красок
+// без якоря (остаток старых версий, чистится тем же reveal)
+bool SecretFormatter::isSecretLikeFormat(const QTextCharFormat &format)
+{
+  if(isSecretFormat(format))
+    return true;
+
+  const QColor secret=secretColor();
+
+  return format.foreground().color()==secret &&
+         format.background().color()==secret;
+}
+
+
+// Снять закраску с диапазона: якорь убирается, краски ставятся
+// в обычные (явно, через палитру: clearForeground/clearBackground
+// в mergeCharFormat - no-op, снятое свойство не перезаписывает).
+// Курсор возвращается в исходную точку
+void SecretFormatter::revealSecretRange(int left, int right)
+{
+  if(left>=right)
+    return;
+
+  QTextCursor cursor(textArea->document());
+  cursor.setPosition(left);
+  cursor.setPosition(right, QTextCursor::KeepAnchor);
+
+  QTextCharFormat clearFormat;
+  clearFormat.setAnchor(false);
+  clearFormat.setAnchorHref(QString());
+  clearFormat.setForeground(QApplication::palette().color(QPalette::Text));
+  clearFormat.setBackground(Qt::NoBrush);
+
+  cursor.mergeCharFormat(clearFormat);
 }
 
 

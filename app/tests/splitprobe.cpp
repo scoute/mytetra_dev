@@ -16,6 +16,7 @@
 
 #include "views/record/MetaEditor.h"
 #include "libraries/wyedit/HtmlSourceEdit.h"
+#include "libraries/wyedit/HtmlSourceEdit.h"
 #include "libraries/wyedit/EditorTextArea.h"
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
@@ -263,6 +264,242 @@ int main(int argc, char **argv)
     check(ed->htmlSourcePane->isVisible(), "PLACE-TOGGLE-VISIBLE");
     ed->toggleHtmlSource();
     check(ed->htmlSourcePlacement()==MetaEditor::HtmlPlacement::Hidden, "PLACE-TOGGLE-HIDES");
+
+    // Пустые абзацы сворачиваются в просмотре исходника
+    check(HtmlSourceEdit::isEmptyParagraphLine(
+              QStringLiteral("<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>")),
+          "FOLD-DETECT-VERBOSE");
+    check(HtmlSourceEdit::isEmptyParagraphLine(QStringLiteral("  <P><BR></P>  ")),
+          "FOLD-DETECT-SHORT");
+    check(HtmlSourceEdit::isEmptyParagraphLine(QStringLiteral("<p><br/></p>")),
+          "FOLD-DETECT-NOSPACE");
+    check(HtmlSourceEdit::isEmptyParagraphLine(QStringLiteral("<p  style=\"x\"><br  /></p>")),
+          "FOLD-DETECT-SPACES");
+    check(HtmlSourceEdit::isFoldableLine(
+              QStringLiteral("<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>")),
+          "FOLD-FOLDABLE-VERBOSE");
+    check(!HtmlSourceEdit::isFoldableLine(
+              QStringLiteral("<p class=\"mtempty\"><br /></p>")),
+          "FOLD-CLASS-KEPT-VISIBLE");
+    check(!HtmlSourceEdit::isEmptyParagraphLine(
+              QStringLiteral("<p style=\" margin-top:0px;\">Text</p>")),
+          "FOLD-KEEPS-TEXT");
+    check(!HtmlSourceEdit::isEmptyParagraphLine(
+              QStringLiteral("<ul><li><br /></li></ul>")),
+          "FOLD-KEEPS-LIST");
+
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Bottom);
+    {
+        QTextCursor c(ed->textArea->document());
+        c.movePosition(QTextCursor::End);
+        c.insertBlock();
+        c.insertBlock();
+        c.insertText(QStringLiteral("Last"));
+        ed->setTextarea(ed->textArea->document()->toHtml());
+    }
+    ed->syncNoteToSource();
+    QApplication::processEvents();
+    {
+        bool foundFolded=false;
+        bool foundVisible=true;
+        int foldedCount=0;
+        for(QTextBlock b=ed->htmlSourcePane->document()->firstBlock();
+            b.isValid(); b=b.next())
+        {
+            if(b.text().contains(QStringLiteral("-qt-paragraph-type:empty")))
+            {
+                ++foldedCount;
+                if(!b.isVisible())
+                    foundFolded=true;
+            }
+            else if(!b.text().trimmed().isEmpty() && !b.isVisible())
+                foundVisible=false;
+        }
+        check(foldedCount>0, "FOLD-HAS-EMPTY");
+        check(foundFolded, "FOLD-HIDDEN");
+        check(foundVisible, "FOLD-TEXT-VISIBLE");
+    }
+
+    // Клик в гуттере разворачивает, повторный сворачивает обратно
+    {
+        QTextBlock folded;
+        for(QTextBlock b=ed->htmlSourcePane->document()->firstBlock();
+            b.isValid(); b=b.next())
+            if(!b.isVisible())
+            {
+                folded=b;
+                break;
+            }
+        check(folded.isValid(), "FOLD-FOUND-HIDDEN");
+
+        if(folded.isValid())
+        {
+            QApplication::processEvents();
+
+            // Строка выше свернутого куска: ее гуттер несет маркер [+]
+            QTextBlock prev=folded.previous();
+            check(prev.isValid(), "FOLD-HAS-PREV");
+
+            if(prev.isValid())
+            {
+                QTextCursor c(ed->htmlSourcePane->document());
+                c.setPosition(prev.position());
+                ed->htmlSourcePane->setTextCursor(c);
+
+                const int y=ed->htmlSourcePane->cursorRect(c).center().y();
+                check(ed->htmlSourcePane->toggleFoldAt(y), "FOLD-UNFOLD-CLICK");
+                check(folded.isVisible(), "FOLD-UNFOLDED");
+            }
+
+            // Клик по самой строке маркера [-] сворачивает обратно
+            QTextCursor c2(ed->htmlSourcePane->document());
+            c2.setPosition(folded.position());
+            ed->htmlSourcePane->setTextCursor(c2);
+
+            const int y2=ed->htmlSourcePane->cursorRect(c2).center().y();
+            check(ed->htmlSourcePane->toggleFoldAt(y2), "FOLD-REFOLD-CLICK");
+            check(!folded.isVisible(), "FOLD-REFOLDED");
+        }
+    }
+
+    // Поиск в свернутой строке показывает ее
+    {
+        ed->htmlSourcePane->findNext(QStringLiteral("-qt-paragraph-type"));
+
+        bool anyVisible=false;
+        for(QTextBlock b=ed->htmlSourcePane->document()->firstBlock();
+            b.isValid(); b=b.next())
+            if(b.text().contains(QStringLiteral("-qt-paragraph-type")) && b.isVisible())
+                anyVisible=true;
+
+        check(anyVisible, "FOLD-FIND-UNHIDES");
+    }
+
+    // Нормализация пустых абзацев в класс: вид, файл и рендер.
+    // Исключения с ненулевыми отступами остаются инлайн точечно
+    {
+        const QString verbose=QStringLiteral("<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>");
+        const QString head=QStringLiteral("<html><head><style type=\"text/css\">\np, li { white-space: pre-wrap; }\n</style></head><body>");
+        const QString tail=QStringLiteral("<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Text</p></body></html>");
+
+        const QString normalized=Editor::normalizeEmptyParagraphs(head+verbose+tail);
+
+        check(normalized.contains(QStringLiteral("<p class=\"mtempty\"><br /></p>")),
+              "NORM-CLASS-FORM");
+        check(normalized.count(QStringLiteral("p.mtempty{"))==1,
+              "NORM-RULE-ONCE");
+        check(Editor::normalizeEmptyParagraphs(normalized)==normalized,
+              "NORM-IDEMPOTENT");
+
+        // Исключение с ненулевыми отступами и обычный абзац не тронуты
+        const QString wide=QString(verbose).replace(QStringLiteral("margin-top:0px"),
+                                                    QStringLiteral("margin-top:12px"));
+        check(!Editor::normalizeEmptyParagraphs(head+wide+tail).contains(QStringLiteral("mtempty")),
+              "NORM-NONZERO-KEPT");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p>hi</p>"))==
+              QStringLiteral("<p>hi</p>"),
+              "NORM-NOOP");
+
+        // Эквивалентность рендера: класс с маркером в правиле грузится
+        // в побайтово тот же пустой блок (без маркера в правиле был бы
+        // фантомный перевод строки, без br абзац вообще пропадал бы)
+        QTextDocument docVerbose, docNorm;
+        docVerbose.setHtml(head+verbose+tail);
+        docNorm.setHtml(normalized);
+
+        bool sameFormat=(docVerbose.blockCount()==docNorm.blockCount());
+
+        for(QTextBlock bv=docVerbose.firstBlock(), bn=docNorm.firstBlock();
+            sameFormat && bv.isValid() && bn.isValid();
+            bv=bv.next(), bn=bn.next())
+        {
+            const QTextBlockFormat fv=bv.blockFormat();
+            const QTextBlockFormat fn=bn.blockFormat();
+
+            sameFormat=(fv.topMargin()==fn.topMargin() &&
+                        fv.bottomMargin()==fn.bottomMargin() &&
+                        fv.leftMargin()==fn.leftMargin() &&
+                        fv.rightMargin()==fn.rightMargin() &&
+                        fv.indent()==fn.indent() &&
+                        fv.textIndent()==fn.textIndent());
+        }
+
+        check(sameFormat, "NORM-SAME-FORMAT");
+        check(docVerbose.toPlainText()==docNorm.toPlainText(),
+              "NORM-SAME-TEXT");
+
+        // Короткий класс виден всегда, не схлопывается фолдингом
+        check(HtmlSourceEdit::isFoldableLine(QStringLiteral("<p class=\"mtempty\"><br /></p>"))==false,
+              "NORM-CLASS-NOT-FOLDED");
+    }
+
+    // Нормализация в класс: вид, файл и рендер
+    {
+        const QString verbose=QStringLiteral("<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>");
+        const QString head=QStringLiteral("<html><head><style type=\"text/css\">\np, li { white-space: pre-wrap; }\n</style></head><body>");
+        const QString tail=QStringLiteral("<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Text</p></body></html>");
+
+        const QString normalized=Editor::normalizeEmptyParagraphs(head+verbose+tail);
+
+        check(normalized.contains(QStringLiteral("<p class=\"mtempty\"><br /></p>")),
+              "NORM-CLASS-FORM");
+        check(normalized.count(QStringLiteral("p.mtempty{"))==1,
+              "NORM-RULE-ONCE");
+        check(Editor::normalizeEmptyParagraphs(normalized)==normalized,
+              "NORM-IDEMPOTENT");
+
+        // Исключение с ненулевыми отступами: инлайн как было
+        const QString wide=QString(verbose).replace(QStringLiteral("margin-top:0px"),
+                                                    QStringLiteral("margin-top:12px"));
+        check(!Editor::normalizeEmptyParagraphs(head+wide+tail).contains(QStringLiteral("mtempty")),
+              "NORM-NONZERO-KEPT");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p>hi</p>"))==
+              QStringLiteral("<p>hi</p>"),
+              "NORM-NOOP");
+
+        // Эквивалентность рендера: форматы блоков и текст совпадают
+        QTextDocument docVerbose, docNorm;
+        docVerbose.setHtml(head+verbose+tail);
+        docNorm.setHtml(normalized);
+
+        bool sameFormat=(docVerbose.blockCount()==docNorm.blockCount());
+
+        for(QTextBlock bv=docVerbose.firstBlock(), bn=docNorm.firstBlock();
+            sameFormat && bv.isValid() && bn.isValid();
+            bv=bv.next(), bn=bn.next())
+        {
+            const QTextBlockFormat fv=bv.blockFormat();
+            const QTextBlockFormat fn=bn.blockFormat();
+
+            sameFormat=(fv.topMargin()==fn.topMargin() &&
+                        fv.bottomMargin()==fn.bottomMargin() &&
+                        fv.leftMargin()==fn.leftMargin() &&
+                        fv.rightMargin()==fn.rightMargin() &&
+                        fv.indent()==fn.indent() &&
+                        fv.textIndent()==fn.textIndent());
+        }
+
+        check(sameFormat, "NORM-SAME-FORMAT");
+        check(docVerbose.toPlainText()==docNorm.toPlainText(),
+              "NORM-SAME-TEXT");
+    }
+
+    // Пустая заметка целиком: первую строку оставить видимой,
+    // иначе панель станет полностью пустой и непонятной
+    {
+        ed->setTextarea(QStringLiteral("<p><br /></p>"));
+        ed->syncNoteToSource();
+        QApplication::processEvents();
+
+        bool anyVisible=false;
+        for(QTextBlock b=ed->htmlSourcePane->document()->firstBlock();
+            b.isValid(); b=b.next())
+            if(b.isVisible())
+                anyVisible=true;
+
+        check(anyVisible, "FOLD-EMPTY-DOC-VISIBLE");
+    }
+
 
     // Линейка отступов всегда над текстом: координаты шкалы
     // сдвигаются на смещение текста относительно линейки

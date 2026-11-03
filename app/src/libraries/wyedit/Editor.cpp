@@ -20,6 +20,8 @@
 #include <QtGlobal>
 #include <QApplication>
 #include <QTimer>
+#include <QRegularExpression>
+#include <QRegularExpressionMatchIterator>
 
 #include "Editor.h"
 #include "EditorConfig.h"
@@ -1087,6 +1089,10 @@ bool Editor::saveTextareaText()
   // останавливается на первом 0x00 и обрезает остаток текста (баг #134:
   // такой байт попадает в документ при вставке из браузера)
   content.remove(QChar('\0'));
+
+  // Пустые абзацы в компактный класс вместо инлайн-простыни
+  content=normalizeEmptyParagraphs(content);
+
   out.setCodec("UTF-8");
   out << content;
 
@@ -1180,6 +1186,69 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
 
   return true;
 }
+
+// Пустые абзацы с нулевыми отступами сворачиваются в класс mtempty,
+// исключения с ненулевыми отступами остаются инлайн точечно
+QString Editor::normalizeEmptyParagraphs(const QString &html)
+{
+  static const QString marker=QStringLiteral("-qt-paragraph-type:empty");
+
+  // Быстрый путь: маркера нет - трогать нечего
+  if(!html.contains(marker))
+    return html;
+
+  static const QRegularExpression rx(
+    QStringLiteral("<p style=\"\\s*-qt-paragraph-type:empty;\\s*margin-top:(\\d+)px;\\s*margin-bottom:(\\d+)px;\\s*margin-left:\\d+px;\\s*margin-right:\\d+px;\\s*-qt-block-indent:-?\\d+;\\s*text-indent:-?\\d+px;\">\\s*<br\\s*/?>\\s*</p>"));
+
+  QString result;
+  result.reserve(html.size());
+
+  int pos=0;
+  int replaced=0;
+  QRegularExpressionMatchIterator it=rx.globalMatch(html);
+
+  while(it.hasNext())
+  {
+    const QRegularExpressionMatch match=it.next();
+    result+=html.mid(pos, match.capturedStart());
+
+    // В класс только нулевые отступы, остальное инлайн как было
+    if(match.captured(1)==QStringLiteral("0") &&
+       match.captured(2)==QStringLiteral("0"))
+    {
+      result+=QStringLiteral("<p class=\"mtempty\"><br /></p>");
+      ++replaced;
+    }
+    else
+      result+=match.captured(0);
+
+    pos=match.capturedEnd();
+  }
+
+  result+=html.mid(pos);
+
+  if(replaced==0)
+    return html;
+
+  // Правило один раз перед закрытием стиля. Фрагменту без <style>
+  // класс не на что опереть - такой HTML не трогаем вообще.
+  // Сверяется полное правило, а не префикс: текст заметки
+  // теоретически может содержать похожее начало
+  static const QString rule=QStringLiteral("p.mtempty{-qt-paragraph-type:empty;margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0px;-qt-block-indent:0;text-indent:0px;}");
+
+  if(!result.contains(rule))
+  {
+    const int styleEnd=result.indexOf(QStringLiteral("</style>"));
+
+    if(styleEnd<0)
+      return html;
+
+    result.insert(styleEnd, QStringLiteral("\n")+rule+QStringLiteral("\n"));
+  }
+
+  return result;
+}
+
 
 void Editor::saveTextarea(void)
 {
@@ -1725,7 +1794,7 @@ void Editor::onShowhtmlClicked(void)
 
   EditorMultiLineInputDialog dialog(this);
 
-  dialog.setText(textArea->toHtml());
+  dialog.setText(normalizeEmptyParagraphs(textArea->toHtml()));
   dialog.setWindowTitle(tr("Edit HTML source"));
 
   if(dialog.exec()!=QDialog::Accepted)

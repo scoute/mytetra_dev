@@ -1076,7 +1076,7 @@ void MetaEditor::refreshSourcePane(void)
   if(htmlSourcePane==nullptr)
     return;
 
-  const QString stable=getTextareaStable();
+  const QString stable=normalizeEmptyParagraphs(getTextareaStable());
 
   if(stable==htmlSourcePane->toPlainText())
     return;
@@ -1085,6 +1085,9 @@ void MetaEditor::refreshSourcePane(void)
 
   const int pos=htmlSourcePane->textCursor().position();
   htmlSourcePane->setPlainText(stable);
+
+  // Пустые абзацы сворачиваются: вид чище, файл и документ целы
+  htmlSourcePane->updateEmptyFolds();
 
   QTextCursor cursor(htmlSourcePane->document());
   cursor.setPosition(qBound(0, pos, qMax(0, htmlSourcePane->document()->characterCount()-1)));

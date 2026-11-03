@@ -1187,63 +1187,226 @@ bool Editor::saveTextareaImages(int mode=SAVE_IMAGES_SIMPLE)
   return true;
 }
 
-// Пустые абзацы с нулевыми отступами сворачиваются в класс mtempty,
-// исключения с ненулевыми отступами остаются инлайн точечно
+
+
+// Разбор style абзаца: маркер пустоты, нулевые верха/низы,
+// ужатый вариант. Пусто = выкинуто всё (атрибут style не нужен)
+struct ParagraphStyleInfo
+{
+  bool hasStyle=false;
+  bool hasMarker=false;
+  QString top;
+  QString bottom;
+  QStringList kept;
+  bool dropped=false;
+};
+
+static ParagraphStyleInfo parseParagraphStyle(const QString &styleInner)
+{
+  ParagraphStyleInfo info;
+  info.hasStyle=true;
+
+  foreach(QString declaration, styleInner.split(QLatin1Char(';')))
+  {
+    const QString trimmed=declaration.trimmed();
+
+    if(trimmed.isEmpty())
+      continue;
+
+    const int colon=trimmed.indexOf(QLatin1Char(':'));
+
+    if(colon<0)
+    {
+      info.kept << trimmed;
+      continue;
+    }
+
+    const QString name=trimmed.left(colon).trimmed().toLower();
+    const QString value=trimmed.mid(colon+1).trimmed();
+
+    // Маркер пустого абзаца - не дефолт, хранится всегда
+    if(name==QStringLiteral("-qt-paragraph-type") &&
+       value.compare(QStringLiteral("empty"), Qt::CaseInsensitive)==0)
+    {
+      info.hasMarker=true;
+      info.kept << QStringLiteral("-qt-paragraph-type:empty");
+      continue;
+    }
+
+    bool isDefault=false;
+
+    if(name==QStringLiteral("margin-top"))
+      isDefault=(value==QStringLiteral("12px"));
+    else if(name==QStringLiteral("margin-bottom"))
+      isDefault=(value==QStringLiteral("12px"));
+    else if(name==QStringLiteral("margin-left") ||
+            name==QStringLiteral("margin-right") ||
+            name==QStringLiteral("text-indent") ||
+            name==QStringLiteral("-qt-block-indent"))
+      isDefault=(value==QStringLiteral("0") || value==QStringLiteral("0px"));
+
+    if(isDefault)
+    {
+      info.dropped=true;
+      continue;
+    }
+
+    if(name==QStringLiteral("margin-top"))
+      info.top=value;
+    else if(name==QStringLiteral("margin-bottom"))
+      info.bottom=value;
+
+    info.kept << name+QStringLiteral(":")+value;
+  }
+
+  return info;
+}
+
+// Голый тег <p> без атрибутов: то, что осталось после вырезания style.
+// Сравнение без пробелов: <p>, <p > и <p  > одно и то же
+static bool isBareParagraphTag(const QString &tag)
+{
+  QString plain=tag;
+  plain.remove(QChar::fromLatin1(' '));
+  plain.remove(QChar::fromLatin1('\t'));
+
+  return plain.compare(QStringLiteral("<p>"), Qt::CaseInsensitive)==0;
+}
+
+// Минимум мета-информации в HTML насколько позволяет Qt.
+// Общее выносится один раз, исключения пишутся точечно:
+// - пустой абзац с нулевыми отступами -> <p class="mtempty"><br /></p>
+//   плюс одно правило в <style> (вместо ~150 символов на каждый);
+// - из остальных <p style="..."> выкидываются декларации со значениями
+//   по умолчанию Qt (margin-top/bottom 12px, остальные нули);
+//   неизвестные свойства и ненулевые значения остаются как были.
+// Стендом проверено: загрузка нормализованного HTML дает побайтово
+// тот же документ (форматы блоков, текст). toHtml класс не переживает
+// (пишет инлайн назад), поэтому нормализация крутится при каждом
+// сохранении и показе
 QString Editor::normalizeEmptyParagraphs(const QString &html)
 {
-  static const QString marker=QStringLiteral("-qt-paragraph-type:empty");
-
-  // Быстрый путь: маркера нет - трогать нечего
-  if(!html.contains(marker))
+  if(!html.contains(QLatin1String("<p")))
     return html;
 
-  static const QRegularExpression rx(
-    QStringLiteral("<p style=\"\\s*-qt-paragraph-type:empty;\\s*margin-top:(\\d+)px;\\s*margin-bottom:(\\d+)px;\\s*margin-left:\\d+px;\\s*margin-right:\\d+px;\\s*-qt-block-indent:-?\\d+;\\s*text-indent:-?\\d+px;\">\\s*<br\\s*/?>\\s*</p>"));
+  if(!html.contains(QLatin1String("style=")))
+    return html;
+
+  static const QRegularExpression openTagRx(
+    QStringLiteral("<p(\\s[^<>]*)?>"),
+    QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression emptyTailRx(
+    QStringLiteral("\\G\\s*<br\\s*/?>\\s*</p>"),
+    QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression styleAttrRx(
+    QStringLiteral("style\\s*=\\s*\"([^\"]*)\""),
+    QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression trailingSpaceRx(
+    QStringLiteral("\\s+>$"));
+  static const QString ruleText=
+    QStringLiteral("p.mtempty{-qt-paragraph-type:empty;margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0px;-qt-block-indent:0;text-indent:0px;}");
 
   QString result;
   result.reserve(html.size());
 
   int pos=0;
-  int replaced=0;
-  QRegularExpressionMatchIterator it=rx.globalMatch(html);
+  bool changed=false;
+  bool needRule=false;
+  QRegularExpressionMatchIterator it=openTagRx.globalMatch(html);
 
   while(it.hasNext())
   {
     const QRegularExpressionMatch match=it.next();
-    result+=html.mid(pos, match.capturedStart());
 
-    // В класс только нулевые отступы, остальное инлайн как было
-    if(match.captured(1)==QStringLiteral("0") &&
-       match.captured(2)==QStringLiteral("0"))
+    // Совпадение внутри уже обработанного куска: пропускаем,
+    // иначе испортим вставку (минусовая длина у mid)
+    if(match.capturedStart()<pos)
+      continue;
+
+    result+=html.mid(pos, match.capturedStart()-pos);
+    pos=match.capturedEnd();
+
+    const QString tag=match.captured(0);
+    const QRegularExpressionMatch styleMatch=styleAttrRx.match(tag);
+
+    if(!styleMatch.hasMatch())
     {
-      result+=QStringLiteral("<p class=\"mtempty\"><br /></p>");
-      ++replaced;
+      result+=tag;
+      continue;
+    }
+
+    const ParagraphStyleInfo info=parseParagraphStyle(styleMatch.captured(1));
+
+    // Пустой абзац целиком: тег + одиночный br. Остальное -
+    // обычный абзац, класс ему не положен
+    bool isEmptyPara=false;
+
+    if(emptyTailRx.match(html, match.capturedEnd()).hasMatch())
+      isEmptyPara=true;
+
+    // Общий класс: маркер есть, отступы нулевые, атрибутов кроме
+    // style нет. Без маркера пустота не гарантируется (Qt кладет
+    // фантомный перевод строки), без нулей меняется геометрия
+    if(isEmptyPara && info.hasMarker &&
+       (info.top==QStringLiteral("0") || info.top==QStringLiteral("0px")) &&
+       (info.bottom==QStringLiteral("0") || info.bottom==QStringLiteral("0px")))
+    {
+      QString opener=tag;
+      opener.remove(styleMatch.captured(0));
+
+      if(isBareParagraphTag(opener))
+      {
+        result+=QStringLiteral("<p class=\"mtempty\"><br /></p>");
+
+        QRegularExpressionMatch tail=emptyTailRx.match(html, match.capturedEnd());
+        pos=tail.capturedEnd();
+
+        needRule=true;
+        changed=true;
+        continue;
+      }
+    }
+
+    // Обычный инлайн-стрип: выкинуть дефолты, остальное как было
+    if(!info.dropped)
+    {
+      result+=tag;
+      continue;
+    }
+
+    if(info.kept.isEmpty())
+    {
+      QString shortened=tag;
+      shortened.remove(styleMatch.captured(0));
+      shortened.replace(trailingSpaceRx, QStringLiteral(">"));
+      result+=shortened;
     }
     else
-      result+=match.captured(0);
+    {
+      QString shortened=tag;
+      shortened.replace(styleMatch.captured(0),
+                        QStringLiteral("style=\"")+info.kept.join(QStringLiteral(";"))+QStringLiteral("\""));
+      result+=shortened;
+    }
 
-    pos=match.capturedEnd();
+    changed=true;
   }
 
   result+=html.mid(pos);
 
-  if(replaced==0)
+  if(!changed)
     return html;
 
-  // Правило один раз перед закрытием стиля. Фрагменту без <style>
-  // класс не на что опереть - такой HTML не трогаем вообще.
-  // Сверяется полное правило, а не префикс: текст заметки
-  // теоретически может содержать похожее начало
-  static const QString rule=QStringLiteral("p.mtempty{-qt-paragraph-type:empty;margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0px;-qt-block-indent:0;text-indent:0px;}");
-
-  if(!result.contains(rule))
+  // Одно правило в <style>. Без него класс висит в воздухе,
+  // поэтому без <style> - откат
+  if(needRule && !result.contains(ruleText))
   {
     const int styleEnd=result.indexOf(QStringLiteral("</style>"));
 
     if(styleEnd<0)
       return html;
 
-    result.insert(styleEnd, QStringLiteral("\n")+rule+QStringLiteral("\n"));
+    result.insert(styleEnd, QStringLiteral("\n")+ruleText+QStringLiteral("\n"));
   }
 
   return result;

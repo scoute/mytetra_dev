@@ -391,7 +391,8 @@ int main(int argc, char **argv)
         check(Editor::normalizeEmptyParagraphs(normalized)==normalized,
               "NORM-IDEMPOTENT");
 
-        // Исключение с ненулевыми отступами и обычный абзац не тронуты
+        // Исключение с ненулевыми отступами: класс не лепится,
+        // инлайн остается (маркер и отступ на месте)
         const QString wide=QString(verbose).replace(QStringLiteral("margin-top:0px"),
                                                     QStringLiteral("margin-top:12px"));
         check(!Editor::normalizeEmptyParagraphs(head+wide+tail).contains(QStringLiteral("mtempty")),
@@ -399,6 +400,26 @@ int main(int argc, char **argv)
         check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p>hi</p>"))==
               QStringLiteral("<p>hi</p>"),
               "NORM-NOOP");
+
+        // Обычный абзац с дефолтными отступами: все сносится в голый <p>
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Text</p>"))==
+              QStringLiteral("<p>Text</p>"),
+              "NORM-STRIP-DEFAULTS");
+
+        // Ненулевые и неизвестные остаются, дефолтные рядом выкидываются
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p style=\"margin-top:5px; margin-bottom:12px; -qt-block-indent:0;\">Text</p>"))==
+              QStringLiteral("<p style=\"margin-top:5px\">Text</p>"),
+              "NORM-STRIP-PARTIAL");
+        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p style=\"margin-top:5px; -qt-foo:bar;\">Text</p>"))==
+              QStringLiteral("<p style=\"margin-top:5px; -qt-foo:bar;\">Text</p>"),
+              "NORM-UNKNOWN-KEPT");
+
+        // Посторонние атрибуты тега целы, класс не лепится поверх них;
+        // выкидывать нечего (нули верха/низа не дефолт) - тег как был
+        check(Editor::normalizeEmptyParagraphs(
+                QStringLiteral("<p align=\"center\" style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px;\"><br /></p>"))==
+              QStringLiteral("<p align=\"center\" style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px;\"><br /></p>"),
+              "NORM-ATTR-KEPT");
 
         // Эквивалентность рендера: класс с маркером в правиле грузится
         // в побайтово тот же пустой блок (без маркера в правиле был бы
@@ -433,56 +454,6 @@ int main(int argc, char **argv)
               "NORM-CLASS-NOT-FOLDED");
     }
 
-    // Нормализация в класс: вид, файл и рендер
-    {
-        const QString verbose=QStringLiteral("<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>");
-        const QString head=QStringLiteral("<html><head><style type=\"text/css\">\np, li { white-space: pre-wrap; }\n</style></head><body>");
-        const QString tail=QStringLiteral("<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Text</p></body></html>");
-
-        const QString normalized=Editor::normalizeEmptyParagraphs(head+verbose+tail);
-
-        check(normalized.contains(QStringLiteral("<p class=\"mtempty\"><br /></p>")),
-              "NORM-CLASS-FORM");
-        check(normalized.count(QStringLiteral("p.mtempty{"))==1,
-              "NORM-RULE-ONCE");
-        check(Editor::normalizeEmptyParagraphs(normalized)==normalized,
-              "NORM-IDEMPOTENT");
-
-        // Исключение с ненулевыми отступами: инлайн как было
-        const QString wide=QString(verbose).replace(QStringLiteral("margin-top:0px"),
-                                                    QStringLiteral("margin-top:12px"));
-        check(!Editor::normalizeEmptyParagraphs(head+wide+tail).contains(QStringLiteral("mtempty")),
-              "NORM-NONZERO-KEPT");
-        check(Editor::normalizeEmptyParagraphs(QStringLiteral("<p>hi</p>"))==
-              QStringLiteral("<p>hi</p>"),
-              "NORM-NOOP");
-
-        // Эквивалентность рендера: форматы блоков и текст совпадают
-        QTextDocument docVerbose, docNorm;
-        docVerbose.setHtml(head+verbose+tail);
-        docNorm.setHtml(normalized);
-
-        bool sameFormat=(docVerbose.blockCount()==docNorm.blockCount());
-
-        for(QTextBlock bv=docVerbose.firstBlock(), bn=docNorm.firstBlock();
-            sameFormat && bv.isValid() && bn.isValid();
-            bv=bv.next(), bn=bn.next())
-        {
-            const QTextBlockFormat fv=bv.blockFormat();
-            const QTextBlockFormat fn=bn.blockFormat();
-
-            sameFormat=(fv.topMargin()==fn.topMargin() &&
-                        fv.bottomMargin()==fn.bottomMargin() &&
-                        fv.leftMargin()==fn.leftMargin() &&
-                        fv.rightMargin()==fn.rightMargin() &&
-                        fv.indent()==fn.indent() &&
-                        fv.textIndent()==fn.textIndent());
-        }
-
-        check(sameFormat, "NORM-SAME-FORMAT");
-        check(docVerbose.toPlainText()==docNorm.toPlainText(),
-              "NORM-SAME-TEXT");
-    }
 
     // Пустая заметка целиком: первую строку оставить видимой,
     // иначе панель станет полностью пустой и непонятной

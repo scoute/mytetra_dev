@@ -8,8 +8,9 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QRadioButton>
-#include <QComboBox>
 #include <QCheckBox>
+
+#include "libraries/MtComboBox.h"
 
 #include "views/appConfigWindow/ConfigPage.h"
 
@@ -47,7 +48,7 @@ private:
 
   // Лимит длинной стороны новых картинок: большие ужимаются при вставке
   QLabel *imageMaxSizeLabel;
-  QComboBox *imageMaxSizeCombo;
+  MtComboBox *imageMaxSizeCombo;
 
   // Мастер-тумблер изменения истинного размера файла картинки
   // (опасная зона: действие необратимо, оригинал уходит в корзину)

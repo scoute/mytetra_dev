@@ -202,7 +202,7 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     opusQuality->setCurrentIndex(mytetraConfig.get_voiceNoteQuality());
 
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);
-    deviceCombo=new QComboBox(this);
+    deviceCombo=new MtComboBox(this);
 
     recordButton=new QPushButton(tr("Record"), this);
     recordButton->setCheckable(true);

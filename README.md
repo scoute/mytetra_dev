@@ -96,7 +96,7 @@ make install
 ```
 
 В Linux, Windows и MacOs сборку можно сделать через QtCreator.
-Для этого в QtCreator надо открыть проект mytetra.pro, и выбрать:
+Для этого в QtCreator надо открыть проект synctetra.pro, и выбрать:
 ```
 Сборка - Собрать проект "mytetra"
 ```

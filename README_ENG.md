@@ -78,7 +78,7 @@ The installed binary is located along the path:
 ```
 
 On Linux, Windows and MacOs, building can be done through QtCreator.
-To do this, open the mytetra.pro project in QtCreator, and select:
+To do this, open the synctetra.pro project in QtCreator, and select:
 ```
 Build - Build project "mytetra"
 ```

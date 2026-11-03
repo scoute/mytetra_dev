@@ -50,25 +50,66 @@ public:
     int lineNumberAreaWidth(void) const;
 
 protected:
+    void keyPressEvent(QKeyEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void updateLineNumberArea(const QRect &rect, int dy);
+    void updatePairHighlight(void);
 
 private:
     // Полоса номеров строк, красит ее сам редактор
     class LineNumberArea;
 
+    // Тег для подсветки пары: [начало, конец), имя в нижнем регистре
+    struct TagSpan
+    {
+        int start=-1;
+        int end=-1;
+        QString name;
+        bool isClose=false;
+        bool selfClose=false;
+        bool special=false;
+    };
+
     LineNumberArea *lineNumberArea;
     QStyleSyntaxHighlighter *xmlHighlighter;
+    QList<QTextEdit::ExtraSelection> matchSelections;
+    QList<QTextEdit::ExtraSelection> pairSelections;
 
     bool findInternal(const QString &text, QTextDocument::FindFlags flags, bool backward);
     void paintLineNumberArea(QPaintEvent *event);
+    void applySelections(void);
+
+    // Тег, содержащий позицию pos (курсор внутри или на его границах).
+    // Многострочные теги поддерживаются, незакрытый (при наборе) - нет
+    bool tagAt(int pos, TagSpan &tag) const;
+
+    // Тег, заканчивающийся ровно в pos (перед курсором только что
+    // закрыли '>' при наборе). Для Enter и автозакрытия
+    bool tagEndingAt(int pos, TagSpan &tag) const;
+
+    // Парный тег с учетом вложенности одноименных тегов. Комментарии вида
+    // <!-- <div> --> внутри эвристикой отбрасываются (окно 1000 символов).
+    // Поиск ограничен сверху, чтобы не висеть на огромных HTML
+    bool findMate(const TagSpan &tag, TagSpan &mate) const;
+
+    static bool isVoidElement(const QString &name);
+    static QString tagInnerText(QTextDocument *doc, int from, int to);
+
+    void handleSmartEnter(QKeyEvent *event);
+    void autoCloseTag(void);
 
     // Лимит подсветки вхождений: полный HTML заметки с картинками
     // в base64 дает тысячи совпадений на коротком запросе
     static const int maxHighlightMatches=1000;
+
+    // Лимит поиска парного тега (совпадений) и окна проверки комментария.
+    // Хватает с запасом для заметок, на гигантских HTML просто
+    // не найдет дальнюю пару вместо висения
+    static const int maxPairScan=2000;
+    static const int commentWindow=1000;
 };
 
 #endif // HTMLSOURCEEDIT_H

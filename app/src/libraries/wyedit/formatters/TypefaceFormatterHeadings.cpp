@@ -1,7 +1,6 @@
 #include <QTextBlock>
 #include <QTextBlockUserData>
 #include <QTextDocument>
-#include <QPainter>
 #include <QTextLayout>
 #include <QFont>
 #include <QRegularExpression>
@@ -62,90 +61,13 @@ struct HeadingStash : public QTextBlockUserData
 };
 
 
-// Высота чернил строки: строки изображения с не-белыми пикселями.
-// Нужна для замера масштабного коэффициента заголовков
-
-
-// Высота чернил строки: строки изображения с не-белыми пикселями.
-// Нужна для замера масштабного коэффициента заголовков
-static int inkedHeight(const QImage &image)
-{
-    int top=image.height();
-    int bottom=-1;
-
-    for(int y=0; y<image.height(); ++y)
-        for(int x=0; x<image.width(); ++x)
-            if(image.pixel(x, y)!=qRgb(255, 255, 255))
-            {
-                if(y<top)
-                    top=y;
-                if(y>bottom)
-                    bottom=y;
-            }
-
-    if(bottom<top)
-        return 0;
-
-    return bottom-top+1;
-}
-
+// Масштаб кегля заголовков относительно базового: фиксированная
+// лесенка 48/32/24/20/16/12 при базе 12 (факторы 4, 8/3, 2, 5/3,
+// 4/3, 1). Замер рендера Qt тут не годится: Qt рисует h6 кеглем
+// обычного текста, а h5 - small, выходила инверсия H6 крупнее H5
 static double headingScaleFactor(int level)
 {
-    static double factors[7]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    static bool measured=false;
-
-    if(!measured)
-    {
-        measured=true;
-        factors[0]=1.0;
-
-        auto renderTag=[](const QString &tag) -> int
-        {
-            QTextDocument probe;
-            QFont baseFont;
-            baseFont.setPointSize(100);
-            probe.setDefaultFont(baseFont);
-            probe.setHtml(tag);
-            probe.setTextWidth(2000);
-
-            QImage image(2000, 400, QImage::Format_RGB32);
-            image.fill(Qt::white);
-            QPainter painter(&image);
-            probe.drawContents(&painter);
-            painter.end();
-
-            return inkedHeight(image);
-        };
-
-        const int plainHeight=renderTag(QStringLiteral("<p>Hg</p>"));
-        if(plainHeight>0)
-        {
-            const int h1=renderTag(QStringLiteral("<h1>Hg</h1>"));
-            const int h2=renderTag(QStringLiteral("<h2>Hg</h2>"));
-            const int h3=renderTag(QStringLiteral("<h3>Hg</h3>"));
-            const int h4=renderTag(QStringLiteral("<h4>Hg</h4>"));
-            const int h5=renderTag(QStringLiteral("<h5>Hg</h5>"));
-            const int h6=renderTag(QStringLiteral("<h6>Hg</h6>"));
-            if(h1>0)
-                factors[1]=double(h1)/double(plainHeight);
-            if(h2>0)
-                factors[2]=double(h2)/double(plainHeight);
-            if(h3>0)
-                factors[3]=double(h3)/double(plainHeight);
-            if(h4>0)
-                factors[4]=double(h4)/double(plainHeight);
-            if(h5>0)
-                factors[5]=double(h5)/double(plainHeight);
-            if(h6>0)
-                factors[6]=double(h6)/double(plainHeight);
-        }
-
-        for(int i=0; i<7; ++i)
-            if(factors[i]<=0.0)
-                factors[i]=1.0;
-
-        qDebug() << "Heading scale factors H1-H6:" << factors[1] << factors[2] << factors[3] << factors[4] << factors[5] << factors[6];
-    }
+    static const double factors[7]={1.0, 4.0, 8.0/3.0, 2.0, 5.0/3.0, 4.0/3.0, 1.0};
 
     if(level<0 || level>6)
         return 1.0;
@@ -357,8 +279,12 @@ void TypefaceFormatter::applyHeadingLevel(int level)
             double baseSize=baseNormalSize;
             if(stash!=nullptr && stash->hasData && stash->stashedLevel==0 && stash->pointSize>0.0)
                 baseSize=stash->pointSize;
-            else if(!snapshots.isEmpty() && snapshots.first().format.fontPointSize()>0.0)
+            else if(oldLevel==0 && !snapshots.isEmpty() &&
+                    snapshots.first().format.fontPointSize()>0.0)
                 baseSize=snapshots.first().format.fontPointSize();
+            // Блок уже заголовок без stash (загруженный документ):
+            // база - шрифт документа. Текущий кегль тут след прошлого
+            // применения, брать его базой - множить при каждом клике
 
             const double absoluteSize=baseSize*headingScaleFactor(target);
 
@@ -415,6 +341,10 @@ void TypefaceFormatter::applyHeadingLevel(int level)
             }
             else
             {
+                // Без stash с исходным обычным уровнем размер - след
+                // прошлого заголовка (загруженный документ): сбросить
+                // к базовому. Оставить как был - следующее применение
+                // снова умножит (кегль "улетает в космос" при вкл/выкл)
                 for(const FragmentSnapshot &snap : snapshots)
                 {
                     QTextCursor fragmentCursor(textArea->document());
@@ -422,8 +352,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                     fragmentCursor.setPosition(snap.position+snap.length, QTextCursor::KeepAnchor);
 
                     QTextCharFormat fragmentFormat;
-                    const double fragSize=snap.format.fontPointSize();
-                    fragmentFormat.setFontPointSize(fragSize>0.0 ? fragSize : baseNormalSize);
+                    fragmentFormat.setFontPointSize(baseNormalSize);
                     fragmentFormat.setFontWeight(QFont::Normal);
                     fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                     fragmentCursor.mergeCharFormat(fragmentFormat);

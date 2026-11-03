@@ -120,16 +120,23 @@ int main(int argc, char **argv)
         c.insertText("Section");
         c.mergeBlockFormat(h2);
         c.insertBlock();
+        QTextBlockFormat h4;
+        h4.setHeadingLevel(4);
+        c.insertText("Deep");
+        c.mergeBlockFormat(h4);
+        c.insertBlock();
         c.setBlockFormat(QTextBlockFormat());
         c.insertText("plain");
     }
     {
         QList<TypefaceFormatter::TocEntry> entries=fmt.collectTocEntries();
-        check(entries.size()==2, "TOC-COUNT");
-        check(entries.size()==2 && entries.at(0).level==1 &&
+        check(entries.size()==3, "TOC-COUNT");
+        check(entries.size()==3 && entries.at(0).level==1 &&
               entries.at(0).text==QStringLiteral("Chapter"), "TOC-H1");
-        check(entries.size()==2 && entries.at(1).level==2 &&
+        check(entries.size()==3 && entries.at(1).level==2 &&
               entries.at(1).text==QStringLiteral("Section"), "TOC-H2");
+        check(entries.size()==3 && entries.at(2).level==4 &&
+              entries.at(2).text==QStringLiteral("Deep"), "TOC-H4");
     }
     check(!TypefaceFormatter::tocGoPrefix().isEmpty(), "TOC-GOPREFIX");
     check(!TypefaceFormatter::tocAnchorHref().isEmpty(), "TOC-ANCHOR");

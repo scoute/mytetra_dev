@@ -225,7 +225,7 @@ void Editor::setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QSt
 }
 
 // Создание плавающего содержания: оверлей поверх текста,
-// показывается сам при наличии заголовков H1-H3
+// показывается сам при наличии заголовков H1-H6
 void Editor::setupFloatToc(void)
 {
   // Создание плавающего содержания: родителем сам редактор,

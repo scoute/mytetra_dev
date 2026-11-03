@@ -35,6 +35,11 @@ public:
   // Публичный чтобы вызывать из проб и внешних мест
   QString attachImageTooltip(const QModelIndex &index) const;
 
+  // HTML предпросмотра вложения для тултипа: картинка - миниатюра,
+  // текст - первые строки, остальное - строка с размером.
+  // Пусто если строка невалидна
+  QString attachPreviewTooltip(const QModelIndex &index) const;
+
   // Режимы колонок ставятся здесь, а не в конструкторе: на пустом
   // хедере без модели setSectionResizeMode роняет Qt
   virtual void setModel(QAbstractItemModel *model);

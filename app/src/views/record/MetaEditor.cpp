@@ -12,6 +12,11 @@
 #include <QScrollArea>
 #include <QTimer>
 #include <QSplitter>
+#include <QDialog>
+#include <QMenu>
+#include <QAction>
+#include <QToolBar>
+#include <QToolButton>
 #include <QtDebug>
 
 #include "MetaEditor.h"
@@ -108,6 +113,9 @@ void MetaEditor::setupSignals(void)
 
     connect(htmlSourcePane, &QPlainTextEdit::cursorPositionChanged,
             this,            &MetaEditor::mirrorSourceCursorToNote);
+
+    // Выпадашка кнопки HTML: места исходника вместо модального окна
+    setupHtmlSourceMenu();
   }
 }
 
@@ -216,7 +224,7 @@ void MetaEditor::metaAssembly(void)
   sourceSplitter->addWidget(textArea);
   htmlSourcePane=new HtmlSourceEdit(sourceSplitter);
   htmlSourcePane->setVisible(false);
-  sourceSplitter->setStretchFactor(0, 3);
+  sourceSplitter->setStretchFactor(0, 2);
   sourceSplitter->setStretchFactor(1, 1);
   sourceSplitter->setCollapsible(0, false);
   sourceSplitter->setCollapsible(1, true);
@@ -231,6 +239,10 @@ void MetaEditor::metaAssembly(void)
   labelTags->setProperty("rowNumber", 8); // Запоминается, в какой строке находятся текстовые метки
 
   gridLayout->setColumnStretch(1,1);
+
+  // Лишняя высота окна целиком уходит строке сплиттера с панелями:
+  // иначе она размазывается по строкам и рвутся полосы пустоты
+  gridLayout->setRowStretch(6, 1);
 
   // Вертикальные зазоры 2px: 1px теряется на темном фоне,
   // штатные 6px давали полосы пустоты
@@ -735,6 +747,18 @@ void MetaEditor::retranslateUi(void)
   labelUrl->setText(tr("<B>Url:</B> "));
   labelTags->setText(tr("<B>Tags:</B> "));
 
+  if(htmlHideAction!=nullptr)
+  {
+    htmlHideAction->setText(tr("Hide"));
+    htmlBottomAction->setText(tr("Bottom"));
+    htmlLeftAction->setText(tr("Left"));
+    htmlRightAction->setText(tr("Right"));
+    htmlWindowAction->setText(tr("Window"));
+  }
+
+  if(htmlSourceWindow!=nullptr)
+    htmlSourceWindow->setWindowTitle(tr("HTML source"));
+
   updateCursorLabel();
 
   editorToolBarAssistant->retranslateUi();
@@ -742,36 +766,265 @@ void MetaEditor::retranslateUi(void)
 
 
 
-// Живой исходник HTML под заметкой (режим редактор+превью).
-// Верх сплиттера - текст, низ - HtmlSourceEdit в паре, правки
-// летят в обе стороны с дебаунсом. Состояние на сессию
-void MetaEditor::setHtmlSourceVisible(bool visible)
+// Живой исходник HTML: размещение выбирается выпадашкой кнопки
+// HTML на тулбаре (внизу, слева, справа, в окне) или хоткеем.
+// Состояние на сессию, в конфиг не пишется
+void MetaEditor::setHtmlSourcePlacement(HtmlPlacement placement)
 {
   if(htmlSourcePane==nullptr || sourceSplitter==nullptr)
     return;
 
-  if(htmlSourcePane->isVisible()==visible)
+  if(placement!=HtmlPlacement::Hidden && placement!=HtmlPlacement::Window)
+    lastInlinePlacement=placement;
+
+  htmlPlacement=placement;
+
+  if(placement==HtmlPlacement::Window)
+  {
+    takePaneToWindow();
+    syncHtmlSourceMenuChecks();
+    return;
+  }
+
+  // Тихо убрать окно: hide() не шлет finished, восстановления не будет
+  if(htmlSourceWindow!=nullptr)
+    htmlSourceWindow->hide();
+
+  if(placement==HtmlPlacement::Hidden)
+  {
+    embedHtmlSourcePane(Qt::Vertical, 1, false);
+    syncHtmlSourceMenuChecks();
+    return;
+  }
+
+  if(placement==HtmlPlacement::Left)
+    embedHtmlSourcePane(Qt::Horizontal, 0, true);
+  else if(placement==HtmlPlacement::Right)
+    embedHtmlSourcePane(Qt::Horizontal, 1, true);
+  else
+    embedHtmlSourcePane(Qt::Vertical, 1, true);
+
+  syncHtmlSourceMenuChecks();
+}
+
+
+// Встроить панель в сплиттер: ориентация, место, показ.
+// Порядок - вставкой: setSizes после replaceWidget игнорируется.
+// Размеры отложенно: сразу после перестановки сплиттер их сбрасывает
+void MetaEditor::embedHtmlSourcePane(Qt::Orientation orientation, int paneIndex, bool show)
+{
+  sourceSplitter->setOrientation(orientation);
+
+  if(paneIndex==0)
+  {
+    sourceSplitter->insertWidget(0, htmlSourcePane);
+    sourceSplitter->insertWidget(1, textArea);
+  }
+  else
+  {
+    sourceSplitter->insertWidget(0, textArea);
+    sourceSplitter->insertWidget(1, htmlSourcePane);
+  }
+
+  sourceSplitter->setStretchFactor(0, 2);
+  sourceSplitter->setStretchFactor(1, 1);
+  sourceSplitter->setCollapsible(0, false);
+  sourceSplitter->setCollapsible(1, true);
+
+  if(!show)
+  {
+    htmlSourcePane->hide();
+    return;
+  }
+
+  htmlSourcePane->show();
+  htmlSourcePane->setReadOnly(textArea->isReadOnly());
+  refreshSourcePane();
+
+  // Размеры сразу и отложенно: сразу после перестановки сплиттер
+  // их сбрасывает, а отложенный тик может застать нулевую геометрию.
+  // Исходник всегда треть: текст остается главным при любом месте
+  applyHtmlSourceSizes();
+  QTimer::singleShot(0, this, [this]() { applyHtmlSourceSizes(); });
+}
+
+
+// Треть ширины/высоты исходнику, остальное тексту — по месту панели,
+// а не по индексу: слева панель первая, справа и внизу — вторая
+void MetaEditor::applyHtmlSourceSizes(void)
+{
+  if(htmlPlacement==HtmlPlacement::Hidden ||
+     htmlPlacement==HtmlPlacement::Window)
     return;
 
-  htmlSourcePane->setVisible(visible);
-  htmlSourcePane->setReadOnly(textArea->isReadOnly());
+  if(htmlSourcePane==nullptr || sourceSplitter==nullptr)
+    return;
 
-  if(visible)
+  const int total=(sourceSplitter->orientation()==Qt::Vertical)
+    ? sourceSplitter->height()
+    : sourceSplitter->width();
+
+  if(total<=0)
+    return;
+
+  const int paneSize=total/3;
+
+  if(sourceSplitter->indexOf(htmlSourcePane)==0)
+    sourceSplitter->setSizes(QList<int>() << paneSize << total-paneSize);
+  else
+    sourceSplitter->setSizes(QList<int>() << total-paneSize << paneSize);
+}
+
+
+// Панель целиком переезжает в отдельное окно: объект тот же,
+// сигналы, синхронизация и зеркала живут дальше без изменений
+void MetaEditor::takePaneToWindow(void)
+{
+  if(htmlSourceWindow==nullptr)
   {
-    refreshSourcePane();
+    htmlSourceWindow=new QDialog(this);
+    htmlSourceWindow->setWindowTitle(tr("HTML source"));
+    htmlSourceWindow->resize(640, 480);
 
-    // Две трети текста, треть исходника
-    const int height=sourceSplitter->height();
+    htmlWindowContainer=new QWidget(htmlSourceWindow);
 
-    if(height>0)
-      sourceSplitter->setSizes(QList<int>() << height*2/3 << height-height*2/3);
+    QVBoxLayout *layout=new QVBoxLayout(htmlSourceWindow);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(htmlWindowContainer);
+
+    QVBoxLayout *innerLayout=new QVBoxLayout(htmlWindowContainer);
+    innerLayout->setContentsMargins(0, 0, 0, 0);
+
+    connect(htmlSourceWindow, &QDialog::finished,
+            this,              &MetaEditor::onHtmlSourceWindowClosed);
   }
+
+  // Репарент сам убирает панель из сплиттера
+  QVBoxLayout *innerLayout=qobject_cast<QVBoxLayout *>(htmlWindowContainer->layout());
+
+  if(innerLayout!=nullptr)
+    innerLayout->addWidget(htmlSourcePane);
+
+  htmlSourcePane->show();
+  htmlSourcePane->setReadOnly(textArea->isReadOnly());
+  refreshSourcePane();
+
+  htmlSourceWindow->show();
+  htmlSourceWindow->raise();
+  htmlSourceWindow->activateWindow();
+}
+
+
+// Окно закрыли крестом: панель на последнее встроенное место
+void MetaEditor::onHtmlSourceWindowClosed(void)
+{
+  if(htmlPlacement!=HtmlPlacement::Window)
+    return;
+
+  setHtmlSourcePlacement(lastInlinePlacement);
+}
+
+
+// Показать/скрыть: показать - на последнем встроенном месте
+void MetaEditor::toggleHtmlSource(void)
+{
+  if(htmlPlacement==HtmlPlacement::Hidden)
+    setHtmlSourcePlacement(lastInlinePlacement);
+  else
+    setHtmlSourcePlacement(HtmlPlacement::Hidden);
+}
+
+
+MetaEditor::HtmlPlacement MetaEditor::htmlSourcePlacement(void) const
+{
+  return htmlPlacement;
+}
+
+
+void MetaEditor::setHtmlSourceVisible(bool visible)
+{
+  if(visible)
+    setHtmlSourcePlacement(lastInlinePlacement);
+  else
+    setHtmlSourcePlacement(HtmlPlacement::Hidden);
 }
 
 
 bool MetaEditor::isHtmlSourceVisible(void) const
 {
-  return htmlSourcePane!=nullptr && htmlSourcePane->isVisible();
+  return htmlPlacement!=HtmlPlacement::Hidden;
+}
+
+
+// Выпадашка кнопки HTML на тулбаре: мгновенный popup как у
+// заголовков, клик всегда открывает выбор, хоткей - переключение.
+// Пункты чекаются по текущему размещению при открытии меню
+void MetaEditor::setupHtmlSourceMenu(void)
+{
+  if(htmlSourceMenu!=nullptr || editorToolBarAssistant==nullptr)
+    return;
+
+  htmlSourceMenu=new QMenu(this);
+
+  htmlHideAction=new QAction(tr("Hide"), htmlSourceMenu);
+  htmlBottomAction=new QAction(tr("Bottom"), htmlSourceMenu);
+  htmlLeftAction=new QAction(tr("Left"), htmlSourceMenu);
+  htmlRightAction=new QAction(tr("Right"), htmlSourceMenu);
+  htmlWindowAction=new QAction(tr("Window"), htmlSourceMenu);
+
+  htmlHideAction->setCheckable(true);
+  htmlBottomAction->setCheckable(true);
+  htmlLeftAction->setCheckable(true);
+  htmlRightAction->setCheckable(true);
+  htmlWindowAction->setCheckable(true);
+
+  htmlSourceMenu->addAction(htmlHideAction);
+  htmlSourceMenu->addAction(htmlBottomAction);
+  htmlSourceMenu->addAction(htmlLeftAction);
+  htmlSourceMenu->addAction(htmlRightAction);
+  htmlSourceMenu->addAction(htmlWindowAction);
+
+  connect(htmlHideAction, &QAction::triggered,
+          this, [this]() { setHtmlSourcePlacement(HtmlPlacement::Hidden); });
+  connect(htmlBottomAction, &QAction::triggered,
+          this, [this]() { setHtmlSourcePlacement(HtmlPlacement::Bottom); });
+  connect(htmlLeftAction, &QAction::triggered,
+          this, [this]() { setHtmlSourcePlacement(HtmlPlacement::Left); });
+  connect(htmlRightAction, &QAction::triggered,
+          this, [this]() { setHtmlSourcePlacement(HtmlPlacement::Right); });
+  connect(htmlWindowAction, &QAction::triggered,
+          this, [this]() { setHtmlSourcePlacement(HtmlPlacement::Window); });
+  connect(htmlSourceMenu, &QMenu::aboutToShow,
+          this, &MetaEditor::syncHtmlSourceMenuChecks);
+
+  // Кнопка ищется по экшену showHtml на линейках тулбара
+  foreach(QToolBar *bar, editorToolBarAssistant->findChildren<QToolBar *>())
+  {
+    QToolButton *button=qobject_cast<QToolButton *>(
+      bar->widgetForAction(editorToolBarAssistant->showHtml));
+
+    if(button!=nullptr)
+    {
+      button->setMenu(htmlSourceMenu);
+      button->setPopupMode(QToolButton::InstantPopup);
+      break;
+    }
+  }
+
+  syncHtmlSourceMenuChecks();
+}
+
+
+void MetaEditor::syncHtmlSourceMenuChecks(void)
+{
+  if(htmlHideAction==nullptr)
+    return;
+
+  htmlHideAction->setChecked(htmlPlacement==HtmlPlacement::Hidden);
+  htmlBottomAction->setChecked(htmlPlacement==HtmlPlacement::Bottom);
+  htmlLeftAction->setChecked(htmlPlacement==HtmlPlacement::Left);
+  htmlRightAction->setChecked(htmlPlacement==HtmlPlacement::Right);
+  htmlWindowAction->setChecked(htmlPlacement==HtmlPlacement::Window);
 }
 
 

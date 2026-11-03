@@ -5868,6 +5868,30 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Outline</source>
         <translation>Оглавление</translation>
     </message>
+    <message>
+        <source>Hide</source>
+        <translation>Скрыть</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>Внизу</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Слева</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Справа</translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation>В окне</translation>
+    </message>
+    <message>
+        <source>HTML source</source>
+        <translation>Исходник HTML</translation>
+    </message>
 </context>
 <context>
     <name>NotePickerDialog</name>

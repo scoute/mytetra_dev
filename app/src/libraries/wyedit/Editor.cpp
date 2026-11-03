@@ -35,6 +35,7 @@
 #include "formatters/Formatter.h"
 #include "EditorMultiLineInputDialog.h"
 #include "EditorCursorPositionDetector.h"
+#include "views/record/MetaEditor.h"
 #include "EditorShowTextDispatcher.h"
 #include "EditorFontSizeComboBox.h"
 #include "EditorFontFamilyComboBox.h"
@@ -1711,9 +1712,17 @@ void Editor::onSelectAll(void)
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }
 
-// Показывание окна с исходным текстом HTML
+// Показывание исходника: в MetaEditor живой панелью
+// на выбранном месте (выпадашка кнопки HTML), в обычном Editor
+// старым модальным диалогом
 void Editor::onShowhtmlClicked(void)
 {
+  if(MetaEditor *metaEditor=qobject_cast<MetaEditor *>(this))
+  {
+    metaEditor->toggleHtmlSource();
+    return;
+  }
+
   EditorMultiLineInputDialog dialog(this);
 
   dialog.setText(textArea->toHtml());

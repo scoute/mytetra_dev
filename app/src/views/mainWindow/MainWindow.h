@@ -250,7 +250,6 @@ private slots:
     void onViewFavoritesToggled(bool checked);
     void onViewTreeFilterToggled(bool checked);
     void onViewToolsToggled(bool checked);
-    void onViewHtmlSourceToggled(bool checked);
     void onViewSecretColor(void);
     void onViewPaperColor(void);
 
@@ -370,7 +369,6 @@ private:
     QAction *viewFavoritesAction=nullptr;
     QAction *viewTreeFilterAction=nullptr;
     QAction *viewToolsAction=nullptr;
-    QAction *viewHtmlSourceAction=nullptr;
     QAction *viewReadOnlyAction=nullptr;
     QAction *viewSecretColorAction=nullptr;
     QAction *viewPaperColorAction=nullptr;

@@ -12,6 +12,9 @@ class QSplitter;
 class QLabel;
 class QShowEvent;
 class QTimer;
+class QDialog;
+class QMenu;
+class QAction;
 
 class AttachTableScreen;
 class HtmlSourceEdit;
@@ -53,7 +56,13 @@ public:
  void setFocusToBaseWidget();
 
  // Живой исходник HTML под заметкой (режим редактор+превью).
- // Верх сплиттера - текст заметки, низ - HtmlSourceEdit в паре
+ // Верх сплиттера - текст заметки, низ - HtmlSourceEdit в паре.
+ // Размещение выбирается выпадашкой кнопки HTML на тулбаре:
+ // внизу, слева, справа или в отдельном окне
+ enum class HtmlPlacement { Hidden=0, Bottom=1, Left=2, Right=3, Window=4 };
+ void setHtmlSourcePlacement(HtmlPlacement placement);
+ HtmlPlacement htmlSourcePlacement(void) const;
+ void toggleHtmlSource(void);
  void setHtmlSourceVisible(bool visible);
  bool isHtmlSourceVisible(void) const;
 
@@ -132,6 +141,27 @@ private:
  // программных сдвигов
  bool cursorSyncing=false;
 
+ // Размещение исходника на сессию, в конфиг не пишется.
+ // lastInlinePlacement - последнее неоконное место для
+ // закрытия окна и переключения видимости
+ HtmlPlacement htmlPlacement=HtmlPlacement::Hidden;
+ HtmlPlacement lastInlinePlacement=HtmlPlacement::Bottom;
+
+ // Отдельное окно исходника: панель переезжает туда целиком,
+ // сигналы и зеркала живут дальше (объект тот же). Закрытие
+ // окна возвращает панель на последнее встроенное место
+ QDialog *htmlSourceWindow=nullptr;
+ QWidget *htmlWindowContainer=nullptr;
+
+ // Выпадашка кнопки HTML на тулбаре: скрыть, внизу, слева,
+ // справа, в окне. Пункты чекаются по текущему размещению
+ QMenu *htmlSourceMenu=nullptr;
+ QAction *htmlHideAction=nullptr;
+ QAction *htmlBottomAction=nullptr;
+ QAction *htmlLeftAction=nullptr;
+ QAction *htmlRightAction=nullptr;
+ QAction *htmlWindowAction=nullptr;
+
  void refreshSourcePane(void);
  void onNoteTextChanged(void);
  void onSourceTextChanged(void);
@@ -141,6 +171,20 @@ private:
  void mirrorSourceCursorToNote(void);
  void mirrorNotePosToSource(int notePos);
  void mirrorSourcePosToNote(int sourcePos);
+
+ // Встроить панель в сплиттер с ориентацией, местом и показом
+ void embedHtmlSourcePane(Qt::Orientation orientation, int paneIndex, bool show);
+
+ // Треть ширины/высоты исходнику, остальное тексту
+ void applyHtmlSourceSizes(void);
+
+ // Панель целиком в отдельное окно и возврат из него
+ void takePaneToWindow(void);
+ void onHtmlSourceWindowClosed(void);
+
+ // Выпадашка кнопки HTML на тулбаре и чеки по размещению
+ void setupHtmlSourceMenu(void);
+ void syncHtmlSourceMenuChecks(void);
 
 };
 

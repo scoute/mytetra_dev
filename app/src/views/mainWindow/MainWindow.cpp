@@ -2139,11 +2139,6 @@ void MainWindow::initViewMenu(void)
     viewToolsAction->setObjectName(QStringLiteral("viewToolsAction"));
     viewMenu->addAction(viewToolsAction);
 
-    viewHtmlSourceAction=new QAction(tr("Show HTML source"), this);
-    viewHtmlSourceAction->setCheckable(true);
-    viewHtmlSourceAction->setObjectName(QStringLiteral("viewHtmlSourceAction"));
-    viewMenu->addAction(viewHtmlSourceAction);
-
     viewReadOnlyAction=new QAction(this);
     viewReadOnlyAction->setCheckable(true);
     viewMenu->addAction(viewReadOnlyAction);
@@ -2170,8 +2165,6 @@ void MainWindow::initViewMenu(void)
             this,                  &MainWindow::onViewTreeFilterToggled);
     connect(viewToolsAction, &QAction::toggled,
             this,            &MainWindow::onViewToolsToggled);
-    connect(viewHtmlSourceAction, &QAction::toggled,
-            this,                  &MainWindow::onViewHtmlSourceToggled);
     connect(viewReadOnlyAction, &QAction::toggled,
             this,               &MainWindow::onViewReadOnlyToggled);
     connect(secretColorAction, &QAction::triggered,
@@ -2205,9 +2198,6 @@ void MainWindow::syncViewMenu(void)
 
     if(viewReadOnlyAction!=nullptr)
         viewReadOnlyAction->setChecked(mytetraConfig.isGlobalReadOnly());
-
-    if(viewHtmlSourceAction!=nullptr && editorScreen!=nullptr)
-        viewHtmlSourceAction->setChecked(editorScreen->isHtmlSourceVisible());
 }
 
 
@@ -2249,17 +2239,6 @@ void MainWindow::onViewToolsToggled(bool checked)
         return;
 
     editorScreen->editorToolBarAssistant->switchToolsVisibility(checked ? 1 : -1);
-}
-
-
-// Живой исходник под заметкой: чекбокс только переключает панель,
-// состояние на сессию, в конфиг не пишется
-void MainWindow::onViewHtmlSourceToggled(bool checked)
-{
-    if(editorScreen==nullptr)
-        return;
-
-    editorScreen->setHtmlSourceVisible(checked);
 }
 
 

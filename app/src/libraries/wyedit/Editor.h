@@ -152,6 +152,16 @@ public:
  bool saveTextareaImages(int mode);
  bool loadTextarea();
 
+ // Пустые абзацы с нулевыми отступами сворачиваются в класс mtempty
+ // (<p class="mtempty"><br /></p> + правило в <style> один раз),
+ // непустые блоки с ровно нулевыми верхом/низом - в класс mt0
+ // (.mt0 + правило один раз), исключения с ненулевыми отступами
+ // остаются инлайн точечно. Стендом проверено: класс с маркером
+ // в правиле грузится в побайтово тот же пустой блок, toHtml класс
+ // не переживает (пишет инлайн назад), поэтому нормализация крутится
+ // при каждом сохранении и показе
+ static QString normalizeEmptyParagraphs(const QString &html);
+
  // Методы установки нестандартных процедур чтения и сохранения текста
  void setSaveCallback(void (*func)(QObject *editor, QString saveString));
  void setLoadCallback(void (*func)(QObject *editor, QString &loadString));

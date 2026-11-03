@@ -11,6 +11,7 @@
         <file alias="styles/glsl.xml">resources/styles/glsl.xml</file>
         <file alias="styles/go.xml">resources/styles/go.xml</file>
         <file alias="styles/html.xml">resources/styles/html.xml</file>
+        <file alias="styles/html-dark.xml">resources/styles/html-dark.xml</file>
         <file alias="styles/ini.xml">resources/styles/ini.xml</file>
         <file alias="styles/java.xml">resources/styles/java.xml</file>
         <file alias="styles/js.xml">resources/styles/js.xml</file>

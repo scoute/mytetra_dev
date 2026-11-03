@@ -11,6 +11,8 @@
 #include <QShortcut>
 #include <QKeyEvent>
 #include <QTextDocument>
+#include <QInputDialog>
+#include <QPlainTextEdit>
 
 #include "EditorMultiLineInputDialog.h"
 #include "libraries/wyedit/HtmlSourceEdit.h"
@@ -86,6 +88,11 @@ void EditorMultiLineInputDialog::setupUi()
   QPushButton *closeFindButton=new QPushButton(tr("x"), findPanel);
   closeFindButton->setMaximumWidth(28);
 
+  // Позиция курсора: обновляется движением по тексту
+  posLabel=new QLabel(findPanel);
+  posLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+  posLabel->setMinimumWidth(110);
+
   QGridLayout *findLayout=new QGridLayout(findPanel);
   findLayout->setContentsMargins(0, 4, 0, 0);
   findLayout->addWidget(findLabel, 0, 0);
@@ -99,6 +106,7 @@ void EditorMultiLineInputDialog::setupUi()
   findLayout->addWidget(replaceEdit, 1, 1);
   findLayout->addWidget(replaceButton, 1, 2);
   findLayout->addWidget(replaceAllButton, 1, 3);
+  findLayout->addWidget(posLabel, 1, 4, 1, 3);
   findLayout->setColumnStretch(1, 1);
 
   connect(prevButton, &QPushButton::clicked, this, &EditorMultiLineInputDialog::onFindPrevious);
@@ -109,6 +117,9 @@ void EditorMultiLineInputDialog::setupUi()
   connect(findEdit, &QLineEdit::textChanged, this, &EditorMultiLineInputDialog::onFindTextChanged);
   connect(findEdit, &QLineEdit::returnPressed, this, &EditorMultiLineInputDialog::onFindNext);
   connect(replaceEdit, &QLineEdit::returnPressed, this, &EditorMultiLineInputDialog::onReplaceOne);
+  connect(textArea, &QPlainTextEdit::cursorPositionChanged,
+          this, &EditorMultiLineInputDialog::updateCursorPosition);
+  updateCursorPosition();
 
   // F3 шагает по вхождениям, Shift+F3 - назад. Только при видимой
   // панели: иначе F3 уходит в глобальные хоткеи редактора
@@ -152,6 +163,11 @@ void EditorMultiLineInputDialog::setupShortcuts(void)
     QShortcut *replaceShortcut=new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_H), this);
     replaceShortcut->setContext(Qt::WindowShortcut);
     connect(replaceShortcut, &QShortcut::activated, this, &EditorMultiLineInputDialog::showReplacePanel);
+
+    // Переход к строке: движок готов (goToLine), здесь только ввод номера
+    QShortcut *gotoShortcut=new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_G), this);
+    gotoShortcut->setContext(Qt::WindowShortcut);
+    connect(gotoShortcut, &QShortcut::activated, this, &EditorMultiLineInputDialog::showGoToLine);
 }
 
 void EditorMultiLineInputDialog::setupSignals()
@@ -219,6 +235,29 @@ void EditorMultiLineInputDialog::showReplacePanel(void)
   showFindPanel();
   replaceEdit->setFocus();
   replaceEdit->selectAll();
+}
+
+void EditorMultiLineInputDialog::showGoToLine(void)
+{
+  const QTextCursor cursor=textArea->textCursor();
+  const int current=cursor.blockNumber()+1;
+  const int last=textArea->document()->blockCount();
+
+  bool ok=false;
+  const int line=QInputDialog::getInt(this, tr("Go to line"), tr("Line:"),
+                                      current, 1, qMax(1, last), 1, &ok);
+
+  if(ok)
+  {
+      textArea->goToLine(line);
+      textArea->setFocus();
+  }
+}
+
+void EditorMultiLineInputDialog::updateCursorPosition(void)
+{
+  const QTextCursor cursor=textArea->textCursor();
+  posLabel->setText(tr("Ln %1, Col %2").arg(cursor.blockNumber()+1).arg(cursor.columnNumber()+1));
 }
 
 void EditorMultiLineInputDialog::hideFindPanel(void)

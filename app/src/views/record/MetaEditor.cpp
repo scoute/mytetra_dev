@@ -1050,8 +1050,11 @@ void MetaEditor::onSourceTextChanged(void)
 // тегов <...> пропускаются (иначе "H6" находит <h6>, "margin" -
 // margin-top из атрибутов). Регистр важен: текст в исходнике хранится
 // как есть, а теги toHtml всегда строчные. Многострочные теги редки:
-// скобка ищется только в пределах своей строки
-static QTextCursor findOutsideTags(QTextDocument *doc, const QString &snippet, int from=0)
+// скобка ищется только в пределах своей строки. regionStart отсекает
+// шапку (doctype, head, style): ее текст (margin из правил CSS) не
+// якорь - иначе слово margin из p.mtempty путает зеркало
+static QTextCursor findOutsideTags(QTextDocument *doc, const QString &snippet,
+                                   int from=0, int regionStart=0)
 {
   if(snippet.isEmpty())
     return QTextCursor();
@@ -1062,6 +1065,13 @@ static QTextCursor findOutsideTags(QTextDocument *doc, const QString &snippet, i
 
     if(found.isNull())
       return QTextCursor();
+
+    // Шапка (до тела): правило CSS - не якорь, дальше
+    if(found.selectionStart()<regionStart)
+    {
+      from=found.selectionEnd();
+      continue;
+    }
 
     // Ближайшая скобка слева на той же строке: '<' - внутри тега, мимо
     QTextBlock block=doc->findBlock(found.selectionStart());
@@ -1080,11 +1090,26 @@ static QTextCursor findOutsideTags(QTextDocument *doc, const QString &snippet, i
 }
 
 
+// Начало тела HTML-документа (позиция за <body ...>): до него шапка -
+// ее текст не якоря для зеркала. 0 для чистого текста (заметка без тегов)
+static int bodyContentStart(QTextDocument *doc)
+{
+  QTextCursor body=doc->find(QStringLiteral("<body"));
+
+  if(body.isNull())
+    return 0;
+
+  QTextCursor gt=doc->find(QStringLiteral(">"), body.selectionEnd());
+
+  return gt.isNull() ? body.selectionEnd() : gt.selectionEnd();
+}
+
+
 // Число вхождений сниппета (больше одного - якорь неоднозначен,
 // диапазон по нему не строится, только курсорный фолбэк).
 // Считается тем же текстовым поиском, что и якоря: совпадения
 // внутри тегов не в счет, иначе "H6" находило бы <h6>, H6, </h6>
-static int snippetOccurrences(QTextDocument *doc, const QString &snippet)
+static int snippetOccurrences(QTextDocument *doc, const QString &snippet, int regionStart=0)
 {
   if(snippet.isEmpty())
     return 0;
@@ -1094,7 +1119,7 @@ static int snippetOccurrences(QTextDocument *doc, const QString &snippet)
 
   while(count<2)
   {
-    QTextCursor found=findOutsideTags(doc, snippet, from);
+    QTextCursor found=findOutsideTags(doc, snippet, from, regionStart);
 
     if(found.isNull())
       break;
@@ -1215,6 +1240,9 @@ void MetaEditor::mirrorNoteCursorToSource(void)
   const int selStart=noteCursor.selectionStart();
   const int selEnd=noteCursor.selectionEnd();
   QTextDocument *sourceDoc=htmlSourcePane->document();
+  // Шапка исходника (doctype, head, style) не якоря: margin из
+  // правила p.mtempty не должен делать слово margin неоднозначным
+  const int bodyStart=bodyContentStart(sourceDoc);
 
   // Первый кусок: от начала выделения, в пределах своего блока.
   // Краевые пробелы небрежного выделения отбрасываются: в исходнике
@@ -1228,11 +1256,11 @@ void MetaEditor::mirrorNoteCursorToSource(void)
   const QString last=endBlock.text().mid(qMax(0, endOff-40), qMin(40, endOff)).trimmed();
 
   QTextCursor foundFirst=first.isEmpty() ? QTextCursor()
-                                        : findOutsideTags(sourceDoc, first);
+                                        : findOutsideTags(sourceDoc, first, 0, bodyStart);
 
   // Короткий кусок встречается не раз - якорь неоднозначен,
   // диапазоном не зеркалим (ниже будет курсорный фолбэк)
-  if(!foundFirst.isNull() && snippetOccurrences(sourceDoc, first)>1)
+  if(!foundFirst.isNull() && snippetOccurrences(sourceDoc, first, bodyStart)>1)
     foundFirst=QTextCursor();
 
   QTextCursor foundLast;
@@ -1244,9 +1272,9 @@ void MetaEditor::mirrorNoteCursorToSource(void)
     // Именно поэтому зеркало работало с начала строки и гасло
     // из середины и с конца
     const int from=foundFirst.isNull() ? 0 : qMax(0, foundFirst.selectionStart()-last.length());
-    foundLast=findOutsideTags(sourceDoc, last, from);
+    foundLast=findOutsideTags(sourceDoc, last, from, bodyStart);
 
-    if(!foundLast.isNull() && snippetOccurrences(sourceDoc, last)>1)
+    if(!foundLast.isNull() && snippetOccurrences(sourceDoc, last, bodyStart)>1)
       foundLast=QTextCursor();
 
     // Откат с запасом мог зацепить более ранний дубль: конец
@@ -1285,7 +1313,8 @@ void MetaEditor::mirrorNotePosToSource(int notePos)
 
   if(!snippet.isEmpty())
   {
-    QTextCursor found=findOutsideTags(htmlSourcePane->document(), snippet);
+    QTextCursor found=findOutsideTags(htmlSourcePane->document(), snippet, 0,
+                                     bodyContentStart(htmlSourcePane->document()));
 
     if(!found.isNull())
       sourcePos=found.selectionStart();

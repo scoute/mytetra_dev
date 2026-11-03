@@ -931,6 +931,79 @@ void TypefaceFormatter::normalizeCopyLinkUnderline(void)
 }
 
 
+// Нормализация кегля при загрузке заметки: разбор <h1>-<h6> кладет в
+// фрагмент ступень FontSizeAdjustment, которая глушит явный font-size
+// (44pt рисуются мелко - см. stripFontSizeAdjustment). При клике по
+// заголовку ступень снимается, а при загрузке ее никто не снимал -
+// после перезапуска заголовки мельчали. Ступень снимается везде, где
+// задан явный кегль (он и есть воля), а заголовкам без явного кегля
+// выставляется лесенка - размеры убывают H1->H6
+void TypefaceFormatter::normalizeHeadingFontSizes(void)
+{
+    if(textArea==nullptr || textArea->document()==nullptr)
+        return;
+
+    QTextDocument *doc=textArea->document();
+
+    // Снимок правок: setCharFormat дробит фрагменты и инвалидирует
+    // итератор. Позиции и длины не едут (текст не меняется)
+    struct PendingEdit
+    {
+        int position;
+        int length;
+        QTextCharFormat format;
+    };
+    QList<PendingEdit> edits;
+
+    for(QTextBlock block=doc->begin(); block.isValid(); block=block.next())
+    {
+        const int level=block.blockFormat().headingLevel();
+
+        // Вне заголовков ступень FontSizeAdjustment - воля импорта
+        // (<font size=+N>, относительный размер), трогать нельзя.
+        // В заголовках размером управляет лесенка H1->H6
+        if(level<1 || level>6)
+            continue;
+
+        const double targetSize=normalPointSize()*headingScaleFactor(level);
+
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid() || fragment.length()==0)
+                continue;
+
+            const QTextCharFormat format=fragment.charFormat();
+
+            // Уже лесенка и ступени нет - править нечего
+            if(!format.hasProperty(QTextFormat::FontSizeAdjustment) &&
+               qAbs(format.fontPointSize()-targetSize)<0.01)
+                continue;
+
+            PendingEdit edit;
+            edit.position=fragment.position();
+            edit.length=fragment.length();
+            edit.format=format;
+            edit.format.clearProperty(QTextFormat::FontSizeAdjustment);
+            edit.format.setFontPointSize(targetSize);
+            edits << edit;
+        }
+    }
+
+    if(edits.isEmpty())
+        return;
+
+    for(const PendingEdit &edit : edits)
+    {
+        QTextCursor cursor(doc);
+        cursor.setPosition(edit.position);
+        cursor.setPosition(edit.position+edit.length, QTextCursor::KeepAnchor);
+        cursor.setCharFormat(edit.format);
+    }
+}
+
+
 // Клик по пункту оглавления: прыжок в раздел. Сначала ищется
 // заголовок с тем же уровнем и текстом (пережил правки вокруг),
 // запасной вариант - тот же порядковый номер того же уровня.

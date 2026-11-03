@@ -939,6 +939,11 @@ void Editor::setTextarea(QString text)
   if(typefaceFormatter!=nullptr)
     typefaceFormatter->normalizeCopyLinkUnderline();
 
+  // Ступень FontSizeAdjustment от разбора <h1>-<h6> глушит явный кегль
+  // заголовков (44pt рисуются мелко) - снимается при загрузке
+  if(typefaceFormatter!=nullptr)
+    typefaceFormatter->normalizeHeadingFontSizes();
+
   // Секреты подтягиваются под глобальный цвет из настроек
   if(secretFormatter!=nullptr)
     secretFormatter->repaintSecrets();
@@ -1611,6 +1616,11 @@ bool Editor::loadTextarea()
 
   // qDebug() << "Set content:";
   // qDebug() << textArea->toHtml();
+
+  // Ступень FontSizeAdjustment от разбора <h1>-<h6> глушит явный кегль
+  // заголовков (44pt рисуются мелко) - снимается при загрузке
+  if(typefaceFormatter!=nullptr)
+    typefaceFormatter->normalizeHeadingFontSizes();
 
   // Секреты подтягиваются под глобальный цвет из настроек
   if(secretFormatter!=nullptr)

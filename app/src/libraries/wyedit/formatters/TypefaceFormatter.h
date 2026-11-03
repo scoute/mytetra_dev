@@ -112,6 +112,13 @@ public slots:
     // его всем ссылкам по умолчанию, а свежие ссылки идут без него.
     // Вызывается при загрузке заметки, чтобы вид совпадал
     void normalizeCopyLinkUnderline(void);
+
+    // Нормализация кегля при загрузке заметки: разбор <h1>-<h6> кладет
+    // в фрагмент ступень FontSizeAdjustment, которая глушит явный
+    // font-size (44pt рисуются мелко). Снимается явным кеглем везде,
+    // где он задан, а заголовкам без явного кегля ставится лесенка.
+    // Без этого заголовки мельчают после перезапуска
+    void normalizeHeadingFontSizes(void);
     void onClearClicked(void);
     void onTextOnlyClicked(void);
     void onFixBreakSymbolClicked(void);

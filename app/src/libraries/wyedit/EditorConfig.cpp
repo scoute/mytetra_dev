@@ -244,24 +244,6 @@ void EditorConfig::set_code_indent_size_apply(bool i)
 }
 
 
-bool EditorConfig::get_structure_panel_visible(void)
-{
-    if(get_parameter("structure_panel_visible").toInt()==1)
-        return true;
-    else
-        return false;
-}
-
-
-void EditorConfig::set_structure_panel_visible(bool i)
-{
-    if(i==true)
-        conf->setValue("structure_panel_visible", 1);
-    else
-        conf->setValue("structure_panel_visible", 0);
-}
-
-
 // ----------------------
 // Настройки шага отступа
 // ----------------------
@@ -552,6 +534,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_40;
     parameterFunctions << get_parameter_table_41;
     parameterFunctions << get_parameter_table_42;
+    parameterFunctions << get_parameter_table_43;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1410,6 +1393,28 @@ QStringList EditorConfig::get_parameter_table_42(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_43(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 42
+    table << get_parameter_table_42(false);
+
+    // Ключ structure_panel_visible убран: боковая панель структуры
+    // заменена плавающим содержанием, настройке нечего хранить.
+    // Удаление идет штатным remove_option, конфиги чистятся при миграции
+
+    table=remove_option(table, "structure_panel_visible");
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -2139,6 +2144,22 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                 if(parts[i]=="separator" && parts[i-1]=="separator")
                     parts.removeAt(i);
 
+            result=parts.join(",");
+        }
+    }
+
+
+    // Кнопка структуры убрана с тулбара совсем: ее заменяет плавающее
+    // содержание. Остатки имени чистятся из обеих линеек, порядок
+    // остального не трогается. Неизвестные имена и так пропускаются
+    // с варнингом, но мусор в конфиге лучше не копить
+    if(versionFrom==42 && versionTo==43)
+    {
+        if(name=="tools_line_1" || name=="tools_line_2")
+        {
+            QStringList parts=result.split(",");
+            parts.removeAll("");
+            parts.removeAll("structure");
             result=parts.join(",");
         }
     }

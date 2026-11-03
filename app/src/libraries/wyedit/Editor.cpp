@@ -24,7 +24,7 @@
 
 #include "Editor.h"
 #include "EditorConfig.h"
-#include "EditorStructurePanel.h"
+#include "EditorFloatToc.h"
 #include "libraries/ShortcutManager.h"
 
 extern ShortcutManager shortcutManager;
@@ -198,7 +198,7 @@ void Editor::init(int mode)
 
   setupSignals();
 
-  setupStructurePanel(); // После тулбара и текста: кнопке выставляется состояние из конфига
+  setupFloatToc(); // Оверлей содержания поверх текста, места в раскладке не нужно
 
   if(initDataEnableAssembly)
     assembly();
@@ -233,32 +233,15 @@ void Editor::setupEditorToolBarAssistant(int mode, EditorTextArea *textArea, QSt
 }
 
 
-// Создание и настройка панели структуры
-void Editor::setupStructurePanel(void)
+// Создание плавающего содержания: оверлей поверх текста,
+// показывается сам при наличии заголовков H1-H6
+void Editor::setupFloatToc(void)
 {
-  structurePanel=new EditorStructurePanel(this);
-  structurePanel->setTextArea(textArea);
-
-  const bool visible=editorConfig->get_structure_panel_visible();
-  structurePanel->setVisible(visible);
-  editorToolBarAssistant->structure->setChecked(visible);
-
-  if(visible)
-    structurePanel->rebuild();
-}
-
-
-// Показ или скрытие панели структуры кнопкой тулбара
-void Editor::onStructureToggled(bool checked)
-{
-  if(structurePanel==nullptr)
-    return;
-
-  structurePanel->setVisible(checked);
-  editorConfig->set_structure_panel_visible(checked);
-
-  if(checked)
-    structurePanel->rebuild();
+  // Создание плавающего содержания: родителем сам редактор,
+  // а не вьюпорт — дети вьюпорта прокручиваются вместе с текстом
+  // (QWidget::scroll двигает их), оверлей же стоит на месте
+  floatToc=new EditorFloatToc(textArea);
+  floatToc->setTextArea(textArea);
 }
 
 
@@ -858,9 +841,6 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->expandEditArea, &QAction::triggered,
             this,                                   &Editor::onExpandEditAreaClicked);
 
-    connect(editorToolBarAssistant->structure, &QAction::triggered,
-            this,                               &Editor::onStructureToggled);
-
     connect(editorToolBarAssistant->save, &QAction::triggered,
             this,                         &Editor::onSaveClicked);
 
@@ -912,14 +892,13 @@ void Editor::assembly(void)
   else
     indentSliderAssistant->setVisible(false);
 
-  // Область редактирования и панель структуры делят место через
-  // сплиттер. MetaEditor этот путь не использует: он кладет панель
-  // третьей колонкой своей сетки сам
+  // Область редактирования лежит в сплиттере одна:
+  // содержание теперь плавает поверх текста, а не делит место.
+  // MetaEditor этот путь не использует: текст он кладет
+  // в свою сетку сам
   QSplitter *editSplitter=new QSplitter(Qt::Horizontal, this);
   editSplitter->addWidget(textArea);
-  editSplitter->addWidget(structurePanel);
   editSplitter->setStretchFactor(0, 1);
-  editSplitter->setStretchFactor(1, 0);
   editSplitter->setCollapsible(0, false);
   buttonsAndEditLayout->addWidget(editSplitter);
 

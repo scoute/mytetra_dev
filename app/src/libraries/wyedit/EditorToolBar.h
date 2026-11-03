@@ -40,7 +40,6 @@ public:
     QAction *subscript;
     EditorDropDownButton *code; // Кнопка кода: меню выбора языка подсветки
     EditorDropDownButton *heading; // Кнопка заголовков: H1-H6, обычный текст
-    QAction *structure; // Кнопка-переключатель панели структуры
     QAction *toc; // Кнопка вставки/обновления оглавления
     QAction *headingH1Action;
     QAction *headingH2Action;

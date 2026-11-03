@@ -191,6 +191,41 @@ int main(int argc, char **argv)
             check(firstOn>0.0 && firstOn==secondOn, "HEADING-RETOGGLE-STABLE");
         }
 
+        // Наследие старого билда: ступень + явный размер
+        {
+            QTextCursor c(doc);
+            c.select(QTextCursor::Document);
+            c.insertText(QStringLiteral("Legacy"));
+            c.setBlockFormat(QTextBlockFormat()); // ровно обычный абзац
+            QTextCursor sel(doc);
+            sel.select(QTextCursor::Document);
+            area.setTextCursor(sel);
+
+            QTextCharFormat legacy;
+            legacy.setFontPointSize(11);
+            legacy.setProperty(QTextFormat::FontSizeAdjustment, -1);
+            QTextCursor merge(doc);
+            merge.select(QTextCursor::Document);
+            merge.mergeCharFormat(legacy);
+
+            fmt.onHeadingClicked(0); // H1 поверх ступени
+            QTextCharFormat applied=doc->firstBlock().begin().fragment().charFormat();
+            check(!applied.hasProperty(QTextFormat::FontSizeAdjustment),
+                  "LEGACY-ADJ-STRIPPED");
+            const double legacyOn=applied.fontPointSize();
+
+            fmt.onHeadingClicked(0); // снять
+            QTextCharFormat removed=doc->firstBlock().begin().fragment().charFormat();
+            check(!removed.hasProperty(QTextFormat::FontSizeAdjustment),
+                  "LEGACY-ADJ-STRIPPED-OFF");
+
+            fmt.onHeadingClicked(0); // заново: тот же кегль, не мелкий
+            QTextCharFormat reapplied=doc->firstBlock().begin().fragment().charFormat();
+            check(reapplied.fontPointSize()==legacyOn &&
+                  !reapplied.hasProperty(QTextFormat::FontSizeAdjustment),
+                  "LEGACY-REAPPLY-STABLE");
+        }
+
         // Загруженный документ (stash нет - userData не сохраняется):
         // снятие нормализует кегль к базовому, повторное применение
         // не умножает след прошлого заголовка

@@ -27,6 +27,12 @@ public slots:
     void onClickedGotoReference(QString href);
     void onTextChanged(void);
 
+    // Перемещение метки аттача в другую заметку: файл уезжает
+    // в таблицу приемника, ссылка дописывается в его текст,
+    // из исходника метка и аттач удаляются. Явное действие
+    // по ПКМ с подтверждением, отмена Ctrl+Z его не откатывает
+    void onMoveAttachClicked(void);
+
     // Метка брошенного файла: иконка скрепки + видимое имя
     // с расширением, href вида attach://<внутреннее имя>.
     // Вставляется как обычная titled-ссылка со своим цветом
@@ -43,11 +49,31 @@ public slots:
     // Пары href-абсолютный путь, как голосовой MIME у баблов
     static const char *attachMimeTypeName(void);
 
+    // Абзац метки для дописки в текст закрытой заметки:
+    // ссылка attach:// плюс [EXT] видимое имя
+    static QString badgeParagraphHtml(const QString &innerName,
+                                      const QString &displayName);
+
+    // Дописка метки в текстовый файл закрытой заметки.
+    // Вставка перед </body> (как голосовые ссылки), файла нет —
+    // минимальный каркас. Не влезло: false и текст ошибки
+    static bool appendAttachBadgeToTextFile(const QString &textFileName,
+                                           const QString &innerName,
+                                           const QString &displayName,
+                                           QString *error);
+
 private:
 
     // Выделить ссылку под курсором если она там есть.
     // Возвращает href или пусто. Курсор без выделения не трогается
     QString selectReferenceUnderCursor(void);
+
+    // Метка аттача под курсором, пусто если курсор не на метке
+    QString attachHrefUnderCursor(void);
+
+    // Выделить метку с href в месте курсора. Нужно для удаления
+    // метки из исходника после переноса файла в другую заметку
+    bool selectAttachBadgeRange(const QString &href);
 
     // Защита от вставки в середину слова: буквы с обеих сторон курсора —
     // почти всегда случайный тык. Уводить курсор в конец слова,

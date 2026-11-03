@@ -249,6 +249,34 @@ bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
 }
 
 
+// Удаление аттача по внутреннему имени для движка переноса метки
+bool AttachTableController::removeAttachByInnerName(const QString &innerName)
+{
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(attachTableData==nullptr || innerName.isEmpty())
+    return false;
+
+  // Строка ищется по прямому имени и по реально лежащему файлу:
+  // режим имен могли сменить после вставки метки, коллизия
+  // оригинала могла увести файл в гибридную схему
+  for(int row=0; row<attachTableData->size(); ++row)
+  {
+    if(attachTableData->getInnerFileName(row)!=innerName &&
+       attachTableData->getAttach(attachTableData->getIdByRow(row)).getExistingInnerFileName()!=innerName)
+      continue;
+
+    attachTableData->deleteAttach(attachTableData->getIdByRow(row));
+
+    saveState();
+
+    return true;
+  }
+
+  return false;
+}
+
+
 void AttachTableController::addFileList(QString attachType, const QStringList &files)
 {
   // Перебираются файлы (из диалога или из drag'n'drop)

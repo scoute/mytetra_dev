@@ -4,6 +4,10 @@
 #include <QDebug>
 #include <QWidget>
 #include <QListWidgetItem>
+#include <QPushButton>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QDate>
 
 #include "ConfigDialog.h"
 #include "ConfigPage.h"
@@ -27,9 +31,17 @@
 #include "AppConfigPage_Theme.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/helpers/ScreenHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "libraries/wyedit/EditorConfigDialog.h"
+#include "libraries/wyedit/EditorConfig.h"
+#include "libraries/GlobalParameters.h"
+#include "libraries/ShortcutManager.h"
+#include "models/appConfig/SettingsTransfer.h"
 
 
 extern AppConfig mytetraConfig;
+extern GlobalParameters globalParameters;
+extern ShortcutManager shortcutManager;
 
 
 QList<AppConfigDialog *> AppConfigDialog::openDialogs;
@@ -87,6 +99,18 @@ AppConfigDialog::AppConfigDialog(const QString &firstPageName, QWidget *parent)
     pageMisc       =configDialog->addWidget(new AppConfigPage_Misc( parent ),
                                             QObject::tr("Misc"));
 
+    // Кнопки переноса настроек в нижний ряд слева: экспорт и
+    // импорт одним INI-файлом вместо ручного копирования конфигов.
+    // Редакторный диалог их не ставит и не меняется
+    exportSettingsButton=new QPushButton(QObject::tr("Export settings..."), configDialog);
+    importSettingsButton=new QPushButton(QObject::tr("Import settings..."), configDialog);
+    configDialog->addFooterButton(exportSettingsButton);
+    configDialog->addFooterButton(importSettingsButton);
+
+    QObject::connect(exportSettingsButton, &QPushButton::clicked,
+                     configDialog, [this]() { onExportSettings(); });
+    QObject::connect(importSettingsButton, &QPushButton::clicked,
+                     configDialog, [this]() { onImportSettings(); });
 
     configDialog->updateListWidth();
 
@@ -144,6 +168,12 @@ void AppConfigDialog::retranslateUi(void)
     pageVoice->setText(QObject::tr("Voice notes"));
     pageMisc->setText(QObject::tr("Misc"));
 
+    if(exportSettingsButton!=nullptr)
+        exportSettingsButton->setText(QObject::tr("Export settings..."));
+
+    if(importSettingsButton!=nullptr)
+        importSettingsButton->setText(QObject::tr("Import settings..."));
+
     QList<ConfigPage *> pages=configDialog->findChildren<ConfigPage *>();
 
     foreach(ConfigPage *page, pages)
@@ -185,4 +215,107 @@ void AppConfigDialog::changePage(QString name)
 void AppConfigDialog::setMenuListVisible(bool visible)
 {
     configDialog->setMenuListVisible(visible);
+}
+
+
+// Выгрузка настроек в INI-файл: шрифты, цвета, список заметок,
+// иконки, клавиатура и остальные переносимые параметры.
+// Версии схем, пути базы/корзины и секреты шифрования не выгружаются
+void AppConfigDialog::onExportSettings(void)
+{
+  const QString workDir=globalParameters.getWorkDirectory();
+
+  const QString defaultName=workDir+QStringLiteral("/mytetra-settings-")+
+    QDate::currentDate().toString(QStringLiteral("yyyyMMdd"))+QStringLiteral(".ini");
+
+  const QString fileName=QFileDialog::getSaveFileName(configDialog,
+    QObject::tr("Export settings"), defaultName,
+    QObject::tr("MyTetra settings (*.ini)"));
+
+  if(fileName.isEmpty())
+    return;
+
+  EditorConfig *editorConfig=find_object<EditorConfig>(QStringLiteral("editorconfig"));
+
+  if(editorConfig==nullptr)
+  {
+    QMessageBox::warning(configDialog,
+      QObject::tr("Export settings"),
+      QObject::tr("Editor settings are unavailable"));
+    return;
+  }
+
+  QString error;
+
+  if(!SettingsTransfer::exportSettings(mytetraConfig.settingsHandle(),
+                                       editorConfig->settingsHandle(),
+                                       workDir+QStringLiteral("/shortcut.ini"),
+                                       fileName, &error))
+  {
+    QMessageBox::warning(configDialog,
+      QObject::tr("Export settings"), error);
+    return;
+  }
+
+  QMessageBox::information(configDialog,
+    QObject::tr("Export settings"),
+    QObject::tr("Settings were exported to %1").arg(fileName));
+}
+
+
+// Загрузка настроек из файла: резервная копия текущих, применение,
+// перезапуск. Несохраненные правки на вкладках отбрасываются:
+// диалог закрывается без apply, чтобы устаревшие значения из памяти
+// не затерли только что загруженные
+void AppConfigDialog::onImportSettings(void)
+{
+  if(QMessageBox::question(configDialog,
+      QObject::tr("Import settings"),
+      QObject::tr("Settings from the file will replace the current ones. "
+                  "A backup copy will be created. "
+                  "Unsaved changes on the tabs will be discarded. Continue?"),
+      QMessageBox::Yes | QMessageBox::No,
+      QMessageBox::No)!=QMessageBox::Yes)
+    return;
+
+  const QString workDir=globalParameters.getWorkDirectory();
+
+  const QString fileName=QFileDialog::getOpenFileName(configDialog,
+    QObject::tr("Import settings"), workDir,
+    QObject::tr("MyTetra settings (*.ini)"));
+
+  if(fileName.isEmpty())
+    return;
+
+  EditorConfig *editorConfig=find_object<EditorConfig>(QStringLiteral("editorconfig"));
+
+  if(editorConfig==nullptr)
+  {
+    QMessageBox::warning(configDialog,
+      QObject::tr("Import settings"),
+      QObject::tr("Editor settings are unavailable"));
+    return;
+  }
+
+  QString error;
+
+  if(!SettingsTransfer::importSettings(mytetraConfig.settingsHandle(),
+                                       editorConfig->settingsHandle(),
+                                       workDir+QStringLiteral("/shortcut.ini"),
+                                       fileName, &error))
+  {
+    QMessageBox::warning(configDialog,
+      QObject::tr("Import settings"), error);
+    return;
+  }
+
+  // Горячие клавиши перечитываются из нового файла сразу,
+  // остальное (тема, шрифты, раскладка) подхватится перезапуском
+  shortcutManager.reload();
+
+  QMessageBox::information(configDialog,
+    QObject::tr("Import settings"),
+    QObject::tr("Settings were imported. Please restart the program."));
+
+  configDialog->reject();
 }

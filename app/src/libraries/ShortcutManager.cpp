@@ -58,6 +58,12 @@ void ShortcutManager::save()
 }
 
 
+void ShortcutManager::reload(void)
+{
+    initKeyTable();
+}
+
+
 void ShortcutManager::updateShortcutInApplication()
 {
     qDebug() << "Update shortcut in application";

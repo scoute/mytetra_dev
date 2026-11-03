@@ -9,6 +9,7 @@
 class ConfigDialog;
 class QListWidgetItem;
 class QWidget;
+class QPushButton;
 
 class AppConfigDialog
 {
@@ -29,6 +30,12 @@ public:
     static QList<AppConfigDialog *> openDialogs;
     
 private:
+    // Выгрузка настроек в файл
+    void onExportSettings(void);
+
+    // Загрузка настроек из файла с резервной копией
+    void onImportSettings(void);
+
     ConfigDialog *configDialog;
 
     QListWidgetItem *pageMain;
@@ -48,6 +55,10 @@ private:
     QListWidgetItem *pageTeam;
     QListWidgetItem *pageVoice;
     QListWidgetItem *pageMisc;
+
+    // Кнопки переноса настроек в нижнем ряду диалога
+    QPushButton *exportSettingsButton=nullptr;
+    QPushButton *importSettingsButton=nullptr;
 
     void changePage(QString name);
 };

@@ -80,7 +80,7 @@ private slots:
     void onNoiseSuppressToggled(bool checked);
     void updateOpusQualityAvailable(void);
     void onOpusQualityChanged(int index);
-    // Битрейт Opus по индексу качества 0..4 (16/24/32/48/64 кбит).
+    // Битрейт Opus по индексу качества 0..5 (12/16/24/32/48/64 кбит).
     // Статика чтобы стенд проверял параметры без микрофона и бэкенда
     static int opusBitrateForQuality(int quality);
     void onStateChanged(QMediaRecorder::State state);

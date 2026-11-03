@@ -1046,8 +1046,44 @@ void MetaEditor::onSourceTextChanged(void)
 }
 
 
+// Поиск сниппета только в полезном тексте: совпадения внутри
+// тегов <...> пропускаются (иначе "H6" находит <h6>, "margin" -
+// margin-top из атрибутов). Регистр важен: текст в исходнике хранится
+// как есть, а теги toHtml всегда строчные. Многострочные теги редки:
+// скобка ищется только в пределах своей строки
+static QTextCursor findOutsideTags(QTextDocument *doc, const QString &snippet, int from=0)
+{
+  if(snippet.isEmpty())
+    return QTextCursor();
+
+  while(true)
+  {
+    QTextCursor found=doc->find(snippet, from, QTextDocument::FindCaseSensitively);
+
+    if(found.isNull())
+      return QTextCursor();
+
+    // Ближайшая скобка слева на той же строке: '<' - внутри тега, мимо
+    QTextBlock block=doc->findBlock(found.selectionStart());
+    const QString line=block.text();
+    const int off=found.selectionStart()-block.position();
+    const int lt=line.lastIndexOf(QLatin1Char('<'), off-1);
+
+    if(lt>=0 && lt>line.lastIndexOf(QLatin1Char('>'), off-1))
+    {
+      from=found.selectionEnd();
+      continue;
+    }
+
+    return found;
+  }
+}
+
+
 // Число вхождений сниппета (больше одного - якорь неоднозначен,
-// диапазон по нему не строится, только курсорный фолбэк)
+// диапазон по нему не строится, только курсорный фолбэк).
+// Считается тем же текстовым поиском, что и якоря: совпадения
+// внутри тегов не в счет, иначе "H6" находило бы <h6>, H6, </h6>
 static int snippetOccurrences(QTextDocument *doc, const QString &snippet)
 {
   if(snippet.isEmpty())
@@ -1058,7 +1094,7 @@ static int snippetOccurrences(QTextDocument *doc, const QString &snippet)
 
   while(count<2)
   {
-    QTextCursor found=doc->find(snippet, from);
+    QTextCursor found=findOutsideTags(doc, snippet, from);
 
     if(found.isNull())
       break;
@@ -1192,7 +1228,7 @@ void MetaEditor::mirrorNoteCursorToSource(void)
   const QString last=endBlock.text().mid(qMax(0, endOff-40), qMin(40, endOff)).trimmed();
 
   QTextCursor foundFirst=first.isEmpty() ? QTextCursor()
-                                        : sourceDoc->find(first);
+                                        : findOutsideTags(sourceDoc, first);
 
   // Короткий кусок встречается не раз - якорь неоднозначен,
   // диапазоном не зеркалим (ниже будет курсорный фолбэк)
@@ -1208,7 +1244,7 @@ void MetaEditor::mirrorNoteCursorToSource(void)
     // Именно поэтому зеркало работало с начала строки и гасло
     // из середины и с конца
     const int from=foundFirst.isNull() ? 0 : qMax(0, foundFirst.selectionStart()-last.length());
-    foundLast=sourceDoc->find(last, from);
+    foundLast=findOutsideTags(sourceDoc, last, from);
 
     if(!foundLast.isNull() && snippetOccurrences(sourceDoc, last)>1)
       foundLast=QTextCursor();
@@ -1249,7 +1285,7 @@ void MetaEditor::mirrorNotePosToSource(int notePos)
 
   if(!snippet.isEmpty())
   {
-    QTextCursor found=htmlSourcePane->document()->find(snippet);
+    QTextCursor found=findOutsideTags(htmlSourcePane->document(), snippet);
 
     if(!found.isNull())
       sourcePos=found.selectionStart();
@@ -1323,11 +1359,28 @@ void MetaEditor::mirrorSourceCursorToNote(void)
   last.remove(tagRx);
   last=last.trimmed();
 
+  // Выбор целиком внутри тега (слово из атрибутов вроде margin):
+  // текста слева нет - взять тот, что тег оборачивает (как first
+  // берет текст после '>'). Иначе якорь пуст и зеркало вырождается
+  // в курсор, а мета-слово "ничего не находит"
+  if(last.isEmpty())
+  {
+    const QString tail=endBlock.text().mid(selEnd-endBlock.position());
+    const int tailEnd=tail.indexOf(QLatin1Char('>'));
+
+    if(tailEnd>=0 && !tail.left(tailEnd).contains(QLatin1Char('<')))
+    {
+      last=tail.mid(tailEnd+1);
+      last.remove(tagRx);
+      last=last.trimmed();
+    }
+  }
+
   if(last.length()>40)
     last=last.right(40);
 
   QTextCursor foundFirst=first.isEmpty() ? QTextCursor()
-                                        : noteDoc->find(first);
+                                        : findOutsideTags(noteDoc, first);
 
   // Короткий кусок встречается не раз - якорь неоднозначен
   if(!foundFirst.isNull() && snippetOccurrences(noteDoc, first)>1)
@@ -1339,7 +1392,7 @@ void MetaEditor::mirrorSourceCursorToNote(void)
     // Тот же запас назад что в прямом направлении: начало вхождения
     // последнего куска может лежать раньше старта первого
     const int from=foundFirst.isNull() ? 0 : qMax(0, foundFirst.selectionStart()-last.length());
-    foundLast=noteDoc->find(last, from);
+    foundLast=findOutsideTags(noteDoc, last, from);
 
     if(!foundLast.isNull() && snippetOccurrences(noteDoc, last)>1)
       foundLast=QTextCursor();
@@ -1381,7 +1434,7 @@ void MetaEditor::mirrorSourcePosToNote(int sourcePos)
 
   if(!snippet.isEmpty())
   {
-    QTextCursor found=textArea->document()->find(snippet);
+    QTextCursor found=findOutsideTags(textArea->document(), snippet);
 
     if(!found.isNull())
       notePos=found.selectionStart();

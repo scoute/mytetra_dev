@@ -236,6 +236,38 @@ int main(int argc, char **argv)
     }
     check(!pane->textCursor().hasSelection(), "SEL-AMBIGUOUS-NO-RANGE");
 
+    // Теги не якоря: текст "H6" не путается с тегом <h6> (поиск Qt
+    // по умолчанию регистронезависим), диапазон строится по тексту,
+    // а не встает курсором на тег
+    ed->setTextarea(QStringLiteral("<h1>H1</h1>\n<h6>H6</h6>\n<p style=\"margin-top:0px;margin-bottom:0px;\">Plain text</p>"));
+    ed->syncNoteToSource();
+    {
+        QTextCursor c(ed->textArea->document()->find(QStringLiteral("H6")));
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(pane->textCursor().hasSelection() &&
+          pane->textCursor().selectedText()==QStringLiteral("H6"),
+          "MIR-TAG-TEXT");
+
+    // Слово из атрибутов (margin) зеркалится в текст, который тег
+    // оборачивает, а не теряется
+    {
+        const int at=pane->toPlainText().indexOf(QStringLiteral("margin"));
+        QTextCursor c(pane->document());
+        c.setPosition(at);
+        c.setPosition(at+6, QTextCursor::KeepAnchor);
+        pane->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(ed->textArea->textCursor().selectedText().contains(QStringLiteral("Plain text")),
+          "MIR-MARGIN-TEXT");
+
+    // Вернуть документ как был: FOLD-тест ниже дописывает пустые
+    // абзацы в текущий документ и ждет их свернутыми
+    ed->setTextarea(QStringLiteral("<p>aaa</p>\n<p>aaa</p>"));
+    ed->syncNoteToSource();
+
     // Размещение исходника: низ, слева, справа, окно, скрыть
     ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Bottom);
     check(ed->htmlSourcePane->isVisible(), "PLACE-BOTTOM-VISIBLE");

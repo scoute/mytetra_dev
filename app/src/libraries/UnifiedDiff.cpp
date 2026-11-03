@@ -131,7 +131,7 @@ QString UnifiedDiff::diffLines(const QStringList &before,
 }
 
 
-QString UnifiedDiff::toColoredHtml(const QString &diff)
+QString UnifiedDiff::toColoredHtml(const QString &diff, bool dark)
 {
     QString html=QStringLiteral("<pre style=\"white-space: pre-wrap;\">\n");
 
@@ -139,32 +139,32 @@ QString UnifiedDiff::toColoredHtml(const QString &diff)
 
     for(const QString &line : lines)
     {
-        QString color=QStringLiteral("#000000");
+        QString color=dark ? QStringLiteral("#DFE1E2") : QStringLiteral("#000000");
         QString background=QStringLiteral("transparent");
 
         if(line.startsWith(QStringLiteral("@@")))
         {
-            color=QStringLiteral("#666666");
-            background=QStringLiteral("#f0f0f0");
+            color=dark ? QStringLiteral("#8fa8bf") : QStringLiteral("#666666");
+            background=dark ? QStringLiteral("#263646") : QStringLiteral("#f0f0f0");
         }
         else if(line.startsWith(QStringLiteral("+++")) ||
                 line.startsWith(QStringLiteral("---")))
         {
-            color=QStringLiteral("#666666");
+            color=dark ? QStringLiteral("#8fa8bf") : QStringLiteral("#666666");
         }
         else if(line.startsWith(QLatin1Char('+')))
         {
-            color=QStringLiteral("#006400");
-            background=QStringLiteral("#e6ffed");
+            color=dark ? QStringLiteral("#7ee787") : QStringLiteral("#006400");
+            background=dark ? QStringLiteral("#1d3a28") : QStringLiteral("#e6ffed");
         }
         else if(line.startsWith(QLatin1Char('-')))
         {
-            color=QStringLiteral("#8b0000");
-            background=QStringLiteral("#ffeef0");
+            color=dark ? QStringLiteral("#ff9e9e") : QStringLiteral("#8b0000");
+            background=dark ? QStringLiteral("#3d2226") : QStringLiteral("#ffeef0");
         }
         else if(line.startsWith(QStringLiteral("diff ")))
         {
-            color=QStringLiteral("#666666");
+            color=dark ? QStringLiteral("#8fa8bf") : QStringLiteral("#666666");
         }
 
         html+=QStringLiteral("<div style=\"color: %1; background: %2;\">%3</div>\n")

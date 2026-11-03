@@ -263,6 +263,50 @@ int main(int argc, char **argv)
     check(ed->textArea->textCursor().selectedText().contains(QStringLiteral("Plain text")),
           "MIR-MARGIN-TEXT");
 
+    // Реальный документ (как на скрине): пустые абзацы дают в шапке
+    // правило p.mtempty с "margin", а текст абзаца тоже "margin".
+    // Слово margin в тексте не должно теряться из-за margin в CSS
+    ed->setTextarea(QStringLiteral(
+        "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px;\"><br /></p>"
+        "<p style=\"margin-top:0px;margin-bottom:0px;\">margin</p>"));
+    ed->syncNoteToSource();
+    check(pane->toPlainText().contains(QStringLiteral("mtempty")), "MIR-MT-RULE");
+    {
+        const int at=pane->toPlainText().indexOf(QStringLiteral(">margin<"));
+        check(at>=0, "MIR-MT-PRESENT");
+        // Сбросить курсор заметки: иначе выбор с прошлого шага мог
+        // остаться и создать ложное впечатление работы зеркала
+        QTextCursor zeroNote(ed->textArea->document());
+        zeroNote.setPosition(0);
+        ed->textArea->setTextCursor(zeroNote);
+        QApplication::processEvents();
+        QTextCursor c(pane->document());
+        c.setPosition(at+1);
+        c.setPosition(at+7, QTextCursor::KeepAnchor);
+        pane->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    check(ed->textArea->textCursor().selectedText()==QStringLiteral("margin"),
+          "MIR-MT-SRC-TO-NOTE");
+    // Сбросить курсор исходника: иначе выбор с прошлого шага мог
+    // остаться и создать ложное впечатление работы зеркала
+    {
+        QTextCursor zero(pane->document());
+        zero.setPosition(0);
+        pane->setTextCursor(zero);
+        QApplication::processEvents();
+    }
+    {
+        QTextCursor c(ed->textArea->document()->find(QStringLiteral("margin")));
+        ed->textArea->setTextCursor(c);
+        QApplication::processEvents();
+    }
+    // Выбран должен быть текст абзаца (margin</p>), а не margin из
+    // правила p.mtempty в шапке (margin-top и т.п.)
+    check(pane->textCursor().selectedText()==QStringLiteral("margin") &&
+          pane->toPlainText().mid(pane->textCursor().selectionEnd(), 4)==QStringLiteral("</p>"),
+          "MIR-MT-NOTE-TO-SRC");
+
     // Вернуть документ как был: FOLD-тест ниже дописывает пустые
     // абзацы в текущий документ и ждет их свернутыми
     ed->setTextarea(QStringLiteral("<p>aaa</p>\n<p>aaa</p>"));

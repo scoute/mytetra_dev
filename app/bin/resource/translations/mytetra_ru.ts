@@ -3329,6 +3329,62 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Ctrl+Enter</source>
         <translation type="vanished">Ctrl+Enter</translation>
     </message>
+    <message>
+        <source>Find:</source>
+        <translation>Найти:</translation>
+    </message>
+    <message>
+        <source>Replace:</source>
+        <translation>Заменить:</translation>
+    </message>
+    <message>
+        <source>Prev</source>
+        <translation>Назад</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Далее</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Заменить</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Все</translation>
+    </message>
+    <message>
+        <source>Aa</source>
+        <translation>Aa</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>Case sensitive</source>
+        <translation>Учитывать регистр</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n совпадение</numerusform>
+            <numerusform>%n совпадения</numerusform>
+            <numerusform>%n совпадений</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not found</source>
+        <translation>Не найдено</translation>
+    </message>
+    <message numerus="yes">
+        <source>Replaced %n time(s)</source>
+        <translation>
+            <numerusform>%n замена</numerusform>
+            <numerusform>%n замены</numerusform>
+            <numerusform>%n замен</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>EditorShowTextContextMenu</name>

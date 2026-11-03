@@ -1,5 +1,7 @@
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QScreen>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -134,16 +136,22 @@ void EditorSpecialCharDialog::assembly(void)
    QLabel *recentLabel=new QLabel(tr("Recent:"), this);
    centralLayout->addWidget(recentLabel);
 
+   // Недавние прижаты влево: иначе сетка тянется на всю ширину
+   // и короткий ряд смотрится отцентрованным
+   QHBoxLayout *recentRowLayout=new QHBoxLayout();
+   recentRowLayout->setContentsMargins(0, 0, 0, 0);
    QGridLayout *recentLayout=new QGridLayout();
    int recentRow=0;
    fillGrid(recentLayout, recent, columns, recentRow);
-   centralLayout->addLayout(recentLayout);
+   recentRowLayout->addLayout(recentLayout);
+   recentRowLayout->addStretch();
+   centralLayout->addLayout(recentRowLayout);
   }
 
  // Вся таблица — в прокрутке: три сотни кнопок в экран не влезают.
  // Минимум 8 рядов кнопок 36px, дальше растет вместе с окном:
  // у прокрутки вертикально Expanding, кнопка Cancel прижата к низу
- QScrollArea *scroll=new QScrollArea(this);
+ scroll=new QScrollArea(this);
  scroll->setWidgetResizable(true);
  scroll->setMinimumHeight(360);
  scroll->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
@@ -155,6 +163,13 @@ void EditorSpecialCharDialog::assembly(void)
 
  scroll->setWidget(gridHost);
  centralLayout->addWidget(scroll);
+
+ // Стартовой ширины хватает на все колонки без горизонтальной
+ // прокрутки: минимум содержимого + вертикальный скроллбар
+ // (таблица всегда выше вьюпорта, он виден сразу) + рамки
+ scroll->setMinimumWidth(gridHost->minimumSizeHint().width()
+                         + scroll->verticalScrollBar()->sizeHint().width()
+                         + 2*scroll->frameWidth());
 
  // Кнопки шрифта покрупнее чтобы символы читались
  foreach(QPushButton *button, symbolButtons)
@@ -182,8 +197,7 @@ void EditorSpecialCharDialog::fillGrid(QGridLayout *layout,
                                        const QStringList &symbols,
                                        int columns,
                                        int &row)
-{
- int column=0;
+{ int column=0;
 
  foreach(const QString &symbol, symbols)
   {
@@ -209,6 +223,31 @@ void EditorSpecialCharDialog::fillGrid(QGridLayout *layout,
 }
 
 
+// Одноразовое доращивание ширины при показе. Ручной расчет
+// minimumWidth в assembly складывает контент+скроллбар+рамки стиля,
+// но QSS-рамки и отступы тем (dark: border 1px + padding 2px = 6px)
+// вьюпорт выедают, а в расчет не входят. Если горизонтальный скролл
+// все же появился — окно доращивается ровно на величину выступа.
+// В светлых темах maximum нулевой, окно не трогается
+void EditorSpecialCharDialog::showEvent(QShowEvent *event)
+{
+ QDialog::showEvent(event);
+
+ if(widthFixed)
+  return;
+
+ widthFixed=true;
+
+ if(scroll==nullptr)
+  return;
+
+ const int overflow=scroll->horizontalScrollBar()->maximum();
+
+ if(overflow>0)
+  resize(width()+overflow+2, height());
+}
+
+
 void EditorSpecialCharDialog::on_symbol_button_clicked(void)
 {
  QPushButton *button=qobject_cast<QPushButton *>(sender());
@@ -218,9 +257,16 @@ void EditorSpecialCharDialog::on_symbol_button_clicked(void)
 
  pickedSymbol=button->text();
 
- // Диалог не закрывается: каждый клик сразу вставляет символ
- // в редактор через сигнал, можно набирать несколько подряд
+ // Каждый клик сразу вставляет символ в редактор через сигнал,
+ // слот вставки отрабатывает синхронно. Дальше по настройке:
+ // окно закрывается (по умолчанию) или остается открытым и
+ // можно набирать несколько символов подряд
  emit symbolPicked(pickedSymbol);
+
+ EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+ if(editorConfig!=nullptr && editorConfig->get_specialCharCloseOnInsert())
+  accept();
 }
 
 

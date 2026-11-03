@@ -188,10 +188,12 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // Метка только информирует о параметрах
     formatInfoLabel=new QLabel(this);
 
-    // Качество Opus: 24 low, 32 middle (дефолт), 48 high, 64 extra.
-    // Индекс пункта совпадает с voiceNoteQuality из конфига
+    // Качество Opus: 16 extra low, 24 low, 32 middle (дефолт),
+    // 48 high, 64 extra. Индекс пункта совпадает
+    // с voiceNoteQuality из конфига
     opusQualityLabel=new QLabel(tr("Quality:"), this);
     opusQuality=new MtComboBox(this);
+    opusQuality->addItem(tr("Extra low (16 kbit/s)"));
     opusQuality->addItem(tr("Low (24 kbit/s)"));
     opusQuality->addItem(tr("Middle (32 kbit/s)"));
     opusQuality->addItem(tr("High (48 kbit/s)"));
@@ -462,18 +464,21 @@ VoiceRecorderDialog::VoiceQualityProfile VoiceRecorderDialog::qualityProfile(Voi
 
 int VoiceRecorderDialog::opusBitrateForQuality(int quality)
 {
-    switch(qBound(0, quality, 3))
+    switch(qBound(0, quality, 4))
     {
     case 0:
-        return 24000;
-
-    case 2:
-        return 48000;
-
-    case 3:
-        return 64000;
+        return 16000;
 
     case 1:
+        return 24000;
+
+    case 3:
+        return 48000;
+
+    case 4:
+        return 64000;
+
+    case 2:
     default:
         return 32000;
     }

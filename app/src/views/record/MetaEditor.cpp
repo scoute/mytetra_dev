@@ -946,12 +946,22 @@ void MetaEditor::mirrorNoteCursorToSource(void)
   QTextCursor foundLast;
   if(!last.isEmpty())
   {
-    // Поиск со старта первого: для однословного выделения оба якоря
-    // указывают на то же вхождение, поиск с конца его бы пропустил
-    const int from=foundFirst.isNull() ? 0 : foundFirst.selectionStart();
+    // Поиск от старта первого минус длина: для короткого выделения
+    // оба якоря указывают на то же вхождение, и его начало лежит
+    // раньше старта первого — поиск строго от старта его пропускает.
+    // Именно поэтому зеркало работало с начала строки и гасло
+    // из середины и с конца
+    const int from=foundFirst.isNull() ? 0 : qMax(0, foundFirst.selectionStart()-last.length());
     foundLast=sourceDoc->find(last, from);
 
     if(!foundLast.isNull() && snippetOccurrences(sourceDoc, last)>1)
+      foundLast=QTextCursor();
+
+    // Откат с запасом мог зацепить более ранний дубль: конец
+    // раньше начала — диапазон вырождается, лучше курсорный фолбэк.
+    // Норма (один кусок внутри другого) — last.end >= first.start
+    if(!foundFirst.isNull() && !foundLast.isNull() &&
+       foundLast.selectionEnd()<=foundFirst.selectionStart())
       foundLast=QTextCursor();
   }
 
@@ -1070,12 +1080,16 @@ void MetaEditor::mirrorSourceCursorToNote(void)
   QTextCursor foundLast;
   if(!last.isEmpty())
   {
-    // Поиск со старта первого: для однословного выделения оба якоря
-    // указывают на то же вхождение, поиск с конца его бы пропустил
-    const int from=foundFirst.isNull() ? 0 : foundFirst.selectionStart();
+    // Тот же запас назад что в прямом направлении: начало вхождения
+    // последнего куска может лежать раньше старта первого
+    const int from=foundFirst.isNull() ? 0 : qMax(0, foundFirst.selectionStart()-last.length());
     foundLast=noteDoc->find(last, from);
 
     if(!foundLast.isNull() && snippetOccurrences(noteDoc, last)>1)
+      foundLast=QTextCursor();
+
+    if(!foundFirst.isNull() && !foundLast.isNull() &&
+       foundLast.selectionEnd()<=foundFirst.selectionStart())
       foundLast=QTextCursor();
   }
 

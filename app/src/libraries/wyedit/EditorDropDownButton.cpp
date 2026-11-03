@@ -133,7 +133,13 @@ void EditorDropDownButton::showListMenu(void)
     int maxWidth=m_button->width();
     for(QAction *action : m_menu->actions())
     {
-        QListWidgetItem *item=new QListWidgetItem(action->icon(), action->text(), list);
+        // В списке нет колонки шорткатов как в QMenu, поэтому шорткат
+        // дописывается в текст строки (раньше он ехал в action->text()
+        // для всех, что давало задвоение в обычных меню)
+        QString itemText=action->text();
+        if(!action->shortcut().isEmpty())
+            itemText+=" ("+action->shortcut().toString()+")";
+        QListWidgetItem *item=new QListWidgetItem(action->icon(), itemText, list);
         item->setData(Qt::UserRole, action->property("menuIndex").toInt());
         maxWidth=qMax(maxWidth, list->sizeHintForColumn(0));
     }

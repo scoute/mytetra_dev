@@ -214,7 +214,7 @@ void ReferenceFormatter::onReferenceClicked(void)
     if(refereceUrl.length()>0)
     {
         charFormat.setAnchor(true);
-        charFormat.setForeground(QApplication::palette().color(QPalette::Link));
+        charFormat.setForeground(linkColorForHref(refereceUrl));
         charFormat.setFontUnderline(true);
 
         textArea->textCursor().mergeCharFormat(charFormat);
@@ -400,7 +400,7 @@ void ReferenceFormatter::insertTitledLink(const QString &internalHref,
     QTextCharFormat linkFormat;
     linkFormat.setAnchor(true);
     linkFormat.setAnchorHref(internalHref);
-    linkFormat.setForeground(QApplication::palette().color(QPalette::Link));
+    linkFormat.setForeground(linkColorForHref(internalHref));
     linkFormat.setFontUnderline(true);
 
     QTextCursor cursor=textArea->textCursor();
@@ -869,6 +869,15 @@ void ReferenceFormatter::onMoveAttachClicked(void)
   if(globalParameters.getStatusBar()!=nullptr)
     globalParameters.getStatusBar()->showMessage(
       tr("Moved to \"%1\"").arg(targetName), 3000);
+}
+
+
+// Цвет ссылки по адресу: единая точка в конфиге
+// (внешние, mytetra://note/..., mytetra://toc-go/...).
+// Невалидные значения настроек геттеры уже подменили дефолтами
+QColor ReferenceFormatter::linkColorForHref(const QString &href) const
+{
+    return editorConfig->linkColorForHref(href);
 }
 
 

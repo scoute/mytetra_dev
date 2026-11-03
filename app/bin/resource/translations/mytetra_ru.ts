@@ -2927,6 +2927,22 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Code font</source>
         <translation>Шрифт для кода</translation>
     </message>
+    <message>
+        <source>Link colors</source>
+        <translation>Цвета ссылок</translation>
+    </message>
+    <message>
+        <source>External link color</source>
+        <translation>Цвет внешних ссылок</translation>
+    </message>
+    <message>
+        <source>Internal link color</source>
+        <translation>Цвет внутренних ссылок</translation>
+    </message>
+    <message>
+        <source>Section link color</source>
+        <translation>Цвет ссылок на разделы</translation>
+    </message>
 </context>
 <context>
     <name>EditorConfigMathExpression</name>

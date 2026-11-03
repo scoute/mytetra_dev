@@ -139,6 +139,8 @@ private:
  void syncSourceToNote(void);
  void mirrorNoteCursorToSource(void);
  void mirrorSourceCursorToNote(void);
+ void mirrorNotePosToSource(int notePos);
+ void mirrorSourcePosToNote(int sourcePos);
 
 };
 

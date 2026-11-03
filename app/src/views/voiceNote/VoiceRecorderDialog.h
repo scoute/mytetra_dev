@@ -7,12 +7,14 @@
 #include <QAudio>
 
 #include "libraries/OpusFileWriter.h"
+#include "libraries/SpectralNoiseSuppress.h"
 #include <QMediaRecorder>
 #include <QAudioFormat>
 #include <QAudioDeviceInfo>
 
 class QLabel;
 class QPushButton;
+class QCheckBox;
 class QComboBox;
 class QRadioButton;
 class QLineEdit;
@@ -74,6 +76,7 @@ private slots:
     void onFileNameEdited(const QString &text);
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
+    void onNoiseSuppressToggled(bool checked);
     void onStateChanged(QMediaRecorder::State state);
     void onRecorderError(QMediaRecorder::Error error);
     void onProbeBuffer(const QAudioBuffer &buffer);
@@ -155,6 +158,32 @@ private:
     bool startOpusCapture(const QString &filePath);
     void stopOpusCapture(void);
 
+    // Прогрев входа: вход стримит непрерывно, пока открыто окно.
+    // Мусор аналогового пробуждения оседает до нажатия записи,
+    // оценки шума калибруются реальным фоном. stopMonitor() свободен
+    // и для полного освобождения входа старого пути
+    void startMonitor(void);
+    void stopMonitor(void);
+
+    // Договаривание формата записи с устройством и открытие самого
+    // входа: общая часть монитора прогрева и старого пути (файл
+    // не открывает). false - нет устройства/формата или вход занят,
+    // причины в статусе, причина занятости через флаг
+    bool openOpusInput(bool reportStartError);
+
+    // Подавление фонового шума: пересчет окон преобразования
+    // очистителя под частоту записи, сброс оценок шума
+    void setupNoiseChain(int sampleRate);
+
+    // Доступность галочки подавления: включена только для Opus,
+    // MP3-запись без подавления, поэтому блокируется
+    void updateNoiseSuppressAvailable(void);
+
+    // Пропуск чанка через спектральное подавление шума (фон
+    // глушится и в паузах, и под речью; уровень речи не трогается;
+    // пол калибруется потоком прогрева и записи)
+    void applyNoiseSuppress(short *pcm, int samples);
+
     QString workDir;
 
     QLabel *statusLabel;
@@ -201,11 +230,20 @@ private:
     // мусорные, сколько уже пропущено
     int warmupDroppedMs;
 
+    // Прогрев входа: вход стримит непрерывно, пока открыто окно.
+    // Мусор аналогового пробуждения оседает до нажатия записи
+    bool micMonitoring;
+
     // Фильтр постоянной составляющей: мусор прогрева входа -
     // это DC. Состояние одноэлементное, переносится между чанками
     bool dcBlockInit;
     double dcBlockPrevIn;
     double dcBlockPrevOut;
+
+    // Подавление фонового шума: галочка и живой флаг ее состояния
+    QCheckBox *noiseSuppress;
+    bool noiseSuppressOn;
+    SpectralNoiseSuppress noiseSuppressor;
 
     QString filePath;
 };

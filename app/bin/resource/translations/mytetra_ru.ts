@@ -598,6 +598,54 @@ SyncTetra должна быть запущена.</translation>
         <source>Clipper status is unavailable.</source>
         <translation>Статус клиппера недоступен.</translation>
     </message>
+<message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="91"/>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Clipper.cpp" line="195"/>
+        <source>Web Clipper: in the browser, select all or part of the page text, then press the global hotkey. The clip is saved to the target branch note.
+Run: mytetra --control --clipboard [--url]
+Bind it to a global OS hotkey, for example: /path/to/start.sh --control --clipboard
+MyTetra must be running.</source>
+        <translation>Веб-клиппер: выделите в браузере весь текст страницы или его часть, затем нажмите глобальный хоткей. Вырезка сохраняется в заметку целевой ветки.
+Запуск: mytetra --control --clipboard [--url]
+Назначьте на глобальный хоткей ОС, например: /path/to/start.sh --control --clipboard
+MyTetra должна быть запущена.</translation>
+    </message>
+<message>
+        <source>Target branch:</source>
+        <translation>Целевая ветка:</translation>
+    </message>
+<message>
+        <source>To default branch (unsorted_notes)</source>
+        <translation>В ветку по умолчанию (unsorted_notes)</translation>
+    </message>
+<message>
+        <source>To selected branch:</source>
+        <translation>В выбранную ветку:</translation>
+    </message>
+<message>
+        <source>Root branches with two nesting levels</source>
+        <translation>Корневые ветки с двумя уровнями вложений</translation>
+    </message>
+<message>
+        <source>Tiles:</source>
+        <translation>Плитки:</translation>
+    </message>
+<message>
+        <source>Last 16</source>
+        <translation>Последние 16</translation>
+    </message>
+<message>
+        <source>Most frequent 16</source>
+        <translation>Частые 16</translation>
+    </message>
+<message>
+        <source>Open original note on duplicate clip</source>
+        <translation>Открывать оригинал при дубле клипа</translation>
+    </message>
+<message>
+        <source>Ask every time (popup window)</source>
+        <translation>Спрашивать каждый раз (всплывающее окно)</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Crypt</name>
@@ -720,6 +768,50 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Crypt.cpp" line="234"/>
         <source>If you change your password all encrypted item will be re-encrypted with a new password.</source>
         <translation>При смене пароля все зашифрованные ветки будут заново зашифрованы с новым паролем.</translation>
+    </message>
+<message>
+        <source>Encryption method</source>
+        <translation>Метод шифрования</translation>
+    </message>
+<message>
+        <source>RC5 (compatible)</source>
+        <translation>RC5 (совместимый)</translation>
+    </message>
+<message>
+        <source>XChaCha20-Poly1305 (modern)</source>
+        <translation>XChaCha20-Poly1305 (современный)</translation>
+    </message>
+<message>
+        <source>Re-encrypt data with selected method</source>
+        <translation>Перешифровать данные выбранным методом</translation>
+    </message>
+<message>
+        <source>Re-encrypt data</source>
+        <translation>Перешифровка данных</translation>
+    </message>
+<message>
+        <source>Crypt is locked. Enter the password first.</source>
+        <translation>Крипта закрыта. Сначала введите пароль.</translation>
+    </message>
+<message>
+        <source>All encrypted data will be re-encrypted with the selected method "%1". Back up your database directory first. Continue?</source>
+        <translation>Все зашифрованные данные будут перешифрованы выбранным методом "%1". Сначала сделайте резервную копию каталога базы. Продолжить?</translation>
+    </message>
+<message>
+        <source>Re-encrypting...</source>
+        <translation>Перешифровка...</translation>
+    </message>
+<message>
+        <source>Database tree is unavailable.</source>
+        <translation>Дерево базы недоступно.</translation>
+    </message>
+<message>
+        <source>Re-encryption canceled, converted branches: %1.</source>
+        <translation>Перешифровка отменена, преобразовано веток: %1.</translation>
+    </message>
+<message>
+        <source>Done. Re-encrypted branches: %1.</source>
+        <translation>Готово. Перешифровано веток: %1.</translation>
     </message>
 </context>
 <context>
@@ -1138,6 +1230,22 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <source>Enable autosave, min</source>
         <translation>Включить автосохранение, мин</translation>
     </message>
+<message>
+        <source>Network and certificates</source>
+        <translation>Сеть и сертификаты</translation>
+    </message>
+<message>
+        <source>Allow loading with invalid or self-signed TLS certificates</source>
+        <translation>Разрешать загрузку с невалидными или самоподписанными TLS-сертификатами</translation>
+    </message>
+<message>
+        <source>Disables certificate verification for images and files downloaded from the network. This reduces protection against traffic substitution. Enable only if you understand the risk.</source>
+        <translation>Отключает проверку сертификата для картинок и файлов, загружаемых из сети. Это снижает защиту от подмены трафика. Включайте только если понимаете риск.</translation>
+    </message>
+<message>
+        <source>Normally a site with an expired, self-signed or otherwise invalid TLS certificate is refused. This option allows downloading images and files from such sites anyway, but an attacker on the network could substitute the content. Default: off.</source>
+        <translation>Обычно сайт с просроченным, самоподписанным или иным невалидным TLS-сертификатом отклоняется. Эта опция разрешает всё равно скачивать с него картинки и файлы, но злоумышленник в сети может подменить содержимое. По умолчанию выключено.</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Tree</name>
@@ -1172,6 +1280,10 @@ claude mcp add --transport stdio synctetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
+    </message>
+<message>
+        <source>Filter branches...</source>
+        <translation>Фильтр веток...</translation>
     </message>
 </context>
 <context>
@@ -1942,6 +2054,30 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/libraries/Clipper.cpp" line="474"/>
         <source>Read-only mode is enabled.</source>
         <translation>Включён режим только чтения.</translation>
+    </message>
+<message>
+        <source>SSL unavailable</source>
+        <translation>SSL недоступен</translation>
+    </message>
+<message>
+        <source>Already clipped, opened existing note.</source>
+        <translation>Уже вставлено, открыта существующая заметка.</translation>
+    </message>
+<message>
+        <source>No selection to clip.</source>
+        <translation>Нет выделения для вставки.</translation>
+    </message>
+<message>
+        <source>Saved to %1: %2</source>
+        <translation>Сохранено в %1: %2</translation>
+    </message>
+<message>
+        <source>Selected branch is gone.</source>
+        <translation>Выбранная ветка исчезла.</translation>
+    </message>
+<message>
+        <source>Cancelled, nothing saved.</source>
+        <translation>Отменено, ничего не сохранено.</translation>
     </message>
 </context>
 <context>
@@ -2734,6 +2870,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Misc</source>
         <translation>Разное</translation>
     </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigDialog.cpp" line="29"/>
+        <source>MyTetra settings...</source>
+        <translation>Настройки MyTetra...</translation>
+    </message>
 </context>
 <context>
     <name>EditorConfigFont</name>
@@ -2961,6 +3102,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Open image with...</source>
         <translation>Открыть изображение с помощью...</translation>
     </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="118"/>
+        <source>Copy code</source>
+        <translation>Скопировать код</translation>
+    </message>
 </context>
 <context>
     <name>EditorFindBar</name>
@@ -3049,6 +3195,49 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
     <message>
         <source>(empty heading)</source>
         <translation>(пустой заголовок)</translation>
+    </message>
+</context>
+<context>
+    <name>ClipBranchDialog</name>
+    <message>
+        <source>Where to save the clip?</source>
+        <translation>Куда сохранить вырезку?</translation>
+    </message>
+    <message>
+        <source>Where do you want to paste?</source>
+        <translation>Куда хотите вставить?</translation>
+    </message>
+    <message>
+        <source>Filter branches...</source>
+        <translation>Фильтр веток...</translation>
+    </message>
+    <message>
+        <source>Recent branches:</source>
+        <translation>Недавние ветки:</translation>
+    </message>
+    <message>
+        <source>Frequent branches:</source>
+        <translation>Частые ветки:</translation>
+    </message>
+</context>
+<context>
+    <name>EditorStructurePanel</name>
+    <message>
+        <source>No H1-H3 headings</source>
+        <translation type="obsolete">Нет заголовков H1–H3</translation>
+    </message>
+    <message>
+        <source>No H1-H6 headings</source>
+        <translation>Нет заголовков H1–H6</translation>
+    </message>
+    <message>
+        <source>(empty heading)</source>
+        <translation>(пустой заголовок)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorStructurePanel.cpp" line="23"/>
+        <source>Outline</source>
+        <translation>Оглавление</translation>
     </message>
 </context>
 <context>
@@ -3765,6 +3954,166 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Normal text</source>
         <translation>Обычный текст</translation>
     </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="170"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="559"/>
+        <source>Plain code</source>
+        <translation>Обычный код</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="171"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="560"/>
+        <source>Angular</source>
+        <translation>Angular</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="172"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="561"/>
+        <source>Bash</source>
+        <translation>Bash</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="173"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="562"/>
+        <source>C</source>
+        <translation>C</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="174"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="563"/>
+        <source>CMake</source>
+        <translation>CMake</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="175"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="564"/>
+        <source>CSS</source>
+        <translation>CSS</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="176"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="565"/>
+        <source>C++</source>
+        <translation>C++</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="177"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="566"/>
+        <source>C#</source>
+        <translation>C#</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="178"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="567"/>
+        <source>GLSL</source>
+        <translation>GLSL</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="179"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="568"/>
+        <source>Go</source>
+        <translation>Go</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="180"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="569"/>
+        <source>HTML</source>
+        <translation>HTML</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="181"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="570"/>
+        <source>INI</source>
+        <translation>INI</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="182"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="571"/>
+        <source>Java</source>
+        <translation>Java</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="183"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="572"/>
+        <source>JavaScript</source>
+        <translation>JavaScript</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="184"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="573"/>
+        <source>JSON</source>
+        <translation>JSON</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="185"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="574"/>
+        <source>Lua</source>
+        <translation>Lua</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="186"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="575"/>
+        <source>Make</source>
+        <translation>Make</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="187"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="576"/>
+        <source>PHP</source>
+        <translation>PHP</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="188"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="577"/>
+        <source>Python</source>
+        <translation>Python</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="189"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="578"/>
+        <source>QML</source>
+        <translation>QML</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="190"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="579"/>
+        <source>React</source>
+        <translation>React</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="191"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="580"/>
+        <source>Rust</source>
+        <translation>Rust</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="192"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="581"/>
+        <source>SQL</source>
+        <translation>SQL</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="193"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="582"/>
+        <source>TypeScript</source>
+        <translation>TypeScript</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="194"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="583"/>
+        <source>XML</source>
+        <translation>XML</translation>
+    </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="195"/>
+        <location filename="../../../src/libraries/wyedit/EditorToolBar.cpp" line="584"/>
+        <source>YAML</source>
+        <translation>YAML</translation>
+    </message>
+<message>
+        <source>Heading</source>
+        <translation>Заголовок</translation>
+    </message>
 </context>
 <context>
     <name>EditorToolbarAvailableCommandsModel</name>
@@ -4234,6 +4583,14 @@ Try to search for entire database.</source>
         <location filename="../../../src/views/findInBaseScreen/FindScreen.cpp" line="178"/>
         <source>Close find widget</source>
         <translation>Закрыть виджет поиска</translation>
+    </message>
+<message>
+        <source>Jump to note text</source>
+        <translation>Прыжок в текст заметки</translation>
+    </message>
+<message>
+        <source>Jump by first word only</source>
+        <translation>Прыжок только по первому слову</translation>
     </message>
 </context>
 <context>
@@ -5186,7 +5543,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <source>; peers: %1</source>
         <translation>; пиры: %1</translation>
-    </message></context>
+    </message><message>
+        <source>Show branch filter</source>
+        <translation>Показывать фильтр веток</translation>
+    </message>
+</context>
 <context>
     <name>MathExpressionFormatter</name>
     <message>
@@ -5295,6 +5656,11 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <source>HTML source</source>
         <translation>Исходник HTML</translation>
+    </message>
+<message>
+        <location filename="../../../src/views/record/MetaEditor.cpp" line="193"/>
+        <source>Outline</source>
+        <translation>Оглавление</translation>
     </message>
 </context>
 <context>
@@ -6173,6 +6539,11 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/mcp/McpServer.cpp" line="777"/>
         <source>Remove a tag everywhere. Irreversible. For 2+ operations in a row use apply_batch instead of separate calls.</source>
         <translation>Удалить тег везде. Необратимо. Для 2+ операций подряд используй apply_batch вместо отдельных вызовов.</translation>
+    </message>
+<message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigDialog.cpp" line="90"/>
+        <source>Editor settings...</source>
+        <translation>Настройки редактора...</translation>
     </message>
 </context>
 <context>
@@ -7599,6 +7970,27 @@ Enable it in Settings on the History page.</source>
         <source>Move voice file and link into another note</source>
         <translation>Переместить файл и ссылку голосовой заметки в другую заметку</translation>
     </message>
+<message>
+        <location filename="../../../src/libraries/ShortcutManager.cpp" line="126"/>
+        <source>Format text as code with a choice of highlighting language</source>
+        <translation>Форматировать текст как код с выбором языка подсветки</translation>
+    </message>
+<message>
+        <source>Structure</source>
+        <translation>Структура</translation>
+    </message>
+<message>
+        <source>Show headings outline with jump to section</source>
+        <translation>Показать оглавление с переходом в раздел</translation>
+    </message>
+<message>
+        <source>Table of contents</source>
+        <translation>Оглавление</translation>
+    </message>
+<message>
+        <source>Insert or refresh the table of contents snapshot</source>
+        <translation>Вставить снимок оглавления или обновить его</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutSettingsModel</name>
@@ -8414,6 +8806,11 @@ Git-история в общем каталоге будет расти с ка�
         <source>Select background color</source>
         <translation>Выбор цвета фона</translation>
     </message>
+<message>
+        <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1013"/>
+        <source>Code copied to clipboard</source>
+        <translation>Код скопирован в буфер обмена</translation>
+    </message>
 </context>
 <context>
     <name>XmlTree</name>
@@ -8637,6 +9034,10 @@ Git-история в общем каталоге будет расти с ка�
         <translation>MP3 (.mp3)</translation>
     </message>
     <message>
+        <source>Suppress noise</source>
+        <translation>Подавлять шум</translation>
+    </message>
+    <message>
         <source>Microphone:</source>
         <translation>Микрофон:</translation>
     </message>
@@ -8675,6 +9076,18 @@ Git-история в общем каталоге будет расти с ка�
     <message>
         <source>Can not record here</source>
         <translation>Здесь записать нельзя</translation>
+    </message>
+<message>
+        <source>Re-record</source>
+        <translation>Перезаписать</translation>
+    </message>
+<message>
+        <source>Old recording will be overwritten</source>
+        <translation>Старая запись будет перезаписана</translation>
+    </message>
+    <message>
+        <source>Noise suppression works in Opus format</source>
+        <translation>Подавление шума работает в формате Opus</translation>
     </message>
 </context>
 <context>

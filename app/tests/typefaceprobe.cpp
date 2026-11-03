@@ -149,19 +149,62 @@ int main(int argc, char **argv)
         QTextBlockFormat f4=doc->firstBlock().blockFormat();
         check(f4.headingLevel()==4, "HEADING-H4-LEVEL");
         check(f4.topMargin()==12 && f4.bottomMargin()==12, "HEADING-H4-MARGINS");
+        const double size4=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
 
         fmt.onHeadingClicked(4);
         QTextBlockFormat f5=doc->firstBlock().blockFormat();
         check(f5.headingLevel()==5, "HEADING-H5-LEVEL");
         check(f5.topMargin()==12 && f5.bottomMargin()==4, "HEADING-H5-MARGINS");
+        const double size5=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
 
         fmt.onHeadingClicked(5);
         QTextBlockFormat f6=doc->firstBlock().blockFormat();
         check(f6.headingLevel()==6, "HEADING-H6-LEVEL");
         check(f6.topMargin()==0 && f6.bottomMargin()==0, "HEADING-H6-MARGINS");
+        const double size6=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
+
+        // Кегль строго убывает с уровнем: лесенка 48/32/24/20/16/12
+        check(size4>size5 && size5>size6, "HEADING-SIZE-MONOTONIC");
 
         fmt.onHeadingClicked(6);
         check(doc->firstBlock().blockFormat().headingLevel()==0, "HEADING-NORMAL-OFF");
+
+        // Переключение вкл/выкл/вкл не растит кегль: второе применение
+        // дает тот же размер, а не умноженный
+        {
+            QTextCursor sel(doc);
+            sel.select(QTextCursor::Document);
+            area.setTextCursor(sel);
+
+            fmt.onHeadingClicked(0);
+            const double firstOn=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
+            fmt.onHeadingClicked(0);
+            fmt.onHeadingClicked(0);
+            const double secondOn=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
+            check(firstOn>0.0 && firstOn==secondOn, "HEADING-RETOGGLE-STABLE");
+        }
+
+        // Загруженный документ (stash нет - userData не сохраняется):
+        // снятие нормализует кегль к базовому, повторное применение
+        // не умножает след прошлого заголовка
+        {
+            QTextCursor c(doc);
+            c.select(QTextCursor::Document);
+            c.insertText(QStringLiteral("Loaded"));
+            c.setBlockFormat(QTextBlockFormat()); // ровно обычный абзац
+            QTextCursor sel(doc);
+            sel.select(QTextCursor::Document);
+            area.setTextCursor(sel);
+
+            fmt.onHeadingClicked(0);
+            const double freshOn=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
+            doc->firstBlock().setUserData(nullptr); // как после save/load
+            fmt.onHeadingClicked(0); // снять без stash
+            const double afterOff=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
+            fmt.onHeadingClicked(0); // применить заново
+            const double reloadOn=doc->firstBlock().begin().fragment().charFormat().fontPointSize();
+            check(afterOff<=freshOn && reloadOn==freshOn, "HEADING-RELOAD-STABLE");
+        }
     }
 
     qDebug() << (fails==0 ? "TYPEFACEPROBE-OK" : "TYPEFACEPROBE-BAD");

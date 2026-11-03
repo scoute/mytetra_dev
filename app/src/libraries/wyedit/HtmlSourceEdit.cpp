@@ -4,8 +4,12 @@
 #include <QPaintEvent>
 #include <QResizeEvent>
 #include <QTextBlock>
+#include <QTextCursor>
 #include <QApplication>
 #include <QPalette>
+#include <QKeyEvent>
+#include <QRegularExpression>
+#include <QSet>
 
 #include <QXMLHighlighter>
 #include <QStyleSyntaxHighlighter>
@@ -75,6 +79,12 @@ HtmlSourceEdit::HtmlSourceEdit(QWidget *parent) : QPlainTextEdit(parent)
     connect(this, &QPlainTextEdit::updateRequest,
             this, &HtmlSourceEdit::updateLineNumberArea);
 
+    // Подсветка парного тега следит за курсором и правками
+    connect(this, &QPlainTextEdit::cursorPositionChanged,
+            this, &HtmlSourceEdit::updatePairHighlight);
+    connect(document(), &QTextDocument::contentsChanged,
+            this, &HtmlSourceEdit::updatePairHighlight);
+
     updateLineNumberAreaWidth(0);
 }
 
@@ -128,7 +138,7 @@ bool HtmlSourceEdit::findPrevious(const QString &text, QTextDocument::FindFlags 
 
 int HtmlSourceEdit::highlightMatches(const QString &text, QTextDocument::FindFlags flags)
 {
-    QList<QTextEdit::ExtraSelection> selections;
+    matchSelections.clear();
 
     if(!text.isEmpty())
     {
@@ -150,20 +160,28 @@ int HtmlSourceEdit::highlightMatches(const QString &text, QTextDocument::FindFla
             QTextEdit::ExtraSelection selection;
             selection.cursor=cursor;
             selection.format=matchFormat;
-            selections.append(selection);
+            matchSelections.append(selection);
             ++count;
         }
     }
 
-    setExtraSelections(selections);
+    applySelections();
 
-    return selections.size();
+    return matchSelections.size();
 }
 
 
 void HtmlSourceEdit::clearMatchHighlight(void)
 {
-    setExtraSelections(QList<QTextEdit::ExtraSelection>());
+    matchSelections.clear();
+    applySelections();
+}
+
+
+void HtmlSourceEdit::applySelections(void)
+{
+    QList<QTextEdit::ExtraSelection> all=matchSelections+pairSelections;
+    setExtraSelections(all);
 }
 
 
@@ -343,4 +361,421 @@ void HtmlSourceEdit::paintLineNumberArea(QPaintEvent *event)
         bottom=top+qRound(blockBoundingRect(block).height());
         ++blockNumber;
     }
+}
+
+
+void HtmlSourceEdit::keyPressEvent(QKeyEvent *event)
+{
+    const bool isEnter=(event->key()==Qt::Key_Return || event->key()==Qt::Key_Enter)
+        && event->modifiers()==Qt::NoModifier;
+    const bool isGreater=(event->key()==Qt::Key_Greater
+        || event->text()==QStringLiteral(">"));
+
+    if(isEnter)
+    {
+        handleSmartEnter(event);
+        return;
+    }
+
+    QPlainTextEdit::keyPressEvent(event);
+
+    if(isGreater)
+        autoCloseTag();
+}
+
+
+void HtmlSourceEdit::handleSmartEnter(QKeyEvent *event)
+{
+    QTextCursor cursor=textCursor();
+
+    if(cursor.hasSelection())
+    {
+        QPlainTextEdit::keyPressEvent(event);
+        return;
+    }
+
+    // Отступ текущей строки: пробелы и табы с ее начала
+    const QString blockText=cursor.block().text();
+    QString indent;
+
+    for(QChar ch : blockText)
+    {
+        if(ch.isSpace())
+            indent+=ch;
+        else
+            break;
+    }
+
+    // Тег, только что закрытый перед курсором: <div>|
+    TagSpan tag;
+    const bool afterOpenTag=tagEndingAt(cursor.position(), tag)
+        && !tag.special && !tag.isClose && !tag.selfClose
+        && !tag.name.isEmpty() && !isVoidElement(tag.name);
+
+    cursor.beginEditBlock();
+    cursor.insertBlock();
+
+    if(afterOpenTag)
+    {
+        // Раскрыть контейнер: закрывающий тег на строке ниже,
+        // курсор остается между с отступом глубже
+        const QString unit=indent.contains(QLatin1Char('\t'))
+            ? QStringLiteral("\t") : QStringLiteral("    ");
+        cursor.insertText(indent+unit);
+        const int middlePos=cursor.position();
+        cursor.insertBlock();
+        cursor.insertText(indent+QStringLiteral("</")+tag.name+QStringLiteral(">"));
+        cursor.setPosition(middlePos);
+    }
+    else
+    {
+        cursor.insertText(indent);
+    }
+
+    cursor.endEditBlock();
+    setTextCursor(cursor);
+}
+
+
+void HtmlSourceEdit::autoCloseTag(void)
+{
+    QTextCursor cursor=textCursor();
+
+    if(cursor.hasSelection())
+        return;
+
+    // Только что допечатали '>' нового открывающего тега
+    TagSpan tag;
+
+    if(!tagEndingAt(cursor.position(), tag))
+        return;
+
+    if(tag.special || tag.isClose || tag.selfClose
+        || tag.name.isEmpty() || isVoidElement(tag.name))
+        return;
+
+    // Дальше уже стоит '>' (допечатка внутри существующей разметки)
+    // или свой же закрывающий: не дублировать
+    QTextCursor after(document());
+    after.setPosition(cursor.position());
+    after.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+
+    const QString tail=after.selectedText().trimmed();
+
+    if(tail.startsWith(QLatin1Char('>')))
+        return;
+
+    if(tail.startsWith(QStringLiteral("</")+tag.name, Qt::CaseInsensitive))
+        return;
+
+    // Откат одной правкой вместе с набранным '>': курсор между тегами
+    QTextCursor editCursor(cursor);
+    editCursor.joinPreviousEditBlock();
+    editCursor.insertText(QStringLiteral("</")+tag.name+QStringLiteral(">"));
+    editCursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor,
+                            tag.name.length()+3);
+    setTextCursor(editCursor);
+}
+
+
+QString HtmlSourceEdit::tagInnerText(QTextDocument *doc, int from, int to)
+{
+    if(from<0 || to<from)
+        return QString();
+
+    QTextCursor sel(doc);
+    sel.setPosition(from);
+    sel.setPosition(to, QTextCursor::KeepAnchor);
+
+    QString text=sel.selectedText();
+    text.replace(QChar::ParagraphSeparator, QLatin1Char(' '));
+    text.replace(QChar::LineSeparator, QLatin1Char(' '));
+
+    return text;
+}
+
+
+bool HtmlSourceEdit::tagAt(int pos, TagSpan &tag) const
+{
+    QTextDocument *doc=document();
+
+    if(pos<0 || pos>doc->characterCount())
+        return false;
+
+    // Ближайший '<' слева: между ним и курсором не должно быть '>'
+    QTextCursor back(doc);
+    back.setPosition(pos);
+    QTextCursor open=doc->find(QStringLiteral("<"), back, QTextDocument::FindBackward);
+
+    if(open.isNull())
+        return false;
+
+    const int lt=open.selectionStart();
+    const QString before=tagInnerText(doc, lt+1, pos);
+
+    if(before.contains(QLatin1Char('>')))
+        return false;
+
+    // Конец тега вперед. Незакрытый (набираемый) - не тег
+    QTextCursor fwd(doc);
+    fwd.setPosition(lt+1);
+    QTextCursor close=doc->find(QStringLiteral(">"), fwd);
+
+    if(close.isNull())
+        return false;
+
+    const int gt=close.selectionStart();
+
+    if(pos<lt || pos>gt+1)
+        return false;
+
+    QString inner=tagInnerText(doc, lt+1, gt).trimmed();
+
+    tag=TagSpan();
+    tag.start=lt;
+    tag.end=gt+1;
+
+    if(inner.startsWith(QLatin1Char('!')) || inner.startsWith(QLatin1Char('?')))
+    {
+        tag.special=true;
+        return true;
+    }
+
+    if(inner.startsWith(QLatin1Char('/')))
+    {
+        tag.isClose=true;
+        inner=inner.mid(1).trimmed();
+    }
+
+    static const QRegularExpression nameRx(QStringLiteral("^[A-Za-z][\\w:.-]*"));
+    const QRegularExpressionMatch nameMatch=nameRx.match(inner);
+
+    if(!nameMatch.hasMatch())
+        return false;
+
+    tag.name=nameMatch.captured(0).toLower();
+
+    const QString rest=inner.mid(tag.name.length()).trimmed();
+    tag.selfClose=rest.endsWith(QLatin1Char('/'));
+
+    return true;
+}
+
+
+bool HtmlSourceEdit::tagEndingAt(int pos, TagSpan &tag) const
+{
+    QTextDocument *doc=document();
+
+    if(pos<1 || pos>doc->characterCount())
+        return false;
+
+    if(doc->characterAt(pos-1)!=QLatin1Char('>'))
+        return false;
+
+    // '<' назад: между ним и '>' не должно быть ни '>', ни '<'
+    QTextCursor back(doc);
+    back.setPosition(pos-1);
+    QTextCursor open=doc->find(QStringLiteral("<"), back, QTextDocument::FindBackward);
+
+    if(open.isNull())
+        return false;
+
+    const int lt=open.selectionStart();
+    const QString inner=tagInnerText(doc, lt+1, pos-1).trimmed();
+
+    if(inner.contains(QLatin1Char('>')) || inner.contains(QLatin1Char('<')))
+        return false;
+
+    TagSpan parsed;
+    parsed.start=lt;
+    parsed.end=pos;
+
+    if(inner.startsWith(QLatin1Char('!')) || inner.startsWith(QLatin1Char('?')))
+    {
+        parsed.special=true;
+        tag=parsed;
+        return true;
+    }
+
+    QString rest=inner;
+
+    if(rest.startsWith(QLatin1Char('/')))
+    {
+        parsed.isClose=true;
+        rest=rest.mid(1).trimmed();
+    }
+
+    static const QRegularExpression nameRx(QStringLiteral("^[A-Za-z][\\w:.-]*"));
+    const QRegularExpressionMatch nameMatch=nameRx.match(rest);
+
+    if(!nameMatch.hasMatch())
+        return false;
+
+    parsed.name=nameMatch.captured(0).toLower();
+
+    const QString tail=rest.mid(parsed.name.length()).trimmed();
+    parsed.selfClose=tail.endsWith(QLatin1Char('/'));
+
+    tag=parsed;
+    return true;
+}
+
+
+bool HtmlSourceEdit::isVoidElement(const QString &name)
+{
+    // Пустые элементы HTML: закрывающего не бывает
+    static const QSet<QString> voids=QSet<QString>()
+        << QStringLiteral("area") << QStringLiteral("base")
+        << QStringLiteral("br") << QStringLiteral("col")
+        << QStringLiteral("embed") << QStringLiteral("hr")
+        << QStringLiteral("img") << QStringLiteral("input")
+        << QStringLiteral("link") << QStringLiteral("meta")
+        << QStringLiteral("param") << QStringLiteral("source")
+        << QStringLiteral("track") << QStringLiteral("wbr");
+
+    return voids.contains(name.toLower());
+}
+
+
+bool HtmlSourceEdit::findMate(const TagSpan &tag, TagSpan &mate) const
+{
+    static const QRegularExpression tagRx(
+        QStringLiteral("<\\s*(/?)\\s*([A-Za-z][\\w:.-]*)[^>]*?(/?)>"));
+
+    const bool forward=!tag.isClose;
+    QTextCursor cursor(document());
+    cursor.setPosition(forward ? tag.end : tag.start);
+
+    int depth=0;
+    int lastPos=forward ? -1 : INT_MAX;
+
+    for(int scanned=0; scanned<maxPairScan; ++scanned)
+    {
+        QTextCursor found=forward
+            ? document()->find(tagRx, cursor)
+            : document()->find(tagRx, cursor, QTextDocument::FindBackward);
+
+        if(found.isNull())
+            return false;
+
+        const int matchPos=forward ? found.selectionEnd() : found.selectionStart();
+
+        // Стоим на месте - дальше не продвинемся
+        if((forward && matchPos<=lastPos) || (!forward && matchPos>=lastPos))
+            return false;
+
+        lastPos=matchPos;
+        cursor.setPosition(matchPos);
+
+        // Совпадение целиком в выделении: группы берутся повторным
+        // матчем по его тексту (у курсора захватов нет)
+        const QRegularExpressionMatch groups=tagRx.match(found.selectedText());
+        const QString name=groups.captured(2);
+
+        if(name.compare(tag.name, Qt::CaseInsensitive)!=0)
+            continue;
+
+        // Совпадение внутри комментария <!-- <div> -->: эвристика окном
+        const int windowStart=qMax(0, found.selectionStart()-commentWindow);
+        const QString window=tagInnerText(document(), windowStart, found.selectionStart());
+        const int opens=window.count(QStringLiteral("<!--"));
+        const int closes=window.count(QStringLiteral("-->"));
+
+        if(opens>closes)
+            continue;
+
+        const bool close=!groups.captured(1).isEmpty();
+        const bool selfClose=!groups.captured(3).isEmpty() || isVoidElement(name);
+
+        if(selfClose)
+            continue;
+
+        if(forward)
+        {
+            if(close)
+            {
+                if(depth==0)
+                {
+                    mate.start=found.selectionStart();
+                    mate.end=found.selectionEnd();
+                    mate.name=name.toLower();
+                    mate.isClose=true;
+                    return true;
+                }
+
+                --depth;
+            }
+            else
+            {
+                ++depth;
+            }
+        }
+        else
+        {
+            if(!close)
+            {
+                if(depth==0)
+                {
+                    mate.start=found.selectionStart();
+                    mate.end=found.selectionEnd();
+                    mate.name=name.toLower();
+                    mate.isClose=false;
+                    return true;
+                }
+
+                --depth;
+            }
+            else
+            {
+                ++depth;
+            }
+        }
+    }
+
+    return false;
+}
+
+
+void HtmlSourceEdit::updatePairHighlight(void)
+{
+    pairSelections.clear();
+
+    TagSpan tag;
+
+    if(tagAt(textCursor().position(), tag)
+        && !tag.special && !tag.name.isEmpty()
+        && !tag.selfClose && !isVoidElement(tag.name))
+    {
+        QTextCharFormat pairFormat;
+        QTextCharFormat mismatchFormat;
+        pairFormat.setBackground(QColor(110, 170, 230, 70));
+        mismatchFormat.setBackground(QColor(230, 110, 110, 70));
+
+        TagSpan mate;
+
+        auto addRange=[&](const TagSpan &span, const QTextCharFormat &format)
+        {
+            QTextCursor cursor(document());
+            cursor.setPosition(span.start);
+            cursor.setPosition(span.end, QTextCursor::KeepAnchor);
+
+            QTextEdit::ExtraSelection selection;
+            selection.cursor=cursor;
+            selection.format=format;
+            pairSelections.append(selection);
+        };
+
+        if(findMate(tag, mate))
+        {
+            addRange(tag, pairFormat);
+            addRange(mate, pairFormat);
+        }
+        else
+        {
+            // Парного нет - незакрытый тег подсвечивается тревожным
+            addRange(tag, mismatchFormat);
+        }
+    }
+
+    applySelections();
 }

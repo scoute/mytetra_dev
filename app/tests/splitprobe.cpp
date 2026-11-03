@@ -7,6 +7,9 @@
 #include <QDebug>
 #include <QSettings>
 #include <QTextCursor>
+#include <QPoint>
+#include "libraries/wyedit/EditorIndentSliderAssistant.h"
+#include "libraries/wyedit/indentslider/IndentSlider.h"
 #include <QTextBlock>
 #include <QSplitter>
 #include <QDialog>
@@ -260,6 +263,27 @@ int main(int argc, char **argv)
     check(ed->htmlSourcePane->isVisible(), "PLACE-TOGGLE-VISIBLE");
     ed->toggleHtmlSource();
     check(ed->htmlSourcePlacement()==MetaEditor::HtmlPlacement::Hidden, "PLACE-TOGGLE-HIDES");
+
+    // Линейка отступов всегда над текстом: координаты шкалы
+    // сдвигаются на смещение текста относительно линейки
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Left);
+    QApplication::processEvents();
+    QApplication::processEvents();
+    {
+        IndentSlider *slider=qobject_cast<IndentSlider *>(
+          ed->indentSliderAssistant->getIndentSlider());
+        check(slider!=nullptr, "PLACE-SLIDER-EXISTS");
+        // Свежий документ без отступов: маркеры стоят ровно на краях
+        // текста, абсолютные координаты сверяются со сдвигом
+        const int shift=ed->textArea->mapTo(slider->parentWidget(), QPoint(0, 0)).x()-
+                       slider->x();
+        check(slider->get_geometry_leftindent_pos()==
+              ed->textArea->getIndentStartedLeft()+shift,
+              "PLACE-SLIDER-SHIFT-LEFT");
+        check(slider->get_geometry_rightindent_pos()==
+              ed->textArea->getIndentStartedRight()+shift,
+              "PLACE-SLIDER-SHIFT-LEFT-R");
+    }
 
     // Исходник всегда уже текста: отложенные размеры успели встать
     ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Left);

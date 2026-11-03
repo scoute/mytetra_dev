@@ -183,12 +183,14 @@ VoiceRecorderDialog::VoiceRecorderDialog(const QString &workDir, QWidget *parent
     // с voiceNoteQuality из конфига
     opusQualityLabel=new QLabel(tr("Quality:"), this);
     opusQuality=new MtComboBox(this);
-    opusQuality->addItem(tr("Super low (12 kbit/s)"));
-    opusQuality->addItem(tr("Extra low (16 kbit/s)"));
-    opusQuality->addItem(tr("Low (24 kbit/s)"));
-    opusQuality->addItem(tr("Middle (32 kbit/s)"));
-    opusQuality->addItem(tr("High (48 kbit/s)"));
-    opusQuality->addItem(tr("Extra high (64 kbit/s)"));
+    // Хвост каждого пункта - прикидка веса минуты: кбит/с*60/8 Кбайт.
+    // Числа вшиты в строки (переводятся целиком), сверка - COMBO-SIZE-*
+    opusQuality->addItem(tr("Super low (12 kbit/s), 1 minute ~ 90 KB"));
+    opusQuality->addItem(tr("Extra low (16 kbit/s), 1 minute ~ 120 KB"));
+    opusQuality->addItem(tr("Low (24 kbit/s), 1 minute ~ 180 KB"));
+    opusQuality->addItem(tr("Middle (32 kbit/s), 1 minute ~ 240 KB"));
+    opusQuality->addItem(tr("High (48 kbit/s), 1 minute ~ 360 KB"));
+    opusQuality->addItem(tr("Extra high (64 kbit/s), 1 minute ~ 480 KB"));
     opusQuality->setCurrentIndex(AppContext::instance().appConfig()->servicesSection()->get_voiceNoteQuality());
 
     QLabel *deviceLabel=new QLabel(tr("Microphone:"), this);

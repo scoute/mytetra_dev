@@ -16,6 +16,7 @@ class QLabel;
 class QPushButton;
 class QCheckBox;
 class QComboBox;
+class MtComboBox;
 class QRadioButton;
 class QLineEdit;
 class QTimer;
@@ -77,6 +78,11 @@ private slots:
     void onRecordToggled(bool checked);
     void onDeviceChanged(int index);
     void onNoiseSuppressToggled(bool checked);
+    void updateOpusQualityAvailable(void);
+    void onOpusQualityChanged(int index);
+    // Битрейт Opus по индексу качества 0..3 (24/32/48/64 кбит).
+    // Статика чтобы стенд проверял параметры без микрофона и бэкенда
+    static int opusBitrateForQuality(int quality);
     void onStateChanged(QMediaRecorder::State state);
     void onRecorderError(QMediaRecorder::Error error);
     void onProbeBuffer(const QAudioBuffer &buffer);
@@ -192,6 +198,8 @@ private:
     QRadioButton *opusRadio;
     QRadioButton *mp3Radio;
     QLabel *formatInfoLabel;
+    QLabel *opusQualityLabel;
+    MtComboBox *opusQuality;
     QLineEdit *fileNameEdit;
     QComboBox *deviceCombo;
     QPushButton *recordButton;

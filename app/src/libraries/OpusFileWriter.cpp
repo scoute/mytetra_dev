@@ -11,6 +11,11 @@
 static const int OPUS_VOICE_BITRATE=32000;
 static const int OPUS_VOICE_FRAME_MS=20;
 
+// Диапазон ручного битрейта из диалога качества: ниже речь
+// сыплется, выше для голоса избыточно
+static const int OPUS_VOICE_BITRATE_MIN=6000;
+static const int OPUS_VOICE_BITRATE_MAX=128000;
+
 
 OpusFileWriter::OpusFileWriter(void)
 {
@@ -25,6 +30,7 @@ OpusFileWriter::OpusFileWriter(void)
     nextPacketNo=2;
     headersWritten=false;
     eosWritten=false;
+    targetBitrate=OPUS_VOICE_BITRATE;
 
     // Иначе после нескольких дублей в writePcm монтируется пакет
     // с мусорной длиной из прошлого прохода стека: segfault
@@ -37,6 +43,12 @@ OpusFileWriter::OpusFileWriter(void)
 OpusFileWriter::~OpusFileWriter(void)
 {
     close();
+}
+
+
+void OpusFileWriter::setTargetBitrate(int bitRate)
+{
+    targetBitrate=qBound(OPUS_VOICE_BITRATE_MIN, bitRate, OPUS_VOICE_BITRATE_MAX);
 }
 
 
@@ -63,7 +75,7 @@ bool OpusFileWriter::open(const QString &filePath, int inputSampleRate)
         return false;
     }
 
-    opus_encoder_ctl(encoder, OPUS_SET_BITRATE(OPUS_VOICE_BITRATE));
+    opus_encoder_ctl(encoder, OPUS_SET_BITRATE(targetBitrate));
     opus_encoder_ctl(encoder, OPUS_SET_VBR(0));
 
     // Задержка энкодера пишется в OpusHead, плеер обрежет ее при чтении

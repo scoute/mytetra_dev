@@ -452,6 +452,11 @@ void Editor::setupSignals(void)
           this,     &Editor::onAttachBadgesPasted,
           Qt::DirectConnection);
 
+  // ПКМ по метке аттача: перенести файл и метку в другую заметку
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuMoveAttach,
+          referenceFormatter, &ReferenceFormatter::onMoveAttachClicked,
+          Qt::DirectConnection);
+
   // Клик по баблу голосовой заметки: play/pause на месте
   connect(textArea,       &EditorTextArea::clickedOnVoiceBubble,
           audioFormatter, &AudioFormatter::onBubbleClicked,

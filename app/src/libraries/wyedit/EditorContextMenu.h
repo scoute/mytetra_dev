@@ -21,6 +21,7 @@ public:
  void setPlayVoice(bool flag); // Пункт "Слушать" на голосовой ссылке
  void setRenameVoice(bool flag);
  void setMoveVoice(bool flag); // Пункт "Переместить" на голосовой ссылке
+ void setMoveAttach(bool flag); // Пункт "Переместить" на метке аттача
  void setShowVoiceInFolder(bool flag); // Пункт "Показать файл" на голосовой ссылке
  void setDeleteVoice(bool flag); // Пункт "Удалить" на голосовой ссылке
  void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
@@ -53,6 +54,7 @@ signals:
   void contextMenuPlayVoice(void);
   void contextMenuRenameVoice(void);
   void contextMenuMoveVoice(void);
+  void contextMenuMoveAttach(void);
   void contextMenuShowVoiceInFolder(void);
   void contextMenuDeleteVoice(void);
   void contextMenuEditReference(void);
@@ -89,6 +91,7 @@ private:
   QAction *actionPlayVoice;
   QAction *actionRenameVoice;
   QAction *actionMoveVoice;
+  QAction *actionMoveAttach;
   QAction *actionShowVoiceInFolder;
   QAction *actionDeleteVoice;
   QAction *actionEditReference;
@@ -120,6 +123,7 @@ protected slots:
   void onActionContextMenuPlayVoice(void);
   void onActionContextMenuRenameVoice(void);
   void onActionContextMenuMoveVoice(void);
+  void onActionContextMenuMoveAttach(void);
   void onActionContextMenuShowVoiceInFolder(void);
   void onActionContextMenuDeleteVoice(void);
   void onActionContextMenuEditReference(void);

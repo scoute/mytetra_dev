@@ -48,6 +48,11 @@ public slots:
                              QString &innerFileName,
                              QString &displayFileName);
 
+  // Удаление аттача по внутреннему имени для движка переноса метки:
+  // находит строку (прямое имя или любая схема), удаляет файл
+  // и запись, сохраняет дерево и обновляет иконку/статистику
+  bool removeAttachByInnerName(const QString &innerName);
+
 protected:
 
   void addSmart(QString attachType);

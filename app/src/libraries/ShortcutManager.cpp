@@ -176,6 +176,7 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-playVoice",          Data{ QKeySequence(""), tr("Play voice note"), tr("Play voice note under cursor") });
     defaultKeyTable.insert("editor-renameVoice",        Data{ QKeySequence(""), tr("Rename voice note"), tr("Rename voice file under cursor") });
     defaultKeyTable.insert("editor-moveVoice",          Data{ QKeySequence(""), tr("Move voice note to another note"), tr("Move voice file and link into another note") });
+    defaultKeyTable.insert("editor-moveAttach",         Data{ QKeySequence(""), tr("Move attachment to another note"), tr("Move attach file and badge into another note") });
     defaultKeyTable.insert("editor-showVoiceInFolder",  Data{ QKeySequence(""), tr("Show voice file in folder"), tr("Open record directory in file manager") });
     defaultKeyTable.insert("editor-deleteVoice",        Data{ QKeySequence(""), tr("Delete voice note"), tr("Remove voice link and move file to trash") });
     defaultKeyTable.insert("editor-insertHorizontalLine",Data{ QKeySequence("Ctrl+H"), tr("Insert horizontal line"), tr("Insert a horizontal line into the empty paragraph from cursor") });

@@ -1362,6 +1362,10 @@ QString Editor::normalizeEmptyParagraphs(const QString &html)
     QStringLiteral("\\s+>$"));
   static const QString ruleText=
     QStringLiteral("p.mtempty{-qt-paragraph-type:empty;margin-top:0px;margin-bottom:0px;margin-left:0px;margin-right:0px;-qt-block-indent:0;text-indent:0px;}");
+  // Непустые блоки с нулевыми верхом/низом: общий класс вместо
+  // инлайн margin-top:0px;margin-bottom:0px на каждом (см. ниже)
+  static const QString tightRuleText=
+    QStringLiteral(".mt0{margin-top:0px;margin-bottom:0px;}");
 
   QString result;
   result.reserve(html.size());
@@ -1369,6 +1373,7 @@ QString Editor::normalizeEmptyParagraphs(const QString &html)
   int pos=0;
   bool changed=false;
   bool needRule=false;
+  bool needTightRule=false;
   QRegularExpressionMatchIterator it=openTagRx.globalMatch(html);
 
   while(it.hasNext())
@@ -1441,6 +1446,28 @@ QString Editor::normalizeEmptyParagraphs(const QString &html)
       }
     }
 
+    // Непустой блок с ровно нулевыми верхом/низом (kept.size()==2):
+    // общий класс в шапке вместо инлайна margin-top:0px;margin-bottom:0px
+    // на каждом. Пустые (br/маркер) идут mtempty выше или остаются как
+    // были (фолдинг). Прочие свойства и ненулевые отступы - точечно
+    // инлайном (исключения)
+    if(!isEmptyPara && !info.hasMarker && info.kept.size()==2 &&
+       (info.top==QStringLiteral("0") || info.top==QStringLiteral("0px")) &&
+       (info.bottom==QStringLiteral("0") || info.bottom==QStringLiteral("0px")))
+    {
+      QString opener=tag;
+      opener.remove(styleMatch.captured(0));
+
+      if(isBareBlockTag(opener, tagName))
+      {
+        result+=QStringLiteral("<")+tagName+QStringLiteral(" class=\"mt0\">");
+
+        needTightRule=true;
+        changed=true;
+        continue;
+      }
+    }
+
     // Обычный инлайн-стрип: выкинуть дефолты, остальное как было
     if(!info.dropped)
     {
@@ -1471,16 +1498,24 @@ QString Editor::normalizeEmptyParagraphs(const QString &html)
   if(!changed)
     return html;
 
-  // Одно правило в <style>. Без него класс висит в воздухе,
+  // Правила в <style>: классы без правил висят в воздухе,
   // поэтому без <style> - откат
+  QString rules;
+
   if(needRule && !result.contains(ruleText))
+    rules+=QStringLiteral("\n")+ruleText+QStringLiteral("\n");
+
+  if(needTightRule && !result.contains(tightRuleText))
+    rules+=QStringLiteral("\n")+tightRuleText+QStringLiteral("\n");
+
+  if(!rules.isEmpty())
   {
     const int styleEnd=result.indexOf(QStringLiteral("</style>"));
 
     if(styleEnd<0)
       return html;
 
-    result.insert(styleEnd, QStringLiteral("\n")+ruleText+QStringLiteral("\n"));
+    result.insert(styleEnd, rules);
   }
 
   return result;

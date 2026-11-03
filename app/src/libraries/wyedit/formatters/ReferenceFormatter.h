@@ -5,6 +5,7 @@
 
 class QDialog;
 class QLineEdit;
+class QColor;
 
 // Класс форматирования ссылок
 
@@ -70,6 +71,11 @@ private:
 
     // Метка аттача под курсором, пусто если курсор не на метке
     QString attachHrefUnderCursor(void);
+
+    // Цвет ссылки по адресу (внешние, note, toc-go).
+    // Единая точка — EditorConfig::linkColorForHref,
+    // здесь только прокси ради старых вызовов
+    QColor linkColorForHref(const QString &href) const;
 
     // Выделить метку с href в месте курсора. Нужно для удаления
     // метки из исходника после переноса файла в другую заметку

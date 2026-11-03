@@ -149,3 +149,12 @@ QString LinkHelper::getIdFromInternalHref(QString href)
     return href;
 
 }
+
+
+bool LinkHelper::isHrefTocGo(QString href)
+{
+    if(href.startsWith(FixedParameters::appTextId+QStringLiteral("://toc-go/")))
+        return true;
+    else
+        return false;
+}

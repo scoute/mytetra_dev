@@ -260,8 +260,6 @@ void MenuBuilder::buildViewMenu(void)
     QAction *toolsAction=addCheck(ActionId::ViewTools, tr("Show editor toolbar"));
     toolsAction->setObjectName(QStringLiteral("viewToolsAction"));
 
-    QAction *htmlSourceAction=addCheck(ActionId::ViewHtmlSource, tr("Show HTML source"));
-
     QAction *readOnlyAction=new QAction(this);
     readOnlyAction->setCheckable(true);
     viewMenu->addAction(readOnlyAction);
@@ -288,8 +286,6 @@ void MenuBuilder::buildViewMenu(void)
             this, &MenuBuilder::viewTreeFilterToggled);
     connect(toolsAction, &QAction::toggled,
             this, &MenuBuilder::viewToolsToggled);
-    connect(htmlSourceAction, &QAction::toggled,
-            this, &MenuBuilder::viewHtmlSourceToggled);
     connect(readOnlyAction, &QAction::toggled,
             this, &MenuBuilder::viewReadOnlyToggled);
     connect(secretColorAction, &QAction::triggered,

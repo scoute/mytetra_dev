@@ -8,6 +8,8 @@
 #include <QSettings>
 #include <QTextCursor>
 #include <QTextBlock>
+#include <QSplitter>
+#include <QDialog>
 
 #include "views/record/MetaEditor.h"
 #include "libraries/wyedit/HtmlSourceEdit.h"
@@ -229,6 +231,58 @@ int main(int argc, char **argv)
         QApplication::processEvents();
     }
     check(!pane->textCursor().hasSelection(), "SEL-AMBIGUOUS-NO-RANGE");
+
+    // Размещение исходника: низ, слева, справа, окно, скрыть
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Bottom);
+    check(ed->htmlSourcePane->isVisible(), "PLACE-BOTTOM-VISIBLE");
+    check(ed->sourceSplitter->orientation()==Qt::Vertical, "PLACE-BOTTOM-VERT");
+    check(ed->sourceSplitter->indexOf(ed->htmlSourcePane)==1, "PLACE-BOTTOM-ORDER");
+
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Left);
+    check(ed->sourceSplitter->orientation()==Qt::Horizontal, "PLACE-LEFT-HORZ");
+    check(ed->sourceSplitter->indexOf(ed->htmlSourcePane)==0, "PLACE-LEFT-ORDER");
+    check(ed->sourceSplitter->indexOf(ed->textArea)==1, "PLACE-LEFT-TEXT");
+
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Right);
+    check(ed->sourceSplitter->orientation()==Qt::Horizontal, "PLACE-RIGHT-HORZ");
+    check(ed->sourceSplitter->indexOf(ed->textArea)==0, "PLACE-RIGHT-TEXT");
+    check(ed->sourceSplitter->indexOf(ed->htmlSourcePane)==1, "PLACE-RIGHT-ORDER");
+
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Window);
+    check(ed->htmlSourceWindow!=nullptr && ed->htmlSourceWindow->isVisible(), "PLACE-WINDOW-SHOWN");
+    check(ed->htmlSourcePane->parent()==ed->htmlWindowContainer, "PLACE-WINDOW-MOVED");
+
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Hidden);
+    check(!ed->htmlSourcePane->isVisible(), "PLACE-HIDDEN");
+
+    ed->toggleHtmlSource();
+    check(ed->htmlSourcePlacement()==MetaEditor::HtmlPlacement::Right, "PLACE-TOGGLE-RESTORES");
+    check(ed->htmlSourcePane->isVisible(), "PLACE-TOGGLE-VISIBLE");
+    ed->toggleHtmlSource();
+    check(ed->htmlSourcePlacement()==MetaEditor::HtmlPlacement::Hidden, "PLACE-TOGGLE-HIDES");
+
+    // Исходник всегда уже текста: отложенные размеры успели встать
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Left);
+    QApplication::processEvents();
+    QApplication::processEvents();
+    {
+        const QList<int> sizes=ed->sourceSplitter->sizes();
+        check(sizes.size()==2 && sizes.at(0)>0 &&
+              sizes.at(ed->sourceSplitter->indexOf(ed->htmlSourcePane))<=
+              sizes.at(ed->sourceSplitter->indexOf(ed->textArea)),
+              "PLACE-LEFT-NARROWER");
+    }
+
+    ed->setHtmlSourcePlacement(MetaEditor::HtmlPlacement::Right);
+    QApplication::processEvents();
+    QApplication::processEvents();
+    {
+        const QList<int> sizes=ed->sourceSplitter->sizes();
+        check(sizes.size()==2 && sizes.at(1)>0 &&
+              sizes.at(ed->sourceSplitter->indexOf(ed->htmlSourcePane))<=
+              sizes.at(ed->sourceSplitter->indexOf(ed->textArea)),
+              "PLACE-RIGHT-NARROWER");
+    }
 
     ed->setHtmlSourceVisible(false);
     check(!ed->isHtmlSourceVisible(), "SPLIT-HIDE");

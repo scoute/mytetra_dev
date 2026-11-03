@@ -228,7 +228,6 @@ private slots:
     void onViewFavoritesToggled(bool checked);
     void onViewTreeFilterToggled(bool checked);
     void onViewToolsToggled(bool checked);
-    void onViewHtmlSourceToggled(bool checked);
     void onViewSecretColor(void);
     void onViewPaperColor(void);
 

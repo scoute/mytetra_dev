@@ -358,7 +358,6 @@ void MainWindow::setupSignals(void)
     connect(menuBuilder, &MenuBuilder::viewFavoritesToggled, this, &MainWindow::onViewFavoritesToggled);
     connect(menuBuilder, &MenuBuilder::viewTreeFilterToggled, this, &MainWindow::onViewTreeFilterToggled);
     connect(menuBuilder, &MenuBuilder::viewToolsToggled, this, &MainWindow::onViewToolsToggled);
-    connect(menuBuilder, &MenuBuilder::viewHtmlSourceToggled, this, &MainWindow::onViewHtmlSourceToggled);
     connect(menuBuilder, &MenuBuilder::viewReadOnlyToggled, this, &MainWindow::onViewReadOnlyToggled);
     connect(menuBuilder, &MenuBuilder::secretColorRequested, this, &MainWindow::onViewSecretColor);
     connect(menuBuilder, &MenuBuilder::paperColorRequested, this, &MainWindow::onViewPaperColor);

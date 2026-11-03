@@ -668,7 +668,7 @@ QList<TypefaceFormatter::TocEntry> TypefaceFormatter::collectTocEntries(void) co
     for(QTextBlock block=textArea->document()->begin(); block.isValid(); block=block.next())
     {
         const int level=block.blockFormat().headingLevel();
-        if(level<1 || level>3)
+        if(level<1 || level>6)
             continue;
 
         QString text=block.text().simplified();

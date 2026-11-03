@@ -7,6 +7,8 @@
 
 #include "AppConfigPage_Voice.h"
 #include "models/appConfig/AppConfig.h"
+#include "libraries/MtComboBox.h"
+#include "views/voiceNote/VoicePlayerDialog.h"
 
 
 extern AppConfig mytetraConfig;
@@ -52,6 +54,16 @@ void AppConfigPage_Voice::setupUi(void)
 
   // Качество Opus по умолчанию из конфига, Middle если мусор
   qualityBox=new QGroupBox(this);
+
+  // Скорость проигрывания по умолчанию из конфига
+  speedBox=new QGroupBox(this);
+  speedCombo=new MtComboBox(this);
+
+  for(double step : VoicePlayerDialog::speedSteps())
+    speedCombo->addItem(QString::number(step)+QStringLiteral("x"), step);
+
+  speedCombo->setCurrentIndex(speedCombo->findData(
+      VoicePlayerDialog::snapSpeed(mytetraConfig.get_voiceNoteSpeed())));
 
   qualitySuperLowRadio=new QRadioButton(this);
   qualityExtraLowRadio=new QRadioButton(this);
@@ -124,9 +136,14 @@ void AppConfigPage_Voice::assembly(void)
   qualityLayout->addWidget(qualityExtraRadio);
   qualityBox->setLayout(qualityLayout);
 
+  QVBoxLayout *speedLayout=new QVBoxLayout();
+  speedLayout->addWidget(speedCombo);
+  speedBox->setLayout(speedLayout);
+
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(formatBox);
   centralLayout->addWidget(qualityBox);
+  centralLayout->addWidget(speedBox);
   centralLayout->addStretch();
   setLayout(centralLayout);
 }
@@ -146,6 +163,8 @@ void AppConfigPage_Voice::retranslateUi(void)
   qualityMiddleRadio->setText(tr("Middle (32 kbit/s), 1 minute ~ 240 KB"));
   qualityHighRadio->setText(tr("High (48 kbit/s), 1 minute ~ 360 KB"));
   qualityExtraRadio->setText(tr("Extra high (64 kbit/s), 1 minute ~ 480 KB"));
+
+  speedBox->setTitle(tr("Default playback speed"));
 
 }
 
@@ -176,6 +195,11 @@ int AppConfigPage_Voice::applyChanges(void)
 
   if(mytetraConfig.get_voiceNoteQuality()!=quality)
     mytetraConfig.set_voiceNoteQuality(quality);
+
+  const double speed=speedCombo->currentData().toDouble();
+
+  if(mytetraConfig.get_voiceNoteSpeed()!=speed)
+    mytetraConfig.set_voiceNoteSpeed(speed);
 
   return 0;
 }

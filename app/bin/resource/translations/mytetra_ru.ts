@@ -9151,6 +9151,14 @@ Git-история в общем каталоге будет расти с ка�
         <source>Can not open file</source>
         <translation>Не удаётся открыть файл</translation>
     </message>
+    <message>
+        <source>Speed:</source>
+        <translation>Скорость:</translation>
+    </message>
+    <message>
+        <source>Speed applies to MP3 format</source>
+        <translation>Скорость действует для формата MP3</translation>
+    </message>
 </context>
 <context>
     <name>VoiceRecorderDialog</name>
@@ -9334,6 +9342,10 @@ Git-история в общем каталоге будет расти с ка�
     <message>
         <source>Extra high (64 kbit/s), 1 minute ~ 480 KB</source>
         <translation>Максимальное (64 кбит/с), 1 минута ~ 480 Кбайт</translation>
+    </message>
+    <message>
+        <source>Default playback speed</source>
+        <translation>Скорость проигрывания по умолчанию</translation>
     </message>
 </context>
 <context>

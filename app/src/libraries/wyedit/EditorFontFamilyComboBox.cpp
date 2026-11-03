@@ -63,7 +63,7 @@ void EditorFontFamilyComboBox::onCurrentIndexChanged(int index)
 
 
 // Недавние шрифты сверху списка: после ""-маркера (индекс 0 занят им,
-// логика onCurrentIndexChanged на него завязана) идут до 5 шрифтов
+// логика onCurrentIndexChanged на него завязана) идут до 10 шрифтов
 // и разделитель. Отсутствующие в системе пропускаются в показе,
 // но место в конфиге держат. Перестройка без сигналов, текущий
 // шрифт возвращается обратно, previousIndex правится под сдвиг
@@ -98,8 +98,13 @@ void EditorFontFamilyComboBox::reloadRecentFonts(const QStringList &recent, cons
     if(recentRows>0)
         this->insertSeparator(row);
 
-    // Текущий шрифт обратно (мог съехать из-за вставки строк)
-    const int currentIndex=this->findText(currentFamily);
+    // Текущий шрифт обратно (мог съехать из-за вставки строк).
+    // Если он есть среди недавних — выделяется строка сверху,
+    // а не дубль из общего списка
+    int currentIndex=recentRowForFamily(currentFamily);
+
+    if(currentIndex<0)
+        currentIndex=this->findText(currentFamily);
 
     if(currentIndex>=0)
     {
@@ -108,6 +113,22 @@ void EditorFontFamilyComboBox::reloadRecentFonts(const QStringList &recent, cons
     }
 
     this->blockSignals(false);
+}
+
+
+// Строка шрифта в группе недавних (после ""-маркера) или -1.
+// Сравнение строгое: имена в группе — те же family-строки,
+// что приходят с курсора и из конфига
+int EditorFontFamilyComboBox::recentRowForFamily(const QString &family) const
+{
+    if(family.isEmpty() || recentRows<=0)
+        return -1;
+
+    for(int row=1; row<=recentRows; ++row)
+        if(this->itemText(row)==family)
+            return row;
+
+    return -1;
 }
 
 

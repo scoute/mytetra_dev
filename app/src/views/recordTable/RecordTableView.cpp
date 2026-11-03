@@ -57,6 +57,26 @@ RecordTableView::~RecordTableView()
 }
 
 
+QSize RecordTableView::minimumSizeHint(void) const
+{
+    // Высота шапки: реальная если уже разложена, иначе хинт
+    int headH=0;
+
+    if(horizontalHeader()->isVisible())
+        headH=qMax(horizontalHeader()->height(),
+                   horizontalHeader()->sizeHint().height());
+
+    // Высота строки: из модели если есть, иначе дефолт секций
+    int rowH=verticalHeader()->defaultSectionSize();
+
+    if(model()!=nullptr && model()->rowCount(QModelIndex())>0)
+        rowH=qMax(rowH, rowHeight(0));
+
+    return QSize(QTableView::minimumSizeHint().width(),
+                 headH+rowH+2*frameWidth());
+}
+
+
 void RecordTableView::setController(RecordTableController *pController)
 {
     controller=pController;

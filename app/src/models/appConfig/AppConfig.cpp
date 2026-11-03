@@ -124,6 +124,13 @@ void AppConfig::sync(void)
 }
 
 
+// Живой QSettings главного конфига для пакетных операций
+QSettings *AppConfig::settingsHandle(void)
+{
+    return m_conf;
+}
+
+
 // Получение имени файла конфига, с которым происходит работа
 QString AppConfig::getConfigFileName()
 {

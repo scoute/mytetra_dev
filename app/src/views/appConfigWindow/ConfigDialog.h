@@ -3,6 +3,12 @@
 
 #include <QDialog>
 
+class QListWidget;
+class QListWidgetItem;
+class QStackedWidget;
+class QPushButton;
+class QHBoxLayout;
+
 class QDialogButtonBox;
 class QListWidget;
 class QListWidgetItem;
@@ -30,6 +36,12 @@ public:
     // из общих - в настройки редактора и наоборот
     void setAlterSettingsButton(const QString &text);
 
+    // Кнопка в нижний ряд слева, рядом с alterSettingsButton.
+    // Точка расширения владельца для действий уровня диалога
+    // (экспорт/импорт настроек в AppConfigDialog). Редакторный
+    // диалог ничего не добавляет и не меняется
+    void addFooterButton(QWidget *button);
+
     // Применить как по OK (с возможным выходом на перезапуск) и закрыть.
     // Нужно прыжкам между диалогами: голый accept() обошел бы applyChanges,
     // который висит на кнопке OK, и правки молча потерялись бы
@@ -54,6 +66,11 @@ private:
     QStackedWidget *pagesWidget;
     QDialogButtonBox *confirmButtons;
     QPushButton *alterSettingsButton;
+
+    // Нижний ряд кнопок: addFooterButton вставляет слева,
+    // после alterSettingsButton. Счетчик помнит позицию
+    QHBoxLayout *buttonsLayout=nullptr;
+    int footerInsertPos=1;
 };
 
 #endif // CONFIGDIALOG_H

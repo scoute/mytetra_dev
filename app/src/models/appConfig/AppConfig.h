@@ -530,6 +530,11 @@ public:
     QString getInterfaceIconSize();
     bool setInterfaceIconSize(QString sizeName);
 
+    // Живой QSettings главного конфига. Нужен пакетным операциям
+    // (перенос настроек): память и файл остаются согласованы,
+    // писать только через движок SettingsTransfer
+    QSettings *settingsHandle(void);
+
 private:
 
     void createFirstAtStartConfigCopy();

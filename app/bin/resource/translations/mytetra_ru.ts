@@ -6565,6 +6565,69 @@ Please report about this problem to the developers.</source>
         <source>Editor settings...</source>
         <translation>Настройки редактора...</translation>
     </message>
+    <message>
+        <source>Export settings...</source>
+        <translation>Экспорт настроек...</translation>
+    </message>
+    <message>
+        <source>Import settings...</source>
+        <translation>Импорт настроек...</translation>
+    </message>
+    <message>
+        <source>Export settings</source>
+        <translation>Экспорт настроек</translation>
+    </message>
+    <message>
+        <source>Import settings</source>
+        <translation>Импорт настроек</translation>
+    </message>
+    <message>
+        <source>MyTetra settings (*.ini)</source>
+        <translation>Настройки MyTetra (*.ini)</translation>
+    </message>
+    <message>
+        <source>Editor settings are unavailable</source>
+        <translation>Настройки редактора недоступны</translation>
+    </message>
+    <message>
+        <source>Settings were exported to %1</source>
+        <translation>Настройки выгружены в %1</translation>
+    </message>
+    <message>
+        <source>Settings from the file will replace the current ones. A backup copy will be created. Unsaved changes on the tabs will be discarded. Continue?</source>
+        <translation>Настройки из файла заменят текущие. Будет создана резервная копия. Несохранённые изменения на вкладках будут отброшены. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Settings were imported. Please restart the program.</source>
+        <translation>Настройки импортированы. Перезапустите программу.</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsTransfer</name>
+    <message>
+        <source>Can not create backup copy of %1</source>
+        <translation>Не удаётся создать резервную копию %1</translation>
+    </message>
+    <message>
+        <source>Settings storage is unavailable</source>
+        <translation>Хранилище настроек недоступно</translation>
+    </message>
+    <message>
+        <source>Can not write file %1</source>
+        <translation>Не удаётся записать файл %1</translation>
+    </message>
+    <message>
+        <source>File not found: %1</source>
+        <translation>Файл не найден: %1</translation>
+    </message>
+    <message>
+        <source>Unsupported settings file format</source>
+        <translation>Неподдерживаемый формат файла настроек</translation>
+    </message>
+    <message>
+        <source>Can not write settings files</source>
+        <translation>Не удаётся записать файлы настроек</translation>
+    </message>
 </context>
 <context>
     <name>RecordInfoFieldsEditor</name>

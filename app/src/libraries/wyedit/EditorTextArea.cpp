@@ -24,6 +24,7 @@
 #include "../TraceLogger.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/VoiceNoteHelper.h"
+#include "formatters/ReferenceFormatter.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "EditorConfig.h"
@@ -452,11 +453,13 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
 
         // Ссылки-действия ([copy] в маркере кода, пункты оглавления)
         // тоже работают без Ctrl, поэтому рука-подсказка показывается
-        // сразу, а не только с зажатым Ctrl
+        // сразу, а не только с зажатым Ctrl. Метки аттачей attach://
+        // туда же: клик открывает файл, подсказка нужна заранее
         QString actionHref=anchorAt(m_currentMousePosition);
         const bool isActionLink=!actionHref.isEmpty() &&
                                 (actionHref==TypefaceFormatter::copyCodeHref() ||
-                                 actionHref.startsWith(TypefaceFormatter::tocGoPrefix()));
+                                 actionHref.startsWith(TypefaceFormatter::tocGoPrefix()) ||
+                                 actionHref.startsWith(QStringLiteral("attach://")));
 
         if(isActionLink)
         {
@@ -548,6 +551,17 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
            href.startsWith(TypefaceFormatter::tocGoPrefix()))
         {
             emit clickedOnTocGo(href);
+
+            event->ignore();
+            return;
+        }
+
+        // Клик по метке аттача attach://: файл открывается внешней
+        // программой. Работает и с Ctrl, и без: метка без Ctrl-подсказки
+        // незаметна, а Ctrl-путь ниже ее тоже поймает. Курсор не двигается
+        if(href.startsWith(QStringLiteral("attach://")))
+        {
+            emit clickedOnReference(href);
 
             event->ignore();
             return;
@@ -890,14 +904,51 @@ bool EditorTextArea::canInsertFromMimeData(const QMimeData *source) const
 {
     if(source->hasImage())
         return true;
-    else
-        return QTextEdit::canInsertFromMimeData(source); // Это не рекурсия, это вызов метода базового класса
+
+    // Локальные файлы из drag-n-drop: оформляются как аттачи
+    // с кликабельной меткой, а не как абсолютный путь
+    if(source->hasUrls())
+    {
+        foreach(const QUrl &url, source->urls())
+            if(url.isLocalFile() && !url.toLocalFile().isEmpty())
+                return true;
+    }
+
+    return QTextEdit::canInsertFromMimeData(source); // Это не рекурсия, это вызов метода базового класса
+}
+
+
+// Локальные файлы из MIME: список путей, пусто если таких нет.
+// Проверяется раньше детекта формата: файловый менеджер кладет
+// рядом text/plain с путем, иначе в текст уедет абсолютный путь
+QStringList EditorTextArea::droppedLocalFiles(const QMimeData *source)
+{
+    QStringList files;
+
+    if(source==nullptr || !source->hasUrls())
+        return files;
+
+    foreach(const QUrl &url, source->urls())
+        if(url.isLocalFile() && !url.toLocalFile().isEmpty())
+            files.append(url.toLocalFile());
+
+    return files;
 }
 
 
 // Переопределенная функция, срабатывает при вставке (paste) текста/объектов из буфера обмена
 void EditorTextArea::insertFromMimeData(const QMimeData *source)
 {
+    // Брошенные файлы уходят в аттачи через сигнал: в текст
+    // встанет метка, абсолютный путь не вставляется никогда
+    const QStringList droppedFiles=droppedLocalFiles(source);
+
+    if(!droppedFiles.isEmpty())
+    {
+        emit fileUrlsDropped(droppedFiles);
+        return;
+    }
+
     MimeDataFormat mimeDataFormat=detectMimeDataFormat( source );
 
     // Голосовые вставки доделываются после асинхронной вставки HTML:
@@ -909,6 +960,14 @@ void EditorTextArea::insertFromMimeData(const QMimeData *source)
                 source->data(VoiceNoteHelper::voiceMimeTypeName()));
         else if(source->hasHtml() && source->html().contains(QStringLiteral("voicenote://")))
             pendingVoiceMimes.append(QByteArray());
+
+        // Метки аттачей доделываются тем же асинхронным путем:
+        // файлы докопирует и аттачи заведет редактор по сигналу
+        if(source->hasFormat(ReferenceFormatter::attachMimeTypeName()))
+            pendingAttachMimes.append(
+                source->data(ReferenceFormatter::attachMimeTypeName()));
+        else if(source->hasHtml() && source->html().contains(QStringLiteral("attach://")))
+            pendingAttachMimes.append(QByteArray());
     }
 
     QTextCursor cursor = this->textCursor();
@@ -1064,6 +1123,11 @@ void EditorTextArea::onDownloadImagesSuccessfull(const QString html,
     // материализация баблов
     if(!pendingVoiceMimes.isEmpty())
         finishVoicePaste(pendingVoiceMimes.takeFirst());
+
+    // Доделка вставки меток аттачей: файлы докопирует и аттачи
+    // заведет редактор, ссылки починятся там же
+    if(!pendingAttachMimes.isEmpty())
+        emit attachBadgesPasted(pendingAttachMimes.takeFirst());
 }
 
 
@@ -1109,14 +1173,59 @@ QStringList EditorTextArea::voiceHrefsInRange(int from, int to) const
 }
 
 
+// Метки аттачей в диапазоне документа без дублей.
+// Баблов у меток нет: только якоря attach://
+QStringList EditorTextArea::attachHrefsInRange(int from, int to) const
+{
+    QStringList hrefs;
+
+    if(from>to)
+        qSwap(from, to);
+
+    QTextDocument *doc=document();
+
+    if(doc==nullptr)
+        return hrefs;
+
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid())
+                continue;
+
+            const int start=fragment.position();
+            const int end=start+fragment.length();
+
+            if(end<=from || start>=to)
+                continue;
+
+            const QString href=fragment.charFormat().anchorHref();
+
+            if(ReferenceFormatter::isAttachHref(href) && !hrefs.contains(href))
+                hrefs.append(href);
+        }
+
+    return hrefs;
+}
+
+
 QString EditorTextArea::voiceWorkDirectory(void) const
 {
-    const Editor *editor=qobject_cast<const Editor*>(parent());
+    // Родитель textArea не Editor: при сборке MetaEditor область
+    // переезжает в сплиттер/контейнеры. Редактор ищется вверх
+    // по родителям, иначе перенос файлов между заметками молча
+    // гаснет (пустой каталог - пустые пары href-путь в MIME)
+    for(QWidget *w=parentWidget(); w!=nullptr; w=w->parentWidget())
+    {
+        const Editor *editor=qobject_cast<const Editor*>(w);
 
-    if(editor==nullptr)
-        return QString();
+        if(editor!=nullptr)
+            return const_cast<Editor*>(editor)->getWorkDirectory();
+    }
 
-    return const_cast<Editor*>(editor)->getWorkDirectory();
+    return QString();
 }
 
 
@@ -1148,10 +1257,12 @@ QMimeData *EditorTextArea::createMimeDataFromSelection(void) const
     if(!cursor.hasSelection())
         return QTextEdit::createMimeDataFromSelection();
 
-    const QStringList hrefs=voiceHrefsInRange(cursor.selectionStart(),
-                                              cursor.selectionEnd());
+    const QStringList voiceHrefs=voiceHrefsInRange(cursor.selectionStart(),
+                                                   cursor.selectionEnd());
+    const QStringList attachHrefs=attachHrefsInRange(cursor.selectionStart(),
+                                                     cursor.selectionEnd());
 
-    if(hrefs.isEmpty())
+    if(voiceHrefs.isEmpty() && attachHrefs.isEmpty())
         return QTextEdit::createMimeDataFromSelection();
 
     // Копия выделения во временный документ: баблы подменяются
@@ -1169,19 +1280,40 @@ QMimeData *EditorTextArea::createMimeDataFromSelection(void) const
 
     // Абсолютные пути файлов для переноса в другую заметку
     const QString workDir=voiceWorkDirectory();
-    QStringList lines;
+    QStringList voiceLines;
 
-    for(const QString &href : hrefs)
+    for(const QString &href : voiceHrefs)
     {
         const QString absPath=VoiceNoteHelper::resolveFilePath(workDir, href);
 
         if(!absPath.isEmpty() && QFileInfo(absPath).isFile())
-            lines << href << absPath;
+            voiceLines << href << absPath;
     }
 
-    if(!lines.isEmpty())
+    if(!voiceLines.isEmpty())
         mime->setData(VoiceNoteHelper::voiceMimeTypeName(),
-                      lines.join(QStringLiteral("\n")).toUtf8());
+                      voiceLines.join(QStringLiteral("\n")).toUtf8());
+
+    // Метки аттачей тем же приемом: пары href-путь своим MIME,
+    // файлы докопирует и аттачи заведет принимающая сторона
+    QStringList attachLines;
+
+    for(const QString &href : attachHrefs)
+    {
+        const QString innerName=ReferenceFormatter::attachInnerFromHref(href);
+
+        if(innerName.isEmpty() || workDir.isEmpty())
+            continue;
+
+        const QString absPath=QDir::cleanPath(QDir(workDir).absoluteFilePath(innerName));
+
+        if(QFileInfo(absPath).isFile())
+            attachLines << href << absPath;
+    }
+
+    if(!attachLines.isEmpty())
+        mime->setData(ReferenceFormatter::attachMimeTypeName(),
+                      attachLines.join(QStringLiteral("\n")).toUtf8());
 
     return mime;
 }

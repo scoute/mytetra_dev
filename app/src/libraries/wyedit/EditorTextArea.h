@@ -3,6 +3,8 @@
 
 #include <QTextEdit>
 
+class QMimeData;
+
 
 class QPaintEvent;
 class QMimeData;
@@ -56,6 +58,16 @@ signals:
     // Передается позиция документа: обработчик сам находит строку
     // маркера и забирает код ниже нее
     void clickedOnCopyCode(int docPosition);
+
+    // Брошенные в текст локальные файлы: редактор сам оформит их
+    // как аттачи и вставит кликабельные метки. Сигнал вместо прямой
+    // вставки пути, чтобы не плодить абсолютные пути в тексте
+    void fileUrlsDropped(const QStringList &files);
+
+    // Метки аттачей после асинхронной вставки HTML: редактор докопирует
+    // файлы в свою запись, заведет аттачи и починит ссылки.
+    // Байты MIME с парами href-путь из буфера обмена
+    void attachBadgesPasted(const QByteArray &attachMime);
 
     // Клик по пункту оглавления: передается адрес ссылки-перехода,
     // обработчик сам находит раздел и ставит туда курсор
@@ -126,8 +138,16 @@ private:
     // через downloadImages, пары href-путь ждут своей вставки здесь
     QList<QByteArray> pendingVoiceMimes;
 
+    // Очередь MIME меток аттачей: тот же асинхронный путь, файлы
+    // докопирует и аттачи заведет редактор по сигналу
+    QList<QByteArray> pendingAttachMimes;
+
     // Голосовые ссылки и баблы в диапазоне документа без дублей
     QStringList voiceHrefsInRange(int from, int to) const;
+
+    // Метки аттачей attach:// в диапазоне документа без дублей.
+    // Баблов у меток нет: только якоря attach://
+    QStringList attachHrefsInRange(int from, int to) const;
 
     // Рабочий каталог заметки через родителя-редактор
     QString voiceWorkDirectory(void) const;
@@ -139,6 +159,10 @@ private:
     // (перенос между заметками), починить ссылки при коллизии
     // имен, материализовать баблы. Вызывается после вставки HTML
     void finishVoicePaste(const QByteArray &voiceMime);
+
+    // Локальные файлы из MIME для drag-n-drop в аттачи.
+    // Пустой список если бросали не файлы
+    static QStringList droppedLocalFiles(const QMimeData *source);
 };
 
 #endif // _EDITORTEXTAREA_H_

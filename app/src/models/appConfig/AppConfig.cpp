@@ -1333,7 +1333,11 @@ int AppConfig::get_attachNameMode(void)
     if(m_conf->value("attachHumanReadableNames", false).toBool())
         return AttachNameHybrid;
 
-    return AttachNameSystem;
+    // По умолчанию оригинальные имена: файл на диске узнаваем
+    // (пробелы меняются на подчеркивания, регистр и кириллица целы).
+    // Явный выбор в настройках уважавается, старые файлы при любом
+    // режиме находятся поиском по всем схемам (candidateFileNames)
+    return AttachNameOriginal;
 }
 
 

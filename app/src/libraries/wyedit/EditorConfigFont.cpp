@@ -142,9 +142,9 @@ void EditorConfigFont::setup_ui(void)
  linkPix.fill(linkColorTocGo->rgb());
  linkColorTocGoButton->setIcon(linkPix);
 
- // Клик по кнопке цвета применяет последний выбранный цвет без пикера
- applyLastColorCheckBox=new QCheckBox(tr("Apply last color on button click"), this);
- applyLastColorCheckBox->setToolTip(tr("Clicking the text or background color button paints in the last used color without opening the picker"));
+ // Клик по кнопке цвета или её горячая клавиша применяет последний выбранный цвет без пикера
+ applyLastColorCheckBox=new QCheckBox(tr("Apply last text/background color"), this);
+ applyLastColorCheckBox->setToolTip(tr("Clicking the text or background color button or its hotkey paints in the last used color without opening the picker"));
  applyLastColorCheckBox->setChecked(conf->get_applyLastColorOnClick());
 }
 

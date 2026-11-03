@@ -434,6 +434,45 @@ QString DiskHelper::formatFileSize(qint64 bytes)
 }
 
 
+// Похож ли файл на текст: читается начало, бинарный маркер — NUL-байт.
+// Пустой и отсутствующий файлы — не текст
+bool DiskHelper::fileLooksLikeText(const QString &fileName, int probeBytes)
+{
+  QFile file(fileName);
+
+  if(!file.open(QIODevice::ReadOnly))
+    return false;
+
+  const QByteArray head=file.read(qMax(probeBytes, 1));
+  file.close();
+
+  if(head.isEmpty())
+    return false;
+
+  return !head.contains('\0');
+}
+
+
+// Первые строки текстового файла для предпросмотра (экранированные).
+// Пусто если файл не читается
+QString DiskHelper::readTextSnippet(const QString &fileName, int maxLines, int maxBytes)
+{
+  QFile file(fileName);
+
+  if(!file.open(QIODevice::ReadOnly))
+    return QString();
+
+  const QStringList lines=QString::fromUtf8(file.read(qMax(maxBytes, 1))).split('\n');
+  file.close();
+
+  QStringList snippet;
+  for(int i=0; i<lines.size() && i<qMax(maxLines, 1); ++i)
+    snippet << lines.at(i).toHtmlEscaped();
+
+  return snippet.join(QStringLiteral("\n"));
+}
+
+
 // Копирование содержимого каталога ресурсов QRC в каталог на диске
 // Копирование происходит рекурсивно со всеми файлами и подкаталогами
 bool DiskHelper::copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath)

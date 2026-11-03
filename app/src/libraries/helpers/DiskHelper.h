@@ -32,6 +32,14 @@ public:
   // Человекочитаемый размер файла: байты, KB, MB
   static QString formatFileSize(qint64 bytes);
 
+  // Похож ли файл на текст: читается начало, бинарный маркер — NUL-байт.
+  // Пустой и отсутствующий файлы — не текст
+  static bool fileLooksLikeText(const QString &fileName, int probeBytes=8192);
+
+  // Первые строки текстового файла для предпросмотра (экранированные).
+  // Пусто если файл не читается
+  static QString readTextSnippet(const QString &fileName, int maxLines=10, int maxBytes=4096);
+
   static bool copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath);
 
 private:

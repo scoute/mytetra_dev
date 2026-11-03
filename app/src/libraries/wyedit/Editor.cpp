@@ -951,10 +951,15 @@ void Editor::assembly(void)
 // Установка текста области редактирования
 void Editor::setTextarea(QString text)
 {
+  // URL документа сохраняется (а не зачищается): относительные src
+  // картинок резолвятся против него, зачистка гасила бы их до
+  // перезахода в заметку. Пустым вызовам без разницы, живых
+  // картинок в них нет
+  const QString documentUrl=textArea->document()->metaInformation( QTextDocument::DocumentUrl );
+
   textArea->setHtml(text);
 
-  // Очищается URL документа, так как документ создается "из ничего"
-  textArea->document()->setMetaInformation( QTextDocument::DocumentUrl, "" );
+  textArea->document()->setMetaInformation( QTextDocument::DocumentUrl, documentUrl );
 
   // Ссылки-кнопки [copy] без подчеркивания, как свежие: HTML-импортер
   // подчеркивает все ссылки по умолчанию

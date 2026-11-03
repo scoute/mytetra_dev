@@ -223,7 +223,7 @@ void EditorToolBar::setupToolBarTools(void)
     code->setListMode(true);
     code->setMaxVisibleItems(15);
 
-    // Кнопка заголовков: одна выпадашка на 4 пункта (H1, H2, H3,
+    // Кнопка заголовков: одна выпадашка на 7 пунктов (H1-H6,
     // обычный текст). Места на тулбаре мало, два отдельных H1/H2
     // раздували линейку. Клик сразу открывает меню (InstantPopup),
     // актуальный уровень помечается галкой из onUpdateOutlineButtonHiglight
@@ -234,14 +234,23 @@ void EditorToolBar::setupToolBarTools(void)
     headingH1Action=new QAction(QIcon(":/resource/pic/edit_heading1.svg"), tr("Heading 1"), this);
     headingH2Action=new QAction(QIcon(":/resource/pic/edit_heading2.svg"), tr("Heading 2"), this);
     headingH3Action=new QAction(QIcon(":/resource/pic/edit_heading3.svg"), tr("Heading 3"), this);
+    headingH4Action=new QAction(QIcon(":/resource/pic/edit_heading4.svg"), tr("Heading 4"), this);
+    headingH5Action=new QAction(QIcon(":/resource/pic/edit_heading5.svg"), tr("Heading 5"), this);
+    headingH6Action=new QAction(QIcon(":/resource/pic/edit_heading6.svg"), tr("Heading 6"), this);
     headingNormalAction=new QAction(tr("Normal text"), this);
     headingH1Action->setCheckable(true);
     headingH2Action->setCheckable(true);
     headingH3Action->setCheckable(true);
+    headingH4Action->setCheckable(true);
+    headingH5Action->setCheckable(true);
+    headingH6Action->setCheckable(true);
     headingNormalAction->setCheckable(true);
     heading->addAction(headingH1Action);
     heading->addAction(headingH2Action);
     heading->addAction(headingH3Action);
+    heading->addAction(headingH4Action);
+    heading->addAction(headingH5Action);
+    heading->addAction(headingH6Action);
     heading->addAction(headingNormalAction);
 
     // Кнопка Clear
@@ -352,14 +361,14 @@ void EditorToolBar::setupToolBarTools(void)
     reference->setIcon(QIcon(":/resource/pic/edit_reference.svg"));
     reference->setObjectName("editor_tb_reference");
 
-    // Кнопка панели структуры: живой список H1-H3 с прыжком в раздел.
+    // Кнопка панели структуры: живой список H1-H6 с прыжком в раздел.
     // В линейке встает сразу за ссылкой (правило миграции 39->40)
     structure=new QAction(this);
     structure->setCheckable(true);
     structure->setIcon(QIcon(":/resource/pic/edit_structure.svg"));
     structure->setObjectName("editor_tb_structure");
 
-    // Кнопка оглавления: вставка снимка H1-H3 в текст, повторный вызов
+    // Кнопка оглавления: вставка снимка H1-H6 в текст, повторный вызов
     // обновляет снимок на месте. В линейке сразу за структурой
     toc=new QAction(this);
     toc->setIcon(QIcon(":/resource/pic/edit_toc.svg"));
@@ -503,6 +512,9 @@ void EditorToolBar::setupShortcuts(void)
     shortcutManager.initAction("editor-heading1", headingH1Action);
     shortcutManager.initAction("editor-heading2", headingH2Action);
     shortcutManager.initAction("editor-heading3", headingH3Action);
+    shortcutManager.initAction("editor-heading4", headingH4Action);
+    shortcutManager.initAction("editor-heading5", headingH5Action);
+    shortcutManager.initAction("editor-heading6", headingH6Action);
     shortcutManager.initAction("editor-clear", clear);
     shortcutManager.initAction("editor-textOnly", textOnly);
     shortcutManager.initAction("editor-fixBreakSymbol", fixBreakSymbol);
@@ -612,6 +624,9 @@ void EditorToolBar::retranslateUi(void)
     headingH1Action->setText(tr("Heading 1"));
     headingH2Action->setText(tr("Heading 2"));
     headingH3Action->setText(tr("Heading 3"));
+    headingH4Action->setText(tr("Heading 4"));
+    headingH5Action->setText(tr("Heading 5"));
+    headingH6Action->setText(tr("Heading 6"));
     headingNormalAction->setText(tr("Normal text"));
     heading->setToolTip(tr("Heading"));
 

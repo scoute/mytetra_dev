@@ -1128,85 +1128,15 @@ struct HeadingStash : public QTextBlockUserData
 };
 
 
-// Высота чернил строки: строки изображения с не-белыми пикселями.
-// Нужна для замера масштабного коэффициента заголовков
-static int inkedHeight(const QImage &image)
-{
-    int top=image.height();
-    int bottom=-1;
-
-    for(int y=0; y<image.height(); ++y)
-        for(int x=0; x<image.width(); ++x)
-            if(image.pixel(x, y)!=qRgb(255, 255, 255))
-            {
-                if(y<top)
-                    top=y;
-                if(y>bottom)
-                    bottom=y;
-            }
-
-    if(bottom<top)
-        return 0;
-
-    return bottom-top+1;
-}
-
-
-// Масштабный коэффициент размера заголовка: во сколько раз h1/h2/h3
-// крупнее обычного текста. Qt хранит крупность в свойстве
-// FontSizeAdjustment, а оно не откатывается undo и плодит мусор,
-// поэтому в работу берутся абсолютные размеры. Коэффициент замеряется
-// один раз за сессию рендером эталона: допущений о внутренностях Qt нет
+// Масштаб кегля заголовков относительно базового: фиксированная
+// лесенка 48/32/24/20/16/12 при базе 12 (факторы 4, 8/3, 2, 5/3,
+// 4/3, 1). Замер рендера Qt тут не годится: Qt рисует h6 кеглем
+// обычного текста, а h5 - small, выходила инверсия H6 крупнее H5
 static double headingScaleFactor(int level)
 {
-    static double factors[4]={0.0, 0.0, 0.0, 0.0};
-    static bool measured=false;
+    static const double factors[7]={1.0, 4.0, 8.0/3.0, 2.0, 5.0/3.0, 4.0/3.0, 1.0};
 
-    if(!measured)
-    {
-        measured=true;
-        factors[0]=1.0;
-
-        auto renderTag=[](const QString &tag) -> int
-        {
-            QTextDocument probe;
-            QFont baseFont;
-            baseFont.setPointSize(100);
-            probe.setDefaultFont(baseFont);
-            probe.setHtml(tag);
-            probe.setTextWidth(2000);
-
-            QImage image(2000, 400, QImage::Format_RGB32);
-            image.fill(Qt::white);
-            QPainter painter(&image);
-            probe.drawContents(&painter);
-            painter.end();
-
-            return inkedHeight(image);
-        };
-
-        const int plainHeight=renderTag(QStringLiteral("<p>Hg</p>"));
-        if(plainHeight>0)
-        {
-            const int h1=renderTag(QStringLiteral("<h1>Hg</h1>"));
-            const int h2=renderTag(QStringLiteral("<h2>Hg</h2>"));
-            const int h3=renderTag(QStringLiteral("<h3>Hg</h3>"));
-            if(h1>0)
-                factors[1]=double(h1)/double(plainHeight);
-            if(h2>0)
-                factors[2]=double(h2)/double(plainHeight);
-            if(h3>0)
-                factors[3]=double(h3)/double(plainHeight);
-        }
-
-        for(int i=0; i<4; ++i)
-            if(factors[i]<=0.0)
-                factors[i]=1.0;
-
-        qDebug() << "Heading scale factors H1/H2/H3:" << factors[1] << factors[2] << factors[3];
-    }
-
-    if(level<0 || level>3)
+    if(level<0 || level>6)
         return 1.0;
 
     return factors[level];
@@ -1223,6 +1153,12 @@ static void headingProbeMargins(int level, QTextBlockFormat &blockFormat)
         probe.setHtml(QStringLiteral("<h2>x</h2>"));
     else if(level==3)
         probe.setHtml(QStringLiteral("<h3>x</h3>"));
+    else if(level==4)
+        probe.setHtml(QStringLiteral("<h4>x</h4>"));
+    else if(level==5)
+        probe.setHtml(QStringLiteral("<h5>x</h5>"));
+    else if(level==6)
+        probe.setHtml(QStringLiteral("<h6>x</h6>"));
     else
         probe.setHtml(QStringLiteral("<p>x</p>"));
 
@@ -1232,6 +1168,27 @@ static void headingProbeMargins(int level, QTextBlockFormat &blockFormat)
         blockFormat.setTopMargin(block.blockFormat().topMargin());
         blockFormat.setBottomMargin(block.blockFormat().bottomMargin());
     }
+}
+
+
+// Ступень FontSizeAdjustment глушит явный кегль: пока свойство есть,
+// размер берется из внутренней таблицы шагов Qt (44pt рисуются мелко).
+// Стендом проверено: снять ее через mergeCharFormat нельзя
+// (clearProperty в источнике слияния игнорируется), только полной
+// заменой формата. Своим же форматом без ступени: позиции и длина не едут
+static void stripFontSizeAdjustment(QTextDocument *doc, int position, int length,
+                                    const QTextCharFormat &fragmentFormat)
+{
+    if(!fragmentFormat.hasProperty(QTextFormat::FontSizeAdjustment))
+        return;
+
+    QTextCursor fragmentCursor(doc);
+    fragmentCursor.setPosition(position);
+    fragmentCursor.setPosition(position+length, QTextCursor::KeepAnchor);
+
+    QTextCharFormat stripped=fragmentFormat;
+    stripped.clearProperty(QTextFormat::FontSizeAdjustment);
+    fragmentCursor.setCharFormat(stripped);
 }
 
 
@@ -1337,7 +1294,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
             continue;
 
         // Пустые абзацы заголовками не делаются: иначе плодятся
-        // пустые H1/H2/H3. Снятие уровня с пустых работает как обычно
+        // пустые H1-H6. Снятие уровня с пустых работает как обычно
         if(target>0 && block.text().simplified().isEmpty())
             continue;
 
@@ -1401,10 +1358,22 @@ void TypefaceFormatter::applyHeadingLevel(int level)
             double baseSize=baseNormalSize;
             if(stash!=nullptr && stash->hasData && stash->stashedLevel==0 && stash->pointSize>0.0)
                 baseSize=stash->pointSize;
-            else if(!snapshots.isEmpty() && snapshots.first().format.fontPointSize()>0.0)
+            else if(oldLevel==0 && !snapshots.isEmpty() &&
+                    snapshots.first().format.fontPointSize()>0.0)
                 baseSize=snapshots.first().format.fontPointSize();
+            // Блок уже заголовок без stash (загруженный документ):
+            // база - шрифт документа. Текущий кегль тут след прошлого
+            // применения, брать его базой - множить при каждом клике
 
             const double absoluteSize=baseSize*headingScaleFactor(target);
+
+            // Наследство старых билдов: ступень FontSizeAdjustment
+            // глушит явный кегль (размер едет из таблицы шагов Qt).
+            // Снять по-настоящему до выставления размера, иначе 44pt
+            // рисуются мелко. merge снятие не умеет (проверено стендом)
+            for(const FragmentSnapshot &snap : snapshots)
+                stripFontSizeAdjustment(textArea->document(), snap.position,
+                                        snap.length, snap.format);
 
             for(const FragmentSnapshot &snap : snapshots)
             {
@@ -1415,26 +1384,27 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                 // Только merge явными значениями: судьба каждого
                 // свойства предсказуема (ничего лишнего не задевается),
                 // а полный setCharFormat на выделении в этой версии Qt
-                // замечен в непересчете вида. Ступень FontSizeAdjustment
-                // только снимается где есть: само ее присутствие
-                // переключает раскладку на свой путь и глушит явный
-                // размер, а выставление не откатывается undo.
-                // Свежим фрагментам она не ставится
+                // замечен в непересчете вида. Свежим фрагментам ступень
+                // не ставится, наследие снято выше
                 QTextCharFormat fragmentFormat;
                 fragmentFormat.setFontPointSize(absoluteSize);
                 fragmentFormat.setFontWeight(QFont::Bold);
-                if(snap.format.hasProperty(QTextFormat::FontSizeAdjustment))
-                    fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                 fragmentCursor.mergeCharFormat(fragmentFormat);
             }
         }
         else
         {
             // Назад в обычный. Был обычным - вернуть свое из stash,
-            // был загруженным заголовком - нормализовать: свой размер
-            // (если задан), обычная жирность, ступень снимается.
-            // Везде только merge явными значениями: снятий свойств,
-            // кроме чужой ступени, нет, нейтральный ноль не пишется
+            // был загруженным заголовком - нормализовать: базовый
+            // размер, обычная жирность. Ступень FontSizeAdjustment
+            // снята заранее (глушит явный кегль, merge ее не снимает):
+            // восстанавливать ее из stash нельзя, иначе размер снова
+            // поедет из таблицы шагов Qt. Везде только merge явными
+            // значениями
+            for(const FragmentSnapshot &snap : snapshots)
+                stripFontSizeAdjustment(textArea->document(), snap.position,
+                                        snap.length, snap.format);
+
             if(stash!=nullptr && stash->hasData && stash->stashedLevel==0)
             {
                 format.setTopMargin(stash->topMargin);
@@ -1450,15 +1420,15 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                     QTextCharFormat fragmentFormat;
                     fragmentFormat.setFontPointSize(stash->pointSize);
                     fragmentFormat.setFontWeight(stash->weight);
-                    if(stash->sizeAdjustment.isValid())
-                        fragmentFormat.setProperty(QTextFormat::FontSizeAdjustment, stash->sizeAdjustment);
-                    else
-                        fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                     fragmentCursor.mergeCharFormat(fragmentFormat);
                 }
             }
             else
             {
+                // Без stash с исходным обычным уровнем размер - след
+                // прошлого заголовка (загруженный документ): сбросить
+                // к базовому. Оставить как был - следующее применение
+                // снова умножит (кегль "улетает в космос" при вкл/выкл)
                 for(const FragmentSnapshot &snap : snapshots)
                 {
                     QTextCursor fragmentCursor(textArea->document());
@@ -1466,10 +1436,8 @@ void TypefaceFormatter::applyHeadingLevel(int level)
                     fragmentCursor.setPosition(snap.position+snap.length, QTextCursor::KeepAnchor);
 
                     QTextCharFormat fragmentFormat;
-                    const double fragSize=snap.format.fontPointSize();
-                    fragmentFormat.setFontPointSize(fragSize>0.0 ? fragSize : baseNormalSize);
+                    fragmentFormat.setFontPointSize(baseNormalSize);
                     fragmentFormat.setFontWeight(QFont::Normal);
-                    fragmentFormat.clearProperty(QTextFormat::FontSizeAdjustment);
                     fragmentCursor.mergeCharFormat(fragmentFormat);
                 }
             }
@@ -1489,7 +1457,7 @@ void TypefaceFormatter::applyHeadingLevel(int level)
 
 void TypefaceFormatter::onHeadingClicked(int index)
 {
-    // Пункты меню: 0-H1, 1-H2, 2-H3, 3-обычный текст
+    // Пункты меню: 0-H1, 1-H2, 2-H3, 3-H4, 4-H5, 5-H6, 6-обычный текст
     if(index==0)
         applyHeadingLevel(1);
     else if(index==1)
@@ -1497,6 +1465,12 @@ void TypefaceFormatter::onHeadingClicked(int index)
     else if(index==2)
         applyHeadingLevel(3);
     else if(index==3)
+        applyHeadingLevel(4);
+    else if(index==4)
+        applyHeadingLevel(5);
+    else if(index==5)
+        applyHeadingLevel(6);
+    else if(index==6)
         applyHeadingLevel(0);
 }
 
@@ -1514,7 +1488,7 @@ double TypefaceFormatter::normalPointSize(void) const
 
 
 // Enter в заголовке. В конце непустого заголовка новый
-// абзац сразу обычный (иначе каждый Enter плодит пустые H1/H2/H3),
+// абзац сразу обычный (иначе каждый Enter плодит пустые H1-H6),
 // на пустом заголовке уровень снимается на месте без новой строки.
 // Выделение строго внутри одного заголовка вырезается как штатно,
 // затем работают те же правила. В середине абзаца, через абзацы
@@ -1685,7 +1659,7 @@ QList<TypefaceFormatter::TocEntry> TypefaceFormatter::collectTocEntries(void) co
     for(QTextBlock block=textArea->document()->begin(); block.isValid(); block=block.next())
     {
         const int level=block.blockFormat().headingLevel();
-        if(level<1 || level>3)
+        if(level<1 || level>6)
             continue;
 
         QString text=block.text().simplified();
@@ -1904,6 +1878,79 @@ void TypefaceFormatter::normalizeCopyLinkUnderline(void)
     }
 
     edit.endEditBlock();
+}
+
+
+// Нормализация кегля при загрузке заметки: разбор <h1>-<h6> кладет в
+// фрагмент ступень FontSizeAdjustment, которая глушит явный font-size
+// (44pt рисуются мелко - см. stripFontSizeAdjustment). При клике по
+// заголовку ступень снимается, а при загрузке ее никто не снимал -
+// после перезапуска заголовки мельчали. Ступень снимается везде, где
+// задан явный кегль (он и есть воля), а заголовкам без явного кегля
+// выставляется лесенка - размеры убывают H1->H6 и не мельчают по таблице Qt
+void TypefaceFormatter::normalizeHeadingFontSizes(void)
+{
+    if(textArea==nullptr || textArea->document()==nullptr)
+        return;
+
+    QTextDocument *doc=textArea->document();
+
+    // Снимок правок: setCharFormat дробит фрагменты и инвалидирует
+    // итератор. Позиции и длины не едут (текст не меняется)
+    struct PendingEdit
+    {
+        int position;
+        int length;
+        QTextCharFormat format;
+    };
+    QList<PendingEdit> edits;
+
+    for(QTextBlock block=doc->begin(); block.isValid(); block=block.next())
+    {
+        const int level=block.blockFormat().headingLevel();
+
+        // Вне заголовков ступень FontSizeAdjustment - воля импорта
+        // (<font size=+N>, относительный размер), трогать нельзя.
+        // В заголовках размером управляет лесенка H1->H6
+        if(level<1 || level>6)
+            continue;
+
+        const double targetSize=normalPointSize()*headingScaleFactor(level);
+
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(!fragment.isValid() || fragment.length()==0)
+                continue;
+
+            const QTextCharFormat format=fragment.charFormat();
+
+            // Уже лесенка и ступени нет - править нечего
+            if(!format.hasProperty(QTextFormat::FontSizeAdjustment) &&
+               qAbs(format.fontPointSize()-targetSize)<0.01)
+                continue;
+
+            PendingEdit edit;
+            edit.position=fragment.position();
+            edit.length=fragment.length();
+            edit.format=format;
+            edit.format.clearProperty(QTextFormat::FontSizeAdjustment);
+            edit.format.setFontPointSize(targetSize);
+            edits << edit;
+        }
+    }
+
+    if(edits.isEmpty())
+        return;
+
+    for(const PendingEdit &edit : edits)
+    {
+        QTextCursor cursor(doc);
+        cursor.setPosition(edit.position);
+        cursor.setPosition(edit.position+edit.length, QTextCursor::KeepAnchor);
+        cursor.setCharFormat(edit.format);
+    }
 }
 
 

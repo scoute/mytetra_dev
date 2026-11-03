@@ -124,7 +124,7 @@ void EditorStructurePanel::rebuild(void)
     for(QTextBlock block=doc->begin(); block.isValid(); block=block.next())
     {
         const int level=block.blockFormat().headingLevel();
-        if(level<1 || level>3)
+        if(level<1 || level>6)
             continue;
 
         QString text=block.text().simplified();
@@ -133,7 +133,7 @@ void EditorStructurePanel::rebuild(void)
         if(text.length()>100)
             text=text.left(100)+QStringLiteral("…");
 
-        // Вложенность видна отступом: H1 без отступа, H2 и H3 глубже
+        // Вложенность видна отступом: H1 без отступа, H2-H6 глубже
         QListWidgetItem *item=new QListWidgetItem(QString((level-1)*2, QLatin1Char(' '))+text, m_list);
         item->setData(Qt::UserRole, block.position());
         item->setToolTip(block.text().simplified());
@@ -141,7 +141,7 @@ void EditorStructurePanel::rebuild(void)
 
     if(m_list->count()==0)
     {
-        QListWidgetItem *item=new QListWidgetItem(tr("No H1-H3 headings"), m_list);
+        QListWidgetItem *item=new QListWidgetItem(tr("No H1-H6 headings"), m_list);
         item->setFlags(item->flags() & ~(Qt::ItemIsSelectable | Qt::ItemIsEnabled));
     }
 

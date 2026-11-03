@@ -3377,6 +3377,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Not found</source>
         <translation>Не найдено</translation>
     </message>
+    <message>
+        <source>Go to line</source>
+        <translation>Перейти к строке</translation>
+    </message>
+    <message>
+        <source>Line:</source>
+        <translation>Строка:</translation>
+    </message>
+    <message>
+        <source>Ln %1, Col %2</source>
+        <translation>Стр %1, Стб %2</translation>
+    </message>
     <message numerus="yes">
         <source>Replaced %n time(s)</source>
         <translation>

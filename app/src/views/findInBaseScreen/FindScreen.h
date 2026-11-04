@@ -73,11 +73,14 @@ public slots:
     // ветки без пароля пропускаются как и в самом поиске.
     // Счетчик прокачанных записей для processEvents во время долгой
     // сборки (чтобы показалась крутилка). Ссылкой сквозь рекурсию:
-    // метод статический, член класса недоступен
+    // метод статический, член класса недоступен. Виджет-владелец
+    // нужен гейту прокачки: pumping разрешен только когда главное
+    // окно уже показано, иначе на старте падает дерево (см. 500)
     static void collectBranchValues(const TreeItem *curritem,
                                     QMap<QString, QStringList> &dictionaries,
                                     QSet<QString> &seen,
-                                    int &pumpCounter);
+                                    int &pumpCounter,
+                                    QWidget *pumpWidget);
 
     // Добавить слово в словарь поля. Пустые значения отбрасываются,
     // повторы без учета регистра тоже: пишется первое встречное
@@ -182,6 +185,12 @@ private:
     bool completerBuilt=false;
     bool completerDirty=true;
 
+    // Флаг идущей сборки: сборка качает события, повторный вход
+    // (таймер паузы, метаданные, showEvent) ждет конца текущей.
+    // Иначе выход из программы посреди сборки роняет недособранную
+    // модель (см. 500)
+    bool completerBuilding=false;
+
     // Счетчик прокачанных записей для processEvents во время
     // долгой сборки словаря (чтобы показалась крутилка).
     // Локальный для сборки: collectBranchValues статический,
@@ -197,6 +206,10 @@ private:
 
     void ensureCompleter(void);
     void doComplete(const QString &text);
+
+    // Прокачка событий во время долгой сборки (см. реализацию).
+    // Вызывается из точек долгой сборки вместо голого processEvents
+    void pumpWhileBuilding(void);
 
     void setupFieldCompleter(void);
 

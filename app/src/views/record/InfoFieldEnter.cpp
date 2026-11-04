@@ -203,7 +203,7 @@ void InfoFieldEnter::refreshTagsCompleter(void)
         const TreeItem *rootItem=treeModel->getRootItem();
 
         if(rootItem!=nullptr)
-            FindScreen::collectBranchValues(rootItem, dictionaries, seen, pumpCounter);
+            FindScreen::collectBranchValues(rootItem, dictionaries, seen, pumpCounter, this);
     }
 
     QStringList tags=dictionaries.value("tags");

@@ -19,6 +19,7 @@
 #include <QStandardItemModel>
 #include <QStandardItem>
 #include <QTimer>
+#include <QScopedPointer>
 #include <QDebug>
 
 #include <algorithm>
@@ -1050,7 +1051,18 @@ void FindScreen::showEvent(QShowEvent *event)
 
     // Словарь подсказок собирается лениво и только по грязи:
     // теги и названия могли измениться, но пересборка на каждый
-    // показ стоила секунд на 100k+ базе
+    // показ стоила секунд на 100k+ базе.
+    // Сборка откладывается за пределы showEvent: showEvent при старте
+    // приходит изнутри win.show() (обход showChildren), а сборка
+    // создает модальный диалог и качает события - реентрантный обход
+    // роняет дерево виджетов (см. 500). Тик задержки незаметен
+    if(!completerBuilt || completerDirty)
+    {
+        completerDirty=true;
+        QTimer::singleShot(0, this, [this]() { ensureCompleter(); });
+        return;
+    }
+
     ensureCompleter();
 }
 
@@ -1234,12 +1246,41 @@ void FindScreen::onTreeMetadataSaved(void)
 // Словарь актуален или пересобирается лениво: при показе панели
 // и перед подсказкой. На 100k+ базе сборка это секунды, поэтому
 // только по грязи, а не на каждый показ
+// Прокачка событий разрешена только когда главное окно уже показано:
+// на старте (восстановление состояния до первого show()) прокачка
+// из недостроенного UI роняет дерево виджетов (см. 500).
+// На старте и так висит стартовый прогресс, крутилка не нужна
+static bool canPumpEvents(QWidget *widget)
+{
+    if(widget==nullptr)
+        return false;
+
+    QWidget *win=widget->window();
+
+    return win!=nullptr && win->isVisible();
+}
+
+
 void FindScreen::ensureCompleter(void)
 {
     if(completerBuilt && !completerDirty)
         return;
 
     refreshFieldCompleter();
+}
+
+
+// Прокачка событий во время долгой сборки: крутилке minimumDuration
+// нужно успевать показаться, иначе вместо нее висит мертвое окно.
+// Только когда главное окно уже показано: на старте (восстановление
+// состояния до первого show()) прокачка из недостроенного UI
+// роняет дерево виджетов - там свой стартовый прогресс,
+// крутилка подсказок не нужна
+void FindScreen::pumpWhileBuilding(void)
+{
+    // См. canPumpEvents выше
+    if(canPumpEvents(this))
+        qApp->processEvents();
 }
 
 // Пересборка словаря подсказок по всем значениям полей,
@@ -1266,18 +1307,48 @@ void FindScreen::refreshFieldCompleter(void)
     if(isVisible()==false)
         return;
 
+    // Окно еще не показано (восстановление состояния до первого
+    // win.show()): сборку откладываем за старт. Модальный диалог
+    // на скрытом родителе и прокачка событий из недостроенного UI
+    // роняют дерево виджетов (см. 500). Там и так висит стартовый
+    // прогресс, повторный вызов придет из showEvent после показа
+    if(!canPumpEvents(this))
+    {
+        completerDirty=true;
+        QTimer::singleShot(0, this, [this]() { ensureCompleter(); });
+        return;
+    }
+
+    // Защита от реентрантного входа: сборка ниже качает события,
+    // повторный ensureCompleter (пауза, метаданные, показ) ждет
+    // конца текущей. Иначе выход из программы посреди сборки
+    // оставляет висячие указатели модели
+    if(completerBuilding)
+        return;
+
+    completerBuilding=true;
+
     // Крутилка на случай долгой сборки: показывается только если
-    // превышен 1с, мелкие базы ее не видят. Кнопки отмены нет:
-    // сборка конечна и нужна самой подсказке
-    QProgressDialog busy(tr("Updating suggestions..."), QString(), 0, 0, this);
-    busy.setCancelButton(nullptr);
-    busy.setMinimumDuration(1000);
-    busy.setModal(true);
-    busy.setWindowTitle(tr("Find in base"));
-    busy.show();
+    // превышен 1с, мелкие базы ее не видят. Кнопки отмены нет и
+    // крестик окна убран: закрыть недособранный словарь нельзя,
+    // сборка конечна (секунды)
+    QScopedPointer<QProgressDialog> busy;
+
+    if(canPumpEvents(this))
+    {
+        busy.reset(new QProgressDialog(tr("Updating suggestions..."), QString(), 0, 0, this));
+        busy->setCancelButton(nullptr);
+        busy->setWindowFlags(busy->windowFlags() & ~Qt::WindowCloseButtonHint);
+        busy->setMinimumDuration(1000);
+        busy->setModal(true);
+        busy->setWindowTitle(tr("Find in base"));
+        busy->show();
+    }
 
     // Словарь собирается по всему дереву: значения из других веток
-    // в подсказке безвредны, зато словарь всегда полный и свежий
+    // в подсказке безвредны, зато словарь всегда полный и свежий.
+    // Модель может отсутствовать если виджет показался раньше
+    // готовности дерева: тогда пустой словарь, достроится позже
     QMap<QString, QStringList> dictionaries;
     QSet<QString> seen;
 
@@ -1286,15 +1357,12 @@ void FindScreen::refreshFieldCompleter(void)
     // Счетчик прокачки событий сквозь рекурсию collectBranchValues
     int pumpCounter=0;
 
-    if(treeView!=nullptr)
-    {
-        KnowTreeModel *searchModel=static_cast<KnowTreeModel*>(treeView->model());
+    KnowTreeModel *searchModel=(treeView!=nullptr)
+        ? static_cast<KnowTreeModel *>(treeView->model())
+        : nullptr;
 
-        const TreeItem *rootItem=searchModel->getRootItem();
-
-        if(rootItem!=nullptr)
-            collectBranchValues(rootItem, dictionaries, seen, pumpCounter);
-    }
+    if(searchModel!=nullptr && searchModel->getRootItem()!=nullptr)
+        collectBranchValues(searchModel->getRootItem(), dictionaries, seen, pumpCounter, this);
 
     // Подсказка показывает объединение словарей отмеченных полей.
     // Тип значения виден по иконке слева, текст значения чистый
@@ -1341,8 +1409,9 @@ void FindScreen::refreshFieldCompleter(void)
               });
 
     // Пачка processEvents чтобы крутилка не замирала на сортировке.
-    // Внутри sort качать нельзя: компаратор обязан быть чистым
-    qApp->processEvents();
+    // Внутри sort качать нельзя: компаратор обязан быть чистым.
+    // Только когда окно уже показано (см. canPumpEvents выше)
+    pumpWhileBuilding();
 
     int fillCounter=0;
 
@@ -1353,7 +1422,7 @@ void FindScreen::refreshFieldCompleter(void)
         fieldCompleterModel->appendRow(item);
 
         if((++fillCounter % 32768)==0)
-            qApp->processEvents();
+            pumpWhileBuilding();
     }
 
     // Подсказывать нечего: ручной привод выключается
@@ -1364,6 +1433,7 @@ void FindScreen::refreshFieldCompleter(void)
 
     completerBuilt=true;
     completerDirty=false;
+    completerBuilding=false;
 
     // Словарь обновился под уже набранный запрос (ветка или заметка
     // созданы после ввода): переподсказать без перепечатывания, но только
@@ -1379,7 +1449,8 @@ void FindScreen::refreshFieldCompleter(void)
 void FindScreen::collectBranchValues(const TreeItem *curritem,
                                      QMap<QString, QStringList> &dictionaries,
                                      QSet<QString> &seen,
-                                     int &pumpCounter)
+                                     int &pumpCounter,
+                                     QWidget *pumpWidget)
 {
     if(curritem==nullptr)
         return;
@@ -1420,15 +1491,17 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
             }
 
             // Долгая сборка качает цикл событий чтобы крутилка
-            // minimumDuration успела показаться и не висело окно
-            if((++pumpCounter % 2048)==0)
+            // minimumDuration успела показаться и не висело окно.
+            // Только когда окно уже показано: на старте прокачка
+            // из недостроенного UI роняет дерево виджетов (см. 500)
+            if((++pumpCounter % 2048)==0 && canPumpEvents(pumpWidget))
                 qApp->processEvents();
         }
     }
 
     // Рекурсивный обход подчиненных веток
     for(int i=0; i<curritem->childCount(); i++)
-        collectBranchValues(curritem->child(i), dictionaries, seen, pumpCounter);
+        collectBranchValues(curritem->child(i), dictionaries, seen, pumpCounter, pumpWidget);
 }
 
 // Добавить слово в словарь поля. Пустые значения отбрасываются,

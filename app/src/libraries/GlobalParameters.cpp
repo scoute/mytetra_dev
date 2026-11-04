@@ -63,7 +63,6 @@ void GlobalParameters::init(void)
 
  // После установки кодеков можно показать имя бинарника, и оно должно отобразиться правильно
  // даже если путь содержит каталог с национальными символами
- qDebug() << "Set main program file to " << m_mainProgramFile;
 
  initWorkDirectory(); // Инициализация рабочей директории
 }
@@ -82,7 +81,6 @@ bool GlobalParameters::initHeadless(void)
 
  initCodepage(); // устанавливаются кодеки локали и кодеки консоли
 
- qDebug() << "Set main program file to " << m_mainProgramFile;
 
  return findWorkDirectory();
 }
@@ -116,10 +114,8 @@ QString GlobalParameters::getInitConsoleCodepage()
 void GlobalParameters::initCodepage(void)
 {
     m_systemCodepage=getInitSystemCodepage();
-    qDebug() << "System code page: " << m_systemCodepage;
 
     m_consoleCodepage=getInitConsoleCodepage();
-    qDebug() << "Console code page: " << m_consoleCodepage;
 
     // Системная кодировка (кодировка локали) устанавливается как основная
     if(m_systemCodepage.size()>0) {
@@ -221,11 +217,9 @@ bool GlobalParameters::findWorkDirectory(void)
  QFileInfo mainProgramFileInfo(m_mainProgramFile);
  QString fullCurrentPath=mainProgramFileInfo.absolutePath();
 
- qDebug() << "Check full current path " << fullCurrentPath;
 
  if(isMytetraIniConfig(fullCurrentPath+"/conf.ini")==true)
   {
-   qDebug() << "Work directory set to path " << fullCurrentPath;
 
    // QDir dir=QDir("./");
    // QDir dir=QDir(QDir::currentPath());
@@ -240,45 +234,36 @@ bool GlobalParameters::findWorkDirectory(void)
    // в поддиректории ".имя_программы"
    QString dir=QDir::homePath()+"/."+getApplicationName();
 
-   qDebug() << "Detect home directory " << dir;
 
    // Если директория существует и в ней есть настоящий файл конфигурации
    if(isMytetraIniConfig(dir+"/conf.ini")==true)
     {
-     qDebug() << "Config init file success find in home directory " << dir;
      m_workDirectory=dir;
     }
    else
     {
      // Иначе директории "~/.имя_программы" нет
      // и нужно пробовать найти данные в "~/.config/имя_программы"
-     qDebug() << "File conf.ini can't' find in home directory " << dir;
 
      dir=QDir::homePath()+"/.config/"+getApplicationName();
 
-     qDebug() << "Try find conf.ini in home subdirectory " << dir;
 
      // Если директория существует и в ней есть настоящий файл конфигурации
      if(isMytetraIniConfig(dir+"/conf.ini")==true)
       {
-       qDebug() << "Config init file success find in home subdirectory " << dir;
        m_workDirectory=dir;
       }
-     else
-      qDebug() << "File conf.ini can't' find in home subdirectory " << dir;
     }
   }
 
  // Если рабочая директория не определена
  if(m_workDirectory.length()==0)
   {
-   qDebug() << "Cant find work directory with mytetra data";
    return false;
   }
  else
   {
    // Иначе рабочая директория установлена
-   qDebug() << "Set work directory to " << m_workDirectory;
 
    // Устанавливается эта директория как рабочая
    if(QDir::setCurrent(m_workDirectory))
@@ -293,23 +278,19 @@ bool GlobalParameters::findWorkDirectory(void)
 // Проверка ini-файла
 bool GlobalParameters::isMytetraIniConfig(QString fileName)
 {
- qDebug() << "Check config file " << fileName;
 
  QFileInfo info(fileName);
 
  // Если файл существует, надо определить, от MyTetra он или от другой программы
  if(info.exists())
   {
-   qDebug() << "Config file " << fileName << " is exists";
 
    // Выясняется имя файла без пути к директории
    QString shortFileName=info.fileName();
-   qDebug() << "Short config file name " << shortFileName;
 
    // Выясняется имя директории из имени файла
    QDir dir=info.dir();
    QString dirName=dir.absolutePath();
-   qDebug() << "Config directory name " << dirName;
 
    // Открывается хранилище настроек
    // todo: Странность в Qt - если указать третьим параметром this в качестве

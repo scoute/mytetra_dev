@@ -8,7 +8,6 @@
 
 #define APPCONFIGUPDATER_VERSION "APPCONFIGUPDATER v.1.0 Build 29.10.2010"
 
-
 AppConfigUpdater::AppConfigUpdater(QObject *pobj) : maxParameterCount(200)
 {
     Q_UNUSED(pobj);
@@ -16,12 +15,10 @@ AppConfigUpdater::AppConfigUpdater(QObject *pobj) : maxParameterCount(200)
     conf=NULL;
 }
 
-
 AppConfigUpdater::~AppConfigUpdater()
 {
     delete conf;
 }
-
 
 void AppConfigUpdater::setConfigFile(QString fileName)
 {
@@ -36,7 +33,6 @@ void AppConfigUpdater::setConfigFile(QString fileName)
     conf->setPath(QSettings::IniFormat, QSettings::UserScope,"./");
     conf->setPath(QSettings::IniFormat, QSettings::SystemScope,"./");
 }
-
 
 // Обновление значения в случае,
 // если значение есть в конфиге, но его представление нужно изменить
@@ -79,7 +75,6 @@ QString AppConfigUpdater::updateValueRepresentation(int versionFrom,
     return value;
 }
 
-
 // Метод разрешения конфликтов
 // Должен включать в себя логику обработки только тех параметров
 // и только для тех версий конфигов, которые действительно
@@ -108,7 +103,6 @@ QString AppConfigUpdater::updateVersionAllowCollision(int versionFrom,
     return QString();
 }
 
-
 // Основной метод обновления версий конфига
 // baseTable - Структура таблицы, которая есть в данный момент
 // finalTable - Структура таблицы, на которую надо обновиться
@@ -117,6 +111,11 @@ void AppConfigUpdater::updateVersion(int versionFrom,
                                      QStringList baseTable,
                                      QStringList finalTable)
 {
+    // Один шаг миграции - одна строка: видно что обновление идет
+    // и на каком шаге встало, если встало. Попарметровый дамп
+    // (сотни строк на шаг) удален - пользователю он не нужен
+    qDebug() << "Update config version from " << versionFrom << " to " << versionTo;
+
     // Структура таблица исходных параметров преобразуется к более удобному для работы виду
     QMap< QString, QMap< QString, QString > > fromTable;
     for(int i=0; i<maxParameterCount; i++)
@@ -138,7 +137,6 @@ void AppConfigUpdater::updateVersion(int versionFrom,
         // Для текущего имени параметра запоминается массив его свойств
         fromTable[name]=line;
     }
-
 
     // Таблица конечных параметров преобразуется к более удобному для работы виду
     // Параллельно создаётся список контролирующий обработанные параметры
@@ -172,11 +170,6 @@ void AppConfigUpdater::updateVersion(int versionFrom,
         controlList << name;
     }
 
-    qDebug() << "From table";
-    qDebug() << fromTable;
-    qDebug() << "To table";
-    qDebug() << toTable;
-
     // Перебирается конечный массив toTable
     QMapIterator< QString, QMap< QString, QString > > i(toTable);
     while(i.hasNext())
@@ -188,11 +181,6 @@ void AppConfigUpdater::updateVersion(int versionFrom,
         QMap< QString, QString > line=i.value();
         QString toType=line["type"];
         QString toDefValue=line["defValue"];
-
-        qDebug() << "To name: " << toName;
-        qDebug() << "To type: " << toType;
-        qDebug() << "To default value: " << toDefValue;
-
 
         // Определяется, есть ли полный аналог параметра в предыдущей версии конфига
         BeforeParamFlag beforeParamFlag = BeforeParamFlag::BEFORE_PARAM_NON_EXISTS;
@@ -207,16 +195,11 @@ void AppConfigUpdater::updateVersion(int versionFrom,
             fromType=line2["type"];
             fromDefValue=line2["defValue"];
 
-            qDebug() << "Line2: " << line2;
-            qDebug() << "From type: " << fromType;
-            qDebug() << "From default value: " << fromDefValue;
-
             if (toType==fromType)
                 beforeParamFlag=BeforeParamFlag::BEFORE_PARAM_EXISTS_AND_SAME_TYPE; // Параметр есть, и типы совпадают
             else
                 beforeParamFlag=BeforeParamFlag::BEFORE_PARAM_EXISTS_AND_OTHER_TYPE; // Параметр есть, но типы не совпадают
         }
-
 
         // Параметра в предыдущей версии конфига не было
         if (beforeParamFlag==BeforeParamFlag::BEFORE_PARAM_NON_EXISTS)
@@ -227,7 +210,6 @@ void AppConfigUpdater::updateVersion(int versionFrom,
             // Параметр из контролирующего массива исключается
             controlList.removeOne(toName);
         }
-
 
         // Параметр в предыдущей версии конфига есть, и типы совпадают
         if (beforeParamFlag==BeforeParamFlag::BEFORE_PARAM_EXISTS_AND_SAME_TYPE)
@@ -257,7 +239,6 @@ void AppConfigUpdater::updateVersion(int versionFrom,
             controlList.removeOne(toName);
         }
 
-
         // Параметр в предыдущей версии конфига есть, но типы не совпадают
         // Пока этот функционал не реализован и внутри updateVersionAllowCollision()
         // будет возникать ошибка
@@ -275,7 +256,6 @@ void AppConfigUpdater::updateVersion(int versionFrom,
         }
 
     } // Закрылся перебор конечного массива
-
 
     // Если в контролирующем массиве остались необработанные параметры
     if(controlList.size()>0)
@@ -317,4 +297,3 @@ void AppConfigUpdater::updateVersion(int versionFrom,
     // Конфигурация записывается на диск
     conf->sync();
 }
-

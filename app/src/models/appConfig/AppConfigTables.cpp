@@ -191,6 +191,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_59;
     parameterFunctions << &AppConfig::get_parameter_table_60;
     parameterFunctions << &AppConfig::get_parameter_table_61;
+    parameterFunctions << &AppConfig::get_parameter_table_62;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -1390,9 +1391,31 @@ QStringList AppConfig::get_parameter_table_61(bool withEndSignature)
 }
 
 
+QStringList AppConfig::get_parameter_table_62(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 61
+    table << get_parameter_table_61(false);
+
+    // Режим полной статистики: 0 - спрашивать, 1 - всегда считать,
+    // 2 - никогда (только быстрая). Лимит записей для автосчета
+    // полной статистики без вопросов. Чистое добавление ключей
+    table << "statsMode" << "int" << "0";
+    table << "statsLimit" << "int" << "1000";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList AppConfig::get_actual_parameter_table(bool withEndSignature)
 {
     // Актуальная таблица = последняя по номеру версии.
     // При добавлении get_parameter_table_N поменять здесь один вызов
-    return get_parameter_table_61(withEndSignature);
+    return get_parameter_table_62(withEndSignature);
 }

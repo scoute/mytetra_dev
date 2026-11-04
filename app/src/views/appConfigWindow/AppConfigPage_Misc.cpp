@@ -6,6 +6,8 @@
 #include <QSpinBox>
 #include <QGroupBox>
 #include <QPushButton>
+#include <QRadioButton>
+#include <QLabel>
 
 #include "AppConfigPage_Misc.h"
 #include "models/appConfig/AppConfig.h"
@@ -13,6 +15,7 @@
 #include "libraries/helpers/ConfigEditorHelper.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigRecordTable.h"
+#include "models/appConfig/AppConfigUi.h"
 #include "models/appConfig/AppConfigGeneral.h"
 #include "models/appConfig/AppConfigServices.h"
 #include "models/appConfig/AppConfigSync.h"
@@ -78,6 +81,24 @@ void AppConfigPage_Misc::setupUi(void)
        "and files from such sites anyway, but an attacker on the network "
        "could substitute the content. Default: off."));
 
+  // Статистика базы: политика полной статистики и лимит записей
+  // для автосчета без вопросов (тот же выбор что в стартовом диалоге)
+  statsBox=new QGroupBox(this);
+
+  statsAsk=new QRadioButton(this);
+  statsAlways=new QRadioButton(this);
+  statsNever=new QRadioButton(this);
+
+  const int statsMode=AppContext::instance().appConfig()->uiSection()->get_statsMode();
+  statsAsk->setChecked(statsMode==0);
+  statsAlways->setChecked(statsMode==1);
+  statsNever->setChecked(statsMode==2);
+
+  statsLimitLabel=new QLabel(this);
+  statsLimit=new QSpinBox(this);
+  statsLimit->setRange(0, 1000000);
+  statsLimit->setValue(AppContext::instance().appConfig()->uiSection()->get_statsLimit());
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -113,6 +134,19 @@ void AppConfigPage_Misc::assembly(void)
   networkLayout->addWidget(tlsIgnoreInvalidCertificates);
   networkBox->setLayout(networkLayout);
 
+  // Группа статистики: радиокнопки политики и лимит в одну строку
+  QVBoxLayout *statsLayout=new QVBoxLayout;
+  statsLayout->addWidget(statsAsk);
+  statsLayout->addWidget(statsAlways);
+  statsLayout->addWidget(statsNever);
+
+  QHBoxLayout *statsLimitLayout=new QHBoxLayout;
+  statsLimitLayout->addWidget(statsLimitLabel);
+  statsLimitLayout->addWidget(statsLimit);
+  statsLimitLayout->addStretch(1);
+  statsLayout->addLayout(statsLimitLayout);
+  statsBox->setLayout(statsLayout);
+
   // Собирается основной слой
   QVBoxLayout *centralLayout=new QVBoxLayout();
   centralLayout->addWidget(printDebugMessages);
@@ -120,6 +154,7 @@ void AppConfigPage_Misc::assembly(void)
   centralLayout->addWidget(enableCreateEmptyRecord);
   centralLayout->addWidget(autosaveBox);
   centralLayout->addWidget(networkBox);
+  centralLayout->addWidget(statsBox);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
 
@@ -142,6 +177,12 @@ void AppConfigPage_Misc::retranslateUi(void)
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
   autosaveBox->setTitle(tr("Autosave"));
   autosaveEnable->setText(tr("Enable autosave, min"));
+
+  statsBox->setTitle(tr("Statistics"));
+  statsAsk->setText(tr("Ask about full statistics each time"));
+  statsAlways->setText(tr("Always compute full statistics"));
+  statsNever->setText(tr("Never compute full statistics (fast only)"));
+  statsLimitLabel->setText(tr("Auto-compute full statistics below this note count"));
 
   networkBox->setTitle(tr("Network and certificates"));
   tlsIgnoreInvalidCertificates->setText(
@@ -196,6 +237,21 @@ int AppConfigPage_Misc::applyChanges(void)
   // перезапуск не нужен
   if(AppContext::instance().appConfig()->servicesSection()->get_tlsIgnoreInvalidCertificates()!=tlsIgnoreInvalidCertificates->isChecked())
     AppContext::instance().appConfig()->servicesSection()->set_tlsIgnoreInvalidCertificates(tlsIgnoreInvalidCertificates->isChecked());
+
+  // Статистика: политика и лимит применяются сразу,
+  // следующий пересчет пойдет по новым правилам
+  int statsMode=0;
+
+  if(statsAlways->isChecked())
+    statsMode=1;
+  else if(statsNever->isChecked())
+    statsMode=2;
+
+  if(AppContext::instance().appConfig()->uiSection()->get_statsMode()!=statsMode)
+    AppContext::instance().appConfig()->uiSection()->set_statsMode(statsMode);
+
+  if(AppContext::instance().appConfig()->uiSection()->get_statsLimit()!=statsLimit->value())
+    AppContext::instance().appConfig()->uiSection()->set_statsLimit(statsLimit->value());
 
   return result;
 }

@@ -152,7 +152,11 @@ QTableWidget *MainWindow::buildStatsTableWidget(QWidget *parent)
     QList<BaseStatRow> rows;
 
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
-        rows=treeScreen->knowTreeModel->getBaseStatRows();
+    {
+        KnowTreeModel *model=treeScreen->knowTreeModel;
+        rows=model->getBaseStatRows(model->isFullStats() ? KnowTreeModel::StatsLevel::Full
+                                                         : KnowTreeModel::StatsLevel::Fast);
+    }
 
     QTableWidget *table=new QTableWidget(parent);
     table->setColumnCount(6);

@@ -672,7 +672,8 @@ QJsonObject McpTools::baseStats(bool detailed)
   int links=0;
   int tags=0;
 
-  m_model->getBaseStats(branches, records, files, images, links, tags);
+  m_model->getBaseStats(branches, records, files, images, links, tags,
+                          KnowTreeModel::StatsLevel::Full);
 
   result["branches"]=branches;
   result["records"]=records;
@@ -683,7 +684,7 @@ QJsonObject McpTools::baseStats(bool detailed)
 
   if(detailed)
   {
-    QList<BaseStatRow> all=m_model->getBaseStatRows();
+    QList<BaseStatRow> all=m_model->getBaseStatRows(KnowTreeModel::StatsLevel::Full);
 
     QJsonArray rows;
 

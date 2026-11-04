@@ -30,6 +30,7 @@ compile_probe() {
     -I$APP -I$APP/src -I$QT/include \
     -I$QT/include/QtCore -I$QT/include/QtWidgets -I$QT/include/QtGui \
     -I$QT/include/QtXml -I$QT/include/QtNetwork -I$QT/include/QtMultimedia \
+    -I$QT/include/QtSql -I$QT/include/QtConcurrent \
     -I$APP/../thirdParty/ogg/include -I$APP/../thirdParty/opus/include \
     -I$APP/../thirdParty/monocypher -I$APP/../thirdParty/qcodeeditor/include \
     -c "$APP/tests/$name.cpp" -o "$OUT/$name.o" || return 1
@@ -39,6 +40,7 @@ compile_probe() {
     -L$APP/../thirdParty/monocypher/build/lib -lmonocypher \
     -lm -L$QT/lib \
     -lQt5Test -lQt5Svg -lQt5PrintSupport -lQt5Widgets -lQt5Multimedia \
+    -lQt5Sql -lQt5Concurrent \
     -lQt5Gui -lQt5Xml -lQt5Network -lQt5Core -lGL -lpthread || return 1
   echo "LINK-DONE $name"
 }
@@ -74,6 +76,7 @@ g++ -fPIC -std=gnu++1y -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB \
   -I$APP -I$APP/src -I$QT/include \
   -I$QT/include/QtCore -I$QT/include/QtWidgets -I$QT/include/QtGui \
   -I$QT/include/QtXml -I$QT/include/QtNetwork -I$QT/include/QtMultimedia \
+  -I$QT/include/QtSql -I$QT/include/QtConcurrent \
   -I$APP/../thirdParty/ogg/include -I$APP/../thirdParty/opus/include \
   -I$APP/../thirdParty/monocypher \
   -c $APP/src/main.cpp -o $OUT/edprobe/main_renamed.o || exit 1

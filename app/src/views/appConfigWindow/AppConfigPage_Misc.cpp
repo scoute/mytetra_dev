@@ -26,6 +26,11 @@ AppConfigPage_Misc::AppConfigPage_Misc(QWidget *parent) : ConfigPage(parent)
   setupUi();
   setupSignals();
   assembly();
+
+  // Тексты группы статистики задаются только в retranslateUi
+  // (как у Theme/Voice): без этого вызова радиокнопки и лимит
+  // остаются без надписей до первой смены языка (см. 504)
+  retranslateUi();
 }
 
 AppConfigPage_Misc::~AppConfigPage_Misc()

@@ -12,6 +12,7 @@ class QItemSelectionModel;
 class QVBoxLayout;
 class QToolBar;
 class QLineEdit;
+class QTimer;
 
 class KnowTreeModel;
 class KnowTreeView;
@@ -103,8 +104,15 @@ public slots:
 private slots:
 
  // Фильтрация дерева по подстроке имени: совпадения и их цепочки
- // предков видны, остальное прячется. Пустая строка — вернуть все
+ // предков видны, остальное прячется. Пустая строка — вернуть все.
+ // Вызывается только по паузе в наборе (см. onTreeFilterTextChanged),
+ // иначе каждая буква стоит полного обхода дерева
  void applyTreeFilter(const QString &text);
+
+ // Набор в фильтре: перезапуск паузы 300мс. Сам фильтр тяжелый
+ // (обход + прятанье строк), на каждую букву его гнать нельзя
+ void onTreeFilterTextChanged(const QString &text);
+ void onTreeFilterPause(void);
 
  // Контекстное меню тулбара на пустом месте: единственный пункт -
  // настройка порядка и видимости кнопок
@@ -191,6 +199,11 @@ private:
  // (setRowHidden), а не прокси-моделью: индексы исходной модели
  // остаются целыми и весь остальной код дерева не трогается
  QLineEdit *treeFilterEdit;
+
+ // Пауза в наборе фильтра: на каждую букву полный обход дерева
+ // с прятаньем строк, ввод висит. Фильтр применяется если
+ // пользователь остановился на 300мс
+ QTimer *treeFilterTimer=nullptr;
 
  // Избранное между тулбаром веток и деревом. Прячется когда пусто
  FavoritesPanel *favoritesPanel=nullptr;

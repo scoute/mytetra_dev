@@ -11,6 +11,7 @@
 #include <QToolBar>
 #include <QLineEdit>
 #include <QInputDialog>
+#include <QTimer>
 
 #include "views/mainWindow/MainWindow.h"
 #include <QProgressDialog>
@@ -236,6 +237,21 @@ void TreeScreen::applyTreeFilter(const QString &text)
   }
 
   filterBranches(QModelIndex(), text);
+}
+
+// Набор в строке фильтра: перезапуск паузы. Сам фильтр тяжелый,
+// применяется только когда пользователь остановился
+void TreeScreen::onTreeFilterTextChanged(const QString &text)
+{
+  Q_UNUSED(text);
+
+  treeFilterTimer->start();
+}
+
+// Пауза выдержана: фильтровать по текущему тексту
+void TreeScreen::onTreeFilterPause(void)
+{
+  applyTreeFilter(treeFilterEdit->text());
 }
 
 // Совпадение или видимый потомок — показать, предков совпадений
@@ -709,9 +725,17 @@ void TreeScreen::setupSignals(void)
  connect(knowTreeView, &KnowTreeView::customContextMenuRequested,
          this,         &TreeScreen::onCustomContextMenuRequested);
 
- // Фильтр дерева: живой поиск по подстроке имени
+ // Фильтр дерева: живой поиск по подстроке имени, но с паузой:
+ // полный обход с прятаньем строк на каждую букву вешает ввод
+ treeFilterTimer=new QTimer(this);
+ treeFilterTimer->setSingleShot(true);
+ treeFilterTimer->setInterval(300);
+
+ connect(treeFilterTimer, &QTimer::timeout,
+         this,             &TreeScreen::onTreeFilterPause);
+
  connect(treeFilterEdit, &QLineEdit::textChanged,
-         this,            &TreeScreen::applyTreeFilter);
+         this,            &TreeScreen::onTreeFilterTextChanged);
 
  // Контекстное меню тулбара: только на пустом месте, там единственный
  // пункт настройки порядка и видимости кнопок

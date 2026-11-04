@@ -1234,6 +1234,48 @@ int KnowTreeModel::getAllRecordCount(void)
   return getAllRecordCountRecurse(rootItem, 1);
 }
 
+// Все записи одним нерекурсивным обходом: тот же порядок что
+// в ensureStats (родитель, затем дети по порядку)
+QList<KnowTreeModel::RecordFileRef> KnowTreeModel::getAllRecordFileRefs(void)
+{
+  QList<RecordFileRef> refs;
+
+  QList<TreeItem *> stack;
+  stack << rootItem;
+
+  while(!stack.isEmpty())
+  {
+    TreeItem *item=stack.takeLast();
+
+    if(item==nullptr)
+      continue;
+
+    RecordTableData *recordTable=item->recordtableGetTableData();
+
+    if(recordTable!=nullptr)
+    {
+      for(unsigned i=0; i<recordTable->size(); ++i)
+      {
+        Record *record=recordTable->getRecord(i);
+
+        if(record==nullptr)
+          continue;
+
+        RecordFileRef ref;
+        ref.id=record->getField(QStringLiteral("id"));
+        ref.dir=record->getField(QStringLiteral("dir"));
+        ref.file=record->getField(QStringLiteral("file"));
+        refs.append(ref);
+      }
+    }
+
+    for(int i=item->childCount()-1; i>=0; --i)
+      stack << item->child(i);
+  }
+
+  return refs;
+}
+
 // Возвращает общее количество веток в дереве (невидимый корень не считается)
 int KnowTreeModel::getBranchCount(void) const
 {

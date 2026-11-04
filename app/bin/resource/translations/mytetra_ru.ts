@@ -5842,6 +5842,30 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Counting records...</source>
         <translation>Подсчет записей...</translation>
     </message>
+    <message>
+        <source>Backlink index</source>
+        <translation>Индекс обратных ссылок</translation>
+    </message>
+    <message>
+        <source>The backlink index is missing for %1 records. Building it scans all note texts and takes a while. Build now?</source>
+        <translation>Индекс обратных ссылок отсутствует для %1 записей. Построение читает тексты всех заметок и занимает время. Построить сейчас?</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Позже</translation>
+    </message>
+    <message>
+        <source>Build</source>
+        <translation>Построить</translation>
+    </message>
+    <message>
+        <source>Indexing notes...</source>
+        <translation>Индексация заметок...</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

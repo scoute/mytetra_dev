@@ -50,12 +50,15 @@ bool BacklinkIndex::isLoaded(void) const
 
 void BacklinkIndex::ensureLoaded(void)
 {
-  if(m_loaded)
+  // Загруженный, но от другой базы (подмена снаружи при живом
+  // сайдкаре): грузить врунью нельзя, только перестроение. Проверка
+  // дешевая - обход дерева без чтения текстов
+  if(m_loaded && isFresh())
     return;
 
-  if(!load())
+  if(!load() || !isFresh())
   {
-    // Сайдкара нет: первый запуск, строим полным сканом
+    // Сайдкара нет, он бит или от другой базы: полный скан
     m_loaded=true;
     buildFull();
     return;
@@ -75,6 +78,13 @@ bool BacklinkIndex::load(void)
   QXmlStreamReader xml(&file);
   if(!xml.readNextStartElement() || xml.name()!=QStringLiteral("backlinks"))
     return false;
+
+  // Число записей на момент записи сайдкара. Нет атрибута -
+  // сайдкар от старой версии, свежесть не проверить
+  if(xml.attributes().hasAttribute(QStringLiteral("records")))
+    m_sidecarRecords=xml.attributes().value(QStringLiteral("records")).toInt();
+  else
+    m_sidecarRecords=-1;
 
   while(xml.readNextStartElement())
   {
@@ -116,6 +126,14 @@ bool BacklinkIndex::save(void) const
   xml.writeStartElement(QStringLiteral("backlinks"));
   xml.writeAttribute(QStringLiteral("version"), QStringLiteral("1"));
 
+  // Число записей дерева на момент записи: проверка свежести при
+  // загрузке ловит базу, подмененную снаружи при живом сайдкаре.
+  // Все мутации идут через save(), счетчик всегда актуален.
+  // Член тоже обновляется: свежесть проверяется и без перезагрузки
+  const int recordCount=currentRecordCount();
+  m_sidecarRecords=recordCount;
+  xml.writeAttribute(QStringLiteral("records"), QString::number(recordCount));
+
   for(auto it=m_forward.constBegin(); it!=m_forward.constEnd(); ++it)
     for(const QString &target : it.value())
     {
@@ -140,6 +158,52 @@ bool BacklinkIndex::save(void) const
 void BacklinkIndex::loadOrBuild(void)
 {
   ensureLoaded();
+}
+
+
+void BacklinkIndex::loadOnly(void)
+{
+  m_forward.clear();
+  m_reverse.clear();
+  m_sidecarRecords=-1;
+
+  m_loaded=load();
+}
+
+
+bool BacklinkIndex::isFresh(void) const
+{
+  if(!m_loaded)
+    return false;
+
+  // Сайдкар от старой версии без счетчика: свежесть не проверить,
+  // честно считается несвежим и перестроится один раз
+  if(m_sidecarRecords<0)
+    return false;
+
+  KnowTreeModel *model=const_cast<BacklinkIndex *>(this)->treeModel();
+
+  if(model==nullptr)
+    return true;
+
+  QSet<QString> ids;
+  const_cast<BacklinkIndex *>(this)->collectAllRecordIds(ids);
+
+  return ids.size()==m_sidecarRecords;
+}
+
+
+int BacklinkIndex::currentRecordCount(void) const
+{
+  KnowTreeModel *model=const_cast<BacklinkIndex *>(this)->treeModel();
+
+  if(model==nullptr)
+    return -1;
+
+  QSet<QString> ids;
+  const_cast<BacklinkIndex *>(this)->collectAllRecordIds(ids);
+
+  return ids.size();
 }
 
 void BacklinkIndex::rebuildReverse(void)
@@ -196,6 +260,16 @@ QString BacklinkIndex::recordTextFileName(const QString &recordId) const
   // getFullTextFileName() у Record защищен, собирается из публичных полей
   const QString dir=record->getField(QStringLiteral("dir"));
   const QString file=record->getField(QStringLiteral("file"));
+
+  return textFileName(dir, file);
+}
+
+
+// Путь к тексту по паре dir/file без поиска записи в дереве.
+// Тяжелым сканам нельзя ходить getRecord(id): рекурсия по дереву
+// на каждую из 100k+ записей дает O(n^2) (см. 494)
+QString BacklinkIndex::textFileName(const QString &dir, const QString &file)
+{
   if(dir.isEmpty() || file.isEmpty())
     return QString();
 
@@ -275,12 +349,22 @@ int BacklinkIndex::purgeMissing(void)
 {
   ensureLoaded();
 
+  // Без модели как раньше ничего не вычищается (recordExists
+  // возвращал true), иначе пустой набор id снес бы весь индекс
+  if(treeModel()==nullptr)
+    return 0;
+
+  // Все id дерева одним проходом: проверка каждой пары поиском
+  // по дереву давала O(n^2) (см. 494)
+  QSet<QString> ids;
+  collectAllRecordIds(ids);
+
   int removed=0;
 
   // Пары с несуществующим источником уходят целиком
   for(auto it=m_forward.begin(); it!=m_forward.end();)
   {
-    if(!recordExists(it.key()))
+    if(!ids.contains(it.key()))
     {
       removed+=it.value().size();
       it=m_forward.erase(it);
@@ -290,7 +374,7 @@ int BacklinkIndex::purgeMissing(void)
     // Цели-призраки вычищаются из списков
     for(auto jt=it.value().begin(); jt!=it.value().end();)
     {
-      if(!recordExists(*jt))
+      if(!ids.contains(*jt))
       {
         jt=it.value().erase(jt);
         removed++;
@@ -327,16 +411,31 @@ void BacklinkIndex::collectAllRecordIds(QSet<QString> &ids) const
     ids.unite(*all.data());
 }
 
-void BacklinkIndex::buildFull(void)
+void BacklinkIndex::buildFull(QAtomicInt *cancel)
 {
   m_forward.clear();
 
-  QSet<QString> ids;
-  collectAllRecordIds(ids);
+  // Один обход O(n): поиск каждой записи по id рекурсией
+  // по дереву давал O(n^2), на 100k+ минуты вместо секунд (см. 494)
+  KnowTreeModel *model=treeModel();
 
-  for(const QString &id : ids)
+  QList<KnowTreeModel::RecordFileRef> refs;
+
+  if(model!=nullptr)
+    refs=model->getAllRecordFileRefs();
+
+  const int total=refs.size();
+  int done=0;
+
+  for(const auto &ref : refs)
   {
-    const QString fileName=recordTextFileName(id);
+    // Отмена из диалога: прерывание честное, частичный индекс
+    // сохраняется ниже, дырки доберет ensureIndexed()
+    if(cancel!=nullptr && cancel->loadAcquire()!=0)
+      break;
+
+    const QString fileName=textFileName(ref.dir, ref.file);
+
     if(fileName.isEmpty())
       continue;
 
@@ -344,13 +443,21 @@ void BacklinkIndex::buildFull(void)
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
       continue;
 
-    const QSet<QString> outgoing=parseOutgoing(id, QString::fromUtf8(file.readAll()));
+    const QSet<QString> outgoing=parseOutgoing(ref.id, QString::fromUtf8(file.readAll()));
     if(!outgoing.isEmpty())
-      m_forward[id]=outgoing;
+      m_forward[ref.id]=outgoing;
+
+    // Прогресс пачками: сигнал без подписчиков почти бесплатен
+    if((++done % 100)==0)
+      emit buildProgress(done, total);
   }
+
+  emit buildProgress(done, total);
 
   rebuildReverse();
   save();
+
+  m_loaded=true;
 
   emit backlinksChanged();
 }
@@ -359,17 +466,23 @@ int BacklinkIndex::ensureIndexed(void)
 {
   ensureLoaded();
 
-  QSet<QString> ids;
-  collectAllRecordIds(ids);
+  // Тот же линейный обход что в buildFull: поиск по id рекурсией
+  // давал O(n^2) на недостающих записях (см. 494)
+  KnowTreeModel *model=treeModel();
+
+  QList<KnowTreeModel::RecordFileRef> refs;
+
+  if(model!=nullptr)
+    refs=model->getAllRecordFileRefs();
 
   int added=0;
 
-  for(const QString &id : ids)
+  for(const auto &ref : refs)
   {
-    if(m_forward.contains(id))
+    if(m_forward.contains(ref.id))
       continue;
 
-    const QString fileName=recordTextFileName(id);
+    const QString fileName=textFileName(ref.dir, ref.file);
     if(fileName.isEmpty())
       continue;
 
@@ -377,10 +490,10 @@ int BacklinkIndex::ensureIndexed(void)
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
       continue;
 
-    const QSet<QString> outgoing=parseOutgoing(id, QString::fromUtf8(file.readAll()));
+    const QSet<QString> outgoing=parseOutgoing(ref.id, QString::fromUtf8(file.readAll()));
     if(!outgoing.isEmpty())
     {
-      m_forward[id]=outgoing;
+      m_forward[ref.id]=outgoing;
       added++;
     }
   }

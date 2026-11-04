@@ -206,7 +206,14 @@ void KnowTreeModel::setupModelData(QDomDocument *dommodel, TreeItem *parent)
     return;
    }
 
+  // Всего веток для прогресса: один обход DOM по памяти, дешево
+  // даже на 100k+ базе. Сам разбор ниже - второй обход с построением
+  m_loadTotal=dommodel->elementsByTagName(QStringLiteral("node")).count();
+  m_loadDone=0;
+
   parseNodeElement(contentRootNode, parent);
+
+  emit loadProgress(m_loadDone, m_loadTotal);
 
   return;
 }
@@ -251,6 +258,10 @@ void KnowTreeModel::parseNodeElement(QDomElement domElement, TreeItem *iParent)
 
       // В дерево разделов устанавливаются считанные атрибуты (сразу все значения)
       parent->child(parent->childCount()-1)->setAllFieldDirect(nameAndValue);
+
+      // Прогресс разбора пачками: одна ветка готова
+      if((++m_loadDone % 25)==0)
+        emit loadProgress(m_loadDone, m_loadTotal);
 
       // Вызов перебора оставшегося DOM дерева с прикреплением обнаруженных объектов
       // к только что созданному элементу
@@ -1521,18 +1532,15 @@ void KnowTreeModel::ensureStats(StatsLevel level)
 
       refStatsSets(noteLinks, noteTags);
 
-      // Прогресс только долгого Full-прохода и тоже пачками: сигнал
-      // без подписчиков почти бесплатен, диалог обновляется в слоте
-      // с processEvents. Быстрый проход идет молча - секунды даже на 100k
-      if(full && (++doneRecords % 100)==0)
+      // Прогресс пачками и в быстром проходе тоже: на 100k+ базе
+      // это секунды, стартовый диалог показывает движение.
+      // Сигнал без подписчиков почти бесплатен
+      if((++doneRecords % 100)==0)
         emit statsProgress(doneRecords, totalRecords);
-      else if(!full)
-        ++doneRecords;
     }
   }
 
-  if(full)
-    emit statsProgress(totalRecords, totalRecords);
+  emit statsProgress(totalRecords, totalRecords);
 
   m_statsFull=full;
   m_statsDirty=false;
@@ -1848,7 +1856,16 @@ void KnowTreeModel::recountSubtreeTotals(void)
       total+=item->child(c)->subtreeRecordCount();
 
     item->setSubtreeTotal(total);
+
+    // Прогресс пачками: проход чисто по памяти, миллисекунды,
+    // но на всякий случай видно движение и здесь
+    const int done=order.size()-i;
+
+    if((done % 1000)==0)
+      emit loadProgress(done, order.size());
   }
+
+  emit loadProgress(order.size(), order.size());
 }
 
 QList<NoteIndexEntry> KnowTreeModel::getNoteIndex(void)

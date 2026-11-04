@@ -12,6 +12,10 @@
 #include <QLineEdit>
 #include <QInputDialog>
 
+#include "views/mainWindow/MainWindow.h"
+#include <QProgressDialog>
+#include <QCoreApplication>
+
 #include "TreeScreen.h"
 #include "KnowTreeView.h"
 #include "KnowTreeDelegate.h"
@@ -539,10 +543,32 @@ void TreeScreen::setupModels(void)
  // knowTreeModel->setHeaders(headers);
 
  // Загрузка данных: только дерево из mytetra.xml (секунды даже
- // на 100k+ базе). Статистика здесь больше не греется: быстрый
- // уровень посчитается сам в MainWindow::updateStats за секунды,
- // а полный предложится после показа окна (см. checkFullStatsOffer)
+ // на 100k+ базе). Идет под стартовым диалогом главного окна:
+ // фазы и прогресс те же что у статистики после старта
+ MainWindow *mainWindow=qobject_cast<MainWindow *>(parentWidget());
+ QProgressDialog *startupProgress=(mainWindow!=nullptr) ? mainWindow->startupProgressDialog() : nullptr;
+
+ if(startupProgress!=nullptr)
+ {
+   startupProgress->setLabelText(tr("Reading database tree..."));
+
+   QObject::connect(knowTreeModel, &KnowTreeModel::loadProgress,
+                    startupProgress, [&](int done, int total) {
+     if(startupProgress->maximum()!=total)
+       startupProgress->setMaximum(total);
+     startupProgress->setValue(done);
+     QCoreApplication::processEvents();
+   });
+ }
+
  knowTreeModel->initFromXML( AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/mytetra.xml" );
+
+ if(startupProgress!=nullptr)
+ {
+   QObject::disconnect(knowTreeModel, &KnowTreeModel::loadProgress,
+                       startupProgress, nullptr);
+   startupProgress->setValue(startupProgress->maximum());
+ }
 
  // Модель подключется к виду
  knowTreeView->setModel(knowTreeModel);

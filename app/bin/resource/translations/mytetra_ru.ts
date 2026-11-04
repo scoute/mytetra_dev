@@ -1318,6 +1318,10 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <translation>Фильтр веток...</translation>
     </message>
     <message>
+        <source>Reading database tree...</source>
+        <translation>Чтение дерева базы...</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
@@ -5865,6 +5869,10 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <source>Cancel</source>
         <translation>Отмена</translation>
+    </message>
+    <message>
+        <source>Loading...</source>
+        <translation>Загрузка...</translation>
     </message>
 </context>
 <context>

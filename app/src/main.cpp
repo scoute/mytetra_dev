@@ -421,6 +421,10 @@ int main(int argc, char ** argv)
     // при старте внутри загрузки темы их ещё не было
     CssHelper::applyCustomDesign();
 
+    // Окно показано: стартовый прогресс больше не нужен.
+    // Дальше только свои диалоги (статистика, индекс)
+    win.hideStartupProgress();
+
     // Восстановление видимости виджета, который был активный, для мобильного интерфейса
     if (AppContext::instance().appConfig()->uiSection()->getInterfaceMode()=="mobile")
         globalParameters.getWindowSwitcher()->restoreFocusWidget();

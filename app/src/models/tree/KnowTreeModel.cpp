@@ -970,6 +970,9 @@ void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branch
     // Новая ветка превращается в зашифрованную
     newBranch->switchToEncrypt();
   }
+
+  // Новая ветка: id-индекс в пересборку
+  m_idIndexDirty=true;
 }
 
 // Добавление новой подветки к указанной ветке из буфера обмена
@@ -1114,6 +1117,9 @@ bool KnowTreeModel::moveBranch(const QString &sourceId, const QString &targetId,
         const int moved=source->subtreeRecordCount();
         oldParent->addSubtreeDelta(-moved);
         newParent->addSubtreeDelta(moved);
+
+        // Пути веток сменились: id-индекс в пересборку
+        m_idIndexDirty=true;
     }
 
     return moveok;
@@ -1356,6 +1362,10 @@ QList<BaseStatRow> KnowTreeModel::getBaseStatRows(StatsLevel level)
 void KnowTreeModel::invalidateStats(void)
 {
   m_statsDirty=true;
+
+  // Тот же сброс для id-индекса: записи и ветки сдвинулись,
+  // старые указатели отдавать нельзя
+  m_idIndexDirty=true;
 }
 
 // Одна запись из кеша вон: distinct-наборы через счетчики
@@ -1723,77 +1733,17 @@ int KnowTreeModel::getAllRecordCountRecurse(TreeItem const *item, int mode) cons
 // Проверка наличия идентификатора ветки во всем дереве
 bool KnowTreeModel::isItemIdExists(QString findId) const
 {
-  // Обнуление счетчика
-  isItemIdExistsRecurse(rootItem, findId, 0);
+  ensureIdIndex();
 
-  return isItemIdExistsRecurse(rootItem, findId, 1);
-}
-
-bool KnowTreeModel::isItemIdExistsRecurse(TreeItem *item, QString findId, int mode) const
-{
-  static bool isExists=false;
-
-  // Инициализация
-  if(mode==0)
-  {
-    isExists=false;
-    return false;
-  }
-
-  // Если ветка найдена, дальше проверять не имеет смысла. Это условие ускоряет возврат из рекурсии.
-  if(isExists)
-    return true;
-
-  // Если текущая ветка содержит искомый идетнификатор
-  if(item->getField("id")==findId)
-  {
-    isExists=true;
-    return true;
-  }
-
-  // Перебираются подветки
-  for(int i=0; i < item->childCount(); i++)
-    isItemIdExistsRecurse(item->child(i), findId, 1);
-
-  return isExists;
+  return m_branchItems.contains(findId);
 }
 
 // Проверка наличия идентификатора записи во всем дереве
 bool KnowTreeModel::isRecordIdExists(QString findId) const
 {
-  // Обнуление флага наличия записи с указанным ID
-  isRecordIdExistsRecurse(rootItem, findId, 0);
+  ensureIdIndex();
 
-  return isRecordIdExistsRecurse(rootItem, findId, 1);
-}
-
-bool KnowTreeModel::isRecordIdExistsRecurse(TreeItem *item, QString findId, int mode) const
-{
-  static bool isExists=false;
-
-  // Инициализация
-  if(mode==0)
-  {
-    isExists=false;
-    return false;
-  }
-
-  // Если запись найдена, дальше проверять не имеет смысла. Это условие ускоряет возврат из рекурсии.
-  if(isExists)
-    return true;
-
-  // Если таблица записей текущей ветки содержит искомый идентификатор
-  if( item->recordtableGetTableData()->isRecordExists(findId) )
-  {
-    isExists=true;
-    return true;
-  }
-
-  // Перебираются подветки
-  for(int i=0; i < item->childCount(); i++)
-    isRecordIdExistsRecurse(item->child(i), findId, 1);
-
-  return isExists;
+  return m_recordBranch.contains(findId);
 }
 
 // Получение списка всех идентификаторов записей в ветке и ее подветках
@@ -1994,6 +1944,9 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 
     // Чистка обратного индекса: записи веток ушли в корзину
     m_backlinks->removeSources(deleteResordsId.toList());
+
+    // Ветки удалены: id-индекс в пересборку
+    m_idIndexDirty=true;
 }
 
 // Удаление одной ветки и её подветок
@@ -2102,7 +2055,12 @@ QString KnowTreeModel::pasteSubbranch(TreeItem *item, ClipboardBranch *subbranch
   // Идентификатор стартовой ветки лежит в первом элементе списка
   QString start_branch_id=tree[0].branch_id;
 
-  return pasteSubbranchRecurse(item, start_branch_id, subbranch);
+  const QString pastedId=pasteSubbranchRecurse(item, start_branch_id, subbranch);
+
+  // Дерево приросло: id-индекс в пересборку
+  m_idIndexDirty=true;
+
+  return pastedId;
 }
 
 // Рекурсивное добавление дерева
@@ -2203,100 +2161,93 @@ void KnowTreeModel::reEncrypt(QString previousPassword, QString currentPassword)
   find_object<TreeScreen>("treeScreen")->saveKnowTree();
 }
 
+// Ленивый индекс id: один нерекурсивный обход строит обе таблицы.
+// Дальше все поиски O(1) (ветка) + O(ветка) вместо O(база)
+void KnowTreeModel::ensureIdIndex(void) const
+{
+  if(!m_idIndexDirty)
+    return;
+
+  m_branchItems.clear();
+  m_recordBranch.clear();
+
+  QList<TreeItem *> stack;
+  stack << rootItem;
+
+  while(!stack.isEmpty())
+  {
+    TreeItem *item=stack.takeLast();
+
+    if(item==nullptr)
+      continue;
+
+    const QString branchId=item->getField(QStringLiteral("id"));
+    m_branchItems.insert(branchId, item);
+
+    RecordTableData *recordTable=item->recordtableGetTableData();
+
+    if(recordTable!=nullptr)
+    {
+      for(unsigned i=0; i<recordTable->size(); ++i)
+      {
+        Record *record=recordTable->getRecord(i);
+
+        if(record==nullptr)
+          continue;
+
+        m_recordBranch.insert(record->getField(QStringLiteral("id")), branchId);
+      }
+    }
+
+    for(int i=item->childCount()-1; i>=0; --i)
+      stack << item->child(i);
+  }
+
+  m_idIndexDirty=false;
+}
+
 // Функция ищет ветку с указанным ID и возвращает ссылку не неё в виде TreeItem *
 // Если ветка с указанным ID не будет найдена, возвращается NULL
 TreeItem *KnowTreeModel::getItemById(const QString &id)
 {
-    // Инициализация поиска
-    getItemByIdRecurse(rootItem, "", 0);
+  ensureIdIndex();
 
-    // Запуск поиска и возврат результата
-    return getItemByIdRecurse(rootItem, id, 1);
+  return m_branchItems.value(id, nullptr);
 }
 
-TreeItem *KnowTreeModel::getItemByIdRecurse(TreeItem *item, const QString &id, int mode)
-{
-    static TreeItem *findItem=nullptr;
-
-    if(mode==0)
-    {
-        findItem=nullptr;
-        return nullptr;
-    }
-
-    if(findItem!=nullptr)
-    {
-        return findItem;
-    }
-
-    if(item->getId()==id)
-    {
-        findItem=item;
-    }
-    else
-    {
-        for(int i=0; i < item->childCount(); i++)
-            getItemByIdRecurse(item->child(i), id, 1); // Рекурсивный поиск с установкой findItem в момент когда запись найдена
-    }
-
-    return findItem;
-}
-
-// Получение указателя на запись по известному идентификатору записи
+// Получение указателя на запись по известному идентификатору записи.
+// Ветка находится O(1) по индексу, внутри ветки линейный поиск
+// (ветка маленькая). Нет записи - nullptr
 Record *KnowTreeModel::getRecord(const QString &recordId)
 {
-    QStringList path=this->getRecordPath(recordId);
+  ensureIdIndex();
 
-    return getItem(path)->recordtableGetTableData()->getRecordById(recordId);
+  TreeItem *branchItem=m_branchItems.value(m_recordBranch.value(recordId, QString()), nullptr);
+
+  if(branchItem==nullptr)
+    return nullptr;
+
+  RecordTableData *recordTable=branchItem->recordtableGetTableData();
+
+  if(recordTable==nullptr)
+    return nullptr;
+
+  return recordTable->getRecordById(recordId);
 }
 
-// Получение пути к ветке, где находится запись
+// Получение пути к ветке, где находится запись.
+// Путь собирается подъемом по родителям O(глубина), формат тот же:
+// корневой "0" первым, владеющая ветка последней
 QStringList KnowTreeModel::getRecordPath(const QString &recordId)
 {
-    QStringList path;
+  ensureIdIndex();
 
-    getRecordPathRecurse(rootItem, path, "0", 0);
+  TreeItem *branchItem=m_branchItems.value(m_recordBranch.value(recordId, QString()), nullptr);
 
-    return getRecordPathRecurse(rootItem, path, recordId, 1);
-}
+  if(branchItem==nullptr)
+    return QStringList();
 
-QStringList KnowTreeModel::getRecordPathRecurse(TreeItem *item,
-                                                QStringList &currentPath,
-                                                const QString &recordId,
-                                                int mode)
-{
-    static QStringList findPath;
-
-    if(mode==0)
-    {
-        findPath.clear();
-        return QStringList();
-    }
-
-    if(findPath.size()!=0)
-    {
-        return findPath;
-    }
-
-    // Если в данной ветке есть искомая запись
-    if( item->recordtableGetTableData()->isRecordExists(recordId) )
-    {
-        findPath=currentPath;
-        findPath << item->getId();
-    }
-    else
-    {
-        // Иначе перебираются подветки
-        for(int i=0; i < item->childCount(); i++)
-        {
-            // Рекурсивный поиск с установкой findPath в момент когда запись найдена
-            currentPath << item->getId();
-            getRecordPathRecurse(item->child(i), currentPath, recordId, 1);
-            currentPath.removeLast();
-        }
-    }
-
-    return findPath;
+  return branchItem->getPathAsField(QStringLiteral("id"));
 }
 
 // Метод определяющий есть ли в дереве зашифрованные ветки

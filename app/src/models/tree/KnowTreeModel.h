@@ -4,6 +4,7 @@
 #include <QModelIndex>
 #include <QObject>
 #include <QMap>
+#include <QHash>
 #include <QSet>
 #include <QList>
 #include <QDomElement>
@@ -109,7 +110,9 @@ public:
     
     QModelIndex getIndexByItem(TreeItem *item);
 
-    //! Получение ветки с указанным ID (поиск ветки)
+    //! Получение ветки с указанным ID. O(1) по ленивому индексу
+    //! (один полный обход при первом запросе после правок).
+    //! Нет ветки - nullptr, как и раньше
     TreeItem *getItemById(const QString &id);
 
     //! Возвращает общее количество записей, хранимых в дереве
@@ -161,7 +164,9 @@ public:
 
     //! Сбросить кеш статистики: следующий запрос посчитает все заново.
     //! Вызывается на структурных правках (ветки, bulk-операции),
-    //! построчные правки идут через refresh/remove без сброса
+    //! построчные правки идут через refresh/remove без сброса.
+    //! Заодно сбрасывает ленивый id-индекс (те же события двигают
+    //! записи и ветки, висячие указатели недопустимы)
     void invalidateStats(void);
 
     //! Пересчитать одну запись (текст, метки, аттачи): distinct-наборы
@@ -199,12 +204,17 @@ public:
 
     QStringList getRecordPath(const QString &recordId);
 
+    //! Указатель на запись по id. O(1) по индексу + линейный поиск
+    //! внутри одной ветки. Нет записи - nullptr (раньше уходил
+    //! в criticalError через пустой путь, теперь тихо)
     Record *getRecord(const QString &recordId);
 
-    //! Проверка наличия идентификатора ветки во всем дереве
+    //! Проверка наличия идентификатора ветки во всем дереве.
+    //! O(1) по индексу вместо рекурсии
     bool isItemIdExists(QString findId) const;
 
-    //! Проверка наличия идентификатора записи во всем дереве
+    //! Проверка наличия идентификатора записи во всем дереве.
+    //! O(1) по индексу вместо рекурсии
     bool isRecordIdExists(QString findId) const;
 
     //! Получение списка всех идентификаторов записей в ветке и ее подветках
@@ -323,6 +333,19 @@ private:
 
     void ensureStats(StatsLevel level);
 
+    // Ленивый индекс id для O(1)-поисков вместо рекурсии по дереву
+    // на каждый запрос (155 мест: избранное, бэклинки, MCP-пачки,
+    // импорт, хуки). Один полный обход при первом запросе после
+    // правок; дальше хеш. Указателей на записи нет (контейнер
+    // таблицы может перевыделить память): только ветки (куча,
+    // стабильные адреса) и строки. Сброс в invalidateStats() и
+    // в мутаторах модели: висячие указатели недопустимы
+    mutable bool m_idIndexDirty=true;
+    mutable QHash<QString, TreeItem *> m_branchItems;
+    mutable QHash<QString, QString> m_recordBranch;
+
+    void ensureIdIndex(void) const;
+
     // Посчитать строку одной записи. Ссылки и метки отдаются наружу
     // наборами для refcount, в строку идут только счетчики.
     // full=false: без чтения text.html и обхода каталога картинок
@@ -339,23 +362,12 @@ private:
                                   QString startBranchId,
                                   ClipboardBranch *subbranch);
 
-    TreeItem *getItemByIdRecurse(TreeItem *item, const QString &id, int mode);
-
     bool isContainsCryptBranchesRecurse(TreeItem *item, int mode);
 
     bool isContainsBlockRecordsRecurse(TreeItem *item, int mode);
 
     //! Добавление подветки из буфера обмена относительно указанного элемента
     QString pasteSubbranch(TreeItem *item, ClipboardBranch *subbranch);
-
-    QStringList getRecordPathRecurse(TreeItem *item,
-                                     QStringList &currentPath,
-                                     const QString &recordId,
-                                     int mode);
-
-    bool isItemIdExistsRecurse(TreeItem *item, QString findId, int mode) const;
-
-    bool isRecordIdExistsRecurse(TreeItem *item, QString findId, int mode) const;
 
     void getAllRecordsIdListRecurse(TreeItem *item, QSet<QString> *ids) const;
 

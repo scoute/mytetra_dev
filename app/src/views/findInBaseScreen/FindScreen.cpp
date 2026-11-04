@@ -908,17 +908,24 @@ bool FindScreen::findInTextProcess(const QString& text)
     int findWordCount=0;
     int findFlag=0;
 
+    // Токенизация один раз на проверку: раньше текст разбивался
+    // на слова под каждое слово запроса, на 108k записях это
+    // кратно числу слов в запросе
+    const bool wholeWord=(howExtract->currentIndex()==0);
+    const QStringList textWords=wholeWord ? textDelimiterDecompose(text)
+                                          : QStringList();
+
     // Перебираются искомые слова
     for(int i=0; i< searchWordList.size(); ++i)
     {
         findFlag=0;
 
         // Если надо найти совпадение целого слова
-        if(howExtract->currentIndex()==0)
+        if(wholeWord)
         {
-            // Текст разбивается на слова с очисткой от лишних знаков
-            // и проверяется, есть ли в полученном списке текущее слово
-            if(textDelimiterDecompose(text).contains(searchWordList.at(i), Qt::CaseInsensitive))
+            // Текст уже разбит выше: проверяется, есть ли в полученном
+            // списке текущее слово
+            if(textWords.contains(searchWordList.at(i), Qt::CaseInsensitive))
                 findFlag=1;
         }
         else

@@ -340,7 +340,7 @@ done
 # Multimedia здесь с голосовых заметок (QMediaPlayer/QMediaRecorder
 # в AudioFormatter и VoiceRecorderDialog): список обязан повторять
 # QT в app/app.pro, иначе портабл падает на старте без сообщений
-QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus Multimedia"
+QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus Multimedia Sql Concurrent"
 
 for module in ${QT_MODULES}; do
     for qt_lib in "${QT_SDK}"/lib/libQt5"${module}".so.5.*; do

@@ -171,14 +171,12 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 void setDebugMessageHandler()
 {
- qDebug() << "Debug message before set message handler for target OS: " << AppContext::instance().globalParameters()->getTargetOs();
 
  // Для десктопных операционок можно переустановить обработчик qDebug()
  // Для Андроида переустановка qDebug() приводит к невозможности получения отладочных сообщений в удаленном отладчике
  if(AppContext::instance().globalParameters()->getTargetOs()=="any" ||
     AppContext::instance().globalParameters()->getTargetOs()=="meego")
   {
-   qDebug() << "Set alternative handler myMessageOutput() for debug message";
 
    #if QT_VERSION < 0x050000
     qInstallMsgHandler(myMessageOutput);
@@ -187,7 +185,6 @@ void setDebugMessageHandler()
    #endif
   }
 
- qDebug() << "Debug message after set message handler";
 }
 
 // Функция-помощник при отладке генерации XML-кода. Преобразует узел DOM в строку

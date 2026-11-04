@@ -1302,6 +1302,18 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
     </message>
+    <message>
+        <source>Opening database</source>
+        <translation>Открытие базы данных</translation>
+    </message>
+    <message>
+        <source>Loading database tree...</source>
+        <translation>Загрузка дерева разделов...</translation>
+    </message>
+    <message>
+        <source>Counting records...</source>
+        <translation>Подсчет записей...</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>

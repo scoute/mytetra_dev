@@ -296,9 +296,10 @@ fi
 
 # Модули Qt строго по нуждам программы (транзитивный ldd для PE-файлов
 # под Linux ненадежен, поэтому список явный; smoke-тест ловит недостачу).
-# Qt5Multimedia здесь с голосовых заметок (список обязан повторять QT
-# в app/app.pro): без него exe не стартует вообще
-QT_DLLS="Qt5Core Qt5Gui Qt5Widgets Qt5Network Qt5Xml Qt5PrintSupport Qt5Svg Qt5Multimedia"
+# Qt5Multimedia здесь с голосовых заметок, Qt5Sql с FTS-индекса текстов,
+# Qt5Concurrent с параллельного поиска (список обязан повторять QT
+# в app/app.pro): без них exe не стартует вообще
+QT_DLLS="Qt5Core Qt5Gui Qt5Widgets Qt5Network Qt5Xml Qt5PrintSupport Qt5Svg Qt5Multimedia Qt5Sql Qt5Concurrent"
 MINGW_DLLS="libgcc_s_dw2-1 libstdc++-6 libwinpthread-1"
 
 for dll in ${QT_DLLS}; do

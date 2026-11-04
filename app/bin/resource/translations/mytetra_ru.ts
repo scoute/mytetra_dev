@@ -4636,6 +4636,41 @@ Try to search for entire database.</source>
         <source>Find in base</source>
         <translation>Поиск по базе</translation>
     </message>
+    <message>
+        <source>Building text index...</source>
+        <translation>Построение индекса текстов...</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>FtsTextIndex</name>
+    <message>
+        <source>Cannot open index file</source>
+        <translation>Не открывается файл индекса</translation>
+    </message>
+    <message>
+        <source>Index schema mismatch</source>
+        <translation>Несовпадение схемы индекса</translation>
+    </message>
+    <message>
+        <source>Another knowledge base</source>
+        <translation>Другая база знаний</translation>
+    </message>
+    <message>
+        <source>Knowledge base changed</source>
+        <translation>База знаний изменилась</translation>
+    </message>
+    <message>
+        <source>Record count changed</source>
+        <translation>Число записей изменилось</translation>
+    </message>
+    <message>
+        <source>Encrypted records changed</source>
+        <translation>Шифрованные записи изменились</translation>
+    </message>
 </context>
 <context>
     <name>FindTableWidget</name>

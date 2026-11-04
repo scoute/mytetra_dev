@@ -12,6 +12,7 @@
 
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/FtsTextIndex.h"
 #include "models/tree/TreeItem.h"
 #include "libraries/WalkHistory.h"
 #include "models/tree/KnowTreeModel.h"
@@ -242,6 +243,13 @@ void RecordTableData::editorSaveCallback(QObject *editor,
         data["recordName"]=CryptService::encryptString(AppContext::instance().globalParameters()->getCryptKey(), currEditor->getMiscField("title"));
         AppContext::instance().actionLogger()->addAction("editCryptRecordText", data);
     }
+
+    // FTS-индекс текста: шифрованные записи не индексируются никогда,
+    // их plaintext не должен лежать рядом с бинарником
+    if(workWithCrypt)
+        AppContext::instance().ftsTextIndex()->remove(currEditor->getMiscField("id"));
+    else
+        AppContext::instance().ftsTextIndex()->upsert(currEditor->getMiscField("id"), saveText);
 
 }
 
@@ -532,6 +540,18 @@ int RecordTableData::insertNewRecord(int mode,
     if(insertPos>=0 && treeItem!=nullptr)
         treeItem->addSubtreeDelta(1);
 
+    // FTS-индекс: новая запись сразу searchable.
+    // Шифрованные не индексируются никогда
+    if(insertPos>=0)
+    {
+        QString newId=getField("id", insertPos);
+
+        if(getField("crypt", insertPos)==QStringLiteral("1"))
+            AppContext::instance().ftsTextIndex()->remove(newId);
+        else
+            AppContext::instance().ftsTextIndex()->upsert(newId, getText(insertPos));
+    }
+
     // Возвращается номера строки, на которую должна быть установлена засветка после выхода из данного метода
     return insertPos;
 }
@@ -575,6 +595,9 @@ void RecordTableData::deleteRecord(int i)
     // Нельзя удалять с недопустимым индексом
     if(i<0 || i>=tableData.size())
         return;
+
+    // Id запоминается до удаления: FTS-индекс чистится в конце
+    const QString removedId=getField("id", i);
 
     // Имя директории хранения записи проверяется на пустоту.
     // Пустое имя приведет к тому, что под удаление попадет сама директория base
@@ -620,6 +643,10 @@ void RecordTableData::deleteRecord(int i)
         treeItem->addSubtreeDelta(-1);
 
     qDebug() << "Delete record succesfull";
+
+    // FTS-индекс чистится от удаленной записи
+    if(!removedId.isEmpty())
+        AppContext::instance().ftsTextIndex()->remove(removedId);
 
     // Удаление записи закончено
     // endRemoveRows();

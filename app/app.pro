@@ -50,7 +50,8 @@ QT = gui \
     core \
     xml \
     svg \
-    network
+    network \
+    sql
 CONFIG += qt \
     warn_on
 
@@ -379,6 +380,7 @@ HEADERS+=\
     src/libraries/VisitHistory.h \
     src/libraries/Favorites.h \
     src/libraries/BacklinkIndex.h \
+    src/libraries/FtsTextIndex.h \
     src/libraries/Clipper.h \
     src/libraries/ClipperPrivate.h \
     src/libraries/crypt/Pbkdf2Qt.h \
@@ -641,6 +643,7 @@ SOURCES+=\
     src/libraries/VisitHistory.cpp \
     src/libraries/Favorites.cpp \
     src/libraries/BacklinkIndex.cpp \
+    src/libraries/FtsTextIndex.cpp \
     src/libraries/Clipper.cpp \
     src/libraries/ClipperParse.cpp \
     src/libraries/ClipperPipeline.cpp \

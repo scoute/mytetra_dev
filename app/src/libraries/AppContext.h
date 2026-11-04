@@ -27,6 +27,7 @@ class InternalClipboard;
 class MainWindow;
 class Favorites;
 class BacklinkIndex;
+class FtsTextIndex;
 class EditorShowTextDispatcher;
 class CryptKeyHolder;
 
@@ -89,6 +90,7 @@ public:
 
     Favorites *favorites(void) const;
     BacklinkIndex *backlinkIndex(void) const;
+    FtsTextIndex *ftsTextIndex(void) const;
     EditorShowTextDispatcher *dispatcher(void) const;
 
 private:
@@ -116,6 +118,7 @@ private:
 
     Favorites *m_favorites=nullptr;
     BacklinkIndex *m_backlinkIndex=nullptr;
+    FtsTextIndex *m_ftsTextIndex=nullptr;
     EditorShowTextDispatcher *m_dispatcher=nullptr;
 };
 

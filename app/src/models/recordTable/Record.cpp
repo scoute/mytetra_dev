@@ -10,6 +10,7 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/FtsTextIndex.h"
 #include "models/attachTable/AttachTableData.h"
 #include "libraries/crypt/CryptService.h"
 #include "libraries/helpers/DiskHelper.h"
@@ -672,6 +673,13 @@ void Record::saveText()
 
   // Сохраняется QByteArray с текстом записи (в QByteArray могут быть как зашифрованные, так и не зашифрованные данные)
   atomicWriteRecordFile(fileName, text, false);
+
+  // FTS-индекс текста: шифрованные записи не индексируются никогда,
+  // их plaintext не должен лежать рядом с бинарником
+  if(fieldList.value("crypt")=="1")
+    AppContext::instance().ftsTextIndex()->remove(fieldList.value("id"));
+  else
+    AppContext::instance().ftsTextIndex()->upsert(fieldList.value("id"), QString::fromUtf8(text));
 }
 
 QMap<QString, QByteArray> Record::getPictureFiles() const

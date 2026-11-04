@@ -374,8 +374,10 @@ done
 # системными (как X11 и GL): тащить весь звуковой стек внутрь нельзя.
 # platforminputcontexts не копируется: его плагин ввода через
 # ibus падает при старте в окружении без DBus, а базовый ввод с клавиатуры
-# обеспечивается самой платформой
-for plugin in platforms imageformats iconengines mediaservice audio; do
+# обеспечивается самой платформой.
+# sqldrivers обязателен: без qsqlite молча не работает FTS-индекс
+# текстов (см. 502), поиск откатывается на линейный без ошибок
+for plugin in platforms imageformats iconengines mediaservice audio sqldrivers; do
     if [[ -d "${QT_SDK}/plugins/${plugin}" ]]; then
         mkdir -p "${PLUGINS_DIR}/${plugin}"
         # Отладочные символы *.debug не нужны и весят половину объема

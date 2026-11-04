@@ -338,9 +338,11 @@ done
 # platforms обязателен (qwindows), imageformats для картинок и svg-иконок,
 # iconengines для svg-иконок. mediaservice это бэкенд голосовых заметок,
 # audio это вывод звука: без них плеер и запись молча не работают.
+# sqldrivers обязателен: без qsqlite молча не работает FTS-индекс
+# текстов (см. 502), поиск откатывается на линейный без ошибок.
 # Как в Linux: без Qt5Svg рядом все падает, он уже скопирован выше
 mkdir -p "${PORTABLE_DIR}/plugins"
-for plugin in platforms imageformats iconengines mediaservice audio; do
+for plugin in platforms imageformats iconengines mediaservice audio sqldrivers; do
     if [[ -d "${QT_SDK}/plugins/${plugin}" ]]; then
         mkdir -p "${PORTABLE_DIR}/plugins/${plugin}"
         cp "${QT_SDK}/plugins/${plugin}/"*.dll "${PORTABLE_DIR}/plugins/${plugin}/" 2>/dev/null || true

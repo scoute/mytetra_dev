@@ -6,6 +6,7 @@
 #include <QSet>
 #include <QString>
 #include <QStringList>
+#include <QAtomicInt>
 
 class KnowTreeModel;
 
@@ -14,7 +15,8 @@ class KnowTreeModel;
 // Прямые пары sourceId -> {targetIds} живут в сайдкаре
 // data/backlinks.xml рядом с mytetra.xml, обратный индекс
 // строится в памяти при загрузке. Полный скан базы бывает
-// только один раз (нет сайдкара) или по кнопке "Перепроверить".
+// только один раз (нет сайдкара или он от другой базы) и только
+// после показа окна с прогрессом: в старте лишь быстрая загрузка.
 // Штатно индекс правится точечно: сохранение записи, удаление,
 // подчистка отсутствующих. Самоссылки не индексируются.
 
@@ -42,14 +44,30 @@ public:
   // Загрузка сайдкара. false если файла нет или он бит
   bool load(void);
 
+  // Только загрузка сайдкара без построения (для старта программы:
+  // тяжелый скан уезжает в диалог после показа окна, см. 494)
+  void loadOnly(void);
+
+  // Свежесть загруженного индекса: число записей в сайдкаре совпадает
+  // с деревом. База, подмененная снаружи при живом сайдкаре, дает
+  // расхождение и treated как отсутствующий индекс. Без модели
+  // проверить нечем - считается свежим
+  bool isFresh(void) const;
+
   // Атомарная запись сайдкара через QSaveFile
   bool save(void) const;
 
-  // Загрузка если есть, иначе полный скан с записью сайдкара
+  // Загрузка если есть, иначе полный скан с записью сайдкара.
+  // В старте программы не используется: там только loadOnly(),
+  // скан уезжает в диалог после показа окна (см. 494)
   void loadOrBuild(void);
 
-  // Полный скан всех записей базы (первый запуск, кнопка)
-  void buildFull(void);
+  // Полный скан всех записей базы (первый запуск, кнопка).
+  // Долгий проход: шлет buildProgress пачками, проверяет cancel
+  // (QAtomicInt: ненулевое значение прерывает). При обрыве
+  // сохраняется частичный индекс - дырки потом доберет
+  // ensureIndexed(), панель самоисцеляется
+  void buildFull(QAtomicInt *cancel=nullptr);
 
   // Доидексировать записи дерева, которых нет в индексе
   // (импорт, синхро, внешняя правка). Возвращает число добавленных
@@ -88,16 +106,35 @@ signals:
   // Индекс поменялся, видимой панели пора перечитаться
   void backlinksChanged(void);
 
+  // Долгий скан buildFull: готово done из total записей.
+  // Диалог обновляется в слоте с processEvents
+  void buildProgress(int done, int total);
+
 private:
 
   void rebuildReverse(void);
   bool recordExists(const QString &recordId) const;
+
+  // Путь к тексту одной записи через поиск в дереве (O(n)).
+  // Только для точечных операций; сканы ходят getAllRecordFileRefs
   QString recordTextFileName(const QString &recordId) const;
+
+  // Путь к тексту по паре dir/file без поиска (для сканов)
+  static QString textFileName(const QString &dir, const QString &file);
   void ensureLoaded(void);
   void collectAllRecordIds(QSet<QString> &ids) const;
 
+  // Число записей дерева сейчас (-1 без модели). Пишется в сайдкар
+  int currentRecordCount(void) const;
+
   KnowTreeModel *m_treeModel=nullptr;
   bool m_loaded=false;
+
+  // Число записей дерева на момент записи сайдкара (-1: сайдкар
+  // от старой версии без счетчика). Расхождение с деревом значит
+  // внешнюю подмену базы и лечится перестроением. Обновляется
+  // в save(), все мутации идут через него
+  mutable int m_sidecarRecords=-1;
 
   // Прямые пары: источник -> цели
   QMap<QString, QSet<QString>> m_forward;

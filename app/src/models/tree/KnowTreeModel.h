@@ -115,6 +115,20 @@ public:
     //! Возвращает общее количество записей, хранимых в дереве
     int getAllRecordCount(void);
 
+    //! Одна запись для тяжелых сканов: id + dir/file из mytetra.xml
+    struct RecordFileRef
+    {
+      QString id;
+      QString dir;
+      QString file;
+    };
+
+    //! Все записи базы одним нерекурсивным обходом за O(n).
+    //! Тяжелым сканам (бэклинки) нельзя ходить getRecord(id):
+    //! поиск каждой записи рекурсией по дереву дает O(n^2),
+    //! на 100k+ это минуты вместо секунд (см. 494)
+    QList<RecordFileRef> getAllRecordFileRefs(void);
+
     //! Возвращает общее количество веток в дереве (без невидимого корня)
     int getBranchCount(void) const;
 

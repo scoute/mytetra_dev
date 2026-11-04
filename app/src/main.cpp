@@ -437,6 +437,11 @@ int main(int argc, char ** argv)
     // диалогом или никак (подробности в MainWindow::checkFullStatsOffer)
     win.checkFullStatsOffer();
 
+    // Обратный индекс после показа окна: в старте была лишь быстрая
+    // загрузка сайдкара, тяжелый скан - только здесь с подтверждением
+    // (подробности в MainWindow::checkBacklinksOffer)
+    win.checkBacklinksOffer();
+
 
     // Если в конфиге настроено, что нужно синхронизироваться при старте
     // И задана команда синхронизации

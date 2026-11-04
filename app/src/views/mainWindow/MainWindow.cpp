@@ -21,6 +21,7 @@
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QAtomicInt>
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -478,9 +479,11 @@ void MainWindow::assembly(void)
 
     setCentralWidget(centralContainer);
 
-    // Обратный индекс ссылок: грузится из сайдкара data/backlinks.xml,
-    // при первом запуске строится полным сканом базы
-    AppContext::instance().backlinkIndex()->loadOrBuild();
+    // Обратный индекс ссылок: в старте только быстрая загрузка
+    // сайдкара data/backlinks.xml. Тяжелый скан (нет сайдкара или
+    // он от другой базы) уезжает в диалог после показа окна,
+    // иначе большая база висит минутами без окна (см. 494)
+    AppContext::instance().backlinkIndex()->loadOnly();
 }
 
 void MainWindow::saveAllState(void)
@@ -993,6 +996,85 @@ void MainWindow::checkFullStatsOffer(void)
         AppContext::instance().appConfig()->uiSection()->set_statsMode(policy);
     }
     // Cancel: ни действие, ни политика не сохраняются
+}
+
+
+// Предложение построить обратный индекс после показа окна. В старте
+// была лишь быстрая загрузка сайдкара: нет сайдкара или он от другой
+// базы (подмена каталога снаружи) - скан всех текстов на 100k+ базе
+// это минуты без окна, поэтому строится только здесь. Маленькая база
+// - молча (доли секунды), большая - вопросом с подтверждением
+void MainWindow::checkBacklinksOffer(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    BacklinkIndex *backlinks=AppContext::instance().backlinkIndex();
+
+    // Индекс загружен и от текущей базы: делать нечего
+    if(backlinks->isLoaded() && backlinks->isFresh())
+        return;
+
+    KnowTreeModel *model=treeScreen->knowTreeModel;
+
+    // Сколько записей вообще: быстрый кеш уже готов из updateStats
+    int branches=0, records=0, files=0, images=0, links=0, tags=0;
+    model->getBaseStats(branches, records, files, images, links, tags,
+                        KnowTreeModel::StatsLevel::Fast);
+
+    // Тот же лимит что у статистики: мелочь строится молча
+    const int autoLimit=AppContext::instance().appConfig()->uiSection()->get_statsLimit();
+
+    if(records<autoLimit)
+    {
+        buildBacklinksWithProgress();
+        return;
+    }
+
+    QMessageBox offerBox(QMessageBox::Question,
+                         tr("Backlink index"),
+                         tr("The backlink index is missing for %1 records. Building it scans all note texts and takes a while. Build now?").arg(records),
+                         QMessageBox::NoButton,
+                         this);
+
+    QPushButton *laterButton=offerBox.addButton(tr("Later"), QMessageBox::RejectRole);
+    QPushButton *buildButton=offerBox.addButton(tr("Build"), QMessageBox::AcceptRole);
+    Q_UNUSED(laterButton);
+    offerBox.exec();
+
+    // Later: панель при открытии достроит индекс сама по требованию
+    if(offerBox.clickedButton()==buildButton)
+        buildBacklinksWithProgress();
+}
+
+
+// Долгое построение индекса с прогрессом и отменой. Обрыв честный:
+// сохраняется частичный индекс, дырки потом доберет ensureIndexed()
+void MainWindow::buildBacklinksWithProgress(void)
+{
+    BacklinkIndex *backlinks=AppContext::instance().backlinkIndex();
+
+    QProgressDialog progress(tr("Indexing notes..."), tr("Cancel"), 0, 0, this);
+    progress.setWindowTitle(tr("Backlink index"));
+    progress.setMinimumDuration(0);
+    progress.setModal(true);
+    progress.show();
+    QCoreApplication::processEvents();
+
+    QAtomicInt cancel(0);
+    QObject::connect(&progress, &QProgressDialog::canceled, &progress, [&]() {
+        cancel.storeRelease(1);
+    });
+
+    QObject::connect(backlinks, &BacklinkIndex::buildProgress,
+                     &progress, [&](int done, int total) {
+        if(progress.maximum()!=total)
+            progress.setMaximum(total);
+        progress.setValue(done);
+        QCoreApplication::processEvents();
+    });
+
+    backlinks->buildFull(&cancel);
 }
 
 

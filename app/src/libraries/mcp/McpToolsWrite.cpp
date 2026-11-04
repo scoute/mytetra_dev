@@ -333,6 +333,9 @@ QJsonObject McpTools::applyCreateNote(KnowTreeModel *model,
   // в GUI сохраняется переданный: возвращается фактический
   result["id"]=stored->getField("id");
 
+  // Новая запись: кеши статистики и id-индекса в пересборку
+  model->invalidateStats();
+
   return result;
 }
 
@@ -525,6 +528,9 @@ bool McpTools::applyDeleteNote(KnowTreeModel *model,
 
   // Каталог записи уезжает в корзину внутри, запись из таблицы долой
   table->deleteRecordById(noteId);
+
+  // Запись удалена: кеши статистики и id-индекса в пересборку
+  model->invalidateStats();
 
   // Сайдкар бэклинков: только если есть что чистить, иначе
   // ensureLoaded построит и сохранит пустой индекс без нужды
@@ -798,6 +804,9 @@ QJsonObject McpTools::applyMoveNote(KnowTreeModel *model,
 
     return result;
   }
+
+  // Запись сменила ветку: кеши статистики и id-индекса в пересборку
+  model->invalidateStats();
 
   result["id"]=noteId;
   result["branch_id"]=targetBranchId;

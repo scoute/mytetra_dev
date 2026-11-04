@@ -81,6 +81,19 @@ public:
     // ok=false если индекс неприменим: поиск идет линейно
     QSet<QString> search(const QStringList &words, bool matchAll, bool *ok);
 
+    // Плоский текст записи из кеша индекса. ok=false если кеш выключен
+    // или строки нет: тогда читать файл как раньше.
+    // Выключатель кеша под будущую галку в настройках (см. setCachePlainText)
+    QString plainText(const QString &recordId, bool *ok);
+
+    // Плоские тексты пачкой для параллельной проверки: один запрос
+    // вместо тысяч prepare. Нет строки = нет в кеше (читать файл)
+    QHash<QString, QString> plainBulk(const QSet<QString> &recordIds);
+
+    // Кешировать ли плоские тексты в SQLite. По умолчанию да;
+    // будущая галка в настройках дернет этот выключатель
+    void setCachePlainText(bool enabled);
+
     // Число проиндексированных записей, для диагностики
     int indexedCount(void);
 
@@ -106,6 +119,11 @@ private:
 
     bool opened=false;
     QSqlDatabase db;
+
+    // Кеш плоских текстов: выключенный кеш не пишется и не читается,
+    // мета plain_cache отличает свежесть (переключение галки
+    // пересобирает индекс)
+    bool cachePlain=true;
 
     // Флаг идущей пересборки и факт правок в ее ходе: правка во время
     // сборки может потеряться (обход прочитал файл раньше записи),

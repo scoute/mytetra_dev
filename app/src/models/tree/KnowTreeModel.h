@@ -252,9 +252,20 @@ signals:
     // только при первичном открытии базы
     void statsProgress(int done, int total);
 
+    // Прогресс построения дерева из XML (setupModelData) и пересчета
+    // итогов (recountSubtreeTotals): done веток из total. Излучается
+    // всегда, диалог показывает TreeScreen при открытии базы
+    void loadProgress(int done, int total);
+
 private:
 
     QString m_xmlFileName;
+
+    // Счетчики прогресса построения дерева (setupModelData):
+    // всего веток в DOM и уже разобрано. Пачки по 25 чтобы
+    // processEvents в слоте не съедал заметного времени
+    int m_loadDone=0;
+    int m_loadTotal=0;
 
     // P3: внедренные индекс и диспетчер (DI вместо синглтонов)
     BacklinkIndex *m_backlinks=nullptr;

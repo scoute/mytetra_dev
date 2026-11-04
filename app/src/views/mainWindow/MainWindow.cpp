@@ -106,6 +106,16 @@ MainWindow::MainWindow() : QMainWindow()
     AppContext::instance().setMainWindow(this);
     setObjectName("mainwindow");
 
+    // Стартовый прогресс первым делом: дальше setupUI грузит дерево
+    // из XML (секунды на 100k+), фазам ниже он же показывает движение.
+    // Прячется из main после win.show()
+    startupProgress=new QProgressDialog(tr("Loading..."), QString(), 0, 0, this);
+    startupProgress->setWindowTitle(QStringLiteral("MyTetra"));
+    startupProgress->setCancelButton(nullptr);
+    startupProgress->setMinimumDuration(400);
+    startupProgress->setModal(true);
+    startupProgress->show();
+
     installEventFilter(this);
 
     setupUI();
@@ -223,7 +233,28 @@ void MainWindow::setupUI(void)
     statsLabel->setCursor(Qt::PointingHandCursor);
     statsLabel->installEventFilter(this);
     statusBar->addPermanentWidget(statsLabel);
-    updateStats();
+
+    // Первый подсчет статистики - под стартовым диалогом: на 100k+
+    // это секунды, видно движение. Дальнейшие updateStats() тихие
+    if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr && startupProgress!=nullptr)
+    {
+        startupProgress->setLabelText(tr("Counting records..."));
+
+        QObject::connect(treeScreen->knowTreeModel, &KnowTreeModel::statsProgress,
+                         startupProgress, [&](int done, int total) {
+            if(startupProgress->maximum()!=total)
+                startupProgress->setMaximum(total);
+            startupProgress->setValue(done);
+            QCoreApplication::processEvents();
+        });
+
+        updateStats();
+
+        QObject::disconnect(treeScreen->knowTreeModel, &KnowTreeModel::statsProgress,
+                            startupProgress, nullptr);
+    }
+    else
+        updateStats();
 
     // Позиция курсора заметки слева. Обычный виджет: важные
     // showMessage-сообщения его перекрывают, потом он возвращается
@@ -1050,6 +1081,27 @@ void MainWindow::checkBacklinksOffer(void)
 
 // Долгое построение индекса с прогрессом и отменой. Обрыв честный:
 // сохраняется частичный индекс, дырки потом доберет ensureIndexed()
+// Стартовый диалог отдают наружу чтобы фаза чтения XML (она глубоко
+// в TreeScreen::setupModels) показывала движение в том же окне
+QProgressDialog *MainWindow::startupProgressDialog(void)
+{
+    return startupProgress;
+}
+
+
+// Спрятать стартовый диалог. Вызывается из main после win.show():
+// дальше окно само показывает работу (статистика, индекс)
+void MainWindow::hideStartupProgress(void)
+{
+    if(startupProgress==nullptr)
+        return;
+
+    startupProgress->hide();
+    startupProgress->deleteLater();
+    startupProgress=nullptr;
+}
+
+
 void MainWindow::buildBacklinksWithProgress(void)
 {
     BacklinkIndex *backlinks=AppContext::instance().backlinkIndex();

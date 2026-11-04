@@ -24,6 +24,7 @@ class QCloseEvent;
 class QSplitter;
 class QStatusBar;
 class QLabel;
+class QProgressDialog;
 class QTimer;
 class QTableWidget;
 class QDockWidget;
@@ -57,6 +58,12 @@ public:
 
     // Статистика базы справа в статусбаре (постоянный виджет)
     QLabel *statsLabel=nullptr;
+
+    // Стартовый прогресс на все фазы до show(): создается первым делом
+    // в конструкторе, прячется из main после win.show(). Без кнопки
+    // отмены: старт прервать нельзя. minimumDuration прячет вспышку
+    // на маленьких базах
+    QProgressDialog *startupProgress=nullptr;
 
     // Позиция курсора заметки. Обычный (не постоянный) виджет статусбара:
     // важные showMessage-сообщения его перекрывают
@@ -210,6 +217,13 @@ public slots:
 
     // Долгое построение индекса с прогрессом и кнопкой отмены
     void buildBacklinksWithProgress(void);
+
+    // Стартовый диалог на время фаз до show(). Мелочь прячется сама
+    // по minimumDuration, большая база видит движение
+    QProgressDialog *startupProgressDialog(void);
+
+    // Спрятать стартовый диалог. Вызывается из main после win.show()
+    void hideStartupProgress(void);
 
     // Перевести статичные тексты новым языком без перезапуска.
     // Тексты на шорткатах обновляются отдельно сигналом

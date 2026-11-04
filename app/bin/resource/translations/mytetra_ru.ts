@@ -4628,6 +4628,14 @@ Try to search for entire database.</source>
         <source>Close find widget</source>
         <translation>Закрыть виджет поиска</translation>
     </message>
+    <message>
+        <source>Updating suggestions...</source>
+        <translation>Обновление подсказок...</translation>
+    </message>
+    <message>
+        <source>Find in base</source>
+        <translation>Поиск по базе</translation>
+    </message>
 </context>
 <context>
     <name>FindTableWidget</name>

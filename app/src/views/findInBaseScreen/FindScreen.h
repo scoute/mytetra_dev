@@ -70,10 +70,14 @@ public slots:
 
     // Рекурсивный сбор значений полей ветки и всех подветок в словари.
     // Ключи словарей совпадают с именами полей поиска. Зашифрованные
-    // ветки без пароля пропускаются как и в самом поиске
+    // ветки без пароля пропускаются как и в самом поиске.
+    // Счетчик прокачанных записей для processEvents во время долгой
+    // сборки (чтобы показалась крутилка). Ссылкой сквозь рекурсию:
+    // метод статический, член класса недоступен
     static void collectBranchValues(const TreeItem *curritem,
                                     QMap<QString, QStringList> &dictionaries,
-                                    QSet<QString> &seen);
+                                    QSet<QString> &seen,
+                                    int &pumpCounter);
 
     // Добавить слово в словарь поля. Пустые значения отбрасываются,
     // повторы без учета регистра тоже: пишется первое встречное
@@ -114,6 +118,7 @@ private slots:
     void changedJumpFirstWord(int state);
 
     void onFindTextEdited(const QString &text);
+    void onCompleterPause(void);
     void onFieldCompletion(const QString &completion);
     void refreshFieldCompleter(void);
 
@@ -171,10 +176,27 @@ private:
     QCompleter *fieldCompleter=nullptr;
     bool fieldCompleterEnabled=false;
 
-    // Пересборка словаря подсказок откладывается таймером, чтобы пакетная
-    // операция не пересобирала его на каждый шаг
-    QTimer *completerRefreshTimer=nullptr;
+    // Словарь собирается один раз и дальше только по грязи:
+    // пересборка на каждый показ стоила секунд на 100k+ базе.
+    // Грязь выставляет onTreeMetadataSaved, чистка в ensureCompleter
+    bool completerBuilt=false;
+    bool completerDirty=true;
+
+    // Счетчик прокачанных записей для processEvents во время
+    // долгой сборки словаря (чтобы показалась крутилка).
+    // Локальный для сборки: collectBranchValues статический,
+    // счетчик передается ссылкой сквозь рекурсию
+    // (сбрасывается перед обходом в refreshFieldCompleter)
+
+    // Пауза в наборе перед подсказкой: дополнять на каждую букву
+    // на 100k+ базе значит вешать ввод, подсказка только если
+    // пользователь остановился на 1000мс
+    QTimer *completerPauseTimer=nullptr;
+
     bool treeMetadataConnected=false;
+
+    void ensureCompleter(void);
+    void doComplete(const QString &text);
 
     void setupFieldCompleter(void);
 

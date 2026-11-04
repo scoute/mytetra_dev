@@ -1041,9 +1041,10 @@ void FindScreen::showEvent(QShowEvent *event)
 
     fixCloseButtonSize();
 
-    // Словарь подсказок пересобирается при каждом показе:
-    // теги и названия могли измениться с прошлого раза
-    refreshFieldCompleter();
+    // Словарь подсказок собирается лениво и только по грязи:
+    // теги и названия могли измениться, но пересборка на каждый
+    // показ стоила секунд на 100k+ базе
+    ensureCompleter();
 }
 
 // Полное сокрытие виджета
@@ -1167,14 +1168,15 @@ QStringList FindScreen::textDelimiterDecompose(QString text)
 // Словарь подставится позже в refreshFieldCompleter
 void FindScreen::setupFieldCompleter(void)
 {
-    // Словарь подсказок пересобирается не только при показе виджета,
-    // но и при изменении метаданных дерева, пока виджет открыт
-    completerRefreshTimer=new QTimer(this);
-    completerRefreshTimer->setSingleShot(true);
-    completerRefreshTimer->setInterval(300);
+    // Пауза в наборе перед подсказкой: дополнять на каждую букву
+    // на 100k+ базе значит вешать ввод, подсказка только если
+    // пользователь остановился на 1000мс
+    completerPauseTimer=new QTimer(this);
+    completerPauseTimer->setSingleShot(true);
+    completerPauseTimer->setInterval(1000);
 
-    connect(completerRefreshTimer, &QTimer::timeout,
-            this,                   &FindScreen::refreshFieldCompleter);
+    connect(completerPauseTimer, &QTimer::timeout,
+            this,                &FindScreen::onCompleterPause);
 
     treeMetadataConnected=false;
 
@@ -1208,16 +1210,36 @@ void FindScreen::setupFieldCompleter(void)
             this,          &FindScreen::onFieldCompletion);
 }
 
-// Метаданные дерева изменились: пересборка словаря откладывается,
-// чтобы пакетная операция не пересобирала его на каждый шаг
+// Метаданные дерева изменились: словарь помечается грязным,
+// пересборка лениво при следующем показе или подсказке
 void FindScreen::onTreeMetadataSaved(void)
 {
-    completerRefreshTimer->start();
+    // Только пометка: словарь пересоберется лениво при следующем
+    // показе или подсказке, а не через 300мс посреди пакетной операции.
+    // Если панель открыта и текст уже набран - переподсказать через
+    // ту же паузу, что при наборе
+    completerDirty=true;
+
+    if(isVisible() && findText->hasFocus() && findText->text().trimmed().length()>=2)
+        completerPauseTimer->start();
+}
+
+// Словарь актуален или пересобирается лениво: при показе панели
+// и перед подсказкой. На 100k+ базе сборка это секунды, поэтому
+// только по грязи, а не на каждый показ
+void FindScreen::ensureCompleter(void)
+{
+    if(completerBuilt && !completerDirty)
+        return;
+
+    refreshFieldCompleter();
 }
 
 // Пересборка словаря подсказок по всем значениям полей,
 // отмеченных галочками. Полнотекстовое поле Text не участвует:
-// дополнять среди всего текста заметок бессмысленно
+// дополнять среди всего текста заметок бессмысленно.
+// Долгая операция на 100k+: идет под крутилкой, которая
+// показывается только если превышен 1с (minimumDuration)
 void FindScreen::refreshFieldCompleter(void)
 {
     // Подписка на изменения дерева делается один раз и только когда
@@ -1237,12 +1259,25 @@ void FindScreen::refreshFieldCompleter(void)
     if(isVisible()==false)
         return;
 
+    // Крутилка на случай долгой сборки: показывается только если
+    // превышен 1с, мелкие базы ее не видят. Кнопки отмены нет:
+    // сборка конечна и нужна самой подсказке
+    QProgressDialog busy(tr("Updating suggestions..."), QString(), 0, 0, this);
+    busy.setCancelButton(nullptr);
+    busy.setMinimumDuration(1000);
+    busy.setModal(true);
+    busy.setWindowTitle(tr("Find in base"));
+    busy.show();
+
     // Словарь собирается по всему дереву: значения из других веток
     // в подсказке безвредны, зато словарь всегда полный и свежий
     QMap<QString, QStringList> dictionaries;
     QSet<QString> seen;
 
     KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
+
+    // Счетчик прокачки событий сквозь рекурсию collectBranchValues
+    int pumpCounter=0;
 
     if(treeView!=nullptr)
     {
@@ -1251,7 +1286,7 @@ void FindScreen::refreshFieldCompleter(void)
         const TreeItem *rootItem=searchModel->getRootItem();
 
         if(rootItem!=nullptr)
-            collectBranchValues(rootItem, dictionaries, seen);
+            collectBranchValues(rootItem, dictionaries, seen, pumpCounter);
     }
 
     // Подсказка показывает объединение словарей отмеченных полей.
@@ -1298,11 +1333,20 @@ void FindScreen::refreshFieldCompleter(void)
                   return a.second.compare(b.second, Qt::CaseInsensitive)<0;
               });
 
+    // Пачка processEvents чтобы крутилка не замирала на сортировке.
+    // Внутри sort качать нельзя: компаратор обязан быть чистым
+    qApp->processEvents();
+
+    int fillCounter=0;
+
     foreach(auto pair, pairs)
     {
         QStandardItem *item=new QStandardItem(completionTypeIcon(pair.first), pair.second);
         item->setEditable(false);
         fieldCompleterModel->appendRow(item);
+
+        if((++fillCounter % 32768)==0)
+            qApp->processEvents();
     }
 
     // Подсказывать нечего: ручной привод выключается
@@ -1311,18 +1355,24 @@ void FindScreen::refreshFieldCompleter(void)
     if(fieldCompleterModel->rowCount()==0)
         fieldCompleter->popup()->hide();
 
+    completerBuilt=true;
+    completerDirty=false;
+
     // Словарь обновился под уже набранный запрос (ветка или заметка
     // созданы после ввода): переподсказать без перепечатывания, но только
-    // если фокус в поле ввода, иначе выпадашка всплывет над чужой работой
+    // если фокус в поле ввода, иначе выпадашка всплывет над чужой работой.
+    // Напрямую дополнением, а не через onFindTextEdited: пауза уже
+    // выдержана, повторный таймер не нужен
     if(fieldCompleterEnabled && findText->hasFocus() && !findText->text().trimmed().isEmpty())
-        onFindTextEdited(findText->text());
+        doComplete(findText->text());
 }
 
 // Рекурсивный сбор значений полей ветки и всех подветок в словари.
 // Ключи словарей совпадают с именами полей поиска
 void FindScreen::collectBranchValues(const TreeItem *curritem,
                                      QMap<QString, QStringList> &dictionaries,
-                                     QSet<QString> &seen)
+                                     QSet<QString> &seen,
+                                     int &pumpCounter)
 {
     if(curritem==nullptr)
         return;
@@ -1361,12 +1411,17 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
                 for(int a=0; a<attachTable->size(); ++a)
                     addDictionaryWord(dictionaries, seen, "attach", attachTable->getFileName(a));
             }
+
+            // Долгая сборка качает цикл событий чтобы крутилка
+            // minimumDuration успела показаться и не висело окно
+            if((++pumpCounter % 2048)==0)
+                qApp->processEvents();
         }
     }
 
     // Рекурсивный обход подчиненных веток
     for(int i=0; i<curritem->childCount(); i++)
-        collectBranchValues(curritem->child(i), dictionaries, seen);
+        collectBranchValues(curritem->child(i), dictionaries, seen, pumpCounter);
 }
 
 // Добавить слово в словарь поля. Пустые значения отбрасываются,
@@ -1396,29 +1451,43 @@ void FindScreen::addDictionaryWord(QMap<QString, QStringList> &dictionaries,
 // от шрифтов системы не зависит
 QIcon FindScreen::completionTypeIcon(const QString &field)
 {
-    QString iconPath;
+    // Пути иконок типов фиксированы: всего шесть штук.
+    // Кеш обязателен: раньше иконка собиралась и растеризовывалась
+    // проверкой на каждую из 200k+ строк словаря, что и давало
+    // секунды сборки на большой базе
+    static QMap<QString, QString> fieldIconPaths;
+    static QMap<QString, QIcon> iconCache;
+    static bool pathsReady=false;
 
-    if(field=="tags")
-        iconPath=":/resource/pic/tag.svg";
-    else if(field=="name")
-        iconPath=":/resource/icons/Flat/color_icons8_flat_document.svg";
-    else if(field=="url")
-        iconPath=":/resource/icons/Flat/color_icons8_flat_link.svg";
-    else if(field=="nameItem")
-        iconPath=":/resource/icons/Flat/color_icons8_flat_opened_folder.svg";
-    else if(field=="author")
-        iconPath=":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg";
-    else if(field=="attach")
-        iconPath=":/resource/pic/attach_is_file.svg";
-    else
+    if(!pathsReady)
+    {
+        fieldIconPaths["tags"]=":/resource/pic/tag.svg";
+        fieldIconPaths["name"]=":/resource/icons/Flat/color_icons8_flat_document.svg";
+        fieldIconPaths["url"]=":/resource/icons/Flat/color_icons8_flat_link.svg";
+        fieldIconPaths["nameItem"]=":/resource/icons/Flat/color_icons8_flat_opened_folder.svg";
+        fieldIconPaths["author"]=":/resource/icons/Flat/color_icons8_flat_portrait_mode.svg";
+        fieldIconPaths["attach"]=":/resource/pic/attach_is_file.svg";
+        pathsReady=true;
+    }
+
+    if(!fieldIconPaths.contains(field))
         return QIcon();
 
-    QIcon icon(iconPath);
+    if(iconCache.contains(field))
+        return iconCache.value(field);
+
+    QIcon icon(fieldIconPaths.value(field));
 
     // Ресурс не найден или не отрисовался: молчать нельзя, иначе
-    // в выпадашке пустые места без понятной причины
+    // в выпадашке пустые места без понятной причины.
+    // Проверка один раз на тип, а не на каждую строку
     if(icon.isNull() || icon.pixmap(16, 16).isNull())
-        qWarning() << "FindScreen::completionTypeIcon: bad icon resource" << iconPath;
+    {
+        qWarning() << "FindScreen::completionTypeIcon: bad icon resource" << fieldIconPaths.value(field);
+        return QIcon();
+    }
+
+    iconCache.insert(field, icon);
 
     return icon;
 }
@@ -1429,15 +1498,56 @@ QIcon FindScreen::completionTypeIcon(const QString &field)
 void FindScreen::onFindTextEdited(const QString &text)
 {
     if(!fieldCompleterEnabled)
+    {
+        // Словарь еще ни разу не собирался (первый показ):
+        // взвести сборку через паузу, а не вешать ввод
+        if(findText->text().trimmed().length()>=2)
+            completerPauseTimer->start();
+
+        return;
+    }
+
+    if(text.trimmed().length()<2)
+    {
+        fieldCompleter->popup()->hide();
+        completerPauseTimer->stop();
+        return;
+    }
+
+    // Ввод продолжается: подсказка только после паузы 1000мс.
+    // На каждую букву дополнять нельзя: прогон фильтра по 200k+
+    // строк вешает набор текста на большой базе
+    completerPauseTimer->start();
+}
+
+
+// Пауза в наборе кончилась: словарь свежий (лениво) и подсказать
+void FindScreen::onCompleterPause(void)
+{
+    const QString text=findText->text();
+
+    // Фокус ушел (поиск уже запущен кнопкой): выпадашка поверх
+    // чужой работы не нужна
+    if(!findText->hasFocus())
         return;
 
-    QString prefix=text.trimmed();
-
-    if(prefix.length()<2)
+    if(text.trimmed().length()<2)
     {
         fieldCompleter->popup()->hide();
         return;
     }
+
+    ensureCompleter();
+    doComplete(text);
+}
+
+
+void FindScreen::doComplete(const QString &text)
+{
+    if(!fieldCompleterEnabled)
+        return;
+
+    QString prefix=text.trimmed();
 
     fieldCompleter->setCompletionPrefix(prefix);
 

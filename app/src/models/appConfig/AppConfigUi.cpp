@@ -676,6 +676,30 @@ void AppConfigUi::setPreviewIconSize(int n)
     m_conf->setValue("previewIconSize", n);
 }
 
+int AppConfigUi::get_statsMode(void)
+{
+    const int mode=m_conf->value("statsMode", 0).toInt();
+
+    return qBound(0, mode, 2);
+}
+
+void AppConfigUi::set_statsMode(int mode)
+{
+    m_conf->setValue("statsMode", qBound(0, mode, 2));
+}
+
+int AppConfigUi::get_statsLimit(void)
+{
+    const int limit=m_conf->value("statsLimit", 1000).toInt();
+
+    return qBound(0, limit, 1000000);
+}
+
+void AppConfigUi::set_statsLimit(int limit)
+{
+    m_conf->setValue("statsLimit", qBound(0, limit, 1000000));
+}
+
 QString AppConfigUi::getIconCurrentSectionName(void)
 {
     return m_host->get_parameter("iconCurrentSectionName");

@@ -1254,9 +1254,10 @@ int KnowTreeModel::getBranchCountRecurse(const TreeItem *item) const
 }
 
 // Общая статистика базы: считается один раз, дальше кеш
-void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags)
+void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags,
+                           StatsLevel level)
 {
-  ensureStats();
+  ensureStats(level);
 
   branches=getBranchCount();
 
@@ -1275,10 +1276,16 @@ void KnowTreeModel::getBaseStats(int &branches, int &records, int &files, int &i
   tags=m_tagRefs.size();
 }
 
-// Построчная детализация статистики: из кеша в порядке дерева
-QList<BaseStatRow> KnowTreeModel::getBaseStatRows(void)
+// Построчная детализация статистики: из кеша в порядке дерева.
+bool KnowTreeModel::isFullStats(void) const
 {
-  ensureStats();
+  return !m_statsDirty && m_statsFull;
+}
+
+
+QList<BaseStatRow> KnowTreeModel::getBaseStatRows(StatsLevel level)
+{
+  ensureStats(level);
 
   QList<BaseStatRow> rows;
 
@@ -1320,7 +1327,9 @@ void KnowTreeModel::refreshRecordStats(const QString &recordId)
   if(recordId.isEmpty())
     return;
 
-  ensureStats();
+  // Пересчет грязного кеша тем же уровнем что был: тихий Fast
+  // не превращается в чтение всех файлов посреди правки
+  ensureStats(m_statsFull ? StatsLevel::Full : StatsLevel::Fast);
 
   const QStringList path=getRecordPath(recordId);
 
@@ -1355,7 +1364,9 @@ void KnowTreeModel::refreshRecordStats(const QString &recordId)
   QSet<QString> noteLinks;
   QSet<QString> noteTags;
 
-  BaseStatRow row=computeStatsRow(record, branchItem, noteLinks, noteTags, hrefPattern);
+  QStringList refreshPathNames=branchItem->getPathAsField("name");
+  refreshPathNames.removeAll(QString(""));
+  BaseStatRow row=computeStatsRow(record, refreshPathNames.join(" / "), noteLinks, noteTags, hrefPattern, m_statsFull);
 
   unrefStatsRow(recordId);
 
@@ -1369,10 +1380,13 @@ void KnowTreeModel::refreshRecordStats(const QString &recordId)
   refStatsSets(noteLinks, noteTags);
 }
 
-void KnowTreeModel::ensureStats(void)
+void KnowTreeModel::ensureStats(StatsLevel level)
 {
-  if(!m_statsDirty)
+  // Чистый кеш нужного уровня уже есть: Full покрывает и Fast-запросы
+  if(!m_statsDirty && (m_statsFull || level==StatsLevel::Fast))
     return;
+
+  const bool full=(level==StatsLevel::Full);
 
   m_statsRows.clear();
   m_statsOrder.clear();
@@ -1418,6 +1432,20 @@ void KnowTreeModel::ensureStats(void)
     totalRecords+=static_cast<int>(recordTable->size());
   }
 
+  // Путь ветки считается один раз на ветку, а не на каждую запись:
+  // на 100k+ базе это тысячи вместо сотен тысяч подъемов по родителям
+  QMap<TreeItem *, QString> branchPaths;
+
+  for(TreeItem *item : order)
+  {
+    if(item==nullptr)
+      continue;
+
+    QStringList pathNames=item->getPathAsField("name");
+    pathNames.removeAll(QString(""));
+    branchPaths[item]=pathNames.join(" / ");
+  }
+
   int doneRecords=0;
 
   for(TreeItem *item : order)
@@ -1440,7 +1468,7 @@ void KnowTreeModel::ensureStats(void)
       QSet<QString> noteLinks;
       QSet<QString> noteTags;
 
-      BaseStatRow row=computeStatsRow(record, item, noteLinks, noteTags, hrefPattern);
+      BaseStatRow row=computeStatsRow(record, branchPaths.value(item), noteLinks, noteTags, hrefPattern, full);
 
       const QString id=row.recordId;
 
@@ -1451,15 +1479,20 @@ void KnowTreeModel::ensureStats(void)
 
       refStatsSets(noteLinks, noteTags);
 
-      // Прогресс пачками: сигнал без подписчиков почти бесплатен,
-      // диалог обновляется в слоте TreeScreen с processEvents
-      if((++doneRecords % 100)==0)
+      // Прогресс только долгого Full-прохода и тоже пачками: сигнал
+      // без подписчиков почти бесплатен, диалог обновляется в слоте
+      // с processEvents. Быстрый проход идет молча - секунды даже на 100k
+      if(full && (++doneRecords % 100)==0)
         emit statsProgress(doneRecords, totalRecords);
+      else if(!full)
+        ++doneRecords;
     }
   }
 
-  emit statsProgress(totalRecords, totalRecords);
+  if(full)
+    emit statsProgress(totalRecords, totalRecords);
 
+  m_statsFull=full;
   m_statsDirty=false;
 }
 
@@ -1502,22 +1535,44 @@ void KnowTreeModel::unrefStatsRow(const QString &recordId)
 
 // Строка одной записи: тихий подсчет (имена, файлы, картинки с диска,
 // ссылки, метки)
-BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
+BaseStatRow KnowTreeModel::computeStatsRow(Record *record, const QString &branchPath,
                                            QSet<QString> &noteLinks, QSet<QString> &noteTags,
-                                           const QRegularExpression &hrefPattern)
+                                           const QRegularExpression &hrefPattern,
+                                           bool full)
 {
   BaseStatRow row;
   row.recordId=record->getField("id");
   row.noteName=record->getField("name");
+  row.branchPath=branchPath;
 
-  QStringList pathNames=branchItem->getPathAsField("name");
-  pathNames.removeAll(QString(""));
-  row.branchPath=pathNames.join(" / ");
+  // Разделители меток статикой: конструкция QRegularExpression
+  // на каждую из 100k+ записей даром жжет CPU
+  static const QRegularExpression tagSplitter(QStringLiteral("[,;]+"));
 
   AttachTableData *attachTable=record->getAttachTablePointer();
 
   if(attachTable!=nullptr)
     row.files=attachTable->size();
+
+  // Быстрый уровень: только mytetra.xml (аттачи уже в DOM выше).
+  // Тексты и каталоги на диске не трогаются: картинки нулевые,
+  // ссылки пустые. Полный уровень ниже доберет их чтением файлов
+  if(!full)
+  {
+    QStringList fastTags=record->getField("tags").split(tagSplitter, Qt::SkipEmptyParts);
+
+    foreach(QString tag, fastTags)
+    {
+      tag=tag.trimmed();
+
+      if(!tag.isEmpty())
+        noteTags.insert(tag.toLower());
+    }
+
+    row.tags=noteTags.size();
+
+    return row;
+  }
 
   QString html=record->getTextForStats();
 
@@ -1570,7 +1625,7 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
 
   // Метки: разбор по запятой/точке с запятой, пробелы по краям.
   // Регистр не важен, дубли не считаются
-  QStringList recordTags=record->getField("tags").split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
+  QStringList recordTags=record->getField("tags").split(tagSplitter, Qt::SkipEmptyParts);
 
   foreach(QString tag, recordTags)
   {

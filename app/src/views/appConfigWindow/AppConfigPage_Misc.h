@@ -8,6 +8,8 @@ class QCheckBox;
 class QSpinBox;
 class QGroupBox;
 class QPushButton;
+class QRadioButton;
+class QLabel;
 
 class AppConfigPage_Misc : public ConfigPage
 {
@@ -40,6 +42,13 @@ protected:
 
   QGroupBox *networkBox;                  // Рамка сетевых настроек
   QCheckBox *tlsIgnoreInvalidCertificates; // Игнорировать ошибки TLS при загрузке
+
+  QGroupBox *statsBox;        // Рамка статистики базы
+  QRadioButton *statsAsk;     // Спрашивать каждый раз
+  QRadioButton *statsAlways;  // Всегда считать полную
+  QRadioButton *statsNever;   // Никогда (только быстрая)
+  QLabel *statsLimitLabel;    // Подпись лимита автосчета
+  QSpinBox *statsLimit;       // Лимит записей для автосчета полной без вопросов
 
   // Цвета заметки и секрета переехали на страницу Themes.
   // Объединяющая рамка для блока с кнопкой редактирования конфиг-файла

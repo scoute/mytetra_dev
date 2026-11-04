@@ -1263,6 +1263,26 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Normally a site with an expired, self-signed or otherwise invalid TLS certificate is refused. This option allows downloading images and files from such sites anyway, but an attacker on the network could substitute the content. Default: off.</source>
         <translation>Обычно сайт с просроченным, самоподписанным или иным невалидным TLS-сертификатом отклоняется. Эта опция разрешает всё равно скачивать с него картинки и файлы, но злоумышленник в сети может подменить содержимое. По умолчанию выключено.</translation>
     </message>
+    <message>
+        <source>Statistics</source>
+        <translation>Статистика</translation>
+    </message>
+    <message>
+        <source>Ask about full statistics each time</source>
+        <translation>Спрашивать о полной статистике каждый раз</translation>
+    </message>
+    <message>
+        <source>Always compute full statistics</source>
+        <translation>Всегда считать полную статистику</translation>
+    </message>
+    <message>
+        <source>Never compute full statistics (fast only)</source>
+        <translation>Никогда не считать полную статистику (только быстрая)</translation>
+    </message>
+    <message>
+        <source>Auto-compute full statistics below this note count</source>
+        <translation>Считать полную статистику без вопросов, если записей меньше</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Tree</name>
@@ -1301,18 +1321,6 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="440"/>
         <source>Customize toolbar...</source>
         <translation>Настроить панель...</translation>
-    </message>
-    <message>
-        <source>Opening database</source>
-        <translation>Открытие базы данных</translation>
-    </message>
-    <message>
-        <source>Loading database tree...</source>
-        <translation>Загрузка дерева разделов...</translation>
-    </message>
-    <message>
-        <source>Counting records...</source>
-        <translation>Подсчет записей...</translation>
     </message>
 </context>
 <context>
@@ -5801,7 +5809,40 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
     <message>
         <source>; peers: %1</source>
         <translation>; пиры: %1</translation>
-    </message></context>
+    </message>
+    <message>
+        <source>Statistics (fast)</source>
+        <translation>Статистика (быстрая)</translation>
+    </message>
+    <message>
+        <source>The base holds %1 records. Full statistics (images on disk, links between notes) takes a while. Compute it now?</source>
+        <translation>В базе %1 записей. Полная статистика (картинки на диске, ссылки между заметками) считается долго. Посчитать сейчас?</translation>
+    </message>
+    <message>
+        <source>Ask each time</source>
+        <translation>Спрашивать каждый раз</translation>
+    </message>
+    <message>
+        <source>Always compute full</source>
+        <translation>Всегда считать полную</translation>
+    </message>
+    <message>
+        <source>Never compute (fast only)</source>
+        <translation>Никогда не считать (только быстрая)</translation>
+    </message>
+    <message>
+        <source>Keep fast</source>
+        <translation>Оставить быструю</translation>
+    </message>
+    <message>
+        <source>Compute full</source>
+        <translation>Посчитать полную</translation>
+    </message>
+    <message>
+        <source>Counting records...</source>
+        <translation>Подсчет записей...</translation>
+    </message>
+</context>
 <context>
     <name>MathExpressionFormatter</name>
     <message>

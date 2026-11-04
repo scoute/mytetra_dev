@@ -20,6 +20,11 @@
 #include <QPrinter>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <QProgressDialog>
+#include <QRadioButton>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QCoreApplication>
 #include <QSplitter>
 #include <QDockWidget>
 #include <QStatusBar>
@@ -787,7 +792,10 @@ void MainWindow::messageHandler(QString message)
 // Упаковка итога handleMcpCommand в компактный JSON
 
 // Пересчитать и показать статистику базы в статусбаре.
-// Вызывается по сигналам модели и точечно после правок
+// Вызывается по сигналам модели и точечно после правок.
+// Всегда быстрый уровень (только mytetra.xml): секунды вместо десятков секунд
+// даже на 100k+ базе. Полный уровень включается отдельно
+// через checkFullStatsOffer после показа окна
 void MainWindow::updateStats(void)
 {
     if(statsLabel==nullptr)
@@ -801,7 +809,8 @@ void MainWindow::updateStats(void)
     int tags=0;
 
     if(treeScreen!=nullptr && treeScreen->knowTreeModel!=nullptr)
-        treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
+        treeScreen->knowTreeModel->getBaseStats(branches, records, files, images, links, tags,
+                                                KnowTreeModel::StatsLevel::Fast);
 
     statsLabel->setText(tr("Branches: %1 | Records: %2 | Tags: %3 | Files: %4 | Images: %5 | Internal links: %6").arg(branches).arg(records).arg(tags).arg(files).arg(images).arg(links));
     statsLabel->setToolTip(tr("Base statistics: branches, records, tags, files, images and links. Links are mytetra:// note links. Click opens per-note details."));
@@ -858,7 +867,14 @@ void MainWindow::showStatsDetails(void)
         return;
 
     QDialog dialog(this);
-    dialog.setWindowTitle(tr("Statistics"));
+
+    // В быстром уровне колонки картинок и ссылок нулевые -
+    // честно подписывается, чтобы нули не читались как факты
+    if(treeScreen->knowTreeModel->isFullStats())
+        dialog.setWindowTitle(tr("Statistics"));
+    else
+        dialog.setWindowTitle(tr("Statistics (fast)"));
+
     dialog.resize(640, 400);
 
     QTableWidget *table=buildStatsTableWidget(&dialog);
@@ -887,6 +903,130 @@ void MainWindow::showStatsDetails(void)
     layout->addWidget(table);
 
     dialog.exec();
+}
+
+
+// Предложение полной статистики после показа окна. Быстрый уровень
+// уже посчитан в updateStats (секунды). Дальше по числу записей:
+// меньше лимита - полный уровень считается молча (тоже быстро),
+// больше - спрашивается: полная с прогрессом или остаться на быстрой.
+// Выбор запоминается галкой в настройках интерфейса (statsMode)
+void MainWindow::checkFullStatsOffer(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    KnowTreeModel *model=treeScreen->knowTreeModel;
+
+    // Сколько записей вообще: быстрый кеш уже готов из updateStats
+    int branches=0, records=0, files=0, images=0, links=0, tags=0;
+    model->getBaseStats(branches, records, files, images, links, tags,
+                        KnowTreeModel::StatsLevel::Fast);
+
+    // Лимит из настроек: меньше - полный уровень считается молча
+    const int autoLimit=AppContext::instance().appConfig()->uiSection()->get_statsLimit();
+
+    // Политика: 0 - спрашивать, 1 - всегда считать полную,
+    // 2 - никогда (оставаться на быстрой)
+    const int mode=AppContext::instance().appConfig()->uiSection()->get_statsMode();
+
+    // Запомненная "только быстрая" - ничего не делать
+    if(mode==2)
+        return;
+
+    // Маленькая база или запомненная "всегда": считать без вопросов.
+    // Маленькая - молча и без прогресса (доли секунды), запомненная
+    // полная - с прогрессом (долго на 100k+, видно движение)
+    if(records<autoLimit || mode==1)
+    {
+        if(records<autoLimit)
+            model->getBaseStats(branches, records, files, images, links, tags,
+                                KnowTreeModel::StatsLevel::Full);
+        else
+            computeFullStatsWithProgress();
+
+        updateStats();
+        return;
+    }
+
+    // Вопрос с политикой на будущее: радиокнопки решают что делать
+    // дальше (спрашивать/всегда/никогда), кнопки действий - что делать
+    // сейчас. Политика сохраняется любым действием, отмена - нет
+    QMessageBox offerBox(QMessageBox::Question,
+                         tr("Statistics"),
+                         tr("The base holds %1 records. Full statistics (images on disk, links between notes) takes a while. Compute it now?").arg(records),
+                         QMessageBox::NoButton,
+                         this);
+
+    QRadioButton *askRadio=new QRadioButton(tr("Ask each time"), &offerBox);
+    QRadioButton *alwaysRadio=new QRadioButton(tr("Always compute full"), &offerBox);
+    QRadioButton *neverRadio=new QRadioButton(tr("Never compute (fast only)"), &offerBox);
+    askRadio->setChecked(true);
+
+    QVBoxLayout *policyLayout=new QVBoxLayout;
+    policyLayout->addWidget(askRadio);
+    policyLayout->addWidget(alwaysRadio);
+    policyLayout->addWidget(neverRadio);
+
+    // Радиокнопки кладутся в контентную часть диалога: у QMessageBox
+    // для этого есть layout() с первой колонкой под виджеты
+    QGridLayout *offerLayout=qobject_cast<QGridLayout *>(offerBox.layout());
+
+    if(offerLayout!=nullptr)
+        offerLayout->addLayout(policyLayout, 1, 1);
+
+    QPushButton *fastButton=offerBox.addButton(tr("Keep fast"), QMessageBox::AcceptRole);
+    QPushButton *fullButton=offerBox.addButton(tr("Compute full"), QMessageBox::ActionRole);
+    offerBox.addButton(QMessageBox::Cancel);
+    offerBox.exec();
+
+    const int policy=alwaysRadio->isChecked() ? 1 : (neverRadio->isChecked() ? 2 : 0);
+
+    if(offerBox.clickedButton()==fullButton)
+    {
+        AppContext::instance().appConfig()->uiSection()->set_statsMode(policy);
+        computeFullStatsWithProgress();
+        updateStats();
+    }
+    else if(offerBox.clickedButton()==fastButton)
+    {
+        AppContext::instance().appConfig()->uiSection()->set_statsMode(policy);
+    }
+    // Cancel: ни действие, ни политика не сохраняются
+}
+
+
+// Долгий полный пересчет с прогрессом: диалог без кнопки отмены
+// (прерывание оставило бы кеш в неконсистентном состоянии)
+void MainWindow::computeFullStatsWithProgress(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    KnowTreeModel *model=treeScreen->knowTreeModel;
+
+    QProgressDialog progress(tr("Counting records..."), QString(), 0, 0, this);
+    progress.setWindowTitle(tr("Statistics"));
+    progress.setMinimumDuration(0);
+    progress.setCancelButton(nullptr);
+    progress.setModal(true);
+    progress.show();
+    QCoreApplication::processEvents();
+
+    QObject::connect(model, &KnowTreeModel::statsProgress,
+                     &progress, [&](int done, int total) {
+        if(progress.maximum()!=total)
+            progress.setMaximum(total);
+        progress.setValue(done);
+        QCoreApplication::processEvents();
+    });
+
+    int branches=0, records=0, files=0, images=0, links=0, tags=0;
+    model->getBaseStats(branches, records, files, images, links, tags,
+                        KnowTreeModel::StatsLevel::Full);
+
+    QObject::disconnect(model, &KnowTreeModel::statsProgress, nullptr, nullptr);
+    progress.close();
 }
 
 void MainWindow::setupShortcuts(void)

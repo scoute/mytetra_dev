@@ -167,6 +167,15 @@ public:
     // Размер иконок в окне выбора (иконки, прикрепляемые к веткам)
     int getPreviewIconSize(void);
     void setPreviewIconSize(int n);
+
+    // Режим полной статистики: 0 - спрашивать каждый раз,
+    // 1 - всегда считать, 2 - никогда (только быстрая)
+    int get_statsMode(void);
+    void set_statsMode(int mode);
+
+    // Лимит записей для автосчета полной статистики без вопросов
+    int get_statsLimit(void);
+    void set_statsLimit(int limit);
     // Последняя выбранная секция в окошке выбора иконок
     QString getIconCurrentSectionName(void);
     void setIconCurrentSectionName(QString name);

@@ -118,20 +118,32 @@ public:
     //! Возвращает общее количество веток в дереве (без невидимого корня)
     int getBranchCount(void) const;
 
-    //! Общая статистика базы: ветки, записи, приаттаченные файлы,
-    //! файлы картинок на диске в каталогах записей, distinct-ссылки
-    //! на всю базу (одна ссылка в десяти заметках - одна ссылка; Qt
-    //! дробит одну ссылку на несколько <a href>, голый подсчет врет)
-    //! и distinct-метки. Тексты читаются тихо (нет файла = пусто,
-    //! закрытый шифр = пусто), модель не меняется.
-    //! Считается один раз, дальше кеш: точечные обновления строк
-    //! (refreshRecordStats) и сброс флага на структурных правках
-    void getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags);
+    //! Два уровня статистики. Fast считается только по mytetra.xml
+    //! (ветки, записи, аттачи из DOM, метки из полей): без чтения
+    //! text.html и обхода каталогов: секунды на 100k+ базе вместо десятков секунд.
+    //! Full добавляет картинки на диске и distinct-ссылки mytetra://
+    //! из текстов (одна ссылка в десяти заметках - одна ссылка; Qt
+    //! дробит одну ссылку на несколько <a href>, голый подсчет врет).
+    //! Тексты читаются тихо (нет файла = пусто, закрытый шифр = пусто).
+    enum class StatsLevel { Fast, Full };
+
+    //! Общая статистика базы запрошенного уровня. Считается один раз,
+    //! дальше кеш: точечные обновления строк (refreshRecordStats)
+    //! и сброс флага на структурных правках. Уровень обязателен
+    //! параметром: тяжелый Full нельзя включать неявно
+    void getBaseStats(int &branches, int &records, int &files, int &images, int &links, int &tags,
+                      StatsLevel level);
 
     //! Построчная детализация статистики для диалога по клику:
     //! каждая запись со своим путем, счетчиками и идентификатором
-    //! (двойной клик прыгает к заметке). Тот же тихий проход что статистика
-    QList<BaseStatRow> getBaseStatRows(void);
+    //! (двойной клик прыгает к заметке). Уровень обязателен параметром:
+    //! Fast отдает кеш как есть (колонки картинок и ссылок в нем могут
+    //! быть нулевыми), Full гарантирует полный пересчет
+    QList<BaseStatRow> getBaseStatRows(StatsLevel level);
+
+    //! Каким уровнем заполнен текущий кеш (false после invalidate
+    //! до первого пересчета). Диалог деталей подписывает заголовок
+    bool isFullStats(void) const;
 
     //! Сбросить кеш статистики: следующий запрос посчитает все заново.
     //! Вызывается на структурных правках (ветки, bulk-операции),
@@ -141,7 +153,7 @@ public:
     //! Пересчитать одну запись (текст, метки, аттачи): distinct-наборы
     //! правятся через счетчики ссылок, полного прохода нет.
     //! Нет записи - строка тихо выкидывается. При грязном кеше
-    //! сначала полный пересчет
+    //! сначала полный пересчет текущим уровнем (isFullStats)
     void refreshRecordStats(const QString &recordId);
 
     //! Выкинуть одну запись из кеша (удаление). При грязном кеше
@@ -274,6 +286,9 @@ private:
     // и меток построчно (для refcount distinct-итогов), сами итоги
     // как счетчики (сколько записей ссылается/метит)
     bool m_statsDirty=true;
+    // Чем заполнен кеш, когда он чист. Full включает чтение всех
+    // text.html и обход каталогов; Fast только mytetra.xml
+    bool m_statsFull=false;
     QMap<QString, BaseStatRow> m_statsRows;
     QStringList m_statsOrder;
     QMap<QString, QSet<QString>> m_statsRowLinks;
@@ -281,13 +296,16 @@ private:
     QMap<QString, int> m_linkRefs;
     QMap<QString, int> m_tagRefs;
 
-    void ensureStats(void);
+    void ensureStats(StatsLevel level);
 
     // Посчитать строку одной записи. Ссылки и метки отдаются наружу
-    // наборами для refcount, в строку идут только счетчики
-    BaseStatRow computeStatsRow(Record *record, TreeItem *branchItem,
+    // наборами для refcount, в строку идут только счетчики.
+    // full=false: без чтения text.html и обхода каталога картинок
+    // (ссылки пустые, картинки нулевые) - все только по mytetra.xml
+    BaseStatRow computeStatsRow(Record *record, const QString &branchPath,
                                 QSet<QString> &noteLinks, QSet<QString> &noteTags,
-                                const QRegularExpression &hrefPattern);
+                                const QRegularExpression &hrefPattern,
+                                bool full);
 
     void refStatsSets(const QSet<QString> &links, const QSet<QString> &tags);
     void unrefStatsRow(const QString &recordId);

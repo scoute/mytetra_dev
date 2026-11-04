@@ -237,6 +237,16 @@ private:
     void findRecurse(const TreeItem* curritem);
     bool findInTextProcess(const QString& text);
 
+    // FTS5-индекс текстов: подготовка кандидатного множества перед поиском.
+    // Возвращает true если кандидаты активны (текст проверяется вхождением
+    // во множество без чтения файлов). Пустой индекс, короткие слова или
+    // шифрованные записи в области поиска дают false: идет линейный поиск
+    bool setupFtsSearch(KnowTreeModel *searchModel, const TreeItem *startItem);
+
+    // Пересборка FTS-индекса с отменяемым диалогом. false при отмене:
+    // поиск идет линейно
+    bool rebuildFtsWithProgress(KnowTreeModel *searchModel);
+
     void switchToolsExpand(bool flag);
 
     QStringList textDelimiterDecompose(QString text);
@@ -247,6 +257,13 @@ private:
 
     // Список слов, которые нужно искать
     QStringList searchWordList;
+
+    // Кандидаты FTS5-индекса текстов для текущего поиска.
+    // Активны только когда текст ищется через индекс: проверка
+    // вхождения идет множеством без чтения файлов, совпадение
+    // подтверждается обычной проверкой для точной семантики
+    QSet<QString> ftsCandidates;
+    bool ftsActive=false;
 
     // Разовый режим строгого совпадения тега (клик по тегу):
     // ищется тег целиком без учета регистра, подстроки не катят

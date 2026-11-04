@@ -1,6 +1,7 @@
 #include "AppContext.h"
 #include "libraries/Favorites.h"
 #include "libraries/BacklinkIndex.h"
+#include "libraries/FtsTextIndex.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
 
 
@@ -28,6 +29,7 @@ AppContext::AppContext(QObject *parent) : QObject(parent)
     // бессмертный Meyers-static при выходе
     m_favorites=new Favorites(this);
     m_backlinkIndex=new BacklinkIndex(this);
+    m_ftsTextIndex=new FtsTextIndex(this);
     m_dispatcher=new EditorShowTextDispatcher(nullptr);
 }
 
@@ -192,6 +194,12 @@ Favorites *AppContext::favorites(void) const
 BacklinkIndex *AppContext::backlinkIndex(void) const
 {
     return m_backlinkIndex;
+}
+
+
+FtsTextIndex *AppContext::ftsTextIndex(void) const
+{
+    return m_ftsTextIndex;
 }
 
 

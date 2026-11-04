@@ -20,6 +20,8 @@
 #include <QStandardItem>
 #include <QTimer>
 #include <QScopedPointer>
+#include <QDir>
+#include <QFileInfo>
 #include <QDebug>
 
 #include <algorithm>
@@ -29,8 +31,10 @@
 #include "FindTableWidget.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
+#include "models/appConfig/AppConfigStorage.h"
 #include "models/tree/TreeItem.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/FtsTextIndex.h"
 #include "views/tree/TreeScreen.h"
 #include "libraries/MtComboBox.h"
 #include "views/tree/KnowTreeView.h"
@@ -618,6 +622,41 @@ void FindScreen::findClicked(void)
     findStart();
 }
 
+// Есть ли шифрованные записи в поддереве поиска: их отсутствие
+// в FTS-индексе требует линейного прохода для корректности.
+// Обход только по флагам, без чтения файлов текстов
+static bool scopeHasCrypt(const TreeItem *startItem)
+{
+    if(startItem==nullptr)
+        return false;
+
+    QList<const TreeItem *> stack;
+    stack.append(startItem);
+
+    while(!stack.isEmpty())
+    {
+        const TreeItem *item=stack.takeLast();
+
+        if(item->getField(QStringLiteral("crypt"))==QStringLiteral("1"))
+            return true;
+
+        if(item->recordtableGetRowCount() > 0)
+        {
+            const RecordTableData *recordTable=item->recordtableGetTableData();
+
+            for(int i=0; i<static_cast<int>(recordTable->size()); i++)
+                if(recordTable->getField(QStringLiteral("crypt"), i)==QStringLiteral("1"))
+                    return true;
+        }
+
+        for(int i=0; i<item->childCount(); i++)
+            stack.append(item->child(i));
+    }
+
+    return false;
+}
+
+
 void FindScreen::findStart(void)
 {
     // Сохраняется текущая редактируемая запись, чтобы и в ней
@@ -670,6 +709,15 @@ void FindScreen::findStart(void)
         return;
     }
 
+    // FTS5-кандидаты текстов: готовятся до линейки поиска.
+    // Неудача (нет индекса, короткие слова, шифр в области)
+    // молча дает линейный поиск
+    ftsActive=false;
+    ftsCandidates.clear();
+
+    if(searchArea.value("text", false) && !exactTagMode)
+        ftsActive=setupFtsSearch(searchModel, startItem);
+
     // Динамически создается виджет линейки наполяемости
     progress=new QProgressDialog(this);
 
@@ -713,6 +761,86 @@ void FindScreen::findStart(void)
     }
 
 }
+
+// FTS5-индекс текстов: подготовка кандидатного множества перед поиском.
+// Возвращает true если кандидаты активны. Пустой индекс, короткие слова
+// или шифрованные записи в области поиска дают false: идет линейный поиск
+bool FindScreen::setupFtsSearch(KnowTreeModel *searchModel, const TreeItem *startItem)
+{
+    // Слова короче 3 букв/цифр FTS не берет: только линейный поиск.
+    // Проверка та же что в запросе: расхождение дало бы пустых кандидатов
+    foreach(const QString &word, searchWordList)
+        if(FtsTextIndex::wordGrams(word).isEmpty())
+            return false;
+
+    FtsTextIndex *fts=AppContext::instance().ftsTextIndex();
+
+    const int cryptCount=FtsTextIndex::cryptRecordCount(searchModel);
+
+    // Шифрованные записи не индексируются никогда: их наличие
+    // в области поиска требует линейного прохода для корректности
+    if(cryptCount>0 && scopeHasCrypt(startItem))
+        return false;
+
+    // Свежесть индекса против текущей базы
+    QString tetradir=AppContext::instance().appConfig()->storageSection()->get_tetradir();
+    QFileInfo xmlInfo(QDir(tetradir).absoluteFilePath(QStringLiteral("mytetra.xml")));
+
+    QString reason;
+
+    if(!fts->isFresh(tetradir,
+                     xmlInfo.size(),
+                     xmlInfo.lastModified().toMSecsSinceEpoch(),
+                     searchModel->getAllRecordCount(),
+                     cryptCount,
+                     &reason))
+    {
+        // Несвежий или пустой индекс: пересборка с отменой.
+        // Отмена молча дает линейный поиск
+        if(!rebuildFtsWithProgress(searchModel))
+            return false;
+    }
+
+    // ИЛИ для wordRegard=0 (любое слово), И для остальных (все слова)
+    const bool matchAll=(wordRegard->currentIndex()!=0);
+
+    bool ok=false;
+    QSet<QString> candidates=fts->search(searchWordList, matchAll, &ok);
+
+    if(!ok)
+        return false;
+
+    ftsCandidates=candidates;
+
+    return true;
+}
+
+
+// Пересборка FTS-индекса с отменяемым диалогом. false при отмене:
+// поиск идет линейно
+bool FindScreen::rebuildFtsWithProgress(KnowTreeModel *searchModel)
+{
+    QProgressDialog rebuilding(tr("Building text index..."), tr("Cancel"), 0, 0, this);
+    rebuilding.setWindowTitle(tr("Find in base"));
+    rebuilding.setMinimumDuration(1000);
+    rebuilding.setModal(true);
+    rebuilding.show();
+
+    FtsTextIndex *fts=AppContext::instance().ftsTextIndex();
+
+    bool completed=fts->rebuildFull(searchModel, [&](int done, int total) {
+        if(rebuilding.maximum()!=total)
+            rebuilding.setMaximum(total);
+
+        rebuilding.setValue(done);
+        qApp->processEvents();
+
+        return !rebuilding.wasCanceled();
+    });
+
+    return completed;
+}
+
 
 void FindScreen::findRecurse(const TreeItem* curritem)
 {
@@ -852,10 +980,26 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                 if(!found && searchArea.value("text", false))
                 {
                     // Поиск в тексте записи
-                    QString inspectText=searchRecordTable->getText(i);
-                    QTextDocument textdoc;
-                    textdoc.setHtml(inspectText);
-                    found=findInTextProcess(textdoc.toPlainText());
+                    if(ftsActive)
+                    {
+                        // Кандидаты FTS: вхождение проверяется множеством
+                        // без чтения файла. Совпадение подтверждается обычной
+                        // проверкой: семантика та же что в линейном поиске
+                        if(ftsCandidates.contains(searchRecordTable->getField("id", i)))
+                        {
+                            QString inspectText=searchRecordTable->getText(i);
+                            QTextDocument textdoc;
+                            textdoc.setHtml(inspectText);
+                            found=findInTextProcess(textdoc.toPlainText());
+                        }
+                    }
+                    else
+                    {
+                        QString inspectText=searchRecordTable->getText(i);
+                        QTextDocument textdoc;
+                        textdoc.setHtml(inspectText);
+                        found=findInTextProcess(textdoc.toPlainText());
+                    }
                 }
             }
 

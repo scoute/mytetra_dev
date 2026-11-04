@@ -6,9 +6,14 @@
 
 AppContext &AppContext::instance(void)
 {
-    static AppContext inst;
+    // Куча вместо статического объекта: main() отдает ядро под
+    // Qt-владение (setParent(&app)), а родителя удаляет детей
+    // через delete. Delete статического хранилища - это free()
+    // не из кучи и аборт при каждом выходе (см. fix/493).
+    // Указатель умирает тривиально, двойного разрушения нет
+    static AppContext *inst=new AppContext;
 
-    return inst;
+    return *inst;
 }
 
 

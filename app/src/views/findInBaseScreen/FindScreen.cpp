@@ -22,6 +22,8 @@
 #include <QScopedPointer>
 #include <QDir>
 #include <QFileInfo>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <QDebug>
 
 #include <algorithm>
@@ -657,6 +659,275 @@ static bool scopeHasCrypt(const TreeItem *startItem)
 }
 
 
+// Снапшот поддерева в плоский вектор в порядке линейного обхода:
+// ветка, ее записи, подветки. Только плоские строки: потоки модель
+// не трогают. Шифра здесь быть не должно: параллельный путь включается
+// только при чистом от шифра scope (см. setupFtsSearch)
+void FindScreen::collectSnaps(const TreeItem *curritem,
+                              QVector<RecSnap> &snaps,
+                              QVector<SnapBranch> &branches,
+                              const QHash<QString, QString> &plains,
+                              const QSet<QString> &candidates,
+                              int &branchSeq)
+{
+    if(curritem==nullptr || cancelFlag==1)
+        return;
+
+    const int myBranch=branchSeq++;
+
+    SnapBranch br;
+    br.name=curritem->getField("name");
+    br.path=curritem->getPath();
+    br.branchId=curritem->getField("id");
+    br.matched=false;
+    br.firstSnap=snaps.size();
+
+    if(searchArea.value("nameItem", false))
+        br.matched=findInTextProcess(br.name);
+
+    branches.append(br);
+
+    if(curritem->recordtableGetRowCount() > 0)
+    {
+        const RecordTableData *recordTable=curritem->recordtableGetTableData();
+
+        for(int i=0; i<static_cast<int>(recordTable->size()); i++)
+        {
+            if(cancelFlag==1)
+                return;
+
+            RecSnap snap;
+            snap.branchSeq=myBranch;
+            snap.id=recordTable->getField("id", i);
+            snap.name=recordTable->getField("name", i);
+            snap.tags=recordTable->getField("tags", i);
+
+            if(searchArea.value("author", false))
+                snap.author=recordTable->getField("author", i);
+
+            if(searchArea.value("url", false))
+                snap.url=recordTable->getField("url", i);
+
+            if(searchArea.value("attach", false))
+            {
+                Record *record=const_cast<RecordTableData *>(recordTable)->getRecord(i);
+
+                if(record!=nullptr)
+                {
+                    AttachTableData *attachTable=record->getAttachTablePointer();
+
+                    QStringList attachNames;
+
+                    for(int a=0; a<attachTable->size(); ++a)
+                        attachNames << attachTable->getFileName(a);
+
+                    snap.attachNames=attachNames.join(" ");
+                }
+            }
+
+            if(searchArea.value("text", false))
+            {
+                snap.inCandidates=candidates.contains(snap.id);
+
+                if(snap.inCandidates)
+                    snap.plain=plains.value(snap.id);
+            }
+
+            snaps.append(snap);
+
+            if((snaps.size() % 4096)==0)
+            {
+                progress->setValue(snaps.size());
+                qApp->processEvents();
+
+                if(progress->wasCanceled())
+                {
+                    cancelFlag=1;
+                    return;
+                }
+            }
+        }
+    }
+
+    for(int i=0; i<curritem->childCount(); i++)
+    {
+        collectSnaps(curritem->child(i), snaps, branches, plains, candidates, branchSeq);
+
+        if(cancelFlag==1)
+            return;
+    }
+}
+
+
+// Параллельный путь поиска при активном FTS: снапшот области,
+// оценка чанками в пуле потоков, хиты в таблицу по порядку.
+// Прогресс и отмена как в линейном пути
+void FindScreen::findParallel(const TreeItem *startItem)
+{
+    // Параметры поиска фиксируются до потоков: комбобоксы дальше не трогаем
+    const bool wholeWord=(howExtract->currentIndex()==0);
+    const bool matchAll=(wordRegard->currentIndex()!=0);
+
+    const bool checkName=searchArea.value("name", false);
+    const bool checkAuthor=searchArea.value("author", false);
+    const bool checkUrl=searchArea.value("url", false);
+    const bool checkTags=searchArea.value("tags", false);
+    const bool checkAttach=searchArea.value("attach", false);
+    const bool checkText=searchArea.value("text", false);
+
+    const QStringList words=searchWordList;
+
+    // Плоские тексты кандидатов одной пачкой вместо тысяч prepare.
+    // Нет строки = нет в кеше: проверка чтением файла как раньше
+    // (флаг в снапшоте, файл читает GUI-поток при мерже)
+    QHash<QString, QString> plains=AppContext::instance().ftsTextIndex()->plainBulk(ftsCandidates);
+
+    // Снапшот области в порядке дерева. Шифра нет (см. setupFtsSearch),
+    // отмены из линейки достаточно: дальше только чтение снапшота
+    QVector<RecSnap> snaps;
+    QVector<SnapBranch> branches;
+    int branchSeq=0;
+    collectSnaps(startItem, snaps, branches, plains, ftsCandidates, branchSeq);
+
+    if(cancelFlag==1)
+        return;
+
+    // Оценка чанками: ожидание с прокачкой и проверкой отмены,
+    // хиты мержатся сразу (частичные строки при отмене как в легаси)
+    const int chunkSize=4096;
+    const int total=snaps.size();
+
+    progress->setRange(0, total);
+    progress->setValue(0);
+
+    int done=0;
+    int mergeBranch=0;
+
+    for(int from=0; from<total && cancelFlag==0; from+=chunkSize)
+    {
+        const int count=qMin(chunkSize, total-from);
+
+        QVector<RecSnap> chunk;
+        chunk.reserve(count);
+
+        for(int i=0; i<count; i++)
+            chunk.append(snaps.at(from+i));
+
+        // Один таск на чанк: меньше оверхеда чем per-item mapped,
+        // лямбда для run выводится без result_type
+        QFuture< QVector<HitSnap> > future=QtConcurrent::run(
+            [chunk, words, wholeWord, matchAll,
+             checkName, checkAuthor, checkUrl, checkTags, checkAttach, checkText]
+            () -> QVector<HitSnap>
+        {
+            QVector<HitSnap> out;
+            out.reserve(chunk.size());
+
+            for(int i=0; i<chunk.size(); i++)
+            {
+                const RecSnap &snap=chunk.at(i);
+
+                HitSnap hit;
+                hit.branchSeq=snap.branchSeq;
+
+                if(matchSnapRecord(snap, words, wholeWord, matchAll,
+                                   checkName, checkAuthor, checkUrl, checkTags,
+                                   checkAttach, checkText))
+                {
+                    hit.id=snap.id;
+                    hit.name=snap.name;
+                    hit.tags=snap.tags;
+                }
+
+                out.append(hit);
+            }
+
+            return out;
+        });
+
+        QFutureWatcher< QVector<HitSnap> > watcher;
+        watcher.setFuture(future);
+
+        while(!watcher.isFinished())
+        {
+            qApp->processEvents();
+
+            if(progress->wasCanceled())
+            {
+                watcher.cancel();
+                cancelFlag=1;
+                break;
+            }
+        }
+
+        watcher.waitForFinished();
+
+        if(cancelFlag==1)
+            break;
+
+        // Мерж чанка: хиты идут в порядке снапшота, ветки по порядку.
+        // Ветка печатается перед первой своей записью (знак <=),
+        // совпавшая без хитов тоже печатается (как в линейном пути)
+        QVector<HitSnap> hits=future.result();
+
+        for(int i=0; i<hits.size(); i++)
+        {
+            const HitSnap &hit=hits.at(i);
+
+            while(mergeBranch<=hit.branchSeq && mergeBranch<branches.size())
+            {
+                const SnapBranch &br=branches.at(mergeBranch);
+
+                if(br.matched)
+                    findTable->addRow(br.name,
+                                      tr("[Tree item]"),
+                                      "",
+                                      br.path,
+                                      br.branchId,
+                                      true);
+
+                ++mergeBranch;
+            }
+
+            if(!hit.id.isEmpty())
+            {
+                const SnapBranch &br=branches.at(hit.branchSeq);
+
+                findTable->addRow(hit.name,
+                                  br.name,
+                                  hit.tags,
+                                  br.path,
+                                  hit.id);
+            }
+        }
+
+        done+=count;
+        progress->setValue(done);
+        qApp->processEvents();
+
+        if(progress->wasCanceled())
+            cancelFlag=1;
+    }
+
+    // Хвостовые ветки без хитов после последнего чанка
+    if(cancelFlag==0)
+        while(mergeBranch<branches.size())
+        {
+            const SnapBranch &br=branches.at(mergeBranch);
+
+            if(br.matched)
+                findTable->addRow(br.name,
+                                  tr("[Tree item]"),
+                                  "",
+                                  br.path,
+                                  br.branchId,
+                                  true);
+
+            ++mergeBranch;
+        }
+}
+
+
 void FindScreen::findStart(void)
 {
     // Сохраняется текущая редактируемая запись, чтобы и в ней
@@ -740,8 +1011,14 @@ void FindScreen::findStart(void)
     isUnsearchCryptBranchPresent=false;
 
     //Вызывается рекурсивный поиск в дереве
-    this->findRecurse( startItem );
-
+    if(ftsActive)
+    {
+        // Параллельный путь: снапшот области и пул потоков.
+        // Легаси-обход ниже не выполняется
+        findParallel(startItem);
+    }
+    else
+        this->findRecurse( startItem );
     // После вставки всех данных подгоняется ширина колонок
     findTable->updateColumnsWidth();
 
@@ -983,14 +1260,26 @@ void FindScreen::findRecurse(const TreeItem* curritem)
                     if(ftsActive)
                     {
                         // Кандидаты FTS: вхождение проверяется множеством
-                        // без чтения файла. Совпадение подтверждается обычной
+                        // без чтения файлов. Совпадение подтверждается обычной
                         // проверкой: семантика та же что в линейном поиске
-                        if(ftsCandidates.contains(searchRecordTable->getField("id", i)))
+                        const QString recId=searchRecordTable->getField("id", i);
+
+                        if(ftsCandidates.contains(recId))
                         {
-                            QString inspectText=searchRecordTable->getText(i);
-                            QTextDocument textdoc;
-                            textdoc.setHtml(inspectText);
-                            found=findInTextProcess(textdoc.toPlainText());
+                            // Плоский текст из кеша индекса: без чтения файла
+                            // и разбора HTML. Нет в кеше: чтение файла как раньше
+                            bool plainOk=false;
+                            QString cachedPlain=AppContext::instance().ftsTextIndex()->plainText(recId, &plainOk);
+
+                            if(plainOk)
+                                found=findInTextProcess(cachedPlain);
+                            else
+                            {
+                                QString inspectText=searchRecordTable->getText(i);
+                                QTextDocument textdoc;
+                                textdoc.setHtml(inspectText);
+                                found=findInTextProcess(textdoc.toPlainText());
+                            }
                         }
                     }
                     else
@@ -1048,7 +1337,22 @@ void FindScreen::findRecurse(const TreeItem* curritem)
 
 // Поиск в переданном тексте
 // Учитываются состояния переключателей wordregard и howextract
+// Тонкая обертка над общим ядром matchWords (оно же в потоках)
 bool FindScreen::findInTextProcess(const QString& text)
+{
+    return matchWords(text,
+                      searchWordList,
+                      howExtract->currentIndex()==0,
+                      wordRegard->currentIndex()!=0);
+}
+
+
+// Чистая проверка текста по словам запроса. Общее ядро для
+// линейного пути и потоков: поведение одно, дублирования нет
+bool FindScreen::matchWords(const QString &text,
+                            const QStringList &words,
+                            bool wholeWord,
+                            bool matchAll)
 {
     int findWordCount=0;
     int findFlag=0;
@@ -1056,12 +1360,11 @@ bool FindScreen::findInTextProcess(const QString& text)
     // Токенизация один раз на проверку: раньше текст разбивался
     // на слова под каждое слово запроса, на 108k записях это
     // кратно числу слов в запросе
-    const bool wholeWord=(howExtract->currentIndex()==0);
     const QStringList textWords=wholeWord ? textDelimiterDecompose(text)
                                           : QStringList();
 
     // Перебираются искомые слова
-    for(int i=0; i< searchWordList.size(); ++i)
+    for(int i=0; i< words.size(); ++i)
     {
         findFlag=0;
 
@@ -1070,13 +1373,13 @@ bool FindScreen::findInTextProcess(const QString& text)
         {
             // Текст уже разбит выше: проверяется, есть ли в полученном
             // списке текущее слово
-            if(textWords.contains(searchWordList.at(i), Qt::CaseInsensitive))
+            if(textWords.contains(words.at(i), Qt::CaseInsensitive))
                 findFlag=1;
         }
         else
         {
             // Если надо найти слово как подстроку
-            if(text.contains(searchWordList.at(i), Qt::CaseInsensitive))
+            if(text.contains(words.at(i), Qt::CaseInsensitive))
                 findFlag=1;
         }
 
@@ -1084,21 +1387,58 @@ bool FindScreen::findInTextProcess(const QString& text)
         if(findFlag==1)findWordCount++;
 
         // Если ищется хотя бы одно совпадение
-        if(findFlag==1 && wordRegard->currentIndex()==0)
+        if(findFlag==1 && !matchAll)
             return true; // То при первом же совпадении цикл прекращается
     }
 
     // Искалось хотя бы одно совпадение, но не было найдено
-    if(wordRegard->currentIndex()==0) return false;
+    if(!matchAll) return false;
     else
     {
         // Иначе требовалось найти все слова в запросе
-        if( findWordCount==searchWordList.size() )
+        if( findWordCount==words.size() )
             return true;
         else
             return false;
     }
 
+}
+
+
+// Проверка записи из снапшота в потоке: только чтение своих полей.
+// Порядок полей и ранний выход как в линейном findRecurse
+bool FindScreen::matchSnapRecord(const RecSnap &snap,
+                                 const QStringList &words,
+                                 bool wholeWord,
+                                 bool matchAll,
+                                 bool checkName,
+                                 bool checkAuthor,
+                                 bool checkUrl,
+                                 bool checkTags,
+                                 bool checkAttach,
+                                 bool checkText)
+{
+    bool found=false;
+
+    if(!found && checkName)
+        found=matchWords(snap.name, words, wholeWord, matchAll);
+
+    if(!found && checkAuthor)
+        found=matchWords(snap.author, words, wholeWord, matchAll);
+
+    if(!found && checkUrl)
+        found=matchWords(snap.url, words, wholeWord, matchAll);
+
+    if(!found && checkTags)
+        found=matchWords(snap.tags, words, wholeWord, matchAll);
+
+    if(!found && checkAttach)
+        found=matchWords(snap.attachNames, words, wholeWord, matchAll);
+
+    if(!found && checkText && snap.inCandidates)
+        found=matchWords(snap.plain, words, wholeWord, matchAll);
+
+    return found;
 }
 
 void FindScreen::changedWordRegard(int pos)

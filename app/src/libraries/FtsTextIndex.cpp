@@ -5,6 +5,7 @@
 #include <QSqlError>
 #include <QVariant>
 #include <QDebug>
+#include <QHash>
 
 #include "libraries/FtsTextIndex.h"
 #include "libraries/AppContext.h"
@@ -25,6 +26,11 @@ FtsTextIndex::~FtsTextIndex(void)
 {
     close();
 }
+
+
+// Версия схемы индекса. 2: добавлен кеш плоских текстов fts_plain.
+// Несовпадение молча пересобирает индекс при следующем поиске
+static const char *FtsSchemaVersion="2";
 
 
 // Путь к файлу индекса: рабочая директория (там же conf.ini),
@@ -151,6 +157,11 @@ bool FtsTextIndex::createSchema(void)
     if(!q.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS fts_text USING fts5(recid UNINDEXED, grams, tokenize='unicode61')")))
         return false;
 
+    // Кеш плоских текстов для проверки кандидатов без чтения файлов
+    // и разбора HTML. Обычная таблица: выборка по первичному ключу
+    if(!q.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS fts_plain(recid TEXT PRIMARY KEY, plain TEXT)")))
+        return false;
+
     return true;
 }
 
@@ -217,7 +228,16 @@ bool FtsTextIndex::isFresh(const QString &tetradir,
 
     QMap<QString, QString> meta=readMeta();
 
-    if(meta.value(QStringLiteral("schema"))!=QStringLiteral("1"))
+    if(meta.value(QStringLiteral("schema"))!=QString::fromLatin1(FtsSchemaVersion))
+    {
+        if(reason!=nullptr)
+            *reason=tr("Index schema mismatch");
+
+        return false;
+    }
+
+    // Переключение кеша текстов меняет состав индекса
+    if(meta.value(QStringLiteral("plain_cache"))!=(cachePlain ? QStringLiteral("1") : QStringLiteral("0")))
     {
         if(reason!=nullptr)
             *reason=tr("Index schema mismatch");
@@ -283,6 +303,9 @@ void FtsTextIndex::rebuildBranch(const TreeItem *curritem,
         QSqlQuery q(db);
         q.prepare(QStringLiteral("INSERT INTO fts_text(recid, grams) VALUES(?, ?)"));
 
+        QSqlQuery qp(db);
+        qp.prepare(QStringLiteral("INSERT INTO fts_plain(recid, plain) VALUES(?, ?)"));
+
         int batch=0;
 
         for(int i=0; i<static_cast<int>(recordTable->size()); i++)
@@ -296,20 +319,30 @@ void FtsTextIndex::rebuildBranch(const TreeItem *curritem,
 
             const QString recId=recordTable->getField(QStringLiteral("id"), i);
 
-            QString grams=gramsOf(plainFromHtml(recordTable->getText(i)));
+            // Плоский текст считается один раз: и для триграмм,
+            // и для кеша проверки без чтения файлов
+            QString plain=plainFromHtml(recordTable->getText(i));
+            QString grams=gramsOf(plain);
 
             if(!grams.isEmpty())
             {
                 q.addBindValue(recId);
                 q.addBindValue(grams);
                 q.exec();
+            }
 
-                if(++batch>=4096)
-                {
-                    batch=0;
-                    db.commit();
-                    db.transaction();
-                }
+            if(cachePlain)
+            {
+                qp.addBindValue(recId);
+                qp.addBindValue(plain);
+                qp.exec();
+            }
+
+            if(++batch>=4096)
+            {
+                batch=0;
+                db.commit();
+                db.transaction();
             }
 
             ++done;
@@ -348,6 +381,11 @@ bool FtsTextIndex::rebuildFull(KnowTreeModel *model,
     if(!q.exec(QStringLiteral("DELETE FROM fts_text")))
         return false;
 
+    // Кеш плоских текстов чистится вместе с индексом.
+    // При выключенном кеше таблица остается пустой и места не занимает
+    if(!q.exec(QStringLiteral("DELETE FROM fts_plain")))
+        return false;
+
     db.transaction();
 
     rebuildRunning=true;
@@ -374,7 +412,8 @@ bool FtsTextIndex::rebuildFull(KnowTreeModel *model,
     QFileInfo xmlInfo(QDir(tetradir).absoluteFilePath(QStringLiteral("mytetra.xml")));
 
     QMap<QString, QString> meta;
-    meta[QStringLiteral("schema")]=QStringLiteral("1");
+    meta[QStringLiteral("schema")]=QString::fromLatin1(FtsSchemaVersion);
+    meta[QStringLiteral("plain_cache")]=cachePlain ? QStringLiteral("1") : QStringLiteral("0");
     meta[QStringLiteral("base_path")]=tetradir;
     meta[QStringLiteral("xml_size")]=QString::number(xmlInfo.size());
     meta[QStringLiteral("xml_mtime")]=QString::number(xmlInfo.lastModified().toMSecsSinceEpoch());
@@ -440,7 +479,8 @@ int FtsTextIndex::cryptRecordCount(KnowTreeModel *model)
 }
 
 
-// Обновить одну запись. Пустой текст удаляет строку
+// Обновить одну запись. Пустой текст удаляет FTS-строку,
+// кеш плоского текста хранит и пустое (проверка без чтения файла)
 void FtsTextIndex::upsert(const QString &recordId, const QString &htmlText)
 {
     if(rebuildRunning)
@@ -454,15 +494,30 @@ void FtsTextIndex::upsert(const QString &recordId, const QString &htmlText)
     q.addBindValue(recordId);
     q.exec();
 
-    QString grams=gramsOf(plainFromHtml(htmlText));
+    QString plain=plainFromHtml(htmlText);
+    QString grams=gramsOf(plain);
 
-    if(grams.isEmpty())
-        return;
+    if(!grams.isEmpty())
+    {
+        q.prepare(QStringLiteral("INSERT INTO fts_text(recid, grams) VALUES(?, ?)"));
+        q.addBindValue(recordId);
+        q.addBindValue(grams);
+        q.exec();
+    }
 
-    q.prepare(QStringLiteral("INSERT INTO fts_text(recid, grams) VALUES(?, ?)"));
-    q.addBindValue(recordId);
-    q.addBindValue(grams);
-    q.exec();
+    if(cachePlain)
+    {
+        q.prepare(QStringLiteral("INSERT OR REPLACE INTO fts_plain(recid, plain) VALUES(?, ?)"));
+        q.addBindValue(recordId);
+        q.addBindValue(plain);
+        q.exec();
+    }
+    else
+    {
+        q.prepare(QStringLiteral("DELETE FROM fts_plain WHERE recid=?"));
+        q.addBindValue(recordId);
+        q.exec();
+    }
 }
 
 
@@ -479,6 +534,84 @@ void FtsTextIndex::remove(const QString &recordId)
     q.prepare(QStringLiteral("DELETE FROM fts_text WHERE recid=?"));
     q.addBindValue(recordId);
     q.exec();
+
+    q.prepare(QStringLiteral("DELETE FROM fts_plain WHERE recid=?"));
+    q.addBindValue(recordId);
+    q.exec();
+}
+
+
+// Плоский текст записи из кеша индекса. ok=false если кеш выключен
+// или строки нет: тогда читать файл как раньше
+QString FtsTextIndex::plainText(const QString &recordId, bool *ok)
+{
+    if(ok!=nullptr)
+        *ok=false;
+
+    if(!cachePlain || recordId.isEmpty() || !ensureOpen())
+        return QString();
+
+    QSqlQuery q(db);
+    q.setForwardOnly(true);
+    q.prepare(QStringLiteral("SELECT plain FROM fts_plain WHERE recid=?"));
+    q.addBindValue(recordId);
+
+    if(!q.exec() || !q.next())
+        return QString();
+
+    if(ok!=nullptr)
+        *ok=true;
+
+    return q.value(0).toString();
+}
+
+
+// Плоские тексты пачкой: чанки по 900 (лимит переменных SQLite 999).
+// Нет строки = нет в кеше, проверять чтением файла
+QHash<QString, QString> FtsTextIndex::plainBulk(const QSet<QString> &recordIds)
+{
+    QHash<QString, QString> result;
+
+    if(!cachePlain || recordIds.isEmpty() || !ensureOpen())
+        return result;
+
+    QList<QString> ids=recordIds.values();
+
+    for(int from=0; from<ids.size(); from+=900)
+    {
+        int count=qMin(900, ids.size()-from);
+
+        QStringList placeholders;
+
+        for(int i=0; i<count; i++)
+            placeholders << QStringLiteral("?");
+
+        QSqlQuery q(db);
+        q.setForwardOnly(true);
+        q.prepare(QStringLiteral("SELECT recid, plain FROM fts_plain WHERE recid IN (") +
+                  placeholders.join(QStringLiteral(",")) +
+                  QStringLiteral(")"));
+
+        for(int i=0; i<count; i++)
+            q.addBindValue(ids.at(from+i));
+
+        if(!q.exec())
+            return result;
+
+        while(q.next())
+            result.insert(q.value(0).toString(), q.value(1).toString());
+    }
+
+    return result;
+}
+
+
+// Кешировать ли плоские тексты в SQLite. Выключатель под будущую
+// галку в настройках: выключение не чистит таблицу сразу,
+// она очистится при следующей пересборке
+void FtsTextIndex::setCachePlainText(bool enabled)
+{
+    cachePlain=enabled;
 }
 
 

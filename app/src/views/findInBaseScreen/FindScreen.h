@@ -247,9 +247,81 @@ private:
     // поиск идет линейно
     bool rebuildFtsWithProgress(KnowTreeModel *searchModel);
 
+    // Снапшот записи для параллельной оценки в потоках (П2 503).
+    // Только плоские данные: никаких указателей в модель, писатели
+    // (автосейв, MCP) во время поиска снапшот не трогают
+    struct RecSnap
+    {
+        QString id;
+        QString name;
+        QString tags;
+        QString author;
+        QString url;
+        QString attachNames;
+        QString plain;
+        QString branchName;
+        QStringList branchPath;
+        int branchSeq=-1;
+        bool inCandidates=false;
+    };
+
+    struct HitSnap
+    {
+        int branchSeq=-1;
+        QString id;
+        QString name;
+        QString tags;
+    };
+
+    // Ветка для упорядоченного мержа: совпавшая печатается перед
+    // первой своей записью, даже если хитов в ней нет
+    struct SnapBranch
+    {
+        QString name;
+        QStringList path;
+        QString branchId;
+        bool matched=false;
+        int firstSnap=-1;
+    };
+
+    // Чистая проверка текста по словам запроса. Общее ядро для
+    // линейного пути и потоков: поведение одно, дублирования нет
+    static bool matchWords(const QString &text,
+                           const QStringList &words,
+                           bool wholeWord,
+                           bool matchAll);
+
+    // Проверка записи из снапшота в потоке: только чтение своих полей
+    static bool matchSnapRecord(const RecSnap &snap,
+                                const QStringList &words,
+                                bool wholeWord,
+                                bool matchAll,
+                                bool checkName,
+                                bool checkAuthor,
+                                bool checkUrl,
+                                bool checkTags,
+                                bool checkAttach,
+                                bool checkText);
+
+    // Параллельный путь поиска при активном FTS: снапшот области,
+    // оценка чанками в пуле потоков, хиты в таблицу по порядку.
+    // Прогресс и отмена как в линейном пути
+    void findParallel(const TreeItem *startItem);
+
+    // Снапшот поддерева в плоский вектор в порядке линейного обхода
+    void collectSnaps(const TreeItem *curritem,
+                      QVector<RecSnap> &snaps,
+                      QVector<SnapBranch> &branches,
+                      const QHash<QString, QString> &plains,
+                      const QSet<QString> &candidates,
+                      int &branchSeq);
+
     void switchToolsExpand(bool flag);
 
-    QStringList textDelimiterDecompose(QString text);
+    // Разбить строку на слова: разделители пробел, пунктуация и кавычки.
+    // Кавычки группируют фразу с пробелами в одно слово.
+    // Статический: то же разбиение нужно потокам проверки (см. matchWords)
+    static QStringList textDelimiterDecompose(QString text);
 
 
     // Поля, где нужно искать (Заголовок, текст, теги...)

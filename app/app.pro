@@ -51,7 +51,8 @@ QT = gui \
     xml \
     svg \
     network \
-    sql
+    sql \
+    concurrent
 CONFIG += qt \
     warn_on
 

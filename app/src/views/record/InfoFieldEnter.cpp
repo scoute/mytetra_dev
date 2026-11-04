@@ -193,6 +193,9 @@ void InfoFieldEnter::refreshTagsCompleter(void)
 
     KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
 
+    // Счетчик прокачки событий сквозь рекурсию (тот же что в FindScreen)
+    int pumpCounter=0;
+
     if(treeView!=nullptr)
     {
         KnowTreeModel *treeModel=static_cast<KnowTreeModel*>(treeView->model());
@@ -200,7 +203,7 @@ void InfoFieldEnter::refreshTagsCompleter(void)
         const TreeItem *rootItem=treeModel->getRootItem();
 
         if(rootItem!=nullptr)
-            FindScreen::collectBranchValues(rootItem, dictionaries, seen);
+            FindScreen::collectBranchValues(rootItem, dictionaries, seen, pumpCounter);
     }
 
     QStringList tags=dictionaries.value("tags");

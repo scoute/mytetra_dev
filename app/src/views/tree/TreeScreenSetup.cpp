@@ -11,6 +11,8 @@
 #include <QToolBar>
 #include <QLineEdit>
 #include <QInputDialog>
+#include <QProgressDialog>
+#include <QCoreApplication>
 
 #include "TreeScreen.h"
 #include "KnowTreeView.h"
@@ -538,8 +540,42 @@ void TreeScreen::setupModels(void)
  // headers << tr("Info groups");
  // knowTreeModel->setHeaders(headers);
 
+ // Долгое открытие на 100k+ базе (чтение всех text.html для
+ // статистики + обход каталогов картинок) идет здесь синхронно,
+ // до показа главного окна. Без диалога приложение выглядит
+ // зависшим, особенно под Wine. Диалог без кнопки отмены:
+ // статистика нужна статусбару, прерывать нечего
+ QProgressDialog progress(this);
+ progress.setWindowTitle(tr("Opening database"));
+ progress.setLabelText(tr("Loading database tree..."));
+ progress.setRange(0, 0);
+ progress.setMinimumDuration(0);
+ progress.setCancelButton(nullptr);
+ progress.setModal(true);
+ progress.show();
+ QCoreApplication::processEvents();
+
  // Загрузка данных
  knowTreeModel->initFromXML( AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/mytetra.xml" );
+
+ // Первичный прогрев кеша статистики с прогрессом: дальше
+ // MainWindow::updateStats возьмет готовое и не подвиснет.
+ // Диалог тот же, меняется только подпись и диапазон
+ progress.setLabelText(tr("Counting records..."));
+
+ QObject::connect(knowTreeModel, &KnowTreeModel::statsProgress,
+                  &progress, [&](int done, int total) {
+   if(progress.maximum()!=total)
+     progress.setMaximum(total);
+   progress.setValue(done);
+   QCoreApplication::processEvents();
+ });
+
+ int branches=0, records=0, files=0, images=0, links=0, tags=0;
+ knowTreeModel->getBaseStats(branches, records, files, images, links, tags);
+
+ QObject::disconnect(knowTreeModel, &KnowTreeModel::statsProgress, nullptr, nullptr);
+ progress.close();
 
  // Модель подключется к виду
  knowTreeView->setModel(knowTreeModel);

@@ -1401,6 +1401,25 @@ void KnowTreeModel::ensureStats(void)
       stack << item->child(i);
   }
 
+  // Всего записей для прогресса: чистый проход по памяти без
+  // чтения файлов, поэтому дешевый даже на 100k+ базе
+  int totalRecords=0;
+
+  for(TreeItem *item : order)
+  {
+    if(item==nullptr)
+      continue;
+
+    RecordTableData *recordTable=item->recordtableGetTableData();
+
+    if(recordTable==nullptr)
+      continue;
+
+    totalRecords+=static_cast<int>(recordTable->size());
+  }
+
+  int doneRecords=0;
+
   for(TreeItem *item : order)
   {
     if(item==nullptr)
@@ -1431,8 +1450,15 @@ void KnowTreeModel::ensureStats(void)
       m_statsRowTags[id]=noteTags;
 
       refStatsSets(noteLinks, noteTags);
+
+      // Прогресс пачками: сигнал без подписчиков почти бесплатен,
+      // диалог обновляется в слоте TreeScreen с processEvents
+      if((++doneRecords % 100)==0)
+        emit statsProgress(doneRecords, totalRecords);
     }
   }
+
+  emit statsProgress(totalRecords, totalRecords);
 
   m_statsDirty=false;
 }
@@ -1507,7 +1533,9 @@ BaseStatRow KnowTreeModel::computeStatsRow(Record *record, TreeItem *branchItem,
       QStringList imageFilters;
       imageFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.gif" << "*.bmp";
 
-      row.images=recordDir.entryList(imageFilters, QDir::Files | QDir::Readable, QDir::Name).size();
+      // Нужен только подсчет: сортировка имени (QDir::Name)
+      // на 100k+ каталогах даром жжет CPU
+      row.images=recordDir.entryList(imageFilters, QDir::Files | QDir::Readable, QDir::NoSort).size();
     }
   }
 

@@ -220,6 +220,12 @@ signals:
 
     void doCloseDetachedWindowByIdSet( QSet<QString> ids );
 
+    // Прогресс долгого прохода ensureStats (чтение 100k+ файлов):
+    // done записей из total. Без подписчиков сигнал почти бесплатен,
+    // поэтому излучается всегда, а диалог показывает TreeScreen
+    // только при первичном открытии базы
+    void statsProgress(int done, int total);
+
 private:
 
     QString m_xmlFileName;

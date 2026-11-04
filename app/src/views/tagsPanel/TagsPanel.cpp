@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QDockWidget>
+#include <QTimer>
 
 #include "TagsPanel.h"
 
@@ -145,6 +146,15 @@ void TagsPanel::setupSignals(void)
     connect(filterEdit, &QLineEdit::textChanged,
             this,        &TagsPanel::onFilterChanged);
 
+    // Дебаунс пересборки при открытой панели: пакет правок
+    // дает одну пересборку после паузы 500мс
+    tagsRefreshTimer=new QTimer(this);
+    tagsRefreshTimer->setSingleShot(true);
+    tagsRefreshTimer->setInterval(500);
+
+    connect(tagsRefreshTimer, &QTimer::timeout,
+            this,              &TagsPanel::ensureTags);
+
     // Одинарный клик только выделяет строку средствами таблицы.
     // Глобальный поиск запускается двойным кликом чтобы не сбивать
     // текущий поиск случайным одинарным кликом
@@ -164,7 +174,30 @@ void TagsPanel::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
+    // Лениво и только по грязи: полный обход на каждый показ
+    // стоил секунд на большой базе
+    ensureTags();
+}
+
+
+void TagsPanel::ensureTags(void)
+{
+    if(tagsBuilt && !tagsDirty)
+        return;
+
     refreshTags();
+}
+
+
+void TagsPanel::onTreeMetadataSaved(void)
+{
+    // Только пометка: пересборка лениво при следующем показе.
+    // Если панель открыта - через паузу, чтобы пакет правок
+    // дал одну пересборку
+    tagsDirty=true;
+
+    if(isVisible())
+        tagsRefreshTimer->start();
 }
 
 // Пересборка таблицы по всему дереву
@@ -183,9 +216,12 @@ void TagsPanel::refreshTags(void)
             treeMetadataConnected=true;
 
             connect(treeScreen, &TreeScreen::treeMetadataSaved,
-                    this,        &TagsPanel::refreshTags);
+                    this,       &TagsPanel::onTreeMetadataSaved);
         }
     }
+
+    if(isVisible()==false)
+        return;
 
     QMap<QString, int> counts;
     QMap<QString, QString> display;
@@ -318,6 +354,9 @@ void TagsPanel::refreshTags(void)
     tagsTable->setUpdatesEnabled(true);
 
     restoreTagSelection(selectedRow, selectedTag);
+
+    tagsBuilt=true;
+    tagsDirty=false;
 
     onFilterChanged(filterEdit->text());
 }

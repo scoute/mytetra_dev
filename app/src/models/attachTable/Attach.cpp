@@ -669,6 +669,37 @@ QString Attach::getExistingInnerFileName() const
     return current;
 }
 
+
+// Поиск реально лежащего файла по всем схемам имен.
+// Пусто если файла нет ни под одним именем
+QString Attach::findExistingFile(const QString &dirName,
+                                 const QString &type,
+                                 const QString &id,
+                                 const QString &fileName)
+{
+    QStringList candidates=candidateFileNames(type, id, fileName);
+
+    foreach(QString candidate, candidates)
+        if(QFile::exists(dirName+QStringLiteral("/")+candidate))
+            return dirName+QStringLiteral("/")+candidate;
+
+    return QString();
+}
+
+
+// Полный путь реально лежащего файла аттача.
+// Пусто если файла нет ни под одним именем
+QString Attach::getExistingInnerFileFullName(void) const
+{
+    if(getField("type")!="file")
+        return QString();
+
+    return findExistingFile(getFullInnerDirName(),
+                            getField("type"),
+                            getField("id"),
+                            getField("fileName"));
+}
+
 // Внутрисистемное имя файла (без пути)
 // Внутрисистемное имя складывается из идентификатора аттача и расширения, взятого от имени файла
 QString Attach::getInnerFileName() const
@@ -740,10 +771,20 @@ void Attach::encrypt(unsigned int area)
   if(getField("crypt")=="1")
     criticalError("Attach::encrypt() : Cant encrypt already encrypted attach.");
 
-  // Шифруется файл
+  // Шифруется файл. Путь резолвится по всем схемам имен как в чтении:
+  // файл мог физически лежать под другой схемой (смена режима имен,
+  // старая база). Нет файла ни под одним именем: предупреждение
+  // и пропуск вместо падения посреди пакетной операции (см. 509)
   if(area & areaFile)
     if(getField("type")=="file")
-      CryptService::encryptFile(AppContext::instance().globalParameters()->getCryptKey(), getFullInnerFileName());
+    {
+        QString target=getExistingInnerFileFullName();
+
+        if(target.isEmpty())
+            qWarning() << "Attach::encrypt() : file not found, skipped:" << getField("id");
+        else
+            CryptService::encryptFile(AppContext::instance().globalParameters()->getCryptKey(), target);
+    }
 
   // Шифруется содержимое файла в памяти, если таковое есть
   if(area & areaMemory)
@@ -773,10 +814,18 @@ void Attach::decrypt(unsigned int area)
   if(getField("crypt")!="1")
     criticalError("Attach::decrypt() : Cant decrypt unencrypted attach.");
 
-  // Расшифровывается файл
+  // Расшифровывается файл. Путь резолвится по всем схемам имен
+  // как в чтении и шифровании (см. выше и 509)
   if(area & areaFile)
     if(getField("type")=="file")
-      CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), getFullInnerFileName());
+    {
+        QString target=getExistingInnerFileFullName();
+
+        if(target.isEmpty())
+            qWarning() << "Attach::decrypt() : file not found, skipped:" << getField("id");
+        else
+            CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), target);
+    }
 
   // Расшифровывается содержимое файла в памяти, если таковое есть
   if(area & areaMemory)

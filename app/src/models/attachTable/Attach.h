@@ -41,6 +41,21 @@ public:
   static QString sanitizeVisibleName(const QString name);
   static QStringList candidateFileNames(const QString type, const QString id, const QString fileName);
   static QString fileNameForMode(int mode, const QString type, const QString id, const QString fileName);
+
+  // Поиск реально лежащего файла по всем схемам имен (порядок:
+  // системное, гибридное, оригинальное). Пусто если файла нет
+  // ни под одним именем. Чистая файловая логика без контекста:
+  // шифрование обязано резолвить файл так же, как чтение,
+  // иначе смена режима имен роняет пакетные операции (см. 509)
+  static QString findExistingFile(const QString &dirName,
+                                  const QString &type,
+                                  const QString &id,
+                                  const QString &fileName);
+
+  // Полный путь реально лежащего файла аттача. Пусто если файла
+  // нет ни под одним именем: пакетные операции такой аттач
+  // пропускают с предупреждением вместо падения (см. 509)
+  QString getExistingInnerFileFullName(void) const;
   QString getInnerFileName() const;
   QString getExistingInnerFileName() const;
   QString getFullInnerFileName() const;

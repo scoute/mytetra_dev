@@ -1,0 +1,35 @@
+name: qtests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  qtest:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt5 and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential qt5-qmake qtbase5-dev qtbase5-dev-tools \
+            qttools5-dev-tools qtmultimedia5-dev libqt5svg5-dev libgl1-mesa-dev
+
+      - name: Build thirdParty static libs
+        run: |
+          for lib in ogg opus monocypher mimetex; do
+            (cd thirdParty/$lib && qmake $(ls *.pro | head -1) && make -j$(nproc))
+          done
+
+      - name: Build app objects
+        run: |
+          mkdir -p build/Desktop_Qt_5_15_2_GCC_64bit/app
+          cd build/Desktop_Qt_5_15_2_GCC_64bit/app
+          qmake ../../../app/app.pro
+          make -j$(nproc)
+
+      - name: Run QTest suite
+        run: |
+          export PATH=/usr/lib/x86_64-linux-gnu/qt5/bin:$PATH
+          ./app/tests/run_qtests.sh

@@ -235,9 +235,12 @@ bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
 
   QFileInfo fileInfo(filePath);
 
+  // Папка в текст меткой не вставляется: метка умеет открывать только
+  // файлы внутри каталога записи. Папку бросают на панель аттачей,
+  // где она добавится ссылкой. Отказ вместо битой метки
   if(fileInfo.isDir())
   {
-    showMessageBox(tr("Cannot add a directory. Please select a file(s)."));
+    showMessageBox(tr("Folders cannot be inserted into note text. Drop the folder onto the attachments panel to add it as a link."));
     return false;
   }
 
@@ -304,11 +307,18 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
 
     QFileInfo currFileInfo(currFullFileName);
 
-    // Если пользователь выбрал директорию (директорию выбирать нельзя, пока что можно выбирать только файлы)
+    // Директория добавляется ссылкой (без копирования в базу):
+    // открывается в файловом менеджере как обычный линк.
+    // Файлы ниже идут прежним путем с копированием в базу
     if(currFileInfo.isDir())
     {
-      showMessageBox(tr("Cannot add a directory. Please select a file(s)."));
-      break;
+        if(addAttach(QStringLiteral("link"),
+                     currFullFileName,
+                     currFileInfo.fileName(),
+                     currFileInfo.absoluteFilePath()))
+            sucessLoadCount++;
+
+        continue;
     }
 
     qDebug() << "Select file from disk: " << currFullFileName;

@@ -1850,7 +1850,11 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp" line="190"/>
         <source>Cannot add a directory. Please select a file(s).</source>
-        <translation>Невозможно добавить директорию. Для добавления выберите файл(ы).</translation>
+        <translation type="obsolete">Невозможно добавить директорию. Для добавления выберите файл(ы).</translation>
+    </message>
+    <message>
+        <source>Folders cannot be inserted into note text. Drop the folder onto the attachments panel to add it as a link.</source>
+        <translation>Папки нельзя вставлять в текст заметки. Перетащите папку на панель аттачей, чтобы добавить ее ссылкой.</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp" line="251"/>

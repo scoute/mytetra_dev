@@ -1,54 +1,58 @@
-// TrayManager стенд: DI против голого QWidget, без MainWindow.
+// TrayManager на QTest (см. 524).
+// Порт trayprobe: DI против голого QWidget, без MainWindow.
 // Офскрин: трея нет, проверяются wiring сигналов и отсутствие падений.
-#include <QApplication>
+#include <QtTest>
 #include <QWidget>
-#include <QDebug>
 #include <QAction>
 #include <QList>
 
 #include "views/mainWindow/TrayManager.h"
 
-static int fails=0;
-static void check(bool ok, const char *name)
+class TestTray : public QObject
 {
-    qDebug() << (ok ? "PASS" : "FAIL") << name;
-    if(!ok)
-        ++fails;
-}
+    Q_OBJECT
 
-int main(int argc, char **argv)
+private slots:
+
+    void wiringNoCrash(void);
+    void signalsViaActions(void);
+};
+
+void TestTray::wiringNoCrash(void)
 {
-    QApplication app(argc, argv);
-
     QWidget host;
     host.setObjectName(QStringLiteral("host"));
 
-    TrayManager tray(&host, &app);
-    check(tray.parent()==&app, "TRAY-PARENT");
+    TrayManager tray(&host, qApp);
+    QCOMPARE(tray.parent(), qApp);
 
     // Хост как QWidget: DI без MainWindow
     tray.setupActions();
     QList<QAction*> acts=tray.findChildren<QAction*>();
-    check(acts.size()==4, "TRAY-ACTIONS");
+    QCOMPARE(acts.size(), 4);
 
     tray.createTrayIcon();
     tray.setIcon();
-    check(true, "TRAY-CREATE-NOCRASH");
-
     tray.retranslate();
-    check(true, "TRAY-RETRANSLATE-NOCRASH");
 
     tray.show();
-    check(tray.isVisible()==false, "TRAY-NOTVISIBLE-OFFSCREEN");
+    QCOMPARE(tray.isVisible(), false);
 
     tray.showMessage(QStringLiteral("t"), QStringLiteral("x"));
-    check(true, "TRAY-MSG-NOCRASH");
+}
+
+void TestTray::signalsViaActions(void)
+{
+    QWidget host;
+    TrayManager tray(&host, qApp);
+    tray.setupActions();
+    QList<QAction*> acts=tray.findChildren<QAction*>();
 
     // Сигналы через действия (работают и без трея)
     bool restored=false;
     bool quit=false;
-    QObject::connect(&tray, &TrayManager::restoreRequested, [&](){ restored=true; });
-    QObject::connect(&tray, &TrayManager::quitRequested, [&](){ quit=true; });
+    connect(&tray, &TrayManager::restoreRequested, [&](){ restored=true; });
+    connect(&tray, &TrayManager::quitRequested, [&](){ quit=true; });
 
     for(QAction *a : acts)
     {
@@ -57,9 +61,10 @@ int main(int argc, char **argv)
         if(a->text()==QStringLiteral("&Quit") || a->text()==QStringLiteral("Выход"))
             a->trigger();
     }
-    check(restored, "TRAY-RESTORE-SIGNAL");
-    check(quit, "TRAY-QUIT-SIGNAL");
-
-    qDebug() << (fails==0 ? "TRAYPROBE-OK" : "TRAYPROBE-BAD");
-    return fails;
+    QVERIFY2(restored, "restore signal must fire");
+    QVERIFY2(quit, "quit signal must fire");
 }
+
+QTEST_MAIN(TestTray)
+
+#include "test_tray.moc"

@@ -615,6 +615,39 @@ void FtsTextIndex::setCachePlainText(bool enabled)
 }
 
 
+// Ручное уплотнение файла индекса (VACUUM)
+bool FtsTextIndex::vacuum(QString *error)
+{
+    if(rebuildRunning)
+    {
+        if(error!=nullptr)
+            *error=tr("Index rebuild is in progress");
+
+        return false;
+    }
+
+    if(!ensureOpen())
+    {
+        if(error!=nullptr)
+            *error=tr("Cannot open index file");
+
+        return false;
+    }
+
+    QSqlQuery q(db);
+
+    if(!q.exec(QStringLiteral("VACUUM")))
+    {
+        if(error!=nullptr)
+            *error=q.lastError().text();
+
+        return false;
+    }
+
+    return true;
+}
+
+
 // Id записей-кандидатов по словам запроса. matchAll=false это ИЛИ.
 // В граммах только буквы/цифры, кавычек быть не может:
 // MATCH собирается без экранирования

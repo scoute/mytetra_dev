@@ -6,6 +6,8 @@
 class QWidget;
 class QGroupBox;
 class QRadioButton;
+class QLabel;
+class QPushButton;
 
 class AppConfigPage_Search : public ConfigPage
 {
@@ -18,6 +20,10 @@ public:
     int applyChanges(void);
   void retranslateUi(void) override;
 
+  protected slots:
+
+    void onFtsVacuumClicked(void);
+
   protected:
 
     void setupUi(void);
@@ -29,6 +35,14 @@ public:
 
     QRadioButton *findBarRadio; // Поиск полоской внутри заметки
     QRadioButton *findWindowRadio; // Поиск отдельным окном
+
+    // Ручное обслуживание FTS-индекса текстов
+    QGroupBox *ftsIndexBox;
+    QLabel *ftsIndexSizeLabel; // Текущий размер файла индекса
+    QPushButton *ftsVacuumButton; // Уплотнить файл (VACUUM)
+
+    // Текст размера файла индекса: обновляется при показе и после уплотнения
+    void updateFtsSizeLabel(void);
 };
 
 #endif // APPCONFIGPAGE_SEARCH_H

@@ -1421,6 +1421,46 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Find in note</source>
         <translation>Поиск в заметке</translation>
     </message>
+    <message>
+        <source>Text index (FTS5)</source>
+        <translation>Индекс текстов (FTS5)</translation>
+    </message>
+    <message>
+        <source>Compact index file</source>
+        <translation>Уплотнить файл индекса</translation>
+    </message>
+    <message>
+        <source>Reclaim free space in the text index file (about 40 MB per 1000 notes). May take minutes on a large base.</source>
+        <translation>Освободить место в файле индекса текстов (примерно 40 МБ на 1000 заметок). На большой базе может занять минуты.</translation>
+    </message>
+    <message>
+        <source>The text index is built on the first text search and lives next to conf.ini (mytetra-fts5.db, about 40 MB per 1000 notes). It grows on saves and shrinks logically on deletions, but the file itself only grows. Compacting (VACUUM) rewrites the file and returns free space to the disk.</source>
+        <translation>Индекс текстов строится при первом поиске по тексту и лежит рядом с conf.ini (mytetra-fts5.db, примерно 40 МБ на 1000 заметок). Он растет при сохранениях и логически уменьшается при удалениях, но сам файл только растет. Уплотнение (VACUUM) перезаписывает файл и возвращает место диску.</translation>
+    </message>
+    <message>
+        <source>No index file yet. It is created on the first text search.</source>
+        <translation>Файла индекса пока нет. Он создастся при первом поиске по тексту.</translation>
+    </message>
+    <message>
+        <source>Index file: %1 MB</source>
+        <translation>Файл индекса: %1 МБ</translation>
+    </message>
+    <message>
+        <source>Text index</source>
+        <translation>Индекс текстов</translation>
+    </message>
+    <message>
+        <source>Compact the text index file now? It may take minutes on a large base.</source>
+        <translation>Уплотнить файл индекса текстов сейчас? На большой базе может занять минуты.</translation>
+    </message>
+    <message>
+        <source>Cannot compact index: %1</source>
+        <translation>Не удалось уплотнить индекс: %1</translation>
+    </message>
+    <message>
+        <source>Index compacted: %1 MB → %2 MB</source>
+        <translation>Индекс уплотнен: %1 МБ → %2 МБ</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Synchro</name>

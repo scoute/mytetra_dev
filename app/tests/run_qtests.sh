@@ -51,10 +51,22 @@ compile_qtest() {
 }
 
 run_qtest() {
-  local name=$1 out totals failed
+  local name=$1 out totals failed bindir=$OUT
   export LD_LIBRARY_PATH=$QT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
   export HOME=/tmp/opencode DISPLAY=:98 QT_QPA_PLATFORM=offscreen GIT_CONFIG_NOSYSTEM=1
-  out=$(cd "$OUT" && timeout 120 "./${name}bin" 2>&1)
+  # Тесты с живым MetaEditor: им нужна рабочая директория
+  # (conf.ini + editorconf.ini) и запуск бинаря из нее (workdir
+  # резолвится из applicationFilePath). Фикстуры — из репо.
+  case "$name" in
+    test_split|test_attachcut)
+      mkdir -p "$OUT/${name}db"
+      cp "$APP/tests/data/conf.ini" \
+         "$APP/tests/data/editorconf.ini" "$OUT/${name}db/"
+      cp "$OUT/${name}bin" "$OUT/${name}db/"
+      bindir="$OUT/${name}db"
+      ;;
+  esac
+  out=$(cd "$bindir" && timeout 300 "./${name}bin" 2>&1)
   echo "$out" | grep -E "^(PASS|FAIL!|Totals|XFAIL)|passed|failed" | tail -8
   # Вердикт по тексту Totals: teardown-креш не должен маскировать результат
   if echo "$out" | grep -q "FAIL!"; then echo "FAILED $name"; return 1; fi

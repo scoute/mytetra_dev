@@ -1,15 +1,16 @@
-// Bridge write-пути на живой KnowTreeModel (без GUI).
-// DI в действии: модель получает индекс+диспетчер в ctor,
-// индекс получает модель через setTreeModel (иначе find_object
-// уронил бы headless-пробу). Фикстура - минимальный mytetra.xml.
+// Bridge write-пути на живой KnowTreeModel на QTest (см. 531).
+// Порт bridgewriteprobe: DI в действии (модель получает
+// индекс+диспетчер в ctor, индекс получает модель через setTreeModel).
+// Фикстура программная: минимальный mytetra.xml в QTemporaryDir.
+#include <QtTest>
 #include <QApplication>
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
-#include <QDebug>
 #include <QSettings>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTemporaryDir>
 
 #include "views/mainWindow/McpGuiBridge.h"
 #include "models/tree/KnowTreeModel.h"
@@ -33,27 +34,28 @@
 #include "models/recordTable/Record.h"
 
 extern AppConfig mytetraConfig;
-extern GlobalParameters globalParameters;
-extern FixedParameters fixedParameters;
-extern AppFiles mytetraFiles;
-extern DataBaseConfig dataBaseConfig;
-extern TrashMonitoring trashMonitoring;
-extern WalkHistory walkHistory;
-extern VisitHistory visitHistory;
-extern ActionLogger actionLogger;
 extern ShortcutManager shortcutManager;
-extern PeriodicCheckBase periodicCheckBase;
-extern PeriodicSyncro periodicSyncro;
 
-static int fails=0;
-static void check(bool ok, const char *name)
+class TestBridgeWrite : public QObject
 {
-    qDebug() << (ok ? "PASS" : "FAIL") << name;
-    if(!ok)
-        ++fails;
-}
+    Q_OBJECT
 
-static QJsonObject call(McpGuiBridge &b, const QString &cmd, const QJsonObject &args)
+private slots:
+
+    void initTestCase(void);
+    void cleanupTestCase(void);
+
+    void bridgeWritePaths(void);
+
+private:
+
+    QTemporaryDir m_tmp;
+    QSettings *m_settings=nullptr;
+
+    static QJsonObject call(McpGuiBridge &b, const QString &cmd, const QJsonObject &args);
+};
+
+QJsonObject TestBridgeWrite::call(McpGuiBridge &b, const QString &cmd, const QJsonObject &args)
 {
     const QString line=cmd+QStringLiteral(" ")+QString::fromUtf8(
         QJsonDocument(args).toJson(QJsonDocument::Compact));
@@ -61,57 +63,67 @@ static QJsonObject call(McpGuiBridge &b, const QString &cmd, const QJsonObject &
     return QJsonDocument::fromJson(reply).object();
 }
 
-int main(int argc, char **argv)
+void TestBridgeWrite::initTestCase(void)
 {
-    QApplication app(argc, argv);
+    static FixedParameters *fp=new FixedParameters;
+    static GlobalParameters *gp=new GlobalParameters;
+    static AppFiles *af=new AppFiles;
+    static DataBaseConfig *dbc=new DataBaseConfig;
+    static TrashMonitoring *tm=new TrashMonitoring;
+    static WalkHistory *wh=new WalkHistory;
+    static VisitHistory *vh=new VisitHistory;
+    static ActionLogger *al=new ActionLogger;
+    static PeriodicCheckBase *pcb=new PeriodicCheckBase;
+    static PeriodicSyncro *ps=new PeriodicSyncro;
+    AppContext::instance().init(fp, gp, &mytetraConfig, af, dbc, tm,
+                                wh, vh, al, &shortcutManager, pcb, ps,
+                                nullptr, nullptr, &gp->cryptHolder());
 
-    QDir().mkpath(QStringLiteral("/tmp/opencode/bridgedb"));
-    QFile::remove(QStringLiteral("/tmp/opencode/probe5.ini"));
-    mytetraConfig.m_conf=new QSettings(QStringLiteral("/tmp/opencode/probe5.ini"),
-                                       QSettings::IniFormat);
-    mytetraConfig.m_conf->setValue(QStringLiteral("tetradir"), QStringLiteral("/tmp/opencode/bridgedb"));
-    mytetraConfig.m_conf->setValue(QStringLiteral("trashdir"), QStringLiteral("/tmp/opencode/bridgedb/trash"));
-    QDir().mkpath(QStringLiteral("/tmp/opencode/bridgedb/trash"));
-    QDir().mkpath(QStringLiteral("/tmp/opencode/bridgedb/base"));
+    QVERIFY2(m_tmp.isValid(), "QTemporaryDir must be created");
 
+    const QString dbDir=m_tmp.filePath(QStringLiteral("bridgedb"));
+    QVERIFY2(QDir().mkpath(dbDir), "bridge db dir must be created");
+    QVERIFY2(QDir().mkpath(dbDir+QStringLiteral("/trash")), "trash must be created");
+    QVERIFY2(QDir().mkpath(dbDir+QStringLiteral("/base")), "base must be created");
+
+    m_settings=new QSettings(m_tmp.filePath(QStringLiteral("test_bridge.ini")),
+                             QSettings::IniFormat, this);
+    mytetraConfig.m_conf=m_settings;
+    m_settings->setValue(QStringLiteral("tetradir"), dbDir);
+    m_settings->setValue(QStringLiteral("trashdir"), dbDir+QStringLiteral("/trash"));
+
+    QFile xml(dbDir+QStringLiteral("/mytetra.xml"));
+    QVERIFY2(xml.open(QIODevice::WriteOnly | QIODevice::Text),
+             "skeleton xml must be writable");
     {
-        QFile xml(QStringLiteral("/tmp/opencode/bridgedb/mytetra.xml"));
-        if(xml.open(QIODevice::WriteOnly | QIODevice::Text))
-        {
-            QTextStream out(&xml);
-            out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mytetra>\n  <format version=\"1\" subversion=\"2\"/>\n</mytetra>\n";
-        }
+        QTextStream out(&xml);
+        out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mytetra>\n  <format version=\"1\" subversion=\"2\"/>\n</mytetra>\n";
     }
+}
 
-    AppContext::instance().init(&fixedParameters,
-                                &globalParameters,
-                                &mytetraConfig,
-                                &mytetraFiles,
-                                &dataBaseConfig,
-                                &trashMonitoring,
-                                &walkHistory,
-                                &visitHistory,
-                                &actionLogger,
-                                &shortcutManager,
-                                &periodicCheckBase,
-                                &periodicSyncro,
-                                nullptr,
-                                nullptr,
-                                &globalParameters.cryptHolder());
+void TestBridgeWrite::cleanupTestCase(void)
+{
+    mytetraConfig.m_conf=nullptr;
+}
+
+void TestBridgeWrite::bridgeWritePaths(void)
+{
+    const QString dbDir=m_settings->value(QStringLiteral("tetradir")).toString();
 
     BacklinkIndex *backlinks=AppContext::instance().backlinkIndex();
     EditorShowTextDispatcher *dispatcher=AppContext::instance().dispatcher();
-    check(backlinks!=nullptr && dispatcher!=nullptr, "DI-OWNED");
+    QVERIFY2(backlinks!=nullptr && dispatcher!=nullptr, "DI trio must be owned");
 
-    KnowTreeModel *model=new KnowTreeModel(backlinks, dispatcher);
-    model->initFromXML(QStringLiteral("/tmp/opencode/bridgedb/mytetra.xml"));
-    backlinks->setTreeModel(model);
+    KnowTreeModel model(backlinks, dispatcher);
+    model.initFromXML(dbDir+QStringLiteral("/mytetra.xml"));
+    backlinks->setTreeModel(&model);
 
-    McpGuiBridge bridge(model);
+    McpGuiBridge bridge(&model);
     bridge.isReadOnly=[]() { return false; };
     bridge.mcpAllowed=[]() { return true; };
     bool cleared=false;
     bridge.clearEditor=[&]() { cleared=true; };
+    Q_UNUSED(cleared);
     bridge.setFavorites(AppContext::instance().favorites());
     bridge.setBacklinkIndex(backlinks);
 
@@ -121,8 +133,7 @@ int main(int argc, char **argv)
     a[QStringLiteral("id")]=QStringLiteral("b1");
     a[QStringLiteral("name")]=QStringLiteral("ProbeBranch");
     QJsonObject r=call(bridge, QStringLiteral("mcpCreateBranch"), a);
-    check(r.value(QStringLiteral("ok")).toBool()==true, "WRITE-BRANCH-OK");
-    check(!model->getRecordPath(QStringLiteral("nope")).isEmpty() || true, "MODEL-ALIVE");
+    QCOMPARE(r.value(QStringLiteral("ok")).toBool(), true);
 
     // create note
     QJsonObject n;
@@ -131,14 +142,13 @@ int main(int argc, char **argv)
     n[QStringLiteral("name")]=QStringLiteral("ProbeNote");
     n[QStringLiteral("html")]=QStringLiteral("hello probe");
     r=call(bridge, QStringLiteral("mcpCreateNote"), n);
-    check(r.value(QStringLiteral("ok")).toBool()==true, "WRITE-NOTE-OK");
+    QCOMPARE(r.value(QStringLiteral("ok")).toBool(), true);
+
     // Headless-вставка всегда генерирует свежий id (см. applyCreateNote):
     // дальше работаем с фактическим из ответа
     const QString nid=r.value(QStringLiteral("id")).toString();
-    check(!nid.isEmpty(), "WRITE-NOTE-ID");
-    check(model->isRecordIdExists(nid), "NOTE-EXISTS");
-
-
+    QVERIFY2(!nid.isEmpty(), "created note must return its id");
+    QVERIFY2(model.isRecordIdExists(nid), "created note must exist");
 
     // update + move clears editor (DI-хук, не синглтон)
     QJsonObject u;
@@ -146,7 +156,7 @@ int main(int argc, char **argv)
     u[QStringLiteral("has_name")]=true;
     u[QStringLiteral("name")]=QStringLiteral("ProbeNote2");
     r=call(bridge, QStringLiteral("mcpUpdateNote"), u);
-    check(r.value(QStringLiteral("ok")).toBool()==true, "WRITE-UPDATE-OK");
+    QCOMPARE(r.value(QStringLiteral("ok")).toBool(), true);
 
     // batch: create second note + delete first
     QJsonObject op1, op2, b;
@@ -165,25 +175,27 @@ int main(int argc, char **argv)
     ops.append(op2);
     b[QStringLiteral("operations")]=ops;
     r=call(bridge, QStringLiteral("mcpApplyBatch"), b);
-    check(r.value(QStringLiteral("ok")).toBool()==true, "WRITE-BATCH-OK");
-    check(r.value(QStringLiteral("applied")).toInt()==2, "WRITE-BATCH-APPLIED");
-    check(!model->isRecordIdExists(nid), "WRITE-BATCH-DELETED");
+    QCOMPARE(r.value(QStringLiteral("ok")).toBool(), true);
+    QCOMPARE(r.value(QStringLiteral("applied")).toInt(), 2);
+    QVERIFY2(!model.isRecordIdExists(nid), "deleted note must be gone");
+
     // batch-create генерирует свежий id: ищем заметку "Second" перебором таблицы ветки
     bool foundSecond=false;
-    if(TreeItem *branch=model->getItemById(QStringLiteral("b1")))
+    if(TreeItem *branch=model.getItemById(QStringLiteral("b1")))
         if(RecordTableData *table=branch->recordtableGetTableData())
             for(unsigned i=0; i<table->size(); ++i)
                 if(table->getRecord(i)!=nullptr &&
                    table->getRecord(i)->getField(QStringLiteral("name"))==QStringLiteral("Second"))
                     foundSecond=true;
-    check(foundSecond, "WRITE-BATCH-CREATED");
+    QVERIFY2(foundSecond, "batch-created note must be found");
 
     // удаление несуществующей: внятный отказ, не молчание
     QJsonObject d;
     d[QStringLiteral("id")]=QStringLiteral("no-such-note");
     r=call(bridge, QStringLiteral("mcpDeleteNote"), d);
-    check(r.value(QStringLiteral("ok")).toBool()==false, "WRITE-DEL-UNKNOWN");
-
-    qDebug() << (fails==0 ? "BRIDGEWRITEPROBE-OK" : "BRIDGEWRITEPROBE-BAD");
-    return fails;
+    QCOMPARE(r.value(QStringLiteral("ok")).toBool(), false);
 }
+
+QTEST_MAIN(TestBridgeWrite)
+
+#include "test_bridgewrite.moc"

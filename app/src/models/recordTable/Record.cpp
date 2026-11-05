@@ -822,11 +822,14 @@ void Record::switchToDecryptAndSaveLite(void)
   if(fieldList.value("crypt")!="1")
     criticalError("Cant call switchToDecryptAndSaveLite() for non crypt record object "+getIdAndNameAsString());
 
-  // Расшифровка файла с текстом записи на диске
+  // Расшифровка файла с текстом записи на диске.
+  // Текстовый трипвайр: двойная расшифровка уже открытого файла
+  // дала бы RC5-шум поверх единственной копии, проверка UTF-8
+  // роняет операцию до записи (см. 511)
   QString dirName;
   QString fileName;
   checkAndFillFileDir(dirName, fileName);
-  CryptService::decryptFile(AppContext::instance().globalParameters()->getCryptKey(), fileName);
+  CryptService::decryptTextFile(AppContext::instance().globalParameters()->getCryptKey(), fileName);
 
   // Расшифровка приаттаченных файлов на диске
   attachTableData.decrypt(Attach::areaFile);

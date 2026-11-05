@@ -35,6 +35,16 @@ public:
   static void decryptFile(QByteArray key, QString fileName);
   static void encDecFileSmart(QByteArray key, QString fileName, int mode);
 
+  // Расшифровка ТЕКСТОВОГО файла на диске (текст записи).
+  // Как decryptFile, но перед атомарной записью проверяет что
+  // результат валидный UTF-8: тексты заметок всегда валидны,
+  // а RC5-шум почти никогда. Двойная расшифровка уже открытого
+  // файла роняла бы шум поверх единственной копии (см. 511)
+  static void decryptTextFile(QByteArray key, QString fileName);
+
+  // Проверка валидности UTF-8. Пустой массив валиден
+  static bool isValidUtf8(const QByteArray &data);
+
   // Выбор бэкенда: шифрование по настройке cryptMethod,
   // расшифровка по магии блоба (MTENC1 -> новый, иначе RC5).
   // Пустой результат расшифровки = неуспех (чужой тег/пароль)

@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QSaveFile>
 #include <QApplication>
+#include <QTextCodec>
 
 #include "libraries/helpers/DebugHelper.h"
 #include "models/appConfig/AppConfig.h"
@@ -183,6 +184,68 @@ void CryptService::encryptFile(QByteArray key, QString fileName)
 void CryptService::decryptFile(QByteArray key, QString fileName)
 {
  encDecFileSmart(key, fileName, 1);
+}
+
+// Проверка валидности UTF-8. Пустой массив валиден
+bool CryptService::isValidUtf8(const QByteArray &data)
+{
+ if(data.isEmpty())
+  return true;
+
+ QTextCodec *codec=QTextCodec::codecForName("UTF-8");
+
+ if(codec==nullptr)
+  return false;
+
+ QTextCodec::ConverterState state;
+
+ codec->toUnicode(data.constData(), data.size(), &state);
+
+ return state.invalidChars==0;
+}
+
+
+// Расшифровка ТЕКСТОВОГО файла на диске (текст записи).
+// Как decryptFile, но перед атомарной записью проверяет что результат
+// валидный UTF-8: тексты заметок всегда пишутся валидными, а RC5-шум
+// от повторной расшифровки уже открытого файла почти никогда валиден.
+// Без проверки шум вставал бы поверх единственной копии (см. 511)
+void CryptService::decryptTextFile(QByteArray key, QString fileName)
+{
+ QFile file(fileName);
+
+ if(!file.open(QIODevice::ReadOnly))
+  criticalError("CryptService::decryptTextFile() : Cant open binary file "+fileName+" for reading.");
+
+ const QByteArray source=file.readAll();
+ file.close();
+
+ QByteArray result=decryptByteArray(key, source);
+
+ // Непустой шифротекст без открытого текста - неверный ключ или порча
+ if(!source.isEmpty() && result.isEmpty())
+  criticalError("CryptService::decryptTextFile() : Can not decrypt file "+fileName+". Wrong password or corrupted data.");
+
+ // Открытый текст обязан быть валидным UTF-8, иначе это не текст,
+ // а шум (повторная расшифровка, чужой файл). Писать его поверх
+ // единственной копии нельзя
+ if(!result.isEmpty() && !isValidUtf8(result))
+  criticalError("CryptService::decryptTextFile() : Decrypted file "+fileName+" is not valid text. Wrong password or corrupted data.");
+
+ // Атомарная запись как в encDecFileSmart
+ QSaveFile out(fileName);
+
+ if(!out.open(QIODevice::WriteOnly))
+  criticalError("CryptService::decryptTextFile() : Cant open binary file "+fileName+" for write.");
+
+ if(out.write(result)!=result.size())
+ {
+  out.cancelWriting();
+  criticalError("CryptService::decryptTextFile() : Cant write binary file "+fileName);
+ }
+
+ if(!out.commit())
+  criticalError("CryptService::decryptTextFile() : Cant commit binary file "+fileName);
 }
 
 void CryptService::encDecFileSmart(QByteArray key, QString fileName, int mode)

@@ -30,6 +30,7 @@ compile_qtest() {
   "$QT_BIN/moc" -o "$OUT/${name}.moc" "$APP/tests/$name.cpp" || return 1
   g++ -fPIC -std=gnu++1y -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB \
     -DQT_TEST_LIB -Dprivate=public -Dprotected=protected \
+    -DTEST_DATA_DIR=\"$APP/tests/data\" \
     -DANY_OS=1 -DMEEGO_OS=2 -DANDROID_OS=3 -DTARGET_OS=ANY_OS \
     -I$APP -I$APP/src -I$OUT -I$QT/include \
     -I$QT/include/QtCore -I$QT/include/QtWidgets -I$QT/include/QtGui \

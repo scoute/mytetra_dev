@@ -7,6 +7,8 @@
 #include "EditorConfig.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/LinkHelper.h"
+#include "libraries/AppContext.h"
+#include "libraries/ActionLogger.h"
 
 
 // Конструктор объекта хранения настроек редактора
@@ -61,15 +63,91 @@ QSettings *EditorConfig::settingsHandle(void)
 }
 
 
-// Получение параметра по имени в виде строки с проверкой его существования
+// Получение параметра по имени в виде строки с проверкой его существования.
+// Отсутствующий или пустой известный параметр подменяется дефолтом
+// из актуальной таблицы (ключ мог потеряться из чужого editorconf.ini
+// или усечься значением): падение на старте заменено предупреждением
+// и счетчиком гниения, как в AppConfig::get_parameter (см. 512).
+// Неизвестное имя по-прежнему роняет программу - это ошибка программиста
 QString EditorConfig::get_parameter(QString name)
 {
     QString t=conf->value(name).toString();
 
-    if(t.length()==0)
-        criticalError("In editor config not found parameter " + name);
+    if(t.length()!=0)
+        return t;
 
-    return t;
+    QStringList actualTable=get_actual_parameter_table(true);
+
+    if(!getParameterTypeFromTable(name, actualTable).isEmpty())
+    {
+        QString defValue=getParameterDefaultValueFromTable(name, actualTable);
+        qWarning() << "In editor config not found parameter" << name << ", using default value:" << defValue;
+
+        // Счетчик гниения конфига: первое срабатывание по имени уходит
+        // в actionLog (дальше только счетчик, чтобы не спамить).
+        // addAction безопасен до init() логгера: молча ничего не пишет
+        ++m_fallbackTotal;
+        const bool firstHit=!m_fallbackHits.contains(name);
+        m_fallbackHits[name]=m_fallbackHits.value(name, 0)+1;
+        if(firstHit)
+            AppContext::instance().actionLogger()->addAction(
+                QStringLiteral("configFallback"),
+                {{"name", name}, {"defaultValue", defValue}});
+
+        return defValue;
+    }
+
+    criticalError("In editor config not found parameter " + name);
+
+    return QString();
+}
+
+
+int EditorConfig::get_configFallbackCount(void) const
+{
+    return m_fallbackTotal;
+}
+
+
+QMap<QString, int> EditorConfig::get_configFallbackHits(void) const
+{
+    return m_fallbackHits;
+}
+
+
+QStringList EditorConfig::get_actual_parameter_table(bool withEndSignature)
+{
+    // Актуальная таблица = последняя по номеру версии.
+    // При добавлении get_parameter_table_N поменять здесь один вызов
+    return get_parameter_table_47(withEndSignature);
+}
+
+
+QString EditorConfig::getParameterTypeFromTable(QString parameterName, QStringList table)
+{
+    for(int i=0; i<(table.length()/3); i++)
+    {
+        QString name=table.at(i*3+0);
+
+        if(name==parameterName)
+            return table.at(i*3+1);
+    }
+
+    return QString();
+}
+
+
+QString EditorConfig::getParameterDefaultValueFromTable(QString parameterName, QStringList table)
+{
+    for(int i=0; i<(table.length()/3); i++)
+    {
+        QString name=table.at(i*3+0);
+
+        if(name==parameterName)
+            return table.at(i*3+2);
+    }
+
+    return QString();
 }
 
 

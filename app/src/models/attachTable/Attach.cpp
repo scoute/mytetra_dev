@@ -845,7 +845,19 @@ void Attach::decrypt(unsigned int area)
 
     // Если поле с указанным именем существует и содержит данные, оно расшифровывается из исходных зашифрованных данных
     if(getField(fieldName).length()>0)
-      setFieldSource(fieldName, CryptService::decryptString( AppContext::instance().globalParameters()->getCryptKey(), fields[fieldName]));
+    {
+      const QString cipherText=fields[fieldName];
+      const QString plainText=CryptService::decryptString(AppContext::instance().globalParameters()->getCryptKey(), cipherText);
+
+      // Непустой аутентифицированный блоб без открытого текста -
+      // неверный ключ/порча. Молча писать пустоту поверх нельзя
+      // (тот же страж что в полях записи и ветки, см. 511)
+      if(plainText.isEmpty() &&
+         QByteArray::fromBase64(cipherText.toLatin1()).startsWith(MTENC1_MAGIC))
+        criticalError("Attach::decrypt() : Can not decrypt field "+fieldName+". Wrong password or corrupted data.");
+
+      setFieldSource(fieldName, plainText);
+    }
   }
 
   // Устанавливается флаг, что запись не зашифрована

@@ -49,6 +49,7 @@ private slots:
     void rc5NeverSilentNoop(void);
     void utf8Tripwire(void);
     void textFileRoundtrip(void);
+    void nullableCheckData(void);
 
 private:
 
@@ -191,6 +192,23 @@ void TestCrypt::textFileRoundtrip(void)
     QFile g(fpath);
     QVERIFY2(g.open(QIODevice::ReadOnly), "decrypted file must be readable");
     QCOMPARE(g.readAll(), m_text);
+}
+
+void TestCrypt::nullableCheckData(void)
+{
+    // fix/548: пустые проверочные ключи - норма для базы без
+    // сохраненного пароля. Геттеры обязаны вернуть "", а не
+    // уронить процесс через criticalError (как падало в reencrypt)
+    DataBaseConfig *dbc=AppContext::instance().dataBaseConfig();
+    QVERIFY2(dbc!=nullptr, "database config must exist");
+    QCOMPARE(dbc->get_middle_hash_check_data(), QString());
+    QCOMPARE(dbc->get_crypt_check_salt(), QString());
+    QCOMPARE(dbc->get_crypt_check_hash(), QString());
+
+    // Пустой check обязан трактоваться как "нет сохранения",
+    // а не падать: тот же путь что CryptMigrate::reencryptAll
+    QVERIFY2(QByteArray::fromBase64(dbc->get_middle_hash_check_data().toLatin1()).isEmpty(),
+             "empty check data must stay empty");
 }
 
 QTEST_APPLESS_MAIN(TestCrypt)

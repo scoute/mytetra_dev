@@ -5171,6 +5171,38 @@ Usable backups (date, branches, records, size):
         <source>Continue without restore</source>
         <translation>Продолжить без восстановления</translation>
     </message>
+    <message>
+        <source>Export error: unable to decrypt field %1.</source>
+        <translation>Ошибка экспорта: не удаётся расшифровать поле %1.</translation>
+    </message>
+    <message>
+        <source>Export error: incorrect record directory name "%1".</source>
+        <translation>Ошибка экспорта: некорректное имя каталога записи "%1".</translation>
+    </message>
+    <message>
+        <source>Export error: incorrect record file name "%1".</source>
+        <translation>Ошибка экспорта: некорректное имя файла записи "%1".</translation>
+    </message>
+    <message>
+        <source>Export error: unable to create directory %1.</source>
+        <translation>Ошибка экспорта: не удаётся создать каталог %1.</translation>
+    </message>
+    <message>
+        <source>Import error: imported branch was not found after reload.</source>
+        <translation>Ошибка импорта: ввезённая ветка не найдена после перезагрузки.</translation>
+    </message>
+    <message>
+        <source>Import error: record directory "%1" escapes the exchange directory.</source>
+        <translation>Ошибка импорта: каталог записи "%1" выходит за пределы обменного каталога.</translation>
+    </message>
+    <message>
+        <source>Import error: destination directory escapes the database.</source>
+        <translation>Ошибка импорта: каталог назначения выходит за пределы базы.</translation>
+    </message>
+    <message>
+        <source>Import error: unable to create directory %1.</source>
+        <translation>Ошибка импорта: не удаётся создать каталог %1.</translation>
+    </message>
 </context>
 <context>
     <name>KnowTreeView</name>
@@ -7438,6 +7470,14 @@ Enable it in Settings on the History page.</source>
     <message>
         <source>Moved to "%1"</source>
         <translation>Перемещено в "%1"</translation>
+    </message>
+    <message>
+        <source>Unable to preview the encrypted attached file.
+Please, use «Save As...» button, or
+enable «Decrypt to a temporary file» option in Settings.</source>
+        <translation>Невозможно предпросмотреть зашифрованный файл.
+Используйте кнопку «Сохранить как...» или
+включите «Расшифровку во временный файл» в настройках.</translation>
     </message>
 </context>
 <context>

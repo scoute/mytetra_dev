@@ -836,11 +836,17 @@ static void refreshModelIfNeeded(KnowTreeModel &model,
 // MCP только подключается и отправляет
 static QString socketNameForId(const QString &id)
 {
-  QString prefix=id.section(QLatin1Char('/'), -1);
+  QString normId=id;
+#if defined(Q_OS_WIN)
+  // Как в QtLocalPeer: путь нижним регистром до qChecksum,
+  // иначе MCP на Windows никогда не находит живой GUI
+  normId=normId.toLower();
+#endif
+  QString prefix=normId.section(QLatin1Char('/'), -1);
   prefix.remove(QRegularExpression("[^a-zA-Z]"));
   prefix.truncate(6);
 
-  QByteArray idc=id.toUtf8();
+  QByteArray idc=normId.toUtf8();
   quint16 idNum=qChecksum(idc.constData(), idc.size());
 
   QString name=QLatin1String("qtsingleapp-")+prefix+

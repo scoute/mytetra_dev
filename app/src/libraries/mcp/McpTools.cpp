@@ -1011,6 +1011,9 @@ bool McpTools::applyUpdateNote(KnowTreeModel *model,
     updatedFields.append("text");
   }
 
+  // Имя и метки в кеш статистики без полного прохода
+  model->invalidateStats();
+
   return true;
 }
 
@@ -1824,6 +1827,8 @@ bool McpTools::applyRenameTag(KnowTreeModel *model,
     }
   });
 
+  model->invalidateStats();
+
   return true;
 }
 
@@ -1868,6 +1873,8 @@ bool McpTools::applyDeleteTag(KnowTreeModel *model,
       cleared++;
     }
   });
+
+  model->invalidateStats();
 
   return true;
 }

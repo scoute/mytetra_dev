@@ -988,7 +988,30 @@ void MainWindow::checkFullStatsOffer(void)
     // сейчас. Политика сохраняется любым действием, отмена - нет.
     // Явный QDialog с собственным layout: вставка виджетов в сетку
     // QMessageBox через layout() непредсказуема (внутренняя сетка 3x3
-    // уносит метку текста в правую колонку, см. 536)
+    // уносит метку текста в правую колонку, см. 536).
+    // То же окно доступно вручную из настроек (Разное -> Статистика
+    // -> "Посчитать сейчас", см. fix/549)
+    showFullStatsOfferDialog();
+}
+
+
+// То же окно предложения полной статистики, что показывает
+// checkFullStatsOffer на старте для большой базы. Вынесено отдельно,
+// чтобы его могла вызвать кнопка "Посчитать сейчас" из настроек:
+// политика и кнопки ведут себя так же, молчаливый автосчет здесь
+// не применяется - раз нажали, значит хотят посчитать
+void MainWindow::showFullStatsOfferDialog(void)
+{
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    KnowTreeModel *model=treeScreen->knowTreeModel;
+
+    // Сколько записей вообще: быстрый кеш уже готов из updateStats
+    int branches=0, records=0, files=0, images=0, links=0, tags=0;
+    model->getBaseStats(branches, records, files, images, links, tags,
+                        KnowTreeModel::StatsLevel::Fast);
+
     QDialog offerDialog(this);
     offerDialog.setWindowTitle(tr("Statistics"));
 

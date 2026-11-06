@@ -416,13 +416,10 @@ bool McpTools::applyUpdateNote(KnowTreeModel *model,
 
   if(hasHtml)
   {
-    // Только публичный API: в память, на диск (атомарно через
-    // pushFatAttributes), память освободить. Параллельный читатель
-    // рваного файла не увидит
-    record->switchToFat();
-    record->setText(html);
-    record->pushFatAttributes();
-    record->switchToLite();
+    // Прямая запись без подъема аттачей (fix/544): updateTextFile
+    // пишет только text.html + FTS, файлы аттачей не трогаются twice
+    // и битый аттач не роняет обновление текста
+    record->updateTextFile(html);
     updatedFields.append("text");
   }
 

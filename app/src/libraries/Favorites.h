@@ -61,6 +61,9 @@ class Favorites : public QObject
 
   mutable bool m_sidecarLoaded=false;
   mutable QSet<QString> m_sidecarIds;
+  // База, для которой загружен сайдкар (fix/544): при смене tetradir
+  // кеш сбрасывается, иначе чужие звезды затирают новый favorites.xml
+  mutable QString m_sidecarTetradir;
 };
 
 #endif // FAVORITES_H

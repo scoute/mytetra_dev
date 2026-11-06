@@ -388,8 +388,9 @@ bool TreeItem::removeChildren(int position, int count)
 
 void TreeItem::removeAllChildren()
 {
-  for(int i=0; i< childItems.size(); i++)
-    delete childItems.takeAt(0);
+  // fix/544: старый цикл takeAt(0) с растущим i удалял только половину
+  qDeleteAll(childItems);
+  childItems.clear();
 }
 
 bool TreeItem::removeChildrenLink(int position, int count)

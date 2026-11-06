@@ -669,6 +669,14 @@ void Record::saveTextDirect(QString iText) const
     criticalError("Record::saveTextDirect() : Unavailable crypt field value \""+fieldList.value("crypt")+"\"");
 }
 
+// Прямая перезапись text.html для внешних применений (MCP): без
+// подъема аттачей, только файл + FTS. Работает и на lite-записи
+void Record::updateTextFile(const QString &html)
+{
+  saveTextDirect(html);
+  AppContext::instance().ftsTextIndex()->upsert(fieldList.value("id"), html);
+}
+
 // Запись текста записи, хранимого в памяти, на диск.
 // Атомарно через временный файл: параллельный читатель никогда
 // не увидит частично записанный файл

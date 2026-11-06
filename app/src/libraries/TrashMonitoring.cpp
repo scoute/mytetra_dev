@@ -49,7 +49,7 @@ void TrashMonitoring::init(const QString trashPath)
         unsigned int fileTime=fileInfoList.at(i).created().toTime_t();
         #endif
 
-        unsigned int fileSize=static_cast<unsigned int>( fileInfoList.at(i).size() );
+        qint64 fileSize=fileInfoList.at(i).size();
 
         // Директории с именами "." и ".." обрабатывать не нужно
         if(fileName=="." || fileName=="..")
@@ -71,7 +71,7 @@ void TrashMonitoring::addFile(const QString fileName)
 
  // Выясняется размер файла
  QFile currentFile(m_path+"/"+fileName);
- unsigned int fileSize=currentFile.size();
+ qint64 fileSize=currentFile.size();
 
  // Информация о файле добавляется в таблицу
  this->appendFileToList(fileName, fileTime, fileSize, AppendFileMode::Head);
@@ -85,7 +85,7 @@ void TrashMonitoring::update(void)
     // условие что количество файлов слишком велико или
     // суммарный размер файлов превышает предельно допустимый размер корзины
     while(m_filesList.size() > AppContext::instance().appConfig()->storageSection()->get_trashmaxfilecount() ||
-          m_dirSize > AppContext::instance().appConfig()->storageSection()->get_trashsize()*1000000)
+          m_dirSize > static_cast<qint64>(AppContext::instance().appConfig()->storageSection()->get_trashsize())*1000000LL)
     {
         if(m_filesList.size()==1)
         {
@@ -100,7 +100,7 @@ void TrashMonitoring::update(void)
 
 void TrashMonitoring::appendFileToList(const QString fileName,
                                        const unsigned int fileTime,
-                                       const unsigned int fileSize,
+                                       const qint64 fileSize,
                                        const AppendFileMode appendFileMode)
 {
     // Если по каким-то причинам добавляется файл, который уже есть в списке,

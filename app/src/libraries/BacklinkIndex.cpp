@@ -107,6 +107,7 @@ bool BacklinkIndex::load(void)
 
   m_forward=forward;
   rebuildReverse();
+  m_sidecarTetradir=AppContext::instance().appConfig()->storageSection()->get_tetradir();
 
   return true;
 }
@@ -132,6 +133,7 @@ bool BacklinkIndex::save(void) const
   // Член тоже обновляется: свежесть проверяется и без перезагрузки
   const int recordCount=currentRecordCount();
   m_sidecarRecords=recordCount;
+  m_sidecarTetradir=AppContext::instance().appConfig()->storageSection()->get_tetradir();
   xml.writeAttribute(QStringLiteral("records"), QString::number(recordCount));
 
   for(auto it=m_forward.constBegin(); it!=m_forward.constEnd(); ++it)
@@ -179,6 +181,11 @@ bool BacklinkIndex::isFresh(void) const
   // Сайдкар от старой версии без счетчика: свежесть не проверить,
   // честно считается несвежим и перестроится один раз
   if(m_sidecarRecords<0)
+    return false;
+
+  // Чужая база с тем же числом записей (fix/544)
+  if(!m_sidecarTetradir.isEmpty() &&
+     m_sidecarTetradir!=AppContext::instance().appConfig()->storageSection()->get_tetradir())
     return false;
 
   KnowTreeModel *model=const_cast<BacklinkIndex *>(this)->treeModel();

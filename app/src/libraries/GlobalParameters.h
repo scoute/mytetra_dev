@@ -114,8 +114,6 @@ private:
     QString m_systemCodepage;
     QString m_consoleCodepage;
 
-    QByteArray passwordHash; // Совместимость: больше не пишется напрямую, см. m_cryptHolder
-
     CryptKeyHolder m_cryptHolder;
 
     //! Язык, который был автоопределен если запускалась инсталляция базы знаний.

@@ -261,8 +261,11 @@ QByteArray XChaChaCipherBackend::decryptBytes(const QByteArray &key,
     if(ok!=0)
     {
         crypto_wipe(plain.data(), plain.size());
+        crypto_wipe(const_cast<char *>(kek.constData()), kek.size());
         return QByteArray();
     }
+
+    crypto_wipe(const_cast<char *>(kek.constData()), kek.size());
 
     return plain;
 }

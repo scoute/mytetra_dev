@@ -26,15 +26,20 @@ protected:
         if(reader==nullptr || !reader->isOpen())
             return 0;
 
-        // Читаем фреймами: short, моно/стерео учитывается внутри ридера
-        const int maxFrames=static_cast<int>(maxSize/sizeof(short));
+        // readPcm считает фреймами (сэмплы на канал), а maxSize - байты.
+        // Без деления на channels стерео писало 2*maxSize (fix/539)
+        const int channels=qMax(1, reader->channels());
+        const int maxFrames=static_cast<int>(maxSize/(sizeof(short)*channels));
         short *out=reinterpret_cast<short *>(data);
+
+        if(maxFrames<=0)
+            return 0;
 
         int total=0;
 
         while(total<maxFrames)
         {
-            const int got=reader->readPcm(out+total, maxFrames-total);
+            const int got=reader->readPcm(out+total*channels, maxFrames-total);
 
             if(got<=0)
                 break;
@@ -42,7 +47,7 @@ protected:
             total+=got;
         }
 
-        return static_cast<qint64>(total)*sizeof(short);
+        return static_cast<qint64>(total)*channels*sizeof(short);
     }
 
     qint64 writeData(const char *, qint64) override { return -1; }

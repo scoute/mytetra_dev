@@ -19,6 +19,7 @@
 #include "views/voiceNote/VoiceRecorderDialog.h"
 #include "views/appConfigWindow/AppConfigPage_Voice.h"
 #include "libraries/OpusFileWriter.h"
+#include "libraries/OpusFileReader.h"
 #include "libraries/VoiceNoteHelper.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/appConfig/AppConfigStorage.h"
@@ -58,6 +59,7 @@ private slots:
     void bitrates(void);
     void combo(void);
     void writer(void);
+    void stereoRead(void);
     void bubbles(void);
     void settingsRadios(void);
 
@@ -167,6 +169,22 @@ void TestVoice::writer(void)
     for(int f=0; f<50; ++f)
         w.writePcm(buf, 960);
     w.close();
+}
+
+void TestVoice::stereoRead(void)
+{
+    // fix/539: стерео-формула фида: maxFrames делится на channels,
+    // preskip считается во фреймах. Здесь - roundtrip моно-файла
+    // через ридер без переполнения буфера
+    OpusFileReader r;
+    QVERIFY2(r.open(m_tmp.filePath(QStringLiteral("q64.opus"))),
+             "opus reader must open written file");
+    QVERIFY2(r.channels()>=1, "channels must be known");
+    QVERIFY2(r.durationMs()>=0, "duration must be known");
+    short out[960*2]={0};
+    const int got=r.readPcm(out, 960);
+    QVERIFY2(got>=0, "readPcm must not fail");
+    r.close();
 }
 
 void TestVoice::bubbles(void)

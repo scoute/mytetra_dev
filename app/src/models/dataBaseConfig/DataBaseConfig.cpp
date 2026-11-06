@@ -112,7 +112,10 @@ void DataBaseConfig::set_crypt_mode(int mode)
 
 QString DataBaseConfig::get_crypt_check_salt(void)
 {
- return get_parameter("crypt_check_salt");
+ // Nullable-ключ: пусто пока пароль не задан. Читать через
+ // conf->value напрямую: get_parameter() роняет программу criticalError
+ // на пустом значении
+ return conf->value("crypt_check_salt", "").toString();
 }
 
 
@@ -124,7 +127,8 @@ void DataBaseConfig::set_crypt_check_salt(QString salt)
 
 QString DataBaseConfig::get_crypt_check_hash(void)
 {
- return get_parameter("crypt_check_hash");
+ // Nullable-ключ: см. get_crypt_check_salt
+ return conf->value("crypt_check_hash", "").toString();
 }
 
 void DataBaseConfig::set_crypt_check_hash(QString hash)
@@ -135,7 +139,9 @@ void DataBaseConfig::set_crypt_check_hash(QString hash)
 
 QString DataBaseConfig::get_middle_hash_check_data(void)
 {
- return get_parameter("middle_hash_check_data");
+ // Nullable-ключ: пусто пока не включено сохранение пароля или база
+ // старая. Падение здесь роняло перешифровку и проверку пароля
+ return conf->value("middle_hash_check_data", "").toString();
 }
 
 

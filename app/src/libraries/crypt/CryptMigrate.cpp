@@ -83,7 +83,8 @@ CryptMigrateResult CryptMigrate::reencryptAll(KnowTreeModel *model,
     }
 
     // Проверочный blob пароля тоже переводится на новый шифр,
-    // иначе база вечно таскает хвост старого формата
+    // иначе база вечно таскает хвост старого формата.
+    // Пусто - норма: сохранение пароля не включалось или база старая
     QByteArray check=QByteArray::fromBase64(
         dataBaseConfig.get_middle_hash_check_data().toLatin1());
 

@@ -33,6 +33,7 @@ private slots:
     void emptyInputs(void);
     void badConfigFallback(void);
     void rc5NeverSilentNoop(void);
+    void nullableCheckData(void);
 
 private:
 
@@ -134,6 +135,19 @@ void TestCrypt::rc5NeverSilentNoop(void)
     // Расшифровка открытого текста никогда не возвращает его же как есть
     QByteArray noise=CryptService::decryptByteArray(m_key, m_text);
     QVERIFY2(noise!=m_text, "RC5 decrypt of plaintext must never echo input");
+}
+
+void TestCrypt::nullableCheckData(void)
+{
+    // Пустые проверочные ключи - норма для базы без сохраненного
+    // пароля. Геттеры обязаны вернуть "", а не уронить процесс
+    // через criticalError (как падало в reencrypt)
+    QCOMPARE(dataBaseConfig.get_middle_hash_check_data(), QString());
+    QCOMPARE(dataBaseConfig.get_crypt_check_salt(), QString());
+    QCOMPARE(dataBaseConfig.get_crypt_check_hash(), QString());
+
+    QVERIFY2(QByteArray::fromBase64(dataBaseConfig.get_middle_hash_check_data().toLatin1()).isEmpty(),
+             "empty check data must stay empty");
 }
 
 QTEST_APPLESS_MAIN(TestCrypt)

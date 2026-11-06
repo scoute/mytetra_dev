@@ -243,7 +243,14 @@ bool Password::checkMiddleHash(void)
     // qDebug() << "Password::checkMiddleHash() : Crypt key :" << key.toHex();
 
     // Из конфига базы данных считываются проверочные данные
-    QByteArray checkData=QByteArray::fromBase64( dataBaseConfig.get_middle_hash_check_data().toLatin1() );
+    // Проверочных данных нет (сохранение пароля не включалось или база
+    // старая): проверять нечего, это не совпадение
+    const QByteArray checkBase64=dataBaseConfig.get_middle_hash_check_data().toLatin1();
+
+    if(checkBase64.isEmpty())
+        return false;
+
+    QByteArray checkData=QByteArray::fromBase64(checkBase64);
 
     // Проверочные данные расшифровыватся с помощью ключа
     QString line=CryptService::decryptStringFromByteArray(key, checkData);

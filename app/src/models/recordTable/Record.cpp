@@ -785,6 +785,10 @@ void Record::switchToEncryptAndSaveLite(void)
 
   // Зашифровываются поля записи (здесь же устанавливается флаг crypt)
   switchToEncryptFields();
+
+  // Открытый текст не должен оставаться в FTS-индексе рядом с бинарником
+  // (см. fix/538): saveText() чистит индекс только при сохранении
+  AppContext::instance().ftsTextIndex()->remove(fieldList.value("id"));
 }
 
 // Шифрование записи с полновесными данными
@@ -809,6 +813,9 @@ void Record::switchToEncryptAndSaveFat(void)
 
   // Тяжелые данные записываются в хранилище
   pushFatAttributes();
+
+  // Чистка FTS как в Lite-версии (см. fix/538)
+  AppContext::instance().ftsTextIndex()->remove(fieldList.value("id"));
 }
 
 // Расшифровка записи с легкими данными

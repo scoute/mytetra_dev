@@ -102,7 +102,10 @@ void DataBaseConfig::set_crypt_mode(int mode)
 
 QString DataBaseConfig::get_crypt_check_salt(void)
 {
- return get_parameter("crypt_check_salt");
+ // Nullable-ключ (fix/548): пусто пока пароль не задан. Читать через
+ // conf->value напрямую: get_parameter() роняет программу criticalError
+ // на пустом значении (тот же паттерн что EditorConfig, см. AGENTS.md)
+ return conf->value("crypt_check_salt", "").toString();
 }
 
 void DataBaseConfig::set_crypt_check_salt(QString salt)
@@ -112,7 +115,8 @@ void DataBaseConfig::set_crypt_check_salt(QString salt)
 
 QString DataBaseConfig::get_crypt_check_hash(void)
 {
- return get_parameter("crypt_check_hash");
+ // Nullable-ключ (fix/548): см. get_crypt_check_salt
+ return conf->value("crypt_check_hash", "").toString();
 }
 
 void DataBaseConfig::set_crypt_check_hash(QString hash)
@@ -122,7 +126,10 @@ void DataBaseConfig::set_crypt_check_hash(QString hash)
 
 QString DataBaseConfig::get_middle_hash_check_data(void)
 {
- return get_parameter("middle_hash_check_data");
+ // Nullable-ключ (fix/548): пусто пока не включено сохранение пароля
+ // или база старая. Падение здесь роняло перешифровку (reencryptAll)
+ // и проверку сохраненного пароля (checkMiddleHash)
+ return conf->value("middle_hash_check_data", "").toString();
 }
 
 void DataBaseConfig::set_middle_hash_check_data(QString hash)

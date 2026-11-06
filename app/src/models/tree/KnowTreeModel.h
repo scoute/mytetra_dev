@@ -61,6 +61,27 @@ public:
     //! Полное имя файла запоминается
     void initFromXML(QString fileName);
 
+    // Хорошая копия базы для восстановления (см. 504)
+    struct XmlBackupInfo
+    {
+        QString path;
+        QDateTime modified;
+        qint64 size=0;
+        int branches=0;
+        int records=0;
+    };
+
+    // Ротация хороших копий рядом с базой (1..3). Пропускается
+    // если свежая копия идентична текущей
+    static void rotateBackups(const QString &xmlFileName);
+
+    // Кандидаты бэкапов с проверкой чтением: только годные
+    static QList<XmlBackupInfo> usableBackups(const QString &xmlFileName);
+
+    // Быстрая проверка файла базы без загрузки в модель:
+    // well-formed XML с корнем root. Считает ветки и записи
+    static bool scanBackupFile(const QString &path, int *branches, int *records);
+
     //! Перечитывание данных из файла формата mytetra.xml
     //! Используется имя файла, запомненное в initFromXML()
     void reload(void);
@@ -222,6 +243,10 @@ signals:
 private:
 
     QString m_xmlFileName;
+
+    // Предложить восстановление из бэкапа. true если файл подложен
+    // и можно пробовать грузить заново
+    static bool tryRestoreFromBackup(const QString &xmlFileName);
 
     // ID вырезанной ветки, см. cutBranchId(). Не поле данных, не сохраняется
     QString cutBranchIdValue;

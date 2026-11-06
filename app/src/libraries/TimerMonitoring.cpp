@@ -54,12 +54,17 @@ void TimerMonitoring::start()
   // Если периодическая проверка не разрешена в конфигурации
   if( !isStartEnabled() )
     return; // Таймер не запускается
-  else // Иначе, если это первый старт, то нужно напрямую первый раз вызвать исполнение действий
-    if( isFirstStart )
-    {
-      timerEvent(NULL);
+
+  // Защита от start() до setDelay(): startTimer(0) - холостой тик (fix/547)
+  if(delay<=0)
+    return;
+
+  if( isFirstStart )
+  {
+      // Q_UNUSED(event) в наследниках: nullptr безопасен
+      timerEvent(nullptr);
       isFirstStart=false;
-    }
+  }
 
   // Установка автоматического повтора действий
   timerId=startTimer(delay*1000); // Периодичность таймера должна задаваться в миллисекундах
@@ -69,6 +74,10 @@ void TimerMonitoring::start()
 
 void TimerMonitoring::stop()
 {
+  // Гарда нестартованного таймера: killTimer(0) давал варнинг (fix/547)
+  if(timerId==0)
+    return;
+
   killTimer(timerId);
   timerId=0;
 }

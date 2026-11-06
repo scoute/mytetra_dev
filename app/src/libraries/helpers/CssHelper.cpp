@@ -39,6 +39,9 @@ qreal CssHelper::getCalculateIconSizePx(void)
 #endif
 
 #if QT_VERSION >= 0x050000 && QT_VERSION < 0x060000
+    // Гарда пустого списка экранов: offscreen/headless падал на at(0) (fix/547)
+    if(QApplication::screens().isEmpty())
+        return 0;
     qreal dpi=QApplication::screens().at(0)->physicalDotsPerInch();
 #endif
 

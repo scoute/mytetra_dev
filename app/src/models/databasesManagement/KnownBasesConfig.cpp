@@ -183,14 +183,27 @@ void KnownBasesConfig::renumSections()
         return;
     }
 
-    // Переименование секций
-    for (int i=0; i<count; ++i)
+    // Переименование секций в два прохода через временные имена (fix/547):
+    // прямое num10->num2 затирало существующую num2 при дырках в нумерации
+    QStringList tmpNames;
+    for(int i=0; i<count; ++i)
     {
-        if (currentSectionNums[i] != correctSectionNums[i])
+        if(currentSectionNums[i]!=correctSectionNums[i])
         {
-            this->renameSection( m_sectionPrefix+QString::number( currentSectionNums[i] ),
-                                 m_sectionPrefix+QString::number( correctSectionNums[i] ) );
+            const QString tmp=m_sectionPrefix+QStringLiteral("tmp_")+
+                              QString::number(currentSectionNums[i]);
+            this->renameSection(m_sectionPrefix+QString::number(currentSectionNums[i]), tmp);
+            tmpNames << tmp;
         }
+        else
+            tmpNames << QString();
+    }
+    // Второй проход: временные имена раскладываются по правильным номерам
+    for(int i=0; i<count; ++i)
+    {
+        if(!tmpNames[i].isEmpty())
+            this->renameSection(tmpNames[i],
+                                m_sectionPrefix+QString::number(correctSectionNums[i]));
     }
 }
 

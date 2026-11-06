@@ -432,9 +432,15 @@ void RecordTableView::editFieldContext(void)
 
     controller->editFieldContext(index);
 
-    // Нужно перерисовать окно редактирования чтобы обновились инфополя
-    // делается это путем "повторного" выбора текущего пункта
-    clickToRecord(index); // Раньше было select()
+    // Перевыбор по id, а не по старому proxy-индексу:
+    // после переименования сортировка могла переставить строки,
+    // клик по старому индексу открывал уже соседнюю запись
+    QString id=index.data(RECORD_ID_ROLE).toString();
+
+    if(!id.isEmpty())
+        controller->setSelectionToId(id);
+    else
+        clickToRecord(index); // Раньше было select()
 }
 
 

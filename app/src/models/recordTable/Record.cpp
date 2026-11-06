@@ -515,6 +515,11 @@ void Record::setAttachTable(AttachTableData iAttachTable)
     criticalError("setAttachTable(): Unsyncro lite state for record: "+getIdAndNameAsString());
 
   attachTableData=iAttachTable;
+
+  // Как в копировании/присваивании: обратные ссылки на новый экземпляр,
+  // иначе Attach::getFullInnerDirName ходит по висячему parentTable
+  attachTableData.setRecord(this);
+  attachTableData.updateAttachTableBackLink();
 }
 
 

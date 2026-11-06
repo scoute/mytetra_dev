@@ -351,8 +351,11 @@ bool AttachTableController::addAttach(QString attachType, QString currFullFileNa
     criticalError("Unsupport adding mode");
 
 
-  // Если запись, к которой добавляется аттач, зашифрована
-  if( attachTableData->isRecordCrypt() )
+  // Если запись, к которой добавляется аттач, зашифрована.
+  // Только при успехе копирования: раньше encrypt() до проверки
+  // result ронял процесс criticalError на битой копии вместо
+  // вежливого showMessageBox
+  if(result && attachTableData->isRecordCrypt())
     attach.encrypt();
 
 

@@ -353,9 +353,9 @@ void RecordTableController::setTableData(RecordTableData *rtData)
     // Если номер записи допустимый
     if(workPos>=0 && workPos<recordSourceModel->rowCount())
     {
-      // Выделение устанавливается на нужную запись
-      // selectionModel()->setCurrentIndex( model()->index( workPos, 0 ) , QItemSelectionModel::SelectCurrent);
-      view->selectRow(workPos);
+      // workPos - позиция в source-модели, вид показывает proxy
+      // (при включенной сортировке индексы расходятся)
+      view->selectRow(convertSourcePosToProxyPos(workPos));
       view->scrollTo( view->currentIndex() ); // QAbstractItemView::PositionAtCenter
 
       isSelection=true;

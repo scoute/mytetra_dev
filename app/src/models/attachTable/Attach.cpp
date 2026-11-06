@@ -878,17 +878,20 @@ void Attach::renameFile(QString newFileName){
     return;
   }
 
-  QFile file(getFullInnerFileName());
+  // Резолв реально лежащего файла по всем схемам имен: режим имен
+  // могли сменить после вставки метки, оригинал мог уйти в гибрид
+  const QString existingFullName=getFullInnerDirName()+"/"+getExistingInnerFileName();
+  QFile file(existingFullName);
 
   // Подправляются права, чтобы файл под новым именем нормально читался
   file.setPermissions(file.permissions() | QFile::ReadUser | QFile::WriteUser);
 
   if(!file.exists())
   {
-    showMessageBox(QObject::tr("Unable to rename the file %1 from disk: file not found.").arg( getFullInnerFileName() ));
+    showMessageBox(QObject::tr("Unable to rename the file %1 from disk: file not found.").arg( existingFullName ));
     return;
   }
-  
+
   QString resultFileName=getFullInnerDirName()+"/"+constructFileName(type, getField("id"), newFileName);
 
   // Результат переименования проверяется до обновления метаданных, иначе
@@ -896,7 +899,7 @@ void Attach::renameFile(QString newFileName){
   // указывало бы на несуществующий файл
   if(!file.rename(resultFileName))
   {
-    showMessageBox(QObject::tr("Unable to rename the file %1 to %2 from disk.").arg( getFullInnerFileName() ).arg( resultFileName ));
+    showMessageBox(QObject::tr("Unable to rename the file %1 to %2 from disk.").arg( existingFullName ).arg( resultFileName ));
     return;
   }
 

@@ -136,6 +136,10 @@ private:
   // в save(), все мутации идут через него
   mutable int m_sidecarRecords=-1;
 
+  // База сайдкара (fix/544): смена tetradir с тем же числом записей
+  // раньше давала ложную свежесть и чужие бэклинки
+  mutable QString m_sidecarTetradir;
+
   // Прямые пары: источник -> цели
   QMap<QString, QSet<QString>> m_forward;
 

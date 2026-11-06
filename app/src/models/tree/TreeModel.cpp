@@ -187,8 +187,9 @@ QModelIndex TreeModel::getIndexRecurse(QModelIndex modelIndex, TreeItem *item, i
         else
         {
             // Иначе указатель узла не совпадает с заданным
-            // и нужно рекурсивно искать далее
-            for(int i=0; i<modelIndex.row(); i++)
+            // и нужно рекурсивно искать далее (fix/544: было
+            // modelIndex.row() вместо rowCount - поиск не работал)
+            for(int i=0; i<rowCount(modelIndex); i++)
                 getIndexRecurse( index(i, 0, modelIndex), item, 1 ); // Через index выясняются дочерние (child) элементы
         }
     }

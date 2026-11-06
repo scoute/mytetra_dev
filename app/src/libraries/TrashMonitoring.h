@@ -30,20 +30,20 @@ private:
 
  void appendFileToList(const QString fileName,
                        const unsigned int fileTime,
-                       const unsigned int fileSize,
+                       const qint64 fileSize,
                        const AppendFileMode appendFileMode);
 
  void removeOldesFile(void);
  
  QString m_path;
  QDir m_dir;
- unsigned int m_dirSize;
+ qint64 m_dirSize;
   
  struct FileData
  {
   QString fileName;
   unsigned int fileTime;
-  unsigned int fileSize;
+  qint64 fileSize;
  };
 
  //! Список обслуживаемых файлов со всеми их данными,

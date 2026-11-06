@@ -453,8 +453,10 @@ CommandRunner *GlobalParameters::getSyncroCommandRunnner()
 
 void GlobalParameters::setCryptKey(QByteArray hash)
 {
+    // Единственное хранилище - CryptKeyHolder. Мертвый дубликат
+    // passwordHash удален (fix/544): лишняя копия ключа в памяти
     m_cryptHolder.setKey(hash);
-    passwordHash=hash;
+    hash.fill(0);
 }
 
 QByteArray GlobalParameters::getCryptKey(void)

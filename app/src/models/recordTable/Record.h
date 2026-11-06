@@ -80,6 +80,10 @@ public:
 
   void pushFatAttributes();
 
+  // Прямая перезапись text.html без подъема аттачей в память (fix/544):
+  // для MCP-обновления текста, чтобы не трогать файлы аттачей twice
+  void updateTextFile(const QString &html);
+
   static void replaceInternalReferenceByTranslateTable(QString recordFileName, QMap<QString, QString> idRecordTranslate);
 
 protected:

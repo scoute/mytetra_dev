@@ -148,6 +148,13 @@ RC5Simple::~RC5Simple(void)
  // Cleaning user key
  for(int i=0; i<RC5_B; i++)
   rc5_key[i]=0;
+
+ // Expanded key table инвертируется в ключ: тоже затирается (fix/544)
+ for(int i=0; i<RC5_T; i++)
+  rc5_s[i]=0;
+
+ rc5_p=0;
+ rc5_q=0;
 }
 
 

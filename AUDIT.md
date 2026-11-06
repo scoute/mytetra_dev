@@ -415,7 +415,147 @@ Headless-пробы (в `/tmp/opencode`, не входят в репозитор
 - Ветка: `fix/259_audit_hardening`, один commit.
 - В `develop-v1-mytetra` не влита, версия не поднята: по `AGENTS.md`
   merge/push в общие линии — только по явной команде.
+- Ветка: `fix/259_audit_hardening`, один commit.
+- В `develop-v1-mytetra` не влита, версия не поднята: по `AGENTS.md`
+  merge/push в общие линии — только по явной команде.
 - Если изменения приняты: `merge --no-ff` + отдельный
   `[chore][version=>1.149.2]`.
 - Перед merge рекомендуется прогнать P1-тесты на реальной базе
   (открытие, смена пароля, экспорт/импорт ветки, Telegram-импорт).
+
+---
+
+# Аудит MyTetra: ветка `develop-v1-mytetra` (дополнение 2026-11-06)
+
+Дата: 2026-11-06
+База: `7065b5a7` (`1.227.1`, `[chore][version=>1.227.1]`)
+Объём: `app/app.pro` + `app/src` (~250 файлов), Qt 5.15 / qmake, PCH `stable.h`.
+
+Метод: ручной разбор ядра (модели, хранение, крипта, конфиги, индексы),
+wyedit-редактора, MCP/IPC, сборки, тестов и `mytetra_ru.ts`; скриптовые
+сверки `app.pro`/`.qrc` и переводов.
+
+## 1. Критические / High (падения, потеря данных, безопасность)
+
+1. `AppConfigTables.cpp:17-107` — безусловный `table.at(i*3)` на 200 итераций
+   без проверки размера/терминатора `"0","0","0"`. Неизвестный ключ =
+   `ASSERT failure in QList::at`. Плюс `AppConfigUpdater.cpp:269` делает
+   `conf->clear()` и пишет только ключи из таблицы: все новые ключи
+   (`attachNameMode`, `notePaperColor`, `treeToolbarOrder`,
+   `voiceNoteFormat` и др. из `AppConfigUi/Storage/Services`) молча
+   стираются при следующем бампе версии `conf.ini`.
+2. `KnowTreeModel::importBranchFromDirectory:706-765` — после
+   `setupModelData()` не выставляются `m_idIndexDirty`/`invalidateStats()`,
+   `getItemById(importItemId)` ищет в устаревшем индексе, `nullptr` ->
+   `switchToEncrypt()` = SIGSEGV при импорте в шифрованную ветку.
+   `KnowTreeModel::moveBranch:1250-1314` (+ `KnowTreeView::dropBranch`,
+   `TreeScreenClipboard::pasteCutBranch`) не сверяет `crypt` родителя/
+   переносимого и не требует ключ: открытая ветка внутри шифрованной,
+   сироты при `reEncrypt`.
+3. `Record::switchToEncryptAndSaveLite:765-788` шифрует файлы, но не делает
+   `ftsTextIndex()->remove(id)`: открытый текст остаётся в
+   `mytetra-fts5.db` (`fts_text`/`fts_plain`) до пересборки.
+4. `OpusFeedDevice::readData (OpusPlayer.cpp:24-46)` считает
+   `maxFrames = maxSize/sizeof(short)` без деления на `channels()`,
+   а `OpusFileReader::readPcm` пишет `copy` сэмплов: стерео `.opus` =
+   heap buffer overflow до `2*maxSize`.
+5. `QtLocalPeer::receiveConnection (qtlocalpeer.cpp:180-185)`:
+   `while(bytesAvailable()<4) waitForReadyRead();` без таймаута = вечный
+   цикл GUI-потока при обрыве клиента; `remaining` без лимита = OOM.
+   `McpServerGui.cpp:60 socketNameForId` без `toLower()` на Windows, а
+   `QtLocalPeer` с `toLower()` -> разные `qChecksum`, MCP на Windows
+   всегда `GUI_NOT_RUNNING` и пишет мимо живого GUI.
+6. `EditorShowTextDispatcher.cpp:14-35,160-220` живёт в своём `QThread`,
+   слоты трогают `KnowTreeModel` и `QWidget::close()` из рабочего потока
+   (запрещено Qt); деструктор инвертирован:
+   `if(mThread->wait(1000)) terminate();` вместо `if(!wait(...))`.
+7. `Record::setAttachTable:485-491`, `AttachTableData:167-189` не
+   переставляют `setRecord/updateAttachTableBackLink/setParentTable` ->
+   висячие `parentTable/record`. `AttachTableController::addAttach:368-381`
+   вызывает `attach.encrypt()` до проверки `result`.
+8. Причина SIGSEGV headless-тестов на выходе: `AppConfig::~AppConfig:36-43`
+   и `DataBaseConfig::~DataBaseConfig:29-36` делают `m_conf->sync()` /
+   `conf->sync()` при `m_conf==nullptr` (тесты зануляют `m_conf` в
+   `cleanupTestCase`, `m_isInit` остаётся `true`).
+
+## 2. Средние (логика, производительность, целостность)
+
+- `CryptMigrate::reencryptAll:15-65` собирает вложенные `crypt=="1"` и
+  гоняет `switchToDecrypt/Encrypt` по каждому: глубина D = D проходов
+  по диску; `out.records` всегда 0.
+- `KnowTreeModel::deleteItemsByModelIndexList:2097-2185` сортирует только
+  по глубине пути: удаление сиблингов 0 и 1 сносит строку 1 дважды (не та
+  ветка + `TreeItem*` с затёртыми записями); нет `invalidateStats()`.
+- `KnownBasesConfig::renumSections:146-189` без числовой сортировки:
+  `childGroups()` даёт `num10` перед `num2`, при 10+ базах
+  `renameSection(num10->num2)` затирает `num2`.
+- `Record::replaceInternalReferenceByTranslateTable:910-959` клеит
+  `readLine()` без `\n` (ломает `<pre>`), без `setCodec("UTF-8")`,
+  пишет через `QFile` вместо атомарной записи.
+- `McpTools::applyUpdateNote:342-430` делает
+  `switchToFat/pushFatAttributes/switchToLite` ради смены текста: двойная
+  перезапись аттачей, `criticalError` при битом аттаче; `applyRenameTag/
+  applyDeleteTag` без `invalidateStats()`. `McpGuiBridge:256-385`
+  не сбрасывает `MetaEditor` при delete/update открытой записи.
+- `Favorites:220-228` (`m_sidecarLoaded`) и `BacklinkIndex::isFresh:174-193`
+  (только счётчик записей) не хранят `tetradir`: переключение базы
+  отдаёт чужие звёзды/бэклинки и затирает чужой `favorites.xml`.
+- `Editor.cpp:74-91,298` — нет `delete audioFormatter` (утечка на каждый
+  `AddNewRecord`/detached-окно; удалять до `delete textArea`).
+  `TreeItem::removeAllChildren:389-393` удаляет половину
+  (`takeAt(0)` + растущий `i`). `TreeModel::getIndexRecurse:181`
+  сравнивает с `modelIndex.row()` вместо `rowCount()`.
+- Ключи в памяти: `GlobalParameters::passwordHash` дублирует
+  `CryptKeyHolder::m_key` и не зануляется; `XChaChaCipherBackend:228-267`
+  не `crypto_wipe(kek)` в `decryptBytes`, статик `sessionKekBuf/Key`
+  живёт после сброса пароля; `RC5Simple::~RC5Simple:146-151` не трёт
+  `rc5_s[26]`.
+- `RecordTableController:314-325` отдаёт `selectRow(workPos)` вместо
+  `convertSourcePosToProxyPos`; `RecordTableView:412-418` кликает по
+  старому `proxyIndex` после пересортировки; `Attach::renameFile:886`
+  вместо `getExistingInnerFileFullName()`.
+- `TelegramImport.cpp:189-242`: `telegramTextToHtml` для `isString()`
+  возвращается до замены `\n-><br/>` (многострочные без форматирования
+  склеиваются); `href=text.toHtmlEscaped()` повторно экранирует `&`.
+
+## 3. Низкие / гигиена / i18n
+
+- Дубли `parseWinHotkey/sendCopyKeys/ClipperWinFilter` в
+  `ClipperParse.cpp:108-245` и `ClipperHotkey.cpp:109-251` (в Parse не
+  используются, ODR-риск на Windows).
+- `static`-переменные в рекурсиях `TreeItem/KnowTreeModel`
+  (`getAllChildrenPathAsFieldRecurse`, `getAllRecordCountRecurse`,
+  `isRecordDirExistsRecurse`, `isContainsCryptBranchesRecurse`,
+  `isContainsBlockRecordsRecurse`); `getAllRecordCount` может брать
+  готовый `subtreeRecordCount()`.
+- `TrashMonitoring.h:32-47` — `unsigned int` для размеров: переполнение
+  при корзине >4 ГБ, нужен `qint64`.
+- `HtmlHelper.cpp:11-28` не экранирует `&`.
+- `IconSelectDialog.h:50` — `QComboBox` вместо `MtComboBox` (пустые
+  квадраты в тёмной теме).
+- `mytetra_ru.ts`: 1532/0/0 (ru 100%), но несколько новых `tr()` нет в
+  `.ts`: `FtsTextIndex "Index rebuild is in progress"`,
+  `ReferenceFormatter "Unable to preview..."`,
+  `AppConfigPage_Crypt "Re-encryption canceled..."`,
+  7x `KnowTreeModel "Export/Import error: ..."`. Контекст `tr()` =
+  класс метода (проверять `EditorImageProperties/Real image size`,
+  `MainWindowMcp`, `TagsPanel`, `TreeScreen*`, `TypefaceFormatter*`).
+- Мусор в репо: `app/iZIKtb.json` (34 КБ) — удалить, не коммитить.
+
+## 4. План исправлений (юниты fix/NNN_*)
+
+- `fix/537_appconfig_tables_bounds` — границы в `AppConfigTables.cpp`,
+  сохранение/регистрация новых ключей при миграции, `nullptr`-гарды
+  в `~AppConfig/~DataBaseConfig` (чинит и teardown QTest).
+- `fix/538_import_move_crypt` — `m_idIndexDirty/invalidateStats/
+  recountSubtreeTotals` в импорте, гейты пароля и `switchToEncrypt/
+  Decrypt` при переносе, `fts->remove()` в `switchToEncrypt*`.
+- `fix/539_opus_stereo_buffer` — фреймы/каналы в `OpusFeedDevice`,
+  `preskip` и буфер в `OpusFileReader`.
+- `fix/540_ipc_mcp_socket` — `toLower()` сокета на Windows, таймаут+лимит
+  в `QtLocalPeer`, `saveTextDirect` + сброс `MetaEditor` в MCP.
+- `fix/541_dispatcher_thread` — диспетчер в GUI-поток (или фикс
+  `wait/terminate` + перенос `QWidget`), `delete audioFormatter`.
+- `fix/542_tree_record_helpers` — сортировка удаления веток,
+  нерекурсивный `CryptMigrate`, `sort` в `renumSections`, UTF-8 и
+  переносы в `replaceInternalReference` и Telegram-импорте.

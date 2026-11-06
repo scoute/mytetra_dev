@@ -15,22 +15,23 @@ extern AppConfig mytetraConfig;
 
 EditorShowTextDispatcher::EditorShowTextDispatcher(QObject *parent) : QObject(parent)
 {
-    mThread=new QThread();
-    this->moveToThread(mThread);
-
-    mThread->start();
+    // Диспетчер живет в GUI-потоке: объект трогает KnowTreeModel
+    // и QWidget::close(), рабочий поток запрещен (см. fix/541)
+    mThread=nullptr;
 }
 
 
 EditorShowTextDispatcher::~EditorShowTextDispatcher()
 {
-    // Корректное закрытие и удаление треда
+    // mThread всегда nullptr (см. ctor): гарда на случай
+    // будущего возврата потока, условие исправлено (!wait -> terminate)
     if(mThread!=nullptr)
     {
         mThread->quit();
-        if(mThread->wait(1000))
+        if(!mThread->wait(1000))
         {
             mThread->terminate();
+            mThread->wait();
         }
 
         delete mThread;

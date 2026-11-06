@@ -79,6 +79,7 @@ Editor::~Editor(void)
 {
   delete editorConfig;
   // delete editorToolBarAssistant; // Закомментировано, т. к. объект удалится автоматически
+  delete audioFormatter; // До textArea: хендлер баблов живет в layout документа
   delete buttonsAndEditLayout;
   delete editorContextMenu;
   delete textArea;

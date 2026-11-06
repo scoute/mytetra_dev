@@ -377,6 +377,8 @@ bool McpTools::applyRenameTag(KnowTreeModel *model,
     }
   });
 
+  model->invalidateStats();
+
   return true;
 }
 
@@ -420,6 +422,8 @@ bool McpTools::applyDeleteTag(KnowTreeModel *model,
       cleared++;
     }
   });
+
+  model->invalidateStats();
 
   return true;
 }

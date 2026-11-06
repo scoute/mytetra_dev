@@ -326,6 +326,12 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
       return false;
     }
 
+    // Удаляемая запись могла быть открыта в редакторе: указатель
+    // внутрь таблицы-источника сбрасывается до удаления (fix/540),
+    // как уже сделано для mcpMoveNote
+    if(clearEditor)
+        clearEditor();
+
     if(!McpTools::applyDeleteNote(m_model, m_backlinks, id, error))
     {
       if(error.isEmpty())
@@ -364,6 +370,10 @@ bool McpGuiBridge::handleMcpCommand(const QString &command,
       error="Empty id";
       return false;
     }
+
+    // Удаляемая ветка могла содержать открытую запись (fix/540)
+    if(clearEditor)
+        clearEditor();
 
     QJsonObject deleted=McpTools::applyDeleteBranch(m_model,
                                                     id, error);

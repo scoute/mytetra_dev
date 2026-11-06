@@ -35,7 +35,9 @@ AppConfig::AppConfig(QObject *pobj)
 // Деструктор объекта настройки программы
 AppConfig::~AppConfig()
 {
-    if (m_isInit)
+    // Гарда m_conf: headless-тесты зануляют m_conf в cleanupTestCase
+    // при взведенном m_isInit, без проверки - SIGSEGV на выходе (fix/537)
+    if(m_isInit && m_conf!=nullptr)
     {
         qDebug() << "Save mytetra config file";
         m_conf->sync();

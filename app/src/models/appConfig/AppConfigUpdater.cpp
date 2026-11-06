@@ -118,7 +118,7 @@ void AppConfigUpdater::updateVersion(int versionFrom,
 
     // Структура таблица исходных параметров преобразуется к более удобному для работы виду
     QMap< QString, QMap< QString, QString > > fromTable;
-    for(int i=0; i<maxParameterCount; i++)
+    for(int i=0; (i+1)*3<=baseTable.size() && i<maxParameterCount; i++)
     {
         QString name=    baseTable.at(i*3+0);
         QString type=    baseTable.at(i*3+1);
@@ -145,7 +145,7 @@ void AppConfigUpdater::updateVersion(int versionFrom,
     // из конечного массива во время обхода через итератор
     QMap< QString, QMap< QString, QString > > toTable;
     QList<QString> controlList;
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    for(int i=0; (i+1)*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD<=finalTable.size() && i<MYTETRA_CONFIG_PARAM_NUM; i++)
     {
         QString name=    finalTable.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD+0);
         QString type=    finalTable.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD+1);
@@ -265,6 +265,15 @@ void AppConfigUpdater::updateVersion(int versionFrom,
         criticalError("Error while update config from "+(QString::number(versionFrom))+" to "+(QString::number(versionTo)) );
     }
 
+    // Неверсионированные ключи (читаются через conf->value напрямую
+    // и не входят в таблицу версий, см. fix/537) сохраняются, иначе
+    // conf->clear() ниже молча стирает пользовательские настройки
+    // (тема, тулбары, голос, аттачи) при каждом бампе версии
+    QMap<QString, QVariant> unversionedValues;
+    foreach(const QString &existingKey, conf->allKeys())
+        if(!toTable.contains(existingKey) && existingKey!="version")
+            unversionedValues.insert(existingKey, conf->value(existingKey));
+
     // Конфиг обнуляется
     conf->clear();
 
@@ -293,6 +302,10 @@ void AppConfigUpdater::updateVersion(int versionFrom,
 
     // Устанавливается новый номер версии
     conf->setValue("version", versionTo);
+
+    // Возвращаются неверсионированные пользовательские ключи
+    for(auto it=unversionedValues.constBegin(); it!=unversionedValues.constEnd(); ++it)
+        conf->setValue(it.key(), it.value());
 
     // Конфигурация записывается на диск
     conf->sync();

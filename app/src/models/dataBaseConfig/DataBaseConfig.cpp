@@ -22,13 +22,15 @@ DataBaseConfig::DataBaseConfig(QObject *pobj)
 {
  Q_UNUSED(pobj);
 
+ conf=nullptr;
  is_init_flag=false;
 }
 
 // Деструктор объекта настройки БД
 DataBaseConfig::~DataBaseConfig()
 {
- if(is_init_flag)
+ // Гарда conf: см. AppConfig::~AppConfig (fix/537)
+ if(is_init_flag && conf!=nullptr)
   {
    qDebug() << "Save database config file";
    conf->sync();

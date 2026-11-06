@@ -307,8 +307,9 @@ int OpusFileReader::readPcm(short *out, int maxFrames)
     if(result!=1)
         return result;
 
-    // Максимальный кадр Opus 120 мс на 48 кГц: 5760 фреймов
-    static short decoded[5760*2];
+    // Максимальный кадр Opus 120 мс на 48 кГц: 5760 фреймов.
+    // thread_local вместо static: переиспользование без гонок
+    thread_local static short decoded[5760*2];
 
     const int frames=opus_decode(decoder, packet.packet, packet.bytes,
                                  decoded, 5760, 0);
@@ -320,8 +321,10 @@ int OpusFileReader::readPcm(short *out, int maxFrames)
 
     if(preskipLeft>0)
     {
-        skip=qMin(preskipLeft, frames*channelCount);
+        // preskip во фреймах (сэмплы на канал), не в сэмплах
+        skip=qMin(preskipLeft, frames);
         preskipLeft-=skip;
+        skip*=channelCount;
     }
 
     const int total=frames*channelCount-skip;

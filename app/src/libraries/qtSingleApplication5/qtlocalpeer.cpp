@@ -177,12 +177,25 @@ void QtLocalPeer::receiveConnection()
     if (!socket)
         return;
 
-    while (socket->bytesAvailable() < (int)sizeof(quint32))
-        socket->waitForReadyRead();
+    // Заголовок фрейма с таймаутом и лимитом: waitForReadyRead()
+    // без таймаута вешал GUI-поток на оборванном клиенте,
+    // а remaining без проверки давал OOM на мусоре
+    while(socket->bytesAvailable() < (int)sizeof(quint32))
+        if(!socket->waitForReadyRead(2000))
+        {
+            delete socket;
+            return;
+        }
     QDataStream ds(socket);
     QByteArray uMsg;
     quint32 remaining;
     ds >> remaining;
+    const quint32 maxFrame=64*1024*1024;
+    if(remaining==0 || remaining>maxFrame)
+    {
+        delete socket;
+        return;
+    }
     uMsg.resize(remaining);
     int got = 0;
     char* uMsgBuf = uMsg.data();

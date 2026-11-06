@@ -5,8 +5,8 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QLabel>
-#include <QComboBox>
 #include <QProgressBar>
+#include "libraries/MtComboBox.h"
 
 
 class IconSelectDialog : public QDialog
@@ -47,7 +47,7 @@ protected:
   void assembly();
 
   QLabel m_sectionLabel;
-  QComboBox m_sectionComboBox;
+  MtComboBox m_sectionComboBox;
   QListWidget m_iconList;
   QPushButton m_buttonRemoveIcon;
   QPushButton m_buttonOk;

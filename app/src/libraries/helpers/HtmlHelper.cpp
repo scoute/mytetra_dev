@@ -10,6 +10,8 @@ HtmlHelper::HtmlHelper()
 
 QString HtmlHelper::htmlSpecialChars(QString line)
 {
+  // Порядок важен: сначала &, иначе &lt; удвоится
+  line.replace("&", "&amp;");
   line.replace("\"", "&quot;");
   line.replace("<",  "&lt;");
   line.replace(">",  "&gt;");
@@ -23,6 +25,7 @@ QString HtmlHelper::htmlSpecialCharsDecode(QString line)
   line.replace("&quot;", "\"");
   line.replace("&lt;", "<");
   line.replace("&gt;", ">");
+  line.replace("&amp;", "&");
 
   return line;
 }

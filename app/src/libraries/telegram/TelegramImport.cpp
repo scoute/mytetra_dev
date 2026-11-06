@@ -193,7 +193,13 @@ static QString entityToHtml(const QString &type, const QString &text,
      type==QStringLiteral("phone") || type==QStringLiteral("mention") ||
      type==QStringLiteral("hashtag") || type==QStringLiteral("bot_command"))
   {
+    // text уже экранирован: для href сначала разэкранировать,
+    // иначе & в URL даст &amp;amp;
     QString href=text;
+    href.replace(QStringLiteral("&amp;"), QStringLiteral("&"));
+    href.replace(QStringLiteral("&lt;"), QStringLiteral("<"));
+    href.replace(QStringLiteral("&gt;"), QStringLiteral(">"));
+    href.replace(QStringLiteral("&quot;"), QStringLiteral("\""));
 
     if(type==QStringLiteral("email") && !href.startsWith(QStringLiteral("mailto:")))
       href=QStringLiteral("mailto:")+href;
@@ -215,8 +221,15 @@ static QString entityToHtml(const QString &type, const QString &text,
 
 QString telegramTextToHtml(const QJsonValue &textValue)
 {
+  // Простая строка без сущностей: те же замены переносов/NBSP, что ниже
+  // (раньше многострочные без форматирования склеивались)
   if(textValue.isString())
-    return textValue.toString().toHtmlEscaped();
+  {
+    QString html=textValue.toString().toHtmlEscaped();
+    html.replace(QStringLiteral("\n"), QStringLiteral("<br/>"));
+    html.replace(QChar::Nbsp, QLatin1Char(' '));
+    return html;
+  }
 
   if(!textValue.isArray())
     return QString();

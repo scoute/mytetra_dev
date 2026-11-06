@@ -943,16 +943,15 @@ void Record::pushFatAttributes()
 // Используется при импорте, когда идентификаторы записей могут поменяться, следовательно должны поменяться и ссылки
 void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QMap<QString, QString> idRecordTranslate)
 {
-  //Считывание из файла
+  //Считывание из файла целиком с UTF-8: readLine() резал
+  // \n и склеивал весь HTML (включая <pre>) в одну строку
   QString lines;
   QFile file(recordFileName);
 
   if (!file.open(QIODevice::ReadOnly))
     return;
 
-  QTextStream stream(&file);
-  while(!stream.atEnd())
-    lines.append(stream.readLine());
+  lines=QString::fromUtf8(file.readAll());
 
   file.close();
 
@@ -985,9 +984,10 @@ void Record::replaceInternalReferenceByTranslateTable(QString recordFileName, QM
   // Запись в файл, если были заменены идентификаторы во внутренних ссылках
   if(isIdReplace)
   {
-    if(file.open(QIODevice::WriteOnly | QIODevice::Text))
+    if(file.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
       QTextStream writeStream(&file);
+      writeStream.setCodec("UTF-8");
       writeStream << lines;
     }
 

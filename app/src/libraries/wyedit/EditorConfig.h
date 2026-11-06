@@ -6,6 +6,7 @@
 #include <QSettings>
 #include <QImage>
 #include <QColor>
+#include <QMap>
 
 
 class EditorConfig : public QWidget
@@ -26,6 +27,11 @@ public:
     // Настройка стандартного шрифта
     QString get_default_font(void);
     void set_default_font(QString fontName);
+
+    // Счетчик гниения конфига: сколько раз отсутствующий или пустой
+    // известный параметр подменялся дефолтом вместо падения (см. 502)
+    int get_configFallbackCount(void) const;
+    QMap<QString, int> get_configFallbackHits(void) const;
 
     int get_default_font_size(void);
     void set_default_font_size(int size);
@@ -161,7 +167,15 @@ private:
 
     QSettings *conf;
 
+    int m_fallbackTotal=0;
+    QMap<QString, int> m_fallbackHits;
+
     QString get_parameter(QString name);
+
+    QStringList get_actual_parameter_table(bool withEndSignature=true);
+
+    static QString getParameterTypeFromTable(QString parameterName, QStringList table);
+    static QString getParameterDefaultValueFromTable(QString parameterName, QStringList table);
 
     int get_config_version(void);
     void set_config_version(int i);

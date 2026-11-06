@@ -2134,13 +2134,20 @@ void KnowTreeModel::getAllRecordsIdListRecurse(TreeItem *item, QSet<QString> *id
 void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 {
     // Сортировка списка индексов по вложенности методом пузырька
-    // Индексы с длинным путем перемещаются в начало списка
+    // Индексы с длинным путем перемещаются в начало списка.
+    // При равной глубине сиблинги идут по убыванию row (fix/542):
+    // иначе удаление строки 0 сдвигало строку 1, и второй проход
+    // сносил уже третью ветку
     for(int i = 0; i < selectItems.size(); i++)
      for(int j=selectItems.size()-1; j>i; j--)
       {
-       QStringList path_1=(this->getItem(selectItems.at(j-1)))->getPath();
-       QStringList path_2=(this->getItem(selectItems.at(j)))->getPath();
-       if(path_1.size() < path_2.size())
+       TreeItem *itemA=this->getItem(selectItems.at(j-1));
+       TreeItem *itemB=this->getItem(selectItems.at(j));
+       QStringList path_1=(itemA!=nullptr) ? itemA->getPath() : QStringList();
+       QStringList path_2=(itemB!=nullptr) ? itemB->getPath() : QStringList();
+       if(path_1.size() < path_2.size() ||
+          (path_1.size()==path_2.size() &&
+           selectItems.at(j-1).row() < selectItems.at(j).row()))
            #if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
            selectItems.swapItemsAt(j-1, j);
            #else
@@ -2170,8 +2177,9 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
     // Чистка обратного индекса: записи веток ушли в корзину
     m_backlinks->removeSources(deleteResordsId.toList());
 
-    // Ветки удалены: id-индекс в пересборку
+    // Ветки удалены: id-индекс и кеш статистики в пересборку (fix/542)
     m_idIndexDirty=true;
+    invalidateStats();
 }
 
 // Удаление одной ветки и её подветок

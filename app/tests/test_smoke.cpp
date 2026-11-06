@@ -40,6 +40,7 @@ private slots:
 
     void emptyStart(void);
     void branchRecordRoundtrip(void);
+    void crossCryptMoveRefused(void);
 
 private:
 
@@ -150,6 +151,34 @@ void TestSmoke::branchRecordRoundtrip(void)
     QCOMPARE(reTable->getField(QStringLiteral("id"), 0), m_savedId);
     QVERIFY2(reTable->getText(0).contains(QStringLiteral("Hello smoke test")),
              "reloaded text must contain inserted content");
+}
+
+void TestSmoke::crossCryptMoveRefused(void)
+{
+    // Смешанный перенос открытая<->шифрованная запрещен,
+    // без ключа - любой перенос внутри шифра
+    SmokeModel model;
+    model.initFromXML(m_xmlPath);
+
+    QMap<QString, QString> openFields;
+    openFields[QStringLiteral("id")]=QStringLiteral("smokeOpen");
+    openFields[QStringLiteral("name")]=QStringLiteral("Open");
+    model.addNewBranch(model.root(), openFields);
+
+    QMap<QString, QString> cryptFields;
+    cryptFields[QStringLiteral("id")]=QStringLiteral("smokeCrypt");
+    cryptFields[QStringLiteral("name")]=QStringLiteral("Crypt");
+    model.addNewBranch(model.root(), cryptFields);
+    TreeItem *cryptBranch=model.getItemById(QStringLiteral("smokeCrypt"));
+    QVERIFY2(cryptBranch!=nullptr, "crypt branch must exist");
+    cryptBranch->setField(QStringLiteral("crypt"), QStringLiteral("1"));
+
+    QVERIFY2(!model.moveBranch(QStringLiteral("smokeOpen"),
+                               QStringLiteral("smokeCrypt"), true),
+             "open into crypt must be refused");
+    QVERIFY2(!model.moveBranch(QStringLiteral("smokeCrypt"),
+                               QStringLiteral("smokeOpen"), true),
+             "crypt into open must be refused");
 }
 
 QTEST_APPLESS_MAIN(TestSmoke)

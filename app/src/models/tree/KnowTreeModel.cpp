@@ -746,6 +746,11 @@ QString KnowTreeModel::importBranchFromDirectory(TreeItem *startItem, QString im
   setupModelData( xmlt.getDomModel(), startItem);
   endResetModel();
 
+  // setupModelData добавил узлы мимо кешей: статистика и итоги
+  // подветок протухли, пересобираются сразу (см. fix/538)
+  invalidateStats();
+  recountSubtreeTotals();
+
   // Выясняется идентификатор только что импортированной ветки
   QString importItemId="";
   QDomNodeList nodeList=xmlt.getDomModel()->elementsByTagName("node");
@@ -756,6 +761,12 @@ QString KnowTreeModel::importBranchFromDirectory(TreeItem *startItem, QString im
   if(startItem->getField("crypt")=="1")
   {
     TreeItem *importItem=getItemById( importItemId );
+
+    if(importItem==nullptr)
+    {
+      showMessageBox(tr("Import error: imported branch was not found after reload."));
+      return "";
+    }
 
     importItem->switchToEncrypt(); // Шифрация импортируемой ветки и всех подветок
   }
@@ -1303,6 +1314,28 @@ bool KnowTreeModel::moveBranch(const QString &sourceId, const QString &targetId,
         newParent=rootItem;
       newRow=target->childNumber()+1;
     }
+
+    // Инвариант шифрования (fix/538): открытая ветка внутри шифрованной
+    // и наоборот молча ломали reEncrypt и светили открытый текст.
+    // Эффективный шифр - флаг по цепочке вверх
+    auto effectiveCrypt=[](TreeItem *item) {
+      for(TreeItem *cur=item; cur!=nullptr; cur=cur->parent())
+        if(cur->getField("crypt")=="1")
+          return true;
+      return false;
+    };
+
+    const bool sourceCrypt=effectiveCrypt(source);
+    const bool destCrypt=effectiveCrypt(newParent);
+
+    // Смешанный перенос запрещен: требуется явное шифрование/расшифровка
+    if(sourceCrypt!=destCrypt)
+      return false;
+
+    // Перенос внутри шифра без ключа запрещен
+    if((sourceCrypt || destCrypt) &&
+       globalParameters.getCryptKey().length()==0)
+      return false;
 
     int oldRow=source->childNumber();
 

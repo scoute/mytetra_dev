@@ -28,7 +28,9 @@ AppConfig::AppConfig(QObject *pobj)
 // Деструктор объекта настройки программы
 AppConfig::~AppConfig()
 {
-    if (m_isInit)
+    // Гарда m_conf: headless-тесты зануляют m_conf в cleanupTestCase
+    // при взведенном m_isInit, без проверки - SIGSEGV на выходе
+    if(m_isInit && m_conf!=nullptr)
     {
         qDebug() << "Save mytetra config file";
         m_conf->sync();
@@ -1993,11 +1995,18 @@ void AppConfig::set_config_version(int i)
 
 QStringList AppConfig::removeParameterFromTable(QString removeName, QStringList table)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    // Перебираются параметры в таблице. Граница - размер списка,
+    // а не MYTETRA_CONFIG_PARAM_NUM: таблица без сигнатуры конца
+    // короче лимита, а отсутствующая сигнатура раньше давала
+    // выход за границы в table.at()
+    for(int i=0; (i+1)*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD<=table.size(); i++)
     {
         // Выясняется имя параметра
         QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
+
+        // Сигнатура конца таблицы
+        if(name=="0")
+            break;
 
         // Если имя совпадает с удаляемым
         if (name==removeName)
@@ -2020,11 +2029,18 @@ QStringList AppConfig::removeParameterFromTable(QString removeName, QStringList 
 // Получение типа параметра в виде строки
 QString AppConfig::getParameterTypeFromTable(QString parameterName, QStringList table)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    // Перебираются параметры в таблице. Граница - размер списка,
+    // а не MYTETRA_CONFIG_PARAM_NUM: таблица без сигнатуры конца
+    // короче лимита, а отсутствующая сигнатура раньше давала
+    // выход за границы в table.at()
+    for(int i=0; (i+1)*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD<=table.size(); i++)
     {
         // Выясняется имя параметра
         QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
+
+        // Сигнатура конца таблицы
+        if(name=="0")
+            break;
 
         if (name==parameterName)
         {
@@ -2039,11 +2055,18 @@ QString AppConfig::getParameterTypeFromTable(QString parameterName, QStringList 
 // Получение значения параметра по-умолчнию, в виде строки
 QString AppConfig::getParameterDefaultValueFromTable(QString parameterName, QStringList table)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    // Перебираются параметры в таблице. Граница - размер списка,
+    // а не MYTETRA_CONFIG_PARAM_NUM: таблица без сигнатуры конца
+    // короче лимита, а отсутствующая сигнатура раньше давала
+    // выход за границы в table.at()
+    for(int i=0; (i+1)*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD<=table.size(); i++)
     {
         // Выясняется имя параметра
         QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
+
+        // Сигнатура конца таблицы
+        if(name=="0")
+            break;
 
         if (name==parameterName)
         {
@@ -2061,11 +2084,18 @@ QStringList AppConfig::replaceParameterInTable(QString replaceName,
                                                QString replaceDefaultValue,
                                                QStringList table)
 {
-    // Перебираются параметры в таблице
-    for (int i=0; i<MYTETRA_CONFIG_PARAM_NUM; i++)
+    // Перебираются параметры в таблице. Граница - размер списка,
+    // а не MYTETRA_CONFIG_PARAM_NUM: таблица без сигнатуры конца
+    // короче лимита, а отсутствующая сигнатура раньше давала
+    // выход за границы в table.at()
+    for(int i=0; (i+1)*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD<=table.size(); i++)
     {
         // Выясняется имя параметра
         QString name=table.at(i*MYTETRA_CONFIG_PARAM_FIELDS_AT_RECORD);
+
+        // Сигнатура конца таблицы
+        if(name=="0")
+            break;
 
         // Если имя совпадает с заменяемым
         if (name==replaceName)

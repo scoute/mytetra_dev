@@ -33,6 +33,7 @@ private slots:
     void servicesFlat(void);
     void parameterFallback(void);
     void tableShape(void);
+    void tableBoundsSafe(void);
 
 private:
 
@@ -174,6 +175,31 @@ void TestConf::tableShape(void)
              "table must contain mid key");
     QVERIFY2(table.contains(QStringLiteral("tetradir")),
              "table must contain old key");
+}
+
+void TestConf::tableBoundsSafe(void)
+{
+    // Хелперы не должны падать на неизвестном имени и на таблице
+    // без сигнатуры конца (раньше table.at() за границей)
+    QStringList noSig;
+    noSig << QStringLiteral("a") << QStringLiteral("int") << QStringLiteral("1")
+          << QStringLiteral("b") << QStringLiteral("bool") << QStringLiteral("true");
+
+    QCOMPARE(mytetraConfig.getParameterTypeFromTable(QStringLiteral("missing"), noSig),
+             QString());
+    QCOMPARE(mytetraConfig.getParameterDefaultValueFromTable(QStringLiteral("missing"), noSig),
+             QString());
+    QCOMPARE(mytetraConfig.getParameterTypeFromTable(QStringLiteral("b"), noSig),
+             QStringLiteral("bool"));
+
+    QStringList stripped=mytetraConfig.removeParameterFromTable(QStringLiteral("missing"), noSig);
+    QCOMPARE(stripped.size(), noSig.size());
+
+    QStringList replaced=mytetraConfig.replaceParameterInTable(QStringLiteral("missing"),
+                                                               QStringLiteral("int"),
+                                                               QStringLiteral("0"),
+                                                               noSig);
+    QCOMPARE(replaced.size(), noSig.size());
 }
 
 QTEST_MAIN(TestConf)

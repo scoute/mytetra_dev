@@ -460,8 +460,10 @@ QString TreeItem::getPathAsNameWithDelimeter(QString delimeter)
   QStringList path=getPathAsName();
 
   // Убирается пустой элемент, если он есть (это может быть корень, у него нет названия)
+  // Гарда indexOf: без пустого имени было removeAt(-1) (fix/547)
   int emptyStringIndex=path.indexOf("");
-  path.removeAt(emptyStringIndex);
+  if(emptyStringIndex>=0)
+    path.removeAt(emptyStringIndex);
 
   return path.join(delimeter);
 }

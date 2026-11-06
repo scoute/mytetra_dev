@@ -27,6 +27,7 @@
 #include "models/appConfig/AppFiles.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "models/appConfig/AppConfig.h"
+#include "libraries/helpers/UniqueIdHelper.h"
 
 extern ShortcutManager shortcutManager;
 
@@ -57,6 +58,7 @@ private slots:
     void cleanupTestCase(void);
 
     void statsTextsSetAtConstruction(void);
+    void uniqueIdsDiffer(void);
 
 private:
 
@@ -106,6 +108,15 @@ void TestMisc::statsTextsSetAtConstruction(void)
     QVERIFY2(!page.alwaysText().isEmpty(), "stats always text must be set");
     QVERIFY2(!page.neverText().isEmpty(), "stats never text must be set");
     QVERIFY2(!page.limitText().isEmpty(), "stats limit text must be set");
+}
+
+void TestMisc::uniqueIdsDiffer(void)
+{
+    // fix/547: QRandomGenerator вместо rand() - серия id различается
+    QSet<QString> ids;
+    for(int i=0; i<50; ++i)
+        ids.insert(getUniqueId());
+    QVERIFY2(ids.size()>45, "unique ids must differ");
 }
 
 QTEST_MAIN(TestMisc)

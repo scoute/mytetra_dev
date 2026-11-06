@@ -503,7 +503,10 @@ CommandRunner *GlobalParameters::getSyncroCommandRunnner()
 
 void GlobalParameters::setCryptKey(QByteArray hash)
 {
+    // Единственное хранилище ключа. Временная копия параметра
+    // затирается, чтобы лишние копии ключа не лежали в памяти
     passwordHash=hash;
+    hash.fill(0);
 }
 
 

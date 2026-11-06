@@ -100,6 +100,10 @@ private:
   KnowTreeModel *m_treeModel=nullptr;
   bool m_loaded=false;
 
+  // База, для которой загружен сайдкар: смена tetradir при том же
+  // кеше в памяти давала чужие бэклинки
+  QString m_sidecarTetradir;
+
   // Прямые пары: источник -> цели
   QMap<QString, QSet<QString>> m_forward;
 

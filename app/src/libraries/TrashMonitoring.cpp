@@ -11,9 +11,11 @@ extern AppConfig mytetraConfig;
 extern QObject *pMainWindow;
 
 
-TrashMonitoring::TrashMonitoring(void)
+// m_dirSize инициализируется здесь: init() зовется только из
+// MainWindow, а update() через addFile доступен и в headless-старте
+TrashMonitoring::TrashMonitoring(void) : m_dirSize(0)
 {
- 
+
 }
 
 

@@ -5135,6 +5135,42 @@ You need to update SyncTetra.</source>
         <source>Import error: unable to copy record data from %1 to %2.</source>
         <translation>Ошибка импорта: не могу скопировать данные записи из %1 в %2.</translation>
     </message>
+    <message>
+        <source>Knowledge base file is missing:
+%1</source>
+        <translation>Файл базы знаний отсутствует:
+%1</translation>
+    </message>
+    <message>
+        <source>Knowledge base file is corrupted and cannot be loaded:
+%1</source>
+        <translation>Файл базы знаний поврежден и не загружается:
+%1</translation>
+    </message>
+    <message>
+        <source>
+Usable backups (date, branches, records, size):
+</source>
+        <translation>
+Годные бэкапы (дата, ветки, записи, размер):
+</translation>
+    </message>
+    <message>
+        <source>%1 — %2 branches, %3 records, %4 MB</source>
+        <translation>%1 — веток: %2, записей: %3, %4 МБ</translation>
+    </message>
+    <message>
+        <source>Restore knowledge base?</source>
+        <translation>Восстановить базу знаний?</translation>
+    </message>
+    <message>
+        <source>Restore backup from %1</source>
+        <translation>Восстановить бэкап от %1</translation>
+    </message>
+    <message>
+        <source>Continue without restore</source>
+        <translation>Продолжить без восстановления</translation>
+    </message>
 </context>
 <context>
     <name>KnowTreeView</name>

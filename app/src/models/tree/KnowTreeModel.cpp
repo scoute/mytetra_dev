@@ -8,6 +8,9 @@
 #include <QSaveFile>
 #include <QElapsedTimer>
 #include <QApplication>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QXmlStreamReader>
 
 #include "main.h"
 #include "KnowTreeModel.h"
@@ -89,11 +92,196 @@ void KnowTreeModel::initFromXML(QString fileName)
   // Загрузка файла и преобразование его в DOM модель
   XmlTree xmlt;
   if(!xmlt.load( m_xmlFileName ))
-    return;
+  {
+    // Файл пропал или бит: предложить восстановление из бэкапа (см. 504)
+    if(tryRestoreFromBackup(fileName) && xmlt.load( m_xmlFileName ))
+    {
+      // Восстановлено, загрузка продолжается штатно
+    }
+    else
+      return;
+  }
 
   init(xmlt.getDomModel());
 
   m_lastLoadDateTime=QDateTime::currentDateTime();
+
+  // Хорошая копия: ротация бэкапов только после успешной загрузки
+  rotateBackups(fileName);
+}
+
+
+// Ротация хороших копий рядом с базой (1..3). Пропускается
+// если свежая копия идентична текущей
+void KnowTreeModel::rotateBackups(const QString &xmlFileName)
+{
+    QFileInfo current(xmlFileName);
+
+    if(!current.exists() || !current.isFile())
+        return;
+
+    const QString bak1=xmlFileName+QStringLiteral(".bak.1");
+
+    QFileInfo bak1info(bak1);
+
+    if(bak1info.exists() &&
+       bak1info.size()==current.size() &&
+       bak1info.lastModified()==current.lastModified())
+        return;
+
+    QFile::remove(xmlFileName+QStringLiteral(".bak.3"));
+    QFile::rename(xmlFileName+QStringLiteral(".bak.2"), xmlFileName+QStringLiteral(".bak.3"));
+    QFile::rename(bak1, xmlFileName+QStringLiteral(".bak.2"));
+
+    if(QFile::copy(xmlFileName, bak1))
+        QFile::setPermissions(bak1, QFile::ReadUser | QFile::WriteUser);
+}
+
+
+// Быстрая проверка файла базы без загрузки в модель:
+// well-formed XML с корнем root. Считает ветки и записи
+bool KnowTreeModel::scanBackupFile(const QString &path, int *branches, int *records)
+{
+    QFile file(path);
+
+    if(!file.open(QIODevice::ReadOnly))
+        return false;
+
+    QXmlStreamReader xml(&file);
+
+    bool seenRoot=false;
+    int branchCount=0;
+    int recordCount=0;
+
+    while(!xml.atEnd())
+    {
+        xml.readNext();
+
+        if(xml.hasError())
+            return false;
+
+        if(!xml.isStartElement())
+            continue;
+
+        if(!seenRoot)
+        {
+            if(xml.name()!=QStringLiteral("root"))
+                return false;
+
+            seenRoot=true;
+        }
+        else if(xml.name()==QStringLiteral("node"))
+            ++branchCount;
+        else if(xml.name()==QStringLiteral("record"))
+            ++recordCount;
+    }
+
+    if(xml.hasError() || !seenRoot)
+        return false;
+
+    if(branches!=nullptr)
+        *branches=branchCount;
+
+    if(records!=nullptr)
+        *records=recordCount;
+
+    return true;
+}
+
+
+// Кандидаты бэкапов с проверкой чтением: только годные
+QList<KnowTreeModel::XmlBackupInfo> KnowTreeModel::usableBackups(const QString &xmlFileName)
+{
+    QList<KnowTreeModel::XmlBackupInfo> result;
+
+    for(int i=1; i<=3; ++i)
+    {
+        const QString path=xmlFileName+QStringLiteral(".bak.")+QString::number(i);
+
+        QFileInfo info(path);
+
+        if(!info.exists() || !info.isFile())
+            continue;
+
+        int branches=0;
+        int records=0;
+
+        if(!scanBackupFile(path, &branches, &records))
+            continue;
+
+        KnowTreeModel::XmlBackupInfo backup;
+        backup.path=path;
+        backup.modified=info.lastModified();
+        backup.size=info.size();
+        backup.branches=branches;
+        backup.records=records;
+        result.append(backup);
+    }
+
+    return result;
+}
+
+
+// Предложить восстановление из бэкапа. true если файл подложен
+// и можно пробовать грузить заново
+bool KnowTreeModel::tryRestoreFromBackup(const QString &xmlFileName)
+{
+    QList<KnowTreeModel::XmlBackupInfo> backups=usableBackups(xmlFileName);
+
+    if(backups.isEmpty())
+        return false;
+
+    QString text;
+
+    if(!QFile::exists(xmlFileName))
+        text=tr("Knowledge base file is missing:\n%1").arg(xmlFileName);
+    else
+        text=tr("Knowledge base file is corrupted and cannot be loaded:\n%1").arg(xmlFileName);
+
+    text+=tr("\nUsable backups (date, branches, records, size):\n");
+
+    foreach(const KnowTreeModel::XmlBackupInfo &backup, backups)
+    {
+        text+=QStringLiteral("\n")+tr("%1 — %2 branches, %3 records, %4 MB").arg(
+            backup.modified.toString(QStringLiteral("yyyy-MM-dd hh:mm")),
+            QString::number(backup.branches),
+            QString::number(backup.records),
+            QString::number(backup.size/1048576.0, 'f', 1));
+    }
+
+    QMessageBox box(QMessageBox::Warning,
+                    tr("Restore knowledge base?"),
+                    text,
+                    QMessageBox::NoButton,
+                    nullptr);
+
+    QMap<QAbstractButton *, QString> buttonPaths;
+
+    foreach(const KnowTreeModel::XmlBackupInfo &backup, backups)
+    {
+        QPushButton *button=box.addButton(
+            tr("Restore backup from %1").arg(
+                backup.modified.toString(QStringLiteral("yyyy-MM-dd hh:mm"))),
+            QMessageBox::AcceptRole);
+        buttonPaths[static_cast<QAbstractButton *>(button)]=backup.path;
+    }
+
+    box.addButton(tr("Continue without restore"), QMessageBox::RejectRole);
+    box.exec();
+
+    QAbstractButton *clicked=box.clickedButton();
+
+    if(clicked==nullptr || !buttonPaths.contains(clicked))
+        return false;
+
+    QFile::remove(xmlFileName);
+
+    if(!QFile::copy(buttonPaths.value(clicked), xmlFileName))
+        return false;
+
+    QFile::setPermissions(xmlFileName, QFile::ReadUser | QFile::WriteUser);
+
+    return true;
 }
 
 

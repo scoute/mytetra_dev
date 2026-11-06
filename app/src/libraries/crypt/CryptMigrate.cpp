@@ -19,7 +19,13 @@ void CryptMigrate::collectCryptBranches(TreeItem *item,
         return;
 
     if(item->getField("crypt")=="1")
+    {
+        // Верхняя шифрованная: поддерево обойдут switchToDecrypt/
+        // switchToEncrypt сами (рекурсивно). Спуск внутрь дал бы
+        // повторную перешифровку глубины D раз (fix/542)
         branches.append(item);
+        return;
+    }
 
     for(int i=0; i<item->childCount(); ++i)
         collectCryptBranches(item->child(i), branches);
@@ -51,10 +57,12 @@ CryptMigrateResult CryptMigrate::reencryptAll(KnowTreeModel *model,
 
     for(int i=0; i<branches.size(); ++i)
     {
+        const int before=branches[i]->subtreeRecordCount();
         branches[i]->switchToDecrypt();
         branches[i]->switchToEncrypt();
 
         result.branches++;
+        result.records+=before;
 
         if(progress!=nullptr)
         {

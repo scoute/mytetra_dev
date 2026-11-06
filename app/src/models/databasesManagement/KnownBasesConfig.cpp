@@ -3,6 +3,8 @@
 #include <QTextCodec>
 #include <QSettings>
 
+#include <algorithm>
+
 #include "KnownBasesConfig.h"
 #include "DatabasesManagementModel.h"
 
@@ -151,7 +153,9 @@ void KnownBasesConfig::renumSections()
     // Перечень номеров секций, в котором могут быть "дырки" в нумерации
     QList<int> currentSectionNums;
 
-    // Из имен секций извлекаются их номера
+    // Из имен секций извлекаются их номера. childGroups() отдает
+    // имена лексикографически (num10 перед num2), без числовой
+    // сортировки переименование затирает секции при 10+ базах (fix/542)
     QStringList sectionNames = m_conf->childGroups();
     for (const auto &sectionName : sectionNames)
     {
@@ -162,6 +166,8 @@ void KnownBasesConfig::renumSections()
             currentSectionNums << numLine.toInt();
         }
     }
+
+    std::sort(currentSectionNums.begin(), currentSectionNums.end());
 
     // Перечень номеров секций без дырок в нумерации
     QList<int> correctSectionNums;

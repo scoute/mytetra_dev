@@ -208,11 +208,11 @@ void TestAttachCut::cut(void)
 
 void TestAttachCut::attachNames(void)
 {
-    // Имена аттачей по умолчанию оригинальные: пробелы в подчеркивания,
-    // регистр и кириллица целы. Кандидаты покрывают все схемы,
-    // гибрид служит дублем при коллизии оригинала
+    // Имена аттачей по умолчанию системные (id.extension): короткие
+    // ASCII-имена без пробелов и национальных символов. Кандидаты
+    // покрывают все схемы, гибрид служит дублем при коллизии оригинала
     QCOMPARE(mytetraConfig.get_attachNameMode(),
-             AppConfig::AttachNameOriginal);
+             AppConfig::AttachNameSystem);
     QCOMPARE(Attach::constructOriginalFileName(QStringLiteral("file"), QStringLiteral("someid"),
              QStringLiteral("My Document v2.PDF")), QStringLiteral("My_Document_v2.PDF"));
     QCOMPARE(Attach::constructOriginalFileName(QStringLiteral("file"), QStringLiteral("someid"),

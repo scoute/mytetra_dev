@@ -54,8 +54,8 @@ protected:
     explicit EditorShowTextDispatcher(QObject *parent = nullptr);
     virtual ~EditorShowTextDispatcher();
 
-    // Код диспетчера должен выполняться в отдельном треде,
-    // как минимум методы закрытия окошек по списку
+    // Диспетчер живет в GUI-потоке: окна и модель трогаются
+    // только из главного потока, отдельного QThread нет (mThread==nullptr)
     QThread *mThread;
 
     // Список открытых окошек, ключ - это ID открытой записи

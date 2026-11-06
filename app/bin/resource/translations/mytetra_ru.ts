@@ -5942,8 +5942,12 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <translation>Статистика (быстрая)</translation>
     </message>
     <message>
-        <source>The base holds %1 records. Full statistics (images on disk, links between notes) takes a while. Compute it now?</source>
-        <translation>В базе %1 записей. Полная статистика (картинки на диске, ссылки между заметками) считается долго. Посчитать сейчас?</translation>
+        <source>The base holds %1 records. Full statistics (images on disk, links between notes) takes a while. Compute it now?
+
+The auto-count threshold can be changed in settings.</source>
+        <translation>В базе %1 записей. Полная статистика (картинки на диске, ссылки между заметками) считается долго. Посчитать сейчас?
+
+Порог автосчёта можно изменить в настройках.</translation>
     </message>
     <message>
         <source>Ask each time</source>

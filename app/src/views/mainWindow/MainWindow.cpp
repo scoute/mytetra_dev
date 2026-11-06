@@ -24,7 +24,7 @@
 #include <QAtomicInt>
 #include <QRadioButton>
 #include <QVBoxLayout>
-#include <QGridLayout>
+#include <QStyle>
 #include <QCoreApplication>
 #include <QSplitter>
 #include <QDockWidget>
@@ -985,44 +985,68 @@ void MainWindow::checkFullStatsOffer(void)
 
     // Вопрос с политикой на будущее: радиокнопки решают что делать
     // дальше (спрашивать/всегда/никогда), кнопки действий - что делать
-    // сейчас. Политика сохраняется любым действием, отмена - нет
-    QMessageBox offerBox(QMessageBox::Question,
-                         tr("Statistics"),
-                         tr("The base holds %1 records. Full statistics (images on disk, links between notes) takes a while. Compute it now?").arg(records),
-                         QMessageBox::NoButton,
-                         this);
+    // сейчас. Политика сохраняется любым действием, отмена - нет.
+    // Явный QDialog с собственным layout: вставка виджетов в сетку
+    // QMessageBox через layout() непредсказуема (внутренняя сетка 3x3
+    // уносит метку текста в правую колонку, см. 536)
+    QDialog offerDialog(this);
+    offerDialog.setWindowTitle(tr("Statistics"));
 
-    QRadioButton *askRadio=new QRadioButton(tr("Ask each time"), &offerBox);
-    QRadioButton *alwaysRadio=new QRadioButton(tr("Always compute full"), &offerBox);
-    QRadioButton *neverRadio=new QRadioButton(tr("Never compute (fast only)"), &offerBox);
+    QVBoxLayout *offerLayout=new QVBoxLayout(&offerDialog);
+
+    QHBoxLayout *topLayout=new QHBoxLayout;
+    QLabel *iconLabel=new QLabel(&offerDialog);
+    iconLabel->setPixmap(offerDialog.style()->standardIcon(QStyle::SP_MessageBoxQuestion).pixmap(32, 32));
+    iconLabel->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    topLayout->addWidget(iconLabel);
+
+    QLabel *messageLabel=new QLabel(
+        tr("The base holds %1 records. Full statistics (images on disk, links between notes) takes a while. Compute it now?\n\nThe auto-count threshold can be changed in settings.").arg(records),
+        &offerDialog);
+    messageLabel->setWordWrap(true);
+    messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    topLayout->addWidget(messageLabel, 1);
+    offerLayout->addLayout(topLayout);
+
+    QRadioButton *askRadio=new QRadioButton(tr("Ask each time"), &offerDialog);
+    QRadioButton *alwaysRadio=new QRadioButton(tr("Always compute full"), &offerDialog);
+    QRadioButton *neverRadio=new QRadioButton(tr("Never compute (fast only)"), &offerDialog);
     askRadio->setChecked(true);
 
-    QVBoxLayout *policyLayout=new QVBoxLayout;
-    policyLayout->addWidget(askRadio);
-    policyLayout->addWidget(alwaysRadio);
-    policyLayout->addWidget(neverRadio);
+    offerLayout->addWidget(askRadio);
+    offerLayout->addWidget(alwaysRadio);
+    offerLayout->addWidget(neverRadio);
 
-    // Радиокнопки кладутся в контентную часть диалога: у QMessageBox
-    // для этого есть layout() с первой колонкой под виджеты
-    QGridLayout *offerLayout=qobject_cast<QGridLayout *>(offerBox.layout());
+    QHBoxLayout *buttonsLayout=new QHBoxLayout;
+    buttonsLayout->addStretch();
+    QPushButton *fullButton=new QPushButton(tr("Compute full"), &offerDialog);
+    QPushButton *cancelButton=new QPushButton(tr("Cancel"), &offerDialog);
+    QPushButton *fastButton=new QPushButton(tr("Keep fast"), &offerDialog);
+    buttonsLayout->addWidget(fullButton);
+    buttonsLayout->addWidget(cancelButton);
+    buttonsLayout->addWidget(fastButton);
+    offerLayout->addLayout(buttonsLayout);
 
-    if(offerLayout!=nullptr)
-        offerLayout->addLayout(policyLayout, 1, 1);
+    connect(fullButton, &QPushButton::clicked, &offerDialog, &QDialog::accept);
+    connect(fastButton, &QPushButton::clicked, &offerDialog, &QDialog::accept);
+    connect(cancelButton, &QPushButton::clicked, &offerDialog, &QDialog::reject);
 
-    QPushButton *fastButton=offerBox.addButton(tr("Keep fast"), QMessageBox::AcceptRole);
-    QPushButton *fullButton=offerBox.addButton(tr("Compute full"), QMessageBox::ActionRole);
-    offerBox.addButton(QMessageBox::Cancel);
-    offerBox.exec();
+    // Какая кнопка закрыла диалог: accept от full/fast, reject от отмены/крестика
+    QPushButton *clickedButton=nullptr;
+    connect(fullButton, &QPushButton::clicked, [&](){ clickedButton=fullButton; });
+    connect(fastButton, &QPushButton::clicked, [&](){ clickedButton=fastButton; });
+
+    offerDialog.exec();
 
     const int policy=alwaysRadio->isChecked() ? 1 : (neverRadio->isChecked() ? 2 : 0);
 
-    if(offerBox.clickedButton()==fullButton)
+    if(clickedButton==fullButton)
     {
         AppContext::instance().appConfig()->uiSection()->set_statsMode(policy);
         computeFullStatsWithProgress();
         updateStats();
     }
-    else if(offerBox.clickedButton()==fastButton)
+    else if(clickedButton==fastButton)
     {
         AppContext::instance().appConfig()->uiSection()->set_statsMode(policy);
     }

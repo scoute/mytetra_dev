@@ -169,6 +169,10 @@ void AttachTableData::addAttach(Attach attach)
   if(relatedAttachTableModel!=NULL)
     relatedAttachTableModel->setData(QModelIndex(), QVariant(), ATTACHTABLE_COMMAND_BEGIN_RESET_MODEL);
 
+  // Обратная ссылка на эту таблицу: иначе копия хранит
+  // чужой parentTable и getFullInnerDirName ходит по висячему указателю
+  attach.setParentTable(this);
+
   // Аттач добавляется в таблицу приаттаченных файлов
   attachTable.append(attach);
 
@@ -184,6 +188,9 @@ void AttachTableData::modifyAttach(QString id, Attach iAttach)
 
   if(row<0)
     return;
+
+  // Обратная ссылка на эту таблицу
+  iAttach.setParentTable(this);
 
   attachTable[row]=iAttach;
 }

@@ -11,6 +11,7 @@
 #include <QTemporaryDir>
 
 #include "models/tree/KnowTreeModel.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/RecordTableData.h"
 #include "models/recordTable/Record.h"

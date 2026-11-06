@@ -6,6 +6,8 @@
 #include <QDialogButtonBox>
 #include <QInputDialog>
 
+#include <algorithm>
+
 #include "AttachTableController.h"
 #include "views/attachTable/AttachTableView.h"
 #include "models/attachTable/AttachTableModel.h"
@@ -772,7 +774,16 @@ QList<QString> AttachTableController::getSelectedId(void)
   // Получение списка выделенных в таблице на экране Item-элементов
   QModelIndexList selectItems=view->selectionModel()->selectedIndexes();
 
-  // Перебор выделенных элементов. Так как имеем несколько столбцов, то для одной строки будет несколько QModelIndex
+  // Перебор выделенных элементов. Так как имеем несколько столбцов, то для одной строки будет несколько QModelIndex.
+  // Порядок selectedIndexes не гарантирован: строки сортируются,
+  // иначе previousRow-фильтр пропускал дубли и терял строки
+  std::sort(selectItems.begin(), selectItems.end(),
+            [](const QModelIndex &a, const QModelIndex &b) {
+              if(a.row()!=b.row())
+                return a.row()<b.row();
+              return a.column()<b.column();
+            });
+
   int previousRow=-1;
   for(int i=0; i<selectItems.size(); i++)
   {

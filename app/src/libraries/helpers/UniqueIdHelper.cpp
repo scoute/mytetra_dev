@@ -1,6 +1,7 @@
 #include <ctime>
 
 #include <QString>
+#include <QRandomGenerator>
 
 #include "UniqueIdHelper.h"
 
@@ -23,8 +24,10 @@ QString getUniqueId(void)
  QString symbols="0123456789abcdefghijklmnopqrstuvwxyz";
  QString line;
 
+ // QRandomGenerator вместо rand(): без srand() rand() давал
+ // одинаковые серии и коллизии id
  for(int i=0; i<10; i++)
-  line+=symbols.mid(rand()%symbols.length(), 1);
+  line+=symbols.mid(static_cast<int>(QRandomGenerator::global()->bounded(symbols.length())), 1);
 
  QString result=secondsLine+line;
 

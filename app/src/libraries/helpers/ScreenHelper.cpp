@@ -18,6 +18,9 @@ int ScreenHelper::getSizeX(void)
 #endif
 
 #if QT_VERSION >= 0x050000 && QT_VERSION < 0x060000
+  // Гарда пустого списка экранов: offscreen/headless падал на at(0)
+  if(QApplication::screens().isEmpty())
+    return 0;
   int size=(QApplication::screens().at(0)->availableGeometry()).width();
 #endif
 
@@ -32,6 +35,8 @@ int ScreenHelper::getSizeY(void)
 #endif
 
 #if QT_VERSION >= 0x050000 && QT_VERSION < 0x060000
+  if(QApplication::screens().isEmpty())
+    return 0;
   int size=(QApplication::screens().at(0)->availableGeometry()).height();
 #endif
 

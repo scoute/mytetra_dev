@@ -1001,13 +1001,10 @@ bool McpTools::applyUpdateNote(KnowTreeModel *model,
 
   if(hasHtml)
   {
-    // Только публичный API: в память, на диск (атомарно через
-    // pushFatAttributes), память освободить. Параллельный читатель
-    // рваного файла не увидит
-    record->switchToFat();
-    record->setText(html);
-    record->pushFatAttributes();
-    record->switchToLite();
+    // Прямая запись без подъема аттачей: updateTextFile пишет только
+    // text.html, файлы аттачей не перезаписываются и битый аттач
+    // не роняет обновление текста (в v2 FTS-индекса нет)
+    record->updateTextFile(html);
     updatedFields.append("text");
   }
 

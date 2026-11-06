@@ -911,6 +911,13 @@ void Record::switchToDecryptAndSaveFat(void)
 }
 
 
+// Прямая перезапись text.html для внешних применений (MCP): без
+// подъема аттачей, только файл. Работает и на lite-записи
+void Record::updateTextFile(const QString &html)
+{
+  saveTextDirect(html);
+}
+
 // Запись "тяжелых" атрибутов (текста, картинок и приаттаченных файлов) на диск
 // Запись происходит в явном виде, то, что хранится в Fat-атрибутах, без шифрации-дешифрации
 void Record::pushFatAttributes()

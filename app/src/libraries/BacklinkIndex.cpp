@@ -64,6 +64,12 @@ bool BacklinkIndex::isLoaded(void) const
 
 void BacklinkIndex::ensureLoaded(void)
 {
+  const QString cur=mytetraConfig.get_tetradir();
+
+  // Смена базы при живом кеше: сайдкар другой
+  if(m_loaded && m_sidecarTetradir!=cur)
+    m_loaded=false;
+
   if(m_loaded)
     return;
 
@@ -71,11 +77,13 @@ void BacklinkIndex::ensureLoaded(void)
   {
     // Сайдкара нет: первый запуск, строим полным сканом
     m_loaded=true;
+    m_sidecarTetradir=cur;
     buildFull();
     return;
   }
 
   m_loaded=true;
+  m_sidecarTetradir=cur;
 }
 
 

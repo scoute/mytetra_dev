@@ -239,12 +239,19 @@ void Favorites::removeIdsSilent(const QStringList &dead)
 
 void Favorites::sidecarEnsureLoaded(void) const
 {
+  const QString cur=mytetraConfig.get_tetradir();
+
+  // Смена базы или внешний синк: кеш протух
+  if(m_sidecarLoaded && m_sidecarTetradir!=cur)
+    m_sidecarLoaded=false;
+
   if(m_sidecarLoaded)
     return;
 
   // Отсутствующий файл не ошибка: избранного просто еще нет
   const_cast<Favorites *>(this)->sidecarLoad();
   m_sidecarLoaded=true;
+  m_sidecarTetradir=cur;
 }
 
 

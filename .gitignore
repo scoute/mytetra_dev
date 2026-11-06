@@ -45,6 +45,10 @@ build-*-Release/*
 # Ignore bash files
 *.sh
 
+# QTest runner навсегда в репо (см. 491)
+!app/tests/run_qtests.sh
+!app/tests/regen_objs.sh
+
 # Ignore php tech files
 /app/src/*.php
 

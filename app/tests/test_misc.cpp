@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QFile>
 #include <QLabel>
+#include <QPushButton>
 #include <QRadioButton>
 #include <QGroupBox>
 #include <QTemporaryDir>
@@ -46,6 +47,8 @@ public:
     QString alwaysText(void) const { return statsAlways->text(); }
     QString neverText(void) const { return statsNever->text(); }
     QString limitText(void) const { return statsLimitLabel->text(); }
+    QString computeNowText(void) const { return statsComputeNow->text(); }
+    bool computeNowVisible(void) const { return statsComputeNow->isVisibleTo(const_cast<MiscTestPage*>(this)); }
 };
 
 class TestMisc : public QObject
@@ -108,6 +111,8 @@ void TestMisc::statsTextsSetAtConstruction(void)
     QVERIFY2(!page.alwaysText().isEmpty(), "stats always text must be set");
     QVERIFY2(!page.neverText().isEmpty(), "stats never text must be set");
     QVERIFY2(!page.limitText().isEmpty(), "stats limit text must be set");
+    QVERIFY2(!page.computeNowText().isEmpty(), "compute now button must be set");
+    QVERIFY2(page.computeNowVisible(), "compute now button must be visible");
 }
 
 void TestMisc::uniqueIdsDiffer(void)

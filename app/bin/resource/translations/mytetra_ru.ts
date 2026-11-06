@@ -1283,6 +1283,10 @@ claude mcp add --transport stdio mytetra -- BINARY --mcp-ro</translation>
         <source>Auto-compute full statistics below this note count</source>
         <translation>Считать полную статистику без вопросов, если записей меньше</translation>
     </message>
+    <message>
+        <source>Compute now</source>
+        <translation>Посчитать сейчас</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Tree</name>

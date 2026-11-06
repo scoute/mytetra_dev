@@ -24,6 +24,7 @@ public:
 
 private slots:
   void onClickedEditMyTetraConfigFile(void);
+  void onClickedStatsComputeNow(void);
 
 protected:
 
@@ -48,6 +49,7 @@ protected:
   QRadioButton *statsAlways;  // Всегда считать полную
   QRadioButton *statsNever;   // Никогда (только быстрая)
   QLabel *statsLimitLabel;    // Подпись лимита автосчета
+  QPushButton *statsComputeNow;   // Ручной вызов окна полной статистики
   QSpinBox *statsLimit;       // Лимит записей для автосчета полной без вопросов
 
   // Цвета заметки и секрета переехали на страницу Themes.

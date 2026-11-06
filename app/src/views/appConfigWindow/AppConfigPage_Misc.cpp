@@ -13,6 +13,8 @@
 #include "models/appConfig/AppConfig.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/ConfigEditorHelper.h"
+#include "libraries/helpers/ObjectHelper.h"
+#include "views/mainWindow/MainWindow.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigRecordTable.h"
 #include "models/appConfig/AppConfigUi.h"
@@ -104,6 +106,11 @@ void AppConfigPage_Misc::setupUi(void)
   statsLimit->setRange(0, 1000000);
   statsLimit->setValue(AppContext::instance().appConfig()->uiSection()->get_statsLimit());
 
+  // Ручной пересчет по требованию: открывает то же окно предложения,
+  // что checkFullStatsOffer показывает на старте (см. fix/549)
+  statsComputeNow=new QPushButton(this);
+  statsComputeNow->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed, QSizePolicy::ToolButton));
+
   // Кнопка редактирования файла конфигурации MyTetra
   editMyTetraConfigFile=new QPushButton(this);
   editMyTetraConfigFile->setText(tr("Edit config file"));
@@ -114,6 +121,7 @@ void AppConfigPage_Misc::setupSignals(void)
 {
   connect(editMyTetraConfigFile, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedEditMyTetraConfigFile);
   connect(autosaveEnable, &QCheckBox::toggled, autosaveInterval, &QSpinBox::setEnabled);
+  connect(statsComputeNow, &QPushButton::clicked, this, &AppConfigPage_Misc::onClickedStatsComputeNow);
 }
 
 void AppConfigPage_Misc::assembly(void)
@@ -150,6 +158,7 @@ void AppConfigPage_Misc::assembly(void)
   statsLimitLayout->addWidget(statsLimit);
   statsLimitLayout->addStretch(1);
   statsLayout->addLayout(statsLimitLayout);
+  statsLayout->addWidget(statsComputeNow, 0, Qt::AlignLeft);
   statsBox->setLayout(statsLayout);
 
   // Собирается основной слой
@@ -175,6 +184,18 @@ void AppConfigPage_Misc::onClickedEditMyTetraConfigFile(void)
   ConfigEditorHelper::editConfigFile( AppContext::instance().globalParameters()->getWorkDirectory()+"/conf.ini", 0.8 );
 }
 
+void AppConfigPage_Misc::onClickedStatsComputeNow(void)
+{
+  // Политика из радиокнопок применяется сразу, чтобы окно предложения
+  // открылось уже с актуальным выбором (как при старте после apply)
+  applyChanges();
+
+  MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+  if(mainWindow!=nullptr)
+    mainWindow->showFullStatsOfferDialog();
+}
+
 void AppConfigPage_Misc::retranslateUi(void)
 {
   printDebugMessages->setText(tr("Print debug messages to console"));
@@ -188,6 +209,7 @@ void AppConfigPage_Misc::retranslateUi(void)
   statsAlways->setText(tr("Always compute full statistics"));
   statsNever->setText(tr("Never compute full statistics (fast only)"));
   statsLimitLabel->setText(tr("Auto-compute full statistics below this note count"));
+  statsComputeNow->setText(tr("Compute now"));
 
   networkBox->setTitle(tr("Network and certificates"));
   tlsIgnoreInvalidCertificates->setText(

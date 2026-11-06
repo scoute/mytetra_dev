@@ -206,6 +206,10 @@ public slots:
     // молча, диалогом или никак. Вызывается из main после win.show()
     void checkFullStatsOffer(void);
 
+    // То же окно предложения, что на старте для большой базы.
+    // Вызывается кнопкой "Посчитать сейчас" из настроек (см. fix/549)
+    void showFullStatsOfferDialog(void);
+
     // Долгий полный пересчет с прогрессом без кнопки отмены
     void computeFullStatsWithProgress(void);
 

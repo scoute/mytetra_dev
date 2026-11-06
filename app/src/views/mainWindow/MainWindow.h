@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSystemTrayIcon>
+class TrayManager;
 
 #include "libraries/Clipper.h"
 #include "views/mcpHistory/McpHistoryDialog.h"
@@ -272,8 +273,6 @@ private slots:
 
     void onSyncroCommandFinishWork(void);
 
-    void iconActivated(QSystemTrayIcon::ActivationReason reason);
-
     void onFocusChanged(QWidget *, QWidget *);
 
 private:
@@ -295,9 +294,6 @@ private:
     // Слот чтобы дергать из проб и внешних мест
     void initRecordTableActions(void);
 
-    void setupIconActions(void);
-    void createTrayIcon(void);
-    void setIcon(void);
 
     // Отложенное применение размеров левой колонки после её показа
     void applyRecordTableSizes(void);
@@ -312,10 +308,6 @@ private:
     void reloadLoadStage(bool isLongTimeReload);
 
 
-    QAction *actionTrayRestore;
-    QAction *actionTrayMaximize;
-    QAction *actionTrayMinimize;
-    QAction *actionTrayQuit;
 
     QAction *actionFocusTree;
     QAction *actionFocusNoteTable;
@@ -339,8 +331,7 @@ private:
 
     MenuBuilder *menuBuilder=nullptr;
 
-    QSystemTrayIcon *trayIcon;
-    QMenu           *trayIconMenu;
+    TrayManager *trayManager=nullptr;
 
     // Веб-клиппер (глобальный хоткей -> unsorted_notes)
     Clipper clipper;

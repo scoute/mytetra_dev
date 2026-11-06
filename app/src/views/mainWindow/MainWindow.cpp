@@ -65,6 +65,7 @@ public:
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
 #include "MainWindow.h"
+#include "TrayManager.h"
 #include "MenuBuilder.h"
 #include "views/printPreview/PrintPreview.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
@@ -139,11 +140,16 @@ MainWindow::MainWindow() : QMainWindow()
 
     setupShortcuts();
 
-    setupIconActions();
-    createTrayIcon();
-    setIcon();
-    if(QSystemTrayIcon::isSystemTrayAvailable())
-        trayIcon->show();
+    // Трей - отдельный TrayManager (хост - это окно как QWidget)
+    trayManager=new TrayManager(this, this);
+    connect(trayManager, &TrayManager::restoreRequested,
+            this, &MainWindow::showWindow);
+    connect(trayManager, &TrayManager::quitRequested,
+            this, &MainWindow::applicationExit);
+    trayManager->setupActions();
+    trayManager->createTrayIcon();
+    trayManager->setIcon();
+    trayManager->show();
 
     // Инициализируется объект слежения за корзиной
     trashMonitoring.init(mytetraConfig.get_trashdir());
@@ -2545,10 +2551,7 @@ void MainWindow::retranslateUi(void)
     shortcutManager.initAction("misc-historyPanel", historyPanelDock->toggleViewAction());
     shortcutManager.initAction("misc-tagsPanel", tagsPanelDock->toggleViewAction());
 
-    actionTrayRestore->setText(tr("&Restore window"));
-    actionTrayMaximize->setText(tr("Ma&ximize window"));
-    actionTrayMinimize->setText(tr("Mi&nimize window"));
-    actionTrayQuit->setText(tr("&Quit"));
+    trayManager->retranslate();
 
     historyPanelDock->setWindowTitle(tr("History"));
 
@@ -2807,13 +2810,7 @@ void MainWindow::onActionLogClicked()
 // но надо сообщить пользователю о результате
 void MainWindow::showTrayMessage(const QString &title, const QString &text)
 {
-    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
-        return;
-
-    if(trayIcon==nullptr || trayIcon->isVisible()==false)
-        return;
-
-    trayIcon->showMessage(title, text, QSystemTrayIcon::Warning);
+    trayManager->showMessage(title, text);
 }
 
 
@@ -3080,22 +3077,6 @@ void MainWindow::onSyncroCommandFinishWork()
 }
 
 
-void MainWindow::setupIconActions(void)
-{
-    actionTrayRestore = new QAction(tr("&Restore window"), this);
-    connect(actionTrayRestore, &QAction::triggered, this, &MainWindow::showWindow);
-
-    actionTrayMaximize = new QAction(tr("Ma&ximize window"), this);
-    connect(actionTrayMaximize, &QAction::triggered, this, &MainWindow::showMaximized);
-
-    actionTrayMinimize = new QAction(tr("Mi&nimize window"), this);
-    connect(actionTrayMinimize, &QAction::triggered, this, &MainWindow::hide);
-
-    actionTrayQuit = new QAction(tr("&Quit"), this);
-    connect(actionTrayQuit, &QAction::triggered, this, &MainWindow::applicationExit);
-}
-
-
 void MainWindow::showWindow()
 {
     activateWindow();
@@ -3104,84 +3085,6 @@ void MainWindow::showWindow()
 
     // Восстанавливается поведение открепляемых окон
     EditorShowTextDispatcher::instance()->restoreBehavior();
-}
-
-
-void MainWindow::createTrayIcon(void)
-{
-    trayIconMenu = new QMenu(this);
-    trayIconMenu->addAction(actionTrayRestore);
-    trayIconMenu->addAction(actionTrayMaximize);
-    trayIconMenu->addAction(actionTrayMinimize);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(actionTrayQuit);
-
-    trayIcon = new QSystemTrayIcon(this);
-    trayIcon->setContextMenu(trayIconMenu);
-}
-
-
-void MainWindow::setIcon(void)
-{
-    connect(trayIcon, &QSystemTrayIcon::activated,
-            this,     &MainWindow::iconActivated);
-
-    QIcon icon = QIcon(":/resource/pic/logo.svg");
-    trayIcon->setIcon(icon);
-    setWindowIcon(icon);
-
-    // tray_icon->setToolTip(iconComboBox->itemText(index));
-}
-
-
-void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
-{
-    if(QSystemTrayIcon::isSystemTrayAvailable()==false)
-        return;
-
-    qDebug() << "Click on tray icon";
-
-    switch (reason)
-    {
-    case QSystemTrayIcon::Trigger:
-    case QSystemTrayIcon::DoubleClick:
-        // Если окно видно
-        if(isVisible())
-        {
-            // Если окно неактивно, значит активно другое (и возможно оно перекрывает окно MyTetra)
-            // Не работает в Windows, в Linux не проверял
-            // Причина неработоспособности - при клике на иконку, окно MyTera всегда становится неактивным (т.к. активен систрей)
-            // И условие срабатывает всегда. Доделать или отказаться
-            // if(QGuiApplication::applicationState() == Qt::ApplicationInactive)
-            // {
-            //   activateWindow();
-            //   return;
-            // }
-
-            if(isMinimized())
-            {
-                qDebug() << "If visible and minimized";
-                showWindow();
-                return;
-            }
-            else
-            {
-                qDebug() << "Hide";
-                hide();
-                return;
-            }
-        }
-        else
-        {
-            qDebug() << "If not visible";
-            showWindow();
-            return;
-            // if(isMinimized()) showNormal();
-            // else show();
-        }
-    default:
-        ;
-    }
 }
 
 
@@ -3198,7 +3101,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         // При приходе события закрыть окно, событие игнорируется
         // и окно просто делается невидимым. Это нужно чтобы при закрытии окна
         // программа не завершала работу
-        if(trayIcon->isVisible())
+        if(trayManager->isVisible())
         {
             hide();
             event->ignore();

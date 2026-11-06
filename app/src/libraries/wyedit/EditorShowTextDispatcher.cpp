@@ -13,21 +13,24 @@
 
 EditorShowTextDispatcher::EditorShowTextDispatcher(QObject *parent) : QObject(parent)
 {
-    mThread=new QThread();
-    this->moveToThread(mThread);
-
-    mThread->start();
+    // fix/541: диспетчер живет в GUI-потоке. Прежде объект уезжал
+    // в свой QThread, а слоты трогали KnowTreeModel и QWidget::close()
+    // из рабочего потока (запрещено Qt, гонки/падения). Закрытие
+    // нескольких окон по QHash - микросекунды, отдельный поток не нужен
+    mThread=nullptr;
 }
 
 EditorShowTextDispatcher::~EditorShowTextDispatcher()
 {
-    // Корректное закрытие и удаление треда
+    // mThread всегда nullptr (см. ctor, fix/541): гарда на случай
+    // будущего возврата потока, условие исправлено (!wait -> terminate)
     if(mThread!=nullptr)
     {
         mThread->quit();
-        if(mThread->wait(1000))
+        if(!mThread->wait(1000))
         {
             mThread->terminate();
+            mThread->wait();
         }
 
         delete mThread;

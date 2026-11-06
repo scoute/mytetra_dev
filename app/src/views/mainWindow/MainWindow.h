@@ -20,6 +20,7 @@
 class QAction;
 class QWidget;
 class QMenu;
+class MenuBuilder;
 class QCloseEvent;
 class QSplitter;
 class QStatusBar;
@@ -281,24 +282,17 @@ private:
     void setupSignals(void);
     void assembly(void);
 
-    void initFileMenu(void);
-    void initToolsMenu(void);
-    void initPreferencesMenu(QMenu *menu);
-    void initHelpMenu(void);
     void initHiddenActions(void);
 
     // Меню быстрого переключения темы и пометка в нем текущей темы.
     // Пометка обновляется при каждом открытии меню, так как тему можно
     // сменить и из диалога настроек
-    void initThemesMenu(void);
-    void syncThemeMenu(void);
+
 
     // Меню Вид между Tools и Themes и пометка в нем текущих состояний.
     // Пометка обновляется при каждом открытии, так как все меняется
     // и из других мест (диалог настроек, контекстное меню).
     // Слот чтобы дергать из проб и внешних мест
-    void initViewMenu(void);
-
     void initRecordTableActions(void);
 
     void setupIconActions(void);
@@ -318,37 +312,6 @@ private:
     void reloadLoadStage(bool isLongTimeReload);
 
 
-    QAction *actionFileMenuDatabasesManagement;
-    QAction *actionFileMenuExportTreeItem;
-    QAction *actionFileMenuImportTreeItem;
-    QAction *actionFileMenuImportTelegram;
-    QAction *actionFileMenuPrint;
-    QAction *actionFileMenuPrintPreview;
-    QAction *actionFileMenuExportPdf;
-    QAction *actionFileMenuQuit;
-
-    QAction *actionToolsMenuFindInBase;
-    QAction *actionToolsMenuImagesGallery;
-    QAction *actionToolsMenuFilesGallery;
-    QAction *actionToolsMenuActionLog;
-    QAction *actionToolsMenuClipFromClipboard;
-    QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
-
-    // Напрямую вызываемые настройки, используются в мобильном интерфейсе
-    QAction *actionDirectPreferencesMain       =nullptr;
-    QAction *actionDirectPreferencesAppearance =nullptr;
-    QAction *actionDirectPreferencesCrypt      =nullptr;
-    QAction *actionDirectPreferencesSyncro     =nullptr;
-    QAction *actionDirectPreferencesRecordTable=nullptr;
-    QAction *actionDirectPreferencesAttach     =nullptr;
-    QAction *actionDirectPreferencesKeyboard   =nullptr;
-    QAction *actionDirectPreferencesHistory    =nullptr;
-    QAction *actionDirectPreferencesMisc       =nullptr;
-
-    QAction *actionHelpMenuAboutMyTetra;
-    QAction *actionHelpMenuAboutQt;
-    QAction *actionHelpMenuTechnicalInfo;
-
     QAction *actionTrayRestore;
     QAction *actionTrayMaximize;
     QAction *actionTrayMinimize;
@@ -358,27 +321,7 @@ private:
     QAction *actionFocusNoteTable;
     QAction *actionFocusEditor;
 
-    // Меню Темы в menubar: один клик вместо похода в настройки
-    QMenu *themesMenu=nullptr;
-    QAction *themeConfigureAction=nullptr;
-
-    // Меню Вид в menubar между Tools и Themes: шапка, избранное,
-    // цвет секрета, бумага
-    QMenu *viewMenu=nullptr;
-    QAction *viewHeaderAction=nullptr;
-    QAction *viewFavoritesAction=nullptr;
-    QAction *viewTreeFilterAction=nullptr;
-    QAction *viewToolsAction=nullptr;
-    QAction *viewReadOnlyAction=nullptr;
-    QAction *viewSecretColorAction=nullptr;
-    QAction *viewPaperColorAction=nullptr;
-
-    // Корневые меню: указатели нужны для перевода названий на лету
-    QMenu *fileMenu=nullptr;
-    QMenu *toolsMenu=nullptr;
-    QMenu *helpMenu=nullptr;
-    QMenu *preferencesSubMenu=nullptr;
-
+    // Меню и их пункты живут в MenuBuilder
     // Панель истории посещений. Переключается из меню Tools и горячей
     // клавишей, в закрытом виде место не занимает
     HistoryPanel *historyPanel=nullptr;
@@ -393,6 +336,8 @@ private:
     // клавишей, в закрытом виде место не занимает
     TagsPanel *tagsPanel=nullptr;
     QDockWidget *tagsPanelDock=nullptr;
+
+    MenuBuilder *menuBuilder=nullptr;
 
     QSystemTrayIcon *trayIcon;
     QMenu           *trayIconMenu;

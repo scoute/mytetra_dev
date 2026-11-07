@@ -541,9 +541,6 @@ void Editor::setupSignals(void)
   connect(editorContextMenu, &EditorContextMenu::contextMenuOpenImageWith,
           imageFormatter,    &ImageFormatter::onContextMenuOpenImageWith,
           Qt::DirectConnection);
-  connect(editorContextMenu, &EditorContextMenu::contextMenuShowImageInFolder,
-          imageFormatter,    &ImageFormatter::onShowImageInFolder,
-          Qt::DirectConnection);
   connect(editorContextMenu, &EditorContextMenu::contextMenuEditImageProperties,
           imageFormatter,    &ImageFormatter::onContextMenuEditImageProperties,
           Qt::DirectConnection);
@@ -561,9 +558,6 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuMoveVoice,
           audioFormatter,     &AudioFormatter::onMoveVoiceClicked,
-          Qt::DirectConnection);
-  connect(editorContextMenu,  &EditorContextMenu::contextMenuShowVoiceInFolder,
-          audioFormatter,     &AudioFormatter::onShowVoiceInFolder,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuShowNoteInFolder,
           this,               &Editor::onShowNoteInFolder,

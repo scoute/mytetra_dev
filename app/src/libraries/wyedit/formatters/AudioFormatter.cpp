@@ -1098,44 +1098,6 @@ void AudioFormatter::onPlayVoiceClicked(void)
 }
 
 
-void AudioFormatter::onShowVoiceInFolder(void)
-{
-  const QString href=voiceHrefUnderCursor();
-
-  if(href.isEmpty())
-    return;
-
-  const QString directory=editor->getWorkDirectory();
-
-  if(directory.isEmpty())
-  {
-    QMessageBox::information(editor,
-                             tr("Show voice file in folder"),
-                             tr("Note directory is unknown, there is nothing to open."));
-    return;
-  }
-
-  // Путь делается абсолютным: workDirectory обычно относительный,
-  // а файловому менеджеру относительный file-URL не открывается
-  const QString absoluteDirectory=QDir(directory).absolutePath();
-
-  if(!QDir(absoluteDirectory).exists())
-  {
-    QMessageBox::information(editor,
-                             tr("Show voice file in folder"),
-                             tr("Directory does not exist: %1").arg(absoluteDirectory));
-    return;
-  }
-
-  if(!QDesktopServices::openUrl(QUrl::fromLocalFile(absoluteDirectory)))
-  {
-    QMessageBox::information(editor,
-                             tr("Show voice file in folder"),
-                             tr("Can not open directory: %1").arg(absoluteDirectory));
-  }
-}
-
-
 void AudioFormatter::onDeleteVoiceClicked(void)
 {
   const QString href=voiceHrefUnderCursor();

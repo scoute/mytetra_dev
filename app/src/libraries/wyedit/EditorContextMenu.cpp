@@ -45,7 +45,6 @@ void EditorContextMenu::setupActions(void)
  actionSelectAll=new QAction(this);
 
  actionEditImageProperties=new QAction(this);
- actionShowImageInFolder=new QAction(this);
  actionOpenImage=new QAction(this);
  actionOpenImageWith=new QAction(this);
  actionEditMathExpression=new QAction(this);
@@ -54,7 +53,6 @@ void EditorContextMenu::setupActions(void)
  actionRenameVoice=new QAction(this);
 actionMoveVoice=new QAction(this);
 actionMoveAttach=new QAction(this);
- actionShowVoiceInFolder=new QAction(this);
  actionShowNoteInFolder=new QAction(this);
  actionShowNoteInFolder->setObjectName(QStringLiteral("editor_showNoteInFolder"));
  actionDeleteVoice=new QAction(this);
@@ -92,8 +90,6 @@ void EditorContextMenu::setupShortcuts(void)
     shortcutManager.initAction("editor-insertImageFromFile", actionEditImageProperties );
     actionEditImageProperties->setText(tr("Edit image properties")); // В контекстном меню это редактирование свойств изображения
 
-    actionShowImageInFolder->setText(tr("Show in folder")); // Открыть каталог с файлом картинки
-
     // "Умное" действие открытия изображения во внешней программе
     shortcutManager.initAction("editor-openImage", actionOpenImage );
     actionOpenImage->setText(tr("Open image"));
@@ -111,7 +107,6 @@ void EditorContextMenu::setupShortcuts(void)
     shortcutManager.initAction("editor-renameVoice", actionRenameVoice );
     shortcutManager.initAction("editor-moveVoice", actionMoveVoice );
     shortcutManager.initAction("editor-moveAttach", actionMoveAttach );
-    shortcutManager.initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
     shortcutManager.initAction("editor-showNoteInFolder", actionShowNoteInFolder );
     shortcutManager.initAction("editor-deleteVoice", actionDeleteVoice );
 
@@ -172,7 +167,6 @@ void EditorContextMenu::update(void)
         setRenameVoice( voiceLink );
         setMoveVoice( voiceLink );
         setMoveAttach( ReferenceFormatter::isAttachHref(href) );
-        setShowVoiceInFolder( voiceLink );
         setDeleteVoice( voiceLink );
         setEditReference( true );
     } else {
@@ -185,7 +179,6 @@ void EditorContextMenu::update(void)
         setRenameVoice( voiceBubble );
         setMoveVoice( voiceBubble );
         setMoveAttach( false );
-        setShowVoiceInFolder( voiceBubble );
         setDeleteVoice( voiceBubble );
         setEditReference( false );
     }
@@ -246,9 +239,6 @@ void EditorContextMenu::setImageProperties(bool flag)
 
     actionEditImageProperties->setVisible(flag);
     actionEditImageProperties->setEnabled(flag);
-
-    actionShowImageInFolder->setVisible(flag);
-    actionShowImageInFolder->setEnabled(flag);
 }
 
 
@@ -297,13 +287,6 @@ void EditorContextMenu::setMoveAttach(bool flag)
 {
   actionMoveAttach->setVisible(flag);
   actionMoveAttach->setEnabled(flag);
-}
-
-
-void EditorContextMenu::setShowVoiceInFolder(bool flag)
-{
-  actionShowVoiceInFolder->setVisible(flag);
-  actionShowVoiceInFolder->setEnabled(flag);
 }
 
 
@@ -391,7 +374,6 @@ void EditorContextMenu::setupSignals(void)
     connect(actionSelectAll,       &QAction::triggered, this, &EditorContextMenu::onActionSelectAll);
 
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
-    connect(actionShowImageInFolder,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowImageInFolder);
     connect(actionOpenImage,            &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImage);
     connect(actionOpenImageWith,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuOpenImageWith);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
@@ -400,7 +382,6 @@ void EditorContextMenu::setupSignals(void)
     connect(actionRenameVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuRenameVoice);
     connect(actionMoveVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveVoice);
     connect(actionMoveAttach,         &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveAttach);
-    connect(actionShowVoiceInFolder,  &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowVoiceInFolder);
     connect(actionShowNoteInFolder,   &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowNoteInFolder);
     connect(actionDeleteVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuDeleteVoice);
     connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
@@ -442,14 +423,12 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionOpenImage);
     this->addAction(actionOpenImageWith);
     this->addAction(actionEditImageProperties);
-    this->addAction(actionShowImageInFolder);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
     this->addAction(actionPlayVoice);
     this->addAction(actionRenameVoice);
     this->addAction(actionMoveVoice);
     this->addAction(actionMoveAttach);
-    this->addAction(actionShowVoiceInFolder);
     this->addAction(actionShowNoteInFolder);
     this->addAction(actionDeleteVoice);
     this->addAction(actionEditReference);
@@ -524,14 +503,6 @@ void EditorContextMenu::onActionContextMenuEditImageProperties()
     }
 }
 
-void EditorContextMenu::onActionContextMenuShowImageInFolder()
-{
-    update();
-    if(actionShowImageInFolder->isEnabled()) {
-        emit contextMenuShowImageInFolder();
-    }
-}
-
 void EditorContextMenu::onActionContextMenuOpenImage()
 {
     update();
@@ -593,14 +564,6 @@ void EditorContextMenu::onActionContextMenuMoveAttach()
     update();
     if(actionMoveAttach->isEnabled()) {
         emit contextMenuMoveAttach();
-    }
-}
-
-void EditorContextMenu::onActionContextMenuShowVoiceInFolder()
-{
-    update();
-    if(actionShowVoiceInFolder->isEnabled()) {
-        emit contextMenuShowVoiceInFolder();
     }
 }
 

@@ -251,6 +251,15 @@ private slots:
  void onShowTextClicked(void);
  void onToAttachClicked(void);
 
+ // Открыть каталог текущей заметки в файловом менеджере.
+ // Безусловный пункт меню (в отличие от show-in-folder голоса/картинки)
+ void onShowNoteInFolder(void);
+
+ // Разрезолвить рабочий каталог в абсолютный существующий путь.
+ // Пусто если каталог неизвестен или его нет на диске (тестируемо
+ // без файлового менеджера и диалогов)
+ static QString absoluteNoteDirectory(const QString &workDir);
+
  // Файлы брошенные в текст: оформить как аттачи и вставить
  // кликабельные метки в позицию курсора. Путь в текст не пишется
  void onFileUrlsDropped(const QStringList &files);

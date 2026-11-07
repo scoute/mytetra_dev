@@ -8320,6 +8320,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Вставка горизонтальной линии</translation>
     </message>
     <message>
+        <source>Insert page break</source>
+        <translation>Вставка разрыва страницы</translation>
+    </message>
+    <message>
+        <source>Insert a page break marker into the empty paragraph from cursor</source>
+        <translation>Вставка маркера разрыва страницы в пустой абзац с курсором</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="160"/>
         <source>Insert special character</source>
         <translation>Вставить спецсимвол</translation>
@@ -9193,6 +9201,10 @@ Please select single item for enabling edit operation.</source>
         <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1852"/>
         <source>Select background color</source>
         <translation>Выбор цвета фона</translation>
+    </message>
+    <message>
+        <source>Page break</source>
+        <translation>Разрыв страницы</translation>
     </message>
 </context>
 <context>

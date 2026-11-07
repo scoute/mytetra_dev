@@ -53,7 +53,7 @@ private:
 // Дефолт ключа из актуальной таблицы (тройки имя/тип/значение)
 static QString tableDefault(const QString &key)
 {
-    QStringList table=EditorConfig::get_parameter_table_47(false);
+    QStringList table=EditorConfig::get_parameter_table_48(false);
 
     for(int i=0; i<table.size()/3; ++i)
         if(table.at(i*3)==key)

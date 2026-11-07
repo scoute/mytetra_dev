@@ -445,6 +445,10 @@ void EditorToolBar::setupToolBarTools(void)
     insertHorizontalLine->setIcon(QIcon(":/resource/pic/edit_insert_horizontal_line.svg"));
     insertHorizontalLine->setObjectName("editor_tb_insertHorizontalLine");
 
+    insertPageBreak=new QAction(this);
+    insertPageBreak->setIcon(QIcon(":/resource/pic/edit_insert_page_break.svg"));
+    insertPageBreak->setObjectName("editor_tb_insertPageBreak");
+
     specialChar=new QAction(this);
     specialChar->setIcon(QIcon(":/resource/pic/edit_special_char.svg"));
     specialChar->setObjectName("editor_tb_specialChar");
@@ -572,6 +576,7 @@ void EditorToolBar::setupShortcuts(void)
     AppContext::instance().shortcutManager()->initAction("editor-openImage", openImage);
     AppContext::instance().shortcutManager()->initAction("editor-micRecord", micRecord);
     AppContext::instance().shortcutManager()->initAction("editor-insertHorizontalLine", insertHorizontalLine);
+    AppContext::instance().shortcutManager()->initAction("editor-insertPageBreak", insertPageBreak);
     AppContext::instance().shortcutManager()->initAction("editor-specialChar", specialChar);
     AppContext::instance().shortcutManager()->initAction("editor-mathExpression", mathExpression);
     AppContext::instance().shortcutManager()->initAction("editor-expandEditArea", expandEditArea);

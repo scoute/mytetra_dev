@@ -1,4 +1,6 @@
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QToolButton>
 #include <QDebug>
 #include <QIcon>
 #include <QScrollBar>
@@ -51,6 +53,16 @@ void EditorShowText::setupUi()
 
     // Создается контекстное меню
     mContextMenu.reset( new EditorShowTextContextMenu(this) );
+
+    // Мини-кнопка скрепки "поверх всех окон": переключаемая,
+    // состояние видно по вдавленности. По умолчанию выключена
+    pinButton=new QToolButton(this);
+    pinButton->setIcon(QIcon(QStringLiteral(":/resource/pic/pin_always_on_top.svg")));
+    pinButton->setCheckable(true);
+    pinButton->setChecked(false);
+    pinButton->setToolTip(tr("Always on top"));
+    pinButton->setFixedSize(22, 22);
+    pinButton->setIconSize(QSize(16, 16));
 }
 
 
@@ -62,6 +74,9 @@ void EditorShowText::setupSignals()
 
     connect(mContextMenu.data(), &EditorShowTextContextMenu::gotoNote,
             this, &EditorShowText::onGotoNote);
+
+    connect(pinButton, &QToolButton::toggled,
+            this, &EditorShowText::onPinToggled);
 }
 
 
@@ -69,6 +84,14 @@ void EditorShowText::assembly()
 {
     QVBoxLayout *mainLayout=new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
+
+    // Полоса со скрепкой справа вверху: пустое место отдается тексту
+    QHBoxLayout *topBarLayout=new QHBoxLayout();
+    topBarLayout->setContentsMargins(0, 0, 0, 0);
+    topBarLayout->addStretch(1);
+    topBarLayout->addWidget(pinButton);
+
+    mainLayout->addLayout(topBarLayout);
 
     // Добавляется область текста
     mainLayout->addWidget( mTextArea.get() );
@@ -219,6 +242,19 @@ void EditorShowText::onGotoNote()
     QStringList path=knowTreeModel->getRecordPath(mNoteId);
 
     find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, mNoteId);
+}
+
+
+// Скрепка "поверх всех окон". Смена флагов требует пересоздания
+// нативного окна: прячем, меняем флаг, показываем заново.
+// Геометрия при этом не теряется: hideEvent/showEvent ее помнят
+void EditorShowText::onPinToggled(bool checked)
+{
+    hide();
+    setWindowFlag(Qt::WindowStaysOnTopHint, checked);
+    show();
+    raise();
+    activateWindow();
 }
 
 

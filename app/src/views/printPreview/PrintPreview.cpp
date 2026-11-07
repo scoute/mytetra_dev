@@ -118,6 +118,13 @@ void PrintPreview::setupUI()
     buttonZoomOut->setText(tr("Zoom Out"));
     buttonZoomOut->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
+    // Обычный размер между увеличением и уменьшением:
+    // возврат к масштабу 1.0 после игры зумом
+    buttonZoomReset=new QToolButton(this);
+    buttonZoomReset->setText(tr("100%"));
+    buttonZoomReset->setToolTip(tr("Normal size"));
+    buttonZoomReset->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
     buttonClose=new QToolButton(this);
     buttonClose->setText(tr("Close"));
     buttonClose->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -142,6 +149,7 @@ void PrintPreview::setupSignals()
     connect(buttonPrint, &QToolButton::clicked, this, &PrintPreview::print);
     connect(buttonPageSetup, &QToolButton::clicked, this, &PrintPreview::pageSetup);
     connect(buttonZoomIn, &QToolButton::clicked, view, &PreviewView::zoomIn);
+    connect(buttonZoomReset, &QToolButton::clicked, view, &PreviewView::zoomReset);
     connect(buttonZoomOut, &QToolButton::clicked, view, &PreviewView::zoomOut);
     connect(buttonClose, &QToolButton::clicked, this, &PrintPreview::close);
 
@@ -167,6 +175,7 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonPrint);
     toolsbox->addWidget(buttonPageSetup);
     toolsbox->addWidget(buttonZoomIn);
+    toolsbox->addWidget(buttonZoomReset);
     toolsbox->addWidget(buttonZoomOut);
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();

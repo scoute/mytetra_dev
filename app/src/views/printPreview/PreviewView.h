@@ -28,6 +28,7 @@ public:
 public slots:
     void zoomIn();
     void zoomOut();
+    void zoomReset();
 
 protected:
     virtual void paintEvent(QPaintEvent *e);

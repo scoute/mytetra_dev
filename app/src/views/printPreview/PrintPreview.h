@@ -51,6 +51,7 @@ private:
     QToolButton *buttonPageSetup;
     QToolButton *buttonZoomIn;
     QToolButton *buttonZoomOut;
+    QToolButton *buttonZoomReset;
     QToolButton *buttonClose;
     
     QVBoxLayout *centralLayout;

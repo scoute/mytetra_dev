@@ -79,6 +79,29 @@ void AppConfigPage_Attach::setupUi(void)
     fileNamesWarning=new QLabel(this);
     fileNamesWarning->setWordWrap(true);
     fileNamesWarning->setText( tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped.") );
+
+    // Пояснение про схему имен каталогов записей на диске
+    recordDirsInfo=new QLabel(this);
+    recordDirsInfo->setWordWrap(true);
+    recordDirsInfo->setText( tr("Record directory naming in base/: system names (id, as in stock MyTetra) or system + note names (hybrid, id_name). The choice applies to new notes and note renames.") );
+
+    // Выбор режима имен: системные, гибридные
+    recordDirNameModeLabel=new QLabel(this);
+    recordDirNameModeLabel->setText( tr("Name new record directories: ") );
+
+    recordDirNameModeCombo=new MtComboBox(this);
+    recordDirNameModeCombo->addItem( tr("System names (id)"), AppConfig::RecordDirSystem );
+    recordDirNameModeCombo->addItem( tr("System + note names (id_name)"), AppConfig::RecordDirHybrid );
+    recordDirNameModeCombo->setCurrentIndex( recordDirNameModeCombo->findData(AppContext::instance().appConfig()->storageSection()->get_recordDirNameMode()) );
+
+    // Кнопка приведения всех каталогов записей к выбранному виду
+    convertRecordDirsButton=new QPushButton(this);
+    convertRecordDirsButton->setText( tr("Convert record directories to the selected form") );
+
+    // Предупреждение: действие опасное и пока в бета-версии
+    recordDirsWarning=new QLabel(this);
+    recordDirsWarning->setWordWrap(true);
+    recordDirsWarning->setText( tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names.") );
 }
 
 void AppConfigPage_Attach::setupSignals(void)
@@ -86,6 +109,7 @@ void AppConfigPage_Attach::setupSignals(void)
     connect( enableRecordWithAttachHighlight, &QCheckBox::toggled, this, &AppConfigPage_Attach::onEnableRecordWithAttachHighlight);
     connect( buttonHighlightColor, &QToolButton::clicked, this, &AppConfigPage_Attach::onClickedHighlightColor);
     connect( convertAttachesButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertAttaches);
+    connect( convertRecordDirsButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertRecordDirs);
 }
 
 void AppConfigPage_Attach::assembly(void)
@@ -122,10 +146,27 @@ void AppConfigPage_Attach::assembly(void)
     fileNamesBox->setTitle( tr("File names on disk") );
     fileNamesBox->setLayout( fileNamesBoxLayout );
 
+    // Рамка имен каталогов записей на диске
+    QHBoxLayout *dirModeLayout=new QHBoxLayout;
+    dirModeLayout->addWidget( recordDirNameModeLabel );
+    dirModeLayout->addWidget( recordDirNameModeCombo );
+    dirModeLayout->addStretch();
+
+    QVBoxLayout *recordDirsBoxLayout=new QVBoxLayout;
+    recordDirsBoxLayout->addWidget( recordDirsInfo );
+    recordDirsBoxLayout->addLayout( dirModeLayout );
+    recordDirsBoxLayout->addWidget( convertRecordDirsButton );
+    recordDirsBoxLayout->addWidget( recordDirsWarning );
+
+    recordDirsBox=new QGroupBox(this);
+    recordDirsBox->setTitle( tr("Record directories on disk") );
+    recordDirsBox->setLayout( recordDirsBoxLayout );
+
     // Собирается основной слой
     QVBoxLayout *centralLayout=new QVBoxLayout();
     centralLayout->addWidget( decorBox );
     centralLayout->addWidget( fileNamesBox );
+    centralLayout->addWidget( recordDirsBox );
     centralLayout->addStretch();
 
     // Основной слой устанавливается
@@ -171,6 +212,13 @@ void AppConfigPage_Attach::retranslateUi(void)
   attachNameModeCombo->setItemText(2, tr("Original names (as uploaded)"));
   convertAttachesButton->setText(tr("Convert attachments to the selected form"));
   fileNamesWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. With original names, files with identical names in one note conflict and are skipped."));
+  recordDirsBox->setTitle(tr("Record directories on disk"));
+  recordDirsInfo->setText(tr("Record directory naming in base/: system names (id, as in stock MyTetra) or system + note names (hybrid, id_name). The choice applies to new notes and note renames."));
+  recordDirNameModeLabel->setText(tr("Name new record directories: "));
+  recordDirNameModeCombo->setItemText(0, tr("System names (id)"));
+  recordDirNameModeCombo->setItemText(1, tr("System + note names (id_name)"));
+  convertRecordDirsButton->setText(tr("Convert record directories to the selected form"));
+  recordDirsWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names."));
 }
 
 // Метод должен возвращать уровень сложности сделанных изменений
@@ -195,6 +243,12 @@ int AppConfigPage_Attach::applyChanges(void)
     int selectedMode=attachNameModeCombo->currentData().toInt();
     if(AppContext::instance().appConfig()->storageSection()->get_attachNameMode()!=selectedMode)
         AppContext::instance().appConfig()->storageSection()->set_attachNameMode(selectedMode);
+
+    // Сохраняется режим имен каталогов новых записей (без переименования
+    // существующих, это делает только кнопка конвертации)
+    int selectedDirMode=recordDirNameModeCombo->currentData().toInt();
+    if(AppContext::instance().appConfig()->storageSection()->get_recordDirNameMode()!=selectedDirMode)
+        AppContext::instance().appConfig()->storageSection()->set_recordDirNameMode(selectedDirMode);
 
     return result;
 }
@@ -343,4 +397,62 @@ void AppConfigPage_Attach::onClickedConvertAttaches()
         QMessageBox::information(this, tr("Convert attachments"), resultText);
     else
         QMessageBox::warning(this, tr("Convert attachments"), resultText);
+}
+
+
+void AppConfigPage_Attach::onClickedConvertRecordDirs()
+{
+    int targetMode=recordDirNameModeCombo->currentData().toInt();
+    QString modeName=recordDirNameModeCombo->currentText();
+
+    // Подтверждение: действие меняет много каталогов на диске и поля dir
+    QMessageBox::StandardButton answer=QMessageBox::question(
+        this,
+        tr("Convert record directories"),
+        tr("All record directories will be brought to the form \"%1\". Back up your database directory first. Continue?").arg(modeName),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+
+    if(answer!=QMessageBox::Yes)
+        return;
+
+    TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+    {
+        QMessageBox::warning(this,
+                             tr("Convert record directories"),
+                             tr("Record tree is unavailable."));
+        return;
+    }
+
+    int notFoundCount=0;
+    int lockedCount=0;
+    QStringList errors;
+    int renamedCount=treeScreen->knowTreeModel->convertRecordDirsToMode(targetMode,
+                                                                        notFoundCount,
+                                                                        lockedCount,
+                                                                        errors);
+
+    // Режим и дерево сохраняются только после прохода без ошибок,
+    // чтобы новые записи сразу именовались в заданном виде, а XML
+    // не остался в промежуточном состоянии
+    if(errors.isEmpty())
+    {
+        treeScreen->saveKnowTree();
+        AppContext::instance().appConfig()->storageSection()->set_recordDirNameMode(targetMode);
+        AppContext::instance().appConfig()->sync();
+    }
+
+    QString resultText=tr("Converted directories: %1.").arg(renamedCount);
+    if(notFoundCount>0)
+        resultText+=QString(" ")+tr("Not found on disk (field fixed): %1.").arg(notFoundCount);
+    if(lockedCount>0)
+        resultText+=QString(" ")+tr("Skipped (encrypted record, unlock the database first): %1.").arg(lockedCount);
+    if(!errors.isEmpty())
+        resultText+=QString(" ")+tr("Errors: %1. First error: %2").arg(errors.size()).arg(errors.first());
+
+    if(errors.isEmpty())
+        QMessageBox::information(this, tr("Convert record directories"), resultText);
+    else
+        QMessageBox::warning(this, tr("Convert record directories"), resultText);
 }

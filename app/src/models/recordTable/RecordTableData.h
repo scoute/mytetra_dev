@@ -72,6 +72,15 @@ public:
     void editRecordFields(int pos,
                           QMap<QString, QString> editFields);
 
+    // Переименование каталога записи на диске и в поле dir.
+    // Каталог-источник берется из поля dir, цель передается готовой
+    // (обычно Record::dirNameForMode). Поле при неудаче не меняется.
+    // Возвращает false с текстом ошибки, если каталога нет на диске,
+    // цель занята или переименование не удалось
+    bool renameRecordDir(int pos,
+                         const QString &newDirName,
+                         QString &errorText);
+
     void deleteRecord(int i);
     void deleteRecordById(QString id);
 

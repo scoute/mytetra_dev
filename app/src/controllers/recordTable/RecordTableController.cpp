@@ -798,7 +798,24 @@ void RecordTableController::editField(int pos,
   editData["tags"]=tags;
 
   // Обновление новых данных в таблице конечных записей
+  const QString oldName=table->getField("name", pos);
   table->editRecordFields(pos, editData);
+
+  // Каталог вслед за именем (гибридный режим id_имя): чтобы по каталогу
+  // было видно что за запись. Только явное переименование через диалог
+  // свойств; массовые правки меток и импорты каталоги не трогают
+  if(!name.isEmpty() && name!=oldName &&
+     AppContext::instance().appConfig()->storageSection()->get_recordDirNameMode()==AppConfig::RecordDirHybrid)
+  {
+    const QString targetDir=Record::dirNameForMode(AppConfig::RecordDirHybrid,
+                                                   table->getField("id", pos),
+                                                   name);
+    QString renameError;
+    if(!table->renameRecordDir(pos, targetDir, renameError) && !renameError.isEmpty())
+      QMessageBox::warning(view,
+                           tr("Rename directory"),
+                           tr("Note renamed, but record directory was kept: %1").arg(renameError));
+  }
 
   // Обновление инфополей в области редактирования записи
   MetaEditor *metaEditor=find_object<MetaEditor>("editorScreen");

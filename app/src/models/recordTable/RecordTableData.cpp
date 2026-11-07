@@ -445,13 +445,23 @@ int RecordTableData::insertNewRecord(int mode,
         // Создается новая запись (ID был пустой) или
         // Запись с таким ID в дереве есть, поэтому выделяются новый ID и новая директория хранения (чтобы не затереть существующие)
 
-        // Директория хранения записи и файл
-        record.setField("dir", getUniqueId());
+        // Директория хранения записи и файл. Имя каталога - по режиму:
+        // системное (id, как в обычной MyTetra) или гибридное (id_имя).
+        // Режим читается здесь, а не у вызывателя, чтобы все пути
+        // создания (диалог, вставка, клиппер) именовали одинаково
         record.setField("file", "text.html");
 
         // Уникальный идентификатор XML записи
         QString id=getUniqueId();
         record.setField("id", id);
+
+        // Каталог - по режиму имен на id записи (единый префикс для
+        // создания и конвертера). Пустое имя дает системный вид
+        QString dirName=Record::dirNameForMode(
+            AppContext::instance().appConfig()->storageSection()->get_recordDirNameMode(),
+            id,
+            record.getField("name"));
+        record.setField("dir", dirName);
 
         // Копия чужой записи избранной не становится: иначе дубль
         // унаследовал бы чужой порядковый номер favor (gee12) и в
@@ -590,6 +600,63 @@ void RecordTableData::editRecordFields(int pos,
     }
 
     // changePersistentIndex(QModelIndex(), QModelIndex());
+}
+
+
+// Переименование каталога записи на диске и в поле dir.
+// Поле при неудаче не меняется
+bool RecordTableData::renameRecordDir(int pos,
+                                      const QString &newDirName,
+                                      QString &errorText)
+{
+    errorText.clear();
+
+    if(pos<0 || pos>=static_cast<int>(tableData.size()))
+    {
+        errorText=QStringLiteral("Bad record position");
+        return false;
+    }
+
+    const QString currentDir=getField("dir", pos);
+
+    if(currentDir.isEmpty())
+    {
+        errorText=QStringLiteral("Record directory field is empty");
+        return false;
+    }
+
+    if(newDirName.isEmpty() || newDirName==currentDir)
+        return true; // Переименовывать нечего: уже целевой вид
+
+    const QString baseDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+QStringLiteral("/base");
+    const QString oldFullName=baseDir+QStringLiteral("/")+currentDir;
+    const QString newFullName=baseDir+QStringLiteral("/")+newDirName;
+
+    // Каталога нет на диске (удален снаружи, база несогласована):
+    // правится только поле, сам каталог создастся штатным путем
+    if(!QDir(oldFullName).exists())
+    {
+        setField("dir", newDirName, pos);
+        return true;
+    }
+
+    // Цель занята чужим каталогом: не затирается
+    if(QFile::exists(newFullName))
+    {
+        errorText=QStringLiteral("Target directory already exists: ")+newDirName;
+        return false;
+    }
+
+    if(!QDir().rename(oldFullName, newFullName))
+    {
+        errorText=QStringLiteral("Unable to rename directory ")+currentDir+
+                  QStringLiteral(" to ")+newDirName;
+        return false;
+    }
+
+    setField("dir", newDirName, pos);
+
+    return true;
 }
 
 // Удаление записи с указанным индексом

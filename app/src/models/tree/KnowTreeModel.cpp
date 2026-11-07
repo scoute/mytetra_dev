@@ -386,6 +386,109 @@ int KnowTreeModel::baseSubVersion(void) const
   return m_baseSubVersion;
 }
 
+
+// Приведение каталогов всех записей к заданному виду имен.
+// Проход только по метаданным и диску, содержимое записей не читается
+int KnowTreeModel::convertRecordDirsToMode(int targetMode,
+                                           int &notFoundCount,
+                                           int &lockedCount,
+                                           QStringList &errors)
+{
+  notFoundCount=0;
+  lockedCount=0;
+  errors.clear();
+
+  const QString baseDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+QStringLiteral("/base");
+  const bool cryptKeyEmpty=(AppContext::instance().globalParameters()->getCryptKey().length()==0);
+
+  QSharedPointer< QSet<QString> > allIds=getAllRecordsIdList();
+
+  if(allIds.isNull())
+  {
+    errors << tr("Record tree is unavailable.");
+    return 0;
+  }
+
+  int renamedCount=0;
+
+  for(const QString &recordId : *allIds.data())
+  {
+    const QStringList path=getRecordPath(recordId);
+
+    if(path.isEmpty())
+      continue;
+
+    TreeItem *branchItem=getItemById(path.last());
+
+    if(branchItem==nullptr)
+      continue;
+
+    RecordTableData *table=branchItem->recordtableGetTableData();
+
+    if(table==nullptr)
+      continue;
+
+    const int pos=table->getPosById(recordId);
+
+    if(pos<0)
+      continue;
+
+    // Зашифрованная при закрытой базе: содержимое не проверить,
+    // каталог без ключа лучше не трогать вообще
+    if(table->getField("crypt", pos)==QStringLiteral("1") && cryptKeyEmpty)
+    {
+      ++lockedCount;
+      continue;
+    }
+
+    const QString currentDir=table->getField("dir", pos);
+
+    if(currentDir.isEmpty())
+    {
+      ++notFoundCount;
+      continue;
+    }
+
+    const QString targetDir=Record::dirNameForMode(targetMode,
+                                                   table->getField("id", pos),
+                                                   table->getField("name", pos));
+
+    // Уже в заданном виде: конвертировать нечего
+    if(targetDir==currentDir)
+      continue;
+
+    // Каталога нет на диске: запись-сирота. Поле при этом правится
+    // на целевой вид: self-heal создаст каталог с правильным именем
+    // при первом обращении, сирота не висит вечно в старом виде
+    if(!QDir(baseDir+QStringLiteral("/")+currentDir).exists())
+    {
+      ++notFoundCount;
+      table->setField("dir", targetDir, pos);
+      continue;
+    }
+
+    // Цель занята чужим каталогом: не затирается, ошибка
+    if(QFile::exists(baseDir+QStringLiteral("/")+targetDir))
+    {
+      errors << tr("Name %1 is already taken, note \"%2\" skipped.").arg(targetDir).arg(table->getField("name", pos));
+      continue;
+    }
+
+    if(!QDir().rename(baseDir+QStringLiteral("/")+currentDir,
+                       baseDir+QStringLiteral("/")+targetDir))
+    {
+      errors << tr("Unable to rename directory %1 to %2.").arg(currentDir).arg(targetDir);
+      continue;
+    }
+
+    table->setField("dir", targetDir, pos);
+
+    ++renamedCount;
+  }
+
+  return renamedCount;
+}
+
 void KnowTreeModel::reload(void)
 {
     this->initFromXML(m_xmlFileName);

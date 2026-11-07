@@ -182,7 +182,6 @@ HEADERS = src/main.h \
     src/libraries/SpectralNoiseSuppress.h \
     src/libraries/wyedit/EditorConfigMathExpression.h \
     src/libraries/wyedit/EditorDropDownButton.h \
-    src/libraries/wyedit/EditorShowTextContextMenu.h \
     src/libraries/wyedit/EditorShowTextDispatcher.h \
     src/libraries/wyedit/EditorFloatToc.h \
     src/libraries/wyedit/EditorToolPseudoButton.h \
@@ -429,7 +428,6 @@ SOURCES = src/main.cpp \
     src/libraries/SpectralNoiseSuppress.cpp \
     src/libraries/wyedit/EditorConfigMathExpression.cpp \
     src/libraries/wyedit/EditorDropDownButton.cpp \
-    src/libraries/wyedit/EditorShowTextContextMenu.cpp \
     src/libraries/wyedit/EditorShowTextDispatcher.cpp \
     src/libraries/wyedit/EditorFloatToc.cpp \
     src/libraries/wyedit/EditorToolPseudoButton.cpp \

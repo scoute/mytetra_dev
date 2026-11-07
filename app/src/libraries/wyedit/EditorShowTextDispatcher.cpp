@@ -2,12 +2,14 @@
 
 #include "EditorShowTextDispatcher.h"
 #include "EditorShowText.h"
+#include "Editor.h"
 #include "views/mainWindow/MainWindow.h"
 #include "views/tree/KnowTreeView.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/recordTable/Record.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "models/appConfig/AppConfig.h"
+#include "libraries/BacklinkIndex.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
 
@@ -81,9 +83,6 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
         editorShowText=new EditorShowText( find_object<MainWindow>("mainwindow"), Qt::Dialog );
     }
 
-    // Устанавливается идентификатор записи, которое отображает данное окно
-    editorShowText->setNoteId( noteId );
-
     // Устанавливается флаг удаления диалога после закрытия его окна
     editorShowText->setAttribute( Qt::WA_DeleteOnClose );
 
@@ -94,12 +93,10 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
     connect(editorShowText.data(), &EditorShowText::editorShowTextClose,
             this, &EditorShowTextDispatcher::onCloseWindow);
 
-    // Выясняется ссылка на объект записи
-    Record *note=dataModel->getRecord(noteId);
-
-    // Из записи заполняется содержимое открепляемого окна
-    editorShowText->setDocument( note->getTextDocument() );
-    editorShowText->setWindowTitle( note->getField("name") );
+    // Запись открывается во внутреннем редакторе окна: тот же движок
+    // что в главном окне (ссылки, голос, оглавление, картинки, поиск),
+    // только без панелей кнопок. Текст грузится из файла записи
+    editorShowText->openNote( noteId );
 
     // Установка координат окна
     if( !(x==-1 and y==-1 and w==-1 and h==-1) )
@@ -118,36 +115,51 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
     this->saveOpenWindows();
 }
 
-// Обновление содержимого открепляемого окна, содержащего запись с указанным ID
-void EditorShowTextDispatcher::updateWindow(const QString &noteId)
+// Обновление содержимого открепляемого окна, содержащего запись с указанным ID.
+// Несохраненные правки окна не затираются, инициатор сейва себя не перечитывает
+void EditorShowTextDispatcher::updateWindow(const QString &noteId, const QObject *initiator)
 {
-    if( mWindowsList.contains( noteId ) )
+    if( !mWindowsList.contains( noteId ) )
+        return;
+
+    EditorShowText *win=mWindowsList[noteId].data();
+
+    if(win==nullptr)
     {
-        // Выясняется ссылка на модель дерева данных
-        KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
-
-        // Выясняется ссылка на объект записи
-        Record *note=dataModel->getRecord(noteId);
-
-        QSharedPointer<QTextDocument> doc=note->getTextDocument();
-
-        // Открепляемое окно начинает отображать новый взятый из записи документ
-        if( !mWindowsList[noteId].isNull() )
-        {
-            // Когда обновися текстовый документ, прокрутка будет сброшена, и надо будет ее восстановить
-            int vScroll=mWindowsList[noteId]->getTextVerticalScroll();
-
-            mWindowsList[noteId]->setDocument( doc ); // Текст окна
-            mWindowsList[noteId]->setWindowTitle( note->getField("name") ); // Заголовок окна
-
-            // Восстановление прокрутки
-            mWindowsList[noteId]->setTextVerticalScroll(vScroll);
-        }
-        else
-        {
-            criticalError("Incorrect pointer in mWindowsList");
-        }
+        criticalError("Incorrect pointer in mWindowsList");
+        return;
     }
+
+    if(win->editor()==nullptr)
+        return;
+
+    // Сейв инициатора: свое окно не перечитывает, файл и так свежий
+    if(initiator!=nullptr && win->editor()==initiator)
+        return;
+
+    // В окне есть несохраненные правки: чужим сейвом не затираются,
+    // их сейв позже перезапишет файл (last-writer-wins)
+    if(win->isModified())
+        return;
+
+    // Выясняется ссылка на модель дерева данных
+    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+
+    // Выясняется ссылка на объект записи (заголовок мог поменяться)
+    Record *note=dataModel->getRecord(noteId);
+
+    if(note==nullptr)
+        return;
+
+    // Курсор и прокрутка переживают перечитывание
+    const int cursorPos=win->cursorPosition();
+    const int scrollPos=win->getTextVerticalScroll();
+
+    win->editor()->loadTextarea(); // Текст окна
+    win->setWindowTitle( note->getField("name") ); // Заголовок окна
+
+    win->setCursorPosition(cursorPos);
+    win->setTextVerticalScroll(scrollPos);
 }
 
 // Обновление содержимого всех открепляемых окон
@@ -156,6 +168,59 @@ void EditorShowTextDispatcher::updateAllWindows()
     for( auto noteId : mWindowsList.keys() )
     {
         this->updateWindow( noteId );
+    }
+}
+
+
+// После сейва открепленного окна: индексы, статистика и главное окно.
+// Состав действий один в один как MainWindow::saveTextarea, кроме
+// истории обхода (курсор чужого окна там не нужен)
+void EditorShowTextDispatcher::refreshAfterDetachedSave(const QString &noteId)
+{
+    if(noteId.isEmpty())
+        return;
+
+    // Текст на диске обновился: перепарсить исходящие ссылки записи
+    AppContext::instance().backlinkIndex()->updateSource(noteId);
+
+    // Текст мог принести/убрать картинки и ссылки: статистика записи
+    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+
+    if(dataModel!=nullptr)
+        dataModel->refreshRecordStats(noteId);
+
+    MainWindow *mainWindow=find_object<MainWindow>("mainwindow");
+
+    if(mainWindow!=nullptr)
+        mainWindow->updateStats();
+
+    // Главное окно на той же записи и не правилось: подтянуть свежий
+    // текст без сброса курсора. Правленое не трогается: его сейв позже
+    // перезапишет файл (last-writer-wins, как везде в программе)
+    Editor *mainEditor=find_object<Editor>(QStringLiteral("editorScreen"));
+
+    if(mainEditor!=nullptr &&
+       mainEditor->getMiscField(QStringLiteral("id"))==noteId &&
+       !mainEditor->getTextareaModified())
+    {
+        const int cursorPos=mainEditor->getCursorPosition();
+        const int scrollPos=mainEditor->getScrollBarPosition();
+
+        mainEditor->loadTextarea();
+
+        mainEditor->setCursorPosition(cursorPos);
+        mainEditor->setScrollBarPosition(scrollPos);
+    }
+}
+
+
+// Переприменить read-only всех окон при переключении глобального режима
+void EditorShowTextDispatcher::refreshAllEditability(void)
+{
+    for( auto widgetWindow : mWindowsList )
+    {
+        if( !widgetWindow.isNull() )
+            widgetWindow->refreshEditability();
     }
 }
 

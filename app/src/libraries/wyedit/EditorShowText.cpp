@@ -1,19 +1,33 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QToolButton>
+#include <QAction>
 #include <QDebug>
 #include <QIcon>
-#include <QScrollBar>
-#include <QEvent>
 #include <QCloseEvent>
+#include <QHideEvent>
+#include <QShowEvent>
 
 #include "EditorShowText.h"
-#include "EditorShowTextContextMenu.h"
+#include "libraries/wyedit/Editor.h"
+#include "libraries/wyedit/EditorTextArea.h"
+#include "libraries/wyedit/EditorFindBar.h"
+#include "libraries/wyedit/EditorToolBarAssistant.h"
+#include "libraries/wyedit/EditorIndentSliderAssistant.h"
+#include "libraries/wyedit/indentslider/IndentSlider.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/ObjectHelper.h"
+#include "libraries/AppContext.h"
+#include "libraries/GlobalParameters.h"
+#include "libraries/ShortcutManager.h"
+#include "models/appConfig/AppConfig.h"
+#include "models/appConfig/AppConfigStorage.h"
+#include "models/appConfig/AppConfigRecordTable.h"
 #include "models/tree/KnowTreeModel.h"
+#include "models/tree/TreeItem.h"
+#include "models/recordTable/RecordTableData.h"
 #include "views/tree/KnowTreeView.h"
-#include "views/mainWindow/MainWindow.h"
 #include "views/record/MetaEditor.h"
 
 
@@ -31,36 +45,157 @@ EditorShowText::~EditorShowText()
 }
 
 
+// Открыть запись во внутреннем редакторе: тот же движок WyEdit
+// что в главном окне, только без тулбаров. Дальше окном владеет
+// запись: сейвы, ссылки, голос, картинки, поиск - все штатное
+void EditorShowText::openNote(const QString &noteId)
+{
+    mNoteId=noteId;
+
+    // Редактор создается лениво: до первого openNote окно пустое
+    ensureEditor();
+
+    // Выясняется ссылка на модель дерева данных
+    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+
+    // Если в дереве нет записи с таким идентификатором, открыть нечего
+    if(!dataModel->isRecordIdExists(noteId))
+        return;
+
+    QStringList path=dataModel->getRecordPath(noteId);
+
+    if(path.isEmpty())
+        return;
+
+    TreeItem *branch=dataModel->getItemById(path.last());
+
+    if(branch==nullptr)
+        return;
+
+    RecordTableData *table=branch->recordtableGetTableData();
+
+    if(table==nullptr)
+        return;
+
+    const int pos=table->getPosById(noteId);
+
+    if(pos<0)
+        return;
+
+    // Перед открытием попытка получения текста записи: создаст файл,
+    // если его еще нет (как при клике по записи в главном окне)
+    table->getText(pos);
+
+    const QString dir=table->getField(QStringLiteral("dir"), pos);
+    const QString file=table->getField(QStringLiteral("file"), pos);
+    const QString crypt=table->getField(QStringLiteral("crypt"), pos);
+
+    mBlocked=(table->getField(QStringLiteral("block"), pos)==QStringLiteral("1"));
+
+    const QString fullDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+
+                          QStringLiteral("/base/")+dir;
+
+    // Редактору задаются директория, файл и колбеки чтения-записи -
+    // ровно как главному окну при клике по записи
+    mEditor->setWorkDirectory(fullDir);
+    mEditor->setFileName(file);
+
+    mEditor->setMiscField(QStringLiteral("id"), noteId);
+    mEditor->setMiscField(QStringLiteral("title"), table->getField(QStringLiteral("name"), pos));
+    mEditor->setMiscField(QStringLiteral("crypt"), crypt);
+    mEditor->setMiscField(QStringLiteral("detached"), QStringLiteral("1"));
+
+    mEditor->setSaveCallback(RecordTableData::editorSaveCallback);
+    mEditor->setLoadCallback(RecordTableData::editorLoadCallback);
+
+    // Шифрованная при закрытой базе: нечего показывать, редактор
+    // просто пустой (как главное окно в том же состоянии)
+    if(crypt==QStringLiteral("1") &&
+       AppContext::instance().globalParameters()->getCryptKey().length()==0)
+        mEditor->setDirFileEmptyReaction(Editor::DIRFILEEMPTY_REACTION_SUPPRESS_ERROR);
+
+    refreshEditability();
+
+    mEditor->loadTextarea();
+
+    setWindowTitle(table->getField(QStringLiteral("name"), pos));
+
+    applyNoteColors();
+}
+
+
+Editor *EditorShowText::editor(void) const
+{
+    return mEditor;
+}
+
+
+// Создать внутренний редактор без привязки к записи.
+// В бою вызывается из openNote, в тестах напрямую
+void EditorShowText::ensureEditor(const QString &configFileName)
+{
+    if(mEditor!=nullptr)
+        return;
+
+    mEditor=new Editor(this);
+
+    // Штатная инициализация WyEdit, но без штатной сборки:
+    // тулбары в открепленном окне не нужны, слой собирается ниже
+    mEditor->initEnableAssembly(false);
+    mEditor->initConfigFileName(configFileName.isEmpty()
+        ? AppContext::instance().globalParameters()->getWorkDirectory()+QStringLiteral("/editorconf.ini")
+        : configFileName);
+    mEditor->initEnableRandomSeed(false);
+    mEditor->initDisableToolList(QStringList());
+    mEditor->init(Editor::WYEDIT_DESKTOP_MODE);
+
+    // Диспетчер нужен сейву: после записи файла обновляются
+    // остальные открепленные окна, инициатор пропускается сам
+    mEditor->showTextDispatcher=AppContext::instance().dispatcher();
+
+    // Тулбары созданы, но в слой не кладутся и не показываются:
+    // хоткеи кнопок мертвы, форматирование только через меню
+    mEditor->editorToolBarAssistant->hide();
+    mEditor->indentSliderAssistant->setVisible(false);
+    mEditor->indentSliderAssistant->getIndentSlider()->hide();
+
+    // Хоткеи которым не хватило кнопок: сохранить и поиск
+    saveAction=new QAction(this);
+    AppContext::instance().shortcutManager()->initAction(QStringLiteral("editor-save"), saveAction);
+    connect(saveAction, &QAction::triggered, this, &EditorShowText::saveDetached);
+    addAction(saveAction);
+
+    findAction=new QAction(this);
+    AppContext::instance().shortcutManager()->initAction(QStringLiteral("editor-findText"), findAction);
+    connect(findAction, &QAction::triggered, this, &EditorShowText::onFindRequested);
+    addAction(findAction);
+
+    // Своя сборка вместо штатной Editor::assembly: только полоска
+    // поиска и поле текста (друг класса, доступ к textArea прямой)
+    QVBoxLayout *editLayout=new QVBoxLayout(mEditor);
+    editLayout->setContentsMargins(0, 0, 0, 0);
+    editLayout->addWidget(mEditor->findBarWidget());
+    editLayout->addWidget(mEditor->textArea);
+
+    mLayout->addWidget(mEditor);
+
+    applyNoteColors();
+}
+
+
+QString EditorShowText::noteId(void) const
+{
+    return mNoteId;
+}
+
+
 void EditorShowText::setupUi()
 {
-    QSizePolicy sizePolicy;
-    sizePolicy.setHorizontalPolicy(QSizePolicy::Expanding);
-    sizePolicy.setVerticalPolicy(QSizePolicy::Expanding);
-
     setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint); // Скрывается кнопка с вопросом
 
     // Задается иконка окна
     QIcon icon = QIcon(":/resource/pic/detach_window_icon.svg");
     this->setWindowIcon( icon );
-
-    // Создается новая область редактора и запоминается указательна него
-    mTextArea.reset(new QTextEdit(this));
-
-    // То же имя что у поля основного редактора: правила бумаг тем
-    // (QWidget[objectName="textArea"]) применяются и здесь.
-    // По имени никто не ищет (проверено), дубликатов не боится -
-    // виджеты в разных окнах. Кастомные цвета поверх дотягивает
-    // applyNoteColors() при каждом показе
-    mTextArea->setObjectName(QStringLiteral("textArea"));
-
-    // Настраивается область редактора
-    mTextArea.get()->setAcceptRichText(true);
-    mTextArea.get()->setSizePolicy(sizePolicy);
-    mTextArea.get()->setReadOnly(true); // Показываемый текст можно только просматривать
-    mTextArea.get()->setContextMenuPolicy(Qt::CustomContextMenu); // Меню определяется в программе
-
-    // Создается контекстное меню
-    mContextMenu.reset( new EditorShowTextContextMenu(this) );
 
     // Мини-кнопка скрепки "поверх всех окон": переключаемая,
     // состояние видно по вдавленности. По умолчанию выключена
@@ -78,13 +213,6 @@ void EditorShowText::setupUi()
 
 void EditorShowText::setupSignals()
 {
-    // Соединение сигнал-слот чтобы показать контекстное меню по правому клику в редакторе
-    connect(mTextArea.data(), &QTextEdit::customContextMenuRequested,
-            this, &EditorShowText::onCustomContextMenuRequested);
-
-    connect(mContextMenu.data(), &EditorShowTextContextMenu::gotoNote,
-            this, &EditorShowText::onGotoNote);
-
     connect(pinButton, &QToolButton::toggled,
             this, &EditorShowText::onPinToggled);
 }
@@ -92,81 +220,113 @@ void EditorShowText::setupSignals()
 
 void EditorShowText::assembly()
 {
-    QVBoxLayout *mainLayout=new QVBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mLayout=new QVBoxLayout(this);
+    mLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Полоса со скрепкой справа вверху: пустое место отдается тексту
+    // Полоса со скрепкой справа вверху, редактор встанет ниже в openNote
     QHBoxLayout *topBarLayout=new QHBoxLayout();
     topBarLayout->setContentsMargins(0, 0, 0, 0);
     topBarLayout->addStretch(1);
     topBarLayout->addWidget(pinButton);
 
-    mainLayout->addLayout(topBarLayout);
-
-    // Добавляется область текста
-    mainLayout->addWidget( mTextArea.get() );
+    mLayout->addLayout(topBarLayout);
 }
 
 
-void EditorShowText::setNoteId(const QString &noteId)
+// Сохранить правки в файл записи и подтянуть главное окно с индексами.
+// Тихий выход без правок и в read-only: звать можно всегда
+void EditorShowText::saveDetached(void)
 {
-    mNoteId=noteId;
+    if(mEditor==nullptr || !mEditable)
+        return;
+
+    if(!mEditor->getTextareaModified())
+        return;
+
+    // Записи уже нет в дереве (удалена, пришла синхронизация): файл
+    // не воскрешаем, правки уходят вместе с окном. Проверка дешевая,
+    // только по дереву, без чтения содержимого
+    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+
+    if(dataModel==nullptr || !dataModel->isRecordIdExists(mNoteId))
+        return;
+
+    mEditor->saveTextarea();
+
+    // Файл обновился: индексы, статистика и главное окно подтягиваются.
+    // Свой сейв окно не перечитывает (инициатор пропускается)
+    AppContext::instance().dispatcher()->refreshAfterDetachedSave(mNoteId);
 }
 
 
-void EditorShowText::setHtml(QString text)
+bool EditorShowText::isModified(void) const
 {
-    mTextArea.get()->setHtml(text);
+    return mEditor!=nullptr && mEditor->getTextareaModified();
 }
 
 
-void EditorShowText::setDocument(QSharedPointer<QTextDocument> pDocument)
+bool EditorShowText::isEditable(void) const
 {
-    // Очистка указателя внутри mTextArea на область документа, куда указывал mTextDocument
-    // Данное действие необходимо производить перед вызовом mTextArea.get()->setDocument()
-    // так как mTextArea является родителем mTextDocument, а согласно документации
-    // в момент выполнения setDocument вначале происходит удаление предыдущего связанного
-    // с QTextEdit документа, а потом установка нового документа.
-    // Получается, что после удаления предыдущего связанного документа методом setDocument,
-    // сырой указатель умного указателя начинает указывать на мусор, а потом в том же setDocument
-    // этот сырой указатель используется для установки указателя на связываемый документ,
-    // и это приводит к сегфолту. При установке nullptr, похоже, что предыдущий
-    // документ не удаляется, и это используется для предотвращения порчи памяти
-    // в последующем вызове setDocument(). Надо разобраться дальше
-    mTextArea.get()->setDocument( nullptr );
-
-    // Указатель на документ запоминается
-    mTextDocument=pDocument;
-
-    // Полученный документ устанавливается как содержимое области редактирования
-    if(mTextArea.get()->document()!=mTextDocument.get())
-    {
-        mTextArea.get()->setDocument( mTextDocument.get() );
-        mTextArea.get()->document()->setParent( mTextArea.get() );
-    }
+    return mEditable;
 }
 
 
-bool EditorShowText::hasTextSelection()
+// Переприменить read-only: заблокированная запись или глобальный
+// режим только чтения. Формула один в один как у главного окна
+void EditorShowText::refreshEditability(void)
 {
-    return  mTextArea.data()->textCursor().hasSelection();
+    mEditable=false;
+
+    if(mEditor!=nullptr && !mNoteId.isEmpty())
+        mEditable=!mBlocked &&
+                  !AppContext::instance().appConfig()->recordTableSection()->get_readOnly();
+
+    if(mEditor!=nullptr)
+        mEditor->setTextareaEditable(mEditable);
 }
 
 
-int EditorShowText::getTextVerticalScroll()
+int EditorShowText::getTextVerticalScroll(void) const
 {
-    return mTextArea.data()->verticalScrollBar()->value();
+    if(mEditor==nullptr)
+        return 0;
+
+    return mEditor->getScrollBarPosition();
 }
 
 
 void EditorShowText::setTextVerticalScroll(int vScroll)
 {
-    mTextArea.data()->verticalScrollBar()->setValue(vScroll);
+    if(mEditor==nullptr)
+        return;
+
+    mEditor->setScrollBarPosition(vScroll);
+}
+
+
+int EditorShowText::cursorPosition(void) const
+{
+    if(mEditor==nullptr)
+        return 0;
+
+    return mEditor->getCursorPosition();
+}
+
+
+void EditorShowText::setCursorPosition(int pos)
+{
+    if(mEditor==nullptr)
+        return;
+
+    mEditor->setCursorPosition(pos);
 }
 
 
 void EditorShowText::closeEvent(QCloseEvent *event)
 {
+    // Правки уходят в файл записи, дальше главное окно и индексы
+    saveDetached();
+
     emit editorShowTextClose( mNoteId );
 
     event->accept();
@@ -232,33 +392,6 @@ void EditorShowText::showEvent(QShowEvent *event)
 }
 
 
-void EditorShowText::onCustomContextMenuRequested(const QPoint &pos)
-{
-    qDebug() << "In EditorShowText onCustomContextMenuRequested";
-
-    // Контекстное меню обновляется
-    mContextMenu->update();
-
-    // Контекстное меню запускается
-    mContextMenu->exec( mTextArea.get()->viewport()->mapToGlobal(pos) );
-}
-
-
-// Переход на запись в интерфейсе MyTetra, текст которой содержится в открепляемом окне
-void EditorShowText::onGotoNote()
-{
-    qDebug() << "Goto note: " << mNoteId;
-
-    // Выясняется ссылка на модель дерева данных
-    KnowTreeModel *knowTreeModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
-
-    // Нахождение ветки, в которой лежит запись с указанным идентификатором
-    QStringList path=knowTreeModel->getRecordPath(mNoteId);
-
-    find_object<MainWindow>("mainwindow")->setTreeAndRecordtablePositions(path, mNoteId);
-}
-
-
 // Скрепка "поверх всех окон". Смена флагов требует пересоздания
 // нативного окна: прячем, меняем флаг, показываем заново.
 // Геометрия при этом не теряется: hideEvent/showEvent ее помнят
@@ -274,51 +407,38 @@ void EditorShowText::onPinToggled(bool checked)
 }
 
 
+void EditorShowText::onFindRequested(void)
+{
+    if(mEditor!=nullptr)
+        mEditor->showFindPanel();
+}
+
+
 bool EditorShowText::isPinned(void) const
 {
     return mPinned;
 }
 
 
-// Бумага и шрифт как в основном редакторе (те же объявления,
-// но прямо на свою область: селектор по objectName здесь не нужен)
+// Бумага и шрифт как в основном редакторе: те же объявления,
+// но прямо на поле внутреннего редактора (друг класса)
 void EditorShowText::applyNoteColors(void)
 {
+    if(mEditor==nullptr)
+        return;
+
     // Без инициализированного конфига (headless-пробы без AppContext)
     // читать нечего: поле полностью отдается теме
     if(AppContext::instance().appConfig()==nullptr)
     {
-        mTextArea->setStyleSheet(QString());
+        mEditor->textArea->setStyleSheet(QString());
         return;
     }
 
     QStringList declarations=MetaEditor::notePaperDeclarations();
 
     if(declarations.isEmpty())
-        mTextArea->setStyleSheet(QString());
+        mEditor->textArea->setStyleSheet(QString());
     else
-        mTextArea->setStyleSheet(declarations.join(" "));
+        mEditor->textArea->setStyleSheet(declarations.join(" "));
 }
-
-
-/*
-// Говорят, что hideEvent/showEvent не относится к свертке/развертке, т.е. "свернутые" окна по-прежнему считаются видимыми.
-// Поэтому надо ловить QWindowStateChangeEvent. Но это не подтвердилось в KDE.
-// В нем нормально отрабатывают hideEvent/showEvent при сворачивании-разворачивании основного окна
-// События hideEvent/showEvent не генерируются в Windows 7 (в других не проверено), но в нем решаемым этим кодом проблеммы нет
-void EditorShowText::changeEvent(QEvent *event)
-{
-  qDebug() << "EditorShowText changeEvent: " << event->type();
-
-  if(event->type() == QEvent::WindowStateChange) {
-    QWindowStateChangeEvent* WindowStateChangeEvent = (QWindowStateChangeEvent*)event;
-    if(!(WindowStateChangeEvent->oldState() & Qt::WindowMaximized) && isMaximized())
-    {
-      geomX=x();
-      geomY=y();
-      geomW=width();
-      geomH=height();
-    }
-  }
-}
-*/

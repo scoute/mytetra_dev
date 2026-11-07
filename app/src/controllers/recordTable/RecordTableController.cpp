@@ -142,6 +142,10 @@ void RecordTableController::refreshEditorReadOnly(void)
   const bool blocked=(pos>=0 && pos<table->size() && table->getField("block", pos)=="1");
 
   edView->setReadOnly(blocked || AppContext::instance().appConfig()->recordTableSection()->get_readOnly());
+
+  // Открепленные окна правят те же записи: read-only пересчитывается и им
+  if(m_dispatcher!=nullptr)
+    m_dispatcher->refreshAllEditability();
 }
 
 void RecordTableController::initMetaEditorAtClickToRecord(const int pos)

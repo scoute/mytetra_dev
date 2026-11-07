@@ -24,8 +24,22 @@ public:
 
     void createWindow(const QString &noteId, int x=-1, int y=-1, int w=-1, int h=-1, int vScroll=0);
 
-    void updateWindow(const QString &noteId);
+    // Перечитать текст окна из файла записи (сейв главного окна,
+    // синхронизация, разблокировка шифра). Окно с несохраненными
+    // правками не трогается, инициатор сейва себя не перечитывает.
+    // Курсор и прокрутка переживают перечитывание
+    void updateWindow(const QString &noteId, const QObject *initiator=nullptr);
     void updateAllWindows();
+
+    // После сейва открепленного окна: исходящие ссылки, статистика
+    // и главное окно подтягиваются (как MainWindow::saveTextarea).
+    // Главное окно на той же записи перечитывается только если
+    // не правилось: иначе его сейв позже перезапишет файл
+    void refreshAfterDetachedSave(const QString &noteId);
+
+    // Переприменить read-only всех окон (переключение глобального
+    // режима чтения). Формула та же что у главного окна
+    void refreshAllEditability(void);
 
     // Перекрасить бумагу всех открепляемых окон под текущую тему.
     // Вызывается из тех же мест что applyNoteColors основного редактора:

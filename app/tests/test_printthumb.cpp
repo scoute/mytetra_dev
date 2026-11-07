@@ -74,6 +74,10 @@ void TestPrintThumb::thumbsAndNav(void)
     QCOMPARE(bar.count(), pages);
     QCOMPARE(bar.currentRow(), 2);
     QVERIFY2(!bar.item(2)->icon().isNull(), "re-rendered thumbnail must exist");
+
+    // Полоса прокрутки всегда видна: иначе появление/исчезновение
+    // давало зацикленное "дрожание" с перерисовкой
+    QCOMPARE(bar.verticalScrollBarPolicy(), Qt::ScrollBarAlwaysOn);
 }
 
 QTEST_MAIN(TestPrintThumb)

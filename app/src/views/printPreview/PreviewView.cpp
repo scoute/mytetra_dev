@@ -188,7 +188,10 @@ PageThumbnailBar::PageThumbnailBar(QWidget *parent) : QListWidget(parent)
     setWrapping(true);
     setSpacing(6);
     setIconSize(QSize(m_thumbWidth, m_thumbWidth));
-    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    // Вертикальная полоса всегда видна: появление/исчезновение
+    // меняло бы ширину вьюпорта и давало зацикленное "дрожание"
+    // с перерисовкой миниатюр. Горизонтальной нет вообще
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setMinimumWidth(96);
 

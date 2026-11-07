@@ -26,6 +26,7 @@
 #include "models/tree/TreeItem.h"
 #include "models/tree/KnowTreeModel.h"
 #include "views/favoritesPanel/FavoritesPanel.h"
+#include "libraries/Favorites.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/ShortcutManager.h"
@@ -578,6 +579,13 @@ void TreeScreen::setupModels(void)
  }
 
  knowTreeModel->initFromXML( AppContext::instance().appConfig()->storageSection()->get_tetradir()+"/mytetra.xml" );
+
+ // Посев порядка из gee12-базы: сайдкара еще нет, а в записях стоят
+ // числовые favor - порядок забирается оттуда, mytetra.xml не правится.
+ // Только для баз 1.3+: старые сканировать целиком незачем. Дальше
+ // штатная пересборка панели уже покажет засеянный порядок
+ if(knowTreeModel->baseSubVersion()>=3)
+   AppContext::instance().favorites()->seedFromFavorOrder(knowTreeModel);
 
  if(startupProgress!=nullptr)
  {

@@ -250,11 +250,19 @@ void EditorShowText::onGotoNote()
 // Геометрия при этом не теряется: hideEvent/showEvent ее помнят
 void EditorShowText::onPinToggled(bool checked)
 {
+    mPinned=checked;
+
     hide();
     setWindowFlag(Qt::WindowStaysOnTopHint, checked);
     show();
     raise();
     activateWindow();
+}
+
+
+bool EditorShowText::isPinned(void) const
+{
+    return mPinned;
 }
 
 

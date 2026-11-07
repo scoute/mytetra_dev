@@ -170,6 +170,9 @@ void RecordTableController::refreshEditorReadOnly(void)
   const bool blocked=(pos>=0 && pos<table->size() && table->getField("block", pos)=="1");
 
   edView->setReadOnly(blocked || mytetraConfig.get_readOnly());
+
+  // Открепленные окна правят те же записи: read-only пересчитывается и им
+  EditorShowTextDispatcher::instance()->refreshAllEditability();
 }
 
 

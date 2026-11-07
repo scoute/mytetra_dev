@@ -2864,6 +2864,10 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Can not open directory: %1</source>
         <translation>Не удаётся открыть каталог: %1</translation>
     </message>
+    <message>
+        <source>Switch to this note in the main window to attach files</source>
+        <translation>Перейдите на эту заметку в главном окне, чтобы прикреплять файлы</translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>

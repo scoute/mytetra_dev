@@ -21,6 +21,7 @@ void TestShowTextPin::pinTogglesFlag(void)
 
     QToolButton *pin=win.findChild<QToolButton *>();
     QVERIFY2(pin!=nullptr, "pin button must exist");
+    QVERIFY2(!pin->icon().isNull(), "pin icon must load from resources");
     QVERIFY2(pin->isCheckable(), "pin button must be checkable");
 
     // По умолчанию скрепка выключена

@@ -46,6 +46,13 @@ void EditorShowText::setupUi()
     // Создается новая область редактора и запоминается указательна него
     mTextArea.reset(new QTextEdit(this));
 
+    // То же имя что у поля основного редактора: правила бумаг тем
+    // (QWidget[objectName="textArea"]) применяются и здесь.
+    // По имени никто не ищет (проверено), дубликатов не боится -
+    // виджеты в разных окнах. Кастомные цвета поверх дотягивает
+    // applyNoteColors() при каждом показе
+    mTextArea->setObjectName(QStringLiteral("textArea"));
+
     // Настраивается область редактора
     mTextArea.get()->setAcceptRichText(true);
     mTextArea.get()->setSizePolicy(sizePolicy);

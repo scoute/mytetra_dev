@@ -23,6 +23,12 @@ public:
     void setHtml(QString text);
     void setDocument(QSharedPointer<QTextDocument> pDocument);
 
+    // Состояние скрепки "поверх всех окон". Хранится отдельно от флага
+    // окна: флаги сбрасываются пересозданием окна (смена поведения
+    // single/together, восстановление из трея), а кнопка должна
+    // отражать желание
+    bool isPinned(void) const;
+
     bool hasTextSelection();
 
     int getTextVerticalScroll();
@@ -52,6 +58,8 @@ private:
 
     // Мини-кнопка скрепки в углу окна
     QToolButton *pinButton=nullptr;
+
+    bool mPinned=false;
 
     int mGeomX=0;
     int mGeomY=0;

@@ -32,11 +32,13 @@ void TestShowTextPin::pinTogglesFlag(void)
     pin->setChecked(true);
     QVERIFY2(win.windowFlags() & Qt::WindowStaysOnTopHint,
              "window must stay on top when pinned");
+    QVERIFY2(win.isPinned(), "pinned state must be remembered");
 
     // Выключение скрепки снимает флаг
     pin->setChecked(false);
     QVERIFY2(!(win.windowFlags() & Qt::WindowStaysOnTopHint),
              "window must not stay on top after unpin");
+    QVERIFY2(!win.isPinned(), "unpinned state must be remembered");
 }
 
 QTEST_MAIN(TestShowTextPin)

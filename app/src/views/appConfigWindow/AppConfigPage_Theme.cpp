@@ -25,6 +25,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/MtComboBox.h"
 #include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
 
@@ -696,6 +697,7 @@ void AppConfigPage_Theme::onSwitchToCustom(void)
 
   if(editorScreen!=nullptr)
     editorScreen->applyNoteColors();
+    AppContext::instance().dispatcher()->applyNoteColorsToAll();
 
   updateCustomEnabled();
 }
@@ -928,6 +930,7 @@ int AppConfigPage_Theme::applyChanges(void)
 
   if(editorScreen!=nullptr)
     editorScreen->applyNoteColors();
+    AppContext::instance().dispatcher()->applyNoteColorsToAll();
 
   return 0;
 }

@@ -14,6 +14,7 @@
 #include "models/tree/KnowTreeModel.h"
 #include "views/tree/KnowTreeView.h"
 #include "views/mainWindow/MainWindow.h"
+#include "views/record/MetaEditor.h"
 
 
 EditorShowText::EditorShowText(QWidget *parent, Qt::WindowFlags f) : QDialog(parent, f)
@@ -197,6 +198,10 @@ void EditorShowText::showEvent(QShowEvent *event)
 
     qDebug() << "Show event of EditorShowText dialog";
 
+    // Бумага по текущей теме: окно живет дольше смены темы,
+    // поэтому цвета обновляются при каждом показе
+    applyNoteColors();
+
     // Если была запомнена геометрия окна, устанавливается прежняя геометрия
     if(!(mGeomX==0 && mGeomY==0 && mGeomW==0 && mGeomH==0))
     {
@@ -265,6 +270,27 @@ void EditorShowText::onPinToggled(bool checked)
 bool EditorShowText::isPinned(void) const
 {
     return mPinned;
+}
+
+
+// Бумага и шрифт как в основном редакторе (те же объявления,
+// но прямо на свою область: селектор по objectName здесь не нужен)
+void EditorShowText::applyNoteColors(void)
+{
+    // Без инициализированного конфига (headless-пробы без AppContext)
+    // читать нечего: поле полностью отдается теме
+    if(AppContext::instance().appConfig()==nullptr)
+    {
+        mTextArea->setStyleSheet(QString());
+        return;
+    }
+
+    QStringList declarations=MetaEditor::notePaperDeclarations();
+
+    if(declarations.isEmpty())
+        mTextArea->setStyleSheet(QString());
+    else
+        mTextArea->setStyleSheet(declarations.join(" "));
 }
 
 

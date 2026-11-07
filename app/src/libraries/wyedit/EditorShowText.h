@@ -37,6 +37,11 @@ public:
     // Действия при закрытии диалога
     void closeEvent(QCloseEvent *event);
 
+    // Бумага и шрифт как в основном редакторе: на теме Custom -
+    // явные цвета/мозаика из настроек, на базовых темах поле
+    // полностью отдается теме (пустой stylesheet)
+    void applyNoteColors(void);
+
 signals:
 
     void editorShowTextClose(const QString &noteId);

@@ -51,6 +51,7 @@
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "views/tree/TreeScreen.h"
 #include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/wyedit/EditorToolBarAssistant.h"
 #include "libraries/wyedit/EditorConfig.h"
 #include "views/recordTable/RecordTableScreen.h"
@@ -280,6 +281,7 @@ void MainWindow::onViewPaperColor(void)
 
     if(editorScreen!=nullptr)
         editorScreen->applyNoteColors();
+        AppContext::instance().dispatcher()->applyNoteColorsToAll();
 }
 
 // Клик по пункту меню Темы: применить выбранную тему сразу
@@ -305,6 +307,7 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         // пустая настройка подхватывает цвет новой темы
         if(editorScreen!=nullptr)
             editorScreen->applyNoteColors();
+        AppContext::instance().dispatcher()->applyNoteColorsToAll();
     }
 }
 

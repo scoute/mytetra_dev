@@ -79,6 +79,10 @@ public:
  // Свой stylesheet виджета бьет тему, поэтому в него попадает только
  // явный цвет из настроек; пустые настройки полностью отдают поле теме
  static QString noteTextAreaStyleSheet(void);
+
+ // Сами CSS-объявления бумаги и шрифта без селектора: общий движок
+ // для основного редактора и открепляемых окон
+ static QStringList notePaperDeclarations(void);
  void applyNoteColors(void);
 
  // Позиция курсора в статусбаре: строка и колонка с единицы.

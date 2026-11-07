@@ -159,6 +159,17 @@ void EditorShowTextDispatcher::updateAllWindows()
     }
 }
 
+
+// Перекрасить бумагу всех открепляемых окон под текущую тему
+void EditorShowTextDispatcher::applyNoteColorsToAll(void)
+{
+    for( auto widgetWindow : mWindowsList )
+    {
+        if( !widgetWindow.isNull() )
+            widgetWindow->applyNoteColors();
+    }
+}
+
 // Закрытие указанного окна
 void EditorShowTextDispatcher::closeWindow(const QString &noteId)
 {

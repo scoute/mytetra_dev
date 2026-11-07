@@ -1,4 +1,4 @@
-// Лента миниатюр предпросмотра печати на QTest, линия v2 (см. 556).
+// Лента миниатюр предпросмотра печати на QTest (см. 556).
 // Чистые виджеты без базы: документ с несколькими страницами,
 // сверка числа миниатюр, математики прокрутки и сигнала выбора.
 #include <QtTest>
@@ -47,6 +47,8 @@ void TestPrintThumb::thumbsAndNav(void)
     view.scrollToPage(1);
     QCOMPARE(view.verticalScrollBar()->value(), view.pageOffset(1));
     QCOMPARE(view.pageAtOffset(view.verticalScrollBar()->value()), 1);
+    view.scrollToPage(0);
+    QCOMPARE(view.verticalScrollBar()->value(), 0);
 
     // Лента: по миниатюре на страницу, иконки не пустые
     PageThumbnailBar bar;
@@ -64,6 +66,14 @@ void TestPrintThumb::thumbsAndNav(void)
     bar.setCurrentPageSilent(2);
     QCOMPARE(spy.count(), 1);
     QCOMPARE(bar.currentRow(), 2);
+
+    // Подгон под ширину: ресайз ленты перерисовывает миниатюры,
+    // выбор и число строк сохраняются
+    bar.resize(bar.width()+60, 500);
+    QApplication::processEvents();
+    QCOMPARE(bar.count(), pages);
+    QCOMPARE(bar.currentRow(), 2);
+    QVERIFY2(!bar.item(2)->icon().isNull(), "re-rendered thumbnail must exist");
 }
 
 QTEST_MAIN(TestPrintThumb)

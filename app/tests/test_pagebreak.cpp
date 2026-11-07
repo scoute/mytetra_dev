@@ -48,6 +48,41 @@ private slots:
 
     void insertStripsAndRoundtrips(void);
 
+    // Бэкспейс в начале абзаца за маркером сносит весь маркер
+    // (текст, фон и page-break), а не ест символы и не трогает
+    // пустые строки до разрыва. Курсор встает на точку стыка
+    void backspaceAfterMarkerRemovesIt(void);
+
+    // Delete в конце абзаца перед маркером - симметрично
+    void deleteBeforeMarkerRemovesIt(void);
+
+    // Бэкспейс внутри текста маркера сносит весь маркер целиком:
+    // огрызок с фоном и разрывом оставлять нельзя
+    void backspaceInsideMarkerRemovesIt(void);
+
+    // Зомби-маркер (текст уже съеден, пустой блок с фоном и разрывом):
+    // бэкспейс за ним убирает блок полностью
+    void backspaceAfterZombieRemovesIt(void);
+
+    // Выделение с запасом до и после маркера: удаляется одним махом
+    // без полосок (это и раньше работало, регрессия)
+    void selectionAcrossMarkerRemovesIt(void);
+
+    // Выделение начинается внутри маркера: маркер уходит целиком,
+    // огрызков с фоном не остается
+    void selectionFromInsideMarkerRemovesIt(void);
+
+    // Чистка зомби перед печатью: пустой блок с фоном и разрывом,
+    // но без ножниц. Разрыв остается, серая полоса уходит
+    void stripCleansZombie(void);
+
+    // Enter внутри маркера: маркер цел, под ним новый обычный абзац
+    // без фона и разрыва. Половинок с разрывом не плодится
+    void enterInsideMarkerMakesCleanBlock(void);
+
+    // Ctrl+X с заходом в маркер: режется весь маркер целиком
+    void cutAcrossMarkerRemovesIt(void);
+
 private:
 
     QTemporaryDir m_tmp;
@@ -195,6 +230,372 @@ void TestPageBreak::insertStripsAndRoundtrips(void)
     TypefaceFormatter::stripPageBreaksForPrint(foreignDoc.data());
     QVERIFY2(foreignDoc->toPlainText().contains(QStringLiteral("made")),
              "foreign page-break content must be kept");
+
+    dropEditor(k);
+}
+
+
+static QString dumpBlocks(QTextDocument *doc)
+{
+    QStringList lines;
+
+    for(QTextBlock b=doc->begin(); b.isValid(); b=b.next())
+        lines << QStringLiteral("[break=%1 bg=%2 text=%3]")
+                 .arg(b.blockFormat().pageBreakPolicy())
+                 .arg(b.blockFormat().background().color().name())
+                 .arg(b.text());
+
+    return lines.join(QStringLiteral(" | "));
+}
+
+
+static int markerBlockCount(QTextDocument *doc)
+{
+    int n=0;
+
+    for(QTextBlock b=doc->begin(); b.isValid(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto)
+            ++n;
+
+    return n;
+}
+
+
+// Документ First / пустой / МАРКЕР / Last через штатную кнопку:
+// курсор после вставки стоит в начале Last
+static QTextBlock insertMarkerBetween(QObject *tc, MetaEditor *ed)
+{
+    Q_UNUSED(tc);
+    QTextDocument *doc=ed->textArea->document();
+
+    QTextCursor split(doc->begin());
+    split.movePosition(QTextCursor::EndOfBlock);
+    split.insertBlock();
+    QApplication::processEvents();
+
+    int emptyPos=-1;
+    for(QTextBlock b=doc->begin(); b.isValid(); b=b.next())
+        if(b.text().isEmpty())
+        {
+            emptyPos=b.position();
+            break;
+        }
+    Q_ASSERT(emptyPos>=0);
+
+    QTextCursor cursor(doc);
+    cursor.setPosition(emptyPos);
+    ed->textArea->setTextCursor(cursor);
+
+    QAction *insertAction=ed->findChild<QAction *>(QStringLiteral("editor_tb_insertPageBreak"));
+    Q_ASSERT(insertAction!=nullptr);
+    insertAction->trigger();
+    QApplication::processEvents();
+
+    for(QTextBlock b=doc->begin(); b.isValid(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto &&
+           b.text().contains(TypefaceFormatter::pageBreakMark()))
+            return b;
+
+    Q_ASSERT(false);
+    return QTextBlock();
+}
+
+
+void TestPageBreak::backspaceAfterMarkerRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+    qDebug() << "BEFORE backspace:" << dumpBlocks(doc);
+
+    // Курсор в начало Last (как после вставки): бэкспейс должен снести
+    // маркер целиком, курсор - на конец First
+    QTextCursor cursor(doc);
+    QTextBlock last=doc->lastBlock();
+    cursor.setPosition(last.position());
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Backspace);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER backspace:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+    QVERIFY2(!doc->toPlainText().contains(TypefaceFormatter::pageBreakMark()),
+             "marker text must be gone");
+    QVERIFY2(doc->toPlainText().contains(QStringLiteral("First")), "First must survive");
+    QVERIFY2(doc->toPlainText().contains(QStringLiteral("Last")), "Last must survive");
+
+    // Курсор на точке стыка (конец First), а не на середине страницы
+    QTextBlock first=doc->begin();
+    QCOMPARE(k.ed->textArea->textCursor().position(),
+             first.position()+first.text().length());
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::deleteBeforeMarkerRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Курсор в конец First: Delete должен снести маркер целиком
+    QTextCursor cursor(doc->begin());
+    cursor.movePosition(QTextCursor::EndOfBlock);
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Delete);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER delete:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+    QVERIFY2(!doc->toPlainText().contains(TypefaceFormatter::pageBreakMark()),
+             "marker text must be gone");
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::backspaceInsideMarkerRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    QTextBlock marker=insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Курсор в середину текста маркера: бэкспейс сносит весь маркер,
+    // а не один символ (иначе остается полоска с разрывом)
+    QTextCursor cursor(doc);
+    cursor.setPosition(marker.position()+2);
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Backspace);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER inner backspace:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+    QVERIFY2(!doc->toPlainText().contains(TypefaceFormatter::pageBreakMark()),
+             "marker text must be gone");
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::backspaceAfterZombieRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    QTextBlock marker=insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Зомби: текст маркера съеден (как у пользователя), остался пустой
+    // блок с фоном и page-break - светлая полоска ни на что не реагирует
+    QTextCursor eat(doc);
+    eat.setPosition(marker.position());
+    eat.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+    eat.removeSelectedText();
+    QApplication::processEvents();
+
+    qDebug() << "ZOMBIE state:" << dumpBlocks(doc);
+
+    // Курсор в начало Last: бэкспейс должен убрать зомби-блок полностью
+    QTextCursor cursor(doc);
+    cursor.setPosition(doc->lastBlock().position());
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Backspace);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER zombie backspace:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::selectionAcrossMarkerRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Выделение с запасом: середина First - середина Last
+    QTextCursor cursor(doc);
+    cursor.setPosition(doc->begin().position()+2);
+    cursor.setPosition(doc->lastBlock().position()+2, QTextCursor::KeepAnchor);
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Backspace);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER wide selection:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+    QVERIFY2(!doc->toPlainText().contains(TypefaceFormatter::pageBreakMark()),
+             "marker text must be gone");
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::selectionFromInsideMarkerRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    QTextBlock marker=insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Выделение начинается внутри маркера, кончается в Last:
+    // маркер уходит целиком
+    QTextCursor cursor(doc);
+    cursor.setPosition(marker.position()+3);
+    cursor.setPosition(doc->lastBlock().position()+2, QTextCursor::KeepAnchor);
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Backspace);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER inner-start selection:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+    QVERIFY2(!doc->toPlainText().contains(TypefaceFormatter::pageBreakMark()),
+             "marker text must be gone");
+    QVERIFY2(doc->toPlainText().contains(QStringLiteral("First")), "First must survive");
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::stripCleansZombie(void)
+{
+    // Зомби: пустой блок с page-break и нашим фоном, но без ножниц.
+    // В печати серая полоса должна уйти, разрыв - остаться
+    QScopedPointer<QTextDocument> zombieDoc(new QTextDocument);
+    zombieDoc->setHtml(QStringLiteral("<p>First</p><p style=\"page-break-after: always; background-color: #e8e8e8;\"></p><p>Last</p>"));
+
+    int zombieBreaks=0;
+    for(QTextBlock b=zombieDoc->begin(); b.isValid(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto)
+            ++zombieBreaks;
+    QVERIFY2(zombieBreaks==1, "zombie break must be present");
+
+    TypefaceFormatter::stripPageBreaksForPrint(zombieDoc.data());
+
+    // Разрыв остался
+    int cleanBreaks=0;
+    for(QTextBlock b=zombieDoc->begin(); b.isValid(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto)
+            ++cleanBreaks;
+    QCOMPARE(cleanBreaks, 1);
+
+    // Серая полоса ушла из html
+    QVERIFY2(!zombieDoc->toHtml().contains(QStringLiteral("#e8e8e8")) &&
+             !zombieDoc->toHtml().contains(QStringLiteral("e8e8e8")),
+             "zombie background must be gone after strip");
+
+    // Чужой пустой page-break без нашего фона не трогается
+    QScopedPointer<QTextDocument> foreignDoc(new QTextDocument);
+    foreignDoc->setHtml(QStringLiteral("<p>Hand</p><p style=\"page-break-after: always;\"></p><p>made</p>"));
+    TypefaceFormatter::stripPageBreaksForPrint(foreignDoc.data());
+
+    int foreignBreaks=0;
+    for(QTextBlock b=foreignDoc->begin(); b.isValid(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto)
+            ++foreignBreaks;
+    QCOMPARE(foreignBreaks, 1);
+}
+
+
+void TestPageBreak::enterInsideMarkerMakesCleanBlock(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    QTextBlock marker=insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Enter в середине маркера: маркер цел, под ним обычный абзац
+    QTextCursor cursor(doc);
+    cursor.setPosition(marker.position()+2);
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_Enter);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER enter in marker:" << dumpBlocks(doc);
+
+    // Маркер один и с текстом
+    int markers=0;
+    for(QTextBlock b=doc->begin(); b.isValid(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto)
+        {
+            ++markers;
+            QVERIFY2(b.text().contains(TypefaceFormatter::pageBreakMark()),
+                     "surviving break must keep marker text");
+        }
+    QCOMPARE(markers, 1);
+
+    // Новый абзац под маркером - обычный, без фона и разрыва
+    QTextBlock fresh=marker.next();
+    QVERIFY2(fresh.isValid(), "block after marker must exist");
+    QCOMPARE(fresh.blockFormat().pageBreakPolicy(), QTextFormat::PageBreak_Auto);
+
+    dropEditor(k);
+}
+
+
+void TestPageBreak::cutAcrossMarkerRemovesIt(void)
+{
+    EditorKit k=makeEditor();
+    k.ed->setTextarea(QStringLiteral("<p>First</p><p>Last</p>"));
+    QApplication::processEvents();
+
+    QTextBlock marker=insertMarkerBetween(this, k.ed);
+
+    QTextDocument *doc=k.ed->textArea->document();
+
+    // Ctrl+X с заходом в маркер: режется весь маркер целиком
+    QTextCursor cursor(doc);
+    cursor.setPosition(marker.position()+3);
+    cursor.setPosition(doc->lastBlock().position()+2, QTextCursor::KeepAnchor);
+    k.ed->textArea->setTextCursor(cursor);
+
+    QTest::keyClick(k.ed->textArea, Qt::Key_X, Qt::ControlModifier);
+    QApplication::processEvents();
+
+    qDebug() << "AFTER cut across marker:" << dumpBlocks(doc);
+
+    QCOMPARE(markerBlockCount(doc), 0);
+    QVERIFY2(!doc->toPlainText().contains(TypefaceFormatter::pageBreakMark()),
+             "marker text must be gone after cut");
 
     dropEditor(k);
 }

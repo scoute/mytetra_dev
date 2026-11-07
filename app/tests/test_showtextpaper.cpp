@@ -87,7 +87,15 @@ void TestShowTextPaper::paperFollowsTheme(void)
     themedWin.setHtml(QStringLiteral("<p>Paper</p>"));
     themedWin.show();
     QApplication::processEvents();
-    QVERIFY2(themedWin.findChild<QTextEdit *>()->styleSheet().contains(QStringLiteral("#112233")),
+
+    QTextEdit *themedArea=themedWin.findChild<QTextEdit *>();
+    QVERIFY2(themedArea!=nullptr, "detached text area must exist");
+
+    // То же имя поля что у основного редактора: CSS-правила бумаг
+    // (QWidget[objectName="textArea"]) применяются и здесь
+    QCOMPARE(themedArea->objectName(), QStringLiteral("textArea"));
+
+    QVERIFY2(themedArea->styleSheet().contains(QStringLiteral("#112233")),
              "detached window must use custom paper color");
 
     // Базовая тема: поле полностью за темой, своего stylesheet нет

@@ -68,6 +68,7 @@ public:
 #include "TrayManager.h"
 #include "MenuBuilder.h"
 #include "views/printPreview/PrintPreview.h"
+#include "libraries/wyedit/formatters/TypefaceFormatter.h"
 #include "views/appConfigWindow/AppConfigDialog.h"
 #include "libraries/TrashMonitoring.h"
 #include "views/tree/TreeScreen.h"
@@ -2625,7 +2626,13 @@ void MainWindow::filePrint(void)
     dlg->setWindowTitle(tr("Print Document"));
 
     if (dlg->exec() == QDialog::Accepted)
-        editorScreen->getTextareaDocument()->print(&printer);
+    {
+        // Печать по копии: маркеры разрывов чистятся (на бумаге только
+        // разрыв), живой документ не трогается
+        QScopedPointer<QTextDocument> printDoc(editorScreen->getTextareaDocument()->clone());
+        TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
+        printDoc->print(&printer);
+    }
 
     delete dlg;
 #endif
@@ -2657,7 +2664,11 @@ void MainWindow::filePrintPdf(void)
         QPrinter printer(QPrinter::HighResolution);
         printer.setOutputFormat(QPrinter::PdfFormat);
         printer.setOutputFileName(fileName);
-        editorScreen->getTextareaDocument()->print(&printer);
+
+        // Та же чистка маркеров что в filePrint: в PDF только разрывы
+        QScopedPointer<QTextDocument> printDoc(editorScreen->getTextareaDocument()->clone());
+        TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
+        printDoc->print(&printer);
     }
 #endif
 }

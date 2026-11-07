@@ -8121,6 +8121,14 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Вставка горизонтальной линии</translation>
     </message>
     <message>
+        <source>Insert page break</source>
+        <translation>Вставка разрыва страницы</translation>
+    </message>
+    <message>
+        <source>Insert a page break marker into the empty paragraph from cursor</source>
+        <translation>Вставка маркера разрыва страницы в пустой абзац с курсором</translation>
+    </message>
+    <message>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="160"/>
         <source>Insert special character</source>
         <translation>Вставить спецсимвол</translation>
@@ -9288,6 +9296,10 @@ Git-история в общем каталоге будет расти с ка�
         <location filename="../../../src/libraries/wyedit/formatters/TypefaceFormatter.cpp" line="1013"/>
         <source>Code copied to clipboard</source>
         <translation>Код скопирован в буфер обмена</translation>
+    </message>
+    <message>
+        <source>Page break</source>
+        <translation>Разрыв страницы</translation>
     </message>
 </context>
 <context>

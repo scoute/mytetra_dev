@@ -10,6 +10,7 @@
 #include <QTextCursor>
 #include <QTextBlockFormat>
 #include <QTextCharFormat>
+#include <QScopedPointer>
 
 #include "libraries/wyedit/EditorTextArea.h"
 #include "libraries/wyedit/formatters/TypefaceFormatter.h"
@@ -25,6 +26,7 @@ private slots:
     void copyLinks(void);
     void toc(void);
     void headings(void);
+    void pageBreak(void);
     void htmlRoundtrip(void);
 };
 
@@ -300,6 +302,56 @@ void TestTypeface::htmlRoundtrip(void)
     QVERIFY2(f1.fontPointSize()>f2.fontPointSize() &&
              f2.fontPointSize()>f6.fontPointSize(),
              "sizes must decrease H1>H2>H6");
+}
+
+void TestTypeface::pageBreak(void)
+{
+    EditorTextArea area;
+    TypefaceFormatter fmt;
+    fmt.setTextArea(&area);
+    QTextDocument *doc=area.document();
+
+    // First, пустой абзац, Last - как Enter в живом редакторе
+    QTextCursor c(doc);
+    c.insertText(QStringLiteral("First"));
+    c.insertBlock();
+    c.insertBlock();
+    c.insertText(QStringLiteral("Last"));
+
+    area.setTextCursor(QTextCursor(doc->findBlockByNumber(1)));
+    fmt.onInsertPageBreakClicked();
+
+    // Маркер: блок с page-break и ножницами между First и Last
+    QTextBlock marker=doc->findBlockByNumber(1);
+    QVERIFY2(marker.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto,
+             "marker must carry page break");
+    QVERIFY2(marker.text().contains(TypefaceFormatter::pageBreakMark()),
+             "marker must contain scissors");
+    QCOMPARE(doc->findBlockByNumber(0).text(), QStringLiteral("First"));
+    QCOMPARE(doc->findBlockByNumber(2).text(), QStringLiteral("Last"));
+
+    // Раундтрип и чистка перед печатью
+    QScopedPointer<QTextDocument> printDoc(new QTextDocument);
+    printDoc->setHtml(doc->toHtml());
+    QVERIFY2(printDoc->toHtml().contains(QStringLiteral("page-break")),
+             "page-break must survive html roundtrip");
+    TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
+
+    bool cleanFound=false;
+    for(QTextBlock b=printDoc->begin(); b!=printDoc->end(); b=b.next())
+        if(b.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto)
+        {
+            QVERIFY2(b.text().isEmpty(), "stripped marker must be empty");
+            cleanFound=true;
+        }
+    QVERIFY2(cleanFound, "clean break must remain after strip");
+
+    // Чужой page-break без маркера не трогается
+    QScopedPointer<QTextDocument> foreignDoc(new QTextDocument);
+    foreignDoc->setHtml(QStringLiteral("<p>Hand</p><p style=\"page-break-after: always;\">made</p>"));
+    TypefaceFormatter::stripPageBreaksForPrint(foreignDoc.data());
+    QVERIFY2(foreignDoc->toPlainText().contains(QStringLiteral("made")),
+             "foreign page-break content must be kept");
 }
 
 QTEST_MAIN(TestTypeface)

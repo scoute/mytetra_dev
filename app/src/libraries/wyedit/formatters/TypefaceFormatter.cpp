@@ -3271,6 +3271,97 @@ void TypefaceFormatter::onInsertHorizontalLineClicked()
 }
 
 
+QChar TypefaceFormatter::pageBreakMark(void)
+{
+    return QChar(0x2702);
+}
+
+
+QString TypefaceFormatter::pageBreakMarkerLine(void)
+{
+    return QString(pageBreakMark())
+           + QStringLiteral(" ")
+           + tr("Page break")
+           + QStringLiteral(" ")
+           + QString(pageBreakMark());
+}
+
+
+// Вставка разрыва страницы в "пустой" абзац, где расположен курсор
+// (пустой абзац заменяется на маркер). Если есть выделение в тексте,
+// или курсор стоит на тексте, вставка не производится
+void TypefaceFormatter::onInsertPageBreakClicked()
+{
+    // Если есть выделение в тексте, то вставка не производится
+    if(textArea->textCursor().hasSelection())
+        return;
+
+    // Если курсор стоит на тексте, то вставка не производится.
+    // Тот же контракт что у горизонтальной линии: сериализованный
+    // <br/> из сохраненки дает символ U+2028, туда вставка не ходит
+    QTextCursor probe=textArea->textCursor();
+    probe.select(QTextCursor::LineUnderCursor);
+    if(!probe.selectedText().isNull())
+        return;
+
+    // Работаем с блоком курсора: пустой абзац превращается в маркер.
+    // insertHtml("<p ...>") здесь не годится: фрагмент сливается
+    // с текущим блоком и page-break теряется (проверено пробой)
+    QTextCursor edit=textArea->textCursor();
+    edit.movePosition(QTextCursor::StartOfBlock);
+    edit.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+    textArea->setTextCursor(edit);
+    textArea->textCursor().removeSelectedText();
+
+    QTextBlockFormat breakFormat;
+    breakFormat.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysAfter);
+    breakFormat.setAlignment(Qt::AlignHCenter);
+    breakFormat.setBackground(QColor(QStringLiteral("#e8e8e8")));
+    textArea->textCursor().setBlockFormat(breakFormat);
+
+    QTextCharFormat markFormat;
+    markFormat.setForeground(QColor(QStringLiteral("#808080")));
+    textArea->textCursor().insertText(pageBreakMarkerLine(), markFormat);
+
+    textArea->moveCursor(QTextCursor::Down);
+    textArea->moveCursor(QTextCursor::StartOfLine);
+}
+
+
+// Чистка визуала разрывов перед печатью: текст и фон убираются,
+// пустой абзац с page-break остается и рвет страницу. Чужие
+// page-break без маркера не трогаются
+void TypefaceFormatter::stripPageBreaksForPrint(QTextDocument *doc)
+{
+    if(doc==nullptr)
+        return;
+
+    QTextBlock block=doc->begin();
+
+    while(block.isValid())
+    {
+        const bool hasBreak=(block.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto);
+
+        if(hasBreak && block.text().contains(pageBreakMark()))
+        {
+            // Наш маркер: стирается только текст блока (до конца блока,
+            // разделитель не трогаем - иначе блок склеится со следующим
+            // и разрыв уедет). Пустой абзац с page-break остается
+            // и рвет страницу на печати
+            QTextCursor cursor(block);
+            cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+            cursor.removeSelectedText();
+
+            QTextBlockFormat clean;
+            clean.setPageBreakPolicy(block.blockFormat().pageBreakPolicy());
+            cursor.setBlockFormat(clean);
+        }
+
+        block=block.next();
+    }
+}
+
+
 // Обработка мягкого переноса
 // Учитываются мягкие переносы до выделенного текста (1-й символ до выделения),
 // после выделенного текста и в выделенных абзацах

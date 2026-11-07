@@ -310,47 +310,6 @@ void ImageFormatter::onDoubleClickOnImage(void)
     onContextMenuEditImageProperties();
 }
 
-// Открыть в файловом менеджере каталог с файлом картинки под курсором.
-// Без shell: только QDesktopServices. Если каталог записи еще неизвестен,
-// показывается сообщение
-void ImageFormatter::onShowImageInFolder(void)
-{
-    // Если выделена картинка
-    if(editor->cursorPositionDetector->isImageSelect() ||
-       editor->cursorPositionDetector->isCursorOnImage())
-    {
-        QString directory=editor->getWorkDirectory();
-
-        if(directory.isEmpty())
-        {
-            QMessageBox::information(editor,
-                                     tr("Show in folder"),
-                                     tr("Note directory is unknown, there is nothing to open."));
-            return;
-        }
-
-        // Путь делается абсолютным: workDirectory обычно относительный
-        // (./data/base/...), а файловому менеджеру относительный file-URL
-        // не открывается
-        QString absoluteDirectory=QDir(directory).absolutePath();
-
-        if(!QDir(absoluteDirectory).exists())
-        {
-            QMessageBox::information(editor,
-                                     tr("Show in folder"),
-                                     tr("Directory does not exist: %1").arg(absoluteDirectory));
-            return;
-        }
-
-        if(!QDesktopServices::openUrl(QUrl::fromLocalFile(absoluteDirectory)))
-        {
-            QMessageBox::information(editor,
-                                     tr("Show in folder"),
-                                     tr("Can not open directory: %1").arg(absoluteDirectory));
-        }
-    }
-}
-
 // Путь к файлу картинки под курсором. Пусто если курсор не на
 // картинке (подсказка в строке статуса) или файла нет на диске
 // (предупреждение). Вызывает только проверку, без открытия

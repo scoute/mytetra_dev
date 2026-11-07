@@ -22,7 +22,6 @@ public:
  void setRenameVoice(bool flag);
  void setMoveVoice(bool flag); // Пункт "Переместить" на голосовой ссылке
  void setMoveAttach(bool flag); // Пункт "Переместить" на метке аттача
- void setShowVoiceInFolder(bool flag); // Пункт "Показать файл" на голосовой ссылке
  void setDeleteVoice(bool flag); // Пункт "Удалить" на голосовой ссылке
  void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
  void setPasteNoteReference(bool flag); // Пункт "Вставить ссылку на заметку", виден если в буфере внутренняя ссылка
@@ -46,7 +45,6 @@ signals:
   void pasteAsPlainText(void);
   void selectAll(void);
   void contextMenuEditImageProperties(void);
-  void contextMenuShowImageInFolder(void);
   void contextMenuOpenImage(void);
   void contextMenuOpenImageWith(void);
   void contextMenuEditMathExpression(void);
@@ -55,7 +53,6 @@ signals:
   void contextMenuRenameVoice(void);
   void contextMenuMoveVoice(void);
   void contextMenuMoveAttach(void);
-  void contextMenuShowVoiceInFolder(void);
   void contextMenuShowNoteInFolder(void);
   void contextMenuDeleteVoice(void);
   void contextMenuEditReference(void);
@@ -84,7 +81,6 @@ private:
   QAction *actionUppercase; // ПРОПИСНЫЕ
 
   QAction *actionEditImageProperties;
-  QAction *actionShowImageInFolder;
   QAction *actionOpenImage;
   QAction *actionOpenImageWith;
   QAction *actionEditMathExpression;
@@ -93,7 +89,6 @@ private:
   QAction *actionRenameVoice;
   QAction *actionMoveVoice;
   QAction *actionMoveAttach;
-  QAction *actionShowVoiceInFolder;
   QAction *actionShowNoteInFolder;
   QAction *actionDeleteVoice;
   QAction *actionEditReference;
@@ -117,7 +112,6 @@ protected slots:
   void onActionPasteAsPlainText(void);
   void onActionSelectAll(void);
   void onActionContextMenuEditImageProperties(void);
-  void onActionContextMenuShowImageInFolder(void);
   void onActionContextMenuOpenImage(void);
   void onActionContextMenuOpenImageWith(void);
   void onActionContextMenuEditMathExpression(void);
@@ -126,7 +120,6 @@ protected slots:
   void onActionContextMenuRenameVoice(void);
   void onActionContextMenuMoveVoice(void);
   void onActionContextMenuMoveAttach(void);
-  void onActionContextMenuShowVoiceInFolder(void);
   void onActionContextMenuShowNoteInFolder(void);
   void onActionContextMenuDeleteVoice(void);
   void onActionContextMenuEditReference(void);

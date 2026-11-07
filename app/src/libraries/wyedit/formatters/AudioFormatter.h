@@ -65,7 +65,6 @@ public slots:
   void onPlayVoiceClicked(void);
   void onRenameVoiceClicked(void);
   void onMoveVoiceClicked(void);
-  void onShowVoiceInFolder(void);
   void onDeleteVoiceClicked(void);
 
 private slots:

@@ -1363,6 +1363,26 @@ void AppConfig::set_attachNameMode(int mode)
 }
 
 
+// Режим имен каталогов записей на диске. Unversioned-ключ как attachNameMode:
+// отсутствующий ключ - системные имена как в обычной MyTetra
+int AppConfig::get_recordDirNameMode(void)
+{
+    if(m_conf->contains("recordDirNameMode"))
+        return m_conf->value("recordDirNameMode", RecordDirSystem).toInt();
+
+    return RecordDirSystem;
+}
+
+
+void AppConfig::set_recordDirNameMode(int mode)
+{
+    if(mode<RecordDirSystem || mode>RecordDirHybrid)
+        mode=RecordDirSystem;
+
+    m_conf->setValue("recordDirNameMode", mode);
+}
+
+
 bool AppConfig::get_recordHeaderVisible(void)
 {
     return m_conf->value("recordHeaderVisible", true).toBool();

@@ -358,6 +358,16 @@ public:
     int get_attachNameMode(void);
     void set_attachNameMode(int mode);
 
+    // Режим имен каталогов записей на диске (base/):
+    // 0 - системные (id, как в обычной MyTetra, по умолчанию),
+    // 1 - гибридные (id_имя, чтобы по каталогу было видно что за запись).
+    // Оригинального режима нет сознательно: голое имя неуникально
+    // и две записи делили бы один каталог. Плоского вида без пути
+    // веток: только id и имя самой записи
+    enum RecordDirNameMode { RecordDirSystem=0, RecordDirHybrid=1 };
+    int get_recordDirNameMode(void);
+    void set_recordDirNameMode(int mode);
+
     // Шапка заметки (название и автор) над редактором.
     // По умолчанию показана
     bool get_recordHeaderVisible(void);

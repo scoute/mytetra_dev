@@ -3640,6 +3640,13 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Перейти на данную запись</translation>
     </message>
 </context>
+    <context>
+        <name>EditorShowText</name>
+        <message>
+            <source>Always on top</source>
+            <translation>Поверх всех окон</translation>
+        </message>
+    </context>
 <context>
     <name>EditorSplitCellForm</name>
     <message>

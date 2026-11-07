@@ -188,20 +188,31 @@ int PreviewView::pageAtOffset(int value) const
 PageThumbnailBar::PageThumbnailBar(QWidget *parent) : QListWidget(parent)
 {
     // Вертикальная лента: иконка сверху, номер снизу, без правки.
-    // Перенос включен: при узкой ленте миниатюры идут строго
-    // друг под другом с вертикальной прокруткой
+    // Перенос включен: при широкой ленте миниатюры сами встают
+    // в несколько колонок (максимум ограничивает максимальная ширина
+    // ленты), при узкой идут строго друг под другом.
+    // Вертикальная полоса всегда видна: появление/исчезновение
+    // меняло бы ширину вьюпорта и давало зацикленное "дрожание".
+    // Горизонтальной нет вообще
     setViewMode(QListView::IconMode);
     setMovement(QListView::Static);
     setResizeMode(QListView::Adjust);
     setWrapping(true);
     setSpacing(6);
     setIconSize(QSize(m_thumbWidth, m_thumbWidth));
-    // Вертикальная полоса всегда видна: появление/исчезновение
-    // меняло бы ширину вьюпорта и давало зацикленное "дрожание"
-    // с перерисовкой миниатюр. Горизонтальной нет вообще
+
+    // Фиксированная ячейка сетки: перенос считается от нее.
+    // Ширина - под миниатюру с полями, высота - миниатюра плюс подпись
+    setGridSize(QSize(m_thumbWidth+12, m_thumbWidth+34));
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setMinimumWidth(96);
+
+    // Ширина ленты: минимум одна колонка, максимум четыре.
+    // Лишнее место при растягивании забирает основной вид:
+    // больше четырех колонок не бывает
+    const int scrollWidth=verticalScrollBar()->sizeHint().width();
+    setMinimumWidth(gridSize().width()+scrollWidth+8);
+    setMaximumWidth(4*gridSize().width()+scrollWidth+8);
 
     connect(this, &QListWidget::currentItemChanged,
             this, &PageThumbnailBar::onCurrentItemChanged);
@@ -210,28 +221,24 @@ PageThumbnailBar::PageThumbnailBar(QWidget *parent) : QListWidget(parent)
 
 void PageThumbnailBar::rebuild(QTextDocument *document)
 {
-    m_doc=document;
-
     m_silent=true;
     clear();
 
-    if(m_doc!=nullptr)
+    if(document!=nullptr)
     {
-        m_thumbWidth=thumbWidthForViewport();
-        setIconSize(QSize(m_thumbWidth, m_thumbWidth));
-
-        const int pages=m_doc->pageCount();
+        // Размер миниатюр фиксированный (m_thumbWidth): ширина ленты
+        // на него не влияет, влияет только на число колонок 1-4
+        const int pages=document->pageCount();
 
         for(int i=0; i<pages; ++i)
         {
             QListWidgetItem *item=new QListWidgetItem(
-                QIcon(renderPage(m_doc, i, m_thumbWidth)),
+                QIcon(renderPage(document, i, m_thumbWidth)),
                 tr("Page %1").arg(i+1),
                 this);
             item->setData(Qt::UserRole, i);
             item->setTextAlignment(Qt::AlignHCenter);
             item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-            item->setSizeHint(QSize(m_thumbWidth+8, m_thumbWidth+28));
         }
 
         if(pages>0)
@@ -259,61 +266,6 @@ void PageThumbnailBar::onCurrentItemChanged(QListWidgetItem *current)
         return;
 
     emit pageSelected(current->data(Qt::UserRole).toInt());
-}
-
-
-void PageThumbnailBar::resizeEvent(QResizeEvent *e)
-{
-    QListWidget::resizeEvent(e);
-
-    if(m_doc==nullptr)
-        return;
-
-    // Миниатюры вписываются в ширину ленты: перерисовка только
-    // при реальном изменении ширины, иначе ресайз окна тормозил бы
-    const int width=thumbWidthForViewport();
-
-    if(width==m_thumbWidth)
-        return;
-
-    m_thumbWidth=width;
-    setIconSize(QSize(m_thumbWidth, m_thumbWidth));
-    renderAll();
-}
-
-
-int PageThumbnailBar::thumbWidthForViewport() const
-{
-    // Ширина вьюпорта минус поля и место под вертикальный скроллбар
-    const int width=viewport()->width()-8-verticalScrollBar()->sizeHint().width();
-
-    return qMax(48, width);
-}
-
-
-void PageThumbnailBar::renderAll()
-{
-    const int row=currentRow();
-
-    m_silent=true;
-
-    for(int i=0; i<count(); ++i)
-    {
-        QListWidgetItem *listItem=QListWidget::item(i);
-
-        if(listItem==nullptr)
-            continue;
-
-        listItem->setIcon(QIcon(renderPage(m_doc,
-                                           listItem->data(Qt::UserRole).toInt(),
-                                           m_thumbWidth)));
-        listItem->setSizeHint(QSize(m_thumbWidth+8, m_thumbWidth+28));
-    }
-
-    // Выделение и позиция прокрутки сохраняются
-    setCurrentRow(row);
-
-    m_silent=false;
 }
 
 

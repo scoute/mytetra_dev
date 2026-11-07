@@ -74,13 +74,17 @@ void TestPrintThumb::thumbsAndNav(void)
     QCOMPARE(spy.count(), 1);
     QCOMPARE(bar.currentRow(), 2);
 
-    // Подгон под ширину: ресайз ленты перерисовывает миниатюры,
-    // выбор и число строк сохраняются
-    bar.resize(bar.width()+60, 500);
+    // Фиксированный размер миниатюр: ресайз ленты их не перерисовывает,
+    // широкая лента раскладывает их в несколько колонок, выбор цел
+    bar.show();
+    QApplication::processEvents();
+    bar.resize(500, 400);
     QApplication::processEvents();
     QCOMPARE(bar.count(), pages);
     QCOMPARE(bar.currentRow(), 2);
-    QVERIFY2(!bar.item(2)->icon().isNull(), "re-rendered thumbnail must exist");
+    QCOMPARE(bar.iconSize(), QSize(120, 120));
+    QVERIFY2(bar.visualItemRect(bar.item(0)).top()==bar.visualItemRect(bar.item(1)).top(),
+             "wide bar must lay thumbnails out in several columns");
 
     // Полоса прокрутки всегда видна: иначе появление/исчезновение
     // давало зацикленное "дрожание" с перерисовкой

@@ -10,6 +10,7 @@
 
 
 class EditorShowTextContextMenu;
+class QToolButton;
 
 class EditorShowText : public QDialog
 {
@@ -39,12 +40,18 @@ protected slots:
     void onCustomContextMenuRequested(const QPoint &pos);
     void onGotoNote();
 
+    // Скрепка "поверх всех окон": переключаемый флаг окна
+    void onPinToggled(bool checked);
+
 private:
 
     QString mNoteId;
     QSharedPointer<QTextEdit> mTextArea;
     QSharedPointer<QTextDocument> mTextDocument;
     QSharedPointer<EditorShowTextContextMenu> mContextMenu;
+
+    // Мини-кнопка скрепки в углу окна
+    QToolButton *pinButton=nullptr;
 
     int mGeomX=0;
     int mGeomY=0;

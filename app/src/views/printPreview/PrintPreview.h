@@ -10,6 +10,7 @@ class QVBoxLayout;
 class QToolButton;
 
 class PreviewView;
+class PageThumbnailBar;
 
 class PrintPreview : public QWidget
 {
@@ -31,6 +32,9 @@ private slots:
     void print();
     void pageSetup();
 
+    // Следование подсветки ленты за прокруткой основного вида
+    void onMainScrollChanged(int value);
+
 private:
     void setupPrintDoc();
     void setupUI();
@@ -39,6 +43,7 @@ private:
 
     QTextDocument *doc;
     PreviewView *view;
+    PageThumbnailBar *thumbBar;
     QPrinter printer;
 
     QToolButton *buttonPrint;

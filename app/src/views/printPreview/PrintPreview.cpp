@@ -13,6 +13,8 @@
 #include <QPageSetupDialog>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QScrollBar>
 
 #include "PreviewView.h"
 #include "PrintPreview.h"
@@ -118,6 +120,10 @@ void PrintPreview::setupUI()
     buttonClose=new QToolButton(this);
     buttonClose->setText(tr("Close"));
     buttonClose->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+    // Лента миниатюр страниц слева от основного вида.
+    // Создается здесь, а не в assembly: сигналы подключаются раньше
+    thumbBar=new PageThumbnailBar(this);
 }
 
 
@@ -138,8 +144,18 @@ void PrintPreview::setupSignals()
     connect(buttonZoomOut, &QToolButton::clicked, view, &PreviewView::zoomOut);
     connect(buttonClose, &QToolButton::clicked, this, &PrintPreview::close);
 
+    // Лента миниатюр <-> основной вид: клик прыгает на страницу,
+    // прокрутка подсвечивает текущую миниатюру
+    connect(thumbBar, &PageThumbnailBar::pageSelected, view, &PreviewView::scrollToPage);
+    connect(view->verticalScrollBar(), &QScrollBar::valueChanged, this, &PrintPreview::onMainScrollChanged);
+
     // Обновление горячих клавиш, если они были изменены
     connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &PrintPreview::setupShortcuts);
+}
+
+void PrintPreview::onMainScrollChanged(int value)
+{
+    thumbBar->setCurrentPageSilent(view->pageAtOffset(value));
 }
 
 
@@ -154,16 +170,25 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();
 
+    // Лента миниатюр слева, основной вид справа
+    QHBoxLayout *contentBox=new QHBoxLayout();
+    contentBox->addWidget(thumbBar);
+    contentBox->addWidget(view, 1);
+    contentBox->setSpacing(4);
+    contentBox->setContentsMargins(0, 0, 0, 0);
 
     // Сборка содержимого окна
     centralLayout=new QVBoxLayout();
     centralLayout->addLayout(toolsbox);
-    centralLayout->addWidget(view);
+    centralLayout->addLayout(contentBox, 1);
     centralLayout->setSpacing(1);
     centralLayout->setContentsMargins(1,1,1,1);
 
     setLayout(centralLayout);
-    resize(800, 600);
+    resize(960, 600);
+
+    // Миниатюры после раскладки документа
+    thumbBar->rebuild(doc);
 }
 
 
@@ -184,6 +209,7 @@ void PrintPreview::pageSetup()
     if (dlg.exec() == QDialog::Accepted) {
         setupPrintDoc(); // setup();
         view->updateLayout();
+        thumbBar->rebuild(doc);
     }
 }
 

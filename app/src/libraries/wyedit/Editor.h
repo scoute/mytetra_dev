@@ -68,6 +68,7 @@ class Editor : public QWidget
 
  friend class EditorContextMenu;
  friend class EditorToolBarAssistant;
+ friend class EditorShowText;
 
 public:
  Editor(QWidget *parent=nullptr);
@@ -130,6 +131,11 @@ public:
 
  // Виджет полоски поиска для вставки в сетку MetaEditor
  EditorFindBar *findBarWidget(void);
+
+ // Показать поиск в заметке (поведение кнопки лупы и Ctrl+F).
+ // Нужно открепленному окну: своего тулбара у него нет, хоткей
+ // вешается диалогом напрямую на этот метод
+ void showFindPanel(void);
 
  // Мост из глобального поиска: показать поиск в заметке с запросом
  // и прыгнуть к первому совпадению. Из нескольких слов выбирается то,

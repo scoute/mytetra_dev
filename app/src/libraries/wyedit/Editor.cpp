@@ -28,8 +28,10 @@
 #include "EditorConfig.h"
 #include "EditorFloatToc.h"
 #include "libraries/ShortcutManager.h"
+#include "libraries/GlobalParameters.h"
 
 extern ShortcutManager shortcutManager;
+extern GlobalParameters globalParameters;
 #include "EditorConfigDialog.h"
 #include "EditorContextMenu.h"
 #include "EditorTextArea.h"
@@ -1612,8 +1614,10 @@ void Editor::saveTextarea(void)
       saveCallbackFunc(qobject_cast<QObject *>(this), content);
     }
 
-    // Обновляется открепляемое окно с текстом записи, если таковое открыто
-    EditorShowTextDispatcher::instance()->updateWindow( this->getMiscField("id") );
+    // Обновляется открепляемое окно с текстом записи, если таковое открыто.
+    // Инициатор не перечитывает сам себя: после своего сейва файл и так
+    // совпадает с памятью, а перечитывание сбросило бы курсор
+    EditorShowTextDispatcher::instance()->updateWindow( this->getMiscField("id"), this );
 
     // Так как произошло сохранение,
     // отмечается что новый текст небыл еще изменен
@@ -2738,6 +2742,13 @@ EditorFindBar *Editor::findBarWidget(void)
   return findBar;
 }
 
+// Показать поиск в заметке для окон без тулбара (открепленное окно:
+// хоткей Ctrl+F диалога). Поведение один в один как кнопка лупы
+void Editor::showFindPanel(void)
+{
+  onFindtextClicked();
+}
+
 
 // Совпадает ли текущее выделение с искомой строкой при заданных флагах
 bool Editor::isSelectionMatch(const QString &text, QTextDocument::FindFlags flags) const
@@ -2917,6 +2928,25 @@ void Editor::onFileUrlsDropped(const QStringList &files)
   if(textArea==nullptr || textArea->isReadOnly())
     return;
 
+  // Открепленное окно правит свою запись, а таблица аттачей синглтона -
+  // всегда текущей записи главного окна. Чужая запись на экране:
+  // дроп ушел бы в чужую таблицу, а метки в этот текст. Вежливый
+  // отказ вместо битых ссылок
+  if(getMiscField(QStringLiteral("detached"))==QStringLiteral("1"))
+  {
+    Editor *mainEditor=find_object<Editor>(QStringLiteral("editorScreen"));
+
+    if(mainEditor==nullptr ||
+       mainEditor->getMiscField(QStringLiteral("id"))!=getMiscField(QStringLiteral("id")))
+    {
+      if(globalParameters.getStatusBar()!=nullptr)
+        globalParameters.getStatusBar()->showMessage(
+          tr("Switch to this note in the main window to attach files"), 4000);
+
+      return;
+    }
+  }
+
   AttachTableController *attachController=find_object<AttachTableController>(
     QStringLiteral("attachTableController"));
 
@@ -2961,6 +2991,23 @@ void Editor::onAttachBadgesPasted(const QByteArray &attachMime)
 
   if(textArea==nullptr || textArea->isReadOnly())
     return;
+
+  // Открепленное окно: вставка меток чужой таблицы аттачей (см. дроп
+  // выше) - тот же вежливый отказ, иначе ссылки укажут в никуда
+  if(getMiscField(QStringLiteral("detached"))==QStringLiteral("1"))
+  {
+    Editor *mainEditor=find_object<Editor>(QStringLiteral("editorScreen"));
+
+    if(mainEditor==nullptr ||
+       mainEditor->getMiscField(QStringLiteral("id"))!=getMiscField(QStringLiteral("id")))
+    {
+      if(globalParameters.getStatusBar()!=nullptr)
+        globalParameters.getStatusBar()->showMessage(
+          tr("Switch to this note in the main window to attach files"), 4000);
+
+      return;
+    }
+  }
 
   const QString workDir=getWorkDirectory();
 

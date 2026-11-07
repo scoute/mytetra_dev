@@ -45,6 +45,15 @@ void PreviewView::zoomOut()
 }
 
 
+void PreviewView::zoomReset()
+{
+    // Обычный размер: масштаб 1.0, как при открытии предпросмотра
+    scale = 1.0;
+    resizeEvent(0);
+    viewport()->update();
+}
+
+
 void PreviewView::paintEvent(QPaintEvent *)
 {
     QPainter p(viewport());

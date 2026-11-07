@@ -47,6 +47,13 @@ void TestPrintThumb::thumbsAndNav(void)
     view.scrollToPage(1);
     QCOMPARE(view.verticalScrollBar()->value(), view.pageOffset(1));
     QCOMPARE(view.pageAtOffset(view.verticalScrollBar()->value()), 1);
+
+    // Зум туда-обратно: сброс возвращает масштаб 1.0
+    const int baseOffset=view.pageOffset(1);
+    view.zoomIn();
+    QVERIFY2(view.pageOffset(1)!=baseOffset, "zoom in must change geometry");
+    view.zoomReset();
+    QCOMPARE(view.pageOffset(1), baseOffset);
     view.scrollToPage(0);
     QCOMPARE(view.verticalScrollBar()->value(), 0);
 

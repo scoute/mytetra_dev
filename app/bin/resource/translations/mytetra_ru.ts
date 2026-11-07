@@ -6418,6 +6418,14 @@ MyTetra перечитает дерево для продолжения рабо
         <source>&amp;Close</source>
         <translation type="vanished">Закрыть [x]</translation>
     </message>
+    <message>
+        <source>100%</source>
+        <translation>100%</translation>
+    </message>
+    <message>
+        <source>Normal size</source>
+        <translation>Обычный размер</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

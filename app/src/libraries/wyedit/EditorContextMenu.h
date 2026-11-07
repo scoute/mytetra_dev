@@ -56,6 +56,7 @@ signals:
   void contextMenuMoveVoice(void);
   void contextMenuMoveAttach(void);
   void contextMenuShowVoiceInFolder(void);
+  void contextMenuShowNoteInFolder(void);
   void contextMenuDeleteVoice(void);
   void contextMenuEditReference(void);
   void contextMenuPasteNoteReference(void);
@@ -93,6 +94,7 @@ private:
   QAction *actionMoveVoice;
   QAction *actionMoveAttach;
   QAction *actionShowVoiceInFolder;
+  QAction *actionShowNoteInFolder;
   QAction *actionDeleteVoice;
   QAction *actionEditReference;
   QAction *actionPasteNoteReference;
@@ -125,6 +127,7 @@ protected slots:
   void onActionContextMenuMoveVoice(void);
   void onActionContextMenuMoveAttach(void);
   void onActionContextMenuShowVoiceInFolder(void);
+  void onActionContextMenuShowNoteInFolder(void);
   void onActionContextMenuDeleteVoice(void);
   void onActionContextMenuEditReference(void);
   void onActionContextMenuPasteNoteReference(void);

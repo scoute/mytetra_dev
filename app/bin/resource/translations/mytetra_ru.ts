@@ -3227,11 +3227,6 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <translation>Изменить цвет секретов...</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="83"/>
-        <source>Show in folder</source>
-        <translation>Открыть в папке</translation>
-    </message>
-    <message>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="87"/>
         <source>Open image</source>
         <translation>Открыть изображение</translation>
@@ -5072,28 +5067,6 @@ Try to search for entire database.</source>
 %1</source>
         <translation>Не удалось запустить программу:
 %1</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="312"/>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="325"/>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="333"/>
-        <source>Show in folder</source>
-        <translation>Открыть в папке</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="313"/>
-        <source>Note directory is unknown, there is nothing to open.</source>
-        <translation>Каталог заметки неизвестен, открывать нечего.</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="326"/>
-        <source>Directory does not exist: %1</source>
-        <translation>Каталог не существует: %1</translation>
-    </message>
-    <message>
-        <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="334"/>
-        <source>Can not open directory: %1</source>
-        <translation>Не могу открыть каталог: %1</translation>
     </message>
     <message>
         <location filename="../../../src/libraries/wyedit/formatters/ImageFormatter.cpp" line="534"/>
@@ -8605,10 +8578,6 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Слушать голосовую заметку под курсором</translation>
     </message>
     <message>
-        <source>Show voice file in folder</source>
-        <translation>Показать файл в папке</translation>
-    </message>
-    <message>
         <source>Show note in folder</source>
         <translation>Показать каталог заметки</translation>
     </message>
@@ -9283,22 +9252,6 @@ Please select single item for enabling edit operation.</source>
     <message>
         <source>Save the note first</source>
         <translation>Сначала сохраните заметку</translation>
-    </message>
-    <message>
-        <source>Show voice file in folder</source>
-        <translation>Показать файл в папке</translation>
-    </message>
-    <message>
-        <source>Note directory is unknown, there is nothing to open.</source>
-        <translation>Каталог заметки неизвестен, открывать нечего.</translation>
-    </message>
-    <message>
-        <source>Directory does not exist: %1</source>
-        <translation>Каталог не существует: %1</translation>
-    </message>
-    <message>
-        <source>Can not open directory: %1</source>
-        <translation>Не удаётся открыть каталог: %1</translation>
     </message>
     <message>
         <source>Delete voice note</source>

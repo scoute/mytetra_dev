@@ -32,7 +32,6 @@ public slots:
 
   void onInsertImageFromFileClicked(void);
   void onContextMenuEditImageProperties(void);
-  void onShowImageInFolder(void);
 
   // Открыть картинку под курсором во внешней программе ОС
   void openImage(void);

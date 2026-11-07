@@ -133,6 +133,7 @@ public:
     QAction *openImage;
     QAction *micRecord;
     QAction *insertHorizontalLine;
+    QAction *insertPageBreak;
     QAction *specialChar;
     QAction *mathExpression;
     QAction *expandEditArea;

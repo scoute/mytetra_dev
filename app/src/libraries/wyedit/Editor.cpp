@@ -860,6 +860,9 @@ void Editor::setupToolsSignals(void)
     connect(editorToolBarAssistant->insertHorizontalLine, &QAction::triggered,
             typefaceFormatter,                            &TypefaceFormatter::onInsertHorizontalLineClicked);
 
+    connect(editorToolBarAssistant->insertPageBreak, &QAction::triggered,
+            typefaceFormatter,                       &TypefaceFormatter::onInsertPageBreakClicked);
+
     connect(editorToolBarAssistant->specialChar, &QAction::triggered,
             typefaceFormatter,                   &TypefaceFormatter::onSpecialCharClicked);
 

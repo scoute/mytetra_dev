@@ -121,7 +121,7 @@ QStringList EditorConfig::get_actual_parameter_table(bool withEndSignature)
 {
     // Актуальная таблица = последняя по номеру версии.
     // При добавлении get_parameter_table_N поменять здесь один вызов
-    return get_parameter_table_46(withEndSignature);
+    return get_parameter_table_47(withEndSignature);
 }
 
 
@@ -706,6 +706,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_44;
     parameterFunctions << get_parameter_table_45;
     parameterFunctions << get_parameter_table_46;
+    parameterFunctions << get_parameter_table_47;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1653,6 +1654,26 @@ QStringList EditorConfig::get_parameter_table_46(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_47(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 46
+    table << get_parameter_table_46(false);
+
+    // Новых ключей нет: только кнопка разрыва страницы в tools_line_1.
+    // Миграция - в update_version_change_value(), версия бампится
+    // чтобы миграция доехала до существующих конфигов
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -2511,6 +2532,21 @@ QString EditorConfig::update_version_change_value(int versionFrom,
             result=parts.join(",");
         }
     }
+
+    if(versionFrom==46 && versionTo==47)
+        if(name=="tools_line_1")
+        {
+            // Кнопка разрыва страницы после горизонтальной линии:
+            // обе команды вставляют готовое в курсор.
+            // Своих кнопок миграция не трогает и не дублирует
+            if(!result.contains("insertPageBreak"))
+            {
+                if(result.contains("insertHorizontalLine"))
+                    result.replace("insertHorizontalLine", "insertHorizontalLine,insertPageBreak");
+                else
+                    result=result+",insertPageBreak";
+            }
+        }
 
 
     return result;

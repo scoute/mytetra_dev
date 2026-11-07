@@ -17,6 +17,7 @@
 #include "PreviewView.h"
 #include "PrintPreview.h"
 #include "libraries/ShortcutManager.h"
+#include "libraries/wyedit/formatters/TypefaceFormatter.h"
 
 
 extern ShortcutManager shortcutManager;
@@ -51,6 +52,10 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
 
     printer.setFullPage(true);
     doc = document->clone();
+
+    // Предпросмотр как на бумаге: маркеры разрывов чистятся,
+    // сами разрывы остаются и рвут страницы в preview
+    TypefaceFormatter::stripPageBreaksForPrint(doc);
 
     view = new PreviewView(doc);
     doc->setUseDesignMetrics(true);

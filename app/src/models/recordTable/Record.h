@@ -84,6 +84,14 @@ public:
   // для MCP-обновления текста, чтобы не трогать файлы аттачей twice
   void updateTextFile(const QString &html);
 
+  // Имя каталога записи по заданному режиму: системное (id, как в
+  // обычной MyTetra) или гибридное (id_имя). Пустое или нечистое имя
+  // дает системный вид. Пробелы чистятся тем же санитайзером что у
+  // вложений (подчеркивания вместо квотирования в консоли Linux)
+  static QString constructLegacyDirName(const QString &id);
+  static QString constructHumanDirName(const QString &id, const QString &name);
+  static QString dirNameForMode(int mode, const QString &id, const QString &name);
+
   static void replaceInternalReferenceByTranslateTable(QString recordFileName, QMap<QString, QString> idRecordTranslate);
 
 protected:

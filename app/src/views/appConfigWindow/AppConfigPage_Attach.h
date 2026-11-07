@@ -32,6 +32,8 @@ private slots:
   void onClickedHighlightColor();
   void onClickedConvertAttaches();
 
+  void onClickedConvertRecordDirs();
+
 protected:
 
   void setColorForButtonHighlightColor(QColor iColor);
@@ -60,6 +62,16 @@ protected:
   MtComboBox *attachNameModeCombo;
   QPushButton *convertAttachesButton;
   QLabel *fileNamesWarning;
+
+  // Каталоги записей на диске: пояснение, выбор режима, кнопка
+  // конвертации, предупреждение. Режим действует на новые записи
+  // и переименования, старые каталоги трогает только конвертер
+  QGroupBox *recordDirsBox;
+  QLabel *recordDirsInfo;
+  QLabel *recordDirNameModeLabel;
+  MtComboBox *recordDirNameModeCombo;
+  QPushButton *convertRecordDirsButton;
+  QLabel *recordDirsWarning;
 };
 
 

@@ -263,3 +263,23 @@ void AppConfigStorage::set_attachNameMode(int mode)
     // Устаревший флаг держится в синхроне для чтения старыми версиями
     m_conf->setValue("attachHumanReadableNames", mode==AppConfig::AttachNameHybrid);
 }
+
+
+// Режим имен каталогов записей на диске. Unversioned-ключ как attachNameMode:
+// отсутствующий ключ - системные имена как в обычной MyTetra
+int AppConfigStorage::get_recordDirNameMode(void)
+{
+    if(m_conf->contains("recordDirNameMode"))
+        return m_conf->value("recordDirNameMode", AppConfig::RecordDirSystem).toInt();
+
+    return AppConfig::RecordDirSystem;
+}
+
+
+void AppConfigStorage::set_recordDirNameMode(int mode)
+{
+    if(mode<AppConfig::RecordDirSystem || mode>AppConfig::RecordDirHybrid)
+        mode=AppConfig::RecordDirSystem;
+
+    m_conf->setValue("recordDirNameMode", mode);
+}

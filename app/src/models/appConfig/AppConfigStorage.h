@@ -60,6 +60,11 @@ public:
     void set_attachHumanReadableNames(bool state);
     int get_attachNameMode(void);
     void set_attachNameMode(int mode);
+    // Режим имен каталогов записей: системный (id) или гибридный
+    // (id_имя). Тот же unversioned-паттерн что attachNameMode:
+    // отсутствующий ключ покрывается дефолтом, миграция conf не нужна
+    int get_recordDirNameMode(void);
+    void set_recordDirNameMode(int mode);
 
 private:
 

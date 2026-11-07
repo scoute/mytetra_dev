@@ -2024,6 +2024,14 @@ void Editor::onRedo(void)
 
 void Editor::onCut(void)
 {
+  // Выделение задело маркер разрыва: расширить на целые маркеры,
+  // иначе вырезание оставит огрызок с фоном и разрывом.
+  // Дальше штатный cut режет уже расширенное
+  QTextCursor cutCursor=textArea->textCursor();
+
+  if(TypefaceFormatter::expandSelectionToMarkers(cutCursor))
+    textArea->setTextCursor(cutCursor);
+
   textArea->cut();
   editorToolBarAssistant->updateToActualFormat(); // Обновляется панель с кнопками
 }

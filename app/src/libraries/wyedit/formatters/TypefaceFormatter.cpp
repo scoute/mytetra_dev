@@ -3316,7 +3316,7 @@ void TypefaceFormatter::onInsertPageBreakClicked()
     QTextBlockFormat breakFormat;
     breakFormat.setPageBreakPolicy(QTextFormat::PageBreak_AlwaysAfter);
     breakFormat.setAlignment(Qt::AlignHCenter);
-    breakFormat.setBackground(QColor(QStringLiteral("#e8e8e8")));
+    breakFormat.setBackground(pageBreakBackground());
     textArea->textCursor().setBlockFormat(breakFormat);
 
     QTextCharFormat markFormat;
@@ -3329,8 +3329,10 @@ void TypefaceFormatter::onInsertPageBreakClicked()
 
 
 // Чистка визуала разрывов перед печатью: текст и фон убираются,
-// пустой абзац с page-break остается и рвет страницу. Чужие
-// page-break без маркера не трогаются
+// пустой абзац с page-break остается и рвет страницу. Наш разрыв:
+// ножницы в тексте либо наш фон без текста (зомби: Enter внутри
+// маркера, старые ручные стирания). Чужие page-break без маркера
+// и без нашего фона не трогаются
 void TypefaceFormatter::stripPageBreaksForPrint(QTextDocument *doc)
 {
     if(doc==nullptr)
@@ -3340,13 +3342,11 @@ void TypefaceFormatter::stripPageBreaksForPrint(QTextDocument *doc)
 
     while(block.isValid())
     {
-        const bool hasBreak=(block.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto);
-
-        if(hasBreak && block.text().contains(pageBreakMark()))
+        if(isPageBreakMarker(block) || isPageBreakZombie(block))
         {
-            // Наш маркер: стирается только текст блока (до конца блока,
-            // разделитель не трогаем - иначе блок склеится со следующим
-            // и разрыв уедет). Пустой абзац с page-break остается
+            // Стирается только текст блока (до конца блока, разделитель
+            // не трогаем - иначе блок склеится со следующим и разрыв
+            // уедет). Пустой абзац с page-break остается
             // и рвет страницу на печати
             QTextCursor cursor(block);
             cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
@@ -3359,6 +3359,310 @@ void TypefaceFormatter::stripPageBreaksForPrint(QTextDocument *doc)
 
         block=block.next();
     }
+}
+
+
+// Наш маркер: page-break в формате плюс ножницы в тексте.
+// Пустой блок с page-break, но без ножниц (зомби после ручного
+// стирания, чужой разрыв) маркером не считается
+bool TypefaceFormatter::isPageBreakMarker(const QTextBlock &block)
+{
+    return block.isValid() &&
+           block.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto &&
+           block.text().contains(pageBreakMark());
+}
+
+
+// Фон маркера: серая полоса на экране, в печати чистится
+QColor TypefaceFormatter::pageBreakBackground(void)
+{
+    return QColor(QStringLiteral("#e8e8e8"));
+}
+
+
+// Пустой блок с page-break и нашим фоном, но без ножниц:
+// половинка после Enter внутри маркера, след старого ручного
+// стирания текста. Чистится в печати как обычный маркер
+bool TypefaceFormatter::isPageBreakZombie(const QTextBlock &block)
+{
+    return block.isValid() &&
+           block.text().isEmpty() &&
+           block.blockFormat().pageBreakPolicy()!=QTextFormat::PageBreak_Auto &&
+           block.blockFormat().background().color()==pageBreakBackground();
+}
+
+
+// Маркер или зомби: наш разрыв в любом виде
+bool TypefaceFormatter::isPageBreakBlock(const QTextBlock &block)
+{
+    return isPageBreakMarker(block) || isPageBreakZombie(block);
+}
+
+
+// Края выделения с поправкой конца на границе блока:
+// конец ровно на начале блока значит что в этом блоке ничего
+// не выделено. Возвращает true если хоть один край - наш разрыв
+static bool selectionMarkerEdges(const QTextCursor &cursor,
+                                 QTextBlock &first,
+                                 QTextBlock &last)
+{
+    QTextDocument *doc=cursor.document();
+
+    first=doc->findBlock(cursor.selectionStart());
+    last=doc->findBlock(cursor.selectionEnd());
+
+    if(last.isValid() && last!=first &&
+       cursor.selectionEnd()==last.position())
+        last=last.previous();
+
+    return TypefaceFormatter::isPageBreakBlock(first) ||
+           TypefaceFormatter::isPageBreakBlock(last);
+}
+
+
+bool TypefaceFormatter::expandSelectionToMarkers(QTextCursor &edit)
+{
+    if(!edit.hasSelection())
+    {
+        // Без выделения расширять нечего. Но caret внутри маркера
+        // под Ctrl+X: атомарность - режется весь маркер, не пустота.
+        // Последний блок оболочкой не удаляется: формат гасится
+        // заранее, иначе останется пустая полоска
+        QTextBlock current=edit.block();
+
+        if(!isPageBreakBlock(current))
+            return false;
+
+        edit.beginEditBlock();
+
+        if(!current.next().isValid())
+        {
+            QTextCursor fmt(current);
+            fmt.setBlockFormat(QTextBlockFormat());
+        }
+
+        edit.setPosition(current.position());
+        edit.setPosition(current.next().isValid() ? current.next().position()
+                                                 : edit.document()->characterCount()-1,
+                        QTextCursor::KeepAnchor);
+        edit.endEditBlock();
+
+        return true;
+    }
+
+    QTextBlock first;
+    QTextBlock last;
+
+    if(!selectionMarkerEdges(edit, first, last))
+        return false;
+
+    QTextDocument *doc=edit.document();
+    const bool firstIsMarker=isPageBreakBlock(first);
+    const bool lastIsMarker=isPageBreakBlock(last);
+
+    // Расширение на целые маркеры по краям
+    const int rangeStart=firstIsMarker ? first.position() : edit.selectionStart();
+    int rangeEnd=edit.selectionEnd();
+
+    if(lastIsMarker)
+        rangeEnd=last.next().isValid() ? last.next().position()
+                                       : doc->characterCount()-1;
+
+    edit.beginEditBlock();
+
+    // Формат краевых маркеров гасится заранее: склейка и вырезание
+    // могут унаследовать именно его, и полоска переживет удаление
+    if(firstIsMarker)
+    {
+        QTextCursor fmt(first);
+        fmt.setBlockFormat(QTextBlockFormat());
+    }
+
+    if(lastIsMarker && last!=first && !last.next().isValid())
+    {
+        QTextCursor fmt(last);
+        fmt.setBlockFormat(QTextBlockFormat());
+    }
+
+    edit.setPosition(rangeStart);
+    edit.setPosition(rangeEnd, QTextCursor::KeepAnchor);
+    edit.endEditBlock();
+
+    return true;
+}
+
+
+// Удалить блок-маркер целиком: текст, фон и page-break.
+// Соседи смыкаются, курсор встает на точку стыка.
+// Вызывать только для блоков, прошедших isPageBreakBlock
+static void removeMarkerBlock(QTextEdit *area, const QTextBlock &marker)
+{
+    QTextDocument *doc=area->document();
+    const QTextBlock next=marker.next();
+
+    QTextCursor edit(doc);
+    edit.beginEditBlock();
+
+    if(next.isValid())
+    {
+        // Маркер целиком вместе с разделителем: соседний текст
+        // остается в своем формате, полоска исчезает
+        edit.setPosition(marker.position());
+        edit.setPosition(next.position(), QTextCursor::KeepAnchor);
+    }
+    else
+    {
+        // Последний блок неудаляем оболочкой: чистится текст,
+        // формат гасится следом - иначе останется пустая полоска
+        edit.setPosition(marker.position());
+        edit.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+    }
+
+    edit.removeSelectedText();
+
+    if(!next.isValid())
+    {
+        QTextBlockFormat clean;
+        edit.setBlockFormat(clean);
+    }
+
+    edit.endEditBlock();
+
+    // Точка стыка - конец предыдущего абзаца, а не начало следующего.
+    // Слева от разделителя курсор рисуется в конце строки, справа -
+    // уже в начале следующей: один шаг решает "зависание на середине"
+    edit.movePosition(QTextCursor::Left);
+
+    area->setTextCursor(edit);
+}
+
+
+bool TypefaceFormatter::consumeMarkerDelete(QTextEdit *area, int key)
+{
+    if(area==nullptr || area->isReadOnly())
+        return false;
+
+    if(key!=Qt::Key_Backspace && key!=Qt::Key_Delete)
+        return false;
+
+    QTextDocument *doc=area->document();
+    QTextCursor cursor=area->textCursor();
+
+    if(cursor.hasSelection())
+    {
+        QTextCursor edit(doc);
+        edit.setPosition(cursor.selectionStart());
+        edit.setPosition(cursor.selectionEnd(), QTextCursor::KeepAnchor);
+
+        edit.beginEditBlock();
+        const bool touched=expandSelectionToMarkers(edit);
+        edit.endEditBlock();
+
+        if(!touched)
+            return false;
+
+        // Удаление расширенного: формат уже погашен, склейка чистая
+        edit.beginEditBlock();
+        edit.removeSelectedText();
+        edit.endEditBlock();
+
+        area->setTextCursor(edit);
+
+        return true;
+    }
+
+    const QTextBlock current=cursor.block();
+
+    // Бэкспейс на стыке перед маркером: снести весь маркер
+    if(key==Qt::Key_Backspace && cursor.atBlockStart())
+    {
+        const QTextBlock prev=current.previous();
+
+        if(isPageBreakBlock(prev))
+        {
+            removeMarkerBlock(area, prev);
+            return true;
+        }
+    }
+
+    // Delete на стыке после маркера: снести весь маркер
+    if(key==Qt::Key_Delete && cursor.atBlockEnd())
+    {
+        const QTextBlock next=current.next();
+
+        if(isPageBreakBlock(next))
+        {
+            removeMarkerBlock(area, next);
+            return true;
+        }
+    }
+
+    // Курсор внутри текста маркера: маркер атомарный, сносится целиком
+    if(isPageBreakBlock(current))
+    {
+        removeMarkerBlock(area, current);
+        return true;
+    }
+
+    return false;
+}
+
+
+// Enter внутри маркера: новый обычный абзац рядом с маркером
+// (в начале - над, иначе - под), сам маркер цел. Иначе штатный
+// сплит плодит половинки с разрывом и фоном, которые потом
+// светятся в печати серыми полосами
+bool TypefaceFormatter::consumeMarkerEnter(QTextEdit *area)
+{
+    if(area==nullptr || area->isReadOnly())
+        return false;
+
+    QTextCursor cursor=area->textCursor();
+
+    // Выделение задело маркер: снести задетое как при удалении
+    // (расширение на целые маркеры, формат погашен), потом новый
+    // абзац на точке удаления. Без этого сплит оставит половинки
+    if(cursor.hasSelection())
+    {
+        QTextBlock first;
+        QTextBlock last;
+
+        if(!selectionMarkerEdges(cursor, first, last))
+            return false;
+
+        if(!consumeMarkerDelete(area, Qt::Key_Backspace))
+            return false;
+
+        // Формат склейки уже не маркерный (погашен заранее):
+        // новый абзац наследует его без полос
+        QTextCursor edit=area->textCursor();
+        edit.beginEditBlock();
+        edit.insertBlock();
+        edit.endEditBlock();
+        area->setTextCursor(edit);
+
+        return true;
+    }
+
+    if(!isPageBreakBlock(cursor.block()))
+        return false;
+
+    // Без выделения: новый абзац над маркером (курсор в начале)
+    // либо под ним, формат всегда чистый. Наследование формата
+    // от маркера (сплит копирует break) гасится явно
+    QTextCursor edit(cursor.block());
+
+    if(!cursor.atBlockStart())
+        edit.movePosition(QTextCursor::EndOfBlock);
+
+    edit.beginEditBlock();
+    edit.insertBlock();
+    edit.setBlockFormat(QTextBlockFormat());
+    edit.endEditBlock();
+
+    area->setTextCursor(edit);
+
+    return true;
 }
 
 

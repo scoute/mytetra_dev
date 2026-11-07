@@ -10,6 +10,7 @@
 #include <QGestureEvent>
 #include <QTextDocumentFragment>
 #include <QMimeData>
+#include <QKeySequence>
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
@@ -128,6 +129,39 @@ bool EditorTextArea::eventFilter(QObject *o, QEvent *e)
 // Cлот отлавливает нажатия клавиш внутри виджета когда он активен (в фокусе)
 void EditorTextArea::keyPressEvent(QKeyEvent *event)
 {
+    // Бэкспейс/Delete рядом или внутри маркера разрыва страницы:
+    // маркер сносится целиком, иначе штатная склейка оставляет
+    // полоску с фоном и разрывом. В read-only правит только
+    // штатный путь (то есть ничего)
+    if( !isReadOnly() &&
+        (event->key()==Qt::Key_Backspace || event->key()==Qt::Key_Delete) &&
+        TypefaceFormatter::consumeMarkerDelete(this, event->key()) )
+    {
+        event->accept();
+        return;
+    }
+
+    // Enter внутри маркера: новый обычный абзац рядом, сам маркер
+    // цел. Штатный сплит плодит половинки с разрывом и фоном
+    if( !isReadOnly() &&
+        (event->key()==Qt::Key_Return || event->key()==Qt::Key_Enter) &&
+        TypefaceFormatter::consumeMarkerEnter(this) )
+    {
+        event->accept();
+        return;
+    }
+
+    // Ctrl+X по выделению с маркером: расширить на целые маркеры,
+    // иначе вырезание оставит огрызок с фоном и разрывом.
+    // Дальше штатный путь режет уже расширенное
+    if( !isReadOnly() && event->matches(QKeySequence::Cut) )
+    {
+        QTextCursor cutCursor=textCursor();
+
+        if(TypefaceFormatter::expandSelectionToMarkers(cutCursor))
+            setTextCursor(cutCursor);
+    }
+
     // Если нажата клавиша Ctrl
     if( event->key() == Qt::Key_Control )
     {
@@ -388,7 +422,9 @@ void EditorTextArea::switchReferenceClickMode(bool flag)
             qApp->setOverrideCursor(QCursor(Qt::PointingHandCursor));
             m_mouseCursorOverriden = true;
 
-            globalParameters.getStatusBar()->showMessage(href);
+            // Статусбара может не быть (headless-пробы): молча пропускаем
+            if(globalParameters.getStatusBar()!=nullptr)
+                globalParameters.getStatusBar()->showMessage(href);
             qDebug() << "Cursor href in key event: " << href;
         }
     }
@@ -400,7 +436,9 @@ void EditorTextArea::switchReferenceClickMode(bool flag)
 
         m_mouseCursorOverriden = false;
 
-        globalParameters.getStatusBar()->showMessage("");
+        // Статусбара может не быть (headless-пробы): молча пропускаем
+        if(globalParameters.getStatusBar()!=nullptr)
+            globalParameters.getStatusBar()->showMessage("");
     }
 
     qDebug() << "switchReferenceClickMode: " << flag;

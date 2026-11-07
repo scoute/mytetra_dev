@@ -66,12 +66,21 @@ public:
 signals:
     void pageSelected(int page);
 
+protected:
+    // Подгон ширины миниатюр под ширину ленты с перерисовкой
+    virtual void resizeEvent(QResizeEvent *e) override;
+
 private slots:
     void onCurrentItemChanged(QListWidgetItem *current);
 
 private:
     static QPixmap renderPage(QTextDocument *doc, int page, int thumbWidth);
 
+    // Ширина миниатюры под текущий вьюпорт ленты
+    int thumbWidthForViewport() const;
+    void renderAll();
+
+    QTextDocument *m_doc=nullptr;
     int m_thumbWidth=120;
     bool m_silent=false;
 };

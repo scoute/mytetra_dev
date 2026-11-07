@@ -14,6 +14,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QSplitter>
 #include <QScrollBar>
 
 #include "PreviewView.h"
@@ -112,6 +113,10 @@ void PrintPreview::setupUI()
     buttonClose=new QToolButton(this);
     buttonClose->setText(tr("Close"));
     buttonClose->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+    // Лента миниатюр страниц слева от основного вида.
+    // Создается здесь, а не в assembly: сигналы подключаются раньше
+    thumbBar=new PageThumbnailBar(this);
 }
 
 void PrintPreview::setupShortcuts()
@@ -155,19 +160,20 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();
 
-    // Лента миниатюр слева, основной вид справа
-    thumbBar=new PageThumbnailBar(this);
-
-    QHBoxLayout *contentBox=new QHBoxLayout();
-    contentBox->addWidget(thumbBar);
-    contentBox->addWidget(view, 1);
-    contentBox->setSpacing(4);
-    contentBox->setContentsMargins(0, 0, 0, 0);
+    // Лента миниатюр слева, основной вид справа. Сплиттер вместо
+    // жесткого HBox: ширину ленты меняет пользователь, миниатюры
+    // сами вписываются в новую ширину (resizeEvent ленты)
+    QSplitter *contentSplitter=new QSplitter(this);
+    contentSplitter->addWidget(thumbBar);
+    contentSplitter->addWidget(view);
+    contentSplitter->setStretchFactor(0, 0);
+    contentSplitter->setStretchFactor(1, 1);
+    contentSplitter->setSizes(QList<int>() << 180 << 780);
 
     // Сборка содержимого окна
     centralLayout=new QVBoxLayout();
     centralLayout->addLayout(toolsbox);
-    centralLayout->addLayout(contentBox, 1);
+    centralLayout->addWidget(contentSplitter, 1);
     centralLayout->setSpacing(1);
     centralLayout->setContentsMargins(1,1,1,1);
 

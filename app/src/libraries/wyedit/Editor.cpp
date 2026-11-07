@@ -15,6 +15,8 @@
 #include <QDebug>
 #include <QInputDialog>
 #include <QFileDialog>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QScrollBar>
 #include <QColor>
 #include <QtGlobal>
@@ -562,6 +564,9 @@ void Editor::setupSignals(void)
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuShowVoiceInFolder,
           audioFormatter,     &AudioFormatter::onShowVoiceInFolder,
+          Qt::DirectConnection);
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuShowNoteInFolder,
+          this,               &Editor::onShowNoteInFolder,
           Qt::DirectConnection);
   connect(editorContextMenu,  &EditorContextMenu::contextMenuDeleteVoice,
           audioFormatter,     &AudioFormatter::onDeleteVoiceClicked,
@@ -3114,6 +3119,48 @@ void Editor::onShowTextClicked(void)
   }
 
   EditorShowTextDispatcher::instance()->createWindow( this->getMiscField("id") );
+}
+
+
+// Разрезолвить рабочий каталог в абсолютный существующий путь.
+// Пусто если каталог неизвестен или его нет на диске
+QString Editor::absoluteNoteDirectory(const QString &workDir)
+{
+  if(workDir.isEmpty())
+    return QString();
+
+  // Путь делается абсолютным: workDirectory обычно относительный
+  // (./data/base/...), а файловому менеджеру относительный
+  // file-URL не открывается
+  const QString absoluteDirectory=QDir(workDir).absolutePath();
+
+  if(!QDir(absoluteDirectory).exists())
+    return QString();
+
+  return absoluteDirectory;
+}
+
+
+// Открыть каталог текущей заметки в файловом менеджере.
+// Безусловный пункт: работает везде, а не только на голосе/картинке
+void Editor::onShowNoteInFolder(void)
+{
+  const QString absoluteDirectory=absoluteNoteDirectory(getWorkDirectory());
+
+  if(absoluteDirectory.isEmpty())
+  {
+    QMessageBox::information(this,
+                             tr("Show note in folder"),
+                             tr("Note directory is unknown or does not exist, there is nothing to open."));
+    return;
+  }
+
+  if(!QDesktopServices::openUrl(QUrl::fromLocalFile(absoluteDirectory)))
+  {
+    QMessageBox::information(this,
+                             tr("Show note in folder"),
+                             tr("Can not open directory: %1").arg(absoluteDirectory));
+  }
 }
 
 

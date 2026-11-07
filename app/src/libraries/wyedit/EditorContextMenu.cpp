@@ -55,6 +55,8 @@ void EditorContextMenu::setupActions(void)
 actionMoveVoice=new QAction(this);
 actionMoveAttach=new QAction(this);
  actionShowVoiceInFolder=new QAction(this);
+ actionShowNoteInFolder=new QAction(this);
+ actionShowNoteInFolder->setObjectName(QStringLiteral("editor_showNoteInFolder"));
  actionDeleteVoice=new QAction(this);
  actionEditReference=new QAction(this);
  actionEditReference->setObjectName(QStringLiteral("editor_editReference"));
@@ -110,6 +112,7 @@ void EditorContextMenu::setupShortcuts(void)
     shortcutManager.initAction("editor-moveVoice", actionMoveVoice );
     shortcutManager.initAction("editor-moveAttach", actionMoveAttach );
     shortcutManager.initAction("editor-showVoiceInFolder", actionShowVoiceInFolder );
+    shortcutManager.initAction("editor-showNoteInFolder", actionShowNoteInFolder );
     shortcutManager.initAction("editor-deleteVoice", actionDeleteVoice );
 
     shortcutManager.initAction("editor-editReference", actionEditReference );
@@ -398,6 +401,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionMoveVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveVoice);
     connect(actionMoveAttach,         &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveAttach);
     connect(actionShowVoiceInFolder,  &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowVoiceInFolder);
+    connect(actionShowNoteInFolder,   &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowNoteInFolder);
     connect(actionDeleteVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuDeleteVoice);
     connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
     connect(actionPasteNoteReference, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuPasteNoteReference);
@@ -446,6 +450,7 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionMoveVoice);
     this->addAction(actionMoveAttach);
     this->addAction(actionShowVoiceInFolder);
+    this->addAction(actionShowNoteInFolder);
     this->addAction(actionDeleteVoice);
     this->addAction(actionEditReference);
     this->addAction(actionPasteNoteReference);
@@ -596,6 +601,14 @@ void EditorContextMenu::onActionContextMenuShowVoiceInFolder()
     update();
     if(actionShowVoiceInFolder->isEnabled()) {
         emit contextMenuShowVoiceInFolder();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuShowNoteInFolder()
+{
+    update();
+    if(actionShowNoteInFolder->isEnabled()) {
+        emit contextMenuShowNoteInFolder();
     }
 }
 

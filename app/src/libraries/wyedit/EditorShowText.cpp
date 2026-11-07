@@ -57,7 +57,9 @@ void EditorShowText::setupUi()
     // Мини-кнопка скрепки "поверх всех окон": переключаемая,
     // состояние видно по вдавленности. По умолчанию выключена
     pinButton=new QToolButton(this);
-    pinButton->setIcon(QIcon(QStringLiteral(":/resource/pic/pin_always_on_top.svg")));
+    // Штатная скрепка из набора Essential: монохром, как остальные
+    // кнопки тулбаров, видно и на светлой, и на темной теме
+    pinButton->setIcon(QIcon(QStringLiteral(":/resource/icons/Essential/nocolor_essential_77_Essential_Icons_Pin.svg")));
     pinButton->setCheckable(true);
     pinButton->setChecked(false);
     pinButton->setToolTip(tr("Always on top"));

@@ -20,6 +20,7 @@ class QDragMoveEvent;
 class QDropEvent;
 class QMimeData;
 class QVBoxLayout;
+class QEvent;
 class TreeScreen;
 
 class FavoritesPanel : public QWidget
@@ -67,12 +68,31 @@ protected:
     // Проверка ноши на формат записей таблицы
     bool canAcceptRecordsDrop(const QMimeData *mimeData) const;
 
+    // Перехват дропов самого списка: внутренний дроп (перестановка)
+    // обрабатывается здесь с вычислением строки, внешний (из таблицы
+    // записей) - как обычное добавление. Дефолт QListWidget для чужих
+    // данных не годится: вставил бы мусор строками
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
+    // Порядок списка как есть (включая красные мертвые строки)
+    QStringList currentListOrder(void) const;
+
+    // Сдвинуть строку контекстного меню на delta / в край.
+    // Работает только в сайдкар-режиме: в xml-режиме порядок -
+    // номера favor в mytetra.xml, их не правим
+    void moveContextNote(int delta);
+    void moveContextNoteToEdge(bool toTop);
+
 private slots:
 
     void onNoteClicked(QListWidgetItem *item);
     void onNoteDoubleClicked(QListWidgetItem *item);
     void onFavoritesContextMenu(const QPoint &pos);
     void onRemoveFavorite(void);
+    void onMoveFavoriteUp(void);
+    void onMoveFavoriteDown(void);
+    void onMoveFavoriteToTop(void);
+    void onMoveFavoriteToBottom(void);
     void onTreeMetadataSaved(void);
     void onFavoritesChanged(void);
 

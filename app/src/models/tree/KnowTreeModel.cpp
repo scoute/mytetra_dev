@@ -342,16 +342,22 @@ bool KnowTreeModel::checkFormat(QDomElement elementFormat)
      baseSubVersion > CURRENT_FORMAT_SUBVERSION)
     return false;
 
-  // В настоящий момент поддерживается формат 1.2
+  // В настоящий момент поддерживается формат 1.3
   // В настоящий момент предполагается, что номер версии всегда 1, поэтому вся работа идет по номеру подверсии
   if(baseSubVersion<=1)
     if(updateSubVersionFrom1To2()==false) // Смена формата с 1.1 на 1.2
       return false;
 
-  // На будущее, для перехода с подверии 2 на подверсию 3, эти строки надо добавлять к существующим (а не заменять)
-  // if(baseSubVersion<=2)
-  //  if(updateSubVersionFrom2To3()==false)
-  //   return false;
+ // Формат 1.3 (gee12): у записей числовой атрибут favor - порядковый
+ // номер в избранном. Наша миграция - no-op: favor уже доносится
+ // до сейва, а порядок живет в сайдкаре, mytetra.xml не трогаем
+ if(baseSubVersion<=2)
+   if(updateSubVersionFrom2To3()==false) // Смена формата с 1.2 на 1.3
+     return false;
+
+  // Запоминается для внешних потребителей (посев избранного из favor
+  // только для баз 1.3+)
+  m_baseSubVersion=baseSubVersion;
 
   return true;
 }
@@ -362,6 +368,19 @@ bool KnowTreeModel::updateSubVersionFrom1To2(void)
   // Формат 1.2 только расширяет формат 1.1 (т. е. только добавляет данные, но не исключает никакие устаревшие)
   // Поэтому ни в каких преобразующих действиях нет необходимости
   return true;
+}
+
+bool KnowTreeModel::updateSubVersionFrom2To3(void)
+{
+  // Формат 1.3 только добавляет необязательный атрибут favor у record
+  // (порядковый номер в избранном gee12). Преобразований не требуется
+  return true;
+}
+
+
+int KnowTreeModel::baseSubVersion(void) const
+{
+  return m_baseSubVersion;
 }
 
 
@@ -740,6 +759,13 @@ QString KnowTreeModel::importBranchFromDirectory(TreeItem *startItem, QString im
   translateImportDomData( *(xmlt.getDomModel()), "node", "id", idNodeTranslate);
   translateImportDomData( *(xmlt.getDomModel()), "record", "id", idRecordTranslate);
   translateImportDomData( *(xmlt.getDomModel()), "record", "dir", dirRecordTranslate);
+
+  // Ввозимые записи избранными не становятся: чужой favor (gee12) -
+  // это чужой порядок в чужой базе, у нас каноном сайдкар. Иначе
+  // ввоз продублировал бы занятые номера и подсветил чужие записи
+  QDomNodeList importRecords=xmlt.getDomModel()->elementsByTagName("record");
+  for(int i=0; i<importRecords.count(); ++i)
+    importRecords.at(i).toElement().removeAttribute("favor");
 
   // Динамическое создание ветки основной базы дерева на основе DOM-данных
   beginResetModel();

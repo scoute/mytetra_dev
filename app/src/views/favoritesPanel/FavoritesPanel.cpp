@@ -6,6 +6,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QShowEvent>
+#include <QEvent>
+#include <QCursor>
 #include <QSplitter>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -83,6 +85,15 @@ void FavoritesPanel::setupUi(void)
 
     favoritesList=new QListWidget(this);
     favoritesList->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    // Старт внутреннего перетаскивания для смены порядка.
+    // Дропы не вьюхе: их перехватывает eventFilter панели, иначе
+    // дефолт QListWidget вставил бы чужие данные строками. Режим
+    // DragDrop чтобы вьюха рисовала индикатор сброса своих драгов
+    favoritesList->setDragEnabled(true);
+    favoritesList->setDragDropMode(QAbstractItemView::DragDrop);
+    favoritesList->setDropIndicatorShown(true);
+    favoritesList->installEventFilter(this);
 
     // Вертикаль Expanding: лишний простор панели (если сплиттер
     // вдруг даст больше пина) забирает белый список, а не серая
@@ -192,6 +203,131 @@ bool FavoritesPanel::canAcceptRecordsDrop(const QMimeData *mimeData) const
         return false;
 
     return mimeData->hasFormat(FixedParameters::appTextId+QStringLiteral("/records"));
+}
+
+
+bool FavoritesPanel::eventFilter(QObject *watched, QEvent *event)
+{
+    // Только дропы списка: остальное вьюхе и панели как обычно
+    if(watched!=favoritesList || event->type()!=QEvent::Drop)
+        return QWidget::eventFilter(watched, event);
+
+    QDropEvent *dropEvent=static_cast<QDropEvent *>(event);
+    QObject *source=dropEvent->source();
+
+    // Внутренний дроп: перестановка строк. Цель - строка под курсором
+    // (мимо строк - в хвост). Дефолт вьюхи не вызываем: он двигает
+    // только виджет, а канон - хранилище через setOrder + пересборка
+    if(source==favoritesList || source==favoritesList->viewport())
+    {
+        QListWidgetItem *dragged=favoritesList->currentItem();
+
+        if(dragged==nullptr)
+            return true;
+
+        const QString id=dragged->data(Qt::UserRole).toString();
+
+        if(id.isEmpty())
+            return true;
+
+        const QPoint viewPos=favoritesList->viewport()->mapFromGlobal(QCursor::pos());
+        int toRow=favoritesList->indexAt(viewPos).row();
+
+        QStringList order=currentListOrder();
+        const int fromRow=order.indexOf(id);
+
+        if(fromRow<0)
+            return true;
+
+        order.removeAt(fromRow);
+
+        // Мимо строк - в хвост. Строки ниже уехавшей съехали
+        // на одну вверх: цель корректируется
+        if(toRow<0)
+            toRow=order.size();
+        else
+        {
+            if(fromRow<toRow)
+                toRow--;
+
+            toRow=qBound(0, toRow, order.size());
+        }
+
+        order.insert(toRow, id);
+
+        Favorites::instance().setOrder(order);
+        dropEvent->acceptProposedAction();
+
+        return true;
+    }
+
+    // Внешний дроп из таблицы записей: звездочки как при броске на панель
+    if(canAcceptRecordsDrop(dropEvent->mimeData()))
+    {
+        dropEvent->acceptProposedAction();
+        this->dropEvent(dropEvent);
+
+        return true;
+    }
+
+    return QWidget::eventFilter(watched, event);
+}
+
+QStringList FavoritesPanel::currentListOrder(void) const
+{
+    QStringList order;
+
+    for(int i=0; i<favoritesList->count(); ++i)
+    {
+        const QString id=favoritesList->item(i)->data(Qt::UserRole).toString();
+
+        if(!id.isEmpty())
+            order << id;
+    }
+
+    return order;
+}
+
+void FavoritesPanel::moveContextNote(int delta)
+{
+    if(contextNoteId.isEmpty())
+        return;
+
+    QStringList order=currentListOrder();
+    const int from=order.indexOf(contextNoteId);
+
+    if(from<0)
+        return;
+
+    const int to=qBound(0, from+delta, order.size()-1);
+
+    if(to==from)
+        return;
+
+    order.move(from, to);
+    Favorites::instance().setOrder(order);
+
+    contextNoteId.clear();
+}
+
+void FavoritesPanel::moveContextNoteToEdge(bool toTop)
+{
+    if(contextNoteId.isEmpty())
+        return;
+
+    QStringList order=currentListOrder();
+
+    if(!order.removeOne(contextNoteId))
+        return;
+
+    if(toTop)
+        order.prepend(contextNoteId);
+    else
+        order.append(contextNoteId);
+
+    Favorites::instance().setOrder(order);
+
+    contextNoteId.clear();
 }
 
 
@@ -322,6 +458,12 @@ void FavoritesPanel::onFavoritesContextMenu(const QPoint &pos)
     if(contextNoteId.isEmpty())
         return;
 
+    // Порядок правится только в сайдкаре: в xml-режиме канон -
+    // номера favor в mytetra.xml, их не трогаем
+    const bool reorderable=(Favorites::instance().storage()==Favorites::StorageSidecar);
+    const int row=favoritesList->row(item);
+    const int lastRow=favoritesList->count()-1;
+
     QMenu menu(this);
 
     // Для мертвой строки прыжка нет, только убрать
@@ -330,16 +472,49 @@ void FavoritesPanel::onFavoritesContextMenu(const QPoint &pos)
     if(!item->data(DeadRole).toBool())
         goAction=menu.addAction(tr("Go to note"));
 
+    QAction *upAction=nullptr;
+    QAction *downAction=nullptr;
+    QAction *topAction=nullptr;
+    QAction *bottomAction=nullptr;
+
+    if(reorderable && favoritesList->count()>1)
+    {
+        menu.addSeparator();
+        upAction=menu.addAction(tr("Move up"));
+        downAction=menu.addAction(tr("Move down"));
+        topAction=menu.addAction(tr("Move to top"));
+        bottomAction=menu.addAction(tr("Move to bottom"));
+
+        upAction->setEnabled(row>0);
+        downAction->setEnabled(row<lastRow);
+        topAction->setEnabled(row>0);
+        bottomAction->setEnabled(row<lastRow);
+    }
+
+    menu.addSeparator();
     QAction *removeAction=menu.addAction(tr("Remove from favorites"));
 
     QAction *chosen=menu.exec(favoritesList->viewport()->mapToGlobal(pos));
     if(chosen==nullptr)
+    {
+        contextNoteId.clear();
         return;
+    }
 
     if(chosen==goAction)
         goToNote(contextNoteId);
+    else if(chosen==upAction)
+        onMoveFavoriteUp();
+    else if(chosen==downAction)
+        onMoveFavoriteDown();
+    else if(chosen==topAction)
+        onMoveFavoriteToTop();
+    else if(chosen==bottomAction)
+        onMoveFavoriteToBottom();
     else if(chosen==removeAction)
         onRemoveFavorite();
+    else
+        contextNoteId.clear();
 }
 
 
@@ -352,6 +527,26 @@ void FavoritesPanel::onRemoveFavorite(void)
     Favorites::instance().setFavorite(contextNoteId, false);
 
     contextNoteId.clear();
+}
+
+void FavoritesPanel::onMoveFavoriteUp(void)
+{
+    moveContextNote(-1);
+}
+
+void FavoritesPanel::onMoveFavoriteDown(void)
+{
+    moveContextNote(1);
+}
+
+void FavoritesPanel::onMoveFavoriteToTop(void)
+{
+    moveContextNoteToEdge(true);
+}
+
+void FavoritesPanel::onMoveFavoriteToBottom(void)
+{
+    moveContextNoteToEdge(false);
 }
 
 
@@ -498,6 +693,10 @@ void FavoritesPanel::refreshFavorites(void)
     TreeScreen *treeScreen=treeScreenRef;
     if(treeScreen==nullptr)
         return;
+
+    // Перетаскивание для смены порядка - только в сайдкаре:
+    // в xml-режиме порядок задают номера favor, их не правим
+    favoritesList->setDragEnabled(Favorites::instance().storage()==Favorites::StorageSidecar);
 
     if(!treeMetadataConnected)
     {

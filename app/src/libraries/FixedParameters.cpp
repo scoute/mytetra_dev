@@ -6,8 +6,8 @@
 
 
 // Поля для записей
-const QStringList FixedParameters::recordFieldAvailableList=       {"id", "name", "author", "url", "tags", "ctime", "dir", "file", "crypt", "block", "favorite", "hasAttach", "attachCount"};
-const QStringList FixedParameters::recordNaturalFieldAvailableList={"id", "name", "author", "url", "tags", "ctime", "dir", "file", "crypt", "block", "favorite"};
+const QStringList FixedParameters::recordFieldAvailableList=       {"id", "name", "author", "url", "tags", "ctime", "dir", "file", "crypt", "block", "favorite", "favor", "hasAttach", "attachCount"};
+const QStringList FixedParameters::recordNaturalFieldAvailableList={"id", "name", "author", "url", "tags", "ctime", "dir", "file", "crypt", "block", "favorite", "favor"};
 const QStringList FixedParameters::recordCalculableFieldAvailableList={"hasAttach", "attachCount"};
 const QStringList FixedParameters::recordFieldCryptedList={"name", "author", "url", "tags"};
 

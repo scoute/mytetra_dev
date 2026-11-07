@@ -466,6 +466,11 @@ int RecordTableData::insertNewRecord(int mode,
         // Уникальный идентификатор XML записи
         QString id=getUniqueId();
         record.setField("id", id);
+
+        // Копия чужой записи избранной не становится: иначе дубль
+        // унаследовал бы чужой порядковый номер favor (gee12).
+        // Перемещение (id сохранен) номер не теряет
+        record.setField("favor", QString());
     }
 
 

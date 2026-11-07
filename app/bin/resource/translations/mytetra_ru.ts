@@ -2808,6 +2808,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Replaced %1</source>
         <translation>Заменено %1</translation>
     </message>
+    <message>
+        <source>Show note in folder</source>
+        <translation>Показать каталог заметки</translation>
+    </message>
+    <message>
+        <source>Note directory is unknown or does not exist, there is nothing to open.</source>
+        <translation>Каталог заметки неизвестен или не существует, открывать нечего.</translation>
+    </message>
+    <message>
+        <source>Can not open directory: %1</source>
+        <translation>Не удаётся открыть каталог: %1</translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -8396,6 +8408,10 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     <message>
         <source>Show voice file in folder</source>
         <translation>Показать файл в папке</translation>
+    </message>
+    <message>
+        <source>Show note in folder</source>
+        <translation>Показать каталог заметки</translation>
     </message>
     <message>
         <source>Open record directory in file manager</source>

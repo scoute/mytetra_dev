@@ -6367,6 +6367,13 @@ MyTetra перечитает дерево для продолжения рабо
         <translation>Предпросмотр</translation>
     </message>
 </context>
+    <context>
+        <name>PageThumbnailBar</name>
+        <message>
+            <source>Page %1</source>
+            <translation>Стр. %1</translation>
+        </message>
+    </context>
 <context>
     <name>PrintPreview</name>
     <message>

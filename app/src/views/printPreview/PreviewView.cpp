@@ -7,6 +7,10 @@
 #include <QDebug>
 #include <QAbstractTextDocumentLayout>
 #include <QMouseEvent>
+#include <QListWidgetItem>
+#include <QIcon>
+#include <QPixmap>
+#include <QImage>
 
 #include "PreviewView.h"
 
@@ -137,5 +141,134 @@ void PreviewView::mouseReleaseEvent(QMouseEvent *e)
 {
     mousePressPos = QPoint();
     e->accept();
+}
+
+
+void PreviewView::scrollToPage(int page)
+{
+    const int pages=doc->pageCount();
+    if(pages<=0)
+        return;
+
+    page=qBound(0, page, pages-1);
+    verticalScrollBar()->setValue(pageOffset(page));
+    horizontalScrollBar()->setValue(0);
+}
+
+
+int PreviewView::pageOffset(int page) const
+{
+    return qRound(page*(interPageSpacing+doc->pageSize().height()*scale));
+}
+
+
+int PreviewView::pageAtOffset(int value) const
+{
+    const qreal step=interPageSpacing+doc->pageSize().height()*scale;
+
+    if(step<=0)
+        return 0;
+
+    // Страница i занимает [i*step, (i+1)*step): верх вьюпорта
+    // на значении value показывает страницу с полом
+    return qBound(0, int(value/step), qMax(0, doc->pageCount()-1));
+}
+
+
+PageThumbnailBar::PageThumbnailBar(QWidget *parent) : QListWidget(parent)
+{
+    // Компактная лента: иконка сверху, номер снизу, без правки
+    setViewMode(QListView::IconMode);
+    setMovement(QListView::Static);
+    setResizeMode(QListView::Adjust);
+    setWrapping(false);
+    setSpacing(6);
+    setIconSize(QSize(m_thumbWidth, m_thumbWidth));
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    // Ширина под миниатюру плюс полоса прокрутки и рамка
+    setFixedWidth(m_thumbWidth+verticalScrollBar()->sizeHint().width()+12);
+
+    connect(this, &QListWidget::currentItemChanged,
+            this, &PageThumbnailBar::onCurrentItemChanged);
+}
+
+
+void PageThumbnailBar::rebuild(QTextDocument *document)
+{
+    m_silent=true;
+    clear();
+
+    if(document!=nullptr)
+    {
+        const int pages=document->pageCount();
+
+        for(int i=0; i<pages; ++i)
+        {
+            QListWidgetItem *item=new QListWidgetItem(
+                QIcon(renderPage(document, i, m_thumbWidth)),
+                tr("Page %1").arg(i+1),
+                this);
+            item->setData(Qt::UserRole, i);
+            item->setTextAlignment(Qt::AlignHCenter);
+            item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        }
+
+        if(pages>0)
+            setCurrentRow(0);
+    }
+
+    m_silent=false;
+}
+
+
+void PageThumbnailBar::setCurrentPageSilent(int page)
+{
+    if(page<0 || page>=count())
+        return;
+
+    m_silent=true;
+    setCurrentRow(page);
+    m_silent=false;
+}
+
+
+void PageThumbnailBar::onCurrentItemChanged(QListWidgetItem *current)
+{
+    if(m_silent || current==nullptr)
+        return;
+
+    emit pageSelected(current->data(Qt::UserRole).toInt());
+}
+
+
+QPixmap PageThumbnailBar::renderPage(QTextDocument *document, int page, int thumbWidth)
+{
+    const QSizeF pgSize=document->pageSize();
+    const qreal k=thumbWidth/qMax(1.0, pgSize.width());
+    const int thumbHeight=qMax(1, qRound(pgSize.height()*k));
+
+    QImage image(thumbWidth, thumbHeight, QImage::Format_ARGB32);
+    image.fill(Qt::white);
+
+    QPainter painter(&image);
+    painter.scale(k, k);
+
+    // Та же обрезка что в PreviewView::paintPage: только своя страница
+    QRectF docRect(QPointF(0, page*pgSize.height()), pgSize);
+    QAbstractTextDocumentLayout::PaintContext ctx;
+    ctx.clip=docRect;
+    ctx.palette.setColor(QPalette::Text, Qt::black);
+
+    painter.translate(0, -page*pgSize.height());
+    painter.setClipRect(docRect);
+    document->documentLayout()->draw(&painter, ctx);
+
+    painter.resetTransform();
+    painter.setPen(QColor(160, 160, 160));
+    painter.drawRect(0, 0, thumbWidth-1, thumbHeight-1);
+
+    return QPixmap::fromImage(image);
 }
 

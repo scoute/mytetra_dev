@@ -58,7 +58,7 @@ run_qtest() {
   # (conf.ini + editorconf.ini) и запуск бинаря из нее (workdir
   # резолвится из applicationFilePath). Фикстуры — из репо.
   case "$name" in
-    test_split|test_attachcut|test_notefolder)
+    test_split|test_attachcut|test_notefolder|test_showtextpaper)
       mkdir -p "$OUT/${name}db"
       cp "$APP/tests/data/conf.ini" \
          "$APP/tests/data/editorconf.ini" "$OUT/${name}db/"

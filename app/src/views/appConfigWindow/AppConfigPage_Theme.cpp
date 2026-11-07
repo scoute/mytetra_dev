@@ -25,6 +25,7 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/MtComboBox.h"
 #include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 
 
 extern AppConfig mytetraConfig;
@@ -735,6 +736,8 @@ void AppConfigPage_Theme::onSwitchToCustom(void)
   if(editorScreen!=nullptr)
     editorScreen->applyNoteColors();
 
+  EditorShowTextDispatcher::instance()->applyNoteColorsToAll();
+
   updateCustomEnabled();
 }
 
@@ -969,6 +972,8 @@ int AppConfigPage_Theme::applyChanges(void)
 
   if(editorScreen!=nullptr)
     editorScreen->applyNoteColors();
+
+  EditorShowTextDispatcher::instance()->applyNoteColorsToAll();
 
   return 0;
 }

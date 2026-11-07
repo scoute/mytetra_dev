@@ -673,12 +673,26 @@ QString MetaEditor::effectiveNoteFontColor(const QString &themeName,
 // оверрайдом
 QString MetaEditor::noteTextAreaStyleSheet(void)
 {
+    QStringList declarations=notePaperDeclarations();
+
+    if(declarations.isEmpty())
+        return "";
+
+    return QString("QWidget[objectName=\"textArea\"] { %1 }").arg(declarations.join(" "));
+}
+
+
+// Сами CSS-объявления бумаги и шрифта без селектора: общий движок
+// для основного редактора (оборачивается селектором выше) и открепляемых
+// окон (кладется прямо на их область текста). Пусто - поле целиком за темой
+QStringList MetaEditor::notePaperDeclarations(void)
+{
     QStringList declarations;
 
     // Цвета и мозаика заметок живут только на теме Custom:
     // базовые темы всегда выглядят как есть
     if(mytetraConfig.getInterfaceTheme()!="custom")
-        return "";
+        return declarations;
 
     QString paperSetting=mytetraConfig.get_notePaperColor();
     QColor paperColor(paperSetting);
@@ -707,10 +721,7 @@ QString MetaEditor::noteTextAreaStyleSheet(void)
         declarations << QString("background-image: url(\"%1\"); background-repeat: repeat-xy;").arg(tile);
     }
 
-    if(declarations.isEmpty())
-        return "";
-
-    return QString("QWidget[objectName=\"textArea\"] { %1 }").arg(declarations.join(" "));
+    return declarations;
 }
 
 

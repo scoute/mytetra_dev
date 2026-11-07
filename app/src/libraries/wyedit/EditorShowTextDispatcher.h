@@ -25,6 +25,11 @@ public:
     void updateWindow(const QString &noteId);
     void updateAllWindows();
 
+    // Перекрасить бумагу всех открепляемых окон под текущую тему.
+    // Вызывается из тех же мест что applyNoteColors основного редактора:
+    // окна живут дольше смены темы и сами ее не отслеживают
+    void applyNoteColorsToAll(void);
+
     void closeWindow(const QString &noteId);
     void closeAllWindows();
     void closeAllWindowsForExit();

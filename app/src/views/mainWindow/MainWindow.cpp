@@ -2104,6 +2104,8 @@ void MainWindow::onViewPaperColor(void)
 
     if(editorScreen!=nullptr)
         editorScreen->applyNoteColors();
+
+    EditorShowTextDispatcher::instance()->applyNoteColorsToAll();
 }
 
 
@@ -2126,6 +2128,8 @@ void MainWindow::onThemeMenuTriggered(QAction *action)
         // пустая настройка подхватывает цвет новой темы
         if(editorScreen!=nullptr)
             editorScreen->applyNoteColors();
+
+        EditorShowTextDispatcher::instance()->applyNoteColorsToAll();
     }
 }
 

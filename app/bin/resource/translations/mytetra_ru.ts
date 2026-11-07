@@ -482,6 +482,50 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Notes with attachments decor</source>
         <translation type="vanished">Отображение записей с прикрепленными файлами</translation>
     </message>
+    <message>
+        <source>Record directory naming in base/: system names (id, as in stock MyTetra) or system + note names (hybrid, id_name). The choice applies to new notes and note renames.</source>
+        <translation>Имена каталогов записей в base/: системные (id, как в обычной MyTetra) или системные + имена заметок (гибридные, id_name). Выбор действует на новые заметки и переименования.</translation>
+    </message>
+    <message>
+        <source>Name new record directories: </source>
+        <translation>Именовать новые каталоги записей: </translation>
+    </message>
+    <message>
+        <source>System names (id)</source>
+        <translation>Системные имена (id)</translation>
+    </message>
+    <message>
+        <source>System + note names (id_name)</source>
+        <translation>Системные + имена заметок (id_name)</translation>
+    </message>
+    <message>
+        <source>Convert record directories to the selected form</source>
+        <translation>Привести каталоги записей к выбранному виду</translation>
+    </message>
+    <message>
+        <source>Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names.</source>
+        <translation>Опасно, бета-версия: перед конвертацией сделайте бэкап каталога базы. Если база зашифрована, сначала расшифруйте. Дерево будет сохранено с новыми именами каталогов.</translation>
+    </message>
+    <message>
+        <source>Convert record directories</source>
+        <translation>Конвертация каталогов записей</translation>
+    </message>
+    <message>
+        <source>All record directories will be brought to the form "%1". Back up your database directory first. Continue?</source>
+        <translation>Все каталоги записей будут приведены к виду "%1". Сначала сделайте бэкап каталога базы. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Converted directories: %1.</source>
+        <translation>Сконвертировано каталогов: %1.</translation>
+    </message>
+    <message>
+        <source>Not found on disk (field fixed): %1.</source>
+        <translation>Не найдено на диске (поле исправлено): %1.</translation>
+    </message>
+    <message>
+        <source>Record directories on disk</source>
+        <translation>Каталоги записей на диске</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Clipper</name>
@@ -5211,6 +5255,18 @@ Usable backups (date, branches, records, size):
         <source>Import error: unable to create directory %1.</source>
         <translation>Ошибка импорта: не удаётся создать каталог %1.</translation>
     </message>
+    <message>
+        <source>Record tree is unavailable.</source>
+        <translation>Дерево записей недоступно.</translation>
+    </message>
+    <message>
+        <source>Name %1 is already taken, note "%2" skipped.</source>
+        <translation>Имя %1 уже занято, заметка "%2" пропущена.</translation>
+    </message>
+    <message>
+        <source>Unable to rename directory %1 to %2.</source>
+        <translation>Не удаётся переименовать каталог %1 в %2.</translation>
+    </message>
 </context>
 <context>
     <name>KnowTreeView</name>
@@ -7002,6 +7058,14 @@ Linux: поставьте пакет git. Windows: https://git-scm.com.</transla
 Enable it in Settings on the History page.</source>
         <translation>История заметок отключена.
 Включите её в настройках на странице История.</translation>
+    </message>
+    <message>
+        <source>Rename directory</source>
+        <translation>Переименование каталога</translation>
+    </message>
+    <message>
+        <source>Note renamed, but record directory was kept: %1</source>
+        <translation>Заметка переименована, но каталог записи оставлен старый: %1</translation>
     </message>
 </context>
 <context>

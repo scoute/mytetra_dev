@@ -11,6 +11,7 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/GlobalParameters.h"
 #include "models/attachTable/AttachTableData.h"
+#include "models/attachTable/Attach.h"
 #include "libraries/crypt/CryptService.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -1025,6 +1026,58 @@ QString Record::getShortDirName() const
    criticalError("Record::getShortDirName() : Not present dir field");
 
  return fieldList.value("dir");
+}
+
+
+// Исходная схема каталога записи: голый id, как в обычной MyTetra
+QString Record::constructLegacyDirName(const QString &id)
+{
+ return id;
+}
+
+
+// Человеко-читаемая схема: id_имя. Префикс id сохраняет уникальность
+// (коллизии имен и регистронезависимость FS не страшны), видимая
+// часть позволяет узнать запись по каталогу, не открывая ее.
+// Плоский вид без пути веток: только id и имя самой записи.
+// Пробелы чистятся общим санитайзером вложений: подчеркивания вместо
+// квотирования в консоли Linux, Windows-запрещенные символы тоже
+// подчеркивания, повторы схлопываются, края чистятся
+QString Record::constructHumanDirName(const QString &id, const QString &name)
+{
+ QString stem=Attach::sanitizeVisibleName(name);
+
+ // Ведущие точки снимаются: каталог не должен становиться скрытым,
+ // а ".." вообще недопустим как часть пути
+ while(stem.startsWith("."))
+   stem=stem.mid(1).trimmed();
+
+ // Хвостовые точки Windows не любит, снимаются тоже
+ while(stem.endsWith("."))
+   stem.chop(1);
+
+ // Длинные названия режутся: 50 символов хватает для узнаваемости,
+ // а в байтах UTF-8 (до 4 на символ) плюс id укладывается в лимит
+ // имени файла 255 даже на строго настроенных FS
+ const int maxStemLength=50;
+ if(stem.length()>maxStemLength)
+   stem=stem.left(maxStemLength).trimmed();
+
+ // От видимого имени ничего пригодного не осталось: исходная схема
+ if(stem.isEmpty() || stem=="." || stem=="..")
+   return constructLegacyDirName(id);
+
+ return id+"_"+stem;
+}
+
+
+// Имя каталога по заданному режиму (для создания и конвертации)
+QString Record::dirNameForMode(int mode, const QString &id, const QString &name)
+{
+ if(mode==AppConfig::RecordDirHybrid)
+   return constructHumanDirName(id, name);
+
+ return constructLegacyDirName(id);
 }
 
 

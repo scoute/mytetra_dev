@@ -193,6 +193,9 @@ public:
 
     QStringList getRecordPath(const QString &recordId);
 
+    // Подверсия базы из последнего checkFormat (0 - не грузили)
+    int baseSubVersion(void) const;
+
     Record *getRecord(const QString &recordId);
 
     //! Проверка наличия идентификатора ветки во всем дереве
@@ -339,6 +342,12 @@ private:
     bool checkFormat(QDomElement elementFormat);
 
     bool updateSubVersionFrom1To2(void);
+
+    // Формат 1.3 (gee12): числовой favor у записей, миграция - no-op
+    bool updateSubVersionFrom2To3(void);
+
+    // Подверсия загруженной базы: посев избранного из favor только для 1.3+
+    int m_baseSubVersion=0;
 
 
     //! Нахождение совпадающих ID в импортируемых данных и в основной базе для веток

@@ -4446,6 +4446,22 @@ Enter your old password and new password.
         <translation>Убрать из избранного</translation>
     </message>
     <message>
+        <source>Move up</source>
+        <translation>Выше</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Ниже</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>В начало</translation>
+    </message>
+    <message>
+        <source>Move to bottom</source>
+        <translation>В конец</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/favoritesPanel/FavoritesPanel.cpp" line="582"/>
         <source>Note is missing from the base</source>
         <translation>Запись отсутствует в базе</translation>

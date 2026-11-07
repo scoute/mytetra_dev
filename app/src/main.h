@@ -38,7 +38,7 @@ using namespace std;
 
 // Поддерживаемая версия формата базы (хранилища)
 #define CURRENT_FORMAT_VERSION    1
-#define CURRENT_FORMAT_SUBVERSION 2
+#define CURRENT_FORMAT_SUBVERSION 3
 
 // Управление трассировкой
 #ifdef QT_DEBUG

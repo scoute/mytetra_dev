@@ -348,6 +348,12 @@ void EditorShowTextDispatcher::switchBehavior(const QString &mode)
         int x=widgetWindow->geometry().x();
         int y=widgetWindow->geometry().y();
 
+        // Скрепка "поверх всех окон" переживает смену поведения:
+        // setWindowFlags ниже затирает все флаги, хинт возвращается обратно.
+        // Окна в этот момент прячутся и показываются заново, так что
+        // флаг применяется штатно
+        const Qt::WindowFlags topHint=widgetWindow->windowFlags() & Qt::WindowStaysOnTopHint;
+
         if(mode=="single")
         {
             // Если идет переключение режима together->single,
@@ -366,7 +372,7 @@ void EditorShowTextDispatcher::switchBehavior(const QString &mode)
             }
 
             widgetWindow->setParent(nullptr);
-            widgetWindow->setWindowFlags(Qt::Window);
+            widgetWindow->setWindowFlags(Qt::WindowFlags(Qt::Window) | topHint);
         }
         else if(mode=="together")
         {
@@ -388,7 +394,7 @@ void EditorShowTextDispatcher::switchBehavior(const QString &mode)
             }
 
             widgetWindow->setParent( mainWindow );
-            widgetWindow->setWindowFlags(Qt::Dialog);
+            widgetWindow->setWindowFlags(Qt::WindowFlags(Qt::Dialog) | topHint);
         }
 
         widgetWindow->move(x, y);

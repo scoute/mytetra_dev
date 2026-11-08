@@ -52,9 +52,11 @@
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/GlobalParameters.h"
 #include "controllers/attachTable/AttachTableController.h"
+#include "models/recordTable/Record.h"
 #include "models/appConfig/AppConfig.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
+#include "models/appConfig/AppConfigStorage.h"
 #include "models/appConfig/AppConfigRecordTable.h"
 
 // Максимально возможная длина выделения текста (в символах) при которой
@@ -3099,10 +3101,48 @@ QString Editor::absoluteNoteDirectory(const QString &workDir)
 
 
 // Открыть каталог текущей заметки в файловом менеджере.
+// Безусловный пункт: работает везде, а не только на голосе/картинке.
+// Каталог могли переименовать мимо программы (крах посреди
+// конвертера, ручная правка): пробуются путь из поля, потом системный
+// id, потом гибридный id_имя. Первое существующее открывается
+QString Editor::resolveNoteDirectory(void)
+{
+  const QString fieldDir=absoluteNoteDirectory(getWorkDirectory());
+
+  if(!fieldDir.isEmpty())
+    return fieldDir;
+
+  const QString recordId=getMiscField(QStringLiteral("id"));
+
+  if(recordId.isEmpty())
+    return QString();
+
+  const QString baseDir=AppContext::instance().appConfig()->storageSection()->get_tetradir()+
+                        QStringLiteral("/base");
+
+  // Системное имя: голый id, как в обычной MyTetra
+  const QString legacyDir=absoluteNoteDirectory(baseDir+
+                                                QStringLiteral("/")+recordId);
+
+  if(!legacyDir.isEmpty())
+    return legacyDir;
+
+  // Гибридное имя: id_имя. Имя из подписи редактора (у шифрованной
+  // при закрытой базе пусто - dirNameForMode даст системный вид,
+  // кандидат совпадет с проверенным выше, все честно)
+  return absoluteNoteDirectory(baseDir+
+                               QStringLiteral("/")+
+                               Record::dirNameForMode(AppConfig::RecordDirHybrid,
+                                                      recordId,
+                                                      getMiscField(QStringLiteral("title"))));
+}
+
+
+// Открыть каталог текущей заметки в файловом менеджере.
 // Безусловный пункт: работает везде, а не только на голосе/картинке
 void Editor::onShowNoteInFolder(void)
 {
-  const QString absoluteDirectory=absoluteNoteDirectory(getWorkDirectory());
+  const QString absoluteDirectory=resolveNoteDirectory();
 
   if(absoluteDirectory.isEmpty())
   {

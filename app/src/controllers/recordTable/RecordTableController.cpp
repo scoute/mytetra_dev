@@ -815,10 +815,26 @@ void RecordTableController::editField(int pos,
                                                    table->getField("id", pos),
                                                    name);
     QString renameError;
-    if(!table->renameRecordDir(pos, targetDir, renameError) && !renameError.isEmpty())
+
+    const bool renamed=table->renameRecordDir(pos, targetDir, renameError);
+
+    if(!renamed && !renameError.isEmpty())
       QMessageBox::warning(view,
                            tr("Rename directory"),
                            tr("Note renamed, but record directory was kept: %1").arg(renameError));
+
+    if(renamed)
+    {
+      // Каталог переехал: открытый редактор смотрит в старый путь.
+      // Обновляется на лету из свежего поля dir, без перезапуска
+      MetaEditor *openEditor=find_object<MetaEditor>("editorScreen");
+
+      if(openEditor!=nullptr && openEditor->getMiscField("id")==table->getField("id", pos))
+        openEditor->refreshWorkDirectory(table->getRecord(pos)->getFullDirName());
+
+      if(m_dispatcher!=nullptr)
+        m_dispatcher->refreshAllWorkDirectories();
+    }
   }
 
   // Обновление инфополей в области редактирования записи

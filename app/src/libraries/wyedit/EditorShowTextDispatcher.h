@@ -37,6 +37,11 @@ public:
     // не правилось: иначе его сейв позже перезапишет файл
     void refreshAfterDetachedSave(const QString &noteId);
 
+    // Каталоги записей переименованы на диске (конвертер имен):
+    // перевести все окна на новые пути из живой таблицы.
+    // Без перезапуска (иначе show-in-folder и сейвы бьют мимо)
+    void refreshAllWorkDirectories(void);
+
     // Переприменить read-only всех окон (переключение глобального
     // режима чтения). Формула та же что у главного окна
     void refreshAllEditability(void);

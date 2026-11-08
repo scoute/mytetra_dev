@@ -19,6 +19,8 @@
 #include "models/attachTable/Attach.h"
 #include "models/attachTable/AttachTableData.h"
 #include "views/tree/TreeScreen.h"
+#include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigUi.h"
@@ -442,6 +444,27 @@ void AppConfigPage_Attach::onClickedConvertRecordDirs()
         AppContext::instance().appConfig()->storageSection()->set_recordDirNameMode(targetMode);
         AppContext::instance().appConfig()->sync();
     }
+
+    // Каталоги переехали: открытые редакторы смотрят в старые пути.
+    // Переводятся на свежие dir из живой таблицы без перезапуска,
+    // иначе show-in-folder и сейвы бьют мимо (даже при частичных
+    // ошибках - удачные переименования уже на диске)
+    MetaEditor *edView=find_object<MetaEditor>("editorScreen");
+
+    if(edView!=nullptr)
+    {
+        const QString openId=edView->getMiscField(QStringLiteral("id"));
+
+        if(!openId.isEmpty())
+        {
+            const QString freshDir=treeScreen->knowTreeModel->recordDirPath(openId);
+
+            if(!freshDir.isEmpty())
+                edView->refreshWorkDirectory(freshDir);
+        }
+    }
+
+    AppContext::instance().dispatcher()->refreshAllWorkDirectories();
 
     QString resultText=tr("Converted directories: %1.").arg(renamedCount);
     if(notFoundCount>0)

@@ -48,8 +48,9 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 
     qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
-    // Перенос файла в корзину
-    if( QFile::rename(fileNameFrom, fileNameTo)==true )
+    // Перенос файла в корзину. Между томами rename не работает,
+    // используется копия с удалением (см. moveFileCrossVolume)
+    if( DiskHelper::moveFileCrossVolume(fileNameFrom, fileNameTo)==true )
       trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
     else
       criticalError("Can not remove file\n"+fileNameFrom+"\nto directory\n"+nameDirTo+"\nwith new name\n"+fileNameTo);
@@ -73,6 +74,34 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 }
 
 
+// Перемещение файла с поддержкой разных томов: QFile::rename
+// между томами не работает (Temp на C:, база на Z: под Wine;
+// portable на другом диске чем %TEMP% в Windows). Тогда файл
+// копируется и исходник удаляется. Неудача - false, дубликатов
+// не остается (неудавшаяся копия забирается назад)
+bool DiskHelper::moveFileCrossVolume(const QString &fileNameFrom,
+                                     const QString &fileNameTo)
+{
+  if(QFile::rename(fileNameFrom, fileNameTo))
+    return true;
+
+  // rename молча не умеет между томами: копия + удаление исходника.
+  // Копия падает если цель занята - вызыватель дает уникальные имена
+  if(!QFile::copy(fileNameFrom, fileNameTo))
+    return false;
+
+  if(!QFile::remove(fileNameFrom))
+  {
+    // Копия уже в корзине, а исходник не удалился: забираем копию
+    // назад чтобы не плодить дубликаты
+    QFile::remove(fileNameTo);
+    return false;
+  }
+
+  return true;
+}
+
+
 // Удаление файла с копированием его копии в корзину
 // Функция возвращает полное имя файла копии, если копирование прошло успешно
 bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
@@ -87,8 +116,9 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
 
   qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
-  // Файл перемещается в корзину
-  if( QFile::rename(fileNameFrom,fileNameTo)==true )
+  // Файл перемещается в корзину. Между томами rename не работает,
+  // используется копия с удалением (см. moveFileCrossVolume)
+  if( DiskHelper::moveFileCrossVolume(fileNameFrom,fileNameTo)==true )
   {
     trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
   }

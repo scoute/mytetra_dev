@@ -278,13 +278,31 @@ done
 # OpenSSL 1.1 для Qt 5.15: Qt грузит через LoadLibrary, в импортах
 # synctetra.exe его не видно. Без этих DLL https-качалки не работают,
 # программа при этом не падает (см. политику TLS в AGENTS.md)
+OPENSSL_COPIED=0
 for dll in libssl-1_1 libcrypto-1_1; do
     if [[ -f "${SSL_DIR}/${dll}.dll" ]]; then
         cp "${SSL_DIR}/${dll}.dll" "${PORTABLE_DIR}/"
+        OPENSSL_COPIED=1
     else
         echo "ПРЕДУПРЕЖДЕНИЕ: нет ${dll}.dll: https в портабле работать не будет" >&2
     fi
 done
+
+# MSVCR100 для OpenSSL выше: QtCreator/bin собран MSVC 2010, а MinGW
+# живет на msvcrt — рантайм не покрывает. Без msvcr100.dll рядом с exe
+# libssl/libcrypto не грузятся и https молча не работает на машинах
+# без установленного VC++ 2010 (см. fix/571). DLL подлинная, вендорится
+# в thirdParty/win32 (редистрибуция разрешена лицензией пакета),
+# копируется рядом с exe - Windows ищет DLL там сам
+if [[ "${OPENSSL_COPIED}" == "1" ]]; then
+    MSVCR100_SRC="${SOURCE_DIR}/thirdParty/win32/msvcr100.dll"
+    if [[ -f "${MSVCR100_SRC}" ]]; then
+        cp "${MSVCR100_SRC}" "${PORTABLE_DIR}/"
+    else
+        echo "ОШИБКА: есть OpenSSL, но нет ${MSVCR100_SRC}: https будет сломан" >&2
+        exit 6
+    fi
+fi
 
 # --------------------------------------------------------------------------
 # Плагины Qt

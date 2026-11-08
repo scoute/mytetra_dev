@@ -42,6 +42,14 @@ public:
 
   static bool copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath);
 
+  // Перемещение файла с поддержкой разных томов: QFile::rename
+  // между томами не работает (Temp на C:, база на Z: под Wine;
+  // portable на другом диске чем %TEMP% в Windows). Тогда файл
+  // копируется и исходник удаляется. Неудача - false, дубликатов
+  // не остается (неудавшаяся копия забирается назад)
+  static bool moveFileCrossVolume(const QString &fileNameFrom,
+                                  const QString &fileNameTo);
+
 private:
 
   static bool copyQrcToDirectoryRecurse(const QString &resourcePath,

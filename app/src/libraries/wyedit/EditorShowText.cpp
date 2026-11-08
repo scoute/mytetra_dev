@@ -286,6 +286,25 @@ void EditorShowText::refreshEditability(void)
 }
 
 
+// Каталог записи переименован на диске: перевести внутренний
+// редактор на новый путь из живой таблицы
+void EditorShowText::refreshWorkDirectory(void)
+{
+    if(mEditor==nullptr || mNoteId.isEmpty())
+        return;
+
+    KnowTreeModel *dataModel=static_cast<KnowTreeModel*>(find_object<KnowTreeView>("knowTreeView")->model());
+
+    if(dataModel==nullptr)
+        return;
+
+    const QString freshDir=dataModel->recordDirPath(mNoteId);
+
+    if(!freshDir.isEmpty())
+        mEditor->refreshWorkDirectory(freshDir);
+}
+
+
 int EditorShowText::getTextVerticalScroll(void) const
 {
     if(mEditor==nullptr)

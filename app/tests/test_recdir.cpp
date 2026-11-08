@@ -7,6 +7,9 @@
 #include <QFile>
 #include <QDir>
 #include <QTemporaryDir>
+#include <QTextDocument>
+
+#include "libraries/wyedit/Editor.h"
 
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
@@ -54,6 +57,14 @@ private slots:
 
     void dirNameFunctions(void);
     void createAndConvert(void);
+
+    // Путь из живой таблицы свежий сразу после конвертера,
+    // без перезапуска (см. fix/568)
+    void recordDirPathFreshAfterConvert(void);
+
+    // Editor::refreshWorkDirectory переводит редактор на новый
+    // каталог и правит DocumentUrl; несуществующий игнорируется
+    void refreshWorkDirectoryUpdatesDirAndUrl(void);
 
 private:
 
@@ -208,6 +219,94 @@ void TestRecdir::createAndConvert(void)
     // Режим возвращается в дефолтный системный
     AppContext::instance().appConfig()->storageSection()->set_recordDirNameMode(
         AppConfig::RecordDirSystem);
+}
+
+
+void TestRecdir::recordDirPathFreshAfterConvert(void)
+{
+    RecdirModel model(AppContext::instance().backlinkIndex(),
+                      AppContext::instance().dispatcher());
+    model.initFromXML(m_xmlPath);
+
+    QMap<QString, QString> branchFields;
+    branchFields[QStringLiteral("id")]=QStringLiteral("recdirB2");
+    branchFields[QStringLiteral("name")]=QStringLiteral("FreshBranch");
+    model.addNewBranch(model.root(), branchFields);
+
+    TreeItem *branch=model.root()->child(0);
+    QVERIFY2(branch!=nullptr, "branch must exist");
+
+    Record record;
+    record.switchToFat();
+    record.setField(QStringLiteral("name"), QStringLiteral("Fresh"));
+    record.setField(QStringLiteral("file"), QStringLiteral("text.html"));
+    record.setText(QStringLiteral("<p>Hello fresh</p>"));
+
+    RecordTableData *table=branch->recordtableGetTableData();
+    const int pos=table->insertNewRecord(
+        GlobalParameters::AddNewRecordBehavior::ADD_TO_END, 0, record);
+    QVERIFY2(pos>=0, "insert must work");
+
+    const QString recordId=table->getField(QStringLiteral("id"), pos);
+    model.save();
+
+    // Путь из живой таблицы совпадает с полем dir
+    QCOMPARE(model.recordDirPath(recordId),
+             m_baseDir+QStringLiteral("/base/")+table->getField(QStringLiteral("dir"), pos));
+
+    // После конвертера путь свежий без перечитывания базы
+    int notFound=0;
+    int locked=0;
+    QStringList errors;
+    model.convertRecordDirsToMode(AppConfig::RecordDirHybrid,
+                                  notFound, locked, errors);
+    QVERIFY2(errors.isEmpty(), "converter must have no errors");
+    QCOMPARE(table->getField(QStringLiteral("dir"), pos),
+             recordId+QStringLiteral("_Fresh"));
+    QCOMPARE(model.recordDirPath(recordId),
+             m_baseDir+QStringLiteral("/base/")+recordId+QStringLiteral("_Fresh"));
+
+    // Нет такой записи - пусто, а не падение
+    QVERIFY2(model.recordDirPath(QStringLiteral("no-such-id")).isEmpty(),
+             "unknown id must give empty path");
+}
+
+
+void TestRecdir::refreshWorkDirectoryUpdatesDirAndUrl(void)
+{
+    // Полный Editor headless: как в test_showtextpaper, конфиг
+    // редактора стейджит раннер рядом с бинарником.
+    // AppConfig::init() здесь нельзя: ему нужен workdir из
+    // GlobalParameters (conf.ini), а редактору достаточно
+    // собственных editorconf.ini и таблицы шорткатов
+    shortcutManager.init();
+
+    const QString oldDir=m_tmp.filePath(QStringLiteral("oldnote"));
+    const QString newDir=m_tmp.filePath(QStringLiteral("newnote"));
+    QVERIFY2(QDir().mkpath(oldDir), "old dir must be created");
+    QVERIFY2(QDir().mkpath(newDir), "new dir must be created");
+
+    Editor editor;
+    editor.initEnableAssembly(false);
+    editor.initConfigFileName(
+        QCoreApplication::applicationDirPath()+QStringLiteral("/editorconf.ini"));
+    editor.initEnableRandomSeed(false);
+    editor.initDisableToolList(QStringList());
+    editor.init(Editor::WYEDIT_DESKTOP_MODE);
+
+    editor.setWorkDirectory(oldDir);
+    editor.setFileName(QStringLiteral("text.html"));
+    QCOMPARE(editor.getWorkDirectory(), oldDir);
+
+    // Переезд: каталог и DocumentUrl обновляются
+    editor.refreshWorkDirectory(newDir);
+    QCOMPARE(editor.getWorkDirectory(), newDir);
+    QCOMPARE(editor.getTextareaDocument()->metaInformation(QTextDocument::DocumentUrl),
+             QStringLiteral("file:")+newDir+QStringLiteral("/text.html"));
+
+    // Несуществующий каталог игнорируется (осиротевшая запись)
+    editor.refreshWorkDirectory(m_tmp.filePath(QStringLiteral("no-such-dir")));
+    QCOMPARE(editor.getWorkDirectory(), newDir);
 }
 
 QTEST_MAIN(TestRecdir)

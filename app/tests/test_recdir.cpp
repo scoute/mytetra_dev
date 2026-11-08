@@ -66,6 +66,14 @@ private slots:
     // каталог и правит DocumentUrl; несуществующий игнорируется
     void refreshWorkDirectoryUpdatesDirAndUrl(void);
 
+    // Зашифрованная при закрытой базе пропускается, после
+    // разблокировки конвертер ее забирает (см. fix/568)
+    void lockedSkippedThenConvertedAfterUnlock(void);
+
+    // Приоритеты каталога: поле, системный id, гибрид id_имя.
+    // Первое существующее (крах посреди конвертера, ручная правка)
+    void resolveNoteDirectoryPriorities(void);
+
 private:
 
     QTemporaryDir m_tmp;
@@ -307,6 +315,127 @@ void TestRecdir::refreshWorkDirectoryUpdatesDirAndUrl(void)
     // Несуществующий каталог игнорируется (осиротевшая запись)
     editor.refreshWorkDirectory(m_tmp.filePath(QStringLiteral("no-such-dir")));
     QCOMPARE(editor.getWorkDirectory(), newDir);
+}
+
+
+void TestRecdir::lockedSkippedThenConvertedAfterUnlock(void)
+{
+    // Свой скелет: слоты делят один xml, нужна детерминированная база
+    QFile skeleton(m_xmlPath);
+    QVERIFY2(skeleton.open(QIODevice::WriteOnly | QIODevice::Truncate),
+             "skeleton must be rewritable");
+    skeleton.write(SKELETON);
+    skeleton.close();
+
+    // Ключ как в test_crypt: шифрование реальное, через CryptService
+    AppContext::instance().globalParameters()->setCryptKey(
+        QByteArray("0123456789abcdef"));
+
+    RecdirModel model(AppContext::instance().backlinkIndex(),
+                      AppContext::instance().dispatcher());
+    model.initFromXML(m_xmlPath);
+
+    QMap<QString, QString> branchFields;
+    branchFields[QStringLiteral("id")]=QStringLiteral("recdirB3");
+    branchFields[QStringLiteral("name")]=QStringLiteral("CryptBranch");
+    model.addNewBranch(model.root(), branchFields);
+
+    TreeItem *branch=model.root()->child(0);
+    QVERIFY2(branch!=nullptr, "branch must exist");
+
+    Record record;
+    record.switchToFat();
+    record.setField(QStringLiteral("name"), QStringLiteral("Secret Note"));
+    record.setField(QStringLiteral("file"), QStringLiteral("text.html"));
+    record.setText(QStringLiteral("<p>Secret text</p>"));
+
+    RecordTableData *table=branch->recordtableGetTableData();
+    const int pos=table->insertNewRecord(
+        GlobalParameters::AddNewRecordBehavior::ADD_TO_END, 0, record);
+    QVERIFY2(pos>=0, "insert must work");
+
+    // Шифрование штатным путем таблицы: имя уходит в шифртекст
+    table->switchToEncrypt();
+    const QString recordId=table->getField(QStringLiteral("id"), pos);
+    model.save();
+
+    // База закрыта: имя недоступно, запись пропускается, каталог цел
+    AppContext::instance().globalParameters()->setCryptKey(QByteArray());
+    QVERIFY2(table->getField(QStringLiteral("name"), pos).isEmpty(),
+             "locked name must be unavailable");
+
+    int notFound=0;
+    int locked=0;
+    QStringList errors;
+    const int renamedLocked=model.convertRecordDirsToMode(AppConfig::RecordDirHybrid,
+                                                          notFound, locked, errors);
+    QCOMPARE(renamedLocked, 0);
+    QCOMPARE(locked, 1);
+    QVERIFY2(errors.isEmpty(), "skip is not an error");
+    QCOMPARE(table->getField(QStringLiteral("dir"), pos), recordId);
+    QVERIFY2(QDir(m_baseDir+QStringLiteral("/base/")+recordId).exists(),
+             "system dir must stay on disk while locked");
+
+    // База открыта: повтор забирает пропущенную запись
+    AppContext::instance().globalParameters()->setCryptKey(
+        QByteArray("0123456789abcdef"));
+
+    const int renamed=model.convertRecordDirsToMode(AppConfig::RecordDirHybrid,
+                                                    notFound, locked, errors);
+    QCOMPARE(renamed, 1);
+    QCOMPARE(locked, 0);
+    QVERIFY2(errors.isEmpty(), "converter must have no errors");
+    QCOMPARE(table->getField(QStringLiteral("dir"), pos),
+             recordId+QStringLiteral("_Secret_Note"));
+    QVERIFY2(QDir(m_baseDir+QStringLiteral("/base/")+recordId+QStringLiteral("_Secret_Note")).exists(),
+             "hybrid dir must exist on disk after unlock");
+
+    AppContext::instance().globalParameters()->setCryptKey(QByteArray());
+}
+
+
+void TestRecdir::resolveNoteDirectoryPriorities(void)
+{
+    shortcutManager.init();
+
+    Editor editor;
+    editor.initEnableAssembly(false);
+    editor.initConfigFileName(
+        QCoreApplication::applicationDirPath()+QStringLiteral("/editorconf.ini"));
+    editor.initEnableRandomSeed(false);
+    editor.initDisableToolList(QStringList());
+    editor.init(Editor::WYEDIT_DESKTOP_MODE);
+
+    editor.setMiscField(QStringLiteral("id"), QStringLiteral("note1"));
+    editor.setMiscField(QStringLiteral("title"), QStringLiteral("My Note"));
+
+    const QString baseDir=m_baseDir+QStringLiteral("/base");
+    const QString legacyDir=baseDir+QStringLiteral("/note1");
+    const QString hybridDir=baseDir+QStringLiteral("/note1_My_Note");
+    const QString elseDir=baseDir+QStringLiteral("/elsewhere");
+
+    // Путь из поля живой и первый в приоритете
+    QVERIFY2(QDir().mkpath(legacyDir), "legacy must be created");
+    QVERIFY2(QDir().mkpath(hybridDir), "hybrid must be created");
+    QVERIFY2(QDir().mkpath(elseDir), "elsewhere must be created");
+    editor.setWorkDirectory(elseDir);
+    editor.setFileName(QStringLiteral("text.html"));
+    QCOMPARE(editor.resolveNoteDirectory(), elseDir);
+
+    // Поле протухло (каталог удален после открытия): находится системный id
+    const QString staleDir=m_tmp.filePath(QStringLiteral("stale"));
+    QVERIFY2(QDir().mkpath(staleDir), "stale must be created");
+    editor.setWorkDirectory(staleDir);
+    QVERIFY2(QDir(staleDir).removeRecursively(), "stale must be gone");
+    QCOMPARE(editor.resolveNoteDirectory(), legacyDir);
+
+    // Системного нет: находится гибридный id_имя
+    QVERIFY2(QDir(legacyDir).removeRecursively(), "legacy must be gone");
+    QCOMPARE(editor.resolveNoteDirectory(), hybridDir);
+
+    // Ничего нет: пусто, а не падение
+    QVERIFY2(QDir(hybridDir).removeRecursively(), "hybrid must be gone");
+    QVERIFY2(editor.resolveNoteDirectory().isEmpty(), "unknown must give empty");
 }
 
 QTEST_MAIN(TestRecdir)

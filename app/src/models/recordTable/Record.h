@@ -92,6 +92,10 @@ public:
   static QString constructHumanDirName(const QString &id, const QString &name);
   static QString dirNameForMode(int mode, const QString &id, const QString &name);
 
+  // Полное имя каталога записи (tetradir/base/dir).
+  // Поле dir живое: после конвертера имен отдает новый путь
+  QString getFullDirName() const;
+
   static void replaceInternalReferenceByTranslateTable(QString recordFileName, QMap<QString, QString> idRecordTranslate);
 
 protected:
@@ -122,8 +126,6 @@ protected:
   void saveText();
 
   QString getIdAndNameAsString() const; // Внутренний метод для облегчения печати отладочной информации
-
-  QString getFullDirName() const;
   QString getShortDirName() const;
 
   QString getFullTextFileName() const;

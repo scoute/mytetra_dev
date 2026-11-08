@@ -57,6 +57,12 @@ public:
     // Вызывается диспетчером при переключении режима чтения
     void refreshEditability(void);
 
+    // Каталог записи переименован на диске (конвертер имен,
+    // переименование вслед за заголовком): перевести внутренний
+    // редактор на новый путь из живой таблицы. Без перезапуска:
+    // show-in-folder, сейвы и аттачи снова находят файлы
+    void refreshWorkDirectory(void);
+
     int getTextVerticalScroll(void) const;
     void setTextVerticalScroll(int vScroll);
 

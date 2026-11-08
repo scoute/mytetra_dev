@@ -19,6 +19,8 @@
 #include "models/attachTable/Attach.h"
 #include "models/attachTable/AttachTableData.h"
 #include "views/tree/TreeScreen.h"
+#include "views/record/MetaEditor.h"
+#include "libraries/wyedit/EditorShowTextDispatcher.h"
 #include "libraries/helpers/ObjectHelper.h"
 
 extern AppConfig mytetraConfig;
@@ -453,6 +455,27 @@ void AppConfigPage_Attach::onClickedConvertRecordDirs()
         mytetraConfig.set_recordDirNameMode(targetMode);
         mytetraConfig.sync();
     }
+
+    // Каталоги переехали: открытые редакторы смотрят в старые пути.
+    // Переводятся на свежие dir из живой таблицы без перезапуска,
+    // иначе show-in-folder и сейвы бьют мимо (даже при частичных
+    // ошибках - удачные переименования уже на диске)
+    MetaEditor *edView=find_object<MetaEditor>("editorScreen");
+
+    if(edView!=nullptr && treeScreen->knowTreeModel!=nullptr)
+    {
+        const QString openId=edView->getMiscField(QStringLiteral("id"));
+
+        if(!openId.isEmpty())
+        {
+            Record *openRecord=treeScreen->knowTreeModel->getRecord(openId);
+
+            if(openRecord!=nullptr)
+                edView->refreshWorkDirectory(openRecord->getFullDirName());
+        }
+    }
+
+    EditorShowTextDispatcher::instance()->refreshAllWorkDirectories();
 
     QString resultText=tr("Converted directories: %1.").arg(renamedCount);
     if(notFoundCount>0)

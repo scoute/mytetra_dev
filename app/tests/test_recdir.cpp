@@ -3,11 +3,12 @@
 // в гибридном режиме и конвертер туда-обратно на временной базе.
 // Глобалы — extern из main.cpp (в v2 нет AppContext).
 #include <QtTest>
-#include <QCoreApplication>
+#include <QApplication>
 #include <QSettings>
 #include <QFile>
 #include <QDir>
 #include <QTemporaryDir>
+#include <QTextDocument>
 
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
@@ -16,10 +17,13 @@
 #include "models/appConfig/AppConfig.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/ShortcutManager.h"
+#include "libraries/wyedit/Editor.h"
 
 extern AppConfig mytetraConfig;
 extern DataBaseConfig dataBaseConfig;
 extern GlobalParameters globalParameters;
+extern ShortcutManager shortcutManager;
 
 class RecdirModel : public KnowTreeModel
 {
@@ -41,6 +45,14 @@ private slots:
 
     void dirNameFunctions(void);
     void createAndConvert(void);
+
+    // Путь из живой таблицы свежий сразу после конвертера,
+    // без перезапуска (см. fix/568)
+    void recordDirPathFreshAfterConvert(void);
+
+    // Editor::refreshWorkDirectory переводит редактор на новый
+    // каталог и правит DocumentUrl; несуществующий игнорируется
+    void refreshWorkDirectoryUpdatesDirAndUrl(void);
 
 private:
 
@@ -176,6 +188,90 @@ void TestRecdir::createAndConvert(void)
              recordId+QStringLiteral("_My_Note"));
 }
 
-QTEST_APPLESS_MAIN(TestRecdir)
+
+void TestRecdir::recordDirPathFreshAfterConvert(void)
+{
+    RecdirModel model;
+    model.initFromXML(m_xmlPath);
+
+    QMap<QString, QString> branchFields;
+    branchFields[QStringLiteral("id")]=QStringLiteral("recdirB2");
+    branchFields[QStringLiteral("name")]=QStringLiteral("FreshBranch");
+    model.addNewBranch(model.root(), branchFields);
+
+    TreeItem *branch=model.root()->child(0);
+    QVERIFY2(branch!=nullptr, "branch must exist");
+
+    Record record;
+    record.switchToFat();
+    record.setField(QStringLiteral("name"), QStringLiteral("Fresh"));
+    record.setField(QStringLiteral("file"), QStringLiteral("text.html"));
+    record.setText(QStringLiteral("<p>Hello fresh</p>"));
+
+    RecordTableData *table=branch->recordtableGetTableData();
+    const int pos=table->insertNewRecord(
+        GlobalParameters::AddNewRecordBehavior::ADD_TO_END, 0, record);
+    QVERIFY2(pos>=0, "insert must work");
+
+    const QString recordId=table->getField(QStringLiteral("id"), pos);
+    model.save();
+
+    // Путь из живой таблицы совпадает с полем dir
+    QCOMPARE(model.recordDirPath(recordId),
+             m_baseDir+QStringLiteral("/base/")+table->getField(QStringLiteral("dir"), pos));
+
+    // После конвертера путь свежий без перечитывания базы
+    int notFound=0;
+    int locked=0;
+    QStringList errors;
+    model.convertRecordDirsToMode(AppConfig::RecordDirHybrid,
+                                  notFound, locked, errors);
+    QVERIFY2(errors.isEmpty(), "converter must have no errors");
+    QCOMPARE(table->getField(QStringLiteral("dir"), pos),
+             recordId+QStringLiteral("_Fresh"));
+    QCOMPARE(model.recordDirPath(recordId),
+             m_baseDir+QStringLiteral("/base/")+recordId+QStringLiteral("_Fresh"));
+
+    // Нет такой записи - пусто, а не падение
+    QVERIFY2(model.recordDirPath(QStringLiteral("no-such-id")).isEmpty(),
+             "unknown id must give empty path");
+}
+
+
+void TestRecdir::refreshWorkDirectoryUpdatesDirAndUrl(void)
+{
+    // Полный Editor headless: конфиг редактора стейджит раннер
+    // рядом с бинарником, шорткаты нужны его init
+    shortcutManager.init();
+
+    const QString oldDir=m_tmp.filePath(QStringLiteral("oldnote"));
+    const QString newDir=m_tmp.filePath(QStringLiteral("newnote"));
+    QVERIFY2(QDir().mkpath(oldDir), "old dir must be created");
+    QVERIFY2(QDir().mkpath(newDir), "new dir must be created");
+
+    Editor editor;
+    editor.initEnableAssembly(false);
+    editor.initConfigFileName(
+        QCoreApplication::applicationDirPath()+QStringLiteral("/editorconf.ini"));
+    editor.initEnableRandomSeed(false);
+    editor.initDisableToolList(QStringList());
+    editor.init(Editor::WYEDIT_DESKTOP_MODE);
+
+    editor.setWorkDirectory(oldDir);
+    editor.setFileName(QStringLiteral("text.html"));
+    QCOMPARE(editor.getWorkDirectory(), oldDir);
+
+    // Переезд: каталог и DocumentUrl обновляются
+    editor.refreshWorkDirectory(newDir);
+    QCOMPARE(editor.getWorkDirectory(), newDir);
+    QCOMPARE(editor.getTextareaDocument()->metaInformation(QTextDocument::DocumentUrl),
+             QStringLiteral("file:")+newDir+QStringLiteral("/text.html"));
+
+    // Несуществующий каталог игнорируется (осиротевшая запись)
+    editor.refreshWorkDirectory(m_tmp.filePath(QStringLiteral("no-such-dir")));
+    QCOMPARE(editor.getWorkDirectory(), newDir);
+}
+
+QTEST_MAIN(TestRecdir)
 
 #include "test_recdir.moc"

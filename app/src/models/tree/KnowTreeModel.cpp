@@ -2560,6 +2560,19 @@ Record *KnowTreeModel::getRecord(const QString &recordId)
 
 
 // Получение пути к ветке, где находится запись
+// Абсолютный каталог записи по id из живой таблицы.
+// После конвертера имен отдает новый путь без перезапуска
+QString KnowTreeModel::recordDirPath(const QString &recordId)
+{
+  Record *record=getRecord(recordId);
+
+  if(record==nullptr)
+    return QString();
+
+  return record->getFullDirName();
+}
+
+
 QStringList KnowTreeModel::getRecordPath(const QString &recordId)
 {
     QStringList path;

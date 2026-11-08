@@ -995,6 +995,21 @@ void Editor::previewTextarea(const QString &text)
 }
 
 
+// Обновить рабочий каталог после переименования на диске
+// (конвертер имен, переименование вслед за заголовком)
+void Editor::refreshWorkDirectory(const QString &dir)
+{
+  if(dir.isEmpty() || !QDir(dir).exists())
+    return;
+
+  workDirectory=dir;
+
+  if(textArea!=nullptr && textArea->document()!=nullptr && !workFileName.isEmpty())
+    textArea->document()->setMetaInformation(QTextDocument::DocumentUrl,
+                                             QStringLiteral("file:")+dir+QStringLiteral("/")+workFileName);
+}
+
+
 // Установка запрета или разрешения редактирования в области редактирования текста
 void Editor::setTextareaEditable(bool editable)
 {

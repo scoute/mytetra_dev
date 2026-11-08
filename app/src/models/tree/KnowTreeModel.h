@@ -198,6 +198,12 @@ public:
 
     Record *getRecord(const QString &recordId);
 
+    // Абсолютный каталог записи (tetradir/base/dir) по id.
+    // Поле dir берется из живой таблицы: после конвертера имен
+    // и переименований отдает уже новый путь без перезапуска.
+    // Пусто если записи нет
+    QString recordDirPath(const QString &recordId);
+
     //! Проверка наличия идентификатора ветки во всем дереве
     bool isItemIdExists(QString findId) const;
 

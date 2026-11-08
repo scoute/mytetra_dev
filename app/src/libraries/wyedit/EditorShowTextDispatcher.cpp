@@ -244,6 +244,18 @@ void EditorShowTextDispatcher::refreshAllEditability(void)
 }
 
 
+// Перевести все окна на новые каталоги записей после конвертера.
+// Поля dir уже обновлены, окна берут свежие пути из живой таблицы
+void EditorShowTextDispatcher::refreshAllWorkDirectories(void)
+{
+    for( auto widgetWindow : mWindowsList )
+    {
+        if( !widgetWindow.isNull() )
+            widgetWindow->refreshWorkDirectory();
+    }
+}
+
+
 // Перекрасить бумагу всех открепляемых окон под текущую тему
 void EditorShowTextDispatcher::applyNoteColorsToAll(void)
 {

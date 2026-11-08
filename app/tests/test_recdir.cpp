@@ -327,6 +327,9 @@ void TestRecdir::lockedSkippedThenConvertedAfterUnlock(void)
     skeleton.write(SKELETON);
     skeleton.close();
 
+    AppContext::instance().appConfig()->storageSection()->set_recordDirNameMode(
+        AppConfig::RecordDirSystem);
+
     // Ключ как в test_crypt: шифрование реальное, через CryptService
     AppContext::instance().globalParameters()->setCryptKey(
         QByteArray("0123456789abcdef"));

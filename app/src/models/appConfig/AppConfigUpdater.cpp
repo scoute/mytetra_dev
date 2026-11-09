@@ -72,6 +72,19 @@ QString AppConfigUpdater::updateValueRepresentation(int versionFrom,
         }
     }
 
+    if(versionFrom==62 and versionTo==63)
+    {
+        // Дефолты клиппера: новые заметки - через диалог (ветка
+        // "спрашивать каждый раз"), плитки - "частые 16".
+        // Двигаются только значения старых дефолтов: сознательно
+        // выбранные режимы не трогаются
+        if(name=="clipperbranchmode" and value.trimmed()=="0")
+            return "2";
+
+        if(name=="clippertilemode" and value.trimmed()=="0")
+            return "1";
+    }
+
     return value;
 }
 

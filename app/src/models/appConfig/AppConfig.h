@@ -407,6 +407,7 @@ private:
     QStringList get_parameter_table_60(bool withEndSignature=true);
     QStringList get_parameter_table_61(bool withEndSignature=true);
     QStringList get_parameter_table_62(bool withEndSignature=true);
+    QStringList get_parameter_table_63(bool withEndSignature=true);
 
     // Актуальная таблица параметров (полный список известных ключей).
     // Единственное место, знающее номер последней версии: при добавлении

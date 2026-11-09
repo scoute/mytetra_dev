@@ -104,6 +104,11 @@ public:
  void initDisableToolList(QStringList toolNames);
  void init(int mode);
 
+ // Открыть настройки редактора, опционально сразу на странице
+ // (page "misc" - туда, где прозрачность содержания).
+ // Нужно плавающему содержанию для пункта "Настроить..." в ПКМ-меню
+ void openSettings(const QString &page=QString());
+
  // Методы работы с textarea
  void setTextarea(QString text);
 
@@ -256,6 +261,7 @@ private slots:
  void onScrollUpHotkey(void);
  void onScrollDownHotkey(void);
  void onSettingsClicked(void);
+ void onOpenMiscSettings(void);
  void onShowformattingClicked(bool);
 
  void onExpandEditAreaClicked(void);

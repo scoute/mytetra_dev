@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QScrollBar>
+#include <QMenu>
 
 #include "EditorFloatToc.h"
 #include "EditorTextArea.h"
@@ -43,6 +44,11 @@ EditorFloatToc::EditorFloatToc(QWidget *parent) : QWidget(parent)
  m_headerButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
  m_headerButton->setCheckable(false);
  m_headerButton->setCursor(Qt::PointingHandCursor);
+
+ // ПКМ по заголовку - меню с прыжком в настройки прозрачности
+ m_headerButton->setContextMenuPolicy(Qt::CustomContextMenu);
+ connect(m_headerButton, &QWidget::customContextMenuRequested,
+         this,            &EditorFloatToc::onHeaderContextMenu);
 
  m_list=new QListWidget(this);
  m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -264,6 +270,20 @@ void EditorFloatToc::onToggleCollapsed(void)
  m_list->setVisible(!m_collapsed);
  m_headerButton->setArrowType(m_collapsed ? Qt::RightArrow : Qt::DownArrow);
  place();
+}
+
+
+// ПКМ-меню заголовка: единственный пункт ведет в настройки
+// редактора сразу на страницу с прозрачностью содержания
+void EditorFloatToc::onHeaderContextMenu(const QPoint &pos)
+{
+ QMenu menu(m_headerButton);
+ QAction *setupAction=menu.addAction(tr("Configure..."));
+
+ if(menu.exec(m_headerButton->mapToGlobal(pos))!=setupAction)
+  return;
+
+ emit setupMiscRequested();
 }
 
 

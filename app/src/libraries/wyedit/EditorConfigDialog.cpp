@@ -11,16 +11,21 @@
 #include "views/appConfigWindow/AppConfigDialog.h"
 
 
-EditorConfigDialog::EditorConfigDialog(QWidget *parent) : QWidget(parent)
+EditorConfigDialog::EditorConfigDialog(QWidget *parent, const QString &page) : QWidget(parent)
 {
  configDialog=new ConfigDialog();
- 
+
  configDialog->setWindowTitle(tr("Editor settings"));
- 
+
  configDialog->addWidget(new EditorConfigFont(this),tr("Fonts"));
  configDialog->addWidget(new EditorConfigToolbars(this),tr("Toolbars"));
  configDialog->addWidget(new EditorConfigMathExpression(this),tr("Formulas"));
- configDialog->addWidget(new EditorConfigMisc(this),tr("Misc"));
+ QListWidgetItem *miscItem=configDialog->addWidget(new EditorConfigMisc(this),tr("Misc"));
+
+ // Прямой прыжок на страницу (из ПКМ-меню плавающего содержания):
+ // выбор до exec, иначе диалог уже закрыт
+ if(page==QStringLiteral("misc") && miscItem!=nullptr)
+   configDialog->externalChangePage(miscItem);
 
  // Кнопка перехода в общие настройки слева внизу:
  // текущие правки применяются как по OK, затем открывается

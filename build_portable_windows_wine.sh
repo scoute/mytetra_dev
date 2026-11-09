@@ -326,16 +326,27 @@ done
 
 # OpenSSL 1.1 для Qt 5.15: Qt грузит через LoadLibrary, в импортах
 # mytetra.exe его не видно. Без этих DLL https-качалки не работают,
-# программа при этом не падает (см. политику TLS в AGENTS.md)
+# программа при этом не падает (см. политику TLS в AGENTS.md).
+# Источник: сначала SSL_DIR (опция --ssl), иначе вендорные копии
+# из thirdParty/win32 (см. fix/575): на сборочной машине OpenSSL
+# может не стоять вообще. Нет ни там, ни там - только предупреждение
+SSL_SRC=""
+if [[ -n "${SSL_DIR}" && -f "${SSL_DIR}/libssl-1_1.dll" && -f "${SSL_DIR}/libcrypto-1_1.dll" ]]; then
+    SSL_SRC="${SSL_DIR}"
+elif [[ -f "${SOURCE_DIR}/thirdParty/win32/libssl-1_1.dll" && -f "${SOURCE_DIR}/thirdParty/win32/libcrypto-1_1.dll" ]]; then
+    SSL_SRC="${SOURCE_DIR}/thirdParty/win32"
+fi
+
 OPENSSL_COPIED=0
-for dll in libssl-1_1 libcrypto-1_1; do
-    if [[ -f "${SSL_DIR}/${dll}.dll" ]]; then
-        cp "${SSL_DIR}/${dll}.dll" "${PORTABLE_DIR}/"
-        OPENSSL_COPIED=1
-    else
-        echo "ПРЕДУПРЕЖДЕНИЕ: нет ${dll}.dll: https в портабле работать не будет" >&2
-    fi
-done
+if [[ -n "${SSL_SRC}" ]]; then
+    echo "OpenSSL из: ${SSL_SRC}"
+    for dll in libssl-1_1 libcrypto-1_1; do
+        cp "${SSL_SRC}/${dll}.dll" "${PORTABLE_DIR}/"
+    done
+    OPENSSL_COPIED=1
+else
+    echo "ПРЕДУПРЕЖДЕНИЕ: нет OpenSSL 1.1 (ни в SSL_DIR, ни в thirdParty/win32): https в портабле работать не будет" >&2
+fi
 
 # MSVCR100 для OpenSSL выше: QtCreator/bin собран MSVC 2010, а MinGW
 # живет на msvcrt — рантайм не покрывает. Без msvcr100.dll рядом с exe

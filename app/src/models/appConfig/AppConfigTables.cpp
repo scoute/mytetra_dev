@@ -214,6 +214,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_60;
     parameterFunctions << &AppConfig::get_parameter_table_61;
     parameterFunctions << &AppConfig::get_parameter_table_62;
+    parameterFunctions << &AppConfig::get_parameter_table_63;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -1435,9 +1436,32 @@ QStringList AppConfig::get_parameter_table_62(bool withEndSignature)
 }
 
 
+QStringList AppConfig::get_parameter_table_63(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 62
+    table << get_parameter_table_62(false);
+
+    // Новых ключей нет: меняются дефолты клиппера (ветка "спрашивать",
+    // плитки "частые"). Дефолты в таблице не переопределить без дублей
+    // (дубль роняет миграцию в criticalError), поэтому новые значения
+    // для старых дефолтов ставит updateValueRepresentation(),
+    // а свежие установки берут их из шаблона conf.ini.
+    // Версия бампится чтобы миграция доехала до существующих конфигов
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList AppConfig::get_actual_parameter_table(bool withEndSignature)
 {
     // Актуальная таблица = последняя по номеру версии.
     // При добавлении get_parameter_table_N поменять здесь один вызов
-    return get_parameter_table_62(withEndSignature);
+    return get_parameter_table_63(withEndSignature);
 }

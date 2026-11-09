@@ -44,6 +44,7 @@ build-*-Release/*
 
 # Ignore bash files
 *.sh
+!build_portable_windows_*.sh
 
 # QTest runner навсегда в репо (см. 491)
 !app/tests/run_qtests.sh

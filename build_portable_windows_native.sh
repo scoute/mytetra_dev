@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# Сборка портабельной версии MyTetra для Windows через Wine.
-# Qt для Windows (mingw81_32) и тулчейн берутся из обычной Qt-установки,
-# сборка идет вызовом windows-qmake и mingw32-make под Wine.
-# Медленно (сам Wine нетороплив), зато без виртуалки.
+# Сборка портабельной версии MyTetra для Windows нативно, без Wine.
+# Запуск из Git Bash на самой Windows-машине:
+#   ./build_portable_windows_native.sh [--jobs 8] [...]
+# Qt для Windows (mingw81_32) и тулчейн берутся из обычной Qt-установки
+# (по умолчанию C:\Qt), сборка прямым вызовом qmake.exe и mingw32-make.exe.
+#
+# Рядом лежит build_portable_windows_wine.sh - тот же результат, но
+# сборка под Linux через Wine (медленно, зато без Windows-машины).
 #
 # В поставке только бинари, DLL Qt и рантайма, плагины, qt.conf.
 # Конфигов и данных НЕТ специально: при первом запуске диалог
@@ -11,45 +15,44 @@
 # Ланчер не нужен: Windows ищет DLL рядом с exe сам.
 #
 # Использование:
-#   ./build_portable_windows.sh            без параметров: исходники откуда
-#                                          запущен скрипт, сборка из каталога
-#                                          Qt Creator (если есть), Qt из него,
-#                                          результат рядом в MyTetra-win-portable
-#   ./build_portable_windows.sh --clean    очистить сборочный каталог
-#   ./build_portable_windows.sh --jobs 2   потоки сборки (под Wine больше
-#                                          4 обычно только хуже)
-#   ./build_portable_windows.sh --portable-dir /путь/к/папке
-#   ./build_portable_windows.sh --qt /путь/к/Qt-mingw81_32
-#   ./build_portable_windows.sh --mingw /путь/к/mingw810_32
-#   ./build_portable_windows.sh --src /путь/к/исходникам
-#   ./build_portable_windows.sh --build-dir /путь/к/сборке
-#   ./build_portable_windows.sh --no-build  только упаковать готовое
-#   ./build_portable_windows.sh --strip / --no-strip
-#   ./build_portable_windows.sh --map      link map рядом с бинарем
-#                                          (по адресу падения найти функцию)
-#   ./build_portable_windows.sh --smoke    тестовый запуск в offscreen под Wine
-#
-# WINEPREFIX пробрасывается как есть (по умолчанию ~/.wine).
+#   ./build_portable_windows_native.sh            без параметров: исходники откуда
+#                                                запущен скрипт, сборка из каталога
+#                                                Qt Creator (если есть), Qt из C:\Qt,
+#                                                результат рядом в MyTetra-win-portable
+#   ./build_portable_windows_native.sh --clean    очистить сборочный каталог
+#   ./build_portable_windows_native.sh --jobs 8   потоки сборки
+#   ./build_portable_windows_native.sh --portable-dir /c/dist/MyTetra-win-portable
+#   ./build_portable_windows_native.sh --qt /c/Qt/5.15.2/mingw81_32
+#   ./build_portable_windows_native.sh --mingw /c/Qt/Tools/mingw810_32
+#   ./build_portable_windows_native.sh --ssl /c/OpenSSL-Win32/bin
+#   ./build_portable_windows_native.sh --src /c/Qt_projects/mytetra_dev
+#   ./build_portable_windows_native.sh --build-dir /c/Qt_projects/mytetra_dev/build/Desktop_Qt_5_15_2_MinGW_32_bit/app
+#   ./build_portable_windows_native.sh --no-build  только упаковать готовое
+#   ./build_portable_windows_native.sh --strip / --no-strip
+#   ./build_portable_windows_native.sh --map      link map рядом с бинарем
+#                                                (по адресу падения найти функцию)
+#   ./build_portable_windows_native.sh --smoke    тестовый запуск в offscreen
+#                                                (процесс должен жить)
 
 set -euo pipefail
 
 # --------------------------------------------------------------------------
 # Хардкод параметров. Правьте под свою машину.
+# Пути в любом виде, понятном Git Bash: C:/Qt/... или /c/Qt/...
 # --------------------------------------------------------------------------
 
 # Qt для Windows: предсобранный mingw81_32
-QT_SDK="/media/user/big_data/soft/windows/Qt_installed/5.15.2/mingw81_32"
+QT_SDK="C:/Qt/5.15.2/mingw81_32"
 
 # Тулчейн MinGW: разрядность обязана совпадать с Qt (32 бита).
 # mingw810_32 это ровно тот gcc 8.1 (posix-seh), которым собран сам Qt
-MINGW_DIR="/media/user/big_data/soft/windows/Qt_installed/Tools/mingw810_32"
+MINGW_DIR="C:/Qt/Tools/mingw810_32"
 
-# OpenSSL 1.1 32 бита для Qt 5.15 (https-качалки). Лежит в QtCreator:
-# отдельный OpenSSL Toolkit в эту установку не ставился.
-# Внимание: сейчас 32-битного OpenSSL в SDK нет (в mingw1310_64/opt
-# только 64-битный, он не подходит) — будет предупреждение, https
-# работать не будет, пока DLL не подложат в этот каталог
-SSL_DIR="/media/user/big_data/soft/windows/Qt_installed/Tools/QtCreator/bin"
+# OpenSSL 1.1 32 бита для Qt 5.15 (https-качалки). Пусто значит не искать:
+# на машине сборки его может не быть, тогда https в портабле работать
+# не будет (как без него - см. политику TLS в AGENTS.md). Если OpenSSL
+# стоит (например C:/OpenSSL-Win32), укажите здесь или опцией --ssl
+SSL_DIR=""
 
 # Исходники: корень репозитория от места скрипта
 SCRIPT_PATH="$(readlink -e "$0" 2>/dev/null || echo "$0")"
@@ -116,10 +119,12 @@ if [[ "${PORTABLE_DIR_EXPLICIT}" -eq 0 ]]; then
     PORTABLE_DIR="$(dirname "${SOURCE_DIR}")/MyTetra-win-portable"
 fi
 
-if ! command -v wine >/dev/null 2>&1; then
-    echo "ОШИБКА: не найден wine" >&2
-    exit 2
-fi
+# Нативным windows-процессам пути отдаются в windows-виде.
+# Git Bash понимает и C:/... и /c/... дальше сам, но qmake.exe,
+# strip.exe и cmd-утилиты ждут именно C:\... - переводим через cygpath
+to_winpath() {
+    cygpath -w "$1"
+}
 
 # Каталог сборки: автоопределение по build/*/app/Makefile
 if [[ -z "${BUILD_DIR}" ]]; then
@@ -129,13 +134,16 @@ if [[ -z "${BUILD_DIR}" ]]; then
     fi
 fi
 
-# Внимание: каталог сборки Qt Creator для Linux НЕ годится для
-# windows-сборки (там linux-Макefайлы). Для Wine нужен отдельный
-# каталог, иначе qmake/make перемешаются
+# Каталог сборки под другой компилятор (MSVC, Linux) НЕ годится:
+# там чужие Makefiles, qmake/make перемешаются
 if [[ -n "${BUILD_DIR}" && "${BUILD_DIR_EXPLICIT}" -eq 0 ]]; then
-    echo "ПРЕДУПРЕЖДЕНИЕ: найден linux-каталог сборки, для Wine он не подходит" >&2
-    echo "Укажите отдельный каталог опцией --build-dir" >&2
-    BUILD_DIR=""
+    case "${BUILD_DIR}" in
+        *[Mm][Ss][Vv][Cc]*|*linux*|*Linux*|*gcc_64*)
+            echo "ПРЕДУПРЕЖДЕНИЕ: найден каталог не-MinGW сборки, он не подходит" >&2
+            echo "Укажите отдельный каталог опцией --build-dir" >&2
+            BUILD_DIR=""
+            ;;
+    esac
 fi
 
 if [[ -z "${BUILD_DIR}" ]]; then
@@ -156,6 +164,9 @@ if [[ ! -f "${MINGW_MAKE}" ]]; then
     exit 2
 fi
 
+# Тулчейн и Qt в PATH: qmake проверяет компилятор, make ищет g++
+export PATH="${MINGW_DIR}/bin:${QT_SDK}/bin:${PATH}"
+
 echo "Qt SDK:      ${QT_SDK}"
 echo "MinGW:       ${MINGW_DIR}"
 echo "Исходники:   ${SOURCE_DIR}"
@@ -165,12 +176,8 @@ echo "Потоки:      ${JOBS}"
 echo
 
 # --------------------------------------------------------------------------
-# Сборка под Wine
+# Сборка нативно
 # --------------------------------------------------------------------------
-
-to_winpath() {
-    winepath -w "$1"
-}
 
 if [[ "${DO_BUILD}" -eq 1 ]]; then
     if [[ "${CLEAN_BUILD}" -eq 1 && -d "${BUILD_DIR}" ]]; then
@@ -183,7 +190,7 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
 
     # mimetex пишет объекты и бинарь в дерево исходников
     # (thirdParty/mimetex/build) даже при сборке вне исходников.
-    # Там могут лежать ELF-артефакты от Linux-сборки: виндовый линкер
+    # Там могут лежать артефакты от другой платформы: линкер
     # их не ест ("file not recognized"). Каталог в .gitignore, чистим
     echo "Очищаю артефакты mimetex в исходниках"
     rm -rf "${SOURCE_DIR}/thirdParty/mimetex/build"
@@ -216,21 +223,15 @@ if [[ "${DO_BUILD}" -eq 1 ]]; then
         echo "Версия в win.rc: ${MAJ}.${SUB}.${MIC}"
     }
 
-    # Тулчейн виден windows-процессам через WINEPATH (аналог PATH
-    # внутри Wine): нужен и qmake (проверка компилятора), и make
-    export WINEPATH="${MINGW_DIR}/bin"
-
-    # qmake под Wine: пути в windows-виде через winepath.
-    # shadow-сборка вне исходников, как в Linux.
+    # Shadow-сборка вне исходников, как в Linux.
     # --map: link map для разбора адресов падения (nm/addr2line).
     QMAKE_ARGS=()
     if [[ "${DO_MAP}" -eq 1 ]]; then
         QMAKE_ARGS+=("QMAKE_LFLAGS+=-Wl,-Map -Wl,link.map")
     fi
-    wine "${QMAKE}" "$(to_winpath "${SOURCE_DIR}/mytetra.pro")" "${QMAKE_ARGS[@]}"
+    "${QMAKE}" "$(to_winpath "${SOURCE_DIR}/mytetra.pro")" "${QMAKE_ARGS[@]}"
 
-    # make с тулчейном в WINEPATH: так windows-процессы находят g++
-    wine "${MINGW_MAKE}" -j"${JOBS}"
+    "${MINGW_MAKE}" -j"${JOBS}"
 fi
 
 # --------------------------------------------------------------------------
@@ -286,8 +287,8 @@ cp "${BUILT_DIR}/mimetex.exe" "${PORTABLE_DIR}/mimetex.exe"
 
 STRIP_BIN="${MINGW_DIR}/bin/strip.exe"
 if [[ "${DO_STRIP}" -eq 1 && -f "${STRIP_BIN}" ]]; then
-    wine "${STRIP_BIN}" "$(to_winpath "${PORTABLE_DIR}/mytetra.exe")" \
-                         "$(to_winpath "${PORTABLE_DIR}/mimetex.exe")"
+    "${STRIP_BIN}" "$(to_winpath "${PORTABLE_DIR}/mytetra.exe")" \
+                   "$(to_winpath "${PORTABLE_DIR}/mimetex.exe")"
 fi
 
 # --------------------------------------------------------------------------
@@ -323,16 +324,22 @@ done
 
 # OpenSSL 1.1 для Qt 5.15: Qt грузит через LoadLibrary, в импортах
 # mytetra.exe его не видно. Без этих DLL https-качалки не работают,
-# программа при этом не падает (см. политику TLS в AGENTS.md)
+# программа при этом не падает (см. политику TLS в AGENTS.md).
+# SSL_DIR по умолчанию пуст: на сборочной машине OpenSSL может не быть,
+# тогда только предупреждение. Каталог задается опцией --ssl
 OPENSSL_COPIED=0
-for dll in libssl-1_1 libcrypto-1_1; do
-    if [[ -f "${SSL_DIR}/${dll}.dll" ]]; then
-        cp "${SSL_DIR}/${dll}.dll" "${PORTABLE_DIR}/"
-        OPENSSL_COPIED=1
-    else
-        echo "ПРЕДУПРЕЖДЕНИЕ: нет ${dll}.dll: https в портабле работать не будет" >&2
-    fi
-done
+if [[ -n "${SSL_DIR}" ]]; then
+    for dll in libssl-1_1 libcrypto-1_1; do
+        if [[ -f "${SSL_DIR}/${dll}.dll" ]]; then
+            cp "${SSL_DIR}/${dll}.dll" "${PORTABLE_DIR}/"
+            OPENSSL_COPIED=1
+        else
+            echo "ПРЕДУПРЕЖДЕНИЕ: нет ${dll}.dll: https в портабле работать не будет" >&2
+        fi
+    done
+else
+    echo "ПРЕДУПРЕЖДЕНИЕ: SSL_DIR не задан: https в портабле работать не будет" >&2
+fi
 
 # MSVCR100 для OpenSSL выше: QtCreator/bin собран MSVC 2010, а MinGW
 # живет на msvcrt — рантайм не покрывает. Без msvcr100.dll рядом с exe
@@ -406,8 +413,8 @@ echo
 echo "Запуск: ${PORTABLE_DIR}/mytetra.exe"
 
 # --------------------------------------------------------------------------
-# Дымовой тест: копия результата с зерном базы, запуск в offscreen
-# под Wine. Процесс должен жить, падение от недостающих DLL было бы
+# Дымовой тест: копия результата с зерном базы, нативный запуск
+# в offscreen. Процесс должен жить, падение от недостающих DLL было бы
 # сразу. Зерно только в копии, в поставке конфигов и данных нет
 # --------------------------------------------------------------------------
 
@@ -420,12 +427,12 @@ if [[ "${DO_SMOKE}" -eq 1 ]]; then
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/database.ini" "${SMOKE_DIR}/data/" 2>/dev/null || true
     cp "${SOURCE_DIR}/app/bin/resource/standartdata/base/1300000000aaaaaaaaa2/text.html" "${SMOKE_DIR}/data/base/seed00000000000001/" 2>/dev/null || true
     printf '[General]\nprintdebugmessages=true\n' > "${SMOKE_DIR}/conf.ini"
-    ( cd "${SMOKE_DIR}" && QT_QPA_PLATFORM=offscreen timeout 60 wine ./mytetra.exe >smoke.log 2>&1 ) &
+    ( cd "${SMOKE_DIR}" && QT_QPA_PLATFORM=offscreen ./mytetra.exe >smoke.log 2>&1 ) &
     SMOKE_PID=$!
     sleep 45
-    if kill -0 $SMOKE_PID 2>/dev/null; then
+    if tasklist //FI "IMAGENAME eq mytetra.exe" 2>/dev/null | grep -q "mytetra.exe"; then
         echo "Дымовой тест пройден: процесс жив"
-        kill $SMOKE_PID 2>/dev/null || true
+        taskkill //F //IM "mytetra.exe" >/dev/null 2>&1 || true
     else
         echo "ОШИБКА: дымовой тест провален, процесс умер, лог:" >&2
         tail -20 "${SMOKE_DIR}/smoke.log" >&2

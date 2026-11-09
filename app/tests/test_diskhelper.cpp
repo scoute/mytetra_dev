@@ -35,6 +35,10 @@ private slots:
     void removeFileToTrashEndToEnd(void);
     void removeDirectoryToTrashEndToEnd(void);
 
+    // Корзины нет (свежий portable): создается на месте, файлы уезжают
+    void missingTrashIsCreatedOnRemoveFile(void);
+    void missingTrashIsCreatedOnRemoveDirectory(void);
+
 private:
 
     QTemporaryDir m_tmp;
@@ -162,6 +166,45 @@ void TestDiskHelper::removeDirectoryToTrashEndToEnd(void)
                                                          QDir::Files);
     QCOMPARE(trashA.size(), 1);
     QCOMPARE(trashB.size(), 1);
+}
+
+void TestDiskHelper::missingTrashIsCreatedOnRemoveFile(void)
+{
+    // Свежий portable без корзины: создается сама, файл уезжает
+    const QString freshTrash=m_tmp.filePath(QStringLiteral("fresh_trash_file"));
+    QVERIFY2(!QDir(freshTrash).exists(), "fresh trash must not exist yet");
+    m_settings->setValue(QStringLiteral("trashdir"), freshTrash);
+
+    const QString src=m_tmp.filePath(QStringLiteral("orphan_src.txt"));
+    QVERIFY2(writeFile(src, QByteArray("orphan")), "src must be written");
+
+    QVERIFY2(DiskHelper::removeFileToTrash(src), "remove must succeed with autocreated trash");
+    QVERIFY2(QDir(freshTrash).exists(), "trash must be autocreated");
+    QVERIFY2(!QFile::exists(src), "src must be gone");
+    QCOMPARE(QDir(freshTrash).entryList(QStringList() << QStringLiteral("*_orphan_src.txt"),
+                                         QDir::Files).size(), 1);
+
+    m_settings->setValue(QStringLiteral("trashdir"), m_trashDir);
+}
+
+void TestDiskHelper::missingTrashIsCreatedOnRemoveDirectory(void)
+{
+    // То же для каталога целиком
+    const QString freshTrash=m_tmp.filePath(QStringLiteral("fresh_trash_dir"));
+    QVERIFY2(!QDir(freshTrash).exists(), "fresh trash must not exist yet");
+    m_settings->setValue(QStringLiteral("trashdir"), freshTrash);
+
+    const QString srcDir=m_tmp.filePath(QStringLiteral("orphandir"));
+    QVERIFY2(QDir().mkpath(srcDir), "srcdir must be created");
+    QVERIFY2(writeFile(srcDir+QStringLiteral("/c.txt"), QByteArray("ccc")), "c must be written");
+
+    DiskHelper::removeDirectoryToTrash(srcDir);
+    QVERIFY2(QDir(freshTrash).exists(), "trash must be autocreated");
+    QVERIFY2(!QDir(srcDir).exists(), "srcdir must be gone");
+    QCOMPARE(QDir(freshTrash).entryList(QStringList() << QStringLiteral("*_c.txt"),
+                                         QDir::Files).size(), 1);
+
+    m_settings->setValue(QStringLiteral("trashdir"), m_trashDir);
 }
 
 QTEST_APPLESS_MAIN(TestDiskHelper)

@@ -59,10 +59,12 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 
     // Перенос файла в корзину. Между томами rename не работает,
     // используется копия с удалением (см. moveFileCrossVolume)
-    if( DiskHelper::moveFileCrossVolume(fileNameFrom, fileNameTo)==true )
+    QString moveError;
+
+    if( DiskHelper::moveFileCrossVolume(fileNameFrom, fileNameTo, &moveError)==true )
       trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
     else
-      criticalError("Can not remove file\n"+fileNameFrom+"\nto directory\n"+nameDirTo+"\nwith new name\n"+fileNameTo);
+      criticalError("Can not remove file\n"+fileNameFrom+"\nto directory\n"+nameDirTo+"\nwith new name\n"+fileNameTo+"\n"+moveError);
   }
 
 
@@ -113,23 +115,43 @@ bool DiskHelper::ensureTrashDir(QString &errorDetail)
 // между томами не работает (Temp на C:, база на Z: под Wine;
 // portable на другом диске чем %TEMP% в Windows). Тогда файл
 // копируется и исходник удаляется. Неудача - false, дубликатов
-// не остается (неудавшаяся копия забирается назад)
+// не остается (неудавшаяся копия забирается назад).
+// Экземплярные QFile вместо статических: только так доступна
+// системная причина неудачи (errorString) для диагностики
 bool DiskHelper::moveFileCrossVolume(const QString &fileNameFrom,
-                                     const QString &fileNameTo)
+                                     const QString &fileNameTo,
+                                     QString *errorDetail)
 {
-  if(QFile::rename(fileNameFrom, fileNameTo))
+  if(errorDetail!=nullptr)
+    errorDetail->clear();
+
+  QFile renameProbe(fileNameFrom);
+  if(renameProbe.rename(fileNameTo))
     return true;
+
+  const QString renameError=renameProbe.errorString();
 
   // rename молча не умеет между томами: копия + удаление исходника.
   // Копия падает если цель занята - вызыватель дает уникальные имена
-  if(!QFile::copy(fileNameFrom, fileNameTo))
+  QFile copyProbe(fileNameFrom);
+  if(!copyProbe.copy(fileNameTo))
+  {
+    if(errorDetail!=nullptr)
+      *errorDetail=QStringLiteral("rename error: ")+renameError+
+                   QStringLiteral("; copy error: ")+copyProbe.errorString();
     return false;
+  }
 
-  if(!QFile::remove(fileNameFrom))
+  QFile removeProbe(fileNameFrom);
+  if(!removeProbe.remove())
   {
     // Копия уже в корзине, а исходник не удалился: забираем копию
     // назад чтобы не плодить дубликаты
     QFile::remove(fileNameTo);
+
+    if(errorDetail!=nullptr)
+      *errorDetail=QStringLiteral("rename error: ")+renameError+
+                   QStringLiteral("; copy ok, remove source error: ")+removeProbe.errorString();
     return false;
   }
 
@@ -170,7 +192,9 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
 
   // Файл перемещается в корзину. Между томами rename не работает,
   // используется копия с удалением (см. moveFileCrossVolume)
-  if( DiskHelper::moveFileCrossVolume(fileNameFrom,fileNameTo)==true )
+  QString moveError;
+
+  if( DiskHelper::moveFileCrossVolume(fileNameFrom, fileNameTo, &moveError)==true )
   {
     trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
   }
@@ -181,7 +205,8 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
           criticalError("Can not remove file to trash directory"
                         "\nOld file name: "+fileNameFrom+
                         " (exists: "+QString(QFile::exists(fileNameFrom) ? "yes" : "no")+")"+
-                        "\nNew file name: "+fileNameTo);
+                        "\nNew file name: "+fileNameTo+
+                        "\n"+moveError);
       }
       else
       {

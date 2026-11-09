@@ -10,7 +10,7 @@ class EditorConfigDialog : public QWidget
  Q_OBJECT
 
 public:
- EditorConfigDialog(QWidget *parent=nullptr);
+ EditorConfigDialog(QWidget *parent=nullptr, const QString &page=QString());
 
 private slots:
  void onAlterToAppSettings(void);

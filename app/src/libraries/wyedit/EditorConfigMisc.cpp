@@ -96,22 +96,30 @@ void EditorConfigMisc::setupUi(void)
  imageMaxSizeLabel->setToolTip(imageFormatHint);
  imageMaxSizeCombo->setToolTip(imageFormatHint);
 
- // Непрозрачность фона плавающего содержания: 30 еле видно,
- // 70 почти глухо. Диапазон ограничен и в конфиге тоже
+ // Непрозрачность фона плавающего содержания: выпадашка 10-90
+ // с шагом 10. MtComboBox вместо голого QComboBox: под темной
+ // темой у обычного попапа белые квадраты вместо пунктов
  floatTocOpacityLabel=new QLabel(this);
  floatTocOpacityLabel->setText(tr("Contents background opacity"));
 
  floatTocOpacityFlexionLabel=new QLabel(this);
  floatTocOpacityFlexionLabel->setText(QStringLiteral("%"));
 
- floatTocOpacitySpinBox=new QSpinBox(this);
- floatTocOpacitySpinBox->setMinimum(30);
- floatTocOpacitySpinBox->setMaximum(70);
- floatTocOpacitySpinBox->setValue(conf->get_floatTocOpacity());
+ floatTocOpacityCombo=new MtComboBox(this);
+
+ for(int percent=10; percent<=90; percent+=10)
+  floatTocOpacityCombo->addItem(QString::number(percent), percent);
+
+ const int opacityIndex=floatTocOpacityCombo->findData(conf->get_floatTocOpacity());
+
+ if(opacityIndex>=0)
+  floatTocOpacityCombo->setCurrentIndex(opacityIndex);
+ else
+  floatTocOpacityCombo->setCurrentIndex(floatTocOpacityCombo->findData(60));
 
  const QString floatTocOpacityHint=tr("Background opacity of the floating contents overlay");
  floatTocOpacityLabel->setToolTip(floatTocOpacityHint);
- floatTocOpacitySpinBox->setToolTip(floatTocOpacityHint);
+ floatTocOpacityCombo->setToolTip(floatTocOpacityHint);
 
  // Мастер-тумблер изменения истинного размера файла картинки
  allowTrueImageResizeCheckBox=new QCheckBox(this);
@@ -161,9 +169,9 @@ void EditorConfigMisc::assembly(void)
  configLayout->addWidget(imageMaxSizeLabel, 3, 0);
  configLayout->addWidget(imageMaxSizeCombo, 3, 1);
 
- // Непрозрачность фона содержания: подпись, спин и знак процента
+ // Непрозрачность фона содержания: подпись, выпадашка и знак процента
  configLayout->addWidget(floatTocOpacityLabel,         4, 0);
- configLayout->addWidget(floatTocOpacitySpinBox,       4, 1);
+ configLayout->addWidget(floatTocOpacityCombo,         4, 1);
  configLayout->addWidget(floatTocOpacityFlexionLabel,  4, 2);
 
   // Группировщик виджетов для опасной зоны
@@ -241,8 +249,10 @@ int EditorConfigMisc::applyChanges(void)
  }
 
  // Непрозрачность фона содержания
- if(conf->get_floatTocOpacity()!=floatTocOpacitySpinBox->value()) {
-   conf->set_floatTocOpacity(floatTocOpacitySpinBox->value());
+ const int newFloatTocOpacity=floatTocOpacityCombo->currentData().toInt();
+
+ if(conf->get_floatTocOpacity()!=newFloatTocOpacity) {
+   conf->set_floatTocOpacity(newFloatTocOpacity);
  }
  
  return difficultChanges;

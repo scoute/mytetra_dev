@@ -52,6 +52,13 @@ private slots:
  void onJump(QListWidgetItem *item);
  void onCursorMoved(void);
  void onToggleCollapsed(void);
+ void onHeaderContextMenu(const QPoint &pos);
+
+signals:
+ // Просьба открыть настройки на странице прозрачности.
+ // Редактор сам коннектит к открытию диалога: искать Editor
+ // по родителям нельзя, textArea перепарeнтится сплиттерами
+ void setupMiscRequested(void);
 
 private:
  // Перестройка списка по документу. Пустые заголовки подписываются,

@@ -119,7 +119,7 @@ QStringList EditorConfig::get_actual_parameter_table(bool withEndSignature)
 {
     // Актуальная таблица = последняя по номеру версии.
     // При добавлении get_parameter_table_N поменять здесь один вызов
-    return get_parameter_table_50(withEndSignature);
+    return get_parameter_table_51(withEndSignature);
 }
 
 
@@ -478,6 +478,28 @@ void EditorConfig::set_floatTocOpacity(int i)
 }
 
 
+// -----------------------------------
+// Цвет фона плавающего содержания
+// -----------------------------------
+
+QString EditorConfig::get_floatTocBgColor(void)
+{
+    QString color=get_parameter("float_toc_bgcolor");
+
+    // Мусор из ручной правки конфига - назад дефолт
+    if(!QColor(color).isValid())
+        return QStringLiteral("#20242C");
+
+    return QColor(color).name();
+}
+
+
+void EditorConfig::set_floatTocBgColor(QString color)
+{
+    conf->setValue("float_toc_bgcolor",color);
+}
+
+
 // -------------------------------------------
 // Счетчик для таймера обновления картинки формулы в редакторе формулы
 // -------------------------------------------
@@ -734,6 +756,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_48;
     parameterFunctions << get_parameter_table_49;
     parameterFunctions << get_parameter_table_50;
+    parameterFunctions << get_parameter_table_51;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1752,6 +1775,25 @@ QStringList EditorConfig::get_parameter_table_50(bool withEndSignature)
     // Новых ключей нет: дефолт float_toc_opacity 50 -> 60 правится
     // миграцией в update_version_change_value(), версия бампится
     // чтобы миграция доехала до существующих конфигов
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_51(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 50
+    table << get_parameter_table_50(false);
+
+    // Новые параметры
+    table << "float_toc_bgcolor" << "QString" << "#20242C";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

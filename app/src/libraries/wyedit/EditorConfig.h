@@ -90,6 +90,11 @@ public:
     int get_floatTocOpacity(void);
     void set_floatTocOpacity(int i);
 
+    // Цвет фона плавающего содержания, #RRGGBB.
+    // Дефолт #20242C - прежний хардкод подложки
+    QString get_floatTocBgColor(void);
+    void set_floatTocBgColor(QString color);
+
     // Счетчик для таймера обновления картинки формулы в редакторе формулы
     int getMathExpressionUpdateTime(void);
     void setMathExpressionUpdateTime(int i);
@@ -236,6 +241,7 @@ private:
     static QStringList get_parameter_table_47(bool withEndSignature=true);
     static QStringList get_parameter_table_48(bool withEndSignature=true);
     static QStringList get_parameter_table_49(bool withEndSignature=true);
+    static QStringList get_parameter_table_50(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

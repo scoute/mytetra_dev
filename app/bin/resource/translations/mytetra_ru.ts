@@ -3094,6 +3094,16 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Background opacity of the floating contents overlay</source>
         <translation>Непрозрачность фона плавающего содержания</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp"/>
+        <source>Contents background color</source>
+        <translation>Цвет фона содержания</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp"/>
+        <source>Background color of the floating contents overlay</source>
+        <translation>Цвет фона плавающего содержания</translation>
+    </message>
 
     <message>
         <source>Formula update timer</source>

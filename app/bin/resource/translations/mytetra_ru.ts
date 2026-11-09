@@ -3084,6 +3084,16 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Inserting a symbol closes the window. Off keeps it open for typing several symbols in a row. On by default.</source>
         <translation>Вставка символа закрывает окно. Выключено — окно остается открытым для набора нескольких символов подряд. По умолчанию включено.</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp"/>
+        <source>Contents background opacity</source>
+        <translation>Непрозрачность фона содержания</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorConfigMisc.cpp"/>
+        <source>Background opacity of the floating contents overlay</source>
+        <translation>Непрозрачность фона плавающего содержания</translation>
+    </message>
 
     <message>
         <source>Formula update timer</source>

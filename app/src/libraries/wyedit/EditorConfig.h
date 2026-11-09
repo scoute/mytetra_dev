@@ -85,6 +85,11 @@ public:
     int get_tab_size(void);
     void set_tab_size(int i);
 
+    // Непрозрачность фона плавающего содержания, проценты.
+    // Допустимо 30-70, дефолт 50 (см. get_parameter_table_48)
+    int get_floatTocOpacity(void);
+    void set_floatTocOpacity(int i);
+
     // Счетчик для таймера обновления картинки формулы в редакторе формулы
     int getMathExpressionUpdateTime(void);
     void setMathExpressionUpdateTime(int i);
@@ -229,6 +234,7 @@ private:
     static QStringList get_parameter_table_45(bool withEndSignature=true);
     static QStringList get_parameter_table_46(bool withEndSignature=true);
     static QStringList get_parameter_table_47(bool withEndSignature=true);
+    static QStringList get_parameter_table_48(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

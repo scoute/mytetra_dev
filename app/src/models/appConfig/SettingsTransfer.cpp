@@ -91,6 +91,99 @@ bool SettingsTransfer::backupFile(const QString &path, QString *error)
 }
 
 
+// Свой файл текстуры бумаги (страница Theme, "own file") в выгрузку.
+// Встроенные тайлы (путь ":/...") едут с программой и не нужны,
+// пустой ключ означает выбор из выпадашки — тоже нечего тащить
+void SettingsTransfer::exportCustomTheme(QSettings *conf, QSettings *out)
+{
+  if(conf==nullptr || out==nullptr)
+    return;
+
+  const QString srcPath=conf->value(QStringLiteral("themeCustomNotePaperImage")).toString();
+
+  if(srcPath.isEmpty() || srcPath.startsWith(QStringLiteral(":")))
+    return;
+
+  QFile src(srcPath);
+
+  if(!src.open(QIODevice::ReadOnly))
+    return;
+
+  const QByteArray data=src.readAll();
+  src.close();
+
+  if(data.isEmpty())
+    return;
+
+  out->beginGroup(QStringLiteral("CustomTheme"));
+  out->setValue(QStringLiteral("paperFileName"), QFileInfo(srcPath).fileName());
+  out->setValue(QStringLiteral("paperData"), QString::fromLatin1(data.toBase64()));
+  out->endGroup();
+}
+
+
+// Байты текстуры из выгрузки в custom-theme приемника с ремапом ключа.
+// Каталог берется из места живого conf.ini приемника
+bool SettingsTransfer::importCustomTheme(QSettings *conf,
+                                         QSettings *in,
+                                         QString *error)
+{
+  if(conf==nullptr || in==nullptr)
+  {
+    if(error!=nullptr)
+      *error=tr("Settings storage is unavailable");
+
+    return false;
+  }
+
+  in->beginGroup(QStringLiteral("CustomTheme"));
+  const QString fileName=QFileInfo(in->value(QStringLiteral("paperFileName")).toString()).fileName();
+  const QByteArray data=QByteArray::fromBase64(in->value(QStringLiteral("paperData")).toString().toLatin1());
+  in->endGroup();
+
+  // Секции нет (старая выгрузка) или пустая — свой файл приемника
+  // не трогается, ключ остается как был
+  if(fileName.isEmpty() || data.isEmpty())
+    return true;
+
+  const QString workDir=QFileInfo(conf->fileName()).absolutePath();
+  QDir dir(workDir);
+
+  if(!dir.mkpath(QStringLiteral("custom-theme")))
+  {
+    if(error!=nullptr)
+      *error=tr("Can not create custom-theme directory");
+
+    return false;
+  }
+
+  const QString target=dir.absoluteFilePath(QStringLiteral("custom-theme/")+fileName);
+  QFile targetFile(target);
+
+  if(!targetFile.open(QIODevice::WriteOnly))
+  {
+    if(error!=nullptr)
+      *error=tr("Can not write file %1").arg(target);
+
+    return false;
+  }
+
+  if(targetFile.write(data)!=data.size())
+  {
+    if(error!=nullptr)
+      *error=tr("Can not write file %1").arg(target);
+
+    return false;
+  }
+
+  targetFile.close();
+
+  conf->setValue(QStringLiteral("themeCustomNotePaperImage"), target);
+
+  return true;
+}
+
+
 // Выгрузка в один INI-файл: [Meta], [Conf], [Editor],
 // [Shortcuts/<раздел>]
 bool SettingsTransfer::exportSettings(QSettings *conf,
@@ -118,6 +211,10 @@ bool SettingsTransfer::exportSettings(QSettings *conf,
 
   copyGroup(conf, QString(), &out, QStringLiteral("Conf"), confSkipKeys());
   copyGroup(editorConf, QString(), &out, QStringLiteral("Editor"), editorSkipKeys());
+
+  // Свой файл текстуры бумаги: ключ хранит абсолютный путь,
+  // без байтов на другой машине ему цена ноль
+  exportCustomTheme(conf, &out);
 
   // Секции хоткеев как есть: initKeyTable приемника выкинет
   // устаревшие действия сам
@@ -217,6 +314,12 @@ bool SettingsTransfer::importSettings(QSettings *conf,
   }
 
   in.endGroup();
+
+  // Свой файл текстуры: байты в custom-theme приемника, ключ
+  // переписывается на новый путь (старый абсолютный уже перезаписан
+  // выше циклом Conf и без ремапа указывал бы в пустоту)
+  if(!importCustomTheme(conf, &in, error))
+    return false;
 
   QSettings shortcuts(shortcutPath, QSettings::IniFormat);
   shortcuts.setIniCodec(QTextCodec::codecForName("UTF-8"));

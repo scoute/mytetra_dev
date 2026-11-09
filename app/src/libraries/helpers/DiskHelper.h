@@ -42,6 +42,11 @@ public:
 
   static bool copyQrcToDirectory(const QString &resourcePath, const QString &targetDirPath);
 
+  // Корзины может не быть (свежий portable, ручное удаление):
+  // тогда и rename, и копия молча возвращают false. Создается
+  // на месте; неустранимое - false с причиной в errorDetail
+  static bool ensureTrashDir(QString &errorDetail);
+
   // Перемещение файла с поддержкой разных томов: QFile::rename
   // между томами не работает (Temp на C:, база на Z: под Wine;
   // portable на другом диске чем %TEMP% в Windows). Тогда файл

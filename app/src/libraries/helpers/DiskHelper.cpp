@@ -38,6 +38,15 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
     QString fileNameToShort;
     QString fileNameTo;
     bool targetFileFree=false;
+
+    // Корзины может не быть (свежий portable): без нее rename
+    // и copy молча возвращают false, а ниже программа роняется.
+    // Создается на месте, неустранимое - сразу в ошибку с причиной
+    QString trashError;
+
+    if(!DiskHelper::ensureTrashDir(trashError))
+      criticalError("Can not remove directory content to trash directory\n"+trashError);
+
     do {
       fileNameToShort=getUniqueId()+"_"+fileList.at(i);
       fileNameTo     =nameDirTo+"/"+fileNameToShort;
@@ -71,6 +80,32 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
     qDebug() << "Directory " << nameDirFrom << " NOT deleted";
   else
     qDebug() << "Directory " << nameDirFrom << " delete succesfull";
+}
+
+
+// Гарантировать каталог корзины: его может не быть (свежий portable
+// без полного первого запуска, ручное удаление). Без него rename
+// и copy молча возвращают false, а вызыватель роняет программу
+bool DiskHelper::ensureTrashDir(QString &errorDetail)
+{
+  errorDetail.clear();
+
+  const QString trashDir=mytetraConfig.get_trashdir();
+
+  if(trashDir.isEmpty())
+  {
+    errorDetail=QStringLiteral("Trash directory is not configured (empty trashdir).");
+    return false;
+  }
+
+  if(QDir(trashDir).exists())
+    return true;
+
+  if(QDir().mkpath(trashDir))
+    return true;
+
+  errorDetail=QStringLiteral("Trash directory is missing and can not be created: ")+trashDir;
+  return false;
 }
 
 
@@ -114,6 +149,23 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
   QString fileNameTo     =mytetraConfig.get_trashdir()+"/"+fileNameToShort;
 
+  // Корзины может не быть (свежий portable): без нее и rename,
+  // и копия молча возвращают false. Создается на месте
+  QString trashError;
+
+  if(!DiskHelper::ensureTrashDir(trashError))
+  {
+      if (stopIfError)
+      {
+          criticalError("Can not remove file to trash directory"
+                        "\nOld file name: "+fileNameFrom+
+                        "\nNew file name: "+fileNameTo+
+                        "\n"+trashError);
+      }
+
+      return false;
+  }
+
   qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
   // Файл перемещается в корзину. Между томами rename не работает,
@@ -128,6 +180,7 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
       {
           criticalError("Can not remove file to trash directory"
                         "\nOld file name: "+fileNameFrom+
+                        " (exists: "+QString(QFile::exists(fileNameFrom) ? "yes" : "no")+")"+
                         "\nNew file name: "+fileNameTo);
       }
       else
@@ -152,6 +205,24 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
   // Получение имени файла для сохранения в корзине
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
   QString fileNameTo     =mytetraConfig.get_trashdir()+"/"+fileNameToShort;
+
+  // Корзины может не быть (свежий portable): без нее копия
+  // молча возвращает пусто. Создается на месте
+  QString trashError;
+
+  if(!DiskHelper::ensureTrashDir(trashError))
+  {
+      if (stopIfError)
+      {
+          criticalError("Can not copy file to trash directory"
+                        "\nSource file: "+fileNameFrom+
+                        " (exists: "+QString(QFile::exists(fileNameFrom) ? "yes" : "no")+")"+
+                        "\nCopy file: "+fileNameTo+
+                        "\n"+trashError);
+      }
+
+      return QString();
+  }
 
   qDebug() << "Copy file from " << fileNameFrom << " to " << fileNameTo;
 

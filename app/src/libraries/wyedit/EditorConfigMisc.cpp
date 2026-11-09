@@ -8,6 +8,9 @@
 #include <QLabel>
 #include <QGroupBox>
 #include <QRadioButton>
+#include <QToolButton>
+#include <QColorDialog>
+#include <QPixmap>
 
 #include "EditorConfigMisc.h"
 #include "EditorConfig.h"
@@ -121,6 +124,21 @@ void EditorConfigMisc::setupUi(void)
  floatTocOpacityLabel->setToolTip(floatTocOpacityHint);
  floatTocOpacityCombo->setToolTip(floatTocOpacityHint);
 
+ // Цвет фона плавающего содержания: кнопка с квадратиком текущего цвета
+ floatTocBgColorLabel=new QLabel(this);
+ floatTocBgColorLabel->setText(tr("Contents background color"));
+
+ floatTocBgColorButton=new QToolButton(this);
+ floatTocBgColor=new QColor(conf->get_floatTocBgColor());
+
+ QPixmap floatTocBgPix(16, 16);
+ floatTocBgPix.fill(floatTocBgColor->rgb());
+ floatTocBgColorButton->setIcon(floatTocBgPix);
+
+ const QString floatTocBgColorHint=tr("Background color of the floating contents overlay");
+ floatTocBgColorLabel->setToolTip(floatTocBgColorHint);
+ floatTocBgColorButton->setToolTip(floatTocBgColorHint);
+
  // Мастер-тумблер изменения истинного размера файла картинки
  allowTrueImageResizeCheckBox=new QCheckBox(this);
  allowTrueImageResizeCheckBox->setText(tr("Allow changing true image file size"));
@@ -144,6 +162,9 @@ void EditorConfigMisc::setupSignals(void)
 {
   connect(editWyEditConfigFile, &QPushButton::clicked,
           this,                 &EditorConfigMisc::onClickedEditWyEditConfigFile);
+
+  connect(floatTocBgColorButton, &QToolButton::clicked,
+          this,                   &EditorConfigMisc::onClickedFloatTocBgColor);
 }
 
 
@@ -174,6 +195,10 @@ void EditorConfigMisc::assembly(void)
  configLayout->addWidget(floatTocOpacityCombo,         4, 1);
  configLayout->addWidget(floatTocOpacityFlexionLabel,  4, 2);
 
+ // Цвет фона: подпись и кнопка с квадратиком
+ configLayout->addWidget(floatTocBgColorLabel,  5, 0);
+ configLayout->addWidget(floatTocBgColorButton, 5, 1);
+
   // Группировщик виджетов для опасной зоны
   QGroupBox *dangerBox=new QGroupBox(this);
   dangerBox->setTitle(tr("Danger actions (Attention!)"));
@@ -201,6 +226,29 @@ void EditorConfigMisc::onClickedEditWyEditConfigFile(void)
   conf->sync();
 
   ConfigEditorHelper::editConfigFile( globalParameters.getWorkDirectory()+"/editorconf.ini", 0.8f );
+}
+
+
+void EditorConfigMisc::onClickedFloatTocBgColor(void)
+{
+ // Исходный цвет
+ QColor color(conf->get_floatTocBgColor());
+
+ // Диалог запроса цвета. Без альфа-канала: прозрачностью
+ // заведует отдельная настройка непрозрачности
+ QColor selectedColor=QColorDialog::getColor(color, this);
+
+ // Если цвет выбран, и он правильный
+ if(selectedColor.isValid())
+  {
+   // Меняется цвет квадратика на кнопке
+   QPixmap pix(16, 16);
+   pix.fill(selectedColor);
+   floatTocBgColorButton->setIcon(pix);
+
+   // Запоминается новый цвет
+   floatTocBgColor->setNamedColor(selectedColor.name());
+  }
 }
 
 
@@ -253,6 +301,11 @@ int EditorConfigMisc::applyChanges(void)
 
  if(conf->get_floatTocOpacity()!=newFloatTocOpacity) {
    conf->set_floatTocOpacity(newFloatTocOpacity);
+ }
+
+ // Цвет фона содержания
+ if(conf->get_floatTocBgColor()!=floatTocBgColor->name()) {
+   conf->set_floatTocBgColor(floatTocBgColor->name());
  }
  
  return difficultChanges;

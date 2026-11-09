@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QRadioButton>
 #include <QCheckBox>
+#include <QColor>
 
 #include "libraries/MtComboBox.h"
 
@@ -28,6 +29,7 @@ public:
     
 private slots:
   void onClickedEditWyEditConfigFile(void);
+  void onClickedFloatTocBgColor(void);
  
 private:
 
@@ -54,6 +56,11 @@ private:
   QLabel *floatTocOpacityLabel;
   QLabel *floatTocOpacityFlexionLabel;
   MtComboBox *floatTocOpacityCombo;
+
+  // Цвет фона плавающего содержания: кнопка с квадратиком + пикер
+  QLabel *floatTocBgColorLabel;
+  QToolButton *floatTocBgColorButton;
+  QColor *floatTocBgColor;
 
   // Мастер-тумблер изменения истинного размера файла картинки
   // (опасная зона: действие необратимо, оригинал уходит в корзину)

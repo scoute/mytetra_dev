@@ -228,23 +228,31 @@ void EditorFloatToc::paintEvent(QPaintEvent *event)
 {
  Q_UNUSED(event);
 
- // Непрозрачность фона из настроек (30-70%, дефолт 50).
- // Читается при каждой отрисовке: диалог настроек применяется
- // на лету без перезапуска, перерисовка подхватывает сама.
- // Без конфига (тесты) - дефолт 50
- int opacity=50;
+ // Непрозрачность и цвет фона из настроек. Читаются при каждой
+ // отрисовке: диалог настроек применяется на лету без перезапуска,
+ // перерисовка подхватывает сама. Без конфига (тесты) - дефолты
+ int opacity=60;
+ QString bgColorName=QStringLiteral("#20242C");
 
  EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
 
  if(editorConfig!=nullptr)
-  opacity=editorConfig->get_floatTocOpacity();
+  {
+   opacity=editorConfig->get_floatTocOpacity();
+   bgColorName=editorConfig->get_floatTocBgColor();
+  }
 
- const int alpha=qRound(opacity*255.0/100.0);
+ QColor bgColor(bgColorName);
+
+ if(!bgColor.isValid())
+  bgColor=QColor(QStringLiteral("#20242C"));
+
+ bgColor.setAlpha(qRound(opacity*255.0/100.0));
 
  QPainter painter(this);
  painter.setRenderHint(QPainter::Antialiasing, true);
  painter.setPen(QPen(QColor(255, 255, 255, 70), 1));
- painter.setBrush(QColor(32, 36, 44, alpha));
+ painter.setBrush(bgColor);
  painter.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 6, 6);
 }
 

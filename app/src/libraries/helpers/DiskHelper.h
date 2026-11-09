@@ -51,9 +51,12 @@ public:
   // между томами не работает (Temp на C:, база на Z: под Wine;
   // portable на другом диске чем %TEMP% в Windows). Тогда файл
   // копируется и исходник удаляется. Неудача - false, дубликатов
-  // не остается (неудавшаяся копия забирается назад)
+  // не остается (неудавшаяся копия забирается назад).
+  // Причина неустранимой неудачи (тексты ошибок rename и copy)
+  // возвращается в errorDetail, если указатель передан
   static bool moveFileCrossVolume(const QString &fileNameFrom,
-                                  const QString &fileNameTo);
+                                  const QString &fileNameTo,
+                                  QString *errorDetail=nullptr);
 
 private:
 

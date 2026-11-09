@@ -221,15 +221,25 @@ void MathExpressionFormatter::createGifFromMathExpression(QString iMathExpressio
     // Файл создается через QTemporaryFile: уникальное имя генерируется
     // с O_EXCL, файл доступен только владельцу. Раньше имя собиралось из
     // предсказуемых time()+rand(), и чужой процесс мог подсунуть симлинк в /tmp
-    QTemporaryFile mathExpressionFile(QDir::tempPath()+"/mytetra_tex_XXXXXX.txt");
-    mathExpressionFile.setAutoRemove(false);
-    if(!mathExpressionFile.open()) {
-        criticalError("Can not create temporary file for TeX source in "+QDir::tempPath());
-        return;
+    //
+    // Объект QTemporaryFile живет только внутри блока: на Windows файл
+    // нельзя переименовать/удалить пока жив объект (хендл удерживается
+    // даже после close(), доказано пробой на Win10: rename/remove падают
+    // пока объект жив, после его уничтожения все операции успешны).
+    // Файл при этом остается (setAutoRemove(false)), дальше с ним
+    // работают mimetex и DiskHelper::removeFileToTrash
+    QString mathExpressionFileName;
+    {
+        QTemporaryFile mathExpressionFile(QDir::tempPath()+"/mytetra_tex_XXXXXX.txt");
+        mathExpressionFile.setAutoRemove(false);
+        if(!mathExpressionFile.open()) {
+            criticalError("Can not create temporary file for TeX source in "+QDir::tempPath());
+            return;
+        }
+        mathExpressionFileName=mathExpressionFile.fileName();
+        mathExpressionFile.write(iMathExpression.toUtf8());
+        mathExpressionFile.close();
     }
-    QString mathExpressionFileName=mathExpressionFile.fileName();
-    mathExpressionFile.write(iMathExpression.toUtf8());
-    mathExpressionFile.close();
 
     // Запуск mimetex для генерации картинки с формулой.
     // Бинарник запускается напрямую через QProcess с раздельными аргументами,
@@ -275,15 +285,19 @@ void MathExpressionFormatter::insertMathExpressionToTextArea(QString iMathExpres
     // Временный файл картинки тоже создается через QTemporaryFile по тем же
     // причинам. Пустой файл-заглушка остается на месте, mimetex усекает его
     // при записи, поэтому окно для подмены симлинком между созданием и
-    // открытием отсутствует
-    QTemporaryFile tempGifFile(QDir::tempPath()+"/mytetra_formula_XXXXXX.gif");
-    tempGifFile.setAutoRemove(false);
-    if(!tempGifFile.open()) {
-        criticalError("Can not create temporary file for math expression picture in "+QDir::tempPath());
-        return;
+    // открытием отсутствует. Как и выше, объект уничтожается сразу после
+    // закрытия: на Windows живой объект блокирует rename/remove файла
+    QString tempFileName;
+    {
+        QTemporaryFile tempGifFile(QDir::tempPath()+"/mytetra_formula_XXXXXX.gif");
+        tempGifFile.setAutoRemove(false);
+        if(!tempGifFile.open()) {
+            criticalError("Can not create temporary file for math expression picture in "+QDir::tempPath());
+            return;
+        }
+        tempFileName=tempGifFile.fileName();
+        tempGifFile.close();
     }
-    QString tempFileName=tempGifFile.fileName();
-    tempGifFile.close();
 
     qDebug() << "Formula code: " << iMathExpressionText;
     qDebug() << "Formula temporary file name: " << tempFileName;

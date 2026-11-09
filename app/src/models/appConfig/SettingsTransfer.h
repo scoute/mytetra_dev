@@ -32,8 +32,8 @@ public:
   static QStringList editorSkipKeys(void);
 
   // Выгрузка в один INI-файл: [Meta], [Conf], [Editor],
-  // [Shortcuts/<раздел>]. conf и editorConf — живые или временные
-  // QSettings, shortcutPath — путь к shortcut.ini
+  // [CustomTheme], [Shortcuts/<раздел>]. conf и editorConf — живые
+  // или временные QSettings, shortcutPath — путь к shortcut.ini
   static bool exportSettings(QSettings *conf,
                              QSettings *editorConf,
                              const QString &shortcutPath,
@@ -64,6 +64,18 @@ private:
 
   // Текущий штамп для имен копий и файлов
   static QString currentStamp(void);
+
+  // Выгрузка своего файла текстуры бумаги в [CustomTheme]:
+  // ключ themeCustomNotePaperImage хранит абсолютный путь рабочего
+  // каталога, файла на другой машине нет. Байты едут с собой
+  static void exportCustomTheme(QSettings *conf, QSettings *out);
+
+  // Загрузка: байты из [CustomTheme] кладутся в custom-theme
+  // приемника, ключ в conf переписывается на новый абсолютный путь.
+  // Без секции ничего не трогается (свой старый файл как был)
+  static bool importCustomTheme(QSettings *conf,
+                                QSettings *in,
+                                QString *error);
 };
 
 #endif // SETTINGSTRANSFER_H

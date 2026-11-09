@@ -5,7 +5,9 @@
 #include <QtTest>
 #include <QSettings>
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
+#include <QByteArray>
 #include <QStringList>
 #include <QTemporaryDir>
 
@@ -24,6 +26,7 @@ private slots:
     void importApplies(void);
     void importKeepsTargetOwn(void);
     void importBackups(void);
+    void customThemeRoundtrip(void);
     void importRejectsBad(void);
 
 private:
@@ -52,6 +55,19 @@ void TestSettingsTransfer::seedFixture(const QString &confPath,
     conf.setValue(QStringLiteral("recordTableShowFields"), QStringLiteral("name,author"));
     conf.setValue(QStringLiteral("mainwingeometry"), QByteArray("fake-geometry-blob"));
     conf.setValue(QStringLiteral("attachAppendDir"), QStringLiteral("/home/user/Документы"));
+    conf.sync();
+
+    // Свой файл текстуры бумаги: байты лежат рядом с conf.ini,
+    // ключ хранит абсолютный путь
+    QDir themeDir(QFileInfo(confPath).absolutePath());
+    QVERIFY2(themeDir.mkpath(QStringLiteral("custom-theme")),
+             "custom-theme dir must be created");
+    QFile paper(themeDir.absoluteFilePath(QStringLiteral("custom-theme/paper.png")));
+    QVERIFY2(paper.open(QIODevice::WriteOnly), "paper fixture must be writable");
+    QVERIFY2(paper.write(QByteArray("fake-png-bytes")) == QByteArray("fake-png-bytes").size(),
+             "paper bytes must be written");
+    paper.close();
+    conf.setValue(QStringLiteral("themeCustomNotePaperImage"), paper.fileName());
     conf.sync();
 
     QSettings editorConf(editorPath, QSettings::IniFormat);
@@ -116,6 +132,12 @@ void TestSettingsTransfer::exportKeepsPortable(void)
              QStringLiteral("Ctrl+B"));
     QCOMPARE(out.value(QStringLiteral("Shortcuts/note/addNewToEnd")).toString(),
              QStringLiteral("Ctrl+Alt+N"));
+
+    // Свой файл текстуры едет байтами, а не абсолютным путем
+    QCOMPARE(out.value(QStringLiteral("CustomTheme/paperFileName")).toString(),
+             QStringLiteral("paper.png"));
+    QCOMPARE(QByteArray::fromBase64(out.value(QStringLiteral("CustomTheme/paperData")).toString().toLatin1()),
+             QByteArray("fake-png-bytes"));
 }
 
 void TestSettingsTransfer::exportSkipsDangerous(void)
@@ -199,6 +221,42 @@ void TestSettingsTransfer::importBackups(void)
                  QStringList() << QStringLiteral("target-shortcut.ini.bak-*"),
                  QDir::Files).isEmpty(),
              "shortcut backup must exist");
+}
+
+void TestSettingsTransfer::customThemeRoundtrip(void)
+{
+    // Приемник в другом каталоге: путь обязан переписаться
+    // на его custom-theme, байты — совпасть
+    QVERIFY2(QDir(m_tmp.path()).mkpath(QStringLiteral("target")),
+             "target dir must be created");
+
+    const QString targetDir=m_tmp.path()+QStringLiteral("/target");
+    QSettings targetConf(targetDir+QStringLiteral("/target-conf.ini"),
+                         QSettings::IniFormat);
+    targetConf.setValue(QStringLiteral("version"), 61);
+    targetConf.sync();
+
+    QSettings targetEditor(targetDir+QStringLiteral("/target-editor.ini"),
+                           QSettings::IniFormat);
+    targetEditor.setValue(QStringLiteral("version"), 47);
+    targetEditor.sync();
+
+    const QString targetShortcut=targetDir+QStringLiteral("/target-shortcut.ini");
+
+    QString error;
+    QVERIFY2(SettingsTransfer::importSettings(&targetConf, &targetEditor, targetShortcut,
+                                              m_out, &error),
+             "import must succeed");
+
+    const QString newPath=targetConf.value(QStringLiteral("themeCustomNotePaperImage")).toString();
+    QVERIFY2(!newPath.isEmpty(), "theme image key must be set");
+    QVERIFY2(newPath.startsWith(targetDir),
+             "path must be remapped to target workdir");
+
+    QFile result(newPath);
+    QVERIFY2(result.open(QIODevice::ReadOnly), "remapped file must exist");
+    QCOMPARE(result.readAll(), QByteArray("fake-png-bytes"));
+    result.close();
 }
 
 void TestSettingsTransfer::importRejectsBad(void)

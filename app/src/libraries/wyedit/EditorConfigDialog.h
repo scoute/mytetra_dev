@@ -10,7 +10,8 @@ class EditorConfigDialog : public QWidget
  Q_OBJECT
 
 public:
- EditorConfigDialog(QWidget *parent=nullptr);
+ // page "misc" - открыться сразу на странице с прозрачностью содержания
+ EditorConfigDialog(QWidget *parent=nullptr, const QString &page=QString());
 
 private slots:
  void onAlterToAppSettings(void);

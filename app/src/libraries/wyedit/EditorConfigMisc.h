@@ -50,10 +50,10 @@ private:
   QLabel *imageMaxSizeLabel;
   MtComboBox *imageMaxSizeCombo;
 
-  // Непрозрачность фона плавающего содержания, проценты 30-70
+  // Непрозрачность фона плавающего содержания, выпадашка 10-90 с шагом 10
   QLabel *floatTocOpacityLabel;
   QLabel *floatTocOpacityFlexionLabel;
-  QSpinBox *floatTocOpacitySpinBox;
+  MtComboBox *floatTocOpacityCombo;
 
   // Мастер-тумблер изменения истинного размера файла картинки
   // (опасная зона: действие необратимо, оригинал уходит в корзину)

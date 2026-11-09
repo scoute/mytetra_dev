@@ -239,6 +239,10 @@ void Editor::setupFloatToc(void)
 // (QWidget::scroll двигает их), оверлей же стоит на месте
   floatToc=new EditorFloatToc(textArea);
   floatToc->setTextArea(textArea);
+
+  // ПКМ-меню содержания ведет в настройки на страницу прозрачности
+  connect(floatToc, &EditorFloatToc::setupMiscRequested,
+          this,      &Editor::onOpenMiscSettings);
 }
 
 // Создание и настройка ассистента линейки отступов
@@ -2796,8 +2800,23 @@ void Editor::onCustomContextMenuRequested(const QPoint &pos)
 
 void Editor::onSettingsClicked(void)
 {
+  openSettings();
+}
+
+
+// Слот для ПКМ-меню плавающего содержания: настройки сразу на Misc
+void Editor::onOpenMiscSettings(void)
+{
+  openSettings(QStringLiteral("misc"));
+}
+
+
+// Открыть настройки редактора, опционально сразу на странице.
+// Диалог модальный: exec крутится уже в конструкторе
+void Editor::openSettings(const QString &page)
+{
   // Создается окно настроек, после выхода из этой функции окно удалится
-  EditorConfigDialog dialog;
+  EditorConfigDialog dialog(nullptr, page);
   dialog.show();
 
   // Устанавка размера табуляции для клавиши Tab

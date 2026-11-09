@@ -3383,6 +3383,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>(empty heading)</source>
         <translation>(пустой заголовок)</translation>
     </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorFloatToc.cpp"/>
+        <source>Configure...</source>
+        <translation>Настроить...</translation>
+    </message>
 </context>
 <context>
     <name>EditorFindDialog</name>

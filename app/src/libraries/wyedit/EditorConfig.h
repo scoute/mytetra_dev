@@ -86,7 +86,7 @@ public:
     void set_tab_size(int i);
 
     // Непрозрачность фона плавающего содержания, проценты.
-    // Допустимо 30-70, дефолт 50 (см. get_parameter_table_49)
+    // Допустимо 10-90, дефолт 60 (см. get_parameter_table_50)
     int get_floatTocOpacity(void);
     void set_floatTocOpacity(int i);
 
@@ -236,6 +236,7 @@ private:
     static QStringList get_parameter_table_47(bool withEndSignature=true);
     static QStringList get_parameter_table_48(bool withEndSignature=true);
     static QStringList get_parameter_table_49(bool withEndSignature=true);
+    static QStringList get_parameter_table_50(bool withEndSignature=true);
 
     static QStringList remove_option(QStringList table, QString optionName);
 

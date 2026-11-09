@@ -119,7 +119,7 @@ QStringList EditorConfig::get_actual_parameter_table(bool withEndSignature)
 {
     // Актуальная таблица = последняя по номеру версии.
     // При добавлении get_parameter_table_N поменять здесь один вызов
-    return get_parameter_table_49(withEndSignature);
+    return get_parameter_table_50(withEndSignature);
 }
 
 
@@ -460,13 +460,13 @@ int EditorConfig::get_floatTocOpacity(void)
 {
     int n=get_parameter("float_toc_opacity").toInt();
 
-    // Диапазон из настроек 30-70: меньше 30 фон нечитаем,
-    // больше 70 перекрывает текст. Мусор из конфига режется
-    if(n<30)
-        return 30;
+    // Диапазон из настроек 10-90: меньше 10 фон нечитаем,
+    // больше 90 перекрывает текст. Мусор из конфига режется
+    if(n<10)
+        return 10;
 
-    if(n>70)
-        return 70;
+    if(n>90)
+        return 90;
 
     return n;
 }
@@ -733,6 +733,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_47;
     parameterFunctions << get_parameter_table_48;
     parameterFunctions << get_parameter_table_49;
+    parameterFunctions << get_parameter_table_50;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1739,6 +1740,26 @@ QStringList EditorConfig::get_parameter_table_49(bool withEndSignature)
 }
 
 
+QStringList EditorConfig::get_parameter_table_50(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 49
+    table << get_parameter_table_49(false);
+
+    // Новых ключей нет: дефолт float_toc_opacity 50 -> 60 правится
+    // миграцией в update_version_change_value(), версия бампится
+    // чтобы миграция доехала до существующих конфигов
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
 QStringList EditorConfig::get_recentSymbols(void)
 {
     // Пустая строка — легальное "пусто", чтения напрямую:
@@ -2612,6 +2633,14 @@ QString EditorConfig::update_version_change_value(int versionFrom,
                     result=result+",insertPageBreak";
             }
         }
+
+    // Дефолт фона содержания 50 -> 60: ключ живет один релиз
+    // (появился в 49-м), сознательно выбранных 50 еще ни у кого нет,
+    // поэтому значение старого дефолта двигается на новый.
+    // Остальные значения не трогаются
+    if(versionFrom==49 && versionTo==50)
+        if(name=="float_toc_opacity" && result=="50")
+            result="60";
 
 
     return result;

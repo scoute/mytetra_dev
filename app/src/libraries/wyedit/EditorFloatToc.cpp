@@ -12,6 +12,8 @@
 
 #include "EditorFloatToc.h"
 #include "EditorTextArea.h"
+#include "EditorConfig.h"
+#include "libraries/helpers/ObjectHelper.h"
 
 
 EditorFloatToc::EditorFloatToc(QWidget *parent) : QWidget(parent)
@@ -220,10 +222,23 @@ void EditorFloatToc::paintEvent(QPaintEvent *event)
 {
  Q_UNUSED(event);
 
+ // Непрозрачность фона из настроек (30-70%, дефолт 50).
+ // Читается при каждой отрисовке: диалог настроек применяется
+ // на лету без перезапуска, перерисовка подхватывает сама.
+ // Без конфига (тесты) - дефолт 50
+ int opacity=50;
+
+ EditorConfig *editorConfig=find_object<EditorConfig>("editorconfig");
+
+ if(editorConfig!=nullptr)
+  opacity=editorConfig->get_floatTocOpacity();
+
+ const int alpha=qRound(opacity*255.0/100.0);
+
  QPainter painter(this);
  painter.setRenderHint(QPainter::Antialiasing, true);
  painter.setPen(QPen(QColor(255, 255, 255, 70), 1));
- painter.setBrush(QColor(32, 36, 44, 180));
+ painter.setBrush(QColor(32, 36, 44, alpha));
  painter.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 6, 6);
 }
 

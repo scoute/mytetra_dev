@@ -96,6 +96,23 @@ void EditorConfigMisc::setupUi(void)
  imageMaxSizeLabel->setToolTip(imageFormatHint);
  imageMaxSizeCombo->setToolTip(imageFormatHint);
 
+ // Непрозрачность фона плавающего содержания: 30 еле видно,
+ // 70 почти глухо. Диапазон ограничен и в конфиге тоже
+ floatTocOpacityLabel=new QLabel(this);
+ floatTocOpacityLabel->setText(tr("Contents background opacity"));
+
+ floatTocOpacityFlexionLabel=new QLabel(this);
+ floatTocOpacityFlexionLabel->setText(QStringLiteral("%"));
+
+ floatTocOpacitySpinBox=new QSpinBox(this);
+ floatTocOpacitySpinBox->setMinimum(30);
+ floatTocOpacitySpinBox->setMaximum(70);
+ floatTocOpacitySpinBox->setValue(conf->get_floatTocOpacity());
+
+ const QString floatTocOpacityHint=tr("Background opacity of the floating contents overlay");
+ floatTocOpacityLabel->setToolTip(floatTocOpacityHint);
+ floatTocOpacitySpinBox->setToolTip(floatTocOpacityHint);
+
  // Мастер-тумблер изменения истинного размера файла картинки
  allowTrueImageResizeCheckBox=new QCheckBox(this);
  allowTrueImageResizeCheckBox->setText(tr("Allow changing true image file size"));
@@ -143,6 +160,11 @@ void EditorConfigMisc::assembly(void)
  // Лимит размера: подпись и комбобокс в своей строке
  configLayout->addWidget(imageMaxSizeLabel, 3, 0);
  configLayout->addWidget(imageMaxSizeCombo, 3, 1);
+
+ // Непрозрачность фона содержания: подпись, спин и знак процента
+ configLayout->addWidget(floatTocOpacityLabel,         4, 0);
+ configLayout->addWidget(floatTocOpacitySpinBox,       4, 1);
+ configLayout->addWidget(floatTocOpacityFlexionLabel,  4, 2);
 
   // Группировщик виджетов для опасной зоны
   QGroupBox *dangerBox=new QGroupBox(this);
@@ -216,6 +238,11 @@ int EditorConfigMisc::applyChanges(void)
  // Закрытие окна спецсимволов после вставки
  if(conf->get_specialCharCloseOnInsert()!=specialCharCloseOnInsertCheckBox->isChecked()) {
    conf->set_specialCharCloseOnInsert(specialCharCloseOnInsertCheckBox->isChecked());
+ }
+
+ // Непрозрачность фона содержания
+ if(conf->get_floatTocOpacity()!=floatTocOpacitySpinBox->value()) {
+   conf->set_floatTocOpacity(floatTocOpacitySpinBox->value());
  }
  
  return difficultChanges;

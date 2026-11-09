@@ -722,6 +722,19 @@ win32 {
 QMAKE_POST_LINK += $$copyToDir($${_PRO_FILE_PWD_}/../thirdParty/mimetex/build/bin/$${MIMETEX_BINARY}, $${OUT_PWD}/bin/$${MIMETEX_BINARY})
 }
 
+# Windows: OpenSSL 1.1 рядом с exe (см. fix/575, fix/576). Qt 5.15.2
+# грузит libssl-1_1/libcrypto-1_1 напрямую через LoadLibrary из каталога
+# программы (отдельных tls-плагинов в этом SDK нет), а ставит их туда
+# никто: запуск из Qt Creator без них дает "TLS initialization failed"
+# в Downloader. Копируются как mimetex выше, из вендора thirdParty/win32
+win32:!android {
+  WIN32_SSL_DLLS = libssl-1_1.dll libcrypto-1_1.dll msvcr100.dll
+
+  for(SSL_DLL, WIN32_SSL_DLLS) {
+    QMAKE_POST_LINK += $$copyToDir($${_PRO_FILE_PWD_}/../thirdParty/win32/$${SSL_DLL}, $${OUT_PWD}/bin/$${SSL_DLL})
+  }
+}
+
 # Бинарник mimetex обязан лежать рядом с mytetra, иначе не рендерятся формулы.
 # Раньше make install ставил только mytetra, и установленное приложение
 # молча не генерировало картинки формул

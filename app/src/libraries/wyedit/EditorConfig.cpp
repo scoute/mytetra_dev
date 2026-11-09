@@ -119,7 +119,7 @@ QStringList EditorConfig::get_actual_parameter_table(bool withEndSignature)
 {
     // Актуальная таблица = последняя по номеру версии.
     // При добавлении get_parameter_table_N поменять здесь один вызов
-    return get_parameter_table_48(withEndSignature);
+    return get_parameter_table_49(withEndSignature);
 }
 
 
@@ -452,6 +452,32 @@ void EditorConfig::set_tab_size(int i)
 }
 
 
+// ---------------------------------------------------
+// Непрозрачность фона плавающего содержания, проценты
+// ---------------------------------------------------
+
+int EditorConfig::get_floatTocOpacity(void)
+{
+    int n=get_parameter("float_toc_opacity").toInt();
+
+    // Диапазон из настроек 30-70: меньше 30 фон нечитаем,
+    // больше 70 перекрывает текст. Мусор из конфига режется
+    if(n<30)
+        return 30;
+
+    if(n>70)
+        return 70;
+
+    return n;
+}
+
+
+void EditorConfig::set_floatTocOpacity(int i)
+{
+    conf->setValue("float_toc_opacity",i);
+}
+
+
 // -------------------------------------------
 // Счетчик для таймера обновления картинки формулы в редакторе формулы
 // -------------------------------------------
@@ -706,6 +732,7 @@ void EditorConfig::update_version_process(void)
     parameterFunctions << get_parameter_table_46;
     parameterFunctions << get_parameter_table_47;
     parameterFunctions << get_parameter_table_48;
+    parameterFunctions << get_parameter_table_49;
 
     for(int i=1; i<parameterFunctions.count()-1; ++i)
         if(fromVersion<=i)
@@ -1685,6 +1712,25 @@ QStringList EditorConfig::get_parameter_table_48(bool withEndSignature)
     // Новых ключей нет: только кнопка разрыва страницы в tools_line_1.
     // Миграция - в update_version_change_value(), версия бампится
     // чтобы миграция доехала до существующих конфигов
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList EditorConfig::get_parameter_table_49(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 48
+    table << get_parameter_table_48(false);
+
+    // Новые параметры
+    table << "float_toc_opacity" << "int" << "50";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

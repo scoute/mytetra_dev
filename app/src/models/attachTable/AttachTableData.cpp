@@ -350,6 +350,16 @@ qint64 AttachTableData::getFileSize(int row)
 }
 
 
+// Полный путь каталога записи-владельца
+QString AttachTableData::getRecordDirName(void) const
+{
+  if(record==nullptr)
+    return QString();
+
+  return record->getFullDirName();
+}
+
+
 // Пачать содержимого таблицы конечных файлов
 void AttachTableData::print()
 {

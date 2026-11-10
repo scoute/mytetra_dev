@@ -530,6 +530,31 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <source>Record directories on disk</source>
         <translation>Каталоги записей на диске</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Folder links</source>
+        <translation>Ссылки на папки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Folders attach as links without copying. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. The choice applies to new folder links.</source>
+        <translation>Папки прикрепляются ссылками без копирования. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. Выбор действует на новые ссылки на папки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Attach folders as: </source>
+        <translation>Прикреплять папки как: </translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Absolute path</source>
+        <translation>Абсолютный путь</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Relative to note directory</source>
+        <translation>Относительно каталога записи</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_Clipper</name>

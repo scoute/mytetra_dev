@@ -311,11 +311,20 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
 
     // Директория добавляется ссылкой (без копирования в базу):
     // открывается в файловом менеджере как обычный линк.
-    // Файлы ниже идут прежним путем с копированием в базу
+    // Файлы ниже идут прежним путем с копированием в базу.
+    // В поле link кладется абсолютный путь или относительный
+    // каталога записи (настройка attachLinkMode): относительные
+    // живут при переезде базы. В source для истории — всегда исходный
     if(currFileInfo.isDir())
     {
+        const int linkMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
+
+        const QString linkPath=Attach::makeStoredLink(getAttachTableData()->getRecordDirName(),
+                                                      currFileInfo.absoluteFilePath(),
+                                                      linkMode);
+
         if(addAttach(QStringLiteral("link"),
-                     currFullFileName,
+                     linkPath,
                      currFileInfo.fileName(),
                      currFileInfo.absoluteFilePath()))
             sucessLoadCount++;

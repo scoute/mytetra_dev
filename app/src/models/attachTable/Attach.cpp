@@ -1,5 +1,6 @@
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
 #include <QStringList>
 #include <QMessageBox>
 #include <QDebug>
@@ -216,7 +217,15 @@ void Attach::setField(QString name, QString value)
   // Поле со ссылкой на файл (содержит путь к файлу, на который указывает линк)
   if(name=="link")
   {
-    QFile tempFile(value);
+    // Проверяется резолвленный путь: относительный линк живет
+    // от каталога записи, а не от текущего каталога процесса.
+    // Без записи (lite) — старая проверка как есть
+    QString checkPath=value;
+
+    if(parentTable!=nullptr && parentTable->record!=nullptr)
+      checkPath=resolveStoredLink(parentTable->record->getFullDirName(), value);
+
+    QFile tempFile(checkPath);
 
     // Если файла, на который ссылается линк, не существует
     if(!tempFile.exists())
@@ -614,6 +623,34 @@ QString Attach::constructOriginalFileName(const QString type, const QString id, 
     return "";
 }
 
+// Ссылка на папку в хранимый вид: в абсолютном режиме как есть,
+// в относительном — от каталога записи (живет при переезде базы).
+// На другом диске (Windows) относительность невозможна —
+// relativeFilePath сам вернет абсолютный путь
+QString Attach::makeStoredLink(const QString &recordDir,
+                               const QString &absolutePath,
+                               int linkMode)
+{
+    if(linkMode==AppConfig::AttachLinkRelative &&
+       !recordDir.isEmpty() &&
+       QFileInfo(absolutePath).isAbsolute())
+        return QDir(recordDir).relativeFilePath(absolutePath);
+
+    return absolutePath;
+}
+
+
+// Хранимая ссылка в абсолютный путь для открытия
+QString Attach::resolveStoredLink(const QString &recordDir,
+                                  const QString &storedLink)
+{
+    if(storedLink.isEmpty() ||
+       QFileInfo(storedLink).isAbsolute() ||
+       recordDir.isEmpty())
+        return storedLink;
+
+    return QDir::cleanPath(recordDir+QStringLiteral("/")+storedLink);
+}
 // Все возможные имена файла на диске для данного вложения
 // (все три схемы без дублей). Порядок: системное, гибридное, оригинальное.
 // Используется поиском существующего файла и конвертацией между схемами
@@ -717,7 +754,14 @@ QString Attach::getFullInnerFileName() const
   }
 
   if(getField("type")=="link") // Для линка
-    return getField("link");
+  {
+    // Относительные линки резолвятся от каталога записи.
+    // Lite-объект без записи — как есть, дальше разберется вызыватель
+    if(parentTable==nullptr || parentTable->record==nullptr)
+      return getField("link");
+
+    return resolveStoredLink(parentTable->record->getFullDirName(), getField("link"));
+  }
 
   criticalError("Bad attach type in getFullInnerFileName():"+getField("type"));
 
@@ -750,7 +794,7 @@ qint64 Attach::getFileSize() const
   }
 
   if(fields["type"]=="link")
-    tempFileName=getField("link");
+    tempFileName=getFullInnerFileName();
 
   QFile tempFile(tempFileName);
 

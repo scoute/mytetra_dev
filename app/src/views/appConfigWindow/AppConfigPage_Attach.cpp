@@ -104,6 +104,20 @@ void AppConfigPage_Attach::setupUi(void)
     recordDirsWarning=new QLabel(this);
     recordDirsWarning->setWordWrap(true);
     recordDirsWarning->setText( tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names.") );
+
+    // Пояснение про ссылки на папки
+    folderLinksInfo=new QLabel(this);
+    folderLinksInfo->setWordWrap(true);
+    folderLinksInfo->setText( tr("Folders attach as links without copying. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. The choice applies to new folder links.") );
+
+    // Выбор вида пути: абсолютный или относительный каталога записи
+    attachLinkModeLabel=new QLabel(this);
+    attachLinkModeLabel->setText( tr("Attach folders as: ") );
+
+    attachLinkModeCombo=new MtComboBox(this);
+    attachLinkModeCombo->addItem( tr("Absolute path"), AppConfig::AttachLinkAbsolute );
+    attachLinkModeCombo->addItem( tr("Relative to note directory"), AppConfig::AttachLinkRelative );
+    attachLinkModeCombo->setCurrentIndex( attachLinkModeCombo->findData(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode()) );
 }
 
 void AppConfigPage_Attach::setupSignals(void)
@@ -154,6 +168,20 @@ void AppConfigPage_Attach::assembly(void)
     dirModeLayout->addWidget( recordDirNameModeCombo );
     dirModeLayout->addStretch();
 
+    // Рамка ссылок на папки
+    QHBoxLayout *linkModeLayout=new QHBoxLayout;
+    linkModeLayout->addWidget( attachLinkModeLabel );
+    linkModeLayout->addWidget( attachLinkModeCombo );
+    linkModeLayout->addStretch();
+
+    QVBoxLayout *folderLinksBoxLayout=new QVBoxLayout;
+    folderLinksBoxLayout->addWidget( folderLinksInfo );
+    folderLinksBoxLayout->addLayout( linkModeLayout );
+
+    folderLinksBox=new QGroupBox(this);
+    folderLinksBox->setTitle( tr("Folder links") );
+    folderLinksBox->setLayout( folderLinksBoxLayout );
+
     QVBoxLayout *recordDirsBoxLayout=new QVBoxLayout;
     recordDirsBoxLayout->addWidget( recordDirsInfo );
     recordDirsBoxLayout->addLayout( dirModeLayout );
@@ -169,6 +197,7 @@ void AppConfigPage_Attach::assembly(void)
     centralLayout->addWidget( decorBox );
     centralLayout->addWidget( fileNamesBox );
     centralLayout->addWidget( recordDirsBox );
+    centralLayout->addWidget( folderLinksBox );
     centralLayout->addStretch();
 
     // Основной слой устанавливается
@@ -221,6 +250,11 @@ void AppConfigPage_Attach::retranslateUi(void)
   recordDirNameModeCombo->setItemText(1, tr("System + note names (id_name)"));
   convertRecordDirsButton->setText(tr("Convert record directories to the selected form"));
   recordDirsWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names."));
+  folderLinksBox->setTitle(tr("Folder links"));
+  folderLinksInfo->setText(tr("Folders attach as links without copying. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. The choice applies to new folder links."));
+  attachLinkModeLabel->setText(tr("Attach folders as: "));
+  attachLinkModeCombo->setItemText(0, tr("Absolute path"));
+  attachLinkModeCombo->setItemText(1, tr("Relative to note directory"));
 }
 
 // Метод должен возвращать уровень сложности сделанных изменений
@@ -251,6 +285,12 @@ int AppConfigPage_Attach::applyChanges(void)
     int selectedDirMode=recordDirNameModeCombo->currentData().toInt();
     if(AppContext::instance().appConfig()->storageSection()->get_recordDirNameMode()!=selectedDirMode)
         AppContext::instance().appConfig()->storageSection()->set_recordDirNameMode(selectedDirMode);
+
+    // Сохраняется вид ссылок на новые папки (без переписки
+    // существующих, они хранятся и открываются как были)
+    int selectedLinkMode=attachLinkModeCombo->currentData().toInt();
+    if(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode()!=selectedLinkMode)
+        AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(selectedLinkMode);
 
     return result;
 }

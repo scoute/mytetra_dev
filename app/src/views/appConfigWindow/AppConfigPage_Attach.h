@@ -72,6 +72,13 @@ protected:
   MtComboBox *recordDirNameModeCombo;
   QPushButton *convertRecordDirsButton;
   QLabel *recordDirsWarning;
+
+  // Ссылки на папки: пояснение и выбор абсолютного/относительного
+  // пути. Режим действует только на новые линки, старые не трогаются
+  QGroupBox *folderLinksBox;
+  QLabel *folderLinksInfo;
+  QLabel *attachLinkModeLabel;
+  MtComboBox *attachLinkModeCombo;
 };
 
 

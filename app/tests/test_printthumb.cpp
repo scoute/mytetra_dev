@@ -37,6 +37,13 @@ void TestPrintThumb::thumbsAndNav(void)
     view.show();
     QApplication::processEvents();
 
+    // Первый показ сам вписывает страницу (автофит, см. 585):
+    // дальше тест пляшет от гарантированной единицы
+    QVERIFY2(!qFuzzyCompare(view.scale, 1.0), "first show must auto-fit");
+    view.zoomReset();
+    QApplication::processEvents();
+    QVERIFY2(qFuzzyCompare(view.scale, 1.0), "reset must restore 1.0");
+
     // Математика страниц туда-обратно
     QCOMPARE(view.pageAtOffset(view.pageOffset(2)), 2);
     QCOMPARE(view.pageAtOffset(view.pageOffset(0)), 0);

@@ -8,6 +8,8 @@
 #include <QAbstractTextDocumentLayout>
 #include <QMouseEvent>
 #include <QResizeEvent>
+#include <QShowEvent>
+#include <QTimer>
 #include <QListWidgetItem>
 #include <QIcon>
 #include <QPixmap>
@@ -39,7 +41,10 @@ void PreviewView::zoomIn()
 
 void PreviewView::zoomOut()
 {
-    scale -= 0.2;
+    // Пол не дает уйти в ноль и минус: иначе страница схлопывается
+    // и paint уходит в деление на крошечный масштаб
+    if(scale > 0.05)
+        scale = qMax(0.05, scale - 0.2);
     resizeEvent(0);
     viewport()->update();
 }
@@ -51,6 +56,91 @@ void PreviewView::zoomReset()
     scale = 1.0;
     resizeEvent(0);
     viewport()->update();
+}
+
+
+void PreviewView::zoomFit()
+{
+    // Вписать страницу в вьюпорт целиком: масштаб по меньшей стороне
+    // с тем же отступом что в paintEvent. Диапазон как у ручного зума
+    const QSizeF pgSize = doc->pageSize();
+
+    if(pgSize.width() <= 0 || pgSize.height() <= 0)
+        return;
+
+    const QSize viewportSize = viewport()->size();
+
+    const qreal fitScale = qMin((viewportSize.width() - 2 * interPageSpacing) / pgSize.width(),
+                                (viewportSize.height() - 2 * interPageSpacing) / pgSize.height());
+
+    if(fitScale > 0)
+        scale = qBound(0.05, fitScale, 8.0);
+
+    resizeEvent(0);
+    viewport()->update();
+}
+
+
+void PreviewView::setFooterAlignment(Qt::Alignment alignment)
+{
+    if(m_footerAlign != alignment)
+    {
+        m_footerAlign = alignment;
+        viewport()->update();
+    }
+}
+
+
+void PreviewView::setFooterEnabled(bool enable)
+{
+    if(m_footerEnabled != enable)
+    {
+        m_footerEnabled = enable;
+        viewport()->update();
+    }
+}
+
+
+void PreviewView::drawFooterNumber(QPainter *painter, const QSizeF &pageSize, int page, Qt::Alignment alignment)
+{
+    // Номер страницы в подвале: серым, слева/по центру/справа.
+    // Общая для превью и печати, чтобы "что вижу" совпадало
+    // с "что на бумаге". Вызывается при транслированном на начало
+    // страницы живописце (минус высота страниц выше), поэтому
+    // смещение пишется полным
+    Qt::Alignment hAlign = Qt::AlignHCenter;
+
+    if(alignment & Qt::AlignLeft)
+        hAlign = Qt::AlignLeft;
+    else if(alignment & Qt::AlignRight)
+        hAlign = Qt::AlignRight;
+
+    painter->setPen(QColor(120, 120, 120));
+
+    QFont footerFont = painter->font();
+    footerFont.setPointSize(9);
+    painter->setFont(footerFont);
+
+    painter->drawText(QRectF(0, page * pageSize.height() + pageSize.height() - 24,
+                             pageSize.width(), 20),
+                      hAlign | Qt::AlignVCenter,
+                      QString::number(page + 1));
+}
+
+
+void PreviewView::showEvent(QShowEvent *event)
+{
+    QAbstractScrollArea::showEvent(event);
+
+    // Первый показ — вписать страницу целиком: на FullHD лист A4
+    // в масштабе 1.0 не влезает по высоте и способа уместить нет.
+    // Отложенно, чтобы вьюпорт уже получил финальный размер:
+    // синхронно в showEvent геометрия еще не устаканилась
+    if(firstShow)
+    {
+        firstShow = false;
+        QTimer::singleShot(0, this, &PreviewView::zoomFit);
+    }
 }
 
 
@@ -103,6 +193,12 @@ void PreviewView::paintPage(QPainter *painter, int page)
     painter->translate(0, - page * pgSize.height());
     painter->setClipRect(docRect);
     doc->documentLayout()->draw(painter, ctx);
+
+    // Номер в подвале — поверх контента, только если включен.
+    // Координаты в транслированной системе (минус высота страниц
+    // выше), поэтому смещение пишется полным
+    if(m_footerEnabled)
+        drawFooterNumber(painter, pgSize, page, m_footerAlign);
 }
 
 

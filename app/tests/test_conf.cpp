@@ -117,6 +117,12 @@ void TestConf::uiSection(void)
     QCOMPARE(AppContext::instance().appConfig()->uiSection()->getEditorCursorPosition(), 123);
     AppContext::instance().appConfig()->uiSection()->setShowSplashScreen(false);
     QCOMPARE(AppContext::instance().appConfig()->uiSection()->getShowSplashScreen(), false);
+    AppContext::instance().appConfig()->uiSection()->set_printFooterAlign(2);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printFooterAlign(), 2);
+    QCOMPARE(m_raw->value("printFooterAlign").toInt(), 2);
+    AppContext::instance().appConfig()->uiSection()->set_printFooterEnabled(false);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled(), false);
+    QCOMPARE(m_raw->value("printFooterEnabled").toBool(), false);
 }
 
 void TestConf::findSection(void)

@@ -10,10 +10,13 @@
 #include <QPrinter>
 #include <QPageLayout>
 #include <QPageSize>
+#include <QColor>
+#include <QPainter>
 #include <QMarginsF>
+#include <QScrollBar>
 #include <QSettings>
 #include <QTemporaryDir>
-#include <QTemporaryDir>
+#include <QFileInfo>
 
 #include "views/printPreview/PrintPreview.h"
 #include "views/printPreview/PreviewView.h"
@@ -48,6 +51,14 @@ private slots:
     void marginsAffectPageSize(void);
 
     void unifiedHelperSetsPageSize(void);
+
+    void footerShowsPageNumber(void);
+
+    void zoomFitFitsPage(void);
+
+    void footerPositionFollowsSetting(void);
+
+    void printDocumentSmokeTest(void);
 
 private:
 
@@ -100,27 +111,32 @@ void TestPrintMargins::marginsAffectPageSize(void)
     preview.printer.setPageMargins(QMarginsF(20, 20, 20, 20), QPageLayout::Millimeter);
     preview.setupPrintDoc();
 
-    const QSize pageRectPx=preview.printer.pageLayout().paintRectPixels(preview.printer.resolution()).size();
-    const qreal kx=qreal(preview.view->logicalDpiX())/preview.printer.logicalDpiX();
-    const qreal ky=qreal(preview.view->logicalDpiY())/preview.printer.logicalDpiY();
+    // Страница — полный лист в пунктах (пропорции бумаги),
+    // перевод мм->pt единый для экрана и печати
+    const QSizeF paperMm=preview.printer.pageLayout().fullRect(QPageLayout::Millimeter).size();
+    const qreal mmToPt=72.0/25.4;
     const QSizeF pageSize=preview.doc->pageSize();
 
-    QVERIFY2(qFuzzyCompare(pageSize.width(), pageRectPx.width()*kx),
-             "page width must follow printer page rect");
-    QVERIFY2(qFuzzyCompare(pageSize.height(), pageRectPx.height()*ky),
-             "page height must follow printer page rect");
+    QVERIFY2(qFuzzyCompare(pageSize.width(), paperMm.width()*mmToPt),
+             "page width must follow full paper");
+    QVERIFY2(qFuzzyCompare(pageSize.height(), paperMm.height()*mmToPt),
+             "page height must follow full paper");
 
-    // Глухого отступа рамки больше нет: поля задает сам размер страницы
-    QCOMPARE(preview.doc->rootFrame()->frameFormat().margin(), 0.0);
+    // Поля пользователя — рамкой текста, по 20мм с каждой стороны
+    const QTextFrameFormat fmt=preview.doc->rootFrame()->frameFormat();
+    QCOMPARE(fmt.margin(), 0.0);
+    QVERIFY2(qFuzzyCompare(fmt.leftMargin(), 20.0*mmToPt),
+             "left margin must follow page setup");
+    QVERIFY2(qFuzzyCompare(fmt.topMargin(), 20.0*mmToPt),
+             "top margin must follow page setup");
 
-    // Смена полей пересчитывает раскладку в ту же сторону
+    // Смена полей не трогает размер страницы, только рамку
     preview.printer.setPageMargins(QMarginsF(10, 10, 10, 10), QPageLayout::Millimeter);
     preview.setupPrintDoc();
 
-    QVERIFY2(preview.doc->pageSize().width() > pageSize.width(),
-             "smaller margins must widen page");
-    QVERIFY2(preview.doc->pageSize().height() > pageSize.height(),
-             "smaller margins must heighten page");
+    QCOMPARE(preview.doc->pageSize(), pageSize);
+    QVERIFY2(qFuzzyCompare(preview.doc->rootFrame()->frameFormat().leftMargin(), 10.0*mmToPt),
+             "smaller margins must shrink frame");
 
     // Миниатюры пересобираются под новую раскладку без падений
     preview.thumbBar->rebuild(preview.doc);
@@ -134,21 +150,172 @@ void TestPrintMargins::unifiedHelperSetsPageSize(void)
     doc.setHtml(QStringLiteral("<p>Unified pipeline</p>"));
 
     QPrinter printer(QPrinter::HighResolution);
-    printer.setFullPage(true);
     printer.setPageSize(QPageSize(QPageSize::A4));
     printer.setPageMargins(QMarginsF(15, 15, 15, 15), QPageLayout::Millimeter);
 
-    PrintPreview::prepareDocument(printer, &doc,
-                                   printer.logicalDpiX(), printer.logicalDpiY());
+    PrintPreview::prepareDocument(printer, &doc);
 
-    QVERIFY2(!printer.fullPage(), "helper must respect margins");
+    QVERIFY2(printer.fullPage(), "helper prints from paper origin");
 
-    const QSizeF printable=printer.pageLayout().paintRectPixels(printer.resolution()).size();
-    QVERIFY2(qFuzzyCompare(doc.pageSize().width(), printable.width()),
-             "unified page width must follow printer");
-    QVERIFY2(qFuzzyCompare(doc.pageSize().height(), printable.height()),
-             "unified page height must follow printer");
-    QCOMPARE(doc.rootFrame()->frameFormat().margin(), 0.0);
+    // Лист целиком 1:1, поля — рамкой 15мм
+    const QSizeF paperMm=printer.pageLayout().fullRect(QPageLayout::Millimeter).size();
+    const qreal mmToPt=72.0/25.4;
+    QVERIFY2(qFuzzyCompare(doc.pageSize().width(), paperMm.width()*mmToPt),
+             "unified page width must follow printer paper");
+    QVERIFY2(qFuzzyCompare(doc.pageSize().height(), paperMm.height()*mmToPt),
+             "unified page height must follow printer paper");
+
+    const QTextFrameFormat fmt=doc.rootFrame()->frameFormat();
+    QCOMPARE(fmt.margin(), 0.0);
+    QVERIFY2(qFuzzyCompare(fmt.leftMargin(), 15.0*mmToPt),
+             "unified left margin must follow page setup");
+}
+
+void TestPrintMargins::footerShowsPageNumber(void)
+{
+    // Номер в подвале рисуется поверх контента (серым по белому),
+    // в документ и печать не попадает. Короткий текст: низ чист,
+    // кроме самого номера
+    QTextDocument doc;
+    doc.setHtml(QStringLiteral("<p>Hi</p>"));
+    doc.setPageSize(QSizeF(400, 500));
+
+    PreviewView view(&doc);
+    view.resize(500, 600);
+    view.show();
+    QApplication::processEvents();
+    view.scrollToPage(0);
+    QApplication::processEvents();
+
+    const QImage shot=view.viewport()->grab().toImage().convertToFormat(QImage::Format_ARGB32);
+
+    // Низ первой страницы: страница начинается с отступа 30,
+    // подвал — последние ~24px страницы
+    bool found=false;
+
+    for(int y=490; y<560 && !found; ++y)
+        for(int x=170; x<290 && !found; ++x)
+        {
+            const QColor c=shot.pixelColor(x, y);
+
+            if(c.alpha() > 200 &&
+               qAbs(c.red()-120) < 50 &&
+               qAbs(c.green()-120) < 50 &&
+               qAbs(c.blue()-120) < 50)
+                found=true;
+        }
+
+    QVERIFY2(found, "footer must contain gray page number");
+}
+
+void TestPrintMargins::zoomFitFitsPage(void)
+{
+    // Высокая страница в низком окне: первый показ сам вписывает
+    // (автофит), зум туда-сюда возвращает в то же состояние
+    QTextDocument doc;
+    doc.setHtml(QStringLiteral("<p>Hi</p>"));
+    doc.setPageSize(QSizeF(400, 1100));
+
+    PreviewView view(&doc);
+    view.resize(500, 200);
+    view.show();
+    QApplication::processEvents();
+    QApplication::processEvents();
+
+    QVERIFY2(view.verticalScrollBar()->maximum()==0,
+             "first show must fit page without scrolling");
+
+    view.zoomIn();
+    QApplication::processEvents();
+    QVERIFY2(view.verticalScrollBar()->maximum() > 0,
+             "zoom in must overflow again");
+
+    view.zoomFit();
+    QApplication::processEvents();
+    QVERIFY2(view.verticalScrollBar()->maximum()==0,
+             "manual fit must restore fitting");
+}
+
+void TestPrintMargins::footerPositionFollowsSetting(void)
+{
+    // Положение номера в подвале: слева/центр/справа.
+    // Рисуется общей drawFooterNumber (она же на печати),
+    // поэтому тест гоняет ее напрямую на картинке известного размера:
+    // детерминировано, без вьюпорта и масштаба
+    const QSizeF pgSize(400, 200);
+
+    auto footerCenterX = [&](Qt::Alignment align) {
+        QImage img(400, 200, QImage::Format_ARGB32);
+        img.fill(Qt::white);
+
+        QPainter painter(&img);
+        PreviewView::drawFooterNumber(&painter, pgSize, 0, align);
+        painter.end();
+
+        long sumX = 0;
+        long count = 0;
+
+        // Полоса подвала: низ страницы минус 24..4
+        for(int y = 176; y < 196; ++y)
+            for(int x = 0; x < 400; ++x)
+            {
+                const QRgb px = img.pixel(x, y);
+                const int g = qGray(px);
+
+                if(g > 90 && g < 160 && qAlpha(px) > 200)
+                {
+                    sumX += x;
+                    ++count;
+                }
+            }
+
+        if(count == 0)
+            return -1.0;
+
+        return double(sumX) / double(count);
+    };
+
+    const double leftX = footerCenterX(Qt::AlignLeft);
+    QVERIFY2(leftX >= 0, "left footer number must be rendered");
+    QVERIFY2(leftX < 400.0 / 3.0,
+             "left number must sit in left third");
+
+    const double centerX = footerCenterX(Qt::AlignHCenter);
+    QVERIFY2(centerX >= 0, "center footer number must be rendered");
+    QVERIFY2(qAbs(centerX - 200.0) < 400.0 / 3.0,
+             "center number must sit in middle third");
+
+    const double rightX = footerCenterX(Qt::AlignRight);
+    QVERIFY2(rightX >= 0, "right footer number must be rendered");
+    QVERIFY2(rightX > 2.0 * 400.0 / 3.0,
+             "right number must sit in right third");
+}
+
+void TestPrintMargins::printDocumentSmokeTest(void)
+{
+    // Сквозной прогон печати в PDF: раскладка из prepareDocument,
+    // постраничная отрисовка с номерами. Проверяется что файл
+    // создается непустым и без падений (содержимое — в превью-тестах)
+    QTextDocument doc;
+
+    QString html;
+    for(int i = 0; i < 30; ++i)
+        html += QStringLiteral("<p>Line %1 for print smoke test</p>").arg(i);
+    doc.setHtml(html);
+
+    const QString outPath = m_tmp.filePath(QStringLiteral("smoke.pdf"));
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setOutputFileName(outPath);
+
+    PrintPreview::prepareDocument(printer, &doc);
+    QVERIFY2(doc.pageCount() > 1, "smoke doc must span several pages");
+
+    PrintPreview::printDocument(printer, &doc);
+
+    QVERIFY2(QFileInfo(outPath).isFile(), "smoke pdf must be created");
+    QVERIFY2(QFileInfo(outPath).size() > 0, "smoke pdf must not be empty");
 }
 
 QTEST_MAIN(TestPrintMargins)

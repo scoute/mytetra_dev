@@ -8,6 +8,7 @@
 #include <QTextFrame>
 #include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
+#include <QPalette>
 #include <QPainter>
 #include <QDebug>
 #include <QPageSetupDialog>
@@ -16,12 +17,32 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QScrollBar>
+#include <QDialog>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QStyledItemDelegate>
+#include "libraries/MtComboBox.h"
 
 #include "PreviewView.h"
 #include "PrintPreview.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/AppContext.h"
+#include "models/appConfig/AppConfig.h"
+#include "models/appConfig/AppConfigUi.h"
 #include "libraries/wyedit/formatters/TypefaceFormatter.h"
+
+
+// Стоковые Qt-диалоги печати/настройки страницы используют голый
+// QComboBox: под темной темой в попапе пустые квадраты вместо пунктов
+// (тот же грабель, что лечит MtComboBox). QStyledItemDelegate чинит
+// отрисовку на месте, пересобирать диалоги не нужно
+void PrintPreview::fixStockDialogCombos(QDialog *dialog)
+{
+    const QList<QComboBox*> combos=dialog->findChildren<QComboBox*>();
+
+    foreach(QComboBox *combo, combos)
+        combo->setItemDelegate(new QStyledItemDelegate(combo));
+}
 
 
 PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
@@ -63,30 +84,107 @@ PrintPreview::~PrintPreview()
 
 void PrintPreview::setupPrintDoc()
 {
-    prepareDocument(printer, doc, view->logicalDpiX(), view->logicalDpiY());
+    prepareDocument(printer, doc);
 }
 
 
 // Общий конвейер подготовки документа для превью, прямой печати
 // и экспорта: один размер страницы, один шрифт, без номеров страниц
-void PrintPreview::prepareDocument(QPrinter &printer, QTextDocument *doc, qreal refDpiX, qreal refDpiY)
+void PrintPreview::prepareDocument(QPrinter &printer, QTextDocument *doc)
 {
-    printer.setFullPage(false);
+    printer.setFullPage(true);
 
-    const QSizeF printablePx=printer.pageLayout().paintRectPixels(printer.resolution()).size();
+    // Бумага целиком в миллиметрах, перевод в пункты: печать идет
+    // в пунктах, device-px дают микроскопию (доказано пробами, см. 586)
+    const QSizeF paperMm=printer.pageLayout().fullRect(QPageLayout::Millimeter).size();
+    const qreal mmToPt=72.0/25.4;
 
-    QSizeF page(printablePx.width()*refDpiX/printer.logicalDpiX(),
-                printablePx.height()*refDpiY/printer.logicalDpiY());
+    doc->setPageSize(QSizeF(paperMm.width()*mmToPt, paperMm.height()*mmToPt));
+
+    // Поля пользователя рамкой текста: отдельно по сторонам,
+    // с обрезкой чтобы не вылезти за полстраницы
+    qreal marginLeft, marginTop, marginRight, marginBottom;
+    printer.getPageMargins(&marginLeft, &marginTop, &marginRight, &marginBottom,
+                           QPrinter::Millimeter);
+
+    const qreal maxH=paperMm.width()/2.0;
+    const qreal maxV=paperMm.height()/2.0;
+
+    marginLeft=qBound(0.0, marginLeft, maxH);
+    marginRight=qBound(0.0, marginRight, maxH);
+    marginTop=qBound(0.0, marginTop, maxV);
+    marginBottom=qBound(0.0, marginBottom, maxV);
 
     QTextFrameFormat fmt=doc->rootFrame()->frameFormat();
     fmt.setMargin(0);
+    fmt.setLeftMargin(marginLeft*mmToPt);
+    fmt.setTopMargin(marginTop*mmToPt);
+    fmt.setRightMargin(marginRight*mmToPt);
+    fmt.setBottomMargin(marginBottom*mmToPt);
     doc->rootFrame()->setFrameFormat(fmt);
-
-    doc->setPageSize(page);
 
     QFont f(doc->defaultFont());
     f.setPointSize(10);
     doc->setDefaultFont(f);
+}
+
+// Печать вручную постранично: QTextDocument::print() без явного
+// pageSize пагинирует сам (плюс номера в подвале), а с явным —
+// масштабирует непредсказуемо. Здесь страницы рисуются тем же кодом
+// что превью: раскладка из prepareDocument, номера — drawFooterNumber
+void PrintPreview::printDocument(QPrinter &printer, QTextDocument *doc)
+{
+    const bool numbersOn=AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled();
+
+    int mode=AppContext::instance().appConfig()->uiSection()->get_printFooterAlign();
+    Qt::Alignment footerAlign=Qt::AlignHCenter;
+
+    if(mode==0)
+        footerAlign=Qt::AlignLeft;
+    else if(mode==2)
+        footerAlign=Qt::AlignRight;
+
+    QPainter painter(&printer);
+
+    if(!painter.isActive())
+        return;
+
+    // Документ разложен в пунктах, принтер рисует в device-пикселях
+    const qreal k=printer.resolution()/72.0;
+    const QSizeF pgSize=doc->pageSize();
+    const int pages=doc->pageCount();
+
+    int from=printer.fromPage()-1;
+    int to=printer.toPage()-1;
+
+    if(printer.fromPage()<=0)
+        from=0;
+
+    if(printer.toPage()<=0 || to>=pages)
+        to=pages-1;
+
+    for(int i=qMax(0, from); i<=to && i<pages; ++i)
+    {
+        if(i>qMax(0, from))
+            printer.newPage();
+
+        painter.save();
+        painter.scale(k, k);
+
+        QRectF docRect(QPointF(0, i*pgSize.height()), pgSize);
+        QAbstractTextDocumentLayout::PaintContext ctx;
+        ctx.clip=docRect;
+        ctx.palette.setColor(QPalette::Text, Qt::black);
+
+        painter.translate(0, -i*pgSize.height());
+        painter.setClipRect(docRect);
+        doc->documentLayout()->draw(&painter, ctx);
+
+        if(numbersOn)
+            PreviewView::drawFooterNumber(&painter, pgSize, i, footerAlign);
+
+        painter.restore();
+    }
 }
 
 void PrintPreview::setupUI()
@@ -115,6 +213,31 @@ void PrintPreview::setupUI()
     buttonZoomReset->setToolTip(tr("Normal size"));
     buttonZoomReset->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
+    // Вписать страницу в окно: на высоком листе масштаб 1.0
+    // не влезает по высоте и другого способа уместить нет
+    buttonZoomFit=new QToolButton(this);
+    buttonZoomFit->setText(tr("Fit"));
+    buttonZoomFit->setToolTip(tr("Fit page to window size"));
+    buttonZoomFit->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
+    // Положение номеров страниц в подвале: слева, по центру, справа.
+    // Действует и на превью, и на печать (один и тот же drawFooterNumber)
+    alignCombo=new MtComboBox(this);
+    alignCombo->addItem(tr("Left"), 0);
+    alignCombo->addItem(tr("Center"), 1);
+    alignCombo->addItem(tr("Right"), 2);
+    alignCombo->setToolTip(tr("Page number position"));
+
+    const int savedAlign=AppContext::instance().appConfig()->uiSection()->get_printFooterAlign();
+    const int alignIndex=savedAlign>=0 ? alignCombo->findData(savedAlign) : -1;
+    alignCombo->setCurrentIndex(alignIndex>=0 ? alignIndex : 1);
+
+    // Печатать ли номера вообще (и в превью, и на бумаге)
+    footersCheckBox=new QCheckBox(this);
+    footersCheckBox->setText(tr("Page numbers"));
+    footersCheckBox->setToolTip(tr("Show page numbers in footer, in preview and in print"));
+    footersCheckBox->setChecked(AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled());
+
     buttonClose=new QToolButton(this);
     buttonClose->setText(tr("Close"));
     buttonClose->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -122,6 +245,11 @@ void PrintPreview::setupUI()
     // Лента миниатюр страниц слева от основного вида.
     // Создается здесь, а не в assembly: сигналы подключаются раньше
     thumbBar=new PageThumbnailBar(this);
+
+    // Стартовые состояние подвала — сохраненные: положение номеров
+    // и сам факт их показа
+    onAlignChanged(alignCombo->currentIndex());
+    onFootersToggled(footersCheckBox->isChecked());
 }
 
 void PrintPreview::setupShortcuts()
@@ -138,6 +266,11 @@ void PrintPreview::setupSignals()
     connect(buttonPageSetup, &QToolButton::clicked, this, &PrintPreview::pageSetup);
     connect(buttonZoomIn, &QToolButton::clicked, view, &PreviewView::zoomIn);
     connect(buttonZoomReset, &QToolButton::clicked, view, &PreviewView::zoomReset);
+    connect(buttonZoomFit, &QToolButton::clicked, view, &PreviewView::zoomFit);
+    connect(alignCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &PrintPreview::onAlignChanged);
+    connect(footersCheckBox, &QCheckBox::toggled,
+            this, &PrintPreview::onFootersToggled);
     connect(buttonZoomOut, &QToolButton::clicked, view, &PreviewView::zoomOut);
     connect(buttonClose, &QToolButton::clicked, this, &PrintPreview::close);
 
@@ -163,7 +296,10 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonPageSetup);
     toolsbox->addWidget(buttonZoomIn);
     toolsbox->addWidget(buttonZoomReset);
+    toolsbox->addWidget(buttonZoomFit);
     toolsbox->addWidget(buttonZoomOut);
+    toolsbox->addWidget(alignCombo);
+    toolsbox->addWidget(footersCheckBox);
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();
 
@@ -194,8 +330,9 @@ void PrintPreview::assembly()
 void PrintPreview::print()
 {
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
+    fixStockDialogCombos(dlg);
     if (dlg->exec() == QDialog::Accepted) {
-        doc->print(&printer);
+        printDocument(printer, doc);
     }
     delete dlg;
 }
@@ -203,11 +340,35 @@ void PrintPreview::print()
 void PrintPreview::pageSetup()
 {
     QPageSetupDialog dlg(&printer, this);
+    fixStockDialogCombos(&dlg);
     if (dlg.exec() == QDialog::Accepted) {
         setupPrintDoc(); // setup();
         view->updateLayout();
         thumbBar->rebuild(doc);
     }
+}
+
+
+void PrintPreview::onAlignChanged(int index)
+{
+    const int mode=alignCombo->itemData(index).toInt();
+
+    Qt::Alignment footerAlign=Qt::AlignHCenter;
+
+    if(mode==0)
+        footerAlign=Qt::AlignLeft;
+    else if(mode==2)
+        footerAlign=Qt::AlignRight;
+
+    view->setFooterAlignment(footerAlign);
+    AppContext::instance().appConfig()->uiSection()->set_printFooterAlign(mode);
+}
+
+
+void PrintPreview::onFootersToggled(bool checked)
+{
+    view->setFooterEnabled(checked);
+    AppContext::instance().appConfig()->uiSection()->set_printFooterEnabled(checked);
 }
 
 // #include "PrintPreview.moc"

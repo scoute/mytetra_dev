@@ -265,6 +265,26 @@ void AppConfigStorage::set_attachNameMode(int mode)
 }
 
 
+// Режим ссылок на папки. Unversioned-ключ как attachNameMode:
+// отсутствующий ключ - абсолютные пути как раньше, миграция не нужна
+int AppConfigStorage::get_attachLinkMode(void)
+{
+    if(m_conf->contains("attachLinkMode"))
+        return m_conf->value("attachLinkMode", AppConfig::AttachLinkAbsolute).toInt();
+
+    return AppConfig::AttachLinkAbsolute;
+}
+
+
+void AppConfigStorage::set_attachLinkMode(int mode)
+{
+    if(mode<AppConfig::AttachLinkAbsolute || mode>AppConfig::AttachLinkRelative)
+        mode=AppConfig::AttachLinkAbsolute;
+
+    m_conf->setValue("attachLinkMode", mode);
+}
+
+
 // Режим имен каталогов записей на диске. Unversioned-ключ как attachNameMode:
 // отсутствующий ключ - системные имена как в обычной MyTetra
 int AppConfigStorage::get_recordDirNameMode(void)

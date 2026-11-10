@@ -56,6 +56,19 @@ public:
   // нет ни под одним именем: пакетные операции такой аттач
   // пропускают с предупреждением вместо падения (см. 509)
   QString getExistingInnerFileFullName(void) const;
+
+  // Ссылка на папку в хранимый вид: в абсолютном режиме как есть,
+  // в относительном — от каталога записи. Чистая файловая логика
+  // без контекста, режим передается числом (см. AttachLinkMode)
+  static QString makeStoredLink(const QString &recordDir,
+                                const QString &absolutePath,
+                                int linkMode);
+
+  // Хранимая ссылка в абсолютный путь для открытия: абсолютная
+  // как есть, относительная — от каталога записи. Пустой recordDir
+  // (lite-объект без записи) — как есть
+  static QString resolveStoredLink(const QString &recordDir,
+                                   const QString &storedLink);
   QString getInnerFileName() const;
   QString getExistingInnerFileName() const;
   QString getFullInnerFileName() const;

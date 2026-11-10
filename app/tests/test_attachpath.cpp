@@ -22,6 +22,11 @@ private slots:
     void firstWins(void);
     void missingIsEmpty(void);
 
+    void storedLinkAbsoluteMode(void);
+    void storedLinkRelativeMode(void);
+    void storedLinkDotDot(void);
+    void resolveStoredLink(void);
+
 private:
 
     QTemporaryDir m_tmp;
@@ -79,6 +84,57 @@ void TestAttachPath::missingIsEmpty(void)
                                       QStringLiteral("no-such-id"),
                                       QStringLiteral("no-such.bin")).isEmpty(),
              "missing file must give empty path");
+}
+
+void TestAttachPath::storedLinkAbsoluteMode(void)
+{
+    // Абсолютный режим (AttachLinkAbsolute=0): как было, так и хранится
+    const QString target=m_dir+QStringLiteral("/docs");
+    QCOMPARE(Attach::makeStoredLink(m_dir+QStringLiteral("/note1"), target, 0),
+             target);
+}
+
+void TestAttachPath::storedLinkRelativeMode(void)
+{
+    // Относительный режим (AttachLinkRelative=1): папка внутри
+    // каталога записи — короткое имя
+    QCOMPARE(Attach::makeStoredLink(m_dir+QStringLiteral("/note1"),
+                                    m_dir+QStringLiteral("/note1/docs"), 1),
+             QStringLiteral("docs"));
+}
+
+void TestAttachPath::storedLinkDotDot(void)
+{
+    // Папка снаружи: относительный путь с .., все равно чинится
+    // от каталога записи
+    QCOMPARE(Attach::makeStoredLink(m_dir+QStringLiteral("/note1"),
+                                    m_dir+QStringLiteral("/shared/docs"), 1),
+             QStringLiteral("../shared/docs"));
+}
+
+void TestAttachPath::resolveStoredLink(void)
+{
+    // Абсолютный хранимый — как есть
+    const QString target=m_dir+QStringLiteral("/docs");
+    QCOMPARE(Attach::resolveStoredLink(m_dir+QStringLiteral("/note1"), target),
+             target);
+
+    // Относительный — от каталога записи
+    QCOMPARE(Attach::resolveStoredLink(m_dir+QStringLiteral("/note1"),
+                                       QStringLiteral("docs")),
+             m_dir+QStringLiteral("/note1/docs"));
+
+    // С точками — чистится
+    QCOMPARE(Attach::resolveStoredLink(m_dir+QStringLiteral("/note1"),
+                                       QStringLiteral("../shared/docs")),
+             m_dir+QStringLiteral("/shared/docs"));
+
+    // Пустые входы — пустой выход, без падений
+    QVERIFY2(Attach::resolveStoredLink(m_dir+QStringLiteral("/note1"),
+                                       QString()).isEmpty(),
+             "empty stored link must stay empty");
+    QCOMPARE(Attach::resolveStoredLink(QString(), QStringLiteral("docs")),
+             QStringLiteral("docs"));
 }
 
 QTEST_APPLESS_MAIN(TestAttachPath)

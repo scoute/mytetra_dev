@@ -53,6 +53,10 @@ public:
   QString getAbsoluteInnerFileName(int row);
   QString getAbsoluteInnerFileNameById(QString id);
 
+  // Полный путь каталога записи-владельца. Пусто для lite-таблицы
+  // без записи: относительные линки тогда не пересчитать
+  QString getRecordDirName(void) const;
+
   qint64 getFileSize(int row);
 
   bool isEmpty() const;

@@ -39,8 +39,6 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
                    Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint |
                    Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 
-    printer.setFullPage(false); // Поля из Page Setup работают:
-                                // pageRect уже за их вычетом
     doc = document->clone();
 
     // Предпросмотр как на бумаге: маркеры разрывов чистятся,
@@ -65,17 +63,22 @@ PrintPreview::~PrintPreview()
 
 void PrintPreview::setupPrintDoc()
 {
-    // Размер страницы — печатная область принтера: pageRect уже
-    // за вычетом полей из Page Setup, fullPage отключен.
-    // Раньше стоял setFullPage(true) + глухой отступ 2 см в рамке
-    // текста: крутилки полей в Page Setup ни на что не влияли
-    QSizeF page = printer.pageRect().size();
-    page.setWidth(page.width() * view->logicalDpiX() / printer.logicalDpiX());
-    page.setHeight(page.height() * view->logicalDpiY() / printer.logicalDpiY());
+    prepareDocument(printer, doc, view->logicalDpiX(), view->logicalDpiY());
+}
 
-    // Отступ рамки текста убран: поля задает сам размер страницы.
-    // Асимметрия не нужна: pageRect уже несет левые/правые/верхние/нижние
-    QTextFrameFormat fmt = doc->rootFrame()->frameFormat();
+
+// Общий конвейер подготовки документа для превью, прямой печати
+// и экспорта: один размер страницы, один шрифт, без номеров страниц
+void PrintPreview::prepareDocument(QPrinter &printer, QTextDocument *doc, qreal refDpiX, qreal refDpiY)
+{
+    printer.setFullPage(false);
+
+    const QSizeF printablePx=printer.pageLayout().paintRectPixels(printer.resolution()).size();
+
+    QSizeF page(printablePx.width()*refDpiX/printer.logicalDpiX(),
+                printablePx.height()*refDpiY/printer.logicalDpiY());
+
+    QTextFrameFormat fmt=doc->rootFrame()->frameFormat();
     fmt.setMargin(0);
     doc->rootFrame()->setFrameFormat(fmt);
 

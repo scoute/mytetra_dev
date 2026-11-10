@@ -1328,17 +1328,19 @@ void MainWindow::filePrint(void)
 {
 #ifndef QT_NO_PRINTER
     QPrinter printer(QPrinter::HighResolution);
-    printer.setFullPage(true);
-
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
     dlg->setWindowTitle(tr("Print Document"));
 
     if (dlg->exec() == QDialog::Accepted)
     {
         // Печать по копии: маркеры разрывов чистятся (на бумаге только
-        // разрыв), живой документ не трогается
+        // разрыв), живой документ не трогается. Раскладка — тем же
+        // конвейером что превью (PrintPreview::prepareDocument):
+        // поля из диалога, без номеров страниц
         QScopedPointer<QTextDocument> printDoc(editorScreen->getTextareaDocument()->clone());
         TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
+        PrintPreview::prepareDocument(printer, printDoc.data(),
+                                       printer.logicalDpiX(), printer.logicalDpiY());
         printDoc->print(&printer);
     }
 
@@ -1375,9 +1377,12 @@ void MainWindow::filePrintPdf(void)
         printer.setOutputFormat(QPrinter::PdfFormat);
         printer.setOutputFileName(fileName);
 
-        // Та же чистка маркеров что в filePrint: в PDF только разрывы
+        // Та же чистка маркеров что в filePrint: в PDF только разрывы.
+        // Раскладка — тем же конвейером что превью: без номеров страниц
         QScopedPointer<QTextDocument> printDoc(editorScreen->getTextareaDocument()->clone());
         TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
+        PrintPreview::prepareDocument(printer, printDoc.data(),
+                                       printer.logicalDpiX(), printer.logicalDpiY());
         printDoc->print(&printer);
     }
 #endif

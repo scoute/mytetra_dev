@@ -29,6 +29,15 @@ public slots:
 
   void setupShortcuts(void);
 
+  // Общая подготовка документа к печати и предпросмотру (см. 584):
+  // размер страницы из печатной области принтера (pageRect уже
+  // за вычетом полей Page Setup), рамка в ноль, шрифт к экранному.
+  // Ею же пользуются прямая печать и экспорт: иначе
+  // QTextDocument::print() без явного pageSize пагинирует сам
+  // и добавляет номера страниц в подвал. refDpi — dpi холста:
+  // для превью экран (view), для печати/экспорта сам принтер
+  static void prepareDocument(QPrinter &printer, QTextDocument *doc, qreal refDpiX, qreal refDpiY);
+
 private slots:
     void print();
     void pageSetup();
@@ -42,6 +51,7 @@ private:
     void setupSignals();
     void assembly();
 
+  private:
     QTextDocument *doc;
     PreviewView *view;
     PageThumbnailBar *thumbBar;

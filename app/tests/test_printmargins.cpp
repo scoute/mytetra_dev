@@ -47,6 +47,8 @@ private slots:
 
     void marginsAffectPageSize(void);
 
+    void unifiedHelperSetsPageSize(void);
+
 private:
 
     QTemporaryDir m_tmp;
@@ -122,6 +124,31 @@ void TestPrintMargins::marginsAffectPageSize(void)
 
     // Миниатюры пересобираются под новую раскладку без падений
     preview.thumbBar->rebuild(preview.doc);
+}
+
+void TestPrintMargins::unifiedHelperSetsPageSize(void)
+{
+    // Статик для прямой печати и экспорта: та же раскладка что превью.
+    // Явный pageSize заодно гасит автонумерацию страниц Qt
+    QTextDocument doc;
+    doc.setHtml(QStringLiteral("<p>Unified pipeline</p>"));
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setFullPage(true);
+    printer.setPageSize(QPageSize(QPageSize::A4));
+    printer.setPageMargins(QMarginsF(15, 15, 15, 15), QPageLayout::Millimeter);
+
+    PrintPreview::prepareDocument(printer, &doc,
+                                   printer.logicalDpiX(), printer.logicalDpiY());
+
+    QVERIFY2(!printer.fullPage(), "helper must respect margins");
+
+    const QSizeF printable=printer.pageLayout().paintRectPixels(printer.resolution()).size();
+    QVERIFY2(qFuzzyCompare(doc.pageSize().width(), printable.width()),
+             "unified page width must follow printer");
+    QVERIFY2(qFuzzyCompare(doc.pageSize().height(), printable.height()),
+             "unified page height must follow printer");
+    QCOMPARE(doc.rootFrame()->frameFormat().margin(), 0.0);
 }
 
 QTEST_MAIN(TestPrintMargins)

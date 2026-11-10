@@ -36,6 +36,7 @@ compile_qtest() {
     -I$QT/include/QtCore -I$QT/include/QtWidgets -I$QT/include/QtGui \
     -I$QT/include/QtXml -I$QT/include/QtNetwork -I$QT/include/QtMultimedia \
     -I$QT/include/QtSql -I$QT/include/QtConcurrent -I$QT/include/QtTest \
+    -I$QT/include/QtPrintSupport -I$QT/include/QtSvg \
     -I$APP/../thirdParty/ogg/include -I$APP/../thirdParty/opus/include \
     -I$APP/../thirdParty/monocypher -I$APP/../thirdParty/qcodeeditor/include \
     -c "$APP/tests/$name.cpp" -o "$OUT/$name.o" || return 1

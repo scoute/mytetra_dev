@@ -23,15 +23,6 @@
 #include "libraries/AppContext.h"
 #include "libraries/wyedit/formatters/TypefaceFormatter.h"
 
-static inline int inchesToPixels(float inches, QPaintDevice *device)
-{
-    return qRound(inches * device->logicalDpiY());
-}
-
-static inline qreal mmToInches(double mm)
-{
-    return mm*0.039370147;
-}
 
 PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
     : QWidget(nullptr), printer(QPrinter::HighResolution)
@@ -48,7 +39,8 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
                    Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint |
                    Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 
-    printer.setFullPage(true);
+    printer.setFullPage(false); // Поля из Page Setup работают:
+                                // pageRect уже за их вычетом
     doc = document->clone();
 
     // Предпросмотр как на бумаге: маркеры разрывов чистятся,
@@ -73,15 +65,18 @@ PrintPreview::~PrintPreview()
 
 void PrintPreview::setupPrintDoc()
 {
+    // Размер страницы — печатная область принтера: pageRect уже
+    // за вычетом полей из Page Setup, fullPage отключен.
+    // Раньше стоял setFullPage(true) + глухой отступ 2 см в рамке
+    // текста: крутилки полей в Page Setup ни на что не влияли
     QSizeF page = printer.pageRect().size();
     page.setWidth(page.width() * view->logicalDpiX() / printer.logicalDpiX());
     page.setHeight(page.height() * view->logicalDpiY() / printer.logicalDpiY());
 
-    // Add a nice 2 cm margin
-    // todo: Доработать размер полей согласно настройкам принтера (вызов из pageSetup())
-    const qreal margin = inchesToPixels(mmToInches(20), this);
+    // Отступ рамки текста убран: поля задает сам размер страницы.
+    // Асимметрия не нужна: pageRect уже несет левые/правые/верхние/нижние
     QTextFrameFormat fmt = doc->rootFrame()->frameFormat();
-    fmt.setMargin(margin);
+    fmt.setMargin(0);
     doc->rootFrame()->setFrameFormat(fmt);
 
     doc->setPageSize(page);

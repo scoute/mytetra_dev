@@ -1330,6 +1330,7 @@ void MainWindow::filePrint(void)
     QPrinter printer(QPrinter::HighResolution);
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
     dlg->setWindowTitle(tr("Print Document"));
+    PrintPreview::fixStockDialogCombos(dlg);
 
     if (dlg->exec() == QDialog::Accepted)
     {
@@ -1339,9 +1340,8 @@ void MainWindow::filePrint(void)
         // поля из диалога, без номеров страниц
         QScopedPointer<QTextDocument> printDoc(editorScreen->getTextareaDocument()->clone());
         TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
-        PrintPreview::prepareDocument(printer, printDoc.data(),
-                                       printer.logicalDpiX(), printer.logicalDpiY());
-        printDoc->print(&printer);
+        PrintPreview::prepareDocument(printer, printDoc.data());
+        PrintPreview::printDocument(printer, printDoc.data());
     }
 
     delete dlg;
@@ -1381,9 +1381,8 @@ void MainWindow::filePrintPdf(void)
         // Раскладка — тем же конвейером что превью: без номеров страниц
         QScopedPointer<QTextDocument> printDoc(editorScreen->getTextareaDocument()->clone());
         TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
-        PrintPreview::prepareDocument(printer, printDoc.data(),
-                                       printer.logicalDpiX(), printer.logicalDpiY());
-        printDoc->print(&printer);
+        PrintPreview::prepareDocument(printer, printDoc.data());
+        PrintPreview::printDocument(printer, printDoc.data());
     }
 #endif
 }

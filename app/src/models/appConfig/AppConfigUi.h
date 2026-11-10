@@ -75,6 +75,15 @@ public:
     // Строка фильтра над деревом веток (тумблер в меню Вид)
     bool get_treeFilterVisible(void);
     void set_treeFilterVisible(bool state);
+    // Положение номеров страниц в подвале предпросмотра и печати:
+    // 0 слева, 1 по центру, 2 справа. Намеренно вне версионных таблиц:
+    // отсутствующий ключ покрывается дефолтом (по центру)
+    int get_printFooterAlign(void);
+    void set_printFooterAlign(int mode);
+    // Печатать ли номера страниц вообще (превью и бумага).
+    // Тоже unversioned, дефолт - показывать
+    bool get_printFooterEnabled(void);
+    void set_printFooterEnabled(bool state);
     // Вид панели прикрепленных файлов: "list" или "tiles"
     QString get_attachViewMode(void);
     void set_attachViewMode(QString mode);

@@ -7,6 +7,7 @@
 
 class QTextDocument;
 class QListWidgetItem;
+class QShowEvent;
 
 class PreviewView : public QAbstractScrollArea
 {
@@ -22,6 +23,10 @@ public:
     // на interPageSpacing + i*(interPageSpacing + H*scale),
     // значению скроллбара соответствует контент без начального отступа
     void scrollToPage(int page);
+
+    // Номер страницы в подвале: общая отрисовка для превью и печати
+    // (PrintPreview::printDocument зовет напрямую)
+    static void drawFooterNumber(QPainter *painter, const QSizeF &pageSize, int page, Qt::Alignment alignment);
     int pageOffset(int page) const;
     int pageAtOffset(int y) const;
 
@@ -29,21 +34,34 @@ public slots:
     void zoomIn();
     void zoomOut();
     void zoomReset();
+    void zoomFit();
+
+    // Подвал с номером страницы: вкл/выкл и положение
+    // (слева, по центру, справа). Действует и на превью,
+    // и на печать — номер рисуется одним кодом
+    void setFooterEnabled(bool enable);
+    void setFooterAlignment(Qt::Alignment alignment);
 
 protected:
     virtual void paintEvent(QPaintEvent *e);
     virtual void resizeEvent(QResizeEvent *);
+    virtual void showEvent(QShowEvent *e);
     virtual void mousePressEvent(QMouseEvent *e);
     virtual void mouseMoveEvent(QMouseEvent *e);
     virtual void mouseReleaseEvent(QMouseEvent *e);
 
 private:
     void paintPage(QPainter *painter, int page);
+
     QTextDocument *doc;
     qreal scale;
     int interPageSpacing;
     QPoint mousePressPos;
     QPoint scrollBarValuesOnMousePress;
+
+    bool m_footerEnabled=true;
+    Qt::Alignment m_footerAlign=Qt::AlignHCenter;
+    bool firstShow=true;
 };
 
 

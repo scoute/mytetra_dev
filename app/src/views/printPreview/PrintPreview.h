@@ -9,9 +9,12 @@ class QTextDocument;
 class QVBoxLayout;
 class QHBoxLayout;
 class QToolButton;
+class QDialog;
 
 class PreviewView;
 class PageThumbnailBar;
+class MtComboBox;
+class QCheckBox;
 
 class PrintPreview : public QWidget
 {
@@ -29,18 +32,27 @@ public slots:
 
   void setupShortcuts(void);
 
-  // Общая подготовка документа к печати и предпросмотру (см. 584):
-  // размер страницы из печатной области принтера (pageRect уже
-  // за вычетом полей Page Setup), рамка в ноль, шрифт к экранному.
-  // Ею же пользуются прямая печать и экспорт: иначе
-  // QTextDocument::print() без явного pageSize пагинирует сам
-  // и добавляет номера страниц в подвал. refDpi — dpi холста:
-  // для превью экран (view), для печати/экспорта сам принтер
-  static void prepareDocument(QPrinter &printer, QTextDocument *doc, qreal refDpiX, qreal refDpiY);
+  // Общая подготовка документа к печати и предпросмотру (см. 584-586):
+  // размер страницы и поля — в пунктах (1/72 дюйма): это единицы,
+  // в которых QTextDocument::print() верстает и маппит на принтер.
+  // Пиксели принтера/экрана здесь неверны: layout в device-px дает
+  // микроскопический вывод, layout в экранных px — мелкий шрифт.
+  // Явный pageSize заодно гасит автонумерацию страниц Qt
+  static void prepareDocument(QPrinter &printer, QTextDocument *doc);
+  static void fixStockDialogCombos(QDialog *dialog);
+
+  // Печать постранично вручную вместо QTextDocument::print():
+  // тот без явного pageSize пагинирует сам и добавляет номера,
+  // а с явным — масштабирует непредсказуемо. Здесь раскладка
+  // из prepareDocument, номера — тем же drawFooterNumber что
+  // в превью (настройка печати и положение — из конфига)
+  static void printDocument(QPrinter &printer, QTextDocument *doc);
 
 private slots:
     void print();
     void pageSetup();
+    void onAlignChanged(int index);
+    void onFootersToggled(bool checked);
 
     // Следование подсветки ленты за прокруткой основного вида
     void onMainScrollChanged(int value);
@@ -62,6 +74,9 @@ private:
     QToolButton *buttonZoomIn;
     QToolButton *buttonZoomOut;
     QToolButton *buttonZoomReset;
+    QToolButton *buttonZoomFit;
+    MtComboBox *alignCombo;
+    QCheckBox *footersCheckBox;
     QToolButton *buttonClose;
     
     QVBoxLayout *centralLayout;

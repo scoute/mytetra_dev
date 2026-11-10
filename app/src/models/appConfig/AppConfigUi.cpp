@@ -149,6 +149,34 @@ void AppConfigUi::setEditorScrollBarPosition(int n)
     m_conf->setValue("editorScrollBarPosition", n);
 }
 
+int AppConfigUi::get_printFooterAlign(void)
+{
+    const int align=m_conf->value("printFooterAlign", 1).toInt();
+
+    if(align<0 || align>2)
+        return 1;
+
+    return align;
+}
+
+void AppConfigUi::set_printFooterAlign(int mode)
+{
+    if(mode<0 || mode>2)
+        mode=1;
+
+    m_conf->setValue("printFooterAlign", mode);
+}
+
+bool AppConfigUi::get_printFooterEnabled(void)
+{
+    return m_conf->value("printFooterEnabled", true).toBool();
+}
+
+void AppConfigUi::set_printFooterEnabled(bool state)
+{
+    m_conf->setValue("printFooterEnabled", state);
+}
+
 int AppConfigUi::getUglyQssReplaceHeightForTableView(void)
 {
     return m_conf->value("uglyQssReplaceHeightForTableView", 0).toInt();

@@ -6487,6 +6487,46 @@ MyTetra перечитает дерево для продолжения рабо
         <source>Normal size</source>
         <translation>Обычный размер</translation>
     </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Left</source>
+        <translation>Слева</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Center</source>
+        <translation>По центру</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Right</source>
+        <translation>Справа</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Page number position</source>
+        <translation>Положение номеров страниц</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Page numbers</source>
+        <translation>Номера страниц</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Show page numbers in footer, in preview and in print</source>
+        <translation>Показывать номера страниц в подвале, в предпросмотре и на печати</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Fit</source>
+        <translation>Вписать</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Fit page to window size</source>
+        <translation>Вписать страницу в окно</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

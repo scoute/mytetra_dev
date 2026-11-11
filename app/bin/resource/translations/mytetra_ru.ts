@@ -537,8 +537,8 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Folders attach as links without copying, and as a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every folder. The choice applies to new folder links.</source>
-        <translation>Папки прикрепляются ссылками без копирования, а также кликабельной ссылкой в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой папки. Выбор действует на новые ссылки на папки.</translation>
+        <source>Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every folder. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.</source>
+        <translation>Папки и файлы прикрепляются ссылками без копирования; папки получают еще и кликабельную ссылку в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой папки. Выбор действует на новые ссылки. Конвертируйте ссылки только после расшифровки (база разблокирована), иначе база выйдет из синхрона.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
@@ -559,6 +559,31 @@ This can happen if there is no free space left on the hard disk or it is impossi
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
         <source>Relative to note directory</source>
         <translation>Относительно каталога записи</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Convert folder and file links to the selected form</source>
+        <translation>Конвертировать ссылки на папки и файлы к выбранному виду</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Convert folder and file links</source>
+        <translation>Конвертация ссылок на папки и файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>All folder and file links will be brought to the form "%1". Back up your database directory first. Convert only after decryption (database unlocked): otherwise the database ends up out of sync and some links may get damaged. Continue?</source>
+        <translation>Все ссылки на папки и файлы будут приведены к виду «%1». Сначала сделайте резервную копию каталога базы. Конвертируйте только после расшифровки (база разблокирована): иначе база выйдет из синхрона, а часть ссылок может оказаться повреждена. Продолжить?</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Select relative or absolute path form to convert folder and file links.</source>
+        <translation>Выберите относительный или абсолютный вид пути для конвертации ссылок на папки и файлы.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Converted links: %1.</source>
+        <translation>Сконвертировано ссылок: %1.</translation>
     </message>
 </context>
 <context>
@@ -2042,6 +2067,36 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
         <source>Remove the folder link from note text as well?</source>
         <translation>Убрать ссылку на папку и из текста заметки?</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Folder already attached: %1</source>
+        <translation>Папка уже прикреплена: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>File already attached: %1</source>
+        <translation>Файл уже прикреплен: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Folder already attached</source>
+        <translation>Папка уже прикреплена</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Folder "%1" is already attached as %2.</source>
+        <translation>Папка «%1» уже прикреплена как %2.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Switch to %1</source>
+        <translation>Переключить на %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Keep as %1</source>
+        <translation>Оставить как %1</translation>
     </message>
 </context>
 <context>

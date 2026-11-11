@@ -30,6 +30,7 @@
 #include "libraries/helpers/MessageHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 #include "views/record/MetaEditor.h"
+#include "libraries/wyedit/formatters/ReferenceFormatter.h"
 #include "libraries/AppContext.h"
 #include "models/appConfig/AppConfigStorage.h"
 
@@ -63,6 +64,14 @@ AttachTableController::AttachTableController(QObject *parent, QObject *iMetaEdit
   selectionModel=new QItemSelectionModel(model, this);
   view->setSelectionModel(selectionModel);
   tileView->setSelectionModel(selectionModel);
+}
+
+// Папки и файлы уже прикреплены: дубли обычны при мульти-дропе,
+// вежливого однострочника в статусбаре достаточно вместо модалки
+static void showAttachStatus(const QString &message)
+{
+  if(AppContext::instance().globalParameters()->getStatusBar()!=nullptr)
+    AppContext::instance().globalParameters()->getStatusBar()->showMessage(message, 4000);
 }
 
 AttachTableController::~AttachTableController()
@@ -222,7 +231,10 @@ void AttachTableController::addDroppedFiles(const QStringList &files)
 // Один файл из дропа в текст заметки: добавляет как аттач
 // и отдает внутреннее имя (для href метки) и видимое имя
 // (для текста метки). Добавление идет тем же движком что пикер:
-// копия в базу, сохранение дерева, обновление списка в редакторе
+// копия в базу, сохранение дерева, обновление списка в редакторе.
+// Дубль (тот же исходник уже строкой): новая копия не заводится,
+// отдаются имена существующей строки — вставка меток между заметками
+// на этом построена, href перепишется на живой аттач
 bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
                                                  QString &innerFileName,
                                                  QString &displayFileName)
@@ -255,6 +267,17 @@ bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
 
   if(fileInfo.isSymLink() && !fileInfo.symLinkTarget().isEmpty())
     sourceFileName=fileInfo.symLinkTarget();
+
+  const QString dupId=getAttachTableData()->findFileAttachRowBySource(sourceFileName);
+
+  if(!dupId.isEmpty())
+  {
+    showAttachStatus(tr("File already attached: %1").arg(shortFileName));
+    innerFileName=getAttachTableData()->getAttach(dupId).getExistingInnerFileName();
+    displayFileName=getAttachTableData()->getFileNameById(dupId);
+
+    return !innerFileName.isEmpty();
+  }
 
   if(!addAttach(QStringLiteral("file"), filePath, shortFileName, sourceFileName))
     return false;
@@ -309,30 +332,17 @@ bool AttachTableController::addSingleFolderAsLink(const QString &dirPath,
      linkMode!=AppConfig::AttachLinkRelative)
     return false;
 
-  const QString linkPath=Attach::makeStoredLink(getAttachTableData()->getRecordDirName(),
-                                                dirInfo.absoluteFilePath(),
-                                                linkMode);
+  // Дубли, переключение режима и новая строка — внутри.
+  // Дерево и список в редакторе там же
+  bool addedNew=false;
+  rowId=processFolderLink(dirInfo.absoluteFilePath(), linkMode, &addedNew);
 
-  if(!addAttach(QStringLiteral("link"),
-                linkPath,
-                dirInfo.fileName(),
-                dirInfo.absoluteFilePath()))
+  if(rowId.isEmpty())
     return false;
 
-  saveState();
-  updateAttachListInEditor();
+  displayName=getAttachTableData()->getFileNameById(rowId);
 
-  AttachTableData *attachTableData=getAttachTableData();
-
-  if(attachTableData==NULL || attachTableData->size()==0)
-    return false;
-
-  // Добавленная строка в хвосте: addAttach дописывает в конец
-  const int lastRow=attachTableData->size()-1;
-  rowId=attachTableData->getIdByRow(lastRow);
-  displayName=attachTableData->getFileNameById(rowId);
-
-  return !rowId.isEmpty();
+  return true;
 }
 
 
@@ -398,6 +408,131 @@ int AttachTableController::requestFolderLinkMode(void)
 }
 
 
+// Общая обработка добавляемой папки: поиск дубля по каноническому
+// пути, вопрос переключения режима, добавление новой строки.
+// wantedMode — резолвленный режим (не Ask). Возвращает id строки:
+// новой, существующей (дубль/переключение) или пусто при отказе
+// движка. addedNew=true только если строка создана сейчас
+QString AttachTableController::processFolderLink(const QString &absolutePath, int wantedMode, bool *addedNew)
+{
+  if(addedNew!=nullptr)
+    *addedNew=false;
+
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(attachTableData==nullptr || absolutePath.isEmpty())
+    return QString();
+
+  if(wantedMode!=AppConfig::AttachLinkAbsolute &&
+     wantedMode!=AppConfig::AttachLinkRelative)
+    return QString();
+
+  // Дубль: та же папка уже строкой-ссылкой в этой заметке.
+  // Папки в других заметках — не дубли, у каждой свой контекст
+  const QString existingId=attachTableData->findLinkRowByPath(absolutePath);
+
+  if(!existingId.isEmpty())
+  {
+    const QString storedLink=attachTableData->getAttach(existingId).getField(QStringLiteral("link"));
+    const int oldMode=QFileInfo(storedLink).isAbsolute()
+      ? AppConfig::AttachLinkAbsolute
+      : AppConfig::AttachLinkRelative;
+
+    // Тот же режим: решать нечего, пропуск с однострочником.
+    // Метку при необходимости восстанавливает вызыватель
+    if(oldMode==wantedMode)
+    {
+      showAttachStatus(tr("Folder already attached: %1").arg(attachTableData->getFileNameById(existingId)));
+      return existingId;
+    }
+
+    // Другой режим: переключить или оставить
+    if(askAndSwitchFolderLink(attachTableData->getFileNameById(existingId),
+                              oldMode,
+                              wantedMode))
+    {
+      const QString newStoredLink=Attach::makeStoredLink(attachTableData->getRecordDirName(),
+                                                         absolutePath,
+                                                         wantedMode);
+
+      Attach switchedAttach=attachTableData->getAttach(existingId);
+      switchedAttach.setField(QStringLiteral("link"), newStoredLink);
+
+      // Отказ движка (цель пропала между вопросом и записью):
+      // строка остается как была
+      if(switchedAttach.getField(QStringLiteral("link"))==newStoredLink)
+      {
+        attachTableData->modifyAttach(existingId, switchedAttach);
+
+        saveState();
+        updateAttachListInEditor();
+      }
+    }
+
+    return existingId;
+  }
+
+  // Новая строка-ссылка
+  const QFileInfo dirInfo(absolutePath);
+
+  const QString linkPath=Attach::makeStoredLink(attachTableData->getRecordDirName(),
+                                                dirInfo.absoluteFilePath(),
+                                                wantedMode);
+
+  if(!addAttach(QStringLiteral("link"),
+                linkPath,
+                dirInfo.fileName(),
+                dirInfo.absoluteFilePath()))
+    return QString();
+
+  saveState();
+  updateAttachListInEditor();
+
+  if(attachTableData->size()==0)
+    return QString();
+
+  // Добавленная строка в хвосте: addAttach дописывает в конец
+  const int lastRow=attachTableData->size()-1;
+  const QString newRowId=attachTableData->getIdByRow(lastRow);
+
+  if(newRowId.isEmpty())
+    return QString();
+
+  if(addedNew!=nullptr)
+    *addedNew=true;
+
+  return newRowId;
+}
+
+
+// Папка уже прикреплена другим режимом: спросить переключить
+// на новый или оставить. Возвращает true если переключили.
+// Отмена и "оставить" — false, строка не трогается
+bool AttachTableController::askAndSwitchFolderLink(const QString &folderName,
+                                                   int oldMode,
+                                                   int newMode)
+{
+  const QString oldName=(oldMode==AppConfig::AttachLinkAbsolute)
+    ? tr("Absolute link") : tr("Relative link");
+  const QString newName=(newMode==AppConfig::AttachLinkAbsolute)
+    ? tr("Absolute link") : tr("Relative link");
+
+  QMessageBox msgBox(currentView());
+  msgBox.setWindowTitle(tr("Folder already attached"));
+  msgBox.setText(tr("Folder \"%1\" is already attached as %2.").arg(folderName).arg(oldName));
+
+  QPushButton *switchButton=msgBox.addButton(tr("Switch to %1").arg(newName),
+                                             QMessageBox::AcceptRole);
+  QPushButton *keepButton=msgBox.addButton(tr("Keep as %1").arg(oldName),
+                                           QMessageBox::RejectRole);
+  msgBox.addButton(QMessageBox::Cancel);
+  msgBox.setDefaultButton(keepButton);
+  msgBox.exec();
+
+  return msgBox.clickedButton()==switchButton;
+}
+
+
 // Открытая в редакторе заметка — та же что таблица аттачей.
 // Метки в текст трогаются только при совпадении каталогов,
 // иначе метка ушла бы в чужой текст
@@ -413,6 +548,8 @@ bool AttachTableController::isMetaEditorSameNote(void)
 
   return !tableDir.isEmpty() && tableDir==editorDir;
 }
+
+
 
 
 // Удаление аттача по id строки для движка меток папок:
@@ -491,7 +628,9 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
     // В поле link кладется абсолютный путь или относительный
     // каталога записи (настройка attachLinkMode или диалог):
     // относительные живут при переезде базы. В source для истории —
-    // всегда исходный. Плюс кликабельная метка в текст заметки
+    // всегда исходный. Плюс кликабельная метка в текст заметки.
+    // Дубли (та же папка уже строкой) разруливает processFolderLink:
+    // пропуск, переключение режима или новая строка
     if(currFileInfo.isDir())
     {
         // Диалог отменен: папки пропускаются
@@ -499,24 +638,22 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
            dirMode!=AppConfig::AttachLinkRelative)
           continue;
 
-        const QString linkPath=Attach::makeStoredLink(getAttachTableData()->getRecordDirName(),
-                                                      currFileInfo.absoluteFilePath(),
-                                                      dirMode);
+        bool addedNew=false;
+        const QString rowId=processFolderLink(currFileInfo.absoluteFilePath(),
+                                              dirMode,
+                                              &addedNew);
 
-        if(addAttach(QStringLiteral("link"),
-                     linkPath,
-                     currFileInfo.fileName(),
-                     currFileInfo.absoluteFilePath()))
-        {
-            sucessLoadCount++;
+        // Отказ движка: папки нет
+        if(rowId.isEmpty())
+          continue;
 
-            // Добавленная строка в хвосте: addAttach дописывает в конец
-            const int lastRow=getAttachTableData()->size()-1;
-            const QString newRowId=getAttachTableData()->getIdByRow(lastRow);
+        sucessLoadCount++;
 
-            if(!newRowId.isEmpty())
-              addedFolders.append(qMakePair(newRowId, currFileInfo.fileName()));
-        }
+        // Новая или восстановленная строка: метка в текст, если ее
+        // там еще нет. Дубли с живой меткой повторно не вставляются
+        if(isMetaEditorSameNote() &&
+           !metaEditor->hasBadgeHref(ReferenceFormatter::folderHrefFromRowId(rowId)))
+          addedFolders.append(qMakePair(rowId, getAttachTableData()->getFileNameById(rowId)));
 
         continue;
     }
@@ -532,6 +669,18 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
 
     if(currFileInfo.isSymLink() && !currFileInfo.symLinkTarget().isEmpty())
       currSourceFileName=currFileInfo.symLinkTarget();
+
+    // Дубль файла: тот же исходник уже строкой в этой заметке.
+    // Копии — снапшоты, но повторный выбор того же файла почти всегда
+    // случаен: пропуск с однострочником вместо второй копии.
+    // Файлы в других заметках — не дубли, у каждой свой контекст
+    const QString dupFileId=getAttachTableData()->findFileAttachRowBySource(currSourceFileName);
+
+    if(!dupFileId.isEmpty())
+    {
+      showAttachStatus(tr("File already attached: %1").arg(currShortFileName));
+      continue;
+    }
 
     // Добавляется файл аттача
     if( addAttach(attachType, currFullFileName, currShortFileName, currSourceFileName) )
@@ -905,7 +1054,7 @@ void AttachTableController::onDeleteAttach(void)
   if(!deletedLinkIds.isEmpty() && isMetaEditorSameNote())
     foreach(const QString &linkId, deletedLinkIds)
     {
-      const QString href=QStringLiteral("attachdir://")+linkId;
+      const QString href=ReferenceFormatter::folderHrefFromRowId(linkId);
 
       if(!metaEditor->hasBadgeHref(href))
         continue;

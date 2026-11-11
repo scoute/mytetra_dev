@@ -1328,6 +1328,7 @@ void MainWindow::filePrint(void)
 {
 #ifndef QT_NO_PRINTER
     QPrinter printer(QPrinter::HighResolution);
+    PrintPreview::applyDefaultMargins(printer);
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
     dlg->setWindowTitle(tr("Print Document"));
     PrintPreview::fixStockDialogCombos(dlg);
@@ -1376,6 +1377,7 @@ void MainWindow::filePrintPdf(void)
         QPrinter printer(QPrinter::HighResolution);
         printer.setOutputFormat(QPrinter::PdfFormat);
         printer.setOutputFileName(fileName);
+        PrintPreview::applyDefaultMargins(printer);
 
         // Та же чистка маркеров что в filePrint: в PDF только разрывы.
         // Раскладка — тем же конвейером что превью: без номеров страниц

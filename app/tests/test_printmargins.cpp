@@ -61,6 +61,7 @@ private slots:
     void printDocumentSmokeTest(void);
 
     void footerFontStaysSmallOnPrinter(void);
+    void defaultMargins(void);
 
 private:
 
@@ -342,6 +343,27 @@ void TestPrintMargins::footerFontStaysSmallOnPrinter(void)
 
     QVERIFY2(h > 0, "footer font metrics must resolve on printer");
     QVERIFY2(h <= 24, "footer font must stay small on high-dpi printer device");
+}
+
+void TestPrintMargins::defaultMargins(void)
+{
+    // Стандартные поля MyTetra: слева 20 мм (подшивка),
+    // остальные по 5 мм. Ставятся хелпером при создании принтера,
+    // конвейер prepareDocument их только читает
+    QPrinter printer(QPrinter::HighResolution);
+    PrintPreview::applyDefaultMargins(printer);
+
+    qreal left = 0;
+    qreal top = 0;
+    qreal right = 0;
+    qreal bottom = 0;
+    printer.getPageMargins(&left, &top, &right, &bottom,
+                           QPrinter::Millimeter);
+
+    QCOMPARE(left, 20.0);
+    QCOMPARE(top, 5.0);
+    QCOMPARE(right, 5.0);
+    QCOMPARE(bottom, 5.0);
 }
 
 QTEST_MAIN(TestPrintMargins)

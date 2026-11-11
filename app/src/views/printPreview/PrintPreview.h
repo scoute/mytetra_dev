@@ -41,6 +41,12 @@ public slots:
   static void prepareDocument(QPrinter &printer, QTextDocument *doc);
   static void fixStockDialogCombos(QDialog *dialog);
 
+  // Стандартные поля MyTetra: слева 20 мм (подшивка), сверху/снизу/
+  // справа по 5 мм. Ставятся при создании принтера (превью, прямая
+  // печать, экспорт), а не в prepareDocument: диалог Page Setup меняет
+  // поля живого принтера, конвейер их только читает
+  static void applyDefaultMargins(QPrinter &printer);
+
   // Печать постранично вручную вместо QTextDocument::print():
   // тот без явного pageSize пагинирует сам и добавляет номера,
   // а с явным — масштабирует непредсказуемо. Здесь раскладка

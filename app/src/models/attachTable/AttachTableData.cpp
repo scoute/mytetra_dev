@@ -196,6 +196,59 @@ void AttachTableData::modifyAttach(QString id, Attach iAttach)
 }
 
 
+// Строка-ссылка на тот же объект (дубль линка). Только type=="link":
+// файлы лежат копиями в базе и дублями не считаются, а линк может
+// указывать и на папку, и на файл. Хранимый путь резолвится
+// от каталога записи, сравнение — Attach::sameFsTarget
+QString AttachTableData::findLinkRowByPath(const QString &absolutePath) const
+{
+  if(absolutePath.isEmpty())
+    return QString();
+
+  const QString recordDir=getRecordDirName();
+
+  for(int row=0; row<attachTable.size(); ++row)
+  {
+    if(attachTable.at(row).getField(QStringLiteral("type"))!=QStringLiteral("link"))
+      continue;
+
+    const QString storedLink=attachTable.at(row).getField(QStringLiteral("link"));
+    const QString candidateAbs=Attach::resolveStoredLink(recordDir, storedLink);
+
+    if(Attach::sameFsTarget(candidateAbs, absolutePath))
+      return attachTable.at(row).getField(QStringLiteral("id"));
+  }
+
+  return QString();
+}
+
+
+// Строка файла с тем же исходным путем (дубль файла). Только
+// type=="file" с непустым полем source: снапшоты копий не сравниваются,
+// пустой source (наследие старых версий) дублем не считается
+QString AttachTableData::findFileAttachRowBySource(const QString &sourcePath) const
+{
+  if(sourcePath.isEmpty())
+    return QString();
+
+  for(int row=0; row<attachTable.size(); ++row)
+  {
+    if(attachTable.at(row).getField(QStringLiteral("type"))!=QStringLiteral("file"))
+      continue;
+
+    const QString storedSource=attachTable.at(row).getField(QStringLiteral("source"));
+
+    if(storedSource.isEmpty())
+      continue;
+
+    if(Attach::sameFsTarget(storedSource, sourcePath))
+      return attachTable.at(row).getField(QStringLiteral("id"));
+  }
+
+  return QString();
+}
+
+
 // Удаление аттача
 void AttachTableData::deleteAttach(QString id)
 {

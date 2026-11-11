@@ -20,6 +20,7 @@
 #include <QDialog>
 #include <QComboBox>
 #include <QCheckBox>
+#include <QFrame>
 #include <QStyledItemDelegate>
 #include "libraries/MtComboBox.h"
 
@@ -70,6 +71,10 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
     doc->setUseDesignMetrics(true);
     doc->documentLayout()->setPaintDevice(view->viewport());
 
+    // Стандартные поля до раскладки: Page Setup правит их уже
+    // на живом принтере, prepareDocument только читает
+    applyDefaultMargins(printer);
+
     setupPrintDoc();
     setupUI();
     setupShortcuts();
@@ -85,6 +90,15 @@ PrintPreview::~PrintPreview()
 void PrintPreview::setupPrintDoc()
 {
     prepareDocument(printer, doc);
+}
+
+
+// Стандартные поля MyTetra: слева 20 мм (подшивка), остальные по 5 мм.
+// Миллиметры как в диалоге Page Setup, порядок QMarginsF —
+// слева, сверху, справа, снизу
+void PrintPreview::applyDefaultMargins(QPrinter &printer)
+{
+    printer.setPageMargins(QMarginsF(20.0, 5.0, 5.0, 5.0), QPageLayout::Millimeter);
 }
 
 
@@ -300,6 +314,14 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonZoomOut);
     toolsbox->addWidget(footersCheckBox);
     toolsbox->addWidget(alignCombo);
+
+    // Отбивка закрывающей кнопки: визуальное отделение
+    // безопасного выхода от рабочих инструментов
+    QFrame *closeSeparator=new QFrame(this);
+    closeSeparator->setFrameShape(QFrame::VLine);
+    closeSeparator->setFrameShadow(QFrame::Sunken);
+    toolsbox->addWidget(closeSeparator);
+
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();
 

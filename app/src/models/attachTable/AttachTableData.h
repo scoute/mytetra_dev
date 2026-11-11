@@ -53,6 +53,15 @@ public:
   QString getAbsoluteInnerFileName(int row);
   QString getAbsoluteInnerFileNameById(QString id);
 
+  // Строка-ссылка на тот же объект (дубль линка). Только type=="link",
+  // причем линк может указывать и на папку, и на файл (пикер Add link).
+  // Хранимый путь резолвится от каталога записи. Пусто если нет
+  QString findLinkRowByPath(const QString &absolutePath) const;
+
+  // Строка файла с тем же исходным путем (дубль файла). Только
+  // type=="file", поле source. Пусто если нет
+  QString findFileAttachRowBySource(const QString &sourcePath) const;
+
   // Полный путь каталога записи-владельца. Пусто для lite-таблицы
   // без записи: относительные линки тогда не пересчитать
   QString getRecordDirName(void) const;

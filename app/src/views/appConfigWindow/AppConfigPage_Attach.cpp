@@ -8,6 +8,7 @@
 #include "libraries/MtComboBox.h"
 #include <QFile>
 #include <QDir>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -105,10 +106,10 @@ void AppConfigPage_Attach::setupUi(void)
     recordDirsWarning->setWordWrap(true);
     recordDirsWarning->setText( tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names.") );
 
-    // Пояснение про ссылки на папки
+    // Пояснение про ссылки на папки и файлы
     folderLinksInfo=new QLabel(this);
     folderLinksInfo->setWordWrap(true);
-    folderLinksInfo->setText( tr("Folders attach as links without copying, and as a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every folder. The choice applies to new folder links.") );
+    folderLinksInfo->setText( tr("Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every folder. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.") );
 
     // Выбор вида пути: спрашивать, абсолютный или относительный каталога записи
     attachLinkModeLabel=new QLabel(this);
@@ -119,6 +120,10 @@ void AppConfigPage_Attach::setupUi(void)
     attachLinkModeCombo->addItem( tr("Relative to note directory"), AppConfig::AttachLinkRelative );
     attachLinkModeCombo->addItem( tr("Absolute path"), AppConfig::AttachLinkAbsolute );
     attachLinkModeCombo->setCurrentIndex( attachLinkModeCombo->findData(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode()) );
+
+    // Конвертер хранимых путей в выбранный вид
+    convertFolderLinksButton=new QPushButton(this);
+    convertFolderLinksButton->setText( tr("Convert folder and file links to the selected form") );
 }
 
 void AppConfigPage_Attach::setupSignals(void)
@@ -127,6 +132,7 @@ void AppConfigPage_Attach::setupSignals(void)
     connect( buttonHighlightColor, &QToolButton::clicked, this, &AppConfigPage_Attach::onClickedHighlightColor);
     connect( convertAttachesButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertAttaches);
     connect( convertRecordDirsButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertRecordDirs);
+    connect( convertFolderLinksButton, &QPushButton::clicked, this, &AppConfigPage_Attach::onClickedConvertFolderLinks);
 }
 
 void AppConfigPage_Attach::assembly(void)
@@ -178,6 +184,7 @@ void AppConfigPage_Attach::assembly(void)
     QVBoxLayout *folderLinksBoxLayout=new QVBoxLayout;
     folderLinksBoxLayout->addWidget( folderLinksInfo );
     folderLinksBoxLayout->addLayout( linkModeLayout );
+    folderLinksBoxLayout->addWidget( convertFolderLinksButton );
 
     folderLinksBox=new QGroupBox(this);
     folderLinksBox->setTitle( tr("Folder links") );
@@ -257,6 +264,7 @@ void AppConfigPage_Attach::retranslateUi(void)
   attachLinkModeCombo->setItemText(0, tr("Always ask"));
   attachLinkModeCombo->setItemText(1, tr("Relative to note directory"));
   attachLinkModeCombo->setItemText(2, tr("Absolute path"));
+  convertFolderLinksButton->setText(tr("Convert folder and file links to the selected form"));
 }
 
 // Метод должен возвращать уровень сложности сделанных изменений
@@ -400,6 +408,84 @@ int AppConfigPage_Attach::convertAllAttachesToMode(int targetMode, int &notFound
     return renamedCount;
 }
 
+// Приведение всех ссылок на папки и файлы к заданному виду пути.
+// Линком может быть и каталог, и файл (пикер Add link).
+// Резолв в абсолютный, затем в целевой вид. Протухшие (цели нет
+// на диске) пропускаются: setField отказался бы с модалкой на каждой
+// строке. Шифрованные при закрытой базе — по пустому видимому имени.
+// Возвращает число сконвертированных строк, -1 если дерево недоступно
+int AppConfigPage_Attach::convertAllFolderLinksToMode(int targetMode, int &notFoundCount, int &encryptedCount)
+{
+    notFoundCount=0;
+    encryptedCount=0;
+
+    TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return -1;
+
+    KnowTreeModel *model=treeScreen->knowTreeModel;
+
+    QSharedPointer< QSet<QString> > idList=model->getAllRecordsIdList();
+
+    int convertedCount=0;
+
+    foreach(QString recordId, *idList)
+    {
+        Record *record=model->getRecord(recordId);
+        if(record==nullptr)
+            continue;
+
+        AttachTableData *attachTable=record->getAttachTablePointer();
+        if(attachTable==nullptr)
+            continue;
+
+        const QString recordDir=attachTable->getRecordDirName();
+
+        for(int row=0; row<attachTable->size(); ++row)
+        {
+            QString attachId=attachTable->getIdByRow(row);
+            Attach attach=attachTable->getAttach(attachId);
+
+            if(attach.getField("type")!="link")
+                continue;
+
+            // Пустое видимое имя означает зашифрованную при закрытой базе
+            // запись: конвертировать нельзя, считается отдельно
+            if(attach.getField("fileName").isEmpty())
+            {
+                ++encryptedCount;
+                continue;
+            }
+
+            const QString absolutePath=Attach::resolveStoredLink(recordDir,
+                                                                 attach.getField("link"));
+
+            // Цели нет на диске: запись-сирота, считается отдельно
+            if(!QFileInfo(absolutePath).exists())
+            {
+                ++notFoundCount;
+                continue;
+            }
+
+            const QString newStoredLink=Attach::makeStoredLink(recordDir,
+                                                               absolutePath,
+                                                               targetMode);
+
+            // Уже в заданном виде: конвертировать нечего
+            if(newStoredLink==attach.getField("link"))
+                continue;
+
+            attach.setField("link", newStoredLink);
+            attachTable->modifyAttach(attachId, attach);
+
+            ++convertedCount;
+        }
+    }
+
+    return convertedCount;
+}
+
+
 void AppConfigPage_Attach::onClickedConvertAttaches()
 {
     int targetMode=attachNameModeCombo->currentData().toInt();
@@ -520,4 +606,67 @@ void AppConfigPage_Attach::onClickedConvertRecordDirs()
         QMessageBox::information(this, tr("Convert record directories"), resultText);
     else
         QMessageBox::warning(this, tr("Convert record directories"), resultText);
+}
+
+
+void AppConfigPage_Attach::onClickedConvertFolderLinks()
+{
+    int targetMode=attachLinkModeCombo->currentData().toInt();
+    QString modeName=attachLinkModeCombo->currentText();
+
+    // "Всегда спрашивать" — не хранимый вид: конвертировать не во что
+    if(targetMode==AppConfig::AttachLinkAsk)
+    {
+        QMessageBox::information(this,
+                                 tr("Convert folder and file links"),
+                                 tr("Select relative or absolute path form to convert folder and file links."));
+        return;
+    }
+
+    // Подтверждение: действие переписывает ссылки во всей базе.
+    // Конвертировать только после расшифровки (база разблокирована):
+    // иначе зашифрованные строки останутся в старом виде, база выйдет
+    // из синхрона, а часть ссылок может оказаться повреждена
+    QMessageBox::StandardButton answer=QMessageBox::question(
+        this,
+        tr("Convert folder and file links"),
+        tr("All folder and file links will be brought to the form \"%1\". Back up your database directory first. Convert only after decryption (database unlocked): otherwise the database ends up out of sync and some links may get damaged. Continue?").arg(modeName),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+
+    if(answer!=QMessageBox::Yes)
+        return;
+
+    int notFoundCount=0;
+    int encryptedCount=0;
+    int convertedCount=convertAllFolderLinksToMode(targetMode, notFoundCount, encryptedCount);
+
+    if(convertedCount<0)
+    {
+        QMessageBox::warning(this,
+                             tr("Convert folder and file links"),
+                             tr("Database tree is unavailable."));
+        return;
+    }
+
+    // Режим и дерево сохраняются: XML поменялся, новые папки сразу
+    // сохраняются в заданном виде
+    if(convertedCount>0)
+    {
+        TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
+
+        if(treeScreen!=nullptr)
+            treeScreen->saveKnowTree();
+
+        AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(targetMode);
+        AppContext::instance().appConfig()->sync();
+    }
+
+    QString resultText=tr("Converted links: %1.").arg(convertedCount);
+    if(notFoundCount>0)
+        resultText+=QString(" ")+tr("Not found on disk: %1.").arg(notFoundCount);
+    if(encryptedCount>0)
+        resultText+=QString(" ")+tr("Skipped (encrypted record, unlock the database first): %1.").arg(encryptedCount);
+
+    QMessageBox::information(this, tr("Convert folder and file links"), resultText);
 }

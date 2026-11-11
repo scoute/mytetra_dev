@@ -68,6 +68,10 @@ public slots:
     static bool isFolderLinkHref(const QString &href);
     static QString folderRowIdFromHref(const QString &href);
 
+    // Канал метки папки по id строки. Единая сборка href,
+    // чтобы контроллер и удаление не хардкодили префикс врозь
+    static QString folderHrefFromRowId(const QString &rowId);
+
     // Имя MIME для переноса меток аттачей между заметками.
     // Пары href-абсолютный путь, как голосовой MIME у баблов
     static const char *attachMimeTypeName(void);

@@ -1335,6 +1335,9 @@ void MainWindow::filePrint(void)
 
     if (dlg->exec() == QDialog::Accepted)
     {
+        // Диалог мог перестроить layout из DEVMODE: возвращаем
+        // fullPage и наши поля до раскладки и печати
+        PrintPreview::reassertFullPage(printer);
         // Печать по копии: маркеры разрывов чистятся (на бумаге только
         // разрыв), живой документ не трогается. Раскладка — тем же
         // конвейером что превью (PrintPreview::prepareDocument):

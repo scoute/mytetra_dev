@@ -62,6 +62,7 @@ private slots:
 
     void footerFontStaysSmallOnPrinter(void);
     void defaultMargins(void);
+    void pdfExportPrinterSetup(void);
 
 private:
 
@@ -371,6 +372,35 @@ void TestPrintMargins::defaultMargins(void)
     QCOMPARE(top, 5.0);
     QCOMPARE(right, 5.0);
     QCOMPARE(bottom, 5.0);
+}
+
+void TestPrintMargins::pdfExportPrinterSetup(void)
+{
+    // Кнопка экспорта из превью: принтер PDF наследует раскладку
+    // текущего принтера (бумага, поля, fullPage), а не дефолты.
+    // Хелпер без диалога, проверяется напрямую
+    QPrinter srcPrinter(QPrinter::HighResolution);
+    srcPrinter.setPageMargins(QMarginsF(10.0, 11.0, 12.0, 13.0), QPageLayout::Millimeter);
+    srcPrinter.setFullPage(true);
+
+    QPrinter pdfPrinter(QPrinter::HighResolution);
+    PrintPreview::setupPdfExportPrinter(pdfPrinter, srcPrinter,
+                                       QStringLiteral("/tmp/opencode/export.pdf"));
+
+    QCOMPARE(pdfPrinter.outputFormat(), QPrinter::PdfFormat);
+    QCOMPARE(pdfPrinter.outputFileName(), QStringLiteral("/tmp/opencode/export.pdf"));
+    QCOMPARE(pdfPrinter.fullPage(), srcPrinter.fullPage());
+    QCOMPARE(pdfPrinter.pageLayout().pageSize().id(), srcPrinter.pageLayout().pageSize().id());
+    QCOMPARE(pdfPrinter.pageLayout().orientation(), srcPrinter.pageLayout().orientation());
+
+    qreal sl = 0, st = 0, sr = 0, sb = 0;
+    qreal dl = 0, dt = 0, dr = 0, db = 0;
+    srcPrinter.getPageMargins(&sl, &st, &sr, &sb, QPrinter::Millimeter);
+    pdfPrinter.getPageMargins(&dl, &dt, &dr, &db, QPrinter::Millimeter);
+    QCOMPARE(dl, sl);
+    QCOMPARE(dt, st);
+    QCOMPARE(dr, sr);
+    QCOMPARE(db, sb);
 }
 
 QTEST_MAIN(TestPrintMargins)

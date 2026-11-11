@@ -230,7 +230,7 @@ void PrintPreview::setupUI()
 
     const int savedAlign=AppContext::instance().appConfig()->uiSection()->get_printFooterAlign();
     const int alignIndex=savedAlign>=0 ? alignCombo->findData(savedAlign) : -1;
-    alignCombo->setCurrentIndex(alignIndex>=0 ? alignIndex : 1);
+    alignCombo->setCurrentIndex(alignIndex>=0 ? alignIndex : 2);
 
     // Печатать ли номера вообще (и в превью, и на бумаге)
     footersCheckBox=new QCheckBox(this);
@@ -298,8 +298,8 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonZoomReset);
     toolsbox->addWidget(buttonZoomFit);
     toolsbox->addWidget(buttonZoomOut);
-    toolsbox->addWidget(alignCombo);
     toolsbox->addWidget(footersCheckBox);
+    toolsbox->addWidget(alignCombo);
     toolsbox->addWidget(buttonClose);
     toolsbox->addStretch();
 

@@ -101,6 +101,18 @@ void PreviewView::setFooterEnabled(bool enable)
 }
 
 
+// Шрифт номера страницы в подвале: пиксельный размер 12 единиц
+// раскладки (см. drawFooterNumber — пункты на предмасштабированном
+// живописце печати дают двойное масштабирование). Отдельным хелпером,
+// чтобы регресс-тест гонял тот же код что печать, а не копию логики
+QFont PreviewView::footerFont(const QFont &base)
+{
+    QFont f = base;
+    f.setPixelSize(12);
+    return f;
+}
+
+
 void PreviewView::drawFooterNumber(QPainter *painter, const QSizeF &pageSize, int page, Qt::Alignment alignment)
 {
     // Номер страницы в подвале: серым, слева/по центру/справа.
@@ -117,12 +129,24 @@ void PreviewView::drawFooterNumber(QPainter *painter, const QSizeF &pageSize, in
 
     painter->setPen(QColor(120, 120, 120));
 
-    QFont footerFont = painter->font();
-    footerFont.setPointSize(9);
-    painter->setFont(footerFont);
+    // Размер шрифта — в пикселях раскладки, НЕ в пунктах: живописец
+    // печати уже масштабирован в k=dpi/72 (пункты в device-пиксели),
+    // и setPointSize дал бы двойное масштабирование — цифра вылезала
+    // из подвала огромной (в PDF уходила кеглем 150 вместо 12).
+    // Пиксели раскладки едут через масштаб один раз: 12 единиц
+    // что в превью, что на бумаге. 12px при 96dpi — те же 9pt
+    // что были в превью раньше
+    painter->setFont(footerFont(painter->font()));
 
-    painter->drawText(QRectF(0, page * pageSize.height() + pageSize.height() - 24,
-                             pageSize.width(), 20),
+    // Отступ номера от края бумаги: минимум 1 см слева и справа,
+    // иначе цифры липнут к самому обрезу (некрасиво). По центру
+    // симметричное сужение на центр не влияет. Единицы — пункты
+    // (1 см = 10*72/25.4 pt), на бумаге масштабируются вместе
+    // со страницей, так что отступ честный и в превью, и в печати
+    const qreal inset = 10.0 * 72.0 / 25.4;
+
+    painter->drawText(QRectF(inset, page * pageSize.height() + pageSize.height() - 24,
+                             pageSize.width() - 2 * inset, 20),
                       hAlign | Qt::AlignVCenter,
                       QString::number(page + 1));
 }

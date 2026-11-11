@@ -2,6 +2,7 @@
 #define _PREVIEWVIEW_H_
 
 #include <QAbstractScrollArea>
+#include <QFont>
 #include <QListWidget>
 
 
@@ -27,6 +28,10 @@ public:
     // Номер страницы в подвале: общая отрисовка для превью и печати
     // (PrintPreview::printDocument зовет напрямую)
     static void drawFooterNumber(QPainter *painter, const QSizeF &pageSize, int page, Qt::Alignment alignment);
+
+    // Шрифт номера: пиксельный размер, общий для превью и печати
+    // (пункты на предмасштабированном живописце печати удваивались)
+    static QFont footerFont(const QFont &base);
     int pageOffset(int page) const;
     int pageAtOffset(int y) const;
 

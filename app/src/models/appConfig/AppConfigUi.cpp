@@ -151,10 +151,10 @@ void AppConfigUi::setEditorScrollBarPosition(int n)
 
 int AppConfigUi::get_printFooterAlign(void)
 {
-    const int align=m_conf->value("printFooterAlign", 1).toInt();
+    const int align=m_conf->value("printFooterAlign", 2).toInt();
 
     if(align<0 || align>2)
-        return 1;
+        return 2;
 
     return align;
 }
@@ -162,7 +162,7 @@ int AppConfigUi::get_printFooterAlign(void)
 void AppConfigUi::set_printFooterAlign(int mode)
 {
     if(mode<0 || mode>2)
-        mode=1;
+        mode=2;
 
     m_conf->setValue("printFooterAlign", mode);
 }

@@ -6562,6 +6562,26 @@ MyTetra перечитает дерево для продолжения рабо
         <translation>Настройка страницы...</translation>
     </message>
     <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Export PDF...</source>
+        <translation>Экспорт в PDF...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Export to PDF file with current page settings</source>
+        <translation>Выгрузить в файл PDF с текущими настройками страницы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Export to PDF</source>
+        <translation>Экспорт в PDF</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>PDF files (*.pdf)</source>
+        <translation>Файлы PDF (*.pdf)</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp" line="96"/>
         <source>Zoom In</source>
         <translation>Увеличить [+]</translation>

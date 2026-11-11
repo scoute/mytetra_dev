@@ -56,6 +56,13 @@ public slots:
   // После QPageSetupDialog НЕ звать: там поля правит пользователь
   static void reassertFullPage(QPrinter &printer);
 
+  // Настройка принтера PDF-экспорта из текущего принтера превью:
+  // бумага, ориентация, поля и fullPage (выбор пользователя в Page Setup),
+  // а не дефолты. Отдельным хелпером чтобы тестировалось без диалога
+  static void setupPdfExportPrinter(QPrinter &pdfPrinter,
+                                    const QPrinter &srcPrinter,
+                                    const QString &fileName);
+
   // Печать постранично вручную вместо QTextDocument::print():
   // тот без явного pageSize пагинирует сам и добавляет номера,
   // а с явным — масштабирует непредсказуемо. Здесь раскладка
@@ -66,6 +73,7 @@ public slots:
 private slots:
     void print();
     void pageSetup();
+    void exportToPdf();
     void onAlignChanged(int index);
     void onFootersToggled(bool checked);
 
@@ -86,6 +94,7 @@ private:
 
     QToolButton *buttonPrint;
     QToolButton *buttonPageSetup;
+    QToolButton *buttonExportPdf;
     QToolButton *buttonZoomIn;
     QToolButton *buttonZoomOut;
     QToolButton *buttonZoomReset;

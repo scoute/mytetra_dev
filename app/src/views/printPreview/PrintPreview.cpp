@@ -21,6 +21,9 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QFrame>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QScopedPointer>
 #include <QStyledItemDelegate>
 #include "libraries/MtComboBox.h"
 
@@ -236,6 +239,14 @@ void PrintPreview::setupUI()
     buttonPageSetup->setText(tr("Page Setup..."));
     buttonPageSetup->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
+    // Выгрузка в PDF прямо из превью: для ОС без PDF-принтера
+    // (Win7) и чтобы не ходить в меню Файл. Настройки бумаги
+    // берутся из текущего принтера превью (см. exportToPdf)
+    buttonExportPdf=new QToolButton(this);
+    buttonExportPdf->setText(tr("Export PDF..."));
+    buttonExportPdf->setToolTip(tr("Export to PDF file with current page settings"));
+    buttonExportPdf->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+
     buttonZoomIn=new QToolButton(this);
     buttonZoomIn->setText(tr("Zoom In"));
     buttonZoomIn->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -302,6 +313,7 @@ void PrintPreview::setupSignals()
 {
     connect(buttonPrint, &QToolButton::clicked, this, &PrintPreview::print);
     connect(buttonPageSetup, &QToolButton::clicked, this, &PrintPreview::pageSetup);
+    connect(buttonExportPdf, &QToolButton::clicked, this, &PrintPreview::exportToPdf);
     connect(buttonZoomIn, &QToolButton::clicked, view, &PreviewView::zoomIn);
     connect(buttonZoomReset, &QToolButton::clicked, view, &PreviewView::zoomReset);
     connect(buttonZoomFit, &QToolButton::clicked, view, &PreviewView::zoomFit);
@@ -332,6 +344,7 @@ void PrintPreview::assembly()
     QHBoxLayout *toolsbox=new QHBoxLayout();
     toolsbox->addWidget(buttonPrint);
     toolsbox->addWidget(buttonPageSetup);
+    toolsbox->addWidget(buttonExportPdf);
     toolsbox->addWidget(buttonZoomIn);
     toolsbox->addWidget(buttonZoomReset);
     toolsbox->addWidget(buttonZoomFit);
@@ -395,6 +408,50 @@ void PrintPreview::pageSetup()
         view->updateLayout();
         thumbBar->rebuild(doc);
     }
+}
+
+
+// Настройка принтера PDF-экспорта из текущего принтера превью:
+// формат, файл, раскладка целиком (бумага, поля, fullPage).
+// Именно копирование layout, а не дефолты: пользователь уже
+// настроил страницу в Page Setup и видит ее в превью.
+// reassertFullPage здесь не нужен: диалога печати не было,
+// настройки никто не сбрасывал
+void PrintPreview::setupPdfExportPrinter(QPrinter &pdfPrinter,
+                                        const QPrinter &srcPrinter,
+                                        const QString &fileName)
+{
+    pdfPrinter.setOutputFormat(QPrinter::PdfFormat);
+    pdfPrinter.setOutputFileName(fileName);
+    pdfPrinter.setPageLayout(srcPrinter.pageLayout());
+    pdfPrinter.setFullPage(srcPrinter.fullPage());
+}
+
+
+// Выгрузка в PDF прямо из превью. Печать по копии документа
+// (как прямая печать): маркеры разрывов чистятся, живой документ
+// не трогается. Принтер превью не портится: пишется во временный
+void PrintPreview::exportToPdf()
+{
+    QString fileName=QFileDialog::getSaveFileName(this,
+                                                  tr("Export to PDF"),
+                                                  QString(),
+                                                  tr("PDF files (*.pdf)"));
+
+    if(fileName.isEmpty())
+        return;
+
+    if(QFileInfo(fileName).suffix().isEmpty())
+        fileName.append(QStringLiteral(".pdf"));
+
+    QPrinter pdfPrinter(QPrinter::HighResolution);
+    setupPdfExportPrinter(pdfPrinter, printer, fileName);
+
+    QScopedPointer<QTextDocument> printDoc(doc->clone());
+    TypefaceFormatter::stripPageBreaksForPrint(printDoc.data());
+
+    PrintPreview::prepareDocument(pdfPrinter, printDoc.data());
+    PrintPreview::printDocument(pdfPrinter, printDoc.data());
 }
 
 

@@ -47,6 +47,15 @@ public slots:
   // поля живого принтера, конвейер их только читает
   static void applyDefaultMargins(QPrinter &printer);
 
+  // Вернуть fullPage и наши поля после диалога печати. Виндовый
+  // QPrintDialog на accept перестраивает layout принтера из DEVMODE
+  // и может сбросить fullPage: печать уезжает на угол printable-области
+  // (замер VM: сдвиг ровно на поля). Вызывать после exec() до
+  // prepareDocument. Размер бумаги и ориентацию не трогает,
+  // поля диалог печати все равно не правит — идемпотентно.
+  // После QPageSetupDialog НЕ звать: там поля правит пользователь
+  static void reassertFullPage(QPrinter &printer);
+
   // Печать постранично вручную вместо QTextDocument::print():
   // тот без явного pageSize пагинирует сам и добавляет номера,
   // а с явным — масштабирует непредсказуемо. Здесь раскладка

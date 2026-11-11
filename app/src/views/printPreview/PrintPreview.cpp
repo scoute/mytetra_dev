@@ -102,6 +102,16 @@ void PrintPreview::applyDefaultMargins(QPrinter &printer)
 }
 
 
+// Вернуть fullPage и наши поля после диалога печати (см. шапку).
+// Порядок важен: fullPage первым, поля поверх — иначе pageRect
+// посчитается от сброшенных значений
+void PrintPreview::reassertFullPage(QPrinter &printer)
+{
+    printer.setFullPage(true);
+    applyDefaultMargins(printer);
+}
+
+
 // Общий конвейер подготовки документа для превью, прямой печати
 // и экспорта: один размер страницы, один шрифт, без номеров страниц
 void PrintPreview::prepareDocument(QPrinter &printer, QTextDocument *doc)
@@ -165,6 +175,14 @@ void PrintPreview::printDocument(QPrinter &printer, QTextDocument *doc)
 
     // Документ разложен в пунктах, принтер рисует в device-пикселях
     const qreal k=printer.resolution()/72.0;
+
+    // Сдвиг origin на бумажный угол. Нативный драйвер Windows стартует
+    // живописца с угла printable-области даже при fullPage (замер VM:
+    // сдвиг текста ровно на поля, слева 40мм вместо 20). Компенсация
+    // к углу листа; где origin честный (Qt PDF-движок, Linux)
+    // pageRect нулевой и это no-op
+    const QPoint pageOrigin=printer.pageRect().topLeft();
+
     const QSizeF pgSize=doc->pageSize();
     const int pages=doc->pageCount();
 
@@ -184,6 +202,12 @@ void PrintPreview::printDocument(QPrinter &printer, QTextDocument *doc)
 
         painter.save();
         painter.scale(k, k);
+
+        // Компенсация сюда, в масштабированную систему (единицы — пункты):
+        // до scale() translate считал бы в device-пикселях и сдвига почти
+        // не давал. Внутри save/restore — действует на каждую страницу
+        if(!pageOrigin.isNull())
+            painter.translate(-pageOrigin.x()/k, -pageOrigin.y()/k);
 
         QRectF docRect(QPointF(0, i*pgSize.height()), pgSize);
         QAbstractTextDocumentLayout::PaintContext ctx;
@@ -354,6 +378,9 @@ void PrintPreview::print()
     QPrintDialog *dlg = new QPrintDialog(&printer, this);
     fixStockDialogCombos(dlg);
     if (dlg->exec() == QDialog::Accepted) {
+        // Диалог мог перестроить layout из DEVMODE: возвращаем
+        // fullPage и наши поля до раскладки и печати
+        reassertFullPage(printer);
         printDocument(printer, doc);
     }
     delete dlg;

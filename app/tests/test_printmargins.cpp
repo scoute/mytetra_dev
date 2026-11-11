@@ -321,6 +321,13 @@ void TestPrintMargins::printDocumentSmokeTest(void)
     PrintPreview::prepareDocument(printer, &doc);
     QVERIFY2(doc.pageCount() > 1, "smoke doc must span several pages");
 
+    // Компенсация origin в printDocument: здесь pageRect нулевой
+    // (Qt PDF-движок, origin честный), сдвига быть не должно.
+    // На нативном драйвере Windows pageRect ненулевой (замер VM)
+    // и тот же код компенсирует сдвиг к бумажному углу
+    QVERIFY2(printer.pageRect().topLeft().isNull(),
+             "pageRect must start at paper corner on sane backend");
+
     PrintPreview::printDocument(printer, &doc);
 
     QVERIFY2(QFileInfo(outPath).isFile(), "smoke pdf must be created");

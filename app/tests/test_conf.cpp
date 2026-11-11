@@ -18,6 +18,7 @@
 #include "models/appConfig/AppConfigClipper.h"
 #include "models/appConfig/AppConfigServices.h"
 #include "models/appConfig/AppConfigGeneral.h"
+#include "libraries/wyedit/formatters/ReferenceFormatter.h"
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
@@ -44,6 +45,7 @@ private slots:
     void cleanupTestCase(void);
 
     void storageSection(void);
+    void folderBadgeHref(void);
     void uiSection(void);
     void findSection(void);
     void syncSection(void);
@@ -101,6 +103,26 @@ void TestConf::storageSection(void)
     QCOMPARE(AppContext::instance().appConfig()->storageSection()->getEnableLogging(), true);
     AppContext::instance().appConfig()->storageSection()->set_attachNameMode(1);
     QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachNameMode(), 1);
+    // Дефолт ссылок на папки — спрашивать (ключ еще не выставлялся)
+    QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode(), AppConfig::AttachLinkAsk);
+    AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(AppConfig::AttachLinkRelative);
+    QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode(), AppConfig::AttachLinkRelative);
+    QCOMPARE(m_raw->value("attachLinkMode").toInt(), AppConfig::AttachLinkRelative);
+    // Мусор в ключе покрывается дефолтом спрашивать
+    AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(99);
+    QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode(), AppConfig::AttachLinkAsk);
+}
+
+void TestConf::folderBadgeHref(void)
+{
+    // Канал меток папок attachdir:// не пересекается с файловым attach://
+    QVERIFY(ReferenceFormatter::isFolderLinkHref(QStringLiteral("attachdir://abc123")));
+    QVERIFY(!ReferenceFormatter::isFolderLinkHref(QStringLiteral("attach://file.txt")));
+    QVERIFY(!ReferenceFormatter::isFolderLinkHref(QString()));
+    QCOMPARE(ReferenceFormatter::folderRowIdFromHref(QStringLiteral("attachdir://abc123")),
+             QStringLiteral("abc123"));
+    QVERIFY(ReferenceFormatter::folderRowIdFromHref(QStringLiteral("attach://file.txt")).isEmpty());
+    QVERIFY(!ReferenceFormatter::isAttachHref(QStringLiteral("attachdir://abc123")));
 }
 
 void TestConf::uiSection(void)

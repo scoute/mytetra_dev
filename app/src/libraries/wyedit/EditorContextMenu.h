@@ -22,6 +22,7 @@ public:
  void setRenameVoice(bool flag);
  void setMoveVoice(bool flag); // Пункт "Переместить" на голосовой ссылке
  void setMoveAttach(bool flag); // Пункт "Переместить" на метке аттача
+ void setRemoveFolderBadge(bool flag); // Пункт "Убрать метку" на метке папки
  void setDeleteVoice(bool flag); // Пункт "Удалить" на голосовой ссылке
  void setEditReference(bool flag); // Пункт "Редактировать ссылку", виден на ссылке
  void setPasteNoteReference(bool flag); // Пункт "Вставить ссылку на заметку", виден если в буфере внутренняя ссылка
@@ -53,6 +54,7 @@ signals:
   void contextMenuRenameVoice(void);
   void contextMenuMoveVoice(void);
   void contextMenuMoveAttach(void);
+  void contextMenuRemoveFolderBadge(void);
   void contextMenuShowNoteInFolder(void);
   void contextMenuDeleteVoice(void);
   void contextMenuEditReference(void);
@@ -89,6 +91,7 @@ private:
   QAction *actionRenameVoice;
   QAction *actionMoveVoice;
   QAction *actionMoveAttach;
+  QAction *actionRemoveFolderBadge;
   QAction *actionShowNoteInFolder;
   QAction *actionDeleteVoice;
   QAction *actionEditReference;
@@ -120,6 +123,7 @@ protected slots:
   void onActionContextMenuRenameVoice(void);
   void onActionContextMenuMoveVoice(void);
   void onActionContextMenuMoveAttach(void);
+  void onActionContextMenuRemoveFolderBadge(void);
   void onActionContextMenuShowNoteInFolder(void);
   void onActionContextMenuDeleteVoice(void);
   void onActionContextMenuEditReference(void);

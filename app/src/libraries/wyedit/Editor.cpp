@@ -447,6 +447,11 @@ void Editor::setupSignals(void)
           referenceFormatter, &ReferenceFormatter::onMoveAttachClicked,
           Qt::DirectConnection);
 
+  // ПКМ по метке папки: убрать метку, спросить про строку таблицы
+  connect(editorContextMenu,  &EditorContextMenu::contextMenuRemoveFolderBadge,
+          referenceFormatter, &ReferenceFormatter::onRemoveFolderBadgeClicked,
+          Qt::DirectConnection);
+
   // Клик по баблу голосовой заметки: play/pause на месте
   connect(textArea,       &EditorTextArea::clickedOnVoiceBubble,
           audioFormatter, &AudioFormatter::onBubbleClicked,
@@ -2905,6 +2910,20 @@ void Editor::onFileUrlsDropped(const QStringList &files)
 
   foreach(const QString &filePath, files)
   {
+    // Папка: строкой-ссылкой в таблицу плюс кликабельной меткой
+    // в позицию дропа. Отказ/отмена добавления — метки нет
+    if(QFileInfo(filePath).isDir())
+    {
+      QString rowId;
+      QString displayName;
+
+      if(!attachController->addSingleFolderAsLink(filePath, rowId, displayName))
+        continue;
+
+      referenceFormatter->insertFolderBadge(rowId, displayName);
+      continue;
+    }
+
     QString innerFileName;
     QString displayFileName;
 
@@ -3059,6 +3078,47 @@ void Editor::onAttachBadgesPasted(const QByteArray &attachMime)
 
   cursor.endEditBlock();
 }
+
+
+// Метка папки-ссылки в конец открытого текста: панельные добавления.
+// Только чтение или пустая метка: молча ничего. Совпадение заметки
+// с таблицей следит вызыватель (контроллер аттачей)
+void Editor::appendFolderBadge(const QString &rowId, const QString &folderName)
+{
+  if(rowId.isEmpty() || folderName.isEmpty())
+    return;
+
+  if(textArea==nullptr || textArea->isReadOnly())
+    return;
+
+  QTextCursor cursor=textArea->textCursor();
+  cursor.movePosition(QTextCursor::End);
+  textArea->setTextCursor(cursor);
+
+  referenceFormatter->insertFolderBadge(rowId, folderName);
+}
+
+
+// Есть ли метка с таким href в открытом тексте
+bool Editor::hasBadgeHref(const QString &href)
+{
+  if(textArea==nullptr)
+    return false;
+
+  return referenceFormatter->hasBadgeHref(href);
+}
+
+
+// Убрать метку с таким href из открытого текста.
+// Только чтение: false без изменений
+bool Editor::removeBadgeByHref(const QString &href)
+{
+  if(textArea==nullptr || textArea->isReadOnly())
+    return false;
+
+  return referenceFormatter->removeBadgeByHref(href);
+}
+
 
 void Editor::onFindInBaseClicked(void)
 {

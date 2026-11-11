@@ -3,8 +3,12 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDesktopServices>
+#include <QDialog>
 #include <QDialogButtonBox>
 #include <QInputDialog>
+#include <QLabel>
+#include <QRadioButton>
+#include <QVBoxLayout>
 
 #include <algorithm>
 
@@ -271,6 +275,167 @@ bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
   return !innerFileName.isEmpty();
 }
 
+// Одна папка из дропа в текст или с панели: строкой-ссылкой
+// в таблицу. Возвращает id строки и видимое имя для метки в тексте.
+// Пусто в rowId если папка не добавилась: несохраненная запись
+// (показывает "Save the note first"), не каталог, ошибка движка
+// или отмена диалога режима. Режим ссылки — настройка attachLinkMode,
+// при "всегда спрашивать" показывает диалог (там же запоминание)
+bool AttachTableController::addSingleFolderAsLink(const QString &dirPath,
+                                                  QString &rowId,
+                                                  QString &displayName)
+{
+  rowId.clear();
+  displayName.clear();
+
+  if(dirPath.isEmpty())
+    return false;
+
+  if(getAttachTableData()==NULL)
+  {
+    showMessageBox(tr("Save the note first"));
+    return false;
+  }
+
+  QFileInfo dirInfo(dirPath);
+
+  if(!dirInfo.isDir())
+    return false;
+
+  const int linkMode=requestFolderLinkMode();
+
+  // Отмена диалога: молча ничего, метки нет
+  if(linkMode!=AppConfig::AttachLinkAbsolute &&
+     linkMode!=AppConfig::AttachLinkRelative)
+    return false;
+
+  const QString linkPath=Attach::makeStoredLink(getAttachTableData()->getRecordDirName(),
+                                                dirInfo.absoluteFilePath(),
+                                                linkMode);
+
+  if(!addAttach(QStringLiteral("link"),
+                linkPath,
+                dirInfo.fileName(),
+                dirInfo.absoluteFilePath()))
+    return false;
+
+  saveState();
+  updateAttachListInEditor();
+
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(attachTableData==NULL || attachTableData->size()==0)
+    return false;
+
+  // Добавленная строка в хвосте: addAttach дописывает в конец
+  const int lastRow=attachTableData->size()-1;
+  rowId=attachTableData->getIdByRow(lastRow);
+  displayName=attachTableData->getFileNameById(rowId);
+
+  return !rowId.isEmpty();
+}
+
+
+// Режим ссылки для добавляемой папки: настройка attachLinkMode,
+// при "всегда спрашивать" — диалог с запоминанием ("всегда"
+// пишет настройку). Возвращает AttachLinkAbsolute/Relative,
+// при отмене диалога -1
+int AttachTableController::requestFolderLinkMode(void)
+{
+  const int storedMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
+
+  if(storedMode!=AppConfig::AttachLinkAsk)
+    return storedMode;
+
+  QDialog dialog(currentView());
+  dialog.setWindowTitle(tr("Attach folder"));
+
+  QLabel *infoLabel=new QLabel(&dialog);
+  infoLabel->setWordWrap(true);
+  infoLabel->setText(tr("The folder is added to attachments and as a clickable link in note text. Relative links survive database relocation."));
+
+  QRadioButton *onceRelative=new QRadioButton(tr("Relative link"), &dialog);
+  QRadioButton *onceAbsolute=new QRadioButton(tr("Absolute link"), &dialog);
+  QRadioButton *alwaysRelative=new QRadioButton(tr("Always relative links"), &dialog);
+  QRadioButton *alwaysAbsolute=new QRadioButton(tr("Always absolute links"), &dialog);
+  onceRelative->setChecked(true);
+
+  QDialogButtonBox *buttons=new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+  connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+  connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+  QVBoxLayout *layout=new QVBoxLayout(&dialog);
+  layout->addWidget(infoLabel);
+  layout->addWidget(onceRelative);
+  layout->addWidget(onceAbsolute);
+  layout->addWidget(alwaysRelative);
+  layout->addWidget(alwaysAbsolute);
+  layout->addWidget(buttons);
+
+  if(dialog.exec()!=QDialog::Accepted)
+    return -1;
+
+  int mode=AppConfig::AttachLinkRelative;
+  bool remember=false;
+
+  if(onceAbsolute->isChecked())
+    mode=AppConfig::AttachLinkAbsolute;
+  else if(alwaysRelative->isChecked())
+  {
+    mode=AppConfig::AttachLinkRelative;
+    remember=true;
+  }
+  else if(alwaysAbsolute->isChecked())
+  {
+    mode=AppConfig::AttachLinkAbsolute;
+    remember=true;
+  }
+
+  if(remember)
+    AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(mode);
+
+  return mode;
+}
+
+
+// Открытая в редакторе заметка — та же что таблица аттачей.
+// Метки в текст трогаются только при совпадении каталогов,
+// иначе метка ушла бы в чужой текст
+bool AttachTableController::isMetaEditorSameNote(void)
+{
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(metaEditor==nullptr || attachTableData==nullptr)
+    return false;
+
+  const QString tableDir=QDir::cleanPath(QDir(attachTableData->getRecordDirName()).absolutePath());
+  const QString editorDir=QDir::cleanPath(QDir(metaEditor->getWorkDirectory()).absolutePath());
+
+  return !tableDir.isEmpty() && tableDir==editorDir;
+}
+
+
+// Удаление аттача по id строки для движка меток папок:
+// строка удаляется, дерево сохраняется, иконка/статистика
+// обновляются. Пустой id или нет строки: false
+bool AttachTableController::deleteAttachById(const QString &rowId)
+{
+  AttachTableData *attachTableData=getAttachTableData();
+
+  if(attachTableData==nullptr || rowId.isEmpty())
+    return false;
+
+  if(attachTableData->getRowById(rowId)<0)
+    return false;
+
+  attachTableData->deleteAttach(rowId);
+
+  saveState();
+
+  return true;
+}
+
+
 // Удаление аттача по внутреннему имени для движка переноса метки
 bool AttachTableController::removeAttachByInnerName(const QString &innerName)
 {
@@ -302,6 +467,17 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
 {
   // Перебираются файлы (из диалога или из drag'n'drop)
   int sucessLoadCount=0;
+
+  // Режим ссылок для папок пачки: при "всегда спрашивать" диалог
+  // один на все папки. Отмена пропускает папки, файлы идут как обычно
+  int dirMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
+
+  if(dirMode==AppConfig::AttachLinkAsk)
+    dirMode=requestFolderLinkMode();
+
+  // Добавленные папки для меток в текст: пары id строки и имени
+  QList<QPair<QString, QString>> addedFolders;
+
   for(int i=0; i<files.size(); ++i)
   {
     // Текущее полное имя файла
@@ -313,21 +489,34 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
     // открывается в файловом менеджере как обычный линк.
     // Файлы ниже идут прежним путем с копированием в базу.
     // В поле link кладется абсолютный путь или относительный
-    // каталога записи (настройка attachLinkMode): относительные
-    // живут при переезде базы. В source для истории — всегда исходный
+    // каталога записи (настройка attachLinkMode или диалог):
+    // относительные живут при переезде базы. В source для истории —
+    // всегда исходный. Плюс кликабельная метка в текст заметки
     if(currFileInfo.isDir())
     {
-        const int linkMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
+        // Диалог отменен: папки пропускаются
+        if(dirMode!=AppConfig::AttachLinkAbsolute &&
+           dirMode!=AppConfig::AttachLinkRelative)
+          continue;
 
         const QString linkPath=Attach::makeStoredLink(getAttachTableData()->getRecordDirName(),
                                                       currFileInfo.absoluteFilePath(),
-                                                      linkMode);
+                                                      dirMode);
 
         if(addAttach(QStringLiteral("link"),
                      linkPath,
                      currFileInfo.fileName(),
                      currFileInfo.absoluteFilePath()))
+        {
             sucessLoadCount++;
+
+            // Добавленная строка в хвосте: addAttach дописывает в конец
+            const int lastRow=getAttachTableData()->size()-1;
+            const QString newRowId=getAttachTableData()->getIdByRow(lastRow);
+
+            if(!newRowId.isEmpty())
+              addedFolders.append(qMakePair(newRowId, currFileInfo.fileName()));
+        }
 
         continue;
     }
@@ -356,6 +545,13 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
 
   // В редакторе обновляется список приаттаченных файлов
   updateAttachListInEditor();
+
+  // Метки добавленных папок в конец открытого текста той же заметки.
+  // Чужая заметка и только чтение отсекаются внутри appendFolderBadge,
+  // совпадение заметки — здесь: иначе метка ушла бы в чужой текст
+  if(!addedFolders.isEmpty() && isMetaEditorSameNote())
+    for(int n=0; n<addedFolders.size(); ++n)
+      metaEditor->appendFolderBadge(addedFolders.at(n).first, addedFolders.at(n).second);
 }
 
 bool AttachTableController::addAttach(QString attachType, QString currFullFileName, QString currShortFileName, const QString &source)
@@ -674,8 +870,16 @@ void AttachTableController::onDeleteAttach(void)
   // Удаление выбранных аттачей
   AttachTableData *attachTableData=getAttachTableData();
 
+  // Id удаляемых папок-ссылок: их метки в тексте спросить отдельно
+  QStringList deletedLinkIds;
+
   foreach( QString id, selectedId )
+  {
+    if(attachTableData->getAttach(id).getField(QStringLiteral("type"))==QStringLiteral("link"))
+      deletedLinkIds << id;
+
     attachTableData->deleteAttach(id);
+  }
 
   // Сохранение дерева веток
   TreeScreen *treeScreen=find_object<TreeScreen>("treeScreen");
@@ -694,6 +898,25 @@ void AttachTableController::onDeleteAttach(void)
 
   if(mainWindow!=nullptr)
     mainWindow->updateStats();
+
+  // Метки удаленных папок в открытом тексте той же заметки:
+  // спросить, убрать ли и ссылку. Закрытая заметка: метка останется
+  // мертвой и честно сообщит об этом по клику
+  if(!deletedLinkIds.isEmpty() && isMetaEditorSameNote())
+    foreach(const QString &linkId, deletedLinkIds)
+    {
+      const QString href=QStringLiteral("attachdir://")+linkId;
+
+      if(!metaEditor->hasBadgeHref(href))
+        continue;
+
+      if(QMessageBox::question(currentView(),
+                               tr("Delete folder link"),
+                               tr("Remove the folder link from note text as well?"),
+                               QMessageBox::Yes | QMessageBox::No,
+                               QMessageBox::Yes)==QMessageBox::Yes)
+        metaEditor->removeBadgeByHref(href);
+    }
 }
 
 // Открытие аттача (аттачей) на просмотр

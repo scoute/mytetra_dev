@@ -488,6 +488,84 @@ QString ReferenceFormatter::attachInnerFromHref(const QString &href)
 }
 
 
+// Метка папки: attachdir://<id строки таблицы>
+bool ReferenceFormatter::isFolderLinkHref(const QString &href)
+{
+    return href.startsWith(QStringLiteral("attachdir://"));
+}
+
+
+// Id строки папки-ссылки из метки, пусто если не метка папки
+QString ReferenceFormatter::folderRowIdFromHref(const QString &href)
+{
+    if(!isFolderLinkHref(href))
+        return QString();
+
+    return href.mid(static_cast<int>(sizeof("attachdir://")-1));
+}
+
+
+// Метка папки-ссылки: [DIR] видимое имя.
+// Только ASCII как у файловых меток: эмодзи в шрифте
+// заметки может отсутствовать и рисоваться tofu-квадратом
+void ReferenceFormatter::insertFolderBadge(const QString &rowId,
+                                           const QString &folderName)
+{
+    if(rowId.isEmpty() || folderName.isEmpty())
+        return;
+
+    const QString href=QStringLiteral("attachdir://")+rowId;
+    const QString title=QStringLiteral("[DIR] ")+folderName;
+
+    insertTitledLink(href, title);
+}
+
+
+// Есть ли метка с таким href в открытом тексте.
+// Линейный поиск как в selectAttachBadgeRange, только без выделения
+bool ReferenceFormatter::hasBadgeHref(const QString &href)
+{
+    if(href.isEmpty() || textArea==nullptr)
+        return false;
+
+    QTextDocument *doc=textArea->document();
+
+    if(doc==nullptr)
+        return false;
+
+    for(QTextBlock block=doc->firstBlock(); block.isValid(); block=block.next())
+        for(QTextBlock::iterator it=block.begin(); !it.atEnd(); ++it)
+        {
+            const QTextFragment fragment=it.fragment();
+
+            if(fragment.isValid() && fragment.charFormat().anchorHref()==href)
+                return true;
+        }
+
+    return false;
+}
+
+
+// Убрать метку с таким href из открытого текста.
+// Только чтение: отказ, иначе selectAttachBadgeRange+удаление
+// (как чистка исходника в переносе метки)
+bool ReferenceFormatter::removeBadgeByHref(const QString &href)
+{
+    if(!hasBadgeHref(href))
+        return false;
+
+    if(textArea==nullptr || textArea->isReadOnly())
+        return false;
+
+    if(!selectAttachBadgeRange(href))
+        return false;
+
+    textArea->textCursor().removeSelectedText();
+
+    return true;
+}
+
+
 // Имя MIME для переноса меток аттачей между заметками
 const char *ReferenceFormatter::attachMimeTypeName(void)
 {
@@ -885,6 +963,79 @@ void ReferenceFormatter::onMoveAttachClicked(void)
 }
 
 
+// Убрать метку папки: вопрос "удалить совсем или оставить
+// в прикрепленных". Метка уходит из текста всегда, строка таблицы —
+// только при "удалить совсем". Отмена не трогает ничего.
+// Строки уже нет (удалена из панели): метка чистится молча
+void ReferenceFormatter::onRemoveFolderBadgeClicked(void)
+{
+    QString href;
+
+    if(editor->cursorPositionDetector->isCursorOnReference())
+    {
+        const QString candidate=editor->cursorPositionDetector->referenceHref();
+
+        if(isFolderLinkHref(candidate))
+            href=candidate;
+    }
+
+    if(href.isEmpty())
+        return;
+
+    const QString rowId=folderRowIdFromHref(href);
+
+    AttachTableController *attachController=find_object<AttachTableController>(
+      QStringLiteral("attachTableController"));
+
+    AttachTableData *attachTableData=(attachController!=nullptr)
+      ? attachController->getAttachTableData() : nullptr;
+
+    QString rowDisplayName;
+
+    if(attachTableData!=nullptr)
+      for(int row=0; row<attachTableData->size(); ++row)
+      {
+        if(attachTableData->getIdByRow(row)!=rowId)
+          continue;
+
+        if(attachTableData->getAttach(rowId).getField(QStringLiteral("type"))!=QStringLiteral("link"))
+          break;
+
+        rowDisplayName=attachTableData->getFileNameById(rowId);
+        break;
+      }
+
+    // Строки уже нет: мертвая метка чистится без вопросов
+    if(rowDisplayName.isEmpty())
+    {
+        removeBadgeByHref(href);
+        return;
+    }
+
+    QMessageBox msgBox(editor);
+    msgBox.setWindowTitle(tr("Remove folder link"));
+    msgBox.setText(tr("Remove the link \"%1\" from note text?").arg(rowDisplayName));
+
+    QPushButton *deleteAllButton=msgBox.addButton(tr("Delete completely"),
+                                                  QMessageBox::DestructiveRole);
+    QPushButton *keepButton=msgBox.addButton(tr("Keep in attachments"),
+                                             QMessageBox::AcceptRole);
+    msgBox.addButton(QMessageBox::Cancel);
+    msgBox.setDefaultButton(keepButton);
+    msgBox.exec();
+
+    if(msgBox.clickedButton()==nullptr ||
+       msgBox.clickedButton()==msgBox.button(QMessageBox::Cancel))
+        return;
+
+    removeBadgeByHref(href);
+
+    if(msgBox.clickedButton()==deleteAllButton &&
+       attachController!=nullptr)
+        attachController->deleteAttachById(rowId);
+}
+
+
 // Действия при выборе контекстного меню редактора "Перейти по ссылке"
 void ReferenceFormatter::onContextMenuGotoReference()
 {
@@ -996,6 +1147,47 @@ void ReferenceFormatter::onClickedGotoReference(QString href)
       }
 
       QDesktopServices::openUrl(QUrl::fromLocalFile(absolutePath));
+      return;
+    }
+
+    // Метка папки-ссылки: строка type=="link" по id из href.
+    // Открывается каталог в файловом менеджере ОС. Строки нет
+    // (вставка из другой заметки, строка удалена) — сообщение:
+    // молча умирать клик не должен
+    if(isFolderLinkHref(href))
+    {
+      const QString rowId=folderRowIdFromHref(href);
+
+      AttachTableController *attachController=find_object<AttachTableController>(
+        QStringLiteral("attachTableController"));
+
+      AttachTableData *attachTableData=(attachController!=nullptr)
+        ? attachController->getAttachTableData() : nullptr;
+
+      QString folderPath;
+
+      if(attachTableData!=nullptr)
+        for(int row=0; row<attachTableData->size(); ++row)
+        {
+          if(attachTableData->getIdByRow(row)!=rowId)
+            continue;
+
+          if(attachTableData->getAttach(rowId).getField(QStringLiteral("type"))!=QStringLiteral("link"))
+            break;
+
+          folderPath=attachTableData->getAbsoluteInnerFileNameById(rowId);
+          break;
+        }
+
+      if(!folderPath.isEmpty() && QDir(folderPath).exists())
+      {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(folderPath));
+        return;
+      }
+
+      QMessageBox::information(editor,
+                               tr("Open folder link"),
+                               tr("Folder not found: %1").arg(folderPath.isEmpty() ? href : folderPath));
       return;
     }
 

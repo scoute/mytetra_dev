@@ -266,20 +266,25 @@ void AppConfigStorage::set_attachNameMode(int mode)
 
 
 // Режим ссылок на папки. Unversioned-ключ как attachNameMode:
-// отсутствующий ключ - абсолютные пути как раньше, миграция не нужна
+// отсутствующий ключ - всегда спрашивать, миграция не нужна
 int AppConfigStorage::get_attachLinkMode(void)
 {
     if(m_conf->contains("attachLinkMode"))
-        return m_conf->value("attachLinkMode", AppConfig::AttachLinkAbsolute).toInt();
+    {
+        const int mode=m_conf->value("attachLinkMode", AppConfig::AttachLinkAsk).toInt();
 
-    return AppConfig::AttachLinkAbsolute;
+        if(mode>=AppConfig::AttachLinkAbsolute && mode<=AppConfig::AttachLinkAsk)
+            return mode;
+    }
+
+    return AppConfig::AttachLinkAsk;
 }
 
 
 void AppConfigStorage::set_attachLinkMode(int mode)
 {
-    if(mode<AppConfig::AttachLinkAbsolute || mode>AppConfig::AttachLinkRelative)
-        mode=AppConfig::AttachLinkAbsolute;
+    if(mode<AppConfig::AttachLinkAbsolute || mode>AppConfig::AttachLinkAsk)
+        mode=AppConfig::AttachLinkAsk;
 
     m_conf->setValue("attachLinkMode", mode);
 }

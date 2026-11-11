@@ -474,12 +474,13 @@ void EditorTextArea::mouseMoveEvent(QMouseEvent *event)
         // Ссылки-действия ([copy] в маркере кода, пункты оглавления)
         // тоже работают без Ctrl, поэтому рука-подсказка показывается
         // сразу, а не только с зажатым Ctrl. Метки аттачей attach://
-        // туда же: клик открывает файл, подсказка нужна заранее
+        // и папок attachdir:// туда же: клик открывает файл и каталог
         QString actionHref=anchorAt(m_currentMousePosition);
         const bool isActionLink=!actionHref.isEmpty() &&
                                 (actionHref==TypefaceFormatter::copyCodeHref() ||
                                  actionHref.startsWith(TypefaceFormatter::tocGoPrefix()) ||
-                                 actionHref.startsWith(QStringLiteral("attach://")));
+                                 actionHref.startsWith(QStringLiteral("attach://")) ||
+                                 actionHref.startsWith(QStringLiteral("attachdir://")));
 
         if(isActionLink)
         {
@@ -575,10 +576,12 @@ void EditorTextArea::mousePressEvent(QMouseEvent *event)
             return;
         }
 
-        // Клик по метке аттача attach://: файл открывается внешней
-        // программой. Работает и с Ctrl, и без: метка без Ctrl-подсказки
-        // незаметна, а Ctrl-путь ниже ее тоже поймает. Курсор не двигается
-        if(href.startsWith(QStringLiteral("attach://")))
+        // Клик по метке аттача attach:// или папки attachdir://:
+        // файл и каталог открываются внешней программой. Работает
+        // и с Ctrl, и без: метка без Ctrl-подсказки незаметна,
+        // а Ctrl-путь ниже ее тоже поймает. Курсор не двигается
+        if(href.startsWith(QStringLiteral("attach://")) ||
+           href.startsWith(QStringLiteral("attachdir://")))
         {
             emit clickedOnReference(href);
 

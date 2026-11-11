@@ -55,6 +55,20 @@ public slots:
                              QString &innerFileName,
                              QString &displayFileName);
 
+  // Одна папка из дропа в текст или с панели: строкой-ссылкой
+  // в таблицу. Возвращает id строки и видимое имя для метки
+  // в тексте. Пусто в rowId если папка не добавилась (ошибка,
+  // несохраненная запись, отмена диалога). Режим ссылки —
+  // настройка attachLinkMode или диалог при "спрашивать"
+  bool addSingleFolderAsLink(const QString &dirPath,
+                             QString &rowId,
+                             QString &displayName);
+
+  // Удаление аттача по id строки для движка меток папок:
+  // строка удаляется, дерево сохраняется, иконка/статистика
+  // обновляются. Пустой id или нет строки: false
+  bool deleteAttachById(const QString &rowId);
+
   // Удаление аттача по внутреннему имени для движка переноса метки:
   // находит строку (прямое имя или любая схема), удаляет файл
   // и запись, сохраняет дерево и обновляет иконку/статистику
@@ -69,6 +83,17 @@ protected:
   QStringList selectFilesForAdding(QString attachType);
   void saveAttachToUserPlace(QString fromFullFileName, QString toFullFileName, QString attachType, bool isAttachCrypt);
   void updateAttachListInEditor(void);
+
+  // Режим ссылки для добавляемой папки: настройка attachLinkMode,
+  // при "всегда спрашивать" — диалог с запоминанием ("всегда"
+  // пишет настройку). Возвращает AttachLinkAbsolute/Relative,
+  // при отмене диалога -1
+  int requestFolderLinkMode(void);
+
+  // Открытая в редакторе заметка — та же что таблица аттачей.
+  // Метки в текст трогаются только при совпадении, иначе дроп
+  // ушел бы в чужую заметку
+  bool isMetaEditorSameNote(void);
 
   AttachTableView *view;
   AttachTableModel *model;

@@ -537,8 +537,13 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Folders attach as links without copying. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. The choice applies to new folder links.</source>
-        <translation>Папки прикрепляются ссылками без копирования. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. Выбор действует на новые ссылки на папки.</translation>
+        <source>Folders attach as links without copying, and as a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every folder. The choice applies to new folder links.</source>
+        <translation>Папки прикрепляются ссылками без копирования, а также кликабельной ссылкой в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой папки. Выбор действует на новые ссылки на папки.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
+        <source>Always ask</source>
+        <translation>Всегда спрашивать</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
@@ -1998,6 +2003,46 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <source>Please, select a single file to see information about one.</source>
         <translation>Просмотр информации возможен только если выбран один файл.</translation>
     </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Attach folder</source>
+        <translation>Прикрепить папку</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>The folder is added to attachments and as a clickable link in note text. Relative links survive database relocation.</source>
+        <translation>Папка добавится в прикрепленные и кликабельной ссылкой в текст заметки. Относительные ссылки переживают переезд базы.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Relative link</source>
+        <translation>Относительная ссылка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Absolute link</source>
+        <translation>Абсолютная ссылка</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Always relative links</source>
+        <translation>Всегда относительные ссылки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Always absolute links</source>
+        <translation>Всегда абсолютные ссылки</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Delete folder link</source>
+        <translation>Удалить ссылку на папку</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Remove the folder link from note text as well?</source>
+        <translation>Убрать ссылку на папку и из текста заметки?</translation>
+    </message>
 </context>
 <context>
     <name>AttachTableModel</name>
@@ -3328,6 +3373,11 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp" line="90"/>
         <source>Open image with...</source>
         <translation>Открыть изображение с помощью...</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/EditorContextMenu.cpp"/>
+        <source>Remove folder link...</source>
+        <translation>Убрать ссылку на папку...</translation>
     </message>
 </context>
 <context>
@@ -7814,6 +7864,36 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <translation>Невозможно предпросмотреть зашифрованный файл.
 Используйте кнопку «Сохранить как...» или
 включите «Расшифровку во временный файл» в настройках.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp"/>
+        <source>Open folder link</source>
+        <translation>Открыть ссылку на папку</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp"/>
+        <source>Folder not found: %1</source>
+        <translation>Папка не найдена: %1</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp"/>
+        <source>Remove folder link</source>
+        <translation>Убрать ссылку на папку</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp"/>
+        <source>Remove the link "%1" from note text?</source>
+        <translation>Убрать ссылку «%1» из текста заметки?</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp"/>
+        <source>Delete completely</source>
+        <translation>Удалить совсем</translation>
+    </message>
+    <message>
+        <location filename="../../../src/libraries/wyedit/formatters/ReferenceFormatter.cpp"/>
+        <source>Keep in attachments</source>
+        <translation>Оставить в прикрепленных</translation>
     </message>
 </context>
 <context>

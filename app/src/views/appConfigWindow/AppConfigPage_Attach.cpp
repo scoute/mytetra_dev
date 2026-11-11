@@ -108,15 +108,16 @@ void AppConfigPage_Attach::setupUi(void)
     // Пояснение про ссылки на папки
     folderLinksInfo=new QLabel(this);
     folderLinksInfo->setWordWrap(true);
-    folderLinksInfo->setText( tr("Folders attach as links without copying. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. The choice applies to new folder links.") );
+    folderLinksInfo->setText( tr("Folders attach as links without copying, and as a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every folder. The choice applies to new folder links.") );
 
-    // Выбор вида пути: абсолютный или относительный каталога записи
+    // Выбор вида пути: спрашивать, абсолютный или относительный каталога записи
     attachLinkModeLabel=new QLabel(this);
     attachLinkModeLabel->setText( tr("Attach folders as: ") );
 
     attachLinkModeCombo=new MtComboBox(this);
-    attachLinkModeCombo->addItem( tr("Absolute path"), AppConfig::AttachLinkAbsolute );
+    attachLinkModeCombo->addItem( tr("Always ask"), AppConfig::AttachLinkAsk );
     attachLinkModeCombo->addItem( tr("Relative to note directory"), AppConfig::AttachLinkRelative );
+    attachLinkModeCombo->addItem( tr("Absolute path"), AppConfig::AttachLinkAbsolute );
     attachLinkModeCombo->setCurrentIndex( attachLinkModeCombo->findData(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode()) );
 }
 
@@ -251,10 +252,11 @@ void AppConfigPage_Attach::retranslateUi(void)
   convertRecordDirsButton->setText(tr("Convert record directories to the selected form"));
   recordDirsWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names."));
   folderLinksBox->setTitle(tr("Folder links"));
-  folderLinksInfo->setText(tr("Folders attach as links without copying. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. The choice applies to new folder links."));
+  folderLinksInfo->setText(tr("Folders attach as links without copying, and as a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every folder. The choice applies to new folder links."));
   attachLinkModeLabel->setText(tr("Attach folders as: "));
-  attachLinkModeCombo->setItemText(0, tr("Absolute path"));
+  attachLinkModeCombo->setItemText(0, tr("Always ask"));
   attachLinkModeCombo->setItemText(1, tr("Relative to note directory"));
+  attachLinkModeCombo->setItemText(2, tr("Absolute path"));
 }
 
 // Метод должен возвращать уровень сложности сделанных изменений

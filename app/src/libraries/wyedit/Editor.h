@@ -235,6 +235,18 @@ public:
  };
 
 
+ // Метка папки-ссылки в конец текста (для добавлений с панели
+ // аттачей, где позиции курсора нет). Только чтение: молча ничего.
+ // Вызыватель сам следит что заметка та же что таблица
+ void appendFolderBadge(const QString &rowId, const QString &folderName);
+
+ // Есть ли метка с таким href в открытом тексте
+ bool hasBadgeHref(const QString &href);
+
+ // Убрать метку с таким href из открытого текста.
+ // Только чтение: false. Вызыватель следит за совпадением заметки
+ bool removeBadgeByHref(const QString &href);
+
 signals:
 
  void send_expand_edit_area(bool flag);
@@ -251,6 +263,7 @@ signals:
 
  void changeFontselectOnDisplay(QString fontName);
  void changeFontsizeOnDisplay(int n);
+
 
 private slots:
 
@@ -289,9 +302,11 @@ private slots:
  // кликабельные метки в позицию курсора. Путь в текст не пишется
  void onFileUrlsDropped(const QStringList &files);
 
+
  // Метки аттачей вставленные из другой заметки: докопировать файлы,
  // завести аттачи и починить ссылки на новые внутренние имена
  void onAttachBadgesPasted(const QByteArray &attachMime);
+
 
  void onCursorPositionChanged(void); // Слот, контролирущий перемещение курсора
  void onSelectionChanged(void);

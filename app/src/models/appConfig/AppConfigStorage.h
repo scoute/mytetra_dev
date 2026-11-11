@@ -61,8 +61,9 @@ public:
     int get_attachNameMode(void);
     void set_attachNameMode(int mode);
 
-    // Режим ссылок на папки: абсолютный путь или относительный
-    // каталога записи. Тот же unversioned-паттерн что attachNameMode
+    // Режим ссылок на папки: абсолютный путь, относительный
+    // каталога записи или всегда спрашивать. Тот же unversioned-паттерн
+    // что attachNameMode
     int get_attachLinkMode(void);
     void set_attachLinkMode(int mode);
     // Режим имен каталогов записей: системный (id) или гибридный

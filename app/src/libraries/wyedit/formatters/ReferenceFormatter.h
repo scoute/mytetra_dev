@@ -39,11 +39,34 @@ public slots:
     void insertAttachBadge(const QString &innerFileName,
                            const QString &displayFileName);
 
+    // Метка папки-ссылки: [DIR] видимое имя, href вида
+    // attachdir://<id строки таблицы>. Вставляется как обычная
+    // titled-ссылка, клик открывает каталог в файловом менеджере
+    void insertFolderBadge(const QString &rowId,
+                           const QString &folderName);
+
+    // Убрать метку папки из текста: вопрос "удалить совсем
+    // или оставить в прикрепленных", удаление строки через контроллер
+    void onRemoveFolderBadgeClicked(void);
+
+    // Есть ли метка с таким href в открытом тексте
+    bool hasBadgeHref(const QString &href);
+
+    // Убрать метку с таким href из открытого текста.
+    // Возвращает false если метки нет или текст только для чтения
+    bool removeBadgeByHref(const QString &href);
+
     // Метка аттача: свой канал attach://<внутреннее имя>.
     // Отдельно от относительных ссылок, чтобы клик без Ctrl
     // открывал только метки, а не любой относительный файл
     static bool isAttachHref(const QString &href);
     static QString attachInnerFromHref(const QString &href);
+
+    // Метка папки-ссылки: свой канал attachdir://<id строки>.
+    // Отдельно от attach://: перенос и MIME файловых меток папок
+    // не касаются, клик открывает каталог в файловом менеджере
+    static bool isFolderLinkHref(const QString &href);
+    static QString folderRowIdFromHref(const QString &href);
 
     // Имя MIME для переноса меток аттачей между заметками.
     // Пары href-абсолютный путь, как голосовой MIME у баблов

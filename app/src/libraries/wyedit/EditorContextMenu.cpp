@@ -48,6 +48,7 @@ void EditorContextMenu::setupActions(void)
  actionRenameVoice=new QAction(this);
 actionMoveVoice=new QAction(this);
 actionMoveAttach=new QAction(this);
+actionRemoveFolderBadge=new QAction(this);
  actionShowNoteInFolder=new QAction(this);
  actionShowNoteInFolder->setObjectName(QStringLiteral("editor_showNoteInFolder"));
  actionDeleteVoice=new QAction(this);
@@ -101,6 +102,8 @@ void EditorContextMenu::setupShortcuts(void)
     AppContext::instance().shortcutManager()->initAction("editor-renameVoice", actionRenameVoice );
     AppContext::instance().shortcutManager()->initAction("editor-moveVoice", actionMoveVoice );
     AppContext::instance().shortcutManager()->initAction("editor-moveAttach", actionMoveAttach );
+
+    actionRemoveFolderBadge->setText(tr("Remove folder link...")); // Убрать метку папки, без шортката
     AppContext::instance().shortcutManager()->initAction("editor-showNoteInFolder", actionShowNoteInFolder );
     AppContext::instance().shortcutManager()->initAction("editor-deleteVoice", actionDeleteVoice );
 
@@ -159,6 +162,7 @@ void EditorContextMenu::update(void)
         setRenameVoice( voiceLink );
         setMoveVoice( voiceLink );
         setMoveAttach( ReferenceFormatter::isAttachHref(href) );
+        setRemoveFolderBadge( ReferenceFormatter::isFolderLinkHref(href) );
         setDeleteVoice( voiceLink );
         setEditReference( true );
     } else {
@@ -171,6 +175,8 @@ void EditorContextMenu::update(void)
         setRenameVoice( voiceBubble );
         setMoveVoice( voiceBubble );
         setMoveAttach( false );
+        setMoveAttach( false );
+        setRemoveFolderBadge( false );
         setDeleteVoice( voiceBubble );
         setEditReference( false );
     }
@@ -273,6 +279,12 @@ void EditorContextMenu::setMoveAttach(bool flag)
   actionMoveAttach->setEnabled(flag);
 }
 
+void EditorContextMenu::setRemoveFolderBadge(bool flag)
+{
+  actionRemoveFolderBadge->setVisible(flag);
+  actionRemoveFolderBadge->setEnabled(flag);
+}
+
 void EditorContextMenu::setDeleteVoice(bool flag)
 {
   actionDeleteVoice->setVisible(flag);
@@ -356,6 +368,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionRenameVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuRenameVoice);
     connect(actionMoveVoice,          &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveVoice);
     connect(actionMoveAttach,         &QAction::triggered, this, &EditorContextMenu::onActionContextMenuMoveAttach);
+    connect(actionRemoveFolderBadge,  &QAction::triggered, this, &EditorContextMenu::onActionContextMenuRemoveFolderBadge);
     connect(actionShowNoteInFolder,   &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowNoteInFolder);
     connect(actionDeleteVoice,        &QAction::triggered, this, &EditorContextMenu::onActionContextMenuDeleteVoice);
     connect(actionEditReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditReference);
@@ -402,6 +415,7 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionRenameVoice);
     this->addAction(actionMoveVoice);
     this->addAction(actionMoveAttach);
+    this->addAction(actionRemoveFolderBadge);
     this->addAction(actionShowNoteInFolder);
     this->addAction(actionDeleteVoice);
     this->addAction(actionEditReference);
@@ -536,6 +550,14 @@ void EditorContextMenu::onActionContextMenuMoveAttach()
     update();
     if(actionMoveAttach->isEnabled()) {
         emit contextMenuMoveAttach();
+    }
+}
+
+void EditorContextMenu::onActionContextMenuRemoveFolderBadge()
+{
+    update();
+    if(actionRemoveFolderBadge->isEnabled()) {
+        emit contextMenuRemoveFolderBadge();
     }
 }
 

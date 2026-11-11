@@ -34,6 +34,8 @@ private slots:
 
   void onClickedConvertRecordDirs();
 
+  void onClickedConvertFolderLinks();
+
 protected:
 
   void setColorForButtonHighlightColor(QColor iColor);
@@ -42,6 +44,11 @@ protected:
   // Возвращает число сконвертированных файлов, через счетчики сообщает
   // о ненайденных на диске, пропущенных зашифрованных и ошибках
   int convertAllAttachesToMode(int targetMode, int &notFoundCount, int &encryptedCount, QStringList &errors);
+
+  // Приведение всех ссылок на папки и файлы к заданному виду пути.
+  // Возвращает число сконвертированных строк, через счетчики сообщает
+  // о ненайденных на диске и пропущенных зашифрованных
+  int convertAllFolderLinksToMode(int targetMode, int &notFoundCount, int &encryptedCount);
 
   // Галка разрешения/запрещения подсветки записи с прикрепленными файлами
   QCheckBox *enableRecordWithAttachHighlight;
@@ -73,12 +80,14 @@ protected:
   QPushButton *convertRecordDirsButton;
   QLabel *recordDirsWarning;
 
-  // Ссылки на папки: пояснение и выбор абсолютного/относительного
-  // пути. Режим действует только на новые линки, старые не трогаются
+  // Ссылки на папки: пояснение, выбор абсолютного/относительного
+  // пути или спрашивания, кнопка конвертации. Режим действует только
+  // на новые линки, старые не трогаются
   QGroupBox *folderLinksBox;
   QLabel *folderLinksInfo;
   QLabel *attachLinkModeLabel;
   MtComboBox *attachLinkModeCombo;
+  QPushButton *convertFolderLinksButton;
 };
 
 

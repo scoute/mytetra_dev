@@ -651,6 +651,24 @@ QString Attach::resolveStoredLink(const QString &recordDir,
 
     return QDir::cleanPath(recordDir+QStringLiteral("/")+storedLink);
 }
+// Один и тот же объект ФС: канонический путь, фолбэк на чищеный
+// абсолютный если цели нет на диске (протухшие ссылки сравниваются
+// как строки). Пустые пути никогда не равны
+bool Attach::sameFsTarget(const QString &pathA,
+                          const QString &pathB)
+{
+    if(pathA.isEmpty() || pathB.isEmpty())
+        return false;
+
+    const QString canonicalA=QFileInfo(pathA).canonicalFilePath();
+    const QString canonicalB=QFileInfo(pathB).canonicalFilePath();
+
+    if(!canonicalA.isEmpty() && !canonicalB.isEmpty())
+        return QDir::cleanPath(canonicalA)==QDir::cleanPath(canonicalB);
+
+    return QDir::cleanPath(QDir(pathA).absolutePath())==
+           QDir::cleanPath(QDir(pathB).absolutePath());
+}
 // Все возможные имена файла на диске для данного вложения
 // (все три схемы без дублей). Порядок: системное, гибридное, оригинальное.
 // Используется поиском существующего файла и конвертацией между схемами

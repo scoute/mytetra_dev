@@ -95,6 +95,20 @@ protected:
   // ушел бы в чужую заметку
   bool isMetaEditorSameNote(void);
 
+  // Общая обработка добавляемой папки: поиск дубля по каноническому
+  // пути, вопрос переключения режима, добавление новой строки.
+  // wantedMode — резолвленный режим (не Ask). Возвращает id строки:
+  // новой, существующей (дубль/переключение) или пусто при отказе
+  // движка. addedNew=true только если строка создана сейчас.
+  // Чистый дубль: пропуск + сообщение, метку восстанавливает вызыватель
+  QString processFolderLink(const QString &absolutePath, int wantedMode, bool *addedNew);
+
+  // Папка уже прикреплена другим режимом: спросить переключить
+  // на новый или оставить. Переключение правит поле link строки
+  // (rowId не меняется — метки остаются валидны), дерево сохраняется.
+  // Возвращает true если переключили
+  bool askAndSwitchFolderLink(const QString &folderName, int oldMode, int newMode);
+
   AttachTableView *view;
   AttachTableModel *model;
 

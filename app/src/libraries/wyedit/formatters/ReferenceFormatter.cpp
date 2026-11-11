@@ -505,6 +505,16 @@ QString ReferenceFormatter::folderRowIdFromHref(const QString &href)
 }
 
 
+// Канал метки папки по id строки
+QString ReferenceFormatter::folderHrefFromRowId(const QString &rowId)
+{
+    if(rowId.isEmpty())
+        return QString();
+
+    return QStringLiteral("attachdir://")+rowId;
+}
+
+
 // Метка папки-ссылки: [DIR] видимое имя.
 // Только ASCII как у файловых меток: эмодзи в шрифте
 // заметки может отсутствовать и рисоваться tofu-квадратом
@@ -514,10 +524,9 @@ void ReferenceFormatter::insertFolderBadge(const QString &rowId,
     if(rowId.isEmpty() || folderName.isEmpty())
         return;
 
-    const QString href=QStringLiteral("attachdir://")+rowId;
     const QString title=QStringLiteral("[DIR] ")+folderName;
 
-    insertTitledLink(href, title);
+    insertTitledLink(folderHrefFromRowId(rowId), title);
 }
 
 

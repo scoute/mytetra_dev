@@ -69,6 +69,12 @@ public:
   // (lite-объект без записи) — как есть
   static QString resolveStoredLink(const QString &recordDir,
                                    const QString &storedLink);
+
+  // Один и тот же объект ФС: сравнение по каноническому пути
+  // (съедает .., симлинки, регистр букв диска), фолбэк на чищеный
+  // абсолютный если цели нет на диске. Чистая файловая логика
+  static bool sameFsTarget(const QString &pathA,
+                           const QString &pathB);
   QString getInnerFileName() const;
   QString getExistingInnerFileName() const;
   QString getFullInnerFileName() const;

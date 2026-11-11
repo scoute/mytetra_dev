@@ -2911,7 +2911,8 @@ void Editor::onFileUrlsDropped(const QStringList &files)
   foreach(const QString &filePath, files)
   {
     // Папка: строкой-ссылкой в таблицу плюс кликабельной меткой
-    // в позицию дропа. Отказ/отмена добавления — метки нет
+    // в позицию дропа. Отказ/отмена добавления — метки нет.
+    // Дубль с живой меткой: вторая не вставляется
     if(QFileInfo(filePath).isDir())
     {
       QString rowId;
@@ -2920,7 +2921,9 @@ void Editor::onFileUrlsDropped(const QStringList &files)
       if(!attachController->addSingleFolderAsLink(filePath, rowId, displayName))
         continue;
 
-      referenceFormatter->insertFolderBadge(rowId, displayName);
+      if(!referenceFormatter->hasBadgeHref(ReferenceFormatter::folderHrefFromRowId(rowId)))
+        referenceFormatter->insertFolderBadge(rowId, displayName);
+
       continue;
     }
 

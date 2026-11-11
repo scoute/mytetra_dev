@@ -16,7 +16,7 @@
 #include <QScrollBar>
 #include <QSettings>
 #include <QTemporaryDir>
-#include <QFileInfo>
+#include <QFileInfo>\n#include <QFontMetrics>
 
 #include "views/printPreview/PrintPreview.h"
 #include "views/printPreview/PreviewView.h"
@@ -59,6 +59,8 @@ private slots:
     void footerPositionFollowsSetting(void);
 
     void printDocumentSmokeTest(void);
+
+    void footerFontStaysSmallOnPrinter(void);
 
 private:
 
@@ -279,6 +281,10 @@ void TestPrintMargins::footerPositionFollowsSetting(void)
     QVERIFY2(leftX >= 0, "left footer number must be rendered");
     QVERIFY2(leftX < 400.0 / 3.0,
              "left number must sit in left third");
+    // Отступ от края бумаги минимум 1 см (=28.35 pt): цифра не должна
+    // липнуть к обрезу. Толерантность 5px на глифные подшипники шрифта
+    QVERIFY2(leftX >= 28.35 - 5.0,
+             "left number must keep 1cm inset from paper edge");
 
     const double centerX = footerCenterX(Qt::AlignHCenter);
     QVERIFY2(centerX >= 0, "center footer number must be rendered");
@@ -289,6 +295,8 @@ void TestPrintMargins::footerPositionFollowsSetting(void)
     QVERIFY2(rightX >= 0, "right footer number must be rendered");
     QVERIFY2(rightX > 2.0 * 400.0 / 3.0,
              "right number must sit in right third");
+    QVERIFY2(rightX <= 400.0 - 28.35 + 5.0,
+             "right number must keep 1cm inset from paper edge");
 }
 
 void TestPrintMargins::printDocumentSmokeTest(void)
@@ -316,6 +324,24 @@ void TestPrintMargins::printDocumentSmokeTest(void)
 
     QVERIFY2(QFileInfo(outPath).isFile(), "smoke pdf must be created");
     QVERIFY2(QFileInfo(outPath).size() > 0, "smoke pdf must not be empty");
+}
+
+void TestPrintMargins::footerFontStaysSmallOnPrinter(void)
+{
+    // Регрессия: номер в PDF уходил кеглем 150 вместо ~12 —
+    // пункты на предмасштабированном живописце печати удваивались
+    // (device-DPI плюс масштаб k). Тот же хелпер что зовет печать,
+    // на реальном устройстве QPrinter: высота шрифта обязана остаться
+    // в пределах подвала (<=24px), а не в сотнях пикселей высокого DPI
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setOutputFileName(m_tmp.filePath(QStringLiteral("metrics.pdf")));
+
+    const QFont f = PreviewView::footerFont(QFont());
+    const int h = QFontMetrics(f, &printer).height();
+
+    QVERIFY2(h > 0, "footer font metrics must resolve on printer");
+    QVERIFY2(h <= 24, "footer font must stay small on high-dpi printer device");
 }
 
 QTEST_MAIN(TestPrintMargins)

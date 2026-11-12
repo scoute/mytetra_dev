@@ -3,6 +3,7 @@
 #include <QPalette>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QPen>
 #include <QColor>
 #include <QDebug>
 #include <QAbstractTextDocumentLayout>
@@ -52,8 +53,17 @@ void PreviewView::zoomOut()
 
 void PreviewView::zoomReset()
 {
-    // Обычный размер: масштаб 1.0, как при открытии предпросмотра
-    scale = 1.0;
+    // Настоящие 100%: пункт документа равен пункту на экране.
+    // Масштаб 1.0 давал 72dpi-картинку: на 96dpi-экране лист выходил
+    // на четверть меньше бумажного (на 24" FullHD ровно -21.6%).
+    // Берется физический DPI экрана (мм-точность), запасной —
+    // логический (платформа без EDID, offscreen)
+    qreal dpi = viewport()->physicalDpiX();
+
+    if(dpi <= 0)
+        dpi = viewport()->logicalDpiX();
+
+    scale = dpi/72.0;
     resizeEvent(0);
     viewport()->update();
 }
@@ -194,15 +204,27 @@ void PreviewView::paintPage(QPainter *painter, int page)
 
     QColor col(Qt::black);
 
-    painter->setPen(col);
+    // Рамка и тени — косметическим пером: ширина всегда ровно
+    // 1 device-пиксель независимо от зума. Обычное перо шириной 1
+    // в единицах раскладки на масштабе <1 давало субпиксельную линию,
+    // которая местами пропадала целиком в зависимости от дробного
+    // смещения при прокрутке (см. 593)
+    QPen framePen(col);
+    framePen.setCosmetic(true);
+
+    painter->setPen(framePen);
     painter->setBrush(Qt::white);
     painter->drawRect(QRectF(QPointF(0, 0), pgSize));
     painter->setBrush(Qt::NoBrush);
 
     col = col.lighter();
+    framePen.setColor(col);
+    painter->setPen(framePen);
     painter->drawLine(QLineF(pgSize.width(), 1, pgSize.width(), pgSize.height() - 1));
 
     col = col.lighter();
+    framePen.setColor(col);
+    painter->setPen(framePen);
     painter->drawLine(QLineF(pgSize.width(), 2, pgSize.width(), pgSize.height() - 2));
 
     QRectF docRect(QPointF(0, page * pgSize.height()), pgSize);
@@ -300,8 +322,20 @@ int PreviewView::pageAtOffset(int value) const
         return 0;
 
     // Страница i занимает [i*step, (i+1)*step): верх вьюпорта
-    // на значении value показывает страницу с полом
-    return qBound(0, int(value/step), qMax(0, doc->pageCount()-1));
+    // на значении value показывает страницу с полом.
+    // Деление дает приближение, границы сверяются с pageOffset
+    // (там qRound): на дробном масштабе усечение int() промахивалось
+    // на страницу при точном попадании в начало (см. 593)
+    const int pages=doc->pageCount();
+    int page=qBound(0, int(value/step), qMax(0, pages-1));
+
+    while(page+1<pages && value>=pageOffset(page+1))
+        ++page;
+
+    while(page>0 && value<pageOffset(page))
+        --page;
+
+    return page;
 }
 
 

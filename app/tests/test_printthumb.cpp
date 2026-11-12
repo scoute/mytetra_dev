@@ -38,11 +38,19 @@ void TestPrintThumb::thumbsAndNav(void)
     QApplication::processEvents();
 
     // Первый показ сам вписывает страницу (автофит, см. 585):
-    // дальше тест пляшет от гарантированной единицы
+    // дальше тест пляшет от гарантированного автофита
     QVERIFY2(!qFuzzyCompare(view.scale, 1.0), "first show must auto-fit");
     view.zoomReset();
     QApplication::processEvents();
-    QVERIFY2(qFuzzyCompare(view.scale, 1.0), "reset must restore 1.0");
+
+    // Сброс — настоящий физический 100% (DPI экрана / 72),
+    // а не единица: лист должен совпадать с бумагой по миллиметрам
+    qreal dpi = view.viewport()->physicalDpiX();
+
+    if(dpi <= 0)
+        dpi = view.viewport()->logicalDpiX();
+
+    QVERIFY2(qFuzzyCompare(view.scale, dpi/72.0), "reset must restore true 100%");
 
     // Математика страниц туда-обратно
     QCOMPARE(view.pageAtOffset(view.pageOffset(2)), 2);

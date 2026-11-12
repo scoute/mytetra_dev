@@ -149,13 +149,9 @@ void TestConf::uiSection(void)
     AppContext::instance().appConfig()->uiSection()->set_printFooterEnabled(false);
     QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled(), false);
     QCOMPARE(m_raw->value("printFooterEnabled").toBool(), false);
-    // Тихий автосейв полей по умолчанию выключен, дефолтные поля 20/5/5/5
-    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printSaveMargins(), false);
+    // Поля страницы: дефолтные 20/5/5/5, автосейв безусловный
     QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printMargins(),
              QMarginsF(20.0, 5.0, 5.0, 5.0));
-    AppContext::instance().appConfig()->uiSection()->set_printSaveMargins(true);
-    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printSaveMargins(), true);
-    QCOMPARE(m_raw->value("printSaveMargins").toBool(), true);
     AppContext::instance().appConfig()->uiSection()->set_printMargins(QMarginsF(10.0, 11.0, 12.0, 13.0));
     QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printMargins(),
              QMarginsF(10.0, 11.0, 12.0, 13.0));

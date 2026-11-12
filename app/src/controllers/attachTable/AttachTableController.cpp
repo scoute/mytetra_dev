@@ -208,7 +208,7 @@ void AttachTableController::addSmart(QString attachType)
   if(files.size()==0)
     return; // Если ни один файл не выбран
 
-  addFileList(attachType, files);
+  addFileList(attachType, files, AppConfig::AttachLinkAsk);
 }
 
 // Файлы из drag'n'drop: тот же движок что у пикера, но без диалога.
@@ -225,7 +225,28 @@ void AttachTableController::addDroppedFiles(const QStringList &files)
     return;
   }
 
-  addFileList("file", files);
+  // При настройке "всегда спрашивать" дроп спрашивает меню:
+  // копией в базу или ссылкой (разово, только этот дроп).
+  // Иначе файлы молча копируются как раньше
+  if(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode()==AppConfig::AttachLinkAsk)
+  {
+    bool addAsCopy=true;
+    const int dropMode=requestDropFileMode(&addAsCopy);
+
+    // Отмена: дроп отменяется целиком
+    if(dropMode!=AppConfig::AttachLinkAbsolute &&
+       dropMode!=AppConfig::AttachLinkRelative &&
+       !addAsCopy)
+      return;
+
+    if(!addAsCopy)
+    {
+      addFileList(QStringLiteral("link"), files, dropMode);
+      return;
+    }
+  }
+
+  addFileList(QStringLiteral("file"), files, AppConfig::AttachLinkAsk);
 }
 
 // Один файл из дропа в текст заметки: добавляет как аттач
@@ -409,6 +430,58 @@ int AttachTableController::requestLinkMode(bool isFolder)
     AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(mode);
 
   return mode;
+}
+
+
+// Меню для перетаскиваемых файлов при настройке "всегда спрашивать":
+// копией в базу или ссылкой (разовый выбор, только этот дроп).
+// Возвращает AttachLinkAbsolute/Relative, *addAsCopy=true для копии,
+// -1 при отмене. Выбор "разовый": настройка не пишется, следующий
+// дроп спросит снова. Папки в том же дропе идут выбранным ссылочным
+// режимом без второго диалога (см. addFileList с пресетом)
+int AttachTableController::requestDropFileMode(bool *addAsCopy)
+{
+  if(addAsCopy!=nullptr)
+    *addAsCopy=false;
+
+  QDialog dialog(currentView());
+  dialog.setWindowTitle(tr("Attach dropped files"));
+
+  QLabel *infoLabel=new QLabel(&dialog);
+  infoLabel->setWordWrap(true);
+  infoLabel->setText(tr("Dropped files can be copied into the database or attached as links without copying. Relative links survive database relocation. Folders are always attached as links."));
+
+  QRadioButton *copyOnce=new QRadioButton(tr("Copy into database"), &dialog);
+  QRadioButton *onceRelative=new QRadioButton(tr("Relative link"), &dialog);
+  QRadioButton *onceAbsolute=new QRadioButton(tr("Absolute link"), &dialog);
+  copyOnce->setChecked(true);
+
+  QDialogButtonBox *buttons=new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+  connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+  connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+  QVBoxLayout *layout=new QVBoxLayout(&dialog);
+  layout->addWidget(infoLabel);
+  layout->addWidget(copyOnce);
+  layout->addWidget(onceRelative);
+  layout->addWidget(onceAbsolute);
+  layout->addWidget(buttons);
+
+  if(dialog.exec()!=QDialog::Accepted)
+    return -1;
+
+  if(copyOnce->isChecked())
+  {
+    if(addAsCopy!=nullptr)
+      *addAsCopy=true;
+
+    return AppConfig::AttachLinkAsk;
+  }
+
+  if(onceAbsolute->isChecked())
+    return AppConfig::AttachLinkAbsolute;
+
+  return AppConfig::AttachLinkRelative;
 }
 
 
@@ -730,28 +803,28 @@ bool AttachTableController::removeAttachByInnerName(const QString &innerName)
   return false;
 }
 
-void AttachTableController::addFileList(QString attachType, const QStringList &files)
+void AttachTableController::addFileList(QString attachType, const QStringList &files, int presetLinkMode)
 {
   // Перебираются файлы (из диалога или из drag'n'drop)
   int sucessLoadCount=0;
 
-  // Режимы ссылок пачки: при "всегда спрашивать" диалог один
-  // на все папки и отдельно один на все файлы-ссылки.
+  // Режимы ссылок пачки резолвятся лениво, по первому вхождению вида:
+  // диалог "один на все папки" — только если в пачке есть папки,
+  // диалог "один на все файлы-ссылки" — только если они есть
+  // (и пачка вообще ссылочная). Раньше оба спрашивались upfront:
+  // кнопка Add Link для одних файлов показывала чужой диалог
+  // про папки, а выбор "всегда" в нем молча переключал режим
+  // и для файлов (см. 599). Предустановленный режим дропа
+  // (presetLinkMode, см. 600) вопросов не задает вообще.
   // Отмена пропускает свой вид, остальное идет как обычно
-  int dirMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
-
-  if(dirMode==AppConfig::AttachLinkAsk)
-    dirMode=requestLinkMode(true);
-
-  int fileLinkMode=AppConfig::AttachLinkAsk;
-
-  if(attachType==QStringLiteral("link"))
-  {
-    fileLinkMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
-
-    if(fileLinkMode==AppConfig::AttachLinkAsk)
-      fileLinkMode=requestLinkMode(false);
-  }
+  const int storedLinkMode=AppContext::instance().appConfig()->storageSection()->get_attachLinkMode();
+  const bool hasPreset=(presetLinkMode==AppConfig::AttachLinkAbsolute ||
+                        presetLinkMode==AppConfig::AttachLinkRelative);
+  int dirMode=hasPreset ? presetLinkMode : storedLinkMode;
+  bool dirModeResolved=hasPreset || (storedLinkMode!=AppConfig::AttachLinkAsk);
+  int fileLinkMode=hasPreset ? presetLinkMode : storedLinkMode;
+  bool fileLinkModeResolved=hasPreset || (storedLinkMode!=AppConfig::AttachLinkAsk ||
+                             attachType!=QStringLiteral("link"));
 
   // Добавленные папки для меток в текст: пары id строки и имени
   QList<QPair<QString, QString>> addedFolders;
@@ -774,6 +847,13 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
     // пропуск, переключение режима или новая строка
     if(currFileInfo.isDir())
     {
+        // Первый каталог пачки при Ask: спросить один раз на все папки
+        if(!dirModeResolved)
+        {
+          dirMode=requestLinkMode(true);
+          dirModeResolved=true;
+        }
+
         // Диалог отменен: папки пропускаются
         if(dirMode!=AppConfig::AttachLinkAbsolute &&
            dirMode!=AppConfig::AttachLinkRelative)
@@ -819,6 +899,13 @@ void AttachTableController::addFileList(QString attachType, const QStringList &f
     // переключение режима или новая строка
     if(attachType==QStringLiteral("link"))
     {
+      // Первый файл-ссылка пачки при Ask: спросить один раз на все файлы
+      if(!fileLinkModeResolved)
+      {
+        fileLinkMode=requestLinkMode(false);
+        fileLinkModeResolved=true;
+      }
+
       // Диалог отменен: файлы-ссылки пропускаются
       if(fileLinkMode!=AppConfig::AttachLinkAbsolute &&
          fileLinkMode!=AppConfig::AttachLinkRelative)

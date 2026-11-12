@@ -77,7 +77,10 @@ public slots:
 protected:
 
   void addSmart(QString attachType);
-  void addFileList(QString attachType, const QStringList &files);
+  // presetLinkMode: предустановленный режим ссылок для всей пачки
+  // (выбор дропа, см. requestDropFileMode). AttachLinkAsk означает
+  // "резолвить как обычно" — настройка или диалог по первому вхождению
+  void addFileList(QString attachType, const QStringList &files, int presetLinkMode);
   bool addAttach(QString attachType, QString currFullFileName, QString currShortFileName, const QString &source=QString());
   void saveState();
   QStringList selectFilesForAdding(QString attachType);
@@ -90,6 +93,14 @@ protected:
   // диалога. Возвращает AttachLinkAbsolute/Relative,
   // при отмене диалога -1
   int requestLinkMode(bool isFolder);
+
+  // Режим для перетаскиваемых файлов при настройке "всегда спрашивать":
+  // копией в базу или ссылкой (разовый выбор, только этот дроп).
+  // Возвращает AttachLinkAbsolute/Relative, *addAsCopy=true для копии,
+  // -1 при отмене. Папки в том же дропе идут выбранным ссылочным
+  // режимом без второго диалога; при копии файлов папки спрашивают
+  // обычным диалогом. Без Ask не вызывается
+  int requestDropFileMode(bool *addAsCopy);
 
   // Открытая в редакторе заметка — та же что таблица аттачей.
   // Метки в текст трогаются только при совпадении, иначе дроп

@@ -63,6 +63,8 @@ private slots:
     void footerFontStaysSmallOnPrinter(void);
     void defaultMargins(void);
     void pdfExportPrinterSetup(void);
+    void zoomResetTrueSize(void);
+    void pageBorderStaysVisible(void);
 
 private:
 
@@ -401,6 +403,96 @@ void TestPrintMargins::pdfExportPrinterSetup(void)
     QCOMPARE(dt, st);
     QCOMPARE(dr, sr);
     QCOMPARE(db, sb);
+}
+
+void TestPrintMargins::zoomResetTrueSize(void)
+{
+    // Кнопка 100%: физический размер листа, а не масштаб 1.0.
+    // Масштаб равен DPI экрана / 72 (физический, запасной логический)
+    QTextDocument doc;
+    doc.setPageSize(QSizeF(400, 500));
+
+    PreviewView view(&doc);
+    view.show();
+    QApplication::processEvents();
+    QApplication::processEvents();
+
+    view.zoomIn();
+    view.zoomReset();
+
+    qreal dpi = view.viewport()->physicalDpiX();
+
+    if(dpi <= 0)
+        dpi = view.viewport()->logicalDpiX();
+
+    QVERIFY2(qAbs(view.scale - dpi/72.0) < 1e-9,
+             "100% must be real-size scale, not 1.0");
+}
+
+void TestPrintMargins::pageBorderStaysVisible(void)
+{
+    // Рамка страницы — косметическое перо: видна целиком на любом
+    // масштабе. Раньше перо 1px в единицах раскладки на дробном
+    // масштабе давало субпиксельную линию, пропадавшую местами
+    // в зависимости от смещения при прокрутке (см. 593)
+    QTextDocument doc;
+    doc.setHtml(QStringLiteral("<p>Hi</p>"));
+    doc.setPageSize(QSizeF(400, 500));
+
+    PreviewView view(&doc);
+    view.resize(803, 317);
+    view.show();
+    QApplication::processEvents();
+    QApplication::processEvents();
+    view.zoomFit();
+
+    // Мелкий масштаб: линия 1px в единицах раскладки растворяется
+    // (старый код), косметическое перо держит 1 device-пиксель всегда
+    while(view.scale > 0.25)
+        view.zoomOut();
+
+    QApplication::processEvents();
+
+    QImage shot = view.viewport()->grab().toImage().convertToFormat(QImage::Format_ARGB32);
+
+    // Строка заведомо внутри страницы по вертикали
+    const int yMid = 30 + qRound(500.0 * view.scale / 2.0);
+
+    // Левый край страницы: первый светлый пиксель в этой строке
+    int left = -1;
+
+    for(int x = 0; x < shot.width(); ++x)
+        if(qGray(shot.pixel(x, yMid)) > 200)
+        {
+            left = x;
+            break;
+        }
+
+    QVERIFY2(left >= 0, "page must be visible");
+
+    // Правая кромка ±2px: темные пиксели рамки по всей высоте
+    const int right = left + qRound(400.0 * view.scale);
+    const int top = 30;
+    const int bottom = qMin(shot.height() - 1, top + qRound(500.0 * view.scale));
+
+    int darkRows = 0;
+    int rows = 0;
+
+    for(int y = top; y < bottom; y += 5)
+    {
+        ++rows;
+
+        for(int x = qMax(0, right - 2); x <= qMin(shot.width() - 1, right + 2); ++x)
+            if(qGray(shot.pixel(x, y)) < 128)
+            {
+                ++darkRows;
+                break;
+            }
+    }
+
+    QVERIFY2(rows > 0, "page must span rows");
+    QVERIFY2(darkRows * 10 >= rows * 8,
+             "page right border must be visible along height");
 }
 
 QTEST_MAIN(TestPrintMargins)

@@ -8,6 +8,7 @@
 #include <QTextDocument>
 #include <QTextFrame>
 #include <QTextTable>
+#include <QTextCursor>
 #include <QAbstractTextDocumentLayout>
 #include <functional>
 #include <QPrinter>
@@ -73,6 +74,8 @@ private slots:
     void fixedTableWidthClamped(void);
 
     void tablesAlignLeftAtRoot(void);
+
+    void frameDrawnOverWideContent(void);
 
     void savedPageSetupApplies(void);
 
@@ -714,6 +717,70 @@ void TestPrintMargins::savedPageSetupApplies(void)
 
     fresh.getPageMargins(&left, &top, &right, &bottom, QPrinter::Millimeter);
     QCOMPARE(QMarginsF(left, top, right, bottom), QMarginsF(20.0, 5.0, 5.0, 5.0));
+}
+
+void TestPrintMargins::frameDrawnOverWideContent(void)
+{
+    // Широкий непрозрачный контент (вставленная из веба таблица шире
+    // страницы с непрозрачным фоном) своим фоном затирал кромку:
+    // рамка рисовалась первой, контент поверх. Разрыв стабильный,
+    // от скролла и зума не зависит, только на страницах с таким
+    // контентом (см. 597). Теперь фон первым, кромка поверх всего:
+    // глубоко черные пиксели кромки обязаны быть по всей видимой
+    // высоте. Порог глубокого черного: затертая кромка сереет
+    // и детектором <128 не ловится, целая косметическая линия дает
+    // полностью черные пиксели
+    QTextDocument doc;
+    QString html = QStringLiteral("<table width=\"600\" align=\"center\" border=\"1\" bgcolor=\"#ffffff\">");
+
+    for(int row = 0; row < 20; ++row)
+        html += QStringLiteral("<tr><td>AAA</td><td>BBB</td></tr>");
+
+    html += QStringLiteral("</table>");
+    doc.setHtml(html);
+    doc.setPageSize(QSizeF(400, 500));
+
+    PreviewView view(&doc);
+    view.resize(803, 317);
+    view.show();
+    QApplication::processEvents();
+    QApplication::processEvents();
+
+    // Живой масштаб как на экране (а не авто-zoomFit): стирание кромки
+    // наполовину пикселя видно только при реальном округлении,
+    // при мелком fit-масштабе кромка сохраняется случайно
+    view.zoomReset();
+    QApplication::processEvents();
+
+    QImage shot = view.viewport()->grab().toImage().convertToFormat(QImage::Format_ARGB32);
+
+    int left = -1;
+
+    for(int y = 10; y < 60 && left < 0; ++y)
+        for(int x = 0; x < shot.width(); ++x)
+            if(qGray(shot.pixel(x, y)) > 200)
+            {
+                left = x;
+                break;
+            }
+
+    QVERIFY2(left >= 0, "page must be visible");
+
+    const int right = left + qRound(400.0 * view.scale);
+    int darkRows = 0;
+
+    for(int y = 0; y < shot.height(); ++y)
+    {
+        for(int x = qMax(0, right - 2); x <= qMin(shot.width() - 1, right + 2); ++x)
+            if(qGray(shot.pixel(x, y)) < 64)
+            {
+                ++darkRows;
+                break;
+            }
+    }
+
+    QVERIFY2(darkRows > 200,
+             "page border must survive opaque wide content");
 }
 
 QTEST_MAIN(TestPrintMargins)

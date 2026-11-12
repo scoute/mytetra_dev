@@ -2929,9 +2929,24 @@ void Editor::onFileUrlsDropped(const QStringList &files)
 
     QString innerFileName;
     QString displayFileName;
+    bool addedAsLink=false;
 
-    if(!attachController->addSingleFileAsAttach(filePath, innerFileName, displayFileName))
+    if(!attachController->addTextDropFile(filePath, innerFileName, displayFileName, &addedAsLink))
       continue;
+
+    // Строка-ссылка: видимая кликабельная метка file:// в позицию
+    // дропа (повторный дроп того же файла метку не дублирует).
+    // В отличие от метки-копии инертна для движка аттачей
+    if(addedAsLink)
+    {
+        const QString absPath=QFileInfo(filePath).absoluteFilePath();
+        const QString fileUrl=QUrl::fromLocalFile(absPath).toString();
+
+        if(!referenceFormatter->hasBadgeHref(fileUrl))
+            referenceFormatter->insertFileLinkMark(absPath, QFileInfo(filePath).fileName());
+
+        continue;
+    }
 
     referenceFormatter->insertAttachBadge(innerFileName, displayFileName);
   }

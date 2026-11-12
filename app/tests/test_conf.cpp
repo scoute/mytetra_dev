@@ -113,6 +113,13 @@ void TestConf::storageSection(void)
     // Мусор в ключе покрывается дефолтом спрашивать
     AppContext::instance().appConfig()->storageSection()->set_attachLinkMode(99);
     QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode(), AppConfig::AttachLinkAsk);
+    // Дефолт выбора дропа — копия, мусор покрывается копией
+    QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachDropDefault(), 0);
+    AppContext::instance().appConfig()->storageSection()->set_attachDropDefault(1);
+    QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachDropDefault(), 1);
+    QCOMPARE(m_raw->value("attachDropDefault").toInt(), 1);
+    AppContext::instance().appConfig()->storageSection()->set_attachDropDefault(99);
+    QCOMPARE(AppContext::instance().appConfig()->storageSection()->get_attachDropDefault(), 0);
 }
 
 void TestConf::folderBadgeHref(void)

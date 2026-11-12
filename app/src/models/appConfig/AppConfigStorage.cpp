@@ -289,6 +289,29 @@ void AppConfigStorage::set_attachLinkMode(int mode)
     m_conf->setValue("attachLinkMode", mode);
 }
 
+// Последний выбор меню дропа файлов. Unversioned-ключ как attachLinkMode:
+// отсутствующий ключ и мусор - копия
+int AppConfigStorage::get_attachDropDefault(void)
+{
+    if(m_conf->contains("attachDropDefault"))
+    {
+        const int mode=m_conf->value("attachDropDefault", 0).toInt();
+
+        if(mode>=0 && mode<=2)
+            return mode;
+    }
+
+    return 0;
+}
+
+void AppConfigStorage::set_attachDropDefault(int mode)
+{
+    if(mode<0 || mode>2)
+        mode=0;
+
+    m_conf->setValue("attachDropDefault", mode);
+}
+
 
 // Режим имен каталогов записей на диске. Unversioned-ключ как attachNameMode:
 // отсутствующий ключ - системные имена как в обычной MyTetra

@@ -64,6 +64,18 @@ public slots:
                              QString &rowId,
                              QString &displayName);
 
+  // Файл из дропа в текст заметки: при настройке "всегда спрашивать"
+  // показывает меню дропа (копия/ссылка, см. requestDropFileMode),
+  // иначе молча копирует как раньше. Возвращает true если файл
+  // добавлен (копией или ссылкой). addedAsLink=true если строкой-ссылкой:
+  // метку-копию в текст не вставлять, вызыватель ставит метку file://
+  // сам (см. Editor). Вставка меток из буфера идет мимо
+  // (там всегда копии, см. onAttachBadgesPasted)
+  bool addTextDropFile(const QString &filePath,
+                       QString &innerFileName,
+                       QString &displayFileName,
+                       bool *addedAsLink);
+
   // Удаление аттача по id строки для движка меток папок:
   // строка удаляется, дерево сохраняется, иконка/статистика
   // обновляются. Пустой id или нет строки: false

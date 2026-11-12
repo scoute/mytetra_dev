@@ -1754,8 +1754,8 @@ void FindScreen::ensureCompleter(void)
 }
 
 
-// Прокачка событий во время долгой сборки: крутилке minimumDuration
-// нужно успевать показаться, иначе вместо нее висит мертвое окно.
+// Прокачка событий во время долгой сборки: прогрессу minimumDuration
+// нужно успеть показаться, иначе вместо него висит мертвое окно.
 // Только когда главное окно уже показано: на старте (восстановление
 // состояния до первого show()) прокачка из недостроенного UI
 // роняет дерево виджетов - там свой стартовый прогресс,
@@ -1770,8 +1770,9 @@ void FindScreen::pumpWhileBuilding(void)
 // Пересборка словаря подсказок по всем значениям полей,
 // отмеченных галочками. Полнотекстовое поле Text не участвует:
 // дополнять среди всего текста заметок бессмысленно.
-// Долгая операция на 100k+: идет под крутилкой, которая
-// показывается только если превышен 1с (minimumDuration)
+// Долгая операция на 100k+: идет под немодальным детерминированным
+// прогрессом (доля готовых записей, потом заливка модели), ввод
+// при этом не замирает. Закрытие панели посреди сборки ее сворачивает
 void FindScreen::refreshFieldCompleter(void)
 {
     // Подписка на изменения дерева делается один раз и только когда
@@ -1811,42 +1812,67 @@ void FindScreen::refreshFieldCompleter(void)
         return;
 
     completerBuilding=true;
+    completerCancelRequested=false;
+    completerProgressDone=0;
 
-    // Крутилка на случай долгой сборки: показывается только если
-    // превышен 1с, мелкие базы ее не видят. Кнопки отмены нет и
-    // крестик окна убран: закрыть недособранный словарь нельзя,
-    // сборка конечна (секунды)
-    QScopedPointer<QProgressDialog> busy;
-
-    if(canPumpEvents(this))
-    {
-        busy.reset(new QProgressDialog(tr("Updating suggestions..."), QString(), 0, 0, this));
-        busy->setCancelButton(nullptr);
-        busy->setWindowFlags(busy->windowFlags() & ~Qt::WindowCloseButtonHint);
-        busy->setMinimumDuration(1000);
-        busy->setModal(true);
-        busy->setWindowTitle(tr("Find in base"));
-        busy->show();
-    }
-
-    // Словарь собирается по всему дереву: значения из других веток
-    // в подсказке безвредны, зато словарь всегда полный и свежий.
+    // Дерево для шкалы прогресса: нужно до диалога.
     // Модель может отсутствовать если виджет показался раньше
     // готовности дерева: тогда пустой словарь, достроится позже
-    QMap<QString, QStringList> dictionaries;
-    QSet<QString> seen;
-
     KnowTreeView *treeView=find_object<KnowTreeView>("knowTreeView");
-
-    // Счетчик прокачки событий сквозь рекурсию collectBranchValues
-    int pumpCounter=0;
 
     KnowTreeModel *searchModel=(treeView!=nullptr)
         ? static_cast<KnowTreeModel *>(treeView->model())
         : nullptr;
 
+    completerProgressTotal=(searchModel!=nullptr)
+        ? qMax(1, searchModel->getAllRecordCount())
+        : 1;
+
+    // Детерминированный немодальный прогресс: ввод не замирает,
+    // видна доля готовых записей. Показывается почти сразу (300мс):
+    // мелкие базы проскакивают без мелькания, долгие видны с начала.
+    // Кнопки отмены нет как раньше: сборка конечна (секунды),
+    // недособранный словарь не используется. Закрытие панели посреди
+    // сборки ее сворачивает (см. completerCancelRequested)
+    QScopedPointer<QProgressDialog> busy;
+
+    if(canPumpEvents(this))
+    {
+        busy.reset(new QProgressDialog(tr("Updating suggestions..."), QString(),
+                                       0, completerProgressTotal, this));
+        busy->setCancelButton(nullptr);
+        busy->setWindowFlags(busy->windowFlags() & ~Qt::WindowCloseButtonHint);
+        busy->setMinimumDuration(300);
+        busy->setModal(false);
+        busy->setWindowModality(Qt::NonModal);
+        busy->setWindowTitle(tr("Find in base"));
+        busy->setValue(0);
+        busy->show();
+        completerProgress=busy.data();
+    }
+
+    // Словарь собирается по всему дереву: значения из других веток
+    // в подсказке безвредны, зато словарь всегда полный и свежий
+    QMap<QString, QStringList> dictionaries;
+    QSet<QString> seen;
+
+    // Счетчик прокачки событий сквозь рекурсию collectBranchValues
+    int pumpCounter=0;
+
     if(searchModel!=nullptr && searchModel->getRootItem()!=nullptr)
-        collectBranchValues(searchModel->getRootItem(), dictionaries, seen, pumpCounter, this);
+        collectBranchValues(searchModel->getRootItem(), dictionaries, seen, pumpCounter, this, this);
+
+    // Панель закрыли посреди сборки: недособранное выбрасывается,
+    // словарь помечается грязным, достроится при следующем показе
+    if(completerCancelRequested || !isVisible())
+    {
+        fieldCompleterModel->clear();
+        completerBuilt=false;
+        completerDirty=true;
+        completerBuilding=false;
+        completerProgress=nullptr;
+        return;
+    }
 
     // Подсказка показывает объединение словарей отмеченных полей.
     // Тип значения виден по иконке слева, текст значения чистый
@@ -1892,21 +1918,49 @@ void FindScreen::refreshFieldCompleter(void)
                   return a.second.compare(b.second, Qt::CaseInsensitive)<0;
               });
 
-    // Пачка processEvents чтобы крутилка не замирала на сортировке.
+    // Пачка processEvents чтобы прогресс не замирал на сортировке.
     // Внутри sort качать нельзя: компаратор обязан быть чистым.
     // Только когда окно уже показано (см. canPumpEvents выше)
     pumpWhileBuilding();
+
+    // Вторая фаза бара: заливка модели. Шкала своя, с нуля
+    if(completerProgress!=nullptr)
+    {
+        completerProgress->setMaximum(qMax(1, pairs.size()));
+        completerProgress->setValue(0);
+    }
 
     int fillCounter=0;
 
     foreach(auto pair, pairs)
     {
+        // Панель закрыли посреди заливки: сворачиваемся так же
+        // как при отмене сбора
+        if(completerCancelRequested || !isVisible())
+            break;
+
         QStandardItem *item=new QStandardItem(completionTypeIcon(pair.first), pair.second);
         item->setEditable(false);
         fieldCompleterModel->appendRow(item);
 
-        if((++fillCounter % 32768)==0)
+        if((++fillCounter % 4096)==0)
+        {
+            if(completerProgress!=nullptr)
+                completerProgress->setValue(fillCounter);
             pumpWhileBuilding();
+        }
+    }
+
+    completerProgress=nullptr;
+
+    // Досрочный выход из заливки: недособранное выбрасывается
+    if(completerCancelRequested || !isVisible())
+    {
+        fieldCompleterModel->clear();
+        completerBuilt=false;
+        completerDirty=true;
+        completerBuilding=false;
+        return;
     }
 
     // Подсказывать нечего: ручной привод выключается
@@ -1934,10 +1988,24 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
                                      QMap<QString, QStringList> &dictionaries,
                                      QSet<QString> &seen,
                                      int &pumpCounter,
-                                     QWidget *pumpWidget)
+                                     QWidget *pumpWidget,
+                                     FindScreen *owner)
 {
     if(curritem==nullptr)
         return;
+
+    // Без владельца (сбор тегов в InfoFieldEnter): без прогресса
+    // и сворачивания, только прокачка как раньше. Ниже все обращения
+    // к owner под проверкой
+    const bool withProgress=(owner!=nullptr);
+
+    // Панель закрыли посреди сборки (диалог немодальный — возможно):
+    // флаг наверх, недособранное выбросит вызыватель
+    if(withProgress && (owner->completerCancelRequested || !owner->isVisible()))
+    {
+        owner->completerCancelRequested=true;
+        return;
+    }
 
     // Зашифрованная ветка без введенного пароля недоступна
     // так же как для самого поиска
@@ -1955,6 +2023,15 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
 
         for(int i=0; i<static_cast<int>(recordTable->size()); i++)
         {
+            // Проверка сворачивания на каждую запись: isVisible
+            // дешевый, зато закрытие панели останавливает сборку сразу,
+            // а не после полного прохода
+            if(withProgress && (owner->completerCancelRequested || !owner->isVisible()))
+            {
+                owner->completerCancelRequested=true;
+                return;
+            }
+
             addDictionaryWord(dictionaries, seen, "name", recordTable->getField("name", i));
             addDictionaryWord(dictionaries, seen, "author", recordTable->getField("author", i));
             addDictionaryWord(dictionaries, seen, "url", recordTable->getField("url", i));
@@ -1974,8 +2051,17 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
                     addDictionaryWord(dictionaries, seen, "attach", attachTable->getFileName(a));
             }
 
-            // Долгая сборка качает цикл событий чтобы крутилка
-            // minimumDuration успела показаться и не висело окно.
+            // Прогресс по записям: обновление не на каждую (лишние
+            // перерисовки), прокачка цикла как раньше каждые 2048
+            if(withProgress)
+            {
+                if(((++owner->completerProgressDone) % 64)==0 &&
+                   owner->completerProgress!=nullptr)
+                    owner->completerProgress->setValue(owner->completerProgressDone);
+            }
+
+            // Долгая сборка качает цикл событий чтобы прогресс
+            // minimumDuration успел показаться и не висело окно.
             // Только когда окно уже показано: на старте прокачка
             // из недостроенного UI роняет дерево виджетов (см. 500)
             if((++pumpCounter % 2048)==0 && canPumpEvents(pumpWidget))
@@ -1985,7 +2071,12 @@ void FindScreen::collectBranchValues(const TreeItem *curritem,
 
     // Рекурсивный обход подчиненных веток
     for(int i=0; i<curritem->childCount(); i++)
-        collectBranchValues(curritem->child(i), dictionaries, seen, pumpCounter, pumpWidget);
+    {
+        collectBranchValues(curritem->child(i), dictionaries, seen, pumpCounter, pumpWidget, owner);
+
+        if(withProgress && owner->completerCancelRequested)
+            return;
+    }
 }
 
 // Добавить слово в словарь поля. Пустые значения отбрасываются,

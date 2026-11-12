@@ -179,16 +179,6 @@ void AppConfigUi::set_printFooterEnabled(bool state)
     m_conf->setValue("printFooterEnabled", state);
 }
 
-bool AppConfigUi::get_printSaveMargins(void)
-{
-    return m_conf->value("printSaveMargins", false).toBool();
-}
-
-void AppConfigUi::set_printSaveMargins(bool state)
-{
-    m_conf->setValue("printSaveMargins", state);
-}
-
 QMarginsF AppConfigUi::get_printMargins(void)
 {
     const qreal left=qMax(0.0, m_conf->value("printMarginLeft", 20.0).toDouble());

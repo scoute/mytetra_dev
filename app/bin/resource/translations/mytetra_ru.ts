@@ -532,13 +532,13 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Folder links</source>
-        <translation>Ссылки на папки</translation>
+        <source>Folder and file links</source>
+        <translation>Ссылки на папки и файлы</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every folder. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.</source>
-        <translation>Папки и файлы прикрепляются ссылками без копирования; папки получают еще и кликабельную ссылку в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой папки. Выбор действует на новые ссылки. Конвертируйте ссылки только после расшифровки (база разблокирована), иначе база выйдет из синхрона.</translation>
+        <source>Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every link. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.</source>
+        <translation>Папки и файлы прикрепляются ссылками без копирования; папки получают еще и кликабельную ссылку в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой ссылки. Выбор действует на новые ссылки. Конвертируйте ссылки только после расшифровки (база разблокирована), иначе база выйдет из синхрона.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
@@ -547,8 +547,8 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Attach folders as: </source>
-        <translation>Прикреплять папки как: </translation>
+        <source>Attach links as: </source>
+        <translation>Прикреплять ссылки как: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
@@ -6641,16 +6641,6 @@ MyTetra перечитает дерево для продолжения рабо
         <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
         <source>Show page numbers in footer, in preview and in print</source>
         <translation>Показывать номера страниц в подвале, в предпросмотре и на печати</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
-        <source>Remember current margins</source>
-        <translation>Запоминать текущие поля</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
-        <source>Automatically save page setup (paper, orientation, margins) as defaults</source>
-        <translation>Автоматически сохранять параметры страницы (бумага, ориентация, поля) как умолчания</translation>
     </message>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>

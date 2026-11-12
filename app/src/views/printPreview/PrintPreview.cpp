@@ -407,13 +407,6 @@ void PrintPreview::setupUI()
     footersCheckBox->setToolTip(tr("Show page numbers in footer, in preview and in print"));
     footersCheckBox->setChecked(AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled());
 
-    // Тихий автосейв полей: пока включена, Page Setup и диалог печати
-    // молча пишут поля в конфиг как умолчания. Включение сразу
-    // запоминает текущие поля (см. onRememberToggled)
-    rememberCheckBox=new QCheckBox(this);
-    rememberCheckBox->setText(tr("Remember current margins"));
-    rememberCheckBox->setToolTip(tr("Automatically save page setup (paper, orientation, margins) as defaults"));
-    rememberCheckBox->setChecked(AppContext::instance().appConfig()->uiSection()->get_printSaveMargins());
 
     buttonClose=new QToolButton(this);
     buttonClose->setText(tr("Close"));
@@ -449,8 +442,6 @@ void PrintPreview::setupSignals()
             this, &PrintPreview::onAlignChanged);
     connect(footersCheckBox, &QCheckBox::toggled,
             this, &PrintPreview::onFootersToggled);
-    connect(rememberCheckBox, &QCheckBox::toggled,
-            this, &PrintPreview::onRememberToggled);
     connect(buttonZoomOut, &QToolButton::clicked, view, &PreviewView::zoomOut);
     connect(buttonClose, &QToolButton::clicked, this, &PrintPreview::close);
 
@@ -481,7 +472,6 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonZoomOut);
     toolsbox->addWidget(footersCheckBox);
     toolsbox->addWidget(alignCombo);
-    toolsbox->addWidget(rememberCheckBox);
 
     // Отбивка закрывающей кнопки: визуальное отделение
     // безопасного выхода от рабочих инструментов
@@ -526,11 +516,9 @@ void PrintPreview::print()
         // fullPage и наши поля до раскладки и печати
         reassertFullPage(printer);
 
-        // По галочке — запомнить итог как умолчания (в диалоге
-        // могла смениться бумага, но поля он не правит: снимок
-        // возьмет то что вернул reassert)
-        if(rememberCheckBox->isChecked())
-            savePageSetupToConfig(printer);
+        // Итог — в умолчания (в диалоге могла смениться бумага,
+        // но поля он не правит: снимок возьмет то что вернул reassert)
+        savePageSetupToConfig(printer);
 
         printDocument(printer, doc);
     }
@@ -542,9 +530,8 @@ void PrintPreview::pageSetup()
     QPageSetupDialog dlg(&printer, this);
     fixStockDialogCombos(&dlg);
     if (dlg.exec() == QDialog::Accepted) {
-        // По галочке — запомнить новые поля как умолчания
-        if(rememberCheckBox->isChecked())
-            savePageSetupToConfig(printer);
+        // Новый сетап — в умолчания
+        savePageSetupToConfig(printer);
 
         setupPrintDoc(); // setup();
         view->updateLayout();
@@ -619,15 +606,5 @@ void PrintPreview::onFootersToggled(bool checked)
     AppContext::instance().appConfig()->uiSection()->set_printFooterEnabled(checked);
 }
 
-
-void PrintPreview::onRememberToggled(bool checked)
-{
-    AppContext::instance().appConfig()->uiSection()->set_printSaveMargins(checked);
-
-    // Включение сразу фиксирует текущие поля как умолчания:
-    // галочка означает "вот эти поля меня устраивают"
-    if(checked)
-        savePageSetupToConfig(printer);
-}
 
 // #include "PrintPreview.moc"

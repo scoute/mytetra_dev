@@ -86,12 +86,6 @@ public:
     // Тоже unversioned, дефолт - показывать
     bool get_printFooterEnabled(void);
     void set_printFooterEnabled(bool state);
-    // Тихий автосейв полей страницы (галочка "Запоминать текущие поля"
-    // в превью): при включении Page Setup и диалог печати молча пишут
-    // поля в конфиг, новые окна стартуют с них. Unversioned, как подвал;
-    // дефолт - выключено, поля по умолчанию 20/5/5/5
-    bool get_printSaveMargins(void);
-    void set_printSaveMargins(bool state);
     // Поля страницы в мм (слева, сверху, справа, снизу).
     // Отсутствующие ключи покрываются дефолтами 20/5/5/5
     QMarginsF get_printMargins(void);

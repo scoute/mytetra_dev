@@ -87,7 +87,6 @@ private slots:
     void exportToPdf();
     void onAlignChanged(int index);
     void onFootersToggled(bool checked);
-    void onRememberToggled(bool checked);
 
     // Следование подсветки ленты за прокруткой основного вида
     void onMainScrollChanged(int value);
@@ -113,7 +112,6 @@ private:
     QToolButton *buttonZoomFit;
     MtComboBox *alignCombo;
     QCheckBox *footersCheckBox;
-    QCheckBox *rememberCheckBox;
     QToolButton *buttonClose;
     
     QVBoxLayout *centralLayout;

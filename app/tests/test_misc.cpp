@@ -14,6 +14,7 @@
 #include <QTemporaryDir>
 
 #include "views/appConfigWindow/AppConfigPage_Misc.h"
+#include "views/record/RecordInfoFieldsEditor.h"
 #include "libraries/AppContext.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/FixedParameters.h"
@@ -62,6 +63,7 @@ private slots:
 
     void statsTextsSetAtConstruction(void);
     void uniqueIdsDiffer(void);
+    void danglingSingleshotSurvived(void);
 
 private:
 
@@ -122,6 +124,33 @@ void TestMisc::uniqueIdsDiffer(void)
     for(int i=0; i<50; ++i)
         ids.insert(getUniqueId());
     QVERIFY2(ids.size()>45, "unique ids must differ");
+}
+
+void TestMisc::danglingSingleshotSurvived(void)
+{
+    // Двойной клик по записи в режиме "только чтение" выходил
+    // из editFieldContext до exec: диалог умирал, а отложенный
+    // QTimer::singleShot(0, [this]...) из InfoFieldEnter::setFocusToStart
+    // стрелял в висячий QLineEdit (см. 604). QPointer-охранник
+    // гасит выстрел в никуда. Пачка диалогов + churn кучи, чтобы
+    // освобожденная память гарантированно переиспользовалась
+    for(int i = 0; i < 20; ++i)
+    {
+        RecordInfoFieldsEditor *dialog=new RecordInfoFieldsEditor();
+        dialog->setField("name", QStringLiteral("Test %1").arg(i));
+        delete dialog;
+
+        // Ворошим кучу блоками размера виджета
+        for(int k = 0; k < 50; ++k)
+        {
+            QByteArray *junk=new QByteArray(256, char('A' + (k % 26)));
+            delete junk;
+        }
+    }
+
+    QApplication::processEvents();
+    QApplication::processEvents();
+    QVERIFY2(true, "dialogs deleted before singleshot must not crash");
 }
 
 QTEST_MAIN(TestMisc)

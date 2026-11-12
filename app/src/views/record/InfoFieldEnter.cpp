@@ -5,6 +5,7 @@
 #include <QToolButton>
 #include <QSizePolicy>
 #include <QTimer>
+#include <QPointer>
 #include <QCompleter>
 #include <QStringListModel>
 #include <QShowEvent>
@@ -422,9 +423,15 @@ void InfoFieldEnter::setFocusToStart(void)
     // произошедший при переключении фокуса
     // Используется QTimer, чтобы переместить курсор
     // после обработки всех текущих событий, так как данный метод вызывается
-    // в assemly(), когда цикл событий виджета еще не запущен
-    QTimer::singleShot(0, [this]() {
-        recordName->setCursorPosition( 0 );
+    // в assemly(), когда цикл событий виджета еще не запущен.
+    // Охранник QPointer: диалог может быть уничтожен до срабатывания
+    // (двойной клик в режиме "только чтение" выходит из editFieldContext
+    // до exec, см. 604). Голый [this] здесь ронял программу
+    // в QLineEdit::setCursorPosition на висячем указателе
+    QPointer<QLineEdit> safeName=recordName;
+    QTimer::singleShot(0, [safeName]() {
+        if(!safeName.isNull())
+            safeName->setCursorPosition(0);
     });
 }
 

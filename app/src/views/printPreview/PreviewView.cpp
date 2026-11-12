@@ -212,20 +212,12 @@ void PreviewView::paintPage(QPainter *painter, int page)
     QPen framePen(col);
     framePen.setCosmetic(true);
 
-    painter->setPen(framePen);
+    // Только фон страницы первым: контент рисуется поверх.
+    // Сама кромка — после контента (см. ниже)
+    painter->setPen(Qt::NoPen);
     painter->setBrush(Qt::white);
     painter->drawRect(QRectF(QPointF(0, 0), pgSize));
     painter->setBrush(Qt::NoBrush);
-
-    col = col.lighter();
-    framePen.setColor(col);
-    painter->setPen(framePen);
-    painter->drawLine(QLineF(pgSize.width(), 1, pgSize.width(), pgSize.height() - 1));
-
-    col = col.lighter();
-    framePen.setColor(col);
-    painter->setPen(framePen);
-    painter->drawLine(QLineF(pgSize.width(), 2, pgSize.width(), pgSize.height() - 2));
 
     QRectF docRect(QPointF(0, page * pgSize.height()), pgSize);
     QAbstractTextDocumentLayout::PaintContext ctx;
@@ -245,6 +237,30 @@ void PreviewView::paintPage(QPainter *painter, int page)
     // выше), поэтому смещение пишется полным
     if(m_footerEnabled)
         drawFooterNumber(painter, pgSize, page, m_footerAlign);
+
+    // Рамка и тени поверх всего. Широкий непрозрачный контент
+    // (таблица с неразрывным содержимым, картинка шире текстового
+    // поля) своим фоном затирал кромку: разрыв стабильный, от скролла
+    // и зума не зависит, только на страницах с таким контентом
+    // (см. 597). Обрезку снять: кромка на границе страницы,
+    // clip страницы ее подрежет. Координаты — транслированные
+    // (docRect), перо то же косметическое
+    painter->setClipping(false);
+    painter->setPen(framePen);
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(docRect);
+
+    col = col.lighter();
+    framePen.setColor(col);
+    painter->setPen(framePen);
+    painter->drawLine(QLineF(pgSize.width(), docRect.top() + 1,
+                             pgSize.width(), docRect.top() + pgSize.height() - 1));
+
+    col = col.lighter();
+    framePen.setColor(col);
+    painter->setPen(framePen);
+    painter->drawLine(QLineF(pgSize.width(), docRect.top() + 2,
+                             pgSize.width(), docRect.top() + pgSize.height() - 2));
 }
 
 

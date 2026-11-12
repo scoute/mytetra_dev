@@ -258,7 +258,7 @@ void BacklinksPanel::fillList(QListWidget *list,
   if(treeModel==nullptr)
     return;
 
-  QStringList sorted=ids.toList();
+  QStringList sorted=ids.values();
   sorted.sort();
 
   for(const QString &linkId : sorted)

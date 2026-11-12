@@ -2040,6 +2040,21 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Attach dropped files</source>
+        <translation>Прикрепить перетаскиваемые файлы</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Dropped files can be copied into the database or attached as links without copying. Relative links survive database relocation. Folders are always attached as links.</source>
+        <translation>Перетаскиваемые файлы можно скопировать в базу или прикрепить ссылками без копирования. Относительные ссылки переживают переезд базы. Папки всегда прикрепляются ссылками.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Copy into database</source>
+        <translation>Скопировать в базу</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
         <source>The folder is added to attachments and as a clickable link in note text. Relative links survive database relocation.</source>
         <translation>Папка добавится в прикрепленные и кликабельной ссылкой в текст заметки. Относительные ссылки переживают переезд базы.</translation>
     </message>

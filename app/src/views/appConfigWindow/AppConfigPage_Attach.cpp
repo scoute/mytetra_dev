@@ -109,11 +109,11 @@ void AppConfigPage_Attach::setupUi(void)
     // Пояснение про ссылки на папки и файлы
     folderLinksInfo=new QLabel(this);
     folderLinksInfo->setWordWrap(true);
-    folderLinksInfo->setText( tr("Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every folder. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.") );
+    folderLinksInfo->setText( tr("Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every link. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.") );
 
     // Выбор вида пути: спрашивать, абсолютный или относительный каталога записи
     attachLinkModeLabel=new QLabel(this);
-    attachLinkModeLabel->setText( tr("Attach folders as: ") );
+    attachLinkModeLabel->setText( tr("Attach links as: ") );
 
     attachLinkModeCombo=new MtComboBox(this);
     attachLinkModeCombo->addItem( tr("Always ask"), AppConfig::AttachLinkAsk );
@@ -187,7 +187,7 @@ void AppConfigPage_Attach::assembly(void)
     folderLinksBoxLayout->addWidget( convertFolderLinksButton );
 
     folderLinksBox=new QGroupBox(this);
-    folderLinksBox->setTitle( tr("Folder links") );
+    folderLinksBox->setTitle( tr("Folder and file links") );
     folderLinksBox->setLayout( folderLinksBoxLayout );
 
     QVBoxLayout *recordDirsBoxLayout=new QVBoxLayout;
@@ -258,9 +258,9 @@ void AppConfigPage_Attach::retranslateUi(void)
   recordDirNameModeCombo->setItemText(1, tr("System + note names (id_name)"));
   convertRecordDirsButton->setText(tr("Convert record directories to the selected form"));
   recordDirsWarning->setText(tr("Danger, beta version: back up your database directory before converting. If the database is encrypted, unlock it first. The tree will be saved with new directory names."));
-  folderLinksBox->setTitle(tr("Folder links"));
-  folderLinksInfo->setText(tr("Folders attach as links without copying, and as a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every folder. The choice applies to new folder links."));
-  attachLinkModeLabel->setText(tr("Attach folders as: "));
+  folderLinksBox->setTitle(tr("Folder and file links"));
+  folderLinksInfo->setText(tr("Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. \"Always ask\" shows a choice dialog for every link. The choice applies to new links."));
+  attachLinkModeLabel->setText(tr("Attach links as: "));
   attachLinkModeCombo->setItemText(0, tr("Always ask"));
   attachLinkModeCombo->setItemText(1, tr("Relative to note directory"));
   attachLinkModeCombo->setItemText(2, tr("Absolute path"));

@@ -532,13 +532,13 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Folder links</source>
-        <translation>Ссылки на папки</translation>
+        <source>Folder and file links</source>
+        <translation>Ссылки на папки и файлы</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every folder. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.</source>
-        <translation>Папки и файлы прикрепляются ссылками без копирования; папки получают еще и кликабельную ссылку в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой папки. Выбор действует на новые ссылки. Конвертируйте ссылки только после расшифровки (база разблокирована), иначе база выйдет из синхрона.</translation>
+        <source>Folders and files attach as links without copying; folders also get a clickable link in note text. Absolute paths break when the database moves; relative paths are stored from the note directory and survive relocation. "Always ask" shows a choice dialog for every link. The choice applies to new links. Convert links only after decryption (database unlocked), otherwise the database ends up out of sync.</source>
+        <translation>Папки и файлы прикрепляются ссылками без копирования; папки получают еще и кликабельную ссылку в тексте заметки. Абсолютные пути ломаются при переезде базы; относительные хранятся от каталога записи и переживают переезд. «Всегда спрашивать» показывает диалог выбора для каждой ссылки. Выбор действует на новые ссылки. Конвертируйте ссылки только после расшифровки (база разблокирована), иначе база выйдет из синхрона.</translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
@@ -547,8 +547,8 @@ This can happen if there is no free space left on the hard disk or it is impossi
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
-        <source>Attach folders as: </source>
-        <translation>Прикреплять папки как: </translation>
+        <source>Attach links as: </source>
+        <translation>Прикреплять ссылки как: </translation>
     </message>
     <message>
         <location filename="../../../src/views/appConfigWindow/AppConfigPage_Attach.cpp"/>
@@ -2035,8 +2035,18 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Attach file as link</source>
+        <translation>Прикрепить файл ссылкой</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
         <source>The folder is added to attachments and as a clickable link in note text. Relative links survive database relocation.</source>
         <translation>Папка добавится в прикрепленные и кликабельной ссылкой в текст заметки. Относительные ссылки переживают переезд базы.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>The file is added to attachments without copying. Relative links survive database relocation.</source>
+        <translation>Файл добавится в прикрепленные без копирования. Относительные ссылки переживают переезд базы.</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
@@ -2087,6 +2097,16 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
         <source>Folder "%1" is already attached as %2.</source>
         <translation>Папка «%1» уже прикреплена как %2.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>File already attached</source>
+        <translation>Файл уже прикреплен</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>File "%1" is already attached as %2.</source>
+        <translation>Файл «%1» уже прикреплен как %2.</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>

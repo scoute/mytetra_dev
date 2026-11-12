@@ -84,11 +84,12 @@ protected:
   void saveAttachToUserPlace(QString fromFullFileName, QString toFullFileName, QString attachType, bool isAttachCrypt);
   void updateAttachListInEditor(void);
 
-  // Режим ссылки для добавляемой папки: настройка attachLinkMode,
-  // при "всегда спрашивать" — диалог с запоминанием ("всегда"
-  // пишет настройку). Возвращает AttachLinkAbsolute/Relative,
+  // Режим ссылки для добавляемой папки или файла: настройка
+  // attachLinkMode, при "всегда спрашивать" — диалог с запоминанием
+  // ("всегда" пишет настройку). isFolder меняет заголовок и пояснение
+  // диалога. Возвращает AttachLinkAbsolute/Relative,
   // при отмене диалога -1
-  int requestFolderLinkMode(void);
+  int requestLinkMode(bool isFolder);
 
   // Открытая в редакторе заметка — та же что таблица аттачей.
   // Метки в текст трогаются только при совпадении, иначе дроп
@@ -108,6 +109,19 @@ protected:
   // (rowId не меняется — метки остаются валидны), дерево сохраняется.
   // Возвращает true если переключили
   bool askAndSwitchFolderLink(const QString &folderName, int oldMode, int newMode);
+
+  // Общая обработка добавляемого файла-ссылки: поиск дубля
+  // по каноническому пути, вопрос переключения режима, добавление
+  // новой строки. Симметрия processFolderLink, но без меток в текст
+  // (метки файлов — только копии через addSingleFileAsAttach).
+  // Копия того же файла (type file) — не дубль: снимок и живая
+  // ссылка живут рядом. Возвращает id строки: новой, существующей
+  // (дубль/переключение) или пусто при отказе движка
+  QString processFileLink(const QString &absolutePath, int wantedMode, bool *addedNew);
+
+  // Файл уже прикреплен ссылкой другим режимом: спросить переключить
+  // на новый или оставить. Возвращает true если переключили
+  bool askAndSwitchFileLink(const QString &fileName, int oldMode, int newMode);
 
   AttachTableView *view;
   AttachTableModel *model;

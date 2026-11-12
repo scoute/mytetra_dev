@@ -6644,6 +6644,16 @@ MyTetra перечитает дерево для продолжения рабо
     </message>
     <message>
         <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Remember current margins</source>
+        <translation>Запоминать текущие поля</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
+        <source>Automatically save page setup (paper, orientation, margins) as defaults</source>
+        <translation>Автоматически сохранять параметры страницы (бумага, ориентация, поля) как умолчания</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/printPreview/PrintPreview.cpp"/>
         <source>Fit</source>
         <translation>Вписать</translation>
     </message>

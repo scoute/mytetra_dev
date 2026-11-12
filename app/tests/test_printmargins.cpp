@@ -37,6 +37,7 @@
 #include "models/appConfig/AppFiles.h"
 #include "models/dataBaseConfig/DataBaseConfig.h"
 #include "models/appConfig/AppConfig.h"
+#include "models/appConfig/AppConfigUi.h"
 
 extern ShortcutManager shortcutManager;
 
@@ -72,6 +73,8 @@ private slots:
     void fixedTableWidthClamped(void);
 
     void tablesAlignLeftAtRoot(void);
+
+    void savedPageSetupApplies(void);
 
 private:
 
@@ -658,6 +661,59 @@ void TestPrintMargins::tablesAlignLeftAtRoot(void)
 
     QVERIFY2(!(innerTable->format().alignment() & Qt::AlignLeft),
              "nested table alignment must be preserved");
+}
+
+void TestPrintMargins::savedPageSetupApplies(void)
+{
+    // Галочка "Запоминать текущие поля": сохраненные поля применяются
+    // к новым принтерам, reassertFullPage после диалога печати
+    // их не затирает хардкодом. Без сохраненного — дефолты 20/5/5/5
+    AppConfigUi *ui=AppContext::instance().appConfig()->uiSection();
+    ui->set_printMargins(QMarginsF(10.0, 11.0, 12.0, 13.0));
+    ui->set_printPageSizeId(QPageSize::Letter);
+    ui->set_printPageOrientation(QPageLayout::Landscape);
+
+    QPrinter printer(QPrinter::HighResolution);
+    PrintPreview::applySavedPageSetup(printer);
+
+    // Сохраненные поля применились
+    qreal left, top, right, bottom;
+    printer.getPageMargins(&left, &top, &right, &bottom, QPrinter::Millimeter);
+    QCOMPARE(QMarginsF(left, top, right, bottom), QMarginsF(10.0, 11.0, 12.0, 13.0));
+
+    // Сохраненные бумага и ориентация применились
+    QVERIFY2(printer.pageLayout().pageSize().id()==QPageSize::Letter,
+             "saved paper size must apply");
+    QVERIFY2(printer.pageLayout().orientation()==QPageLayout::Landscape,
+             "saved orientation must apply");
+
+    // Диалог печати сбрасывает fullPage: reassert возвращает fullPage,
+    // а поля берет из конфига, а не из хардкода 20/5/5/5.
+    // Бумагу и ориентацию не трогает (их мог сменить диалог)
+    printer.setPageSize(QPageSize(QPageSize::A4));
+    printer.setFullPage(false);
+    PrintPreview::reassertFullPage(printer);
+    QVERIFY2(printer.fullPage(), "fullPage must be restored");
+
+    printer.getPageMargins(&left, &top, &right, &bottom, QPrinter::Millimeter);
+    QCOMPARE(QMarginsF(left, top, right, bottom), QMarginsF(10.0, 11.0, 12.0, 13.0));
+    QVERIFY2(printer.pageLayout().pageSize().id()==QPageSize::A4,
+             "reassert must not touch paper size");
+
+    // Чистка за собой: другие тесты ждут пустой конфиг
+    m_settings->remove(QStringLiteral("printMarginLeft"));
+    m_settings->remove(QStringLiteral("printMarginTop"));
+    m_settings->remove(QStringLiteral("printMarginRight"));
+    m_settings->remove(QStringLiteral("printMarginBottom"));
+    m_settings->remove(QStringLiteral("printPageSizeId"));
+    m_settings->remove(QStringLiteral("printPageOrientation"));
+
+    // Без сохраненного — старое поведение: дефолтные поля
+    QPrinter fresh(QPrinter::HighResolution);
+    PrintPreview::applySavedPageSetup(fresh);
+
+    fresh.getPageMargins(&left, &top, &right, &bottom, QPrinter::Millimeter);
+    QCOMPARE(QMarginsF(left, top, right, bottom), QMarginsF(20.0, 5.0, 5.0, 5.0));
 }
 
 QTEST_MAIN(TestPrintMargins)

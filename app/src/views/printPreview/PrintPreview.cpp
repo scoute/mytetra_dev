@@ -1,6 +1,7 @@
 #include <QAbstractScrollArea>
 #include <QPrintDialog>
 #include <QPrinter>
+#include <QPageSize>
 #include <QToolBar>
 #include <QAction>
 #include <QTextFormat>
@@ -75,9 +76,10 @@ PrintPreview::PrintPreview(const QTextDocument *document, QWidget *parent)
     doc->setUseDesignMetrics(true);
     doc->documentLayout()->setPaintDevice(view->viewport());
 
-    // Стандартные поля до раскладки: Page Setup правит их уже
-    // на живом принтере, prepareDocument только читает
-    applyDefaultMargins(printer);
+    // Стартовый сетап — сохраненный галочкой (или дефолтные поля,
+    // если ничего не сохранялось): новые окна открываются с ним.
+    // Page Setup правит его уже на живом принтере
+    applySavedPageSetup(printer);
 
     setupPrintDoc();
     setupUI();
@@ -106,13 +108,79 @@ void PrintPreview::applyDefaultMargins(QPrinter &printer)
 }
 
 
+// Полный сетап из конфига как стартовый набор: сохраненный галочкой
+// "Запоминать текущие поля" (бумага, ориентация, поля), либо дефолтные
+// поля если ничего не сохранялось (бумагу тогда не трогаем)
+void PrintPreview::applySavedPageSetup(QPrinter &printer)
+{
+    AppConfigUi *ui=AppContext::instance().appConfig()->uiSection();
+
+    // Ничего не сохранялось — старое поведение: дефолтные поля,
+    // бумагу системного принтера не трогаем
+    if(!ui->has_savedPrintPageSetup())
+    {
+        applyDefaultMargins(printer);
+        return;
+    }
+
+    const int sizeId=ui->get_printPageSizeId();
+    QPageSize pageSize;
+
+    if(sizeId==QPageSize::Custom)
+    {
+        const QSizeF customMm=ui->get_printCustomPageSize();
+
+        if(customMm.width()>0.0 && customMm.height()>0.0)
+            pageSize=QPageSize(customMm, QPageSize::Millimeter,
+                               QString(), QPageSize::ExactMatch);
+    }
+    else
+        pageSize=QPageSize(static_cast<QPageSize::PageSizeId>(sizeId));
+
+    if(!pageSize.isValid())
+        pageSize=QPageSize(QPageSize::A4);
+
+    printer.setPageSize(pageSize);
+    printer.setOrientation(static_cast<QPrinter::Orientation>(ui->get_printPageOrientation()));
+    printer.setFullPage(true);
+    printer.setPageMargins(ui->get_printMargins(), QPageLayout::Millimeter);
+}
+
+
+// Снимок текущего сетапа принтера (бумага, ориентация, поля)
+// в конфиг как умолчания для следующих окон
+// (превью, прямая печать, экспорт)
+void PrintPreview::savePageSetupToConfig(const QPrinter &printer)
+{
+    AppConfigUi *ui=AppContext::instance().appConfig()->uiSection();
+
+    qreal left, top, right, bottom;
+    printer.getPageMargins(&left, &top, &right, &bottom, QPrinter::Millimeter);
+    ui->set_printMargins(QMarginsF(left, top, right, bottom));
+
+    const QPageSize pageSize=printer.pageLayout().pageSize();
+    ui->set_printPageSizeId(pageSize.id());
+
+    if(pageSize.id()==QPageSize::Custom)
+        ui->set_printCustomPageSize(pageSize.size(QPageSize::Millimeter));
+
+    ui->set_printPageOrientation(printer.pageLayout().orientation());
+}
+
+
 // Вернуть fullPage и наши поля после диалога печати (см. шапку).
 // Порядок важен: fullPage первым, поля поверх — иначе pageRect
 // посчитается от сброшенных значений
 void PrintPreview::reassertFullPage(QPrinter &printer)
 {
     printer.setFullPage(true);
-    applyDefaultMargins(printer);
+
+    // Поля — сохраненные галочкой (или дефолты): диалог печати поля
+    // не правит, а сохраненные затирать хардкодом нельзя (см. 594).
+    // Бумагу и ориентацию не трогаем: их пользователь мог сменить
+    // в самом диалоге, applySavedPageSetup здесь не подходит
+    const QMarginsF margins=AppContext::instance().appConfig()->uiSection()->get_printMargins();
+    printer.setPageMargins(margins, QPageLayout::Millimeter);
 }
 
 
@@ -339,6 +407,14 @@ void PrintPreview::setupUI()
     footersCheckBox->setToolTip(tr("Show page numbers in footer, in preview and in print"));
     footersCheckBox->setChecked(AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled());
 
+    // Тихий автосейв полей: пока включена, Page Setup и диалог печати
+    // молча пишут поля в конфиг как умолчания. Включение сразу
+    // запоминает текущие поля (см. onRememberToggled)
+    rememberCheckBox=new QCheckBox(this);
+    rememberCheckBox->setText(tr("Remember current margins"));
+    rememberCheckBox->setToolTip(tr("Automatically save page setup (paper, orientation, margins) as defaults"));
+    rememberCheckBox->setChecked(AppContext::instance().appConfig()->uiSection()->get_printSaveMargins());
+
     buttonClose=new QToolButton(this);
     buttonClose->setText(tr("Close"));
     buttonClose->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -373,6 +449,8 @@ void PrintPreview::setupSignals()
             this, &PrintPreview::onAlignChanged);
     connect(footersCheckBox, &QCheckBox::toggled,
             this, &PrintPreview::onFootersToggled);
+    connect(rememberCheckBox, &QCheckBox::toggled,
+            this, &PrintPreview::onRememberToggled);
     connect(buttonZoomOut, &QToolButton::clicked, view, &PreviewView::zoomOut);
     connect(buttonClose, &QToolButton::clicked, this, &PrintPreview::close);
 
@@ -403,6 +481,7 @@ void PrintPreview::assembly()
     toolsbox->addWidget(buttonZoomOut);
     toolsbox->addWidget(footersCheckBox);
     toolsbox->addWidget(alignCombo);
+    toolsbox->addWidget(rememberCheckBox);
 
     // Отбивка закрывающей кнопки: визуальное отделение
     // безопасного выхода от рабочих инструментов
@@ -446,6 +525,13 @@ void PrintPreview::print()
         // Диалог мог перестроить layout из DEVMODE: возвращаем
         // fullPage и наши поля до раскладки и печати
         reassertFullPage(printer);
+
+        // По галочке — запомнить итог как умолчания (в диалоге
+        // могла смениться бумага, но поля он не правит: снимок
+        // возьмет то что вернул reassert)
+        if(rememberCheckBox->isChecked())
+            savePageSetupToConfig(printer);
+
         printDocument(printer, doc);
     }
     delete dlg;
@@ -456,6 +542,10 @@ void PrintPreview::pageSetup()
     QPageSetupDialog dlg(&printer, this);
     fixStockDialogCombos(&dlg);
     if (dlg.exec() == QDialog::Accepted) {
+        // По галочке — запомнить новые поля как умолчания
+        if(rememberCheckBox->isChecked())
+            savePageSetupToConfig(printer);
+
         setupPrintDoc(); // setup();
         view->updateLayout();
         thumbBar->rebuild(doc);
@@ -527,6 +617,17 @@ void PrintPreview::onFootersToggled(bool checked)
 {
     view->setFooterEnabled(checked);
     AppContext::instance().appConfig()->uiSection()->set_printFooterEnabled(checked);
+}
+
+
+void PrintPreview::onRememberToggled(bool checked)
+{
+    AppContext::instance().appConfig()->uiSection()->set_printSaveMargins(checked);
+
+    // Включение сразу фиксирует текущие поля как умолчания:
+    // галочка означает "вот эти поля меня устраивают"
+    if(checked)
+        savePageSetupToConfig(printer);
 }
 
 // #include "PrintPreview.moc"

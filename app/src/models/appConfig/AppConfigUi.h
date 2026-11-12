@@ -7,6 +7,8 @@
 #include <QStringList>
 #include <QList>
 #include <QByteArray>
+#include <QMarginsF>
+#include <QSizeF>
 
 class AppConfig;
 
@@ -84,6 +86,30 @@ public:
     // Тоже unversioned, дефолт - показывать
     bool get_printFooterEnabled(void);
     void set_printFooterEnabled(bool state);
+    // Тихий автосейв полей страницы (галочка "Запоминать текущие поля"
+    // в превью): при включении Page Setup и диалог печати молча пишут
+    // поля в конфиг, новые окна стартуют с них. Unversioned, как подвал;
+    // дефолт - выключено, поля по умолчанию 20/5/5/5
+    bool get_printSaveMargins(void);
+    void set_printSaveMargins(bool state);
+    // Поля страницы в мм (слева, сверху, справа, снизу).
+    // Отсутствующие ключи покрываются дефолтами 20/5/5/5
+    QMarginsF get_printMargins(void);
+    void set_printMargins(const QMarginsF &margins);
+    // Размер бумаги (QPageSize::PageSizeId) и ориентация
+    // (QPageLayout::Portrait/Landscape). Невалидные значения
+    // покрываются дефолтами A4/портрет
+    int get_printPageSizeId(void);
+    void set_printPageSizeId(int id);
+    int get_printPageOrientation(void);
+    void set_printPageOrientation(int orientation);
+    // Размер нестандартной бумаги в мм (для Custom). Пишется
+    // вместе с остальным сетапом, читается только при id=Custom
+    QSizeF get_printCustomPageSize(void);
+    void set_printCustomPageSize(const QSizeF &sizeMm);
+    // Есть ли сохраненный сетап (пишется всегда целиком,
+    // достаточно проверить один ключ из набора)
+    bool has_savedPrintPageSetup(void);
     // Вид панели прикрепленных файлов: "list" или "tiles"
     QString get_attachViewMode(void);
     void set_attachViewMode(QString mode);

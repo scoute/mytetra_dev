@@ -411,8 +411,19 @@ for target in "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
     [[ -f "${target}" ]] || continue
     while read -r dep; do
         [[ -f "${dep}" ]] || continue
-        case "${dep}" in
-            "${QT_SDK}"/lib/*)
+        # ldd на Debian выдает /lib/..., а QT_LIB_DIR это /usr/lib/...
+        # (/lib симлинк на /usr/lib): сравниваем канонические пути,
+        # иначе совпадение по строке не срабатывает и добор молчит
+        dep_real="$(readlink -f "${dep}")"
+        qt_lib_real="$(readlink -f "${QT_LIB_DIR}")"
+        qt_sdk_lib_real="$(readlink -f "${QT_SDK}/lib")"
+        case "${dep_real}" in
+            # SDK-раскладка: все Qt-либы в ${QT_SDK}/lib.
+            # Системный Qt Debian: либы в QT_LIB_DIR (multiarch,
+            # например /usr/lib/x86_64-linux-gnu), а ${QT_SDK}/lib
+            # это просто /usr/lib. Без второй ветки добор на Debian
+            # молча ничего не копирует и проверка на смешивание падает
+            "${qt_sdk_lib_real}"/*|"${qt_lib_real}"/*)
                 dep_name="$(basename "${dep}")"
                 if [[ ! -e "${LIB_DIR}/${dep_name}" ]]; then
                     cp -L "${dep}" "${LIB_DIR}/"

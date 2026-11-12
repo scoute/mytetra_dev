@@ -33,16 +33,35 @@ OS_LIKE="$(grep -m1 '^ID_LIKE=' /etc/os-release | cut -d= -f2 | tr -d '\"' || tr
 if [[ "${OS_ID}" != "debian" && "${OS_LIKE}" != *debian* ]]; then
     fail "скрипт только для Debian 12 и производных ( LMDE ), обнаружен: ${OS_ID} (like: ${OS_LIKE})"
 fi
-
 # 1. Права root скрипту НЕ нужны и НЕ используются.
 # Все недостающее ставит сам пользователь руками (см. раздел 4)
 
+# Явная проверка каждой зависимости в стиле configure:
+#   check g++ ............................ OK
+#   check plugin mediaservice ............ MISSING (пакет: libqt5multimedia5-plugins)
+# Молчаливых пропусков нет: каждая строка видна сразу
+NEED_PKGS_STR=""
+
+check_item() {
+    local label="$1"
+    local pkgs="$2"
+    local cond="$3"
+    local dots
+    dots="$(printf '%*s' $((46 - ${#label})) '' | tr ' ' '.')"
+    if eval "${cond}" >/dev/null 2>&1; then
+        echo "check ${label} ${dots} OK"
+    else
+        echo "check ${label} ${dots} not found"
+        echo "please apt install ${pkgs}"
+        NEED_PKGS_STR="${NEED_PKGS_STR} ${pkgs}"
+    fi
+}
+
 # 2. Обязательные инструменты
-NEED_PKGS=()
-command -v g++ >/dev/null 2>&1 || NEED_PKGS+=(build-essential)
-command -v make >/dev/null 2>&1 || NEED_PKGS+=(build-essential)
-command -v qmake >/dev/null 2>&1 || NEED_PKGS+=(qt5-qmake)
-command -v git >/dev/null 2>&1 || NEED_PKGS+=(git)
+check_item "tool g++" "build-essential" "command -v g++"
+check_item "tool make" "build-essential" "command -v make"
+check_item "tool qmake" "qt5-qmake" "command -v qmake"
+check_item "tool git" "git" "command -v git"
 
 # 3. Инструменты Qt: qmake обязан резолвиться и отдавать пути
 if command -v qmake >/dev/null 2>&1; then
@@ -58,39 +77,31 @@ fi
 
 # 3a. Заголовки Qt-модулей, используемых приложением (см. QT в app/app.pro).
 # Проверяются файлы, а не пакеты: пакет уже может стоять частично
-check_header() {
-    [[ -n "${QT_HEADERS}" && -f "${QT_HEADERS}/$1" ]]
-}
-
-check_header "QtWidgets/QtWidgets"            || NEED_PKGS+=(qtbase5-dev)
-command -v lrelease >/dev/null 2>&1           || NEED_PKGS+=(qttools5-dev)
-check_header "QtSvg/QtSvg"                    || NEED_PKGS+=(libqt5svg5-dev)
-check_header "QtMultimedia/QtMultimedia"       || NEED_PKGS+=(qtmultimedia5-dev)
-{ [[ -n "${QT_PLUGINS}" && -f "${QT_PLUGINS}/sqldrivers/libqsqlite.so" ]]; } || NEED_PKGS+=(libqt5sql5-sqlite)
+check_item "headers QtWidgets" "qtbase5-dev" '[[ -n "${QT_HEADERS}" && -f "${QT_HEADERS}/QtWidgets/QtWidgets" ]]'
+check_item "headers QtSvg" "libqt5svg5-dev" '[[ -n "${QT_HEADERS}" && -f "${QT_HEADERS}/QtSvg/QtSvg" ]]'
+check_item "headers QtMultimedia" "qtmultimedia5-dev" '[[ -n "${QT_HEADERS}" && -f "${QT_HEADERS}/QtMultimedia/QtMultimedia" ]]'
+check_item "tool lrelease" "qttools5-dev" "command -v lrelease"
+check_item "plugin sqldrivers" "libqt5sql5-sqlite" '[[ -n "${QT_PLUGINS}" && -f "${QT_PLUGINS}/sqldrivers/libqsqlite.so" ]]'
 
 # 3b. Плагины Qt: платформа (десктоп и offscreen для smoke-теста),
 # картинки, иконки, звуковой бэкенд голосовых заметок
-check_plugin() {
-    [[ -n "${QT_PLUGINS}" ]] && compgen -G "${QT_PLUGINS}/$1" >/dev/null
-}
-
-check_plugin "platforms/libqxcb.so"           || NEED_PKGS+=(qtbase5-dev)
-check_plugin "platforms/libqoffscreen.so"     || NEED_PKGS+=(qtbase5-dev)
-check_plugin "imageformats/libqsvg.so"        || NEED_PKGS+=(qtbase5-dev)
-check_plugin "imageformats/libqjpeg.so"       || NEED_PKGS+=(qtbase5-dev)
-check_plugin "iconengines/*.so"               || NEED_PKGS+=(qtbase5-dev)
-check_plugin "sqldrivers/libqsqlite.so"       || NEED_PKGS+=(libqt5sql5-sqlite)
-check_plugin "mediaservice/*.so"              || NEED_PKGS+=(libqt5multimedia5-plugins)
-check_plugin "audio/*.so"                     || NEED_PKGS+=(libqt5multimedia5-plugins)
+check_item "plugin platforms/qxcb" "qtbase5-dev" '[[ -n "${QT_PLUGINS}" && -f "${QT_PLUGINS}/platforms/libqxcb.so" ]]'
+check_item "plugin platforms/qoffscreen" "qtbase5-dev" '[[ -n "${QT_PLUGINS}" && -f "${QT_PLUGINS}/platforms/libqoffscreen.so" ]]'
+check_item "plugin imageformats/qsvg" "qtbase5-dev" '[[ -n "${QT_PLUGINS}" && -f "${QT_PLUGINS}/imageformats/libqsvg.so" ]]'
+check_item "plugin imageformats/qjpeg" "qtbase5-dev" '[[ -n "${QT_PLUGINS}" && -f "${QT_PLUGINS}/imageformats/libqjpeg.so" ]]'
+check_item "plugin iconengines" "qtbase5-dev" '[[ -n "${QT_PLUGINS}" ]] && compgen -G "${QT_PLUGINS}/iconengines/*.so"'
+check_item "plugin mediaservice" "libqt5multimedia5-plugins" '[[ -n "${QT_PLUGINS}" ]] && compgen -G "${QT_PLUGINS}/mediaservice/*.so"'
+check_item "plugin audio" "libqt5multimedia5-plugins" '[[ -n "${QT_PLUGINS}" ]] && compgen -G "${QT_PLUGINS}/audio/*.so"'
 
 # 3c. Переводы строк Qt (qttranslations5-l10n)
-[[ -d /usr/share/qt5/translations ]] && compgen -G "/usr/share/qt5/translations/qt_*.qm" >/dev/null || NEED_PKGS+=(qttranslations5-l10n)
+check_item "translations qt_*.qm" "qttranslations5-l10n" 'compgen -G "/usr/share/qt5/translations/qt_*.qm"'
 
 # 4. Недостающее НЕ ставится автоматически: печатаем готовую
 # команду и падаем. Ставит пакеты сам пользователь руками
-if [[ "${#NEED_PKGS[@]}" -gt 0 ]]; then
-    # shellcheck disable=SC2207
-    UNIQUES=($(printf "%s\n" "${NEED_PKGS[@]}" | sort -u))
+# shellcheck disable=SC2207
+UNIQUES=($(printf "%s\n" ${NEED_PKGS_STR} | sort -u))
+if [[ "${#UNIQUES[@]}" -gt 0 ]]; then
+    echo "" >&2
     echo "ОШИБКА: для полноценной сборки не хватает пакетов: ${UNIQUES[*]}" >&2
     echo "" >&2
     echo "Доустановите их одной командой:" >&2
@@ -100,38 +111,9 @@ if [[ "${#NEED_PKGS[@]}" -gt 0 ]]; then
     exit 2
 fi
 
-# 5. Финальная проверка ВСЕГО заново: что не встало - то явная ошибка.
-# Здесь уже никаких попыток чинить, только констатация
-ERRORS=()
-command -v g++ >/dev/null 2>&1    || ERRORS+=("нет g++ (build-essential)")
-command -v make >/dev/null 2>&1   || ERRORS+=("нет make (build-essential)")
-command -v qmake >/dev/null 2>&1  || ERRORS+=("нет qmake (qt5-qmake)")
+echo "all OK, starting build"
 
-QT_HEADERS="$(command -v qmake >/dev/null 2>&1 && qmake -query QT_INSTALL_HEADERS 2>/dev/null || true)"
-QT_PLUGINS="$(command -v qmake >/dev/null 2>&1 && qmake -query QT_INSTALL_PLUGINS 2>/dev/null || true)"
-[[ -n "${QT_HEADERS}" && -d "${QT_HEADERS}/QtWidgets" ]] || ERRORS+=("нет заголовков QtWidgets (qtbase5-dev)")
-[[ -f "${QT_HEADERS}/QtSvg/QtSvg" ]]                     2>/dev/null || ERRORS+=("нет заголовков QtSvg (libqt5svg5-dev)")
-[[ -f "${QT_HEADERS}/QtMultimedia/QtMultimedia" ]]       2>/dev/null || ERRORS+=("нет заголовков QtMultimedia (qtmultimedia5-dev)")
-command -v lrelease >/dev/null 2>&1                      || ERRORS+=("нет lrelease (qttools5-dev)")
-[[ -f "${QT_PLUGINS}/platforms/libqxcb.so" ]]            2>/dev/null || ERRORS+=("нет platforms/libqxcb.so (qtbase5-dev)")
-[[ -f "${QT_PLUGINS}/platforms/libqoffscreen.so" ]]      2>/dev/null || ERRORS+=("нет platforms/libqoffscreen.so (qtbase5-dev)")
-[[ -f "${QT_PLUGINS}/imageformats/libqsvg.so" ]]         2>/dev/null || ERRORS+=("нет imageformats/libqsvg.so (qtbase5-dev)")
-[[ -f "${QT_PLUGINS}/imageformats/libqjpeg.so" ]]        2>/dev/null || ERRORS+=("нет imageformats/libqjpeg.so (qtbase5-dev)")
-compgen -G "${QT_PLUGINS}/iconengines/*.so" >/dev/null   2>&1 || ERRORS+=("нет iconengines/*.so (qtbase5-dev)")
-[[ -f "${QT_PLUGINS}/sqldrivers/libqsqlite.so" ]]        2>/dev/null || ERRORS+=("нет sqldrivers/libqsqlite.so (libqt5sql5-sqlite)")
-compgen -G "${QT_PLUGINS}/mediaservice/*.so" >/dev/null 2>&1 || ERRORS+=("нет mediaservice/*.so (libqt5multimedia5-plugins)")
-compgen -G "${QT_PLUGINS}/audio/*.so" >/dev/null 2>&1         || ERRORS+=("нет audio/*.so (libqt5multimedia5-plugins)")
-compgen -G "/usr/share/qt5/translations/qt_*.qm" >/dev/null 2>&1 || ERRORS+=("нет переводов Qt (qttranslations5-l10n)")
-
-if [[ "${#ERRORS[@]}" -gt 0 ]]; then
-    echo "ОШИБКА: не хватает компонентов для полноценной сборки:" >&2
-    printf ' - %s\n' "${ERRORS[@]}" >&2
-    exit 3
-fi
-
-echo "Все компоненты на месте, запускаю сборку"
-
-# 6. Делегирование общей сборке со всеми аргументами пользователя
+# 5. Делегирование общей сборке со всеми аргументами пользователя
 [[ -x "${BASE_SCRIPT}" ]] || fail "нет базового скрипта ${BASE_SCRIPT}"
 
 exec "${BASE_SCRIPT}" "$@"

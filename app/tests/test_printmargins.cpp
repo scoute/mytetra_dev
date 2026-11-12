@@ -7,6 +7,9 @@
 #include <QApplication>
 #include <QTextDocument>
 #include <QTextFrame>
+#include <QTextTable>
+#include <QAbstractTextDocumentLayout>
+#include <functional>
 #include <QPrinter>
 #include <QPageLayout>
 #include <QPageSize>
@@ -65,6 +68,10 @@ private slots:
     void pdfExportPrinterSetup(void);
     void zoomResetTrueSize(void);
     void pageBorderStaysVisible(void);
+
+    void fixedTableWidthClamped(void);
+
+    void tablesAlignLeftAtRoot(void);
 
 private:
 
@@ -493,6 +500,164 @@ void TestPrintMargins::pageBorderStaysVisible(void)
     QVERIFY2(rows > 0, "page must span rows");
     QVERIFY2(darkRows * 10 >= rows * 8,
              "page right border must be visible along height");
+}
+
+// Рекурсивный поиск первой таблицы в кадре (для fixedTableWidthClamped)
+static QTextTable *findFirstTable(QTextFrame *frame)
+{
+    for(QTextFrame::iterator it=frame->begin(); !it.atEnd(); ++it)
+    {
+        QTextTable *table=qobject_cast<QTextTable*>(it.currentFrame());
+
+        if(table!=nullptr)
+            return table;
+
+        if(it.currentFrame()!=nullptr)
+        {
+            QTextTable *nested=findFirstTable(it.currentFrame());
+
+            if(nested!=nullptr)
+                return nested;
+        }
+    }
+
+    return nullptr;
+}
+
+void TestPrintMargins::fixedTableWidthClamped(void)
+{
+    // Вставленная из веба таблица с width="600": фиксированная ширина
+    // шире текстового поля. Без нормализации Qt якорил бы ее слева
+    // и растил вправо за границу (см. 596, проба tableprobe).
+    // prepareDocument жмет такие таблицы до 100%
+    QTextDocument wide;
+    wide.setHtml(QStringLiteral("<p>Before</p>"
+                                "<table width=\"600\" align=\"center\" border=\"1\">"
+                                "<tr><td>AAA</td><td>BBB</td></tr>"
+                                "</table><p>After</p>"));
+
+    QPrinter printer(QPrinter::HighResolution);
+    PrintPreview::applyDefaultMargins(printer);
+    PrintPreview::prepareDocument(printer, &wide);
+
+    QTextTable *wideTable=findFirstTable(wide.rootFrame());
+    QVERIFY2(wideTable!=nullptr, "table must be found");
+
+    QVERIFY2(wideTable->format().width().type()==QTextLength::PercentageLength,
+             "overwide fixed table must become percentage");
+    QCOMPARE(wideTable->format().width().rawValue(), 100.0);
+
+    // Узкая фиксированная (200) в поле помещается — не трогается
+    QTextDocument narrow;
+    narrow.setHtml(QStringLiteral("<table width=\"200\" border=\"1\">"
+                                  "<tr><td>AAA</td></tr>"
+                                  "</table>"));
+
+    PrintPreview::prepareDocument(printer, &narrow);
+
+    QTextTable *narrowTable=findFirstTable(narrow.rootFrame());
+    QVERIFY2(narrowTable!=nullptr, "narrow table must be found");
+
+    QVERIFY2(narrowTable->format().width().type()==QTextLength::FixedLength,
+             "fitting fixed table must stay fixed");
+    QCOMPARE(narrowTable->format().width().rawValue(), 200.0);
+
+    // Вложенная широкая таблица тоже жмется
+    QTextDocument nested;
+    nested.setHtml(QStringLiteral("<table width=\"100%\" border=\"1\">"
+                                  "<tr><td><table width=\"600\" border=\"1\">"
+                                  "<tr><td>Inner</td></tr>"
+                                  "</table></td></tr>"
+                                  "</table>"));
+
+    PrintPreview::prepareDocument(printer, &nested);
+
+    QTextTable *outerTable=findFirstTable(nested.rootFrame());
+    QVERIFY2(outerTable!=nullptr, "outer table must be found");
+    QVERIFY2(outerTable->format().width().type()==QTextLength::PercentageLength,
+             "outer percentage table must stay percentage");
+
+    QTextTable *innerTable=findFirstTable(outerTable);
+    QVERIFY2(innerTable!=nullptr, "inner table must be found");
+    QVERIFY2(innerTable->format().width().type()==QTextLength::PercentageLength,
+             "overwide nested fixed table must become percentage");
+}
+
+void TestPrintMargins::tablesAlignLeftAtRoot(void)
+{
+    // Центрированная 100% и правая 50%: без нормализации Qt ставит
+    // их как L + align*(pageW-R-W) — левое поле забыто в базе
+    // выравнивания, таблицы уезжают вправо за границу (см. 596,
+    // проба tableprobe: +33pt и +61pt). prepareDocument ставит
+    // корневым процентным таблицам AlignLeft: позиция align=0
+    // не течет, 100%-я выглядит так же, узкие влезают в поле.
+    // Вложенная центрированная не трогается (в ячейке утечки нет)
+    QTextDocument doc;
+    doc.setHtml(QStringLiteral("<p>Before</p>"
+                               "<table width=\"100%\" align=\"center\" border=\"1\">"
+                               "<tr><td>A</td><td><table width=\"50%\" align=\"center\" border=\"1\">"
+                               "<tr><td>Inner</td></tr>"
+                               "</table></td></tr>"
+                               "</table>"
+                               "<table width=\"50%\" align=\"right\" border=\"1\">"
+                               "<tr><td>B</td><td>C</td></tr>"
+                               "</table><p>After</p>"));
+
+    QPrinter printer(QPrinter::HighResolution);
+    PrintPreview::applyDefaultMargins(printer);
+    PrintPreview::prepareDocument(printer, &doc);
+
+    // Текстовое поле в пунктах для сверки геометрии
+    qreal ml, mt, mr, mb;
+    printer.getPageMargins(&ml, &mt, &mr, &mb, QPrinter::Millimeter);
+    const qreal mmToPt=72.0/25.4;
+    const qreal textLeft=ml*mmToPt;
+    const qreal textRight=doc.pageSize().width()-mr*mmToPt;
+
+    QList<QTextTable*> rootTables;
+    QTextTable *innerTable=nullptr;
+    std::function<void(QTextFrame*, bool)> walk=[&](QTextFrame *f, bool isRoot)
+    {
+        for(QTextFrame::iterator it=f->begin(); !it.atEnd(); ++it)
+        {
+            QTextTable *t=qobject_cast<QTextTable*>(it.currentFrame());
+
+            if(t!=nullptr)
+            {
+                if(isRoot)
+                    rootTables.append(t);
+                else if(innerTable==nullptr)
+                    innerTable=t;
+
+                walk(t, false);
+                continue;
+            }
+
+            if(it.currentFrame()!=nullptr)
+                walk(it.currentFrame(), false);
+        }
+    };
+    walk(doc.rootFrame(), true);
+
+    QCOMPARE(rootTables.size(), 2);
+    QVERIFY2(innerTable!=nullptr, "nested table must be found");
+
+    // Корневые — влево и в пределах поля с запасом 6pt
+    // (остаточная константа Qt ~1-4pt). Вложенная — как была
+    foreach(QTextTable *t, rootTables)
+    {
+        QVERIFY2(t->format().alignment() & Qt::AlignLeft,
+                 "root percentage table must be left aligned for print");
+
+        const QRectF fr=doc.documentLayout()->frameBoundingRect(t);
+        QVERIFY2(fr.left() >= textLeft-1.0 && fr.left() <= textLeft+6.0,
+                 "root table must start at text left");
+        QVERIFY2(fr.right() <= textRight+6.0,
+                 "root table must not run past text right");
+    }
+
+    QVERIFY2(!(innerTable->format().alignment() & Qt::AlignLeft),
+             "nested table alignment must be preserved");
 }
 
 QTEST_MAIN(TestPrintMargins)

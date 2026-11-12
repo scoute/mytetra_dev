@@ -2035,8 +2035,18 @@ enable «Decrypt to a temporary file» option in Settings.</source>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>Attach file as link</source>
+        <translation>Прикрепить файл ссылкой</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
         <source>The folder is added to attachments and as a clickable link in note text. Relative links survive database relocation.</source>
         <translation>Папка добавится в прикрепленные и кликабельной ссылкой в текст заметки. Относительные ссылки переживают переезд базы.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>The file is added to attachments without copying. Relative links survive database relocation.</source>
+        <translation>Файл добавится в прикрепленные без копирования. Относительные ссылки переживают переезд базы.</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
@@ -2087,6 +2097,16 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
         <source>Folder "%1" is already attached as %2.</source>
         <translation>Папка «%1» уже прикреплена как %2.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>File already attached</source>
+        <translation>Файл уже прикреплен</translation>
+    </message>
+    <message>
+        <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>
+        <source>File "%1" is already attached as %2.</source>
+        <translation>Файл «%1» уже прикреплен как %2.</translation>
     </message>
     <message>
         <location filename="../../../src/controllers/attachTable/AttachTableController.cpp"/>

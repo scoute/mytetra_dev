@@ -6,6 +6,7 @@
 #include <QTextFormat>
 #include <QMouseEvent>
 #include <QTextFrame>
+#include <QTextTable>
 #include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
 #include <QPalette>
@@ -115,6 +116,52 @@ void PrintPreview::reassertFullPage(QPrinter &printer)
 }
 
 
+// Рекурсивная нормализация таблиц под печать (см. 596).
+// Два бага Qt 5.15, оба чинятся только на формате (позицию таблиц
+// задать нельзя):
+// 1. Таблица с фиксированной шириной шире текстового поля якорится
+//    слева и растет вправо за границу (вставки из веба с width="800",
+//    наследие старых версий). Такие жмем до 100%.
+// 2. Процентная таблица позиционируется как L + align*(pageW-R-W):
+//    левое поле один раз забыто в базе выравнивания. Левые стоят
+//    ровно, центральные уезжают на L/2, правые на полное L (при наших
+//    полях 20/5 это ~10мм и ~20мм — за границу). Поэтому корневым
+//    процентным таблицам ставим AlignLeft: 100%-я выглядит так же,
+//    узкие гарантированно влезают в поле. Вложенные не трогаем —
+//    в ячейке без полей утечки нет, верстка автора сохраняется.
+// Вызывается из prepareDocument, правится клон под печать.
+// isRoot — прямой ребенок корневого кадра (текстовое поле записи)
+static void normalizeTablesForPrint(QTextFrame *frame, qreal textWidth, bool isRoot)
+{
+    for(QTextFrame::iterator it=frame->begin(); !it.atEnd(); ++it)
+    {
+        QTextTable *table=qobject_cast<QTextTable*>(it.currentFrame());
+
+        if(table!=nullptr)
+        {
+            QTextTableFormat fmt=table->format();
+
+            if(fmt.width().type()==QTextLength::FixedLength &&
+               fmt.width().rawValue() > textWidth)
+                fmt.setWidth(QTextLength(QTextLength::PercentageLength, 100));
+
+            if(isRoot &&
+               fmt.width().type()==QTextLength::PercentageLength &&
+               !(fmt.alignment() & Qt::AlignLeft))
+                fmt.setAlignment(Qt::AlignLeft);
+
+            table->setFormat(fmt);
+
+            normalizeTablesForPrint(table, textWidth, false);
+            continue;
+        }
+
+        if(it.currentFrame()!=nullptr)
+            normalizeTablesForPrint(it.currentFrame(), textWidth, false);
+    }
+}
+
+
 // Общий конвейер подготовки документа для превью, прямой печати
 // и экспорта: один размер страницы, один шрифт, без номеров страниц
 void PrintPreview::prepareDocument(QPrinter &printer, QTextDocument *doc)
@@ -153,6 +200,11 @@ void PrintPreview::prepareDocument(QPrinter &printer, QTextDocument *doc)
     QFont f(doc->defaultFont());
     f.setPointSize(10);
     doc->setDefaultFont(f);
+
+    // Таблицы в границы текстового поля и без сдвига вправо.
+    // Правится клон под печать, живой документ не меняется. См. 596
+    const qreal textWidthPt=paperMm.width()*mmToPt-(marginLeft+marginRight)*mmToPt;
+    normalizeTablesForPrint(doc->rootFrame(), textWidthPt, true);
 }
 
 // Печать вручную постранично: QTextDocument::print() без явного

@@ -319,6 +319,59 @@ bool AttachTableController::addSingleFileAsAttach(const QString &filePath,
   return !innerFileName.isEmpty();
 }
 
+// Файл из дропа в текст заметки: при Ask меню дропа (копия/ссылка),
+// иначе молча копия. Ссылка добавляется строкой как с панели
+// (processFileLink: дедуп, переключение режима), метку file://
+// в текст ставит вызыватель (см. Editor)
+bool AttachTableController::addTextDropFile(const QString &filePath,
+                                            QString &innerFileName,
+                                            QString &displayFileName,
+                                            bool *addedAsLink)
+{
+  innerFileName.clear();
+  displayFileName.clear();
+
+  if(addedAsLink!=nullptr)
+    *addedAsLink=false;
+
+  if(filePath.isEmpty())
+    return false;
+
+  if(getAttachTableData()==NULL)
+  {
+    showMessageBox(tr("Save the note first"));
+    return false;
+  }
+
+  if(QFileInfo(filePath).isDir())
+    return false; // Папки идут своим путем выше по вызову
+
+  // Без Ask — прежнее поведение: копия + метка
+  if(AppContext::instance().appConfig()->storageSection()->get_attachLinkMode()!=AppConfig::AttachLinkAsk)
+    return addSingleFileAsAttach(filePath, innerFileName, displayFileName);
+
+  bool addAsCopy=true;
+  const int dropMode=requestDropFileMode(&addAsCopy);
+
+  // Отмена: ничего не добавляется
+  if(dropMode!=AppConfig::AttachLinkAbsolute &&
+     dropMode!=AppConfig::AttachLinkRelative &&
+     !addAsCopy)
+    return false;
+
+  if(addAsCopy)
+    return addSingleFileAsAttach(filePath, innerFileName, displayFileName);
+
+  if(processFileLink(QFileInfo(filePath).absoluteFilePath(), dropMode, nullptr).isEmpty())
+    return false;
+
+  if(addedAsLink!=nullptr)
+    *addedAsLink=true;
+
+  return true;
+}
+
+
 // Одна папка из дропа в текст или с панели: строкой-ссылкой
 // в таблицу. Возвращает id строки и видимое имя для метки в тексте.
 // Пусто в rowId если папка не добавилась: несохраненная запись
@@ -454,7 +507,17 @@ int AttachTableController::requestDropFileMode(bool *addAsCopy)
   QRadioButton *copyOnce=new QRadioButton(tr("Copy into database"), &dialog);
   QRadioButton *onceRelative=new QRadioButton(tr("Relative link"), &dialog);
   QRadioButton *onceAbsolute=new QRadioButton(tr("Absolute link"), &dialog);
-  copyOnce->setChecked(true);
+
+  // Прошлый выбор предвыбран: спрашивать всегда, но повторять
+  // одно и то же одним Enter (см. attachDropDefault)
+  const int lastDrop=AppContext::instance().appConfig()->storageSection()->get_attachDropDefault();
+
+  if(lastDrop==1)
+    onceRelative->setChecked(true);
+  else if(lastDrop==2)
+    onceAbsolute->setChecked(true);
+  else
+    copyOnce->setChecked(true);
 
   QDialogButtonBox *buttons=new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
   connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -470,8 +533,11 @@ int AttachTableController::requestDropFileMode(bool *addAsCopy)
   if(dialog.exec()!=QDialog::Accepted)
     return -1;
 
+  // Выбор запоминается как умолчание для следующего дропа
   if(copyOnce->isChecked())
   {
+    AppContext::instance().appConfig()->storageSection()->set_attachDropDefault(0);
+
     if(addAsCopy!=nullptr)
       *addAsCopy=true;
 
@@ -479,8 +545,12 @@ int AttachTableController::requestDropFileMode(bool *addAsCopy)
   }
 
   if(onceAbsolute->isChecked())
+  {
+    AppContext::instance().appConfig()->storageSection()->set_attachDropDefault(2);
     return AppConfig::AttachLinkAbsolute;
+  }
 
+  AppContext::instance().appConfig()->storageSection()->set_attachDropDefault(1);
   return AppConfig::AttachLinkRelative;
 }
 

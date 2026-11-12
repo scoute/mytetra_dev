@@ -66,6 +66,11 @@ public:
     // что attachNameMode
     int get_attachLinkMode(void);
     void set_attachLinkMode(int mode);
+    // Последний выбор меню дропа файлов (копия/ссылка): 0 - копия,
+    // 1 - относительная ссылка, 2 - абсолютная ссылка. Unversioned,
+    // как attachLinkMode: отсутствующий ключ - копия
+    int get_attachDropDefault(void);
+    void set_attachDropDefault(int mode);
     // Режим имен каталогов записей: системный (id) или гибридный
     // (id_имя). Тот же unversioned-паттерн что attachNameMode:
     // отсутствующий ключ покрывается дефолтом, миграция conf не нужна

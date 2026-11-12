@@ -471,6 +471,27 @@ void ReferenceFormatter::insertAttachBadge(const QString &innerFileName,
 }
 
 
+// Метка файла-ссылки: [EXT] имя с file:// href на цель.
+// Тот же вид что у insertAttachBadge, но движок аттачей
+// ее не видит: удаление строки ссылку из текста не чистит
+void ReferenceFormatter::insertFileLinkMark(const QString &absolutePath,
+                                            const QString &displayFileName)
+{
+    if(absolutePath.isEmpty() || displayFileName.isEmpty())
+        return;
+
+    QString ext=QFileInfo(displayFileName).suffix().toUpper();
+
+    if(ext.isEmpty())
+        ext=QStringLiteral("FILE");
+
+    const QString href=QUrl::fromLocalFile(absolutePath).toString();
+    const QString title=QStringLiteral("[")+ext+QStringLiteral("] ")+displayFileName;
+
+    insertTitledLink(href, title);
+}
+
+
 // Метка аттача: attach://<внутреннее имя на диске>
 bool ReferenceFormatter::isAttachHref(const QString &href)
 {

@@ -2220,12 +2220,12 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="235"/>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="246"/>
         <source>Incoming links</source>
-        <translation>Входящие ссылки</translation>
+        <translation>Другие заметки ссылаются на эту</translation>
     </message>
     <message>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="252"/>
         <source>Incoming links (%1)</source>
-        <translation>Входящие ссылки (%1)</translation>
+        <translation>Другие заметки ссылаются на эту: (%1)</translation>
     </message>
     <message>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="289"/>
@@ -2246,13 +2246,13 @@ enable «Decrypt to a temporary file» option in Settings.</source>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="236"/>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="247"/>
         <source>Outgoing links</source>
-        <translation>Исходящие ссылки</translation>
+        <translation>Эта заметка ссылается на</translation>
     </message>
     <message>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="193"/>
         <location filename="../../../src/views/backlinksPanel/BacklinksPanel.cpp" line="261"/>
         <source>Outgoing links (%1)</source>
-        <translation>Исходящие ссылки (%1)</translation>
+        <translation>Эта заметка ссылается на: (%1)</translation>
     </message>
 </context>
 <context>

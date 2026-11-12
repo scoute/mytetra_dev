@@ -7,6 +7,8 @@
 #include <QSettings>
 #include <QFile>
 #include <QTemporaryDir>
+#include <QPageSize>
+#include <QPageLayout>
 
 #include "models/appConfig/AppConfig.h"
 #include "models/appConfig/AppConfigStorage.h"
@@ -147,6 +149,36 @@ void TestConf::uiSection(void)
     AppContext::instance().appConfig()->uiSection()->set_printFooterEnabled(false);
     QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printFooterEnabled(), false);
     QCOMPARE(m_raw->value("printFooterEnabled").toBool(), false);
+    // Тихий автосейв полей по умолчанию выключен, дефолтные поля 20/5/5/5
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printSaveMargins(), false);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printMargins(),
+             QMarginsF(20.0, 5.0, 5.0, 5.0));
+    AppContext::instance().appConfig()->uiSection()->set_printSaveMargins(true);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printSaveMargins(), true);
+    QCOMPARE(m_raw->value("printSaveMargins").toBool(), true);
+    AppContext::instance().appConfig()->uiSection()->set_printMargins(QMarginsF(10.0, 11.0, 12.0, 13.0));
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printMargins(),
+             QMarginsF(10.0, 11.0, 12.0, 13.0));
+    QCOMPARE(m_raw->value("printMarginLeft").toDouble(), 10.0);
+    QCOMPARE(m_raw->value("printMarginBottom").toDouble(), 13.0);
+    // Отрицательные поля отрезаются в ноль и на записи, и на чтении
+    AppContext::instance().appConfig()->uiSection()->set_printMargins(QMarginsF(-5.0, 5.0, 5.0, 5.0));
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printMargins().left(), 0.0);
+    // Бумага и ориентация: дефолты A4/портрет, мусор отрезается
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printPageSizeId(),
+             static_cast<int>(QPageSize::A4));
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printPageOrientation(),
+             static_cast<int>(QPageLayout::Portrait));
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->has_savedPrintPageSetup(), true);
+    AppContext::instance().appConfig()->uiSection()->set_printPageSizeId(QPageSize::Letter);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printPageSizeId(),
+             static_cast<int>(QPageSize::Letter));
+    AppContext::instance().appConfig()->uiSection()->set_printPageOrientation(QPageLayout::Landscape);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printPageOrientation(),
+             static_cast<int>(QPageLayout::Landscape));
+    AppContext::instance().appConfig()->uiSection()->set_printPageSizeId(999999);
+    QCOMPARE(AppContext::instance().appConfig()->uiSection()->get_printPageSizeId(),
+             static_cast<int>(QPageSize::A4));
 }
 
 void TestConf::findSection(void)

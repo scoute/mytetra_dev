@@ -47,6 +47,17 @@ public slots:
   // поля живого принтера, конвейер их только читает
   static void applyDefaultMargins(QPrinter &printer);
 
+    // Полный сетап из конфига (сохраненный галочкой, см. 594) как
+    // стартовый набор для новых окон превью, прямой печати и экспорта.
+    // Если ничего не сохранялось — те же дефолтные поля 20/5/5/5,
+    // а бумагу системного принтера не трогаем
+    static void applySavedPageSetup(QPrinter &printer);
+
+    // Снимок текущего сетапа принтера (бумага, ориентация, поля)
+    // в конфиг как умолчания. Вызывается из pageSetup/print
+    // по галочке и при ее включении
+    static void savePageSetupToConfig(const QPrinter &printer);
+
   // Вернуть fullPage и наши поля после диалога печати. Виндовый
   // QPrintDialog на accept перестраивает layout принтера из DEVMODE
   // и может сбросить fullPage: печать уезжает на угол printable-области
@@ -76,6 +87,7 @@ private slots:
     void exportToPdf();
     void onAlignChanged(int index);
     void onFootersToggled(bool checked);
+    void onRememberToggled(bool checked);
 
     // Следование подсветки ленты за прокруткой основного вида
     void onMainScrollChanged(int value);
@@ -101,6 +113,7 @@ private:
     QToolButton *buttonZoomFit;
     MtComboBox *alignCombo;
     QCheckBox *footersCheckBox;
+    QCheckBox *rememberCheckBox;
     QToolButton *buttonClose;
     
     QVBoxLayout *centralLayout;

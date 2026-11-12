@@ -3,6 +3,8 @@
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/AppContext.h"
+#include <QPageSize>
+#include <QPageLayout>
 
 AppConfigUi::AppConfigUi(QObject *parent) : QObject(parent)
 {
@@ -175,6 +177,87 @@ bool AppConfigUi::get_printFooterEnabled(void)
 void AppConfigUi::set_printFooterEnabled(bool state)
 {
     m_conf->setValue("printFooterEnabled", state);
+}
+
+bool AppConfigUi::get_printSaveMargins(void)
+{
+    return m_conf->value("printSaveMargins", false).toBool();
+}
+
+void AppConfigUi::set_printSaveMargins(bool state)
+{
+    m_conf->setValue("printSaveMargins", state);
+}
+
+QMarginsF AppConfigUi::get_printMargins(void)
+{
+    const qreal left=qMax(0.0, m_conf->value("printMarginLeft", 20.0).toDouble());
+    const qreal top=qMax(0.0, m_conf->value("printMarginTop", 5.0).toDouble());
+    const qreal right=qMax(0.0, m_conf->value("printMarginRight", 5.0).toDouble());
+    const qreal bottom=qMax(0.0, m_conf->value("printMarginBottom", 5.0).toDouble());
+
+    return QMarginsF(left, top, right, bottom);
+}
+
+void AppConfigUi::set_printMargins(const QMarginsF &margins)
+{
+    m_conf->setValue("printMarginLeft", qMax(0.0, margins.left()));
+    m_conf->setValue("printMarginTop", qMax(0.0, margins.top()));
+    m_conf->setValue("printMarginRight", qMax(0.0, margins.right()));
+    m_conf->setValue("printMarginBottom", qMax(0.0, margins.bottom()));
+}
+
+int AppConfigUi::get_printPageSizeId(void)
+{
+    const int id=m_conf->value("printPageSizeId", QPageSize::A4).toInt();
+
+    if(id==QPageSize::Custom)
+        return QPageSize::Custom;
+
+    if(!QPageSize(static_cast<QPageSize::PageSizeId>(id)).isValid())
+        return QPageSize::A4;
+
+    return id;
+}
+
+void AppConfigUi::set_printPageSizeId(int id)
+{
+    m_conf->setValue("printPageSizeId", id);
+}
+
+int AppConfigUi::get_printPageOrientation(void)
+{
+    const int orientation=m_conf->value("printPageOrientation", QPageLayout::Portrait).toInt();
+
+    if(orientation!=QPageLayout::Portrait && orientation!=QPageLayout::Landscape)
+        return QPageLayout::Portrait;
+
+    return orientation;
+}
+
+void AppConfigUi::set_printPageOrientation(int orientation)
+{
+    if(orientation!=QPageLayout::Portrait && orientation!=QPageLayout::Landscape)
+        orientation=QPageLayout::Portrait;
+
+    m_conf->setValue("printPageOrientation", orientation);
+}
+
+QSizeF AppConfigUi::get_printCustomPageSize(void)
+{
+    return QSizeF(m_conf->value("printCustomPageWidthMm", 0.0).toDouble(),
+                  m_conf->value("printCustomPageHeightMm", 0.0).toDouble());
+}
+
+void AppConfigUi::set_printCustomPageSize(const QSizeF &sizeMm)
+{
+    m_conf->setValue("printCustomPageWidthMm", sizeMm.width());
+    m_conf->setValue("printCustomPageHeightMm", sizeMm.height());
+}
+
+bool AppConfigUi::has_savedPrintPageSetup(void)
+{
+    return m_conf->contains("printMarginLeft");
 }
 
 int AppConfigUi::getUglyQssReplaceHeightForTableView(void)

@@ -11,6 +11,8 @@
 # Использование:
 #   ./build_portable_linux_debian12.sh [--jobs N] [аргументы build_portable_linux.sh]
 # Аргументы после проверок передаются в build_portable_linux.sh как есть.
+# Каталог сборки по умолчанию: build/portable-debian12 в папке проекта
+# (можно переопределить через --build-dir).
 
 set -u
 
@@ -113,7 +115,23 @@ fi
 
 echo "all OK, starting build"
 
-# 5. Делегирование общей сборке со всеми аргументами пользователя
+# Пауза, чтобы человек глазами успел увидеть результат проверок
+sleep 1
+
+# 5. Делегирование общей сборке со всеми аргументами пользователя.
+# Каталог сборки по умолчанию - внутри папки проекта, чтобы не
+# требовать выбора директории: build/portable-debian12
+HAVE_BUILD_DIR=0
+for arg in "$@"; do
+    if [[ "${arg}" == "--build-dir" ]]; then
+        HAVE_BUILD_DIR=1
+        break
+    fi
+done
+if [[ "${HAVE_BUILD_DIR}" -eq 0 ]]; then
+    set -- "$@" --build-dir "${SCRIPT_DIR}/build/portable-debian12"
+fi
+
 [[ -x "${BASE_SCRIPT}" ]] || fail "нет базового скрипта ${BASE_SCRIPT}"
 
 exec "${BASE_SCRIPT}" "$@"

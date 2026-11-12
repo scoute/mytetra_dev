@@ -2304,7 +2304,7 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
     emit doCloseDetachedWindowByIdSet( deleteResordsId );
 
     // Чистка обратного индекса: записи веток ушли в корзину
-    m_backlinks->removeSources(deleteResordsId.toList());
+    m_backlinks->removeSources(deleteResordsId.values());
 
     // Ветки удалены: id-индекс и кеш статистики в пересборку (fix/542)
     m_idIndexDirty=true;

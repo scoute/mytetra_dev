@@ -47,6 +47,10 @@ build-*-Release/*
 !app/tests/*.sh
 !build_portable_windows_*.sh
 
+# Compiled Qt translations: built from .ts by lrelease on every build,
+# never commit them (200KB churn on each translation fix)
+app/bin/resource/translations/*.qm
+
 # Ignore php tech files
 /app/src/*.php
 

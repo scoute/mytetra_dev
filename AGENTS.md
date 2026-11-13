@@ -35,7 +35,7 @@ cd mytetra-dev/build/Desktop_Qt_5_15_2_GCC_64bit/app && make -j12
 
 - `EditorConfig` (editorconf.ini) is versioned: new keys require a new `get_parameter_table_N` + registration in the table list + migration rules in `update_version_change_value`. Same pattern as the mic/secret/toggleTools dockings.
 - `EditorConfig::get_parameter()` calls `criticalError` on missing **or empty** values. Nullable keys (empty default) must be read via `conf->value(...)` directly.
-- `.ts` files: never run bare `lupdate` (rewrites thousands of line numbers). Add messages by hand next to their `<name>` context (context = class name of the `tr()` call site — runtime lookup fails otherwise), then `lrelease` the `.qm`. Only `ru` must be 100% (strict check counts empty + `unfinished`, ignores `obsolete`).
+- `.ts` files: never run bare `lupdate` (rewrites thousands of line numbers). Add messages by hand next to their `<name>` context (context = class name of the `tr()` call site — runtime lookup fails otherwise). Compiled `.qm` are build artifacts (lrelease runs automatically before rcc via `updateqm` in app.pro) — commit only `.ts`, never `.qm`. Only `ru` must be 100% (strict check counts empty + `unfinished`, ignores `obsolete`).
 
 ## Verified Qt 5.15 gotchas
 

@@ -94,6 +94,19 @@ TRANSLATIONS = bin/resource/translations/mytetra_ru.ts \
                bin/resource/translations/mytetra_hy.ts
 CODECFORSRC  = utf8
 
+# .qm собираются из .ts при каждой сборке и в репозиторий не коммитятся
+# (бинарник 200КБ перекоммичивался при каждой правке перевода).
+# lrelease обязан идти ДО rcc: иначе в ресурсы вшьются старые .qm
+# или сборка упадет на свежих клонах, где .qm еще нет
+win32: QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease.exe
+else: QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease
+for(ts, TRANSLATIONS): ABS_TS += $$_PRO_FILE_PWD_/$$ts
+updateqm.input = ABS_TS
+updateqm.output = ${QMAKE_FILE_PATH}/${QMAKE_FILE_BASE}.qm
+updateqm.commands = $$QMAKE_LRELEASE ${QMAKE_FILE_IN} -qm ${QMAKE_FILE_OUT}
+updateqm.CONFIG += no_link target_predeps
+QMAKE_EXTRA_COMPILERS += updateqm
+
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/src
 

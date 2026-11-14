@@ -37,6 +37,17 @@ private slots:
 
 private:
 
+    // PIN для входа в чужую сеть (пусто = отмена).
+    // Честно предупреждает что локальная пара будет пересоздана
+    QString askJoinPin(const QString &peerName,
+                       const QString &peerGroup=QString());
+
+    // Сброс локальной пары перед входом в чужую сеть
+    void joinFresh(void);
+
+    // Показ итога ручного синка
+    void showManualResult(const QString &result, bool syncOk);
+
     // Строка считается спаренной: секрет есть и выведен именно с ней
     bool isPaired(const AppConfig::SyncDeviceInfo &info) const;
     int currentRowId(QString &id) const;

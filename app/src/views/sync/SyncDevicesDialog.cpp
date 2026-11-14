@@ -284,11 +284,22 @@ void SyncDevicesDialog::onSyncNow(void)
             return;
         }
 
-        // Тот же путь что headless с PIN: сервер примет с warning,
-        // клиент возьмет группу хаба внутри сессии
+        // Тот же путь что headless с PIN: сервер 078+ примет с warning,
+        // клиент возьмет группу хаба внутри сессии.
+        // Старый сервер так и откажет — тогда входим свежо (сброс пары):
+        // пустая группа втягивается сервером любой версии
         report=session.run(target.ip,
                            static_cast<quint16>(target.port),
                            pin);
+
+        if(!report.ok
+           && report.errorCode==QStringLiteral("foreign-network"))
+        {
+            joinFresh();
+            report=session.run(target.ip,
+                               static_cast<quint16>(target.port),
+                               pin);
+        }
     }
 
     if(!report.ok)
@@ -340,11 +351,11 @@ void SyncDevicesDialog::onManualSync(void)
     QString pin;
     QString errorCode;
     bool syncOk=false;
+    QString result;
 
     // Секрета нет: сначала пробуем hello чтобы показать фингерпринт
-    // сервера до ввода PIN. Секрет есть: проба вредна — при чужой сети
-    // она падает раньше основного пути и прячет вопрос о переходе,
-    // идем сразу в runSyncToHeadless
+    // сервера до ввода PIN. Секрет есть: идем сразу в runSyncToHeadless,
+    // проба при чужой сети упала бы раньше вопроса о переходе
     if(config->get_syncPairingSecret().isEmpty())
     {
         // Проба: кто отвечает, чтобы показать фингерпринт до ввода PIN
@@ -353,6 +364,27 @@ void SyncDevicesDialog::onManualSync(void)
 
         if(!hello.ok)
         {
+            // Чужая сеть уже на пробе: сразу предлагаем войти свежо
+            // (сервер любой версии: пустая группа втягивается всегда)
+            if(hello.errorCode==QStringLiteral("foreign-network")
+               && !hello.remoteGroupId.isEmpty())
+            {
+                pin=askJoinPin(hello.remoteDeviceName.isEmpty()
+                               ? hello.remoteDeviceId : hello.remoteDeviceName,
+                               hello.remoteGroupId);
+
+                if(pin.isEmpty())
+                {
+                    refreshList();
+                    return;
+                }
+
+                joinFresh();
+                result=win->runSyncToHeadless(host, pin, port, syncOk);
+                showManualResult(result, syncOk);
+                return;
+            }
+
             QMessageBox::warning(this, tr("Sync"),
                                  tr("Handshake failed: %1").arg(hello.errorText));
             refreshList();
@@ -377,52 +409,84 @@ void SyncDevicesDialog::onManualSync(void)
             return;
     }
 
-    QString result=win->runSyncToHeadless(host, pin, port,
-                                          syncOk, &errorCode);
+    result=win->runSyncToHeadless(host, pin, port,
+                                  syncOk, &errorCode);
 
-    // Чужая сеть и в ручном пути: сервер 078+ с PIN сам примет с warning,
-    // старый — так и откажет, тогда в сообщении уже есть подсказка про forget
-    if(!syncOk && errorCode==QStringLiteral("foreign-network") && pin.isEmpty())
+    // Чужая сеть: сервер 078+ с PIN сам примет с warning.
+    // Старый либо отказ без PIN — предлагаем войти свежо (сброс локальной
+    // пары + PIN): пустая группа втягивается сервером любой версии
+    if(!syncOk && errorCode==QStringLiteral("foreign-network"))
     {
-        if(QMessageBox::question(
-               this, tr("Sync"),
-               tr("This server is in another sync network.\n"
-                  "Switch to its network? The secret will be re-derived "
-                  "from PIN."))!=QMessageBox::Yes)
+        pin=askJoinPin(QString());
+
+        if(pin.isEmpty())
         {
             refreshList();
             return;
         }
 
-        bool ok=false;
-        pin=QInputDialog::getText(this,
-                                  tr("Sync pairing"),
-                                  tr("Enter the pairing PIN (the same PIN "
-                                     "must be entered on the server). "
-                                     "Empty = cancel."),
-                                  QLineEdit::Password,
-                                  QString(),
-                                  &ok);
-
-        if(!ok || pin.isEmpty())
-        {
-            refreshList();
-            return;
-        }
-
+        joinFresh();
         result=win->runSyncToHeadless(host, pin, port, syncOk);
     }
 
-    if(!syncOk)
-    {
-        QMessageBox::warning(this, tr("Sync"), result);
-        refreshList();
-        return;
-    }
+    showManualResult(result, syncOk);
+}
 
-    QMessageBox::information(this, tr("Sync"), result);
+
+// PIN для входа в чужую сеть. Честно предупреждаем: локальная пара
+// (секрет, группа, привязка) будет пересоздана, старая сеть забыта.
+// Пусто — отмена пользователем
+QString SyncDevicesDialog::askJoinPin(const QString &peerName,
+                                      const QString &peerGroup)
+{
+    QString text=tr("This server is in another sync network.\n"
+                    "Join it? Local pairing (secret, group) will be "
+                    "re-created from PIN, current network forgotten.");
+
+    if(!peerName.isEmpty())
+        text+=tr("\n\nServer: %1").arg(peerName);
+
+    if(!peerGroup.isEmpty())
+        text+=tr("\nIts group: %1").arg(peerGroup);
+
+    if(QMessageBox::question(this, tr("Sync"), text)!=QMessageBox::Yes)
+        return QString();
+
+    bool ok=false;
+    const QString pin=QInputDialog::getText(this,
+                                            tr("Sync pairing"),
+                                            tr("Enter the pairing PIN (the same PIN "
+                                               "must be entered on the server). "
+                                               "Empty = cancel."),
+                                            QLineEdit::Password,
+                                            QString(),
+                                            &ok);
+
+    if(!ok || pin.isEmpty())
+        return QString();
+
+    return pin;
+}
+
+
+// Сброс локальной пары перед входом в чужую сеть: секрет, группа,
+// привязка. Дальше runSyncToHeadless с PIN спарит с нуля на любом сервере
+void SyncDevicesDialog::joinFresh(void)
+{
+    config->set_syncPairingSecret(QString());
+    config->set_syncGroupId(QString());
+    config->set_syncPairedDeviceId(QString());
+}
+
+
+void SyncDevicesDialog::showManualResult(const QString &result, bool syncOk)
+{
+    if(!syncOk)
+        QMessageBox::warning(this, tr("Sync"), result);
+    else
+        QMessageBox::information(this, tr("Sync"), result);
+
     refreshList();
-    return;
 }
 
 

@@ -1,10 +1,55 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
+#include <QDateTime>
+#include <QCryptographicHash>
 #include <QJsonDocument>
 #include <QJsonObject>
 
 #include "SyncSidecar.h"
+
+
+namespace
+{
+SyncSidecar *g_instance=nullptr;
+}
+
+
+SyncSidecar &SyncSidecar::instance(void)
+{
+    if(g_instance==nullptr)
+        g_instance=new SyncSidecar();
+
+    return *g_instance;
+}
+
+
+void SyncSidecar::init(const QString &xmlFileName)
+{
+    instance().load(xmlFileName);
+}
+
+
+void SyncSidecar::shutdown(void)
+{
+    delete g_instance;
+    g_instance=nullptr;
+}
+
+
+void SyncSidecar::touchNote(const QString &id, const QByteArray &contentBytes)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded())
+        return;
+
+    const QString hash=QString::fromLatin1(
+        QCryptographicHash::hash(contentBytes,
+                                 QCryptographicHash::Sha256).toHex());
+
+    g_instance->setEntry(id, QDateTime::currentMSecsSinceEpoch(),
+                         hash, QStringLiteral("note"));
+    g_instance->save();
+}
 
 
 QString SyncSidecar::sidecarPathForXml(const QString &xmlFileName)

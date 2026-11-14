@@ -48,6 +48,16 @@ public:
     QMap<QString, qint64> tombstones(void) const;
     void clearTombstone(const QString &id);
 
+    // Единственный экземпляр на процесс (база одна активна).
+    // init вызывается при открытии базы, дальше touch* пишут сами
+    static SyncSidecar &instance(void);
+    static void init(const QString &xmlFileName);
+    static void shutdown(void);
+
+    // Отметить сейв заметки: mtime=сейчас, hash контента, kind="note".
+    // Пишет сайдкар на диск сразу (файл крошечный). Нет init — no-op
+    static void touchNote(const QString &id, const QByteArray &contentBytes);
+
 private:
 
     QString m_xmlFileName;

@@ -318,7 +318,8 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
 
   // Выгрузка всех связанных данных с расшифровкой (если это необходимо)
   // и одновременная расшифровка всех атрибутов (если это необходимо)
-  exportRelatedDataAndDecryptIfNeed(doc, exportDir);
+  if(!exportRelatedDataAndDecryptIfNeed(doc, exportDir))
+    return false;
 
 
   // Запись DOM данных в файл
@@ -341,13 +342,11 @@ bool KnowTreeModel::exportBranchToDirectory(TreeItem *startItem, QString exportD
 }
 
 
-void KnowTreeModel::exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString exportDir)
+bool KnowTreeModel::exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString exportDir)
 {
   QDomElement contentRootNode=doc.documentElement().firstChildElement("content").firstChildElement("node");
 
-  exportRelatedDataAndDecryptIfNeedRecurse(contentRootNode, exportDir);
-
-  return;
+  return exportRelatedDataAndDecryptIfNeedRecurse(contentRootNode, exportDir);
 }
 
 
@@ -357,7 +356,8 @@ void KnowTreeModel::exportRelatedDataAndDecryptIfNeed(QDomDocument &doc, QString
 // - файлы картинок
 // - прикрепленные к записи файлы
 // все эти данные выгружаются в поддиректорию, записанную в атрибуте dir
-void KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &element, QString exportDir)
+// Возвращает false, если копирование данных не удалось
+bool KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &element, QString exportDir)
 {
   QStringList cryptFieldNames;
 
@@ -389,8 +389,14 @@ void KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
      if( !QDir().mkpath(toDir) )
        criticalError("Cant create directory "+toDir);
 
-     // Копирование всех файлов из директории записи в директорию экспортируемой записи
-     DiskHelper::copyDirectory(fromDir, toDir);
+      // Копирование всех файлов из директории записи в директорию экспортируемой записи.
+      // Результат проверяется: молчаливый пропуск копирования приводил к экспорту
+      // со ссылками на несуществующие файлы
+      if(!DiskHelper::copyDirectory(fromDir, toDir))
+      {
+        showMessageBox(tr("Export error: unable to copy record data from %1 to %2.").arg(fromDir).arg(toDir));
+        return false;
+      }
 
      // Расшифровка файлов
      if(element.attribute("crypt")=="1")
@@ -435,8 +441,11 @@ void KnowTreeModel::exportRelatedDataAndDecryptIfNeedRecurse(QDomElement &elemen
     if(childList.at(i).isElement())
     {
       QDomElement childElement=childList.at(i).toElement();
-      exportRelatedDataAndDecryptIfNeedRecurse( childElement, exportDir);
+      if(!exportRelatedDataAndDecryptIfNeedRecurse( childElement, exportDir))
+        return false;
     }
+
+  return true;
 }
 
 
@@ -549,8 +558,14 @@ bool KnowTreeModel::copyImportRecordDirectories( QDomDocument &doc,
       if( !QDir().mkpath(fullToDir) )
         criticalError("Cant create directory "+fullToDir);
 
-      // Копирование всех файлов из директории импортируемой записи в директорию записи основной базы
-      DiskHelper::copyDirectory(fullFromDir, fullToDir);
+      // Копирование всех файлов из директории импортируемой записи в директорию записи основной базы.
+      // Результат проверяется, иначе импорт фиксировался бы в базе со ссылками
+      // на нескопированные тексты, картинки и аттачи
+      if(!DiskHelper::copyDirectory(fullFromDir, fullToDir))
+      {
+        showMessageBox(tr("Import error: unable to copy record data from %1 to %2.").arg(fullFromDir).arg(fullToDir));
+        return false;
+      }
 
       // В файле записи меняются внутренние ссылки формата "mytetra:" в случае, если импортируемые записи получили новые идентификаторы
       QString recordFileName=fullToDir+"/"+shortFileName;

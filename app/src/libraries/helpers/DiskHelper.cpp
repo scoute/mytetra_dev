@@ -208,6 +208,9 @@ bool DiskHelper::removeDirectory(const QString &dirName)
 
 // Копирование содержимого директории
 // Копируются только файлы
+// Возвращает false, если хотя бы один файл скопировать не удалось.
+// Раньше результат QFile::copy() игнорировался, и метод возвращал true
+// при частично скопированных данных
 bool DiskHelper::copyDirectory(const QString &fromName, const QString &toName)
 {
     QDir fromDir(fromName);
@@ -217,7 +220,11 @@ bool DiskHelper::copyDirectory(const QString &fromName, const QString &toName)
     {
         Q_FOREACH(QFileInfo info, fromDir.entryInfoList(QDir::Files))
         {
-            QFile::copy(info.absoluteFilePath(), toName+"/"+info.fileName());
+            if(!QFile::copy(info.absoluteFilePath(), toName+"/"+info.fileName()))
+            {
+                qWarning() << "Cant copy file " << info.absoluteFilePath() << " to " << toName+"/"+info.fileName();
+                return false;
+            }
         }
 
         return true;

@@ -1399,6 +1399,16 @@ void Editor::onCustomContextMenuRequested(const QPoint &pos)
 {
     qDebug() << "In Editor on_customContextMenuRequested";
 
+    // Курсор едет в точку клика только если нет выделения.
+    // Каретка и выделение в Qt один объект: двигать каретку
+    // не трогая выделение нельзя, поэтому с выделением вообще
+    // ничего не двигаем (поведение Qt цело), а без выделения
+    // курсор всегда ставится в клик чтобы меню работало с точкой
+    // клика, а не со старым местом
+    QTextCursor currentCursor=textArea->textCursor();
+    if(!currentCursor.hasSelection())
+      textArea->setTextCursor(textArea->cursorForPosition(pos));
+
     // В контекстном меню выставляются допустимые пункты
     editorContextMenu->update();
 

@@ -541,6 +541,16 @@ QScrollArea QWidget QWidget:disabled {
   background-color: #19232D;
 }
 
+/* Строка меток под текстом заметки (MetaEditor): высота зоны жестко
+ * поджата кодом под высоту меток (setMaximumHeight), поэтому рамка
+ * и внутренние отступы из общего правила QAbstractScrollArea здесь
+ * запрещены: они выедали несколько пикселей вьюпорта и нижняя часть
+ * текста меток утопала */
+QScrollArea#recordTagsScrollArea {
+  border: none;
+  padding: 0px;
+}
+
 /* QScrollBar -------------------------------------------------------------
 
 https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qscrollbar

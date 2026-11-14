@@ -35,8 +35,12 @@ public:
     static SyncHelloResult checkHello(const QJsonObject &hello,
                                      AppConfig *config, qint64 serverTime);
 
-    // Зарегистрировать POST /hello на сервере. config жив всю жизнь сервера
-    static void registerRoutes(SyncServer *server, AppConfig *config);
+    // Зарегистрировать POST /hello на сервере. config жив всю жизнь сервера.
+    // pairingPin: предустановленный PIN для headless-спаривания (--sync-pair).
+    // Если секрета еще нет, а PIN задан — секрет выводится при первом hello
+    // с обеих сторон одинаково, сверка фингерпринта в этом режиме на человеке
+    static void registerRoutes(SyncServer *server, AppConfig *config,
+                               const QString &pairingPin=QString());
 
     // Последний неизвестный гость (hello без секрета с нашей стороны).
     // Для диалога спаривания на сервере: показать имя/фингерпринт,

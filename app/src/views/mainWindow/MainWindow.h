@@ -110,6 +110,22 @@ private slots:
     void onSyncServerToggle(bool checked);
     void onSyncPairing(void);
 
+public:
+
+    // Headless-управление сервером (для --sync-server и тестов).
+    // Порт по умолчанию 47777
+    bool startSyncServer(quint16 port=47777, const QString &pairingPin=QString());
+    void stopSyncServer(void);
+    bool isSyncServerRunning(void) const;
+
+    // Headless-синк: без диалогов. pin — для первого спаривания
+    // (GUI-путь сверяет фингерпринт, здесь — осознанно нет).
+    // Возвращает текст отчета, ok=false при ошибке
+    QString runSyncToHeadless(const QString &host,
+                              const QString &pin,
+                              quint16 port,
+                              bool &ok);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -173,6 +189,7 @@ private:
 
     // Синхронизация: хаб живет пока включен сервер из меню Tools
     SyncHub *syncHub=nullptr;
+    static const quint16 syncDefaultPort;
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
     QAction *actionDirectPreferencesMain       =nullptr;

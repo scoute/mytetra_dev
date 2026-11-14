@@ -178,7 +178,7 @@ QMap<QString, QString> TreeItem::getAllFields()
 
 // Получение всех установленных полей "имя_поля"->"значение"
 // Напрямую, без преобразований, без расшифровки
-QMap<QString, QString> TreeItem::getAllFieldsDirect()
+QMap<QString, QString> TreeItem::getAllFieldsDirect() const
 {
   return fieldsTable;
 }

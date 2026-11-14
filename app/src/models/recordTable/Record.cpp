@@ -1,5 +1,6 @@
 #include <QObject>
 #include <QMessageBox>
+#include <QSet>
 #include <QXmlStreamWriter>
 
 #include "Record.h"
@@ -114,6 +115,12 @@ QDomElement Record::exportDataToDom(QDomDocument *doc) const
       elem.setAttribute(currentFieldName, getNaturalFieldSource(currentFieldName));
   }
 
+  // Неизвестные поля новых версий возвращаются как были:
+  // иначе первый сейв молча срезал бы чужие данные
+  for(auto it=fieldList.constBegin(); it!=fieldList.constEnd(); ++it)
+    if(!availableFieldList.contains(it.key()))
+      elem.setAttribute(it.key(), it.value());
+
   // К элементу записи прикрепляется элемент таблицы приаттаченных файлов, если таковые есть
   if(attachTableData.size()>0)
     elem.appendChild( attachTableData.exportDataToDom(doc) );
@@ -137,6 +144,11 @@ void Record::exportDataToStreamWriter(QXmlStreamWriter *xmlWriter) const
     if(isNaturalFieldExists(currentFieldName))
       xmlWriter->writeAttribute(currentFieldName, getNaturalFieldSource(currentFieldName));
   }
+
+  // Неизвестные поля новых версий возвращаются как были (см. exportDataToDom)
+  for(auto it=fieldList.constBegin(); it!=fieldList.constEnd(); ++it)
+    if(!availableFieldList.contains(it.key()))
+      xmlWriter->writeAttribute(it.key(), it.value());
 
   // К элементу записи прикрепляется элемент таблицы приаттаченных файлов, если таковые есть
   if(attachTableData.size()>0)
@@ -360,9 +372,24 @@ QString Record::getNaturalFieldSource(QString name) const
 
 void Record::setNaturalFieldSource(QString name, QString value)
 {
-  // Если имя поля недопустимо
+  // Неизвестные поля новых версий не роняют программу: читаются как есть
+  // и возвращаются на место при сохранении. Использовать их нельзя,
+  // только донести до сейва, иначе первый сейв молча срезал бы чужие данные
   if(FixedParameters::isRecordFieldNatural(name)==false)
-    criticalError("In RecordTableData::setNaturalFieldSource() unavailable field name "+name+" try set to "+value);
+  {
+    static QSet<QString> warnedFields;
+
+    if(!warnedFields.contains(name))
+    {
+      warnedFields.insert(name);
+      qWarning() << "Record::setNaturalFieldSource() : unknown field" << name << "kept as-is";
+    }
+
+    // Гигиена как в setField: нулевой байт резал бы хвост в XML
+    value.remove(QChar('\0'));
+    fieldList.insert(name, value);
+    return;
+  }
 
   // Устанавливается значение поля
   fieldList.insert(name, value);

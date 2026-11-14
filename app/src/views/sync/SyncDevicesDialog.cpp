@@ -137,16 +137,58 @@ void SyncDevicesDialog::refreshList(void)
 {
     refreshSelf();
 
-    const QList<AppConfig::SyncDeviceInfo> devices=config->get_syncDevices();
+    QList<AppConfig::SyncDeviceInfo> devices=config->get_syncDevices();
+
+    // Спаренный пир висит строкой всегда, даже если ни разу не виден
+    // в сети (секрет есть, записи нет). Иначе его нельзя точечно
+    // разорвать: Reset all при нескольких коннектах — не выход.
+    // Unknown означает: пара выведена под этот id, но hello от него
+    // не было (или запись удалили, а секрет остался)
+    const QString pairedId=config->get_syncPairedDeviceId();
+    bool havePairedRow=false;
+
+    for(const AppConfig::SyncDeviceInfo &info : devices)
+    {
+        if(info.id==pairedId)
+        {
+            havePairedRow=true;
+            break;
+        }
+    }
+
+    bool syntheticPaired=false;
+
+    if(!config->get_syncPairingSecret().isEmpty() && !pairedId.isEmpty()
+       && !havePairedRow)
+    {
+        AppConfig::SyncDeviceInfo ghost;
+        ghost.id=pairedId;
+        devices << ghost;
+        syntheticPaired=true;
+    }
 
     table->setRowCount(devices.size());
 
     for(int row=0; row<devices.size(); ++row)
     {
         const AppConfig::SyncDeviceInfo &info=devices.at(row);
+        const bool isGhost=syntheticPaired && row==devices.size()-1;
 
         QTableWidgetItem *nameItem=new QTableWidgetItem(
-            info.name.isEmpty() ? info.id.left(12) : info.name);
+            info.name.isEmpty()
+            ? (isGhost ? tr("(unknown device)") : info.id.left(12))
+            : info.name);
+
+        if(isGhost)
+        {
+            nameItem->setToolTip(
+                tr("Paired peer, never seen on network. "
+                   "Unpair or Remove to break pairing selectively."));
+            QFont ghostFont=nameItem->font();
+            ghostFont.setItalic(true);
+            nameItem->setFont(ghostFont);
+        }
+
         QTableWidgetItem *addrItem=new QTableWidgetItem(
             info.ip.isEmpty() ? tr("(unknown address)")
                               : QStringLiteral("%1:%2").arg(info.ip).arg(info.port));

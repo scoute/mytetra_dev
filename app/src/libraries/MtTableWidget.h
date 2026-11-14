@@ -1,9 +1,10 @@
 #ifndef __MTTABLEWIDGET_H__
 #define __MTTABLEWIDGET_H__
 
-#include <QWidget>
 #include <QTableWidget>
-#include <QStyledItemDelegate>
+
+class QWidget;
+class QStyledItemDelegate;
 
 // Этот класс не используется, скорее всего будет удален
 

@@ -2,9 +2,10 @@
 #define	__MTCOMBOBOX_H__
 
 #include <QObject>
-#include <QWidget>
 #include <QComboBox>
-#include <QStyledItemDelegate>
+
+class QWidget;
+class QStyledItemDelegate;
 
 // Класс, исправляющий QComboBox, чтобы правильно применялись QSS-стили
 // Проблема описана здесь: stackoverflow.com/questions/13308341/qcombobox-abstractitemviewitem

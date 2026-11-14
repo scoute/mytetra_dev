@@ -4,6 +4,9 @@
 
 #include "ShortcutManager.h"
 
+#include <QAction>
+#include <QToolButton>
+
 #include "libraries/GlobalParameters.h"
 #include "libraries/helpers/DebugHelper.h"
 

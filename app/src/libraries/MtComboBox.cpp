@@ -1,5 +1,7 @@
 #include "MtComboBox.h"
 
+#include <QStyledItemDelegate>
+
 
 MtComboBox::MtComboBox(QWidget *parent) : QComboBox(parent)
 {

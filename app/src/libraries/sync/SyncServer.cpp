@@ -181,11 +181,32 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
         }
     }
 
+    bool expectContinue=false;
+
+    if(headEnd>=0)
+    {
+        const QString headLower=QString::fromLatin1(raw.constData(), headEnd).toLower();
+
+        if(headLower.contains(QStringLiteral("expect: 100-continue")))
+            expectContinue=true;
+    }
+
     const int bodyStart=(headEnd>=0) ? headEnd+4 : raw.size();
     const int bodyHave=raw.size()-bodyStart;
 
     if(bodyHave<contentLength)
+    {
+        // Клиент (QNetworkAccessManager) ждет промежуточного подтверждения,
+        // иначе тело не отправит вообще. Отвечаем сразу, тело ждем дальше
+        if(expectContinue && bodyHave==0)
+        {
+            static const QByteArray cont="HTTP/1.1 100 Continue\r\n\r\n";
+            socket->write(cont);
+            socket->flush();
+        }
+
         return false;
+    }
 
     // Запрос целый — остаток из буфера убираем (соединение одноразовое,
     // но повторный разбор того же мусора нам не нужен)

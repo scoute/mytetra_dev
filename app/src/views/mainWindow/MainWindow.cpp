@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QSplitter>
 #include <QStatusBar>
+#include <QCoreApplication>
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -269,10 +270,19 @@ void MainWindow::saveAllState(void)
 
     // Сохраняются данные сеанса работы
     saveWindowGeometry();
-    saveTreePosition();
-    saveRecordTablePosition();
-    saveEditorCursorPosition();
-    saveEditorScrollBarPosition();
+
+    // Headless sync-режим (--sync-server/--sync-to/--sync-status/--sync-forget):
+    // позицию в дереве и редакторе не трогаем. Иначе сейв перезапишет
+    // tree_position текущим (после commit-reload это корень или шифроветка),
+    // а следующий headless-старт кликнет шифроветку и повиснет в запросе
+    // пароля, которого некому ввести
+    if(!isSyncHeadlessMode())
+    {
+        saveTreePosition();
+        saveRecordTablePosition();
+        saveEditorCursorPosition();
+        saveEditorScrollBarPosition();
+    }
 
     // Синхронизируется с диском конфиг программы
     mytetraConfig.sync();
@@ -567,6 +577,19 @@ void MainWindow::restoreFindOnBaseVisible(void)
 }
 
 
+// Headless sync-режим определяется флагами запуска, а не состоянием:
+// в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
+bool MainWindow::isSyncHeadlessMode(void)
+{
+    const QStringList args=QCoreApplication::arguments();
+
+    return args.contains(QStringLiteral("--sync-server"))
+        || args.contains(QStringLiteral("--sync-to"))
+        || args.contains(QStringLiteral("--sync-status"))
+        || args.contains(QStringLiteral("--sync-forget"));
+}
+
+
 void MainWindow::restoreAllWindowState(void)
 {
     globalParameters.getWindowSwitcher()->disableSwitch();
@@ -574,6 +597,15 @@ void MainWindow::restoreAllWindowState(void)
     restoreFindOnBaseVisible();
     restoreWindowGeometry();
 
+
+    // Headless sync-режим: дерево/записи/курсор не восстанавливаем.
+    // Восстановление кликает сохраненную ветку, а это может быть шифроветка —
+    // дальше модальный запрос пароля и вечный вис без дисплея (см. saveAllState)
+    if(isSyncHeadlessMode())
+    {
+        globalParameters.getWindowSwitcher()->enableSwitch();
+        return;
+    }
 
     restoreTreePosition();
 

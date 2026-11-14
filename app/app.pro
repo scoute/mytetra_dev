@@ -307,6 +307,8 @@ HEADERS+=\
     src/libraries/sync/SyncSidecar.h \
     src/libraries/sync/SyncManifest.h \
     src/libraries/sync/SyncHub.h \
+    src/libraries/sync/SyncNoteIo.h \
+    src/libraries/sync/SyncSession.h \
     src/libraries/sync/SyncClient.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/views/enterPassword/EnterPassword.h \
@@ -488,6 +490,8 @@ SOURCES+=\
     src/libraries/sync/SyncManifest.cpp \
     src/libraries/sync/SyncHub.cpp \
     src/libraries/sync/SyncClient.cpp \
+    src/libraries/sync/SyncNoteIo.cpp \
+    src/libraries/sync/SyncSession.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \

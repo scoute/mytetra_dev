@@ -230,6 +230,15 @@ QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
     if(!ok)
         return QJsonObject();
 
+    // Сервер отклонил применение (bad id, no text и т.п.): текст лежит
+    // в answer, а не в lastError. Без этого сессия падает с пустым
+    // "pull note failed" (та же ловушка что была в push, юнит 072)
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return QJsonObject();
+    }
+
     return answer;
 }
 
@@ -247,6 +256,12 @@ QJsonObject SyncClient::pullBranch(const QString &host, quint16 port,
 
     if(!ok)
         return QJsonObject();
+
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return QJsonObject();
+    }
 
     return answer;
 }

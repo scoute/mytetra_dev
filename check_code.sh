@@ -34,7 +34,7 @@ fi
 exec cppcheck \
   --library=qt \
   --enable=warning,performance \
-  --std=c++11 \
+  --std=c++14 \
   --inline-suppr \
   --quiet \
   --error-exitcode=1 \

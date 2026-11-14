@@ -38,6 +38,11 @@ public:
 
 private:
 
+    QJsonObject pullNote(const QString &id);
+    QJsonObject pullBranch(const QString &id);
+
+private:
+
     SyncServer *server=nullptr;
     KnowTreeModel *model=nullptr;
     AppConfig *config=nullptr;

@@ -1637,6 +1637,24 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     SyncClient client(&mytetraConfig);
     SyncHelloResult hello=client.hello(host, port);
 
+    // Сервер уже спарен, а мы нет: деривация по PIN и повторный hello
+    // уже с доказательством (deviceId приходит и в отказе)
+    if(!hello.ok && hello.errorCode==QStringLiteral("auth-failed")
+       && mytetraConfig.get_syncPairingSecret().isEmpty()
+       && !pin.isEmpty() && !hello.remoteDeviceId.isEmpty())
+    {
+        const QString secret=
+            SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
+                                              hello.remoteDeviceId,
+                                              pin);
+
+        if(!secret.isEmpty())
+        {
+            mytetraConfig.set_syncPairingSecret(secret);
+            hello=client.hello(host, port);
+        }
+    }
+
     if(!hello.ok)
         return tr("Handshake failed: %1").arg(hello.errorText);
 

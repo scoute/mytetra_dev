@@ -1637,11 +1637,12 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     SyncClient client(&mytetraConfig);
     SyncHelloResult hello=client.hello(host, port);
 
-    // Сервер уже спарен, а мы нет: деривация по PIN и повторный hello
-    // уже с доказательством (deviceId приходит и в отказе)
+    // Починка пары (та же логика что в SyncSession::run: headless-путь
+    // дублирует ее до сессии ради GUI-диалога выше). PIN предъявлен —
+    // перевыводим secret поверх старого и повторяем hello
     if(!hello.ok && hello.errorCode==QStringLiteral("auth-failed")
-       && mytetraConfig.get_syncPairingSecret().isEmpty()
-       && !pin.isEmpty() && !hello.remoteDeviceId.isEmpty())
+       && !pin.isEmpty() && !hello.remoteDeviceId.isEmpty()
+       && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
     {
         const QString secret=
             SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
@@ -1656,7 +1657,32 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     }
 
     if(!hello.ok)
-        return tr("Handshake failed: %1").arg(hello.errorText);
+    {
+        QString fail=tr("Handshake failed: %1").arg(hello.errorText);
+
+        // Подсказки для живых разборок: чьи версии, какой перекос часов
+        if(hello.errorCode==QStringLiteral("version-mismatch"))
+            fail+=tr(" (theirs: ask peer for --sync-status)");
+        else if(hello.errorCode==QStringLiteral("clock-skew"))
+            fail+=tr(" (skew %1 ms — compare `date +%%s` on both sides)")
+                .arg(hello.skewMs);
+
+        return fail;
+    }
+
+    // Сервер что-то простил: сходимся к тому же secret по нашему PIN
+    if(!hello.warning.isEmpty() && !pin.isEmpty()
+       && !hello.remoteDeviceId.isEmpty()
+       && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
+    {
+        const QString secret=
+            SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
+                                              hello.remoteDeviceId,
+                                              pin);
+
+        if(!secret.isEmpty())
+            mytetraConfig.set_syncPairingSecret(secret);
+    }
 
     // Спаривание headless: секрета нет, PIN дан — выводим и храним.
     // Фингерпринт здесь не сверяется (см. onSyncNow для GUI-пути)
@@ -1691,7 +1717,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                         &mytetraConfig,
                         mytetraConfig.get_tetradir());
 
-    const SyncReport report=session.run(host, port);
+    // PIN пробрасываем и в сессию: ее починка пары — вторая линия обороны
+    // (предсессионная выше обычно уже все решила)
+    const SyncReport report=session.run(host, port, pin);
 
     // Headless-прогон: шаги сессии всегда в выводе, иначе зависший клиент
     // молчит и непонятно где встал. GUI показывает только summary

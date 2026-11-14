@@ -34,6 +34,7 @@
 #include "libraries/ShortcutManager.h"
 #include "libraries/PeriodicCheckBase.h"
 #include "libraries/PeriodicSyncro.h"
+#include "libraries/sync/SyncIdentity.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -100,7 +101,28 @@ void printHelp()
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
     printf("./mytetra --sync-server [--sync-port N] [--sync-pair PIN] - Start sync hub without GUI interaction\n");
     printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
+    printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
+    printf("./mytetra --sync-forget - Clear sync pairing (secret and group) and exit\n");
     printf("\n");
+}
+
+
+// Печать sync-identity для живых проверок и переспаривания.
+// Только чтение конфига, сервер не нужен, подходит обеим сторонам
+void printSyncStatus(void)
+{
+    const QString deviceId=mytetraConfig.get_syncDeviceId();
+    const QString groupId=mytetraConfig.get_syncGroupId();
+    const bool paired=!mytetraConfig.get_syncPairingSecret().isEmpty();
+
+    printf("Sync status:\n");
+    printf("  device: %s\n", mytetraConfig.get_syncDeviceName().toLocal8Bit().data());
+    printf("  deviceId: %s\n", deviceId.toLocal8Bit().data());
+    printf("  fingerprint:\n%s\n",
+           SyncIdentity::fingerprint(deviceId).toLocal8Bit().data());
+    printf("  paired: %s\n", paired ? "yes" : "no");
+    printf("  group: %s\n",
+           groupId.isEmpty() ? "(none)" : groupId.toLocal8Bit().data());
 }
 
 
@@ -130,10 +152,12 @@ void parseConsoleOption(QtSingleApplication &app)
     }
 
     // Если MyTetra запущена с какой-то опцией, но нет опции --control
-    // и это не sync-режим (--sync-server / --sync-to живут своим процессом)
+    // и это не sync-режим (sync-флаги живут своим процессом)
     if ( app.arguments().count()>1 && !app.arguments().contains("--control")
          && !app.arguments().contains("--sync-server")
-         && !app.arguments().contains("--sync-to") )
+         && !app.arguments().contains("--sync-to")
+         && !app.arguments().contains("--sync-status")
+         && !app.arguments().contains("--sync-forget") )
     {
         QString message="Bad options. Maybe you lost \"--help\" or \"--control\"?\n";
         printf("%s", message.toLocal8Bit().data());
@@ -474,7 +498,9 @@ int main(int argc, char ** argv)
 
     // Headless-режим синхронизации: --sync-server [--sync-port N] [--sync-pair PIN]
     // поднимает хаб, --sync-to HOST — выполняет одну сессию и выходит с кодом.
-    // Нужно для скриптовых прогонов и тестов без GUI
+    // --sync-status — показать identity/пару и выйти, --sync-forget —
+    // сбросить пару (секрет+группа) и выйти. Нужно для скриптовых прогонов
+    // и тестов без GUI, а также для удобного переспаривания вживую
     {
         const QStringList args=app.arguments();
 
@@ -484,6 +510,22 @@ int main(int argc, char ** argv)
                 return args.at(i+1);
             return def;
         };
+
+        // Локальные команды: сервер не нужен, выполняем и выходим сразу
+        if(args.contains(QStringLiteral("--sync-status")))
+        {
+            printSyncStatus();
+            return 0;
+        }
+
+        if(args.contains(QStringLiteral("--sync-forget")))
+        {
+            mytetraConfig.set_syncPairingSecret(QString());
+            mytetraConfig.set_syncGroupId(QString());
+            printf("Sync pairing cleared (secret and group). "
+                   "Re-pair both sides with the same --sync-pair PIN.\n");
+            return 0;
+        }
 
         quint16 syncPort=static_cast<quint16>(argValue(QStringLiteral("--sync-port"),
                                                       QStringLiteral("47777")).toUShort());

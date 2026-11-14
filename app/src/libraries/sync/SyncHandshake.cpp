@@ -1,4 +1,5 @@
 #include <QDateTime>
+#include <QDebug>
 
 #include "main.h"
 #include "SyncHandshake.h"
@@ -76,7 +77,9 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
        format!=syncFormatVersion())
     {
         result.errorCode=QStringLiteral("version-mismatch");
-        result.errorText=QStringLiteral("Sync versions differ, update both sides.");
+        result.errorText=QStringLiteral("Sync versions differ, update both sides. "
+                                        "ours app=%1 format=%2, theirs app=%3 format=%4")
+            .arg(syncAppVersion(), syncFormatVersion(), app, format);
         return result;
     }
 
@@ -88,7 +91,10 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
     if(!theirGroup.isEmpty() && !ourGroup.isEmpty() && theirGroup!=ourGroup)
     {
         result.errorCode=QStringLiteral("foreign-network");
-        result.errorText=QStringLiteral("Device belongs to another sync network.");
+        result.errorText=QStringLiteral("Device belongs to another sync network. "
+                                        "ours group=%1, theirs group=%2. "
+                                        "Re-pair with --sync-forget on both sides.")
+            .arg(ourGroup, theirGroup);
         return result;
     }
 
@@ -101,7 +107,10 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
     if(qAbs(result.skewMs)>maxClockSkewMs)
     {
         result.errorCode=QStringLiteral("clock-skew");
-        result.errorText=QStringLiteral("Clock difference too large, set the time.");
+        result.errorText=QStringLiteral("Clock difference too large, set the time. "
+                                        "skew=%1 ms (limit %2 ms). "
+                                        "Compare `date +%s` on both sides.")
+            .arg(result.skewMs).arg(maxClockSkewMs);
         return result;
     }
 
@@ -122,7 +131,9 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
         if(proof.isEmpty() || proof!=expected)
         {
             result.errorCode=QStringLiteral("auth-failed");
-            result.errorText=QStringLiteral("Pairing check failed.");
+            result.errorText=QStringLiteral("Pairing check failed: secrets differ. "
+                                            "Re-pair both sides with the same PIN "
+                                            "(clear old state with --sync-forget).");
             return result;
         }
     }
@@ -142,7 +153,42 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
     server->addRoute(QStringLiteral("POST /hello"),
                      [config, pairingPin](const QJsonObject &body) -> QJsonObject {
         const qint64 now=QDateTime::currentMSecsSinceEpoch();
-        const SyncHelloResult r=checkHello(body, config, now);
+        SyncHelloResult r=checkHello(body, config, now);
+
+        const QString theirId=body.value(QStringLiteral("deviceId")).toString();
+        const QString theirName=body.value(QStringLiteral("deviceName")).toString();
+
+        QString warning;
+
+        // Починка пары: proof чужой, но PIN предъявлен — значит оператор
+        // осознанно переспаривает (второй стороне сбросили состояние).
+        // Предупреждаем, но принимаем; строже — позже.
+        // Без PIN здесь делать нечего: строгий отказ уходит как есть
+        if(!r.ok && r.errorCode==QStringLiteral("auth-failed")
+           && !pairingPin.isEmpty()
+           && !theirId.isEmpty()
+           && theirId!=config->get_syncDeviceId())
+        {
+            const QString derived=
+                SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
+                                                  theirId, pairingPin);
+
+            if(!derived.isEmpty())
+            {
+                config->set_syncPairingSecret(derived);
+                r.ok=true;
+                r.paired=true;
+                r.errorCode.clear();
+                r.errorText.clear();
+
+                warning=QStringLiteral("secret mismatch, re-paired via PIN "
+                                       "with %1 (id %2), continuing with warning")
+                    .arg(theirName, theirId);
+
+                // Видно всегда, не только под дебагом: событие редкое и важное
+                qDebug() << "SyncHandshake:" << warning;
+            }
+        }
 
         QJsonObject answer;
         answer[QStringLiteral("ok")]=r.ok;
@@ -166,9 +212,9 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         // Автосведение групп: пустые с обеих сторон — детерминированный
         // общий groupId (обе стороны считают одинаково, маршрут не нужен).
         // У нас пусто, у гостя есть — принимаем его. Наоборот — гость
-        // примет наш сам по тем же правилам на своей стороне
+        // примет наш сам по тем же правилам на своей стороне.
+        // theirId/theirName взяты выше (нужны и починке пары)
         const QString theirGroup=body.value(QStringLiteral("groupId")).toString();
-        const QString theirId=body.value(QStringLiteral("deviceId")).toString();
 
         if(config->get_syncGroupId().isEmpty())
         {
@@ -186,7 +232,7 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         if(!theirId.isEmpty() && theirId!=config->get_syncDeviceId())
         {
             g_unknownId=theirId;
-            g_unknownName=body.value(QStringLiteral("deviceName")).toString();
+            g_unknownName=theirName;
         }
 
         // Headless-спаривание: секрета нет, PIN задан флагом — выводим
@@ -202,6 +248,9 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             if(!derived.isEmpty())
                 config->set_syncPairingSecret(derived);
         }
+
+        if(!warning.isEmpty())
+            answer[QStringLiteral("warning")]=warning;
 
         return answer;
     });

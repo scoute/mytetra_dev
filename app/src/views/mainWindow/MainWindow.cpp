@@ -1589,6 +1589,13 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     if(errorCode!=nullptr)
         errorCode->clear();
 
+    // Снапшот пары на входе: данные разрешены только если пара
+    // существовала ДО запуска (гейт 089). Прогон, создавший/починивший
+    // пару по PIN, — "попытка установить pair": останавливаемся здесь,
+    // данные пойдут следующим запуском
+    const QString pairingBefore=mytetraConfig.get_syncPairingSecret();
+    const QString groupBefore=mytetraConfig.get_syncGroupId();
+
     SyncClient client(&mytetraConfig);
 
     // Предсессионное hello молчало в логах: зависший до сессии клиент
@@ -1670,6 +1677,22 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         mytetraConfig.set_syncGroupId(
             SyncIdentity::pairGroupId(mytetraConfig.get_syncDeviceId(),
                                       hello.remoteDeviceId));
+    }
+
+    // Пара создана/пересоздана этим запуском — фиксируем и выходим:
+    // это была установка пары, данные следующим запуском.
+    // (Секрет тут уже гарантированно есть: пустой раньше бы вышел
+    // через "Not paired", adopt выше его выставил)
+    if(mytetraConfig.get_syncPairingSecret()!=pairingBefore
+       || mytetraConfig.get_syncGroupId()!=groupBefore)
+    {
+        if(errorCode!=nullptr)
+            *errorCode=QStringLiteral("pair-established");
+
+        return tr("Pair established with %1, "
+                  "run sync again to transfer data.")
+            .arg(hello.remoteDeviceName.isEmpty()
+                 ? hello.remoteDeviceId : hello.remoteDeviceName);
     }
 
     SyncSession session(treeScreen->knowTreeModel,

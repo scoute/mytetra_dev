@@ -45,6 +45,11 @@ private:
     QJsonObject applyBranch(const QJsonObject &request);
     QJsonObject applyDelete(const QString &id, qint64 deletedAt);
 
+    // Гейт пары (089): маршруты данных обслуживают только спаренного.
+    // Без секрета/привязки (сброс, девственный хаб) — отказ not-paired:
+    // чужой с улицы даже манифест не прочитает. Hello/ping открыты
+    bool dataAllowed(void) const;
+
 private:
 
     SyncServer *server=nullptr;

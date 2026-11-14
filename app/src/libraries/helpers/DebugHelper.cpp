@@ -192,14 +192,12 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 void setDebugMessageHandler()
 {
- qDebug() << "Debug message before set message handler for target OS: " << globalParameters.getTargetOs();
 
  // Для десктопных операционок можно переустановить обработчик qDebug()
  // Для Андроида переустановка qDebug() приводит к невозможности получения отладочных сообщений в удаленном отладчике
  if(globalParameters.getTargetOs()=="any" ||
     globalParameters.getTargetOs()=="meego")
   {
-   qDebug() << "Set alternative handler myMessageOutput() for debug message";
 
    #if QT_VERSION < 0x050000
     qInstallMsgHandler(myMessageOutput);
@@ -208,7 +206,6 @@ void setDebugMessageHandler()
    #endif
   }
 
- qDebug() << "Debug message after set message handler";
 }
 
 

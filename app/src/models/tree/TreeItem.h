@@ -34,7 +34,7 @@ class TreeItem
     QMap<QString, QString> getAllFields();
 
     // Получение всех полей данных напрямую, без преобразований
-    QMap<QString, QString> getAllFieldsDirect();
+    QMap<QString, QString> getAllFieldsDirect() const;
 
     // Заполнение указанного поля
     void setField(QString name, QString value);

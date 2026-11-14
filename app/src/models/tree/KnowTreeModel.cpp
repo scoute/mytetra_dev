@@ -1511,6 +1511,12 @@ TreeItem *KnowTreeModel::getItemById(const QString &id)
 }
 
 
+const TreeItem *KnowTreeModel::getRootItemPublic(void) const
+{
+    return rootItem;
+}
+
+
 TreeItem *KnowTreeModel::getItemByIdRecurse(TreeItem *item, const QString &id, int mode)
 {
     static TreeItem *findItem=nullptr;

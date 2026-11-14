@@ -68,6 +68,10 @@ public:
     //! Получение ветки с указанным ID (поиск ветки)
     TreeItem *getItemById(const QString &id);
 
+    // Корень дерева для обхода (напр. построение sync-манифеста).
+    // Сам корневой псевдо-элемент (id "0") не синхронизируется
+    const TreeItem *getRootItemPublic(void) const;
+
     //! Возвращает общее количество записей, хранимых в дереве
     int getAllRecordCount(void);
     

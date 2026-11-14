@@ -67,9 +67,21 @@ void criticalError(QString message)
   qDebug() << "---------------";
   qDebug() << " ";
 
-  QMessageBox::critical(qobject_cast<QWidget *>(pMainWindow), "Critical error",
-                        message+"\n\nProgramm was closed.",
-                        QMessageBox::Ok);
+  // Headless sync-режим (--sync-server/--sync-to): модальному окну некому
+  // нажать OK (offscreen), и процесс висел бы вечно вместо выхода с кодом.
+  // Поэтому без диалога — сразу выход с кодом 1, как и задумано.
+  // GUI-поведение не меняется.
+  if(!globalParameters.getSyncHeadlessMode())
+  {
+    QMessageBox::critical(qobject_cast<QWidget *>(pMainWindow), "Critical error",
+                          message+"\n\nProgramm was closed.",
+                          QMessageBox::Ok);
+  }
+  else
+  {
+    fprintf(stderr, "Critical error (headless, exiting): %s\n",
+            message.toLocal8Bit().data());
+  }
 
   exit(1);
 }

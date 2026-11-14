@@ -32,6 +32,7 @@
 #include "libraries/ActionLogger.h"
 #include "libraries/WindowSwitcher.h"
 #include "views/actionLog/ActionLogScreen.h"
+#include "views/sync/SyncDevicesDialog.h"
 #include "views/databasesManagement/DatabasesManagementScreen.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/RandomInitter.h"
@@ -43,6 +44,7 @@
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncHandshake.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncDebug.h"
 
 
 extern AppConfig mytetraConfig;
@@ -64,6 +66,7 @@ MainWindow::MainWindow() : QMainWindow()
     setupUI();
     initFileMenu();
     initToolsMenu();
+    initSyncMenu();
     initHelpMenu();
     initHiddenActions();
     setupSignals();
@@ -174,9 +177,10 @@ void MainWindow::setupSignals(void)
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
     // Синхронизация по Wi-Fi
-    connect(actionToolsMenuSyncNow, &QAction::triggered, this, &MainWindow::onSyncNow);
-    connect(actionToolsMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
-    connect(actionToolsMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
+    connect(actionSyncMenuSyncNow, &QAction::triggered, this, &MainWindow::onSyncNow);
+    connect(actionSyncMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
+    connect(actionSyncMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
+    connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -581,12 +585,7 @@ void MainWindow::restoreFindOnBaseVisible(void)
 // в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
 bool MainWindow::isSyncHeadlessMode(void)
 {
-    const QStringList args=QCoreApplication::arguments();
-
-    return args.contains(QStringLiteral("--sync-server"))
-        || args.contains(QStringLiteral("--sync-to"))
-        || args.contains(QStringLiteral("--sync-status"))
-        || args.contains(QStringLiteral("--sync-forget"));
+    return globalParameters.getSyncHeadlessMode();
 }
 
 
@@ -682,20 +681,6 @@ void MainWindow::initToolsMenu(void)
 
     menu->addSeparator();
 
-    // Синхронизация по Wi-Fi: сервер на этом устройстве, клиент к другому,
-    // спаривание с показом фингерпринтов. MVP: ручной запуск, без авто
-    actionToolsMenuSyncServer = new QAction(tr("Sync server"), this);
-    actionToolsMenuSyncServer->setCheckable(true);
-    menu->addAction(actionToolsMenuSyncServer);
-
-    actionToolsMenuSyncNow = new QAction(tr("Sync &now..."), this);
-    menu->addAction(actionToolsMenuSyncNow);
-
-    actionToolsMenuSyncPairing = new QAction(tr("Sync pairing..."), this);
-    menu->addAction(actionToolsMenuSyncPairing);
-
-    menu->addSeparator();
-
     if(mytetraConfig.getInterfaceMode()=="desktop")
     {
         actionToolsMenuPreferences = new QAction(tr("&Preferences"), this);
@@ -708,6 +693,29 @@ void MainWindow::initToolsMenu(void)
         initPreferencesMenu(subMenu);
         menu->addMenu(subMenu);
     }
+}
+
+
+// Создание отдельного меню Sync: синхронизация — подсистема,
+// а не утилита. Сервер на этом устройстве, клиент к другому,
+// устройства, спаривание с показом фингерпринтов. MVP: ручной запуск
+void MainWindow::initSyncMenu(void)
+{
+    QMenu *menu = new QMenu(tr("&Sync"), this);
+    this->menuBar()->addMenu(menu);
+
+    actionSyncMenuSyncServer = new QAction(tr("Sync server"), this);
+    actionSyncMenuSyncServer->setCheckable(true);
+    menu->addAction(actionSyncMenuSyncServer);
+
+    actionSyncMenuSyncNow = new QAction(tr("Sync &now..."), this);
+    menu->addAction(actionSyncMenuSyncNow);
+
+    actionSyncMenuSyncDevices = new QAction(tr("Sync &devices..."), this);
+    menu->addAction(actionSyncMenuSyncDevices);
+
+    actionSyncMenuSyncPairing = new QAction(tr("Sync pairing..."), this);
+    menu->addAction(actionSyncMenuSyncPairing);
 }
 
 
@@ -1559,7 +1567,7 @@ void MainWindow::onSyncServerToggle(bool checked)
         {
             QMessageBox::warning(this, tr("Sync"),
                                  tr("Cannot start sync server: port is busy."));
-            actionToolsMenuSyncServer->setChecked(false);
+            actionSyncMenuSyncServer->setChecked(false);
             return;
         }
 
@@ -1667,7 +1675,18 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     ok=false;
 
     SyncClient client(&mytetraConfig);
+
+    // Предсессионное hello молчало в логах: зависший до сессии клиент
+    // не оставлял следов. Дублируем шаги сюда под тем же флагом
+    if(syncDebugEnabled())
+        qDebug() << "SyncStep: pre-hello" << host << port;
+
     SyncHelloResult hello=client.hello(host, port);
+
+    if(syncDebugEnabled())
+        qDebug() << "SyncStep: pre-hello"
+                 << (hello.ok ? QStringLiteral("ok")
+                              : QStringLiteral("failed: ")+hello.errorCode);
 
     // Починка пары (та же логика что в SyncSession::run: headless-путь
     // дублирует ее до сессии ради GUI-диалога выше). PIN предъявлен —
@@ -1676,16 +1695,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
        && !pin.isEmpty() && !hello.remoteDeviceId.isEmpty()
        && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
     {
-        const QString secret=
-            SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
-                                              hello.remoteDeviceId,
-                                              pin);
-
-        if(!secret.isEmpty())
-        {
-            mytetraConfig.set_syncPairingSecret(secret);
+        if(SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId,
+                                      pin))
             hello=client.hello(host, port);
-        }
     }
 
     if(!hello.ok)
@@ -1703,18 +1715,8 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     }
 
     // Сервер что-то простил: сходимся к тому же secret по нашему PIN
-    if(!hello.warning.isEmpty() && !pin.isEmpty()
-       && !hello.remoteDeviceId.isEmpty()
-       && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
-    {
-        const QString secret=
-            SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
-                                              hello.remoteDeviceId,
-                                              pin);
-
-        if(!secret.isEmpty())
-            mytetraConfig.set_syncPairingSecret(secret);
-    }
+    if(!hello.warning.isEmpty() && !pin.isEmpty())
+        SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId, pin);
 
     // Спаривание headless: секрета нет, PIN дан — выводим и храним.
     // Фингерпринт здесь не сверяется (см. onSyncNow для GUI-пути)
@@ -1723,16 +1725,17 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         if(pin.isEmpty())
             return tr("Not paired: enter pairing PIN first.");
 
-        const QString secret=
-            SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
-                                              hello.remoteDeviceId,
-                                              pin);
-
-        if(secret.isEmpty())
+        if(!SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId,
+                                       pin))
             return tr("Empty PIN is not allowed.");
-
-        mytetraConfig.set_syncPairingSecret(secret);
     }
+
+    // Пир ответил — запоминаем для окна Sync devices (с IP для Sync now)
+    if(hello.ok && !hello.remoteDeviceId.isEmpty()
+       && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
+        mytetraConfig.touch_syncDevice(hello.remoteDeviceId,
+                                       hello.remoteDeviceName,
+                                       host, port);
 
     // Группа: чужая есть — принимаем; обе пустые — детерминированная общая
     if(mytetraConfig.get_syncGroupId().isEmpty())
@@ -1828,16 +1831,25 @@ void MainWindow::onSyncPairing(void)
     if(!ok || pin.isEmpty())
         return;
 
-    const QString secret=
-        SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
-                                          unknownId, pin);
-
-    if(secret.isEmpty())
+    if(!SyncIdentity::adoptPairing(&mytetraConfig, unknownId, pin))
         return;
 
-    mytetraConfig.set_syncPairingSecret(secret);
+    mytetraConfig.touch_syncDevice(unknownId, unknownName);
     SyncHandshake::clearUnknown();
 
     QMessageBox::information(this, tr("Sync pairing"),
                              tr("Paired. Next sync will be authenticated."));
+}
+
+
+void MainWindow::onSyncDevices(void)
+{
+    SyncDevicesDialog dialog(treeScreen->knowTreeModel,
+                             &mytetraConfig,
+                             mytetraConfig.get_tetradir(),
+                             this);
+    dialog.exec();
+
+    // Серверный чекбокс мог измениться только из своего пункта меню,
+    // устройства — только учет. Синхронизировать нечего
 }

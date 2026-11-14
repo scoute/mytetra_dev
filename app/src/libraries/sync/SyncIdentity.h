@@ -3,6 +3,8 @@
 
 #include <QString>
 
+class AppConfig;
+
 // Идентичность устройства для синхронизации. Асимметричной криптографии
 // в Qt нет, новых библиотек не тянем: взаимная аутентификация строится
 // на общем секрете спаривания (HMAC-SHA256, QMessageAuthenticationCode),
@@ -36,6 +38,12 @@ public:
     // устройств (у обоих пусто): обе стороны считают одинаково
     static QString pairGroupId(const QString &deviceIdA,
                                const QString &deviceIdB);
+
+    // Вывести secret из PIN и запомнить пару: secret + с кем (pairedDeviceId).
+    // Единая точка для всех путей спаривания/починки (GUI, headless, retry).
+    // Пустой PIN или id — false, ничего не меняет
+    static bool adoptPairing(AppConfig *config, const QString &peerId,
+                             const QString &pin);
 };
 
 #endif // SYNCIDENTITY_H

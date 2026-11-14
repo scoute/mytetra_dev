@@ -169,13 +169,8 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
            && !theirId.isEmpty()
            && theirId!=config->get_syncDeviceId())
         {
-            const QString derived=
-                SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
-                                                  theirId, pairingPin);
-
-            if(!derived.isEmpty())
+            if(SyncIdentity::adoptPairing(config, theirId, pairingPin))
             {
-                config->set_syncPairingSecret(derived);
                 r.ok=true;
                 r.paired=true;
                 r.errorCode.clear();
@@ -241,16 +236,16 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         if(config->get_syncPairingSecret().isEmpty() && !pairingPin.isEmpty()
            && !theirId.isEmpty())
         {
-            const QString derived=
-                SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
-                                                  theirId, pairingPin);
-
-            if(!derived.isEmpty())
-                config->set_syncPairingSecret(derived);
+            SyncIdentity::adoptPairing(config, theirId, pairingPin);
         }
 
         if(!warning.isEmpty())
             answer[QStringLiteral("warning")]=warning;
+
+        // Пир прошел hello — запоминаем для окна Sync devices.
+        // IP здесь нет (за транспортом следит SyncServer), допишет клиент
+        // при своем синке; серверная строка без IP честна
+        config->touch_syncDevice(theirId, theirName);
 
         return answer;
     });

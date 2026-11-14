@@ -240,6 +240,98 @@ bool AppConfig::set_syncPairingSecret(const QString &secret)
 }
 
 
+// Устройство, с которым выведен текущий секрет.
+// Нужно окну Sync devices: галочка "спарено" только у своей пары
+QString AppConfig::get_syncPairedDeviceId(void)
+{
+    return m_conf->value("syncPairedDeviceId", QString()).toString();
+}
+
+
+bool AppConfig::set_syncPairedDeviceId(const QString &deviceId)
+{
+    m_conf->setValue("syncPairedDeviceId", deviceId);
+    return true;
+}
+
+
+// Известные sync-устройства: сервер пишет всех кто стучался в hello,
+// клиент — тех к кому ходил на синк (с IP и портом для кнопки Sync now)
+QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
+{
+    QList<SyncDeviceInfo> out;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices"));
+    const QStringList ids=m_conf->childGroups();
+    m_conf->endGroup();
+
+    for(const QString &id : ids)
+    {
+        m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+
+        SyncDeviceInfo info;
+        info.id=id;
+        info.name=m_conf->value(QStringLiteral("name")).toString();
+        info.ip=m_conf->value(QStringLiteral("ip")).toString();
+        info.port=m_conf->value(QStringLiteral("port"), 47777).toInt();
+        info.firstSeen=m_conf->value(QStringLiteral("firstSeen"), 0).toLongLong();
+        info.lastSeen=m_conf->value(QStringLiteral("lastSeen"), 0).toLongLong();
+
+        m_conf->endGroup();
+
+        out << info;
+    }
+
+    return out;
+}
+
+
+void AppConfig::touch_syncDevice(const QString &id, const QString &name,
+                                 const QString &ip, int port)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+
+    const qint64 now=QDateTime::currentMSecsSinceEpoch();
+
+    if(!m_conf->contains(QStringLiteral("firstSeen")))
+        m_conf->setValue(QStringLiteral("firstSeen"), now);
+
+    if(!name.isEmpty())
+        m_conf->setValue(QStringLiteral("name"), name);
+
+    if(!ip.isEmpty())
+    {
+        m_conf->setValue(QStringLiteral("ip"), ip);
+        m_conf->setValue(QStringLiteral("port"), port);
+    }
+
+    m_conf->setValue(QStringLiteral("lastSeen"), now);
+    m_conf->endGroup();
+}
+
+
+bool AppConfig::remove_syncDevice(const QString &id)
+{
+    if(id.isEmpty())
+        return false;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices"));
+
+    if(!m_conf->childGroups().contains(id))
+    {
+        m_conf->endGroup();
+        return false;
+    }
+
+    m_conf->endGroup();
+    m_conf->remove(QStringLiteral("syncDevices/")+id);
+    return true;
+}
+
+
 // Установка имени директории с корзиной
 bool AppConfig::set_trashdir(QString dirName)
 {

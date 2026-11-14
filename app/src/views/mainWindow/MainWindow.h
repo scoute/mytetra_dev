@@ -109,6 +109,7 @@ private slots:
     void onSyncNow(void);
     void onSyncServerToggle(bool checked);
     void onSyncPairing(void);
+    void onSyncDevices(void);
 
     // Headless sync-режим определяется флагами запуска, а не состоянием:
     // в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
@@ -157,6 +158,7 @@ private:
 
     void initFileMenu(void);
     void initToolsMenu(void);
+    void initSyncMenu(void);
     void initPreferencesMenu(QMenu *menu);
     void initHelpMenu(void);
     void initHiddenActions(void);
@@ -188,9 +190,11 @@ private:
     QAction *actionToolsMenuFindInBase;
     QAction *actionToolsMenuActionLog;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
-    QAction *actionToolsMenuSyncNow=nullptr;
-    QAction *actionToolsMenuSyncServer=nullptr;
-    QAction *actionToolsMenuSyncPairing=nullptr;
+    // Отдельное меню Sync (не Tools): подсистема синхронизации
+    QAction *actionSyncMenuSyncNow=nullptr;
+    QAction *actionSyncMenuSyncServer=nullptr;
+    QAction *actionSyncMenuSyncPairing=nullptr;
+    QAction *actionSyncMenuSyncDevices=nullptr;
 
     // Синхронизация: хаб живет пока включен сервер из меню Tools
     SyncHub *syncHub=nullptr;

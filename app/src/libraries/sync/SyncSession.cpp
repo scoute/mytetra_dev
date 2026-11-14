@@ -57,14 +57,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
        && !hello.remoteDeviceId.isEmpty()
        && hello.remoteDeviceId!=config->get_syncDeviceId())
     {
-        const QString derived=
-            SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
-                                              hello.remoteDeviceId,
-                                              pairingPin);
-
-        if(!derived.isEmpty())
+        if(SyncIdentity::adoptPairing(config, hello.remoteDeviceId,
+                                      pairingPin))
         {
-            config->set_syncPairingSecret(derived);
             addLog(QStringLiteral("secret mismatch, re-paired via PIN, retry"));
             hello=client.hello(host, port);
         }
@@ -87,17 +82,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     {
         addLog(QStringLiteral("server warning: %1").arg(hello.warning));
 
-        if(!pairingPin.isEmpty() && !hello.remoteDeviceId.isEmpty()
-           && hello.remoteDeviceId!=config->get_syncDeviceId())
-        {
-            const QString derived=
-                SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
-                                                  hello.remoteDeviceId,
-                                                  pairingPin);
-
-            if(!derived.isEmpty())
-                config->set_syncPairingSecret(derived);
-        }
+        if(!pairingPin.isEmpty())
+            SyncIdentity::adoptPairing(config, hello.remoteDeviceId,
+                                       pairingPin);
     }
 
     // Спаривание: секрета нет, PIN задан — выводим тот же secret что сервер.
@@ -105,18 +92,13 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     if(config->get_syncPairingSecret().isEmpty() && !pairingPin.isEmpty()
        && !hello.remoteDeviceId.isEmpty())
     {
-        const QString derived=
-            SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
-                                              hello.remoteDeviceId,
-                                              pairingPin);
-
-        if(derived.isEmpty())
+        if(!SyncIdentity::adoptPairing(config, hello.remoteDeviceId,
+                                       pairingPin))
         {
             report.error=QStringLiteral("empty PIN is not allowed");
             return report;
         }
 
-        config->set_syncPairingSecret(derived);
         addLog(QStringLiteral("paired via PIN"));
     }
 

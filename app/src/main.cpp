@@ -279,19 +279,24 @@ int main(int argc, char ** argv)
     // Sync-режим (--sync-server / --sync-to) работает отдельным процессом
     // рядом с уже запущенным экземпляром и не участвует в single-instance
     // механизме: QtSingleApplication виснет в конструкторе при живом сервере,
-    // поэтому здесь обычный QApplication
+    // поэтому здесь обычный QApplication.
+    // Флаг виден всему приложению: в headless нельзя модальные диалоги
     bool syncMode=false;
 
     for(int ai=1; ai<argc; ++ai)
     {
         const QString arg=QString::fromLocal8Bit(argv[ai]);
 
-        if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to"))
+        if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to")
+           || arg==QStringLiteral("--sync-status")
+           || arg==QStringLiteral("--sync-forget"))
         {
             syncMode=true;
             break;
         }
     }
+
+    globalParameters.setSyncHeadlessMode(syncMode);
 
     QtSingleApplication *singleApp=syncMode ? nullptr : new QtSingleApplication(argc, argv);
     QApplication *plainApp=syncMode ? new QApplication(argc, argv) : nullptr;
@@ -527,7 +532,8 @@ int main(int argc, char ** argv)
         {
             mytetraConfig.set_syncPairingSecret(QString());
             mytetraConfig.set_syncGroupId(QString());
-            printf("Sync pairing cleared (secret and group). "
+            mytetraConfig.set_syncPairedDeviceId(QString());
+            printf("Sync pairing cleared (secret, group and peer). "
                    "Re-pair both sides with the same --sync-pair PIN.\n");
             return 0;
         }
@@ -550,12 +556,20 @@ int main(int argc, char ** argv)
             printf("Sync server started on port %u\n", syncPort);
         }
 
-        if(doSyncTo && !syncHost.isEmpty())
+        if(doSyncTo)
         {
+            if(syncHost.isEmpty())
+            {
+                printf("Sync: --sync-to requires a host.\n");
+                fflush(stdout);
+                return 4;
+            }
+
             bool syncOk=false;
             const QString report=win.runSyncToHeadless(syncHost, syncPin,
                                                        syncPort, syncOk);
             printf("%s\n", report.toLocal8Bit().data());
+            fflush(stdout);
 
             // Разовый прогон без сервера — выходим с кодом результата
             if(!doServe)

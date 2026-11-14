@@ -56,6 +56,18 @@ QString GlobalParameters::getMainProgramFile(void)
 }
 
 
+void GlobalParameters::setSyncHeadlessMode(bool mode)
+{
+ m_syncHeadlessMode=mode;
+}
+
+
+bool GlobalParameters::getSyncHeadlessMode(void) const
+{
+ return m_syncHeadlessMode;
+}
+
+
 void GlobalParameters::init(void)
 {
  m_pointTreeScreen=nullptr;

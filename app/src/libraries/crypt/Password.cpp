@@ -43,6 +43,14 @@ Password::~Password(void)
 // Только если пароль правилен, устанавливается ключ
 bool Password::retrievePassword()
 {
+    // Headless sync-режим: спрашивать некого, любой диалог — вечный вис.
+    // Синк слепой по дизайну (шифротекст переносится как есть), ключ не нужен.
+    // Отложенный клик по шифроветке из QTimer::singleShot прилетает в первый
+    // же вложенный цикл событий (например hello-сессии) — без этого возврата
+    // висел бы там
+    if(globalParameters.getSyncHeadlessMode())
+        return false;
+
     // Если пароль в данной сессии не вводился
     if(globalParameters.getCryptKey().size()==0)
     {

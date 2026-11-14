@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QDir>
 #include <QSettings>
+#include <QList>
+#include <QDateTime>
 #include <QDebug>
 
 class QRect;
@@ -55,6 +57,29 @@ public:
     // По сети в открытом виде не ходит, только HMAC-доказательства
     QString get_syncPairingSecret(void);
     bool set_syncPairingSecret(const QString &secret);
+
+    // Устройство, с которым выведен текущий секрет (его id).
+    // Секрет парный: тот же PIN с другим id дает другой secret
+    QString get_syncPairedDeviceId(void);
+    bool set_syncPairedDeviceId(const QString &deviceId);
+
+    // Известные sync-устройства для окна Sync devices.
+    // Хранятся группами syncDevices/<id>/{name,ip,port,firstSeen,lastSeen}.
+    // Fingerprint считается из id на лету, хранить нечего
+    struct SyncDeviceInfo
+    {
+        QString id;
+        QString name;
+        QString ip;
+        int port=47777;
+        qint64 firstSeen=0;
+        qint64 lastSeen=0;
+    };
+
+    QList<SyncDeviceInfo> get_syncDevices(void);
+    void touch_syncDevice(const QString &id, const QString &name,
+                          const QString &ip=QString(), int port=47777);
+    bool remove_syncDevice(const QString &id);
 
     // Директория с корзиной
     QString get_trashdir(void);

@@ -5,6 +5,7 @@
 #include <QRandomGenerator>
 
 #include "SyncIdentity.h"
+#include "models/appConfig/AppConfig.h"
 
 
 QString SyncIdentity::fingerprint(const QString &deviceId)
@@ -84,4 +85,25 @@ QString SyncIdentity::pairGroupId(const QString &deviceIdA,
     return QString::fromLatin1(
         QCryptographicHash::hash((first+second).toLatin1(),
                                  QCryptographicHash::Sha256).toHex()).left(16);
+}
+
+
+bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
+                                const QString &pin)
+{
+    if(config==nullptr || peerId.isEmpty() || pin.isEmpty())
+        return false;
+
+    if(peerId==config->get_syncDeviceId())
+        return false;
+
+    const QString derived=derivePairingSecret(config->get_syncDeviceId(),
+                                              peerId, pin);
+
+    if(derived.isEmpty())
+        return false;
+
+    config->set_syncPairingSecret(derived);
+    config->set_syncPairedDeviceId(peerId);
+    return true;
 }

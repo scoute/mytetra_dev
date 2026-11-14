@@ -306,6 +306,7 @@ HEADERS+=\
     src/libraries/sync/SyncHandshake.h \
     src/libraries/sync/SyncSidecar.h \
     src/libraries/sync/SyncManifest.h \
+    src/libraries/sync/SyncHub.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/views/enterPassword/EnterPassword.h \
     src/views/consoleEmulator/ConsoleEmulator.h \
@@ -484,6 +485,7 @@ SOURCES+=\
     src/libraries/sync/SyncHandshake.cpp \
     src/libraries/sync/SyncSidecar.cpp \
     src/libraries/sync/SyncManifest.cpp \
+    src/libraries/sync/SyncHub.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \

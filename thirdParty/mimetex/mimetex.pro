@@ -6,6 +6,11 @@ message(Touch mimeTeX qmake)
 QMAKE_CFLAGS += -DAA
 QMAKE_CXXFLAGS += -DAA
 
+# Вендорный mimeTeX 2004 года: сотни варнингов старого C-кода (-Wall).
+# Чинить его не будем, просто глушим выводы для этой цели:
+# warn_off убирает -Wall только здесь, остальной проект не трогает
+CONFIG += warn_off
+
 SOURCES=mimetex.c \
         gifsave.c \
 

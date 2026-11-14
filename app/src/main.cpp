@@ -252,11 +252,40 @@ int main(int argc, char ** argv)
     // Перехват отладочных сообщений
     setDebugMessageHandler();
 
-    // Создание объекта приложения
-    QtSingleApplication app(argc, argv);
+    // Sync-режим (--sync-server / --sync-to) работает отдельным процессом
+    // рядом с уже запущенным экземпляром и не участвует в single-instance
+    // механизме: QtSingleApplication виснет в конструкторе при живом сервере,
+    // поэтому здесь обычный QApplication
+    bool syncMode=false;
 
-    // Обработка консольных опций
-    parseConsoleOption(app);
+    for(int ai=1; ai<argc; ++ai)
+    {
+        const QString arg=QString::fromLocal8Bit(argv[ai]);
+
+        if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to"))
+        {
+            syncMode=true;
+            break;
+        }
+    }
+
+    QtSingleApplication *singleApp=syncMode ? nullptr : new QtSingleApplication(argc, argv);
+    QApplication *plainApp=syncMode ? new QApplication(argc, argv) : nullptr;
+    QCoreApplication &app=syncMode ? static_cast<QCoreApplication &>(*plainApp)
+                                   : static_cast<QCoreApplication &>(*singleApp);
+
+    // Обработка консольных опций (в sync-режиме пропускается:
+    // флаги разбираются ниже, single-instance не нужен)
+    if(!syncMode)
+        parseConsoleOption(*singleApp);
+
+    // В sync-режиме --help тоже работает (parseConsoleOption пропущен)
+    if(syncMode && (app.arguments().contains(QStringLiteral("-h"))
+                    || app.arguments().contains(QStringLiteral("--help"))))
+    {
+        printHelp();
+        return 0;
+    }
 
 
     // Установка увеличенного разрешения для дисплеев с большим DPI (Retina)
@@ -426,10 +455,18 @@ int main(int argc, char ** argv)
     // Окно программы может быть снова открыто из трея
     QApplication::setQuitOnLastWindowClosed(false);
 
-    app.connect(&app, &QtSingleApplication::lastWindowClosed, &app, &QtSingleApplication::quit);
+    if(!syncMode)
+    {
+        QtSingleApplication *singleApp=static_cast<QtSingleApplication *>(&app);
 
-    // Прием сообщений, испускаемых другим экземпляром MyTetra с помощью консольных команд "--control"
-    app.connect(&app, &QtSingleApplication::messageReceived,  &win, &MainWindow::messageHandler);
+        singleApp->connect(singleApp, &QtSingleApplication::lastWindowClosed,
+                           singleApp, &QtSingleApplication::quit);
+
+        // Прием сообщений, испускаемых другим экземпляром MyTetra с помощью консольных команд "--control".
+        // Только в single-instance режиме: в sync-режиме второго экземпляра нет по определению
+        singleApp->connect(singleApp, SIGNAL(messageReceived(QString)),
+                           &win, SLOT(messageHandler(QString)));
+    }
 
     // Окно сплеш-скрина скрывается
     if (mytetraConfig.getShowSplashScreen())

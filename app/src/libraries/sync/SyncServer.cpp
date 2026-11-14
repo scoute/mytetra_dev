@@ -83,7 +83,10 @@ void SyncServer::onNewConnection(void)
                 this,   &SyncServer::onReadyRead);
 
         connect(socket, &QTcpSocket::disconnected,
-                socket, &QTcpSocket::deleteLater);
+                this, [this, socket]() {
+            pendingRequests.remove(socket);
+            socket->deleteLater();
+        });
     }
 }
 
@@ -132,7 +135,10 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
 {
     broken=false;
 
-    const QByteArray raw=socket->readAll();
+    // Добираем приехавшее к остатку прошлого пакета: заголовки
+    // и тело могут прийти разными TCP-сегментами
+    pendingRequests[socket]+=socket->readAll();
+    const QByteArray raw=pendingRequests.value(socket);
 
     if(raw.isEmpty())
         return false;
@@ -181,6 +187,10 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
     if(bodyHave<contentLength)
         return false;
 
+    // Запрос целый — остаток из буфера убираем (соединение одноразовое,
+    // но повторный разбор того же мусора нам не нужен)
+    pendingRequests.remove(socket);
+
     if(contentLength<=0)
     {
         body=QJsonObject();
@@ -194,9 +204,12 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
 
     if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
     {
+        pendingRequests.remove(socket);
         broken=true;
         return false;
     }
+
+    pendingRequests.remove(socket);
 
     body=doc.object();
     return true;

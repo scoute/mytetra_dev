@@ -1,6 +1,8 @@
 #include <functional>
 #include <QRect>
 #include <QTextCodec>
+#include <QRandomGenerator>
+#include <QHostInfo>
 
 #include "AppConfig.h"
 #include "AppConfigUpdater.h"
@@ -165,6 +167,63 @@ bool AppConfig::set_tetradir(QString dirName)
 QString AppConfig::get_tetradir(void)
 {
     return this->get_parameter("tetradir");
+}
+
+
+// Идентификатор устройства для синхронизации. Генерируется один раз
+// при первом обращении (32 случайных байта hex) и хранится в конфиге
+QString AppConfig::get_syncDeviceId(void)
+{
+    QString id=m_conf->value("syncDeviceId", QString()).toString();
+
+    if(!id.isEmpty())
+        return id;
+
+    QByteArray bytes;
+    bytes.reserve(32);
+    for(int i=0; i<32; ++i)
+        bytes.append(static_cast<char>(QRandomGenerator::global()->generate() & 0xFF));
+
+    id=QString::fromLatin1(bytes.toHex());
+    m_conf->setValue("syncDeviceId", id);
+
+    return id;
+}
+
+
+// Имя устройства для показа при спаривании. По умолчанию имя хоста
+QString AppConfig::get_syncDeviceName(void)
+{
+    QString name=m_conf->value("syncDeviceName", QString()).toString();
+
+    if(!name.isEmpty())
+        return name;
+
+    name=QHostInfo::localHostName();
+    m_conf->setValue("syncDeviceName", name);
+
+    return name;
+}
+
+
+bool AppConfig::set_syncDeviceName(const QString &name)
+{
+    m_conf->setValue("syncDeviceName", name);
+    return true;
+}
+
+
+// Группа sync-сети. Пусто = устройство нигде не состоит (девственно чистое)
+QString AppConfig::get_syncGroupId(void)
+{
+    return m_conf->value("syncGroupId", QString()).toString();
+}
+
+
+bool AppConfig::set_syncGroupId(const QString &groupId)
+{
+    m_conf->setValue("syncGroupId", groupId);
+    return true;
 }
 
 
@@ -1243,6 +1302,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_40;
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
+    parameterFunctions << &AppConfig::get_parameter_table_43;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2106,6 +2166,29 @@ QStringList AppConfig::get_parameter_table_42(bool withEndSignature)
     // Размер обозначается специальными строками, начинающимися на "META_ICON_"
     // Если размер пустой, используется системный размер иконок
     table << "interfaceIconSize" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 42
+    table << get_parameter_table_42(false);
+
+    // Синхронизация: идентичность устройства и группа.
+    // syncDeviceId пустой до первого обращения (генерируется лениво),
+    // syncGroupId пустой пока устройство ни в какой sync-сети
+    table << "syncDeviceId" << "QString" << "";
+    table << "syncDeviceName" << "QString" << "";
+    table << "syncGroupId" << "QString" << "";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

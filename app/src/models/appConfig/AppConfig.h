@@ -42,6 +42,15 @@ public:
     QString get_tetradir(void);
     bool set_tetradir(QString dirName);
 
+    // Синхронизация: идентичность устройства и группа.
+    // syncDeviceId генерируется один раз (32 случайных байта hex),
+    // syncGroupId пуст = устройство ни в какой sync-сети (девственно чистое)
+    QString get_syncDeviceId(void);
+    QString get_syncDeviceName(void);
+    bool set_syncDeviceName(const QString &name);
+    QString get_syncGroupId(void);
+    bool set_syncGroupId(const QString &groupId);
+
     // Директория с корзиной
     QString get_trashdir(void);
     bool set_trashdir(QString dirName);
@@ -335,6 +344,7 @@ private:
     QStringList get_parameter_table_40(bool withEndSignature=true);
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
+    QStringList get_parameter_table_43(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

@@ -63,6 +63,10 @@ public:
     QString get_syncPairedDeviceId(void);
     bool set_syncPairedDeviceId(const QString &deviceId);
 
+    // Последний хост ручного синка (окно Sync devices подставляет его)
+    QString get_syncLastHost(void);
+    bool set_syncLastHost(const QString &host);
+
     // Известные sync-устройства для окна Sync devices.
     // Хранятся группами syncDevices/<id>/{name,ip,port,firstSeen,lastSeen}.
     // Fingerprint считается из id на лету, хранить нечего

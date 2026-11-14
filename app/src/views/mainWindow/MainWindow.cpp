@@ -177,7 +177,6 @@ void MainWindow::setupSignals(void)
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
     // Синхронизация по Wi-Fi
-    connect(actionSyncMenuSyncNow, &QAction::triggered, this, &MainWindow::onSyncNow);
     connect(actionSyncMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
     connect(actionSyncMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
     connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
@@ -707,9 +706,6 @@ void MainWindow::initSyncMenu(void)
     actionSyncMenuSyncServer = new QAction(tr("Sync server"), this);
     actionSyncMenuSyncServer->setCheckable(true);
     menu->addAction(actionSyncMenuSyncServer);
-
-    actionSyncMenuSyncNow = new QAction(tr("Sync &now..."), this);
-    menu->addAction(actionSyncMenuSyncNow);
 
     actionSyncMenuSyncDevices = new QAction(tr("Sync &devices..."), this);
     menu->addAction(actionSyncMenuSyncDevices);
@@ -1582,91 +1578,6 @@ void MainWindow::onSyncServerToggle(bool checked)
 }
 
 
-// Спаривание на клиенте: сверка фингерпринта сервера, ввод PIN,
-// вывод общего секрета. Пустая строка — отмена пользователем
-static QString clientPairingPin(QWidget *parent,
-                                const QString &serverName,
-                                const QString &serverFingerprint)
-{
-    const QString text=
-        MainWindow::tr("Unknown sync server.\n\nName: %1\nFingerprint:\n%2\n\n"
-                       "Enter the pairing PIN (the same PIN must be entered "
-                       "on the server via Sync pairing...). Empty = cancel.")
-        .arg(serverName, serverFingerprint);
-
-    bool ok=false;
-    const QString pin=QInputDialog::getText(parent,
-                                            MainWindow::tr("Sync pairing"),
-                                            text,
-                                            QLineEdit::Password,
-                                            QString(),
-                                            &ok);
-
-    if(!ok)
-        return QString();
-
-    return pin;
-}
-
-
-void MainWindow::onSyncNow(void)
-{
-    bool ok=false;
-    const QString host=QInputDialog::getText(this,
-                                             tr("Sync now"),
-                                             tr("Server address (IP):"),
-                                             QLineEdit::Normal,
-                                             QString(),
-                                             &ok);
-
-    if(!ok || host.isEmpty())
-        return;
-
-    // Спаривание через GUI: сверка фингерпринта + PIN.
-    // Headless-вариант (флаг --sync-pair) проверку пропускает осознанно
-    QString pin;
-
-    if(mytetraConfig.get_syncPairingSecret().isEmpty())
-    {
-        SyncClient probe(&mytetraConfig);
-        SyncHelloResult hello=probe.hello(host, syncDefaultPort);
-
-        if(!hello.ok)
-        {
-            QMessageBox::warning(this, tr("Sync"),
-                                 tr("Handshake failed: %1").arg(hello.errorText));
-            return;
-        }
-
-        const QString serverFingerprint=
-            SyncIdentity::fingerprint(hello.remoteDeviceId);
-
-        pin=clientPairingPin(this,
-                             hello.remoteDeviceName,
-                             serverFingerprint);
-
-        if(pin.isEmpty())
-            return;
-    }
-
-    statusBar->showMessage(tr("Syncing..."));
-
-    bool syncOk=false;
-    const QString summary=runSyncToHeadless(host, pin, syncDefaultPort,
-                                            syncOk);
-
-    if(!syncOk)
-    {
-        statusBar->showMessage(tr("Sync failed"), 5000);
-        QMessageBox::warning(this, tr("Sync"), summary);
-        return;
-    }
-
-    statusBar->showMessage(tr("Sync complete"), 5000);
-    QMessageBox::information(this, tr("Sync"), summary);
-}
-
-
 QString MainWindow::runSyncToHeadless(const QString &host,
                                       const QString &pin,
                                       quint16 port,
@@ -1726,7 +1637,7 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId, pin);
 
     // Спаривание headless: секрета нет, PIN дан — выводим и храним.
-    // Фингерпринт здесь не сверяется (см. onSyncNow для GUI-пути)
+    // Фингерпринт здесь не сверяется (GUI-путь с проверкой — окно Sync devices)
     if(mytetraConfig.get_syncPairingSecret().isEmpty())
     {
         if(pin.isEmpty())

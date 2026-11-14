@@ -44,8 +44,10 @@ private slots:
 
 private:
 
-    // Разобрать запрос из буфера сокета. Возвращает false если данных
-    // пока не хватает (ждем еще) или запрос битый (отвечаем 400 и закрываем)
+    // Разобрать запрос из буфера сокета. Данные копятся между вызовами:
+    // заголовки и тело могут приехать разными пакетами. Возвращает false,
+    // если данных пока не хватает (ждем еще readyRead) или запрос битый
+    // (отвечаем 400 и закрываем). Прочитанное не теряется
     bool tryParseRequest(QTcpSocket *socket, QString &methodPath,
                          QJsonObject &body, bool &broken);
 
@@ -55,6 +57,10 @@ private:
     QTcpServer *server=nullptr;
     quint16 listenPort=0;
     QMap<QString, Handler> routes;
+
+    // Недочитанные запросы по сокетам: readAll в onReadyRead забирает все,
+    // что приехало, остаток ждет следующего пакета здесь, а не теряется
+    QMap<QTcpSocket *, QByteArray> pendingRequests;
 };
 
 #endif // SYNCSERVER_H

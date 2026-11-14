@@ -50,3 +50,37 @@ QString SyncIdentity::hmacProof(const QString &pairingSecretHex,
         QMessageAuthenticationCode::hash(challenge, key,
                                          QCryptographicHash::Sha256).toHex());
 }
+
+
+QString SyncIdentity::derivePairingSecret(const QString &deviceIdA,
+                                          const QString &deviceIdB,
+                                          const QString &pin)
+{
+    // Сортировка чтобы клиент и сервер сошлись независимо от ролей.
+    // Пустой PIN запрещен: иначе secret становится вычислимым по открытым id
+    if(deviceIdA.isEmpty() || deviceIdB.isEmpty() || pin.isEmpty())
+        return QString();
+
+    const QString first=(deviceIdA<deviceIdB) ? deviceIdA : deviceIdB;
+    const QString second=(deviceIdA<deviceIdB) ? deviceIdB : deviceIdA;
+
+    return QString::fromLatin1(
+        QCryptographicHash::hash((first+second+pin).toLatin1(),
+                                 QCryptographicHash::Sha256).toHex());
+}
+
+
+QString SyncIdentity::pairGroupId(const QString &deviceIdA,
+                                  const QString &deviceIdB)
+{
+    if(deviceIdA.isEmpty() || deviceIdB.isEmpty())
+        return QString();
+
+    const QString first=(deviceIdA<deviceIdB) ? deviceIdA : deviceIdB;
+    const QString second=(deviceIdA<deviceIdB) ? deviceIdB : deviceIdA;
+
+    // 16 hex-символов достаточно для группового id личного облака
+    return QString::fromLatin1(
+        QCryptographicHash::hash((first+second).toLatin1(),
+                                 QCryptographicHash::Sha256).toHex()).left(16);
+}

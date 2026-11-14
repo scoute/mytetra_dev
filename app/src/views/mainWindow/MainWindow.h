@@ -24,6 +24,7 @@ class RecordTableScreen;
 class FindScreen;
 class WindowSwitcher;
 class CommandRunner;
+class SyncHub;
 
 class MainWindow : public QMainWindow
 {
@@ -105,6 +106,10 @@ private slots:
     void toolsPreferences(void);
     void onActionLogClicked(void);
 
+    void onSyncNow(void);
+    void onSyncServerToggle(bool checked);
+    void onSyncPairing(void);
+
     void onExpandEditArea(bool flag);
 
     void onClickHelpAboutMyTetra(void);
@@ -162,6 +167,12 @@ private:
     QAction *actionToolsMenuFindInBase;
     QAction *actionToolsMenuActionLog;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
+    QAction *actionToolsMenuSyncNow=nullptr;
+    QAction *actionToolsMenuSyncServer=nullptr;
+    QAction *actionToolsMenuSyncPairing=nullptr;
+
+    // Синхронизация: хаб живет пока включен сервер из меню Tools
+    SyncHub *syncHub=nullptr;
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
     QAction *actionDirectPreferencesMain       =nullptr;

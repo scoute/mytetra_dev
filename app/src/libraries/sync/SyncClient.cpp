@@ -175,6 +175,9 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port)
     result.skewMs=answer.value(QStringLiteral("skewMs"))
                        .toVariant().toLongLong();
     result.paired=answer.value(QStringLiteral("paired")).toBool(false);
+    result.remoteDeviceId=answer.value(QStringLiteral("deviceId")).toString();
+    result.remoteDeviceName=answer.value(QStringLiteral("deviceName")).toString();
+    result.remoteGroupId=answer.value(QStringLiteral("groupId")).toString();
 
     if(!result.ok)
     {

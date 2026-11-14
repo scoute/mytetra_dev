@@ -7,6 +7,13 @@
 #include "models/appConfig/AppConfig.h"
 
 
+namespace
+{
+QString g_unknownId;
+QString g_unknownName;
+}
+
+
 // Версия приложения мажор.минор для сверки при handshake.
 // Микро не сравниваем: багфиксы не ломают протокол
 static QString syncAppVersion(void)
@@ -127,6 +134,8 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
 
 void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config)
 {
+    clearUnknown();
+
     // Замыкание держит только указатели на долгоживущие объекты
     // (сервер и конфиг переживают все соединения)
     server->addRoute(QStringLiteral("POST /hello"),
@@ -140,12 +149,63 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config)
         answer[QStringLiteral("skewMs")]=r.skewMs;
         answer[QStringLiteral("paired")]=r.paired;
 
+        // Себя называем всегда: клиент показывает имя/фингерпринт сервера
+        // при спаривании, сверяет группу и считает детерминированный groupId
+        answer[QStringLiteral("deviceId")]=config->get_syncDeviceId();
+        answer[QStringLiteral("deviceName")]=config->get_syncDeviceName();
+        answer[QStringLiteral("groupId")]=config->get_syncGroupId();
+
         if(!r.ok)
         {
             answer[QStringLiteral("error")]=r.errorCode;
             answer[QStringLiteral("detail")]=r.errorText;
+            return answer;
+        }
+
+        // Автосведение групп: пустые с обеих сторон — детерминированный
+        // общий groupId (обе стороны считают одинаково, маршрут не нужен).
+        // У нас пусто, у гостя есть — принимаем его. Наоборот — гость
+        // примет наш сам по тем же правилам на своей стороне
+        const QString theirGroup=body.value(QStringLiteral("groupId")).toString();
+        const QString theirId=body.value(QStringLiteral("deviceId")).toString();
+
+        if(config->get_syncGroupId().isEmpty())
+        {
+            if(!theirGroup.isEmpty())
+                config->set_syncGroupId(theirGroup);
+            else if(!theirId.isEmpty())
+                config->set_syncGroupId(
+                    SyncIdentity::pairGroupId(config->get_syncDeviceId(),
+                                              theirId));
+        }
+
+        // Неизвестный гость для диалога спаривания на сервере.
+        // Запоминаем только если у нас секрета нет (иначе это чужой/битый)
+        if(config->get_syncPairingSecret().isEmpty() && !theirId.isEmpty())
+        {
+            g_unknownId=theirId;
+            g_unknownName=body.value(QStringLiteral("deviceName")).toString();
         }
 
         return answer;
     });
+}
+
+
+QString SyncHandshake::lastUnknownDeviceId(void)
+{
+    return g_unknownId;
+}
+
+
+QString SyncHandshake::lastUnknownDeviceName(void)
+{
+    return g_unknownName;
+}
+
+
+void SyncHandshake::clearUnknown(void)
+{
+    g_unknownId.clear();
+    g_unknownName.clear();
 }

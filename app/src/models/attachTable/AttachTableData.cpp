@@ -5,6 +5,7 @@
 #include "AttachTableData.h"
 #include "AttachTableModel.h"
 #include "models/recordTable/Record.h"
+#include "libraries/sync/SyncSidecar.h"
 #include "libraries/helpers/DebugHelper.h"
 
 
@@ -174,6 +175,10 @@ void AttachTableData::addAttach(Attach attach)
 
   if(relatedAttachTableModel!=NULL)
     relatedAttachTableModel->setData(QModelIndex(), QVariant(), ATTACHTABLE_COMMAND_END_RESET_MODEL);
+
+  // Синк-сайдкар: набор файлов записи поменялся
+  if(record!=nullptr)
+    SyncSidecar::touchFields(record->getNaturalFieldSource(QStringLiteral("id")));
 }
 
 
@@ -186,6 +191,10 @@ void AttachTableData::modifyAttach(QString id, Attach iAttach)
     return;
 
   attachTable[row]=iAttach;
+
+  // Синк-сайдкар: набор файлов записи поменялся
+  if(record!=nullptr)
+    SyncSidecar::touchFields(record->getNaturalFieldSource(QStringLiteral("id")));
 }
 
 
@@ -204,6 +213,11 @@ void AttachTableData::deleteAttach(QString id)
   if(relatedAttachTableModel==NULL)
   {
     attachTable.removeAt(row); // Просто удаляется запись в данных
+
+    // Синк-сайдкар: набор файлов записи поменялся
+    if(record!=nullptr)
+      SyncSidecar::touchFields(record->getNaturalFieldSource(QStringLiteral("id")));
+
     return;
   }
   else
@@ -214,6 +228,10 @@ void AttachTableData::deleteAttach(QString id)
     attachTable.removeAt(row); // Удаляется запись в данных
     relatedAttachTableModel->setData(QModelIndex(), QVariant(), ATTACHTABLE_COMMAND_END_REMOVE_ROW);
   }
+
+  // Синк-сайдкар: набор файлов записи поменялся
+  if(record!=nullptr)
+    SyncSidecar::touchFields(record->getNaturalFieldSource(QStringLiteral("id")));
 }
 
 

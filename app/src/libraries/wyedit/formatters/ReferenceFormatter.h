@@ -22,6 +22,12 @@ public slots:
     void onClickedGotoReference(QString href);
     void onTextChanged(void);
 
+private:
+
+    // Увод курсора из середины слова в его конец перед запросом ссылки.
+    // Возвращает true если курсор двигался
+    bool moveCursorToWordEnd(void);
+
 };
 
 

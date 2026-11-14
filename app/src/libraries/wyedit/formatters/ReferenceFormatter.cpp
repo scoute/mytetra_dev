@@ -27,6 +27,30 @@ ReferenceFormatter::ReferenceFormatter()
 
 
 // Редактирование ссылки
+// Увод курсора из середины слова в его конец: буквы с обеих сторон
+// курсора — почти всегда случайный тык, а не намерение разрезать слово
+bool ReferenceFormatter::moveCursorToWordEnd(void)
+{
+    if(textArea->textCursor().hasSelection())
+        return false;
+
+    QTextCursor cursor=textArea->textCursor();
+    const int pos=cursor.position();
+    QTextDocument *doc=textArea->document();
+
+    if(pos>0 &&
+       doc->characterAt(pos-1).isLetterOrNumber() &&
+       doc->characterAt(pos).isLetterOrNumber())
+    {
+        cursor.movePosition(QTextCursor::EndOfWord);
+        textArea->setTextCursor(cursor);
+        return true;
+    }
+
+    return false;
+}
+
+
 void ReferenceFormatter::onReferenceClicked(void)
 {
     // TRACELOG
@@ -88,6 +112,9 @@ void ReferenceFormatter::onReferenceClicked(void)
     }
 
     // Создание виджета запроса URL с указанием редактора как родительского виджета
+    // Защита от вставки в середину слова (см. moveCursorToWordEnd)
+    moveCursorToWordEnd();
+
     QInputDialog inputDialog(editor);
 
     // Установка ширины виджета запроса URL

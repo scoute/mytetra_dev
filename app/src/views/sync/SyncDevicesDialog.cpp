@@ -373,10 +373,12 @@ void SyncDevicesDialog::onManualSync(void)
 
     bool syncOk=false;
     QString errorCode;
-    const QString result=win->runSyncToHeadless(host, pin, port,
-                                               syncOk, &errorCode);
+    QString result=win->runSyncToHeadless(host, pin, port,
+                                          syncOk, &errorCode);
 
-    if(!syncOk && errorCode==QStringLiteral("foreign-network"))
+    // Чужая сеть и в ручном пути: сервер 078+ с PIN сам примет с warning,
+    // старый — так и откажет, тогда в сообщении уже есть подсказка про forget
+    if(!syncOk && errorCode==QStringLiteral("foreign-network") && pin.isEmpty())
     {
         if(QMessageBox::question(
                this, tr("Sync"),
@@ -404,19 +406,7 @@ void SyncDevicesDialog::onManualSync(void)
             return;
         }
 
-        const QString retry=win->runSyncToHeadless(host, pin, port, syncOk);
-
-        if(!syncOk)
-        {
-            QMessageBox::warning(this, tr("Sync"),
-                                 tr("Sync failed: %1").arg(retry));
-            refreshList();
-            return;
-        }
-
-        QMessageBox::information(this, tr("Sync"), retry);
-        refreshList();
-        return;
+        result=win->runSyncToHeadless(host, pin, port, syncOk);
     }
 
     if(!syncOk)
@@ -428,6 +418,7 @@ void SyncDevicesDialog::onManualSync(void)
 
     QMessageBox::information(this, tr("Sync"), result);
     refreshList();
+    return;
 }
 
 
@@ -518,5 +509,16 @@ void SyncDevicesDialog::onRemove(void)
     }
 
     config->remove_syncDevice(id);
+
+    // Устройств не осталось — статус сбрасывается автоматически:
+    // секрет, группа и пара чистятся, устройство девственно чистое.
+    // Отдельного подтверждения не спрашиваем: удаление уже подтвердили
+    if(config->get_syncDevices().isEmpty())
+    {
+        config->set_syncPairingSecret(QString());
+        config->set_syncGroupId(QString());
+        config->set_syncPairedDeviceId(QString());
+    }
+
     refreshList();
 }

@@ -18,6 +18,9 @@ struct SyncHelloResult
     qint64 skewMs=0;     // оценка clientTime-serverTime (есть и при отказе по часам)
     qint64 serverTime=0;
     bool paired=false;   // у сервера есть секрет под эту пару
+    QString remoteDeviceId;   // кто ответил (для фингерпринта и secret'а)
+    QString remoteDeviceName;
+    QString remoteGroupId;
 };
 
 class SyncHandshake
@@ -34,6 +37,13 @@ public:
 
     // Зарегистрировать POST /hello на сервере. config жив всю жизнь сервера
     static void registerRoutes(SyncServer *server, AppConfig *config);
+
+    // Последний неизвестный гость (hello без секрета с нашей стороны).
+    // Для диалога спаривания на сервере: показать имя/фингерпринт,
+    // ввести тот же PIN. Очищается при старте сервера и после спаривания
+    static QString lastUnknownDeviceId(void);
+    static QString lastUnknownDeviceName(void);
+    static void clearUnknown(void);
 
     // Максимальный модуль расхождения часов, мс. Больше — железный блок
     static constexpr qint64 maxClockSkewMs=1000;

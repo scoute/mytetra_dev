@@ -8,6 +8,8 @@
 #include <QPrinter>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QSplitter>
 #include <QStatusBar>
 
@@ -34,6 +36,12 @@
 #include "libraries/RandomInitter.h"
 #include "libraries/helpers/ObjectHelper.h"
 #include "libraries/wyedit/EditorShowTextDispatcher.h"
+#include "libraries/sync/SyncHub.h"
+#include "libraries/sync/SyncSession.h"
+#include "libraries/sync/SyncClient.h"
+#include "libraries/sync/SyncIdentity.h"
+#include "libraries/sync/SyncHandshake.h"
+#include "libraries/sync/SyncSidecar.h"
 
 
 extern AppConfig mytetraConfig;
@@ -163,6 +171,11 @@ void MainWindow::setupSignals(void)
 
     // Вызов окна просмотра лога
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
+
+    // Синхронизация по Wi-Fi
+    connect(actionToolsMenuSyncNow, &QAction::triggered, this, &MainWindow::onSyncNow);
+    connect(actionToolsMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
+    connect(actionToolsMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -634,6 +647,20 @@ void MainWindow::initToolsMenu(void)
 
     actionToolsMenuActionLog = new QAction(tr("Action &log"), this);
     menu->addAction(actionToolsMenuActionLog);
+
+    menu->addSeparator();
+
+    // Синхронизация по Wi-Fi: сервер на этом устройстве, клиент к другому,
+    // спаривание с показом фингерпринтов. MVP: ручной запуск, без авто
+    actionToolsMenuSyncServer = new QAction(tr("Sync server"), this);
+    actionToolsMenuSyncServer->setCheckable(true);
+    menu->addAction(actionToolsMenuSyncServer);
+
+    actionToolsMenuSyncNow = new QAction(tr("Sync &now..."), this);
+    menu->addAction(actionToolsMenuSyncNow);
+
+    actionToolsMenuSyncPairing = new QAction(tr("Sync pairing..."), this);
+    menu->addAction(actionToolsMenuSyncPairing);
 
     menu->addSeparator();
 
@@ -1455,3 +1482,224 @@ void MainWindow::onFocusChanged(QWidget *widgetFrom, QWidget *widgetTo)
     return; // Временно ничего не делает
 }
 
+
+
+// Порт sync-сервера по умолчанию. Фиксированный для MVP:
+// обнаружение позже, пока ручной ввод IP на клиенте
+static const quint16 syncDefaultPort=47777;
+
+
+void MainWindow::onSyncServerToggle(bool checked)
+{
+    if(checked)
+    {
+        if(syncHub!=nullptr && syncHub->isRunning())
+            return;
+
+        if(syncHub==nullptr)
+            syncHub=new SyncHub(treeScreen->knowTreeModel,
+                                &mytetraConfig,
+                                SyncSidecar::instance(),
+                                mytetraConfig.get_tetradir(),
+                                this);
+
+        if(!syncHub->start(syncDefaultPort))
+        {
+            QMessageBox::warning(this, tr("Sync"),
+                                 tr("Cannot start sync server: port is busy."));
+            actionToolsMenuSyncServer->setChecked(false);
+            return;
+        }
+
+        statusBar->showMessage(tr("Sync server started"), 3000);
+    }
+    else
+    {
+        if(syncHub!=nullptr)
+            syncHub->stop();
+
+        statusBar->showMessage(tr("Sync server stopped"), 3000);
+    }
+}
+
+
+// Спаривание на клиенте: сверка фингерпринта сервера, ввод PIN,
+// вывод общего секрета. Пустая строка — отмена пользователем
+static QString clientPairingPin(QWidget *parent,
+                                const QString &serverName,
+                                const QString &serverFingerprint)
+{
+    const QString text=
+        MainWindow::tr("Unknown sync server.\n\nName: %1\nFingerprint:\n%2\n\n"
+                       "Enter the pairing PIN (the same PIN must be entered "
+                       "on the server via Sync pairing...). Empty = cancel.")
+        .arg(serverName, serverFingerprint);
+
+    bool ok=false;
+    const QString pin=QInputDialog::getText(parent,
+                                            MainWindow::tr("Sync pairing"),
+                                            text,
+                                            QLineEdit::Password,
+                                            QString(),
+                                            &ok);
+
+    if(!ok)
+        return QString();
+
+    return pin;
+}
+
+
+void MainWindow::onSyncNow(void)
+{
+    bool ok=false;
+    const QString host=QInputDialog::getText(this,
+                                             tr("Sync now"),
+                                             tr("Server address (IP):"),
+                                             QLineEdit::Normal,
+                                             QString(),
+                                             &ok);
+
+    if(!ok || host.isEmpty())
+        return;
+
+    SyncClient client(&mytetraConfig);
+    SyncHelloResult hello=client.hello(host, syncDefaultPort);
+
+    if(!hello.ok)
+    {
+        QMessageBox::warning(this, tr("Sync"),
+                             tr("Handshake failed: %1").arg(hello.errorText));
+        return;
+    }
+
+    // Спаривание: секрета нет ни у кого — фингерпринт + PIN с обеих сторон
+    if(mytetraConfig.get_syncPairingSecret().isEmpty())
+    {
+        const QString serverFingerprint=
+            SyncIdentity::fingerprint(hello.remoteDeviceId);
+
+        const QString pin=clientPairingPin(this,
+                                           hello.remoteDeviceName,
+                                           serverFingerprint);
+
+        if(pin.isEmpty())
+            return;
+
+        const QString secret=
+            SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
+                                              hello.remoteDeviceId,
+                                              pin);
+
+        if(secret.isEmpty())
+        {
+            QMessageBox::warning(this, tr("Sync"),
+                                 tr("Empty PIN is not allowed."));
+            return;
+        }
+
+        mytetraConfig.set_syncPairingSecret(secret);
+
+        // Группа: чужая есть — принимаем; обе пустые — детерминированная общая
+        if(mytetraConfig.get_syncGroupId().isEmpty())
+        {
+            if(!hello.remoteGroupId.isEmpty())
+                mytetraConfig.set_syncGroupId(hello.remoteGroupId);
+            else
+                mytetraConfig.set_syncGroupId(
+                    SyncIdentity::pairGroupId(mytetraConfig.get_syncDeviceId(),
+                                              hello.remoteDeviceId));
+        }
+    }
+
+    // Полная сессия: hello уже проверен выше, внутри повторный не нужен.
+    // SyncSession делает свое hello сам — расхождение исключено тем же кодом
+    SyncSession session(treeScreen->knowTreeModel,
+                        &mytetraConfig,
+                        mytetraConfig.get_tetradir());
+
+    statusBar->showMessage(tr("Syncing..."));
+
+    const SyncReport report=session.run(host, syncDefaultPort);
+
+    if(!report.ok)
+    {
+        statusBar->showMessage(tr("Sync failed"), 5000);
+        QMessageBox::warning(this, tr("Sync"),
+                             tr("Sync failed: %1").arg(report.error));
+        return;
+    }
+
+    // Отчет: что уехало/приехало + конфликты. Плюс строка в action log:
+    // xintrea любит видеть синхронизацию в журнале
+    QMap<QString, QString> logData;
+    logData["upNotes"]=QString::number(report.uploadedNotes);
+    logData["downNotes"]=QString::number(report.downloadedNotes);
+    logData["upBranches"]=QString::number(report.uploadedBranches);
+    logData["downBranches"]=QString::number(report.downloadedBranches);
+    logData["appliedDeletes"]=QString::number(report.appliedDeletes);
+    logData["conflicts"]=QString::number(report.conflicts.size());
+    actionLogger.addAction("syncSession", logData);
+
+    QString summary=tr("Sync complete.\nUploaded: notes %1, branches %2.\n"
+                       "Downloaded: notes %3, branches %4.\n"
+                       "Applied deletes: %5.")
+        .arg(report.uploadedNotes).arg(report.uploadedBranches)
+        .arg(report.downloadedNotes).arg(report.downloadedBranches)
+        .arg(report.appliedDeletes);
+
+    if(!report.conflicts.isEmpty())
+        summary+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
+                 .arg(report.conflicts.join(QStringLiteral(", ")));
+
+    statusBar->showMessage(tr("Sync complete"), 5000);
+    QMessageBox::information(this, tr("Sync"), summary);
+}
+
+
+void MainWindow::onSyncPairing(void)
+{
+    const QString unknownId=SyncHandshake::lastUnknownDeviceId();
+    const QString unknownName=SyncHandshake::lastUnknownDeviceName();
+
+    if(unknownId.isEmpty())
+    {
+        QMessageBox::information(
+            this, tr("Sync pairing"),
+            tr("No pending devices.\n\nThis device:\n%1\nFingerprint:\n%2")
+            .arg(mytetraConfig.get_syncDeviceName(),
+                 SyncIdentity::fingerprint(mytetraConfig.get_syncDeviceId())));
+        return;
+    }
+
+    const QString text=
+        tr("Pair with device?\n\nName: %1\nFingerprint:\n%2\n\n"
+           "Enter the SAME pairing PIN as on that device. "
+           "Empty = cancel.")
+        .arg(unknownName.isEmpty() ? unknownId : unknownName,
+             SyncIdentity::fingerprint(unknownId));
+
+    bool ok=false;
+    const QString pin=QInputDialog::getText(this,
+                                            tr("Sync pairing"),
+                                            text,
+                                            QLineEdit::Password,
+                                            QString(),
+                                            &ok);
+
+    if(!ok || pin.isEmpty())
+        return;
+
+    const QString secret=
+        SyncIdentity::derivePairingSecret(mytetraConfig.get_syncDeviceId(),
+                                          unknownId, pin);
+
+    if(secret.isEmpty())
+        return;
+
+    mytetraConfig.set_syncPairingSecret(secret);
+    SyncHandshake::clearUnknown();
+
+    QMessageBox::information(this, tr("Sync pairing"),
+                             tr("Paired. Next sync will be authenticated."));
+}

@@ -24,6 +24,18 @@ public:
     // Hex-строка; сравнение только по полному совпадению
     static QString hmacProof(const QString &pairingSecretHex,
                              const QByteArray &challenge);
+
+    // Детерминированный secret спаривания из PIN, введенного на обеих
+    // сторонах: по сети не ходит вообще. id сортируются чтобы обе стороны
+    // посчитали одинаково независимо от ролей
+    static QString derivePairingSecret(const QString &deviceIdA,
+                                       const QString &deviceIdB,
+                                       const QString &pin);
+
+    // Детерминированный groupId для первого спаривания двух девственных
+    // устройств (у обоих пусто): обе стороны считают одинаково
+    static QString pairGroupId(const QString &deviceIdA,
+                               const QString &deviceIdB);
 };
 
 #endif // SYNCIDENTITY_H

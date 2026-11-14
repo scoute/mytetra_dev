@@ -102,7 +102,9 @@ void printHelp()
     printf("./mytetra --sync-server [--sync-port N] [--sync-pair PIN] - Start sync hub without GUI interaction\n");
     printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
     printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
-    printf("./mytetra --sync-forget - Clear sync pairing (secret and group) and exit\n");
+    printf("./mytetra --sync-forget - Clear sync pairing (secret, group, peer and device list) and exit\n");
+    printf("./mytetra --sync-unpair ID - Break pairing with device ID and exit\n");
+    printf("./mytetra --sync-remove ID - Forget device ID (auto-reset when list becomes empty) and exit\n");
     printf("\n");
 }
 
@@ -180,7 +182,9 @@ void parseConsoleOption(QtSingleApplication &app)
          && !app.arguments().contains("--sync-server")
          && !app.arguments().contains("--sync-to")
          && !app.arguments().contains("--sync-status")
-         && !app.arguments().contains("--sync-forget") )
+         && !app.arguments().contains("--sync-forget")
+         && !app.arguments().contains("--sync-unpair")
+         && !app.arguments().contains("--sync-remove") )
     {
         QString message="Bad options. Maybe you lost \"--help\" or \"--control\"?\n";
         printf("%s", message.toLocal8Bit().data());
@@ -312,7 +316,9 @@ int main(int argc, char ** argv)
 
         if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to")
            || arg==QStringLiteral("--sync-status")
-           || arg==QStringLiteral("--sync-forget"))
+           || arg==QStringLiteral("--sync-forget")
+           || arg==QStringLiteral("--sync-unpair")
+           || arg==QStringLiteral("--sync-remove"))
         {
             syncMode=true;
             break;
@@ -556,8 +562,49 @@ int main(int argc, char ** argv)
             mytetraConfig.set_syncPairingSecret(QString());
             mytetraConfig.set_syncGroupId(QString());
             mytetraConfig.set_syncPairedDeviceId(QString());
-            printf("Sync pairing cleared (secret, group and peer). "
+
+            for(const AppConfig::SyncDeviceInfo &info
+                : mytetraConfig.get_syncDevices())
+                mytetraConfig.remove_syncDevice(info.id);
+
+            printf("Sync pairing cleared (secret, group, peer and device list). "
                    "Re-pair both sides with the same --sync-pair PIN.\n");
+            return 0;
+        }
+
+        // Точечные операции окна Sync devices, те же гейты:
+        // --sync-unpair ID рвет пару (секрет+привязка+группа),
+        // --sync-remove ID забывает устройство (с автосбросом при пустом списке)
+        const QString unpairId=argValue(QStringLiteral("--sync-unpair"), QString());
+        const QString removeId=argValue(QStringLiteral("--sync-remove"), QString());
+
+        if(!unpairId.isEmpty() || !removeId.isEmpty())
+        {
+            const QString id=!unpairId.isEmpty() ? unpairId : removeId;
+            const bool wasPaired=(mytetraConfig.get_syncPairedDeviceId()==id);
+
+            if(wasPaired)
+            {
+                mytetraConfig.set_syncPairingSecret(QString());
+                mytetraConfig.set_syncPairedDeviceId(QString());
+                mytetraConfig.set_syncGroupId(QString());
+            }
+
+            if(!removeId.isEmpty())
+            {
+                mytetraConfig.remove_syncDevice(id);
+
+                if(mytetraConfig.get_syncDevices().isEmpty())
+                {
+                    mytetraConfig.set_syncPairingSecret(QString());
+                    mytetraConfig.set_syncGroupId(QString());
+                    mytetraConfig.set_syncPairedDeviceId(QString());
+                }
+            }
+
+            printf("Sync: device %s %s.\n",
+                   id.toLocal8Bit().data(),
+                   wasPaired ? "unpaired" : "not paired, list updated");
             return 0;
         }
 

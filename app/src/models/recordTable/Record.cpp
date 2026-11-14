@@ -39,6 +39,27 @@ Record::Record(const Record &obj)
 }
 
 
+// Оператор присваивания повторяет конструктор копирования:
+// копируется каждый кусочек класса, обратный указатель таблицы
+// аттачей переводится на новый экземпляр
+Record &Record::operator=(const Record &obj)
+{
+  if(this==&obj)
+    return *this;
+
+  liteFlag=obj.liteFlag;
+  fieldList=obj.fieldList;
+  text=obj.text;
+  pictureFiles=obj.pictureFiles;
+  attachTableData=obj.attachTableData;
+
+  attachTableData.setRecord(this);
+  attachTableData.updateAttachTableBackLink();
+
+  return *this;
+}
+
+
 Record::~Record()
 {
 

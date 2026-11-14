@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QSplitter>
+#include <QRegularExpression>
 #include <QtDebug>
 
 #include "MetaEditor.h"
@@ -327,7 +328,7 @@ void MetaEditor::setTags(QString tags)
 
 
  // Строка с метками разделяется на отдельные меки
- recordTagsTextList = recordTagsText.split(QRegExp("[,;]+"), QString::SkipEmptyParts);
+ recordTagsTextList = recordTagsText.split(QRegularExpression("[,;]+"), Qt::SkipEmptyParts);
 
  // В каждой метке убираются лишние пробелы по краям
  for(int i = 0; i < recordTagsTextList.size(); ++i)

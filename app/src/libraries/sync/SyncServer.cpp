@@ -144,9 +144,13 @@ void SyncServer::onReadyRead(void)
     if(syncDebugEnabled())
     {
         const QString err=answer.value(QStringLiteral("error")).toString();
+        const QString warn=answer.value(QStringLiteral("warning")).toString();
+
         qDebug() << "SyncServer:" << methodPath << elapsed << "ms"
                  << (err.isEmpty() ? QStringLiteral("ok")
-                                   : QStringLiteral("error=")+err);
+                                   : QStringLiteral("error=")+err)
+                 << (warn.isEmpty() ? QString()
+                                    : QStringLiteral("warning=")+warn);
     }
 
     sendJson(socket, 200, answer);

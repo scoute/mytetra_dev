@@ -121,8 +121,31 @@ void printSyncStatus(void)
     printf("  fingerprint:\n%s\n",
            SyncIdentity::fingerprint(deviceId).toLocal8Bit().data());
     printf("  paired: %s\n", paired ? "yes" : "no");
+
+    if(paired)
+        printf("  pairedWith: %s\n",
+               mytetraConfig.get_syncPairedDeviceId().toLocal8Bit().data());
+
     printf("  group: %s\n",
            groupId.isEmpty() ? "(none)" : groupId.toLocal8Bit().data());
+
+    const QList<AppConfig::SyncDeviceInfo> devices=mytetraConfig.get_syncDevices();
+    printf("  known devices: %d\n", devices.size());
+
+    for(const AppConfig::SyncDeviceInfo &info : devices)
+    {
+        printf("    - %s id=%s ip=%s lastSeen=%lld\n",
+               info.name.isEmpty() ? "(unnamed)" : info.name.toLocal8Bit().data(),
+               info.id.toLocal8Bit().data(),
+               info.ip.isEmpty() ? "(unknown)" : info.ip.toLocal8Bit().data(),
+               info.lastSeen);
+    }
+
+    // Ловушка рассинхрона: пара есть, а пиров нет (или наоборот).
+    // Сразу видно, а не гаданием по foreign-network
+    if(paired && devices.isEmpty())
+        printf("  NOTE: paired but device list is empty — "
+               "re-pair or --sync-forget to clean.\n");
 }
 
 

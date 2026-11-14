@@ -483,12 +483,14 @@ void SyncDevicesDialog::onUnpair(void)
 
     if(QMessageBox::question(this, tr("Sync"),
                              tr("Break pairing with this device? "
+                                "You will leave the sync network as well. "
                                 "Next sync will require pairing again."))
        !=QMessageBox::Yes)
         return;
 
     config->set_syncPairingSecret(QString());
     config->set_syncPairedDeviceId(QString());
+    config->set_syncGroupId(QString());
     refreshList();
 }
 

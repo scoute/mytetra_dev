@@ -3,9 +3,12 @@
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QDateTime>
+#include <QElapsedTimer>
+#include <QDebug>
 
 #include "SyncManifest.h"
 #include "SyncSidecar.h"
+#include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
@@ -79,6 +82,9 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
 
     if(model==nullptr)
         return out;
+
+    QElapsedTimer timer;
+    timer.start();
 
     // Ветки обходом от корня
     collectBranches(model->getRootItemPublic(), QString(), out, sidecar);
@@ -168,6 +174,15 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
     }
 
     out.tombstones=sidecar.tombstones();
+
+    // Сколько чего собрали и за сколько: вис манифеста раньше ловили
+    // только гаданием (был criticalError на вычислимых полях)
+    if(syncDebugEnabled())
+        qDebug() << "SyncManifest: built branches=" << out.branches.size()
+                 << "notes=" << out.notes.size()
+                 << "tombs=" << out.tombstones.size()
+                 << "in" << timer.elapsed() << "ms";
+
     return out;
 }
 

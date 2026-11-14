@@ -75,6 +75,47 @@ void SyncSidecar::forgetNote(const QString &id)
 }
 
 
+QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields)
+{
+    QByteArray canonical;
+
+    for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
+    {
+        canonical+=it.key().toUtf8();
+        canonical+='=';
+        canonical+=it.value().toUtf8();
+        canonical+='\n';
+    }
+
+    return QString::fromLatin1(
+        QCryptographicHash::hash(canonical,
+                                 QCryptographicHash::Sha256).toHex());
+}
+
+
+void SyncSidecar::touchBranch(const QString &id,
+                              const QMap<QString, QString> &fields)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    g_instance->setEntry(id, QDateTime::currentMSecsSinceEpoch(),
+                         hashBranchFields(fields),
+                         QStringLiteral("branch"));
+    g_instance->save();
+}
+
+
+void SyncSidecar::forgetBranch(const QString &id)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    g_instance->forget(id, QDateTime::currentMSecsSinceEpoch());
+    g_instance->save();
+}
+
+
 QString SyncSidecar::sidecarPathForXml(const QString &xmlFileName)
 {
     // Тот же каталог, фиксированное имя. Подкаталоги баз не поддерживаются:

@@ -650,6 +650,15 @@ void RecordTableData::deleteAllRecords(void)
 }
 
 
+// Добавление записи с готовым id (синк): данные уже лежат на диске
+// как надо (включая шифртекст), преобразования не нужны
+int RecordTableData::appendSyncedRecord(const Record &record)
+{
+    tableData << record;
+    return tableData.size()-1;
+}
+
+
 // Метод мягкого удаления данных
 // Данные очищаются только у объекта
 // а физически данные на диске не затрагиваются

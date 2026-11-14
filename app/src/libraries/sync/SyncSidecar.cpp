@@ -75,6 +75,37 @@ void SyncSidecar::forgetNote(const QString &id)
 }
 
 
+void SyncSidecar::adopt(const QString &id, qint64 mtime,
+                        const QString &hash, const QString &kind)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    g_instance->setEntry(id, mtime, hash, kind);
+    g_instance->save();
+}
+
+
+void SyncSidecar::adoptTombstone(const QString &id, qint64 deletedAt)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    g_instance->forget(id, deletedAt);
+    g_instance->save();
+}
+
+
+void SyncSidecar::dropEntry(const QString &id)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    g_instance->m_entries.remove(id);
+    g_instance->save();
+}
+
+
 QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields)
 {
     QByteArray canonical;

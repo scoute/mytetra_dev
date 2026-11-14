@@ -66,6 +66,16 @@ public:
     // Пишет на диск сразу
     static void forgetNote(const QString &id);
 
+    // Хеш канонической сериализации полей ветки (QMap уже отсортирован)
+    static QString hashBranchFields(const QMap<QString, QString> &fields);
+
+    // Отметить изменение ветки: mtime=сейчас, hash полей. Пишет сразу
+    static void touchBranch(const QString &id,
+                            const QMap<QString, QString> &fields);
+
+    // Забыть ветку целиком (tombstone). Пишет сразу
+    static void forgetBranch(const QString &id);
+
 private:
 
     QString m_xmlFileName;

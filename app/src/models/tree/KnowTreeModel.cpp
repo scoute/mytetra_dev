@@ -11,6 +11,23 @@
 
 #include "libraries/ClipboardBranch.h"
 #include "libraries/sync/SyncSidecar.h"
+
+
+// Рекурсивный сбор id ветки и всех подветок для tombstone.
+// Только чтение полей, дерево не меняется
+static void collectSubtreeBranchIds(TreeItem *item, QStringList &ids)
+{
+    if(item==nullptr)
+        return;
+
+    const QString id=item->getField(QStringLiteral("id"));
+
+    if(!id.isEmpty() && !ids.contains(id))
+        ids << id;
+
+    for(int i=0; i<item->childCount(); ++i)
+        collectSubtreeBranchIds(item->child(i), ids);
+}
 #include "models/appConfig/AppConfig.h"
 #include "models/attachTable/Attach.h"
 #include "models/recordTable/Record.h"
@@ -895,6 +912,12 @@ void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branch
   // Инициализируется таблица конечных записей
   newBranch->recordtableGetTableData()->init(newBranch, QDomElement());
 
+  // Синк-сайдкар: новая ветка
+  SyncSidecar::touchBranch(newBranch->getField(QStringLiteral("id")),
+                           newBranch->getAllFieldsDirect());
+
+  // Определяется, является ли родительская ветка зашифрованной
+
   // Определяется, является ли родительская ветка зашифрованной
   if(parent->getField("crypt")=="1")
   {
@@ -1231,6 +1254,17 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 
     QSet< QString > deleteResordsId;
 
+    // Синк-сайдкар: собрать id веток под удаление заранее (после
+    // удаления элементы недоступны). Рекурсивно: сама ветка и все подветки
+    QStringList deleteBranchIds;
+    for(int i = 0; i < selectItems.size(); ++i)
+    {
+        TreeItem *topItem=this->getItem(selectItems.at(i));
+
+        if(topItem!=nullptr)
+            collectSubtreeBranchIds(topItem, deleteBranchIds);
+    }
+
     // Вызов удаления веток
     for(int i = 0; i < selectItems.size(); ++i)
     {
@@ -1240,6 +1274,10 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 
         this->deleteOneBranch(selectItems.at(i));
     }
+
+    // Синк-сайдкар: tombstone на каждую удаленную ветку
+    for(const QString &branchId : deleteBranchIds)
+        SyncSidecar::forgetBranch(branchId);
 
     // Закрываются открепляемые окна для удаленных записей
     emit doCloseDetachedWindowByIdSet( deleteResordsId );

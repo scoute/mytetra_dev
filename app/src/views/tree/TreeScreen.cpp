@@ -21,6 +21,7 @@
 #include "libraries/ClipboardBranch.h"
 #include "views/record/MetaEditor.h"
 #include "libraries/GlobalParameters.h"
+#include "libraries/sync/SyncSidecar.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/crypt/Password.h"
 #include "libraries/WindowSwitcher.h"
@@ -701,6 +702,10 @@ void TreeScreen::editBranch(void)
  find_object<MainWindow>("mainwindow")->setDisabled(true);
  
  item->setField("name", newname);
+
+ // Синк-сайдкар: имя ветки поменялось
+ SyncSidecar::touchBranch(item->getField(QStringLiteral("id")),
+                          item->getAllFieldsDirect());
  
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
@@ -1222,6 +1227,10 @@ void TreeScreen::setIcon(void)
 
     currentItem->setField("icon", relatedFileName);
 
+    // Синк-сайдкар: иконка ветки поменялась
+    SyncSidecar::touchBranch(currentItem->getField(QStringLiteral("id")),
+                             currentItem->getAllFieldsDirect());
+
     // Обновляеются на экране ветка и ее подветки
     updateBranchOnScreen( getCurrentItemIndex() );
 
@@ -1232,6 +1241,10 @@ void TreeScreen::setIcon(void)
   {
     TreeItem *currentItem=knowTreeModel->getItem( getCurrentItemIndex() );
     currentItem->setField("icon", "");
+
+    // Синк-сайдкар: иконка ветки убрана
+    SyncSidecar::touchBranch(currentItem->getField(QStringLiteral("id")),
+                             currentItem->getAllFieldsDirect());
 
     // Обновляеются на экране ветка и ее подветки
     updateBranchOnScreen( getCurrentItemIndex() );

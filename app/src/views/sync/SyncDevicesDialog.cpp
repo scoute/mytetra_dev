@@ -159,6 +159,7 @@ void SyncDevicesDialog::refreshList(void)
     bool syntheticPaired=false;
 
     if(!config->get_syncPairingSecret().isEmpty() && !pairedId.isEmpty()
+       && pairedId!=config->get_syncDeviceId()
        && !havePairedRow)
     {
         AppConfig::SyncDeviceInfo ghost;
@@ -197,8 +198,49 @@ void SyncDevicesDialog::refreshList(void)
             ? QDateTime::fromMSecsSinceEpoch(info.lastSeen)
                   .toString(QStringLiteral("yyyy-MM-dd hh:mm"))
             : QString());
-        QTableWidgetItem *pairedItem=new QTableWidgetItem(
-            isPaired(info) ? tr("yes") : tr("no"));
+        // Paired колонка трехстатусная, а не да/нет: если что-то пошло
+        // не так — видно прямо в строке, а не гаданием.
+        // yes — секрет под эту строку. no — чужая строка или пары нет.
+        // unknown — секрет есть, но с кем — неизвестно (наследие старых
+        // версий без привязки пары). error — пара сломана: спарен сам
+        // с собой, такой secret ни с кем не сойдется
+        const bool haveSecret=!config->get_syncPairingSecret().isEmpty();
+        const bool selfPairing=haveSecret
+            && !pairedId.isEmpty()
+            && pairedId==config->get_syncDeviceId();
+
+        QString pairedText;
+        QString pairedTip;
+
+        if(!haveSecret)
+        {
+            pairedText=tr("no");
+        }
+        else if(selfPairing)
+        {
+            pairedText=tr("error");
+            pairedTip=tr("Broken pairing: paired with self. "
+                         "Reset all and pair again.");
+        }
+        else if(pairedId.isEmpty())
+        {
+            pairedText=tr("unknown");
+            pairedTip=tr("Paired with unknown device (legacy state, "
+                         "no peer binding). Re-pair via Pair or Reset all.");
+        }
+        else if(pairedId==info.id)
+        {
+            pairedText=tr("yes");
+        }
+        else
+        {
+            pairedText=tr("no");
+        }
+
+        QTableWidgetItem *pairedItem=new QTableWidgetItem(pairedText);
+
+        if(!pairedTip.isEmpty())
+            pairedItem->setToolTip(pairedTip);
         QTableWidgetItem *idItem=new QTableWidgetItem(info.id);
 
         table->setItem(row, 0, nameItem);
@@ -225,24 +267,33 @@ void SyncDevicesDialog::refreshSelf(void)
 
     if(paired)
     {
-        QString peerName;
-
-        for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+        // Сломана в принципе: спарен сам с собой. Такой secret ни с кем
+        // не сойдется — только Reset all и спаривание заново
+        if(!pairedId.isEmpty() && pairedId==ownId)
         {
-            if(info.id==pairedId)
-            {
-                peerName=info.name;
-                break;
-            }
+            peerText=tr("ERROR: paired with self!");
         }
+        else
+        {
+            QString peerName;
 
-        if(peerName.isEmpty())
-            peerName=pairedId.isEmpty() ? tr("(unknown)")
-                                        : pairedId+tr(" (not in list!)");
-        else if(pairedId!=peerName)
-            peerName+=QStringLiteral(" (")+pairedId+QStringLiteral(")");
+            for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+            {
+                if(info.id==pairedId)
+                {
+                    peerName=info.name;
+                    break;
+                }
+            }
 
-        peerText=tr("yes, with %1").arg(peerName);
+            if(peerName.isEmpty())
+                peerName=pairedId.isEmpty() ? tr("(unknown)")
+                                            : pairedId+tr(" (not in list!)");
+            else if(pairedId!=peerName)
+                peerName+=QStringLiteral(" (")+pairedId+QStringLiteral(")");
+
+            peerText=tr("yes, with %1").arg(peerName);
+        }
     }
 
     selfLabel->setText(

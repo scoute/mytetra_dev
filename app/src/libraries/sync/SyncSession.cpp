@@ -39,6 +39,27 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     SyncHelloResult hello=client.hello(host, port);
 
+    // Сервер уже спарен, а мы нет (секрет узнали позже): деривация
+    // по PIN и повторный hello уже с доказательством. Без PIN здесь
+    // делать нечего — нужно спаривание через GUI или флаг
+    if(!hello.ok && hello.errorCode==QStringLiteral("auth-failed")
+       && config->get_syncPairingSecret().isEmpty()
+       && !pairingPin.isEmpty()
+       && !hello.remoteDeviceId.isEmpty())
+    {
+        const QString derived=
+            SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
+                                              hello.remoteDeviceId,
+                                              pairingPin);
+
+        if(!derived.isEmpty())
+        {
+            config->set_syncPairingSecret(derived);
+            addLog(QStringLiteral("paired via PIN on retry"));
+            hello=client.hello(host, port);
+        }
+    }
+
     if(!hello.ok)
     {
         report.error=hello.errorText.isEmpty() ? hello.errorCode

@@ -52,6 +52,29 @@ void SyncSidecar::touchNote(const QString &id, const QByteArray &contentBytes)
 }
 
 
+void SyncSidecar::touchFields(const QString &id)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    Entry old=g_instance->entry(id);
+
+    g_instance->setEntry(id, QDateTime::currentMSecsSinceEpoch(),
+                         old.hash, QStringLiteral("note"));
+    g_instance->save();
+}
+
+
+void SyncSidecar::forgetNote(const QString &id)
+{
+    if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
+        return;
+
+    g_instance->forget(id, QDateTime::currentMSecsSinceEpoch());
+    g_instance->save();
+}
+
+
 QString SyncSidecar::sidecarPathForXml(const QString &xmlFileName)
 {
     // Тот же каталог, фиксированное имя. Подкаталоги баз не поддерживаются:

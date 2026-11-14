@@ -3,8 +3,11 @@
 #include "SyncNoteIo.h"
 #include "SyncSidecar.h"
 #include "SyncIdentity.h"
+#include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
+
+#include <QDebug>
 
 
 SyncSession::SyncSession(KnowTreeModel *model, AppConfig *config,
@@ -25,6 +28,11 @@ QStringList SyncSession::log(void) const
 void SyncSession::addLog(const QString &line)
 {
     logLines << line;
+
+    // Живой прогон (ПК + VM): каждый шаг сразу в stderr, иначе зависший
+    // клиент молчит и непонятно где встал. Только под MYTETRA_SYNC_DEBUG=1
+    if(syncDebugEnabled())
+        qDebug() << "SyncStep:" << line;
 }
 
 
@@ -118,6 +126,12 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // 3. Сверка. Мы спок: равные mtime решает хаб (той же детерминированной
     // логикой: хаб бы скачал, мы — заливаем; итог одинаковый с обеих сторон)
     const SyncPlan plan=SyncManifestBuilder::compare(local, remote, false);
+
+    addLog(QStringLiteral("plan upNotes=%1 downNotes=%2 upBranches=%3 "
+                          "downBranches=%4 deleteLocal=%5 conflicts=%6")
+           .arg(plan.uploadNotes.size()).arg(plan.downloadNotes.size())
+           .arg(plan.uploadBranches.size()).arg(plan.downloadBranches.size())
+           .arg(plan.deleteLocal.size()).arg(plan.conflicts.size()));
 
     if(plan.empty())
     {

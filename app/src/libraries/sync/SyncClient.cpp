@@ -9,7 +9,10 @@
 
 #include "SyncClient.h"
 #include "SyncHandshake.h"
+#include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
+
+#include <QDebug>
 
 
 SyncClient::SyncClient(AppConfig *config) : config(config)
@@ -73,6 +76,11 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     if(reply->error()!=QNetworkReply::NoError)
     {
         lastErrorText=reply->errorString();
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncClient:" << path << "transport error:"
+                     << lastErrorText;
+
         reply->deleteLater();
         return QJsonObject();
     }
@@ -131,6 +139,11 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
     if(reply->error()!=QNetworkReply::NoError)
     {
         lastErrorText=reply->errorString();
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncClient:" << path << "transport error:"
+                     << lastErrorText;
+
         reply->deleteLater();
         return QJsonObject();
     }
@@ -246,7 +259,19 @@ bool SyncClient::pushNote(const QString &host, quint16 port,
                                       QStringLiteral("/push-note"),
                                       note, ok);
 
-    return ok && !answer.contains(QStringLiteral("error"));
+    if(!ok)
+        return false;
+
+    // Сервер принял транспорт, но отклонил применение (bad request,
+    // no branch и т.п.): текст ошибки лежит в answer, а не в lastError.
+    // Без этого сессия падает с пустым "Sync failed: "
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -258,7 +283,16 @@ bool SyncClient::pushBranch(const QString &host, quint16 port,
                                       QStringLiteral("/push-branch"),
                                       branch, ok);
 
-    return ok && !answer.contains(QStringLiteral("error"));
+    if(!ok)
+        return false;
+
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -274,7 +308,16 @@ bool SyncClient::pushDelete(const QString &host, quint16 port,
                                       QStringLiteral("/push-delete"),
                                       request, ok);
 
-    return ok && !answer.contains(QStringLiteral("error"));
+    if(!ok)
+        return false;
+
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return false;
+    }
+
+    return true;
 }
 
 

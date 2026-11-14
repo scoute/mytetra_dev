@@ -4,7 +4,10 @@
 #include "SyncManifest.h"
 #include "SyncSidecar.h"
 #include "SyncNoteIo.h"
+#include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
+
+#include <QDebug>
 
 
 SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
@@ -143,8 +146,18 @@ QJsonObject SyncHub::pullBranch(const QString &id)
 
 QJsonObject SyncHub::applyNote(const QJsonObject &request)
 {
-    QJsonObject answer;
+    const QString id=request.value(QStringLiteral("id")).toString();
     const QString error=SyncNoteIo::applyNote(model, tetradir, request);
+
+    if(syncDebugEnabled())
+    {
+        if(error.isEmpty())
+            qDebug() << "SyncHub: push-note" << id << "applied";
+        else
+            qDebug() << "SyncHub: push-note" << id << "rejected:" << error;
+    }
+
+    QJsonObject answer;
 
     if(!error.isEmpty())
         answer[QStringLiteral("error")]=error;
@@ -157,8 +170,18 @@ QJsonObject SyncHub::applyNote(const QJsonObject &request)
 
 QJsonObject SyncHub::applyBranch(const QJsonObject &request)
 {
-    QJsonObject answer;
+    const QString id=request.value(QStringLiteral("id")).toString();
     const QString error=SyncNoteIo::applyBranch(model, request);
+
+    if(syncDebugEnabled())
+    {
+        if(error.isEmpty())
+            qDebug() << "SyncHub: push-branch" << id << "applied";
+        else
+            qDebug() << "SyncHub: push-branch" << id << "rejected:" << error;
+    }
+
+    QJsonObject answer;
 
     if(!error.isEmpty())
         answer[QStringLiteral("error")]=error;
@@ -171,8 +194,17 @@ QJsonObject SyncHub::applyBranch(const QJsonObject &request)
 
 QJsonObject SyncHub::applyDelete(const QString &id, qint64 deletedAt)
 {
-    QJsonObject answer;
     const QString error=SyncNoteIo::applyDelete(model, id, deletedAt);
+
+    if(syncDebugEnabled())
+    {
+        if(error.isEmpty())
+            qDebug() << "SyncHub: push-delete" << id << "applied";
+        else
+            qDebug() << "SyncHub: push-delete" << id << "rejected:" << error;
+    }
+
+    QJsonObject answer;
 
     if(!error.isEmpty())
         answer[QStringLiteral("error")]=error;

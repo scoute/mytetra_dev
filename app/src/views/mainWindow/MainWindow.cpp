@@ -1693,8 +1693,19 @@ QString MainWindow::runSyncToHeadless(const QString &host,
 
     const SyncReport report=session.run(host, port);
 
+    // Headless-прогон: шаги сессии всегда в выводе, иначе зависший клиент
+    // молчит и непонятно где встал. GUI показывает только summary
+    const QString steps=session.log().join(QStringLiteral("\n"));
+
     if(!report.ok)
-        return tr("Sync failed: %1").arg(report.error);
+    {
+        QString fail=tr("Sync failed: %1").arg(report.error);
+
+        if(!steps.isEmpty())
+            fail+=QStringLiteral("\n-- steps --\n")+steps;
+
+        return fail;
+    }
 
     QMap<QString, QString> logData;
     logData["upNotes"]=QString::number(report.uploadedNotes);
@@ -1715,6 +1726,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     if(!report.conflicts.isEmpty())
         summary+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
                  .arg(report.conflicts.join(QStringLiteral(", ")));
+
+    if(!steps.isEmpty())
+        summary+=QStringLiteral("\n-- steps --\n")+steps;
 
     ok=true;
     return summary;

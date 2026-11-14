@@ -1,8 +1,11 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QJsonDocument>
+#include <QElapsedTimer>
+#include <QDebug>
 
 #include "SyncServer.h"
+#include "SyncDebug.h"
 #include "main.h"
 
 
@@ -109,6 +112,10 @@ void SyncServer::onReadyRead(void)
         {
             QJsonObject error;
             error[QStringLiteral("error")]=QStringLiteral("bad request");
+
+            if(syncDebugEnabled())
+                qDebug() << "SyncServer: bad request";
+
             sendJson(socket, 400, error);
             socket->disconnectFromHost();
         }
@@ -120,12 +127,29 @@ void SyncServer::onReadyRead(void)
     {
         QJsonObject error;
         error[QStringLiteral("error")]=QStringLiteral("unknown route");
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncServer: unknown route" << methodPath;
+
         sendJson(socket, 404, error);
         socket->disconnectFromHost();
         return;
     }
 
-    sendJson(socket, 200, routes.value(methodPath)(body));
+    QElapsedTimer timer;
+    timer.start();
+    const QJsonObject answer=routes.value(methodPath)(body);
+    const qint64 elapsed=timer.elapsed();
+
+    if(syncDebugEnabled())
+    {
+        const QString err=answer.value(QStringLiteral("error")).toString();
+        qDebug() << "SyncServer:" << methodPath << elapsed << "ms"
+                 << (err.isEmpty() ? QStringLiteral("ok")
+                                   : QStringLiteral("error=")+err);
+    }
+
+    sendJson(socket, 200, answer);
     socket->disconnectFromHost();
 }
 

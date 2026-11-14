@@ -103,9 +103,14 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
 
             info.crypt=(record->getNaturalFieldSource(QStringLiteral("crypt"))==QStringLiteral("1"));
 
+            // Синхронизируются только натуральные поля. hasAttach/attachCount —
+            // вычислимые (Record::getCalculableField), через getNaturalFieldSource
+            // роняют программу в criticalError-модалку и вешают сервер.
+            // dir/file нужны приему для пути текста (base/dir/file),
+            // crypt — чтобы новая запись создавалась с тем же флагом
             static const char *fieldNames[] = {
                 "name", "author", "url", "tags", "ctime",
-                "block", "hasAttach", "attachCount"
+                "block", "dir", "file", "crypt"
             };
 
             for(const char *field : fieldNames)
@@ -131,10 +136,14 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                 att.hash=sha256File(att.fileName);
 
                 // Тип и цель нужны чтобы восстановить запись таблицы как
-                // была (файл vs ссылка). Хеш всегда по содержимому
+                // была (файл vs ссылка). Хеш всегда по содержимому.
+                // link читается только у link-аттачей: у файловых getField
+                // роняет criticalError-модалку и вешает сервер
                 const Attach rowAttach=attachTable.getAttach(att.id);
                 att.type=rowAttach.getField(QStringLiteral("type"));
-                att.link=rowAttach.getField(QStringLiteral("link"));
+                att.link=(att.type==QStringLiteral("link"))
+                    ? rowAttach.getField(QStringLiteral("link"))
+                    : QString();
 
                 info.attaches << att;
             }

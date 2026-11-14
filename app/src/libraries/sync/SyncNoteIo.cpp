@@ -9,6 +9,7 @@
 #include "SyncNoteIo.h"
 #include "SyncSidecar.h"
 #include "SyncManifest.h"
+#include "libraries/FixedParameters.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
@@ -75,9 +76,13 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
     answer[QStringLiteral("crypt")]=
         (record->getNaturalFieldSource(QStringLiteral("crypt"))==QStringLiteral("1"));
 
+    // Синхронизируются только натуральные поля (см. SyncManifestBuilder:
+    // вычислимые hasAttach/attachCount роняют criticalError).
+    // dir/file нужны приему для пути текста (base/dir/file),
+    // crypt — чтобы новая запись создавалась с тем же флагом
     static const char *fieldNames[] = {
         "name", "author", "url", "tags", "ctime",
-        "block", "hasAttach", "attachCount"
+        "block", "dir", "file", "crypt"
     };
 
     QJsonObject fields;
@@ -147,12 +152,15 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
         }
 
         const Attach rowAttach=attachTable.getAttach(attachTable.getIdByRow(i));
+        const QString attachType=rowAttach.getField(QStringLiteral("type"));
 
         QJsonObject a;
         a[QStringLiteral("id")]=attachTable.getIdByRow(i);
         a[QStringLiteral("file")]=QFileInfo(absPath).fileName();
-        a[QStringLiteral("type")]=rowAttach.getField(QStringLiteral("type"));
-        a[QStringLiteral("link")]=rowAttach.getField(QStringLiteral("link"));
+        a[QStringLiteral("type")]=attachType;
+        a[QStringLiteral("link")]=(attachType==QStringLiteral("link"))
+            ? rowAttach.getField(QStringLiteral("link"))
+            : QString();
         a[QStringLiteral("size")]=attachTable.getFileSize(i);
         a[QStringLiteral("data")]=QString::fromLatin1(data.toBase64());
         attaches.append(a);
@@ -280,40 +288,72 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
 
     if(pos>=0)
     {
-        for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
-            table->setField(it.key(), it.value().toString(), pos);
-
-        Record *record=model->getRecord(id);
-
-        if(record==nullptr)
-            return QStringLiteral("record lost");
-
-        AttachTableData *attachTable=record->getAttachTablePointer();
-        attachTable->clear();
-
-        for(const QJsonValue &value : attaches)
+        // Смена флага шифрования через синк запрещена (как у веток):
+        // расшифровать без пароля нечем, молча портить нельзя
         {
-            const QJsonObject a=value.toObject();
-            Attach attach(attachTable);
-            attach.setField(QStringLiteral("id"), a.value(QStringLiteral("id")).toString());
-            attach.setField(QStringLiteral("type"), a.value(QStringLiteral("type")).toString());
-            attach.setField(QStringLiteral("fileName"), a.value(QStringLiteral("file")).toString());
+            Record *existing=model->getRecord(id);
 
-            if(!a.value(QStringLiteral("link")).toString().isEmpty())
-                attach.setField(QStringLiteral("link"), a.value(QStringLiteral("link")).toString());
+            if(existing==nullptr)
+                return QStringLiteral("record lost");
 
-            attachTable->addAttach(attach);
+            const QString oldCrypt=
+                existing->getNaturalFieldSource(QStringLiteral("crypt"));
+            const QString newCrypt=fields.value(QStringLiteral("crypt")).toString();
+
+            if(oldCrypt!=newCrypt)
+                return QStringLiteral("crypt change unsupported");
         }
 
-        SyncSidecar::adopt(id, remoteMtime, remoteHash,
-                           QStringLiteral("note"));
+        // Слепая запись сырого источника (шифротекст как есть, без пароля).
+        // table->setField здесь нельзя: для crypt=1 он требует ключ
+        // и роняет criticalError-модалку, вешая сервер
+        {
+            Record *record=model->getRecord(id);
+
+            if(record==nullptr)
+                return QStringLiteral("record lost");
+
+            // Чужие/старые пиры могли прислать вычислимые поля (hasAttach и т.п.):
+            // setField на них роняет criticalError, пропускаем молча
+            for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
+                if(FixedParameters::isRecordFieldNatural(it.key()))
+                    record->setNaturalFieldSource(it.key(), it.value().toString());
+        }
+
+        {
+            Record *record=model->getRecord(id);
+
+            if(record==nullptr)
+                return QStringLiteral("record lost");
+
+            AttachTableData *attachTable=record->getAttachTablePointer();
+            attachTable->clear();
+
+            for(const QJsonValue &value : attaches)
+            {
+                const QJsonObject a=value.toObject();
+                Attach attach(attachTable);
+                attach.setField(QStringLiteral("id"), a.value(QStringLiteral("id")).toString());
+                attach.setField(QStringLiteral("type"), a.value(QStringLiteral("type")).toString());
+                attach.setField(QStringLiteral("fileName"), a.value(QStringLiteral("file")).toString());
+
+                if(!a.value(QStringLiteral("link")).toString().isEmpty())
+                    attach.setField(QStringLiteral("link"), a.value(QStringLiteral("link")).toString());
+
+                attachTable->addAttach(attach);
+            }
+
+            SyncSidecar::adopt(id, remoteMtime, remoteHash,
+                               QStringLiteral("note"));
+        }
     }
     else
     {
         Record record;
 
         for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
-            record.setNaturalFieldSource(it.key(), it.value().toString());
+            if(FixedParameters::isRecordFieldNatural(it.key()))
+                record.setNaturalFieldSource(it.key(), it.value().toString());
 
         AttachTableData *attachTable=record.getAttachTablePointer();
 

@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QImage>
 #include <QTemporaryFile>
+#include <QProcess>
 
 #include "MathExpressionFormatter.h"
 
@@ -20,7 +21,6 @@
 #include "main.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/FixedParameters.h"
-#include "views/consoleEmulator/CommandRunner.h"
 #include "libraries/helpers/DebugHelper.h"
 #include "libraries/helpers/UniqueIdHelper.h"
 
@@ -226,28 +226,32 @@ void MathExpressionFormatter::createGifFromMathExpression(QString iMathExpressio
     mathExpressionFile.write(iMathExpression.toUtf8());
     mathExpressionFile.close();
 
-    // Запуск консольной команды для генерации картинки с формулой
+    // Запуск mimetex для генерации картинки с формулой.
+    // Бинарник запускается напрямую через QProcess с раздельными аргументами,
+    // без командного интерпретатора: раньше команда собиралась конкатенацией
+    // в shell-строку без кавычек, и пробелы в путях ломали генерацию формул
     QString mimetexBinaryName="mimetex";
-    QString chDirCommand;
     QString mimetexPath=QCoreApplication::applicationDirPath(); // mimetex должен лежать там же где и mytetra
-    CommandRunner commandRunner;
 
-    if(commandRunner.getOsFamily()=="unix") {
-        mimetexBinaryName="./"+mimetexBinaryName;
-        chDirCommand="cd "+mimetexPath+" ; ";
-    }
+#ifdef Q_OS_WIN
+    mimetexBinaryName+=".exe";
+#endif
 
-    if(commandRunner.getOsFamily()=="windows") {
-        mimetexBinaryName+=".exe";
-        chDirCommand="chdir /D "+mimetexPath+" & ";
-    }
+    QString mimetexProgram=mimetexPath+"/"+mimetexBinaryName;
+    QStringList mimetexArguments;
+    mimetexArguments << "-e" << iFileName << "-f" << mathExpressionFileName;
 
-    QString command=chDirCommand+mimetexBinaryName+" -e "+iFileName+" -f "+mathExpressionFileName;
+    qDebug() << "Command for create math expression picture: " << mimetexProgram << mimetexArguments;
 
-    qDebug() << "Command for create math expression picture: " << command;
+    // Рабочая директория выставляется как раньше (каталог бинарника),
+    // но через QProcess, а не через cd/chdir в shell-строке
+    QProcess mimetexProcess;
+    mimetexProcess.setWorkingDirectory(mimetexPath);
+    mimetexProcess.start(mimetexProgram, mimetexArguments);
+    mimetexProcess.waitForFinished(-1);
 
-    commandRunner.setCommand(command);
-    commandRunner.runSimple();
+    int mimetexExitCode=mimetexProcess.exitCode();
+    qDebug() << "Mimetex exit code: " << mimetexExitCode;
 
     if (removeTeXFileToTrash) {
         // Файл с TeX исходником удаляется в корзину

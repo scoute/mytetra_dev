@@ -1,4 +1,4 @@
-/* <MyTetraStyle name="dark" version="4" about="QDarkStyleSheet"/> */
+/* <MyTetraStyle name="dark" version="5" about="QDarkStyleSheet"/> */
 
 /* Reset elements ------------------------------------------------------------
 
@@ -338,7 +338,7 @@ https://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qmenubar
 --------------------------------------------------------------------------- */
 QMenuBar {
   background-color: #455364;
-  padding: 2px;
+  padding: 1px;
   border: 1px solid #19232D;
   color: #DFE1E2;
   selection-background-color: #1A72BB;
@@ -348,20 +348,24 @@ QMenuBar:focus {
   border: 1px solid #346792;
 }
 
+/* Отступы строки меню ужаты на 1px вверх и вниз: базовые 2px у самой
+ * строки и 4px у пунктов давали меню заметно выше нативного, как в
+ * светлой теме. Значение у item, selected и pressed обязано совпадать,
+ * иначе при наведении строка дергается по высоте */
 QMenuBar::item {
   background: transparent;
-  padding: 4px;
+  padding: 3px;
 }
 
 QMenuBar::item:selected {
-  padding: 4px;
+  padding: 3px;
   background: transparent;
   border: 0px solid #455364;
   background-color: #1A72BB;
 }
 
 QMenuBar::item:pressed {
-  padding: 4px;
+  padding: 3px;
   border: 0px solid #455364;
   background-color: #1A72BB;
   color: #DFE1E2;
@@ -2128,7 +2132,7 @@ QSplitter::handle {
   background-color: #455364;
   border: 0px solid #19232D;
   spacing: 0px;
-  padding: 1px;
+  padding: 0px;
   margin: 0px;
 }
 
@@ -2137,12 +2141,12 @@ QSplitter::handle:hover {
 }
 
 QSplitter::handle:horizontal {
-  width: 5px;
+  width: 4px;
   image: url("themes/dark/pic/line_vertical.png");
 }
 
 QSplitter::handle:vertical {
-  height: 5px;
+  height: 4px;
   image: url("themes/dark/pic/line_horizontal.png");
 }
 

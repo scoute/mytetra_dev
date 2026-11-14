@@ -58,6 +58,14 @@ public:
     // Пишет сайдкар на диск сразу (файл крошечный). Нет init — no-op
     static void touchNote(const QString &id, const QByteArray &contentBytes);
 
+    // Отметить изменение без нового контента (поля, перемещение):
+    // mtime=сейчас, hash прежний. Пишет на диск сразу
+    static void touchFields(const QString &id);
+
+    // Отметить удаление: запись уходит, появляется tombstone.
+    // Пишет на диск сразу
+    static void forgetNote(const QString &id);
+
 private:
 
     QString m_xmlFileName;

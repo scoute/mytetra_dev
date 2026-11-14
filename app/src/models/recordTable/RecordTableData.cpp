@@ -527,6 +527,9 @@ int RecordTableData::insertNewRecord(int mode,
     else
         actionLogger.addAction("createCryptRecord", data);
 
+    // Синк-сайдкар: новая запись, контента на диске может еще не быть
+    SyncSidecar::touchFields(record.getNaturalFieldSource("id"));
+
 
     // В историю перемещений по записям добавляется только что созданная запись
     walkHistory.add(record.getNaturalFieldSource("id"), 0, 0);
@@ -562,6 +565,9 @@ void RecordTableData::editRecordFields(int pos,
         data["recordName"]=CryptService::encryptString(globalParameters.getCryptKey(), getField("name", pos));
         actionLogger.addAction("editCryptRecord", data);
     }
+
+    // Синк-сайдкар: поля поменялись, текст тот же
+    SyncSidecar::touchFields(getField("id", pos));
 
     // changePersistentIndex(QModelIndex(), QModelIndex());
 }
@@ -617,6 +623,9 @@ void RecordTableData::deleteRecord(int i)
     // Удаляется элемент
     tableData.removeAt(i); // Было takeAt
     qDebug() << "Delete record succesfull";
+
+    // Синк-сайдкар: tombstone вместо записи
+    SyncSidecar::forgetNote(id);
 
     // Удаление записи закончено
     // endRemoveRows();

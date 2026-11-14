@@ -2910,6 +2910,18 @@ Please report about this problem to the developers.</source>
         <source>Reference or URL</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Self reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A link to the note itself makes no sense.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ShortcutManager</name>

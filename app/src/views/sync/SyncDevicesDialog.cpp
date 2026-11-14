@@ -337,22 +337,28 @@ void SyncDevicesDialog::onManualSync(void)
     if(win==nullptr)
         return;
 
-    // Проба: кто отвечает, чтобы показать фингерпринт до ввода PIN
-    SyncClient probe(config);
-    SyncHelloResult hello=probe.hello(host, port);
-
-    if(!hello.ok)
-    {
-        QMessageBox::warning(this, tr("Sync"),
-                             tr("Handshake failed: %1").arg(hello.errorText));
-        refreshList();
-        return;
-    }
-
     QString pin;
+    QString errorCode;
+    bool syncOk=false;
 
+    // Секрета нет: сначала пробуем hello чтобы показать фингерпринт
+    // сервера до ввода PIN. Секрет есть: проба вредна — при чужой сети
+    // она падает раньше основного пути и прячет вопрос о переходе,
+    // идем сразу в runSyncToHeadless
     if(config->get_syncPairingSecret().isEmpty())
     {
+        // Проба: кто отвечает, чтобы показать фингерпринт до ввода PIN
+        SyncClient probe(config);
+        SyncHelloResult hello=probe.hello(host, port);
+
+        if(!hello.ok)
+        {
+            QMessageBox::warning(this, tr("Sync"),
+                                 tr("Handshake failed: %1").arg(hello.errorText));
+            refreshList();
+            return;
+        }
+
         bool ok=false;
         pin=QInputDialog::getText(
             this,
@@ -371,8 +377,6 @@ void SyncDevicesDialog::onManualSync(void)
             return;
     }
 
-    bool syncOk=false;
-    QString errorCode;
     QString result=win->runSyncToHeadless(host, pin, port,
                                           syncOk, &errorCode);
 

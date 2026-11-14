@@ -6,8 +6,25 @@
 #include "SyncNoteIo.h"
 #include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
+#include "models/appConfig/AppConfig.h"
 
 #include <QDebug>
+
+
+bool SyncHub::dataAllowed(void) const
+{
+    return config!=nullptr
+        && !config->get_syncPairingSecret().isEmpty()
+        && !config->get_syncPairedDeviceId().isEmpty();
+}
+
+
+static QJsonObject notPairedAnswer(void)
+{
+    QJsonObject answer;
+    answer[QStringLiteral("error")]=QStringLiteral("not-paired");
+    return answer;
+}
 
 
 SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
@@ -25,6 +42,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     // Манифест локальной базы для спока
     server->addRoute(QStringLiteral("GET /manifest"),
                      [this](const QJsonObject &) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         const SyncManifest manifest=
             SyncManifestBuilder::build(this->model, *this->sidecar,
                                        this->tetradir);
@@ -35,12 +55,18 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     // Шифрованные отдаются шифртекстом, ключ не нужен и не отдается
     server->addRoute(QStringLiteral("POST /pull-note"),
                      [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         return pullNote(request.value(QStringLiteral("id")).toString());
     });
 
     // Ветка целиком: поля + parentId
     server->addRoute(QStringLiteral("POST /pull-branch"),
                      [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         return pullBranch(request.value(QStringLiteral("id")).toString());
     });
 
@@ -48,11 +74,17 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     // Ветка должна уже существовать: клиент шлет ветки раньше заметок
     server->addRoute(QStringLiteral("POST /push-note"),
                      [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         return applyNote(request);
     });
     // Прием ветки целиком (создание или обновление полей, id сохраняется)
     server->addRoute(QStringLiteral("POST /push-branch"),
                      [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         return applyBranch(request);
     });
 
@@ -60,6 +92,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     // Время tombstone'а — удаленное, не локальное (иначе пинг-понг)
     server->addRoute(QStringLiteral("POST /push-delete"),
                      [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         return applyDelete(request.value(QStringLiteral("id")).toString(),
                            request.value(QStringLiteral("deletedAt")).toVariant().toLongLong());
     });
@@ -68,6 +103,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     // чтобы виды показали примененное. Вызывает клиент в конце плана
     server->addRoute(QStringLiteral("POST /commit"),
                      [this](const QJsonObject &) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+
         this->model->save();
         this->model->reload();
 

@@ -42,6 +42,13 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     SyncReport report;
     SyncClient client(config);
 
+    // Снапшот пары на входе: данные разрешены только если пара
+    // существовала ДО сессии (гейт 089). Сессия, создавшая/починившая
+    // пару по PIN, — "попытка установить pair": останавливаемся
+    // до манифестов, данные пойдут следующим запуском
+    const QString pairingBefore=config->get_syncPairingSecret();
+    const QString groupBefore=config->get_syncGroupId();
+
     // 1. Рукопожатие: версии, сеть, часы, подлинность
     addLog(QStringLiteral("hello %1:%2").arg(host).arg(port));
 
@@ -123,6 +130,30 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         config->set_syncGroupId(
             SyncIdentity::pairGroupId(config->get_syncDeviceId(),
                                       hello.remoteDeviceId));
+    }
+
+    // Гейт пары: без секрета данных нет вообще (только что сброшенная
+    // или девственная пара без PIN — дальше не идем, нужен pair по PIN)
+    if(config->get_syncPairingSecret().isEmpty())
+    {
+        report.error=QStringLiteral("not paired: pair with the same PIN first");
+        report.errorCode=QStringLiteral("not-paired");
+        addLog(QStringLiteral("refusing data: not paired"));
+        return report;
+    }
+
+    // Пара создана/пересоздана этой сессией — фиксируем и выходим:
+    // это была установка пары, данные следующим запуском
+    if(config->get_syncPairingSecret()!=pairingBefore
+       || config->get_syncGroupId()!=groupBefore)
+    {
+        report.error=QStringLiteral("Pair established with %1, "
+                                    "run sync again to transfer data")
+            .arg(hello.remoteDeviceName.isEmpty()
+                 ? hello.remoteDeviceId : hello.remoteDeviceName);
+        report.errorCode=QStringLiteral("pair-established");
+        addLog(QStringLiteral("pair established, data deferred to next run"));
+        return report;
     }
 
     // 2. Манифесты: чужой тянем, свой строим локально
@@ -244,7 +275,8 @@ bool SyncSession::pushByPlan(SyncClient &client,
 
         if(note.contains(QStringLiteral("error")))
         {
-            report.error=QStringLiteral("serialize note failed");
+            report.error=QStringLiteral("serialize note %1 failed: %2")
+                .arg(id, note.value(QStringLiteral("error")).toString());
             return false;
         }
 

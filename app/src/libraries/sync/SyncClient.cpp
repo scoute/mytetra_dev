@@ -9,7 +9,10 @@
 
 #include "SyncClient.h"
 #include "SyncHandshake.h"
+#include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
+
+#include <QDebug>
 
 
 SyncClient::SyncClient(AppConfig *config) : config(config)
@@ -73,6 +76,11 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     if(reply->error()!=QNetworkReply::NoError)
     {
         lastErrorText=reply->errorString();
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncClient:" << path << "transport error:"
+                     << lastErrorText;
+
         reply->deleteLater();
         return QJsonObject();
     }
@@ -131,6 +139,11 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
     if(reply->error()!=QNetworkReply::NoError)
     {
         lastErrorText=reply->errorString();
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncClient:" << path << "transport error:"
+                     << lastErrorText;
+
         reply->deleteLater();
         return QJsonObject();
     }

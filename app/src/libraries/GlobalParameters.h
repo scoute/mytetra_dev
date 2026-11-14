@@ -38,6 +38,12 @@ public:
     void setMainProgramFile(QString file);
     QString getMainProgramFile(void);
 
+    // Headless sync-режим (--sync-server/--sync-to/--sync-status/--sync-forget).
+    // Ставится один раз в main() из argv; читают все места где нельзя
+    // показывать модальные диалоги (пароль!) — там вис без дисплея
+    void setSyncHeadlessMode(bool mode);
+    bool getSyncHeadlessMode(void) const;
+
     void init(void);
 
     QString getSystemCodepage(void);
@@ -98,6 +104,7 @@ private:
 
     QString m_mainProgramFile;
     QString m_workDirectory;
+    bool m_syncHeadlessMode=false;
 
     QString m_systemCodepage;
     QString m_consoleCodepage;

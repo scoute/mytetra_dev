@@ -279,19 +279,24 @@ int main(int argc, char ** argv)
     // Sync-режим (--sync-server / --sync-to) работает отдельным процессом
     // рядом с уже запущенным экземпляром и не участвует в single-instance
     // механизме: QtSingleApplication виснет в конструкторе при живом сервере,
-    // поэтому здесь обычный QApplication
+    // поэтому здесь обычный QApplication.
+    // Флаг виден всему приложению: в headless нельзя модальные диалоги
     bool syncMode=false;
 
     for(int ai=1; ai<argc; ++ai)
     {
         const QString arg=QString::fromLocal8Bit(argv[ai]);
 
-        if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to"))
+        if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to")
+           || arg==QStringLiteral("--sync-status")
+           || arg==QStringLiteral("--sync-forget"))
         {
             syncMode=true;
             break;
         }
     }
+
+    globalParameters.setSyncHeadlessMode(syncMode);
 
     QtSingleApplication *singleApp=syncMode ? nullptr : new QtSingleApplication(argc, argv);
     QApplication *plainApp=syncMode ? new QApplication(argc, argv) : nullptr;

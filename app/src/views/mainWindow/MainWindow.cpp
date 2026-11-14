@@ -585,12 +585,7 @@ void MainWindow::restoreFindOnBaseVisible(void)
 // в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
 bool MainWindow::isSyncHeadlessMode(void)
 {
-    const QStringList args=QCoreApplication::arguments();
-
-    return args.contains(QStringLiteral("--sync-server"))
-        || args.contains(QStringLiteral("--sync-to"))
-        || args.contains(QStringLiteral("--sync-status"))
-        || args.contains(QStringLiteral("--sync-forget"));
+    return globalParameters.getSyncHeadlessMode();
 }
 
 

@@ -392,7 +392,12 @@ int RecordTableData::insertNewRecord(int mode,
                                      int pos,
                                      Record record)
 {
-    qDebug() << "RecordTableData::insert_new_record() : Insert new record to tree item " << treeItem->getAllFields();
+    // Дерево, к которому относится таблица, может быть не установлено, поэтому
+    // обращение к нему идет только после проверки на пустую ссылку
+    if(treeItem!=nullptr)
+        qDebug() << "RecordTableData::insert_new_record() : Insert new record to tree item " << treeItem->getAllFields();
+    else
+        qDebug() << "RecordTableData::insert_new_record() : Insert new record to tree item without tree item";
 
     // Мотод должен принять полновесный объект записи
     if(record.isLite()==true)
@@ -460,15 +465,24 @@ int RecordTableData::insertNewRecord(int mode,
         tableData << record;
         insertPos=tableData.size()-1;
     }
-    else if(mode==GlobalParameters::AddNewRecordBehavior::ADD_BEFORE) // Перед указанной позицией
+    // Позиция вставки проверяется на корректность, так как она может оказаться
+    // равной -1, если в таблице записей ничего не выделено.
+    // В таком случае, а также если запись по указанной позиции не существует,
+    // новая запись добавляется в конец списка
+    else if(mode==GlobalParameters::AddNewRecordBehavior::ADD_BEFORE && pos>=0 && pos<tableData.count()) // Перед указанной позицией
     {
         tableData.insert(pos, record);
         insertPos=pos;
     }
-    else if(mode==GlobalParameters::AddNewRecordBehavior::ADD_AFTER) // После указанной позиции
+    else if(mode==GlobalParameters::AddNewRecordBehavior::ADD_AFTER && pos>=0 && pos<tableData.count()) // После указанной позиции
     {
         tableData.insert(pos+1, record);
         insertPos=pos+1;
+    }
+    else
+    {
+        tableData << record;
+        insertPos=tableData.size()-1;
     }
 
     qDebug() << "RecordTableData::insert_new_record() : New record pos" << QString::number(insertPos);
@@ -535,13 +549,36 @@ void RecordTableData::deleteRecord(int i)
     qDebug() << "Try delete record num " << i << " table count " << tableData.size();
 
     // Нельзя удалять с недопустимым индексом
-    if(i>=tableData.size())
+    if(i<0 || i>=tableData.size())
         return;
 
-    // Удаление директории и файлов внутри, с сохранением в резервной директории
-    QString dirForDelete=mytetraConfig.get_tetradir()+"/base/"+getField("dir",i);
-    qDebug() << "Remove dir " << dirForDelete;
-    DiskHelper::removeDirectoryToTrash( dirForDelete );
+    // Имя директории хранения записи проверяется на пустоту.
+    // Пустое имя приведет к тому, что под удаление попадет сама директория base
+    // со всем содержимым базы знаний, так как будет удаляться по пути "base/"
+    QString recordDirName=getField("dir",i);
+
+    if(recordDirName.isEmpty())
+    {
+        qWarning() << "RecordTableData::deleteRecord() : the record has no dir field, there is nothing to remove";
+    }
+    else
+    {
+        // Путь к директории записи должен оставаться внутри директории base,
+        // иначе значение поля dir вида ".." уведет удаление за пределы базы
+        QString baseDirName=QDir::cleanPath( mytetraConfig.get_tetradir()+"/base" );
+        QString dirForDelete=QDir::cleanPath( baseDirName+"/"+recordDirName );
+
+        if(dirForDelete==baseDirName || !dirForDelete.startsWith(baseDirName+"/"))
+        {
+            qWarning() << "RecordTableData::deleteRecord() : the dir field points outside the base directory:" << recordDirName;
+        }
+        else
+        {
+            // Удаление директории и файлов внутри, с сохранением в резервной директории
+            qDebug() << "Remove dir " << dirForDelete;
+            DiskHelper::removeDirectoryToTrash( dirForDelete );
+        }
+    }
 
 
     // Удаление позиции курсора из истории
@@ -633,32 +670,38 @@ unsigned int RecordTableData::size(void) const
 // Перемещение записи вверх на одну строку
 void RecordTableData::moveUp(int pos)
 {
-    if(pos>0)
-    {
-        // Данные перемещаются
-        tableData.move(pos,pos-1);
+    // Запись должна существовать и это не должна быть самая первая запись,
+    // так как перемещать выше первой записи некуда.
+    // Значение -1 приходит, когда в таблице ничего не выделено
+    if(pos<1 || pos>=tableData.count())
+        return;
 
-        // Обновляется экран
-        // QModelIndex from=index(pos-1);
-        // QModelIndex to=index(pos);
-        // emit dataChanged(from,to); // Посылается сигнал что данные были изменены
-    }
+    // Данные перемещаются
+    tableData.move(pos,pos-1);
+
+    // Обновляется экран
+    // QModelIndex from=index(pos-1);
+    // QModelIndex to=index(pos);
+    // emit dataChanged(from,to); // Посылается сигнал что данные были изменены
 }
 
 
 // Перемещение записи вниз на одну строку
 void RecordTableData::moveDn(int pos)
 {
-    if(pos<tableData.count())
-    {
-        // Данные перемещаются
-        tableData.move(pos,pos+1);
+    // Запись должна существовать и это не должна быть самая последняя запись,
+    // так как перемещать ниже последней записи некуда.
+    // Значение -1 приходит, когда в таблице ничего не выделено
+    if(pos<0 || pos+1>=tableData.count())
+        return;
 
-        // Обновляется экран
-        // QModelIndex from=index(pos);
-        // QModelIndex to=index(pos+1);
-        // emit dataChanged(from,to); // Посылается сигнал что данные были изменены
-    }
+    // Данные перемещаются
+    tableData.move(pos,pos+1);
+
+    // Обновляется экран
+    // QModelIndex from=index(pos);
+    // QModelIndex to=index(pos+1);
+    // emit dataChanged(from,to); // Посылается сигнал что данные были изменены
 }
 
 

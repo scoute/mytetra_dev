@@ -67,10 +67,16 @@ protected:
   QVector<QString> diskFilesNames; // Имена файлов на диске при скачивании в режиме disk
 
   bool isSuccessFlag;
+  bool downloadHasErrors; // Становится true при любой ошибке и уже не сбрасывается
 
   QString errorLog;
 
   int currentReferenceNum;
+
+  QUrl lastRedirectUrl; // Последний пройденный редирект текущей ссылки
+  int redirectCount; // Количество пройденных редиректов текущей ссылки
+
+  static const int maxRedirectCount=10; // Предел длины цепочки редиректов
 
   QStringList colsName; // Список имен колонок в таблице, определяется в конструкторе
   int downloadReferenceCol; // Номер колонки со ссылкой
@@ -88,7 +94,7 @@ protected:
   void assembly();
 
   void startNextDownload();
-  QUrl checkedRedirectUrl(const QUrl& possibleRedirectUrl) const;
+  QUrl checkedRedirectUrl(const QUrl& possibleRedirectUrl);
 
   void addErrorLog(const QString text);
 

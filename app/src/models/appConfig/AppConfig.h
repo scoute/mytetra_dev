@@ -51,6 +51,11 @@ public:
     QString get_syncGroupId(void);
     bool set_syncGroupId(const QString &groupId);
 
+    // Секрет спаривания (hex). Пусто = спариваний не было.
+    // По сети в открытом виде не ходит, только HMAC-доказательства
+    QString get_syncPairingSecret(void);
+    bool set_syncPairingSecret(const QString &secret);
+
     // Директория с корзиной
     QString get_trashdir(void);
     bool set_trashdir(QString dirName);
@@ -345,6 +350,7 @@ private:
     QStringList get_parameter_table_41(bool withEndSignature=true);
     QStringList get_parameter_table_42(bool withEndSignature=true);
     QStringList get_parameter_table_43(bool withEndSignature=true);
+    QStringList get_parameter_table_44(bool withEndSignature=true);
 
     QSettings *m_conf = nullptr; // было static
     bool m_isInit;

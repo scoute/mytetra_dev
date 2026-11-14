@@ -36,6 +36,22 @@ public:
     QJsonObject pullBranch(const QString &host, quint16 port,
                            const QString &id);
 
+    // Отправить заметку целиком (создание/обновление). Блоб base64,
+    // mtime/hash — из локального манифеста (хаб их adopt'ит, не "сейчас")
+    bool pushNote(const QString &host, quint16 port,
+                  const QJsonObject &note);
+
+    // Отправить ветку целиком (создание/обновление полей)
+    bool pushBranch(const QString &host, quint16 port,
+                    const QJsonObject &branch);
+
+    // Отправить удаление по tombstone
+    bool pushDelete(const QString &host, quint16 port,
+                    const QString &id, qint64 deletedAt);
+
+    // Фиксация: сейв + перезагрузка моделей на хабе
+    bool commit(const QString &host, quint16 port);
+
     QString lastError(void) const;
 
 private:

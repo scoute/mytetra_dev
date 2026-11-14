@@ -75,6 +75,11 @@ public:
     void deleteRecord(int i);
     void deleteRecordById(QString id);
 
+    // Добавление записи с готовым id (синк/импорт): без генерации id,
+    // без преобразований шифрования. Возвращает позицию. Представление
+    // обновляет вызывающий (reset модели или перезагрузка)
+    int appendSyncedRecord(const Record &record);
+
     bool isRecordExists(QString id);
     bool isBlockRecordExists();
 

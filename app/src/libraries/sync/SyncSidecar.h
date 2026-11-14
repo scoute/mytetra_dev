@@ -66,6 +66,19 @@ public:
     // Пишет на диск сразу
     static void forgetNote(const QString &id);
 
+    // Принять чужое состояние как свое (при apply пуша): mtime/hash
+    // ставятся присланные, а не "сейчас". Пишет сразу
+    static void adopt(const QString &id, qint64 mtime,
+                      const QString &hash, const QString &kind);
+
+    // Принять чужой tombstone: запись стирается, время — удаленное.
+    // Пишет сразу
+    static void adoptTombstone(const QString &id, qint64 deletedAt);
+
+    // Молча выкинуть entry без tombstone (мусор удаленного поддерева:
+    // его покрывает tombstone ветки). Пишет сразу
+    static void dropEntry(const QString &id);
+
     // Хеш канонической сериализации полей ветки (QMap уже отсортирован)
     static QString hashBranchFields(const QMap<QString, QString> &fields);
 

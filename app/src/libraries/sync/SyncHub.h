@@ -40,6 +40,9 @@ private:
 
     QJsonObject pullNote(const QString &id);
     QJsonObject pullBranch(const QString &id);
+    QJsonObject applyNote(const QJsonObject &request);
+    QJsonObject applyBranch(const QJsonObject &request);
+    QJsonObject applyDelete(const QString &id, qint64 deletedAt);
 
 private:
 

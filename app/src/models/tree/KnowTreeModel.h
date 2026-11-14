@@ -44,13 +44,20 @@ public:
     void save(void);
 
     //! Добавление новой подветки к указанной ветке
+    // Создание ветки из синка: id и поля сохраняются как есть
+    // (включая шифртекст), авто-шифрования нет. Пустой parentId — корень.
+    // Возвращает id или пусто при ошибке
+    QString createSyncedBranch(const QString &parentId,
+                               const QMap<QString, QString> &fields);
+
     void addNewChildBranch(const QModelIndex &index, QMap<QString, QString> branchFields);
 
     //! Добавление новой ветки после указанной ветки
     void addNewSiblingBranch(const QModelIndex &index, QMap<QString, QString> branchFields);
 
     //! Добавление новой подветки к Item элементу
-    void addNewBranch(TreeItem *parent, QMap<QString, QString> branchFields);
+    void addNewBranch(TreeItem *parent, QMap<QString, QString> branchFields,
+                      bool skipAutoEncrypt=false);
 
 
     //! Перемещение ветки вверх

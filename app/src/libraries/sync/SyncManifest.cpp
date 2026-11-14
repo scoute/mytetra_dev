@@ -129,6 +129,13 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                 att.fileName=attachTable.getAbsoluteInnerFileName(i);
                 att.size=attachTable.getFileSize(i);
                 att.hash=sha256File(att.fileName);
+
+                // Тип и цель нужны чтобы восстановить запись таблицы как
+                // была (файл vs ссылка). Хеш всегда по содержимому
+                const Attach rowAttach=attachTable.getAttach(att.id);
+                att.type=rowAttach.getField(QStringLiteral("type"));
+                att.link=rowAttach.getField(QStringLiteral("link"));
+
                 info.attaches << att;
             }
 
@@ -203,6 +210,8 @@ QJsonObject SyncManifest::toJson(void) const
             QJsonObject a;
             a[QStringLiteral("id")]=att.id;
             a[QStringLiteral("file")]=QFileInfo(att.fileName).fileName();
+            a[QStringLiteral("type")]=att.type;
+            a[QStringLiteral("link")]=att.link;
             a[QStringLiteral("size")]=att.size;
             a[QStringLiteral("hash")]=att.hash;
             attaches.append(a);
@@ -272,6 +281,8 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
             SyncAttachInfo att;
             att.id=a.value(QStringLiteral("id")).toString();
             att.fileName=a.value(QStringLiteral("file")).toString();
+            att.type=a.value(QStringLiteral("type")).toString();
+            att.link=a.value(QStringLiteral("link")).toString();
             att.size=a.value(QStringLiteral("size")).toVariant().toLongLong();
             att.hash=a.value(QStringLiteral("hash")).toString();
             info.attaches << att;
@@ -294,6 +305,32 @@ bool SyncPlan::empty(void) const
     return uploadNotes.isEmpty() && downloadNotes.isEmpty() &&
            uploadBranches.isEmpty() && downloadBranches.isEmpty() &&
            deleteLocal.isEmpty() && conflicts.isEmpty();
+}
+
+
+// Наборы аттачей равны: совпадают id с хешами. Имена файлов и размеры
+// не сравниваем: хеш контента решает, остальное косметика
+static bool attachSetsEqual(const QList<SyncAttachInfo> &a,
+                            const QList<SyncAttachInfo> &b)
+{
+    if(a.size()!=b.size())
+        return false;
+
+    QMap<QString, QString> aHashes;
+
+    for(const SyncAttachInfo &att : a)
+        aHashes.insert(att.id, att.hash);
+
+    for(const SyncAttachInfo &att : b)
+    {
+        if(!aHashes.contains(att.id))
+            return false;
+
+        if(aHashes.value(att.id)!=att.hash)
+            return false;
+    }
+
+    return true;
 }
 
 
@@ -373,7 +410,8 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
         const SyncNoteInfo &ours=local.notes.value(it.key());
         const SyncNoteInfo &theirs=it.value();
 
-        if(ours.hash==theirs.hash)
+        if(ours.hash==theirs.hash && attachSetsEqual(ours.attaches,
+                                                    theirs.attaches))
             continue;
 
         if(ours.mtime>theirs.mtime)

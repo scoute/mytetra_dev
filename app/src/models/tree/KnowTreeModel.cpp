@@ -880,8 +880,10 @@ void KnowTreeModel::addNewSiblingBranch(const QModelIndex &index, QMap<QString, 
 
 
 // Добавление новой подветки к Item элементу
-void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branchFields)
+void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branchFields,
+                                 bool skipAutoEncrypt)
 {
+
   // Прикрепляется пустой подузел в конец списка подчиненных элементов
   parent->addChildrenEmpty();
 
@@ -912,18 +914,54 @@ void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branch
   // Инициализируется таблица конечных записей
   newBranch->recordtableGetTableData()->init(newBranch, QDomElement());
 
-  // Синк-сайдкар: новая ветка
-  SyncSidecar::touchBranch(newBranch->getField(QStringLiteral("id")),
-                           newBranch->getAllFieldsDirect());
-
-  // Определяется, является ли родительская ветка зашифрованной
-
-  // Определяется, является ли родительская ветка зашифрованной
-  if(parent->getField("crypt")=="1")
+  // Определяется, является ли родительская ветка зашифрованной.
+  // Синк передает готовые поля (шифртекст уже на месте) — повторное
+  // шифрование испортило бы их, поэтому для синка шаг пропускается
+  if(parent->getField("crypt")=="1" && !skipAutoEncrypt)
   {
     // Новая ветка превращается в зашифрованную
     newBranch->switchToEncrypt();
   }
+
+  // Синк-сайдкар: новая ветка (после всех преобразований, хеш финальный)
+  SyncSidecar::touchBranch(newBranch->getField(QStringLiteral("id")),
+                           newBranch->getAllFieldsDirect());
+}
+
+
+// Создание ветки из синка: id и поля сохраняются как есть
+QString KnowTreeModel::createSyncedBranch(const QString &parentId,
+                                          const QMap<QString, QString> &fields)
+{
+    const QString id=fields.value(QStringLiteral("id"));
+
+    if(id.isEmpty())
+        return QString();
+
+    TreeItem *parent=nullptr;
+
+    if(parentId.isEmpty())
+        parent=rootItem;
+    else
+        parent=getItemById(parentId);
+
+    if(parent==nullptr)
+        return QString();
+
+    QMap<QString, QString> branchFields=fields;
+    addNewBranch(parent, branchFields, true);
+
+    // addNewBranch всегда пропускает поле crypt (его ставит switchToEncrypt).
+    // У синка шифртекст уже готов, поэтому флаг выставляется напрямую
+    if(fields.value(QStringLiteral("crypt"))==QStringLiteral("1"))
+    {
+        TreeItem *created=getItemById(id);
+
+        if(created!=nullptr)
+            created->setField(QStringLiteral("crypt"), QStringLiteral("1"));
+    }
+
+    return id;
 }
 
 
@@ -1275,9 +1313,14 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
         this->deleteOneBranch(selectItems.at(i));
     }
 
-    // Синк-сайдкар: tombstone на каждую удаленную ветку
+    // Синк-сайдкар: tombstone на каждую удаленную ветку.
+    // Записи поддерева покрыты tombstone'ами веток: их локальные entry
+    // выкидываем молча, иначе повиснут мусором (deleteResordsId собран выше)
     for(const QString &branchId : deleteBranchIds)
         SyncSidecar::forgetBranch(branchId);
+
+    for(const QString &recordId : deleteResordsId.values())
+        SyncSidecar::dropEntry(recordId);
 
     // Закрываются открепляемые окна для удаленных записей
     emit doCloseDetachedWindowByIdSet( deleteResordsId );

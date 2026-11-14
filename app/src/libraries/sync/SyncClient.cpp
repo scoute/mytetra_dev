@@ -233,3 +233,54 @@ QJsonObject SyncClient::pullBranch(const QString &host, quint16 port,
 
     return answer;
 }
+
+
+bool SyncClient::pushNote(const QString &host, quint16 port,
+                          const QJsonObject &note)
+{
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/push-note"),
+                                      note, ok);
+
+    return ok && !answer.contains(QStringLiteral("error"));
+}
+
+
+bool SyncClient::pushBranch(const QString &host, quint16 port,
+                            const QJsonObject &branch)
+{
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/push-branch"),
+                                      branch, ok);
+
+    return ok && !answer.contains(QStringLiteral("error"));
+}
+
+
+bool SyncClient::pushDelete(const QString &host, quint16 port,
+                            const QString &id, qint64 deletedAt)
+{
+    QJsonObject request;
+    request[QStringLiteral("id")]=id;
+    request[QStringLiteral("deletedAt")]=deletedAt;
+
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/push-delete"),
+                                      request, ok);
+
+    return ok && !answer.contains(QStringLiteral("error"));
+}
+
+
+bool SyncClient::commit(const QString &host, quint16 port)
+{
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/commit"),
+                                      QJsonObject(), ok);
+
+    return ok && answer.value(QStringLiteral("ok")).toBool(false);
+}

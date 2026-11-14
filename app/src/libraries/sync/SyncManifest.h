@@ -28,6 +28,8 @@ struct SyncAttachInfo
 {
     QString id;
     QString fileName;
+    QString type;
+    QString link;
     qint64 size=0;
     QString hash;
 };

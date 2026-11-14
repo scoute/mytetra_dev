@@ -97,6 +97,21 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     }
 
     ok=true;
+
+    // Ответ сервера с его ошибкой (не транспорт): тоже в лог,
+    // иначе по таймингам видно "ok", а сессия падает дальше молча
+    if(syncDebugEnabled())
+    {
+        const QJsonObject obj=doc.object();
+        const QString err=obj.value(QStringLiteral("error")).toString();
+        const QString warn=obj.value(QStringLiteral("warning")).toString();
+
+        if(!err.isEmpty() || !warn.isEmpty())
+            qDebug() << "SyncClient:" << path << "server says:"
+                     << (err.isEmpty() ? QString() : QStringLiteral("error=")+err)
+                     << (warn.isEmpty() ? QString() : QStringLiteral("warning=")+warn);
+    }
+
     return doc.object();
 }
 
@@ -160,6 +175,21 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
     }
 
     ok=true;
+
+    // Ответ сервера с его ошибкой (не транспорт): тоже в лог,
+    // иначе по таймингам видно "ok", а сессия падает дальше молча
+    if(syncDebugEnabled())
+    {
+        const QJsonObject obj=doc.object();
+        const QString err=obj.value(QStringLiteral("error")).toString();
+        const QString warn=obj.value(QStringLiteral("warning")).toString();
+
+        if(!err.isEmpty() || !warn.isEmpty())
+            qDebug() << "SyncClient:" << path << "server says:"
+                     << (err.isEmpty() ? QString() : QStringLiteral("error=")+err)
+                     << (warn.isEmpty() ? QString() : QStringLiteral("warning=")+warn);
+    }
+
     return doc.object();
 }
 

@@ -143,6 +143,11 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // логикой: хаб бы скачал, мы — заливаем; итог одинаковый с обеих сторон)
     const SyncPlan plan=SyncManifestBuilder::compare(local, remote, false);
 
+    addLog(QStringLiteral("manifest local notes=%1 branches=%2, "
+                          "remote notes=%3 branches=%4")
+           .arg(local.notes.size()).arg(local.branches.size())
+           .arg(remote.notes.size()).arg(remote.branches.size()));
+
     addLog(QStringLiteral("plan upNotes=%1 downNotes=%2 upBranches=%3 "
                           "downBranches=%4 deleteLocal=%5 conflicts=%6")
            .arg(plan.uploadNotes.size()).arg(plan.downloadNotes.size())

@@ -522,7 +522,8 @@ int main(int argc, char ** argv)
         {
             mytetraConfig.set_syncPairingSecret(QString());
             mytetraConfig.set_syncGroupId(QString());
-            printf("Sync pairing cleared (secret and group). "
+            mytetraConfig.set_syncPairedDeviceId(QString());
+            printf("Sync pairing cleared (secret, group and peer). "
                    "Re-pair both sides with the same --sync-pair PIN.\n");
             return 0;
         }

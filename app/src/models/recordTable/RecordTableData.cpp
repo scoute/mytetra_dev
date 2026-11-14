@@ -3,6 +3,7 @@
 #include <QMap>
 #include <QString>
 #include <QDir>
+#include <QSaveFile>
 #include <QMessageBox>
 #include <QXmlStreamWriter>
 
@@ -169,11 +170,16 @@ void RecordTableData::editorSaveCallback(QObject *editor,
 
     QString fileName=currEditor->getWorkDirectory()+"/"+currEditor->getFileName();
 
-    // Если шифровать не нужно
+    // К этому моменту Editor::saveTextarea уже унес предыдущий файл
+    // в корзину, так что пишется всегда свежий файл с правами по umask.
+    // Атомарность здесь: читатели видят либо предыдущий файл в корзине,
+    // либо полностью записанный новый, но никогда обрезанный
     if(workWithCrypt==false)
     {
-        // Текст сохраняется в файл
-        QFile wfile(fileName);
+        // Текст сохраняется в файл атомарно: сначала во временный,
+        // затем переименование. Обрыв посреди записи оставляет
+        // временный мусор вместо обрезанного текста
+        QSaveFile wfile(fileName);
 
         if(!wfile.open(QIODevice::WriteOnly | QIODevice::Text))
             criticalError("RecordTableData::editor_save_callback() : Cant open text file "+fileName+" for write.");
@@ -181,19 +187,30 @@ void RecordTableData::editorSaveCallback(QObject *editor,
         QTextStream out(&wfile);
         out.setCodec("UTF-8");
         out << saveText;
+        out.flush();
+
+        if(!wfile.commit())
+            criticalError("RecordTableData::editor_save_callback() : Cant commit text file "+fileName);
     }
     else
     {
         // Текст шифруется
         QByteArray encryptData=CryptService::encryptStringToByteArray(globalParameters.getCryptKey(), saveText);
 
-        // В файл сохраняются зашифрованные данные
-        QFile wfile(fileName);
+        // В файл сохраняются зашифрованные данные, тоже атомарно
+        QSaveFile wfile(fileName);
 
         if(!wfile.open(QIODevice::WriteOnly))
             criticalError("RecordTableData::editor_save_callback() : Cant open binary file "+fileName+" for write.");
 
-        wfile.write(encryptData);
+        if(wfile.write(encryptData)!=encryptData.size())
+        {
+            wfile.cancelWriting();
+            criticalError("RecordTableData::editor_save_callback() : Cant write binary file "+fileName);
+        }
+
+        if(!wfile.commit())
+            criticalError("RecordTableData::editor_save_callback() : Cant commit binary file "+fileName);
     }
 
 

@@ -123,7 +123,6 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
   QString fileNameToShort=getUniqueId()+"_"+fileNameFromShort;
   QString fileNameTo     =mytetraConfig.get_trashdir()+"/"+fileNameToShort;
 
-  qDebug() << "Copy file from " << fileNameFrom << " to " << fileNameTo;
 
   // Файл копируется в корзину
   if( QFile::copy(fileNameFrom, fileNameTo)==true )

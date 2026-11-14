@@ -20,7 +20,6 @@ WalkHistory::~WalkHistory(void)
 
 void WalkHistory::clear(void)
 {
- qDebug() << "WalkHistory::clear()";
 
  historyId.clear();
  data.clear();

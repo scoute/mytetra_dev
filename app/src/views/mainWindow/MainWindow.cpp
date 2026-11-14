@@ -44,6 +44,7 @@
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncHandshake.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncDebug.h"
 
 
 extern AppConfig mytetraConfig;
@@ -1679,7 +1680,18 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     ok=false;
 
     SyncClient client(&mytetraConfig);
+
+    // Предсессионное hello молчало в логах: зависший до сессии клиент
+    // не оставлял следов. Дублируем шаги сюда под тем же флагом
+    if(syncDebugEnabled())
+        qDebug() << "SyncStep: pre-hello" << host << port;
+
     SyncHelloResult hello=client.hello(host, port);
+
+    if(syncDebugEnabled())
+        qDebug() << "SyncStep: pre-hello"
+                 << (hello.ok ? QStringLiteral("ok")
+                              : QStringLiteral("failed: ")+hello.errorCode);
 
     // Починка пары (та же логика что в SyncSession::run: headless-путь
     // дублирует ее до сессии ради GUI-диалога выше). PIN предъявлен —

@@ -551,12 +551,20 @@ int main(int argc, char ** argv)
             printf("Sync server started on port %u\n", syncPort);
         }
 
-        if(doSyncTo && !syncHost.isEmpty())
+        if(doSyncTo)
         {
+            if(syncHost.isEmpty())
+            {
+                printf("Sync: --sync-to requires a host.\n");
+                fflush(stdout);
+                return 4;
+            }
+
             bool syncOk=false;
             const QString report=win.runSyncToHeadless(syncHost, syncPin,
                                                        syncPort, syncOk);
             printf("%s\n", report.toLocal8Bit().data());
+            fflush(stdout);
 
             // Разовый прогон без сервера — выходим с кодом результата
             if(!doServe)

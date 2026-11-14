@@ -8,6 +8,8 @@
 class KnowTreeModel;
 class QTableWidget;
 class QLabel;
+class QLineEdit;
+class QSpinBox;
 class QPushButton;
 
 // Окно Sync devices: известные пиры (кто стучался в hello / к кому ходили).
@@ -28,6 +30,7 @@ private slots:
     void refreshList(void);
     void onSelectionChanged(void);
     void onSyncNow(void);
+    void onManualSync(void);
     void onPair(void);
     void onUnpair(void);
     void onRemove(void);
@@ -44,6 +47,8 @@ private:
 
     QTableWidget *table=nullptr;
     QLabel *fingerprintLabel=nullptr;
+    QLineEdit *hostEdit=nullptr;
+    QSpinBox *portSpin=nullptr;
     QPushButton *syncButton=nullptr;
     QPushButton *pairButton=nullptr;
     QPushButton *unpairButton=nullptr;

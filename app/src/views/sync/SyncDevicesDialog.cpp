@@ -7,9 +7,11 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QSpinBox>
 #include <QDateTime>
 
 #include "SyncDevicesDialog.h"
+#include "views/mainWindow/MainWindow.h"
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncSession.h"
 #include "libraries/sync/SyncClient.h"
@@ -46,8 +48,26 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     fingerprintLabel->setWordWrap(true);
     layout->addWidget(fingerprintLabel);
 
+    // Ручной синк с произвольным хостом — здесь же, а не пунктом меню:
+    // весь синк в одном окне. Последний хост подставляется сам
+    QHBoxLayout *manual=new QHBoxLayout();
+    manual->addWidget(new QLabel(tr("Host:"), this));
+    hostEdit=new QLineEdit(this);
+    hostEdit->setText(config->get_syncLastHost());
+    hostEdit->setPlaceholderText(tr("192.168.1.2"));
+    manual->addWidget(hostEdit);
+    manual->addWidget(new QLabel(tr("Port:"), this));
+    portSpin=new QSpinBox(this);
+    portSpin->setRange(1, 65535);
+    portSpin->setValue(47777);
+    manual->addWidget(portSpin);
+    QPushButton *manualSyncButton=new QPushButton(tr("Sync now"), this);
+    manual->addWidget(manualSyncButton);
+    layout->addLayout(manual);
+
     QHBoxLayout *buttons=new QHBoxLayout();
-    syncButton=new QPushButton(tr("Sync now"), this);
+    syncButton=new QPushButton(tr("Sync"), this);
+    syncButton->setToolTip(tr("Sync with the selected device"));
     pairButton=new QPushButton(tr("Pair..."), this);
     unpairButton=new QPushButton(tr("Unpair"), this);
     removeButton=new QPushButton(tr("Remove"), this);
@@ -70,6 +90,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
             this, &SyncDevicesDialog::onUnpair);
     connect(removeButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onRemove);
+    connect(manualSyncButton, &QPushButton::clicked,
+            this, &SyncDevicesDialog::onManualSync);
     connect(closeButton, &QPushButton::clicked,
             this, &QDialog::accept);
 
@@ -289,6 +311,122 @@ void SyncDevicesDialog::onSyncNow(void)
                  .arg(report.conflicts.join(QStringLiteral(", ")));
 
     QMessageBox::information(this, tr("Sync"), summary);
+    refreshList();
+}
+
+
+// Ручной синк с произвольным хостом (бывший пункт меню Sync now):
+// пробуем hello, при нужде PIN с показом фингерпринта сервера,
+// дальше общий путь через MainWindow::runSyncToHeadless
+void SyncDevicesDialog::onManualSync(void)
+{
+    const QString host=hostEdit->text().trimmed();
+    const quint16 port=static_cast<quint16>(portSpin->value());
+
+    if(host.isEmpty())
+    {
+        QMessageBox::warning(this, tr("Sync"),
+                             tr("Enter the server address (IP)."));
+        return;
+    }
+
+    config->set_syncLastHost(host);
+
+    MainWindow *win=qobject_cast<MainWindow *>(parentWidget());
+
+    if(win==nullptr)
+        return;
+
+    // Проба: кто отвечает, чтобы показать фингерпринт до ввода PIN
+    SyncClient probe(config);
+    SyncHelloResult hello=probe.hello(host, port);
+
+    if(!hello.ok)
+    {
+        QMessageBox::warning(this, tr("Sync"),
+                             tr("Handshake failed: %1").arg(hello.errorText));
+        refreshList();
+        return;
+    }
+
+    QString pin;
+
+    if(config->get_syncPairingSecret().isEmpty())
+    {
+        bool ok=false;
+        pin=QInputDialog::getText(
+            this,
+            tr("Sync pairing"),
+            tr("Unknown sync server.\n\nName: %1\nFingerprint:\n%2\n\n"
+               "Enter the pairing PIN (the same PIN must be entered "
+               "on the server). Empty = cancel.")
+            .arg(hello.remoteDeviceName.isEmpty()
+                 ? hello.remoteDeviceId : hello.remoteDeviceName,
+                 SyncIdentity::fingerprint(hello.remoteDeviceId)),
+            QLineEdit::Password,
+            QString(),
+            &ok);
+
+        if(!ok || pin.isEmpty())
+            return;
+    }
+
+    bool syncOk=false;
+    QString errorCode;
+    const QString result=win->runSyncToHeadless(host, pin, port,
+                                               syncOk, &errorCode);
+
+    if(!syncOk && errorCode==QStringLiteral("foreign-network"))
+    {
+        if(QMessageBox::question(
+               this, tr("Sync"),
+               tr("This server is in another sync network.\n"
+                  "Switch to its network? The secret will be re-derived "
+                  "from PIN."))!=QMessageBox::Yes)
+        {
+            refreshList();
+            return;
+        }
+
+        bool ok=false;
+        pin=QInputDialog::getText(this,
+                                  tr("Sync pairing"),
+                                  tr("Enter the pairing PIN (the same PIN "
+                                     "must be entered on the server). "
+                                     "Empty = cancel."),
+                                  QLineEdit::Password,
+                                  QString(),
+                                  &ok);
+
+        if(!ok || pin.isEmpty())
+        {
+            refreshList();
+            return;
+        }
+
+        const QString retry=win->runSyncToHeadless(host, pin, port, syncOk);
+
+        if(!syncOk)
+        {
+            QMessageBox::warning(this, tr("Sync"),
+                                 tr("Sync failed: %1").arg(retry));
+            refreshList();
+            return;
+        }
+
+        QMessageBox::information(this, tr("Sync"), retry);
+        refreshList();
+        return;
+    }
+
+    if(!syncOk)
+    {
+        QMessageBox::warning(this, tr("Sync"), result);
+        refreshList();
+        return;
+    }
+
+    QMessageBox::information(this, tr("Sync"), result);
     refreshList();
 }
 

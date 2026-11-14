@@ -106,7 +106,6 @@ private slots:
     void toolsPreferences(void);
     void onActionLogClicked(void);
 
-    void onSyncNow(void);
     void onSyncServerToggle(bool checked);
     void onSyncPairing(void);
     void onSyncDevices(void);
@@ -194,7 +193,6 @@ private:
     QAction *actionToolsMenuActionLog;
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
     // Отдельное меню Sync (не Tools): подсистема синхронизации
-    QAction *actionSyncMenuSyncNow=nullptr;
     QAction *actionSyncMenuSyncServer=nullptr;
     QAction *actionSyncMenuSyncPairing=nullptr;
     QAction *actionSyncMenuSyncDevices=nullptr;

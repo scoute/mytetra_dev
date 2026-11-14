@@ -34,6 +34,7 @@ private slots:
     void onPair(void);
     void onUnpair(void);
     void onRemove(void);
+    void onResetAll(void);
 
 private:
 
@@ -41,6 +42,9 @@ private:
     // Честно предупреждает что локальная пара будет пересоздана
     QString askJoinPin(const QString &peerName,
                        const QString &peerGroup=QString());
+
+    // Свое состояние пары в том же окне (без отдельных команд)
+    void refreshSelf(void);
 
     // Сброс локальной пары перед входом в чужую сеть
     void joinFresh(void);
@@ -58,6 +62,7 @@ private:
 
     QTableWidget *table=nullptr;
     QLabel *fingerprintLabel=nullptr;
+    QLabel *selfLabel=nullptr;
     QLineEdit *hostEdit=nullptr;
     QSpinBox *portSpin=nullptr;
     QPushButton *syncButton=nullptr;

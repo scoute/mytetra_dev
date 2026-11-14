@@ -27,9 +27,16 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
       tetradir(tetradir)
 {
     setWindowTitle(tr("Sync devices"));
-    resize(640, 380);
+    resize(640, 420);
 
     QVBoxLayout *layout=new QVBoxLayout(this);
+
+    // Свое состояние пары — тем же окном, а не отдельной командой.
+    // Иначе повторяется путаница "список пуст, а секрет где-то блокирует"
+    selfLabel=new QLabel(this);
+    selfLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    selfLabel->setWordWrap(true);
+    layout->addWidget(selfLabel);
 
     table=new QTableWidget(this);
     table->setColumnCount(5);
@@ -72,11 +79,16 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     unpairButton=new QPushButton(tr("Unpair"), this);
     removeButton=new QPushButton(tr("Remove"), this);
     QPushButton *closeButton=new QPushButton(tr("Close"), this);
+    QPushButton *resetButton=new QPushButton(tr("Reset all"), this);
+    resetButton->setToolTip(tr("Forget everything: pairing secret, group, "
+                               "paired device and the whole list. "
+                               "Same as --sync-forget plus list cleanup."));
     buttons->addWidget(syncButton);
     buttons->addWidget(pairButton);
     buttons->addWidget(unpairButton);
     buttons->addWidget(removeButton);
     buttons->addStretch();
+    buttons->addWidget(resetButton);
     buttons->addWidget(closeButton);
     layout->addLayout(buttons);
 
@@ -90,6 +102,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
             this, &SyncDevicesDialog::onUnpair);
     connect(removeButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onRemove);
+    connect(resetButton, &QPushButton::clicked,
+            this, &SyncDevicesDialog::onResetAll);
     connect(manualSyncButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onManualSync);
     connect(closeButton, &QPushButton::clicked,
@@ -121,6 +135,8 @@ int SyncDevicesDialog::currentRowId(QString &id) const
 
 void SyncDevicesDialog::refreshList(void)
 {
+    refreshSelf();
+
     const QList<AppConfig::SyncDeviceInfo> devices=config->get_syncDevices();
 
     table->setRowCount(devices.size());
@@ -151,6 +167,48 @@ void SyncDevicesDialog::refreshList(void)
     }
 
     onSelectionChanged();
+}
+
+
+// Свое состояние пары в том же окне: устройство, спаренность, группа.
+// Именно его отсутствие порождало "список пуст, а синк заблокирован"
+void SyncDevicesDialog::refreshSelf(void)
+{
+    const QString ownId=config->get_syncDeviceId();
+    const bool paired=!config->get_syncPairingSecret().isEmpty();
+    const QString pairedId=config->get_syncPairedDeviceId();
+    const QString group=config->get_syncGroupId();
+
+    QString peerText=tr("no");
+
+    if(paired)
+    {
+        QString peerName;
+
+        for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+        {
+            if(info.id==pairedId)
+            {
+                peerName=info.name;
+                break;
+            }
+        }
+
+        if(peerName.isEmpty())
+            peerName=pairedId.isEmpty() ? tr("(unknown)")
+                                        : pairedId+tr(" (not in list!)");
+        else if(pairedId!=peerName)
+            peerName+=QStringLiteral(" (")+pairedId+QStringLiteral(")");
+
+        peerText=tr("yes, with %1").arg(peerName);
+    }
+
+    selfLabel->setText(
+        tr("This device: %1\nPaired: %2\nGroup: %3")
+        .arg(config->get_syncDeviceName().isEmpty()
+             ? ownId : config->get_syncDeviceName(),
+             peerText,
+             group.isEmpty() ? tr("(none)") : group));
 }
 
 
@@ -589,6 +647,29 @@ void SyncDevicesDialog::onRemove(void)
         config->set_syncGroupId(QString());
         config->set_syncPairedDeviceId(QString());
     }
+
+    refreshList();
+}
+
+
+// Полный сброс — видимый аналог --sync-forget плюс чистка списка.
+// Нужен именно кнопкой здесь: состояние обязано управляться из UI,
+// а не отдельной командой про которую надо знать
+void SyncDevicesDialog::onResetAll(void)
+{
+    if(QMessageBox::question(this, tr("Sync"),
+                             tr("Forget everything? Pairing secret, sync group, "
+                                "paired device and the whole device list "
+                                "will be cleared. This cannot be undone."))
+       !=QMessageBox::Yes)
+        return;
+
+    config->set_syncPairingSecret(QString());
+    config->set_syncGroupId(QString());
+    config->set_syncPairedDeviceId(QString());
+
+    for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+        config->remove_syncDevice(info.id);
 
     refreshList();
 }

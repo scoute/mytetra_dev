@@ -196,12 +196,25 @@ fi
 QMAKE="${QT_SDK}/bin/qmake"
 MAKE_BIN="$(command -v make || true)"
 
+# Каталоги библиотек и плагинов спрашиваем у самого qmake, а не выводим
+# из префикса: в SDK-раскладке (наш Qt 5.15.2) это ${QT_SDK}/lib и
+# ${QT_SDK}/plugins, а в системном Qt Debian это multiarch-пути
+# (/usr/lib/x86_64-linux-gnu и .../qt5/plugins). Без этого на Debian
+# плагины не находились, папка plugins оставалась пустой и портабл
+# падал на старте
+QT_LIB_DIR="$("${QMAKE}" -query QT_INSTALL_LIBS 2>/dev/null || true)"
+[ -d "${QT_LIB_DIR}" ] || QT_LIB_DIR="${QT_SDK}/lib"
+QT_PLUGINS_DIR="$("${QMAKE}" -query QT_INSTALL_PLUGINS 2>/dev/null || true)"
+[ -d "${QT_PLUGINS_DIR}" ] || QT_PLUGINS_DIR="${QT_SDK}/plugins"
+
 if [[ -z "${MAKE_BIN}" ]]; then
     echo "ОШИБКА: не найден make" >&2
     exit 2
 fi
 
 echo "Qt SDK:      ${QT_SDK}"
+echo "Qt libs:     ${QT_LIB_DIR}"
+echo "Qt plugins:  ${QT_PLUGINS_DIR}"
 echo "Исходники:   ${SOURCE_DIR}"
 echo "Сборка:      ${BUILD_DIR}"
 echo "Результат:   ${PORTABLE_DIR}"
@@ -293,7 +306,7 @@ mkdir -p "${LIB_DIR}" "${PLUGINS_DIR}"
 
 # Пути всех библиотек, от которых зависит собранный mytetra.
 # mimetex зависит только от libc, поэтому его библиотеки отдельно не нужны
-mapfile -t NEEDED_LIBS < <(LD_LIBRARY_PATH="${QT_SDK}/lib" ldd "${PORTABLE_DIR}/mytetra" | awk '{print $3}' | grep "^/")
+mapfile -t NEEDED_LIBS < <(LD_LIBRARY_PATH="${QT_LIB_DIR}" ldd "${PORTABLE_DIR}/mytetra" | awk '{print $3}' | grep "^/")
 
 COPIED_LIBS=0
 for lib in "${NEEDED_LIBS[@]}"; do
@@ -340,7 +353,7 @@ done
 QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus"
 
 for module in ${QT_MODULES}; do
-    for qt_lib in "${QT_SDK}"/lib/libQt5"${module}".so.5.*; do
+    for qt_lib in "${QT_LIB_DIR}"/libQt5"${module}".so.5.*; do
         # Отладочные символы весят в разы больше самой библиотеки
         [[ "${qt_lib}" == *.debug ]] && continue
 
@@ -369,13 +382,13 @@ done
 # ibus падает при старте в окружении без DBus, а базовый ввод с клавиатуры
 # обеспечивается самой платформой
 for plugin in platforms imageformats iconengines; do
-    if [[ -d "${QT_SDK}/plugins/${plugin}" ]]; then
+    if [[ -d "${QT_PLUGINS_DIR}/${plugin}" ]]; then
         mkdir -p "${PLUGINS_DIR}/${plugin}"
         # Отладочные символы *.debug не нужны и весят половину объема
-        find "${QT_SDK}/plugins/${plugin}" -maxdepth 1 -type f -name '*.so' \
+        find "${QT_PLUGINS_DIR}/${plugin}" -maxdepth 1 -type f -name '*.so' \
              -exec cp -a {} "${PLUGINS_DIR}/${plugin}/" \;
     else
-        echo "ПРЕДУПРЕЖДЕНИЕ: не найдены плагины ${plugin} в ${QT_SDK}/plugins" >&2
+        echo "ПРЕДУПРЕЖДЕНИЕ: не найдены плагины ${plugin} в ${QT_PLUGINS_DIR}" >&2
     fi
 done
 
@@ -395,7 +408,7 @@ for target in "${LIB_DIR}"/libQt5*.so* "${PLUGINS_DIR}"/*/*.so; do
                 fi
                 ;;
         esac
-    done < <(LD_LIBRARY_PATH="${QT_SDK}/lib" ldd "${target}" 2>/dev/null | awk '{print $3}' | grep "^/")
+    done < <(LD_LIBRARY_PATH="${QT_LIB_DIR}" ldd "${target}" 2>/dev/null | awk '{print $3}' | grep "^/")
 done
 
 # OpenSSL 1.1 для Qt 5.15: Qt грузит его через dlopen, в ldd его нет.

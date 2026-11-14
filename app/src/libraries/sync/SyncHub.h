@@ -22,7 +22,8 @@ public:
 
     explicit SyncHub(KnowTreeModel *model, AppConfig *config,
                      SyncSidecar &sidecar, const QString &tetradir,
-                     QObject *parent=nullptr);
+                     QObject *parent=nullptr,
+                     const QString &pairingPin=QString());
     ~SyncHub(void) override;
 
     // Слушать порт. false — порт занят

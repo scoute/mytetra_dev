@@ -35,7 +35,8 @@ public:
 
     // Полный цикл с хабом host:port. isHub=false для спока.
     // Возвращает отчет; при ok==false смотреть error
-    SyncReport run(const QString &host, quint16 port);
+    SyncReport run(const QString &host, quint16 port,
+                   const QString &pairingPin=QString());
 
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;

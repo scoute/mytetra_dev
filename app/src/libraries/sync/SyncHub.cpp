@@ -9,7 +9,7 @@
 
 SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                  SyncSidecar &sidecar, const QString &tetradir,
-                 QObject *parent)
+                 QObject *parent, const QString &pairingPin)
     : QObject(parent),
       model(model),
       config(config),
@@ -17,7 +17,7 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
       tetradir(tetradir)
 {
     server=new SyncServer(this);
-    SyncHandshake::registerRoutes(server, this->config);
+    SyncHandshake::registerRoutes(server, this->config, pairingPin);
 
     // Манифест локальной базы для спока
     server->addRoute(QStringLiteral("GET /manifest"),

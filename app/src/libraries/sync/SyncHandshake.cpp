@@ -132,14 +132,15 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
 }
 
 
-void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config)
+void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
+                                    const QString &pairingPin)
 {
     clearUnknown();
 
     // Замыкание держит только указатели на долгоживущие объекты
     // (сервер и конфиг переживают все соединения)
     server->addRoute(QStringLiteral("POST /hello"),
-                     [config](const QJsonObject &body) -> QJsonObject {
+                     [config, pairingPin](const QJsonObject &body) -> QJsonObject {
         const qint64 now=QDateTime::currentMSecsSinceEpoch();
         const SyncHelloResult r=checkHello(body, config, now);
 
@@ -180,11 +181,26 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config)
         }
 
         // Неизвестный гость для диалога спаривания на сервере.
-        // Запоминаем только если у нас секрета нет (иначе это чужой/битый)
-        if(config->get_syncPairingSecret().isEmpty() && !theirId.isEmpty())
+        // Запоминаем всегда (нужен id для вывода секрета по PIN),
+        // доверяем — только после сверки фингерпринта человеком
+        if(!theirId.isEmpty() && theirId!=config->get_syncDeviceId())
         {
             g_unknownId=theirId;
             g_unknownName=body.value(QStringLiteral("deviceName")).toString();
+        }
+
+        // Headless-спаривание: секрета нет, PIN задан флагом — выводим
+        // тот же secret что и клиент (ид симметричны, PIN общий).
+        // GUI-путь с проверкой фингерпринта — отдельно, через onSyncPairing
+        if(config->get_syncPairingSecret().isEmpty() && !pairingPin.isEmpty()
+           && !theirId.isEmpty())
+        {
+            const QString derived=
+                SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
+                                                  theirId, pairingPin);
+
+            if(!derived.isEmpty())
+                config->set_syncPairingSecret(derived);
         }
 
         return answer;

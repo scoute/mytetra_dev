@@ -98,6 +98,8 @@ void printHelp()
     printf("./mytetra --control --openNote <noteId> - Jump to note with <noteId>\n");
     printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
+    printf("./mytetra --sync-server [--sync-port N] [--sync-pair PIN] - Start sync hub without GUI interaction\n");
+    printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
     printf("\n");
 }
 
@@ -128,7 +130,10 @@ void parseConsoleOption(QtSingleApplication &app)
     }
 
     // Если MyTetra запущена с какой-то опцией, но нет опции --control
-    if ( app.arguments().count()>1 && !app.arguments().contains("--control"))
+    // и это не sync-режим (--sync-server / --sync-to живут своим процессом)
+    if ( app.arguments().count()>1 && !app.arguments().contains("--control")
+         && !app.arguments().contains("--sync-server")
+         && !app.arguments().contains("--sync-to") )
     {
         QString message="Bad options. Maybe you lost \"--help\" or \"--control\"?\n";
         printf("%s", message.toLocal8Bit().data());
@@ -429,6 +434,50 @@ int main(int argc, char ** argv)
     // Окно сплеш-скрина скрывается
     if (mytetraConfig.getShowSplashScreen())
         splash.finish(&win);
+
+    // Headless-режим синхронизации: --sync-server [--sync-port N] [--sync-pair PIN]
+    // поднимает хаб, --sync-to HOST — выполняет одну сессию и выходит с кодом.
+    // Нужно для скриптовых прогонов и тестов без GUI
+    {
+        const QStringList args=app.arguments();
+
+        auto argValue=[&args](const QString &name, const QString &def) -> QString {
+            const int i=args.indexOf(name);
+            if(i>=0 && i+1<args.size() && !args.at(i+1).startsWith(QStringLiteral("-")))
+                return args.at(i+1);
+            return def;
+        };
+
+        quint16 syncPort=static_cast<quint16>(argValue(QStringLiteral("--sync-port"),
+                                                      QStringLiteral("47777")).toUShort());
+        const QString syncPin=argValue(QStringLiteral("--sync-pair"), QString());
+        const bool doServe=args.contains(QStringLiteral("--sync-server"));
+        const bool doSyncTo=args.contains(QStringLiteral("--sync-to"));
+        const QString syncHost=argValue(QStringLiteral("--sync-to"), QString());
+
+        if(doServe)
+        {
+            if(!win.startSyncServer(syncPort, syncPin))
+            {
+                printf("Sync server: cannot listen on port %u\n", syncPort);
+                return 3;
+            }
+
+            printf("Sync server started on port %u\n", syncPort);
+        }
+
+        if(doSyncTo && !syncHost.isEmpty())
+        {
+            bool syncOk=false;
+            const QString report=win.runSyncToHeadless(syncHost, syncPin,
+                                                       syncPort, syncOk);
+            printf("%s\n", report.toLocal8Bit().data());
+
+            // Разовый прогон без сервера — выходим с кодом результата
+            if(!doServe)
+                return syncOk ? 0 : 4;
+        }
+    }
 
     return app.exec();
 }

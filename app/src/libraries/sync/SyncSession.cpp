@@ -2,6 +2,7 @@
 #include "SyncClient.h"
 #include "SyncNoteIo.h"
 #include "SyncSidecar.h"
+#include "SyncIdentity.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 
@@ -27,7 +28,8 @@ void SyncSession::addLog(const QString &line)
 }
 
 
-SyncReport SyncSession::run(const QString &host, quint16 port)
+SyncReport SyncSession::run(const QString &host, quint16 port,
+                              const QString &pairingPin)
 {
     SyncReport report;
     SyncClient client(config);
@@ -35,7 +37,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port)
     // 1. Рукопожатие: версии, сеть, часы, подлинность
     addLog(QStringLiteral("hello %1:%2").arg(host).arg(port));
 
-    const SyncHelloResult hello=client.hello(host, port);
+    SyncHelloResult hello=client.hello(host, port);
 
     if(!hello.ok)
     {
@@ -46,6 +48,37 @@ SyncReport SyncSession::run(const QString &host, quint16 port)
     }
 
     addLog(QStringLiteral("hello ok, skew %1 ms").arg(hello.skewMs));
+
+    // Спаривание: секрета нет, PIN задан — выводим тот же secret что сервер.
+    // GUI-вариант с проверкой фингерпринта — отдельно, до вызова run
+    if(config->get_syncPairingSecret().isEmpty() && !pairingPin.isEmpty()
+       && !hello.remoteDeviceId.isEmpty())
+    {
+        const QString derived=
+            SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
+                                              hello.remoteDeviceId,
+                                              pairingPin);
+
+        if(derived.isEmpty())
+        {
+            report.error=QStringLiteral("empty PIN is not allowed");
+            return report;
+        }
+
+        config->set_syncPairingSecret(derived);
+        addLog(QStringLiteral("paired via PIN"));
+    }
+
+    // Группа: пустая у нас — принимаем удаленную или детерминированную общую
+    if(config->get_syncGroupId().isEmpty())
+    {
+        if(!hello.remoteGroupId.isEmpty())
+            config->set_syncGroupId(hello.remoteGroupId);
+        else if(!hello.remoteDeviceId.isEmpty())
+            config->set_syncGroupId(
+                SyncIdentity::pairGroupId(config->get_syncDeviceId(),
+                                          hello.remoteDeviceId));
+    }
 
     // 2. Манифесты: чужой тянем, свой строим локально
     const SyncManifest remote=client.fetchManifest(host, port);

@@ -131,6 +131,7 @@ void MetaEditor::setupUI(void)
 
  // Создается QScrollArea и в нее добавляется виджет с QHBoxLayout
  recordTagsScrollArea=new QScrollArea();
+ recordTagsScrollArea->setObjectName("recordTagsScrollArea"); // Имя нужно CSS-теме, чтобы снять с этой зоны общий хром QScrollArea (рамку и отступы), который урезает высоту строки меток
  recordTagsScrollArea->setContentsMargins( 0, 0, 0, 0 ); // Убирается отступ от границ содержимого
  recordTagsScrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
  recordTagsScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff ); // Убирается горизонтальная полоса прокрутки
@@ -403,7 +404,12 @@ void MetaEditor::setTags(QString tags)
  }
 
  recordTagsContainer->adjustSize();
- recordTagsScrollArea->setMaximumHeight(recordTagsContainer->height());
+ // Высота зоны задается жестко по содержимому: sizeHint() у QScrollArea
+ // околонулевой, и сетка дает зоне нулевую высоту. height() в момент
+ // вызова тоже ненадежен (виджет может быть еще не разложен).
+ // Плюс пиксель воздуха сверху и снизу чтобы текст не лип к краям.
+ // Хром темы (рамка+отступы) снят селектором recordTagsScrollArea в CSS
+ recordTagsScrollArea->setFixedHeight(recordTagsContainer->sizeHint().height()+2);
 }
 
 

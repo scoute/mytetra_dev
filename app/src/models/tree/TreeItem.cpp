@@ -189,6 +189,10 @@ QMap<QString, QString> TreeItem::getAllFieldsDirect()
 // Второй параметр - устанавливаемое значение
 void TreeItem::setField(QString name, QString value)
 {
+  // Нулевые байты вычищаются как в Record::setField: иначе QXmlStreamWriter
+  // молча режет хвост значения при сохранении (баг #134)
+  value.remove(QChar('\0'));
+
   // Если имя поля допустимо
   if(FixedParameters::itemFieldAvailableList.contains(name))
   {

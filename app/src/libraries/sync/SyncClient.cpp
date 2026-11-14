@@ -10,6 +10,7 @@
 #include "SyncClient.h"
 #include "SyncHandshake.h"
 #include "SyncDebug.h"
+#include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
 
 #include <QDebug>
@@ -194,15 +195,22 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
 }
 
 
-SyncHelloResult SyncClient::hello(const QString &host, quint16 port)
+SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
+                                    bool pairRequest)
 {
     SyncHelloResult result;
     result.serverTime=QDateTime::currentMSecsSinceEpoch();
 
+    if(syncDebugEnabled())
+        qDebug() << "SyncClient: hello" << host << port
+                 << (pairRequest ? QStringLiteral("pairRequest")
+                                 : QString());
+
     bool ok=false;
     const QJsonObject answer=postJson(
         host, port, QStringLiteral("/hello"),
-        SyncHandshake::buildHello(config, result.serverTime), ok);
+        SyncHandshake::buildHello(config, result.serverTime,
+                                 pairRequest), ok);
 
     if(!ok)
     {
@@ -222,6 +230,8 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port)
     result.remoteDeviceName=answer.value(QStringLiteral("deviceName")).toString();
     result.remoteGroupId=answer.value(QStringLiteral("groupId")).toString();
     result.warning=answer.value(QStringLiteral("warning")).toString();
+    result.pairPending=answer.value(QStringLiteral("pairPending"))
+                            .toBool(false);
 
     if(!result.ok)
     {

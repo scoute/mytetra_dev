@@ -291,6 +291,8 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
         info.port=m_conf->value(QStringLiteral("port"), 47777).toInt();
         info.firstSeen=m_conf->value(QStringLiteral("firstSeen"), 0).toLongLong();
         info.lastSeen=m_conf->value(QStringLiteral("lastSeen"), 0).toLongLong();
+        info.pairOffer=m_conf->value(QStringLiteral("pairOffer"), false).toBool();
+        info.lastMutual=m_conf->value(QStringLiteral("lastMutual"), 0).toLongLong();
 
         m_conf->endGroup();
 
@@ -344,6 +346,53 @@ bool AppConfig::remove_syncDevice(const QString &id)
     m_conf->endGroup();
     m_conf->remove(QStringLiteral("syncDevices/")+id);
     return true;
+}
+
+
+// Входящий запрос на пару / взаимность / сброс флага.
+// Флаги живут отдельно от touch (он только факты появления и адрес)
+void AppConfig::set_syncDeviceOffer(const QString &id)
+{
+    if(id.isEmpty())
+        return;
+
+    touch_syncDevice(id, QString());
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/pairOffer"), true);
+}
+
+
+void AppConfig::clear_syncDeviceOffer(const QString &id)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/pairOffer"), false);
+}
+
+
+void AppConfig::set_syncDeviceMutual(const QString &id)
+{
+    if(id.isEmpty())
+        return;
+
+    touch_syncDevice(id, QString());
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/pairOffer"), false);
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/lastMutual"),
+                     QDateTime::currentMSecsSinceEpoch());
+}
+
+
+void AppConfig::clear_syncDeviceMutual(const QString &id)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/lastMutual"), 0);
 }
 
 

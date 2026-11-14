@@ -32,6 +32,7 @@ private slots:
     void onSyncNow(void);
     void onManualSync(void);
     void onPair(void);
+    void onAccept(void);
     void onUnpair(void);
     void onRemove(void);
     void onResetAll(void);
@@ -52,8 +53,10 @@ private:
     // Показ итога ручного синка
     void showManualResult(const QString &result, bool syncOk);
 
-    // Строка считается спаренной: секрет есть и выведен именно с ней
+    // Строка считается спаренной: секрет есть и выведен именно с ней.
+    // Взаимность (isMutual) строже: обмен с проверкой уже был, Sync можно
     bool isPaired(const AppConfig::SyncDeviceInfo &info) const;
+    bool isMutual(const AppConfig::SyncDeviceInfo &info) const;
     int currentRowId(QString &id) const;
 
     KnowTreeModel *model=nullptr;
@@ -67,6 +70,7 @@ private:
     QSpinBox *portSpin=nullptr;
     QPushButton *syncButton=nullptr;
     QPushButton *pairButton=nullptr;
+    QPushButton *acceptButton=nullptr;
     QPushButton *unpairButton=nullptr;
     QPushButton *removeButton=nullptr;
 };

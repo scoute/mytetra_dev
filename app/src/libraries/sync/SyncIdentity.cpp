@@ -105,5 +105,10 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
 
     config->set_syncPairingSecret(derived);
     config->set_syncPairedDeviceId(peerId);
+
+    // Пара пересоздана: старые "запрос"/взаимность протухли,
+    // взаимность наступит после первого обмена с новым секретом
+    config->clear_syncDeviceOffer(peerId);
+    config->clear_syncDeviceMutual(peerId);
     return true;
 }

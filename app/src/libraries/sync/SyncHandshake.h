@@ -21,6 +21,7 @@ struct SyncHelloResult
     QString remoteDeviceId;   // кто ответил (для фингерпринта и secret'а)
     QString remoteDeviceName;
     QString remoteGroupId;
+    QString warning;     // непусто при ok: сервер что-то простил (re-pair)
 };
 
 class SyncHandshake
@@ -38,7 +39,12 @@ public:
     // Зарегистрировать POST /hello на сервере. config жив всю жизнь сервера.
     // pairingPin: предустановленный PIN для headless-спаривания (--sync-pair).
     // Если секрета еще нет, а PIN задан — секрет выводится при первом hello
-    // с обеих сторон одинаково, сверка фингерпринта в этом режиме на человеке
+    // с обеих сторон одинаково, сверка фингерпринта в этом режиме на человеке.
+    // Починка пары: секрет есть, но proof чужой (второй стороне сбросили
+    // состояние или ввели другой PIN раньше) — при заданном PIN не отказываем,
+    // а перевыводим secret и принимаем с warning. Без PIN — строгий отказ:
+    // GUI-путь с проверкой фингерпринта — отдельно, через onSyncPairing.
+    // Строже (отпечатки, allowlist) — позже, см. долг в sync-mvp
     static void registerRoutes(SyncServer *server, AppConfig *config,
                                const QString &pairingPin=QString());
 

@@ -47,13 +47,15 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     SyncHelloResult hello=client.hello(host, port);
 
-    // Сервер уже спарен, а мы нет (секрет узнали позже): деривация
-    // по PIN и повторный hello уже с доказательством. Без PIN здесь
-    // делать нечего — нужно спаривание через GUI или флаг
+    // Починка пары: секрет есть, но proof чужой (сервер сбросили или PIN
+    // раньше был другой). Раз PIN предъявлен — перевыводим secret поверх
+    // старого и повторяем hello. Сервер с тем же PIN сойдется к тому же
+    // secret (деривация симметрична), с чужим PIN — снова откажет внятно.
+    // Без PIN: строгий отказ уходит как есть, чинится через --sync-forget
     if(!hello.ok && hello.errorCode==QStringLiteral("auth-failed")
-       && config->get_syncPairingSecret().isEmpty()
        && !pairingPin.isEmpty()
-       && !hello.remoteDeviceId.isEmpty())
+       && !hello.remoteDeviceId.isEmpty()
+       && hello.remoteDeviceId!=config->get_syncDeviceId())
     {
         const QString derived=
             SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
@@ -63,7 +65,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         if(!derived.isEmpty())
         {
             config->set_syncPairingSecret(derived);
-            addLog(QStringLiteral("paired via PIN on retry"));
+            addLog(QStringLiteral("secret mismatch, re-paired via PIN, retry"));
             hello=client.hello(host, port);
         }
     }
@@ -77,6 +79,26 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     }
 
     addLog(QStringLiteral("hello ok, skew %1 ms").arg(hello.skewMs));
+
+    // Сервер что-то простил (re-pair): сходимся к тому же secret по нашему
+    // PIN, иначе в следующий раз чиниться будет снова. Без PIN — просто
+    // показываем предупреждение, секрет не трогаем
+    if(!hello.warning.isEmpty())
+    {
+        addLog(QStringLiteral("server warning: %1").arg(hello.warning));
+
+        if(!pairingPin.isEmpty() && !hello.remoteDeviceId.isEmpty()
+           && hello.remoteDeviceId!=config->get_syncDeviceId())
+        {
+            const QString derived=
+                SyncIdentity::derivePairingSecret(config->get_syncDeviceId(),
+                                                  hello.remoteDeviceId,
+                                                  pairingPin);
+
+            if(!derived.isEmpty())
+                config->set_syncPairingSecret(derived);
+        }
+    }
 
     // Спаривание: секрета нет, PIN задан — выводим тот же secret что сервер.
     // GUI-вариант с проверкой фингерпринта — отдельно, до вызова run

@@ -191,6 +191,7 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port)
     result.remoteDeviceId=answer.value(QStringLiteral("deviceId")).toString();
     result.remoteDeviceName=answer.value(QStringLiteral("deviceName")).toString();
     result.remoteGroupId=answer.value(QStringLiteral("groupId")).toString();
+    result.warning=answer.value(QStringLiteral("warning")).toString();
 
     if(!result.ok)
     {

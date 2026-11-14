@@ -301,6 +301,7 @@ HEADERS+=src/libraries/qtSingleApplication5/qtsingleapplication.h \
 HEADERS+=\
     src/libraries/ClipboardBranch.h \
     src/libraries/GlobalParameters.h \
+    src/libraries/sync/SyncIdentity.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/views/enterPassword/EnterPassword.h \
     src/views/consoleEmulator/ConsoleEmulator.h \
@@ -474,6 +475,7 @@ SOURCES+=src/libraries/qtSingleApplication5/qtsingleapplication.cpp \
 SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
     src/libraries/GlobalParameters.cpp \
+    src/libraries/sync/SyncIdentity.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \

@@ -227,6 +227,19 @@ bool AppConfig::set_syncGroupId(const QString &groupId)
 }
 
 
+QString AppConfig::get_syncPairingSecret(void)
+{
+    return m_conf->value("syncPairingSecret", QString()).toString();
+}
+
+
+bool AppConfig::set_syncPairingSecret(const QString &secret)
+{
+    m_conf->setValue("syncPairingSecret", secret);
+    return true;
+}
+
+
 // Установка имени директории с корзиной
 bool AppConfig::set_trashdir(QString dirName)
 {
@@ -1303,6 +1316,7 @@ void AppConfig::update_version_process(void)
     parameterFunctions << &AppConfig::get_parameter_table_41;
     parameterFunctions << &AppConfig::get_parameter_table_42;
     parameterFunctions << &AppConfig::get_parameter_table_43;
+    parameterFunctions << &AppConfig::get_parameter_table_44;
 
     for (int i=1; i<parameterFunctions.count()-1; ++i)
     {
@@ -2189,6 +2203,25 @@ QStringList AppConfig::get_parameter_table_43(bool withEndSignature)
     table << "syncDeviceId" << "QString" << "";
     table << "syncDeviceName" << "QString" << "";
     table << "syncGroupId" << "QString" << "";
+
+    if(withEndSignature)
+        table << "0" << "0" << "0";
+
+    return table;
+}
+
+
+QStringList AppConfig::get_parameter_table_44(bool withEndSignature)
+{
+    // Таблица параметров
+    // Имя, Тип, Значение на случай когда в конфиге параметра прочему-то нет
+    QStringList table;
+
+    // Старые параметры, аналогичные версии 43
+    table << get_parameter_table_43(false);
+
+    // Синхронизация: секрет спаривания (hex, общий у спаренных устройств)
+    table << "syncPairingSecret" << "QString" << "";
 
     if(withEndSignature)
         table << "0" << "0" << "0";

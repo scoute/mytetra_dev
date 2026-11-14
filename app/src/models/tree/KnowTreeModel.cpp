@@ -10,6 +10,7 @@
 #include "XmlTree.h"
 
 #include "libraries/ClipboardBranch.h"
+#include "libraries/sync/SyncSidecar.h"
 #include "models/appConfig/AppConfig.h"
 #include "models/attachTable/Attach.h"
 #include "models/recordTable/Record.h"
@@ -83,6 +84,10 @@ void KnowTreeModel::initFromXML(QString fileName)
   init(xmlt.getDomModel());
 
   m_lastLoadDateTime=QDateTime::currentDateTime();
+
+  // Синк-сайдкар привязывается к открытой базе. Нет файла —
+  // состояние пустое, построится по мере сейвов
+  SyncSidecar::init(m_xmlFileName);
 }
 
 

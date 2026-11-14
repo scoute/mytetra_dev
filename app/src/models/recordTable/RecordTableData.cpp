@@ -19,6 +19,7 @@
 #include "libraries/crypt/CryptService.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "libraries/ActionLogger.h"
+#include "libraries/sync/SyncSidecar.h"
 
 #include "libraries/wyedit/Editor.h"
 #include "libraries/helpers/ObjectHelper.h"
@@ -191,6 +192,10 @@ void RecordTableData::editorSaveCallback(QObject *editor,
 
         if(!wfile.commit())
             criticalError("RecordTableData::editor_save_callback() : Cant commit text file "+fileName);
+
+        // Синк-сайдкар: mtime и хеш сохраненного (UTF-8 как на диске)
+        SyncSidecar::touchNote(currEditor->getMiscField("id"),
+                               saveText.toUtf8());
     }
     else
     {
@@ -211,6 +216,9 @@ void RecordTableData::editorSaveCallback(QObject *editor,
 
         if(!wfile.commit())
             criticalError("RecordTableData::editor_save_callback() : Cant commit binary file "+fileName);
+
+        // Синк-сайдкар: хеш шифртекста (внутрь не лезем, пароль не нужен)
+        SyncSidecar::touchNote(currEditor->getMiscField("id"), encryptData);
     }
 
 

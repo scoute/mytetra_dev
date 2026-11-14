@@ -110,6 +110,11 @@ private slots:
     void onSyncServerToggle(bool checked);
     void onSyncPairing(void);
 
+    // Headless sync-режим определяется флагами запуска, а не состоянием:
+    // в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
+    // (иначе клик по шифроветке = модальный пароль = вечный вис)
+    static bool isSyncHeadlessMode(void);
+
 public:
 
     // Headless-управление сервером (для --sync-server и тестов).

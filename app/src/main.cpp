@@ -399,8 +399,11 @@ int main(int argc, char ** argv)
             win.hide();
     }
 
-    // Восстанавливаются открепляемые окна
-    win.restoreDockableWindowsState();
+    // Восстанавливаются открепляемые окна.
+    // В headless sync-режиме пропускаем: detached-редакторы могли остаться
+    // открытыми на шифрозаписях, а пароль спрашивать некому
+    if(!syncMode)
+        win.restoreDockableWindowsState();
 
     // Восстановление видимости виджета, который был активный, для мобильного интерфейса
     if (mytetraConfig.getInterfaceMode()=="mobile")
@@ -423,8 +426,9 @@ int main(int argc, char ** argv)
 
     // Если настроено в конфиге, сразу запрашивается пароль доступа
     // к зашифрованным данным
-    // И если есть хоть какие-то зашифрованные данные
-    if (mytetraConfig.get_howpassrequest()=="atStartProgram")
+    // И если есть хоть какие-то зашифрованные данные.
+    // В headless sync-режиме пропускаем целиком: некому вводить
+    if(!syncMode && mytetraConfig.get_howpassrequest()=="atStartProgram")
         if (globalParameters.getCryptKey().length()==0)
             if (dataBaseConfig.get_crypt_mode()>0)
             {
@@ -440,8 +444,9 @@ int main(int argc, char ** argv)
 
 
     // Если в общем конфиге стоит опция хранения пароля
-    // И хранимый пароль (точнее его хеш) заполнен
-    if (globalParameters.getCryptKey().length()==0)
+    // И хранимый пароль (точнее его хеш) заполнен.
+    // В headless sync-режиме пропускаем: некому вводить, а висеть нельзя
+    if(!syncMode && globalParameters.getCryptKey().length()==0)
         if (dataBaseConfig.get_crypt_mode()>0)
             if (mytetraConfig.getPasswordSaveFlag())
                 if (mytetraConfig.getPasswordMiddleHash().length()>0)

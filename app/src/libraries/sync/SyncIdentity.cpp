@@ -1,4 +1,5 @@
 #include <QByteArray>
+#include <QStringList>
 #include <QCryptographicHash>
 #include <QMessageAuthenticationCode>
 #include <QRandomGenerator>

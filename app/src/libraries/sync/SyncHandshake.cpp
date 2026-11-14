@@ -185,6 +185,33 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             }
         }
 
+        // Чужая сеть, но PIN предъявлен: раз оператор ввел общий PIN —
+        // это согласие, хаб (мы, сервер) — источник правды по группе.
+        // Перевыводим secret под эту пару и велим споку взять нашу группу.
+        // Без PIN — строгий отказ как был (лечится --sync-forget с одной
+        // стороны: пустая группа втягивается автоматически)
+        if(!r.ok && r.errorCode==QStringLiteral("foreign-network")
+           && !pairingPin.isEmpty()
+           && !theirId.isEmpty()
+           && theirId!=config->get_syncDeviceId())
+        {
+            if(SyncIdentity::adoptPairing(config, theirId, pairingPin))
+            {
+                r.ok=true;
+                r.paired=true;
+                r.errorCode.clear();
+                r.errorText.clear();
+
+                warning=QStringLiteral("different network (ours %1, theirs %2): "
+                                       "re-paired via PIN with %3, adopt our group %1")
+                    .arg(config->get_syncGroupId(),
+                         body.value(QStringLiteral("groupId")).toString(),
+                         theirName);
+
+                qDebug() << "SyncHandshake:" << warning;
+            }
+        }
+
         QJsonObject answer;
         answer[QStringLiteral("ok")]=r.ok;
         answer[QStringLiteral("serverTime")]=r.serverTime;

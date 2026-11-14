@@ -1670,9 +1670,13 @@ void MainWindow::onSyncNow(void)
 QString MainWindow::runSyncToHeadless(const QString &host,
                                       const QString &pin,
                                       quint16 port,
-                                      bool &ok)
+                                      bool &ok,
+                                      QString *errorCode)
 {
     ok=false;
+
+    if(errorCode!=nullptr)
+        errorCode->clear();
 
     SyncClient client(&mytetraConfig);
 
@@ -1703,6 +1707,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     if(!hello.ok)
     {
         QString fail=tr("Handshake failed: %1").arg(hello.errorText);
+
+        if(errorCode!=nullptr)
+            *errorCode=hello.errorCode;
 
         // Подсказки для живых разборок: чьи версии, какой перекос часов
         if(hello.errorCode==QStringLiteral("version-mismatch"))
@@ -1737,15 +1744,21 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                                        hello.remoteDeviceName,
                                        host, port);
 
-    // Группа: чужая есть — принимаем; обе пустые — детерминированная общая
-    if(mytetraConfig.get_syncGroupId().isEmpty())
+    // Группа: пустая у нас — принимаем удаленную или детерминированную.
+    // Чужая непустая при общем PIN — переезд между сетями, хаб прав:
+    // берем его группу (зеркало логики SyncSession::run)
+    if(!hello.remoteGroupId.isEmpty()
+       && hello.remoteGroupId!=mytetraConfig.get_syncGroupId())
     {
-        if(!hello.remoteGroupId.isEmpty())
+        if(mytetraConfig.get_syncGroupId().isEmpty() || !pin.isEmpty())
             mytetraConfig.set_syncGroupId(hello.remoteGroupId);
-        else if(!hello.remoteDeviceId.isEmpty())
-            mytetraConfig.set_syncGroupId(
-                SyncIdentity::pairGroupId(mytetraConfig.get_syncDeviceId(),
-                                          hello.remoteDeviceId));
+    }
+    else if(mytetraConfig.get_syncGroupId().isEmpty()
+            && !hello.remoteDeviceId.isEmpty())
+    {
+        mytetraConfig.set_syncGroupId(
+            SyncIdentity::pairGroupId(mytetraConfig.get_syncDeviceId(),
+                                      hello.remoteDeviceId));
     }
 
     SyncSession session(treeScreen->knowTreeModel,
@@ -1763,6 +1776,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     if(!report.ok)
     {
         QString fail=tr("Sync failed: %1").arg(report.error);
+
+        if(errorCode!=nullptr)
+            *errorCode=report.errorCode;
 
         if(!steps.isEmpty())
             fail+=QStringLiteral("\n-- steps --\n")+steps;

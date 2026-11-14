@@ -69,6 +69,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     {
         report.error=hello.errorText.isEmpty() ? hello.errorCode
                                               : hello.errorText;
+        report.errorCode=hello.errorCode;
         addLog(QStringLiteral("hello failed: %1").arg(report.error));
         return report;
     }
@@ -102,15 +103,26 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         addLog(QStringLiteral("paired via PIN"));
     }
 
-    // Группа: пустая у нас — принимаем удаленную или детерминированную общую
-    if(config->get_syncGroupId().isEmpty())
+    // Группа: пустая у нас — принимаем удаленную или детерминированную общую.
+    // Чужая непустая при общем PIN — переезд между сетями: хаб источник
+    // правды, берем его группу с логом (сервер нас уже принял с warning).
+    // Без PIN чужую группу не трогаем: строгий отказ уходит как есть
+    if(!hello.remoteGroupId.isEmpty()
+       && hello.remoteGroupId!=config->get_syncGroupId())
     {
-        if(!hello.remoteGroupId.isEmpty())
+        if(config->get_syncGroupId().isEmpty() || !pairingPin.isEmpty())
+        {
             config->set_syncGroupId(hello.remoteGroupId);
-        else if(!hello.remoteDeviceId.isEmpty())
-            config->set_syncGroupId(
-                SyncIdentity::pairGroupId(config->get_syncDeviceId(),
-                                          hello.remoteDeviceId));
+            addLog(QStringLiteral("adopted hub group %1")
+                   .arg(hello.remoteGroupId));
+        }
+    }
+    else if(config->get_syncGroupId().isEmpty()
+            && !hello.remoteDeviceId.isEmpty())
+    {
+        config->set_syncGroupId(
+            SyncIdentity::pairGroupId(config->get_syncDeviceId(),
+                                      hello.remoteDeviceId));
     }
 
     // 2. Манифесты: чужой тянем, свой строим локально

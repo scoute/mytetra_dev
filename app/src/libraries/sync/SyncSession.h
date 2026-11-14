@@ -18,6 +18,7 @@ struct SyncReport
 {
     bool ok=false;
     QString error;
+    QString errorCode; // код handshake (foreign-network и т.п.), пусто для прочих
     int uploadedNotes=0;
     int downloadedNotes=0;
     int uploadedBranches=0;

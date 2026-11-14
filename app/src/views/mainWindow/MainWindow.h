@@ -126,11 +126,14 @@ public:
 
     // Headless-синк: без диалогов. pin — для первого спаривания
     // (GUI-путь сверяет фингерпринт, здесь — осознанно нет).
-    // Возвращает текст отчета, ok=false при ошибке
+    // Возвращает текст отчета, ok=false при ошибке.
+    // errorCode — код handshake наружу (foreign-network для диалога),
+    // опционален чтобы не трогать старые вызовы
     QString runSyncToHeadless(const QString &host,
                               const QString &pin,
                               quint16 port,
-                              bool &ok);
+                              bool &ok,
+                              QString *errorCode=nullptr);
 
     void onExpandEditArea(bool flag);
 

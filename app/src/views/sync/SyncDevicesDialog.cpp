@@ -227,9 +227,47 @@ void SyncDevicesDialog::onSyncNow(void)
     SyncSession session(model, config, tetradir);
 
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —
-    // через Pair заново (осознанно, с показом фингерпринта выше)
-    const SyncReport report=session.run(target.ip,
-                                        static_cast<quint16>(target.port));
+    // через Pair заново (осознанно, с показом фингерпринта выше).
+    // Исключение — чужая сеть: там PIN нужен чтобы взять группу хаба
+    SyncReport report=session.run(target.ip,
+                                  static_cast<quint16>(target.port));
+
+    if(!report.ok
+       && report.errorCode==QStringLiteral("foreign-network"))
+    {
+        if(QMessageBox::question(
+               this, tr("Sync"),
+               tr("This device is in another sync network.\n"
+                  "Switch to its network? The secret will be re-derived "
+                  "from PIN."))!=QMessageBox::Yes)
+        {
+            refreshList();
+            return;
+        }
+
+        bool ok=false;
+        const QString pin=QInputDialog::getText(this,
+                                                tr("Sync pairing"),
+                                                tr("Enter the pairing PIN (the same PIN "
+                                                   "must be entered on %1). Empty = cancel.")
+                                                .arg(target.name.isEmpty() ? target.id
+                                                                           : target.name),
+                                                QLineEdit::Password,
+                                                QString(),
+                                                &ok);
+
+        if(!ok || pin.isEmpty())
+        {
+            refreshList();
+            return;
+        }
+
+        // Тот же путь что headless с PIN: сервер примет с warning,
+        // клиент возьмет группу хаба внутри сессии
+        report=session.run(target.ip,
+                           static_cast<quint16>(target.port),
+                           pin);
+    }
 
     if(!report.ok)
     {

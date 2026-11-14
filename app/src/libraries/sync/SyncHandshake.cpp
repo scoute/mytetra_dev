@@ -15,6 +15,33 @@ QString g_unknownName;
 }
 
 
+// Взаимность — редкое событие (первый обмен после спаривания),
+// логируем только переход 0 -> now, дальше тихо
+void SyncHandshake::noteMutual(AppConfig *config, const QString &id,
+                               const char *context)
+{
+    if(config==nullptr || id.isEmpty())
+        return;
+
+    qint64 before=0;
+
+    for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+    {
+        if(info.id==id)
+        {
+            before=info.lastMutual;
+            break;
+        }
+    }
+
+    config->set_syncDeviceMutual(id);
+
+    if(before<=0)
+        qDebug() << "SyncHandshake: mutual pairing confirmed with"
+                 << id << "(" << context << ")";
+}
+
+
 // Версия приложения мажор.минор для сверки при handshake.
 // Микро не сравниваем: багфиксы не ломают протокол
 static QString syncAppVersion(void)
@@ -34,7 +61,8 @@ static QString syncFormatVersion(void)
 }
 
 
-QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime)
+QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
+                                        bool pairRequest)
 {
     QJsonObject hello;
     hello[QStringLiteral("proto")]=QStringLiteral("sync/1");
@@ -44,6 +72,11 @@ QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime)
     hello[QStringLiteral("deviceName")]=config->get_syncDeviceName();
     hello[QStringLiteral("groupId")]=config->get_syncGroupId();
     hello[QStringLiteral("clientTime")]=clientTime;
+
+    // Запрос в пару — явный флаг: сервер отличит "стучусь" от "синк",
+    // запишет входящий запрос для Accept и ответит pairPending
+    if(pairRequest)
+        hello[QStringLiteral("pairRequest")]=true;
 
     // Доказательство владения секретом: HMAC от (время + id).
     // Секрета нет (первое знакомство) — поле пустое, сервер это различает
@@ -182,6 +215,8 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
 
                 // Видно всегда, не только под дебагом: событие редкое и важное
                 qDebug() << "SyncHandshake:" << warning;
+
+                SyncHandshake::noteMutual(config, theirId, "re-pair via PIN");
             }
         }
 
@@ -209,6 +244,8 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
                          theirName);
 
                 qDebug() << "SyncHandshake:" << warning;
+
+                SyncHandshake::noteMutual(config, theirId, "foreign network join");
             }
         }
 
@@ -259,15 +296,49 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
 
         // Headless-спаривание: секрета нет, PIN задан флагом — выводим
         // тот же secret что и клиент (ид симметричны, PIN общий).
+        // Флаг — стоящее согласие оператора: взаимность сразу.
         // GUI-путь с проверкой фингерпринта — отдельно, через onSyncPairing
         if(config->get_syncPairingSecret().isEmpty() && !pairingPin.isEmpty()
            && !theirId.isEmpty())
         {
             SyncIdentity::adoptPairing(config, theirId, pairingPin);
+            SyncHandshake::noteMutual(config, theirId, "headless standing PIN");
         }
 
         if(!warning.isEmpty())
             answer[QStringLiteral("warning")]=warning;
+
+        // Запрос в пару (accept-flow): гость стучится с pairRequest.
+        // Чистый проход (proof сошелся с давним секретом) — не запрос,
+        // а подтверждение взаимности делом: фиксируем mutual.
+        // Иначе пишем входящий запрос для кнопки Accept и отвечаем
+        // pairPending. Со стоящим PIN-флагом спаривание ниже произойдет
+        // само (headless-согласие), mutual выставится там же
+        const bool pairReq=body.value(QStringLiteral("pairRequest"))
+                               .toBool(false);
+
+        if(r.ok && pairReq && !theirId.isEmpty()
+           && theirId!=config->get_syncDeviceId())
+        {
+            if(r.paired)
+            {
+                SyncHandshake::noteMutual(config, theirId, "pair-request proof");
+            }
+            else
+            {
+                qDebug() << "SyncHandshake: pair request recorded from"
+                         << theirName << "(" << theirId
+                         << "), waiting for Accept";
+                config->set_syncDeviceOffer(theirId);
+                answer[QStringLiteral("pairPending")]=true;
+            }
+        }
+
+        // Чистый проход обычного hello (proof сошелся с давним секретом,
+        // без починок и запросов): взаимность подтверждена делом
+        if(r.ok && r.paired && !pairReq && !theirId.isEmpty()
+           && theirId!=config->get_syncDeviceId())
+            SyncHandshake::noteMutual(config, theirId, "clean hello");
 
         // Пир прошел hello — запоминаем для окна Sync devices.
         // IP здесь нет (за транспортом следит SyncServer), допишет клиент

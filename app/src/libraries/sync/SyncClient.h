@@ -21,7 +21,10 @@ public:
     void setTimeoutMs(int ms);
 
     // Рукопожатие. Пустой error — успех (см. SyncHelloResult).
-    SyncHelloResult hello(const QString &host, quint16 port);
+    // pairRequest: "хочу в пару" — сервер запишет входящий запрос
+    // для Accept и ответит pairPending (шаг 1 accept-flow)
+    SyncHelloResult hello(const QString &host, quint16 port,
+                         bool pairRequest=false);
 
     // Забрать чужой манифест. Пустой (без веток/заметок) при ошибке сети —
     // вызывающий проверяет отдельно через lastError()

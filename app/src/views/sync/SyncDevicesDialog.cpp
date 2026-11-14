@@ -76,6 +76,9 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     syncButton=new QPushButton(tr("Sync"), this);
     syncButton->setToolTip(tr("Sync with the selected device"));
     pairButton=new QPushButton(tr("Pair..."), this);
+    acceptButton=new QPushButton(tr("Accept"), this);
+    acceptButton->setToolTip(tr("Accept the incoming pair request "
+                               "from the selected device"));
     unpairButton=new QPushButton(tr("Unpair"), this);
     removeButton=new QPushButton(tr("Remove"), this);
     QPushButton *closeButton=new QPushButton(tr("Close"), this);
@@ -85,6 +88,7 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
                                "Same as --sync-forget plus list cleanup."));
     buttons->addWidget(syncButton);
     buttons->addWidget(pairButton);
+    buttons->addWidget(acceptButton);
     buttons->addWidget(unpairButton);
     buttons->addWidget(removeButton);
     buttons->addStretch();
@@ -98,6 +102,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
             this, &SyncDevicesDialog::onSyncNow);
     connect(pairButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onPair);
+    connect(acceptButton, &QPushButton::clicked,
+            this, &SyncDevicesDialog::onAccept);
     connect(unpairButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onUnpair);
     connect(removeButton, &QPushButton::clicked,
@@ -117,6 +123,15 @@ bool SyncDevicesDialog::isPaired(const AppConfig::SyncDeviceInfo &info) const
 {
     return !config->get_syncPairingSecret().isEmpty()
         && config->get_syncPairedDeviceId()==info.id;
+}
+
+
+bool SyncDevicesDialog::isMutual(const AppConfig::SyncDeviceInfo &info) const
+{
+    if(!isPaired(info))
+        return false;
+
+    return info.lastMutual>0;
 }
 
 
@@ -198,12 +213,14 @@ void SyncDevicesDialog::refreshList(void)
             ? QDateTime::fromMSecsSinceEpoch(info.lastSeen)
                   .toString(QStringLiteral("yyyy-MM-dd hh:mm"))
             : QString());
-        // Paired колонка трехстатусная, а не да/нет: если что-то пошло
-        // не так — видно прямо в строке, а не гаданием.
-        // yes — секрет под эту строку. no — чужая строка или пары нет.
-        // unknown — секрет есть, но с кем — неизвестно (наследие старых
-        // версий без привязки пары). error — пара сломана: спарен сам
-        // с собой, такой secret ни с кем не сойдется
+        // Paired колонка статусов accept-flow, а не да/нет:
+        // yes — взаимно спарены (обмен с проверкой был), Sync можно.
+        // pair-request — мы отправили запрос (секрет выведен, но взаимности
+        //   еще нет): ждем Accept на той стороне. Повтор Pair перепроверяет.
+        // wait-accept — входящий запрос: нужен Accept с вводом общего PIN.
+        // no — чужая строка или пары нет. unknown — секрет есть, но с кем —
+        //   неизвестно (наследие без привязки). error — пара сломана
+        //   (спарен сам с собой)
         const bool haveSecret=!config->get_syncPairingSecret().isEmpty();
         const bool selfPairing=haveSecret
             && !pairedId.isEmpty()
@@ -230,7 +247,25 @@ void SyncDevicesDialog::refreshList(void)
         }
         else if(pairedId==info.id)
         {
-            pairedText=tr("yes");
+            // Призрак (спаренный, но ни разу не виденный) — флагов нет,
+            // взаимность неизвестна: оставляем legacy yes
+            if(isGhost || info.lastMutual>0)
+            {
+                pairedText=tr("yes");
+            }
+            else
+            {
+                pairedText=tr("pair-request");
+                pairedTip=tr("Pair request sent, waiting for Accept "
+                             "on that device. Press Pair again to re-check "
+                             "whether it was accepted.");
+            }
+        }
+        else if(info.pairOffer)
+        {
+            pairedText=tr("wait-accept");
+            pairedTip=tr("Incoming pair request from this device. "
+                         "Press Accept and enter the same PIN to pair.");
         }
         else
         {
@@ -276,12 +311,14 @@ void SyncDevicesDialog::refreshSelf(void)
         else
         {
             QString peerName;
+            qint64 peerMutual=-1;
 
             for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
             {
                 if(info.id==pairedId)
                 {
                     peerName=info.name;
+                    peerMutual=info.lastMutual;
                     break;
                 }
             }
@@ -292,7 +329,13 @@ void SyncDevicesDialog::refreshSelf(void)
             else if(pairedId!=peerName)
                 peerName+=QStringLiteral(" (")+pairedId+QStringLiteral(")");
 
-            peerText=tr("yes, with %1").arg(peerName);
+            // Предложили, взаимности нет — честный статус вместо yes:
+            // запрос ушёл, ждем Accept на той стороне
+            if(!pairedId.isEmpty() && peerMutual==0)
+                peerText=tr("pair requested, waiting for accept on %1")
+                    .arg(peerName);
+            else
+                peerText=tr("yes, with %1").arg(peerName);
         }
     }
 
@@ -324,6 +367,8 @@ void SyncDevicesDialog::onSelectionChanged(void)
 
     bool hasAddress=false;
     bool paired=false;
+    bool mutual=false;
+    bool offer=false;
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
     {
@@ -332,16 +377,28 @@ void SyncDevicesDialog::onSelectionChanged(void)
 
         hasAddress=!info.ip.isEmpty();
         paired=isPaired(info);
+        mutual=isMutual(info);
+        offer=info.pairOffer;
         break;
     }
 
-    // Синк инициирует только спок (клиент тянет с хаба). Адрес известен —
-    // кнопка жива; иначе подсказка где его взять
-    syncButton->setEnabled(hasAddress);
-    syncButton->setToolTip(hasAddress ? QString()
-        : tr("Address unknown: this device never synced to it. "
-             "Sync from the other side first (it records our address)."));
-    pairButton->setEnabled(!paired);
+    // Sync — только по взаимно спаренной строке (шаг 5 accept-flow):
+    // без Accept на той стороне данных нет (там же гейт 089/сервер).
+    // Pair — отправить запрос или перепроверить отправленный.
+    // Входящий запрос спаривается кнопкой Accept, а не Pair
+    syncButton->setEnabled(hasAddress && mutual);
+    syncButton->setToolTip(!hasAddress
+        ? tr("Address unknown: this device never synced to it. "
+             "Sync from the other side first (it records our address).")
+        : (!mutual
+           ? tr("Not mutually paired: send a Pair request first "
+                "(or Accept the incoming one), sync unlocks after Accept.")
+           : QString()));
+    pairButton->setEnabled(!mutual && !offer);
+    pairButton->setToolTip(offer
+        ? tr("This device asks to pair: use Accept, not Pair.")
+        : QString());
+    acceptButton->setEnabled(offer);
     unpairButton->setEnabled(paired);
     removeButton->setEnabled(true);
 }
@@ -368,33 +425,18 @@ void SyncDevicesDialog::onSyncNow(void)
     if(target.ip.isEmpty())
         return;
 
-    // Спаривание здесь же, если секрета нет: без него hello не пройдет.
-    // Фингерпринт уже показан выше — сверка глазами до ввода PIN
-    if(!isPaired(target))
+    // Sync только по взаимной паре (шаг 5 accept-flow): без Accept
+    // на той стороне кнопка и так выключена, это вторая линия.
+    // Запрос в пару — кнопкой Pair, входящий — кнопкой Accept
+    if(!isMutual(target))
     {
-        bool ok=false;
-        const QString pin=QInputDialog::getText(this,
-                                                tr("Sync pairing"),
-                                                tr("Enter the pairing PIN (the same PIN "
-                                                   "must be entered on %1). Empty = cancel.")
-                                                .arg(target.name.isEmpty() ? target.id
-                                                                           : target.name),
-                                                QLineEdit::Password,
-                                                QString(),
-                                                &ok);
-
-        if(!ok || pin.isEmpty())
-            return;
-
-        if(!SyncIdentity::adoptPairing(config, id, pin))
-        {
-            QMessageBox::warning(this, tr("Sync"),
-                                 tr("Empty PIN is not allowed."));
-            return;
-        }
-
-        if(config->get_syncGroupId().isEmpty())
-            config->touch_syncDevice(id, target.name);
+        QMessageBox::warning(this, tr("Sync"),
+                             tr("Not mutually paired with this device. "
+                                "Send a Pair request first (or Accept "
+                                "the incoming one); sync unlocks after "
+                                "Accept on that side."));
+        refreshList();
+        return;
     }
 
     SyncSession session(model, config, tetradir);
@@ -621,12 +663,19 @@ QString SyncDevicesDialog::askJoinPin(const QString &peerName,
 
 
 // Сброс локальной пары перед входом в чужую сеть: секрет, группа,
-// привязка. Дальше runSyncToHeadless с PIN спарит с нуля на любом сервере
+// привязка. Дальше runSyncToHeadless с PIN спарит с нуля на любом сервере.
+// Флаги запросов/взаимности по всем строкам тоже гаснут: старая сеть забыта
 void SyncDevicesDialog::joinFresh(void)
 {
     config->set_syncPairingSecret(QString());
     config->set_syncGroupId(QString());
     config->set_syncPairedDeviceId(QString());
+
+    for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+    {
+        config->clear_syncDeviceOffer(info.id);
+        config->clear_syncDeviceMutual(info.id);
+    }
 }
 
 
@@ -648,15 +697,65 @@ void SyncDevicesDialog::onPair(void)
     if(currentRowId(id)<0)
         return;
 
-    QString name;
+    AppConfig::SyncDeviceInfo target;
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
     {
         if(info.id==id)
         {
-            name=info.name;
+            target=info;
             break;
         }
+    }
+
+    if(target.ip.isEmpty())
+    {
+        QMessageBox::warning(this, tr("Sync pairing"),
+                             tr("Address unknown: cannot reach this device. "
+                                "Enter its IP below and use Sync now "
+                                "(it sends the pair request too)."));
+        refreshList();
+        return;
+    }
+
+    qDebug() << "SyncPair: Pair pressed for"
+             << (target.name.isEmpty() ? target.id : target.name)
+             << "at" << target.ip << target.port;
+
+    // Уже предлагали, взаимности нет: повтор Pair = проверка статуса
+    // (пришел ли Accept). Секрет уже выведен — hello пойдет с proof
+    if(isPaired(target) && !isMutual(target))
+    {
+        qDebug() << "SyncPair: re-checking whether our request was accepted";
+        SyncClient probe(config);
+        const SyncHelloResult hello=probe.hello(target.ip,
+            static_cast<quint16>(target.port));
+
+        if(!hello.ok)
+        {
+            qDebug() << "SyncPair: re-check failed:" << hello.errorCode;
+            QMessageBox::warning(this, tr("Sync pairing"),
+                                 tr("Handshake failed: %1")
+                                 .arg(hello.errorText));
+        }
+        else if(hello.paired)
+        {
+            qDebug() << "SyncPair: our request was accepted, sync unlocked";
+            SyncHandshake::noteMutual(config, id, "pair re-check");
+            QMessageBox::information(this, tr("Sync pairing"),
+                                     tr("Accepted on that side, "
+                                        "sync unlocked."));
+        }
+        else
+        {
+            qDebug() << "SyncPair: still waiting for Accept on that side";
+            QMessageBox::information(this, tr("Sync pairing"),
+                                     tr("Still waiting for Accept "
+                                        "on that device."));
+        }
+
+        refreshList();
+        return;
     }
 
     bool ok=false;
@@ -665,7 +764,7 @@ void SyncDevicesDialog::onPair(void)
                                             tr("Pair with %1?\nFingerprint above. "
                                                "Enter the SAME pairing PIN as on that device. "
                                                "Empty = cancel.")
-                                            .arg(name.isEmpty() ? id : name),
+                                            .arg(target.name.isEmpty() ? id : target.name),
                                             QLineEdit::Password,
                                             QString(),
                                             &ok);
@@ -673,6 +772,64 @@ void SyncDevicesDialog::onPair(void)
     if(!ok || pin.isEmpty())
         return;
 
+    MainWindow *win=qobject_cast<MainWindow *>(parentWidget());
+
+    if(win==nullptr)
+        return;
+
+    // Общий путь: pre-hello, adopt предложения, group, offering-hello
+    // с pairRequest, стоп на pair-established (шаг 1 accept-flow).
+    // Сервер запишет входящий запрос для своего Accept
+    bool syncOk=false;
+    QString errorCode;
+    const QString result=win->runSyncToHeadless(target.ip, pin,
+                                               static_cast<quint16>(target.port),
+                                               syncOk, &errorCode);
+    showManualResult(result, syncOk);
+}
+
+
+void SyncDevicesDialog::onAccept(void)
+{
+    QString id;
+
+    if(currentRowId(id)<0)
+        return;
+
+    AppConfig::SyncDeviceInfo target;
+
+    for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+    {
+        if(info.id==id)
+        {
+            target=info;
+            break;
+        }
+    }
+
+    if(!target.pairOffer)
+        return;
+
+    qDebug() << "SyncPair: Accept pressed for"
+             << (target.name.isEmpty() ? target.id : target.name);
+
+    bool ok=false;
+    const QString pin=QInputDialog::getText(this,
+                                            tr("Sync pairing"),
+                                            tr("Accept pair request from %1?\n"
+                                               "Fingerprint above. "
+                                               "Enter the SAME pairing PIN as on that device. "
+                                               "Empty = cancel.")
+                                            .arg(target.name.isEmpty() ? id : target.name),
+                                            QLineEdit::Password,
+                                            QString(),
+                                            &ok);
+
+    if(!ok || pin.isEmpty())
+        return;
+
+    // adopt гасит запрос (stash 087); взаимность — решением оператора:
+    // PIN введен здесь осознанно, дальше докажет первый обмен
     if(!SyncIdentity::adoptPairing(config, id, pin))
     {
         QMessageBox::warning(this, tr("Sync"),
@@ -680,8 +837,12 @@ void SyncDevicesDialog::onPair(void)
         return;
     }
 
+    SyncHandshake::noteMutual(config, id, "operator Accept");
+    qDebug() << "SyncPair: accepted" << id << ", sync unlocked both sides";
+
     QMessageBox::information(this, tr("Sync pairing"),
-                             tr("Paired. Next sync will be authenticated."));
+                             tr("Paired with %1. Sync unlocked.")
+                             .arg(target.name.isEmpty() ? id : target.name));
     refreshList();
 }
 
@@ -706,6 +867,11 @@ void SyncDevicesDialog::onUnpair(void)
     config->set_syncPairingSecret(QString());
     config->set_syncPairedDeviceId(QString());
     config->set_syncGroupId(QString());
+
+    // Флаги пары по строке тоже гаснут: запрос принят/отклонен разрывом
+    qDebug() << "SyncPair: unpaired" << id << ", offer/mutual cleared";
+    config->clear_syncDeviceOffer(id);
+    config->clear_syncDeviceMutual(id);
     refreshList();
 }
 

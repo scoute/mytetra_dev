@@ -1679,6 +1679,13 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                                       hello.remoteDeviceId));
     }
 
+    // Взаимность: сервер подтверждает пару (answer.paired) — фиксируем.
+    // Transition редкий — логируется внутри noteMutual всегда
+    if(hello.ok && hello.paired && !hello.remoteDeviceId.isEmpty()
+       && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
+        SyncHandshake::noteMutual(&mytetraConfig, hello.remoteDeviceId,
+                                 "hello answer paired");
+
     // Пара создана/пересоздана этим запуском — фиксируем и выходим:
     // это была установка пары, данные следующим запуском.
     // (Секрет тут уже гарантированно есть: пустой раньше бы вышел
@@ -1689,10 +1696,40 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         if(errorCode!=nullptr)
             *errorCode=QStringLiteral("pair-established");
 
-        return tr("Pair established with %1, "
-                  "run sync again to transfer data.")
-            .arg(hello.remoteDeviceName.isEmpty()
-                 ? hello.remoteDeviceId : hello.remoteDeviceName);
+        // Запрос в пару уходит отдельным hello с proof: сервер запишет
+        // входящий запрос для кнопки Accept и ответит pairPending.
+        // Со стоящим PIN-флагом сервер спарится сам (headless-согласие)
+        qDebug() << "SyncPair: sending pair request to"
+                 << host << port
+                 << "as" << mytetraConfig.get_syncDeviceName()
+                 << "(" << mytetraConfig.get_syncDeviceId() << ")";
+
+        const SyncHelloResult offer=client.hello(host, port, true);
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncPair: offer answer ok=" << offer.ok
+                     << "paired=" << offer.paired
+                     << "pairPending=" << offer.pairPending
+                     << (offer.warning.isEmpty() ? QString()
+                                               : "warning="+offer.warning);
+
+        const QString peerName=hello.remoteDeviceName.isEmpty()
+            ? hello.remoteDeviceId : hello.remoteDeviceName;
+
+        if(offer.ok && offer.paired)
+        {
+            qDebug() << "SyncPair: server pre-accepted (standing PIN), "
+                        "next run will transfer data";
+            return tr("Pair established with %1, "
+                      "run sync again to transfer data.")
+                .arg(peerName);
+        }
+
+        qDebug() << "SyncPair: request sent, waiting for Accept on" << peerName;
+        return tr("Pair request sent to %1, "
+                  "waiting for Accept on that device. "
+                  "Run sync again after accept.")
+            .arg(peerName);
     }
 
     SyncSession session(treeScreen->knowTreeModel,

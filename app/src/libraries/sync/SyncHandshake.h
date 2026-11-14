@@ -18,6 +18,8 @@ struct SyncHelloResult
     qint64 skewMs=0;     // оценка clientTime-serverTime (есть и при отказе по часам)
     qint64 serverTime=0;
     bool paired=false;   // у сервера есть секрет под эту пару
+    bool pairPending=false; // сервер записал наш запрос (wait-accept),
+                            // пары пока нет — ждем Accept на той стороне
     QString remoteDeviceId;   // кто ответил (для фингерпринта и secret'а)
     QString remoteDeviceName;
     QString remoteGroupId;
@@ -29,8 +31,11 @@ class SyncHandshake
 public:
 
     // Собрать тело /hello из локального конфига.
-    // proof пуст пока спаривания не было (первое знакомство)
-    static QJsonObject buildHello(AppConfig *config, qint64 clientTime);
+    // proof пуст пока спаривания не было (первое знакомство).
+    // pairRequest: "хочу в пару" — сервер запишет входящий запрос
+    // (wait-accept), а не данные; ответ придет с pairPending
+    static QJsonObject buildHello(AppConfig *config, qint64 clientTime,
+                                  bool pairRequest=false);
 
     // Проверить чужой /hello. Ничего не меняет, только вердикт
     static SyncHelloResult checkHello(const QJsonObject &hello,
@@ -54,6 +59,12 @@ public:
     static QString lastUnknownDeviceId(void);
     static QString lastUnknownDeviceName(void);
     static void clearUnknown(void);
+
+    // Зафиксировать взаимность пары (первый проверенный обмен).
+    // Логирует только переход 0 -> now, дальше тихо. Вызывается
+    // и сервером (чистый проход hello), и клиентом (answer.paired)
+    static void noteMutual(AppConfig *config, const QString &id,
+                           const char *context);
 
     // Максимальный модуль расхождения часов, мс. Больше — железный блок
     static constexpr qint64 maxClockSkewMs=1000;

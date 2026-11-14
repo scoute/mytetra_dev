@@ -78,12 +78,27 @@ public:
         int port=47777;
         qint64 firstSeen=0;
         qint64 lastSeen=0;
+
+        // Входящий запрос на пару: пир стучался с proof, а у нас
+        // секрета еще нет (спок тянет — сервер видит). Гасится спариванием
+        bool pairOffer=false;
+
+        // Взаимность подтверждена: сервер проверил proof пира
+        // (или клиент получил ok при paired с обеих сторон).
+        // До этого — "wait accept", а не "yes"
+        qint64 lastMutual=0;
     };
 
     QList<SyncDeviceInfo> get_syncDevices(void);
     void touch_syncDevice(const QString &id, const QString &name,
                           const QString &ip=QString(), int port=47777);
     bool remove_syncDevice(const QString &id);
+
+    // Флаги пары по устройству (см. SyncDeviceInfo)
+    void set_syncDeviceOffer(const QString &id);
+    void clear_syncDeviceOffer(const QString &id);
+    void set_syncDeviceMutual(const QString &id);
+    void clear_syncDeviceMutual(const QString &id);
 
     // Директория с корзиной
     QString get_trashdir(void);

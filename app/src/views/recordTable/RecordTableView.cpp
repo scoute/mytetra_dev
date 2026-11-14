@@ -19,7 +19,6 @@
 #include "models/appConfig/AppConfig.h"
 #include "models/tree/KnowTreeModel.h"
 #include "libraries/GlobalParameters.h"
-#include "views/mainWindow/MainWindow.h"
 #include "libraries/WindowSwitcher.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/InternalClipboard.h"

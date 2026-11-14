@@ -5,7 +5,6 @@
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QSpinBox>
 
 #include "AppConfigPage_Synchro.h"

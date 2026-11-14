@@ -8,7 +8,6 @@
 #include <QMessageBox>
 #include <QString>
 #include <QShowEvent>
-#include <QString>
 #include <QStyle>
 
 #include "views/mainWindow/MainWindow.h"

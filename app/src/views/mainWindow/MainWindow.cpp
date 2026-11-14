@@ -1,7 +1,6 @@
 #include <QDialog>
 #include <QString>
 #include <QDir>
-#include <QString>
 #include <QDesktopWidget>
 #include <QMenu>
 #include <QMenuBar>

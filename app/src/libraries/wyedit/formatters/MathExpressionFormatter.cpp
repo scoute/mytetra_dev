@@ -6,7 +6,6 @@
 #include <QImageReader>
 #include <QTextDocumentFragment>
 #include <QMessageBox>
-#include <QImage>
 #include <QTemporaryFile>
 #include <QProcess>
 

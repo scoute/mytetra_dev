@@ -349,8 +349,11 @@ done
 # Без нее Qt падает при загрузке плагинов, и это выглядит как
 # аварийный старт без всякого сообщения
 # Qt-модули, которые нужны программе и ее плагинам. Перечислены явно,
-# а не все libQt5* из SDK: лишние модули весят сотни мегабайт
-QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus"
+# а не все libQt5* из SDK: лишние модули весят сотни мегабайт.
+# Плюс приватные либы платформенных плагинов (не модули app.pro,
+# но без них проверка на смешивание падает, а на чужой машине
+# плагин не грузится): XcbQpa для xcb, EglFSDeviceIntegration для eglfs
+QT_MODULES="Core Gui Widgets Network Xml PrintSupport Svg DBus XcbQpa EglFSDeviceIntegration"
 
 for module in ${QT_MODULES}; do
     for qt_lib in "${QT_LIB_DIR}"/libQt5"${module}".so.5.*; do

@@ -522,6 +522,15 @@ win32 {
 QMAKE_POST_LINK += $$copyToDir($${_PRO_FILE_PWD_}/../thirdParty/mimetex/build/bin/$${MIMETEX_BINARY}, $${OUT_PWD}/bin/$${MIMETEX_BINARY})
 }
 
+# Бинарник mimetex обязан лежать рядом с mytetra, иначе не рендерятся формулы.
+# Раньше make install ставил только mytetra, и установленное приложение
+# молча не генерировало картинки формул
+!android {
+  mimetex_binary.path=$${BINARY_INSTALL_PATH}
+  mimetex_binary.files=$${OUT_PWD}/bin/$${MIMETEX_BINARY}
+  INSTALLS+=mimetex_binary
+}
+
 FORMS += \
     src/samples/buttonwidth.ui \
     src/views/installDialog/InstallDialog.ui

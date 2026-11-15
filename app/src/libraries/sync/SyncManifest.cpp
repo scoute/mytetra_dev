@@ -39,6 +39,66 @@ QString SyncManifestBuilder::sha256Bytes(const QByteArray &data)
 }
 
 
+// Хеш полей заметки + ее ветки: переименования и переносы меняют хеш
+// и потому синхронизируются (хеш контента их не видит).
+// Канонизация как у веток: crypt/block "0" == "" (старые базы),
+// пустые значения не хешируются (round-trip их роняет/возвращает)
+static QString hashNoteFields(const QMap<QString, QString> &fields,
+                              const QString &branchId)
+{
+    QByteArray canonical;
+
+    for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
+    {
+        QString value=it.value();
+
+        if((it.key()==QStringLiteral("crypt")
+            || it.key()==QStringLiteral("block"))
+           && value==QStringLiteral("0"))
+            value.clear();
+
+        if(value.isEmpty())
+            continue;
+
+        canonical+=it.key().toUtf8();
+        canonical+='=';
+        canonical+=value.toUtf8();
+        canonical+='\n';
+    }
+
+    canonical+="branch=";
+    canonical+=branchId.toUtf8();
+    canonical+='\n';
+
+    return QString::fromLatin1(
+        QCryptographicHash::hash(canonical,
+                                 QCryptographicHash::Sha256).toHex());
+}
+
+
+// Покрыт ли id tombstone'ом: сам или любой предок по цепочке parents.
+// parents: id -> parentId того же манифеста, чья цепочка проверяется
+static bool coveredByTombs(const QString &id,
+                            const QMap<QString, QString> &parents,
+                            const QMap<QString, qint64> &tombs)
+{
+    QString cur=id;
+    QSet<QString> seen;
+
+    while(!cur.isEmpty() && !seen.contains(cur))
+    {
+        seen.insert(cur);
+
+        if(tombs.contains(cur))
+            return true;
+
+        cur=parents.value(cur);
+    }
+
+    return false;
+}
+
+
 // Глубина ветки по цепочке parentId (корень — 0)
 static int branchDepth(const QMap<QString, SyncBranchInfo> &branches,
                        const QString &id)
@@ -189,6 +249,10 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
             const QString textPath=tetradir+QStringLiteral("/base/")
                                    +dir+QStringLiteral("/")+file;
 
+            // Хеш полей+ветки — всегда живьем (поля в памяти, дешево):
+            // переименования и переносы детектятся без сайдкара
+            info.fhash=hashNoteFields(info.fields, info.branchId);
+
             // Аттачи записи: id, имя, размер, хеш
             AttachTableData attachTable=record->getAttachTable();
 
@@ -289,6 +353,7 @@ QJsonObject SyncManifest::toJson(void) const
         n[QStringLiteral("branch")]=it.value().branchId;
         n[QStringLiteral("mtime")]=it.value().mtime;
         n[QStringLiteral("hash")]=it.value().hash;
+        n[QStringLiteral("fhash")]=it.value().fhash;
         n[QStringLiteral("crypt")]=it.value().crypt;
 
         QJsonObject fields;
@@ -362,6 +427,7 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
         info.branchId=n.value(QStringLiteral("branch")).toString();
         info.mtime=n.value(QStringLiteral("mtime")).toVariant().toLongLong();
         info.hash=n.value(QStringLiteral("hash")).toString();
+        info.fhash=n.value(QStringLiteral("fhash")).toString();
         info.crypt=n.value(QStringLiteral("crypt")).toBool();
 
         const QJsonObject fields=n.value(QStringLiteral("fields")).toObject();
@@ -437,17 +503,72 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
     Q_UNUSED(isHub);
     SyncPlan plan;
 
-    // Чужие tombstone'ы: у нас такое есть — удалить локально.
-    // Нет — нечего делать (уже удалено или никогда не было)
+    // Родительские цепочки для проверки покрытия tombstone'ами:
+    // ветка/заметка под удаленной веткой — часть удаленного поддерева
+    QMap<QString, QString> localParents;
+    for(auto it=local.branches.constBegin();
+        it!=local.branches.constEnd(); ++it)
+        localParents.insert(it.key(), it.value().parentId);
+
+    QMap<QString, QString> localNoteParents;
+    for(auto it=local.notes.constBegin();
+        it!=local.notes.constEnd(); ++it)
+        localNoteParents.insert(it.key(), it.value().branchId);
+
+    QMap<QString, QString> remoteParents;
+    for(auto it=remote.branches.constBegin();
+        it!=remote.branches.constEnd(); ++it)
+        remoteParents.insert(it.key(), it.value().parentId);
+
+    QMap<QString, QString> remoteNoteParents;
+    for(auto it=remote.notes.constBegin();
+        it!=remote.notes.constEnd(); ++it)
+        remoteNoteParents.insert(it.key(), it.value().branchId);
+
+    // Чужие tombstone'ы с правилом edit-wins: наша правка новее чужого
+    // удаления — побеждает правка (зальем к ним, воскресят).
+    // Равный mtime — удаление (осознанное действие бьет ничью).
+    // Иначе удалить локально
     for(auto it=remote.tombstones.constBegin();
         it!=remote.tombstones.constEnd(); ++it)
     {
-        if(local.notes.contains(it.key()) ||
-           local.branches.contains(it.key()))
-            plan.deleteLocal << it.key();
+        const QString id=it.key();
+        const qint64 tombTime=it.value();
+
+        if(local.notes.contains(id))
+        {
+            if(local.notes.value(id).mtime>tombTime)
+                plan.uploadNotes << id;
+            else
+                plan.deleteLocal << id;
+        }
+        else if(local.branches.contains(id))
+        {
+            if(local.branches.value(id).mtime>tombTime)
+                plan.uploadBranches << id;
+            else
+                plan.deleteLocal << id;
+        }
     }
 
-    // Свои tombstone'ы вторая сторона отработает сама по нашему манифесту
+    // Наши tombstone'ы против их живых с тем же edit-wins: их правка новее
+    // нашего удаления — качаем к себе (воскрешаем), tomb им не пушим
+    // (pushOwnTombstones ту же проверку делает сам перед отправкой).
+    // Tombstone ветки покрывает поддерево: их заметки/дети под нашей
+    // удаленной веткой не качаются (наше удаление поддерева в силе)
+    for(auto it=local.tombstones.constBegin();
+        it!=local.tombstones.constEnd(); ++it)
+    {
+        const QString id=it.key();
+        const qint64 tombTime=it.value();
+
+        if(remote.notes.contains(id)
+           && remote.notes.value(id).mtime>tombTime)
+            plan.downloadNotes << id;
+        else if(remote.branches.contains(id)
+                && remote.branches.value(id).mtime>tombTime)
+            plan.downloadBranches << id;
+    }
 
     // Ветки: нет там — загрузить туда; нет здесь — скачать оттуда;
     // хеши разные — побеждает больший mtime, равные — конфликт
@@ -455,7 +576,11 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
         it!=remote.branches.constEnd(); ++it)
     {
         if(local.tombstones.contains(it.key()))
-            continue; // мы удалили — наше удаление уедет к ним tombstone'ом
+            continue; // наше удаление в силе (edit-wins решен выше)
+
+        if(coveredByTombs(it.value().parentId, remoteParents,
+                           local.tombstones))
+            continue; // чужое под нашим удаленным поддеревом — не качаем
 
         if(!local.branches.contains(it.key()))
         {
@@ -481,21 +606,25 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
         it!=local.branches.constEnd(); ++it)
     {
         if(remote.tombstones.contains(it.key()))
-        {
-            plan.deleteLocal << it.key();
-            continue;
-        }
+            continue; // решено в tomb-цикле выше (edit-wins/deleteLocal)
+
+        if(coveredByTombs(it.value().parentId, localParents,
+                           remote.tombstones))
+            continue; // наше под их удаленным поддеревом — не заливаем
 
         if(!remote.branches.contains(it.key()))
             plan.uploadBranches << it.key();
     }
 
-    // Заметки — та же логика
+    // Заметки — та же логика; равенство — по контенту, полям+ветке и аттачам
     for(auto it=remote.notes.constBegin();
         it!=remote.notes.constEnd(); ++it)
     {
         if(local.tombstones.contains(it.key()))
-            continue;
+            continue; // наше удаление в силе (edit-wins решен выше)
+
+        if(local.tombstones.contains(it.value().branchId))
+            continue; // чужое под нашим удаленным поддеревом — не качаем
 
         if(!local.notes.contains(it.key()))
         {
@@ -506,8 +635,8 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
         const SyncNoteInfo &ours=local.notes.value(it.key());
         const SyncNoteInfo &theirs=it.value();
 
-        if(ours.hash==theirs.hash && attachSetsEqual(ours.attaches,
-                                                    theirs.attaches))
+        if(ours.hash==theirs.hash && ours.fhash==theirs.fhash
+           && attachSetsEqual(ours.attaches, theirs.attaches))
             continue;
 
         if(ours.mtime>theirs.mtime)
@@ -521,11 +650,9 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
     for(auto it=local.notes.constBegin();
         it!=local.notes.constEnd(); ++it)
     {
-        if(remote.tombstones.contains(it.key()))
-        {
-            plan.deleteLocal << it.key();
-            continue;
-        }
+        if(remote.tombstones.contains(it.key())
+           || remote.tombstones.contains(it.value().branchId))
+            continue; // решено в tomb-цикле / под их удаленным поддеревом
 
         if(!remote.notes.contains(it.key()))
             plan.uploadNotes << it.key();

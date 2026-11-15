@@ -39,7 +39,8 @@ struct SyncNoteInfo
     QString id;
     QString branchId;
     qint64 mtime=0;
-    QString hash;
+    QString hash;   // контент текста (как лежит, для шифрованных — шифртекст)
+    QString fhash;  // поля записи + branchId (переименования и переносы видно)
     bool crypt=false;
     QMap<QString, QString> fields;
     QList<SyncAttachInfo> attaches;
@@ -59,6 +60,10 @@ struct SyncManifest
 // upload/download — id заметок/веток целиком; deleteLocal — применить
 // чужие tombstone'ы у себя; conflicts — равные mtime при разных хешах
 // (решает хаб вручную/авто по правилу, проигравший в бэкап).
+// Удаление против правки: побеждает более поздний mtime (правка новее
+// удаления — воскрешение через upload/download, иначе deleteLocal).
+// Tombstone ветки покрывает поддерево: чужое под удаленной веткой
+// не качается и не заливается (иначе "no branch" при каждой сессии)
 struct SyncPlan
 {
     QStringList uploadNotes;

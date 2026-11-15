@@ -459,6 +459,16 @@ bool SyncSession::pushOwnTombstones(SyncClient &client,
         if(remote.tombstones.contains(it.key()))
             continue;
 
+        // Их правка новее нашего удаления — edit-wins: tomb не пушим,
+        // план уже поставил download (воскрешаем у себя)
+        if(remote.notes.contains(it.key())
+           && remote.notes.value(it.key()).mtime>it.value())
+            continue;
+
+        if(remote.branches.contains(it.key())
+           && remote.branches.value(it.key()).mtime>it.value())
+            continue;
+
         addLog(QStringLiteral("push delete %1").arg(it.key()));
 
         if(!client.pushDelete(host, port, it.key(), it.value()))

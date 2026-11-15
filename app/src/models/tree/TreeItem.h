@@ -93,6 +93,11 @@ class TreeItem
     // Получение идентификатора родительской ветки
     QString getParentId();
 
+    // Перелинковка к новому родителю с сохранением id (для синка:
+    // применение переезда ветки). Детей и записи не трогает.
+    // false — newParent null/тот же/цикл
+    bool relinkTo(TreeItem *newParent);
+
     // Получение иконки ветки
     QIcon getIcon();
 

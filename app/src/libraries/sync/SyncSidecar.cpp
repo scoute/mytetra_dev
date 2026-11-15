@@ -106,17 +106,40 @@ void SyncSidecar::dropEntry(const QString &id)
 }
 
 
-QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields)
+QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields,
+                                        const QString &parentId)
 {
     QByteArray canonical;
 
     for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
     {
+        QString value=it.value();
+
+        // Канонический crypt: "" вместо "0" старых баз (семантика одна).
+        // Нормализация в одной точке — хеш, поэтому старые базы
+        // сходятся без переписывания данных
+        if(it.key()==QStringLiteral("crypt")
+           && value==QStringLiteral("0"))
+            value.clear();
+
+        // Пустые значения не хешируем вообще: реальное приложение часть
+        // атрибутов не пишет (нет ctime/icon = пустой ctime/icon),
+        // а round-trip через JSON/apply их то роняет, то возвращает.
+        // Без этого хеш вечно расходится на пустом месте, и каждая
+        // такая ветка висит в конфликтах. Непустое <-> пустое —
+        // по-прежнему разница (иконку сняли — видно)
+        if(value.isEmpty())
+            continue;
+
         canonical+=it.key().toUtf8();
         canonical+='=';
-        canonical+=it.value().toUtf8();
+        canonical+=value.toUtf8();
         canonical+='\n';
     }
+
+    canonical+="parent=";
+    canonical+=parentId.toUtf8();
+    canonical+='\n';
 
     return QString::fromLatin1(
         QCryptographicHash::hash(canonical,
@@ -125,13 +148,14 @@ QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields)
 
 
 void SyncSidecar::touchBranch(const QString &id,
-                              const QMap<QString, QString> &fields)
+                              const QMap<QString, QString> &fields,
+                              const QString &parentId)
 {
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
     g_instance->setEntry(id, QDateTime::currentMSecsSinceEpoch(),
-                         hashBranchFields(fields),
+                         hashBranchFields(fields, parentId),
                          QStringLiteral("branch"));
     g_instance->save();
 }

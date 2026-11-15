@@ -279,7 +279,14 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // после ответа; отмена оставляет флаг и прерывает сессию
     if(config->get_syncAskStrategy())
     {
-        if(!local.notes.isEmpty() && !remote.notes.isEmpty())
+        // Спрашиваем, когда есть что-то ХОТЬ С ОДНОЙ стороны (ветки
+        // тоже считаются): стратегии осмыслены и для одностороннего
+        // содержимого. Совсем пусто — флаг не гасим, спросим при
+        // первом синке с данными
+        const bool localAny=!local.notes.isEmpty() || !local.branches.isEmpty();
+        const bool remoteAny=!remote.notes.isEmpty() || !remote.branches.isEmpty();
+
+        if(localAny || remoteAny)
         {
             SyncStrategy strategy=SyncStrategy::Merge;
 

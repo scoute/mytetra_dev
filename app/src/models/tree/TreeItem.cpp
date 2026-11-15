@@ -205,8 +205,10 @@ void TreeItem::setField(QString name, QString value)
         icon=QIcon(); // Изображение иконки обнуляется
     }
 
-    // Если поле нужно шифровать
-    if(fieldsTable["crypt"]=="1")
+    // Если поле нужно шифровать.
+    // Читать через value(): оператор [] вставил бы недостающий ключ
+    // пустым (потом сейв пишет его в XML фантомным атрибутом)
+    if(fieldsTable.value(QStringLiteral("crypt"))==QStringLiteral("1"))
       if(FixedParameters::itemFieldCryptedList.contains(name))
       {
         // Если установлен пароль
@@ -255,8 +257,8 @@ void TreeItem::setAllFieldDirect(const QMap<QString, QString> nameAndValue)
 
 QIcon TreeItem::getIcon()
 {
-  // Если ветка не зашифрована
-  if( fieldsTable["crypt"]!="1" )
+  // Если ветка не зашифрована (читать через value, см. setField)
+  if( fieldsTable.value(QStringLiteral("crypt"))!=QStringLiteral("1") )
     return icon; // Просто возвращается иконка, не важно, пустая или с рисунком
   else
   {
@@ -588,7 +590,8 @@ void TreeItem::switchToEncrypt(void)
   qDebug() << "TreeItem::switchToEncrypt() : Crypt tree item " << fieldsTable["name"] << "id" << fieldsTable["id"];
 
   // Если ветка оказалось заашифрованной ее нельзя зашифровывать второй раз
-  if(fieldsTable["crypt"]=="1")
+  // (читать через value, см. setField)
+  if(fieldsTable.value(QStringLiteral("crypt"))==QStringLiteral("1"))
     return;
 
   // Устанавливается поле, что ветка зашифрована
@@ -614,8 +617,8 @@ void TreeItem::switchToDecrypt(void)
   qDebug() << "TreeItem::switchToDecrypt() : Decrypt tree item" << fieldsTable["name"] << "id" << fieldsTable["id"];
 
   // Если ветка оказалось незашифрованной, нечего расшифровывать
-  if(fieldsTable["crypt"].length()==0 ||
-     fieldsTable["crypt"]=="0")
+  if(fieldsTable.value(QStringLiteral("crypt")).length()==0 ||
+     fieldsTable.value(QStringLiteral("crypt"))==QStringLiteral("0"))
     return;
 
   // Устанавливается поле, что ветка не зашифрована

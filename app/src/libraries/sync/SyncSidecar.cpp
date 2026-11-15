@@ -5,6 +5,8 @@
 #include <QCryptographicHash>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSaveFile>
+#include <QDebug>
 
 #include "SyncSidecar.h"
 
@@ -26,7 +28,27 @@ SyncSidecar &SyncSidecar::instance(void)
 
 void SyncSidecar::init(const QString &xmlFileName)
 {
-    instance().load(xmlFileName);
+    SyncSidecar &self=instance();
+
+    if(self.load(xmlFileName))
+        return;
+
+    // Битый сайдкар — не молчим (раньше load() игнорировался, все touch*
+    // становились no-op и журнал терялся молча). В журнале живут tombstone'ы:
+    // без них удаления воскресают с пира. Файл убираем в карантин,
+    // состояние начинаем с пустого и пишем заново при первом сейве
+    const QString path=sidecarPathForXml(xmlFileName);
+    const QString quarantine=path+QStringLiteral(".corrupt-")
+        +QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMddHHmmss"));
+
+    if(QFile::rename(path, quarantine))
+        qWarning() << "SyncSidecar: sidecar was corrupted, moved to"
+                   << quarantine;
+
+    qWarning() << "SyncSidecar: sync journal (incl. tombstones) is lost, "
+                  "deleted items may come back from peers until re-deleted";
+
+    self.load(xmlFileName); // файла больше нет — пустое состояние, не ошибка
 }
 
 
@@ -262,13 +284,24 @@ bool SyncSidecar::save(void) const
     root[QStringLiteral("entries")]=entries;
     root[QStringLiteral("tombstones")]=tombs;
 
-    QFile file(m_sidecarPath);
+    // Атомарно (QSaveFile): обрыв посреди записи раньше оставлял
+    // обрезанный JSON, load() его не брал и журнал терялся целиком
+    QSaveFile file(m_sidecarPath);
 
-    if(!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        qWarning() << "SyncSidecar: cannot write" << m_sidecarPath;
         return false;
+    }
 
     file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
-    file.close();
+
+    if(!file.commit())
+    {
+        qWarning() << "SyncSidecar: commit failed for" << m_sidecarPath;
+        return false;
+    }
+
     return true;
 }
 

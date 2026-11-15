@@ -955,15 +955,19 @@ QString KnowTreeModel::createSyncedBranch(const QString &parentId,
     QMap<QString, QString> branchFields=fields;
     addNewBranch(parent, branchFields, true);
 
-    // addNewBranch всегда пропускает поле crypt (его ставит switchToEncrypt).
-    // У синка шифртекст уже готов, поэтому флаг выставляется напрямую
-    if(fields.value(QStringLiteral("crypt"))==QStringLiteral("1"))
-    {
-        TreeItem *created=getItemById(id);
+    TreeItem *created=getItemById(id);
 
-        if(created!=nullptr)
-            created->setField(QStringLiteral("crypt"), QStringLiteral("1"));
-    }
+    if(created==nullptr)
+        return QString();
+
+    // addNewBranch пропускает crypt и неизвестные поля (GUI-путь),
+    // а хеш ветки считается по ВСЕМ полям: досылаем поля слепо целиком,
+    // иначе создание никогда не сойдется с пиром по хешу.
+    // crypt="1" ставим тем же слепым способом: setField пришлось бы
+    // шифровать уже готовый шифртекст (см. SyncNoteIo::applyBranch)
+    QMap<QString, QString> rawFields=fields;
+    rawFields.insert(QStringLiteral("id"), id);
+    created->setAllFieldDirect(rawFields);
 
     return id;
 }

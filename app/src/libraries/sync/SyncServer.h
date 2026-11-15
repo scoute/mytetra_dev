@@ -11,6 +11,7 @@
 
 class QTcpServer;
 class QTcpSocket;
+class QUdpSocket;
 
 // Минимальный HTTP/1.1 сервер синхронизации (Qt 5.15 без QHttpServer).
 // Одно соединение — один запрос — один ответ — закрытие. Тела JSON,
@@ -42,10 +43,16 @@ public:
     // иначе на сервере вечно "(unknown address)" и обратный синк невозможен
     QString lastPeerAddress(void) const;
 
+    // Идентичность для LAN-discovery (ответ на UDP-проб, см. SyncDiscovery).
+    // Пусто — на пробы не отвечаем. Порт в ответ добавит сервер сам
+    using DiscoveryIdentity = std::function<QJsonObject()>;
+    void setDiscoveryIdentity(DiscoveryIdentity identity);
+
 private slots:
 
     void onNewConnection(void);
     void onReadyRead(void);
+    void onDiscoveryDatagram(void);
 
 private:
 
@@ -62,6 +69,10 @@ private:
     QTcpServer *server=nullptr;
     quint16 listenPort=0;
     QMap<QString, Handler> routes;
+
+    // LAN-discovery: UDP на том же порту, ответы на пробы скана
+    QUdpSocket *udpSocket=nullptr;
+    DiscoveryIdentity discoveryIdentity;
 
     // Недочитанные запросы по сокетам: readAll в onReadyRead забирает все,
     // что приехало, остаток ждет следующего пакета здесь, а не теряется

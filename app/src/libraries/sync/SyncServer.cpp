@@ -1,11 +1,14 @@
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QUdpSocket>
 #include <QHostAddress>
 #include <QJsonDocument>
+#include <QNetworkDatagram>
 #include <QElapsedTimer>
 #include <QDebug>
 
 #include "SyncServer.h"
+#include "SyncDiscovery.h"
 #include "SyncDebug.h"
 #include "main.h"
 
@@ -56,6 +59,24 @@ bool SyncServer::start(quint16 port)
 
     listenPort=server->serverPort();
 
+    // LAN-discovery: UDP на том же порту. Если порт UDP занят —
+    // работаем без скана, TCP-синк важнее
+    if(udpSocket==nullptr)
+    {
+        udpSocket=new QUdpSocket(this);
+        connect(udpSocket, &QUdpSocket::readyRead,
+                this, &SyncServer::onDiscoveryDatagram);
+    }
+
+    if(!udpSocket->bind(QHostAddress::AnyIPv4, listenPort,
+                        QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint))
+    {
+        qWarning() << "SyncServer: UDP discovery bind failed on port"
+                   << listenPort << "- scan will not find this hub";
+        delete udpSocket;
+        udpSocket=nullptr;
+    }
+
     // Встроенный маршрут живости: версия приложения и протокола sync/1.
     // Клиент по нему же проверяет что говорит с MyTetra, а не с чем-то еще
     addRoute(QStringLiteral("GET /ping"),
@@ -80,7 +101,52 @@ void SyncServer::stop(void)
     if(server->isListening())
         server->close();
 
+    if(udpSocket!=nullptr)
+        udpSocket->close();
+
     listenPort=0;
+}
+
+
+void SyncServer::setDiscoveryIdentity(DiscoveryIdentity identity)
+{
+    discoveryIdentity=identity;
+}
+
+
+void SyncServer::onDiscoveryDatagram(void)
+{
+    if(udpSocket==nullptr)
+        return;
+
+    while(udpSocket->hasPendingDatagrams())
+    {
+        const QNetworkDatagram datagram=udpSocket->receiveDatagram();
+        const QJsonObject probe=SyncDiscovery::parseProbe(datagram.data());
+
+        if(probe.isEmpty() || !discoveryIdentity)
+            continue;
+
+        const QJsonObject identity=discoveryIdentity();
+        const QString selfId=identity.value(QStringLiteral("deviceId")).toString();
+        const QString theirId=probe.value(QStringLiteral("deviceId")).toString();
+
+        // на свой же проб не отвечаем (стенд "два экземпляра на одной
+        // машине" шлет проб и в loopback)
+        if(theirId.isEmpty() || theirId==selfId)
+            continue;
+
+        const QByteArray reply=SyncDiscovery::buildReply(
+            selfId,
+            identity.value(QStringLiteral("deviceName")).toString(),
+            listenPort);
+        udpSocket->writeDatagram(reply, datagram.senderAddress(),
+                                 datagram.senderPort());
+
+        if(syncDebugEnabled())
+            qDebug() << "SyncServer: discovery probe from" << theirId
+                     << "answered, port" << listenPort;
+    }
 }
 
 

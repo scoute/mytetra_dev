@@ -466,7 +466,8 @@ bool SyncPlan::empty(void) const
 {
     return uploadNotes.isEmpty() && downloadNotes.isEmpty() &&
            uploadBranches.isEmpty() && downloadBranches.isEmpty() &&
-           deleteLocal.isEmpty() && conflicts.isEmpty();
+           deleteLocal.isEmpty() && pushTombs.isEmpty() &&
+           conflicts.isEmpty();
 }
 
 
@@ -555,19 +556,31 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
     // нашего удаления — качаем к себе (воскрешаем), tomb им не пушим
     // (pushOwnTombstones ту же проверку делает сам перед отправкой).
     // Tombstone ветки покрывает поддерево: их заметки/дети под нашей
-    // удаленной веткой не качаются (наше удаление поддерева в силе)
+    // удаленной веткой не качаются (наше удаление поддерева в силе).
+    // Tomb, которого нет у хаба, — в pushTombs: иначе удаление как
+    // единственное изменение никогда не уедет (ранний выход по пустому плану)
     for(auto it=local.tombstones.constBegin();
         it!=local.tombstones.constEnd(); ++it)
     {
         const QString id=it.key();
         const qint64 tombTime=it.value();
+        bool beaten=false;
 
         if(remote.notes.contains(id)
            && remote.notes.value(id).mtime>tombTime)
+        {
             plan.downloadNotes << id;
+            beaten=true;
+        }
         else if(remote.branches.contains(id)
                 && remote.branches.value(id).mtime>tombTime)
+        {
             plan.downloadBranches << id;
+            beaten=true;
+        }
+
+        if(!beaten && !remote.tombstones.contains(id))
+            plan.pushTombs << id;
     }
 
     // Ветки: нет там — загрузить туда; нет здесь — скачать оттуда;

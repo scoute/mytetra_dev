@@ -68,6 +68,12 @@ private:
     QJsonObject postJson(const QString &host, quint16 port,
                          const QString &path, const QJsonObject &body,
                          bool &ok);
+
+    // Подписать тело proof'ом пары (маршрут — часть challenge).
+    // Без секрета (до спаривания) тело уходит как есть — сервер ответит
+    // not-paired/auth-failed, гейт пары выше по стеку
+    QJsonObject withAuth(const QString &route,
+                         const QJsonObject &body);
     QJsonObject getJson(const QString &host, quint16 port,
                         const QString &path, bool &ok);
 

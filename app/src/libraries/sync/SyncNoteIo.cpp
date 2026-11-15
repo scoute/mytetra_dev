@@ -276,16 +276,83 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     if(table==nullptr)
         return QStringLiteral("no table");
 
-    const QByteArray textBytes=
-        QByteArray::fromBase64(request.value(QStringLiteral("text"))
-                               .toString().toLatin1());
-
     const QJsonObject fields=request.value(QStringLiteral("fields")).toObject();
     const QString dir=fields.value(QStringLiteral("dir")).toString();
     const QString file=fields.value(QStringLiteral("file")).toString();
 
     if(dir.isEmpty() || file.isEmpty())
         return QStringLiteral("bad record dir");
+
+    const int pos=table->getPosById(id);
+    const QStringList curPath=model->getRecordPath(id);
+    const bool needMove=(pos<0 && !curPath.isEmpty()
+                         && curPath.last()!=branchId);
+
+    // Проверки ДО записи на диск: иначе при отказе (смена шифрования)
+    // файлы уже перезаписаны, а модель/сайдкар старые — молчаливое
+    // расхождение навсегда (сайдкар приоритетнее живого хеша)
+    if(pos>=0 && !needMove)
+    {
+        // Смена флага шифрования через синк запрещена (как у веток):
+        // расшифровать без пароля нечем, молча портить нельзя
+        Record *existing=model->getRecord(id);
+
+        if(existing==nullptr)
+            return QStringLiteral("record lost");
+
+        const QString oldCrypt=
+            existing->getNaturalFieldSource(QStringLiteral("crypt"));
+        const QString newCrypt=fields.value(QStringLiteral("crypt")).toString();
+
+        // "" и "0" — одно и то же (не шифровано), см. normCrypt
+        if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
+            return QStringLiteral("crypt change unsupported");
+    }
+
+    if(needMove)
+    {
+        // Переезд записи между ветками: изъять из старой таблицы
+        // (без диска/корзины/сайдкара — это не удаление) и добавить
+        // в новую. Файлы лежат в dir записи и не трогаются
+        TreeItem *oldBranch=model->getItemById(curPath.last());
+
+        if(oldBranch==nullptr)
+            return QStringLiteral("no old branch");
+
+        RecordTableData *oldTable=oldBranch->recordtableGetTableData();
+
+        if(oldTable==nullptr)
+            return QStringLiteral("no old table");
+
+        const int oldPos=oldTable->getPosById(id);
+
+        if(oldPos<0)
+            return QStringLiteral("record lost");
+
+        Record moving;
+
+        if(!oldTable->takeRecordForMove(oldPos, moving))
+            return QStringLiteral("record lost");
+
+        // Смена шифрования при переезде — тот же запрет. Запись уже
+        // изъята (старой позиции нет): кладем в новую как есть, диск
+        // не тронут, данные целы; сессия повторит и сойдется
+        const QString oldCrypt=
+            moving.getNaturalFieldSource(QStringLiteral("crypt"));
+        const QString newCrypt=fields.value(QStringLiteral("crypt")).toString();
+
+        if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
+        {
+            table->appendSyncedRecord(moving);
+            return QStringLiteral("crypt change unsupported");
+        }
+
+        table->appendSyncedRecord(moving);
+    }
+
+    const QByteArray textBytes=
+        QByteArray::fromBase64(request.value(QStringLiteral("text"))
+                               .toString().toLatin1());
 
     const QString basePath=tetradir+QStringLiteral("/base/")
                            +dir+QStringLiteral("/")+file;
@@ -316,30 +383,16 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
 
     const qint64 remoteMtime=request.value(QStringLiteral("mtime")).toVariant().toLongLong();
     const QString remoteHash=request.value(QStringLiteral("hash")).toString();
-    const int pos=table->getPosById(id);
 
-    if(pos>=0)
+    // После переезда запись уже в новой таблице: позиция пересчитывается
+    const int finalPos=needMove ? table->getPosById(id) : pos;
+
+    if(finalPos>=0)
     {
-        // Смена флага шифрования через синк запрещена (как у веток):
-        // расшифровать без пароля нечем, молча портить нельзя
-        {
-            Record *existing=model->getRecord(id);
-
-            if(existing==nullptr)
-                return QStringLiteral("record lost");
-
-            const QString oldCrypt=
-                existing->getNaturalFieldSource(QStringLiteral("crypt"));
-            const QString newCrypt=fields.value(QStringLiteral("crypt")).toString();
-
-            // "" и "0" — одно и то же (не шифровано), см. normCrypt
-            if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
-                return QStringLiteral("crypt change unsupported");
-        }
-
         // Слепая запись сырого источника (шифротекст как есть, без пароля).
         // table->setField здесь нельзя: для crypt=1 он требует ключ
-        // и роняет criticalError-модалку, вешая сервер
+        // и роняет criticalError-модалку, вешая сервер.
+        // Смена шифрования проверена до записи на диск (см. выше)
         {
             Record *record=model->getRecord(id);
 

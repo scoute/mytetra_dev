@@ -80,6 +80,12 @@ public:
     // обновляет вызывающий (reset модели или перезагрузка)
     int appendSyncedRecord(const Record &record);
 
+    // Изъять запись из таблицы без диска/корзины/сайдкара (переезд
+    // записи между ветками по синку): запись целиком в out, файлы
+    // на диске не трогаются (dir сохраняется). Представление обновляет
+    // вызывающий. false — плохой pos
+    bool takeRecordForMove(int pos, Record &out);
+
     bool isRecordExists(QString id);
     bool isBlockRecordExists();
 

@@ -109,7 +109,7 @@ if [[ "${#UNIQUES[@]}" -gt 0 ]]; then
     exit 2
 fi
 
-echo "all OK, starting build"
+echo "all OK, starting build - v$(sed -n 's/^#define APPLICATION_RELEASE_VERSION  *//p;s/^#define APPLICATION_RELEASE_SUBVERSION  */./p;s/^#define APPLICATION_RELEASE_MICROVERSION  */./p' "${SCRIPT_DIR}/app/src/main.h" | tr -d '\n')"
 
 # Пауза, чтобы человек глазами успел увидеть результат проверок
 sleep 1

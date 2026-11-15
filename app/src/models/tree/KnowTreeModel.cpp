@@ -1350,15 +1350,16 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
             collectSubtreeBranchIds(topItem, deleteBranchIds);
     }
 
-    // Вызов удаления веток
+    // Список удаляемых записей собирается ДО любых удалений (иначе
+    // указатели элементов протухнут), чтобы закрыть открепляемые окна
     for(int i = 0; i < selectItems.size(); ++i)
-    {
-        // Собирается список удаляемых записей, чтобы закрыть открепляемые окна
-        // у записей, которые были удалены
-        deleteResordsId.unite( *(this->getRecordsIdList(this->getItem(selectItems.at(i))).data()) );
+        deleteResordsId.unite(
+            *(this->getRecordsIdList(this->getItem(selectItems.at(i))).data()) );
 
+    // Вызов удаления веток: сначала глубокие (сортировка выше),
+    // удаление родителя не трогает уже удаленных потомков
+    for(int i = 0; i < selectItems.size(); ++i)
         this->deleteOneBranch(selectItems.at(i));
-    }
 
     // Синк-сайдкар: tombstone на каждую удаленную ветку.
     // Записи поддерева покрыты tombstone'ами веток: их локальные entry
@@ -1411,11 +1412,14 @@ void KnowTreeModel::deleteOneBranch(QModelIndex index)
  ( this->getItem(path) )->recordtableDeleteAllRecords();
  // ( knowTreeModel->getItem(path) )->removeAllChildren(); // Команда действительно не нужна. Далее в removeRows() вызывается removeChildren()
 
- // Удаление ветки на экране, при этом удалятся все подветки
- qDebug() << "This branch have row() as" << index.row();
- if(index.isValid()) qDebug() << "Index valid";
- else qDebug() << "Index non valid";
- this->removeRows(index.row(), 1, index.parent());
+ // Удаление ветки на экране, при этом удалятся все подветки.
+ // row/parent берутся ЖИВЫМИ от элемента: индекс протухает при
+ // мульти-удалении (после удаления соседа его row сдвигается) —
+ // удаление уходило не в ту ветку и освобождало TreeItem, который
+ // следующая итерация еще читала (SIGSEGV в getRecordsIdList)
+ TreeItem *parentOfItem=item->parent();
+ this->removeRows(item->childNumber(), 1,
+                  this->getIndexByItem(parentOfItem));
 
  /*
  // Удаление всех нужных подветок

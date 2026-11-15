@@ -9,6 +9,7 @@
 #include <QDebug>
 
 #include "SyncSidecar.h"
+#include "SyncDebug.h"
 
 
 namespace
@@ -128,6 +129,25 @@ void SyncSidecar::reset(void)
 
     if(g_instance->isLoaded())
         g_instance->save();
+
+    syncDbg("sidecar: journal reset");
+}
+
+
+void SyncSidecar::clearTombstones(void)
+{
+    if(g_instance==nullptr)
+        return;
+
+    const int count=g_instance->m_tombstones.size();
+    g_instance->m_tombstones.clear();
+
+    if(g_instance->isLoaded())
+        g_instance->save();
+
+    if(count>0)
+        syncDbg("sidecar: "+QString::number(count)
+                +" tombstone(s) cleared (new pairing epoch)");
 }
 
 
@@ -267,6 +287,8 @@ bool SyncSidecar::load(const QString &xmlFileName)
         m_tombstones.insert(it.key(), it.value().toVariant().toLongLong());
 
     m_loaded=true;
+    syncDbg("sidecar loaded: "+QString::number(m_entries.size())
+            +" entries, "+QString::number(m_tombstones.size())+" tombstones");
     return true;
 }
 
@@ -312,6 +334,7 @@ bool SyncSidecar::save(void) const
     if(!file.commit())
     {
         qWarning() << "SyncSidecar: commit failed for" << m_sidecarPath;
+        syncDbg("sidecar: SAVE FAILED "+m_sidecarPath);
         return false;
     }
 

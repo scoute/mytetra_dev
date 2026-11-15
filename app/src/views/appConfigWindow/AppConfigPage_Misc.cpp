@@ -47,6 +47,11 @@ void AppConfigPage_Misc::setupUi(void)
   enableActionLog->setText(tr("Enable action logging (experimental)"));
   enableActionLog->setChecked(mytetraConfig.getEnableLogging());
 
+  // Отладка синхронизации: подробный журнал в консоли и syncdebug.log
+  enableSyncDebug=new QCheckBox(this);
+  enableSyncDebug->setText(tr("Enable sync debug (console + syncdebug.log)"));
+  enableSyncDebug->setChecked(mytetraConfig.get_syncDebugEnabled());
+
   // Разрешение/запрещение создавать пустую запись (без текста)
   enableCreateEmptyRecord=new QCheckBox(this);
   enableCreateEmptyRecord->setText(tr("Create empty note enable"));
@@ -82,6 +87,7 @@ void AppConfigPage_Misc::assembly(void)
   centralLayout->addWidget(cutBranchConfirm);
   centralLayout->addWidget(printDebugMessages);
   centralLayout->addWidget(enableActionLog);
+  centralLayout->addWidget(enableSyncDebug);
   centralLayout->addWidget(enableCreateEmptyRecord);
   centralLayout->addWidget(dangerBox);
   centralLayout->addStretch();
@@ -123,6 +129,10 @@ int AppConfigPage_Misc::applyChanges(void)
     mytetraConfig.setEnableLogging(enableActionLog->isChecked());
     result=1;
   }
+
+  // Сохраняется настройка отладки синхронизации
+  if(mytetraConfig.get_syncDebugEnabled()!=enableSyncDebug->isChecked())
+    mytetraConfig.set_syncDebugEnabled(enableSyncDebug->isChecked());
 
   // Сохраняется настройка возможности создания записи, не содержащей текст
   if(mytetraConfig.getEnableCreateEmptyRecord()!=enableCreateEmptyRecord->isChecked())

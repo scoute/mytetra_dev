@@ -31,6 +31,61 @@ void SyncSession::setStrategyResolver(StrategyResolver resolver)
 }
 
 
+void SyncSession::setDeleteGuard(DeleteGuard guard)
+{
+    deleteGuard=guard;
+}
+
+
+namespace
+{
+// Сколько элементов (ветки со своими записями и поддеревьями) исчезнет
+// вместе с id: удаление ветки тащит все поддерево
+int subtreeItemCount(const QString &id,
+                     const QMap<QString, SyncBranchInfo> &branches,
+                     const QMap<QString, SyncNoteInfo> &notes)
+{
+    QMap<QString, QStringList> childBranches;
+    QMap<QString, int> noteCounts;
+
+    for(auto it=branches.constBegin(); it!=branches.constEnd(); ++it)
+        childBranches[it.value().parentId] << it.key();
+
+    for(auto it=notes.constBegin(); it!=notes.constEnd(); ++it)
+        noteCounts[it.value().branchId]++;
+
+    int count=0;
+    QStringList queue;
+    queue << id;
+    QSet<QString> seen;
+
+    while(!queue.isEmpty())
+    {
+        const QString cur=queue.takeFirst();
+
+        if(cur.isEmpty() || seen.contains(cur))
+            continue;
+
+        seen.insert(cur);
+
+        if(notes.contains(cur))
+        {
+            count++;
+            continue;
+        }
+
+        if(!branches.contains(cur))
+            continue;
+
+        count+=1+noteCounts.value(cur);
+        queue << childBranches.value(cur);
+    }
+
+    return count;
+}
+}
+
+
 void SyncSession::skipItem(SyncReport &report, const QString &entry)
 {
     report.errors << entry;
@@ -66,10 +121,10 @@ void SyncSession::addLog(const QString &line)
 {
     logLines << line;
 
-    // Живой прогон (ПК + VM): каждый шаг сразу в stderr, иначе зависший
-    // клиент молчит и непонятно где встал. Только под MYTETRA_SYNC_DEBUG=1
-    if(syncDebugEnabled())
-        qDebug() << "SyncStep:" << line;
+    // Каждый шаг сессии в консоль и журнал синка (включается настройкой
+    // "Отладка синка" или MYTETRA_SYNC_DEBUG=1): зависший клиент молчит
+    // и непонятно где встал, а журнал можно просто прислать
+    syncDbg("session: "+line);
 }
 
 
@@ -299,6 +354,41 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         addLog(QStringLiteral("already in sync"));
         report.ok=true;
         return report;
+    }
+
+    // 3а. Страховка от массового удаления: история показала, что синк,
+    // уничтожающий заметную часть базы, требует явного подтверждения
+    // (удаление локальной базы + переспаривание как-то раз обнулило сервер)
+    int remoteDeletes=0;
+
+    for(const QString &id : plan.pushTombs)
+        remoteDeletes+=subtreeItemCount(id, remote.branches, remote.notes);
+
+    int localDeletes=0;
+
+    for(const QString &id : plan.deleteLocal)
+        localDeletes+=subtreeItemCount(id, local.branches, local.notes);
+
+    const int remoteItems=remote.branches.size()+remote.notes.size();
+    const int localItems=local.branches.size()+local.notes.size();
+
+    if(remoteDeletes>0 || localDeletes>0)
+        addLog(QStringLiteral("delete impact: %1 item(s) on hub, %2 locally")
+               .arg(remoteDeletes).arg(localDeletes));
+
+    const bool massRemote=remoteDeletes>=10
+        || (remoteDeletes>=3 && remoteDeletes*2>=remoteItems);
+    const bool massLocal=localDeletes>=10
+        || (localDeletes>=3 && localDeletes*2>=localItems);
+
+    if((massRemote || massLocal) && deleteGuard)
+    {
+        if(!deleteGuard(remoteDeletes, localDeletes))
+        {
+            addLog(QStringLiteral("mass delete cancelled"));
+            report.error=QStringLiteral("Sync cancelled: mass delete");
+            return report;
+        }
     }
 
     // 4. Заливка нашего на хаб

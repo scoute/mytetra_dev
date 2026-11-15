@@ -8,6 +8,7 @@
 #include <QSet>
 
 #include "SyncNoteIo.h"
+#include "SyncDebug.h"
 #include "SyncSidecar.h"
 #include "SyncManifest.h"
 #include "libraries/FixedParameters.h"
@@ -494,9 +495,18 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         const QStringList entries=noteDir.entryList(QDir::Files | QDir::Hidden,
                                                     QDir::Name);
 
+        int removedCount=0;
+
         for(const QString &name : entries)
             if(!keepNames.contains(name))
+            {
                 DiskHelper::removeFileToTrash(noteDir.absoluteFilePath(name));
+                removedCount++;
+            }
+
+        if(removedCount>0)
+            syncDbg("apply note "+id+": "+QString::number(removedCount)
+                    +" stale file(s) in note dir -> trash");
     }
 
     const qint64 remoteMtime=request.value(QStringLiteral("mtime")).toVariant().toLongLong();
@@ -605,6 +615,10 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
                            QStringLiteral("note"));
     }
 
+    syncDbg("apply note "+id+" branch="+branchId
+            +" text="+QString::number(textBytes.size())
+            +" bytes, dirFiles applied");
+
     return QString();
 }
 
@@ -660,13 +674,18 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         const QString curParentWire=(curParent==QStringLiteral("0"))
             ? QString() : curParent;
 
+        bool moved=false;
+
         if(newParent!=curParentWire)
         {
             if(!model->moveSyncedBranch(id, newParent))
                 return QStringLiteral("cannot move branch");
+
+            moved=true;
         }
 
         SyncSidecar::adopt(id, remoteMtime, remoteHash, QStringLiteral("branch"));
+        syncDbg("apply branch "+id+" updated"+(moved ? " (moved)" : ""));
         return QString();
     }
 
@@ -676,6 +695,8 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         return QStringLiteral("cannot create branch");
 
     SyncSidecar::adopt(id, remoteMtime, remoteHash, QStringLiteral("branch"));
+    syncDbg("apply branch "+id+" created under "
+            +(parentId.isEmpty() ? QStringLiteral("root") : parentId));
     return QString();
 }
 
@@ -717,6 +738,9 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
         for(const QString &recordId : subRecords)
             SyncSidecar::dropEntry(recordId);
 
+        syncDbg("apply delete "+id+": branch + subtree ("
+                +QString::number(subBranches.size())+" branches, "
+                +QString::number(subRecords.size())+" records) -> trash");
         return QString();
     }
 
@@ -747,6 +771,7 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
         table->deleteRecord(pos);
 
     SyncSidecar::adoptTombstone(id, deletedAt);
+    syncDbg("apply delete "+id+": record deleted");
     return QString();
 }
 
@@ -781,6 +806,9 @@ TreeItem *findForeignChildByName(TreeItem *parent, const QString &name,
 void mergeBranchInto(KnowTreeModel *model, TreeItem *from, TreeItem *to,
                      const QSet<QString> &clientIds)
 {
+    syncDbg("merge branch "+from->getField(QStringLiteral("id"))
+            +" -> "+to->getField(QStringLiteral("id"))
+            +" ("+from->getField(QStringLiteral("name"))+")");
     // подветки — с конца: переносы и удаления меняют список детей
     for(int i=from->childCount()-1; i>=0; --i)
     {
@@ -833,6 +861,8 @@ QString mergeByName(KnowTreeModel *model, const QStringList &clientBranchIds)
         return QStringLiteral("bad request");
 
     const QSet<QString> clientIds=clientBranchIds.toSet();
+    syncDbg("merge-by-name start, own branches="
+            +QString::number(clientBranchIds.size()));
 
     // Верхний уровень: наши ветки вливаются в одноименные ихние;
     // без пары остаются как есть (просто новые ветки на хабе)
@@ -886,6 +916,9 @@ QString wipeAll(KnowTreeModel *model)
     // tombstone'ами (это была бы порча чужих данных), а его содержимое
     // должно приехать свежим без edit-wins от нашей истории
     SyncSidecar::reset();
+
+    syncDbg("wipe all: "+QString::number(list.size())
+            +" top-level branches -> trash, journal reset");
 
     return QString();
 }

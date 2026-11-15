@@ -1783,6 +1783,19 @@ QString MainWindow::runSyncToHeadless(const QString &host,
             return askSyncStrategy(this, localItems, remoteItems);
         });
 
+    // Массовое удаление — только с явного подтверждения
+    session.setDeleteGuard(
+        [this](int remoteDeletes, int localDeletes) -> bool {
+            return QMessageBox::question(
+                this, tr("Sync"),
+                tr("Sync will delete %1 item(s) on the other side "
+                   "and %2 on this device.\n"
+                   "Deleted items go to trash.\n\nContinue?")
+                    .arg(remoteDeletes).arg(localDeletes),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No)==QMessageBox::Yes;
+        });
+
     // PIN пробрасываем и в сессию: ее починка пары — вторая линия обороны
     // (предсессионная выше обычно уже все решила)
     const SyncReport report=session.run(host, port, pin);

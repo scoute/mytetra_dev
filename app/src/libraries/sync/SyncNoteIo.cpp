@@ -5,11 +5,13 @@
 #include <QJsonArray>
 #include <QModelIndex>
 #include <QModelIndexList>
+#include <QSet>
 
 #include "SyncNoteIo.h"
 #include "SyncSidecar.h"
 #include "SyncManifest.h"
 #include "libraries/FixedParameters.h"
+#include "libraries/helpers/DiskHelper.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
 #include "models/recordTable/Record.h"
@@ -181,6 +183,7 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
     answer[QStringLiteral("text")]=QString::fromLatin1(textBytes.toBase64());
 
     QJsonArray attaches;
+    QStringList attachFileNames;
     AttachTableData attachTable=record->getAttachTable();
 
     for(int i=0; i<attachTable.size(); ++i)
@@ -220,9 +223,45 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
         a[QStringLiteral("size")]=attachTable.getFileSize(i);
         a[QStringLiteral("data")]=QString::fromLatin1(data.toBase64());
         attaches.append(a);
+        attachFileNames << a.value(QStringLiteral("file")).toString();
     }
 
     answer[QStringLiteral("attaches")]=attaches;
+
+    // Прочие файлы каталога заметки (инлайн-картинки и т.п.): про них
+    // нет данных в mytetra.xml (они не в <files> записи), и без явной
+    // передачи они не доезжают вовсе — белые квадраты в заметке после
+    // синка. Шлем все файлы каталога, кроме текста и файлов аттачей.
+    // Хеш заметки остается текстовым: HTML включает ссылки на картинки,
+    // любое изменение картинок меняет текст -> пересинк; сами файлы
+    // картинок неизменяемы (редактор пишет их только при отсутствии)
+    {
+        const QDir noteDir=QDir(QFileInfo(textPath).absolutePath());
+        const QStringList entries=noteDir.entryList(QDir::Files | QDir::Hidden,
+                                                    QDir::Name);
+        QJsonArray dirFiles;
+
+        for(const QString &name : entries)
+        {
+            if(name==file || attachFileNames.contains(name))
+                continue;
+
+            bool have=false;
+            const QByteArray data=readBytes(noteDir.absoluteFilePath(name), have);
+
+            if(!have)
+                continue;
+
+            QJsonObject dirFile;
+            dirFile[QStringLiteral("file")]=name;
+            dirFile[QStringLiteral("data")]=
+                QString::fromLatin1(data.toBase64());
+            dirFiles.append(dirFile);
+        }
+
+        answer[QStringLiteral("dirFiles")]=dirFiles;
+    }
+
     return answer;
 }
 
@@ -410,6 +449,54 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
                              +QStringLiteral("/")
                              +a.value(QStringLiteral("file")).toString(), data))
             return QStringLiteral("cannot write attach");
+    }
+
+    // Прочие файлы каталога заметки (инлайн-картинки и т.п.): пишем
+    // как есть, слепо. Зеркальное удаление лишних — ТОЛЬКО если поле
+    // прислано: у старых пиров его нет, их локальные файлы трогать нельзя
+    const QString noteDirPath=basePath.section(QLatin1Char('/'), 0, -2);
+
+    if(request.contains(QStringLiteral("dirFiles")))
+    {
+        const QJsonArray dirFiles=
+            request.value(QStringLiteral("dirFiles")).toArray();
+        QSet<QString> keepNames;
+        keepNames << file;
+
+        for(const QJsonValue &value : attaches)
+        {
+            const QJsonObject a=value.toObject();
+
+            if(a.value(QStringLiteral("type")).toString()!=QStringLiteral("link"))
+                keepNames << a.value(QStringLiteral("file")).toString();
+        }
+
+        for(const QJsonValue &value : dirFiles)
+        {
+            const QJsonObject dirFile=value.toObject();
+            const QString name=dirFile.value(QStringLiteral("file")).toString();
+
+            if(name.isEmpty())
+                continue;
+
+            const QByteArray data=QByteArray::fromBase64(
+                dirFile.value(QStringLiteral("data")).toString().toLatin1());
+
+            if(!writeBytesAtomic(noteDirPath+QStringLiteral("/")+name, data))
+                return QStringLiteral("cannot write file");
+
+            keepNames << name;
+        }
+
+        // зеркало: лишние файлы в каталоге убираем в корзину (например,
+        // картинку, которую на той стороне удалили)
+        const QDir noteDir(noteDirPath);
+        const QStringList entries=noteDir.entryList(QDir::Files | QDir::Hidden,
+                                                    QDir::Name);
+
+        for(const QString &name : entries)
+            if(!keepNames.contains(name))
+                DiskHelper::removeFileToTrash(noteDir.absoluteFilePath(name));
     }
 
     const qint64 remoteMtime=request.value(QStringLiteral("mtime")).toVariant().toLongLong();

@@ -22,6 +22,12 @@ public:
  RecordTableScreen(QWidget *parent=nullptr);
  virtual ~RecordTableScreen();
 
+ // Отцепить вид и модель от данных перед разрушением окна:
+ // иначе ~QWidget->hideChildren дергает header->proxy->model->table,
+ // а RecordTableData уже мертва (SIGSEGV в rowCount, см. 095).
+ // setTableData(nullptr) через begin/endReset гасит виды корректно
+ void detachModels(void);
+
  int     getFirstSelectionPos(void);
  QString getFirstSelectionId(void);
  void    setSelectionToPos(int pos);

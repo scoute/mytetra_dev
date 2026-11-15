@@ -26,6 +26,11 @@ public:
 
  KnowTreeModel *knowTreeModel;
 
+ // Отцепить вид от модели перед разрушением окна: иначе
+ // ~QWidget->hideChildren дергает header->model->table,
+ // а данные дерева уже мертвы (SIGSEGV в rowCount, см. 095)
+ void detachModels(void);
+
  void saveKnowTree(void);
  bool reloadKnowTree(void);
 

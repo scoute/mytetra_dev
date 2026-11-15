@@ -52,6 +52,18 @@ RecordTableScreen::~RecordTableScreen()
 }
 
 
+void RecordTableScreen::detachModels(void)
+{
+    if(recordTableController!=nullptr)
+    {
+        if(recordTableController->getView()!=nullptr)
+            recordTableController->getView()->setModel(nullptr);
+
+        recordTableController->setTableData(nullptr);
+    }
+}
+
+
 // Настройка возможных действий
 void RecordTableScreen::setupActions(void)
 {

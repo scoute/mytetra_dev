@@ -73,6 +73,13 @@ TreeScreen::~TreeScreen()
 }
 
 
+void TreeScreen::detachModels(void)
+{
+    if(knowTreeView!=nullptr)
+        knowTreeView->setModel(nullptr);
+}
+
+
 void TreeScreen::setupActions(void)
 {
  QAction *ac;

@@ -29,7 +29,8 @@ protected:
 
   QCheckBox *cutBranchConfirm;        // Требуется ли показывать предупреждение при вырезании ветки
   QCheckBox *printDebugMessages;      // Выводить ли в консоль отладочные сообщения
-  QCheckBox *enableActionLog;         // Разрешено ли логирование действий
+  QCheckBox *enableActionLog;
+  QCheckBox *enableSyncDebug;         // Разрешено ли логирование действий
   QCheckBox *enableCreateEmptyRecord; // Разрешено ли создание записи, не содержащей текст (а только заголовок)
   QPushButton *editMyTetraConfigFile;
 

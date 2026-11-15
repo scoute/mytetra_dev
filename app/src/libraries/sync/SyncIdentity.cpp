@@ -5,6 +5,7 @@
 #include <QRandomGenerator>
 
 #include "SyncIdentity.h"
+#include "SyncSidecar.h"
 #include "models/appConfig/AppConfig.h"
 
 
@@ -113,7 +114,15 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     config->set_syncPairedDeviceId(peerId);
 
     if(isNewPair)
+    {
         config->set_syncAskStrategy(true);
+
+        // Новая пара — новая эпоха: старые tombstone'ы не должны
+        // поехать новому пиру и уничтожить его данные (это уже
+        // случалось: удаление локальной базы + новая пара -> обнулился
+        // сервер, потому что tombstone'ы пережили смену пары)
+        SyncSidecar::clearTombstones();
+    }
 
     // Пара пересоздана: старые "запрос"/взаимность протухли,
     // взаимность наступит после первого обмена с новым секретом

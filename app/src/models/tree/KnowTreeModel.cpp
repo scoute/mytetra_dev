@@ -11,6 +11,7 @@
 
 #include "libraries/ClipboardBranch.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncDebug.h"
 
 
 // Рекурсивный сбор id ветки и всех подветок для tombstone.
@@ -1358,6 +1359,8 @@ void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 
     // Вызов удаления веток: сначала глубокие (сортировка выше),
     // удаление родителя не трогает уже удаленных потомков
+    syncDbg("tree: multi-delete "+QString::number(selectItems.size())+" item(s)");
+
     for(int i = 0; i < selectItems.size(); ++i)
         this->deleteOneBranch(selectItems.at(i));
 
@@ -1418,6 +1421,8 @@ void KnowTreeModel::deleteOneBranch(QModelIndex index)
  // удаление уходило не в ту ветку и освобождало TreeItem, который
  // следующая итерация еще читала (SIGSEGV в getRecordsIdList)
  TreeItem *parentOfItem=item->parent();
+ syncDbg("tree: delete branch "+item->getField(QStringLiteral("id"))
+         +" row="+QString::number(item->childNumber()));
  this->removeRows(item->childNumber(), 1,
                   this->getIndexByItem(parentOfItem));
 

@@ -18,6 +18,7 @@
 #include "libraries/sync/SyncClient.h"
 #include "libraries/sync/SyncDebug.h"
 #include "libraries/sync/SyncDiscovery.h"
+#include "libraries/sync/SyncSidecar.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 
@@ -523,6 +524,19 @@ void SyncDevicesDialog::onSyncNow(void)
             return MainWindow::askSyncStrategy(this, localItems, remoteItems);
         });
 
+    // Массовое удаление — только с явного подтверждения
+    session.setDeleteGuard(
+        [this](int remoteDeletes, int localDeletes) -> bool {
+            return QMessageBox::question(
+                this, tr("Sync"),
+                tr("Sync will delete %1 item(s) on the other side "
+                   "and %2 on this device.\n"
+                   "Deleted items go to trash.\n\nContinue?")
+                    .arg(remoteDeletes).arg(localDeletes),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No)==QMessageBox::Yes;
+        });
+
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —
     // через Pair заново (осознанно, с показом фингерпринта выше).
     // Исключение — чужая сеть: там PIN нужен чтобы взять группу хаба
@@ -1017,6 +1031,9 @@ void SyncDevicesDialog::onUnpair(void)
     config->set_syncPairedDeviceId(QString());
     config->set_syncGroupId(QString());
 
+    // Журнал синка — в новую эпоху (см. SyncIdentity::adoptPairing)
+    SyncSidecar::reset();
+
     // Флаги пары по строке тоже гаснут: запрос принят/отклонен разрывом
     qDebug() << "SyncPair: unpaired" << id << ", offer/mutual cleared";
     config->clear_syncDeviceOffer(id);
@@ -1042,6 +1059,7 @@ void SyncDevicesDialog::onRemove(void)
     {
         config->set_syncPairingSecret(QString());
         config->set_syncPairedDeviceId(QString());
+        SyncSidecar::reset();
     }
 
     config->remove_syncDevice(id);
@@ -1078,6 +1096,9 @@ void SyncDevicesDialog::onResetAll(void)
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
         config->remove_syncDevice(info.id);
+
+    // Журнал синка — в новую эпоху
+    SyncSidecar::reset();
 
     refreshList();
 }

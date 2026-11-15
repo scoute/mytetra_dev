@@ -66,6 +66,13 @@ public:
         std::function<SyncStrategy(int localItems, int remoteItems)>;
     void setStrategyResolver(StrategyResolver resolver);
 
+    // Страховка от массового удаления: синк, который уничтожит заметную
+    // часть базы (ветки тащат поддеревья), требует подтверждения.
+    // true — продолжить. Без колбэка — выполняется без вопросов
+    using DeleteGuard =
+        std::function<bool(int remoteDeletes, int localDeletes)>;
+    void setDeleteGuard(DeleteGuard guard);
+
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;
 
@@ -119,6 +126,7 @@ private:
     QString tetradir;
     QStringList logLines;
     StrategyResolver strategyResolver;
+    DeleteGuard deleteGuard;
 
     void addLog(const QString &line);
 };

@@ -74,6 +74,11 @@ public:
     bool get_syncAskStrategy(void);
     void set_syncAskStrategy(bool value);
 
+    // Отладка синка: подробный журнал в консоли и syncdebug.log
+    // (включается в настройках или переменной MYTETRA_SYNC_DEBUG=1)
+    bool get_syncDebugEnabled(void);
+    void set_syncDebugEnabled(bool value);
+
     // Известные sync-устройства для окна Sync devices.
     // Хранятся группами syncDevices/<id>/{name,ip,port,firstSeen,lastSeen}.
     // Fingerprint считается из id на лету, хранить нечего

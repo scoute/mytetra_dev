@@ -282,6 +282,18 @@ void AppConfig::set_syncAskStrategy(bool value)
 }
 
 
+bool AppConfig::get_syncDebugEnabled(void)
+{
+    return m_conf->value("syncDebugEnabled", false).toBool();
+}
+
+
+void AppConfig::set_syncDebugEnabled(bool value)
+{
+    m_conf->setValue("syncDebugEnabled", value);
+}
+
+
 // Известные sync-устройства: сервер пишет всех кто стучался в hello,
 // клиент — тех к кому ходил на синк (с IP и портом для кнопки Sync now)
 QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)

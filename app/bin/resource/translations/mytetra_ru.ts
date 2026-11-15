@@ -689,6 +689,10 @@ Stored password will be cleared if uncheck this checkbox.</source>
         <source>Try remember cursor position at ordinary selection</source>
         <translation type="vanished">Пытаться вспомнить позицию курсора при обычном выборе записи</translation>
     </message>
+    <message>
+        <source>Enable sync debug (console + syncdebug.log)</source>
+        <translation>Отладка синка (консоль + syncdebug.log)</translation>
+    </message>
 </context>
 <context>
     <name>AppConfigPage_RecordTable</name>
@@ -3292,6 +3296,17 @@ How to sync?</source>
         <source>The server&apos;s data goes to trash, my base is uploaded in full.</source>
         <translation>Данные сервера уходят в корзину, моя база заливается целиком.</translation>
     </message>
+    <message>
+        <source>Sync will delete %1 item(s) on the other side and %2 on this device.
+Deleted items go to trash.
+
+Continue?</source>
+        <translation>Синхронизация удалит %1 элемент(ов) на другой стороне
+и %2 на этом устройстве.
+Удаленные элементы уйдут в корзину.
+
+Продолжить?</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -5525,4 +5540,18 @@ Please select single item for enabling edit operation.</source>
 %3.</translation>
     </message>
 </context>
+  <context>
+    <name>SyncDevicesDialog</name>
+    <message>
+        <source>Sync will delete %1 item(s) on the other side and %2 on this device.
+Deleted items go to trash.
+
+Continue?</source>
+        <translation>Синхронизация удалит %1 элемент(ов) на другой стороне
+и %2 на этом устройстве.
+Удаленные элементы уйдут в корзину.
+
+Продолжить?</translation>
+    </message>
+  </context>
 </TS>

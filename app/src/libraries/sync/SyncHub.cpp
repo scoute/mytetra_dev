@@ -41,7 +41,12 @@ static QString checkAuth(AppConfig *config, const QString &route,
     if(!SyncHandshake::checkDataAuth(config, route, request,
                                      QDateTime::currentMSecsSinceEpoch(),
                                      detail))
-        return detail.isEmpty() ? QStringLiteral("auth failed") : detail;
+    {
+        const QString error=detail.isEmpty() ? QStringLiteral("auth failed")
+                                             : detail;
+        syncDbg("hub: "+route+" rejected: "+error);
+        return error;
+    }
 
     return QString();
 }
@@ -183,6 +188,7 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         if(!authErr.isEmpty())
                 return authFailedAnswer(authErr);
 
+        syncDbg("hub: reset (wipe all, strategy push)");
         const QString error=SyncNoteIo::wipeAll(this->model);
 
         QJsonObject answer;
@@ -211,6 +217,7 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         for(const QJsonValue &value : arr)
             ids << value.toString();
 
+        syncDbg("hub: merge-by-name, own branches="+QString::number(ids.size()));
         QJsonObject answer;
         const QString error=SyncNoteIo::mergeByName(this->model, ids);
 
@@ -295,13 +302,10 @@ QJsonObject SyncHub::applyNote(const QJsonObject &request)
     const QString id=request.value(QStringLiteral("id")).toString();
     const QString error=SyncNoteIo::applyNote(model, tetradir, request);
 
-    if(syncDebugEnabled())
-    {
-        if(error.isEmpty())
-            qDebug() << "SyncHub: push-note" << id << "applied";
-        else
-            qDebug() << "SyncHub: push-note" << id << "rejected:" << error;
-    }
+    if(error.isEmpty())
+        syncDbg("hub: push-note "+id+" applied");
+    else
+        syncDbg("hub: push-note "+id+" rejected: "+error);
 
     QJsonObject answer;
 
@@ -319,13 +323,10 @@ QJsonObject SyncHub::applyBranch(const QJsonObject &request)
     const QString id=request.value(QStringLiteral("id")).toString();
     const QString error=SyncNoteIo::applyBranch(model, request);
 
-    if(syncDebugEnabled())
-    {
-        if(error.isEmpty())
-            qDebug() << "SyncHub: push-branch" << id << "applied";
-        else
-            qDebug() << "SyncHub: push-branch" << id << "rejected:" << error;
-    }
+    if(error.isEmpty())
+        syncDbg("hub: push-branch "+id+" applied");
+    else
+        syncDbg("hub: push-branch "+id+" rejected: "+error);
 
     QJsonObject answer;
 
@@ -342,13 +343,10 @@ QJsonObject SyncHub::applyDelete(const QString &id, qint64 deletedAt)
 {
     const QString error=SyncNoteIo::applyDelete(model, id, deletedAt);
 
-    if(syncDebugEnabled())
-    {
-        if(error.isEmpty())
-            qDebug() << "SyncHub: push-delete" << id << "applied";
-        else
-            qDebug() << "SyncHub: push-delete" << id << "rejected:" << error;
-    }
+    if(error.isEmpty())
+        syncDbg("hub: push-delete "+id+" applied");
+    else
+        syncDbg("hub: push-delete "+id+" rejected: "+error);
 
     QJsonObject answer;
 

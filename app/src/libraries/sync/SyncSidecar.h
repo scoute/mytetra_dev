@@ -80,6 +80,10 @@ public:
     // в корзину и пересоздается синком с чистого листа)
     static void reset(void);
 
+    // Сброс только tombstone'ов: новая пара — новая эпоха, старые
+    // удаления не должны поехать новому пиру и уничтожить его данные
+    static void clearTombstones(void);
+
     // Молча выкинуть entry без tombstone (мусор удаленного поддерева:
     // его покрывает tombstone ветки). Пишет сразу
     static void dropEntry(const QString &id);

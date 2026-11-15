@@ -36,6 +36,7 @@
 #include "libraries/PeriodicSyncro.h"
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncDiscovery.h"
+#include "libraries/sync/SyncSidecar.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -605,7 +606,12 @@ int main(int argc, char ** argv)
                 : mytetraConfig.get_syncDevices())
                 mytetraConfig.remove_syncDevice(info.id);
 
-            printf("Sync pairing cleared (secret, group, peer and device list). "
+            // Журнал синка — тоже в новую эпоху: старые tombstone'ы
+            // после переспаривания убивали бы данные пира
+            SyncSidecar::reset();
+
+            printf("Sync pairing cleared (secret, group, peer, device list "
+                   "and sync journal). "
                    "Re-pair both sides with the same --sync-pair PIN.\n");
             return 0;
         }
@@ -626,6 +632,7 @@ int main(int argc, char ** argv)
                 mytetraConfig.set_syncPairingSecret(QString());
                 mytetraConfig.set_syncPairedDeviceId(QString());
                 mytetraConfig.set_syncGroupId(QString());
+                SyncSidecar::reset();
             }
 
             if(!removeId.isEmpty())

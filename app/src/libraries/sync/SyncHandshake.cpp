@@ -62,8 +62,11 @@ void SyncHandshake::noteMutual(AppConfig *config, const QString &id,
     config->set_syncDeviceMutual(id);
 
     if(before<=0)
+    {
         qDebug() << "SyncHandshake: mutual pairing confirmed with"
                  << id << "(" << context << ")";
+        syncDbg("handshake: mutual pairing with "+id+" ("+context+")");
+    }
 }
 
 
@@ -322,6 +325,7 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
 
                 // Видно всегда, не только под дебагом: событие редкое и важное
                 qDebug() << "SyncHandshake:" << warning;
+                syncDbg("handshake: "+warning);
 
                 SyncHandshake::noteMutual(config, theirId, "re-pair via PIN");
             }
@@ -351,6 +355,7 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
                          theirName);
 
                 qDebug() << "SyncHandshake:" << warning;
+                syncDbg("handshake: "+warning);
 
                 SyncHandshake::noteMutual(config, theirId, "foreign network join");
             }

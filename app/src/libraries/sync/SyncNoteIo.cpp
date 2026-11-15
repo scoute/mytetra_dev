@@ -79,9 +79,11 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
     // Синхронизируются только натуральные поля (см. SyncManifestBuilder:
     // вычислимые hasAttach/attachCount роняют criticalError).
     // dir/file нужны приему для пути текста (base/dir/file),
-    // crypt — чтобы новая запись создавалась с тем же флагом
+    // crypt — чтобы новая запись создавалась с тем же флагом,
+    // id — чтобы втянутая запись не осталась без ид (иначе следующая
+    // сессия видит фантом "" и падает в serialize через "bad id")
     static const char *fieldNames[] = {
-        "name", "author", "url", "tags", "ctime",
+        "id", "name", "author", "url", "tags", "ctime",
         "block", "dir", "file", "crypt"
     };
 
@@ -373,6 +375,11 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
             if(FixedParameters::isRecordFieldNatural(it.key()))
                 record.setNaturalFieldSource(it.key(), it.value().toString());
+
+        // id дублируем явно из верха запроса: старые пиры его в fields
+        // не клали, а без ид запись-невидимка (фантом "" в манифесте).
+        // appendSyncedRecord ждет запись "с готовым id" — даем его
+        record.setNaturalFieldSource(QStringLiteral("id"), id);
 
         AttachTableData *attachTable=record.getAttachTablePointer();
 

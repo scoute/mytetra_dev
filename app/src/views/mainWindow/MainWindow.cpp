@@ -98,6 +98,17 @@ MainWindow::~MainWindow()
 {
     saveAllState();
 
+    // Виды отцепляются от моделей здесь, в теле деструктора, пока все
+    // живо: дальше ~QWidget->hideChildren пересчитывает геометрию хедеров,
+    // и этот пересчет идет header->proxy->model->table, а данные дерева
+    // к тому моменту уже мертвы (был SIGSEGV в RecordTableData::size).
+    // setTableData(nullptr) идет через begin/endReset — виды гаснут штатно
+    if(treeScreen!=nullptr)
+        treeScreen->detachModels();
+
+    if(recordTableScreen!=nullptr)
+        recordTableScreen->detachModels();
+
     // В лог записывается событие остановки программы
     actionLogger.addAction("stopProgram");
 }

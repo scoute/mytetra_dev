@@ -63,7 +63,11 @@ bool SyncServer::start(quint16 port)
         QJsonObject answer;
         answer[QStringLiteral("service")]=QStringLiteral("mytetrasync");
         answer[QStringLiteral("proto")]=QStringLiteral("sync/1");
-        answer[QStringLiteral("app")]=QStringLiteral("1.44");
+        // Версия из main.h, не константа: раньше была захардкожена "1.44"
+        // и врала клиенту после каждого бампа версии
+        answer[QStringLiteral("app")]=QStringLiteral("%1.%2")
+            .arg(APPLICATION_RELEASE_VERSION)
+            .arg(APPLICATION_RELEASE_SUBVERSION);
         return answer;
     });
 

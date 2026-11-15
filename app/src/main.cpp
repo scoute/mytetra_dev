@@ -105,6 +105,7 @@ void printHelp()
     printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
     printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
     printf("./mytetra --sync-scan [--sync-port N] - Find sync hubs in the local network and exit\n");
+    printf("./mytetra --sync-allow-delete - Confirm deletions for headless --sync-to\n");
     printf("./mytetra --sync-strategy merge|merge-by-name|pull|push - First-sync strategy for --sync-to\n");
     printf("        (merge=keep both trees, merge-by-name=merge same-named branches on hub,\n");
     printf("         pull=take from hub, push=replace hub content)\n");
@@ -190,6 +191,7 @@ void parseConsoleOption(QtSingleApplication &app)
          && !app.arguments().contains("--sync-status")
          && !app.arguments().contains("--sync-scan")
          && !app.arguments().contains("--sync-strategy")
+         && !app.arguments().contains("--sync-allow-delete")
          && !app.arguments().contains("--sync-forget")
          && !app.arguments().contains("--sync-unpair")
          && !app.arguments().contains("--sync-remove") )
@@ -326,6 +328,7 @@ int main(int argc, char ** argv)
            || arg==QStringLiteral("--sync-status")
            || arg==QStringLiteral("--sync-scan")
            || arg==QStringLiteral("--sync-strategy")
+           || arg==QStringLiteral("--sync-allow-delete")
            || arg==QStringLiteral("--sync-forget")
            || arg==QStringLiteral("--sync-unpair")
            || arg==QStringLiteral("--sync-remove"))

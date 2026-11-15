@@ -524,17 +524,38 @@ void SyncDevicesDialog::onSyncNow(void)
             return MainWindow::askSyncStrategy(this, localItems, remoteItems);
         });
 
-    // Массовое удаление — только с явного подтверждения
+    // Опасный синк (удаления) — явный выбор: продолжить / отменить /
+    // восстановиться с сервера. Безопасное едет молча
     session.setDeleteGuard(
-        [this](int remoteDeletes, int localDeletes) -> bool {
-            return QMessageBox::question(
-                this, tr("Sync"),
-                tr("Sync will delete %1 item(s) on the other side "
-                   "and %2 on this device.\n"
-                   "Deleted items go to trash.\n\nContinue?")
-                    .arg(remoteDeletes).arg(localDeletes),
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No)==QMessageBox::Yes;
+        [this](int remoteDeletes, int localDeletes)
+            -> SyncSession::DeleteDecision {
+            QMessageBox box(this);
+            box.setWindowTitle(tr("Sync"));
+            box.setIcon(QMessageBox::Warning);
+            box.setText(tr("This sync will DELETE data:\n"
+                           "%1 item(s) on the other side, "
+                           "%2 on this device.\n"
+                           "Deleted items go to trash.\n\n"
+                           "What to do?")
+                        .arg(remoteDeletes).arg(localDeletes));
+
+            QPushButton *continueButton=box.addButton(
+                tr("Continue delete"), QMessageBox::YesRole);
+            QPushButton *restoreButton=box.addButton(
+                tr("Restore from the server instead "
+                   "(my data goes to trash)"), QMessageBox::YesRole);
+            QPushButton *cancelButton=box.addButton(
+                tr("Cancel"), QMessageBox::RejectRole);
+            box.setDefaultButton(cancelButton);
+            box.exec();
+
+            if(box.clickedButton()==continueButton)
+                return SyncSession::DeleteDecision::Proceed;
+
+            if(box.clickedButton()==restoreButton)
+                return SyncSession::DeleteDecision::Restore;
+
+            return SyncSession::DeleteDecision::Cancel;
         });
 
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —

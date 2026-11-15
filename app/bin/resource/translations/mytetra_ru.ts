@@ -3307,6 +3307,26 @@ Continue?</source>
 
 Продолжить?</translation>
     </message>
+    <message>
+        <source>This sync will DELETE data:
+%1 item(s) on the other side, %2 on this device.
+Deleted items go to trash.
+
+What to do?</source>
+        <translation>Эта синхронизация УДАЛИТ данные:
+%1 элемент(ов) на другой стороне, %2 на этом устройстве.
+Удаленные элементы уйдут в корзину.
+
+Что делать?</translation>
+    </message>
+    <message>
+        <source>Continue delete</source>
+        <translation>Продолжить удаление</translation>
+    </message>
+    <message>
+        <source>Restore from the server instead (my data goes to trash)</source>
+        <translation>Вместо этого восстановить с сервера (мои данные уйдут в корзину)</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>
@@ -5553,5 +5573,25 @@ Continue?</source>
 
 Продолжить?</translation>
     </message>
-  </context>
+      <message>
+        <source>This sync will DELETE data:
+%1 item(s) on the other side, %2 on this device.
+Deleted items go to trash.
+
+What to do?</source>
+        <translation>Эта синхронизация УДАЛИТ данные:
+%1 элемент(ов) на другой стороне, %2 на этом устройстве.
+Удаленные элементы уйдут в корзину.
+
+Что делать?</translation>
+    </message>
+    <message>
+        <source>Continue delete</source>
+        <translation>Продолжить удаление</translation>
+    </message>
+    <message>
+        <source>Restore from the server instead (my data goes to trash)</source>
+        <translation>Вместо этого восстановить с сервера (мои данные уйдут в корзину)</translation>
+    </message>
+</context>
 </TS>

@@ -42,6 +42,27 @@ extern ShortcutManager shortcutManager;
 extern InternalClipboard *internalClipboard;
 
 
+namespace
+{
+// parentId в формате провода для хеша ветки: "" для корневого
+// уровня (id корня "0"), иначе id родителя
+QString wireParentId(TreeItem *item)
+{
+    if(item==nullptr)
+        return QString();
+
+    TreeItem *parent=item->parent();
+
+    if(parent==nullptr)
+        return QString();
+
+    const QString pid=parent->getField(QStringLiteral("id"));
+
+    return (pid==QStringLiteral("0")) ? QString() : pid;
+}
+}
+
+
 TreeScreen::TreeScreen(QWidget *parent) : QWidget(parent)
 {
   lastKnowTreeModifyDateTime=QDateTime();
@@ -712,7 +733,8 @@ void TreeScreen::editBranch(void)
 
  // Синк-сайдкар: имя ветки поменялось
  SyncSidecar::touchBranch(item->getField(QStringLiteral("id")),
-                          item->getAllFieldsDirect());
+                          item->getAllFieldsDirect(),
+                          wireParentId(item));
  
  // Сохранение дерева веток
  find_object<TreeScreen>("treeScreen")->saveKnowTree();
@@ -1236,7 +1258,8 @@ void TreeScreen::setIcon(void)
 
     // Синк-сайдкар: иконка ветки поменялась
     SyncSidecar::touchBranch(currentItem->getField(QStringLiteral("id")),
-                             currentItem->getAllFieldsDirect());
+                             currentItem->getAllFieldsDirect(),
+                             wireParentId(currentItem));
 
     // Обновляеются на экране ветка и ее подветки
     updateBranchOnScreen( getCurrentItemIndex() );
@@ -1251,7 +1274,8 @@ void TreeScreen::setIcon(void)
 
     // Синк-сайдкар: иконка ветки убрана
     SyncSidecar::touchBranch(currentItem->getField(QStringLiteral("id")),
-                             currentItem->getAllFieldsDirect());
+                             currentItem->getAllFieldsDirect(),
+                             wireParentId(currentItem));
 
     // Обновляеются на экране ветка и ее подветки
     updateBranchOnScreen( getCurrentItemIndex() );

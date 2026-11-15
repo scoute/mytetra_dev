@@ -80,11 +80,15 @@ public:
     static void dropEntry(const QString &id);
 
     // Хеш канонической сериализации полей ветки (QMap уже отсортирован)
-    static QString hashBranchFields(const QMap<QString, QString> &fields);
+    // плюс parentId: переезд ветки меняет хеш и потому синхронизируется.
+    // parentId в формате провода ("" для корневого уровня, не "0")
+    static QString hashBranchFields(const QMap<QString, QString> &fields,
+                                    const QString &parentId=QString());
 
-    // Отметить изменение ветки: mtime=сейчас, hash полей. Пишет сразу
+    // Отметить изменение ветки: mtime=сейчас, hash полей+родителя. Пишет сразу
     static void touchBranch(const QString &id,
-                            const QMap<QString, QString> &fields);
+                            const QMap<QString, QString> &fields,
+                            const QString &parentId=QString());
 
     // Забыть ветку целиком (tombstone). Пишет сразу
     static void forgetBranch(const QString &id);

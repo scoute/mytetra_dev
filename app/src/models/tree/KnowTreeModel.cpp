@@ -923,9 +923,13 @@ void KnowTreeModel::addNewBranch(TreeItem *parent, QMap<QString, QString> branch
     newBranch->switchToEncrypt();
   }
 
-  // Синк-сайдкар: новая ветка (после всех преобразований, хеш финальный)
+  // Синк-сайдкар: новая ветка (после всех преобразований, хеш финальный).
+  // parentId в формате провода: "" для корневого уровня
+  const QString newParentId=parent->getField(QStringLiteral("id"));
   SyncSidecar::touchBranch(newBranch->getField(QStringLiteral("id")),
-                           newBranch->getAllFieldsDirect());
+                           newBranch->getAllFieldsDirect(),
+                           (newParentId==QStringLiteral("0"))
+                           ? QString() : newParentId);
 }
 
 
@@ -962,6 +966,45 @@ QString KnowTreeModel::createSyncedBranch(const QString &parentId,
     }
 
     return id;
+}
+
+
+// Переезд ветки из синка: смена родителя с сохранением id и поддерева.
+// Виды уведомляются штатно через begin/endMoveRows
+bool KnowTreeModel::moveSyncedBranch(const QString &id,
+                                     const QString &newParentId)
+{
+    TreeItem *item=getItemById(id);
+
+    if(item==nullptr || item==rootItem)
+        return false;
+
+    TreeItem *newParent=newParentId.isEmpty()
+        ? rootItem : getItemById(newParentId);
+
+    if(newParent==nullptr)
+        return false;
+
+    if(newParent==item->parent())
+        return true; // уже там
+
+    const QModelIndex srcParentIndex=getIndexByItem(item->parent());
+    const QModelIndex dstParentIndex=getIndexByItem(newParent);
+
+    // Невалидный индекс нормален только для корня (верхний уровень);
+    // в остальных случаях — битые указатели, двигать нельзя
+    if((!srcParentIndex.isValid() && item->parent()!=rootItem)
+       || (!dstParentIndex.isValid() && newParent!=rootItem))
+        return false;
+
+    beginMoveRows(srcParentIndex, item->childNumber(), item->childNumber(),
+                  dstParentIndex, newParent->childCount());
+
+    const bool ok=item->relinkTo(newParent);
+
+    endMoveRows();
+
+    return ok;
 }
 
 

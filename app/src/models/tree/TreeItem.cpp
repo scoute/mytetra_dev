@@ -428,6 +428,36 @@ bool TreeItem::moveDn(void)
 }
 
 
+// Перелинковка к новому родителю с сохранением id (для синка:
+// применение переезда ветки). В тот же родитель, в null, в себя
+// или в своего потомка — отказ (false), дерево не портится
+bool TreeItem::relinkTo(TreeItem *newParent)
+{
+    if(newParent==nullptr || newParent==parentItem)
+        return false;
+
+    // Цикл: новый родитель внутри нашего поддерева — нельзя
+    for(TreeItem *p=newParent; p!=nullptr; p=p->parentItem)
+    {
+        if(p==this)
+            return false;
+    }
+
+    const int row=childNumber();
+
+    if(row<0)
+        return false;
+
+    if(!parentItem->removeChildrenLink(row, 1))
+        return false;
+
+    newParent->addChildrenItem(this);
+    parentItem=newParent;
+
+    return true;
+}
+
+
 // Путь к элементу (список идентификаторов от корня до текущего элемента)
 QStringList TreeItem::getPath(void) const
 {

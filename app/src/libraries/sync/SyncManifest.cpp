@@ -99,24 +99,26 @@ static void collectBranches(const TreeItem *item, const QString &parentId,
         info.parentId=parentId;
         info.fields=item->getAllFieldsDirect();
 
+        // Хеш ветки — всегда живьем по полям+родителю: поля все в памяти,
+        // это дешево, зато переезды веток детектятся даже по протухшему
+        // сайдкару (а он при перемещениях и протухает).
+        // mtime — из сайдкара (там метки правок), без записи — 0
+        info.hash=SyncSidecar::hashBranchFields(info.fields, info.parentId);
+
         if(sidecar.hasEntry(id))
-        {
-            const SyncSidecar::Entry e=sidecar.entry(id);
-            info.mtime=e.mtime;
-            info.hash=e.hash;
-        }
+            info.mtime=sidecar.entry(id).mtime;
         else
-        {
-            // Истории нет — хеш живьем, mtime ноль (досчитается при первом сейве)
-            info.hash=SyncSidecar::hashBranchFields(info.fields);
             info.mtime=0;
-        }
 
         out.branches.insert(id, info);
     }
 
+    // parentId в формате провода: корень "0" наружу не отдаем,
+    // иначе разъедется с serializeBranch (там "0" -> "")
+    const QString childParent=(id==QStringLiteral("0")) ? QString() : id;
+
     for(int i=0; i<item->childCount(); ++i)
-        collectBranches(item->child(i), id, out, sidecar);
+        collectBranches(item->child(i), childParent, out, sidecar);
 }
 
 

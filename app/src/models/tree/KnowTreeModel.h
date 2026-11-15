@@ -50,6 +50,11 @@ public:
     QString createSyncedBranch(const QString &parentId,
                                const QMap<QString, QString> &fields);
 
+    //! Переезд ветки из синка: смена родителя с сохранением id.
+    // Пустой parentId — корень. false — ветки/родителя нет, тот же
+    // родитель, цикл. Виды уведомляются через begin/endMoveRows
+    bool moveSyncedBranch(const QString &id, const QString &newParentId);
+
     void addNewChildBranch(const QModelIndex &index, QMap<QString, QString> branchFields);
 
     //! Добавление новой ветки после указанной ветки

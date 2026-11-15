@@ -20,6 +20,16 @@
 
 namespace SyncNoteIo
 {
+
+// Канонический crypt: приложение пишет "" (или вовсе без атрибута),
+// старые базы — "0". Семантика одна (не "1" = не шифровано), и хеш
+// обязан считать их равными, иначе вечные фантомные расхождения:
+// хеш с "0" никогда не сойдется с хешем с "". Нормализация — в одной
+// точке, внутри hashBranchFields ниже; здесь только для сравнений
+static QString normCrypt(const QString &crypt)
+{
+    return (crypt==QStringLiteral("0")) ? QString() : crypt;
+}
 namespace
 {
 
@@ -236,10 +246,11 @@ QJsonObject serializeBranch(KnowTreeModel *model, const QString &id)
     }
     else
     {
-        // Живьем: mtime неоткуда взять, хеш по полям. Досчитается при сейве
+        // Живьем: mtime неоткуда взять, хеш по полям+родителю.
+        // Досчитается при сейве
         answer[QStringLiteral("mtime")]=0;
         answer[QStringLiteral("hash")]=
-            SyncSidecar::hashBranchFields(allFields);
+            SyncSidecar::hashBranchFields(allFields, parentId);
     }
 
     return answer;
@@ -321,7 +332,8 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
                 existing->getNaturalFieldSource(QStringLiteral("crypt"));
             const QString newCrypt=fields.value(QStringLiteral("crypt")).toString();
 
-            if(oldCrypt!=newCrypt)
+            // "" и "0" — одно и то же (не шифровано), см. normCrypt
+            if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
                 return QStringLiteral("crypt change unsupported");
         }
 
@@ -431,12 +443,27 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         const QString oldCrypt=existing->getField(QStringLiteral("crypt"));
         const QString newCrypt=fields.value(QStringLiteral("crypt"));
 
-        if(oldCrypt!=newCrypt)
+        // "" и "0" — одно и то же (не шифровано), см. normCrypt
+        if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
             return QStringLiteral("crypt change unsupported");
 
         existing->setField(QStringLiteral("name"), fields.value(QStringLiteral("name")));
         existing->setField(QStringLiteral("icon"), fields.value(QStringLiteral("icon")));
         existing->setField(QStringLiteral("ctime"), fields.value(QStringLiteral("ctime")));
+
+        // Переезд: родитель в запросе отличается — перелинковываем
+        // с сохранением id и поддерева. Без этого переезды веток
+        // детектятся (хеш с parentId), но молча не применяются
+        const QString newParent=request.value(QStringLiteral("parent")).toString();
+        const QString curParent=existing->getParentId();
+        const QString curParentWire=(curParent==QStringLiteral("0"))
+            ? QString() : curParent;
+
+        if(newParent!=curParentWire)
+        {
+            if(!model->moveSyncedBranch(id, newParent))
+                return QStringLiteral("cannot move branch");
+        }
 
         SyncSidecar::adopt(id, remoteMtime, remoteHash, QStringLiteral("branch"));
         return QString();

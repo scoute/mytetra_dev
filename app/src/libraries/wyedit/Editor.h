@@ -191,6 +191,15 @@ private slots:
  void onShowTextClicked(void);
  void onToAttachClicked(void);
 
+ // Открыть каталог текущей заметки в файловом менеджере.
+ // Безусловный пункт меню (работает везде, не только на голосе/картинке)
+ void onShowNoteInFolder(void);
+
+ // Разрезолвить рабочий каталог в абсолютный существующий путь.
+ // Пусто если каталог неизвестен или его нет на диске (тестируемо
+ // без файлового менеджера и диалогов)
+ static QString absoluteNoteDirectory(const QString &workDir);
+
  void onCursorPositionChanged(void); // Слот, контролирущий перемещение курсора
  void onSelectionChanged(void);
  void onUndo(void);

@@ -37,6 +37,7 @@ signals:
   void contextMenuEditImageProperties(void);
   void contextMenuEditMathExpression(void);
   void contextMenuGotoReference(void);
+  void contextMenuShowNoteInFolder(void);
   void lowercase(void);
   void uppercase(void);
 
@@ -59,6 +60,7 @@ private:
   QAction *actionEditImageProperties;
   QAction *actionEditMathExpression;
   QAction *actionGotoReference;
+  QAction *actionShowNoteInFolder;
 
   void setupActions(void);
   void setupSignals(void);
@@ -76,6 +78,7 @@ protected slots:
   void onActionContextMenuEditImageProperties(void);
   void onActionContextMenuEditMathExpression(void);
   void onActionContextMenuGotoReference(void);
+  void onActionContextMenuShowNoteInFolder(void);
 
   void onActionLowercase();
   void onActionUppercase();

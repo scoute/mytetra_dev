@@ -156,7 +156,8 @@ void ShortcutManager::initDefaultKeyTable()
     defaultKeyTable.insert("editor-save",                Data{ QKeySequence("Ctrl+S"), tr("Forse save note"), tr("") });
     defaultKeyTable.insert("editor-showText",            Data{ QKeySequence("Ctrl+Shift+W"), tr("Show detached window"), tr("") });
     defaultKeyTable.insert("editor-toAttach",            Data{ QKeySequence("Ctrl+Shift+A"), tr("Attach files"), tr("") });
-    defaultKeyTable.insert("editor-gotoReference",       Data{ QKeySequence("Alt+Shift+U"), tr("Go to URL or reference"), tr("") }); // Сочетание Alt+U перестает работать после того, как нажато на месте без URL-a
+    defaultKeyTable.insert("editor-gotoReference",       Data{ QKeySequence("Alt+Shift+U"), tr("Go to URL or reference"), tr("") });
+    defaultKeyTable.insert("editor-showNoteInFolder",    Data{ QKeySequence(""), tr("Show note in folder"), tr("Open record directory in file manager") }); // Сочетание Alt+U перестает работать после того, как нажато на месте без URL-a
 
     defaultKeyTable.insert("actionLog-copy", Data{ QKeySequence("Ctrl+C"), tr("Copy selected rows"), tr("") });
 

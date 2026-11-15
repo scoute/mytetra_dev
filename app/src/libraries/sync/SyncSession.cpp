@@ -265,6 +265,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         SyncManifestBuilder::build(model, SyncSidecar::instance(),
                                    tetradir);
 
+    // Явный деструктивный выбор стратегии уже является подтверждением
+    bool destructiveStrategy=false;
+
     // 2а. Первый синк после спаривания, когда данные есть с обеих
     // сторон: спросить стратегию (тихий мерж удивлял). Флаг снимается
     // после ответа; отмена оставляет флаг и прерывает сессию
@@ -297,6 +300,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
             if(strategy==SyncStrategy::PullFromHub)
             {
+                destructiveStrategy=true;
                 addLog(QStringLiteral("strategy: take from hub, local -> trash"));
                 const QString error=SyncNoteIo::wipeAll(model);
 
@@ -311,6 +315,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
             }
             else if(strategy==SyncStrategy::PushToHub)
             {
+                destructiveStrategy=true;
                 addLog(QStringLiteral("strategy: replace hub content with ours"));
 
                 if(!client.reset(host, port))
@@ -356,9 +361,10 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
-    // 3а. Страховка от массового удаления: история показала, что синк,
-    // уничтожающий заметную часть базы, требует явного подтверждения
-    // (удаление локальной базы + переспаривание как-то раз обнулило сервер)
+    // 3а. Опасный синк — только с явного подтверждения. Принцип:
+    // безопасное (создание/обновление) едет молча, любые удаления
+    // подсвечиваются пользователю (история: случайное удаление базы
+    // на клиенте молча обнулило сервер)
     int remoteDeletes=0;
 
     for(const QString &id : plan.pushTombs)
@@ -369,26 +375,34 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     for(const QString &id : plan.deleteLocal)
         localDeletes+=subtreeItemCount(id, local.branches, local.notes);
 
-    const int remoteItems=remote.branches.size()+remote.notes.size();
-    const int localItems=local.branches.size()+local.notes.size();
-
     if(remoteDeletes>0 || localDeletes>0)
+    {
         addLog(QStringLiteral("delete impact: %1 item(s) on hub, %2 locally")
                .arg(remoteDeletes).arg(localDeletes));
 
-    const bool massRemote=remoteDeletes>=10
-        || (remoteDeletes>=3 && remoteDeletes*2>=remoteItems);
-    const bool massLocal=localDeletes>=10
-        || (localDeletes>=3 && localDeletes*2>=localItems);
-
-    if((massRemote || massLocal) && deleteGuard)
-    {
-        if(!deleteGuard(remoteDeletes, localDeletes))
+        if(deleteGuard && !destructiveStrategy)
         {
-            addLog(QStringLiteral("mass delete cancelled"));
-            report.error=QStringLiteral("Sync cancelled: mass delete");
-            return report;
+            const DeleteDecision decision=
+                deleteGuard(remoteDeletes, localDeletes);
+
+            if(decision==DeleteDecision::Cancel)
+            {
+                addLog(QStringLiteral("delete sync cancelled"));
+                report.error=QStringLiteral(
+                    "Sync cancelled: it would delete data "
+                    "(in headless mode use --sync-allow-delete)");
+                return report;
+            }
+
+            if(decision==DeleteDecision::Restore)
+            {
+                addLog(QStringLiteral("restore from hub instead of delete"));
+                return restoreFromHub(host, port, client);
+            }
         }
+        else if(!destructiveStrategy)
+            addLog(QStringLiteral("warning: deletions proceed without "
+                                  "confirmation (no guard)"));
     }
 
     // 4. Заливка нашего на хаб
@@ -755,6 +769,56 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
     model->save();
     model->reload();
     addLog(QStringLiteral("merge-by-name: done"));
+
+    report.ok=true;
+    return report;
+}
+
+// Восстановление с хаба: локальное уходит в корзину, база
+// перекачивается с хаба целиком. Ответ на "случайно удалил, хочу
+// восстановиться" прямо из диалога подтверждения удаления
+SyncReport SyncSession::restoreFromHub(const QString &host, quint16 port,
+                                      SyncClient &client)
+{
+    SyncReport report;
+    addLog(QStringLiteral("restore: local -> trash, pull all from hub"));
+
+    const QString error=SyncNoteIo::wipeAll(model);
+
+    if(!error.isEmpty())
+    {
+        report.error=error;
+        addLog(report.error);
+        return report;
+    }
+
+    const SyncManifest freshRemote=client.fetchManifest(host, port);
+
+    if(!client.lastError().isEmpty())
+    {
+        report.error=client.lastError();
+        addLog(report.error);
+        return report;
+    }
+
+    SyncManifest emptyLocal;
+    const SyncPlan fullPlan=
+        SyncManifestBuilder::compare(emptyLocal, freshRemote, false);
+
+    if(!pullByPlan(client, host, port, fullPlan, freshRemote, report))
+        return report;
+
+    if(!client.commit(host, port))
+    {
+        report.error=client.lastError().isEmpty()
+            ? QStringLiteral("hub commit failed") : client.lastError();
+        addLog(report.error);
+        return report;
+    }
+
+    model->save();
+    model->reload();
+    addLog(QStringLiteral("restore from hub: done"));
 
     report.ok=true;
     return report;

@@ -66,11 +66,18 @@ public:
         std::function<SyncStrategy(int localItems, int remoteItems)>;
     void setStrategyResolver(StrategyResolver resolver);
 
-    // Страховка от массового удаления: синк, который уничтожит заметную
-    // часть базы (ветки тащат поддеревья), требует подтверждения.
-    // true — продолжить. Без колбэка — выполняется без вопросов
+    // Решение по опасному синку. Принцип: безопасное (создание,
+    // обновление) синкается молча, опасное (любые удаления) — только
+    // с явного подтверждения пользователя
+    enum class DeleteDecision
+    {
+        Proceed,  // подтверждено: удаляем
+        Cancel,   // отмена: сессия прерывается
+        Restore,  // восстановить с сервера: локальное в корзину,
+                  // база перекачивается с хаба целиком
+    };
     using DeleteGuard =
-        std::function<bool(int remoteDeletes, int localDeletes)>;
+        std::function<DeleteDecision(int remoteDeletes, int localDeletes)>;
     void setDeleteGuard(DeleteGuard guard);
 
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
@@ -109,6 +116,10 @@ private:
                            const SyncManifest &remote,
                            const SyncPlan &plan,
                            SyncReport &report);
+
+    // Восстановление с хаба: локальное в корзину, полная загрузка
+    SyncReport restoreFromHub(const QString &host, quint16 port,
+                              SyncClient &client);
 
     // Локальная поштучная ошибка (сериализация/применение у себя):
     // в report.errors + лог, сессия идет дальше

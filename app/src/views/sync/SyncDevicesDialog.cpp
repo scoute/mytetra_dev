@@ -497,8 +497,13 @@ void SyncDevicesDialog::onSyncNow(void)
 
     if(!report.ok)
     {
-        QMessageBox::warning(this, tr("Sync"),
-                             tr("Sync failed: %1").arg(report.error));
+        QString fail=tr("Sync failed: %1").arg(report.error);
+        const QString steps=session.log().join(QStringLiteral("\n"));
+
+        if(!steps.isEmpty())
+            fail+=QStringLiteral("\n-- steps --\n")+steps;
+
+        QMessageBox::warning(this, tr("Sync"), fail);
         refreshList();
         return;
     }
@@ -513,6 +518,10 @@ void SyncDevicesDialog::onSyncNow(void)
     if(!report.conflicts.isEmpty())
         summary+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
                  .arg(report.conflicts.join(QStringLiteral(", ")));
+
+    if(!report.errors.isEmpty())
+        summary+=tr("\n\nItem errors (skipped items):\n%1")
+                 .arg(report.errors.join(QStringLiteral("\n")));
 
     QMessageBox::information(this, tr("Sync"), summary);
     refreshList();

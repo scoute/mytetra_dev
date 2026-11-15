@@ -142,6 +142,27 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
 
     for(int i=0; i<attachTable.size(); ++i)
     {
+        const Attach rowAttach=attachTable.getAttach(attachTable.getIdByRow(i));
+        const QString attachType=rowAttach.getField(QStringLiteral("type"));
+
+        QJsonObject a;
+        a[QStringLiteral("id")]=attachTable.getIdByRow(i);
+        a[QStringLiteral("type")]=attachType;
+
+        // Ссылка — не файл: контента нет, цель может вообще не существовать
+        // (внешний путь, URL). Хеш — по строке цели, иначе любая ссылка
+        // роняла бы всю сессию через "no attach file"
+        if(attachType==QStringLiteral("link"))
+        {
+            const QString link=rowAttach.getField(QStringLiteral("link"));
+            a[QStringLiteral("file")]=rowAttach.getField(QStringLiteral("fileName"));
+            a[QStringLiteral("link")]=link;
+            a[QStringLiteral("size")]=attachTable.getFileSize(i);
+            a[QStringLiteral("data")]=QString();
+            attaches.append(a);
+            continue;
+        }
+
         const QString absPath=attachTable.getAbsoluteInnerFileName(i);
         const QByteArray data=readBytes(absPath, ok);
 
@@ -151,16 +172,8 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
             return answer;
         }
 
-        const Attach rowAttach=attachTable.getAttach(attachTable.getIdByRow(i));
-        const QString attachType=rowAttach.getField(QStringLiteral("type"));
-
-        QJsonObject a;
-        a[QStringLiteral("id")]=attachTable.getIdByRow(i);
         a[QStringLiteral("file")]=QFileInfo(absPath).fileName();
-        a[QStringLiteral("type")]=attachType;
-        a[QStringLiteral("link")]=(attachType==QStringLiteral("link"))
-            ? rowAttach.getField(QStringLiteral("link"))
-            : QString();
+        a[QStringLiteral("link")]=QString();
         a[QStringLiteral("size")]=attachTable.getFileSize(i);
         a[QStringLiteral("data")]=QString::fromLatin1(data.toBase64());
         attaches.append(a);
@@ -272,6 +285,12 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     for(const QJsonValue &value : attaches)
     {
         const QJsonObject a=value.toObject();
+
+        // Ссылка — файла нет, писать нечего: только строка таблицы.
+        // Писать пустой data в файл цели было бы порчей чужого пути
+        if(a.value(QStringLiteral("type")).toString()==QStringLiteral("link"))
+            continue;
+
         const QByteArray data=
             QByteArray::fromBase64(a.value(QStringLiteral("data"))
                                    .toString().toLatin1());

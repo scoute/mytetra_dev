@@ -94,8 +94,19 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
 
     if(!allIds.isNull())
     {
+        int skippedEmpty=0;
+
         for(const QString &id : allIds->values())
         {
+            // Запись без id (битая/импортная, поля нет в XML): она невидима
+            // поиску модели и уронила бы сессию через "bad id" в serialize.
+            // Пропускаем честно с одной строкой в лог, а не молча
+            if(id.isEmpty())
+            {
+                skippedEmpty++;
+                continue;
+            }
+
             Record *record=model->getRecord(id);
 
             if(record==nullptr)
@@ -137,19 +148,27 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
             {
                 SyncAttachInfo att;
                 att.id=attachTable.getIdByRow(i);
-                att.fileName=attachTable.getAbsoluteInnerFileName(i);
-                att.size=attachTable.getFileSize(i);
-                att.hash=sha256File(att.fileName);
 
-                // Тип и цель нужны чтобы восстановить запись таблицы как
-                // была (файл vs ссылка). Хеш всегда по содержимому.
-                // link читается только у link-аттачей: у файловых getField
-                // роняет criticalError-модалку и вешает сервер
                 const Attach rowAttach=attachTable.getAttach(att.id);
                 att.type=rowAttach.getField(QStringLiteral("type"));
-                att.link=(att.type==QStringLiteral("link"))
-                    ? rowAttach.getField(QStringLiteral("link"))
-                    : QString();
+
+                // Ссылка: контента нет, хеш — по строке цели.
+                // Иначе sha256File по отсутствующей цели давал бы пустоту
+                // с обеих сторон (ложное равенство) или рвало бы сессию
+                if(att.type==QStringLiteral("link"))
+                {
+                    att.link=rowAttach.getField(QStringLiteral("link"));
+                    att.fileName=rowAttach.getField(QStringLiteral("fileName"));
+                    att.size=attachTable.getFileSize(i);
+                    att.hash=sha256Bytes(att.link.toUtf8());
+                }
+                else
+                {
+                    att.fileName=attachTable.getAbsoluteInnerFileName(i);
+                    att.size=attachTable.getFileSize(i);
+                    att.hash=sha256File(att.fileName);
+                    att.link=QString();
+                }
 
                 info.attaches << att;
             }
@@ -171,6 +190,11 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
 
             out.notes.insert(id, info);
         }
+
+        if(skippedEmpty>0)
+            qDebug() << "SyncManifest: skipped records without id:"
+                     << skippedEmpty << "(such notes stay local-only, "
+                     "recreate them to sync)";
     }
 
     out.tombstones=sidecar.tombstones();

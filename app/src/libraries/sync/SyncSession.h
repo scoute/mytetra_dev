@@ -25,6 +25,10 @@ struct SyncReport
     int downloadedBranches=0;
     int appliedDeletes=0;
     QStringList conflicts; // id с равными mtime при разных хешах
+
+    // Поштучные несмертельные ошибки ("note <id>: <причина>").
+    // Сессия идет дальше, а не падает на первой битой записи
+    QStringList errors;
 };
 
 class SyncSession
@@ -66,6 +70,17 @@ private:
                            const SyncManifest &local,
                            const SyncManifest &remote,
                            SyncReport &report);
+
+    // Локальная поштучная ошибка (сериализация/применение у себя):
+    // в report.errors + лог, сессия идет дальше
+    void skipItem(SyncReport &report, const QString &entry);
+
+    // Сетевая поштучная ошибка: транспорт умер или not-paired —
+    // фатально (report.error, вернуть false); иначе в report.errors
+    // и идем дальше (вернуть true)
+    bool noteItem(SyncClient &client, SyncReport &report,
+                  const QString &kind, const QString &id,
+                  const QString &reason);
 
     KnowTreeModel *model;
     AppConfig *config;

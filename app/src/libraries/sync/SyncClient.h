@@ -57,6 +57,12 @@ public:
 
     QString lastError(void) const;
 
+    // Последний запрос дошел до сервера и вернулся разобранным
+    // (true), либо умер в пути: таймаут/сеть/битый ответ (false).
+    // Нужно сессии чтобы отличить фатальное (рвем сессию) от
+    // поштучного (пишем в report.errors и идем дальше)
+    bool lastTransportOk(void) const;
+
 private:
 
     QJsonObject postJson(const QString &host, quint16 port,
@@ -68,6 +74,7 @@ private:
     AppConfig *config=nullptr;
     int timeoutMs=15000;
     QString lastErrorText;
+    bool lastTransportOkFlag=true;
 };
 
 #endif // SYNCCLIENT_H

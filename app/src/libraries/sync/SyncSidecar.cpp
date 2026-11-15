@@ -198,7 +198,7 @@ QString SyncSidecar::sidecarPathForXml(const QString &xmlFileName)
     // Тот же каталог, фиксированное имя. Подкаталоги баз не поддерживаются:
     // mytetra.xml всегда один на базу
     return QFileInfo(xmlFileName).absolutePath()+
-           QStringLiteral("/mytetras.sync");
+           QStringLiteral("/mytetra.sync");
 }
 
 

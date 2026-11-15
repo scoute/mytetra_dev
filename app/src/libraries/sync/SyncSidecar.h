@@ -4,7 +4,7 @@
 #include <QMap>
 #include <QString>
 
-// Сайдкар синхронизации (mytetras.sync рядом с mytetras.xml, JSON).
+// Сайдкар синхронизации (mytetra.sync рядом с mytetra.xml, JSON).
 // Свое состояние движка, стоковый xintrea файл не знает и игнорирует.
 // entries: id -> {mtime, hash, kind}. mtime — мс последнего локального
 // сейва (для шифрованных — время изменения blob-файла, внутрь не лезем).
@@ -22,7 +22,7 @@ public:
         QString kind; // "note" или "branch"
     };
 
-    // Путь сайдкара для данного mytetra.xml (тот же каталог, имя mytetras.sync)
+    // Путь сайдкара для данного mytetra.xml (тот же каталог, имя mytetra.sync)
     static QString sidecarPathForXml(const QString &xmlFileName);
 
     // Загрузить с диска (нет файла — пустое состояние, не ошибка).

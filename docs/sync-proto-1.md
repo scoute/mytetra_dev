@@ -222,7 +222,7 @@ hello → [pair-логика] → fetch manifest → build local manifest
 
 ## 12. Журнал сайдкара (референс)
 
-MyTetra хранит локальное состояние синка в `mytetras.sync` рядом
+MyTetra хранит локальное состояние синка в `mytetra.sync` рядом
 с `mytetra.xml` (JSON; формат внутренний, но семантика — часть
 протокола, ее надо держать одинаково):
 

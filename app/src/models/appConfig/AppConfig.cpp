@@ -287,7 +287,7 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
         SyncDeviceInfo info;
         info.id=id;
         info.name=m_conf->value(QStringLiteral("name")).toString();
-        info.ip=m_conf->value(QStringLiteral("ip")).toString();
+        info.lastIp=m_conf->value(QStringLiteral("lastIp")).toString();
         info.port=m_conf->value(QStringLiteral("port"), 47777).toInt();
         info.firstSeen=m_conf->value(QStringLiteral("firstSeen"), 0).toLongLong();
         info.lastSeen=m_conf->value(QStringLiteral("lastSeen"), 0).toLongLong();
@@ -304,7 +304,7 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
 
 
 void AppConfig::touch_syncDevice(const QString &id, const QString &name,
-                                 const QString &ip, int port)
+                                 const QString &lastIp, int port)
 {
     if(id.isEmpty())
         return;
@@ -324,9 +324,11 @@ void AppConfig::touch_syncDevice(const QString &id, const QString &name,
     if(!name.isEmpty())
         m_conf->setValue(QStringLiteral("name"), name);
 
-    if(!ip.isEmpty())
+    // lastIp: адрес, где устройство видели в последний раз (DHCP меняет
+    // адреса, это подсказка для Sync now, а не постоянный адрес)
+    if(!lastIp.isEmpty())
     {
-        m_conf->setValue(QStringLiteral("ip"), ip);
+        m_conf->setValue(QStringLiteral("lastIp"), lastIp);
         m_conf->setValue(QStringLiteral("port"), port);
     }
 
@@ -377,9 +379,12 @@ void AppConfig::set_syncDeviceOffer(const QString &id)
     const bool wasOffer=m_conf->value(QStringLiteral("syncDevices/")+id
                                       +QStringLiteral("/pairOffer"), false).toBool();
 
-    touch_syncDevice(id, QString());
+    // Флаг ПЕРЕД touch: touch сигналит syncDevicesChanged, и окно читает
+    // конфиг ровно по этому сигналу — при прежнем порядке сигнал прилетал
+    // ДО записи флага и статус висел протухшим
     m_conf->setValue(QStringLiteral("syncDevices/")+id
                      +QStringLiteral("/pairOffer"), true);
+    touch_syncDevice(id, QString());
 
     if(!wasOffer)
     {
@@ -414,12 +419,16 @@ void AppConfig::set_syncDeviceMutual(const QString &id)
     if(id.isEmpty())
         return;
 
-    touch_syncDevice(id, QString());
+    // Флаги ПЕРЕД touch: touch сигналит syncDevicesChanged, и окно читает
+    // конфиг по сигналу — при прежнем порядке сигнал прилетал ДО записи
+    // lastMutual и статус висел "pair-request" (не обновлялся в моменте)
     m_conf->setValue(QStringLiteral("syncDevices/")+id
                      +QStringLiteral("/pairOffer"), false);
     m_conf->setValue(QStringLiteral("syncDevices/")+id
                      +QStringLiteral("/lastMutual"),
                      QDateTime::currentMSecsSinceEpoch());
+
+    touch_syncDevice(id, QString());
 }
 
 

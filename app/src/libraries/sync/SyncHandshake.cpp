@@ -1,5 +1,7 @@
 #include <QDateTime>
 #include <QDebug>
+#include <QHostAddress>
+#include <QNetworkInterface>
 
 #include "main.h"
 #include "SyncHandshake.h"
@@ -13,6 +15,28 @@ namespace
 {
 QString g_unknownId;
 QString g_unknownName;
+
+// NAT-хайрпин: под VirtualBox NAT соединение от виртуалки приходит на
+// сервер с НАШИМ же адресом (пакет выходит через NAT-движок хоста).
+// Писать такой адрес в строку пира нельзя: кнопка Sync now синкнулась бы
+// сама с собой. Loopback оставляем — два экземпляра на одной машине
+// это валидный стенд тестирования
+bool isNonLoopbackLocalAddress(const QString &ip)
+{
+    if(ip.isEmpty())
+        return false;
+
+    const QHostAddress addr(ip);
+
+    if(addr.isNull() || addr.isLoopback())
+        return false;
+
+    for(const QHostAddress &local : QNetworkInterface::allAddresses())
+        if(local==addr)
+            return true;
+
+    return false;
+}
 }
 
 
@@ -445,7 +469,12 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             qDebug() << "SyncHandshake: peer" << theirId
                      << "seen at" << peerIp;
 
-        config->touch_syncDevice(theirId, theirName, peerIp, peerPort);
+        // NAT-хайрпин: наш собственный адрес вместо адреса пира —
+        // в строку его не пишем (см. isNonLoopbackLocalAddress)
+        config->touch_syncDevice(theirId, theirName,
+                                 isNonLoopbackLocalAddress(peerIp) ? QString()
+                                                                  : peerIp,
+                                 peerPort);
 
         return answer;
     });

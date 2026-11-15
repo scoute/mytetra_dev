@@ -43,7 +43,7 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     table=new QTableWidget(this);
     table->setColumnCount(5);
     table->setHorizontalHeaderLabels(QStringList()
-        << tr("Name") << tr("Address") << tr("Last seen")
+        << tr("Name") << tr("Last address") << tr("Last seen")
         << tr("Paired") << tr("Device ID"));
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -171,7 +171,7 @@ bool SyncDevicesDialog::ownRequestPending(QString *ip,
             return false;
 
         if(ip!=nullptr)
-            *ip=info.ip;
+            *ip=info.lastIp;
 
         if(port!=nullptr)
             *port=static_cast<quint16>(info.port);
@@ -261,8 +261,8 @@ void SyncDevicesDialog::refreshList(void)
         }
 
         QTableWidgetItem *addrItem=new QTableWidgetItem(
-            info.ip.isEmpty() ? tr("(unknown address)")
-                              : QStringLiteral("%1:%2").arg(info.ip).arg(info.port));
+            info.lastIp.isEmpty() ? tr("(unknown address)")
+                              : QStringLiteral("%1:%2").arg(info.lastIp).arg(info.port));
         QTableWidgetItem *seenItem=new QTableWidgetItem(
             info.lastSeen>0
             ? QDateTime::fromMSecsSinceEpoch(info.lastSeen)
@@ -444,7 +444,7 @@ void SyncDevicesDialog::onSelectionChanged(void)
         if(info.id!=id)
             continue;
 
-        hasAddress=!info.ip.isEmpty();
+        hasAddress=!info.lastIp.isEmpty();
         paired=isPaired(info);
         mutual=isMutual(info);
         offer=info.pairOffer;
@@ -491,7 +491,7 @@ void SyncDevicesDialog::onSyncNow(void)
         }
     }
 
-    if(target.ip.isEmpty())
+    if(target.lastIp.isEmpty())
         return;
 
     // Sync только по взаимной паре (шаг 5 accept-flow): без Accept
@@ -513,7 +513,7 @@ void SyncDevicesDialog::onSyncNow(void)
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —
     // через Pair заново (осознанно, с показом фингерпринта выше).
     // Исключение — чужая сеть: там PIN нужен чтобы взять группу хаба
-    SyncReport report=session.run(target.ip,
+    SyncReport report=session.run(target.lastIp,
                                   static_cast<quint16>(target.port));
 
     if(!report.ok
@@ -550,7 +550,7 @@ void SyncDevicesDialog::onSyncNow(void)
         // клиент возьмет группу хаба внутри сессии.
         // Старый сервер так и откажет — тогда входим свежо (сброс пары):
         // пустая группа втягивается сервером любой версии
-        report=session.run(target.ip,
+        report=session.run(target.lastIp,
                            static_cast<quint16>(target.port),
                            pin);
 
@@ -558,7 +558,7 @@ void SyncDevicesDialog::onSyncNow(void)
            && report.errorCode==QStringLiteral("foreign-network"))
         {
             joinFresh();
-            report=session.run(target.ip,
+            report=session.run(target.lastIp,
                                static_cast<quint16>(target.port),
                                pin);
         }
@@ -786,7 +786,7 @@ void SyncDevicesDialog::onPair(void)
         }
     }
 
-    if(target.ip.isEmpty())
+    if(target.lastIp.isEmpty())
     {
         QMessageBox::warning(this, tr("Sync pairing"),
                              tr("Address unknown: cannot reach this device. "
@@ -798,7 +798,7 @@ void SyncDevicesDialog::onPair(void)
 
     qDebug() << "SyncPair: Pair pressed for"
              << (target.name.isEmpty() ? target.id : target.name)
-             << "at" << target.ip << target.port;
+             << "at" << target.lastIp << target.port;
 
     // Уже предлагали, взаимности нет: повтор Pair = проверка статуса
     // (пришел ли Accept). Секрет уже выведен — hello пойдет с proof
@@ -806,7 +806,7 @@ void SyncDevicesDialog::onPair(void)
     {
         qDebug() << "SyncPair: re-checking whether our request was accepted";
         SyncClient probe(config);
-        const SyncHelloResult hello=probe.hello(target.ip,
+        const SyncHelloResult hello=probe.hello(target.lastIp,
             static_cast<quint16>(target.port));
 
         if(!hello.ok)
@@ -860,7 +860,7 @@ void SyncDevicesDialog::onPair(void)
     // Сервер запишет входящий запрос для своего Accept
     bool syncOk=false;
     QString errorCode;
-    const QString result=win->runSyncToHeadless(target.ip, pin,
+    const QString result=win->runSyncToHeadless(target.lastIp, pin,
                                                static_cast<quint16>(target.port),
                                                syncOk, &errorCode);
     showManualResult(result, syncOk);

@@ -74,7 +74,7 @@ public:
     {
         QString id;
         QString name;
-        QString ip;
+        QString lastIp;
         int port=47777;
         qint64 firstSeen=0;
         qint64 lastSeen=0;

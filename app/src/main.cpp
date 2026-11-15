@@ -139,7 +139,7 @@ void printSyncStatus(void)
         printf("    - %s id=%s ip=%s lastSeen=%lld\n",
                info.name.isEmpty() ? "(unnamed)" : info.name.toLocal8Bit().data(),
                info.id.toLocal8Bit().data(),
-               info.ip.isEmpty() ? "(unknown)" : info.ip.toLocal8Bit().data(),
+               info.lastIp.isEmpty() ? "(unknown)" : info.lastIp.toLocal8Bit().data(),
                info.lastSeen);
     }
 

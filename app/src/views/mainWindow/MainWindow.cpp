@@ -12,6 +12,10 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTimer>
+#include <QVBoxLayout>
+#include <QRadioButton>
+#include <QDialogButtonBox>
+#include <QLabel>
 #include <QSplitter>
 #include <QStatusBar>
 #include <QCoreApplication>
@@ -1894,44 +1898,68 @@ void MainWindow::onSyncDevices(void)
 SyncStrategy MainWindow::askSyncStrategy(QWidget *parent,
                                          int localItems, int remoteItems)
 {
-    QMessageBox box(parent);
-    box.setWindowTitle(tr("Sync"));
-    box.setIcon(QMessageBox::Question);
-    box.setText(tr("Both devices already have data.\n"
-                   "This device: %1 item(s), the other side: %2 item(s).\n\n"
-                   "How to sync?")
-                .arg(localItems).arg(remoteItems));
+    QDialog dialog(parent);
+    dialog.setWindowTitle(tr("Sync"));
 
-    QPushButton *mergeButton=box.addButton(
-        tr("Merge both trees"), QMessageBox::AcceptRole);
-    QPushButton *mergeByNameButton=box.addButton(
-        tr("Merge same-named branches on the server "
-           "(server ids win, same-named notes stay duplicated), "
-           "then my base becomes the merged result"),
-        QMessageBox::YesRole);
-    QPushButton *pullButton=box.addButton(
-        tr("Take from the server (my data goes to trash)"),
-        QMessageBox::YesRole);
-    QPushButton *pushButton=box.addButton(
-        tr("Replace the server's with mine (server data goes to trash)"),
-        QMessageBox::YesRole);
-    box.addButton(tr("Cancel"), QMessageBox::RejectRole);
-    box.setDefaultButton(mergeButton);
-    box.exec();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    layout->addWidget(new QLabel(
+        tr("Both devices already have data.\n"
+           "This device: %1 item(s), the other side: %2 item(s).\n\n"
+           "How to sync?").arg(localItems).arg(remoteItems), &dialog));
 
-    if(box.clickedButton()==mergeButton)
-        return SyncStrategy::Merge;
+    // Выбор стратегии — радиокнопки: кнопок слишком много,
+    // текста в каждой длинный
+    QRadioButton *merge=new QRadioButton(
+        tr("Merge both trees"), &dialog);
+    merge->setToolTip(tr("Both trees stay as they are. "
+                         "If the same structure was recreated by hand, "
+                         "duplicates are possible."));
 
-    if(box.clickedButton()==mergeByNameButton)
+    QRadioButton *mergeByName=new QRadioButton(
+        tr("Merge same-named branches on the server"), &dialog);
+    mergeByName->setToolTip(tr("Branches with equal names are merged into "
+                               "the server's branches (server ids win), "
+                               "same-named notes stay duplicated, "
+                               "then my base becomes the merged result."));
+
+    QRadioButton *pull=new QRadioButton(
+        tr("Take from the server"), &dialog);
+    pull->setToolTip(tr("My data goes to trash, "
+                        "the server's base is downloaded in full."));
+
+    QRadioButton *push=new QRadioButton(
+        tr("Replace the server's with mine"), &dialog);
+    push->setToolTip(tr("The server's data goes to trash, "
+                        "my base is uploaded in full."));
+
+    merge->setChecked(true);
+
+    layout->addWidget(merge);
+    layout->addWidget(mergeByName);
+    layout->addWidget(pull);
+    layout->addWidget(push);
+
+    QDialogButtonBox *buttons=new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    connect(buttons, &QDialogButtonBox::accepted,
+            &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected,
+            &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+
+    if(dialog.exec()!=QDialog::Accepted)
+        return SyncStrategy::Cancel;
+
+    if(mergeByName->isChecked())
         return SyncStrategy::MergeByName;
 
-    if(box.clickedButton()==pullButton)
+    if(pull->isChecked())
         return SyncStrategy::PullFromHub;
 
-    if(box.clickedButton()==pushButton)
+    if(push->isChecked())
         return SyncStrategy::PushToHub;
 
-    return SyncStrategy::Cancel;
+    return SyncStrategy::Merge;
 }
 
 

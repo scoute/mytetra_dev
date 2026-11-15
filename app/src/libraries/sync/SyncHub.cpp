@@ -1,3 +1,5 @@
+#include <QJsonArray>
+
 #include "SyncHub.h"
 #include "SyncServer.h"
 #include "SyncHandshake.h"
@@ -184,6 +186,33 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         const QString error=SyncNoteIo::wipeAll(this->model);
 
         QJsonObject answer;
+
+        if(!error.isEmpty())
+            answer[QStringLiteral("error")]=error;
+        else
+            answer[QStringLiteral("ok")]=true;
+
+        return answer;
+    });
+
+    // Слияние веток по именам (стратегия "объединение"): клиент шлет id
+    // своих веток, хаб вливает их в одноименные свои (id хаба побеждает)
+    server->addRoute(QStringLiteral("POST /merge-by-name"),
+                     [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /merge-by-name"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
+
+        QStringList ids;
+        const QJsonArray arr=request.value(QStringLiteral("branchIds")).toArray();
+
+        for(const QJsonValue &value : arr)
+            ids << value.toString();
+
+        QJsonObject answer;
+        const QString error=SyncNoteIo::mergeByName(this->model, ids);
 
         if(!error.isEmpty())
             answer[QStringLiteral("error")]=error;

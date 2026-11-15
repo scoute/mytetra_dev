@@ -39,6 +39,9 @@ enum class SyncStrategy
 {
     Ask,         // спросить оператора (GUI); headless трактует как Merge
     Merge,       // слить как есть: оба дерева остаются
+    MergeByName, // объединение по именам веток на хабе (id хаба
+                 // побеждает, одноименные записи — дубли), затем
+                 // перетирание клиента результатом с хаба
     PullFromHub, // стереть свое в корзину, взять с хаба целиком
     PushToHub,   // стереть на хабе (в корзину), залить свое целиком
     Cancel       // оператор отменил: сессия прерывается, флаг остается
@@ -78,6 +81,14 @@ private:
                     const SyncPlan &plan,
                     const SyncManifest &remote,
                     SyncReport &report);
+
+    // Стратегия "объединение по именам веток на хабе": заливка своего ->
+    // слияние на хабе (id хаба побеждает) -> commit -> перетирание
+    // клиента результатом с хаба
+    SyncReport mergeByNameSession(const QString &host, quint16 port,
+                                  const SyncManifest &local,
+                                  const SyncManifest &remote,
+                                  SyncClient &client);
 
     // Применить чужие tombstone'ы локально
     bool applyRemoteDeletes(const SyncPlan &plan,

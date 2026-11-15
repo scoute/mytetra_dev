@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QUrl>
+#include <QJsonArray>
 #include <QJsonDocument>
 
 #include "SyncClient.h"
@@ -425,6 +426,35 @@ bool SyncClient::commit(const QString &host, quint16 port)
                                       withAuth(QStringLiteral("POST /commit"), QJsonObject()), ok);
 
     return ok && answer.value(QStringLiteral("ok")).toBool(false);
+}
+
+
+bool SyncClient::mergeByName(const QString &host, quint16 port,
+                             const QStringList &branchIds)
+{
+    QJsonArray arr;
+
+    for(const QString &id : branchIds)
+        arr.append(id);
+
+    QJsonObject request;
+    request[QStringLiteral("branchIds")]=arr;
+
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/merge-by-name"),
+                                      withAuth(QStringLiteral("POST /merge-by-name"), request), ok);
+
+    if(!ok)
+        return false;
+
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return false;
+    }
+
+    return true;
 }
 
 

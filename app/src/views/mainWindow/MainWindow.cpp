@@ -1768,6 +1768,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
 
                     if(value==QStringLiteral("push"))
                         return SyncStrategy::PushToHub;
+
+                    if(value==QStringLiteral("merge-by-name"))
+                        return SyncStrategy::MergeByName;
                 }
 
                 return SyncStrategy::Merge;
@@ -1901,6 +1904,11 @@ SyncStrategy MainWindow::askSyncStrategy(QWidget *parent,
 
     QPushButton *mergeButton=box.addButton(
         tr("Merge both trees"), QMessageBox::AcceptRole);
+    QPushButton *mergeByNameButton=box.addButton(
+        tr("Merge same-named branches on the server "
+           "(server ids win, same-named notes stay duplicated), "
+           "then my base becomes the merged result"),
+        QMessageBox::YesRole);
     QPushButton *pullButton=box.addButton(
         tr("Take from the server (my data goes to trash)"),
         QMessageBox::YesRole);
@@ -1913,6 +1921,9 @@ SyncStrategy MainWindow::askSyncStrategy(QWidget *parent,
 
     if(box.clickedButton()==mergeButton)
         return SyncStrategy::Merge;
+
+    if(box.clickedButton()==mergeByNameButton)
+        return SyncStrategy::MergeByName;
 
     if(box.clickedButton()==pullButton)
         return SyncStrategy::PullFromHub;

@@ -535,6 +535,10 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
     for(auto it=fieldsObj.constBegin(); it!=fieldsObj.constEnd(); ++it)
         fields.insert(it.key(), it.value().toString());
 
+    // id всегда из верха запроса: старые/чужие пиры могли не класть его
+    // в fields, а без id создание ветки невозможно
+    fields.insert(QStringLiteral("id"), id);
+
     const QString parentId=request.value(QStringLiteral("parent")).toString();
     const qint64 remoteMtime=request.value(QStringLiteral("mtime")).toVariant().toLongLong();
     const QString remoteHash=request.value(QStringLiteral("hash")).toString();
@@ -550,9 +554,16 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
             return QStringLiteral("crypt change unsupported");
 
-        existing->setField(QStringLiteral("name"), fields.value(QStringLiteral("name")));
-        existing->setField(QStringLiteral("icon"), fields.value(QStringLiteral("icon")));
-        existing->setField(QStringLiteral("ctime"), fields.value(QStringLiteral("ctime")));
+        // Слепая запись полей целиком (как у записей через setNaturalFieldSource):
+        // setField для crypt=1 шифрует значение ПОВТОРНО (двойной шифртекст,
+        // нечитаемо даже с верным паролем) или роняет criticalError без пароля
+        // (headless: весь процесс хаба падает от одного пуша).
+        // Принимаем все чужие поля (кроме id/crypt — сверены выше): хеш ветки
+        // считается по всем полям, иначе расхождение не сойдется никогда
+        QMap<QString, QString> rawFields=fields;
+        rawFields.insert(QStringLiteral("id"), id);
+        rawFields.insert(QStringLiteral("crypt"), oldCrypt);
+        existing->setAllFieldDirect(rawFields);
 
         // Переезд: родитель в запросе отличается — перелинковываем
         // с сохранением id и поддерева. Без этого переезды веток

@@ -501,7 +501,6 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
                                       const SyncManifest &remote,
                                       bool isHub)
 {
-    Q_UNUSED(isHub);
     SyncPlan plan;
 
     // Родительские цепочки для проверки покрытия tombstone'ами:
@@ -584,7 +583,9 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
     }
 
     // Ветки: нет там — загрузить туда; нет здесь — скачать оттуда;
-    // хеши разные — побеждает больший mtime, равные — конфликт
+    // хеши разные — побеждает больший mtime, равные — хаб (источник правды):
+    // мы спок (isHub=false) — качаем его версию. Детерминировано с обеих
+    // сторон, вечных конфликтов нет (поле conflicts зарезервировано)
     for(auto it=remote.branches.constBegin();
         it!=remote.branches.constEnd(); ++it)
     {
@@ -611,8 +612,10 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
             plan.uploadBranches << it.key();
         else if(theirs.mtime>ours.mtime)
             plan.downloadBranches << it.key();
+        else if(isHub)
+            plan.uploadBranches << it.key();
         else
-            plan.conflicts << it.key();
+            plan.downloadBranches << it.key();
     }
 
     for(auto it=local.branches.constBegin();
@@ -656,8 +659,10 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
             plan.uploadNotes << it.key();
         else if(theirs.mtime>ours.mtime)
             plan.downloadNotes << it.key();
+        else if(isHub)
+            plan.uploadNotes << it.key();
         else
-            plan.conflicts << it.key();
+            plan.downloadNotes << it.key();
     }
 
     for(auto it=local.notes.constBegin();

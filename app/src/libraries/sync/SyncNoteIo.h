@@ -33,6 +33,14 @@ QString applyDelete(KnowTreeModel *model, const QString &id,
 // содержимого (пустое место под полный залив с другой стороны)
 QString wipeAll(KnowTreeModel *model);
 
+// Слияние веток по именам на хабе (стратегия "объединение"): ветки из
+// clientBranchIds (созданные клиентом, их у хаба не было) вливаются
+// в одноименные ветки хаба — id хаба побеждает, записи не сливаются
+// (одноименные остаются дублями), пустые оболочки удаляются.
+// Рекурсивно по уровням. "" при успехе
+QString mergeByName(KnowTreeModel *model,
+                    const QStringList &clientBranchIds);
+
 } // namespace SyncNoteIo
 
 #endif // SYNCNOTEIO_H

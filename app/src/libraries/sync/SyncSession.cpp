@@ -233,6 +233,13 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
             config->set_syncAskStrategy(false);
 
+            if(strategy==SyncStrategy::MergeByName)
+            {
+                addLog(QStringLiteral("strategy: merge by branch names "
+                                      "on hub (server ids win)"));
+                return mergeByNameSession(host, port, local, remote, client);
+            }
+
             if(strategy==SyncStrategy::PullFromHub)
             {
                 addLog(QStringLiteral("strategy: take from hub, local -> trash"));
@@ -556,4 +563,109 @@ bool SyncSession::pushOwnTombstones(SyncClient &client,
     }
 
     return true;
+}
+
+// Стратегия "объединение по именам веток на хабе" (114):
+// 1) заливаем свое (недостающее создается, разное решает LWW);
+// 2) хаб сливает НАШИ ветки в одноименные свои (id хаба побеждает,
+//    записи не трогаются — одноименные остаются дублями);
+// 3) commit хаба;
+// 4) перетирание клиента результатом (как стратегия "взять с сервера").
+// При любой ошибке на шагах 1-3 сессия прерывается БЕЗ перетирания:
+// терять локальное можно только когда результат слияния уже готов
+SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
+                                           const SyncManifest &local,
+                                           const SyncManifest &remote,
+                                           SyncClient &client)
+{
+    SyncReport report;
+
+    // 1. Заливка своего
+    const SyncPlan prePlan=SyncManifestBuilder::compare(local, remote, false);
+    addLog(QStringLiteral("merge-by-name: push own (upNotes=%1 upBranches=%2)")
+           .arg(prePlan.uploadNotes.size()).arg(prePlan.uploadBranches.size()));
+
+    if(!pushByPlan(client, host, port, prePlan, local, report))
+        return report;
+
+    if(!report.errors.isEmpty())
+    {
+        // сливать можно только полное дерево: потерянная ветка исчезла бы
+        // безвозвратно при перетирании клиента
+        report.error=QStringLiteral("merge by name aborted: "
+                                    "item errors on upload");
+        addLog(report.error);
+        return report;
+    }
+
+    // 2. Наши ветки = локальные минус бывшие у хаба до заливки
+    QStringList clientOnly;
+
+    for(auto it=local.branches.constBegin();
+        it!=local.branches.constEnd(); ++it)
+        if(!remote.branches.contains(it.key()))
+            clientOnly << it.key();
+
+    addLog(QStringLiteral("merge-by-name: %1 own branches to merge")
+           .arg(clientOnly.size()));
+
+    if(!client.mergeByName(host, port, clientOnly))
+    {
+        report.error=client.lastError().isEmpty()
+            ? QStringLiteral("merge by name failed") : client.lastError();
+        addLog(report.error);
+        return report;
+    }
+
+    // 3. Фиксация слияния на хабе
+    if(!client.commit(host, port))
+    {
+        report.error=client.lastError().isEmpty()
+            ? QStringLiteral("hub commit failed") : client.lastError();
+        addLog(report.error);
+        return report;
+    }
+
+    // 4. Перетирание клиента результатом слияния
+    addLog(QStringLiteral("merge-by-name: wipe local, pull merged result"));
+
+    const QString error=SyncNoteIo::wipeAll(model);
+
+    if(!error.isEmpty())
+    {
+        report.error=error;
+        addLog(report.error);
+        return report;
+    }
+
+    const SyncManifest freshRemote=client.fetchManifest(host, port);
+
+    if(!client.lastError().isEmpty())
+    {
+        report.error=client.lastError();
+        addLog(report.error);
+        return report;
+    }
+
+    SyncManifest emptyLocal;
+    const SyncPlan fullPlan=
+        SyncManifestBuilder::compare(emptyLocal, freshRemote, false);
+
+    if(!pullByPlan(client, host, port, fullPlan, freshRemote, report))
+        return report;
+
+    if(!client.commit(host, port))
+    {
+        report.error=client.lastError().isEmpty()
+            ? QStringLiteral("hub commit failed") : client.lastError();
+        addLog(report.error);
+        return report;
+    }
+
+    model->save();
+    model->reload();
+    addLog(QStringLiteral("merge-by-name: done"));
+
+    report.ok=true;
+    return report;
 }

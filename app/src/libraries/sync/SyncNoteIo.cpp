@@ -664,6 +664,110 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
 }
 
 
+namespace
+{
+
+// Среди детей parent найти одноименную ветку, чей id НЕ из clientIds
+// ("ихняя" ветка: ее id и побеждает при слиянии)
+TreeItem *findForeignChildByName(TreeItem *parent, const QString &name,
+                                 const QSet<QString> &clientIds)
+{
+    for(int i=0; i<parent->childCount(); ++i)
+    {
+        TreeItem *child=parent->child(i);
+
+        if(clientIds.contains(child->getField(QStringLiteral("id"))))
+            continue;
+
+        if(child->getField(QStringLiteral("name"))==name)
+            return child;
+    }
+
+    return nullptr;
+}
+
+
+// Влить содержимое from в to (id to побеждает): наши подветки —
+// рекурсивно по именам или переносом целиком, чужие/общие — переносом
+// как есть. Записи переносятся все, одноименные остаются дублями.
+// Оболочка from удаляется с tombstone'ом
+void mergeBranchInto(KnowTreeModel *model, TreeItem *from, TreeItem *to,
+                     const QSet<QString> &clientIds)
+{
+    // подветки — с конца: переносы и удаления меняют список детей
+    for(int i=from->childCount()-1; i>=0; --i)
+    {
+        TreeItem *child=from->child(i);
+        const QString childId=child->getField(QStringLiteral("id"));
+        const QString childName=child->getField(QStringLiteral("name"));
+
+        // сливаем только НАШИ ветки; общие по истории просто переезжают
+        TreeItem *target=nullptr;
+
+        if(clientIds.contains(childId))
+            target=findForeignChildByName(to, childName, clientIds);
+
+        if(target!=nullptr)
+            mergeBranchInto(model, child, target, clientIds);
+        else
+            model->moveSyncedBranch(childId, to->getField(QStringLiteral("id")));
+    }
+
+    // записи from — все в to (заметки не сливаем: одноименные — дубли)
+    RecordTableData *fromTable=from->recordtableGetTableData();
+    RecordTableData *toTable=to->recordtableGetTableData();
+
+    while(fromTable->size()>0)
+    {
+        Record record;
+
+        if(!fromTable->takeRecordForMove(0, record))
+            break;
+
+        toTable->appendSyncedRecord(record);
+    }
+
+    // оболочка from пуста и не нужна (tombstone: ветка удалена)
+    applyDelete(model, from->getField(QStringLiteral("id")),
+                QDateTime::currentMSecsSinceEpoch());
+}
+
+} // namespace
+
+
+QString mergeByName(KnowTreeModel *model, const QStringList &clientBranchIds)
+{
+    if(model==nullptr)
+        return QStringLiteral("bad request");
+
+    TreeItem *root=const_cast<TreeItem *>(model->getRootItemPublic());
+
+    if(root==nullptr)
+        return QStringLiteral("bad request");
+
+    const QSet<QString> clientIds=clientBranchIds.toSet();
+
+    // Верхний уровень: наши ветки вливаются в одноименные ихние;
+    // без пары остаются как есть (просто новые ветки на хабе)
+    for(int i=root->childCount()-1; i>=0; --i)
+    {
+        TreeItem *child=root->child(i);
+        const QString childId=child->getField(QStringLiteral("id"));
+
+        if(!clientIds.contains(childId))
+            continue;
+
+        TreeItem *target=findForeignChildByName(
+            root, child->getField(QStringLiteral("name")), clientIds);
+
+        if(target!=nullptr)
+            mergeBranchInto(model, child, target, clientIds);
+    }
+
+    return QString();
+}
+
+
 QString wipeAll(KnowTreeModel *model)
 {
     if(model==nullptr)

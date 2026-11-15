@@ -104,8 +104,9 @@ void printHelp()
     printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
     printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
     printf("./mytetra --sync-scan [--sync-port N] - Find sync hubs in the local network and exit\n");
-    printf("./mytetra --sync-strategy merge|pull|push - First-sync strategy for --sync-to\n");
-    printf("        (merge=keep both trees, pull=take from hub, push=replace hub content)\n");
+    printf("./mytetra --sync-strategy merge|merge-by-name|pull|push - First-sync strategy for --sync-to\n");
+    printf("        (merge=keep both trees, merge-by-name=merge same-named branches on hub,\n");
+    printf("         pull=take from hub, push=replace hub content)\n");
     printf("./mytetra --sync-forget - Clear sync pairing (secret, group, peer and device list) and exit\n");
     printf("./mytetra --sync-unpair ID - Break pairing with device ID and exit\n");
     printf("./mytetra --sync-remove ID - Forget device ID (auto-reset when list becomes empty) and exit\n");

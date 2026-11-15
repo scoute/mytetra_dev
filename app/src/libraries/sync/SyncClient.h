@@ -2,6 +2,7 @@
 #define SYNCCLIENT_H
 
 #include <QString>
+#include <QStringList>
 #include <QJsonObject>
 
 #include "SyncManifest.h"
@@ -58,6 +59,11 @@ public:
     // Полная замена содержимого хаба (стратегия "заменить серверные"):
     // хаб стирает базу в корзину без tombstone'ов
     bool reset(const QString &host, quint16 port);
+
+    // Слияние веток по именам на хабе (стратегия "объединение"):
+    // ветки из branchIds вливаются в одноименные ветки хаба
+    bool mergeByName(const QString &host, quint16 port,
+                     const QStringList &branchIds);
 
     QString lastError(void) const;
 

@@ -7,6 +7,7 @@
 #include <QStringList>
 
 #include "SyncManifest.h"
+#include "SyncPreview.h"
 
 class KnowTreeModel;
 class AppConfig;
@@ -80,6 +81,13 @@ public:
         std::function<DeleteDecision(int remoteDeletes, int localDeletes)>;
     void setDeleteGuard(DeleteGuard guard);
 
+    // Окно предпросмотра (GUI): план по категориям с действиями
+    // (создание молча, остальное — явный выбор). Возвращает false —
+    // пользователь отменил. Без него (headless) действует DeleteGuard
+    using PreviewResolver = std::function<bool(const SyncPreview::Preview &,
+                                               SyncPreview::Decisions &)>;
+    void setPreviewResolver(PreviewResolver resolver);
+
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;
 
@@ -138,6 +146,7 @@ private:
     QStringList logLines;
     StrategyResolver strategyResolver;
     DeleteGuard deleteGuard;
+    PreviewResolver previewResolver;
 
     void addLog(const QString &line);
 };

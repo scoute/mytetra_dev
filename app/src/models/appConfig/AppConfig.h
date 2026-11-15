@@ -79,6 +79,11 @@ public:
     bool get_syncDebugEnabled(void);
     void set_syncDebugEnabled(bool value);
 
+    // Дефолты действий предпросмотра синка: 5 значений через запятую
+    // (Create,Rename,Edit,MyDelete,TheirDelete; 0=apply..4=skip)
+    QString get_syncPreviewActions(void);
+    void set_syncPreviewActions(const QString &value);
+
     // Известные sync-устройства для окна Sync devices.
     // Хранятся группами syncDevices/<id>/{name,ip,port,firstSeen,lastSeen}.
     // Fingerprint считается из id на лету, хранить нечего

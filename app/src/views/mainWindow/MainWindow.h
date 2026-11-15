@@ -26,6 +26,7 @@ class WindowSwitcher;
 class CommandRunner;
 class SyncHub;
 #include "libraries/sync/SyncSession.h"
+#include "libraries/sync/SyncPreview.h"
 
 class MainWindow : public QMainWindow
 {
@@ -145,6 +146,12 @@ public:
     // Общий для runSyncToHeadless и окна Sync devices
     static SyncStrategy askSyncStrategy(QWidget *parent,
                                         int localItems, int remoteItems);
+
+    // Окно предпросмотра синка (категории с действиями + diff).
+    // Заполняет decisions выбранными действиями, false — отмена
+    bool askSyncPreview(const SyncPreview::Preview &preview,
+                        SyncPreview::Decisions &decisions,
+                        const QString &host, quint16 port);
 
     void onExpandEditArea(bool flag);
 

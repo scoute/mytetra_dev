@@ -37,6 +37,12 @@ void SyncSession::setDeleteGuard(DeleteGuard guard)
 }
 
 
+void SyncSession::setPreviewResolver(PreviewResolver resolver)
+{
+    previewResolver=resolver;
+}
+
+
 namespace
 {
 // Сколько элементов (ветки со своими записями и поддеревьями) исчезнет
@@ -376,10 +382,47 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         localDeletes+=subtreeItemCount(id, local.branches, local.notes);
 
     if(remoteDeletes>0 || localDeletes>0)
-    {
         addLog(QStringLiteral("delete impact: %1 item(s) on hub, %2 locally")
                .arg(remoteDeletes).arg(localDeletes));
 
+    // 3б. Предпросмотр (GUI): категории с действиями — безопасное
+    // (создание) молча, остальное явным выбором. Заменяет собой
+    // и guard удалений: удаления решаются в том же окне
+    SyncPlan finalPlan=plan;
+
+    if(previewResolver && !destructiveStrategy)
+    {
+        const SyncPreview::Preview preview=
+            SyncPreview::classify(plan, local, remote);
+
+        if(preview.needsAttention())
+        {
+            SyncPreview::Decisions decisions=
+                SyncPreview::Decisions::defaults();
+
+            if(!previewResolver(preview, decisions))
+            {
+                addLog(QStringLiteral("preview cancelled"));
+                report.error=QStringLiteral("Sync cancelled");
+                return report;
+            }
+
+            finalPlan=SyncPreview::applyDecisions(plan, preview, decisions,
+                                                  local, remote);
+            addLog(QStringLiteral("preview: final plan upNotes=%1 "
+                                  "downNotes=%2 upBranches=%3 "
+                                  "downBranches=%4 deleteLocal=%5 pushTombs=%6")
+                   .arg(finalPlan.uploadNotes.size())
+                   .arg(finalPlan.downloadNotes.size())
+                   .arg(finalPlan.uploadBranches.size())
+                   .arg(finalPlan.downloadBranches.size())
+                   .arg(finalPlan.deleteLocal.size())
+                   .arg(finalPlan.pushTombs.size()));
+        }
+    }
+    else if(remoteDeletes>0 || localDeletes>0)
+    {
+        // Headless: диалогов нет, удаления — только с явного флага
         if(deleteGuard && !destructiveStrategy)
         {
             const DeleteDecision decision=
@@ -406,11 +449,11 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     }
 
     // 4. Заливка нашего на хаб
-    if(!pushByPlan(client, host, port, plan, local, report))
+    if(!pushByPlan(client, host, port, finalPlan, local, report))
         return report;
 
     // 5. Скачивание с хаба и применение у себя
-    if(!pullByPlan(client, host, port, plan, remote, report))
+    if(!pullByPlan(client, host, port, finalPlan, remote, report))
         return report;
 
     // 6. Чужие tombstone'ы — применить локально

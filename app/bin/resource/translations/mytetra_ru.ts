@@ -3987,6 +3987,46 @@ It is developer error.
 Please report about this problem to the developers.</source>
         <translation type="vanished">Контроллер корзины не смог удалить файл:\n\n%1\n\nПожалуйста, сообщите о проблеме разработчикам.</translation>
     </message>
+    <message>
+        <source>Apply silently</source>
+        <translation>Применить молча</translation>
+    </message>
+    <message>
+        <source>Show and confirm</source>
+        <translation>Показать и подтвердить</translation>
+    </message>
+    <message>
+        <source>Take from the server</source>
+        <translation>Взять с сервера</translation>
+    </message>
+    <message>
+        <source>Keep mine</source>
+        <translation>Настоять на моём</translation>
+    </message>
+    <message>
+        <source>Skip this time</source>
+        <translation>Пропустить в этот раз</translation>
+    </message>
+    <message>
+        <source>Added</source>
+        <translation>Добавлено</translation>
+    </message>
+    <message>
+        <source>Renamed</source>
+        <translation>Переименовано</translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation>Изменено</translation>
+    </message>
+    <message>
+        <source>My deletions</source>
+        <translation>Мои удаления</translation>
+    </message>
+    <message>
+        <source>Their deletions</source>
+        <translation>Ихние удаления</translation>
+    </message>
 </context>
 <context>
     <name>RecordInfoFieldsEditor</name>
@@ -5594,4 +5634,73 @@ What to do?</source>
         <translation>Вместо этого восстановить с сервера (мои данные уйдут в корзину)</translation>
     </message>
 </context>
+  <context>
+    <name>SyncPreviewDialog</name>
+    <message>
+        <source>Sync preview</source>
+        <translation>Предпросмотр синхронизации</translation>
+    </message>
+    <message>
+        <source>What this sync will do.
+Safe changes (added) apply silently, everything else needs your choice.</source>
+        <translation>Что сделает эта синхронизация.
+Безопасные изменения (добавленное) применяются молча, всё остальное требует вашего выбора.</translation>
+    </message>
+    <message>
+        <source>Item</source>
+        <translation>Элемент</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>Действие</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>Тип</translation>
+    </message>
+    <message>
+        <source>(without name)</source>
+        <translation>(без имени)</translation>
+    </message>
+    <message>
+        <source>branch</source>
+        <translation>ветка</translation>
+    </message>
+    <message>
+        <source>note</source>
+        <translation>запись</translation>
+    </message>
+    <message>
+        <source>Select a modified note to see the diff.</source>
+        <translation>Выберите измененную запись, чтобы увидеть различия.</translation>
+    </message>
+    <message>
+        <source>Diff is only available for modified notes.</source>
+        <translation>Diff доступен только для измененных записей.</translation>
+    </message>
+    <message>
+        <source>The other side&apos;s text is unavailable.</source>
+        <translation>Текст с другой стороны недоступен.</translation>
+    </message>
+    <message>
+        <source>=== %1 (other side) -&gt; %2 (this device) ===</source>
+        <translation>=== %1 (другая сторона) -&gt; %2 (это устройство) ===</translation>
+    </message>
+    <message>
+        <source>old</source>
+        <translation>было</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>стало</translation>
+    </message>
+    <message>
+        <source>Remember these actions as defaults</source>
+        <translation>Запомнить эти действия как значения по умолчанию</translation>
+    </message>
+    <message>
+        <source>Synchronize</source>
+        <translation>Синхронизировать</translation>
+    </message>
+  </context>
 </TS>

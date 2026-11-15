@@ -294,6 +294,18 @@ void AppConfig::set_syncDebugEnabled(bool value)
 }
 
 
+QString AppConfig::get_syncPreviewActions(void)
+{
+    return m_conf->value("syncPreviewActions", QString()).toString();
+}
+
+
+void AppConfig::set_syncPreviewActions(const QString &value)
+{
+    m_conf->setValue("syncPreviewActions", value);
+}
+
+
 // Известные sync-устройства: сервер пишет всех кто стучался в hello,
 // клиент — тех к кому ходил на синк (с IP и портом для кнопки Sync now)
 QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)

@@ -306,6 +306,9 @@ HEADERS+=\
     src/libraries/sync/SyncHandshake.h \
     src/libraries/sync/SyncSidecar.h \
     src/libraries/sync/SyncDiscovery.h \
+    src/libraries/sync/SyncDiff.h \
+    src/libraries/sync/SyncPreview.h \
+    src/views/sync/SyncPreviewDialog.h \
     src/libraries/sync/SyncManifest.h \
     src/libraries/sync/SyncHub.h \
     src/libraries/sync/SyncNoteIo.h \
@@ -490,6 +493,9 @@ SOURCES+=\
     src/libraries/sync/SyncHandshake.cpp \
     src/libraries/sync/SyncSidecar.cpp \
     src/libraries/sync/SyncDiscovery.cpp \
+    src/libraries/sync/SyncDiff.cpp \
+    src/libraries/sync/SyncPreview.cpp \
+    src/views/sync/SyncPreviewDialog.cpp \
     src/libraries/sync/SyncManifest.cpp \
     src/libraries/sync/SyncHub.cpp \
     src/libraries/sync/SyncClient.cpp \

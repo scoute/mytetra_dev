@@ -39,6 +39,7 @@
 #include "libraries/WindowSwitcher.h"
 #include "views/actionLog/ActionLogScreen.h"
 #include "views/sync/SyncDevicesDialog.h"
+#include "views/sync/SyncPreviewDialog.h"
 #include "views/databasesManagement/DatabasesManagementScreen.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/RandomInitter.h"
@@ -50,6 +51,7 @@
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncHandshake.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncNoteIo.h"
 #include "libraries/sync/SyncDebug.h"
 
 
@@ -1783,6 +1785,15 @@ QString MainWindow::runSyncToHeadless(const QString &host,
             return askSyncStrategy(this, localItems, remoteItems);
         });
 
+    // Предпросмотр синка — только GUI (категории с действиями + diff).
+    // Headless: без диалогов, действует guard удалений ниже
+    if(!isSyncHeadlessMode())
+        session.setPreviewResolver(
+            [this, &host, port](const SyncPreview::Preview &preview,
+                                SyncPreview::Decisions &decisions) -> bool {
+                return askSyncPreview(preview, decisions, host, port);
+            });
+
     // Опасный синк (удаления) — явный выбор: продолжить / отменить /
     // восстановиться с сервера. Безопасное едет молча.
     // Headless: диалогов нет, согласие — явный флаг --sync-allow-delete
@@ -1943,6 +1954,88 @@ void MainWindow::onSyncDevices(void)
 
 // Диалог стратегии первого синка: данные есть с обеих сторон, пока
 // ничего не слилось. Стирание — только в корзину
+namespace
+{
+// Дефолты категорий предпросмотра из конфига (5 значений через запятую)
+SyncPreview::Decisions loadPreviewDefaults(void)
+{
+    const QStringList parts=mytetraConfig.get_syncPreviewActions()
+        .split(QLatin1Char(','));
+    SyncPreview::Decisions decisions=SyncPreview::Decisions::defaults();
+
+    if(parts.size()==5)
+        for(int i=0; i<5; ++i)
+        {
+            bool ok=false;
+            const int value=parts.at(i).toInt(&ok);
+
+            if(ok && value>=0 && value<=4)
+                decisions.category[static_cast<SyncPreview::Category>(i)]=
+                    static_cast<SyncPreview::Action>(value);
+        }
+
+    return decisions;
+}
+
+
+void savePreviewDefaults(const SyncPreview::Decisions &decisions)
+{
+    QStringList parts;
+
+    for(int i=0; i<5; ++i)
+        parts << QString::number(static_cast<int>(
+            decisions.category.value(static_cast<SyncPreview::Category>(i),
+                                     SyncPreview::Action::Confirm)));
+
+    mytetraConfig.set_syncPreviewActions(parts.join(QLatin1Char(',')));
+}
+} // namespace
+
+
+// Окно предпросмотра синка: категории с действиями, список элементов
+// с точечными действиями, diff по требованию. false — отмена
+bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
+                                SyncPreview::Decisions &decisions,
+                                const QString &host, quint16 port)
+{
+    // Свой текст — из модели; чужой — pull-note с хаба по требованию
+    const auto ownText=[this](const SyncPreview::Item &item) -> QString {
+        if(item.isBranch)
+            return QString();
+
+        const QJsonObject note=SyncNoteIo::serializeNote(
+            treeScreen->knowTreeModel, mytetraConfig.get_tetradir(), item.id);
+
+        return QString::fromUtf8(QByteArray::fromBase64(
+            note.value(QStringLiteral("text")).toString().toLatin1()));
+    };
+
+    const auto otherText=[host, port](const SyncPreview::Item &item) -> QString {
+        if(item.isBranch)
+            return QString();
+
+        SyncClient client(&mytetraConfig);
+        const QJsonObject note=client.pullNote(host, port, item.id);
+
+        return QString::fromUtf8(QByteArray::fromBase64(
+            note.value(QStringLiteral("text")).toString().toLatin1()));
+    };
+
+    SyncPreviewDialog dialog(preview, loadPreviewDefaults(),
+                             ownText, otherText, this);
+
+    if(dialog.exec()!=QDialog::Accepted)
+        return false;
+
+    decisions=dialog.decisions();
+
+    if(dialog.wantSaveDefaults())
+        savePreviewDefaults(decisions);
+
+    return true;
+}
+
+
 SyncStrategy MainWindow::askSyncStrategy(QWidget *parent,
                                          int localItems, int remoteItems)
 {

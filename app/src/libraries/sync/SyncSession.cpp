@@ -25,6 +25,35 @@ QStringList SyncSession::log(void) const
 }
 
 
+void SyncSession::skipItem(SyncReport &report, const QString &entry)
+{
+    report.errors << entry;
+    addLog(QStringLiteral("item error, skipping: %1").arg(entry));
+    qDebug() << "SyncSession: item error, skipping:" << entry;
+}
+
+
+bool SyncSession::noteItem(SyncClient &client, SyncReport &report,
+                           const QString &kind, const QString &id,
+                           const QString &reason)
+{
+    // Транспорт умер (не дошло) или гейт пары (not-paired) —
+    // это не "битая запись", сессию рвем сразу
+    if(!client.lastTransportOk()
+       || reason==QStringLiteral("not-paired"))
+    {
+        report.error=reason.isEmpty()
+            ? QStringLiteral("%1 %2 failed").arg(kind, id) : reason;
+        report.errorCode=reason==QStringLiteral("not-paired")
+            ? QStringLiteral("not-paired") : report.errorCode;
+        return false;
+    }
+
+    skipItem(report, QStringLiteral("%1 %2: %3").arg(kind, id, reason));
+    return true;
+}
+
+
 void SyncSession::addLog(const QString &line)
 {
     logLines << line;
@@ -249,8 +278,10 @@ bool SyncSession::pushByPlan(SyncClient &client,
 
         if(branch.contains(QStringLiteral("error")))
         {
-            report.error=QStringLiteral("serialize branch failed");
-            return false;
+            skipItem(report, QStringLiteral("branch %1: %2")
+                     .arg(id, branch.value(QStringLiteral("error"))
+                     .toString()));
+            continue;
         }
 
         // mtime/hash для adopt на хабе — из локального манифеста
@@ -262,8 +293,11 @@ bool SyncSession::pushByPlan(SyncClient &client,
 
         if(!client.pushBranch(host, port, branch))
         {
-            report.error=client.lastError();
-            return false;
+            if(!noteItem(client, report, QStringLiteral("branch"), id,
+                         client.lastError()))
+                return false;
+
+            continue;
         }
 
         report.uploadedBranches++;
@@ -275,9 +309,9 @@ bool SyncSession::pushByPlan(SyncClient &client,
 
         if(note.contains(QStringLiteral("error")))
         {
-            report.error=QStringLiteral("serialize note %1 failed: %2")
-                .arg(id, note.value(QStringLiteral("error")).toString());
-            return false;
+            skipItem(report, QStringLiteral("note %1: %2")
+                     .arg(id, note.value(QStringLiteral("error")).toString()));
+            continue;
         }
 
         const SyncNoteInfo &info=local.notes.value(id);
@@ -289,8 +323,11 @@ bool SyncSession::pushByPlan(SyncClient &client,
 
         if(!client.pushNote(host, port, note))
         {
-            report.error=client.lastError();
-            return false;
+            if(!noteItem(client, report, QStringLiteral("note"), id,
+                         client.lastError()))
+                return false;
+
+            continue;
         }
 
         report.uploadedNotes++;
@@ -315,10 +352,13 @@ bool SyncSession::pullByPlan(SyncClient &client,
         if(branch.contains(QStringLiteral("error")) ||
            !client.lastError().isEmpty())
         {
-            report.error=client.lastError().isEmpty()
+            if(!noteItem(client, report, QStringLiteral("branch"), id,
+                         client.lastError().isEmpty()
                          ? QStringLiteral("pull branch failed")
-                         : client.lastError();
-            return false;
+                         : client.lastError()))
+                return false;
+
+            continue;
         }
 
         QJsonObject full=branch;
@@ -332,8 +372,8 @@ bool SyncSession::pullByPlan(SyncClient &client,
 
         if(!error.isEmpty())
         {
-            report.error=error;
-            return false;
+            skipItem(report, QStringLiteral("branch %1: %2").arg(id, error));
+            continue;
         }
 
         report.downloadedBranches++;
@@ -348,10 +388,13 @@ bool SyncSession::pullByPlan(SyncClient &client,
         if(note.contains(QStringLiteral("error")) ||
            !client.lastError().isEmpty())
         {
-            report.error=client.lastError().isEmpty()
+            if(!noteItem(client, report, QStringLiteral("note"), id,
+                         client.lastError().isEmpty()
                          ? QStringLiteral("pull note failed")
-                         : client.lastError();
-            return false;
+                         : client.lastError()))
+                return false;
+
+            continue;
         }
 
         QJsonObject full=note;
@@ -366,8 +409,8 @@ bool SyncSession::pullByPlan(SyncClient &client,
 
         if(!error.isEmpty())
         {
-            report.error=error;
-            return false;
+            skipItem(report, QStringLiteral("note %1: %2").arg(id, error));
+            continue;
         }
 
         report.downloadedNotes++;
@@ -391,8 +434,9 @@ bool SyncSession::applyRemoteDeletes(const SyncPlan &plan,
 
         if(!error.isEmpty())
         {
-            report.error=error;
-            return false;
+            skipItem(report, QStringLiteral("delete %1: %2")
+                     .arg(id, error));
+            continue;
         }
 
         report.appliedDeletes++;
@@ -419,10 +463,13 @@ bool SyncSession::pushOwnTombstones(SyncClient &client,
 
         if(!client.pushDelete(host, port, it.key(), it.value()))
         {
-            report.error=client.lastError().isEmpty()
+            if(!noteItem(client, report, QStringLiteral("delete"),
+                         it.key(), client.lastError().isEmpty()
                          ? QStringLiteral("push delete failed")
-                         : client.lastError();
-            return false;
+                         : client.lastError()))
+                return false;
+
+            continue;
         }
     }
 

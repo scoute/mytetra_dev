@@ -10,7 +10,6 @@
 #include "SyncClient.h"
 #include "SyncHandshake.h"
 #include "SyncDebug.h"
-#include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
 
 #include <QDebug>
@@ -33,11 +32,18 @@ QString SyncClient::lastError(void) const
 }
 
 
+bool SyncClient::lastTransportOk(void) const
+{
+    return lastTransportOkFlag;
+}
+
+
 QJsonObject SyncClient::postJson(const QString &host, quint16 port,
                                  const QString &path, const QJsonObject &body,
                                  bool &ok)
 {
     ok=false;
+    lastTransportOkFlag=false;
     lastErrorText.clear();
 
     QNetworkAccessManager manager;
@@ -98,6 +104,7 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     }
 
     ok=true;
+    lastTransportOkFlag=true;
 
     // Ответ сервера с его ошибкой (не транспорт): тоже в лог,
     // иначе по таймингам видно "ok", а сессия падает дальше молча
@@ -121,6 +128,7 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
                                 const QString &path, bool &ok)
 {
     ok=false;
+    lastTransportOkFlag=false;
     lastErrorText.clear();
 
     QNetworkAccessManager manager;
@@ -176,6 +184,7 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
     }
 
     ok=true;
+    lastTransportOkFlag=true;
 
     // Ответ сервера с его ошибкой (не транспорт): тоже в лог,
     // иначе по таймингам видно "ok", а сессия падает дальше молча

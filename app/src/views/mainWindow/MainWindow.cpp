@@ -1777,6 +1777,10 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         summary+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
                  .arg(report.conflicts.join(QStringLiteral(", ")));
 
+    if(!report.errors.isEmpty())
+        summary+=tr("\n\nItem errors (skipped, details in steps below):\n%1")
+                 .arg(report.errors.join(QStringLiteral("\n")));
+
     if(!steps.isEmpty())
         summary+=QStringLiteral("\n-- steps --\n")+steps;
 

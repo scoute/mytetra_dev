@@ -1590,6 +1590,18 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
         <source>Select a single cell.</source>
         <translation type="vanished">Необходимо выбрать только одну ячейку.</translation>
     </message>
+    <message>
+        <source>Show note in folder</source>
+        <translation>Показать каталог заметки</translation>
+    </message>
+    <message>
+        <source>Note directory is unknown or does not exist, there is nothing to open.</source>
+        <translation>Каталог заметки неизвестен или не существует, открывать нечего.</translation>
+    </message>
+    <message>
+        <source>Can not open directory: %1</source>
+        <translation>Не удаётся открыть каталог: %1</translation>
+    </message>
 </context>
 <context>
     <name>EditorAddTableForm</name>
@@ -4963,6 +4975,10 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/libraries/ShortcutManager.cpp" line="179"/>
         <source>Quit</source>
         <translation>Выход</translation>
+    </message>
+    <message>
+        <source>Show note in folder</source>
+        <translation>Показать каталог заметки</translation>
     </message>
 </context>
 <context>

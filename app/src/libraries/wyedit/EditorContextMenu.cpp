@@ -44,6 +44,7 @@ void EditorContextMenu::setupActions(void)
  actionEditImageProperties=new QAction(this);
  actionEditMathExpression=new QAction(this);
  actionGotoReference=new QAction(this);
+ actionShowNoteInFolder=new QAction(this);
 
  actionLowercase=new QAction(this);
  actionUppercase=new QAction(this);
@@ -71,6 +72,7 @@ void EditorContextMenu::setupShortcuts(void)
     actionEditMathExpression->setText(tr("Edit math expression")); // В контекстном меню это редактирование формулы
 
     shortcutManager.initAction("editor-gotoReference", actionGotoReference );
+    shortcutManager.initAction("editor-showNoteInFolder", actionShowNoteInFolder );
 
     shortcutManager.initAction("editor-lowercase", actionLowercase );
     shortcutManager.initAction("editor-uppercase", actionUppercase );
@@ -207,6 +209,7 @@ void EditorContextMenu::setupSignals(void)
     connect(actionEditImageProperties,&QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditImageProperties);
     connect(actionEditMathExpression, &QAction::triggered, this, &EditorContextMenu::onActionContextMenuEditMathExpression);
     connect(actionGotoReference,      &QAction::triggered, this, &EditorContextMenu::onActionContextMenuGotoReference);
+    connect(actionShowNoteInFolder,   &QAction::triggered, this, &EditorContextMenu::onActionContextMenuShowNoteInFolder);
 
     connect(actionLowercase, &QAction::triggered, this, &EditorContextMenu::onActionLowercase);
     connect(actionUppercase, &QAction::triggered, this, &EditorContextMenu::onActionUppercase);
@@ -239,6 +242,11 @@ void EditorContextMenu::setupMenu(void)
     this->addAction(actionEditImageProperties);
     this->addAction(actionEditMathExpression);
     this->addAction(actionGotoReference);
+
+    this->addSeparator();
+
+    // Безусловный пункт: папка текущей заметки, работает везде
+    this->addAction(actionShowNoteInFolder);
 }
 
 
@@ -313,6 +321,12 @@ void EditorContextMenu::onActionContextMenuEditMathExpression()
         emit contextMenuEditMathExpression();
     }
 }
+
+void EditorContextMenu::onActionContextMenuShowNoteInFolder()
+{
+    emit contextMenuShowNoteInFolder();
+}
+
 
 void EditorContextMenu::onActionContextMenuGotoReference()
 {

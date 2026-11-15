@@ -110,6 +110,10 @@ private slots:
     void onSyncPairing(void);
     void onSyncDevices(void);
 
+    // Попап входящего запроса на пару: «такой-то девайс хочет pair»
+    // с вариантами Принять / Отказать / Окно устройств
+    void onSyncPairRequest(const QString &deviceId, const QString &deviceName);
+
     // Headless sync-режим определяется флагами запуска, а не состоянием:
     // в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
     // (иначе клик по шифроветке = модальный пароль = вечный вис)
@@ -200,6 +204,9 @@ private:
     // Синхронизация: хаб живет пока включен сервер из меню Tools
     SyncHub *syncHub=nullptr;
     static const quint16 syncDefaultPort;
+
+    // Попап pair-запроса уже показан (не плодим окна поверх друг друга)
+    bool syncPairPopupActive=false;
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
     QAction *actionDirectPreferencesMain       =nullptr;

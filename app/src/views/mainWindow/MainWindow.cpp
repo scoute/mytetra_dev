@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QPushButton>
+#include <QTimer>
 #include <QSplitter>
 #include <QStatusBar>
 #include <QCoreApplication>
@@ -191,6 +193,8 @@ void MainWindow::setupSignals(void)
     connect(actionSyncMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
     connect(actionSyncMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
     connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
+    connect(&mytetraConfig, &AppConfig::syncPairRequestArrived,
+            this, &MainWindow::onSyncPairRequest);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -1854,4 +1858,73 @@ void MainWindow::onSyncDevices(void)
 
     // Серверный чекбокс мог измениться только из своего пункта меню,
     // устройства — только учет. Синхронизировать нечего
+}
+
+
+// Попап входящего запроса на пару: устройство стучится с pairRequest.
+// Принять — общий PIN (та же цепочка, что Accept в окне устройств),
+// Отказать — снять запрос, Открыть окна — список устройств
+void MainWindow::onSyncPairRequest(const QString &deviceId, const QString &deviceName)
+{
+    // Headless: показывать некому, запрос и так виден в окне устройств
+    if(isSyncHeadlessMode() || syncPairPopupActive)
+        return;
+
+    // Показываем отложенно: сигнал прилетает из обработчика hello сервера,
+    // модальный диалог прямо там заблокировал бы отправку ответа клиенту
+    // (тот висел бы до нажатия кнопки и упал бы по таймауту)
+    QTimer::singleShot(0, this, [this, deviceId, deviceName]() {
+        if(syncPairPopupActive)
+            return;
+
+        syncPairPopupActive=true;
+        const QString shownName=deviceName.isEmpty() ? deviceId : deviceName;
+
+        QMessageBox box(this);
+        box.setWindowTitle(tr("Sync pairing"));
+        box.setIcon(QMessageBox::Question);
+        box.setText(tr("Device %1 wants to pair with this computer.\n\n"
+                       "Fingerprint:\n%2\n\n"
+                       "Accept the pair request?")
+                    .arg(shownName, SyncIdentity::fingerprint(deviceId)));
+
+        QPushButton *acceptButton=box.addButton(tr("Accept"),
+                                                QMessageBox::AcceptRole);
+        QPushButton *rejectButton=box.addButton(tr("Reject"),
+                                                QMessageBox::RejectRole);
+        QPushButton *devicesButton=box.addButton(tr("Open devices..."),
+                                                 QMessageBox::ActionRole);
+        box.setDefaultButton(acceptButton);
+        box.exec();
+
+        if(box.clickedButton()==acceptButton)
+        {
+            bool ok=false;
+            const QString pin=QInputDialog::getText(
+                this, tr("Sync pairing"),
+                tr("Enter the SAME pairing PIN as on that device. Empty = cancel."),
+                QLineEdit::Password, QString(), &ok);
+
+            if(ok && !pin.isEmpty()
+               && SyncIdentity::adoptPairing(&mytetraConfig, deviceId, pin))
+            {
+                SyncHandshake::noteMutual(&mytetraConfig, deviceId,
+                                          "operator Accept (popup)");
+                statusBar->showMessage(tr("Paired with %1").arg(shownName), 5000);
+            }
+        }
+        else if(box.clickedButton()==devicesButton)
+        {
+            onSyncDevices();
+        }
+        else
+        {
+            // Отказать: запрос снимается; повторный pairRequest создаст новый
+            mytetraConfig.clear_syncDeviceOffer(deviceId);
+            statusBar->showMessage(tr("Pair request from %1 rejected")
+                                   .arg(shownName), 5000);
+        }
+
+        syncPairPopupActive=false;
+    });
 }

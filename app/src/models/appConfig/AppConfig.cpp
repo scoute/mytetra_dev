@@ -309,6 +309,11 @@ void AppConfig::touch_syncDevice(const QString &id, const QString &name,
     if(id.isEmpty())
         return;
 
+    // Самого себя в устройства не пишем: hello на свой же адрес иначе
+    // добавляет серверу (и клиенту) строку-дубликат самого себя
+    if(id==get_syncDeviceId())
+        return;
+
     m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
 
     const qint64 now=QDateTime::currentMSecsSinceEpoch();

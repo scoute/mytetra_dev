@@ -235,6 +235,21 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
         return result;
     }
 
+    // Hello от самого себя (синк на свой же адрес): дальше не идем.
+    // Единая точка отказа для GUI, headless и перепроверок пары
+    const QString answerDeviceId=answer.value(QStringLiteral("deviceId")).toString();
+
+    if(!answerDeviceId.isEmpty() && answerDeviceId==config->get_syncDeviceId())
+    {
+        result.ok=false;
+        result.errorCode=QStringLiteral("self-hello");
+        result.errorText=QStringLiteral("Sync with itself is not allowed: %1 answered as this device (%2). Check the address.")
+            .arg(host, config->get_syncDeviceName().isEmpty()
+                 ? answerDeviceId : config->get_syncDeviceName());
+        result.remoteDeviceId=answerDeviceId;
+        return result;
+    }
+
     // Сервер уже все проверил; клиент только фиксирует вердикт
     result.ok=answer.value(QStringLiteral("ok")).toBool(false);
     result.serverTime=answer.value(QStringLiteral("serverTime"))

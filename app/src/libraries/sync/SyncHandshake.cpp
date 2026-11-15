@@ -256,6 +256,24 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         const QString theirId=body.value(QStringLiteral("deviceId")).toString();
         const QString theirName=body.value(QStringLiteral("deviceName")).toString();
 
+        // Hello от самого себя (клиент стукнулся на свой же адрес):
+        // ничего не записываем (ни строку, ни группу, ни mutual) и отказываем
+        // внятно. Иначе сервер добавляет сам себя в устройства, а клиент
+        // "успешно синкается" сам с собой
+        if(!theirId.isEmpty() && theirId==config->get_syncDeviceId())
+        {
+            QJsonObject selfAnswer;
+            selfAnswer[QStringLiteral("ok")]=false;
+            selfAnswer[QStringLiteral("serverTime")]=now;
+            selfAnswer[QStringLiteral("paired")]=false;
+            selfAnswer[QStringLiteral("deviceId")]=config->get_syncDeviceId();
+            selfAnswer[QStringLiteral("deviceName")]=config->get_syncDeviceName();
+            selfAnswer[QStringLiteral("groupId")]=config->get_syncGroupId();
+            selfAnswer[QStringLiteral("error")]=QStringLiteral("self-hello");
+            selfAnswer[QStringLiteral("detail")]=QStringLiteral("Sync with itself is not allowed: this server is that device. Check the address.");
+            return selfAnswer;
+        }
+
         QString warning;
 
         // Починка пары: proof чужой, но PIN предъявлен — значит оператор

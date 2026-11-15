@@ -3250,6 +3250,48 @@ Check the setting in &quot;Sync&quot; section in &quot;Tools&quot; menu</source>
         <source>Mi&amp;nimize window</source>
         <translation>Свернуть окно</translation>
     </message>
+    <message>
+        <source>Both devices already have data.
+This device: %1 item(s), the other side: %2 item(s).
+
+How to sync?</source>
+        <translation>На обоих устройствах уже есть данные.
+Это устройство: %1 элемент(ов), вторая сторона: %2 элемент(ов).
+
+Как синхронизировать?</translation>
+    </message>
+    <message>
+        <source>Merge both trees</source>
+        <translation>Слить оба дерева</translation>
+    </message>
+    <message>
+        <source>Both trees stay as they are. If the same structure was recreated by hand, duplicates are possible.</source>
+        <translation>Оба дерева остаются как есть. Если одна и та же структура создавалась вручную на обоих устройствах, возможны дубли.</translation>
+    </message>
+    <message>
+        <source>Merge same-named branches on the server</source>
+        <translation>Объединить одинаковые ветки на сервере</translation>
+    </message>
+    <message>
+        <source>Branches with equal names are merged into the server&apos;s branches (server ids win), same-named notes stay duplicated, then my base becomes the merged result.</source>
+        <translation>Ветки с одинаковыми именами вливаются в ветки сервера (id сервера побеждает), одноимённые записи остаются дублями, затем моя база становится результатом слияния.</translation>
+    </message>
+    <message>
+        <source>Take from the server</source>
+        <translation>Взять с сервера</translation>
+    </message>
+    <message>
+        <source>My data goes to trash, the server&apos;s base is downloaded in full.</source>
+        <translation>Мои данные уходят в корзину, база сервера скачивается целиком.</translation>
+    </message>
+    <message>
+        <source>Replace the server&apos;s with mine</source>
+        <translation>Заменить серверные моими</translation>
+    </message>
+    <message>
+        <source>The server&apos;s data goes to trash, my base is uploaded in full.</source>
+        <translation>Данные сервера уходят в корзину, моя база заливается целиком.</translation>
+    </message>
 </context>
 <context>
     <name>MathExpressionFormatter</name>

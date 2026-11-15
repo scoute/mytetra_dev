@@ -234,7 +234,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
 
     // 7. Свои tombstone'ы, которых нет у хаба — отправить ему
-    if(!pushOwnTombstones(client, host, port, local, remote, report))
+    if(!pushOwnTombstones(client, host, port, local, remote, plan, report))
         return report;
 
     // 8. Фиксация: сначала хаб (сейв+перезагрузка), потом мы
@@ -450,31 +450,30 @@ bool SyncSession::pushOwnTombstones(SyncClient &client,
                                     const QString &host, quint16 port,
                                     const SyncManifest &local,
                                     const SyncManifest &remote,
+                                    const SyncPlan &plan,
                                     SyncReport &report)
 {
-    for(auto it=local.tombstones.constBegin();
-        it!=local.tombstones.constEnd(); ++it)
+    // Шлем только tombstone'ы из плана: которых нет у хаба и которые
+    // не проиграны их более новой правке (там уже стоит download)
+    for(const QString &id : plan.pushTombs)
     {
-        // У хаба уже есть — пересылать нечего
-        if(remote.tombstones.contains(it.key()))
+        const qint64 deletedAt=local.tombstones.value(id, 0);
+
+        // Перепроверка edit-wins: их правка новее — tomb не пушим
+        if(remote.notes.contains(id)
+           && remote.notes.value(id).mtime>deletedAt)
             continue;
 
-        // Их правка новее нашего удаления — edit-wins: tomb не пушим,
-        // план уже поставил download (воскрешаем у себя)
-        if(remote.notes.contains(it.key())
-           && remote.notes.value(it.key()).mtime>it.value())
+        if(remote.branches.contains(id)
+           && remote.branches.value(id).mtime>deletedAt)
             continue;
 
-        if(remote.branches.contains(it.key())
-           && remote.branches.value(it.key()).mtime>it.value())
-            continue;
+        addLog(QStringLiteral("push delete %1").arg(id));
 
-        addLog(QStringLiteral("push delete %1").arg(it.key()));
-
-        if(!client.pushDelete(host, port, it.key(), it.value()))
+        if(!client.pushDelete(host, port, id, deletedAt))
         {
             if(!noteItem(client, report, QStringLiteral("delete"),
-                         it.key(), client.lastError().isEmpty()
+                         id, client.lastError().isEmpty()
                          ? QStringLiteral("push delete failed")
                          : client.lastError()))
                 return false;

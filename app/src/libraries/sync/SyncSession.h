@@ -69,6 +69,7 @@ private:
                            quint16 port,
                            const SyncManifest &local,
                            const SyncManifest &remote,
+                           const SyncPlan &plan,
                            SyncReport &report);
 
     // Локальная поштучная ошибка (сериализация/применение у себя):

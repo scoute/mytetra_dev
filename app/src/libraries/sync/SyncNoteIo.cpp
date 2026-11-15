@@ -33,6 +33,28 @@ static QString normCrypt(const QString &crypt)
 namespace
 {
 
+// Собрать id поддерева: сама ветка, все подветки и все их записи.
+// Нужно ДО удаления (после элементы недоступны). Записи — через модель,
+// ветки — рекурсией по детям
+void collectSubtreeIds(KnowTreeModel *model, TreeItem *item,
+                       QStringList &branches, QStringList &records)
+{
+    if(model==nullptr || item==nullptr)
+        return;
+
+    branches << item->getField(QStringLiteral("id"));
+
+    const QSharedPointer< QSet<QString> > ownRecords=
+        model->getRecordsIdList(item);
+
+    if(!ownRecords.isNull())
+        for(const QString &recordId : ownRecords->values())
+            records << recordId;
+
+    for(int i=0; i<item->childCount(); ++i)
+        collectSubtreeIds(model, item->child(i), branches, records);
+}
+
 QByteArray readBytes(const QString &path, bool &ok)
 {
     QFile file(path);
@@ -549,26 +571,39 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
         if(!index.isValid())
             return QStringLiteral("no index");
 
-        {
-            const QSharedPointer< QSet<QString> > subRecords=
-                model->getRecordsIdList(branchItem);
-
-            if(!subRecords.isNull())
-                for(const QString &recordId : subRecords->values())
-                    SyncSidecar::dropEntry(recordId);
-        }
+        // Id поддерева — заранее: после удаления элементы недоступны.
+        // Ветки — каскадом в tombstones (иначе дети воскресают у пира,
+        // а их записи дают вечный "no branch" при каждом синке).
+        // Записи — молча из entry (покрыты tombstone'ами веток, как в GUI).
+        // Путь модели сам проставит свежие метки — ниже перезапишем
+        // удаленным временем, иначе пинг-понг tombstone'ов
+        QStringList subBranches;
+        QStringList subRecords;
+        collectSubtreeIds(model, branchItem, subBranches, subRecords);
 
         QModelIndexList list;
         list << index;
         model->deleteItemsByModelIndexList(list);
-        SyncSidecar::adoptTombstone(id, deletedAt);
+
+        for(const QString &branchId : subBranches)
+            SyncSidecar::adoptTombstone(branchId, deletedAt);
+
+        for(const QString &recordId : subRecords)
+            SyncSidecar::dropEntry(recordId);
+
         return QString();
     }
 
     const QStringList path=model->getRecordPath(id);
 
     if(path.isEmpty())
+    {
+        // Уже нет (удалено раньше или никогда не было): tombstone все равно
+        // запоминаем — иначе удаление неидемпотентно и при смене ролей
+        // данные воскреснут
+        SyncSidecar::adoptTombstone(id, deletedAt);
         return QString();
+    }
 
     TreeItem *branch=model->getItemById(path.last());
 

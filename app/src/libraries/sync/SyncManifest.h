@@ -71,6 +71,7 @@ struct SyncPlan
     QStringList uploadBranches;
     QStringList downloadBranches;
     QStringList deleteLocal; // id с любой стороны tombstone
+    QStringList pushTombs;   // наши tombstone'ы, которых нет у хаба — отправить
     QStringList conflicts;
     bool empty(void) const;
 };

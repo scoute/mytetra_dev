@@ -124,7 +124,16 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
     for(const char *field : fieldNames)
     {
         const QString name=QString::fromLatin1(field);
-        fields.insert(name, record->getNaturalFieldSource(name));
+        const QString value=record->getNaturalFieldSource(name);
+
+        // Канонические пустые crypt/block не передаем: само приложение
+        // такие атрибуты не пишет, а прием вставил бы их в XML пустыми —
+        // побайтовое расхождение баз без разницы в данных
+        if((name==QStringLiteral("crypt") || name==QStringLiteral("block"))
+           && value.isEmpty())
+            continue;
+
+        fields.insert(name, value);
     }
 
     answer[QStringLiteral("fields")]=fields;
@@ -422,10 +431,20 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
                 return QStringLiteral("record lost");
 
             // Чужие/старые пиры могли прислать вычислимые поля (hasAttach и т.п.):
-            // setField на них роняет criticalError, пропускаем молча
+            // setField на них роняет criticalError, пропускаем молча.
+            // Пустые crypt/block тоже не ставим (канонический XML без них)
             for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
-                if(FixedParameters::isRecordFieldNatural(it.key()))
-                    record->setNaturalFieldSource(it.key(), it.value().toString());
+            {
+                if(!FixedParameters::isRecordFieldNatural(it.key()))
+                    continue;
+
+                if((it.key()==QStringLiteral("crypt")
+                    || it.key()==QStringLiteral("block"))
+                   && it.value().toString().isEmpty())
+                    continue;
+
+                record->setNaturalFieldSource(it.key(), it.value().toString());
+            }
         }
 
         {
@@ -460,8 +479,17 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         Record record;
 
         for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
-            if(FixedParameters::isRecordFieldNatural(it.key()))
-                record.setNaturalFieldSource(it.key(), it.value().toString());
+        {
+            if(!FixedParameters::isRecordFieldNatural(it.key()))
+                continue;
+
+            if((it.key()==QStringLiteral("crypt")
+                || it.key()==QStringLiteral("block"))
+               && it.value().toString().isEmpty())
+                continue;
+
+            record.setNaturalFieldSource(it.key(), it.value().toString());
+        }
 
         // id дублируем явно из верха запроса: старые пиры его в fields
         // не клали, а без ид запись-невидимка (фантом "" в манифесте).

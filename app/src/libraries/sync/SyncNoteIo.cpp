@@ -663,4 +663,40 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
     return QString();
 }
 
+
+QString wipeAll(KnowTreeModel *model)
+{
+    if(model==nullptr)
+        return QStringLiteral("bad request");
+
+    const TreeItem *root=model->getRootItemPublic();
+
+    if(root==nullptr)
+        return QStringLiteral("bad request");
+
+    // Все ветки верхнего уровня уходят в корзину штатным удалением
+    // (записи и поддеревья — с ними). Индексы держат указатели на
+    // элементы, порядок не важен
+    QModelIndexList list;
+
+    for(int i=0; i<root->childCount(); ++i)
+    {
+        QModelIndex index=model->getIndexByItem(
+            const_cast<TreeItem *>(root->child(i)));
+
+        if(index.isValid())
+            list << index;
+    }
+
+    if(!list.isEmpty())
+        model->deleteItemsByModelIndexList(list);
+
+    // Журнал — целиком: стертые локальные id не должны поехать пиру
+    // tombstone'ами (это была бы порча чужих данных), а его содержимое
+    // должно приехать свежим без edit-wins от нашей истории
+    SyncSidecar::reset();
+
+    return QString();
+}
+
 } // namespace SyncNoteIo

@@ -1,6 +1,8 @@
 #ifndef SYNCSESSION_H
 #define SYNCSESSION_H
 
+#include <functional>
+
 #include <QString>
 #include <QStringList>
 
@@ -31,6 +33,17 @@ struct SyncReport
     QStringList errors;
 };
 
+// Стратегия первого синка, когда данные есть с обеих сторон
+// (пока ничего не слилось). Merge — тихое слияние как в MVP
+enum class SyncStrategy
+{
+    Ask,         // спросить оператора (GUI); headless трактует как Merge
+    Merge,       // слить как есть: оба дерева остаются
+    PullFromHub, // стереть свое в корзину, взять с хаба целиком
+    PushToHub,   // стереть на хабе (в корзину), залить свое целиком
+    Cancel       // оператор отменил: сессия прерывается, флаг остается
+};
+
 class SyncSession
 {
 public:
@@ -42,6 +55,13 @@ public:
     // Возвращает отчет; при ok==false смотреть error
     SyncReport run(const QString &host, quint16 port,
                    const QString &pairingPin=QString());
+
+    // Решение стратегии первого синка (данные есть с обеих сторон).
+    // GUI передает диалог, headless — значение --sync-strategy.
+    // По умолчанию — Merge (тихое слияние, поведение MVP)
+    using StrategyResolver =
+        std::function<SyncStrategy(int localItems, int remoteItems)>;
+    void setStrategyResolver(StrategyResolver resolver);
 
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;
@@ -87,6 +107,7 @@ private:
     AppConfig *config;
     QString tetradir;
     QStringList logLines;
+    StrategyResolver strategyResolver;
 
     void addLog(const QString &line);
 };

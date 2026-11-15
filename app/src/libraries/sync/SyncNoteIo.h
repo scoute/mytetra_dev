@@ -27,6 +27,12 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request);
 QString applyDelete(KnowTreeModel *model, const QString &id,
                     qint64 deletedAt);
 
+// Стереть всю базу локально (стратегии "начать заново"): все ветки
+// уходят в корзину штатным удалением, журнал синка стирается целиком
+// БЕЗ tombstone'ов: это не удаление данных для пира, а замена
+// содержимого (пустое место под полный залив с другой стороны)
+QString wipeAll(KnowTreeModel *model);
+
 } // namespace SyncNoteIo
 
 #endif // SYNCNOTEIO_H

@@ -75,6 +75,11 @@ public:
     // Пишет сразу
     static void adoptTombstone(const QString &id, qint64 deletedAt);
 
+    // Полный сброс журнала: entries и tombstones стираются целиком.
+    // Нужен стратегиям "начать заново" (локальное состояние уходит
+    // в корзину и пересоздается синком с чистого листа)
+    static void reset(void);
+
     // Молча выкинуть entry без tombstone (мусор удаленного поддерева:
     // его покрывает tombstone ветки). Пишет сразу
     static void dropEntry(const QString &id);

@@ -426,3 +426,14 @@ bool SyncClient::commit(const QString &host, quint16 port)
 
     return ok && answer.value(QStringLiteral("ok")).toBool(false);
 }
+
+
+bool SyncClient::reset(const QString &host, quint16 port)
+{
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/reset"),
+                                      withAuth(QStringLiteral("POST /reset"), QJsonObject()), ok);
+
+    return ok && answer.value(QStringLiteral("ok")).toBool(false);
+}

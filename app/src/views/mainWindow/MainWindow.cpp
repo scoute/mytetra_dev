@@ -1751,6 +1751,31 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                         &mytetraConfig,
                         mytetraConfig.get_tetradir());
 
+    // Стратегия первого синка: GUI — диалог, headless — --sync-strategy
+    session.setStrategyResolver(
+        [this](int localItems, int remoteItems) -> SyncStrategy {
+            if(isSyncHeadlessMode())
+            {
+                const QStringList args=QCoreApplication::arguments();
+                const int i=args.indexOf(QStringLiteral("--sync-strategy"));
+
+                if(i>=0 && i+1<args.size())
+                {
+                    const QString value=args.at(i+1);
+
+                    if(value==QStringLiteral("pull"))
+                        return SyncStrategy::PullFromHub;
+
+                    if(value==QStringLiteral("push"))
+                        return SyncStrategy::PushToHub;
+                }
+
+                return SyncStrategy::Merge;
+            }
+
+            return askSyncStrategy(this, localItems, remoteItems);
+        });
+
     // PIN пробрасываем и в сессию: ее починка пары — вторая линия обороны
     // (предсессионная выше обычно уже все решила)
     const SyncReport report=session.run(host, port, pin);
@@ -1858,6 +1883,44 @@ void MainWindow::onSyncDevices(void)
 
     // Серверный чекбокс мог измениться только из своего пункта меню,
     // устройства — только учет. Синхронизировать нечего
+}
+
+
+// Диалог стратегии первого синка: данные есть с обеих сторон, пока
+// ничего не слилось. Стирание — только в корзину
+SyncStrategy MainWindow::askSyncStrategy(QWidget *parent,
+                                         int localItems, int remoteItems)
+{
+    QMessageBox box(parent);
+    box.setWindowTitle(tr("Sync"));
+    box.setIcon(QMessageBox::Question);
+    box.setText(tr("Both devices already have data.\n"
+                   "This device: %1 item(s), the other side: %2 item(s).\n\n"
+                   "How to sync?")
+                .arg(localItems).arg(remoteItems));
+
+    QPushButton *mergeButton=box.addButton(
+        tr("Merge both trees"), QMessageBox::AcceptRole);
+    QPushButton *pullButton=box.addButton(
+        tr("Take from the server (my data goes to trash)"),
+        QMessageBox::YesRole);
+    QPushButton *pushButton=box.addButton(
+        tr("Replace the server's with mine (server data goes to trash)"),
+        QMessageBox::YesRole);
+    box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    box.setDefaultButton(mergeButton);
+    box.exec();
+
+    if(box.clickedButton()==mergeButton)
+        return SyncStrategy::Merge;
+
+    if(box.clickedButton()==pullButton)
+        return SyncStrategy::PullFromHub;
+
+    if(box.clickedButton()==pushButton)
+        return SyncStrategy::PushToHub;
+
+    return SyncStrategy::Cancel;
 }
 
 

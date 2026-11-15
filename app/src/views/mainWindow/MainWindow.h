@@ -25,6 +25,7 @@ class FindScreen;
 class WindowSwitcher;
 class CommandRunner;
 class SyncHub;
+#include "libraries/sync/SyncSession.h"
 
 class MainWindow : public QMainWindow
 {
@@ -114,6 +115,7 @@ private slots:
     // с вариантами Принять / Отказать / Окно устройств
     void onSyncPairRequest(const QString &deviceId, const QString &deviceName);
 
+
     // Headless sync-режим определяется флагами запуска, а не состоянием:
     // в нем нет дисплея, поэтому рестор и сейв UI-позиции пропускаются
     // (иначе клик по шифроветке = модальный пароль = вечный вис)
@@ -137,6 +139,12 @@ public:
                               quint16 port,
                               bool &ok,
                               QString *errorCode=nullptr);
+
+    // Диалог стратегии первого синка (данные есть с обеих сторон):
+    // слить как есть / взять с сервера / заменить серверные / отмена.
+    // Общий для runSyncToHeadless и окна Sync devices
+    static SyncStrategy askSyncStrategy(QWidget *parent,
+                                        int localItems, int remoteItems);
 
     void onExpandEditArea(bool flag);
 

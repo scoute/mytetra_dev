@@ -103,8 +103,17 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     if(derived.isEmpty())
         return false;
 
+    // Новая пара (секрета не было или пара сменилась): первый синк
+    // спросит стратегию, если данные есть с обеих сторон. Починка
+    // пары с тем же пиром — не новая, стратегию не спрашиваем
+    const bool isNewPair=config->get_syncPairingSecret().isEmpty()
+        || config->get_syncPairedDeviceId()!=peerId;
+
     config->set_syncPairingSecret(derived);
     config->set_syncPairedDeviceId(peerId);
+
+    if(isNewPair)
+        config->set_syncAskStrategy(true);
 
     // Пара пересоздана: старые "запрос"/взаимность протухли,
     // взаимность наступит после первого обмена с новым секретом

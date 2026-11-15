@@ -55,6 +55,10 @@ public:
     // Фиксация: сейв + перезагрузка моделей на хабе
     bool commit(const QString &host, quint16 port);
 
+    // Полная замена содержимого хаба (стратегия "заменить серверные"):
+    // хаб стирает базу в корзину без tombstone'ов
+    bool reset(const QString &host, quint16 port);
+
     QString lastError(void) const;
 
     // Последний запрос дошел до сервера и вернулся разобранным

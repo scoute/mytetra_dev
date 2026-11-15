@@ -118,6 +118,19 @@ void SyncSidecar::adoptTombstone(const QString &id, qint64 deletedAt)
 }
 
 
+void SyncSidecar::reset(void)
+{
+    if(g_instance==nullptr)
+        return;
+
+    g_instance->m_entries.clear();
+    g_instance->m_tombstones.clear();
+
+    if(g_instance->isLoaded())
+        g_instance->save();
+}
+
+
 void SyncSidecar::dropEntry(const QString &id)
 {
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())

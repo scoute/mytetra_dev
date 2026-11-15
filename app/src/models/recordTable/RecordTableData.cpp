@@ -640,6 +640,22 @@ void RecordTableData::deleteRecordById(QString id)
 }
 
 
+// Изъятие записи из таблицы без диска/корзины/сайдкара (переезд по синку)
+bool RecordTableData::takeRecordForMove(int pos, Record &out)
+{
+    if(pos<0 || pos>=(int)tableData.size())
+        return false;
+
+    out=tableData.at(pos);
+    tableData.removeAt(pos);
+
+    // История перемещений по записям: изъятой позиции больше нет
+    walkHistory.removeHistoryData(out.getNaturalFieldSource(QStringLiteral("id")));
+
+    return true;
+}
+
+
 // Удаление всех элементов таблицы конечных записей
 void RecordTableData::deleteAllRecords(void)
 {

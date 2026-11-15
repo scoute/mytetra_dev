@@ -169,6 +169,29 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         answer[QStringLiteral("ok")]=true;
         return answer;
     });
+
+    // Полная замена содержимого хаба (стратегия "заменить серверные
+    // моими"): база уходит в корзину без tombstone'ов, журнал стирается.
+    // Дальше клиент заливает свое. Только для стратегий первого синка!
+    server->addRoute(QStringLiteral("POST /reset"),
+                     [this](const QJsonObject &request) -> QJsonObject {
+        if(!this->dataAllowed())
+            return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /reset"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
+
+        const QString error=SyncNoteIo::wipeAll(this->model);
+
+        QJsonObject answer;
+
+        if(!error.isEmpty())
+            answer[QStringLiteral("error")]=error;
+        else
+            answer[QStringLiteral("ok")]=true;
+
+        return answer;
+    });
 }
 
 

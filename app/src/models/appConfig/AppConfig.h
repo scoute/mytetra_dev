@@ -67,6 +67,13 @@ public:
     QString get_syncLastHost(void);
     bool set_syncLastHost(const QString &host);
 
+    // Спросить стратегию при первом синке после спаривания (данные
+    // есть с обеих сторон): слить как есть / взять с сервера /
+    // заменить серверные. Ставится при установке пары, снимается
+    // после ответа (отмена оставляет флаг)
+    bool get_syncAskStrategy(void);
+    void set_syncAskStrategy(bool value);
+
     // Известные sync-устройства для окна Sync devices.
     // Хранятся группами syncDevices/<id>/{name,ip,port,firstSeen,lastSeen}.
     // Fingerprint считается из id на лету, хранить нечего

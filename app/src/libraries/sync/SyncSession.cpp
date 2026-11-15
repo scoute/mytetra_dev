@@ -25,6 +25,12 @@ QStringList SyncSession::log(void) const
 }
 
 
+void SyncSession::setStrategyResolver(StrategyResolver resolver)
+{
+    strategyResolver=resolver;
+}
+
+
 void SyncSession::skipItem(SyncReport &report, const QString &entry)
 {
     report.errors << entry;
@@ -184,11 +190,14 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
                  ? hello.remoteDeviceId : hello.remoteDeviceName);
         report.errorCode=QStringLiteral("pair-established");
         addLog(QStringLiteral("pair established, data deferred to next run"));
+        // первый следующий синк спросит стратегию (данные есть
+        // с обеих сторон — тихий мерж удивлял)
+        config->set_syncAskStrategy(true);
         return report;
     }
 
     // 2. Манифесты: чужой тянем, свой строим локально
-    const SyncManifest remote=client.fetchManifest(host, port);
+    SyncManifest remote=client.fetchManifest(host, port);
 
     if(!client.lastError().isEmpty())
     {
@@ -197,9 +206,71 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
-    const SyncManifest local=
+    SyncManifest local=
         SyncManifestBuilder::build(model, SyncSidecar::instance(),
                                    tetradir);
+
+    // 2а. Первый синк после спаривания, когда данные есть с обеих
+    // сторон: спросить стратегию (тихий мерж удивлял). Флаг снимается
+    // после ответа; отмена оставляет флаг и прерывает сессию
+    if(config->get_syncAskStrategy())
+    {
+        if(!local.notes.isEmpty() && !remote.notes.isEmpty())
+        {
+            SyncStrategy strategy=SyncStrategy::Merge;
+
+            if(strategyResolver)
+                strategy=strategyResolver(
+                    local.notes.size()+local.branches.size(),
+                    remote.notes.size()+remote.branches.size());
+
+            if(strategy==SyncStrategy::Cancel)
+            {
+                addLog(QStringLiteral("strategy: cancelled, will ask again"));
+                report.error=QStringLiteral("Sync cancelled");
+                return report;
+            }
+
+            config->set_syncAskStrategy(false);
+
+            if(strategy==SyncStrategy::PullFromHub)
+            {
+                addLog(QStringLiteral("strategy: take from hub, local -> trash"));
+                const QString error=SyncNoteIo::wipeAll(model);
+
+                if(!error.isEmpty())
+                {
+                    report.error=error;
+                    return report;
+                }
+
+                // локальное состояние стерто: план = полная загрузка
+                local=SyncManifest();
+            }
+            else if(strategy==SyncStrategy::PushToHub)
+            {
+                addLog(QStringLiteral("strategy: replace hub content with ours"));
+
+                if(!client.reset(host, port))
+                {
+                    report.error=client.lastError().isEmpty()
+                        ? QStringLiteral("hub reset failed") : client.lastError();
+                    return report;
+                }
+
+                // хаб пуст: план = полная заливка
+                remote=SyncManifest();
+            }
+            else
+                addLog(QStringLiteral("strategy: merge as-is"));
+        }
+        else
+        {
+            // выбирать нечего (одна из сторон пуста) — флаг гасим,
+            // чтобы не спросить позже без причины
+            config->set_syncAskStrategy(false);
+        }
+    }
 
     // 3. Сверка. Мы спок: равные mtime решает хаб (той же детерминированной
     // логикой: хаб бы скачал, мы — заливаем; итог одинаковый с обеих сторон)

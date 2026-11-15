@@ -517,6 +517,12 @@ void SyncDevicesDialog::onSyncNow(void)
 
     SyncSession session(model, config, tetradir);
 
+    // Стратегия первого синка — тот же диалог, что и в headless-пути
+    session.setStrategyResolver(
+        [this](int localItems, int remoteItems) -> SyncStrategy {
+            return MainWindow::askSyncStrategy(this, localItems, remoteItems);
+        });
+
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —
     // через Pair заново (осознанно, с показом фингерпринта выше).
     // Исключение — чужая сеть: там PIN нужен чтобы взять группу хаба

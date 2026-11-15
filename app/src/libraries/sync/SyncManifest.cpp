@@ -5,6 +5,8 @@
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <QDebug>
+#include <QSet>
+#include <algorithm>
 
 #include "SyncManifest.h"
 #include "SyncSidecar.h"
@@ -34,6 +36,50 @@ QString SyncManifestBuilder::sha256Bytes(const QByteArray &data)
     return QString::fromLatin1(
         QCryptographicHash::hash(data,
                                  QCryptographicHash::Sha256).toHex());
+}
+
+
+// Глубина ветки по цепочке parentId (корень — 0)
+static int branchDepth(const QMap<QString, SyncBranchInfo> &branches,
+                       const QString &id)
+{
+    int depth=0;
+    QString cur=id;
+    QSet<QString> seen;
+
+    while(true)
+    {
+        auto it=branches.constFind(cur);
+
+        if(it==branches.constEnd())
+            break;
+
+        const QString parent=it.value().parentId;
+
+        if(parent.isEmpty() || seen.contains(parent))
+            break;
+
+        seen.insert(parent);
+        cur=parent;
+        depth++;
+
+        if(depth>10000)
+            break; // паранойя от циклов
+    }
+
+    return depth;
+}
+
+
+// Сортировка ид веток: сначала родители, потом дети (stable —
+// детерминированность плана при равной глубине сохраняется)
+static void orderBranchesParentsFirst(
+    const QMap<QString, SyncBranchInfo> &branches, QStringList &ids)
+{
+    std::stable_sort(ids.begin(), ids.end(),
+                     [&](const QString &a, const QString &b) {
+        return branchDepth(branches, a) < branchDepth(branches, b);
+    });
 }
 
 
@@ -485,5 +531,13 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
 
     plan.deleteLocal.removeDuplicates();
     plan.conflicts.removeDuplicates();
+
+    // Порядок веток: родители раньше детей. Иначе принимающая сторона
+    // не найдет родителя в createSyncedBranch и пропустит ветку —
+    // внешне это "синк только вглубь на 1". Глубина считается по цепочке
+    // parentId в том же манифесте; битые родители/циклы дают 0
+    orderBranchesParentsFirst(local.branches, plan.uploadBranches);
+    orderBranchesParentsFirst(remote.branches, plan.downloadBranches);
+
     return plan;
 }

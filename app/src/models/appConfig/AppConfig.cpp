@@ -372,9 +372,28 @@ void AppConfig::set_syncDeviceOffer(const QString &id)
     if(id.isEmpty())
         return;
 
+    // Попап хаба — только на переходе в запрос: повторные pairRequest
+    // от того же устройства не должны плодить окна
+    const bool wasOffer=m_conf->value(QStringLiteral("syncDevices/")+id
+                                      +QStringLiteral("/pairOffer"), false).toBool();
+
     touch_syncDevice(id, QString());
     m_conf->setValue(QStringLiteral("syncDevices/")+id
                      +QStringLiteral("/pairOffer"), true);
+
+    if(!wasOffer)
+    {
+        QString name;
+
+        for(const SyncDeviceInfo &info : get_syncDevices())
+            if(info.id==id)
+            {
+                name=info.name;
+                break;
+            }
+
+        emit syncPairRequestArrived(id, name);
+    }
 }
 
 

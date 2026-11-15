@@ -107,6 +107,10 @@ signals:
     // а не тикающим опросом
     void syncDevicesChanged(void);
 
+    // Входящий запрос на пару (новый): устройство стучится с pairRequest.
+    // Хаб показывает попап «принять / отказать / окно устройств»
+    void syncPairRequestArrived(const QString &deviceId, const QString &deviceName);
+
 public:
 
     // Директория с корзиной

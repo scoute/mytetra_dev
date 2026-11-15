@@ -17,6 +17,7 @@
 #include "libraries/sync/SyncSession.h"
 #include "libraries/sync/SyncClient.h"
 #include "libraries/sync/SyncDebug.h"
+#include "libraries/sync/SyncDiscovery.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 
@@ -72,6 +73,10 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     manual->addWidget(portSpin);
     QPushButton *manualSyncButton=new QPushButton(tr("Sync now"), this);
     manual->addWidget(manualSyncButton);
+    scanButton=new QPushButton(tr("Scan"), this);
+    scanButton->setToolTip(tr("Find sync hubs in the local network "
+                              "and refresh their addresses"));
+    manual->addWidget(scanButton);
     layout->addLayout(manual);
 
     QHBoxLayout *buttons=new QHBoxLayout();
@@ -114,6 +119,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
             this, &SyncDevicesDialog::onResetAll);
     connect(manualSyncButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onManualSync);
+    connect(scanButton, &QPushButton::clicked,
+            this, &SyncDevicesDialog::onScan);
     connect(closeButton, &QPushButton::clicked,
             this, &QDialog::accept);
 
@@ -594,6 +601,28 @@ void SyncDevicesDialog::onSyncNow(void)
 
     QMessageBox::information(this, tr("Sync"), summary);
     refreshList();
+}
+
+
+// Скан сети: хабы отвечают на UDP-проб своей идентичностью,
+// адреса в списке обновляются сами (DHCP-терпимо)
+void SyncDevicesDialog::onScan(void)
+{
+    const quint16 port=static_cast<quint16>(portSpin->value());
+
+    const QList<SyncDiscoveredDevice> found=
+        SyncDiscovery::scan(config->get_syncDeviceId(), port);
+
+    for(const SyncDiscoveredDevice &device : found)
+        config->touch_syncDevice(device.deviceId, device.deviceName,
+                                 device.address, device.port);
+
+    refreshList();
+
+    QMessageBox::information(this, tr("Scan"), found.isEmpty()
+        ? tr("No devices found. Check that the sync server is running "
+             "in the same network on port %1.").arg(port)
+        : tr("Found %1 device(s) in the local network.").arg(found.size()));
 }
 
 

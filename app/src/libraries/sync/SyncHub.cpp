@@ -66,6 +66,14 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     server=new SyncServer(this);
     SyncHandshake::registerRoutes(server, this->config, pairingPin);
 
+    // LAN-discovery: отвечаем на пробы скана своей идентичностью
+    server->setDiscoveryIdentity([config]() -> QJsonObject {
+        QJsonObject identity;
+        identity[QStringLiteral("deviceId")]=config->get_syncDeviceId();
+        identity[QStringLiteral("deviceName")]=config->get_syncDeviceName();
+        return identity;
+    });
+
     // Манифест локальной базы для спока
     server->addRoute(QStringLiteral("POST /manifest"),
                      [this](const QJsonObject &request) -> QJsonObject {

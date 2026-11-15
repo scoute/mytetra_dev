@@ -32,6 +32,7 @@ private slots:
     void onSelectionChanged(void);
     void onSyncNow(void);
     void onManualSync(void);
+    void onScan(void);
     void onPair(void);
     void onRecheckPair(void);
     void onAccept(void);
@@ -76,6 +77,7 @@ private:
     QLabel *selfLabel=nullptr;
     QLineEdit *hostEdit=nullptr;
     QSpinBox *portSpin=nullptr;
+    QPushButton *scanButton=nullptr;
     QPushButton *syncButton=nullptr;
     QPushButton *pairButton=nullptr;
     QPushButton *acceptButton=nullptr;

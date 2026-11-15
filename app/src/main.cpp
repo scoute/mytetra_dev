@@ -35,6 +35,7 @@
 #include "libraries/PeriodicCheckBase.h"
 #include "libraries/PeriodicSyncro.h"
 #include "libraries/sync/SyncIdentity.h"
+#include "libraries/sync/SyncDiscovery.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -102,6 +103,7 @@ void printHelp()
     printf("./mytetra --sync-server [--sync-port N] [--sync-pair PIN] - Start sync hub without GUI interaction\n");
     printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
     printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
+    printf("./mytetra --sync-scan [--sync-port N] - Find sync hubs in the local network and exit\n");
     printf("./mytetra --sync-forget - Clear sync pairing (secret, group, peer and device list) and exit\n");
     printf("./mytetra --sync-unpair ID - Break pairing with device ID and exit\n");
     printf("./mytetra --sync-remove ID - Forget device ID (auto-reset when list becomes empty) and exit\n");
@@ -182,6 +184,7 @@ void parseConsoleOption(QtSingleApplication &app)
          && !app.arguments().contains("--sync-server")
          && !app.arguments().contains("--sync-to")
          && !app.arguments().contains("--sync-status")
+         && !app.arguments().contains("--sync-scan")
          && !app.arguments().contains("--sync-forget")
          && !app.arguments().contains("--sync-unpair")
          && !app.arguments().contains("--sync-remove") )
@@ -316,6 +319,7 @@ int main(int argc, char ** argv)
 
         if(arg==QStringLiteral("--sync-server") || arg==QStringLiteral("--sync-to")
            || arg==QStringLiteral("--sync-status")
+           || arg==QStringLiteral("--sync-scan")
            || arg==QStringLiteral("--sync-forget")
            || arg==QStringLiteral("--sync-unpair")
            || arg==QStringLiteral("--sync-remove"))
@@ -554,6 +558,35 @@ int main(int argc, char ** argv)
         if(args.contains(QStringLiteral("--sync-status")))
         {
             printSyncStatus();
+            return 0;
+        }
+
+        // Скан сети: найти хабы в LAN (CLI-паритет кнопки Scan в окне
+        // устройств). Отвечают хабы с запущенным sync-сервером
+        if(args.contains(QStringLiteral("--sync-scan")))
+        {
+            const quint16 scanPort=static_cast<quint16>(
+                argValue(QStringLiteral("--sync-port"),
+                         QStringLiteral("47777")).toUShort());
+
+            printf("Scanning local network on UDP port %u ...\n", scanPort);
+            fflush(stdout);
+
+            const QList<SyncDiscoveredDevice> found=
+                SyncDiscovery::scan(mytetraConfig.get_syncDeviceId(), scanPort);
+
+            if(found.isEmpty())
+                printf("No devices found. Check that the sync server is "
+                       "running in the same network on this port.\n");
+
+            for(const SyncDiscoveredDevice &device : found)
+                printf("  - %s id=%s at %s:%u\n",
+                       device.deviceName.isEmpty() ? "(unnamed)"
+                          : device.deviceName.toLocal8Bit().data(),
+                       device.deviceId.toLocal8Bit().data(),
+                       device.address.toLocal8Bit().data(),
+                       device.port);
+
             return 0;
         }
 

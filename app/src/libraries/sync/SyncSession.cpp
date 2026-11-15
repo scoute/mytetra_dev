@@ -37,15 +37,17 @@ bool SyncSession::noteItem(SyncClient &client, SyncReport &report,
                            const QString &kind, const QString &id,
                            const QString &reason)
 {
-    // Транспорт умер (не дошло) или гейт пары (not-paired) —
-    // это не "битая запись", сессию рвем сразу
+    // Транспорт умер (не дошло), гейт пары (not-paired) или отказ
+    // proof (auth-failed) — это не "битая запись", сессию рвем сразу
     if(!client.lastTransportOk()
-       || reason==QStringLiteral("not-paired"))
+       || reason==QStringLiteral("not-paired")
+       || reason==QStringLiteral("auth-failed"))
     {
         report.error=reason.isEmpty()
             ? QStringLiteral("%1 %2 failed").arg(kind, id) : reason;
-        report.errorCode=reason==QStringLiteral("not-paired")
-            ? QStringLiteral("not-paired") : report.errorCode;
+        if(reason==QStringLiteral("not-paired")
+           || reason==QStringLiteral("auth-failed"))
+            report.errorCode=reason;
         return false;
     }
 

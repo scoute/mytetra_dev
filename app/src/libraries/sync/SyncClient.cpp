@@ -26,6 +26,13 @@ void SyncClient::setTimeoutMs(int ms)
 }
 
 
+QJsonObject SyncClient::withAuth(const QString &route,
+                                  const QJsonObject &body)
+{
+    return SyncHandshake::buildDataAuth(config, route, body);
+}
+
+
 QString SyncClient::lastError(void) const
 {
     return lastErrorText;
@@ -255,11 +262,20 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
 SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port)
 {
     bool ok=false;
-    const QJsonObject answer=getJson(host, port,
-                                     QStringLiteral("/manifest"), ok);
+    const QJsonObject answer=postJson(
+        host, port, QStringLiteral("/manifest"),
+        withAuth(QStringLiteral("POST /manifest"), QJsonObject()), ok);
 
     if(!ok)
         return SyncManifest();
+
+    // Сервер отклонил (not-paired/auth-failed): пустой манифест без ошибки
+    // в lastError звал бы заливку всего локального — фиксируем отказ
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return SyncManifest();
+    }
 
     return SyncManifest::fromJson(answer);
 }
@@ -274,7 +290,7 @@ QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/pull-note"),
-                                      request, ok);
+                                      withAuth(QStringLiteral("POST /pull-note"), request), ok);
 
     if(!ok)
         return QJsonObject();
@@ -301,7 +317,7 @@ QJsonObject SyncClient::pullBranch(const QString &host, quint16 port,
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/pull-branch"),
-                                      request, ok);
+                                      withAuth(QStringLiteral("POST /pull-branch"), request), ok);
 
     if(!ok)
         return QJsonObject();
@@ -322,7 +338,7 @@ bool SyncClient::pushNote(const QString &host, quint16 port,
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/push-note"),
-                                      note, ok);
+                                      withAuth(QStringLiteral("POST /push-note"), note), ok);
 
     if(!ok)
         return false;
@@ -346,7 +362,7 @@ bool SyncClient::pushBranch(const QString &host, quint16 port,
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/push-branch"),
-                                      branch, ok);
+                                      withAuth(QStringLiteral("POST /push-branch"), branch), ok);
 
     if(!ok)
         return false;
@@ -371,7 +387,7 @@ bool SyncClient::pushDelete(const QString &host, quint16 port,
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/push-delete"),
-                                      request, ok);
+                                      withAuth(QStringLiteral("POST /push-delete"), request), ok);
 
     if(!ok)
         return false;
@@ -391,7 +407,7 @@ bool SyncClient::commit(const QString &host, quint16 port)
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/commit"),
-                                      QJsonObject(), ok);
+                                      withAuth(QStringLiteral("POST /commit"), QJsonObject()), ok);
 
     return ok && answer.value(QStringLiteral("ok")).toBool(false);
 }

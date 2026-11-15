@@ -53,6 +53,19 @@ public:
     static void registerRoutes(SyncServer *server, AppConfig *config,
                                const QString &pairingPin=QString());
 
+    // Доказательство для data-маршрутов: HMAC от (время + id + маршрут).
+    // Hello проверяется один раз, а манифест/блобы без proof читал бы
+    // любой в LAN пока хаб спарен. Маршрут в challenge — чтобы proof
+    // с pull нельзя было переподставить в push
+    static QJsonObject buildDataAuth(AppConfig *config, const QString &route,
+                                     const QJsonObject &body=QJsonObject());
+
+    // Проверить чужой data-запрос. route — тот же ключ что в маршрутах
+    // ("POST /push-note"). now — время сервера. detail — человекочитаемо
+    static bool checkDataAuth(AppConfig *config, const QString &route,
+                              const QJsonObject &body, qint64 now,
+                              QString &detail);
+
     // Последний неизвестный гость (hello без секрета с нашей стороны).
     // Для диалога спаривания на сервере: показать имя/фингерпринт,
     // ввести тот же PIN. Очищается при старте сервера и после спаривания
@@ -68,6 +81,11 @@ public:
 
     // Максимальный модуль расхождения часов, мс. Больше — железный блок
     static constexpr qint64 maxClockSkewMs=1000;
+
+    // Максимальная давность метки data-запроса, мс. Больше — отказ
+    // (защита от переигрывания). Часы уже сведены hello в пределах
+    // maxClockSkewMs, здесь окно шире — на джиттер и обработку
+    static constexpr qint64 maxDataTsSkewMs=5000;
 };
 
 #endif // SYNCHANDSHAKE_H

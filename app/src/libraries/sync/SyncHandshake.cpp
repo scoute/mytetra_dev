@@ -62,6 +62,70 @@ static QString syncFormatVersion(void)
 }
 
 
+
+QJsonObject SyncHandshake::buildDataAuth(AppConfig *config,
+                                         const QString &route,
+                                         const QJsonObject &body)
+{
+    QJsonObject answer=body;
+
+    if(config==nullptr)
+        return answer;
+
+    const qint64 ts=QDateTime::currentMSecsSinceEpoch();
+    const QString deviceId=config->get_syncDeviceId();
+
+    answer[QStringLiteral("_dev")]=deviceId;
+    answer[QStringLiteral("_ts")]=ts;
+    answer[QStringLiteral("_proof")]=
+        SyncIdentity::hmacProof(config->get_syncPairingSecret(),
+                                QByteArray::number(ts)
+                                +deviceId.toLatin1()+route.toLatin1());
+    return answer;
+}
+
+
+bool SyncHandshake::checkDataAuth(AppConfig *config, const QString &route,
+                                  const QJsonObject &body, qint64 now,
+                                  QString &detail)
+{
+    if(config==nullptr || config->get_syncPairingSecret().isEmpty())
+    {
+        detail=QStringLiteral("not paired");
+        return false;
+    }
+
+    const QString deviceId=body.value(QStringLiteral("_dev")).toString();
+    const qint64 ts=body.value(QStringLiteral("_ts")).toVariant().toLongLong();
+    const QString proof=body.value(QStringLiteral("_proof")).toString();
+
+    if(deviceId.isEmpty() || ts<=0 || proof.isEmpty())
+    {
+        detail=QStringLiteral("missing auth fields");
+        return false;
+    }
+
+    if(qAbs(now-ts)>maxDataTsSkewMs)
+    {
+        detail=QStringLiteral("stale request");
+        return false;
+    }
+
+    const QString expected=
+        SyncIdentity::hmacProof(config->get_syncPairingSecret(),
+                                QByteArray::number(ts)
+                                +deviceId.toLatin1()+route.toLatin1());
+
+    if(proof!=expected)
+    {
+        detail=QStringLiteral("bad proof");
+        return false;
+    }
+
+    return true;
+}
+
+
 QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
                                         bool pairRequest)
 {

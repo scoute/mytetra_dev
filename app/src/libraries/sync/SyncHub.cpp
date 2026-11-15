@@ -8,6 +8,8 @@
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 
+#include <QDateTime>
+
 #include <QDebug>
 
 
@@ -27,6 +29,31 @@ static QJsonObject notPairedAnswer(void)
 }
 
 
+// Проверка proof пары на data-маршруте. Пустая строка — ок,
+// иначе текст ошибки для поля error (auth-failed)
+static QString checkAuth(AppConfig *config, const QString &route,
+                         const QJsonObject &request)
+{
+    QString detail;
+
+    if(!SyncHandshake::checkDataAuth(config, route, request,
+                                     QDateTime::currentMSecsSinceEpoch(),
+                                     detail))
+        return detail.isEmpty() ? QStringLiteral("auth failed") : detail;
+
+    return QString();
+}
+
+
+static QJsonObject authFailedAnswer(const QString &detail)
+{
+    QJsonObject answer;
+    answer[QStringLiteral("error")]=QStringLiteral("auth-failed");
+    answer[QStringLiteral("detail")]=detail;
+    return answer;
+}
+
+
 SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                  SyncSidecar &sidecar, const QString &tetradir,
                  QObject *parent, const QString &pairingPin)
@@ -40,10 +67,13 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     SyncHandshake::registerRoutes(server, this->config, pairingPin);
 
     // Манифест локальной базы для спока
-    server->addRoute(QStringLiteral("GET /manifest"),
-                     [this](const QJsonObject &) -> QJsonObject {
+    server->addRoute(QStringLiteral("POST /manifest"),
+                     [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /manifest"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         const SyncManifest manifest=
             SyncManifestBuilder::build(this->model, *this->sidecar,
@@ -57,6 +87,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                      [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /pull-note"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         return pullNote(request.value(QStringLiteral("id")).toString());
     });
@@ -66,6 +99,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                      [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /pull-branch"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         return pullBranch(request.value(QStringLiteral("id")).toString());
     });
@@ -76,6 +112,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                      [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /push-note"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         return applyNote(request);
     });
@@ -84,6 +123,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                      [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /push-branch"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         return applyBranch(request);
     });
@@ -94,6 +136,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
                      [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /push-delete"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         return applyDelete(request.value(QStringLiteral("id")).toString(),
                            request.value(QStringLiteral("deletedAt")).toVariant().toLongLong());
@@ -102,9 +147,12 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
     // Фиксация сессии: сейв базы и перезагрузка моделей,
     // чтобы виды показали примененное. Вызывает клиент в конце плана
     server->addRoute(QStringLiteral("POST /commit"),
-                     [this](const QJsonObject &) -> QJsonObject {
+                     [this](const QJsonObject &request) -> QJsonObject {
         if(!this->dataAllowed())
             return notPairedAnswer();
+        const QString authErr=checkAuth(this->config, QStringLiteral("POST /commit"), request);
+        if(!authErr.isEmpty())
+                return authFailedAnswer(authErr);
 
         this->model->save();
         this->model->reload();

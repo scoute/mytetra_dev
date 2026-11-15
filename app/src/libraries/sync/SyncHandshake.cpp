@@ -5,6 +5,7 @@
 #include "SyncHandshake.h"
 #include "SyncServer.h"
 #include "SyncIdentity.h"
+#include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
 
 
@@ -184,7 +185,7 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
     // Замыкание держит только указатели на долгоживущие объекты
     // (сервер и конфиг переживают все соединения)
     server->addRoute(QStringLiteral("POST /hello"),
-                     [config, pairingPin](const QJsonObject &body) -> QJsonObject {
+                     [server, config, pairingPin](const QJsonObject &body) -> QJsonObject {
         const qint64 now=QDateTime::currentMSecsSinceEpoch();
         SyncHelloResult r=checkHello(body, config, now);
 
@@ -341,9 +342,28 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             SyncHandshake::noteMutual(config, theirId, "clean hello");
 
         // Пир прошел hello — запоминаем для окна Sync devices.
-        // IP здесь нет (за транспортом следит SyncServer), допишет клиент
-        // при своем синке; серверная строка без IP честна
-        config->touch_syncDevice(theirId, theirName);
+        // IP берем из сокета (в hello его нет): иначе на сервере вечно
+        // "(unknown address)" и обратный синк невозможен. Порт не затираем:
+        // слушающий порт пира нам неизвестен, оставляем какой был
+        // (или дефолт 47777 у новой строки)
+        int peerPort=47777;
+
+        for(const AppConfig::SyncDeviceInfo &known : config->get_syncDevices())
+        {
+            if(known.id==theirId)
+            {
+                peerPort=known.port;
+                break;
+            }
+        }
+
+        const QString peerIp=server->lastPeerAddress();
+
+        if(!peerIp.isEmpty() && syncDebugEnabled())
+            qDebug() << "SyncHandshake: peer" << theirId
+                     << "seen at" << peerIp;
+
+        config->touch_syncDevice(theirId, theirName, peerIp, peerPort);
 
         return answer;
     });

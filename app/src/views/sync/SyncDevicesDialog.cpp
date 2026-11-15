@@ -9,12 +9,14 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QDateTime>
+#include <QTimer>
 
 #include "SyncDevicesDialog.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncSession.h"
 #include "libraries/sync/SyncClient.h"
+#include "libraries/sync/SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 
@@ -115,6 +117,22 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     connect(closeButton, &QPushButton::clicked,
             this, &QDialog::accept);
 
+    // Живое обновление без опроса: список sync-устройств меняется снаружи
+    // (входящий hello, pair-request, Accept на другой стороне) — конфиг
+    // сигналит, окно перечитывает. Выделение строки сохраняется по id
+    connect(config, &AppConfig::syncDevicesChanged,
+            this, &SyncDevicesDialog::refreshList);
+
+    // Добивка исходящего запроса: споку некуда принимать пуш от сервера,
+    // поэтому пока висит свой неотвеченный pair-request — перепроверяем
+    // коротким hello (пришел ли Accept). Останавливается сам, как только
+    // взаимность наступила или запрос снят. Это единственный тикающий
+    // кусок, и он узкий: только свой запрос, только пока он висит
+    recheckTimer=new QTimer(this);
+    recheckTimer->setSingleShot(true);
+    connect(recheckTimer, &QTimer::timeout,
+            this, &SyncDevicesDialog::onRecheckPair);
+
     refreshList();
 }
 
@@ -135,6 +153,38 @@ bool SyncDevicesDialog::isMutual(const AppConfig::SyncDeviceInfo &info) const
 }
 
 
+bool SyncDevicesDialog::ownRequestPending(QString *ip,
+                                          quint16 *port) const
+{
+    const QString pairedId=config->get_syncPairedDeviceId();
+
+    if(config->get_syncPairingSecret().isEmpty() || pairedId.isEmpty()
+       || pairedId==config->get_syncDeviceId())
+        return false;
+
+    for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+    {
+        if(info.id!=pairedId)
+            continue;
+
+        if(info.lastMutual>0)
+            return false;
+
+        if(ip!=nullptr)
+            *ip=info.ip;
+
+        if(port!=nullptr)
+            *port=static_cast<quint16>(info.port);
+
+        return true;
+    }
+
+    // Привязка есть, а строки нет (призрак): запрос висит, но перепроверить
+    // некуда — ждем ручного Pair со вводом адреса
+    return false;
+}
+
+
 int SyncDevicesDialog::currentRowId(QString &id) const
 {
     const QList<QTableWidgetSelectionRange> ranges=table->selectedRanges();
@@ -151,6 +201,11 @@ int SyncDevicesDialog::currentRowId(QString &id) const
 void SyncDevicesDialog::refreshList(void)
 {
     refreshSelf();
+
+    // Автотик живого обновления не должен сбрасывать выделение:
+    // запоминаем id, после перестройки выделяем ту же строку
+    QString selectedId;
+    currentRowId(selectedId);
 
     QList<AppConfig::SyncDeviceInfo> devices=config->get_syncDevices();
 
@@ -283,7 +338,21 @@ void SyncDevicesDialog::refreshList(void)
         table->setItem(row, 2, seenItem);
         table->setItem(row, 3, pairedItem);
         table->setItem(row, 4, idItem);
+
+        // Возвращаем выделение той же строке (обновление по событию)
+        if(!selectedId.isEmpty() && info.id==selectedId)
+            table->selectRow(row);
     }
+
+    // Добивку исходящего запроса взводим только пока он висит;
+    // иначе стоп (окно открыто, делать нечего)
+    if(ownRequestPending())
+    {
+        if(!recheckTimer->isActive())
+            recheckTimer->start(5000);
+    }
+    else
+        recheckTimer->stop();
 
     onSelectionChanged();
 }
@@ -795,6 +864,42 @@ void SyncDevicesDialog::onPair(void)
                                                static_cast<quint16>(target.port),
                                                syncOk, &errorCode);
     showManualResult(result, syncOk);
+}
+
+
+void SyncDevicesDialog::onRecheckPair(void)
+{
+    QString ip;
+    quint16 port=0;
+
+    if(!ownRequestPending(&ip, &port) || ip.isEmpty())
+        return; // сняли/приняли пока ждали — refreshList уже пересчитал
+
+    qDebug() << "SyncPair: auto re-check of outstanding request to"
+             << ip << port;
+
+    SyncClient probe(config);
+    probe.setTimeoutMs(4000);
+
+    const SyncHelloResult hello=probe.hello(ip, port);
+
+    if(hello.ok && hello.paired)
+    {
+        qDebug() << "SyncPair: request accepted, sync unlocked";
+        SyncHandshake::noteMutual(config,
+                                 config->get_syncPairedDeviceId(),
+                                 "auto re-check");
+        // refreshList придет по syncDevicesChanged
+        return;
+    }
+
+    if(syncDebugEnabled())
+        qDebug() << "SyncPair: still waiting"
+                 << (hello.ok ? QString() : hello.errorCode);
+
+    // Не приняли (или недоступен) — повторим, пока запрос висит
+    // и окно открыто. Снятие запроса остановит через refreshList
+    recheckTimer->start(5000);
 }
 
 

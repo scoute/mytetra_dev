@@ -327,6 +327,12 @@ void AppConfig::touch_syncDevice(const QString &id, const QString &name,
 
     m_conf->setValue(QStringLiteral("lastSeen"), now);
     m_conf->endGroup();
+
+    // Сразу на диск: серверный процесс часто убивают сигналом,
+    // без sync() строка пира (и адрес для обратного синка) потеряется
+    m_conf->sync();
+
+    emit syncDevicesChanged();
 }
 
 
@@ -345,6 +351,11 @@ bool AppConfig::remove_syncDevice(const QString &id)
 
     m_conf->endGroup();
     m_conf->remove(QStringLiteral("syncDevices/")+id);
+
+    // Сразу на диск, см. touch_syncDevice
+    m_conf->sync();
+
+    emit syncDevicesChanged();
     return true;
 }
 
@@ -369,6 +380,8 @@ void AppConfig::clear_syncDeviceOffer(const QString &id)
 
     m_conf->setValue(QStringLiteral("syncDevices/")+id
                      +QStringLiteral("/pairOffer"), false);
+
+    emit syncDevicesChanged();
 }
 
 
@@ -393,6 +406,8 @@ void AppConfig::clear_syncDeviceMutual(const QString &id)
 
     m_conf->setValue(QStringLiteral("syncDevices/")+id
                      +QStringLiteral("/lastMutual"), 0);
+
+    emit syncDevicesChanged();
 }
 
 

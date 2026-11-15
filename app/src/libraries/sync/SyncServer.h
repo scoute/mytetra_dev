@@ -37,6 +37,11 @@ public:
     // Зарегистрировать обработчик маршрута "METHOD path"
     void addRoute(const QString &methodPath, Handler handler);
 
+    // IP пира текущего обрабатываемого запроса (пусто вне обработчика).
+    // Нужно hello-маршруту: записать адрес устройства в список пиров,
+    // иначе на сервере вечно "(unknown address)" и обратный синк невозможен
+    QString lastPeerAddress(void) const;
+
 private slots:
 
     void onNewConnection(void);
@@ -61,6 +66,11 @@ private:
     // Недочитанные запросы по сокетам: readAll в onReadyRead забирает все,
     // что приехало, остаток ждет следующего пакета здесь, а не теряется
     QMap<QTcpSocket *, QByteArray> pendingRequests;
+
+    // Адрес пира текущего запроса (для hello: записать IP устройства).
+    // Запросы идут строго последовательно в одном потоке, гонки нет.
+    // IPv6-mapped IPv4 нормализуется к dotted-quad
+    QString currentPeerIp;
 };
 
 #endif // SYNCSERVER_H

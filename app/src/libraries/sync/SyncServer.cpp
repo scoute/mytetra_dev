@@ -1,5 +1,6 @@
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QHostAddress>
 #include <QJsonDocument>
 #include <QElapsedTimer>
 #include <QDebug>
@@ -7,6 +8,27 @@
 #include "SyncServer.h"
 #include "SyncDebug.h"
 #include "main.h"
+
+
+namespace
+{
+// Адрес пира в удобном виде: IPv6-mapped IPv4 (::ffff:192.168.1.2)
+// нормализуем к dotted-quad, иначе в списке устройств мусор
+QString normalizedPeerAddress(QTcpSocket *socket)
+{
+    if(socket==nullptr)
+        return QString();
+
+    const QHostAddress addr=socket->peerAddress();
+    bool ok=false;
+    const quint32 v4=addr.toIPv4Address(&ok);
+
+    if(ok)
+        return QHostAddress(v4).toString();
+
+    return addr.toString();
+}
+}
 
 
 SyncServer::SyncServer(QObject *parent) : QObject(parent)
@@ -76,6 +98,12 @@ void SyncServer::addRoute(const QString &methodPath, Handler handler)
 }
 
 
+QString SyncServer::lastPeerAddress(void) const
+{
+    return currentPeerIp;
+}
+
+
 void SyncServer::onNewConnection(void)
 {
     while(server->hasPendingConnections())
@@ -138,6 +166,11 @@ void SyncServer::onReadyRead(void)
 
     QElapsedTimer timer;
     timer.start();
+
+    // Запоминаем, откуда прилетел запрос: hello-маршрут запишет IP пира.
+    // Сокет жив весь вызов обработчика ниже (удаляется только по disconnect)
+    currentPeerIp=normalizedPeerAddress(socket);
+
     const QJsonObject answer=routes.value(methodPath)(body);
     const qint64 elapsed=timer.elapsed();
 

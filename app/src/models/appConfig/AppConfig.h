@@ -100,6 +100,15 @@ public:
     void set_syncDeviceMutual(const QString &id);
     void clear_syncDeviceMutual(const QString &id);
 
+signals:
+
+    // Список sync-устройств изменился (входящий hello, pair-request,
+    // Accept/Unpair/Remove/Reset). Окно Sync devices обновляется по нему,
+    // а не тикающим опросом
+    void syncDevicesChanged(void);
+
+public:
+
     // Директория с корзиной
     QString get_trashdir(void);
     bool set_trashdir(QString dirName);

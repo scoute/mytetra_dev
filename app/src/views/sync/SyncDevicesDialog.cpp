@@ -12,10 +12,12 @@
 #include <QTimer>
 
 #include "SyncDevicesDialog.h"
+#include "SyncPreviewDialog.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncSession.h"
 #include "libraries/sync/SyncClient.h"
+#include "libraries/sync/SyncNoteIo.h"
 #include "libraries/sync/SyncDebug.h"
 #include "libraries/sync/SyncDiscovery.h"
 #include "libraries/sync/SyncSidecar.h"
@@ -556,6 +558,51 @@ void SyncDevicesDialog::onSyncNow(void)
                 return SyncSession::DeleteDecision::Restore;
 
             return SyncSession::DeleteDecision::Cancel;
+        });
+
+    // Предпросмотр: окно выбора по категориям (создание едет молча,
+    // остальное — явным выбором). Без него встречные правки тихо
+    // решались по mtime и пользователь не видел никакого выбора
+    session.setPreviewResolver(
+        [this, &target](const SyncPreview::Preview &preview,
+                        SyncPreview::Decisions &decisions) -> bool {
+            const auto ownText=[this](const SyncPreview::Item &item) -> QString {
+                if(item.isBranch)
+                    return QString();
+
+                const QJsonObject note=SyncNoteIo::serializeNote(
+                    model, tetradir, item.id);
+
+                if(note.contains(QStringLiteral("error")))
+                    return QString();
+
+                return QString::fromUtf8(QByteArray::fromBase64(
+                    note.value(QStringLiteral("text")).toString().toLatin1()));
+            };
+            const auto otherText=[&target, this](const SyncPreview::Item &item) -> QString {
+                if(item.isBranch)
+                    return QString();
+
+                SyncClient client(config);
+                const QJsonObject note=client.pullNote(target.lastIp,
+                    static_cast<quint16>(target.port), item.id);
+
+                if(note.contains(QStringLiteral("error")))
+                    return QString();
+
+                return QString::fromUtf8(QByteArray::fromBase64(
+                    note.value(QStringLiteral("text")).toString().toLatin1()));
+            };
+
+            SyncPreviewDialog dialog(preview,
+                SyncPreview::Decisions::defaults(),
+                ownText, otherText, this);
+
+            if(dialog.exec()!=QDialog::Accepted)
+                return false;
+
+            decisions=dialog.decisions();
+            return true;
         });
 
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —

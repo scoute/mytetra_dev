@@ -215,6 +215,15 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
             continue;
         }
 
+        // Тип обязан быть известным: getAbsoluteInnerFileName на мусоре
+        // делает criticalError (в headless — смерть всей сессии), а синк
+        // обязан пропускать битую запись, а не падать (см. skipItem)
+        if(attachType!=QStringLiteral("file"))
+        {
+            answer[QStringLiteral("error")]=QStringLiteral("bad attach type");
+            return answer;
+        }
+
         const QString absPath=attachTable.getAbsoluteInnerFileName(i);
         const QByteArray data=readBytes(absPath, ok);
 

@@ -64,3 +64,8 @@ qrc_*.cpp
 /app/user*appdatalocal*
 
 flamegraph.svg
+
+# Shadow build dirs and heavy local data (also keeps
+# opencode session snapshots small: they pack the worktree)
+build/
+mytetraHighLoad_data/

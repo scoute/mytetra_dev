@@ -129,6 +129,12 @@ private:
  QDateTime lastKnowTreeModifyDateTime;
  qint64    lastKnowTreeSize;
 
+ // Ветка, на которой стоял курсор до modelAboutToBeReset (reload модели
+ // при синке убивает все TreeItem/RecordTableData). На modelReset выбор
+ // восстанавливается по id, иначе вид списка записей держит мертвую
+ // таблицу и падает в RecordTableModel::rowCount на первой перерисовке
+ QString savedBranchIdAfterReset;
+
  // bool isKnowtreeClickedWork=false;
 };
 

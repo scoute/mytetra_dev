@@ -27,6 +27,7 @@
 #include "libraries/WindowSwitcher.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "controllers/recordTable/RecordTableController.h"
+#include "controllers/attachTable/AttachTableController.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/ShortcutManager.h"
 #include "libraries/helpers/ObjectHelper.h"
@@ -458,6 +459,73 @@ void TreeScreen::setupSignals(void)
 
  // Обновление горячих клавиш, если они были изменены
  connect(&shortcutManager, &ShortcutManager::updateWidgetShortcut, this, &TreeScreen::setupShortcuts);
+
+ // Перезагрузка модели (синк делает save+reload прямо в GUI-потоке)
+ // убивает все TreeItem/RecordTableData. Без этого вид списка записей
+ // держит мертвую таблицу и падает с SIGSEGV в RecordTableModel::rowCount
+ // на первой же перерисовке после синка (стек: paintEvent -> rowCount).
+ // Поэтому: перед ресетом запоминаем ветку и отцепляем таблицы, после —
+ // возвращаем выбор по id (штатный путь сам переподцепит свежие данные)
+ connect(knowTreeModel, &QAbstractItemModel::modelAboutToBeReset,
+         this, [this]() {
+    savedBranchIdAfterReset.clear();
+
+    const QModelIndex cur=knowTreeView->currentIndex();
+
+    if(cur.isValid())
+    {
+        TreeItem *item=knowTreeModel->getItem(cur);
+
+        if(item!=nullptr)
+            savedBranchIdAfterReset=item->getField(QStringLiteral("id"));
+    }
+
+    qDebug() << "TreeScreen: model reset, detach record/attach tables, saved branch"
+             << savedBranchIdAfterReset;
+
+    find_object<RecordTableController>("recordTableController")->setTableData(nullptr);
+
+    AttachTableController *attachController=find_object<AttachTableController>("attachTableController");
+
+    if(attachController!=nullptr)
+        attachController->setAttachTableData(nullptr);
+ });
+
+ connect(knowTreeModel, &QAbstractItemModel::modelReset,
+         this, [this]() {
+    if(savedBranchIdAfterReset.isEmpty())
+        return;
+
+    TreeItem *item=knowTreeModel->getItemById(savedBranchIdAfterReset);
+    savedBranchIdAfterReset.clear();
+
+    if(item==nullptr)
+    {
+        qDebug() << "TreeScreen: model reset, saved branch gone (deleted by sync)";
+        return;
+    }
+
+    // Зашифрованная без введенного пароля: автовыбор поднял бы диалог
+    // пароля — не трогаем, пользователь выберет сам
+    if(item->getField(QStringLiteral("crypt"))==QStringLiteral("1") &&
+       globalParameters.getCryptKey().length()==0)
+    {
+        qDebug() << "TreeScreen: model reset, saved branch is locked, skip reselect";
+        return;
+    }
+
+    const QModelIndex index=knowTreeModel->getIndexByItem(item);
+
+    if(!index.isValid())
+        return;
+
+    qDebug() << "TreeScreen: model reset, restore selection";
+
+    if(mytetraConfig.getInterfaceMode()=="desktop")
+        knowTreeView->setCurrentIndex(index); // дальше штатно через currentRowChanged
+    else
+        onKnowtreeClicked(index); // в mobile выбор идет через clicked
+ });
 }
 
 

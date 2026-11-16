@@ -880,6 +880,14 @@ void SyncPreviewDialog::onDuelTheirs(void)
 
 void SyncPreviewDialog::showDiffFor(const Item *item)
 {
+    if(item!=nullptr
+       && (item->category==Category::MyDelete
+           || item->category==Category::TheirDelete))
+    {
+        m_diffView->setPlainText(tr("Элемент удалён, показывать нечего."));
+        return;
+    }
+
     if(item==nullptr || item->category!=Category::Edit || item->isBranch)
     {
         m_diffView->setPlainText(

@@ -22,6 +22,21 @@ QString branchName(const SyncManifest &manifest, const QString &id)
 }
 
 
+// Имя ищем на ОБЕИХ сторонах: у удаленной записи своя сторона уже
+// ничего не знает (иначе в окне "(без имени)" вместо реального имени).
+// Удаление едет наружу — имя берет с той стороны, где элемент еще жив
+QString anyNoteName(const SyncManifest &local, const SyncManifest &remote,
+                    const QString &id)
+{
+    QString name=noteName(local, id);
+
+    if(name.isEmpty())
+        name=noteName(remote, id);
+
+    return name;
+}
+
+
 // Имя/родитель ищутся на ОБЕИХ сторонах: у удаленного элемента
 // его сторона уже ничего не знает
 QString parentOf(const SyncManifest &local, const SyncManifest &remote,
@@ -192,7 +207,7 @@ Preview classify(const SyncPlan &plan,
 
         preview.items.append(
             makeItem(local, remote, id, category, false, true,
-                     noteName(local, id)));
+                     anyNoteName(local, remote, id)));
     }
 
     for(const QString &id : plan.uploadBranches)
@@ -203,7 +218,7 @@ Preview classify(const SyncPlan &plan,
 
         preview.items.append(
             makeItem(local, remote, id, category, true, true,
-                     branchName(local, id)));
+                     anyBranchName(local, remote, id)));
     }
 
     // Ихние изменения, приходящие к нам
@@ -220,7 +235,7 @@ Preview classify(const SyncPlan &plan,
 
         preview.items.append(
             makeItem(local, remote, id, category, false, false,
-                     noteName(remote, id)));
+                     anyNoteName(local, remote, id)));
     }
 
     for(const QString &id : plan.downloadBranches)
@@ -230,7 +245,7 @@ Preview classify(const SyncPlan &plan,
 
         preview.items.append(
             makeItem(local, remote, id, category, true, false,
-                     branchName(remote, id)));
+                     anyBranchName(local, remote, id)));
     }
 
     // Удаления по направлениям
@@ -242,7 +257,8 @@ Preview classify(const SyncPlan &plan,
 
         preview.items.append(
             makeItem(local, remote, id, Category::MyDelete, isBranch, true,
-                     isBranch ? branchName(local, id) : noteName(local, id)));
+                     isBranch ? anyBranchName(local, remote, id)
+                              : anyNoteName(local, remote, id)));
     }
 
     for(const QString &id : plan.deleteLocal)
@@ -251,7 +267,8 @@ Preview classify(const SyncPlan &plan,
             || remote.branches.contains(id);
         preview.items.append(
             makeItem(local, remote, id, Category::TheirDelete, isBranch, false,
-                     isBranch ? branchName(remote, id) : noteName(remote, id)));
+                     isBranch ? anyBranchName(local, remote, id)
+                              : anyNoteName(local, remote, id)));
     }
 
     return preview;

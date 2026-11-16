@@ -22,6 +22,7 @@
 #include "views/record/MetaEditor.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncDebug.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/crypt/Password.h"
 #include "libraries/WindowSwitcher.h"
@@ -480,8 +481,8 @@ void TreeScreen::setupSignals(void)
             savedBranchIdAfterReset=item->getField(QStringLiteral("id"));
     }
 
-    qDebug() << "TreeScreen: model reset, detach record/attach tables, saved branch"
-             << savedBranchIdAfterReset;
+    syncDbg(QStringLiteral("TreeScreen: model reset, detach record/attach tables, saved branch ")
+            + savedBranchIdAfterReset);
 
     find_object<RecordTableController>("recordTableController")->setTableData(nullptr);
 
@@ -501,7 +502,7 @@ void TreeScreen::setupSignals(void)
 
     if(item==nullptr)
     {
-        qDebug() << "TreeScreen: model reset, saved branch gone (deleted by sync)";
+        syncDbg(QStringLiteral("TreeScreen: model reset, saved branch gone (deleted by sync)"));
         return;
     }
 
@@ -510,7 +511,7 @@ void TreeScreen::setupSignals(void)
     if(item->getField(QStringLiteral("crypt"))==QStringLiteral("1") &&
        globalParameters.getCryptKey().length()==0)
     {
-        qDebug() << "TreeScreen: model reset, saved branch is locked, skip reselect";
+        syncDbg(QStringLiteral("TreeScreen: model reset, saved branch is locked, skip reselect"));
         return;
     }
 
@@ -519,7 +520,7 @@ void TreeScreen::setupSignals(void)
     if(!index.isValid())
         return;
 
-    qDebug() << "TreeScreen: model reset, restore selection";
+    syncDbg(QStringLiteral("TreeScreen: model reset, restore selection"));
 
     if(mytetraConfig.getInterfaceMode()=="desktop")
         knowTreeView->setCurrentIndex(index); // дальше штатно через currentRowChanged

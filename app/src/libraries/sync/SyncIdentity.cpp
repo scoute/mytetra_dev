@@ -1,4 +1,5 @@
 #include <QByteArray>
+#include <QMap>
 #include <QStringList>
 #include <QCryptographicHash>
 #include <QMessageAuthenticationCode>
@@ -104,24 +105,37 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     if(derived.isEmpty())
         return false;
 
-    // Новая пара (секрета не было или пара сменилась): первый синк
-    // спросит стратегию, если данные есть с обеих сторон. Починка
-    // пары с тем же пиром — не новая, стратегию не спрашиваем
-    const bool isNewPair=config->get_syncPairingSecret().isEmpty()
-        || config->get_syncPairedDeviceId()!=peerId;
+    // Кольцо: новая пара добавляется, старые не трогаем (у человека
+    // 4-5 устройств: ПК, ноут, телефоны, планшет). Первая в жизни пара
+    // дополнительно кладется в легаси-секрет для совместимости.
+    // Новая эпоха (спрос стратегии + чистка tombstone'ов) — только когда
+    // кольцо было пустым: присоединение второго устройства не должно
+    // уничтожать чужие отложенные удаления и молча все сливать.
+    // Починка пары с тем же пиром — не новая, стратегию не спрашиваем
+    const QMap<QString, QString> ringBefore=config->get_syncSecretsRing();
+    const bool firstEver=ringBefore.isEmpty();
+    const bool isNewPair=firstEver || !ringBefore.contains(peerId);
 
-    config->set_syncPairingSecret(derived);
-    config->set_syncPairedDeviceId(peerId);
+    config->set_syncDeviceSecret(peerId, derived);
+
+    if(firstEver)
+        config->set_syncPairingSecret(derived);
+
+    if(config->get_syncPairedDeviceId().isEmpty())
+        config->set_syncPairedDeviceId(peerId);
 
     if(isNewPair)
     {
         config->set_syncAskStrategy(true);
 
-        // Новая пара — новая эпоха: старые tombstone'ы не должны
-        // поехать новому пиру и уничтожить его данные (это уже
-        // случалось: удаление локальной базы + новая пара -> обнулился
-        // сервер, потому что tombstone'ы пережили смену пары)
-        SyncSidecar::clearTombstones();
+        if(firstEver)
+        {
+            // Новая пара — новая эпоха: старые tombstone'ы не должны
+            // поехать новому пиру и уничтожить его данные (это уже
+            // случалось: удаление локальной базы + новая пара -> обнулился
+            // сервер, потому что tombstone'ы пережили смену пары)
+            SyncSidecar::clearTombstones();
+        }
     }
 
     // Пара пересоздана: старые "запрос"/взаимность протухли,
@@ -129,4 +143,23 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     config->clear_syncDeviceOffer(peerId);
     config->clear_syncDeviceMutual(peerId);
     return true;
+}
+
+
+QString SyncIdentity::secretForPeer(const AppConfig *config,
+                                    const QString &peerId)
+{
+    if(config==nullptr || peerId.isEmpty())
+        return QString();
+
+    // Сначала запись устройства (свежая), затем легаси-пара
+    const QString direct=config->get_syncDeviceSecret(peerId);
+
+    if(!direct.isEmpty())
+        return direct;
+
+    if(config->get_syncPairedDeviceId()==peerId)
+        return config->get_syncPairingSecret();
+
+    return QString();
 }

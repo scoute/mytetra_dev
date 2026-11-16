@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QSettings>
 #include <QList>
+#include <QMap>
 #include <QDateTime>
 #include <QDebug>
 
@@ -54,14 +55,30 @@ public:
     bool set_syncGroupId(const QString &groupId);
 
     // Секрет спаривания (hex). Пусто = спариваний не было.
-    // По сети в открытом виде не ходит, только HMAC-доказательства
-    QString get_syncPairingSecret(void);
+    // По сети в открытом виде не ходит, только HMAC-доказательства.
+    // Легаси-пара: первая пара устройства (для совместимости).
+    // При кольце из нескольких пар это секрет первой из них
+    QString get_syncPairingSecret(void) const;
     bool set_syncPairingSecret(const QString &secret);
 
-    // Устройство, с которым выведен текущий секрет (его id).
-    // Секрет парный: тот же PIN с другим id дает другой secret
-    QString get_syncPairedDeviceId(void);
+    // Устройство, с которым выведен текущий (первый) секрет.
+    // Секреты парные: тот же PIN с другим id дает другой secret,
+    // поэтому у каждого пира свой секрет (см. кольцо ниже)
+    QString get_syncPairedDeviceId(void) const;
     bool set_syncPairedDeviceId(const QString &deviceId);
+
+    // Кольцо секретов личного облака: у человека 4-5 устройств
+    // (ПК, ноут, телефоны, планшет), с каждым — своя попарная пара.
+    // Секреты лежат в syncDevices/<id>/secret; легаси-пара входит
+    // в кольцо для совместимости. По проводам формат не менялся
+    QString get_syncDeviceSecret(const QString &id) const;
+    void set_syncDeviceSecret(const QString &id, const QString &secret);
+    void clear_syncDeviceSecret(const QString &id);
+    // Все секреты кольца: id -> secret (легаси-пара включена)
+    QMap<QString, QString> get_syncSecretsRing(void) const;
+    void clear_syncSecretsRing(void);
+    // Есть ли хоть одна пара (кольцо не пусто)
+    bool hasSyncPairing(void) const;
 
     // Последний хост ручного синка (окно Sync devices подставляет его)
     QString get_syncLastHost(void);

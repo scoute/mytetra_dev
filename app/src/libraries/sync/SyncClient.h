@@ -65,6 +65,12 @@ public:
     bool mergeByName(const QString &host, quint16 port,
                      const QStringList &branchIds);
 
+    // Секрет именно под текущий пир (кольцо на 4-5 устройств).
+    // hello() перебирает кольцо и запоминает рабочий; сессия может
+    // перевыставить явно после adoptPairing (секрет сменился)
+    void setPeerSecret(const QString &secret);
+    QString peerSecret(void) const;
+
     QString lastError(void) const;
 
     // Последний запрос дошел до сервера и вернулся разобранным
@@ -89,6 +95,7 @@ private:
 
     AppConfig *config=nullptr;
     int timeoutMs=15000;
+    QString peerSecretText;
     QString lastErrorText;
     bool lastTransportOkFlag=true;
 };

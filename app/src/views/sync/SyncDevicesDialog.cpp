@@ -9,6 +9,8 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QDateTime>
+#include <QMap>
+#include <QSet>
 #include <QTimer>
 
 #include "SyncDevicesDialog.h"
@@ -149,8 +151,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
 
 bool SyncDevicesDialog::isPaired(const AppConfig::SyncDeviceInfo &info) const
 {
-    return !config->get_syncPairingSecret().isEmpty()
-        && config->get_syncPairedDeviceId()==info.id;
+    // Кольцо: у каждого спаренного пира свой секрет
+    return !SyncIdentity::secretForPeer(config, info.id).isEmpty();
 }
 
 
@@ -166,19 +168,18 @@ bool SyncDevicesDialog::isMutual(const AppConfig::SyncDeviceInfo &info) const
 bool SyncDevicesDialog::ownRequestPending(QString *ip,
                                           quint16 *port) const
 {
-    const QString pairedId=config->get_syncPairedDeviceId();
+    const QMap<QString, QString> ring=config->get_syncSecretsRing();
 
-    if(config->get_syncPairingSecret().isEmpty() || pairedId.isEmpty()
-       || pairedId==config->get_syncDeviceId())
+    if(ring.isEmpty())
         return false;
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
     {
-        if(info.id!=pairedId)
+        if(!ring.contains(info.id) || info.id==config->get_syncDeviceId())
             continue;
 
         if(info.lastMutual>0)
-            return false;
+            continue;
 
         if(ip!=nullptr)
             *ip=info.lastIp;
@@ -219,31 +220,30 @@ void SyncDevicesDialog::refreshList(void)
 
     QList<AppConfig::SyncDeviceInfo> devices=config->get_syncDevices();
 
-    // Спаренный пир висит строкой всегда, даже если ни разу не виден
-    // в сети (секрет есть, записи нет). Иначе его нельзя точечно
-    // разорвать: Reset all при нескольких коннектах — не выход.
-    // Unknown означает: пара выведена под этот id, но hello от него
-    // не было (или запись удалили, а секрет остался)
-    const QString pairedId=config->get_syncPairedDeviceId();
-    bool havePairedRow=false;
+    // Каждый спаренный пир висит строкой всегда, даже если ни разу
+    // не виден в сети (секрет есть, записи нет). Иначе его нельзя
+    // точечно разорвать: Reset all при нескольких коннектах — не выход.
+    const QMap<QString, QString> ring=config->get_syncSecretsRing();
+    QSet<QString> haveRows;
 
     for(const AppConfig::SyncDeviceInfo &info : devices)
-    {
-        if(info.id==pairedId)
-        {
-            havePairedRow=true;
-            break;
-        }
-    }
+        haveRows.insert(info.id);
+
+    QList<QString> ghostIds;
+
+    for(auto it=ring.constBegin(); it!=ring.constEnd(); ++it)
+        if(!haveRows.contains(it.key()))
+            ghostIds << it.key();
 
     bool syntheticPaired=false;
 
-    if(!config->get_syncPairingSecret().isEmpty() && !pairedId.isEmpty()
-       && pairedId!=config->get_syncDeviceId()
-       && !havePairedRow)
+    for(const QString &ghostId : ghostIds)
     {
+        if(ghostId==config->get_syncDeviceId())
+            continue;
+
         AppConfig::SyncDeviceInfo ghost;
-        ghost.id=pairedId;
+        ghost.id=ghostId;
         devices << ghost;
         syntheticPaired=true;
     }
@@ -285,11 +285,11 @@ void SyncDevicesDialog::refreshList(void)
         // wait-accept — входящий запрос: нужен Accept с вводом общего PIN.
         // no — чужая строка или пары нет. unknown — секрет есть, но с кем —
         //   неизвестно (наследие без привязки). error — пара сломана
-        //   (спарен сам с собой)
-        const bool haveSecret=!config->get_syncPairingSecret().isEmpty();
+        //   (спарен сам с собой).
+        // Кольцо: спаренность проверяется по секрету КОНКРЕТНОЙ строки
+        const bool haveSecret=!ring.isEmpty();
         const bool selfPairing=haveSecret
-            && !pairedId.isEmpty()
-            && pairedId==config->get_syncDeviceId();
+            && ring.contains(config->get_syncDeviceId());
 
         QString pairedText;
         QString pairedTip;
@@ -304,13 +304,14 @@ void SyncDevicesDialog::refreshList(void)
             pairedTip=tr("Broken pairing: paired with self. "
                          "Reset all and pair again.");
         }
-        else if(pairedId.isEmpty())
+        else if(!config->get_syncPairingSecret().isEmpty()
+                && config->get_syncPairedDeviceId().isEmpty())
         {
             pairedText=tr("unknown");
             pairedTip=tr("Paired with unknown device (legacy state, "
                          "no peer binding). Re-pair via Pair or Reset all.");
         }
-        else if(pairedId==info.id)
+        else if(ring.contains(info.id))
         {
             // Призрак (спаренный, но ни разу не виденный) — флагов нет,
             // взаимность неизвестна: оставляем legacy yes
@@ -373,8 +374,8 @@ void SyncDevicesDialog::refreshList(void)
 void SyncDevicesDialog::refreshSelf(void)
 {
     const QString ownId=config->get_syncDeviceId();
-    const bool paired=!config->get_syncPairingSecret().isEmpty();
-    const QString pairedId=config->get_syncPairedDeviceId();
+    const QMap<QString, QString> ring=config->get_syncSecretsRing();
+    const bool paired=!ring.isEmpty();
     const QString group=config->get_syncGroupId();
 
     QString peerText=tr("no");
@@ -383,38 +384,45 @@ void SyncDevicesDialog::refreshSelf(void)
     {
         // Сломана в принципе: спарен сам с собой. Такой secret ни с кем
         // не сойдется — только Reset all и спаривание заново
-        if(!pairedId.isEmpty() && pairedId==ownId)
+        if(ring.contains(ownId))
         {
             peerText=tr("ERROR: paired with self!");
         }
         else
         {
-            QString peerName;
-            qint64 peerMutual=-1;
+            // Кольцо: перечисляем всех спаренных пиров (4-5 устройств),
+            // по каждому — взаимность отдельным флагом
+            QStringList peerTexts;
 
-            for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+            for(auto it=ring.constBegin(); it!=ring.constEnd(); ++it)
             {
-                if(info.id==pairedId)
+                const QString &pid=it.key();
+                QString peerName;
+                qint64 peerMutual=-1;
+
+                for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
                 {
-                    peerName=info.name;
-                    peerMutual=info.lastMutual;
-                    break;
+                    if(info.id==pid)
+                    {
+                        peerName=info.name;
+                        peerMutual=info.lastMutual;
+                        break;
+                    }
                 }
+
+                if(peerName.isEmpty())
+                    peerName=pid+tr(" (not in list!)");
+
+                // Предложили, взаимности нет — честный статус вместо yes:
+                // запрос ушёл, ждем Accept на той стороне
+                if(peerMutual==0)
+                    peerTexts << tr("%1 (pair requested, waiting for accept)")
+                        .arg(peerName);
+                else
+                    peerTexts << peerName;
             }
 
-            if(peerName.isEmpty())
-                peerName=pairedId.isEmpty() ? tr("(unknown)")
-                                            : pairedId+tr(" (not in list!)");
-            else if(pairedId!=peerName)
-                peerName+=QStringLiteral(" (")+pairedId+QStringLiteral(")");
-
-            // Предложили, взаимности нет — честный статус вместо yes:
-            // запрос ушёл, ждем Accept на той стороне
-            if(!pairedId.isEmpty() && peerMutual==0)
-                peerText=tr("pair requested, waiting for accept on %1")
-                    .arg(peerName);
-            else
-                peerText=tr("yes, with %1").arg(peerName);
+            peerText=tr("yes, with %1").arg(peerTexts.join(QStringLiteral("; ")));
         }
     }
 
@@ -868,9 +876,9 @@ QString SyncDevicesDialog::askJoinPin(const QString &peerName,
 // Флаги запросов/взаимности по всем строкам тоже гаснут: старая сеть забыта
 void SyncDevicesDialog::joinFresh(void)
 {
-    config->set_syncPairingSecret(QString());
+    // Кольцо целиком: вход в чужую сеть забывает все пары
+    config->clear_syncSecretsRing();
     config->set_syncGroupId(QString());
-    config->set_syncPairedDeviceId(QString());
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
     {
@@ -1091,22 +1099,32 @@ void SyncDevicesDialog::onUnpair(void)
     if(currentRowId(id)<0)
         return;
 
-    if(config->get_syncPairedDeviceId()!=id)
+    // Кольцо: рвем пару точечно, остальные пиры не трогаем
+    if(!config->get_syncSecretsRing().contains(id))
         return;
 
-    if(QMessageBox::question(this, tr("Sync"),
-                             tr("Break pairing with this device? "
-                                "You will leave the sync network as well. "
-                                "Next sync will require pairing again."))
-       !=QMessageBox::Yes)
+    const bool wasPrimary=(config->get_syncPairedDeviceId()==id);
+
+    const QString askText=tr("Break pairing with this device? %1"
+                                "Next sync will require pairing again.")
+        .arg(wasPrimary
+             ? tr("You will leave the sync network as well. ")
+             : tr("Other pairings stay intact. "));
+
+    if(QMessageBox::question(this, tr("Sync"), askText)!=QMessageBox::Yes)
         return;
 
-    config->set_syncPairingSecret(QString());
-    config->set_syncPairedDeviceId(QString());
-    config->set_syncGroupId(QString());
+    config->clear_syncDeviceSecret(id);
 
-    // Журнал синка — в новую эпоху (см. SyncIdentity::adoptPairing)
-    SyncSidecar::reset();
+    if(wasPrimary)
+    {
+        config->set_syncPairingSecret(QString());
+        config->set_syncPairedDeviceId(QString());
+        config->set_syncGroupId(QString());
+
+        // Журнал синка — в новую эпоху (см. SyncIdentity::adoptPairing)
+        SyncSidecar::reset();
+    }
 
     // Флаги пары по строке тоже гаснут: запрос принят/отклонен разрывом
     qDebug() << "SyncPair: unpaired" << id << ", offer/mutual cleared";
@@ -1128,12 +1146,18 @@ void SyncDevicesDialog::onRemove(void)
        !=QMessageBox::Yes)
         return;
 
-    // Удаляем спаренное — заодно рвем пару, иначе висячий секрет
-    if(config->get_syncPairedDeviceId()==id)
+    // Удаляем спаренное — заодно рвем пару, иначе висячий секрет.
+    // Кольцо: снимаем секрет строки; первичная пара рвется целиком
+    if(config->get_syncSecretsRing().contains(id))
     {
-        config->set_syncPairingSecret(QString());
-        config->set_syncPairedDeviceId(QString());
-        SyncSidecar::reset();
+        config->clear_syncDeviceSecret(id);
+
+        if(config->get_syncPairedDeviceId()==id)
+        {
+            config->set_syncPairingSecret(QString());
+            config->set_syncPairedDeviceId(QString());
+            SyncSidecar::reset();
+        }
     }
 
     config->remove_syncDevice(id);
@@ -1164,9 +1188,9 @@ void SyncDevicesDialog::onResetAll(void)
        !=QMessageBox::Yes)
         return;
 
-    config->set_syncPairingSecret(QString());
+    // Кольцо целиком: легаси-пара, секреты устройств, группа, список
+    config->clear_syncSecretsRing();
     config->set_syncGroupId(QString());
-    config->set_syncPairedDeviceId(QString());
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
         config->remove_syncDevice(info.id);

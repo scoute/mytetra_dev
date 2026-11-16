@@ -33,9 +33,11 @@ public:
     // Собрать тело /hello из локального конфига.
     // proof пуст пока спаривания не было (первое знакомство).
     // pairRequest: "хочу в пару" — сервер запишет входящий запрос
-    // (wait-accept), а не данные; ответ придет с pairPending
+    // (wait-accept), а не данные; ответ придет с pairPending.
+    // peerSecret: секрет именно под этот пир (кольцо); пусто — легаси-одиночка
     static QJsonObject buildHello(AppConfig *config, qint64 clientTime,
-                                  bool pairRequest=false);
+                                  bool pairRequest=false,
+                                  const QString &peerSecret=QString());
 
     // Проверить чужой /hello. Ничего не меняет, только вердикт
     static SyncHelloResult checkHello(const QJsonObject &hello,
@@ -56,9 +58,11 @@ public:
     // Доказательство для data-маршрутов: HMAC от (время + id + маршрут).
     // Hello проверяется один раз, а манифест/блобы без proof читал бы
     // любой в LAN пока хаб спарен. Маршрут в challenge — чтобы proof
-    // с pull нельзя было переподставить в push
+    // с pull нельзя было переподставить в push.
+    // peerSecret: секрет именно под этот пир (кольцо); пусто — легаси-одиночка
     static QJsonObject buildDataAuth(AppConfig *config, const QString &route,
-                                     const QJsonObject &body=QJsonObject());
+                                     const QJsonObject &body=QJsonObject(),
+                                     const QString &peerSecret=QString());
 
     // Проверить чужой data-запрос. route — тот же ключ что в маршрутах
     // ("POST /push-note"). now — время сервера. detail — человекочитаемо

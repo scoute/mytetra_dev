@@ -18,9 +18,9 @@
 bool SyncHub::dataAllowed(void) const
 {    SYNC_TRACE();
 
-    return config!=nullptr
-        && !config->get_syncPairingSecret().isEmpty()
-        && !config->get_syncPairedDeviceId().isEmpty();
+    // Кольцо: данные разрешены при хоть одной паре (4-5 устройств),
+    // привязка к конкретному пиру больше не требуется
+    return config!=nullptr && config->hasSyncPairing();
 }
 
 

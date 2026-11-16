@@ -41,9 +41,16 @@ public:
 
     // Вывести secret из PIN и запомнить пару: secret + с кем (pairedDeviceId).
     // Единая точка для всех путей спаривания/починки (GUI, headless, retry).
-    // Пустой PIN или id — false, ничего не меняет
+    // Пустой PIN или id — false, ничего не меняет.
+    // Аддитивно для кольца: новая пара НЕ затирает старые (у человека
+    // 4-5 устройств), первой паре соответствует легаси-секрет
     static bool adoptPairing(AppConfig *config, const QString &peerId,
                              const QString &pin);
+
+    // Секрет для конкретного пира из кольца: сначала запись устройства,
+    // затем легаси-пара при совпадении id. Пусто — пары с ним нет
+    static QString secretForPeer(const AppConfig *config,
+                                 const QString &peerId);
 };
 
 #endif // SYNCIDENTITY_H

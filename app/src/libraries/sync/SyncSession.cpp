@@ -8,6 +8,7 @@
 #include "models/appConfig/AppConfig.h"
 
 #include <QDebug>
+#include <QMap>
 
 
 SyncSession::SyncSession(KnowTreeModel *model, AppConfig *config,
@@ -150,7 +151,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // существовала ДО сессии (гейт 089). Сессия, создавшая/починившая
     // пару по PIN, — "попытка установить pair": останавливаемся
     // до манифестов, данные пойдут следующим запуском
-    const QString pairingBefore=config->get_syncPairingSecret();
+    QMap<QString, QString> ringBefore=config->get_syncSecretsRing();
     const QString groupBefore=config->get_syncGroupId();
 
     // 1. Рукопожатие: версии, сеть, часы, подлинность
@@ -238,7 +239,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     // Гейт пары: без секрета данных нет вообще (только что сброшенная
     // или девственная пара без PIN — дальше не идем, нужен pair по PIN)
-    if(config->get_syncPairingSecret().isEmpty())
+    if(!config->hasSyncPairing())
     {
         report.error=QStringLiteral("not paired: pair with the same PIN first");
         report.errorCode=QStringLiteral("not-paired");
@@ -246,9 +247,15 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
+    // Секрет именно под этот пир (кольцо): hello уже выбрал рабочий,
+    // после починок пары перевыставляем явно
+    client.setPeerSecret(
+        SyncIdentity::secretForPeer(config, hello.remoteDeviceId));
+
     // Пара создана/пересоздана этой сессией — фиксируем и выходим:
     // это была установка пары, данные следующим запуском
-    if(config->get_syncPairingSecret()!=pairingBefore
+    if(config->get_syncSecretsRing().value(hello.remoteDeviceId)
+           !=ringBefore.value(hello.remoteDeviceId)
        || config->get_syncGroupId()!=groupBefore)
     {
         report.error=QStringLiteral("Pair established with %1, "

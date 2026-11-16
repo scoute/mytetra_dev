@@ -2,6 +2,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QEventLoop>
+#include <QMap>
 #include <QTimer>
 #include <QDateTime>
 #include <QUrl>
@@ -32,7 +33,20 @@ QJsonObject SyncClient::withAuth(const QString &route,
                                   const QJsonObject &body)
 {    SYNC_TRACE();
 
-    return SyncHandshake::buildDataAuth(config, route, body);
+    return SyncHandshake::buildDataAuth(config, route, body,
+                                        peerSecretText);
+}
+
+
+void SyncClient::setPeerSecret(const QString &secret)
+{
+    peerSecretText=secret;
+}
+
+
+QString SyncClient::peerSecret(void) const
+{
+    return peerSecretText;
 }
 
 
@@ -228,18 +242,75 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
                  << (pairRequest ? QStringLiteral("pairRequest")
                                  : QString());
 
-    bool ok=false;
-    const QJsonObject answer=postJson(
-        host, port, QStringLiteral("/hello"),
-        SyncHandshake::buildHello(config, result.serverTime,
-                                 pairRequest), ok);
+    // Кандидаты секрета: сначала легаси-одиночка, затем кольцо
+    // (у человека 4-5 устройств — hello пробует каждый, рабочий
+    // запоминается для data-маршрутов). Дедупликация: одно устройство —
+    // один secret
+    QStringList candidates;
+    const QString primary=config->get_syncPairingSecret();
 
-    if(!ok)
+    if(!primary.isEmpty())
+        candidates << primary;
+
+    const QMap<QString, QString> ring=config->get_syncSecretsRing();
+
+    for(auto it=ring.constBegin(); it!=ring.constEnd(); ++it)
+        if(!it.value().isEmpty() && !candidates.contains(it.value()))
+            candidates << it.value();
+
+    // Девственное устройство (кольцо пусто): hello без proof,
+    // сервер это различает (первое знакомство / pairRequest)
+    if(candidates.isEmpty())
+        candidates << QString();
+
+    QJsonObject answer;
+    QString usedSecret;
+    bool transported=false;
+
+    for(const QString &candidate : candidates)
+    {
+        bool ok=false;
+        answer=postJson(
+            host, port, QStringLiteral("/hello"),
+            SyncHandshake::buildHello(config, result.serverTime,
+                                     pairRequest, candidate), ok);
+
+        if(!ok)
+        {
+            result.errorCode=QStringLiteral("network");
+            result.errorText=lastErrorText;
+            return result;
+        }
+
+        transported=true;
+        usedSecret=candidate;
+
+        const QString errPreview=answer.value(QStringLiteral("error")).toString();
+
+        // auth-failed и кандидаты еще есть — пробуем следующий секрет.
+        // Любой другой исход (ok, not-paired, foreign-network, версии,
+        // часы, pairPending) — окончательный, дальше не перебираем
+        if(!answer.value(QStringLiteral("ok")).toBool(false)
+           && errPreview==QStringLiteral("auth-failed")
+           && candidate!=candidates.last())
+        {
+            syncDbg(QStringLiteral("hello: secret #%1 rejected, trying next")
+                    .arg(candidates.indexOf(candidate)+1));
+            continue;
+        }
+
+        break;
+    }
+
+    if(!transported)
     {
         result.errorCode=QStringLiteral("network");
         result.errorText=lastErrorText;
         return result;
     }
+
+    // Рабочий секрет — для всех data-маршрутов сессии
+    peerSecretText=usedSecret;
 
     // Hello от самого себя (синк на свой же адрес): дальше не идем.
     // Единая точка отказа для GUI, headless и перепроверок пары

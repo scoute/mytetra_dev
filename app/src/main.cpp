@@ -10,6 +10,7 @@
 #include <QSplashScreen>
 #include <QTextOption>
 #include <QMessageBox>
+#include <QMap>
 #include <QStringList>
 
 #include <QScroller>
@@ -123,7 +124,8 @@ void printSyncStatus(void)
 {
     const QString deviceId=mytetraConfig.get_syncDeviceId();
     const QString groupId=mytetraConfig.get_syncGroupId();
-    const bool paired=!mytetraConfig.get_syncPairingSecret().isEmpty();
+    const QMap<QString, QString> ring=mytetraConfig.get_syncSecretsRing();
+    const bool paired=!ring.isEmpty();
 
     printf("Sync status:\n");
     printf("  device: %s\n", mytetraConfig.get_syncDeviceName().toLocal8Bit().data());
@@ -133,8 +135,9 @@ void printSyncStatus(void)
     printf("  paired: %s\n", paired ? "yes" : "no");
 
     if(paired)
-        printf("  pairedWith: %s\n",
-               mytetraConfig.get_syncPairedDeviceId().toLocal8Bit().data());
+        printf("  pairedWith (%d): %s\n", ring.size(),
+               QStringList(ring.keys()).join(QStringLiteral(", "))
+               .toLocal8Bit().data());
 
     printf("  group: %s\n",
            groupId.isEmpty() ? "(none)" : groupId.toLocal8Bit().data());
@@ -606,9 +609,9 @@ int main(int argc, char ** argv)
 
         if(args.contains(QStringLiteral("--sync-forget")))
         {
-            mytetraConfig.set_syncPairingSecret(QString());
+            // Кольцо целиком: все пары, иначе второй пир останется
+            mytetraConfig.clear_syncSecretsRing();
             mytetraConfig.set_syncGroupId(QString());
-            mytetraConfig.set_syncPairedDeviceId(QString());
 
             for(const AppConfig::SyncDeviceInfo &info
                 : mytetraConfig.get_syncDevices())
@@ -633,21 +636,29 @@ int main(int argc, char ** argv)
         if(!unpairId.isEmpty() || !removeId.isEmpty())
         {
             const QString id=!unpairId.isEmpty() ? unpairId : removeId;
-            const bool wasPaired=(mytetraConfig.get_syncPairedDeviceId()==id);
+            const bool wasPaired=mytetraConfig.get_syncSecretsRing()
+                .contains(id);
+            const bool wasPrimary=(mytetraConfig.get_syncPairedDeviceId()==id);
 
             if(wasPaired)
             {
-                mytetraConfig.set_syncPairingSecret(QString());
-                mytetraConfig.set_syncPairedDeviceId(QString());
-                mytetraConfig.set_syncGroupId(QString());
-                SyncSidecar::reset();
+                mytetraConfig.clear_syncDeviceSecret(id);
+
+                if(wasPrimary)
+                {
+                    mytetraConfig.set_syncPairingSecret(QString());
+                    mytetraConfig.set_syncPairedDeviceId(QString());
+                    mytetraConfig.set_syncGroupId(QString());
+                    SyncSidecar::reset();
+                }
             }
 
             if(!removeId.isEmpty())
             {
                 mytetraConfig.remove_syncDevice(id);
 
-                if(mytetraConfig.get_syncDevices().isEmpty())
+                if(mytetraConfig.get_syncDevices().isEmpty()
+                   && mytetraConfig.get_syncSecretsRing().isEmpty())
                 {
                     mytetraConfig.set_syncPairingSecret(QString());
                     mytetraConfig.set_syncGroupId(QString());

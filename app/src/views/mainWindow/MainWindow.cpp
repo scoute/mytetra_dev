@@ -1612,11 +1612,12 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     if(errorCode!=nullptr)
         errorCode->clear();
 
-    // Снапшот пары на входе: данные разрешены только если пара
-    // существовала ДО запуска (гейт 089). Прогон, создавший/починивший
-    // пару по PIN, — "попытка установить pair": останавливаемся здесь,
-    // данные пойдут следующим запуском
-    const QString pairingBefore=mytetraConfig.get_syncPairingSecret();
+    // Снапшот кольца на входе: данные разрешены только если пара
+    // с ЭТИМ пиром существовала ДО запуска (гейт 089). Прогон,
+    // создавший/починивший пару по PIN, — "попытка установить pair":
+    // останавливаемся здесь, данные пойдут следующим запуском.
+    // Кольцо: у человека 4-5 устройств, секреты попарные
+    const QMap<QString, QString> ringBefore=mytetraConfig.get_syncSecretsRing();
     const QString groupBefore=mytetraConfig.get_syncGroupId();
 
     SyncClient client(&mytetraConfig);
@@ -1666,9 +1667,11 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     if(!hello.warning.isEmpty() && !pin.isEmpty())
         SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId, pin);
 
-    // Спаривание headless: секрета нет, PIN дан — выводим и храним.
-    // Фингерпринт здесь не сверяется (GUI-путь с проверкой — окно Sync devices)
-    if(mytetraConfig.get_syncPairingSecret().isEmpty())
+    // Спаривание: секрета под ЭТОТ пир нет, PIN дан — выводим и храним
+    // (аддитивно: остальные пары кольца не трогаем). Фингерпринт здесь
+    // не сверяется (GUI-путь с проверкой — окно Sync devices)
+    if(SyncIdentity::secretForPeer(&mytetraConfig, hello.remoteDeviceId)
+       .isEmpty())
     {
         if(pin.isEmpty())
             return tr("Not paired: enter pairing PIN first.");
@@ -1713,7 +1716,8 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     // это была установка пары, данные следующим запуском.
     // (Секрет тут уже гарантированно есть: пустой раньше бы вышел
     // через "Not paired", adopt выше его выставил)
-    if(mytetraConfig.get_syncPairingSecret()!=pairingBefore
+    if(mytetraConfig.get_syncSecretsRing().value(hello.remoteDeviceId)
+           !=ringBefore.value(hello.remoteDeviceId)
        || mytetraConfig.get_syncGroupId()!=groupBefore)
     {
         if(errorCode!=nullptr)

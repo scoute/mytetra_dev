@@ -92,7 +92,8 @@ static QString syncFormatVersion(void)
 
 QJsonObject SyncHandshake::buildDataAuth(AppConfig *config,
                                          const QString &route,
-                                         const QJsonObject &body)
+                                         const QJsonObject &body,
+                                         const QString &peerSecret)
 {
     QJsonObject answer=body;
 
@@ -102,10 +103,15 @@ QJsonObject SyncHandshake::buildDataAuth(AppConfig *config,
     const qint64 ts=QDateTime::currentMSecsSinceEpoch();
     const QString deviceId=config->get_syncDeviceId();
 
+    // Секрет именно под этот пир (кольцо на 4-5 устройств);
+    // пусто — легаси-одиночка для совместимости
+    const QString secret=peerSecret.isEmpty()
+        ? config->get_syncPairingSecret() : peerSecret;
+
     answer[QStringLiteral("_dev")]=deviceId;
     answer[QStringLiteral("_ts")]=ts;
     answer[QStringLiteral("_proof")]=
-        SyncIdentity::hmacProof(config->get_syncPairingSecret(),
+        SyncIdentity::hmacProof(secret,
                                 QByteArray::number(ts)
                                 +deviceId.toLatin1()+route.toLatin1());
     return answer;
@@ -116,7 +122,7 @@ bool SyncHandshake::checkDataAuth(AppConfig *config, const QString &route,
                                   const QJsonObject &body, qint64 now,
                                   QString &detail)
 {
-    if(config==nullptr || config->get_syncPairingSecret().isEmpty())
+    if(config==nullptr || !config->hasSyncPairing())
     {
         detail=QStringLiteral("not paired");
         return false;
@@ -138,8 +144,19 @@ bool SyncHandshake::checkDataAuth(AppConfig *config, const QString &route,
         return false;
     }
 
+    // Секрет именно под заявившегося пира (у каждого свой).
+    // Неизвестный пир — тоже отказ, но внятным текстом: сервер видит
+    // кто стучался (строка пишется) и ждет Pair/Accept
+    const QString secret=SyncIdentity::secretForPeer(config, deviceId);
+
+    if(secret.isEmpty())
+    {
+        detail=QStringLiteral("unknown device, pair it first");
+        return false;
+    }
+
     const QString expected=
-        SyncIdentity::hmacProof(config->get_syncPairingSecret(),
+        SyncIdentity::hmacProof(secret,
                                 QByteArray::number(ts)
                                 +deviceId.toLatin1()+route.toLatin1());
 
@@ -154,7 +171,8 @@ bool SyncHandshake::checkDataAuth(AppConfig *config, const QString &route,
 
 
 QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
-                                        bool pairRequest)
+                                        bool pairRequest,
+                                        const QString &peerSecret)
 {
     QJsonObject hello;
     hello[QStringLiteral("proto")]=QStringLiteral("sync/1");
@@ -172,7 +190,8 @@ QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
 
     // Доказательство владения секретом: HMAC от (время + id).
     // Секрета нет (первое знакомство) — поле пустое, сервер это различает
-    const QString secret=config->get_syncPairingSecret();
+    const QString secret=peerSecret.isEmpty()
+        ? config->get_syncPairingSecret() : peerSecret;
     QString proof;
 
     if(!secret.isEmpty())
@@ -239,26 +258,29 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
         return result;
     }
 
-    // 4. Подлинность: у нас есть секрет — требуем верное доказательство.
-    // Секрета нет — устройство девственно чистое, впускаем к спариванию
+    // 4. Подлинность: есть хоть одна пара — требуем верное доказательство
+    // секретом именно под этот пир (у каждого устройства свой).
+    // Секретов нет — устройство девственно чистое, впускаем к спариванию
     // (само спаривание с показом фингерпринтов — отдельно, позже)
-    const QString secret=config->get_syncPairingSecret();
-    result.paired=!secret.isEmpty();
+    result.paired=config->hasSyncPairing();
 
     if(result.paired)
     {
         const QString proof=hello.value(QStringLiteral("proof")).toString();
         const QString deviceId=hello.value(QStringLiteral("deviceId")).toString();
-        const QString expected=SyncIdentity::hmacProof(
-            secret,
-            QByteArray::number(clientTime)+deviceId.toLatin1());
+        const QString secret=SyncIdentity::secretForPeer(config, deviceId);
+        const QString expected=secret.isEmpty() ? QString()
+            : SyncIdentity::hmacProof(
+                secret,
+                QByteArray::number(clientTime)+deviceId.toLatin1());
 
-        if(proof.isEmpty() || proof!=expected)
+        if(proof.isEmpty() || expected.isEmpty() || proof!=expected)
         {
             result.errorCode=QStringLiteral("auth-failed");
-            result.errorText=QStringLiteral("Pairing check failed: secrets differ. "
-                                            "Re-pair both sides with the same PIN "
-                                            "(clear old state with --sync-forget).");
+            result.errorText=QStringLiteral("Pairing check failed: no pairing with this device. "
+                                            "Pair via Sync devices (Pair/Accept with the same PIN) — "
+                                            "existing pairings stay intact. "
+                                            "(Full reset only via --sync-forget.)");
             return result;
         }
     }
@@ -300,6 +322,33 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             selfAnswer[QStringLiteral("detail")]=QStringLiteral("Sync with itself is not allowed: this server is that device. Check the address.");
             return selfAnswer;
         }
+
+        // Пир постучался — запоминаем для окна Sync devices.
+        // Видимость НЕ зависит от успеха hello: иначе админ не видит
+        // кто пытался (кейс "клиент пишет secrets differ, а сервер его
+        // даже не видит"). Доверия запись не дает: пара/mutual отдельно.
+        // IP берем из сокета (в hello его нет). Порт не затираем:
+        // слушающий порт пира нам неизвестен, оставляем какой был
+        // (или дефолт 47777 у новой строки)
+        int peerPort=47777;
+
+        for(const AppConfig::SyncDeviceInfo &known : config->get_syncDevices())
+        {
+            if(known.id==theirId)
+            {
+                peerPort=known.port;
+                break;
+            }
+        }
+
+        const QString peerIp=server->lastPeerAddress();
+
+        // NAT-хайрпин: наш собственный адрес вместо адреса пира —
+        // в строку его не пишем (см. isNonLoopbackLocalAddress)
+        config->touch_syncDevice(theirId, theirName,
+                                 isNonLoopbackLocalAddress(peerIp) ? QString()
+                                                                   : peerIp,
+                                 peerPort);
 
         QString warning;
 
@@ -451,35 +500,6 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         if(r.ok && r.paired && !pairReq && !theirId.isEmpty()
            && theirId!=config->get_syncDeviceId())
             SyncHandshake::noteMutual(config, theirId, "clean hello");
-
-        // Пир прошел hello — запоминаем для окна Sync devices.
-        // IP берем из сокета (в hello его нет): иначе на сервере вечно
-        // "(unknown address)" и обратный синк невозможен. Порт не затираем:
-        // слушающий порт пира нам неизвестен, оставляем какой был
-        // (или дефолт 47777 у новой строки)
-        int peerPort=47777;
-
-        for(const AppConfig::SyncDeviceInfo &known : config->get_syncDevices())
-        {
-            if(known.id==theirId)
-            {
-                peerPort=known.port;
-                break;
-            }
-        }
-
-        const QString peerIp=server->lastPeerAddress();
-
-        if(!peerIp.isEmpty() && syncDebugEnabled())
-            qDebug() << "SyncHandshake: peer" << theirId
-                     << "seen at" << peerIp;
-
-        // NAT-хайрпин: наш собственный адрес вместо адреса пира —
-        // в строку его не пишем (см. isNonLoopbackLocalAddress)
-        config->touch_syncDevice(theirId, theirName,
-                                 isNonLoopbackLocalAddress(peerIp) ? QString()
-                                                                  : peerIp,
-                                 peerPort);
 
         return answer;
     });

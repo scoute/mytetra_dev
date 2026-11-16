@@ -227,7 +227,7 @@ bool AppConfig::set_syncGroupId(const QString &groupId)
 }
 
 
-QString AppConfig::get_syncPairingSecret(void)
+QString AppConfig::get_syncPairingSecret(void) const
 {
     return m_conf->value("syncPairingSecret", QString()).toString();
 }
@@ -242,7 +242,7 @@ bool AppConfig::set_syncPairingSecret(const QString &secret)
 
 // Устройство, с которым выведен текущий секрет.
 // Нужно окну Sync devices: галочка "спарено" только у своей пары
-QString AppConfig::get_syncPairedDeviceId(void)
+QString AppConfig::get_syncPairedDeviceId(void) const
 {
     return m_conf->value("syncPairedDeviceId", QString()).toString();
 }
@@ -253,6 +253,94 @@ bool AppConfig::set_syncPairedDeviceId(const QString &deviceId)
     m_conf->setValue("syncPairedDeviceId", deviceId);
     return true;
 }
+
+// Секрет пары с конкретным устройством (кольцо личного облака).
+// Пустой id или секрет не пишем: тихий игнор вместо порчи чужой строки
+QString AppConfig::get_syncDeviceSecret(const QString &id) const
+{
+    if(id.isEmpty())
+        return QString();
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    const QString secret=m_conf->value(QStringLiteral("secret")).toString();
+    m_conf->endGroup();
+    return secret;
+}
+
+
+void AppConfig::set_syncDeviceSecret(const QString &id, const QString &secret)
+{
+    if(id.isEmpty() || secret.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->setValue(QStringLiteral("secret"), secret);
+    m_conf->endGroup();
+    m_conf->sync();
+}
+
+
+void AppConfig::clear_syncDeviceSecret(const QString &id)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->remove(QStringLiteral("secret"));
+    m_conf->endGroup();
+    m_conf->sync();
+}
+
+
+// Все секреты кольца: легаси-пара (первая) + секреты по устройствам.
+// При конфликте побеждает запись устройства (свежее)
+QMap<QString, QString> AppConfig::get_syncSecretsRing(void) const
+{
+    QMap<QString, QString> ring;
+
+    const QString legacyId=get_syncPairedDeviceId();
+    const QString legacySecret=get_syncPairingSecret();
+
+    if(!legacyId.isEmpty() && !legacySecret.isEmpty())
+        ring.insert(legacyId, legacySecret);
+
+    m_conf->beginGroup(QStringLiteral("syncDevices"));
+    const QStringList ids=m_conf->childGroups();
+    m_conf->endGroup();
+
+    for(const QString &id : ids)
+    {
+        const QString secret=get_syncDeviceSecret(id);
+
+        if(!secret.isEmpty())
+            ring.insert(id, secret);
+    }
+
+    return ring;
+}
+
+
+void AppConfig::clear_syncSecretsRing(void)
+{
+    set_syncPairingSecret(QString());
+    set_syncPairedDeviceId(QString());
+
+    m_conf->beginGroup(QStringLiteral("syncDevices"));
+    const QStringList ids=m_conf->childGroups();
+    m_conf->endGroup();
+
+    for(const QString &id : ids)
+        clear_syncDeviceSecret(id);
+
+    m_conf->sync();
+}
+
+
+bool AppConfig::hasSyncPairing(void) const
+{
+    return !get_syncSecretsRing().isEmpty();
+}
+
 
 
 // Последний хост ручного синка из окна Sync devices.

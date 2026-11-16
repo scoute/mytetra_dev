@@ -56,8 +56,16 @@ struct Item
                            // false — ихнее (придет к нам)
     QString name;          // имя для списка (из нашего манифеста)
     QString branchId;      // для записей: ветка (для diff-запроса)
-    QString parentId;      // для веток: родитель; для записей = branchId
-    QString parentName;    // имя родителя (для дерева по веткам)
+    QString parentId;      // родитель (последний из pathIds)
+    QString parentName;    // имя родителя (для панели ветки)
+    /** id предков от корня до родителя — порядок и глубина дерева. */
+    QStringList pathIds;
+    /** Имена предков от корня до родителя — контекст дерева. */
+    QStringList path;
+    /** Число вложений с нашей стороны (для "почти пустой"). */
+    int ownAttaches=0;
+    /** Число вложений с ихней стороны. */
+    int otherAttaches=0;
 };
 
 // Разложенный план: элементы по категориям (порядок стабильный)
@@ -104,6 +112,26 @@ SyncPlan applyDecisions(const SyncPlan &plan,
 // и обратно. Используется галочкой "Запомнить" в окне предпросмотра
 QString serializeDefaults(const Decisions &decisions);
 Decisions defaultsFromString(const QString &data);
+
+// Угроза бития: почти-пустая версия затирает содержательную.
+// Асимметрично: обе почти-пустые или обе содержательные — обычный поток
+enum class Danger { None, MyEmpty, TheirEmpty };
+
+/** Порог "почти пустой": видимый текст короче (и нет вложений). */
+constexpr int NEAR_EMPTY_CHARS=10;
+
+/** Видимый текст заметки: без HTML-тегов и сущностей. */
+int visibleTextLength(const QString &text);
+
+/** Почти пустая: мало текста И нет вложений (вложения — тоже содержимое). */
+bool isNearEmpty(const QString &text, int attaches);
+
+/**
+ * Опасность для Edit-правки: только когда почти-пустое затирает
+ * содержательное. Создание ничего не затирает, удаления уже защищены
+ * дефолтами (мои — воскресить, ихние — подтвердить).
+ */
+Danger dangerFor(const Item &item, bool ownEmpty, bool otherEmpty);
 
 // Имя действия для UI
 QString actionName(Action action);

@@ -1,3 +1,4 @@
+#include <QRegularExpression>
 #include <QSet>
 #include <algorithm>
 
@@ -21,10 +22,61 @@ QString branchName(const SyncManifest &manifest, const QString &id)
 }
 
 
-Item makeItem(const QString &id, Category category, bool isBranch,
-              bool fromLocal, const QString &name,
-              const QString &parentId=QString(),
-              const QString &parentName=QString())
+// Имя/родитель ищутся на ОБЕИХ сторонах: у удаленного элемента
+// его сторона уже ничего не знает
+QString parentOf(const SyncManifest &local, const SyncManifest &remote,
+                 const QString &id)
+{
+    if(local.notes.contains(id) && !local.notes.value(id).branchId.isEmpty())
+        return local.notes.value(id).branchId;
+
+    if(local.branches.contains(id) && !local.branches.value(id).parentId.isEmpty())
+        return local.branches.value(id).parentId;
+
+    if(remote.notes.contains(id) && !remote.notes.value(id).branchId.isEmpty())
+        return remote.notes.value(id).branchId;
+
+    if(remote.branches.contains(id) && !remote.branches.value(id).parentId.isEmpty())
+        return remote.branches.value(id).parentId;
+
+    return QString();
+}
+
+QString anyBranchName(const SyncManifest &local, const SyncManifest &remote,
+                      const QString &id)
+{
+    if(id.isEmpty())
+        return QString();
+
+    QString name=local.branches.value(id).fields.value(QStringLiteral("name"));
+
+    if(name.isEmpty())
+        name=remote.branches.value(id).fields.value(QStringLiteral("name"));
+
+    return name;
+}
+
+/** Цепочка предков: ids и имена от корня до родителя. */
+void pathOf(const SyncManifest &local, const SyncManifest &remote,
+            const QString &id, QStringList &outIds, QStringList &outNames)
+{
+    outIds.clear();
+    outNames.clear();
+    QSet<QString> seen;
+    QString cur=parentOf(local, remote, id);
+
+    while(!cur.isEmpty() && !seen.contains(cur) && outIds.size()<10000)
+    {
+        seen.insert(cur);
+        outIds.prepend(cur);
+        outNames.prepend(anyBranchName(local, remote, cur));
+        cur=parentOf(local, remote, cur);
+    }
+}
+
+Item makeItem(const SyncManifest &local, const SyncManifest &remote,
+              const QString &id, Category category, bool isBranch,
+              bool fromLocal, const QString &name)
 {
     Item item;
     item.id=id;
@@ -32,24 +84,22 @@ Item makeItem(const QString &id, Category category, bool isBranch,
     item.isBranch=isBranch;
     item.fromLocal=fromLocal;
     item.name=name;
-    item.parentId=parentId;
-    item.parentName=parentName;
+
+    pathOf(local, remote, id, item.pathIds, item.path);
+    item.parentId=item.pathIds.isEmpty() ? QString() : item.pathIds.last();
+    item.parentName=item.path.isEmpty() ? QString() : item.path.last();
 
     if(!isBranch)
-        item.branchId=parentId; // у записей родитель и есть ветка
+        item.branchId=item.parentId; // у записей родитель и есть ветка
+
+    item.ownAttaches=local.notes.contains(id)
+        ? local.notes.value(id).attaches.size() : 0;
+    item.otherAttaches=remote.notes.contains(id)
+        ? remote.notes.value(id).attaches.size() : 0;
 
     return item;
 }
 
-// Имя ветки-родителя для дерева: для записей — содержащая ветка,
-// для веток — родительская (пусто = верхний уровень)
-QString parentBranchName(const SyncManifest &manifest, const QString &branchId)
-{
-    if(branchId.isEmpty())
-        return QString();
-
-    return branchName(manifest, branchId);
-}
 
 
 // Глубина ветки в манифесте (для порядка родители-вперед)
@@ -140,10 +190,9 @@ Preview classify(const SyncPlan &plan,
         else
             category=Category::Rename;       // контент тот же, поля/ветка другие
 
-        const QString branchId=local.notes.value(id).branchId;
         preview.items.append(
-            makeItem(id, category, false, true, noteName(local, id),
-                     branchId, parentBranchName(local, branchId)));
+            makeItem(local, remote, id, category, false, true,
+                     noteName(local, id)));
     }
 
     for(const QString &id : plan.uploadBranches)
@@ -152,10 +201,9 @@ Preview classify(const SyncPlan &plan,
         const Category category=remote.branches.contains(id)
             ? Category::Rename : Category::Create;
 
-        const QString parentId=local.branches.value(id).parentId;
         preview.items.append(
-            makeItem(id, category, true, true, branchName(local, id),
-                     parentId, parentBranchName(local, parentId)));
+            makeItem(local, remote, id, category, true, true,
+                     branchName(local, id)));
     }
 
     // Ихние изменения, приходящие к нам
@@ -170,10 +218,9 @@ Preview classify(const SyncPlan &plan,
         else
             category=Category::Rename;
 
-        const QString branchId=remote.notes.value(id).branchId;
         preview.items.append(
-            makeItem(id, category, false, false, noteName(remote, id),
-                     branchId, parentBranchName(remote, branchId)));
+            makeItem(local, remote, id, category, false, false,
+                     noteName(remote, id)));
     }
 
     for(const QString &id : plan.downloadBranches)
@@ -181,10 +228,9 @@ Preview classify(const SyncPlan &plan,
         const Category category=local.branches.contains(id)
             ? Category::Rename : Category::Create;
 
-        const QString parentId=remote.branches.value(id).parentId;
         preview.items.append(
-            makeItem(id, category, true, false, branchName(remote, id),
-                     parentId, parentBranchName(remote, parentId)));
+            makeItem(local, remote, id, category, true, false,
+                     branchName(remote, id)));
     }
 
     // Удаления по направлениям
@@ -195,7 +241,7 @@ Preview classify(const SyncPlan &plan,
             : local.branches.contains(id);
 
         preview.items.append(
-            makeItem(id, Category::MyDelete, isBranch, true,
+            makeItem(local, remote, id, Category::MyDelete, isBranch, true,
                      isBranch ? branchName(local, id) : noteName(local, id)));
     }
 
@@ -203,14 +249,9 @@ Preview classify(const SyncPlan &plan,
     {
         const bool isBranch=local.branches.contains(id)
             || remote.branches.contains(id);
-        const QString parentId=isBranch
-            ? local.branches.value(id).parentId
-            : local.notes.value(id).branchId;
-
         preview.items.append(
-            makeItem(id, Category::TheirDelete, isBranch, false,
-                     isBranch ? branchName(remote, id) : noteName(remote, id),
-                     parentId, parentBranchName(local, parentId)));
+            makeItem(local, remote, id, Category::TheirDelete, isBranch, false,
+                     isBranch ? branchName(remote, id) : noteName(remote, id)));
     }
 
     return preview;
@@ -379,15 +420,49 @@ Decisions defaultsFromString(const QString &data)
 }
 
 
+int visibleTextLength(const QString &text)
+{
+    QString noTags=text;
+    noTags.replace(QRegularExpression(QStringLiteral("<[^>]*>")),
+                   QStringLiteral(" "));
+    QString noEntities=noTags;
+    noEntities.replace(
+        QRegularExpression(QStringLiteral("&[a-zA-Z#0-9]{1,8};")),
+        QStringLiteral(" "));
+    return noEntities.trimmed().length();
+}
+
+
+bool isNearEmpty(const QString &text, int attaches)
+{
+    return visibleTextLength(text)<NEAR_EMPTY_CHARS && attaches==0;
+}
+
+
+Danger dangerFor(const Item &item, bool ownEmpty, bool otherEmpty)
+{
+    if(item.category!=Category::Edit)
+        return Danger::None;
+
+    if(ownEmpty && !otherEmpty)
+        return Danger::MyEmpty;
+
+    if(otherEmpty && !ownEmpty)
+        return Danger::TheirEmpty;
+
+    return Danger::None;
+}
+
+
 QString actionName(Action action)
 {
     switch(action)
     {
-    case Action::Apply:      return QObject::tr("Apply silently");
-    case Action::Confirm:    return QObject::tr("Show and confirm");
-    case Action::TakeServer: return QObject::tr("Take from the server");
-    case Action::ForceMine:  return QObject::tr("Keep mine");
-    case Action::Skip:       return QObject::tr("Skip this time");
+    case Action::Apply:      return QObject::tr("Применить молча");
+    case Action::Confirm:    return QObject::tr("Показать и подтвердить");
+    case Action::TakeServer: return QObject::tr("Взять с сервера");
+    case Action::ForceMine:  return QObject::tr("Настоять на моём");
+    case Action::Skip:       return QObject::tr("Пропустить в этот раз");
     }
 
     return QString();
@@ -398,11 +473,11 @@ QString categoryName(Category category)
 {
     switch(category)
     {
-    case Category::Create:      return QObject::tr("Added");
-    case Category::Rename:      return QObject::tr("Renamed");
-    case Category::Edit:        return QObject::tr("Modified");
-    case Category::MyDelete:    return QObject::tr("My deletions");
-    case Category::TheirDelete: return QObject::tr("Their deletions");
+    case Category::Create:      return QObject::tr("Добавлено");
+    case Category::Rename:      return QObject::tr("Переименовано");
+    case Category::Edit:        return QObject::tr("Изменено");
+    case Category::MyDelete:    return QObject::tr("Мои удаления");
+    case Category::TheirDelete: return QObject::tr("Ихние удаления");
     }
 
     return QString();

@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <QDialog>
+#include <QMap>
 
 #include "libraries/sync/SyncPreview.h"
 
@@ -11,14 +12,17 @@ class QCheckBox;
 class QComboBox;
 class QLabel;
 class QPlainTextEdit;
+class QPushButton;
 class QTabBar;
 class QToolButton;
 class QTreeWidget;
 class QTreeWidgetItem;
+class QWidget;
 
 // Дерево изменений синхронизации (концепция мобильной версии):
-// вкладки-направления (Я→сервер / Сервер→я / Обоюдные правки),
-// счетчик разобранного, дерево по веткам, панель ветки с diff,
+// вкладки-направления с git-статистикой, счетчик разобранного,
+// дерево по веткам с контекстом, панель ветки с поединком версий
+// и diff, защита от бития (почти-пустое не затирает содержательное),
 // помощь по обозначениям. Принцип: безопасное (создание) не требует
 // решений, остальное — явный выбор пользователя.
 //
@@ -55,19 +59,31 @@ private slots:
     void onHelpClicked(void);
     void onItemSelectionChanged(void);
     void onItemActionChanged(int index);
+    void onDuelMine(void);
+    void onDuelTheirs(void);
 
 private:
 
-    // Вкладка: 0 = Я→сервер, 1 = Сервер→я, 2 = Обоюдные правки
+    // Вкладка: 0 = Я→сервер, 1 = Сервер→я, 2 = Обоюдные правки.
+    // Обоюдные — только правки текста (как на мобиле)
     bool itemVisibleOnTab(const SyncPreview::Item &item, int tab) const;
     QString tabName(int tab) const;
+    QString tabStats(int tab) const;
 
     void buildTabs(void);
     void buildActionsMenu(void);
     void buildItems(void);
-    void refreshCounter(void);
+    QComboBox *makeActionCombo(int index);
+    void applyFilters(void);
+    void setDimmed(QTreeWidgetItem *node, bool dimmed);
     void refreshRowText(QTreeWidgetItem *row);
+    void refreshBranchMarks(void);
+    void collectSubtreeItems(QTreeWidgetItem *node, QList<int> &out) const;
+    void refreshCounter(void);
+    void refreshAll(void);
     void updateBranchPanel(QTreeWidgetItem *row);
+    void updateDuel(const SyncPreview::Item *item);
+    void refreshDuel(void);
     void showDiffFor(const SyncPreview::Item *item);
     void showHelp(void);
 
@@ -79,8 +95,12 @@ private:
     TextFetcher m_ownText;
     TextFetcher m_otherText;
 
+    // Защита от бития: id -> опасность (предвычислено в конструкторе)
+    QMap<QString, SyncPreview::Danger> m_dangers;
+
     int m_tab=0;
-    bool m_wholeTree=true;
+    bool m_wholeTree=false;
+    QString m_duelItemId;
 
     QLabel *m_statusLabel=nullptr;
     QCheckBox *m_saveDefaults=nullptr;
@@ -89,6 +109,10 @@ private:
     QCheckBox *m_wholeTreeCheck=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
     QLabel *m_branchLabel=nullptr;
+    QWidget *m_duelRow=nullptr;
+    QPushButton *m_mineButton=nullptr;
+    QPushButton *m_theirsButton=nullptr;
+    QLabel *m_duelHint=nullptr;
     QPlainTextEdit *m_diffView=nullptr;
 };
 

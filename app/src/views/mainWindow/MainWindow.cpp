@@ -1653,12 +1653,18 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         if(errorCode!=nullptr)
             *errorCode=hello.errorCode;
 
-        // Подсказки для живых разборок: чьи версии, какой перекос часов
+        // Подсказки для живых разборок: чьи версии, какой перекос часов,
+        // слушает ли другая сторона (Sync now требует слушателя на том конце)
         if(hello.errorCode==QStringLiteral("version-mismatch"))
             fail+=tr(" (theirs: ask peer for --sync-status)");
         else if(hello.errorCode==QStringLiteral("clock-skew"))
             fail+=tr(" (skew %1 ms — compare `date +%%s` on both sides)")
                 .arg(hello.skewMs);
+        else if(hello.errorCode==QStringLiteral("network"))
+            fail+=tr(" (is sync server running on the other side? "
+                      "Sync now needs a listener there: Sync menu checkbox "
+                      "or --sync-server. For the reverse direction press "
+                      "Sync now on that device instead)");
 
         return fail;
     }

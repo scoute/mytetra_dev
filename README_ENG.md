@@ -10,6 +10,17 @@ RUS: Основной репозитарий исходников для раз�
 * [Официальная русскоязычная страница MyTetra](http://webhamster.ru/site/page/index/articles/projectcode/105)
 
 
+Wi-Fi sync (in development)
+===========================
+
+Database exchange between the MyTetra desktop hub and the MyTetroid
+mobile client over a local network (the `sync/1` protocol):
+
+* [Protocol sync/1](docs/sync-proto-1.md)
+* [Client behavior and safety guarantees](docs/sync-behavior.md)
+* [Development plans](docs/sync-plans.md)
+
+
 Agreement on the coding (registration code)
 ===========================================
 

@@ -346,6 +346,39 @@ SyncPlan applyDecisions(const SyncPlan &plan,
 }
 
 
+QString serializeDefaults(const Decisions &decisions)
+{
+    QStringList parts;
+
+    for(int i=0; i<5; ++i)
+        parts << QString::number(static_cast<int>(
+            decisions.category.value(static_cast<Category>(i),
+                                     Action::Confirm)));
+
+    return parts.join(QLatin1Char(','));
+}
+
+
+Decisions defaultsFromString(const QString &data)
+{
+    Decisions decisions=Decisions::defaults();
+    const QStringList parts=data.split(QLatin1Char(','));
+
+    if(parts.size()==5)
+        for(int i=0; i<5; ++i)
+        {
+            bool ok=false;
+            const int value=parts.at(i).toInt(&ok);
+
+            if(ok && value>=0 && value<=4)
+                decisions.category[static_cast<Category>(i)]=
+                    static_cast<Action>(value);
+        }
+
+    return decisions;
+}
+
+
 QString actionName(Action action)
 {
     switch(action)

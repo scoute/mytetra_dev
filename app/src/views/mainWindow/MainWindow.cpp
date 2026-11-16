@@ -1964,38 +1964,20 @@ void MainWindow::onSyncDevices(void)
 // ничего не слилось. Стирание — только в корзину
 namespace
 {
-// Дефолты категорий предпросмотра из конфига (5 значений через запятую)
+// Дефолты категорий предпросмотра из конфига (см. SyncPreview::
+ // serializeDefaults/defaultsFromString — тот же формат, что и в
+ // диалоге устройств, чтобы галочка "Запомнить" работала везде одинаково)
 SyncPreview::Decisions loadPreviewDefaults(void)
 {
-    const QStringList parts=mytetraConfig.get_syncPreviewActions()
-        .split(QLatin1Char(','));
-    SyncPreview::Decisions decisions=SyncPreview::Decisions::defaults();
-
-    if(parts.size()==5)
-        for(int i=0; i<5; ++i)
-        {
-            bool ok=false;
-            const int value=parts.at(i).toInt(&ok);
-
-            if(ok && value>=0 && value<=4)
-                decisions.category[static_cast<SyncPreview::Category>(i)]=
-                    static_cast<SyncPreview::Action>(value);
-        }
-
-    return decisions;
+    return SyncPreview::defaultsFromString(
+        mytetraConfig.get_syncPreviewActions());
 }
 
 
 void savePreviewDefaults(const SyncPreview::Decisions &decisions)
 {
-    QStringList parts;
-
-    for(int i=0; i<5; ++i)
-        parts << QString::number(static_cast<int>(
-            decisions.category.value(static_cast<SyncPreview::Category>(i),
-                                     SyncPreview::Action::Confirm)));
-
-    mytetraConfig.set_syncPreviewActions(parts.join(QLatin1Char(',')));
+    mytetraConfig.set_syncPreviewActions(
+        SyncPreview::serializeDefaults(decisions));
 }
 } // namespace
 

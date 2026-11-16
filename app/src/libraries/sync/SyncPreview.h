@@ -100,6 +100,11 @@ SyncPlan applyDecisions(const SyncPlan &plan,
                         const SyncManifest &local,
                         const SyncManifest &remote);
 
+// Умолчания категорий в строку конфига (5 чисел через запятую)
+// и обратно. Используется галочкой "Запомнить" в окне предпросмотра
+QString serializeDefaults(const Decisions &decisions);
+Decisions defaultsFromString(const QString &data);
+
 // Имя действия для UI
 QString actionName(Action action);
 QString categoryName(Category category);

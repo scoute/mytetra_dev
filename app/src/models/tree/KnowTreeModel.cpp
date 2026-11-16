@@ -1645,12 +1645,44 @@ TreeItem *KnowTreeModel::getItemByIdRecurse(TreeItem *item, const QString &id, i
 }
 
 
-// Получение указателя на запись по известному идентификатору записи
+// Получение указателя на запись по известному идентификатору записи.
+// Null-safe: после синка/перезагрузки модели запись может отсутствовать
+// (удалена, путь протух) — возвращаем nullptr вместо падения, вызывающий
+// обязан проверить (см. EditorShowTextDispatcher, RecordTableController)
 Record *KnowTreeModel::getRecord(const QString &recordId)
 {
     QStringList path=this->getRecordPath(recordId);
 
-    return getItem(path)->recordtableGetTableData()->getRecordById(recordId);
+    if(path.isEmpty())
+    {
+        qWarning() << "KnowTreeModel::getRecord: no path for id" << recordId;
+        return nullptr;
+    }
+
+    TreeItem *item=getItem(path);
+
+    if(item==nullptr)
+    {
+        qWarning() << "KnowTreeModel::getRecord: no item for path"
+                   << path.join(QStringLiteral(","));
+        return nullptr;
+    }
+
+    RecordTableData *table=item->recordtableGetTableData();
+
+    if(table==nullptr)
+    {
+        qWarning() << "KnowTreeModel::getRecord: no table for id" << recordId;
+        return nullptr;
+    }
+
+    Record *record=table->getRecordById(recordId);
+
+    if(record==nullptr)
+        qWarning() << "KnowTreeModel::getRecord: id" << recordId
+                   << "not found in its branch table (stale view?)";
+
+    return record;
 }
 
 

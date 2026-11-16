@@ -67,13 +67,17 @@ inline void syncDebugLog(const QString &line)
     }
 }
 
-// Одновременно в консоль (qDebug) и в журнал файла
+// Одновременно в консоль (stderr напрямую, в обход qDebug-хендлера,
+// который в headless/GUI без "print debug messages" глотает qDebug)
+// и в журнал файла
 inline void syncDbg(const QString &line)
 {
     if(!syncDebugEnabled())
         return;
 
-    qDebug().noquote() << QStringLiteral("Sync:") << line;
+    const QByteArray bytes=(QStringLiteral("Sync: ")+line+QLatin1Char('\n')).toUtf8();
+    (void)fwrite(bytes.constData(), 1, (size_t)bytes.size(), stderr);
+    fflush(stderr);
     syncDebugLog(line);
 }
 
@@ -110,12 +114,9 @@ public:
         if(!syncDebugEnabled())
             return;
 
-        QString msg=QStringLiteral(">> %1 [%2:%3] tid=%4 %5")
+        syncDbg(QStringLiteral(">> %1 [%2:%3] tid=%4 %5")
             .arg(m_func, QString::fromLatin1(file),
-                 QString::number(line), syncTid(), extra);
-
-        qDebug().noquote() << QStringLiteral("Sync:") << msg;
-        syncDebugLog(msg);
+                 QString::number(line), syncTid(), extra));
     }
 
     ~SyncTracer()
@@ -125,11 +126,8 @@ public:
 
         const qint64 elapsed=
             QDateTime::currentMSecsSinceEpoch()-m_start;
-        QString msg=QStringLiteral("<< %1 %2ms tid=%3")
-            .arg(m_func, QString::number(elapsed), syncTid());
-
-        qDebug().noquote() << QStringLiteral("Sync:") << msg;
-        syncDebugLog(msg);
+        syncDbg(QStringLiteral("<< %1 %2ms tid=%3")
+            .arg(m_func, QString::number(elapsed), syncTid()));
     }
 
     void checkpoint(const QString &note)
@@ -139,11 +137,8 @@ public:
 
         const qint64 elapsed=
             QDateTime::currentMSecsSinceEpoch()-m_start;
-        QString msg=QStringLiteral(".. %1 +%2ms %3")
-            .arg(m_func, QString::number(elapsed), note);
-
-        qDebug().noquote() << QStringLiteral("Sync:") << msg;
-        syncDebugLog(msg);
+        syncDbg(QStringLiteral(".. %1 +%2ms %3")
+            .arg(m_func, QString::number(elapsed), note));
     }
 
 private:

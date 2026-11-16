@@ -129,6 +129,21 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
   // Выясняется ссылка на таблицу конечных данных
   RecordTableData *table=recordSourceModel->getTableData();
 
+  // Протухшая позиция (вид не успел обновиться после reload модели
+  // при синке): вместо падения — варнинг и тихий возврат
+  if(table==nullptr || pos<0 || pos>=table->size())
+  {
+      qWarning() << "RecordTableController::initMetaEditor: stale pos" << pos
+                 << "table size" << (table ? table->size() : -1);
+      return;
+  }
+
+  if(table->getRecord(pos)==nullptr)
+  {
+      qWarning() << "RecordTableController::initMetaEditor: no record at pos" << pos;
+      return;
+  }
+
   // Элементы управления редактором становятся доступными только при условии что запись не заблокирована на изменение
   if( table->getField("block", pos)=="1" )
     edView->setReadOnly(true);
@@ -236,6 +251,13 @@ void RecordTableController::initAttachTableAtClickToRecord(const int pos)
 {
   // Выясняется ссылка на таблицу конечных данных
   RecordTableData *table=recordSourceModel->getTableData();
+
+  // Протухшая позиция после reload — см. initMetaEditorAtClickToRecord
+  if(table==nullptr || pos<0 || pos>=table->size() || table->getRecord(pos)==nullptr)
+  {
+      qWarning() << "RecordTableController::initAttachTable: stale pos" << pos;
+      return;
+  }
 
   // Устанавливается таблица приаттаченных файлов
   AttachTableController *attachTableController=find_object<AttachTableController>("attachTableController");

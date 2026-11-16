@@ -109,6 +109,14 @@ void EditorShowTextDispatcher::createWindow(const QString &noteId, int x, int y,
     // Выясняется ссылка на объект записи
     Record *note=dataModel->getRecord(noteId);
 
+    if(note==nullptr)
+    {
+        qWarning() << "EditorShowTextDispatcher: record" << noteId
+                   << "vanished (sync delete/reload?), detached window not opened";
+        editorShowText->deleteLater();
+        return;
+    }
+
     // Из записи заполняется содержимое открепляемого окна
     editorShowText->setDocument( note->getTextDocument() );
     editorShowText->setWindowTitle( note->getField("name") );
@@ -141,6 +149,13 @@ void EditorShowTextDispatcher::updateWindow(const QString &noteId)
 
         // Выясняется ссылка на объект записи
         Record *note=dataModel->getRecord(noteId);
+
+        if(note==nullptr)
+        {
+            qWarning() << "EditorShowTextDispatcher::updateWindow: record"
+                       << noteId << "vanished (sync delete/reload?), skip";
+            return;
+        }
 
         QSharedPointer<QTextDocument> doc=note->getTextDocument();
 

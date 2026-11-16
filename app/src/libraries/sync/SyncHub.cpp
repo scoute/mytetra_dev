@@ -16,7 +16,8 @@
 
 
 bool SyncHub::dataAllowed(void) const
-{
+{    SYNC_TRACE();
+
     return config!=nullptr
         && !config->get_syncPairingSecret().isEmpty()
         && !config->get_syncPairedDeviceId().isEmpty();
@@ -24,7 +25,8 @@ bool SyncHub::dataAllowed(void) const
 
 
 static QJsonObject notPairedAnswer(void)
-{
+{    SYNC_TRACE();
+
     QJsonObject answer;
     answer[QStringLiteral("error")]=QStringLiteral("not-paired");
     return answer;
@@ -35,7 +37,8 @@ static QJsonObject notPairedAnswer(void)
 // иначе текст ошибки для поля error (auth-failed)
 static QString checkAuth(AppConfig *config, const QString &route,
                          const QJsonObject &request)
-{
+{    SYNC_TRACE();
+
     QString detail;
 
     if(!SyncHandshake::checkDataAuth(config, route, request,
@@ -69,7 +72,8 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
       config(config),
       sidecar(&sidecar),
       tetradir(tetradir)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     server=new SyncServer(this);
     SyncHandshake::registerRoutes(server, this->config, pairingPin);
 
@@ -169,8 +173,13 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         if(!authErr.isEmpty())
                 return authFailedAnswer(authErr);
 
+        syncDbg(QStringLiteral("hub: BEFORE save model=%1 tid=%2")
+                .arg(syncPtr(this->model), syncTid()));
         this->model->save();
+        syncDbg(QStringLiteral("hub: AFTER save, BEFORE reload"));
         this->model->reload();
+        syncDbg(QStringLiteral("hub: AFTER reload root=%1")
+                .arg(syncPtr(this->model->getRootItemPublic())));
 
         QJsonObject answer;
         answer[QStringLiteral("ok")]=true;
@@ -188,8 +197,10 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         if(!authErr.isEmpty())
                 return authFailedAnswer(authErr);
 
-        syncDbg("hub: reset (wipe all, strategy push)");
+        syncDbg(QStringLiteral("hub: reset BEFORE wipe model=%1")
+                .arg(syncPtr(this->model)));
         const QString error=SyncNoteIo::wipeAll(this->model);
+        syncDbg(QStringLiteral("hub: reset AFTER wipe err=%1").arg(error));
 
         QJsonObject answer;
 
@@ -217,7 +228,8 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         for(const QJsonValue &value : arr)
             ids << value.toString();
 
-        syncDbg("hub: merge-by-name, own branches="+QString::number(ids.size()));
+        syncDbg(QStringLiteral("hub: merge-by-name BEFORE model=%1 n=%2")
+                .arg(syncPtr(this->model)).arg(ids.size()));
         QJsonObject answer;
         const QString error=SyncNoteIo::mergeByName(this->model, ids);
 
@@ -232,19 +244,22 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
 
 
 SyncHub::~SyncHub(void)
-{
+{    SYNC_TRACE();
+
     stop();
 }
 
 
 bool SyncHub::start(quint16 port)
-{
+{    SYNC_TRACE();
+
     return server->start(port);
 }
 
 
 void SyncHub::stop(void)
-{
+{    SYNC_TRACE();
+
     server->stop();
 }
 
@@ -286,19 +301,22 @@ static QByteArray readFileBytes(const QString &path, bool &ok)
 
 
 QJsonObject SyncHub::pullNote(const QString &id)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1").arg(id));
+
     return SyncNoteIo::serializeNote(model, tetradir, id);
 }
 
 
 QJsonObject SyncHub::pullBranch(const QString &id)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1").arg(id));
+
     return SyncNoteIo::serializeBranch(model, id);
 }
 
 
 QJsonObject SyncHub::applyNote(const QJsonObject &request)
-{
+{    SYNC_TRACE();
+
     const QString id=request.value(QStringLiteral("id")).toString();
     const QString error=SyncNoteIo::applyNote(model, tetradir, request);
 
@@ -319,7 +337,8 @@ QJsonObject SyncHub::applyNote(const QJsonObject &request)
 
 
 QJsonObject SyncHub::applyBranch(const QJsonObject &request)
-{
+{    SYNC_TRACE();
+
     const QString id=request.value(QStringLiteral("id")).toString();
     const QString error=SyncNoteIo::applyBranch(model, request);
 
@@ -340,7 +359,8 @@ QJsonObject SyncHub::applyBranch(const QJsonObject &request)
 
 
 QJsonObject SyncHub::applyDelete(const QString &id, qint64 deletedAt)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1").arg(id));
+
     const QString error=SyncNoteIo::applyDelete(model, id, deletedAt);
 
     if(error.isEmpty())

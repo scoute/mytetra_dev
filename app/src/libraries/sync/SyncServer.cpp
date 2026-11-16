@@ -35,7 +35,8 @@ QString normalizedPeerAddress(QTcpSocket *socket)
 
 
 SyncServer::SyncServer(QObject *parent) : QObject(parent)
-{
+{    SYNC_TRACE();
+
     server=new QTcpServer(this);
 
     connect(server, &QTcpServer::newConnection,
@@ -44,13 +45,15 @@ SyncServer::SyncServer(QObject *parent) : QObject(parent)
 
 
 SyncServer::~SyncServer(void)
-{
+{    SYNC_TRACE();
+
     stop();
 }
 
 
 bool SyncServer::start(quint16 port)
-{
+{    SYNC_TRACE();
+
     if(server->isListening())
         return true;
 
@@ -97,7 +100,8 @@ bool SyncServer::start(quint16 port)
 
 
 void SyncServer::stop(void)
-{
+{    SYNC_TRACE();
+
     if(server->isListening())
         server->close();
 
@@ -115,7 +119,8 @@ void SyncServer::setDiscoveryIdentity(DiscoveryIdentity identity)
 
 
 void SyncServer::onDiscoveryDatagram(void)
-{
+{    SYNC_TRACE();
+
     if(udpSocket==nullptr)
         return;
 
@@ -174,7 +179,8 @@ QString SyncServer::lastPeerAddress(void) const
 
 
 void SyncServer::onNewConnection(void)
-{
+{    SYNC_TRACE();
+
     while(server->hasPendingConnections())
     {
         QTcpSocket *socket=server->nextPendingConnection();
@@ -192,7 +198,8 @@ void SyncServer::onNewConnection(void)
 
 
 void SyncServer::onReadyRead(void)
-{
+{    SYNC_TRACE();
+
     QTcpSocket *socket=qobject_cast<QTcpSocket *>(sender());
 
     if(socket==nullptr)
@@ -260,7 +267,8 @@ void SyncServer::onReadyRead(void)
 
 bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
                                 QJsonObject &body, bool &broken)
-{
+{    SYNC_TRACE();
+
     broken=false;
 
     // Добираем приехавшее к остатку прошлого пакета: заголовки
@@ -366,7 +374,8 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
 
 
 void SyncServer::sendJson(QTcpSocket *socket, int code, const QJsonObject &obj)
-{
+{    SYNC_TRACE();
+
     const QByteArray payload=QJsonDocument(obj).toJson(QJsonDocument::Compact);
 
     QByteArray out=statusLine(code);

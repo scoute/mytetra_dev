@@ -1605,6 +1605,8 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                                       bool &ok,
                                       QString *errorCode)
 {
+    SYNC_TRACE_EXTRA(QStringLiteral("host=%1 model=%2 tid=%3")
+                     .arg(host, syncPtr(treeScreen->knowTreeModel), syncTid()));
     ok=false;
 
     if(errorCode!=nullptr)
@@ -1844,7 +1846,13 @@ QString MainWindow::runSyncToHeadless(const QString &host,
 
     // PIN пробрасываем и в сессию: ее починка пары — вторая линия обороны
     // (предсессионная выше обычно уже все решила)
+    syncDbg(QStringLiteral("gui: BEFORE session.run model=%1")
+            .arg(syncPtr(treeScreen->knowTreeModel)));
     const SyncReport report=session.run(host, port, pin);
+    syncDbg(QStringLiteral("gui: AFTER session.run ok=%1 err=%2 model=%3 root=%4")
+            .arg(report.ok).arg(report.error)
+            .arg(syncPtr(treeScreen->knowTreeModel))
+            .arg(syncPtr(treeScreen->knowTreeModel->getRootItemPublic())));
 
     // Headless-прогон: шаги сессии всегда в выводе, иначе зависший клиент
     // молчит и непонятно где встал. GUI показывает только summary

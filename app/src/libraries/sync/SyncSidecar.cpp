@@ -19,7 +19,8 @@ SyncSidecar *g_instance=nullptr;
 
 
 SyncSidecar &SyncSidecar::instance(void)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr)
         g_instance=new SyncSidecar();
 
@@ -28,7 +29,8 @@ SyncSidecar &SyncSidecar::instance(void)
 
 
 void SyncSidecar::init(const QString &xmlFileName)
-{
+{    SYNC_TRACE();
+
     SyncSidecar &self=instance();
 
     if(self.load(xmlFileName))
@@ -54,14 +56,16 @@ void SyncSidecar::init(const QString &xmlFileName)
 
 
 void SyncSidecar::shutdown(void)
-{
+{    SYNC_TRACE();
+
     delete g_instance;
     g_instance=nullptr;
 }
 
 
 void SyncSidecar::touchNote(const QString &id, const QByteArray &contentBytes)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded())
         return;
 
@@ -76,7 +80,8 @@ void SyncSidecar::touchNote(const QString &id, const QByteArray &contentBytes)
 
 
 void SyncSidecar::touchFields(const QString &id)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -89,7 +94,8 @@ void SyncSidecar::touchFields(const QString &id)
 
 
 void SyncSidecar::forgetNote(const QString &id)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -100,7 +106,8 @@ void SyncSidecar::forgetNote(const QString &id)
 
 void SyncSidecar::adopt(const QString &id, qint64 mtime,
                         const QString &hash, const QString &kind)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -110,7 +117,8 @@ void SyncSidecar::adopt(const QString &id, qint64 mtime,
 
 
 void SyncSidecar::adoptTombstone(const QString &id, qint64 deletedAt)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1").arg(id));
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -120,7 +128,8 @@ void SyncSidecar::adoptTombstone(const QString &id, qint64 deletedAt)
 
 
 void SyncSidecar::reset(void)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr)
         return;
 
@@ -152,7 +161,8 @@ void SyncSidecar::clearTombstones(void)
 
 
 void SyncSidecar::dropEntry(const QString &id)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -163,7 +173,8 @@ void SyncSidecar::dropEntry(const QString &id)
 
 QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields,
                                         const QString &parentId)
-{
+{    SYNC_TRACE();
+
     QByteArray canonical;
 
     for(auto it=fields.constBegin(); it!=fields.constEnd(); ++it)
@@ -205,7 +216,8 @@ QString SyncSidecar::hashBranchFields(const QMap<QString, QString> &fields,
 void SyncSidecar::touchBranch(const QString &id,
                               const QMap<QString, QString> &fields,
                               const QString &parentId)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -217,7 +229,8 @@ void SyncSidecar::touchBranch(const QString &id,
 
 
 void SyncSidecar::forgetBranch(const QString &id)
-{
+{    SYNC_TRACE();
+
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
@@ -236,7 +249,8 @@ QString SyncSidecar::sidecarPathForXml(const QString &xmlFileName)
 
 
 bool SyncSidecar::load(const QString &xmlFileName)
-{
+{    SYNC_TRACE();
+
     m_xmlFileName=xmlFileName;
     m_sidecarPath=sidecarPathForXml(xmlFileName);
     m_entries.clear();
@@ -294,7 +308,8 @@ bool SyncSidecar::load(const QString &xmlFileName)
 
 
 bool SyncSidecar::save(void) const
-{
+{    SYNC_TRACE();
+
     if(!m_loaded || m_sidecarPath.isEmpty())
         return false;
 
@@ -388,7 +403,8 @@ QMap<QString, SyncSidecar::Entry> SyncSidecar::allEntries(void) const
 
 
 void SyncSidecar::forget(const QString &id, qint64 deletedAt)
-{
+{    SYNC_TRACE();
+
     m_entries.remove(id);
 
     if(!id.isEmpty())

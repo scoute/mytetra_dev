@@ -15,7 +15,8 @@ SyncSession::SyncSession(KnowTreeModel *model, AppConfig *config,
     : model(model),
       config(config),
       tetradir(tetradir)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
 }
 
 
@@ -50,7 +51,8 @@ namespace
 int subtreeItemCount(const QString &id,
                      const QMap<QString, SyncBranchInfo> &branches,
                      const QMap<QString, SyncNoteInfo> &notes)
-{
+{    SYNC_TRACE();
+
     QMap<QString, QStringList> childBranches;
     QMap<QString, int> noteCounts;
 
@@ -93,7 +95,8 @@ int subtreeItemCount(const QString &id,
 
 
 void SyncSession::skipItem(SyncReport &report, const QString &entry)
-{
+{    SYNC_TRACE();
+
     report.errors << entry;
     addLog(QStringLiteral("item error, skipping: %1").arg(entry));
     qDebug() << "SyncSession: item error, skipping:" << entry;
@@ -103,7 +106,8 @@ void SyncSession::skipItem(SyncReport &report, const QString &entry)
 bool SyncSession::noteItem(SyncClient &client, SyncReport &report,
                            const QString &kind, const QString &id,
                            const QString &reason)
-{
+{    SYNC_TRACE();
+
     // Транспорт умер (не дошло), гейт пары (not-paired) или отказ
     // proof (auth-failed) — это не "битая запись", сессию рвем сразу
     if(!client.lastTransportOk()
@@ -124,7 +128,8 @@ bool SyncSession::noteItem(SyncClient &client, SyncReport &report,
 
 
 void SyncSession::addLog(const QString &line)
-{
+{    SYNC_TRACE();
+
     logLines << line;
 
     // Каждый шаг сессии в консоль и журнал синка (включается настройкой
@@ -136,7 +141,8 @@ void SyncSession::addLog(const QString &line)
 
 SyncReport SyncSession::run(const QString &host, quint16 port,
                               const QString &pairingPin)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("host=%1 model=%2").arg(host, syncPtr(model)));
+
     SyncReport report;
     SyncClient client(config);
 
@@ -456,10 +462,14 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     }
 
     // 4. Заливка нашего на хаб
+    syncDbg(QStringLiteral("session: phase PUSH model=%1 tid=%2")
+            .arg(syncPtr(model), syncTid()));
     if(!pushByPlan(client, host, port, finalPlan, local, report))
         return report;
 
     // 5. Скачивание с хаба и применение у себя
+    syncDbg(QStringLiteral("session: phase PULL model=%1")
+            .arg(syncPtr(model)));
     if(!pullByPlan(client, host, port, finalPlan, remote, report))
         return report;
 
@@ -472,6 +482,8 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
 
     // 8. Фиксация: сначала хаб (сейв+перезагрузка), потом мы
+    syncDbg(QStringLiteral("session: phase COMMIT model=%1")
+            .arg(syncPtr(model)));
     addLog(QStringLiteral("commit hub"));
 
     if(!client.commit(host, port))
@@ -483,8 +495,14 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
+    syncDbg(QStringLiteral("session: BEFORE local save model=%1 tid=%2")
+            .arg(syncPtr(model), syncTid()));
     model->save();
+    syncDbg(QStringLiteral("session: AFTER local save, BEFORE reload model=%1")
+            .arg(syncPtr(model)));
     model->reload();
+    syncDbg(QStringLiteral("session: AFTER local reload model=%1 root=%2")
+            .arg(syncPtr(model), syncPtr(model->getRootItemPublic())));
     addLog(QStringLiteral("commit local"));
 
     // 9. Конфликты — в отчет, тихо не теряем ничего:
@@ -504,7 +522,8 @@ bool SyncSession::pushByPlan(SyncClient &client,
                              const SyncPlan &plan,
                              const SyncManifest &local,
                              SyncReport &report)
-{
+{    SYNC_TRACE();
+
     // Ветки раньше заметок: заметка ссылается на ветку
     for(const QString &id : plan.uploadBranches)
     {
@@ -576,7 +595,8 @@ bool SyncSession::pullByPlan(SyncClient &client,
                              const SyncPlan &plan,
                              const SyncManifest &remote,
                              SyncReport &report)
-{
+{    SYNC_TRACE();
+
     for(const QString &id : plan.downloadBranches)
     {
         addLog(QStringLiteral("pull branch %1").arg(id));
@@ -657,7 +677,8 @@ bool SyncSession::pullByPlan(SyncClient &client,
 bool SyncSession::applyRemoteDeletes(const SyncPlan &plan,
                                      const SyncManifest &remote,
                                      SyncReport &report)
-{
+{    SYNC_TRACE();
+
     for(const QString &id : plan.deleteLocal)
     {
         const qint64 deletedAt=remote.tombstones.value(id, 0);
@@ -686,7 +707,8 @@ bool SyncSession::pushOwnTombstones(SyncClient &client,
                                     const SyncManifest &remote,
                                     const SyncPlan &plan,
                                     SyncReport &report)
-{
+{    SYNC_TRACE();
+
     // Шлем только tombstone'ы из плана: которых нет у хаба и которые
     // не проиграны их более новой правке (там уже стоит download)
     for(const QString &id : plan.pushTombs)
@@ -731,7 +753,8 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
                                            const SyncManifest &local,
                                            const SyncManifest &remote,
                                            SyncClient &client)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     SyncReport report;
 
     // 1. Заливка своего
@@ -781,6 +804,8 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
     }
 
     // 4. Перетирание клиента результатом слияния
+    syncDbg(QStringLiteral("session: merge-by-name BEFORE wipe model=%1")
+            .arg(syncPtr(model)));
     addLog(QStringLiteral("merge-by-name: wipe local, pull merged result"));
 
     const QString error=SyncNoteIo::wipeAll(model);
@@ -816,8 +841,13 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
         return report;
     }
 
+    syncDbg(QStringLiteral("session: merge-by-name BEFORE save model=%1")
+            .arg(syncPtr(model)));
     model->save();
+    syncDbg(QStringLiteral("session: merge-by-name AFTER save, BEFORE reload"));
     model->reload();
+    syncDbg(QStringLiteral("session: merge-by-name AFTER reload root=%1")
+            .arg(syncPtr(model->getRootItemPublic())));
     addLog(QStringLiteral("merge-by-name: done"));
 
     report.ok=true;
@@ -829,7 +859,8 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
 // восстановиться" прямо из диалога подтверждения удаления
 SyncReport SyncSession::restoreFromHub(const QString &host, quint16 port,
                                       SyncClient &client)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     SyncReport report;
     addLog(QStringLiteral("restore: local -> trash, pull all from hub"));
 
@@ -866,8 +897,13 @@ SyncReport SyncSession::restoreFromHub(const QString &host, quint16 port,
         return report;
     }
 
+    syncDbg(QStringLiteral("session: restore BEFORE save model=%1")
+            .arg(syncPtr(model)));
     model->save();
+    syncDbg(QStringLiteral("session: restore AFTER save, BEFORE reload"));
     model->reload();
+    syncDbg(QStringLiteral("session: restore AFTER reload root=%1")
+            .arg(syncPtr(model->getRootItemPublic())));
     addLog(QStringLiteral("restore from hub: done"));
 
     report.ok=true;

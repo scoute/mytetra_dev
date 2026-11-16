@@ -30,7 +30,8 @@ namespace SyncNoteIo
 // хеш с "0" никогда не сойдется с хешем с "". Нормализация — в одной
 // точке, внутри hashBranchFields ниже; здесь только для сравнений
 static QString normCrypt(const QString &crypt)
-{
+{    SYNC_TRACE();
+
     return (crypt==QStringLiteral("0")) ? QString() : crypt;
 }
 namespace
@@ -41,7 +42,8 @@ namespace
 // ветки — рекурсией по детям
 void collectSubtreeIds(KnowTreeModel *model, TreeItem *item,
                        QStringList &branches, QStringList &records)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     if(model==nullptr || item==nullptr)
         return;
 
@@ -59,7 +61,8 @@ void collectSubtreeIds(KnowTreeModel *model, TreeItem *item,
 }
 
 QByteArray readBytes(const QString &path, bool &ok)
-{
+{    SYNC_TRACE();
+
     QFile file(path);
     ok=file.open(QIODevice::ReadOnly);
 
@@ -71,7 +74,8 @@ QByteArray readBytes(const QString &path, bool &ok)
 
 
 bool writeBytesAtomic(const QString &path, const QByteArray &data)
-{
+{    SYNC_TRACE();
+
     QDir().mkpath(QFileInfo(path).absolutePath());
 
     QSaveFile file(path);
@@ -90,7 +94,8 @@ bool writeBytesAtomic(const QString &path, const QByteArray &data)
 
 QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
                           const QString &id)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1 model=%2").arg(id, syncPtr(model)));
+
     QJsonObject answer;
 
     if(model==nullptr || id.isEmpty())
@@ -268,7 +273,8 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
 
 
 QJsonObject serializeBranch(KnowTreeModel *model, const QString &id)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1 model=%2").arg(id, syncPtr(model)));
+
     QJsonObject answer;
 
     if(model==nullptr || id.isEmpty())
@@ -330,9 +336,11 @@ QJsonObject serializeBranch(KnowTreeModel *model, const QString &id)
 
 QString applyNote(KnowTreeModel *model, const QString &tetradir,
                   const QJsonObject &request)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     const QString id=request.value(QStringLiteral("id")).toString();
     const QString branchId=request.value(QStringLiteral("branch")).toString();
+    SYNC_CHECKPOINT(QStringLiteral("id=%1 branch=%2").arg(id, branchId));
 
     if(model==nullptr || id.isEmpty() || branchId.isEmpty())
         return QStringLiteral("bad request");
@@ -414,7 +422,9 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
 
         if(normCrypt(oldCrypt)!=normCrypt(newCrypt))
         {
-            table->appendSyncedRecord(moving);
+            syncDbg(QStringLiteral("applyNote %1: re-append moved record to branch table=%2")
+                .arg(id, syncPtr(table)));
+        table->appendSyncedRecord(moving);
             return QStringLiteral("crypt change unsupported");
         }
 
@@ -428,8 +438,10 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     const QString basePath=tetradir+QStringLiteral("/base/")
                            +dir+QStringLiteral("/")+file;
 
+    SYNC_CHECKPOINT(QStringLiteral("before write text ")+basePath);
     if(!writeBytesAtomic(basePath, textBytes))
         return QStringLiteral("cannot write text");
+    SYNC_CHECKPOINT(QStringLiteral("after write text"));
 
     const QJsonArray attaches=request.value(QStringLiteral("attaches")).toArray();
 
@@ -550,6 +562,8 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
             if(record==nullptr)
                 return QStringLiteral("record lost");
 
+            syncDbg(QStringLiteral("applyNote %1: clear attach table=%2")
+                    .arg(id, syncPtr(record->getAttachTablePointer())));
             AttachTableData *attachTable=record->getAttachTablePointer();
             attachTable->clear();
 
@@ -609,6 +623,8 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
             attachTable->addAttach(attach);
         }
 
+        syncDbg(QStringLiteral("applyNote %1: append new record to branch=%2 table=%3")
+                .arg(id, branchId, syncPtr(table)));
         table->appendSyncedRecord(record);
 
         SyncSidecar::adopt(id, remoteMtime, remoteHash,
@@ -624,7 +640,8 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
 
 
 QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     const QString id=request.value(QStringLiteral("id")).toString();
 
     if(model==nullptr || id.isEmpty())
@@ -664,6 +681,8 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         QMap<QString, QString> rawFields=fields;
         rawFields.insert(QStringLiteral("id"), id);
         rawFields.insert(QStringLiteral("crypt"), oldCrypt);
+        syncDbg(QStringLiteral("applyBranch %1: setAllFieldDirect item=%2")
+                .arg(id, syncPtr(existing)));
         existing->setAllFieldDirect(rawFields);
 
         // Переезд: родитель в запросе отличается — перелинковываем
@@ -678,8 +697,10 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
 
         if(newParent!=curParentWire)
         {
+            SYNC_CHECKPOINT(QStringLiteral("before moveSyncedBranch ")+id);
             if(!model->moveSyncedBranch(id, newParent))
                 return QStringLiteral("cannot move branch");
+            SYNC_CHECKPOINT(QStringLiteral("after moveSyncedBranch ")+id);
 
             moved=true;
         }
@@ -689,7 +710,9 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         return QString();
     }
 
+    SYNC_CHECKPOINT(QStringLiteral("before createSyncedBranch parent=")+parentId);
     const QString created=model->createSyncedBranch(parentId, fields);
+    SYNC_CHECKPOINT(QStringLiteral("after createSyncedBranch created=")+created);
 
     if(created.isEmpty())
         return QStringLiteral("cannot create branch");
@@ -702,7 +725,8 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
 
 
 QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("id=%1 model=%2").arg(id, syncPtr(model)));
+
     if(model==nullptr || id.isEmpty())
         return QStringLiteral("bad request");
 
@@ -728,9 +752,12 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
         QStringList subRecords;
         collectSubtreeIds(model, branchItem, subBranches, subRecords);
 
+        syncDbg(QStringLiteral("applyDelete %1: deleteItemsByModelIndexList row=%2 model=%3")
+                .arg(id).arg(index.row()).arg(syncPtr(model)));
         QModelIndexList list;
         list << index;
         model->deleteItemsByModelIndexList(list);
+        SYNC_CHECKPOINT(QStringLiteral("after deleteItems ")+id);
 
         for(const QString &branchId : subBranches)
             SyncSidecar::adoptTombstone(branchId, deletedAt);
@@ -767,6 +794,8 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
 
     const int pos=table->getPosById(id);
 
+    syncDbg(QStringLiteral("applyDelete %1: deleteRecord pos=%2 table=%3")
+            .arg(id).arg(pos).arg(syncPtr(table)));
     if(pos>=0)
         table->deleteRecord(pos);
 
@@ -783,7 +812,8 @@ namespace
 // ("ихняя" ветка: ее id и побеждает при слиянии)
 TreeItem *findForeignChildByName(TreeItem *parent, const QString &name,
                                  const QSet<QString> &clientIds)
-{
+{    SYNC_TRACE();
+
     for(int i=0; i<parent->childCount(); ++i)
     {
         TreeItem *child=parent->child(i);
@@ -805,7 +835,8 @@ TreeItem *findForeignChildByName(TreeItem *parent, const QString &name,
 // Оболочка from удаляется с tombstone'ом
 void mergeBranchInto(KnowTreeModel *model, TreeItem *from, TreeItem *to,
                      const QSet<QString> &clientIds)
-{
+{    SYNC_TRACE();
+
     syncDbg("merge branch "+from->getField(QStringLiteral("id"))
             +" -> "+to->getField(QStringLiteral("id"))
             +" ("+from->getField(QStringLiteral("name"))+")");
@@ -851,7 +882,8 @@ void mergeBranchInto(KnowTreeModel *model, TreeItem *from, TreeItem *to,
 
 
 QString mergeByName(KnowTreeModel *model, const QStringList &clientBranchIds)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     if(model==nullptr)
         return QStringLiteral("bad request");
 
@@ -886,7 +918,8 @@ QString mergeByName(KnowTreeModel *model, const QStringList &clientBranchIds)
 
 
 QString wipeAll(KnowTreeModel *model)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     if(model==nullptr)
         return QStringLiteral("bad request");
 
@@ -909,8 +942,11 @@ QString wipeAll(KnowTreeModel *model)
             list << index;
     }
 
+    syncDbg(QStringLiteral("wipeAll: deleteItemsByModelIndexList n=%1 model=%2")
+            .arg(list.size()).arg(syncPtr(model)));
     if(!list.isEmpty())
         model->deleteItemsByModelIndexList(list);
+    SYNC_CHECKPOINT(QStringLiteral("after wipe deleteItems"));
 
     // Журнал — целиком: стертые локальные id не должны поехать пиру
     // tombstone'ами (это была бы порча чужих данных), а его содержимое

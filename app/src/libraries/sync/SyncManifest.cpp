@@ -19,7 +19,8 @@
 
 
 QString SyncManifestBuilder::sha256File(const QString &path)
-{
+{    SYNC_TRACE();
+
     QFile file(path);
 
     if(!file.open(QIODevice::ReadOnly))
@@ -32,7 +33,8 @@ QString SyncManifestBuilder::sha256File(const QString &path)
 
 
 QString SyncManifestBuilder::sha256Bytes(const QByteArray &data)
-{
+{    SYNC_TRACE();
+
     return QString::fromLatin1(
         QCryptographicHash::hash(data,
                                  QCryptographicHash::Sha256).toHex());
@@ -185,7 +187,8 @@ static void collectBranches(const TreeItem *item, const QString &parentId,
 SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                                         SyncSidecar &sidecar,
                                         const QString &tetradir)
-{
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
     SyncManifest out;
 
     if(model==nullptr)
@@ -324,7 +327,8 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
 
 
 QJsonObject SyncManifest::toJson(void) const
-{
+{    SYNC_TRACE();
+
     QJsonObject root;
     QJsonObject branchesObj;
 
@@ -395,7 +399,8 @@ QJsonObject SyncManifest::toJson(void) const
 
 
 SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
-{
+{    SYNC_TRACE();
+
     SyncManifest out;
 
     const QJsonObject branches=obj.value(QStringLiteral("branches")).toObject();
@@ -463,7 +468,8 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
 
 
 bool SyncPlan::empty(void) const
-{
+{    SYNC_TRACE();
+
     return uploadNotes.isEmpty() && downloadNotes.isEmpty() &&
            uploadBranches.isEmpty() && downloadBranches.isEmpty() &&
            deleteLocal.isEmpty() && pushTombs.isEmpty() &&
@@ -500,7 +506,8 @@ static bool attachSetsEqual(const QList<SyncAttachInfo> &a,
 SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
                                       const SyncManifest &remote,
                                       bool isHub)
-{
+{    SYNC_TRACE();
+
     SyncPlan plan;
 
     // Родительские цепочки для проверки покрытия tombstone'ами:

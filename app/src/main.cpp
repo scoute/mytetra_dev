@@ -37,6 +37,7 @@
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncDiscovery.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncDebug.h"
 #include "libraries/IconSelectDialog.h"
 #include "libraries/InternalClipboard.h"
 #include "libraries/helpers/DebugHelper.h"
@@ -312,6 +313,10 @@ int main(int argc, char ** argv)
 
     // Перехват отладочных сообщений
     setDebugMessageHandler();
+
+    // Ловушка сегфолта для синка: стек падает в консоль и syncdebug.log
+    // всегда (даже без MYTETRA_SYNC_DEBUG) — присылайте вывод целиком
+    installSyncCrashHandler();
 
     // Sync-режим (--sync-server / --sync-to) работает отдельным процессом
     // рядом с уже запущенным экземпляром и не участвует в single-instance

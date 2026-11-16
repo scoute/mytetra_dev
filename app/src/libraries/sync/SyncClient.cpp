@@ -17,7 +17,8 @@
 
 
 SyncClient::SyncClient(AppConfig *config) : config(config)
-{
+{    SYNC_TRACE();
+
 }
 
 
@@ -29,7 +30,8 @@ void SyncClient::setTimeoutMs(int ms)
 
 QJsonObject SyncClient::withAuth(const QString &route,
                                   const QJsonObject &body)
-{
+{    SYNC_TRACE();
+
     return SyncHandshake::buildDataAuth(config, route, body);
 }
 
@@ -49,7 +51,8 @@ bool SyncClient::lastTransportOk(void) const
 QJsonObject SyncClient::postJson(const QString &host, quint16 port,
                                  const QString &path, const QJsonObject &body,
                                  bool &ok)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     ok=false;
     lastTransportOkFlag=false;
     lastErrorText.clear();
@@ -134,7 +137,8 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
 
 QJsonObject SyncClient::getJson(const QString &host, quint16 port,
                                 const QString &path, bool &ok)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     ok=false;
     lastTransportOkFlag=false;
     lastErrorText.clear();
@@ -214,7 +218,8 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
 
 SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
                                     bool pairRequest)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     SyncHelloResult result;
     result.serverTime=QDateTime::currentMSecsSinceEpoch();
 
@@ -276,7 +281,8 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
 
 
 SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     bool ok=false;
     const QJsonObject answer=postJson(
         host, port, QStringLiteral("/manifest"),
@@ -299,7 +305,8 @@ SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port)
 
 QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
                                  const QString &id)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     QJsonObject request;
     request[QStringLiteral("id")]=id;
 
@@ -326,7 +333,8 @@ QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
 
 QJsonObject SyncClient::pullBranch(const QString &host, quint16 port,
                                    const QString &id)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     QJsonObject request;
     request[QStringLiteral("id")]=id;
 
@@ -350,7 +358,8 @@ QJsonObject SyncClient::pullBranch(const QString &host, quint16 port,
 
 bool SyncClient::pushNote(const QString &host, quint16 port,
                           const QJsonObject &note)
-{
+{    SYNC_TRACE_EXTRA(host+QStringLiteral(" ")+note.value(QStringLiteral("id")).toString());
+
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/push-note"),
@@ -374,7 +383,8 @@ bool SyncClient::pushNote(const QString &host, quint16 port,
 
 bool SyncClient::pushBranch(const QString &host, quint16 port,
                             const QJsonObject &branch)
-{
+{    SYNC_TRACE_EXTRA(host+QStringLiteral(" ")+branch.value(QStringLiteral("id")).toString());
+
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/push-branch"),
@@ -395,7 +405,8 @@ bool SyncClient::pushBranch(const QString &host, quint16 port,
 
 bool SyncClient::pushDelete(const QString &host, quint16 port,
                             const QString &id, qint64 deletedAt)
-{
+{    SYNC_TRACE_EXTRA(host+QStringLiteral(" ")+id);
+
     QJsonObject request;
     request[QStringLiteral("id")]=id;
     request[QStringLiteral("deletedAt")]=deletedAt;
@@ -419,7 +430,8 @@ bool SyncClient::pushDelete(const QString &host, quint16 port,
 
 
 bool SyncClient::commit(const QString &host, quint16 port)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/commit"),
@@ -431,7 +443,8 @@ bool SyncClient::commit(const QString &host, quint16 port)
 
 bool SyncClient::mergeByName(const QString &host, quint16 port,
                              const QStringList &branchIds)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     QJsonArray arr;
 
     for(const QString &id : branchIds)
@@ -459,7 +472,8 @@ bool SyncClient::mergeByName(const QString &host, quint16 port,
 
 
 bool SyncClient::reset(const QString &host, quint16 port)
-{
+{    SYNC_TRACE_EXTRA(host);
+
     bool ok=false;
     const QJsonObject answer=postJson(host, port,
                                       QStringLiteral("/reset"),

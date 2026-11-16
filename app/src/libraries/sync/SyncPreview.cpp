@@ -22,7 +22,9 @@ QString branchName(const SyncManifest &manifest, const QString &id)
 
 
 Item makeItem(const QString &id, Category category, bool isBranch,
-              bool fromLocal, const QString &name)
+              bool fromLocal, const QString &name,
+              const QString &parentId=QString(),
+              const QString &parentName=QString())
 {
     Item item;
     item.id=id;
@@ -30,7 +32,23 @@ Item makeItem(const QString &id, Category category, bool isBranch,
     item.isBranch=isBranch;
     item.fromLocal=fromLocal;
     item.name=name;
+    item.parentId=parentId;
+    item.parentName=parentName;
+
+    if(!isBranch)
+        item.branchId=parentId; // у записей родитель и есть ветка
+
     return item;
+}
+
+// Имя ветки-родителя для дерева: для записей — содержащая ветка,
+// для веток — родительская (пусто = верхний уровень)
+QString parentBranchName(const SyncManifest &manifest, const QString &branchId)
+{
+    if(branchId.isEmpty())
+        return QString();
+
+    return branchName(manifest, branchId);
 }
 
 
@@ -122,8 +140,10 @@ Preview classify(const SyncPlan &plan,
         else
             category=Category::Rename;       // контент тот же, поля/ветка другие
 
+        const QString branchId=local.notes.value(id).branchId;
         preview.items.append(
-            makeItem(id, category, false, true, noteName(local, id)));
+            makeItem(id, category, false, true, noteName(local, id),
+                     branchId, parentBranchName(local, branchId)));
     }
 
     for(const QString &id : plan.uploadBranches)
@@ -132,8 +152,10 @@ Preview classify(const SyncPlan &plan,
         const Category category=remote.branches.contains(id)
             ? Category::Rename : Category::Create;
 
+        const QString parentId=local.branches.value(id).parentId;
         preview.items.append(
-            makeItem(id, category, true, true, branchName(local, id)));
+            makeItem(id, category, true, true, branchName(local, id),
+                     parentId, parentBranchName(local, parentId)));
     }
 
     // Ихние изменения, приходящие к нам
@@ -148,8 +170,10 @@ Preview classify(const SyncPlan &plan,
         else
             category=Category::Rename;
 
+        const QString branchId=remote.notes.value(id).branchId;
         preview.items.append(
-            makeItem(id, category, false, false, noteName(remote, id)));
+            makeItem(id, category, false, false, noteName(remote, id),
+                     branchId, parentBranchName(remote, branchId)));
     }
 
     for(const QString &id : plan.downloadBranches)
@@ -157,8 +181,10 @@ Preview classify(const SyncPlan &plan,
         const Category category=local.branches.contains(id)
             ? Category::Rename : Category::Create;
 
+        const QString parentId=remote.branches.value(id).parentId;
         preview.items.append(
-            makeItem(id, category, true, false, branchName(remote, id)));
+            makeItem(id, category, true, false, branchName(remote, id),
+                     parentId, parentBranchName(remote, parentId)));
     }
 
     // Удаления по направлениям
@@ -177,10 +203,14 @@ Preview classify(const SyncPlan &plan,
     {
         const bool isBranch=local.branches.contains(id)
             || remote.branches.contains(id);
+        const QString parentId=isBranch
+            ? local.branches.value(id).parentId
+            : local.notes.value(id).branchId;
 
         preview.items.append(
             makeItem(id, Category::TheirDelete, isBranch, false,
-                     isBranch ? branchName(remote, id) : noteName(remote, id)));
+                     isBranch ? branchName(remote, id) : noteName(remote, id),
+                     parentId, parentBranchName(local, parentId)));
     }
 
     return preview;

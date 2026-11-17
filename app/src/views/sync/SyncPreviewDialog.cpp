@@ -102,7 +102,7 @@ static QString takeServerSub(const Item &item, Danger danger)
     case Category::MyDelete:
         return QObject::tr("Отменить моё удаление (воскресить с сервера)");
     default:
-        return QObject::tr("Взять версию с сервера");
+        return QObject::tr("Восстановить с сервера");
     }
 }
 
@@ -546,13 +546,13 @@ void SyncPreviewDialog::buildItems(void)
         {
             QComboBox *combo=makeActionCombo(index);
             m_itemsTree->setItemWidget(node, 1, combo);
-            node->setText(2, directionFor(item));
+            node->setText(2, item.isBranch ? tr("ветка") : tr("запись"));
         }
         else
         {
             QComboBox *combo=makeActionCombo(index);
             m_itemsTree->setItemWidget(node, 1, combo);
-            node->setText(2, directionFor(item));
+            node->setText(2, item.isBranch ? tr("ветка") : tr("запись"));
         }
 
         if(parent==nullptr)
@@ -1173,7 +1173,7 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("✓"), green, tr("Применить — выполнить запланированное молча"));
     html+=sym(QStringLiteral("✓"), green, tr("Подтвердить — то же, но только после моего взгляда"));
     html+=sym(QStringLiteral("⚠"), darkred, tr("Красное с ⚠ в списке — данные будут удалены или затёрты: удаление здесь/на сервере, затирание полной версии пустой"));
-    html+=sym(QStringLiteral("•"), purple, tr("Взять с сервера — отменить моё, взять их версию (моё удаление — воскресить)"));
+    html+=sym(QStringLiteral("•"), purple, tr("Восстановить с сервера — отменить моё, взять их версию (моё удаление — воскресить)"));
     html+=sym(QStringLiteral("•"), purple, tr("Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)"));
     html+=sym(QStringLiteral("•"), purple, tr("Пропустить — ничего не делать в этот раз"));
     html+=QStringLiteral("<h3>")+tr("Вкладки")+QStringLiteral("</h3>");

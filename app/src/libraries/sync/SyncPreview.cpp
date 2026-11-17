@@ -479,7 +479,7 @@ QString actionName(Action action)
     {
     case Action::Apply:      return QObject::tr("Применить молча");
     case Action::Confirm:    return QObject::tr("Показать и подтвердить");
-    case Action::TakeServer: return QObject::tr("Взять с сервера");
+    case Action::TakeServer: return QObject::tr("Восстановить с сервера");
     case Action::ForceMine:  return QObject::tr("Настоять на моём");
     case Action::Skip:       return QObject::tr("Пропустить в этот раз");
     }

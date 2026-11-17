@@ -1072,27 +1072,39 @@ void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &ite
     QToolButton *bYes=btns.at(0);
     QToolButton *bNo=btns.at(1);
 
-    // Серые по умолчанию, активный подсвечен (как в макете)
-    const QString idle=QStringLiteral("color: #777; border: 1.5px solid #555;");
-    QString yesStyle=idle, noStyle=idle;
+    // Смайловая заливка как на мобиле: светлый цветной фон всегда,
+    // в активе — сплошной + белый глиф
+    auto paint=[&](QToolButton *b, const QColor &solid, bool active) {
+        const QColor fill=solid;
+        const QColor light(fill.red(), fill.green(), fill.blue(), 0x55);
+        b->setStyleSheet(QStringLiteral(
+            "color: %1; background: %2; border: 1.5px solid %3; font-weight: bold;")
+            .arg(active ? QStringLiteral("white") : solid.name(QColor::HexRgb),
+                 (active ? solid : light).name(QColor::HexArgb),
+                 solid.name(QColor::HexRgb)));
+    };
+
+    const QColor green(0x66BB6A), red(0xEF5350), blue(0x64B5F6);
+    const QColor noSolid=isEdit ? blue : red;
+
+    bool yesActive=false, noActive=false;
 
     if(decided)
     {
         if(isEdit)
         {
-            if(effective==Action::ForceMine)
-                yesStyle=QStringLiteral("color: #66BB6A; border: 1.5px solid #66BB6A; font-weight: bold;");
-            else if(effective==Action::TakeServer)
-                noStyle=QStringLiteral("color: #64B5F6; border: 1.5px solid #64B5F6; font-weight: bold;");
+            yesActive=(effective==Action::ForceMine);
+            noActive=(effective==Action::TakeServer);
         }
-        else if(effective==accept)
-            yesStyle=QStringLiteral("color: #66BB6A; border: 1.5px solid #66BB6A; font-weight: bold;");
-        else if(effective==reject)
-            noStyle=QStringLiteral("color: #EF5350; border: 1.5px solid #EF5350; font-weight: bold;");
+        else
+        {
+            yesActive=(effective==accept);
+            noActive=(effective==reject);
+        }
     }
 
-    bYes->setStyleSheet(yesStyle);
-    bNo->setStyleSheet(noStyle);
+    paint(bYes, green, yesActive);
+    paint(bNo, noSolid, noActive);
 }
 
 

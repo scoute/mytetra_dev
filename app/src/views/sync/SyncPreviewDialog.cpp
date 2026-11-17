@@ -805,7 +805,6 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     const QColor markerBase=index.data(MarkerColorRole).value<QColor>();
     const QString arrow=index.data(ArrowTextRole).toString();
     const QColor arrowBase=index.data(ArrowColorRole).value<QColor>();
-    const bool hasCheck=index.data(HasCheckRole).toBool();
     const bool hasWarn=index.data(HasWarnRole).toBool();
     const bool subtreeDone=index.data(SubtreeDoneRole).toBool();
 
@@ -813,10 +812,8 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
         : fm.horizontalAdvance(marker)+gap;
     const int arrowW=arrow.isEmpty() ? 0
         : fm.horizontalAdvance(arrow)+gap;
-    const QString checkMark=hasCheck ? QStringLiteral(" ✓") : QString();
     const QString warnMark=hasWarn ? QStringLiteral(" ⚠") : QString();
     const QString doneMark=subtreeDone ? QStringLiteral(" ✓") : QString();
-    const int checkW=hasCheck ? fm.horizontalAdvance(checkMark) : 0;
     const int warnW=hasWarn ? fm.horizontalAdvance(warnMark) : 0;
     const int doneW=subtreeDone ? fm.horizontalAdvance(doneMark) : 0;
 
@@ -850,7 +847,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     if(grayed)
         pillBase=QColor(0x888888);
 
-    const int tailW=checkW+warnW+doneW;
+    const int tailW=warnW+doneW;
     const int nameAvail=qMax(20, right-x-tailW-pillPad*2);
     const QString shownName=fm.elidedText(name, Qt::ElideRight, nameAvail);
     const int pillW=fm.horizontalAdvance(shownName)+pillPad*2;
@@ -870,14 +867,6 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     painter->setFont(o.font);
     painter->drawText(pillRect.toRect(), Qt::AlignCenter, shownName);
     x+=pillW+gap;
-
-    if(hasCheck)
-    {
-        painter->setPen(grayed ? dimFg : QColor(0xFF66BB6A));
-        painter->drawText(x, cy-fm.height()/2, checkW, fm.height(),
-                          Qt::AlignLeft | Qt::AlignVCenter, checkMark);
-        x+=checkW;
-    }
 
     if(hasWarn)
     {

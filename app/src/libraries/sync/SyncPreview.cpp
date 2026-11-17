@@ -251,9 +251,11 @@ Preview classify(const SyncPlan &plan,
     // Удаления по направлениям
     for(const QString &id : plan.pushTombs)
     {
-        const bool isBranch=!local.branches.contains(id)
-            && !local.notes.contains(id) ? false
-            : local.branches.contains(id);
+        // Тип — по ОБОИМ манифестам: своего уже нет (удалён),
+        // живой лежит у пира. Только локальный давал вечный false
+        // для веток — и имя искалось среди заметок ("без имени")
+        const bool isBranch=local.branches.contains(id)
+            || remote.branches.contains(id);
 
         preview.items.append(
             makeItem(local, remote, id, Category::MyDelete, isBranch, true,

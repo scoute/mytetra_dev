@@ -1452,9 +1452,8 @@ void SyncPreviewDialog::refreshDuel(void)
     const Danger danger=m_dangers.value(m_duelItemId, Danger::None);
 
     // Предложение эвристики (как на мобиле): битая сторона проигрывает,
-    // иначе побеждает более длинный текст; равные — новее по mtime
+    // иначе побеждает более новая по mtime (размер при равных байтах молчит)
     bool proposalMine=false;
-    bool proposalSized=false;
 
     if(m_duelItemId.isEmpty())
         proposalMine=false;
@@ -1468,20 +1467,7 @@ void SyncPreviewDialog::refreshDuel(void)
                 else if(danger==Danger::TheirEmpty)
                     proposalMine=true;
                 else
-                {
-                    const int ownLen=m_ownText
-                        ? SyncPreview::visibleTextLength(m_ownText(item)) : 0;
-                    const int otherLen=m_otherText
-                        ? SyncPreview::visibleTextLength(m_otherText(item)) : 0;
-                    proposalSized=(ownLen!=otherLen);
-
-                    if(ownLen>otherLen)
-                        proposalMine=true;
-                    else if(otherLen>ownLen)
-                        proposalMine=false;
-                    else
-                        proposalMine=item.fromLocal;
-                }
+                    proposalMine=item.fromLocal;
 
                 break;
             }
@@ -1491,9 +1477,6 @@ void SyncPreviewDialog::refreshDuel(void)
         hint=tr("оставляем наш вариант");
     else if(chosen==Action::TakeServer)
         hint=tr("перетираем с сервера");
-    else if(proposalSized)
-        hint=tr("предложение: %1 — больше текста, подтвердите")
-            .arg(proposalMine ? tr("наша") : tr("ихняя"));
     else
         hint=tr("предложение: %1 — подтвердите")
             .arg(proposalMine ? tr("наша") : tr("ихняя"));

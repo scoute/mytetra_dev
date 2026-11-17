@@ -258,6 +258,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
                                  << tr("Элемент") << tr("Действие") << tr("Инфо"));
     m_itemsTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_itemsTree->setRootIsDecorated(true);
+    m_itemsTree->setIndentation(12);
     m_itemsTree->setItemDelegateForColumn(
         0, new SyncPreviewItemDelegate(m_itemsTree));
     layout->addWidget(m_itemsTree, 3);
@@ -1451,8 +1452,9 @@ void SyncPreviewDialog::refreshDuel(void)
     const Danger danger=m_dangers.value(m_duelItemId, Danger::None);
 
     // Предложение эвристики (как на мобиле): битая сторона проигрывает,
-    // иначе побеждает более новая
+    // иначе побеждает более длинный текст; равные — новее по mtime
     bool proposalMine=false;
+    bool proposalSized=false;
 
     if(m_duelItemId.isEmpty())
         proposalMine=false;
@@ -1466,16 +1468,32 @@ void SyncPreviewDialog::refreshDuel(void)
                 else if(danger==Danger::TheirEmpty)
                     proposalMine=true;
                 else
-                    proposalMine=item.fromLocal;
+                {
+                    const int ownLen=m_ownText
+                        ? SyncPreview::visibleTextLength(m_ownText(item)) : 0;
+                    const int otherLen=m_otherText
+                        ? SyncPreview::visibleTextLength(m_otherText(item)) : 0;
+                    proposalSized=(ownLen!=otherLen);
+
+                    if(ownLen>otherLen)
+                        proposalMine=true;
+                    else if(otherLen>ownLen)
+                        proposalMine=false;
+                    else
+                        proposalMine=item.fromLocal;
+                }
 
                 break;
             }
     }
 
     if(chosen==Action::ForceMine)
-        hint=tr("решено: наша победила");
+        hint=tr("оставляем наш вариант");
     else if(chosen==Action::TakeServer)
-        hint=tr("решено: ихняя победила");
+        hint=tr("перетираем с сервера");
+    else if(proposalSized)
+        hint=tr("предложение: %1 — больше текста, подтвердите")
+            .arg(proposalMine ? tr("наша") : tr("ихняя"));
     else
         hint=tr("предложение: %1 — подтвердите")
             .arg(proposalMine ? tr("наша") : tr("ихняя"));

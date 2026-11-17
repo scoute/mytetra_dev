@@ -851,7 +851,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
         pillBase=QColor(0x888888);
 
     const bool isBranch=index.data(BranchRole).toBool();
-    const int iconW=fm.height();
+    const int iconW=isBranch ? fm.height() : fm.height()*4/5;
     const int iconGap=4;
     const int tailW=warnW+doneW;
     const int nameAvail=qMax(20, right-x-tailW-pillPad*2-iconW-iconGap);
@@ -872,21 +872,25 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     painter->drawRoundedRect(pillRect, pillH/2, pillH/2);
     painter->setRenderHint(QPainter::Antialiasing, false);
 
-    // Иконка типа: папка / лист с загнутым углом (как на мобиле)
+    // Иконка типа: классика как на мобиле — жёлтая папка,
+    // белый лист с серым контуром
     {
-        const QColor iconFg=grayed ? dimFg : fg;
         const int iconH=pillH-8;
         const int iconX=x+4;
         const int iconY=cy-iconH/2;
-        painter->setBrush(iconFg);
-        painter->setPen(Qt::NoPen);
         painter->setRenderHint(QPainter::Antialiasing, true);
         if(isBranch)
         {
             const int tabW=iconW*45/100, tabH=iconH*32/100;
+            painter->setBrush(QColor(0xFFC107));
+            painter->setPen(Qt::NoPen);
             painter->drawRoundedRect(QRectF(iconX, iconY, tabW, tabH+2), 2, 2);
             painter->drawRoundedRect(QRectF(iconX, iconY+tabH*0.5,
                 iconW, iconH-tabH*0.5), 2, 2);
+            painter->setBrush(Qt::NoBrush);
+            painter->setPen(QPen(QColor(0xE6A200), 1));
+            painter->drawRoundedRect(QRectF(iconX+0.5, iconY+tabH*0.5+0.5,
+                iconW-1, iconH-tabH*0.5-1), 2, 2);
         }
         else
         {
@@ -897,6 +901,11 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
                  << QPointF(iconX+iconW, iconY+f)
                  << QPointF(iconX+iconW, iconY+iconH)
                  << QPointF(iconX, iconY+iconH);
+            painter->setBrush(QColor(Qt::white));
+            painter->setPen(Qt::NoPen);
+            painter->drawPolygon(page);
+            painter->setBrush(Qt::NoBrush);
+            painter->setPen(QPen(QColor(0x9E9E9E), 1));
             painter->drawPolygon(page);
         }
         painter->setRenderHint(QPainter::Antialiasing, false);

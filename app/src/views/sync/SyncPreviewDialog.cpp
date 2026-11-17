@@ -1315,7 +1315,10 @@ void SyncPreviewDialog::showDiffFor(const Item *item)
     const QString before=item->fromLocal ? other : own;
     const QString after=item->fromLocal ? own : other;
 
-    const QList<SyncDiff::Line> lines=SyncDiff::diff(before, after);
+    // Диффим видимое (без HTML-мусора редакторов), картинки —
+    // заглушками "[картинка: имя]" (как в мобильной версии)
+    const QList<SyncDiff::Line> lines=SyncDiff::diffLines(
+        SyncDiff::visibleLines(before), SyncDiff::visibleLines(after));
 
     QStringList out;
 

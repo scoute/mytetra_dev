@@ -1,3 +1,4 @@
+#include <QRegularExpression>
 #include <QVector>
 
 #include "SyncDiff.h"
@@ -21,11 +22,126 @@ Line makeLine(Line::Kind kind, const QString &text)
 }
 
 
+QString decodeEntities(QString s)
+{
+    s.replace(QStringLiteral("&nbsp;"), QStringLiteral(" "));
+    s.replace(QStringLiteral("&amp;"), QStringLiteral("&"));
+    s.replace(QStringLiteral("&lt;"), QStringLiteral("<"));
+    s.replace(QStringLiteral("&gt;"), QStringLiteral(">"));
+    s.replace(QStringLiteral("&quot;"), QStringLiteral("\""));
+    s.replace(QStringLiteral("&apos;"), QStringLiteral("'"));
+
+    // &#123; и &#x1F;
+    static const QRegularExpression entityRe(
+        QStringLiteral("&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]{1,8});"));
+
+    QString out;
+    QRegularExpressionMatchIterator it=entityRe.globalMatch(s);
+    int pos=0;
+
+    while(it.hasNext())
+    {
+        const QRegularExpressionMatch m=it.next();
+        out+=s.mid(pos, m.capturedStart()-pos);
+        pos=m.capturedEnd();
+
+        const QString body=m.captured(1);
+        bool ok=false;
+        int code=0;
+
+        if(body.startsWith(QStringLiteral("#x"), Qt::CaseInsensitive))
+            code=body.mid(2).toInt(&ok, 16);
+        else if(body.startsWith(QLatin1Char('#')))
+            code=body.mid(1).toInt(&ok, 10);
+
+        if(ok && code>0)
+            out+=QString::fromUcs4(reinterpret_cast<const uint *>(&code), 1);
+        else
+            out+=m.captured(0);
+    }
+
+    out+=s.mid(pos);
+    return out;
+}
+
+
+QStringList visibleLines(const QString &text)
+{
+    QString s=text;
+
+    // <style>/<script>/<head> — целиком, вместе с содержимым
+    static const QRegularExpression headRe(
+        QStringLiteral("<(style|script|head|title)[^>]*>.*?</\\1>"),
+        QRegularExpression::CaseInsensitiveOption
+        | QRegularExpression::DotMatchesEverythingOption);
+    s.remove(headRe);
+
+    // <img> — в отдельные строки-заглушки с именем файла
+    static const QRegularExpression imgRe(
+        QStringLiteral("<img[^>]*>"),
+        QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression srcRe(
+        QStringLiteral("src\\s*=\\s*[\"']?([^\"'\\s>]+)"));
+
+    QRegularExpressionMatchIterator it=imgRe.globalMatch(s);
+    QString rebuilt;
+    int pos=0;
+
+    while(it.hasNext())
+    {
+        const QRegularExpressionMatch m=it.next();
+        rebuilt+=s.mid(pos, m.capturedStart()-pos);
+        pos=m.capturedEnd();
+
+        const QRegularExpressionMatch sm=srcRe.match(m.captured(0));
+        QString src=sm.hasMatch() ? sm.captured(1) : QString();
+        QString name=src.section(QLatin1Char('/'), -1);
+        name=name.section(QLatin1Char('\\'), -1);
+
+        if(name.isEmpty())
+            name=QStringLiteral("картинка");
+
+        rebuilt+=QStringLiteral("\n\n[картинка: ")+name+QStringLiteral("]\n\n");
+    }
+
+    rebuilt+=s.mid(pos);
+    s=rebuilt;
+
+    // блочные теги — в переносы, остальные теги — прочь
+    static const QRegularExpression blockRe(
+        QStringLiteral("</?(p|div|li|ul|ol|h[1-6]|br|tr|table|blockquote|hr)[^>]*>"),
+        QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression tagRe(QStringLiteral("<[^>]*>"));
+    static const QRegularExpression wsRe(QStringLiteral("\\s+"));
+
+    s.replace(blockRe, QStringLiteral("\n"));
+    s.remove(tagRe);
+    s=decodeEntities(s);
+
+    QStringList out;
+
+    for(const QString &raw : s.split(QLatin1Char('\n')))
+    {
+        QString line=raw.trimmed();
+        line.replace(wsRe, QStringLiteral(" "));
+
+        if(!line.isEmpty())
+            out << line;
+    }
+
+    return out;
+}
+
+
 QList<Line> diff(const QString &before, const QString &after)
 {
-    const QStringList a=before.split(QLatin1Char('\n'));
-    const QStringList b=after.split(QLatin1Char('\n'));
+    return diffLines(before.split(QLatin1Char('\n')),
+                     after.split(QLatin1Char('\n')));
+}
 
+
+QList<Line> diffLines(const QStringList &a, const QStringList &b)
+{
     // Общий префикс и суффикс отрезаются: реальные правки заметок
     // меняют маленький кусок большого текста, и LCS нужен только на нем
     int prefix=0;

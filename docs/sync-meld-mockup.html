@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Синк в стиле meld — макет (десктоп)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E3E5EC; color: #212121; font-family: Roboto, Arial, sans-serif;
+         display: flex; justify-content: center; padding: 12px; }
+  .desk { width: 940px; max-width: 100%; background: #F2F3F7; border-radius: 12px;
+          padding: 16px 18px 20px; }
+  h1 { font-size: 20px; margin-bottom: 10px; }
+  .toprow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .ring { cursor: pointer; flex: none; }
+  .ring text { font-size: 11px; font-weight: bold; fill: #212121; }
+  .progress { font-size: 15px; color: #616161; font-weight: bold; flex: 1; }
+  label.remember { font-size: 14px; color: #616161; display: flex; align-items: center; gap: 6px; }
+  .cols { display: grid; grid-template-columns: 1fr 132px 1fr; gap: 6px;
+          font-size: 12px; font-weight: bold; color: #616161; margin: 8px 0 4px;
+          text-align: center; }
+  .row { display: grid; grid-template-columns: 1fr 132px 1fr; gap: 6px;
+         align-items: center; padding: 2px 0; border-radius: 8px; }
+  .row.flash { animation: flashblink 1.2s ease-in-out; border-radius: 8px; }
+  @keyframes flashblink {
+    0%, 100% { background: transparent; opacity: 1; }
+    20%, 40% { background: rgba(56,191,163,.45); opacity: .4; }
+    60%, 80% { background: rgba(56,191,163,.45); opacity: .4; }
+  }
+  .cell { min-width: 0; display: flex; }
+  .cell.left { justify-content: flex-end; }
+  .mid { display: flex; gap: 4px; justify-content: center; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px;
+          padding: 3px 10px; font-size: 13px; border: 1.5px solid; max-width: 100%;
+          overflow: hidden; white-space: nowrap; }
+  .pill .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pill.quiet { border-color: #BDBDBD; color: #9E9E9E; background: transparent; }
+  .pill.tomb { border: 1.5px dashed #9E9E9E; background: #EEEEEE; color: #9E9E9E;
+               text-decoration: line-through; }
+  .pill.ghost { border-style: dashed; opacity: .85; }
+  .empty { color: #BDBDBD; font-size: 13px; }
+  .arr { width: 34px; height: 28px; border-radius: 8px; border: 1.5px solid #BDBDBD;
+         background: #E8EAF6; color: #9E9E9E; font-size: 15px; font-weight: bold;
+         cursor: pointer; }
+  .arr.up.on { background: #66BB6A; border-color: #66BB6A; color: #fff; }
+  .arr.dn.on { background: #64B5F6; border-color: #64B5F6; color: #fff; }
+  .arr:disabled { opacity: .3; cursor: default; }
+  .difflink { background: none; border: none; color: #303F9F; font-size: 12px;
+              font-weight: bold; cursor: pointer; padding: 2px 6px; }
+  .diffbox { display: none; grid-column: 1 / -1; margin: 2px 40px 4px;
+             font-family: monospace; font-size: 12px; background: #ECEFF1;
+             border-radius: 8px; padding: 8px 10px; line-height: 1.5; }
+  .diffbox.open { display: block; }
+  .diffbox .add { color: #2E7D32; } .diffbox .del { color: #C62828; }
+  .footer { display: flex; justify-content: flex-end; gap: 16px; margin-top: 14px; }
+  .footer button { background: none; border: none; font-size: 15px; cursor: pointer; padding: 6px 4px; }
+  #btnCancel { color: #616161; }
+  #btnApply { color: #303F9F; font-weight: bold; }
+  #btnApply:disabled { color: #BDBDBD; cursor: default; }
+  .warn { background: #FFEBEE; border: 1.5px solid #EF5350; color: #C62828;
+          border-radius: 8px; padding: 6px 10px; font-size: 13px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="desk">
+  <h1>Синхронизация — две стороны (meld-стиль)</h1>
+  <div class="toprow">
+    <svg class="ring" id="ring" width="56" height="56" viewBox="0 0 56 56" title="К первому нерешенному">
+      <circle cx="28" cy="28" r="22" fill="none" stroke="#D5D8E0" stroke-width="7"/>
+      <circle id="ringLeft" cx="28" cy="28" r="22" fill="none" stroke="#EF5350" stroke-width="7"
+              stroke-dasharray="0 999" transform="rotate(-90 28 28)" stroke-linecap="round"/>
+      <circle id="ringDone" cx="28" cy="28" r="22" fill="none" stroke="#66BB6A" stroke-width="7"
+              stroke-dasharray="0 999" transform="rotate(-90 28 28)" stroke-linecap="round"/>
+      <text x="28" y="32" text-anchor="middle" id="ringText">0/0</text>
+    </svg>
+    <div class="progress" id="progress">Разобрано: <b>0 из 0</b></div>
+    <label class="remember"><input type="checkbox"> Запомнить</label>
+  </div>
+  <div class="warn" id="dangerBar" style="display:none">⚠ <span id="dangerText"></span></div>
+  <div class="cols"><div>⬅ Я · это устройство</div><div>копировать</div><div>Сервер ➡</div></div>
+  <div id="tree"></div>
+  <div class="footer">
+    <button id="btnCancel">ОТМЕНА</button>
+    <button id="btnApply" disabled>ПРИМЕНИТЬ</button>
+  </div>
+</div>
+
+<script>
+// Строка = один id. left/right: null = нет с этой стороны; killed = надгробие.
+// staged: null | 'up' (→ на сервер) | 'down' (→ ко мне)
+const ROWS = [
+  {id:'b1', depth:0, kind:'branch', cat:'Create', left:'Черновики', right:null, staged:'up', preset:true},
+  {id:'n1', depth:1, kind:'note', cat:'Create', left:'Идея для отпуска', right:null, staged:'up', preset:true},
+  {id:'b2', depth:0, kind:'branch', cat:'Same', left:'Рецепты', right:'Рецепты', staged:'ok'},
+  {id:'n2', depth:1, kind:'note', cat:'Same', left:'Борщ', right:'Борщ', staged:'ok'},
+  {id:'b3', depth:0, kind:'branch', cat:'Rename', left:'Глубина 4', right:'Глубина 44', staged:null},
+  {id:'n3', depth:1, kind:'note', cat:'Create', left:'new', right:null, staged:'up', preset:true},
+  {id:'n4', depth:0, kind:'note', cat:'MyDelete', left:'Конспект', leftKilled:true, right:'Конспект', staged:null},
+  {id:'b4', depth:0, kind:'branch', cat:'TheirDelete', left:'Архив', right:'Архив', rightKilled:true, staged:null},
+  {id:'n5', depth:0, kind:'note', cat:'Edit', left:'Дневник', right:'Дневник',
+   staged:null, duel:true, diff:{mine:['Утро. Кофе. Код.','+ созвон в 15:00'], theirs:['Утро. Кофе. Код.','+ созвон в 16:00']}},
+];
+const CATCOL = {Create:'#2E7D32', Rename:'#1565C0', Edit:'#E65100', MyDelete:'#C62828', TheirDelete:'#6A1B9A', Same:'#9E9E9E'};
+const CATMARK = {Create:'+', Rename:'≡', Edit:'~', MyDelete:'−', TheirDelete:'−', Same:'='};
+const CIRC = 2 * Math.PI * 22;
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function pill(name, cat, opts={}) {
+  const cls = opts.tomb ? 'pill tomb' : (opts.ghost ? 'pill ghost' : 'pill') + (cat==='Same' ? ' quiet' : '');
+  const col = CATCOL[cat];
+  return `<span class="${cls}" style="border-color:${col};${opts.ghost?`background:${col}22`:''}">` +
+    `<b style="color:${col}">${CATMARK[cat]}</b><span class="nm">${esc(name)}</span></span>`;
+}
+function cellHTML(side, r) {
+  // Призрак: staged-приём показывает, что приедет на пустую/убитую сторону
+  const mine = side === 'left';
+  const name = mine ? r.left : r.right;
+  const killed = mine ? r.leftKilled : r.rightKilled;
+  const ghosted = (mine && r.staged === 'down' && (name == null || killed)) ||
+                  (!mine && r.staged === 'up' && (name == null || killed));
+  if (ghosted) return pill(mine ? r.right : r.left, r.cat, {ghost:true});
+  if (name == null) return `<span class="empty">—</span>`;
+  if (killed) return pill(name, r.cat, {tomb:true});
+  return pill(name, r.cat, {});
+}
+function arrowsHTML(r) {
+  if (r.staged === 'ok') return `<span style="color:#BDBDBD;font-size:12px">=</span>`;
+  const onlyLeft = r.left != null && r.right == null && !r.leftKilled && !r.rightKilled;
+  const onlyRight = r.right != null && r.left == null && !r.leftKilled && !r.rightKilled;
+  const upDis = onlyRight ? 'disabled' : '';
+  const dnDis = onlyLeft ? 'disabled' : '';
+  return `<button class="arr up${r.staged==='up'?' on':''}" data-act="up" data-id="${r.id}" ${upDis} title="Скопировать на сервер">→</button>` +
+         `<button class="arr dn${r.staged==='down'?' on':''}" data-act="down" data-id="${r.id}" ${dnDis} title="Скопировать ко мне">←</button>` +
+         ((r.duel || r.cat === 'Rename') ? ` <button class="difflink" data-diff="${r.id}">diff</button>` : ``);
+}
+function diffHTML(r) {
+  if (r.cat === 'Rename')
+    return `<div class="diffbox" id="diff-${r.id}"><div>  ${esc(r.left)}</div><div class="del">- ${esc(r.right)}</div><div class="add">+ ${esc(r.left)}</div><div><span style="color:#26A69A">+1</span> <span class="del">-1</span></div></div>`;
+  if (!r.diff) return `<div class="diffbox" id="diff-${r.id}"><div>  без изменений текста</div></div>`;
+  return `<div class="diffbox" id="diff-${r.id}"><div>  ${esc(r.diff.mine[0])}</div>` +
+    `<div class="del">- ${esc(r.diff.theirs[1])}</div><div class="add">+ ${esc(r.diff.mine[1])}</div></div>`;
+}
+function render() {
+  const t = document.getElementById('tree');
+  let h = '';
+  for (const r of ROWS) {
+    const pad = r.depth * 24;
+    h += `<div class="meldrow" data-id="${r.id}" style="display:contents">` +
+      `<div class="row" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 132px 1fr;gap:6px;align-items:center;padding:2px 0 2px ${pad}px" id="row-${r.id}">` +
+      `<div class="cell left">${cellHTML('left', r)}</div>` +
+      `<div class="mid">${arrowsHTML(r)}</div>` +
+      `<div class="cell">${cellHTML('right', r)}</div>` +
+      `</div>${diffHTML(r)}</div>`;
+  }
+  t.innerHTML = h;
+  refresh();
+}
+function activeRows() { return ROWS.filter(r => r.staged !== 'ok'); }
+function refresh() {
+  const rows = activeRows();
+  const done = rows.filter(r => r.staged).length;
+  const total = rows.length;
+  document.getElementById('progress').innerHTML =
+    done === total ? `✓ Всё разобрано (<b>${done}/${total}</b>)` : `Разобрано: <b>${done} из ${total}</b>`;
+  document.getElementById('btnApply').disabled = !(total > 0 && done === total);
+  const C = CIRC;
+  document.getElementById('ringDone').setAttribute('stroke-dasharray', `${C * done / Math.max(total,1)} ${C}`);
+  document.getElementById('ringLeft').setAttribute('stroke-dasharray', `${C * (total - done) / Math.max(total,1)} ${C}`);
+  document.getElementById('ringLeft').setAttribute('stroke-dashoffset', `${-C * done / Math.max(total,1)}`);
+  document.getElementById('ringText').textContent = `${done}/${total}`;
+  const deaths = rows.filter(r => r.cat === 'MyDelete' || r.cat === 'TheirDelete');
+  document.getElementById('dangerBar').style.display = '';
+  document.getElementById('dangerText').textContent =
+    deaths.length ? `${deaths.length}: удаления в плане — стрелка туда/сюда решает судьбу` : 'все стрелки расставлены';
+}
+function jumpToFirst() {
+  const r = activeRows().find(r => !r.staged);
+  if (!r) return;
+  const el = document.getElementById('row-' + r.id);
+  if (!el) return;
+  el.scrollIntoView({block:'center', behavior:'smooth'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  setTimeout(() => el.classList.remove('flash'), 1300);
+}
+document.getElementById('ring').addEventListener('click', jumpToFirst);
+document.addEventListener('click', e => {
+  const a = e.target.closest('button.arr');
+  if (a && !a.disabled) {
+    const r = ROWS.find(x => x.id === a.dataset.id);
+    const act = a.dataset.act;
+    r.staged = (r.staged === act) ? null : act; // повторный тап снимает
+    render();
+    return;
+  }
+  const d = e.target.closest('button.difflink');
+  if (d) {
+    const box = document.getElementById('diff-' + d.dataset.diff);
+    if (box) box.classList.toggle('open');
+  }
+});
+render();
+</script>
+</body>
+</html>

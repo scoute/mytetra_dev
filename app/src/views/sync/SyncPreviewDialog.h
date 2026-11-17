@@ -74,6 +74,8 @@ private:
     void buildActionsMenu(void);
     void buildItems(void);
     QComboBox *makeActionCombo(int index);
+    void syncComboState(QComboBox *combo, const SyncPreview::Item &item);
+    void refreshCombos(void);
     void applyFilters(void);
     void setDimmed(QTreeWidgetItem *node, bool dimmed);
     void refreshRowText(QTreeWidgetItem *row);

@@ -26,6 +26,104 @@ using SyncPreview::Danger;
 using SyncPreview::Decisions;
 using SyncPreview::Item;
 
+// Опасно ли действие для КОНКРЕТНОГО элемента: красным светим удаление
+// здесь/на сервере и затирание полной версии пустой. Воскрешение и пропуск
+// безопасны всегда; запланированное удаление едет как есть — тоже красное
+static bool dangerOf(const Item &item, Action action,
+                     const QMap<QString, Danger> &dangers)
+{
+    const Danger danger=dangers.value(item.id, Danger::None);
+
+    switch(action)
+    {
+    case Action::TakeServer:
+        // воскрешение моего удаления — спасение, не потеря
+        if(item.category==Category::MyDelete)
+            return false;
+        // моя правка сносится их версией (кроме спасения полной)
+        if(item.category==Category::Edit)
+            return danger!=Danger::MyEmpty;
+        return false;
+    case Action::ForceMine:
+        // воскрешение моей копии наверх — спасение
+        if(item.category==Category::TheirDelete)
+            return false;
+        // их правка сносится моей версией (кроме спасения полной)
+        if(item.category==Category::Edit)
+            return danger!=Danger::TheirEmpty;
+        return false;
+    case Action::Apply:
+    case Action::Confirm:
+        return item.category==Category::MyDelete
+            || item.category==Category::TheirDelete;
+    case Action::Skip:
+        return false;
+    }
+
+    return false;
+}
+
+// Чем кончится "Применить/Подтвердить" для этого элемента
+static QString plannedOutcome(const Item &item)
+{
+    switch(item.category)
+    {
+    case Category::Create:
+        return item.fromLocal ? QObject::tr("Новое уедет на сервер")
+                              : QObject::tr("Новое приедет с сервера");
+    case Category::Edit:
+        return item.fromLocal ? QObject::tr("Моя правка уедет на сервер")
+                              : QObject::tr("Их правка приедет ко мне");
+    case Category::Rename:
+        return item.fromLocal ? QObject::tr("Моё переименование уедет наверх")
+                              : QObject::tr("Их переименование приедет ко мне");
+    case Category::MyDelete:
+        return QObject::tr("Удаление уедет на сервер");
+    case Category::TheirDelete:
+        return QObject::tr("Удалится и у меня тоже");
+    }
+
+    return QString();
+}
+
+static QString takeServerSub(const Item &item, Danger danger)
+{
+    switch(item.category)
+    {
+    case Category::Create:
+        return QObject::tr("Не отправлять моё (останется только у меня)");
+    case Category::Edit:
+        return danger==Danger::MyEmpty
+            ? QObject::tr("Взять их полную версию (моя почти пустая)")
+            : QObject::tr("Отменить мою правку, взять их версию");
+    case Category::Rename:
+        return QObject::tr("Отменить моё переименование");
+    case Category::MyDelete:
+        return QObject::tr("Отменить моё удаление (воскресить с сервера)");
+    default:
+        return QObject::tr("Взять версию с сервера");
+    }
+}
+
+static QString forceMineSub(const Item &item, Danger danger)
+{
+    switch(item.category)
+    {
+    case Category::Create:
+        return QObject::tr("Не скачивать (останется только у них)");
+    case Category::Edit:
+        return danger==Danger::TheirEmpty
+            ? QObject::tr("Оставить мою полную версию (их почти пустая)")
+            : QObject::tr("Оставить мою версию, их не брать");
+    case Category::Rename:
+        return QObject::tr("Отменить их переименование");
+    case Category::TheirDelete:
+        return QObject::tr("Не удалять у меня (воскресить мою копию наверх)");
+    default:
+        return QObject::tr("Настоять на моей версии");
+    }
+}
+
 // Цвета бейджей — как в мобильной версии
 static uint categoryColor(Category category)
 {
@@ -490,22 +588,113 @@ void SyncPreviewDialog::buildItems(void)
 }
 
 
+// Подписи действий в строке: только осмысленные для направления
+// ("взять с сервера" — лишь нашему, "настоять на моём" — лишь ихнему);
+// бессмысленные пункты скрыты, а не врут
+static QList<Action> rowActions(const Item &item)
+{
+    QList<Action> actions;
+    actions << Action::Apply << Action::Confirm;
+
+    if(item.fromLocal)
+        actions << Action::TakeServer;
+    else
+        actions << Action::ForceMine;
+
+    actions << Action::Skip;
+    return actions;
+}
+
+static QString actionSub(const Item &item, Action action, Danger danger)
+{
+    switch(action)
+    {
+    case Action::Apply:
+        return plannedOutcome(item)
+            + QObject::tr(" Без лишних вопросов.");
+    case Action::Confirm:
+        return plannedOutcome(item) + QObject::tr(" — подтверждаю вручную.");
+    case Action::TakeServer:
+        return takeServerSub(item, danger);
+    case Action::ForceMine:
+        return forceMineSub(item, danger);
+    case Action::Skip:
+        return QObject::tr("Ничего не делать, напомнить при следующем синке.");
+    }
+
+    return QString();
+}
+
 QComboBox *SyncPreviewDialog::makeActionCombo(int index)
 {
     const Item &item=m_preview.items.at(index);
+    const Danger danger=m_dangers.value(item.id, Danger::None);
     QComboBox *combo=new QComboBox(m_itemsTree);
-
-    for(int a=0; a<5; ++a)
-        combo->addItem(SyncPreview::actionName(static_cast<Action>(a)));
-
-    combo->setCurrentIndex(static_cast<int>(m_decisions.forItem(item)));
     combo->setProperty("itemIndex", index);
+    // обычный цвет текста — для возврата с красного
+    combo->setProperty("normalColor",
+                       combo->palette().color(QPalette::Text));
+
+    for(Action action : rowActions(item))
+    {
+        const int row=combo->count();
+        combo->addItem(SyncPreview::actionName(action),
+                       static_cast<int>(action));
+        combo->setItemData(row, actionSub(item, action, danger),
+                           Qt::ToolTipRole);
+    }
+
+    syncComboState(combo, item);
 
     connect(combo,
         static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
         this, &SyncPreviewDialog::onItemActionChanged);
 
     return combo;
+}
+
+// Состояние комбо под решение: выбор, красный при опасности, тултип исхода
+void SyncPreviewDialog::syncComboState(QComboBox *combo, const Item &item)
+{
+    if(combo==nullptr)
+        return;
+
+    const Action effective=m_decisions.forItem(item);
+    const int row=combo->findData(static_cast<int>(effective));
+
+    if(row>=0 && combo->currentIndex()!=row)
+    {
+        QSignalBlocker block(combo);
+        combo->setCurrentIndex(row);
+    }
+
+    const Danger danger=m_dangers.value(item.id, Danger::None);
+    const bool dangerNow=dangerOf(item, effective, m_dangers);
+    QPalette pal=combo->palette();
+    pal.setColor(QPalette::Text, dangerNow
+                 ? QColor(QStringLiteral("#C00000"))
+                 : combo->property("normalColor").value<QColor>());
+    combo->setPalette(pal);
+    combo->setToolTip(actionSub(item, effective, danger));
+}
+
+// Все комбо дерева под текущие решения (дуэль/категории меняют их мимо строк)
+void SyncPreviewDialog::refreshCombos(void)
+{
+    for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
+    {
+        QTreeWidgetItem *row=*it;
+        const int itemIndex=row->data(0, Qt::UserRole).toInt();
+
+        if(itemIndex<0 || itemIndex>=m_preview.items.size())
+            continue;
+
+        QComboBox *combo=qobject_cast<QComboBox *>(
+            m_itemsTree->itemWidget(row, 1));
+
+        if(combo!=nullptr)
+            syncComboState(combo, m_preview.items.at(itemIndex));
+    }
 }
 
 
@@ -661,6 +850,7 @@ void SyncPreviewDialog::refreshAll(void)
 
     refreshBranchMarks();
     refreshCounter();
+    refreshCombos();
     applyFilters();
 }
 
@@ -707,8 +897,13 @@ void SyncPreviewDialog::onItemActionChanged(int index)
     if(itemIndex<0 || itemIndex>=m_preview.items.size())
         return;
 
+    const int actionValue=combo->currentData().toInt();
+
+    if(actionValue<0 || actionValue>4)
+        return;
+
     m_decisions.byId[m_preview.items.at(itemIndex).id]=
-        static_cast<Action>(combo->currentIndex());
+        static_cast<Action>(actionValue);
 
     refreshAll();
 }
@@ -960,6 +1155,15 @@ void SyncPreviewDialog::showHelp(void)
            "↓ — ихнее приезжает к нам\n"
            "⚠ — почти-пустая заметка затирает содержательную: по умолчанию остается полная версия\n"
            "✓ — решено: выбрано действие; ветка подсвечена целиком, когда разобрана\n"
+           "\n"
+           "Действия\n"
+           "Применить — выполнить запланированное молча\n"
+           "Подтвердить — то же, но только после моего взгляда\n"
+           "Красное с ⚠ в списке — данные будут удалены или затёрты: \n"
+           "удаление здесь/на сервере, затирание полной версии пустой\n"
+           "Взять с сервера — отменить моё, взять их версию (моё удаление — воскресить)\n"
+           "Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)\n"
+           "Пропустить — ничего не делать в этот раз"
            "\n"
            "Вкладки\n"
            "↑ Я → сервер: мои изменения уедут наружу\n"

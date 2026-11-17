@@ -1520,7 +1520,78 @@ void SyncPreviewDialog::showDiffFor(const Item *item)
         return;
     }
 
-    if(item==nullptr || item->category!=Category::Edit || item->isBranch)
+    if(item!=nullptr && item->isBranch)
+    {
+        // Ветки: диффим имена (текста у веток нет) — из самого айтема,
+        // фетчеры для веток отдают пусто
+        m_diffOwn=item->ownName;
+        m_diffOther=item->otherName;
+
+        if(m_diffOwn.isEmpty() && m_diffOther.isEmpty())
+        {
+            m_diffView->setPlainText(tr("Имени нет ни с одной стороны."));
+            return;
+        }
+
+        if(!m_diffOwn.isEmpty() && m_diffOther.isEmpty())
+        {
+            m_diffView->setPlainText(
+                m_diffOwn + QStringLiteral("\n\n")
+                + tr("(на другой стороне такой ветки нет)"));
+            return;
+        }
+
+        if(m_diffOwn.isEmpty() && !m_diffOther.isEmpty())
+        {
+            m_diffView->setPlainText(
+                m_diffOther + QStringLiteral("\n\n")
+                + tr("(у меня такой ветки нет)"));
+            return;
+        }
+
+        // before — чужая версия, after — моя (как у правок текста)
+        const QString bBefore=item->fromLocal ? m_diffOther : m_diffOwn;
+        const QString bAfter=item->fromLocal ? m_diffOwn : m_diffOther;
+        const QList<SyncDiff::Line> bLines=SyncDiff::diffLines(
+            SyncDiff::visibleLines(bBefore), SyncDiff::visibleLines(bAfter));
+
+        const QString green=QStringLiteral("#43A047");
+        const QString red=QStringLiteral("#E53935");
+        QString bHtml=QStringLiteral("<pre style='margin:0; font-family: monospace;'>");
+        int bAdded=0, bRemoved=0;
+
+        for(const SyncDiff::Line &line : bLines)
+        {
+            const QString esc=line.text.toHtmlEscaped();
+
+            switch(line.kind)
+            {
+            case SyncDiff::Line::Equal:
+                bHtml+=esc+QStringLiteral("<br>");
+                break;
+            case SyncDiff::Line::Added:
+                bHtml+=QStringLiteral("<font color=\"%1\">+%2</font><br>")
+                    .arg(green).arg(esc);
+                bAdded++;
+                break;
+            default:
+                bHtml+=QStringLiteral("<font color=\"%1\">-%2</font><br>")
+                    .arg(red).arg(esc);
+                bRemoved++;
+                break;
+            }
+        }
+
+        bHtml+=QStringLiteral("<font color=\"%1\">+%2</font> <font color=\"%3\">-%4</font>")
+            .arg(green).arg(bAdded).arg(red).arg(bRemoved);
+        bHtml+=QStringLiteral("</pre>");
+
+        m_diffHtml=bHtml;
+        refreshDiffView();
+        return;
+    }
+
+    if(item==nullptr || item->category!=Category::Edit)
     {
         m_diffView->setPlainText(
             tr("Выберите измененную запись, чтобы увидеть diff."));

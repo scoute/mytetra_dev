@@ -100,6 +100,17 @@ Item makeItem(const SyncManifest &local, const SyncManifest &remote,
     item.fromLocal=fromLocal;
     item.name=name;
 
+    if(isBranch)
+    {
+        item.ownName=local.branches.value(id).fields.value(QStringLiteral("name"));
+        item.otherName=remote.branches.value(id).fields.value(QStringLiteral("name"));
+    }
+    else
+    {
+        item.ownName=noteName(local, id);
+        item.otherName=noteName(remote, id);
+    }
+
     pathOf(local, remote, id, item.pathIds, item.path);
     item.parentId=item.pathIds.isEmpty() ? QString() : item.pathIds.last();
     item.parentName=item.path.isEmpty() ? QString() : item.path.last();

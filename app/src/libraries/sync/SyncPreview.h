@@ -55,6 +55,8 @@ struct Item
     bool fromLocal=false;  // true — наше изменение (едет наружу),
                            // false — ихнее (придет к нам)
     QString name;          // имя для списка (из нашего манифеста)
+    QString ownName;       // имя с нашей стороны (дифф имён веток)
+    QString otherName;     // имя с ихней стороны (дифф имён веток)
     QString branchId;      // для записей: ветка (для diff-запроса)
     QString parentId;      // родитель (последний из pathIds)
     QString parentName;    // имя родителя (для панели ветки)

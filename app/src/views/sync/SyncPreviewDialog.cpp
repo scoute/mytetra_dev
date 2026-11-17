@@ -8,6 +8,7 @@
 #include <QMenu>
 #include <QPalette>
 #include <QPlainTextEdit>
+#include <QTextEdit>
 #include <QPushButton>
 #include <QTabBar>
 #include <QToolButton>
@@ -1143,40 +1144,51 @@ void SyncPreviewDialog::showHelp(void)
 
     QVBoxLayout *layout=new QVBoxLayout(&help);
 
-    QPlainTextEdit *text=new QPlainTextEdit(&help);
+    // Справка в цветах дерева (как в мобильной версии): символы
+    // действий — цветом своей категории, опасное — красным, иначе
+    // легенда врёт. QTextEdit вместо Plain: нужен rich text
+    const auto sym = [](const QString &mark, const QString &color,
+                        const QString &text) {
+        return QStringLiteral("<p style='margin:0 0 2px 0;'><font color='%1'><b>%2</b></font> %3</p>")
+            .arg(color, mark.toHtmlEscaped(), text.toHtmlEscaped());
+    };
+    const QString green=QStringLiteral("#66BB6A");
+    const QString blue=QStringLiteral("#42A5F5");
+    const QString orange=QStringLiteral("#FFFFB74D");
+    const QString red=QStringLiteral("#EF5350");
+    const QString purple=QStringLiteral("#CE93D8");
+    const QString darkred=QStringLiteral("#C00000");
+
+    QString html;
+    html+=QStringLiteral("<h3>")+tr("Обозначения")+QStringLiteral("</h3>");
+    html+=sym(QStringLiteral("+"), green, tr("создано: новая запись или ветка"));
+    html+=sym(QStringLiteral("≡"), blue, tr("переименовано: изменилось имя или свойства"));
+    html+=sym(QStringLiteral("~"), orange, tr("правка текста"));
+    html+=sym(QStringLiteral("−"), red, tr("удалено"));
+    html+=sym(QStringLiteral("↑"), green, tr("наше едет наружу"));
+    html+=sym(QStringLiteral("↓"), blue, tr("ихнее приезжает к нам"));
+    html+=sym(QStringLiteral("⚠"), darkred, tr("почти-пустая заметка затирает содержательную: по умолчанию остается полная версия"));
+    html+=sym(QStringLiteral("✓"), green, tr("решено: выбрано действие; ветка подсвечена целиком, когда разобрана"));
+    html+=QStringLiteral("<h3>")+tr("Действия")+QStringLiteral("</h3>");
+    html+=sym(QStringLiteral("✓"), green, tr("Применить — выполнить запланированное молча"));
+    html+=sym(QStringLiteral("✓"), green, tr("Подтвердить — то же, но только после моего взгляда"));
+    html+=sym(QStringLiteral("⚠"), darkred, tr("Красное с ⚠ в списке — данные будут удалены или затёрты: удаление здесь/на сервере, затирание полной версии пустой"));
+    html+=sym(QStringLiteral("•"), purple, tr("Взять с сервера — отменить моё, взять их версию (моё удаление — воскресить)"));
+    html+=sym(QStringLiteral("•"), purple, tr("Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)"));
+    html+=sym(QStringLiteral("•"), purple, tr("Пропустить — ничего не делать в этот раз"));
+    html+=QStringLiteral("<h3>")+tr("Вкладки")+QStringLiteral("</h3>");
+    html+=sym(QStringLiteral("↑"), green, tr("Я → сервер: мои изменения уедут наружу"));
+    html+=sym(QStringLiteral("↓"), blue, tr("Сервер → я: ихние изменения приедут к нам"));
+    html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
+    html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
+    html+=sym(QStringLiteral("•"), green, tr("«Запомнить» — сохранить выбранные действия как умолчание для будущих синков"));
+    html+=sym(QStringLiteral("•"), green, tr("«Всё дерево» — показать элементы всех вкладок сразу (чужие — бледным контекстом)"));
+    html+=sym(QStringLiteral("•"), green, tr("«Действия ▾» — действия по умолчанию для целых категорий"));
+    html+=sym(QStringLiteral("•"), green, tr("Клик по ветке — её записи внизу; «Применить» — выполнить, «Отмена» — прервать"));
+
+    QTextEdit *text=new QTextEdit(&help);
     text->setReadOnly(true);
-    text->setPlainText(
-        tr("Обозначения\n"
-           "+ — создано: новая запись или ветка\n"
-           "≡ — переименовано: изменилось имя или свойства\n"
-           "~ — правка текста\n"
-           "− — удалено\n"
-           "↑ — наше едет наружу\n"
-           "↓ — ихнее приезжает к нам\n"
-           "⚠ — почти-пустая заметка затирает содержательную: по умолчанию остается полная версия\n"
-           "✓ — решено: выбрано действие; ветка подсвечена целиком, когда разобрана\n"
-           "\n"
-           "Действия\n"
-           "Применить — выполнить запланированное молча\n"
-           "Подтвердить — то же, но только после моего взгляда\n"
-           "Красное с ⚠ в списке — данные будут удалены или затёрты: \n"
-           "удаление здесь/на сервере, затирание полной версии пустой\n"
-           "Взять с сервера — отменить моё, взять их версию (моё удаление — воскресить)\n"
-           "Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)\n"
-           "Пропустить — ничего не делать в этот раз"
-           "\n"
-           "Вкладки\n"
-           "↑ Я → сервер: мои изменения уедут наружу\n"
-           "↓ Сервер → я: ихние изменения приедут к нам\n"
-           "⇅ Обоюдные правки: текст разошелся с обеих сторон. "
-           "Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. "
-           "Эвристика предлагает более новую, но решаете вы\n"
-           "\n"
-           "Кнопки и галочки\n"
-           "«Запомнить» — сохранить выбранные действия как умолчание для будущих синков\n"
-           "«Всё дерево» — показать элементы всех вкладок сразу (чужие — бледным контекстом)\n"
-           "«Действия ▾» — действия по умолчанию для целых категорий\n"
-           "Клик по ветке — её записи внизу; «Применить» — выполнить, «Отмена» — прервать"));
+    text->setHtml(html);
     layout->addWidget(text);
 
     QDialogButtonBox *buttons=new QDialogButtonBox(

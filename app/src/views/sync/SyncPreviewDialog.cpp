@@ -294,15 +294,15 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
         tr("Выберите измененную запись, чтобы увидеть diff."));
     layout->addWidget(m_diffView, 2);
 
-    // --- кнопки ---
+    // --- кнопки: Применить ждёт, пока всё разобрано (как на мобиле) ---
     QDialogButtonBox *buttons=new QDialogButtonBox(this);
-    QPushButton *applyButton=buttons->addButton(
+    m_applyButton=buttons->addButton(
         tr("Применить"), QDialogButtonBox::AcceptRole);
     buttons->addButton(tr("Отмена"), QDialogButtonBox::RejectRole);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     layout->addWidget(buttons);
-    applyButton->setDefault(true);
+    m_applyButton->setDefault(true);
 
     refreshAll();
 }
@@ -1048,6 +1048,9 @@ void SyncPreviewDialog::refreshCounter(void)
         m_statusLabel->setText(tr("✓ Всё разобрано (%1/%2)").arg(decided).arg(total));
     else
         m_statusLabel->setText(tr("Разобрано (%1/%2)").arg(decided).arg(total));
+
+    if(m_applyButton!=nullptr)
+        m_applyButton->setEnabled(total>0 && decided==total);
 }
 
 
@@ -1392,6 +1395,7 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("•"), green, tr("«Запомнить» — сохранить выбранные действия как умолчание для будущих синков"));
     html+=sym(QStringLiteral("•"), green, tr("«Всё дерево» — показать элементы всех вкладок сразу (чужие — бледным контекстом)"));
     html+=sym(QStringLiteral("•"), green, tr("«Действия ▾» — действия по умолчанию для целых категорий"));
+    html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» ждёт, пока всё разобрано"));
     html+=sym(QStringLiteral("•"), green, tr("Клик по ветке — её записи внизу; «Применить» — выполнить, «Отмена» — прервать"));
 
     QTextEdit *text=new QTextEdit(&help);

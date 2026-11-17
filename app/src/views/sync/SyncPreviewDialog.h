@@ -143,6 +143,7 @@ private:
     QCheckBox *m_wholeTreeCheck=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
     QLabel *m_branchLabel=nullptr;
+    QPushButton *m_applyButton=nullptr;
     QWidget *m_duelRow=nullptr;
     QPushButton *m_mineButton=nullptr;
     QPushButton *m_theirsButton=nullptr;

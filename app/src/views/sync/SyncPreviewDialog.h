@@ -87,10 +87,11 @@ private slots:
 
     void onTabChanged(int index);
     void onActionsMenuTriggered(void);
-    void onWholeTreeToggled(bool checked);
+    void onJumpClicked(void);
     void onHelpClicked(void);
     void onItemSelectionChanged(void);
     void onItemActionChanged(int index);
+    void onRowButtonClicked(void);
     void onDuelMine(void);
     void onDuelTheirs(void);
 
@@ -98,6 +99,7 @@ private:
 
     // Вкладка: 0 = Я→сервер, 1 = Сервер→я, 2 = Обоюдные правки.
     // Обоюдные — только правки текста (как на мобиле)
+    int sectionOf(const SyncPreview::Item &item) const;
     bool itemVisibleOnTab(const SyncPreview::Item &item, int tab) const;
     QString tabName(int tab) const;
     QList<QPair<QString, QColor>> tabStatSpans(int tab) const;
@@ -109,6 +111,11 @@ private:
     QComboBox *makeActionCombo(int index);
     void syncComboState(QComboBox *combo, const SyncPreview::Item &item);
     void refreshCombos(void);
+    QWidget *makeActionWidget(int index);
+    void syncWidgetState(QWidget *w, const SyncPreview::Item &item);
+    void refreshWidgets(void);
+    static SyncPreview::Action acceptFor(const SyncPreview::Item &item);
+    static SyncPreview::Action rejectFor(const SyncPreview::Item &item);
     void applyFilters(void);
     void setDimmed(QTreeWidgetItem *node, bool dimmed);
     void refreshRowText(QTreeWidgetItem *row);
@@ -142,7 +149,8 @@ private:
     QCheckBox *m_saveDefaults=nullptr;
     QTabBar *m_tabs=nullptr;
     QToolButton *m_actionsButton=nullptr;
-    QCheckBox *m_wholeTreeCheck=nullptr;
+    QTreeWidgetItem *m_sectionHeaders[3]={nullptr,nullptr,nullptr};
+    QPushButton *m_jumpButton=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
     QLabel *m_branchLabel=nullptr;
     QString m_diffOwn;

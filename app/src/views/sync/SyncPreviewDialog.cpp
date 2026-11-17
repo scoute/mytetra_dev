@@ -154,6 +154,12 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
       m_ownText(ownText),
       m_otherText(otherText)
 {
+    // Skip умер как класс: старые сохранённые Skip считаем нерешенными
+    for(auto it=m_decisions.category.begin(); it!=m_decisions.category.end(); ++it)
+        if(it.value()==Action::Skip) it.value()=Action::Confirm;
+    for(auto it=m_decisions.byId.begin(); it!=m_decisions.byId.end(); ++it)
+        if(it.value()==Action::Skip) it.value()=Action::Confirm;
+
     setWindowTitle(tr("Дерево изменений синхронизации"));
     resize(880, 660);
 
@@ -229,14 +235,11 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     buildActionsMenu();
     toolbar->addWidget(m_actionsButton);
 
-    m_wholeTreeCheck=new QCheckBox(tr("Всё дерево"), this);
-    m_wholeTreeCheck->setChecked(m_wholeTree);
-    m_wholeTreeCheck->setToolTip(
-        tr("Показать элементы всех вкладок сразу (чужие — бледным контекстом). "
-           "Выключено — только дерево текущей вкладки"));
-    connect(m_wholeTreeCheck, &QCheckBox::toggled,
-            this, &SyncPreviewDialog::onWholeTreeToggled);
-    toolbar->addWidget(m_wholeTreeCheck);
+    m_jumpButton=new QPushButton(tr("↓ 0"), this);
+    m_jumpButton->setToolTip(tr("К первому неразобранному"));
+    connect(m_jumpButton, &QPushButton::clicked,
+            this, &SyncPreviewDialog::onJumpClicked);
+    toolbar->addWidget(m_jumpButton);
 
     toolbar->addStretch(1);
 
@@ -346,16 +349,19 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 }
 
 
+int SyncPreviewDialog::sectionOf(const Item &item) const
+{
+    // 0 — Я → сервер, 1 — Сервер → я, 2 — обоюдные правки.
+    // Обоюдные — все Edit (как tabOf на мобиле), остальное по направлению
+    if(item.category==Category::Edit)
+        return 2;
+    return item.fromLocal ? 0 : 1;
+}
+
+
 bool SyncPreviewDialog::itemVisibleOnTab(const Item &item, int tab) const
 {
-    if(tab==0)
-        return item.fromLocal;
-    if(tab==1)
-        return !item.fromLocal;
-
-    // Обоюдные правки: только правки текста (как в мобильной версии).
-    // Переименования идут по направлениям
-    return item.category==Category::Edit;
+    return sectionOf(item)==tab;
 }
 
 
@@ -488,7 +494,7 @@ void SyncPreviewDialog::buildActionsMenu(void)
                 .arg(SyncPreview::categoryName(category)).arg(count));
         sub->setEnabled(count>0);
 
-        for(int a=0; a<5; ++a)
+        for(int a=0; a<4; ++a)
         {
             const Action action=static_cast<Action>(a);
             QAction *entry=sub->addAction(SyncPreview::actionName(action));
@@ -580,25 +586,57 @@ void SyncPreviewDialog::refreshRowText(QTreeWidgetItem *row)
     row->setData(0, HasWarnRole, m_dangers.contains(item.id));
     row->setData(0, PillColorRole, QColor(categoryColor(item.category)));
     row->setData(0, DimmedRole, false);
+
+    // Подсветка требующего решения: нерешенное — жирным + тёплый фон
+    QFont rf=row->font(0);
+    rf.setBold(!decided);
+    row->setFont(0, rf);
+    if(!decided)
+        row->setBackground(0, QBrush(QColor(0x26, 0xA6, 0x9A, 0x2E)));
+    else
+        row->setData(0, Qt::BackgroundRole, QVariant());
 }
 
 
 void SyncPreviewDialog::buildItems(void)
 {
     m_itemsTree->clear();
+    for(int i=0;i<3;++i) m_sectionHeaders[i]=nullptr;
 
-    // Узлы для всех элементов (фильтр вкладок — скрытием, как на мобиле)
+    // Разделы-линейки: одно дерево целиком (как в макете)
+    int secCount[3]={0,0,0};
+    for(const Item &it : m_preview.items)
+        secCount[sectionOf(it)]++;
+
+    for(int sec=0; sec<3; ++sec)
+    {
+        QTreeWidgetItem *h=new QTreeWidgetItem(m_itemsTree);
+        h->setFirstColumnSpanned(true);
+        h->setData(0, Qt::UserRole, -2);
+        h->setData(0, Qt::UserRole+1, QStringLiteral("section-%1").arg(sec));
+        h->setFlags(h->flags() & ~Qt::ItemIsSelectable);
+        h->setExpanded(true);
+        const QString title=QStringLiteral("── %1 · %2 ──")
+            .arg(tabName(sec)).arg(secCount[sec]);
+        h->setText(0, title);
+        h->setData(0, Qt::UserRole+2, title);
+        QFont f=h->font(0); f.setBold(true); h->setFont(0, f);
+        m_sectionHeaders[sec]=h;
+    }
+
+    // Узлы для всех элементов, по секциям (предки внутри своей секции)
     QMap<QString, QTreeWidgetItem *> nodeById;
-    QList<QTreeWidgetItem *> roots;
 
-    auto contextNode=[&](const QString &id, const QString &name,
+    // Контекст-предки внутри своей секции (ключ секция+id)
+    auto contextNode=[&](int sec, const QString &id, const QString &name,
                          QTreeWidgetItem *parent) -> QTreeWidgetItem * {
-        if(nodeById.contains(id))
-            return nodeById.value(id);
+        const QString key=QStringLiteral("%1:%2").arg(sec).arg(id);
+        if(nodeById.contains(key))
+            return nodeById.value(key);
 
-        QTreeWidgetItem *node=(parent!=nullptr)
-            ? new QTreeWidgetItem(parent)
-            : new QTreeWidgetItem(m_itemsTree);
+        QTreeWidgetItem *top=(parent!=nullptr) ? parent
+                                              : m_sectionHeaders[sec];
+        QTreeWidgetItem *node=new QTreeWidgetItem(top);
         node->setText(0, name.isEmpty() ? tr("(ветка)") : name);
         node->setData(0, Qt::UserRole, -1);
         node->setData(0, Qt::UserRole+1, id);
@@ -609,12 +647,8 @@ void SyncPreviewDialog::buildItems(void)
         node->setData(0, HasCheckRole, false);
         node->setData(0, HasWarnRole, false);
         node->setData(0, PillColorRole, QColor(0x888888));
-        node->setData(0, DimmedRole, true);
-
-        if(parent==nullptr)
-            roots << node;
-
-        nodeById.insert(id, node);
+        node->setData(0, DimmedRole, false);
+        nodeById.insert(key, node);
         return node;
     };
 
@@ -635,63 +669,50 @@ void SyncPreviewDialog::buildItems(void)
     for(int index : order)
     {
         const Item &item=m_preview.items.at(index);
+        const int sec=sectionOf(item);
 
         QTreeWidgetItem *parent=nullptr;
 
         for(int level=0; level<item.pathIds.size(); ++level)
         {
-            parent=contextNode(item.pathIds.at(level),
+            parent=contextNode(sec, item.pathIds.at(level),
                 level < item.path.size() ? item.path.at(level) : QString(),
                 parent);
         }
 
-        QTreeWidgetItem *node=(parent!=nullptr)
-            ? new QTreeWidgetItem(parent)
-            : new QTreeWidgetItem(m_itemsTree);
+        QTreeWidgetItem *node=new QTreeWidgetItem(
+            parent!=nullptr ? parent : m_sectionHeaders[sec]);
         node->setData(0, Qt::UserRole, index);
         node->setData(0, Qt::UserRole+1, item.isBranch ? item.id : item.parentId);
         refreshRowText(node);
 
-        if(item.isBranch)
-        {
-            QComboBox *combo=makeActionCombo(index);
-            m_itemsTree->setItemWidget(node, 1, combo);
-            node->setText(2, item.isBranch ? tr("ветка") : tr("запись"));
-        }
-        else
-        {
-            QComboBox *combo=makeActionCombo(index);
-            m_itemsTree->setItemWidget(node, 1, combo);
-            node->setText(2, item.isBranch ? tr("ветка") : tr("запись"));
-        }
+        QWidget *actions=makeActionWidget(index);
+        m_itemsTree->setItemWidget(node, 1, actions);
+        node->setText(2, item.isBranch ? tr("ветка") : tr("запись"));
 
-        if(parent==nullptr)
-            roots << node;
-
-        // Ветки тоже адресуются по id (для подсветки и контекста)
+        // Ветки тоже адресуются по id секции (для подсветки)
+        const QString selfKey=QStringLiteral("%1:%2").arg(sec).arg(item.id);
         if(item.isBranch)
-            nodeById.insert(item.id, node);
-        else if(!nodeById.contains(item.id))
-            nodeById.insert(item.id, node);
+            nodeById.insert(selfKey, node);
+        else if(!nodeById.contains(selfKey))
+            nodeById.insert(selfKey, node);
     }
 
     applyFilters();
 
-    for(QTreeWidgetItem *root : roots)
-        root->setExpanded(true);
+    for(int sec=0; sec<3; ++sec)
+        if(m_sectionHeaders[sec]!=nullptr)
+            m_sectionHeaders[sec]->setExpanded(true);
 
-    // Начальный выбор: первый элемент текущей вкладки
+    // Начальный выбор: первый элемент
     for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
     {
-        if(!(*it)->isHidden())
-        {
-            const int itemIndex=(*it)->data(0, Qt::UserRole).toInt();
+        const int itemIndex=(*it)->data(0, Qt::UserRole).toInt();
 
-            if(itemIndex>=0)
-            {
-                m_itemsTree->setCurrentItem(*it);
-                break;
-            }
+        if(itemIndex>=0)
+        {
+            m_itemsTree->setCurrentItem(*it);
+            break;
         }
     }
 
@@ -712,7 +733,6 @@ static QList<Action> rowActions(const Item &item)
     else
         actions << Action::ForceMine;
 
-    actions << Action::Skip;
     return actions;
 }
 
@@ -950,52 +970,198 @@ void SyncPreviewDialog::refreshCombos(void)
 }
 
 
-void SyncPreviewDialog::applyFilters(void)
+
+SyncPreview::Action SyncPreviewDialog::acceptFor(const SyncPreview::Item &item)
 {
-    QSet<QString> visibleIds;
-    QSet<QString> contextIds;
+    using Action=SyncPreview::Action;
+    using Category=SyncPreview::Category;
+    if(item.category==Category::MyDelete)
+        return Action::TakeServer;
+    return Action::Apply;
+}
 
-    for(const Item &item : m_preview.items)
+
+SyncPreview::Action SyncPreviewDialog::rejectFor(const SyncPreview::Item &item)
+{
+    using Action=SyncPreview::Action;
+    using Category=SyncPreview::Category;
+    if(item.category==Category::MyDelete)
+        return Action::Apply;
+    if(item.category==Category::TheirDelete)
+        return Action::ForceMine;
+    if(item.category==Category::Edit)
+        return item.fromLocal ? Action::TakeServer : Action::ForceMine;
+    return item.fromLocal ? Action::TakeServer : Action::ForceMine;
+}
+
+
+QWidget *SyncPreviewDialog::makeActionWidget(int index)
+{
+    const Item &item=m_preview.items.at(index);
+    QWidget *w=new QWidget(m_itemsTree);
+    QHBoxLayout *lay=new QHBoxLayout(w);
+    lay->setContentsMargins(0, 0, 0, 0);
+    lay->setSpacing(2);
+
+    const bool isEdit=(item.category==Category::Edit && !item.isBranch);
+
+    QToolButton *bYes=new QToolButton(w);
+    QToolButton *bNo=new QToolButton(w);
+    QToolButton *bDiff=new QToolButton(w);
+
+    if(isEdit)
     {
-        if(!itemVisibleOnTab(item, m_tab))
-            continue;
+        bYes->setText(tr("\u2191"));
+        bNo->setText(tr("\u2193"));
+        bYes->setToolTip(tr("Наша (оставить мою версию)"));
+        bNo->setToolTip(tr("Ихняя (взять версию с сервера)"));
+    }
+    else
+    {
+        bYes->setText(QStringLiteral("\u2713"));
+        bNo->setText(QStringLiteral("\u2715"));
+        bYes->setToolTip(actionSub(item, acceptFor(item),
+            m_dangers.value(item.id, Danger::None)));
+        bNo->setToolTip(actionSub(item, rejectFor(item),
+            m_dangers.value(item.id, Danger::None)));
+    }
+    bDiff->setText(tr("diff"));
+    bDiff->setToolTip(tr("Показать diff"));
 
-        visibleIds.insert(item.id);
-
-        for(const QString &aid : item.pathIds)
-            contextIds.insert(aid);
+    for(QToolButton *b : {bYes, bNo, bDiff})
+    {
+        b->setCheckable(false);
+        b->setAutoRaise(true);
+        lay->addWidget(b);
     }
 
+    bYes->setProperty("itemIndex", index);
+    bYes->setProperty("role", "yes");
+    bNo->setProperty("itemIndex", index);
+    bNo->setProperty("role", "no");
+    bDiff->setProperty("itemIndex", index);
+    bDiff->setProperty("role", "diff");
+
+    connect(bYes, &QToolButton::clicked,
+            this, &SyncPreviewDialog::onRowButtonClicked);
+    connect(bNo, &QToolButton::clicked,
+            this, &SyncPreviewDialog::onRowButtonClicked);
+    connect(bDiff, &QToolButton::clicked,
+            this, &SyncPreviewDialog::onRowButtonClicked);
+
+    syncWidgetState(w, item);
+    return w;
+}
+
+
+void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &item)
+{
+    if(w==nullptr)
+        return;
+
+    const Action effective=m_decisions.forItem(item);
+    const bool decided=(effective!=Action::Confirm);
+    const bool isEdit=(item.category==Category::Edit && !item.isBranch);
+    const Action accept=acceptFor(item);
+    const Action reject=rejectFor(item);
+
+    QList<QToolButton *> btns=w->findChildren<QToolButton *>();
+    if(btns.size()<3)
+        return;
+
+    QToolButton *bYes=btns.at(0);
+    QToolButton *bNo=btns.at(1);
+
+    // Серые по умолчанию, активный подсвечен (как в макете)
+    const QString idle=QStringLiteral("color: #777; border: 1.5px solid #555;");
+    QString yesStyle=idle, noStyle=idle;
+
+    if(decided)
+    {
+        if(isEdit)
+        {
+            if(effective==Action::ForceMine)
+                yesStyle=QStringLiteral("color: #66BB6A; border: 1.5px solid #66BB6A; font-weight: bold;");
+            else if(effective==Action::TakeServer)
+                noStyle=QStringLiteral("color: #64B5F6; border: 1.5px solid #64B5F6; font-weight: bold;");
+        }
+        else if(effective==accept)
+            yesStyle=QStringLiteral("color: #66BB6A; border: 1.5px solid #66BB6A; font-weight: bold;");
+        else if(effective==reject)
+            noStyle=QStringLiteral("color: #EF5350; border: 1.5px solid #EF5350; font-weight: bold;");
+    }
+
+    bYes->setStyleSheet(yesStyle);
+    bNo->setStyleSheet(noStyle);
+}
+
+
+void SyncPreviewDialog::refreshWidgets(void)
+{
     for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
     {
-        QTreeWidgetItem *node=*it;
-        const int itemIndex=node->data(0, Qt::UserRole).toInt();
+        QTreeWidgetItem *row=*it;
+        const int itemIndex=row->data(0, Qt::UserRole).toInt();
 
-        if(itemIndex<0)
-        {
-            // Контекстный узел предка
-            const QString id=node->data(0, Qt::UserRole+1).toString();
-            const bool inContext=contextIds.contains(id);
-            node->setHidden(!m_wholeTree && !inContext);
-            setDimmed(node, m_wholeTree || inContext);
+        if(itemIndex<0 || itemIndex>=m_preview.items.size())
             continue;
-        }
 
-        const Item &item=m_preview.items.at(itemIndex);
-        const bool visible=visibleIds.contains(item.id);
-        const bool context=!visible && contextIds.contains(item.id);
+        if(QWidget *w=m_itemsTree->itemWidget(row, 1))
+            syncWidgetState(w, m_preview.items.at(itemIndex));
+    }
+}
 
-        if(m_wholeTree)
+
+void SyncPreviewDialog::onRowButtonClicked(void)
+{
+    QToolButton *b=qobject_cast<QToolButton *>(sender());
+    if(b==nullptr)
+        return;
+
+    const int itemIndex=b->property("itemIndex").toInt();
+    if(itemIndex<0 || itemIndex>=m_preview.items.size())
+        return;
+
+    const Item &item=m_preview.items.at(itemIndex);
+    const QString role=b->property("role").toString();
+    const Action effective=m_decisions.forItem(item);
+
+    if(role==QStringLiteral("diff"))
+    {
+        // Diff по иконке: выбрать строку (панель diff обновится)
+        for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
         {
-            // Всё дерево: чужие вкладки — бледным контекстом
-            node->setHidden(false);
-            setDimmed(node, !visible);
+            if((*it)->data(0, Qt::UserRole).toInt()==itemIndex)
+            {
+                m_itemsTree->setCurrentItem(*it);
+                m_itemsTree->scrollToItem(*it);
+                break;
+            }
         }
-        else
-        {
-            node->setHidden(!visible && !context);
-            setDimmed(node, context);
-        }
+        return;
+    }
+
+    const bool isEdit=(item.category==Category::Edit && !item.isBranch);
+    Action target=Action::Confirm;
+
+    if(role==QStringLiteral("yes"))
+        target=isEdit ? Action::ForceMine : acceptFor(item);
+    else if(role==QStringLiteral("no"))
+        target=isEdit ? Action::TakeServer : rejectFor(item);
+
+    // Повторный тап снимает решение (как в макете)
+    m_decisions.byId[item.id]=(effective==target) ? Action::Confirm : target;
+    refreshAll();
+}
+
+void SyncPreviewDialog::applyFilters(void)
+{
+    // Новая концепция: одно дерево целиком, вкладки — якоря.
+    // Фильтра нет: всё видимо, контекст не бледним
+    for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
+    {
+        (*it)->setHidden(false);
+        setDimmed(*it, false);
     }
 }
 
@@ -1089,6 +1255,13 @@ void SyncPreviewDialog::refreshCounter(void)
 
     if(m_applyButton!=nullptr)
         m_applyButton->setEnabled(total>0 && decided==total);
+
+    if(m_jumpButton!=nullptr)
+    {
+        const int left=total-decided;
+        m_jumpButton->setText(tr("↓ %1").arg(left));
+        m_jumpButton->setVisible(left>0);
+    }
 }
 
 
@@ -1101,36 +1274,41 @@ void SyncPreviewDialog::refreshAll(void)
     refreshBranchMarks();
     refreshCounter();
     refreshCombos();
+    refreshWidgets();
     applyFilters();
 }
 
 
 void SyncPreviewDialog::onTabChanged(int index)
 {
+    // Вкладки — якоря-ссылки: тап скроллит к разделу, фильтра нет
     m_tab=index;
-    applyFilters();
-
-    // Панель — под первый видимый элемент вкладки
-    for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
+    if(index>=0 && index<3 && m_sectionHeaders[index]!=nullptr)
     {
-        if(!(*it)->isHidden())
-        {
-            const int itemIndex=(*it)->data(0, Qt::UserRole).toInt();
-
-            if(itemIndex>=0)
-            {
-                m_itemsTree->setCurrentItem(*it);
-                break;
-            }
-        }
+        m_itemsTree->scrollToItem(m_sectionHeaders[index],
+            QAbstractItemView::PositionAtTop);
+        m_itemsTree->setCurrentItem(m_sectionHeaders[index]);
     }
 }
 
 
-void SyncPreviewDialog::onWholeTreeToggled(bool checked)
+void SyncPreviewDialog::onJumpClicked(void)
 {
-    m_wholeTree=checked;
-    applyFilters();
+    // К первому неразобранному (Confirm == нет решения): прыжок + выбор
+    for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
+    {
+        QTreeWidgetItem *node=*it;
+        const int itemIndex=node->data(0, Qt::UserRole).toInt();
+        if(itemIndex<0 || itemIndex>=m_preview.items.size())
+            continue;
+        if(m_decisions.forItem(m_preview.items.at(itemIndex))==Action::Confirm)
+        {
+            m_itemsTree->scrollToItem(node,
+                QAbstractItemView::PositionAtTop);
+            m_itemsTree->setCurrentItem(node);
+            break;
+        }
+    }
 }
 
 

@@ -996,13 +996,14 @@ QWidget *SyncPreviewDialog::makeActionWidget(int index)
     lay->setContentsMargins(0, 0, 0, 0);
     lay->setSpacing(2);
 
-    const bool isEdit=(item.category==Category::Edit && !item.isBranch);
+    const bool isDuel=((item.category==Category::Edit && !item.isBranch)
+        || (item.category==Category::Rename && item.isBranch));
 
     QToolButton *bYes=new QToolButton(w);
     QToolButton *bNo=new QToolButton(w);
     QToolButton *bDiff=new QToolButton(w);
 
-    if(isEdit)
+    if(isDuel)
     {
         bYes->setText(tr("\u2191"));
         bNo->setText(tr("\u2193"));
@@ -1054,7 +1055,8 @@ void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &ite
 
     const Action effective=m_decisions.forItem(item);
     const bool decided=(effective!=Action::Confirm);
-    const bool isEdit=(item.category==Category::Edit && !item.isBranch);
+    const bool isDuel=((item.category==Category::Edit && !item.isBranch)
+        || (item.category==Category::Rename && item.isBranch));
     const Action accept=acceptFor(item);
     const Action reject=rejectFor(item);
 
@@ -1079,13 +1081,13 @@ void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &ite
     };
 
     const QColor green(0x66BB6A), red(0xEF5350), blue(0x64B5F6);
-    const QColor noSolid=isEdit ? blue : red;
+    const QColor noSolid=isDuel ? blue : red;
 
     bool yesActive=false, noActive=false;
 
     if(decided)
     {
-        if(isEdit)
+        if(isDuel)
         {
             yesActive=(effective==Action::ForceMine);
             noActive=(effective==Action::TakeServer);
@@ -1147,13 +1149,14 @@ void SyncPreviewDialog::onRowButtonClicked(void)
         return;
     }
 
-    const bool isEdit=(item.category==Category::Edit && !item.isBranch);
+    const bool isDuel=((item.category==Category::Edit && !item.isBranch)
+        || (item.category==Category::Rename && item.isBranch));
     Action target=Action::Confirm;
 
     if(role==QStringLiteral("yes"))
-        target=isEdit ? Action::ForceMine : acceptFor(item);
+        target=isDuel ? Action::ForceMine : acceptFor(item);
     else if(role==QStringLiteral("no"))
-        target=isEdit ? Action::TakeServer : rejectFor(item);
+        target=isDuel ? Action::TakeServer : rejectFor(item);
 
     // Повторный тап снимает решение (как в макете)
     m_decisions.byId[item.id]=(effective==target) ? Action::Confirm : target;

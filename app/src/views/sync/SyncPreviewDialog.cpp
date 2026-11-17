@@ -587,6 +587,7 @@ void SyncPreviewDialog::refreshRowText(QTreeWidgetItem *row)
     row->setData(0, HasWarnRole, m_dangers.contains(item.id));
     row->setData(0, PillColorRole, QColor(categoryColor(item.category)));
     row->setData(0, DimmedRole, false);
+    row->setData(0, BranchRole, item.isBranch);
 
     // Подсветка требующего решения: нерешенное — жирным + тёплый фон
     QFont rf=row->font(0);
@@ -649,6 +650,7 @@ void SyncPreviewDialog::buildItems(void)
         node->setData(0, HasWarnRole, false);
         node->setData(0, PillColorRole, QColor(0x888888));
         node->setData(0, DimmedRole, false);
+        node->setData(0, BranchRole, true); // контекстные узлы — ветки
         nodeById.insert(key, node);
         return node;
     };
@@ -848,10 +850,13 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     if(grayed)
         pillBase=QColor(0x888888);
 
+    const bool isBranch=index.data(BranchRole).toBool();
+    const int iconW=fm.height();
+    const int iconGap=4;
     const int tailW=warnW+doneW;
-    const int nameAvail=qMax(20, right-x-tailW-pillPad*2);
+    const int nameAvail=qMax(20, right-x-tailW-pillPad*2-iconW-iconGap);
     const QString shownName=fm.elidedText(name, Qt::ElideRight, nameAvail);
-    const int pillW=fm.horizontalAdvance(shownName)+pillPad*2;
+    const int pillW=fm.horizontalAdvance(shownName)+iconW+iconGap+pillPad*2;
     const int pillH=qMin(rowH-2, fm.height()+8);
     const QRectF pillRect(x, cy-pillH/2, pillW, pillH);
 
@@ -867,9 +872,41 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     painter->drawRoundedRect(pillRect, pillH/2, pillH/2);
     painter->setRenderHint(QPainter::Antialiasing, false);
 
+    // Иконка типа: папка / лист с загнутым углом (как на мобиле)
+    {
+        const QColor iconFg=grayed ? dimFg : fg;
+        const int iconH=pillH-8;
+        const int iconX=x+4;
+        const int iconY=cy-iconH/2;
+        painter->setBrush(iconFg);
+        painter->setPen(Qt::NoPen);
+        painter->setRenderHint(QPainter::Antialiasing, true);
+        if(isBranch)
+        {
+            const int tabW=iconW*45/100, tabH=iconH*32/100;
+            painter->drawRoundedRect(QRectF(iconX, iconY, tabW, tabH+2), 2, 2);
+            painter->drawRoundedRect(QRectF(iconX, iconY+tabH*0.5,
+                iconW, iconH-tabH*0.5), 2, 2);
+        }
+        else
+        {
+            const int f=iconW*30/100;
+            QPolygonF page;
+            page << QPointF(iconX, iconY)
+                 << QPointF(iconX+iconW-f, iconY)
+                 << QPointF(iconX+iconW, iconY+f)
+                 << QPointF(iconX+iconW, iconY+iconH)
+                 << QPointF(iconX, iconY+iconH);
+            painter->drawPolygon(page);
+        }
+        painter->setRenderHint(QPainter::Antialiasing, false);
+    }
+
     painter->setPen(grayed ? dimFg : fg);
     painter->setFont(o.font);
-    painter->drawText(pillRect.toRect(), Qt::AlignCenter, shownName);
+    painter->drawText(QRect(x+4+iconW+iconGap, pillRect.top(),
+        pillW-4-iconW-iconGap-pillPad, pillH),
+        Qt::AlignLeft | Qt::AlignVCenter, shownName);
     x+=pillW+gap;
 
     if(hasWarn)

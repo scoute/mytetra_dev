@@ -1072,16 +1072,17 @@ void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &ite
     QToolButton *bYes=btns.at(0);
     QToolButton *bNo=btns.at(1);
 
-    // Смайловая заливка как на мобиле: светлый цветной фон всегда,
-    // в активе — сплошной + белый глиф
+    // Как на мобиле: неактивные серые, в активе — сплошной цвет + белый глиф
+    const QColor grayFg(0x777777), grayBd(0x555555);
+    const QColor grayBg(0x777777, 0x777777, 0x777777, 0x28);
     auto paint=[&](QToolButton *b, const QColor &solid, bool active) {
         const QColor fill=solid;
         const QColor light(fill.red(), fill.green(), fill.blue(), 0x55);
         b->setStyleSheet(QStringLiteral(
             "color: %1; background: %2; border: 1.5px solid %3; font-weight: bold;")
-            .arg(active ? QStringLiteral("white") : solid.name(QColor::HexRgb),
-                 (active ? solid : light).name(QColor::HexArgb),
-                 solid.name(QColor::HexRgb)));
+            .arg(active ? QStringLiteral("white") : grayFg.name(QColor::HexRgb),
+                 (active ? solid : grayBg).name(QColor::HexArgb),
+                 (active ? solid : grayBd).name(QColor::HexRgb)));
     };
 
     const QColor green(0x66BB6A), red(0xEF5350), blue(0x64B5F6);

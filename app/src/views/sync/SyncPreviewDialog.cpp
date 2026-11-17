@@ -857,8 +857,11 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     QColor fill=pillBase;
     fill.setAlpha(selected ? 255 : 90);
     painter->setBrush(fill);
-    painter->setPen(QPen(selected ? fg : pillBase,
-                         subtreeDone ? 2 : 1));
+    QPen pillPen(selected ? fg : pillBase, subtreeDone ? 2 : 1);
+    // Серый контекст — пунктиром, как на мобиле
+    if(grayed)
+        pillPen.setStyle(Qt::DashLine);
+    painter->setPen(pillPen);
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->drawRoundedRect(pillRect, pillH/2, pillH/2);
     painter->setRenderHint(QPainter::Antialiasing, false);

@@ -45,6 +45,7 @@ class QLabel;
 class QPlainTextEdit;
 class QPushButton;
 class QTabBar;
+class QTextEdit;
 class QToolButton;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -119,6 +120,7 @@ private:
     void updateDuel(const SyncPreview::Item *item);
     void refreshDuel(void);
     void showDiffFor(const SyncPreview::Item *item);
+    void refreshDiffView(void);
     void showHelp(void);
 
     static QString markerFor(const SyncPreview::Item &item);
@@ -143,12 +145,19 @@ private:
     QCheckBox *m_wholeTreeCheck=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
     QLabel *m_branchLabel=nullptr;
+    QString m_diffOwn;
+    QString m_diffOther;
+    QString m_diffHtml;
+    int m_diffMode=2; // 0 наша, 1 ихняя, 2 diff
+    QPushButton *m_diffOursButton=nullptr;
+    QPushButton *m_diffTheirsButton=nullptr;
+    QPushButton *m_diffDiffButton=nullptr;
     QPushButton *m_applyButton=nullptr;
     QWidget *m_duelRow=nullptr;
     QPushButton *m_mineButton=nullptr;
     QPushButton *m_theirsButton=nullptr;
     QLabel *m_duelHint=nullptr;
-    QPlainTextEdit *m_diffView=nullptr;
+    QTextEdit *m_diffView=nullptr;
 };
 
 #endif // SYNCPREVIEWDIALOG_H

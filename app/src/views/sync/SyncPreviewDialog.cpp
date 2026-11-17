@@ -288,8 +288,46 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
             this, &SyncPreviewDialog::onDuelTheirs);
     layout->addWidget(m_duelRow);
 
-    m_diffView=new QPlainTextEdit(this);
+    QHBoxLayout *diffTabs=new QHBoxLayout();
+    diffTabs->setContentsMargins(0, 0, 0, 0);
+    m_diffOursButton=new QPushButton(tr("Наша"), this);
+    m_diffTheirsButton=new QPushButton(tr("Ихняя"), this);
+    m_diffDiffButton=new QPushButton(tr("Diff"), this);
+    m_diffOursButton->setCheckable(true);
+    m_diffTheirsButton->setCheckable(true);
+    m_diffDiffButton->setCheckable(true);
+    diffTabs->addWidget(m_diffOursButton);
+    diffTabs->addWidget(m_diffTheirsButton);
+    diffTabs->addWidget(m_diffDiffButton);
+    diffTabs->addStretch(1);
+    layout->addLayout(diffTabs);
+
+    auto markDiffTab=[&](QPushButton *active) {
+        for(QPushButton *b : {m_diffOursButton, m_diffTheirsButton,
+                              m_diffDiffButton})
+            b->setChecked(b==active);
+    };
+    markDiffTab(m_diffDiffButton);
+
+    connect(m_diffOursButton, &QPushButton::clicked, this, [this, markDiffTab]() {
+        m_diffMode=0;
+        markDiffTab(m_diffOursButton);
+        refreshDiffView();
+    });
+    connect(m_diffTheirsButton, &QPushButton::clicked, this, [this, markDiffTab]() {
+        m_diffMode=1;
+        markDiffTab(m_diffTheirsButton);
+        refreshDiffView();
+    });
+    connect(m_diffDiffButton, &QPushButton::clicked, this, [this, markDiffTab]() {
+        m_diffMode=2;
+        markDiffTab(m_diffDiffButton);
+        refreshDiffView();
+    });
+
+    m_diffView=new QTextEdit(this);
     m_diffView->setReadOnly(true);
+    m_diffView->setAcceptRichText(true);
     m_diffView->setPlaceholderText(
         tr("Выберите измененную запись, чтобы увидеть diff."));
     layout->addWidget(m_diffView, 2);
@@ -1287,6 +1325,10 @@ void SyncPreviewDialog::onDuelTheirs(void)
 
 void SyncPreviewDialog::showDiffFor(const Item *item)
 {
+    m_diffOwn.clear();
+    m_diffOther.clear();
+    m_diffHtml.clear();
+
     if(item!=nullptr
        && (item->category==Category::MyDelete
            || item->category==Category::TheirDelete))
@@ -1307,6 +1349,9 @@ void SyncPreviewDialog::showDiffFor(const Item *item)
 
     if(other.isEmpty())
     {
+        m_diffOwn.clear();
+        m_diffOther.clear();
+        m_diffHtml.clear();
         m_diffView->setPlainText(tr("Текст другой стороны недоступен."));
         return;
     }
@@ -1320,27 +1365,68 @@ void SyncPreviewDialog::showDiffFor(const Item *item)
     const QList<SyncDiff::Line> lines=SyncDiff::diffLines(
         SyncDiff::visibleLines(before), SyncDiff::visibleLines(after));
 
-    QStringList out;
+    // Git-раскраска как в мобильной версии: + зелёным, − красным,
+    // шапка и счётчик — своим цветом. QTextEdit вместо Plain:
+    // нужен rich text, текст экранируется
+    const QString green=QStringLiteral("#43A047");
+    const QString red=QStringLiteral("#E53935");
+    QString html=QStringLiteral("<pre style='margin:0; font-family: monospace;'>");
+
+    auto esc=[](const QString &t) { return t.toHtmlEscaped(); };
 
     if(m_dangers.contains(item->id))
-        out << tr("⚠ Защита от бития: с одной стороны почти пустой текст, дефолт — оставить полную.") << QString();
+        html+=QStringLiteral("<b><font color=\"%1\">\u26A0 %2</font></b><br>").arg(
+            red, tr("Защита от бития: с одной стороны почти пустой текст, дефолт — оставить полную.").toHtmlEscaped());
 
-    out << tr("=== %1 (другая сторона) -> %2 (это устройство) ===")
-               .arg(tr("старое"), tr("новое"));
+    html+=QStringLiteral("<b>%1</b><br>").arg(
+        tr("=== %1 (другая сторона) -> %2 (это устройство) ===")
+        .arg(tr("старое"), tr("новое")).toHtmlEscaped());
+
+    int added=0, removed=0;
 
     for(const SyncDiff::Line &line : lines)
     {
         switch(line.kind)
         {
-        case SyncDiff::Line::Equal:  out << QStringLiteral("  ")+line.text; break;
-        case SyncDiff::Line::Removed: out << QStringLiteral("- ")+line.text; break;
-        case SyncDiff::Line::Added:  out << QStringLiteral("+ ")+line.text; break;
+        case SyncDiff::Line::Equal:
+            html+=QStringLiteral("  %1<br>").arg(esc(line.text));
+            break;
+        case SyncDiff::Line::Removed:
+            ++removed;
+            html+=QStringLiteral("<font color=\"%1\">- %2</font><br>").arg(red, esc(line.text));
+            break;
+        case SyncDiff::Line::Added:
+            ++added;
+            html+=QStringLiteral("<font color=\"%1\">+ %2</font><br>").arg(green, esc(line.text));
+            break;
         }
     }
 
-    out << SyncDiff::summary(lines);
+    html+=QStringLiteral("<font color=\"%1\">+%2</font> <font color=\"%3\">-%4</font>")
+        .arg(green).arg(added).arg(red).arg(removed);
+    html+=QStringLiteral("</pre>");
 
-    m_diffView->setPlainText(out.join(QLatin1Char('\n')));
+    // Три вкладки: полные видимые тексты обеих сторон + diff.
+    // "Наша" — моя версия (это устройство), "Ихняя" — другая сторона
+    m_diffOwn=SyncDiff::visibleLines(
+        item->fromLocal ? after : before).join(QStringLiteral("\n"));
+    m_diffOther=SyncDiff::visibleLines(
+        item->fromLocal ? before : after).join(QStringLiteral("\n"));
+    m_diffHtml=html;
+    refreshDiffView();
+}
+
+
+void SyncPreviewDialog::refreshDiffView(void)
+{
+    if(m_diffMode==0 && !m_diffOwn.isEmpty())
+        m_diffView->setPlainText(m_diffOwn);
+    else if(m_diffMode==1 && !m_diffOther.isEmpty())
+        m_diffView->setPlainText(m_diffOther);
+    else if(!m_diffHtml.isEmpty())
+        m_diffView->setHtml(m_diffHtml);
+    else
+        m_diffView->clear();
 }
 
 

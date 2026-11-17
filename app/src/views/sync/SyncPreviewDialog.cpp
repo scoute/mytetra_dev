@@ -7,6 +7,8 @@
 #include <QLabel>
 #include <QMenu>
 #include <QPalette>
+#include <QPainter>
+#include <QPixmap>
 #include <QPlainTextEdit>
 #include <QTextEdit>
 #include <QPushButton>
@@ -253,6 +255,8 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
                                  << tr("Элемент") << tr("Действие") << tr("Инфо"));
     m_itemsTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_itemsTree->setRootIsDecorated(true);
+    m_itemsTree->setItemDelegateForColumn(
+        0, new SyncPreviewItemDelegate(m_itemsTree));
     layout->addWidget(m_itemsTree, 3);
     buildItems();
 
@@ -328,7 +332,9 @@ QString SyncPreviewDialog::tabName(int tab) const
 }
 
 
-QString SyncPreviewDialog::tabStats(int tab) const
+// Статистика вкладки цветными кусками: текст + цвет категории.
+// QTabBar не умеет многоцветный текст — куски рисуются в иконку
+QList<QPair<QString, QColor>> SyncPreviewDialog::tabStatSpans(int tab) const
 {
     int created=0, renamed=0, edited=0, deleted=0;
 
@@ -346,28 +352,74 @@ QString SyncPreviewDialog::tabStats(int tab) const
         }
     }
 
-    QStringList parts;
+    QList<QPair<QString, QColor>> spans;
 
     if(created>0)
-        parts << QStringLiteral("+%1").arg(created);
+        spans << qMakePair(QStringLiteral("+%1").arg(created),
+                           QColor(categoryColor(Category::Create)));
 
     if(renamed>0)
-        parts << QStringLiteral("≡%1").arg(renamed);
+        spans << qMakePair(QStringLiteral("≡%1").arg(renamed),
+                           QColor(categoryColor(Category::Rename)));
 
     if(edited>0)
-        parts << QStringLiteral("~%1").arg(edited);
+        spans << qMakePair(QStringLiteral("~%1").arg(edited),
+                           QColor(categoryColor(Category::Edit)));
 
     if(deleted>0)
-        parts << QStringLiteral("−%1").arg(deleted);
+        spans << qMakePair(QStringLiteral("−%1").arg(deleted),
+                           QColor(categoryColor(Category::MyDelete)));
 
-    return parts.isEmpty() ? QStringLiteral("—") : parts.join(QStringLiteral(" "));
+    if(spans.isEmpty())
+        spans << qMakePair(QStringLiteral("—"), QColor(0x888888));
+
+    return spans;
+}
+
+// Пиктограмма статистики: цветные куски на прозрачном фоне
+QPixmap SyncPreviewDialog::tabStatsIcon(int tab) const
+{
+    const QList<QPair<QString, QColor>> spans=tabStatSpans(tab);
+    QFontMetrics fm(m_tabs->font());
+    const int gap=fm.horizontalAdvance(QStringLiteral(" "));
+    int width=0;
+
+    for(const auto &span : spans)
+        width+=fm.horizontalAdvance(span.first)+gap;
+
+    width-=gap;
+    const int height=fm.height();
+    QImage image(QSize(width, height), QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::transparent);
+
+    QPainter painter(&image);
+    painter.setFont(m_tabs->font());
+    int x=0;
+
+    for(const auto &span : spans)
+    {
+        painter.setPen(span.second);
+        painter.drawText(x, fm.ascent(), span.first);
+        x+=fm.horizontalAdvance(span.first)+gap;
+    }
+
+    return QPixmap::fromImage(image);
 }
 
 
 void SyncPreviewDialog::buildTabs(void)
 {
+    QSize iconSize(0, 0);
+
     for(int tab=0; tab<3; ++tab)
-        m_tabs->addTab(QStringLiteral("%1 · %2").arg(tabName(tab), tabStats(tab)));
+    {
+        m_tabs->addTab(tabName(tab));
+        const QPixmap icon=tabStatsIcon(tab);
+        iconSize=iconSize.expandedTo(icon.size());
+        m_tabs->setTabIcon(tab, icon);
+    }
+
+    m_tabs->setIconSize(iconSize);
 
     // Начальная вкладка: обоюдные, если есть правки — иначе вверх
     bool hasEdit=false;
@@ -477,6 +529,19 @@ void SyncPreviewDialog::refreshRowText(QTreeWidgetItem *row)
     row->setText(0, text);
     row->setData(0, Qt::UserRole+2, text);
     row->setForeground(0, QColor(categoryColor(item.category)));
+
+    // Части для делегата-пилюли: имя в пилюле, остальное текстом
+    row->setData(0, MarkerTextRole, markerFor(item));
+    row->setData(0, MarkerColorRole, QColor(categoryColor(item.category)));
+    row->setData(0, ArrowTextRole, directionFor(item));
+    row->setData(0, ArrowColorRole,
+                 QColor(item.fromLocal ? 0xFF66BB6A : 0xFF64B5F6));
+    row->setData(0, NameTextRole,
+                 item.name.isEmpty() ? tr("(без имени)") : item.name);
+    row->setData(0, HasCheckRole, decided);
+    row->setData(0, HasWarnRole, m_dangers.contains(item.id));
+    row->setData(0, PillColorRole, QColor(categoryColor(item.category)));
+    row->setData(0, DimmedRole, false);
 }
 
 
@@ -500,6 +565,13 @@ void SyncPreviewDialog::buildItems(void)
         node->setData(0, Qt::UserRole, -1);
         node->setData(0, Qt::UserRole+1, id);
         node->setData(0, Qt::UserRole+2, node->text(0));
+        node->setData(0, MarkerTextRole, QString());
+        node->setData(0, ArrowTextRole, QString());
+        node->setData(0, NameTextRole, node->text(0));
+        node->setData(0, HasCheckRole, false);
+        node->setData(0, HasWarnRole, false);
+        node->setData(0, PillColorRole, QColor(0x888888));
+        node->setData(0, DimmedRole, true);
 
         if(parent==nullptr)
             roots << node;
@@ -625,6 +697,147 @@ static QString actionSub(const Item &item, Action action, Danger danger)
 
     return QString();
 }
+
+SyncPreviewItemDelegate::SyncPreviewItemDelegate(QObject *parent)
+    : QStyledItemDelegate(parent)
+{
+}
+
+
+void SyncPreviewItemDelegate::paint(QPainter *painter,
+                                    const QStyleOptionViewItem &option,
+                                    const QModelIndex &index) const
+{
+    const QString name=index.data(NameTextRole).toString();
+
+    // Нет частей — обычная отрисовка (групповые заголовки и т.п.)
+    if(name.isNull())
+    {
+        QStyledItemDelegate::paint(painter, option, index);
+        return;
+    }
+
+    // Фон, фокус и выделение — штатно, без текста
+    QStyleOptionViewItem o(option);
+    initStyleOption(&o, index);
+    o.text.clear();
+
+    QStyle *style=o.widget!=nullptr ? o.widget->style()
+                                    : QApplication::style();
+    style->drawControl(QStyle::CE_ItemViewItem, &o, painter, o.widget);
+
+    const bool selected=(o.state & QStyle::State_Selected)!=0;
+    const bool dimmed=index.data(DimmedRole).toBool();
+    const bool grayed=dimmed && !selected;
+
+    const QColor normal=o.palette.color(QPalette::Text);
+    const QColor hilite=o.palette.color(QPalette::HighlightedText);
+    const QColor disabled=o.palette.color(QPalette::Disabled,
+                                          QPalette::Text);
+    const QColor fg=selected ? hilite : normal;
+    const QColor dimFg=selected ? hilite : disabled;
+
+    QFontMetrics fm(o.font);
+    const int rowH=o.rect.height();
+    const int gap=6;
+    const int pillPad=8;
+
+    // Замер сегментов: маркер, стрелка, пилюля(имя), хвост
+    const QString marker=index.data(MarkerTextRole).toString();
+    const QColor markerBase=index.data(MarkerColorRole).value<QColor>();
+    const QString arrow=index.data(ArrowTextRole).toString();
+    const QColor arrowBase=index.data(ArrowColorRole).value<QColor>();
+    const bool hasCheck=index.data(HasCheckRole).toBool();
+    const bool hasWarn=index.data(HasWarnRole).toBool();
+    const bool subtreeDone=index.data(SubtreeDoneRole).toBool();
+
+    const int markerW=marker.isEmpty() ? 0
+        : fm.horizontalAdvance(marker)+gap;
+    const int arrowW=arrow.isEmpty() ? 0
+        : fm.horizontalAdvance(arrow)+gap;
+    const QString checkMark=hasCheck ? QStringLiteral(" ✓") : QString();
+    const QString warnMark=hasWarn ? QStringLiteral(" ⚠") : QString();
+    const QString doneMark=subtreeDone ? QStringLiteral(" ✓") : QString();
+    const int checkW=hasCheck ? fm.horizontalAdvance(checkMark) : 0;
+    const int warnW=hasWarn ? fm.horizontalAdvance(warnMark) : 0;
+    const int doneW=subtreeDone ? fm.horizontalAdvance(doneMark) : 0;
+
+    int x=o.rect.left()+4;
+    const int right=o.rect.right()-4;
+    const int cy=o.rect.top()+rowH/2;
+
+    auto drawSegment=[&](const QString &s, const QColor &c, int &xpos) {
+        if(s.isEmpty())
+            return;
+
+        painter->setPen(c);
+        painter->setFont(o.font);
+        painter->drawText(xpos, cy-fm.height()/2,
+                          fm.horizontalAdvance(s), fm.height(),
+                          Qt::AlignLeft | Qt::AlignVCenter, s);
+        xpos+=fm.horizontalAdvance(s)+gap;
+    };
+
+    drawSegment(marker, grayed ? dimFg : markerBase.isValid()
+                ? (selected ? fg : markerBase) : fg, x);
+    drawSegment(arrow, grayed ? dimFg : arrowBase.isValid()
+                ? (selected ? fg : arrowBase) : fg, x);
+
+    // Пилюля имени: заливка категории, рамка категории, текст обычный
+    QColor pillBase=index.data(PillColorRole).value<QColor>();
+
+    if(!pillBase.isValid())
+        pillBase=QColor(0x888888);
+
+    if(grayed)
+        pillBase=QColor(0x888888);
+
+    const int tailW=checkW+warnW+doneW;
+    const int nameAvail=qMax(20, right-x-tailW-pillPad*2);
+    const QString shownName=fm.elidedText(name, Qt::ElideRight, nameAvail);
+    const int pillW=fm.horizontalAdvance(shownName)+pillPad*2;
+    const int pillH=qMin(rowH-2, fm.height()+8);
+    const QRectF pillRect(x, cy-pillH/2, pillW, pillH);
+
+    QColor fill=pillBase;
+    fill.setAlpha(selected ? 255 : 90);
+    painter->setBrush(fill);
+    painter->setPen(QPen(selected ? fg : pillBase,
+                         subtreeDone ? 2 : 1));
+    painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->drawRoundedRect(pillRect, pillH/2, pillH/2);
+    painter->setRenderHint(QPainter::Antialiasing, false);
+
+    painter->setPen(grayed ? dimFg : fg);
+    painter->setFont(o.font);
+    painter->drawText(pillRect.toRect(), Qt::AlignCenter, shownName);
+    x+=pillW+gap;
+
+    if(hasCheck)
+    {
+        painter->setPen(grayed ? dimFg : QColor(0xFF66BB6A));
+        painter->drawText(x, cy-fm.height()/2, checkW, fm.height(),
+                          Qt::AlignLeft | Qt::AlignVCenter, checkMark);
+        x+=checkW;
+    }
+
+    if(hasWarn)
+    {
+        painter->setPen(grayed ? dimFg : QColor(0xC00000));
+        painter->drawText(x, cy-fm.height()/2, warnW, fm.height(),
+                          Qt::AlignLeft | Qt::AlignVCenter, warnMark);
+        x+=warnW;
+    }
+
+    if(subtreeDone)
+    {
+        painter->setPen(grayed ? dimFg : QColor(0xFF66BB6A));
+        painter->drawText(x, cy-fm.height()/2,
+                          doneW, fm.height(),
+                          Qt::AlignLeft | Qt::AlignVCenter, doneMark);
+    }
+}
+
 
 QComboBox *SyncPreviewDialog::makeActionCombo(int index)
 {
@@ -800,12 +1013,7 @@ void SyncPreviewDialog::refreshBranchMarks(void)
                 break;
             }
 
-        QString base=node->data(0, Qt::UserRole+2).toString();
-
-        if(base.isEmpty())
-            base=node->text(0);
-
-        node->setText(0, all ? base+QStringLiteral(" ✓") : base);
+        node->setData(0, SubtreeDoneRole, all);
     }
 }
 

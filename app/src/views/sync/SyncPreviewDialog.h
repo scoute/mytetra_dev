@@ -4,9 +4,40 @@
 #include <functional>
 
 #include <QDialog>
+#include <QList>
 #include <QMap>
+#include <QPair>
+#include <QPixmap>
+#include <QStyledItemDelegate>
 
 #include "libraries/sync/SyncPreview.h"
+
+// Роли данных строки дерева для делегата-пилюли: имя рисуется
+// в скруглённой пилюле, остальное (маркер/стрелка/галочки) —
+// текстом рядом. Пилюля несёт цвет категории, текст имени — обычный
+enum SyncPreviewRowRole
+{
+    MarkerTextRole = Qt::UserRole + 10,
+    MarkerColorRole,
+    ArrowTextRole,
+    ArrowColorRole,
+    NameTextRole,
+    HasCheckRole,   // решено (зелёная ✓)
+    HasWarnRole,    // опасность (красная ⚠)
+    PillColorRole,  // базовый цвет пилюли (категория)
+    DimmedRole,     // контекстный узел (всё серым)
+    SubtreeDoneRole // ветка разобрана целиком (рамка жирнее + ✓)
+};
+
+// Делегат нулевой колонки дерева: имя в пилюле, остальное текстом.
+// Без частей (групповые заголовки) — рисует как обычно
+class SyncPreviewItemDelegate : public QStyledItemDelegate
+{
+public:
+    explicit SyncPreviewItemDelegate(QObject *parent = nullptr);
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override;
+};
 
 class QCheckBox;
 class QComboBox;
@@ -68,7 +99,8 @@ private:
     // Обоюдные — только правки текста (как на мобиле)
     bool itemVisibleOnTab(const SyncPreview::Item &item, int tab) const;
     QString tabName(int tab) const;
-    QString tabStats(int tab) const;
+    QList<QPair<QString, QColor>> tabStatSpans(int tab) const;
+    QPixmap tabStatsIcon(int tab) const;
 
     void buildTabs(void);
     void buildActionsMenu(void);

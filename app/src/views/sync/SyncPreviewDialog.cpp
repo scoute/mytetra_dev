@@ -852,7 +852,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
 
     const bool isBranch=index.data(BranchRole).toBool();
     const int iconW=isBranch ? fm.height() : fm.height()*4/5;
-    const int iconGap=4;
+    const int iconGap=6;
     const int tailW=warnW+doneW;
     const int nameAvail=qMax(20, right-x-tailW-pillPad*2-iconW-iconGap);
     const QString shownName=fm.elidedText(name, Qt::ElideRight, nameAvail);

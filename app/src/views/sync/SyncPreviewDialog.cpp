@@ -953,7 +953,7 @@ QSize SyncPreviewItemDelegate::sizeHint(const QStyleOptionViewItem &option,
     // (см. комментарий в заголовке). -2 вслед за утоньшением пилюли
     const QSize base=QStyledItemDelegate::sizeHint(option, index);
     QFontMetrics fm(option.font);
-    return QSize(base.width(), fm.height()+6);
+    return QSize(base.width(), fm.height()+7); // +1px воздуха между пилюлями
 }
 
 
@@ -1052,7 +1052,12 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     QColor fill=pillBase;
     fill.setAlpha(selected ? 255 : 90);
     painter->setBrush(fill);
-    QPen pillPen(selected ? fg : pillBase, subtreeDone ? 2 : 1);
+    // Ветки: рамка чёрная и всегда 1px — цветная жирная (2px при
+    // subtreeDone) смотрелась наляписто рядом с заметками 1px.
+    // Готовность поддерева и так видна по зелёной галке после пилюли.
+    // Серый контекст — как был, серым пунктиром
+    QPen pillPen(selected ? fg : (isBranch && !grayed ? QColor(Qt::black)
+                                                     : pillBase), 1);
     // Серый контекст — пунктиром, как на мобиле
     if(grayed)
         pillPen.setStyle(Qt::DashLine);
@@ -1436,11 +1441,11 @@ QSize SyncPreviewActionDelegate::sizeHint(const QStyleOptionViewItem &option,
     if(!cellLayout(option, index, rYes, rNo, rDiff))
     {
         const QSize base=QStyledItemDelegate::sizeHint(option, index);
-        return QSize(base.width(), option.fontMetrics.height()+6);
+        return QSize(base.width(), option.fontMetrics.height()+7);
     }
 
     return QSize(rDiff.right()-rYes.left()+3,
-                 option.fontMetrics.height()+6);
+                 option.fontMetrics.height()+7);
 }
 
 

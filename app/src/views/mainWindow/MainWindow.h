@@ -66,8 +66,9 @@ public:
 
     // Кнопка синхронизации в нативном режиме: одна взаимная пара —
     // синк сразу, несколько — меню выбора устройства, ноль — окно
-    // устройств (там спаривание)
-    void runToolbarNativeSync(void);
+    // устройств (там спаривание). interactive=false (таймер) меню
+    // и окна не показывает: неоднозначный выбор молча пропускается
+    void runToolbarNativeSync(bool interactive);
 
     void goWalkHistoryPrevious(void);
     void goWalkHistoryNext(void);

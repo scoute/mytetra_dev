@@ -1192,7 +1192,7 @@ void MainWindow::synchronization(bool visible)
     // Нативный режим кнопки: встроенный Wi-Fi-синк вместо внешней команды
     if(mytetraConfig.get_syncToolbarNative())
     {
-        runToolbarNativeSync();
+        runToolbarNativeSync(visible);
         return;
     }
 
@@ -1242,7 +1242,7 @@ void MainWindow::synchronization(bool visible)
 
 
 // Кнопка синхронизации в нативном режиме (см. настройку syncToolbarNative)
-void MainWindow::runToolbarNativeSync(void)
+void MainWindow::runToolbarNativeSync(bool interactive)
 {
     // Только взаимные пары с известным адресом (как кнопка Sync now
     // в окне устройств: секрет в кольце + lastMutual)
@@ -1264,6 +1264,13 @@ void MainWindow::runToolbarNativeSync(void)
 
     if(peers.isEmpty())
     {
+        // Таймер молча пропускает: окно устройств из фона не открываем
+        if(!interactive)
+        {
+            qDebug() << "Toolbar native sync: no pairs, skip (timer)";
+            return;
+        }
+
         QMessageBox::information(
             this, tr("Sync"),
             tr("No mutually paired devices.\nPair a device first (Sync devices window)."));
@@ -1279,6 +1286,12 @@ void MainWindow::runToolbarNativeSync(void)
         // Пара единственная — окно синка сразу, без лишних кликов
         target=peers.first();
         haveTarget=true;
+    }
+    else if(!interactive)
+    {
+        // Таймер: выбирать некому, меню из фона не показываем
+        qDebug() << QStringLiteral("Toolbar native sync: %1 pairs, skip (timer)").arg(peers.size());
+        return;
     }
     else
     {

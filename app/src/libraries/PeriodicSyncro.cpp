@@ -23,8 +23,10 @@ void PeriodicSyncro::timerEvent(QTimerEvent *event)
 
   qDebug() << "In timer PeriodicSyncro working method";
 
-  // Если команда синхронизации пуста, нечего выполнять
-  if(mytetraConfig.get_synchrocommand().trimmed().length()==0)
+  // Если команда синхронизации пуста, нечего выполнять.
+  // Нативный режим кнопки команду не использует — там решает сама кнопка
+  if(!mytetraConfig.get_syncToolbarNative()
+     && mytetraConfig.get_synchrocommand().trimmed().length()==0)
     return;
 
   // Запуск синхронизации в скрытом режиме

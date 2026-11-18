@@ -1058,6 +1058,9 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     // Серый контекст — как был, серым пунктиром
     QPen pillPen(selected ? fg : (isBranch && !grayed ? QColor(Qt::black)
                                                      : pillBase), 1);
+    // Строго 1px без мыла: косметическое перо на дробных координатах
+    // со сглаживанием даёт полупиксельную «1.5» и липнет к соседям
+    pillPen.setWidth(0);
     // Серый контекст — пунктиром, как на мобиле
     if(grayed)
         pillPen.setStyle(Qt::DashLine);

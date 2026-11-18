@@ -18,12 +18,32 @@ DiskHelper::DiskHelper()
 
 
 // Удаление директории с копированием содержимого в корзину
+// rename через границы файловых систем не работает — тогда copy+unlink
+// (+права с исходника). Проверять диск заранее бессмысленно (TOCTOU:
+// между проверкой и операцией монтирование может смениться), поэтому
+// пробуем rename, падение — штатная ветка. false — не вышло никак
+static bool moveOrCopyFile(const QString &fileNameFrom, const QString &fileNameTo)
+{
+    if(QFile::rename(fileNameFrom, fileNameTo))
+        return true;
+
+    if(!QFile::copy(fileNameFrom, fileNameTo))
+        return false;
+
+    QFile::setPermissions(fileNameTo, QFile::permissions(fileNameFrom));
+    return QFile::remove(fileNameFrom);
+}
+
+
 void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 {
   QDir dirFrom(nameDirFrom);
   QStringList fileList=dirFrom.entryList();
 
   QString nameDirTo=mytetraConfig.get_trashdir();
+
+  // Имена успешно перенесённых — учёт одним пакетом в конце
+  QStringList movedFiles;
 
   // Перебор всех файлов в удаляемой директории
   for(int i=0;i<fileList.size();i++)
@@ -48,12 +68,15 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 
     qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
-    // Перенос файла в корзину
-    if( QFile::rename(fileNameFrom, fileNameTo)==true )
-      trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
+    // Перенос файла в корзину (rename, через границы ФС — copy+unlink)
+    if(moveOrCopyFile(fileNameFrom, fileNameTo)==true)
+      movedFiles << fileNameToShort; // Оповещение что в корзину добавлен файл
     else
       criticalError("Can not remove file\n"+fileNameFrom+"\nto directory\n"+nameDirTo+"\nwith new name\n"+fileNameTo);
   }
+
+  if(!movedFiles.isEmpty())
+    trashMonitoring.addFiles(movedFiles);
 
 
   // Проверка наличия файлов внутри очищенной директории через новый временный объект директории
@@ -87,8 +110,8 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
 
   qDebug() << "Move file from " << fileNameFrom << " to " << fileNameTo;
 
-  // Файл перемещается в корзину
-  if( QFile::rename(fileNameFrom,fileNameTo)==true )
+  // Файл перемещается в корзину (rename, через границы ФС — copy+unlink)
+  if( moveOrCopyFile(fileNameFrom,fileNameTo)==true )
   {
     trashMonitoring.addFile(fileNameToShort); // Оповещение что в корзину добавлен файл
   }

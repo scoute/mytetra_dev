@@ -702,6 +702,10 @@ bool SyncSession::applyRemoteDeletes(const SyncPlan &plan,
                                      SyncReport &report)
 {    SYNC_TRACE();
 
+    // Приём 50k tombstone'ов: сайдкар сейвится один раз в конце пачки
+    const SyncSidecar::BulkGuard bulkGuard;
+    Q_UNUSED(bulkGuard);
+
     for(const QString &id : plan.deleteLocal)
     {
         const qint64 deletedAt=remote.tombstones.value(id, 0);

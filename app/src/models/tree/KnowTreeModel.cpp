@@ -1319,6 +1319,11 @@ void KnowTreeModel::getAllRecordsIdListRecurse(TreeItem *item, QSet<QString> *id
 
 void KnowTreeModel::deleteItemsByModelIndexList(QModelIndexList &selectItems)
 {
+    // Сайдкар пишет файл на каждый forget/drop: на 50k удалений пачка
+    // сейвится один раз в конце (вложенность — счётчиком, синглы не тронуты)
+    const SyncSidecar::BulkGuard bulkGuard;
+    Q_UNUSED(bulkGuard);
+
     // Сортировка списка индексов по вложенности методом пузырька
     // Индексы с длинным путем перемещаются в начало списка
     for(int i = 0; i < selectItems.size(); i++)

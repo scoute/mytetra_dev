@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QDir>
 #include <QSet>
+#include <QStringList>
 
 
 class TrashMonitoring
@@ -18,6 +19,11 @@ public:
  // Функция, вызываемая после фактического добавления файла в корзину
  // принимает имя файла без пути к директории
  void addFile(const QString fileName);
+
+ // Пакетное добавление (массовое удаление): один memmove + один update
+ // вместо O(n^2). Порядок — как при последовательных addFile
+ // (новые — в начало, вытеснение — с конца)
+ void addFiles(const QStringList &fileNames);
  
  void update(void);
 

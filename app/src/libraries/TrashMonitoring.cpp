@@ -81,6 +81,41 @@ void TrashMonitoring::addFile(const QString fileName)
 }
 
 
+void TrashMonitoring::addFiles(const QStringList &fileNames)
+{
+ // Пакет собирается в порядке последовательных addFile (каждый следующий —
+ // в начало), затем кладётся в список одним движением: O(n) вместо O(n^2).
+ // Дубли (уже учтённые имена) пропускаются, как в addFile
+ QList<FileData> batch;
+ QSet<QString> batchNames;
+ for(int i=fileNames.size()-1; i>=0; --i)
+ {
+  const QString fileName=fileNames.at(i);
+
+  if(m_availableFilesName.contains(fileName) || batchNames.contains(fileName))
+  {
+   qDebug() << "Double append file to trash monitoring: " << fileName;
+   continue;
+  }
+  batchNames.insert(fileName);
+
+  QFile currentFile(m_path+"/"+fileName);
+  FileData currentFileData;
+  currentFileData.fileName=fileName;
+  currentFileData.fileTime=(QDateTime::currentDateTime()).toTime_t();
+  currentFileData.fileSize=currentFile.size();
+
+  m_dirSize=m_dirSize+currentFileData.fileSize;
+  m_availableFilesName << fileName;
+  batch.append(currentFileData);
+ }
+
+ m_filesList=batch+m_filesList;
+
+ update();
+}
+
+
 void TrashMonitoring::update(void)
 {
     // Исключается наиболее старый файл пока выполняется

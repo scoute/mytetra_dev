@@ -66,6 +66,19 @@ public:
     // Пишет на диск сразу
     static void forgetNote(const QString &id);
 
+    // Массовые операции (удаление 50k записей, приём 50k tombstone'ов):
+    // save() на каждый id = перезапись всего файла на каждый id.
+    // BulkGuard откладывает save до конца пачки (вложенность — счётчиком).
+    // touch* на одиночных правках по-прежнему пишут сразу.
+    static void beginBulk(void);
+    static void endBulk(void);
+    class BulkGuard
+    {
+    public:
+        BulkGuard(void) { SyncSidecar::beginBulk(); }
+        ~BulkGuard(void) { SyncSidecar::endBulk(); }
+    };
+
     // Принять чужое состояние как свое (при apply пуша): mtime/hash
     // ставятся присланные, а не "сейчас". Пишет сразу
     static void adopt(const QString &id, qint64 mtime,

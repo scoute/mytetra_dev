@@ -15,6 +15,10 @@
 namespace
 {
 SyncSidecar *g_instance=nullptr;
+
+// Глубина bulk-пачки (массовые удаления/приём tombstone'ов).
+// Пока >0, save() — no-op, реальная запись — в endBulk на нуле
+int s_bulkDepth=0;
 }
 
 
@@ -60,6 +64,19 @@ void SyncSidecar::shutdown(void)
 
     delete g_instance;
     g_instance=nullptr;
+}
+
+
+void SyncSidecar::beginBulk(void)
+{
+    s_bulkDepth++;
+}
+
+
+void SyncSidecar::endBulk(void)
+{
+    if(s_bulkDepth>0 && --s_bulkDepth==0 && g_instance!=nullptr)
+        g_instance->save();
 }
 
 
@@ -309,6 +326,9 @@ bool SyncSidecar::load(const QString &xmlFileName)
 
 bool SyncSidecar::save(void) const
 {    SYNC_TRACE();
+
+    if(s_bulkDepth>0)
+        return true; // сейв отложен до endBulk (массовая операция)
 
     if(!m_loaded || m_sidecarPath.isEmpty())
         return false;

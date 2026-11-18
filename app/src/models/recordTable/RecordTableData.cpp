@@ -659,10 +659,10 @@ bool RecordTableData::takeRecordForMove(int pos, Record &out)
 // Удаление всех элементов таблицы конечных записей
 void RecordTableData::deleteAllRecords(void)
 {
-    int tableSize=size(); // Запоминается размер таблицы, так как он при удалении меняется
-
-    for(int i=0; i<tableSize; ++i)
-        deleteRecord(0); // Удаляется самая первая запись много раз
+    // Удаление с конца: removeAt(last) — O(1), а removeAt(0) на 50k записей
+    // даёт O(n^2) memmove таблицы. Порядок не важен — удаляется всё
+    while(size()>0)
+        deleteRecord(size()-1);
 }
 
 

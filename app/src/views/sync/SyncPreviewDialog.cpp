@@ -43,6 +43,9 @@ static bool dangerOf(const Item &item, Action action,
         // воскрешение моего удаления — спасение, не потеря
         if(item.category==Category::MyDelete)
             return false;
+        // принятие ихнего удаления — моя копия тоже умрёт
+        if(item.category==Category::TheirDelete)
+            return true;
         // моя правка сносится их версией (кроме спасения полной)
         if(item.category==Category::Edit)
             return danger!=Danger::MyEmpty;
@@ -51,6 +54,9 @@ static bool dangerOf(const Item &item, Action action,
         // воскрешение моей копии наверх — спасение
         if(item.category==Category::TheirDelete)
             return false;
+        // продавливание моего удаления — копия на сервере тоже умрёт
+        if(item.category==Category::MyDelete)
+            return true;
         // их правка сносится моей версией (кроме спасения полной)
         if(item.category==Category::Edit)
             return danger!=Danger::TheirEmpty;
@@ -1013,9 +1019,7 @@ void SyncPreviewDialog::refreshCombos(void)
 SyncPreview::Action SyncPreviewDialog::acceptFor(const SyncPreview::Item &item)
 {
     using Action=SyncPreview::Action;
-    using Category=SyncPreview::Category;
-    if(item.category==Category::MyDelete)
-        return Action::TakeServer;
+    Q_UNUSED(item);
     return Action::Apply;
 }
 
@@ -1024,8 +1028,6 @@ SyncPreview::Action SyncPreviewDialog::rejectFor(const SyncPreview::Item &item)
 {
     using Action=SyncPreview::Action;
     using Category=SyncPreview::Category;
-    if(item.category==Category::MyDelete)
-        return Action::Apply;
     if(item.category==Category::TheirDelete)
         return Action::ForceMine;
     if(item.category==Category::Edit)
@@ -1053,8 +1055,10 @@ QWidget *SyncPreviewDialog::makeActionWidget(int index)
     {
         bYes->setText(tr("\u2191"));
         bNo->setText(tr("\u2193"));
-        bYes->setToolTip(tr("Наша (оставить мою версию)"));
-        bNo->setToolTip(tr("Ихняя (взять версию с сервера)"));
+        bYes->setToolTip(actionSub(item, Action::ForceMine,
+            m_dangers.value(item.id, Danger::None)));
+        bNo->setToolTip(actionSub(item, Action::TakeServer,
+            m_dangers.value(item.id, Danger::None)));
     }
     else
     {
@@ -1779,17 +1783,15 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("⚠"), darkred, tr("Красное с ⚠ в списке — данные будут удалены или затёрты: удаление здесь/на сервере, затирание полной версии пустой"));
     html+=sym(QStringLiteral("•"), purple, tr("Восстановить с сервера — отменить моё, взять их версию (моё удаление — воскресить)"));
     html+=sym(QStringLiteral("•"), purple, tr("Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)"));
-    html+=sym(QStringLiteral("•"), purple, tr("Пропустить — ничего не делать в этот раз"));
     html+=QStringLiteral("<h3>")+tr("Вкладки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("↑"), green, tr("Я → сервер: мои изменения уедут наружу"));
     html+=sym(QStringLiteral("↓"), blue, tr("Сервер → я: ихние изменения приедут к нам"));
     html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
     html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("•"), green, tr("«Запомнить» — сохранить выбранные действия как умолчание для будущих синков"));
-    html+=sym(QStringLiteral("•"), green, tr("«Всё дерево» — показать элементы всех вкладок сразу (чужие — бледным контекстом)"));
     html+=sym(QStringLiteral("•"), green, tr("«Действия ▾» — действия по умолчанию для целых категорий"));
     html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» ждёт, пока всё разобрано"));
-    html+=sym(QStringLiteral("•"), green, tr("Клик по ветке — её записи внизу; «Применить» — выполнить, «Отмена» — прервать"));
+    html+=sym(QStringLiteral("•"), green, tr("«Применить» — выполнить, «Отмена» — прервать"));
 
     QTextEdit *text=new QTextEdit(&help);
     text->setReadOnly(true);

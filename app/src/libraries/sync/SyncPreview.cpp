@@ -303,7 +303,7 @@ Decisions Decisions::defaults(void)
     decisions.category[Category::Create]=Action::Apply;
     decisions.category[Category::Rename]=Action::Confirm;
     decisions.category[Category::Edit]=Action::Confirm;
-    decisions.category[Category::MyDelete]=Action::TakeServer;
+    decisions.category[Category::MyDelete]=Action::Confirm;
     decisions.category[Category::TheirDelete]=Action::Confirm;
     return decisions;
 }

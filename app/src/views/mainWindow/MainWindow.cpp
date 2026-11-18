@@ -741,7 +741,7 @@ void MainWindow::initSyncMenu(void)
     actionSyncMenuSyncDevices = new QAction(tr("Sync &devices..."), this);
     menu->addAction(actionSyncMenuSyncDevices);
 
-    actionSyncMenuSyncPairing = new QAction(tr("Sync pairing..."), this);
+    actionSyncMenuSyncPairing = new QAction(tr("Sync pairing info..."), this);
     menu->addAction(actionSyncMenuSyncPairing);
 }
 
@@ -2205,11 +2205,45 @@ void MainWindow::onSyncPairing(void)
 
     if(unknownId.isEmpty())
     {
-        QMessageBox::information(
-            this, tr("Sync pairing"),
-            tr("No pending devices.\n\nThis device:\n%1\nFingerprint:\n%2")
+        // Входящих нет — сводка состояния спаривания: кто я, с кем пара,
+        // кто стучится. Короткие id (первые 8 символов), полные видно
+        // в окне Sync devices
+        QString info=tr("This device:\n%1\nFingerprint:\n%2\nGroup: %3")
             .arg(mytetraConfig.get_syncDeviceName(),
-                 SyncIdentity::fingerprint(mytetraConfig.get_syncDeviceId())));
+                 SyncIdentity::fingerprint(mytetraConfig.get_syncDeviceId()),
+                 mytetraConfig.get_syncGroupId());
+
+        const QMap<QString, QString> ring=mytetraConfig.get_syncSecretsRing();
+        QStringList pairedLines;
+
+        for(const AppConfig::SyncDeviceInfo &dev : mytetraConfig.get_syncDevices())
+        {
+            if(dev.id==mytetraConfig.get_syncDeviceId())
+                continue;
+
+            if(ring.contains(dev.id))
+            {
+                const QString label=dev.name.isEmpty() ? dev.id : dev.name;
+                pairedLines << QStringLiteral("• %1 (%2…) — %3")
+                    .arg(label, dev.id.left(8),
+                         dev.lastMutual>0 ? tr("mutual")
+                                          : tr("paired, waiting for accept"));
+            }
+            else if(dev.pairOffer)
+            {
+                const QString label=dev.name.isEmpty() ? dev.id : dev.name;
+                pairedLines << QStringLiteral("• %1 (%2…) — %3")
+                    .arg(label, dev.id.left(8), tr("pair requested"));
+            }
+        }
+
+        if(pairedLines.isEmpty())
+            info+=tr("\n\nPaired devices: none");
+        else
+            info+=tr("\n\nPaired devices (%1):\n%2")
+                .arg(pairedLines.size()).arg(pairedLines.join(QStringLiteral("\n")));
+
+        QMessageBox::information(this, tr("Sync pairing info"), info);
         return;
     }
 

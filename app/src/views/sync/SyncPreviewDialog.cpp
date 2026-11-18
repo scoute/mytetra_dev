@@ -1044,7 +1044,11 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     const int tailW=warnW+doneW;
     const int nameAvail=qMax(20, right-x-tailW-pillPad*2-iconW-iconGap);
     const QString shownName=fm.elidedText(name, Qt::ElideRight, nameAvail);
-    const int pillW=fm.horizontalAdvance(shownName)+iconW+iconGap+pillPad*2;
+    // Компромисс по пикселям: контент вправо на 2 (иконка x+6 вместо x+4),
+    // правый паддинг ужаты на 2 — пилюля уже на 2px
+    const int pillLeft=6;
+    const int pillRight=2;
+    const int pillW=fm.horizontalAdvance(shownName)+iconW+iconGap+pillLeft+pillRight;
     const int pillH=qMin(rowH-2, fm.height()+8);
     const QRectF pillRect(x, cy-pillH/2, pillW, pillH);
 
@@ -1064,7 +1068,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     // белый лист с серым контуром
     {
         const int iconH=pillH-8;
-        const int iconX=x+4;
+        const int iconX=x+pillLeft;
         const int iconY=cy-iconH/2;
         painter->setRenderHint(QPainter::Antialiasing, true);
         if(isBranch)
@@ -1101,8 +1105,8 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
 
     painter->setPen(grayed ? dimFg : fg);
     painter->setFont(o.font);
-    painter->drawText(QRect(x+4+iconW+iconGap, pillRect.top(),
-        pillW-4-iconW-iconGap-pillPad, pillH),
+    painter->drawText(QRect(x+pillLeft+iconW+iconGap, pillRect.top(),
+        pillW-pillLeft-iconW-iconGap-pillRight, pillH),
         Qt::AlignLeft | Qt::AlignVCenter, shownName);
     x+=pillW+gap;
 

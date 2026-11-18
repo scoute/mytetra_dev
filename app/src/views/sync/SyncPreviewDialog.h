@@ -7,6 +7,7 @@
 #include <QList>
 #include <QMap>
 #include <QPair>
+#include <QPersistentModelIndex>
 #include <QPixmap>
 #include <QSet>
 #include <QStyledItemDelegate>
@@ -28,7 +29,13 @@ enum SyncPreviewRowRole
     PillColorRole,  // базовый цвет пилюли (категория)
     DimmedRole,     // контекстный узел (всё серым)
     SubtreeDoneRole, // ветка разобрана целиком (рамка жирнее + ✓)
-    BranchRole      // true — ветка-папка, false — заметка-лист
+    BranchRole,      // true — ветка-папка, false — заметка-лист
+    ActionIsDuelRole,   // колонка 1: поединок ↑/↓ вместо ✓/✕
+    ActionYesActiveRole, // левая кнопка в активе (сплошной цвет)
+    ActionNoActiveRole,  // правая кнопка в активе
+    ActionYesTipRole,    // тултип левой кнопки
+    ActionNoTipRole,     // тултип правой кнопки
+    ActionDiffTipRole    // тултип diff-ссылки
 };
 
 // Делегат нулевой колонки дерева: имя в пилюле, остальное текстом.
@@ -39,6 +46,49 @@ public:
     explicit SyncPreviewItemDelegate(QObject *parent = nullptr);
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const override;
+};
+
+class QAbstractItemView;
+class QHelpEvent;
+class QTreeWidget;
+class SyncPreviewDialog;
+
+// Делегат колонки «Действие»: вместо живых виджетов на каждой строке
+// рисует ✓/✕ (в поединке ↑/↓) и текстовый diff. Клики и тултипы —
+// по регионам глифа, состояние — из ролей колонки 1 (делегат stateless,
+// решения живут в SyncPreviewDialog и раскладываются в refreshRowText)
+class SyncPreviewActionDelegate : public QStyledItemDelegate
+{
+public:
+    explicit SyncPreviewActionDelegate(SyncPreviewDialog *dialog,
+                                       QTreeWidget *view);
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override;
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const override;
+    bool editorEvent(QEvent *event, QAbstractItemModel *model,
+                     const QStyleOptionViewItem &option,
+                     const QModelIndex &index) override;
+    bool helpEvent(QHelpEvent *event, QAbstractItemView *view,
+                   const QStyleOptionViewItem &option,
+                   const QModelIndex &index) override;
+    // Хит-тест для фильтра вьюпорта (клик НЕ должен двигать селекцию:
+    // иначе каждый ✓/✕ тянет diff с хаба). Геометрия та же, что в paint
+    int hitTest(const QModelIndex &index,
+                const QPoint &viewportPos) const;
+
+private:
+    // Регион внутри ячейки: 0 — мимо кнопок, 1 — «да», 2 — «нет», 3 — diff
+    int partAt(const QStyleOptionViewItem &option,
+               const QModelIndex &index, const QPoint &pos) const;
+    bool cellLayout(const QStyleOptionViewItem &option,
+                    const QModelIndex &index,
+                    QRect &yes, QRect &no, QRect &diff) const;
+
+    SyncPreviewDialog *m_dialog;
+    QTreeWidget *m_view;
+    mutable QPersistentModelIndex m_hover;
+    mutable int m_hoverPart=0;
 };
 
 class QCheckBox;
@@ -105,11 +155,26 @@ private slots:
     void onApplyClicked(void);
     void onItemSelectionChanged(void);
     void onItemActionChanged(int index);
-    void onRowButtonClicked(void);
     void onDuelMine(void);
     void onDuelTheirs(void);
 
 private:
+
+    friend class SyncPreviewActionDelegate;
+
+    // Клик по региону колонки «Действие» (роль "yes"/"no"/"diff"):
+    // то же, что делал живой QToolButton — тап по ✓/✕ ставит/снимает
+    // решение, тап по diff выбирает строку (панель diff обновится сама).
+    // Селекцию при клике НЕ двигаем (фильтр вьюпорта): иначе каждый ✓/✕
+    // перезагружал бы diff с хаба
+    void handleActionClick(int itemIndex, const QString &role);
+    bool eventFilter(QObject *watched, QEvent *event) override;
+    // Снять взвод клика: вернуть селекцию молча (без перезагрузки diff)
+    void cancelActionArm(void);
+    bool m_actionArmed=false;
+    QPersistentModelIndex m_armedIndex;
+    int m_armedPart=0;
+    QPersistentModelIndex m_savedCurrent;
 
     // Вкладка: 0 = Я→сервер, 1 = Сервер→я, 2 = Обоюдные правки.
     // Обоюдные — только правки текста (как на мобиле)
@@ -126,9 +191,6 @@ private:
     QComboBox *makeActionCombo(int index);
     void syncComboState(QComboBox *combo, const SyncPreview::Item &item);
     void refreshCombos(void);
-    QWidget *makeActionWidget(int index);
-    void syncWidgetState(QWidget *w, const SyncPreview::Item &item);
-    void refreshWidgets(void);
     static SyncPreview::Action acceptFor(const SyncPreview::Item &item);
     static SyncPreview::Action rejectFor(const SyncPreview::Item &item);
     void applyFilters(void);

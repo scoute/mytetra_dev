@@ -3,11 +3,13 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QEvent>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QPalette>
 #include <QPainter>
 #include <QPixmap>
@@ -16,6 +18,7 @@
 #include <QPushButton>
 #include <QTabBar>
 #include <QToolButton>
+#include <QToolTip>
 #include <QTreeWidget>
 #include <QTreeWidgetItemIterator>
 #include <QVBoxLayout>
@@ -142,6 +145,8 @@ static QString forceMineSub(const Item &item, Danger danger)
         return QObject::tr("Настоять на моей версии");
     }
 }
+
+static QString actionSub(const Item &item, Action action, Danger danger);
 
 // Цвета бейджей — как в мобильной версии
 static uint categoryColor(Category category)
@@ -300,6 +305,15 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_itemsTree->setUniformRowHeights(true);
     m_itemsTree->setItemDelegateForColumn(
         0, new SyncPreviewItemDelegate(m_itemsTree));
+    // Колонка «Действие» рисуется делегатом (без живых виджетов):
+    // 42k строк × 3 кнопки вешали перераскладку на каждый чих
+    m_itemsTree->setItemDelegateForColumn(
+        1, new SyncPreviewActionDelegate(this, m_itemsTree));
+    // Ховер подсвечивается по регионам глифа — нужен трекинг мыши
+    m_itemsTree->setMouseTracking(true);
+    // Клики по ✓/✕/diff разбираем сами, ДО смены селекции:
+    // иначе каждый тап перезагружал бы diff-панель (текст с хаба)
+    m_itemsTree->viewport()->installEventFilter(this);
     layout->addWidget(m_itemsTree, 3);
     connect(m_expandAllButton, &QPushButton::clicked,
             m_itemsTree, &QTreeWidget::expandAll);
@@ -699,6 +713,41 @@ void SyncPreviewDialog::refreshRowText(QTreeWidgetItem *row)
     row->setData(0, DimmedRole, false);
     row->setData(0, BranchRole, item.isBranch);
 
+    // Части для делегата колонки «Действие»: поединок или ✓/✕,
+    // активные кнопки, тултипы тех же текстов, что были у живых кнопок.
+    // Текст diff — в DisplayRole (тот же tr, переводы не едут)
+    const bool isDuel=((item.category==Category::Edit && !item.isBranch)
+        || (item.category==Category::Rename && item.isBranch));
+    const Danger danger=m_dangers.value(item.id, Danger::None);
+    const Action effective=m_decisions.forItem(item);
+    const Action accept=acceptFor(item);
+    const Action reject=rejectFor(item);
+    bool yesActive=false, noActive=false;
+
+    if(decided)
+    {
+        if(isDuel)
+        {
+            yesActive=(effective==Action::ForceMine);
+            noActive=(effective==Action::TakeServer);
+        }
+        else
+        {
+            yesActive=(effective==accept);
+            noActive=(effective==reject);
+        }
+    }
+
+    row->setText(1, tr("diff"));
+    row->setData(1, ActionIsDuelRole, isDuel);
+    row->setData(1, ActionYesActiveRole, yesActive);
+    row->setData(1, ActionNoActiveRole, noActive);
+    row->setData(1, ActionYesTipRole, actionSub(
+        item, isDuel ? Action::ForceMine : accept, danger));
+    row->setData(1, ActionNoTipRole, actionSub(
+        item, isDuel ? Action::TakeServer : reject, danger));
+    row->setData(1, ActionDiffTipRole, tr("Показать diff"));
+
     // Подсветка требующего решения: нерешенное — жирным + тёплый фон
     QFont rf=row->font(0);
     rf.setBold(!decided);
@@ -812,8 +861,6 @@ void SyncPreviewDialog::buildItems(void)
         node->setData(0, Qt::UserRole+1, item.isBranch ? item.id : item.parentId);
         refreshRowText(node);
 
-        QWidget *actions=makeActionWidget(index);
-        m_itemsTree->setItemWidget(node, 1, actions);
         node->setText(2, item.isBranch ? tr("ветка") : tr("запись"));
 
         // Ветки тоже адресуются по id секции (для подсветки)
@@ -1160,162 +1207,332 @@ SyncPreview::Action SyncPreviewDialog::rejectFor(const SyncPreview::Item &item)
 }
 
 
-QWidget *SyncPreviewDialog::makeActionWidget(int index)
+SyncPreviewActionDelegate::SyncPreviewActionDelegate(SyncPreviewDialog *dialog,
+                                                         QTreeWidget *view)
+    : QStyledItemDelegate(view),
+      m_dialog(dialog),
+      m_view(view)
 {
-    const Item &item=m_preview.items.at(index);
-    QWidget *w=new QWidget(m_itemsTree);
-    QHBoxLayout *lay=new QHBoxLayout(w);
-    lay->setContentsMargins(0, 0, 0, 0);
-    lay->setSpacing(2);
-
-    const bool isDuel=((item.category==Category::Edit && !item.isBranch)
-        || (item.category==Category::Rename && item.isBranch));
-
-    QToolButton *bYes=new QToolButton(w);
-    QToolButton *bNo=new QToolButton(w);
-    QToolButton *bDiff=new QToolButton(w);
-
-    if(isDuel)
-    {
-        bYes->setText(tr("\u2191"));
-        bNo->setText(tr("\u2193"));
-        bYes->setToolTip(actionSub(item, Action::ForceMine,
-            m_dangers.value(item.id, Danger::None)));
-        bNo->setToolTip(actionSub(item, Action::TakeServer,
-            m_dangers.value(item.id, Danger::None)));
-    }
-    else
-    {
-        bYes->setText(QStringLiteral("\u2713"));
-        bNo->setText(QStringLiteral("\u2715"));
-        bYes->setToolTip(actionSub(item, acceptFor(item),
-            m_dangers.value(item.id, Danger::None)));
-        bNo->setToolTip(actionSub(item, rejectFor(item),
-            m_dangers.value(item.id, Danger::None)));
-    }
-    bDiff->setText(tr("diff"));
-    bDiff->setToolTip(tr("Показать diff"));
-
-    for(QToolButton *b : {bYes, bNo, bDiff})
-    {
-        b->setCheckable(false);
-        b->setAutoRaise(true);
-        lay->addWidget(b);
-    }
-
-    bYes->setProperty("itemIndex", index);
-    bYes->setProperty("role", "yes");
-    bNo->setProperty("itemIndex", index);
-    bNo->setProperty("role", "no");
-    bDiff->setProperty("itemIndex", index);
-    bDiff->setProperty("role", "diff");
-
-    connect(bYes, &QToolButton::clicked,
-            this, &SyncPreviewDialog::onRowButtonClicked);
-    connect(bNo, &QToolButton::clicked,
-            this, &SyncPreviewDialog::onRowButtonClicked);
-    connect(bDiff, &QToolButton::clicked,
-            this, &SyncPreviewDialog::onRowButtonClicked);
-
-    syncWidgetState(w, item);
-    return w;
 }
 
 
-void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &item)
+// Раскладка ячейки «Действие»: три региона в строку с шагом 2 —
+// как был QHBoxLayout(spacing 2, margins 0) с тремя QToolButton.
+// false — строка без действий (заголовок секции, контекст)
+bool SyncPreviewActionDelegate::cellLayout(const QStyleOptionViewItem &option,
+                                           const QModelIndex &index,
+                                           QRect &yes, QRect &no,
+                                           QRect &diff) const
 {
-    if(w==nullptr)
+    const QModelIndex sib=index.sibling(index.row(), 0);
+
+    if(!sib.isValid() || !sib.data(Qt::UserRole).isValid())
+        return false;
+
+    if(sib.data(Qt::UserRole).toInt()<0)
+        return false;
+
+    if(!index.data(ActionIsDuelRole).isValid())
+        return false;
+
+    const bool duel=index.data(ActionIsDuelRole).toBool();
+    QFont bold=option.font;
+    bold.setBold(true);
+    const QFontMetrics fm(bold);
+    const QString yesGlyph=duel ? QStringLiteral("\u2191")
+                                : QStringLiteral("\u2713");
+    const QString noGlyph=duel ? QStringLiteral("\u2193")
+                               : QStringLiteral("\u2715");
+    const QString diffLabel=index.data(Qt::DisplayRole).toString();
+
+    if(diffLabel.isEmpty())
+        return false;
+
+    const int h=qMax(16, option.rect.height()-4);
+    const int cy=option.rect.center().y();
+    const int wYes=fm.horizontalAdvance(yesGlyph)+12;
+    const int wNo=fm.horizontalAdvance(noGlyph)+12;
+    const int wDiff=fm.horizontalAdvance(diffLabel)+12;
+    int x=option.rect.left()+1;
+    yes=QRect(x, cy-h/2, wYes, h);
+    x+=wYes+2;
+    no=QRect(x, cy-h/2, wNo, h);
+    x+=wNo+2;
+    diff=QRect(x, cy-h/2, wDiff, h);
+    return true;
+}
+
+
+int SyncPreviewActionDelegate::hitTest(const QModelIndex &index,
+                                         const QPoint &viewportPos) const
+{
+    if(!index.isValid() || index.column()!=1 || m_view==nullptr)
+        return 0;
+
+    QStyleOptionViewItem option;
+    option.initFrom(m_view);
+    option.rect=m_view->visualRect(index);
+    option.font=m_view->font();
+    return partAt(option, index, viewportPos);
+}
+
+
+// Регион внутри ячейки: 0 — мимо кнопок, 1 — «да», 2 — «нет», 3 — diff
+int SyncPreviewActionDelegate::partAt(const QStyleOptionViewItem &option,
+                                      const QModelIndex &index,
+                                      const QPoint &pos) const
+{
+    QRect rYes, rNo, rDiff;
+
+    if(!cellLayout(option, index, rYes, rNo, rDiff))
+        return 0;
+
+    if(rYes.contains(pos))
+        return 1;
+
+    if(rNo.contains(pos))
+        return 2;
+
+    if(rDiff.contains(pos))
+        return 3;
+
+    return 0;
+}
+
+
+void SyncPreviewActionDelegate::paint(QPainter *painter,
+                                      const QStyleOptionViewItem &option,
+                                      const QModelIndex &index) const
+{
+    // Фон, фокус и выделение — штатно, текста в колонке нет
+    QStyleOptionViewItem o(option);
+    initStyleOption(&o, index);
+    o.text.clear();
+
+    QStyle *style=o.widget!=nullptr ? o.widget->style()
+                                    : QApplication::style();
+    style->drawControl(QStyle::CE_ItemViewItem, &o, painter, o.widget);
+
+    QRect rYes, rNo, rDiff;
+
+    if(!cellLayout(option, index, rYes, rNo, rDiff))
         return;
 
-    const Action effective=m_decisions.forItem(item);
-    const bool decided=(effective!=Action::Confirm);
-    const bool isDuel=((item.category==Category::Edit && !item.isBranch)
-        || (item.category==Category::Rename && item.isBranch));
-    const Action accept=acceptFor(item);
-    const Action reject=rejectFor(item);
+    const bool duel=index.data(ActionIsDuelRole).toBool();
+    const bool yesActive=index.data(ActionYesActiveRole).toBool();
+    const bool noActive=index.data(ActionNoActiveRole).toBool();
+    const QString diffLabel=index.data(Qt::DisplayRole).toString();
 
-    QList<QToolButton *> btns=w->findChildren<QToolButton *>();
-    if(btns.size()<3)
-        return;
-
-    QToolButton *bYes=btns.at(0);
-    QToolButton *bNo=btns.at(1);
-
-    // Как на мобиле: неактивные серые, в активе — сплошной цвет + белый глиф.
-    // В светлой теме кнопки чуть скруглены (вровень с остальным круглым),
-    // тёмную не трогаем
+    // Те же цвета, что были у живых кнопок (см. старый syncWidgetState):
+    // в активе — сплошной цвет + белый глиф, иначе — dim-текст на
+    // полупрозрачном сером. diff — текстовый линк без фона
+    const QColor green(0x66BB6A), red(0xEF5350), blue(0x64B5F6);
     const QColor grayFg(0x777777), grayBd(0x555555);
     const QColor grayBg(0x777777, 0x777777, 0x777777, 0x28);
     const int radius=isLightTheme() ? 6 : 0;
-    auto paint=[&](QToolButton *b, const QColor &solid, bool active) {
-        const QColor fill=solid;
-        const QColor light(fill.red(), fill.green(), fill.blue(), 0x55);
-        b->setStyleSheet(QStringLiteral(
-            "color: %1; background: %2; border: 1.5px solid %3;"
-            " border-radius: %4px; font-weight: bold;")
-            .arg(active ? QStringLiteral("white") : grayFg.name(QColor::HexRgb),
-                 (active ? solid : grayBg).name(QColor::HexArgb),
-                 (active ? solid : grayBd).name(QColor::HexRgb))
-             .arg(radius));
+
+    const bool hoverOn=(o.state & QStyle::State_MouseOver)!=0
+        && m_hover==index && m_hoverPart!=0;
+
+    QFont bold=o.font;
+    bold.setBold(true);
+
+    auto paintButton=[&](const QRect &r, const QString &glyph,
+                         const QColor &solid, bool active, bool hovered) {
+        painter->setBrush(active ? solid : grayBg);
+        painter->setPen(QPen(active ? solid : (hovered ? solid : grayBd),
+                             1.5));
+        painter->setRenderHint(QPainter::Antialiasing, true);
+        painter->drawRoundedRect(QRectF(r), radius, radius);
+        painter->setRenderHint(QPainter::Antialiasing, false);
+        painter->setPen(active ? QColor(Qt::white) : grayFg);
+        painter->setFont(bold);
+        painter->drawText(r, Qt::AlignCenter, glyph);
     };
 
-    const QColor green(0x66BB6A), red(0xEF5350), blue(0x64B5F6);
-    const QColor noSolid=isDuel ? blue : red;
+    paintButton(rYes, duel ? QStringLiteral("\u2191")
+                           : QStringLiteral("\u2713"),
+                green, yesActive, hoverOn && m_hoverPart==1);
+    paintButton(rNo, duel ? QStringLiteral("\u2193")
+                          : QStringLiteral("\u2715"),
+                duel ? blue : red, noActive, hoverOn && m_hoverPart==2);
 
-    bool yesActive=false, noActive=false;
+    QFont linkFont=o.font;
 
-    if(decided)
-    {
-        if(isDuel)
-        {
-            yesActive=(effective==Action::ForceMine);
-            noActive=(effective==Action::TakeServer);
-        }
-        else
-        {
-            yesActive=(effective==accept);
-            noActive=(effective==reject);
-        }
-    }
+    if(hoverOn && m_hoverPart==3)
+        linkFont.setUnderline(true);
 
-    paint(bYes, green, yesActive);
-    paint(bNo, noSolid, noActive);
+    painter->setFont(linkFont);
+    painter->setPen(o.palette.color(QPalette::Text));
+    painter->drawText(rDiff, Qt::AlignCenter, diffLabel);
 }
 
 
-void SyncPreviewDialog::refreshWidgets(void)
+QSize SyncPreviewActionDelegate::sizeHint(const QStyleOptionViewItem &option,
+                                         const QModelIndex &index) const
 {
-    for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
-    {
-        QTreeWidgetItem *row=*it;
-        const int itemIndex=row->data(0, Qt::UserRole).toInt();
+    QRect rYes, rNo, rDiff;
 
-        if(itemIndex<0 || itemIndex>=m_preview.items.size())
-            continue;
+    if(!cellLayout(option, index, rYes, rNo, rDiff))
+        return QStyledItemDelegate::sizeHint(option, index);
 
-        if(QWidget *w=m_itemsTree->itemWidget(row, 1))
-            syncWidgetState(w, m_preview.items.at(itemIndex));
-    }
+    const int h=qMax(rYes.height(), option.fontMetrics.height()+8);
+    return QSize(rDiff.right()-rYes.left()+3, h+4);
 }
 
 
-void SyncPreviewDialog::onRowButtonClicked(void)
+bool SyncPreviewActionDelegate::editorEvent(QEvent *event,
+                                            QAbstractItemModel *model,
+                                            const QStyleOptionViewItem &option,
+                                            const QModelIndex &index)
 {
-    QToolButton *b=qobject_cast<QToolButton *>(sender());
-    if(b==nullptr)
+    Q_UNUSED(model);
+
+    if(event->type()==QEvent::MouseMove)
+    {
+        const QMouseEvent *me=static_cast<const QMouseEvent *>(event);
+        const int part=partAt(option, index, me->pos());
+
+        if(m_hover!=index || m_hoverPart!=part)
+        {
+            m_hover=index;
+            m_hoverPart=part;
+
+            if(m_view!=nullptr && m_view->viewport()!=nullptr)
+                m_view->viewport()->update();
+        }
+
+        return false;
+    }
+
+    // Клики НЕ здесь: их разбирает фильтр вьюпорта (eventFilter диалога),
+    // чтобы press не двигал селекцию (иначе каждый ✓/✕ перезагружал бы
+    // diff с хаба). Здесь только ховер
+    return false;
+}
+
+
+// Тултипы тех же текстов, что были у живых кнопок — по регионам глифа
+bool SyncPreviewActionDelegate::helpEvent(QHelpEvent *event,
+                                         QAbstractItemView *view,
+                                         const QStyleOptionViewItem &option,
+                                         const QModelIndex &index)
+{
+    if(event->type()!=QEvent::ToolTip)
+        return false;
+
+    const int part=partAt(option, index, event->pos());
+    QString tip;
+
+    if(part==1)
+        tip=index.data(ActionYesTipRole).toString();
+    else if(part==2)
+        tip=index.data(ActionNoTipRole).toString();
+    else if(part==3)
+        tip=index.data(ActionDiffTipRole).toString();
+
+    if(tip.isEmpty())
+        return false;
+
+    QToolTip::showText(event->globalPos(), tip, view);
+    return true;
+}
+
+
+bool SyncPreviewDialog::eventFilter(QObject *watched, QEvent *event)
+{
+    if(watched==m_itemsTree->viewport())
+    {
+        if(event->type()==QEvent::MouseButtonPress)
+        {
+            const QMouseEvent *me=static_cast<const QMouseEvent *>(event);
+
+            if(me->button()==Qt::LeftButton)
+            {
+                cancelActionArm(); // зависший взвод (release мимо вьюпорта)
+                auto *delegate=static_cast<SyncPreviewActionDelegate *>(
+                    m_itemsTree->itemDelegateForColumn(1));
+                const QModelIndex idx=m_itemsTree->indexAt(me->pos());
+                const int part=(delegate!=nullptr && idx.isValid())
+                    ? delegate->hitTest(idx, me->pos()) : 0;
+
+                if(part!=0)
+                {
+                    m_actionArmed=true;
+                    m_armedIndex=idx;
+                    m_armedPart=part;
+                    m_savedCurrent=m_itemsTree->currentIndex();
+                    // Селекция сменится молча: diff с хаба не дёргаем
+                    m_itemsTree->blockSignals(true);
+                }
+            }
+        }
+        else if(event->type()==QEvent::MouseButtonRelease)
+        {
+            const QMouseEvent *me=static_cast<const QMouseEvent *>(event);
+
+            if(me->button()==Qt::LeftButton && m_actionArmed)
+            {
+                auto *delegate=static_cast<SyncPreviewActionDelegate *>(
+                    m_itemsTree->itemDelegateForColumn(1));
+                const QModelIndex idx=m_itemsTree->indexAt(me->pos());
+                const int part=(delegate!=nullptr && idx.isValid())
+                    ? delegate->hitTest(idx, me->pos()) : 0;
+                const bool same=idx.isValid() && idx==m_armedIndex
+                    && part==m_armedPart && part!=0;
+                // Селекцию вернуть молча, затем разблокировать
+                m_itemsTree->setCurrentIndex(m_savedCurrent);
+                m_itemsTree->blockSignals(false);
+                m_actionArmed=false;
+
+                if(same)
+                {
+                    static const char *roles[]={"", "yes", "no", "diff"};
+                    const QModelIndex sib=
+                        m_armedIndex.sibling(m_armedIndex.row(), 0);
+                    const int itemIndex=sib.data(Qt::UserRole).toInt();
+
+                    if(itemIndex>=0)
+                        handleActionClick(itemIndex,
+                            QString::fromLatin1(roles[part]));
+                }
+
+                return true;
+            }
+        }
+        else if(event->type()==QEvent::Leave)
+        {
+            cancelActionArm();
+        }
+    }
+
+    return QDialog::eventFilter(watched, event);
+}
+
+
+void SyncPreviewDialog::cancelActionArm(void)
+{
+    if(!m_actionArmed)
         return;
 
-    const int itemIndex=b->property("itemIndex").toInt();
+    m_itemsTree->blockSignals(true);
+    m_itemsTree->setCurrentIndex(m_savedCurrent);
+    m_itemsTree->blockSignals(false);
+    m_actionArmed=false;
+}
+
+
+void SyncPreviewDialog::handleActionClick(int itemIndex, const QString &role)
+{
     if(itemIndex<0 || itemIndex>=m_preview.items.size())
         return;
 
     const Item &item=m_preview.items.at(itemIndex);
-    const QString role=b->property("role").toString();
     const Action effective=m_decisions.forItem(item);
 
     if(role==QStringLiteral("diff"))
     {
-        // Diff по иконке: выбрать строку (панель diff обновится)
+        // Diff по ссылке: выбрать строку (панель diff обновится сама)
         for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
         {
             if((*it)->data(0, Qt::UserRole).toInt()==itemIndex)
@@ -1336,6 +1553,8 @@ void SyncPreviewDialog::onRowButtonClicked(void)
         target=isDuel ? Action::ForceMine : acceptFor(item);
     else if(role==QStringLiteral("no"))
         target=isDuel ? Action::TakeServer : rejectFor(item);
+    else
+        return;
 
     // Повторный тап снимает решение (как в макете)
     m_decisions.byId[item.id]=(effective==target) ? Action::Confirm : target;
@@ -1540,8 +1759,6 @@ void SyncPreviewDialog::refreshAll(void)
 
     refreshBranchMarks();
     refreshCounter();
-    refreshCombos();
-    refreshWidgets();
     applyFilters();
 }
 

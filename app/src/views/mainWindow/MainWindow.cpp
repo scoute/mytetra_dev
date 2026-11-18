@@ -1814,9 +1814,15 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     // Headless: без диалогов, действует guard удалений ниже
     if(!isSyncHeadlessMode())
         session.setPreviewResolver(
-            [this, &host, port](const SyncPreview::Preview &preview,
-                                SyncPreview::Decisions &decisions) -> bool {
-                return askSyncPreview(preview, decisions, host, port);
+            [this, &session, &host, port](
+                const SyncPreview::Preview &preview,
+                SyncPreview::Decisions &decisions) -> bool {
+                return askSyncPreview(
+                    preview, decisions, host, port,
+                    [&session](const QMap<QString, SyncPreview::Action>
+                               &actions) -> bool {
+                        return session.syncPartialNow(actions);
+                    });
             });
 
     // Опасный синк (удаления) — явный выбор: продолжить / отменить /
@@ -2009,7 +2015,8 @@ void savePreviewDefaults(const SyncPreview::Decisions &decisions)
 // с точечными действиями, diff по требованию. false — отмена
 bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
                                 SyncPreview::Decisions &decisions,
-                                const QString &host, quint16 port)
+                                const QString &host, quint16 port,
+                                const SyncSession::PartialSyncer &partial)
 {
     // Свой текст — из модели; чужой — pull-note с хаба по требованию
     const auto ownText=[this](const SyncPreview::Item &item) -> QString {
@@ -2036,6 +2043,7 @@ bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
 
     SyncPreviewDialog dialog(preview, loadPreviewDefaults(),
                              ownText, otherText, this);
+    dialog.setPartialSyncer(partial);
 
     if(dialog.exec()!=QDialog::Accepted)
         return false;

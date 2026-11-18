@@ -88,6 +88,14 @@ public:
                                                SyncPreview::Decisions &)>;
     void setPreviewResolver(PreviewResolver resolver);
 
+    // Частичный синк из окна предпросмотра (аналог syncPartial мобилы):
+    // режет текущий план по id и гоняет тем же выполнением
+    // (push/pull/удаления/commit). Контекст (план/манифесты/клиент) жив
+    // только пока run() внутри previewResolver, вне его — false
+    using PartialSyncer =
+        std::function<bool(const QMap<QString, SyncPreview::Action> &)>;
+    bool syncPartialNow(const QMap<QString, SyncPreview::Action> &actions);
+
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;
 
@@ -147,6 +155,16 @@ private:
     StrategyResolver strategyResolver;
     DeleteGuard deleteGuard;
     PreviewResolver previewResolver;
+
+    // Контекст частичного синка: валиден только пока run() внутри
+    // previewResolver (диалог модален внутри run, клиент тот же)
+    SyncPlan partialPlan;
+    SyncManifest partialLocal;
+    SyncManifest partialRemote;
+    SyncClient *partialClient=nullptr;
+    QString partialHost;
+    quint16 partialPort=0;
+    SyncReport *partialReport=nullptr;
 
     void addLog(const QString &line);
 };

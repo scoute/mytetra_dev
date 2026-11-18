@@ -148,10 +148,13 @@ public:
                                         int localItems, int remoteItems);
 
     // Окно предпросмотра синка (категории с действиями + diff).
-    // Заполняет decisions выбранными действиями, false — отмена
+    // Заполняет decisions выбранными действиями, false — отмена.
+    // partial — частичное «Применить» из окна (сессия режет план по id
+    // тем же выполнением, окно при этом не закрывается)
     bool askSyncPreview(const SyncPreview::Preview &preview,
                         SyncPreview::Decisions &decisions,
-                        const QString &host, quint16 port);
+                        const QString &host, quint16 port,
+                        const SyncSession::PartialSyncer &partial);
 
     void onExpandEditArea(bool flag);
 

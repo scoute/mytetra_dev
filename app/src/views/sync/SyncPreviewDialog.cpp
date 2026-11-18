@@ -6,6 +6,7 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QMenu>
+#include <QMessageBox>
 #include <QPalette>
 #include <QPainter>
 #include <QPixmap>
@@ -28,6 +29,14 @@ using SyncPreview::Category;
 using SyncPreview::Danger;
 using SyncPreview::Decisions;
 using SyncPreview::Item;
+
+// Светлая ли тема (палитра окна): скругления кнопок строк и прочие
+// светлые штрихи не должны ехать в тёмную. Темы десктопа — default
+// (светлая) и dark, палитра приезжает из CustomPalette CSS
+static bool isLightTheme(void)
+{
+    return QApplication::palette().color(QPalette::Window).lightness() > 128;
+}
 
 // Опасно ли действие для КОНКРЕТНОГО элемента: красным светим удаление
 // здесь/на сервере и затирание полной версии пустой. Воскрешение и пропуск
@@ -241,8 +250,25 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     buildActionsMenu();
     toolbar->addWidget(m_actionsButton);
 
+    m_expandAllButton=new QPushButton(tr("Развернуть всё"), this);
+    m_expandAllButton->setToolTip(tr("Развернуть все ветки дерева"));
+    m_expandAllButton->setAutoDefault(false);
+    toolbar->addWidget(m_expandAllButton);
+
+    m_collapseAllButton=new QPushButton(tr("Свернуть всё"), this);
+    m_collapseAllButton->setToolTip(tr("Свернуть все ветки дерева"));
+    m_collapseAllButton->setAutoDefault(false);
+    toolbar->addWidget(m_collapseAllButton);
+
     m_jumpButton=new QPushButton(tr("↓ 0"), this);
     m_jumpButton->setToolTip(tr("К первому неразобранному"));
+    // Как в мобиле: красный фон + белый текст, скругление сильнее
+    m_jumpButton->setStyleSheet(QStringLiteral(
+        "QPushButton { color: white; background: #EF5350;"
+        " border: 1px solid #C62828; border-radius: 10px;"
+        " padding: 2px 10px; font-weight: bold; }"
+        "QPushButton:disabled { color: white; background: #BDBDBD;"
+        " border-color: #9E9E9E; }"));
     connect(m_jumpButton, &QPushButton::clicked,
             this, &SyncPreviewDialog::onJumpClicked);
     toolbar->addWidget(m_jumpButton);
@@ -268,6 +294,10 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_itemsTree->setItemDelegateForColumn(
         0, new SyncPreviewItemDelegate(m_itemsTree));
     layout->addWidget(m_itemsTree, 3);
+    connect(m_expandAllButton, &QPushButton::clicked,
+            m_itemsTree, &QTreeWidget::expandAll);
+    connect(m_collapseAllButton, &QPushButton::clicked,
+            m_itemsTree, &QTreeWidget::collapseAll);
     buildItems();
 
     connect(m_itemsTree, &QTreeWidget::itemSelectionChanged,
@@ -342,12 +372,15 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
         tr("Выберите измененную запись, чтобы увидеть diff."));
     layout->addWidget(m_diffView, 2);
 
-    // --- кнопки: Применить ждёт, пока всё разобрано (как на мобиле) ---
+    // --- кнопки: «Применить» активно при хоть одном решении (гейт
+    // canApply как на мобиле), закрывает окно только когда всё разобрано,
+    // иначе — частичный синк решённого с сужением дерева
     QDialogButtonBox *buttons=new QDialogButtonBox(this);
     m_applyButton=buttons->addButton(
         tr("Применить"), QDialogButtonBox::AcceptRole);
     buttons->addButton(tr("Отмена"), QDialogButtonBox::RejectRole);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::accepted,
+            this, &SyncPreviewDialog::onApplyClicked);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     layout->addWidget(buttons);
     m_applyButton->setDefault(true);
@@ -391,6 +424,9 @@ QList<QPair<QString, QColor>> SyncPreviewDialog::tabStatSpans(int tab) const
 
     for(const Item &item : m_preview.items)
     {
+        if(isSynced(item.id))
+            continue;
+
         if(!itemVisibleOnTab(item, tab))
             continue;
 
@@ -458,6 +494,23 @@ QPixmap SyncPreviewDialog::tabStatsIcon(int tab) const
 }
 
 
+void SyncPreviewDialog::refreshTabs(void)
+{
+    // Статистика по остатку (после частичного синка дерево сузилось)
+    QSignalBlocker block(m_tabs);
+    QSize iconSize(0, 0);
+
+    for(int tab=0; tab<3; ++tab)
+    {
+        const QPixmap icon=tabStatsIcon(tab);
+        iconSize=iconSize.expandedTo(icon.size());
+        m_tabs->setTabIcon(tab, icon);
+    }
+
+    m_tabs->setIconSize(iconSize);
+}
+
+
 void SyncPreviewDialog::buildTabs(void)
 {
     QSize iconSize(0, 0);
@@ -517,6 +570,50 @@ void SyncPreviewDialog::buildActionsMenu(void)
     }
 
     m_actionsButton->setMenu(menu);
+}
+
+
+void SyncPreviewDialog::setPartialSyncer(PartialSyncer syncer)
+{
+    m_partialSync=syncer;
+}
+
+
+bool SyncPreviewDialog::isSynced(const QString &id) const
+{
+    return m_syncedIds.contains(id);
+}
+
+
+bool SyncPreviewDialog::isDone(const Item &item) const
+{
+    return isSynced(item.id)
+        || m_decisions.forItem(item)!=Action::Confirm;
+}
+
+
+bool SyncPreviewDialog::canApply(void) const
+{
+    // Хоть одно решённое несинкнутое (как canApply мобилы)
+    for(const Item &item : m_preview.items)
+        if(!isSynced(item.id)
+           && m_decisions.forItem(item)!=Action::Confirm)
+            return true;
+
+    return false;
+}
+
+
+bool SyncPreviewDialog::allDecided(void) const
+{
+    if(m_preview.items.isEmpty())
+        return false;
+
+    for(const Item &item : m_preview.items)
+        if(!isDone(item))
+            return false;
+
+    return true;
 }
 
 
@@ -611,10 +708,15 @@ void SyncPreviewDialog::buildItems(void)
     m_itemsTree->clear();
     for(int i=0;i<3;++i) m_sectionHeaders[i]=nullptr;
 
-    // Разделы-линейки: одно дерево целиком (как в макете)
+    // Разделы-линейки: одно дерево целиком (как в макете).
+    // Уже синкнутое частичным «Применить» в дерево не входит
     int secCount[3]={0,0,0};
     for(const Item &it : m_preview.items)
+    {
+        if(isSynced(it.id))
+            continue;
         secCount[sectionOf(it)]++;
+    }
 
     for(int sec=0; sec<3; ++sec)
     {
@@ -677,6 +779,9 @@ void SyncPreviewDialog::buildItems(void)
 
     for(int index : order)
     {
+        if(isSynced(m_preview.items.at(index).id))
+            continue;
+
         const Item &item=m_preview.items.at(index);
         const int sec=sectionOf(item);
 
@@ -712,6 +817,11 @@ void SyncPreviewDialog::buildItems(void)
     for(int sec=0; sec<3; ++sec)
         if(m_sectionHeaders[sec]!=nullptr)
             m_sectionHeaders[sec]->setExpanded(true);
+
+    // По умолчанию всё развёрнуто: контекстные ветки в Qt стартуют
+    // свёрнутыми, раскрываем целиком (перестройка после частичного
+    // синка тоже приходит сюда)
+    m_itemsTree->expandAll();
 
     // Начальный выбор: первый элемент
     for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
@@ -1117,17 +1227,22 @@ void SyncPreviewDialog::syncWidgetState(QWidget *w, const SyncPreview::Item &ite
     QToolButton *bYes=btns.at(0);
     QToolButton *bNo=btns.at(1);
 
-    // Как на мобиле: неактивные серые, в активе — сплошной цвет + белый глиф
+    // Как на мобиле: неактивные серые, в активе — сплошной цвет + белый глиф.
+    // В светлой теме кнопки чуть скруглены (вровень с остальным круглым),
+    // тёмную не трогаем
     const QColor grayFg(0x777777), grayBd(0x555555);
     const QColor grayBg(0x777777, 0x777777, 0x777777, 0x28);
+    const int radius=isLightTheme() ? 6 : 0;
     auto paint=[&](QToolButton *b, const QColor &solid, bool active) {
         const QColor fill=solid;
         const QColor light(fill.red(), fill.green(), fill.blue(), 0x55);
         b->setStyleSheet(QStringLiteral(
-            "color: %1; background: %2; border: 1.5px solid %3; font-weight: bold;")
+            "color: %1; background: %2; border: 1.5px solid %3;"
+            " border-radius: %4px; font-weight: bold;")
             .arg(active ? QStringLiteral("white") : grayFg.name(QColor::HexRgb),
                  (active ? solid : grayBg).name(QColor::HexArgb),
-                 (active ? solid : grayBd).name(QColor::HexRgb)));
+                 (active ? solid : grayBd).name(QColor::HexRgb))
+             .arg(radius));
     };
 
     const QColor green(0x66BB6A), red(0xEF5350), blue(0x64B5F6);
@@ -1302,7 +1417,7 @@ void SyncPreviewDialog::refreshCounter(void)
     int decided=0;
 
     for(const Item &item : m_preview.items)
-        if(m_decisions.forItem(item)!=Action::Confirm)
+        if(isDone(item))
             decided++;
 
     const int total=m_preview.items.size();
@@ -1312,8 +1427,9 @@ void SyncPreviewDialog::refreshCounter(void)
     else
         m_statusLabel->setText(tr("Разобрано (%1/%2)").arg(decided).arg(total));
 
+    // Гейт как на мобиле: активно при хоть одном решённом несинкнутом
     if(m_applyButton!=nullptr)
-        m_applyButton->setEnabled(total>0 && decided==total);
+        m_applyButton->setEnabled(canApply());
 
     if(m_jumpButton!=nullptr)
     {
@@ -1321,6 +1437,84 @@ void SyncPreviewDialog::refreshCounter(void)
         m_jumpButton->setText(tr("↓ %1").arg(left));
         m_jumpButton->setVisible(left>0);
     }
+}
+
+
+void SyncPreviewDialog::onApplyClicked(void)
+{
+    // Всё разобрано — старый путь: закрыть окно, финал — в сессии
+    if(allDecided() || !m_partialSync)
+    {
+        accept();
+        return;
+    }
+
+    // Частичное «Применить» (как на мобиле): синкаем решённое сейчас,
+    // дерево локально сузится до остатка, окно НЕ закрываем
+    QMap<QString, Action> actions;
+
+    for(const Item &item : m_preview.items)
+    {
+        if(isSynced(item.id))
+            continue;
+
+        const Action effective=m_decisions.forItem(item);
+
+        if(effective!=Action::Confirm)
+            actions.insert(item.id, effective);
+    }
+
+    if(actions.isEmpty())
+        return;
+
+    const int decidedN=actions.size();
+    int totalN=0;
+    for(const Item &item : m_preview.items)
+        if(!isSynced(item.id))
+            totalN++;
+    const QMessageBox::StandardButton pick=QMessageBox::question(
+        this,
+        tr("Частичная синхронизация"),
+        tr("Синхронизировать только %1 из %2? "
+           "Оставшиеся элементы можно синхронизировать позже в этом же окне.")
+            .arg(decidedN).arg(totalN),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+
+    if(pick!=QMessageBox::Yes)
+        return;
+
+    bool ok=false;
+
+    try
+    {
+        ok=m_partialSync(actions);
+    }
+    catch(...)
+    {
+        ok=false;
+    }
+
+    if(!ok)
+    {
+        QMessageBox::warning(
+            this,
+            tr("Частичная синхронизация"),
+            tr("Не вышло — попробуйте позже."));
+        return;
+    }
+
+    for(auto it=actions.constBegin(); it!=actions.constEnd(); ++it)
+        m_syncedIds.insert(it.key());
+
+    buildItems();
+    refreshTabs();
+    refreshAll();
+
+    QMessageBox::information(
+        this,
+        tr("Частичная синхронизация"),
+        tr("Готово: %1, осталось: %2.").arg(decidedN).arg(totalN-decidedN));
 }
 
 
@@ -1790,7 +1984,7 @@ void SyncPreviewDialog::showHelp(void)
     html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("•"), green, tr("«Запомнить» — сохранить выбранные действия как умолчание для будущих синков"));
     html+=sym(QStringLiteral("•"), green, tr("«Действия ▾» — действия по умолчанию для целых категорий"));
-    html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» ждёт, пока всё разобрано"));
+    html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» активно при хоть одном решении: всё разобрано — закроет окно, иначе синкнет решённое, а дерево сузится до остатка"));
     html+=sym(QStringLiteral("•"), green, tr("«Применить» — выполнить, «Отмена» — прервать"));
 
     QTextEdit *text=new QTextEdit(&help);
@@ -1809,7 +2003,14 @@ void SyncPreviewDialog::showHelp(void)
 
 Decisions SyncPreviewDialog::decisions(void) const
 {
-    return m_decisions;
+    Decisions result=m_decisions;
+
+    // Уже синкнутое частичным «Применить» в финальный план не входит
+    // (applyDecisions вычеркнет Skip, наборы не пересекаются)
+    for(const QString &id : m_syncedIds)
+        result.byId[id]=Action::Skip;
+
+    return result;
 }
 
 

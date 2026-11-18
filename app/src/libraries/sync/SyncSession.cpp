@@ -9,6 +9,7 @@
 
 #include <QDebug>
 #include <QMap>
+#include <QSet>
 
 
 SyncSession::SyncSession(KnowTreeModel *model, AppConfig *config,
@@ -420,7 +421,22 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
             SyncPreview::Decisions decisions=
                 SyncPreview::Decisions::defaults();
 
-            if(!previewResolver(preview, decisions))
+            // Контекст частичного «Применить»: диалог модален внутри run,
+            // колбэк режет этот план по id тем же выполнением ниже
+            partialPlan=plan;
+            partialLocal=local;
+            partialRemote=remote;
+            partialClient=&client;
+            partialHost=host;
+            partialPort=port;
+            partialReport=&report;
+
+            const bool previewOk=previewResolver(preview, decisions);
+
+            partialClient=nullptr;
+            partialReport=nullptr;
+
+            if(!previewOk)
             {
                 addLog(QStringLiteral("preview cancelled"));
                 report.error=QStringLiteral("Sync cancelled");
@@ -481,11 +497,11 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
 
     // 6. Чужие tombstone'ы — применить локально
-    if(!applyRemoteDeletes(plan, remote, report))
+    if(!applyRemoteDeletes(finalPlan, remote, report))
         return report;
 
     // 7. Свои tombstone'ы, которых нет у хаба — отправить ему
-    if(!pushOwnTombstones(client, host, port, local, remote, plan, report))
+    if(!pushOwnTombstones(client, host, port, local, remote, finalPlan, report))
         return report;
 
     // 8. Фиксация: сначала хаб (сейв+перезагрузка), потом мы
@@ -860,6 +876,73 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
     report.ok=true;
     return report;
 }
+
+// Частичный синк из окна предпросмотра (аналог syncPartial мобилы):
+// срез плана по id + то же выполнение (push/pull/удаления/commit).
+// Поштучные ошибки оставляют строки в дереве (false), фатальные рвут
+// так же. Итоговые счетчики — в финальном проходе run(), здесь только
+// факт успеха (как у мобилы: отчет пачки отбрасывается)
+bool SyncSession::syncPartialNow(
+    const QMap<QString, SyncPreview::Action> &actions)
+{
+    if(partialClient==nullptr || partialReport==nullptr)
+        return false;
+
+    const QList<QString> keys=actions.keys();
+    const QSet<QString> ids(keys.begin(), keys.end());
+
+    // Срез плана по id (аналог slicePlan мобилы)
+    SyncPlan sub;
+    auto keep=[&](const QStringList &list) {
+        QStringList out;
+        for(const QString &id : list)
+            if(ids.contains(id))
+                out << id;
+        return out;
+    };
+    sub.uploadNotes=keep(partialPlan.uploadNotes);
+    sub.downloadNotes=keep(partialPlan.downloadNotes);
+    sub.uploadBranches=keep(partialPlan.uploadBranches);
+    sub.downloadBranches=keep(partialPlan.downloadBranches);
+    sub.deleteLocal=keep(partialPlan.deleteLocal);
+    sub.pushTombs=keep(partialPlan.pushTombs);
+
+    if(sub.empty())
+        return true;
+
+    const SyncPreview::Preview subPreview=
+        SyncPreview::classify(sub, partialLocal, partialRemote);
+    SyncPreview::Decisions subDecisions;
+    subDecisions.byId=actions;
+    const SyncPlan finalSub=SyncPreview::applyDecisions(
+        sub, subPreview, subDecisions, partialLocal, partialRemote);
+
+    addLog(QStringLiteral("partial: %1 item(s)").arg(ids.size()));
+
+    SyncReport tmp;
+    if(!pushByPlan(*partialClient, partialHost, partialPort,
+                   finalSub, partialLocal, tmp))
+        return false;
+    if(!pullByPlan(*partialClient, partialHost, partialPort,
+                   finalSub, partialRemote, tmp))
+        return false;
+    if(!applyRemoteDeletes(finalSub, partialRemote, tmp))
+        return false;
+    if(!pushOwnTombstones(*partialClient, partialHost, partialPort,
+                           partialLocal, partialRemote, finalSub, tmp))
+        return false;
+
+    if(!partialClient->commit(partialHost, partialPort))
+        return false;
+
+    model->save();
+    model->reload();
+    addLog(QStringLiteral("partial: committed"));
+
+    Q_UNUSED(partialReport);
+    return tmp.errors.isEmpty();
+}
+
 
 // Восстановление с хаба: локальное уходит в корзину, база
 // перекачивается с хаба целиком. Ответ на "случайно удалил, хочу

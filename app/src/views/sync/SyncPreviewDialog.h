@@ -8,6 +8,7 @@
 #include <QMap>
 #include <QPair>
 #include <QPixmap>
+#include <QSet>
 #include <QStyledItemDelegate>
 
 #include "libraries/sync/SyncPreview.h"
@@ -72,13 +73,24 @@ public:
     using TextFetcher =
         std::function<QString(const SyncPreview::Item &)>;
 
+    // Частичное выполнение из диалога: сессия режет план по id тем же
+    // выполнением. true — всё чисто (строки уходят из дерева),
+    // false — оставить строки, показать предупреждение
+    using PartialSyncer =
+        std::function<bool(const QMap<QString, SyncPreview::Action> &)>;
+
     SyncPreviewDialog(const SyncPreview::Preview &preview,
                       const SyncPreview::Decisions &initial,
                       const TextFetcher &ownText,
                       const TextFetcher &otherText,
                       QWidget *parent=nullptr);
 
-    // Итоговые решения (после exec()==Accepted)
+    void setPartialSyncer(PartialSyncer syncer);
+
+    // Итоговые решения (после exec()==Accepted).
+    // Уже синкнутое частичным «Применить» помечается Skip —
+    // applyDecisions его вычеркнет из финального плана, наборы
+    // с финальным проходом не пересекаются
     SyncPreview::Decisions decisions(void) const;
 
     // Сохранить выбранные действия как умолчание (галочка "Запомнить")
@@ -90,6 +102,7 @@ private slots:
     void onActionsMenuTriggered(void);
     void onJumpClicked(void);
     void onHelpClicked(void);
+    void onApplyClicked(void);
     void onItemSelectionChanged(void);
     void onItemActionChanged(int index);
     void onRowButtonClicked(void);
@@ -105,6 +118,7 @@ private:
     QString tabName(int tab) const;
     QList<QPair<QString, QColor>> tabStatSpans(int tab) const;
     QPixmap tabStatsIcon(int tab) const;
+    void refreshTabs(void);
 
     void buildTabs(void);
     void buildActionsMenu(void);
@@ -122,6 +136,14 @@ private:
     void refreshRowText(QTreeWidgetItem *row);
     void refreshBranchMarks(void);
     void collectSubtreeItems(QTreeWidgetItem *node, QList<int> &out) const;
+    // Уже синкнуто частичным «Применить»: в дереве скрыто,
+    // в счётчике — как разобранное, из финальных решений — в Skip
+    bool isSynced(const QString &id) const;
+    bool isDone(const SyncPreview::Item &item) const;
+    // Гейт «Применить» (как canApply мобилы): активно при хоть одном
+    // решённом несинкнутом; закрывает окно только когда всё разобрано
+    bool canApply(void) const;
+    bool allDecided(void) const;
     void refreshCounter(void);
     void refreshAll(void);
     void updateBranchPanel(QTreeWidgetItem *row);
@@ -138,6 +160,11 @@ private:
     SyncPreview::Decisions m_decisions;
     TextFetcher m_ownText;
     TextFetcher m_otherText;
+    PartialSyncer m_partialSync;
+
+    // Уже синкнутые частичным «Применить» (строк нет в дереве,
+    // перестройка локальная, без запросов к серверу)
+    QSet<QString> m_syncedIds;
 
     // Защита от бития: id -> опасность (предвычислено в конструкторе)
     QMap<QString, SyncPreview::Danger> m_dangers;
@@ -152,6 +179,8 @@ private:
     QToolButton *m_actionsButton=nullptr;
     QTreeWidgetItem *m_sectionHeaders[3]={nullptr,nullptr,nullptr};
     QPushButton *m_jumpButton=nullptr;
+    QPushButton *m_expandAllButton=nullptr;
+    QPushButton *m_collapseAllButton=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
     QLabel *m_branchLabel=nullptr;
     QString m_diffOwn;

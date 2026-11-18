@@ -186,6 +186,12 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     setWindowTitle(tr("Дерево изменений синхронизации"));
     resize(880, 660);
 
+    // Кнопки свернуть/развернуть: окно часто открывают рядом с деревом,
+    // на пол-экрана — разворот на полную должен быть под рукой
+    setWindowFlags(windowFlags()
+                   | Qt::WindowMinimizeButtonHint
+                   | Qt::WindowMaximizeButtonHint);
+
     // Опасность бития: почти-пустое затирает содержательное.
     // Меряем заранее (тексты обеих сторон), как в мобильной версии
     QElapsedTimer pt; pt.start();

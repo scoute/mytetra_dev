@@ -681,7 +681,8 @@ void SyncDevicesDialog::onSyncNow(void)
         if(!steps.isEmpty())
             fail+=QStringLiteral("\n-- steps --\n")+steps;
 
-        QMessageBox::warning(this, tr("Sync"), fail);
+        QMessageBox::warning(this, tr("Sync"),
+                             MainWindow::trimSyncReportForDialog(fail));
         refreshList();
         return;
     }
@@ -701,7 +702,8 @@ void SyncDevicesDialog::onSyncNow(void)
         summary+=tr("\n\nItem errors (skipped items):\n%1")
                  .arg(report.errors.join(QStringLiteral("\n")));
 
-    QMessageBox::information(this, tr("Sync"), summary);
+    QMessageBox::information(this, tr("Sync"),
+                               MainWindow::trimSyncReportForDialog(summary));
     refreshList();
 }
 
@@ -891,9 +893,11 @@ void SyncDevicesDialog::joinFresh(void)
 void SyncDevicesDialog::showManualResult(const QString &result, bool syncOk)
 {
     if(!syncOk)
-        QMessageBox::warning(this, tr("Sync"), result);
+        QMessageBox::warning(this, tr("Sync"),
+                             MainWindow::trimSyncReportForDialog(result));
     else
-        QMessageBox::information(this, tr("Sync"), result);
+        QMessageBox::information(this, tr("Sync"),
+                               MainWindow::trimSyncReportForDialog(result));
 
     refreshList();
 }

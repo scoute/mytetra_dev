@@ -166,6 +166,12 @@ public:
     static SyncStrategy askSyncStrategy(QWidget *parent,
                                         int localItems, int remoteItems);
 
+    // Длинный отчёт синка (100k+ строк шагов) в окно диалога не влезает:
+    // шаги режем до головы+хвоста, ошибки — первые 50. Полный текст
+    // остаётся в консоли при включённой отладке синка (там же все шаги
+    // дублируются через syncDbg). Headless-путь печатает целиком
+    static QString trimSyncReportForDialog(const QString &text);
+
     // Окно предпросмотра синка (категории с действиями + diff).
     // Заполняет decisions выбранными действиями, false — отмена.
     // partial — частичное «Применить» из окна (сессия режет план по id

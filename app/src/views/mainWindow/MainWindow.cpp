@@ -1355,9 +1355,11 @@ void MainWindow::runToolbarNativeSync(bool interactive)
         target.lastIp, QString(), static_cast<quint16>(target.port), ok);
 
     if(ok)
-        QMessageBox::information(this, tr("Sync"), result);
+        QMessageBox::information(this, tr("Sync"),
+                             trimSyncReportForDialog(result));
     else
-        QMessageBox::warning(this, tr("Sync"), result);
+        QMessageBox::warning(this, tr("Sync"),
+                         trimSyncReportForDialog(result));
 }
 
 
@@ -2318,6 +2320,66 @@ bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
         savePreviewDefaults(decisions);
 
     return true;
+}
+
+
+QString MainWindow::trimSyncReportForDialog(const QString &text)
+{
+    // Шаги — всё после маркера, ошибки — блок "Item errors" до него
+    const QString marker=QStringLiteral("\n-- steps --\n");
+    const int at=text.indexOf(marker);
+    QString head=text, steps;
+
+    if(at>=0)
+    {
+        head=text.left(at);
+        steps=text.mid(at+marker.size());
+    }
+
+    // Ошибки — первые 50, дальше счётчик (их обычно единицы)
+    {
+        const QStringList lines=head.split(QLatin1Char('\n'));
+        int errStart=-1;
+
+        for(int i=0; i<lines.size(); ++i)
+            if(lines.at(i).startsWith(QStringLiteral("Item errors")))
+            {
+                errStart=i+1;
+                break;
+            }
+
+        if(errStart>=0)
+        {
+            const int errCount=lines.size()-errStart;
+
+            if(errCount>50)
+            {
+                QStringList cut=lines.mid(0, errStart+50);
+                cut << QStringLiteral("... and %1 more error(s), see full log in console "
+                                      "with sync debugging enabled").arg(errCount-50);
+                head=cut.join(QLatin1Char('\n'));
+            }
+        }
+    }
+
+    // Шаги: голова+хвост, середину в топку (там push note ×100500).
+    // Полный текст остаётся в консоли при включённой отладке синка:
+    // каждый шаг туда дублируется через syncDbg
+    if(!steps.isEmpty())
+    {
+        const QStringList lines=steps.split(QLatin1Char('\n'));
+
+        if(lines.size()>60)
+        {
+            QStringList cut=lines.mid(0, 15);
+            cut << QStringLiteral("... [%1 lines omitted — full log in console "
+                                  "with sync debugging enabled] ...").arg(lines.size()-55);
+            cut+=lines.mid(lines.size()-40);
+            steps=cut.join(QLatin1Char('\n'));
+        }
+    }
+
+    return at>=0 ? head+marker+steps : head;
 }
 
 

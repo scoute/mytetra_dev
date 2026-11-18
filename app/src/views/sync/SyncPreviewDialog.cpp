@@ -1254,6 +1254,9 @@ bool SyncPreviewActionDelegate::cellLayout(const QStyleOptionViewItem &option,
     // Глифы кнопок чуть меньше текста (duel-стрелки — тем же кеглем,
     // кнопки остаются парными); diff-текст — обычным кеглем
     QFont glyphFont=bold;
+    // Глифы кнопок — максимально жирно (Black вместо Bold):
+    // белые ✓/✕ на цветном фоне тонкими почти не читаются
+    glyphFont.setWeight(QFont::Black);
     if(glyphFont.pointSize()>0)
         glyphFont.setPointSize(qMax(8, glyphFont.pointSize()-1));
     else
@@ -1358,6 +1361,7 @@ void SyncPreviewActionDelegate::paint(QPainter *painter,
     QFont bold=o.font;
     bold.setBold(true);
     QFont glyphFont=bold;
+    glyphFont.setWeight(QFont::Black); // как в cellLayout: жирнее белого
     if(glyphFont.pointSize()>0)
         glyphFont.setPointSize(qMax(8, glyphFont.pointSize()-1));
     else

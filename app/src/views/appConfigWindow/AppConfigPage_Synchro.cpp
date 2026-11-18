@@ -103,6 +103,19 @@ void AppConfigPage_Synchro::setupUi(void)
     synchroPeriodLayout->addStretch();
     synchroOnLayout->addLayout( synchroPeriodLayout );
 
+    syncBgPush=new QCheckBox(this);
+    syncBgPush->setText(tr("Background sync: upload mine"));
+    syncBgPush->setChecked(mytetraConfig.get_syncBgPush());
+    syncBgPull=new QCheckBox(this);
+    syncBgPull->setText(tr("Background sync: download theirs"));
+    syncBgPull->setChecked(mytetraConfig.get_syncBgPull());
+    syncBgNote=new QLabel(this);
+    syncBgNote->setText(tr("Native background sync: safe additions only, at most once per 15 min"));
+    syncBgNote->setWordWrap(true);
+    synchroOnLayout->addWidget( syncBgPush );
+    synchroOnLayout->addWidget( syncBgPull );
+    synchroOnLayout->addWidget( syncBgNote );
+
     synchroOnBox->setLayout( synchroOnLayout );
 
     // Начальное состояние зависимых параметров (активны-неактивны) для периодической синхронизации
@@ -202,6 +215,11 @@ void AppConfigPage_Synchro::onEnablePeriodicSyncro(bool state)
     synchroPeriodText->setEnabled(state);
     synchroPeriod->setEnabled(state);
     synchroPeriodPostfix->setEnabled(state);
+
+    // Направления фона — тоже только при включённой периодике
+    syncBgPush->setEnabled(state);
+    syncBgPull->setEnabled(state);
+    syncBgNote->setEnabled(state);
 }
 
 
@@ -252,6 +270,13 @@ int AppConfigPage_Synchro::applyChanges(void)
         else
             periodicSyncro.stop();
     }
+
+    // Сохраняются направления фонового нативного синка
+    if(mytetraConfig.get_syncBgPush()!=syncBgPush->isChecked())
+        mytetraConfig.set_syncBgPush(syncBgPush->isChecked());
+
+    if(mytetraConfig.get_syncBgPull()!=syncBgPull->isChecked())
+        mytetraConfig.set_syncBgPull(syncBgPull->isChecked());
 
 
     // Сохраняется период проверки дерева базы

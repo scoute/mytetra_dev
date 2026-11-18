@@ -107,6 +107,13 @@ public:
     bool get_syncToolbarNative(void);
     void set_syncToolbarNative(bool value);
 
+    // Фоновый (таймерный) нативный синк: направления по отдельности.
+    // Дефолт — оба включены. Выключатель «совсем» — оба выкл
+    bool get_syncBgPush(void);
+    void set_syncBgPush(bool value);
+    bool get_syncBgPull(void);
+    void set_syncBgPull(bool value);
+
     // Дефолты действий предпросмотра синка: 5 значений через запятую
     // (Create,Rename,Edit,MyDelete,TheirDelete; 0=apply..4=skip)
     QString get_syncPreviewActions(void);

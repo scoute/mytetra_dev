@@ -49,6 +49,9 @@ protected:
   QCheckBox   *synchroOnStartup;
   QCheckBox   *synchroOnExit;
   QCheckBox   *synchroOnPeriodic;
+  QCheckBox   *syncBgPush;
+  QCheckBox   *syncBgPull;
+  QLabel      *syncBgNote;
   QVBoxLayout *synchroOnLayout;
   QGroupBox   *synchroOnBox;
 

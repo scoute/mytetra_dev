@@ -70,6 +70,10 @@ public:
     // и окна не показывает: неоднозначный выбор молча пропускается
     void runToolbarNativeSync(bool interactive);
 
+    // Фоновый тик таймера в нативе: молча, только безопасное, по одной
+    // паре за тик (round-robin), не чаще раза в 15 минут
+    void backgroundSyncTick(void);
+
     void goWalkHistoryPrevious(void);
     void goWalkHistoryNext(void);
 
@@ -141,13 +145,20 @@ public:
     // scopeRootId — синк только поддерева ветки (пусто = весь синк).
     // Возвращает текст отчета, ok=false при ошибке.
     // errorCode — код handshake наружу (foreign-network для диалога),
-    // опционален чтобы не трогать старые вызовы
+    // опционален чтобы не трогать старые вызовы.
+    // silentDecisions — тихий фон: вместо окна выбора применяются готовые
+    // решения (только создания; остальное Skip до ручного синка).
+    // silentPush/silentPull — разрешённые направления тихих созданий
+    // (выключенное направление тоже уходит в Skip)
     QString runSyncToHeadless(const QString &host,
                               const QString &pin,
                               quint16 port,
                               bool &ok,
                               QString *errorCode=nullptr,
-                              const QString &scopeRootId=QString());
+                              const QString &scopeRootId=QString(),
+                              const SyncPreview::Decisions *silentDecisions=nullptr,
+                              bool silentPush=true,
+                              bool silentPull=true);
 
     // Диалог стратегии первого синка (данные есть с обеих сторон):
     // слить как есть / взять с сервера / заменить серверные / отмена.
@@ -233,6 +244,14 @@ private:
 
     // Попап pair-запроса уже показан (не плодим окна поверх друг друга)
     bool syncPairPopupActive=false;
+
+    // Нативный синк уже идёт (кнопка модальна, а таймер — нет):
+    // повторный вход пропускается, журнал один
+    bool m_nativeSyncBusy=false;
+    // Последний фоновый тик (мс): чаще раза в 15 минут не синкаем
+    qint64 m_bgLastTickMs=0;
+    // Кого синкать следующим фоновым тиком (round-robin по парам)
+    int m_bgNextPeer=0;
 
     // Напрямую вызываемые настройки, используются в мобильном интерфейсе
     QAction *actionDirectPreferencesMain       =nullptr;

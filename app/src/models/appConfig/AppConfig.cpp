@@ -406,6 +406,30 @@ void AppConfig::set_syncToolbarNative(bool value)
 }
 
 
+bool AppConfig::get_syncBgPush(void)
+{
+    return m_conf->value("syncBgPush", true).toBool();
+}
+
+
+void AppConfig::set_syncBgPush(bool value)
+{
+    m_conf->setValue("syncBgPush", value);
+}
+
+
+bool AppConfig::get_syncBgPull(void)
+{
+    return m_conf->value("syncBgPull", true).toBool();
+}
+
+
+void AppConfig::set_syncBgPull(bool value)
+{
+    m_conf->setValue("syncBgPull", value);
+}
+
+
 QString AppConfig::get_syncPreviewActions(void)
 {
     return m_conf->value("syncPreviewActions", QString()).toString();

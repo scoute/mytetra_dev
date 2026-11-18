@@ -1189,10 +1189,15 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
 // Старт синхронизации
 void MainWindow::synchronization(bool visible)
 {
-    // Нативный режим кнопки: встроенный Wi-Fi-синк вместо внешней команды
+    // Нативный режим кнопки: встроенный Wi-Fi-синк вместо внешней команды.
+    // Кнопка — интерактивно, таймер — тихим фоновым тиком
     if(mytetraConfig.get_syncToolbarNative())
     {
-        runToolbarNativeSync(visible);
+        if(visible)
+            runToolbarNativeSync(true);
+        else
+            backgroundSyncTick();
+
         return;
     }
 
@@ -1244,6 +1249,24 @@ void MainWindow::synchronization(bool visible)
 // Кнопка синхронизации в нативном режиме (см. настройку syncToolbarNative)
 void MainWindow::runToolbarNativeSync(bool interactive)
 {
+    // Нативный синк уже идёт (кнопка модальна, а таймер — нет)
+    if(m_nativeSyncBusy)
+    {
+        qDebug() << "Toolbar native sync: busy, skip";
+        return;
+    }
+
+    m_nativeSyncBusy=true;
+
+    // Сброс флага на любом выходе (меню/отмена/итог): повторный вход
+    // таймера или кнопки во время синка пропускается
+    struct BusyReset
+    {
+        MainWindow *w;
+        ~BusyReset(void) { w->m_nativeSyncBusy=false; }
+    };
+    const BusyReset busyReset{this};
+    Q_UNUSED(busyReset);
     // Только взаимные пары с известным адресом (как кнопка Sync now
     // в окне устройств: секрет в кольце + lastMutual)
     QList<AppConfig::SyncDeviceInfo> peers;
@@ -1335,6 +1358,104 @@ void MainWindow::runToolbarNativeSync(bool interactive)
         QMessageBox::information(this, tr("Sync"), result);
     else
         QMessageBox::warning(this, tr("Sync"), result);
+}
+
+
+// Фоновый тик таймера в нативе (см. backgroundSyncTick в заголовке)
+void MainWindow::backgroundSyncTick(void)
+{
+    using Category=SyncPreview::Category;
+    using Action=SyncPreview::Action;
+
+    // Только натив: внешняя команда идёт старым путём и сюда не попадает
+    if(m_nativeSyncBusy)
+    {
+        qDebug() << "Background sync: busy, skip";
+        return;
+    }
+
+    // Стратегия не улажена — деструктивный выбор за пользователя не делаем
+    if(mytetraConfig.get_syncAskStrategy())
+    {
+        qDebug() << "Background sync: strategy pending, skip";
+        return;
+    }
+
+    const bool bgPush=mytetraConfig.get_syncBgPush();
+    const bool bgPull=mytetraConfig.get_syncBgPull();
+
+    // Оба направления выкл — фон выключен совсем
+    if(!bgPush && !bgPull)
+    {
+        qDebug() << "Background sync: directions off, skip";
+        return;
+    }
+
+    // Не чаще раза в 15 минут: полный проход по базе каждый тик
+    // диск и сеть грузит, чаще — захлебнётся
+    const qint64 now=QDateTime::currentMSecsSinceEpoch();
+
+    if(now-m_bgLastTickMs<15*60*1000)
+    {
+        qDebug() << "Background sync: too soon, skip";
+        return;
+    }
+
+    // Те же взаимные пары, что у кнопки (секрет в кольце + lastMutual)
+    QList<AppConfig::SyncDeviceInfo> peers;
+
+    for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+    {
+        if(SyncIdentity::secretForPeer(&mytetraConfig, info.id).isEmpty())
+            continue;
+
+        if(info.lastMutual<=0)
+            continue;
+
+        if(info.lastIp.isEmpty())
+            continue;
+
+        peers << info;
+    }
+
+    if(peers.isEmpty())
+    {
+        qDebug() << "Background sync: no pairs, skip";
+        return;
+    }
+
+    // Round-robin: каждый тик — следующая пара, все по кругу подтянутся
+    if(m_bgNextPeer>=peers.size())
+        m_bgNextPeer=0;
+
+    const AppConfig::SyncDeviceInfo target=peers.at(m_bgNextPeer);
+    m_bgNextPeer++;
+
+    // Тихие решения: едут только создания в разрешённых направлениях,
+    // остальное — Skip (дождётся ручного синка с окном). Удаления так
+    // не едут вообще: в финальный план не попадают, guard не нужен
+    SyncPreview::Decisions silent;
+    silent.category[Category::Create]=Action::Apply;
+    silent.category[Category::Rename]=Action::Skip;
+    silent.category[Category::Edit]=Action::Skip;
+    silent.category[Category::MyDelete]=Action::Skip;
+    silent.category[Category::TheirDelete]=Action::Skip;
+
+    m_nativeSyncBusy=true;
+    m_bgLastTickMs=now;
+
+    bool ok=false;
+    const QString result=runSyncToHeadless(
+        target.lastIp, QString(), static_cast<quint16>(target.port), ok,
+        nullptr, QString(), &silent, bgPush, bgPull);
+
+    m_nativeSyncBusy=false;
+
+    // Итог — только в лог, модалок из фона нет
+    if(ok)
+        qDebug() << "Background sync ok:" << result.left(200);
+    else
+        qDebug() << "Background sync failed:" << result.left(500);
 }
 
 
@@ -1721,7 +1842,10 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                                       quint16 port,
                                       bool &ok,
                                       QString *errorCode,
-                                      const QString &scopeRootId)
+                                      const QString &scopeRootId,
+                                      const SyncPreview::Decisions *silentDecisions,
+                                      bool silentPush,
+                                      bool silentPull)
 {
     SYNC_TRACE_EXTRA(QStringLiteral("host=%1 model=%2 tid=%3")
                      .arg(host, syncPtr(treeScreen->knowTreeModel), syncTid()));
@@ -1887,9 +2011,15 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                         &mytetraConfig,
                         mytetraConfig.get_tetradir());
 
-    // Стратегия первого синка: GUI — диалог, headless — --sync-strategy
+    // Стратегия первого синка: GUI — диалог, headless — --sync-strategy.
+    // Тихий фон (silentDecisions) стратегию не выбирает: она обязана быть
+    // улажена заранее (проверяет вызыватель), здесь страховка — Merge
     session.setStrategyResolver(
-        [this](int localItems, int remoteItems) -> SyncStrategy {
+        [this, silentDecisions](int localItems, int remoteItems) -> SyncStrategy {
+            if(silentDecisions!=nullptr)
+                return SyncStrategy::Merge;
+
+            if(isSyncHeadlessMode())
             if(isSyncHeadlessMode())
             {
                 const QStringList args=QCoreApplication::arguments();
@@ -1916,8 +2046,29 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         });
 
     // Предпросмотр синка — только GUI (категории с действиями + diff).
-    // Headless: без диалогов, действует guard удалений ниже
-    if(!isSyncHeadlessMode())
+    // Headless: без диалогов, действует guard удалений ниже.
+    // Тихий фон: без диалога, готовые тихие решения (только создания
+    // в разрешённых направлениях, остальное — Skip до ручного синка)
+    if(silentDecisions!=nullptr)
+        session.setPreviewResolver(
+            [silentDecisions, silentPush, silentPull](
+                const SyncPreview::Preview &preview,
+                SyncPreview::Decisions &decisions) -> bool {
+                decisions=*silentDecisions;
+
+                for(const SyncPreview::Item &item : preview.items)
+                {
+                    if(item.category!=SyncPreview::Category::Create)
+                        continue;
+
+                    if((item.fromLocal && !silentPush)
+                       || (!item.fromLocal && !silentPull))
+                        decisions.byId[item.id]=SyncPreview::Action::Skip;
+                }
+
+                return true;
+            });
+    else if(!isSyncHeadlessMode())
         session.setPreviewResolver(
             [this, &session, &host, port](
                 const SyncPreview::Preview &preview,

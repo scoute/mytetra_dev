@@ -953,7 +953,7 @@ QSize SyncPreviewItemDelegate::sizeHint(const QStyleOptionViewItem &option,
     // (см. комментарий в заголовке). -2 вслед за утоньшением пилюли
     const QSize base=QStyledItemDelegate::sizeHint(option, index);
     QFontMetrics fm(option.font);
-    return QSize(base.width(), fm.height()+10);
+    return QSize(base.width(), fm.height()+8);
 }
 
 
@@ -1046,7 +1046,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     const QString shownName=fm.elidedText(name, Qt::ElideRight, nameAvail);
     const int pillW=fm.horizontalAdvance(shownName)+iconW+iconGap+pillPad*2;
     // Пилюля уже по вертикали (компромисс: -2px высоты, иконка едет следом)
-    const int pillH=qMin(rowH-2, fm.height()+6);
+    const int pillH=qMin(rowH-2, fm.height()+4);
     const QRectF pillRect(x, cy-pillH/2, pillW, pillH);
 
     QColor fill=pillBase;
@@ -1065,7 +1065,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     // белый лист с серым контуром
     {
         const int iconH=pillH-8;
-        const int iconX=x+4;
+        const int iconX=x+6; // иконка чуть правее, зазор до текста 6→4
         const int iconY=cy-iconH/2;
         painter->setRenderHint(QPainter::Antialiasing, true);
         if(isBranch)
@@ -1392,7 +1392,7 @@ QSize SyncPreviewActionDelegate::sizeHint(const QStyleOptionViewItem &option,
     }
 
     return QSize(rDiff.right()-rYes.left()+3,
-                 option.fontMetrics.height()+10);
+                 option.fontMetrics.height()+8);
 }
 
 

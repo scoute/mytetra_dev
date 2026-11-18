@@ -80,6 +80,16 @@ MainWindow::MainWindow() : QMainWindow()
     setupSignals();
     assembly();
 
+    // Сервер синка: восстановить запомненную галку. Молча: если порт
+    // занят — флаг сбрасываем, модалку при старте не показываем
+    if(mytetraConfig.get_syncServerAutostart())
+    {
+        if(startSyncServer(syncDefaultPort))
+            actionSyncMenuSyncServer->setChecked(true);
+        else
+            mytetraConfig.set_syncServerAutostart(false);
+    }
+
     setupShortcuts();
 
     setupIconActions();
@@ -1585,15 +1595,18 @@ void MainWindow::onSyncServerToggle(bool checked)
             QMessageBox::warning(this, tr("Sync"),
                                  tr("Cannot start sync server: port is busy."));
             actionSyncMenuSyncServer->setChecked(false);
+            mytetraConfig.set_syncServerAutostart(false);
             return;
         }
 
+        mytetraConfig.set_syncServerAutostart(true);
         statusBar->showMessage(tr("Sync server started"), 3000);
     }
     else
     {
         stopSyncServer();
 
+        mytetraConfig.set_syncServerAutostart(false);
         statusBar->showMessage(tr("Sync server stopped"), 3000);
     }
 }

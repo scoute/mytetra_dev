@@ -382,6 +382,18 @@ void AppConfig::set_syncDebugEnabled(bool value)
 }
 
 
+bool AppConfig::get_syncServerAutostart(void)
+{
+    return m_conf->value("syncServerAutostart", false).toBool();
+}
+
+
+void AppConfig::set_syncServerAutostart(bool value)
+{
+    m_conf->setValue("syncServerAutostart", value);
+}
+
+
 QString AppConfig::get_syncPreviewActions(void)
 {
     return m_conf->value("syncPreviewActions", QString()).toString();

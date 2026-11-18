@@ -96,6 +96,12 @@ public:
     bool get_syncDebugEnabled(void);
     void set_syncDebugEnabled(bool value);
 
+    // Сервер синка: галка «Sync server» запоминается между запусками.
+    // true = при старте поднять слушатель молча (без модалок, если
+    // порт занят — флаг сбрасывается, галка гаснет)
+    bool get_syncServerAutostart(void);
+    void set_syncServerAutostart(bool value);
+
     // Дефолты действий предпросмотра синка: 5 значений через запятую
     // (Create,Rename,Edit,MyDelete,TheirDelete; 0=apply..4=skip)
     QString get_syncPreviewActions(void);

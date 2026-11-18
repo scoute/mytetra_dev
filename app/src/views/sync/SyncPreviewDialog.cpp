@@ -1047,7 +1047,12 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     const int pillW=fm.horizontalAdvance(shownName)+iconW+iconGap+pillPad*2;
     // Пилюля уже по вертикали (компромисс: -2px высоты, иконка едет следом)
     const int pillH=qMin(rowH-2, fm.height()+4);
-    const QRectF pillRect(x, cy-pillH/2, pillW, pillH);
+    // Горизонтали — строго на целые пиксели: иначе косметическое перо
+    // 1px ложится между пикселями и верх/низ мылятся даже без AA
+    const qreal topEdge=qRound(cy-pillH/2.0);
+    const qreal botEdge=qRound(cy+pillH/2.0);
+    const QRectF pillRect(x, topEdge, pillW, botEdge-topEdge);
+    const qreal pillRadius=(botEdge-topEdge)/2;
 
     QColor fill=pillBase;
     fill.setAlpha(selected ? 255 : 90);
@@ -1066,7 +1071,7 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
         pillPen.setStyle(Qt::DashLine);
     painter->setPen(pillPen);
     painter->setRenderHint(QPainter::Antialiasing, true);
-    painter->drawRoundedRect(pillRect, pillH/2, pillH/2);
+    painter->drawRoundedRect(pillRect, pillRadius, pillRadius);
     painter->setRenderHint(QPainter::Antialiasing, false);
 
     // Иконка типа: классика как на мобиле — жёлтая папка,

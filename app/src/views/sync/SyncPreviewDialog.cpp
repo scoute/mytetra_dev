@@ -1374,10 +1374,40 @@ void SyncPreviewActionDelegate::paint(QPainter *painter,
                              1.5));
         painter->setRenderHint(QPainter::Antialiasing, true);
         painter->drawRoundedRect(QRectF(r), radius, radius);
+        // ✓/✕ — жирным штрихом вручную: шрифтовой глиф тонкий даже
+        // в Black (у DejaVu нет такого начертания — Qt молча берёт Bold).
+        // Стрелки дуэлей — шрифтом, как раньше
+        if(glyph==QStringLiteral("\u2713") || glyph==QStringLiteral("\u2715"))
+        {
+            QPen strokePen(active ? QColor(Qt::white) : grayFg,
+                           qMax(2, r.height()/7));
+            strokePen.setCapStyle(Qt::RoundCap);
+            strokePen.setJoinStyle(Qt::RoundJoin);
+            painter->setPen(strokePen);
+            const qreal x0=r.left(), y0=r.top();
+            const qreal w=r.width(), h=r.height();
+            if(glyph==QStringLiteral("\u2713"))
+            {
+                painter->drawLine(QPointF(x0+w*0.28, y0+h*0.55),
+                                  QPointF(x0+w*0.45, y0+h*0.70));
+                painter->drawLine(QPointF(x0+w*0.45, y0+h*0.70),
+                                  QPointF(x0+w*0.74, y0+h*0.30));
+            }
+            else
+            {
+                painter->drawLine(QPointF(x0+w*0.34, y0+h*0.34),
+                                  QPointF(x0+w*0.66, y0+h*0.66));
+                painter->drawLine(QPointF(x0+w*0.66, y0+h*0.34),
+                                  QPointF(x0+w*0.34, y0+h*0.66));
+            }
+        }
+        else
+        {
+            painter->setPen(active ? QColor(Qt::white) : grayFg);
+            painter->setFont(glyphFont);
+            painter->drawText(r, Qt::AlignCenter, glyph);
+        }
         painter->setRenderHint(QPainter::Antialiasing, false);
-        painter->setPen(active ? QColor(Qt::white) : grayFg);
-        painter->setFont(glyphFont);
-        painter->drawText(r, Qt::AlignCenter, glyph);
     };
 
     paintButton(rYes, duel ? QStringLiteral("\u2191")

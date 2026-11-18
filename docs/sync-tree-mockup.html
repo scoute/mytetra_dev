@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дерево изменений — одно окно, светлая тема</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E3E5EC; color: #212121; font-family: Roboto, Arial, sans-serif;
+         display: flex; justify-content: center; padding: 12px; }
+  .phone { width: 400px; max-width: 100%; background: #F2F3F7; border-radius: 12px;
+           padding: 16px 12px 20px; }
+  h1 { font-size: 20px; margin-bottom: 10px; }
+  .toprow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .ring { cursor: pointer; flex: none; }
+  .ring .track { stroke: #D5D8E0; }
+  .ring .done { stroke: #66BB6A; stroke-linecap: round; }
+  .ring .left { stroke: #EF5350; stroke-linecap: round; }
+  .ring text { font-size: 11px; font-weight: bold; fill: #212121; }
+  .progress { color: #616161; font-weight: bold; font-size: 15px; flex: 1; }
+  .progress b { color: #212121; }
+  label.remember { color: #616161; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .tabs { display: flex; gap: 6px; margin: 12px 0 8px; }
+  .tabs a { flex: 1; text-decoration: none; color: #616161;
+            border: 1.5px solid #C5CAE9; border-radius: 10px; padding: 7px 2px; font-size: 12px;
+            font-weight: bold; background: #E8EAF6; }
+  .tabs a.on-up { border-color: #66BB6A; color: #2E7D32; }
+  .tabs a.on-down { border-color: #64B5F6; color: #1565C0; }
+  .tabs a.on-mut { border-color: #FFB74D; color: #E65100; }
+  .tabs small { display: block; font-weight: normal; font-size: 11px; }
+  .toolbar { display: flex; gap: 8px; align-items: center; margin: 8px 0 4px; }
+  .chipbtn { border: 1.5px solid #C5CAE9; background: #E8EAF6; color: #212121;
+             border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+  .section { margin: 14px 0 4px; display: flex; align-items: center; gap: 8px; }
+  .section::before, .section::after { content: ""; height: 1.5px; background: #9E9E9E; flex: 1; }
+  .section span { font-size: 14px; font-weight: bold; color: #616161; white-space: nowrap; }
+  ul.tree, ul.tree ul { list-style: none; padding-left: 8px; position: relative; }
+  ul.tree { padding-left: 4px; }
+  ul.tree ul::before { content: ""; position: absolute; left: 6px; top: -2px; bottom: 10px;
+                       border-left: 1.5px solid #9E9E9E; }
+  li.node { position: relative; padding: 1px 0 1px 8px; }
+  li.node::before { content: ""; position: absolute; left: -10px; top: 50%;
+                    width: 10px; border-top: 1.5px solid #9E9E9E; }
+  .row { display: flex; align-items: center; gap: 6px; border-radius: 8px; padding: 2px; }
+  .row.needs { background: rgba(38,166,154,.12); }
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px;
+          padding: 3px 10px; font-size: 13px; border: 1.5px solid; max-width: 100%;
+          background: #E8F5E9; color: #212121; }
+  .pill .b { font-weight: bold; }
+  .pill .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .iconbtn { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid;
+             font-size: 14px; font-weight: bold; cursor: pointer;
+             display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .iconbtn.yes, .iconbtn.no { border-color: #9E9E9E; color: #9E9E9E; background: #E8EAF6; }
+  .iconbtn.yes.on { border-color: #66BB6A; color: #fff; background: #66BB6A; }
+  .iconbtn.no.on { border-color: #EF5350; color: #fff; background: #EF5350; }
+  .difflink { background: none; border: none; color: #303F9F; font-size: 12px; font-weight: bold;
+              cursor: pointer; padding: 4px; flex: none; }
+  .duel { display: inline-flex; gap: 4px; }
+  .duel button { border-radius: 10px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+                 border: 1.5px solid #C5CAE9; background: #E8EAF6; color: #616161; }
+  .duel button.on-mine { border-color: #66BB6A; color: #2E7D32; background: #C8E6C9; }
+  .duel button.on-theirs { border-color: #64B5F6; color: #1565C0; background: #BBDEFB; }
+  .diffbox { display: none; margin: 4px 0 4px 26px; font-family: monospace; font-size: 12px;
+             background: #ECEFF1; color: #212121; border-radius: 8px; padding: 8px 10px; line-height: 1.5; }
+  .diffbox.open { display: block; }
+  .diffbox .add { color: #2E7D32; } .diffbox .del { color: #C62828; }
+  .footer { display: flex; justify-content: flex-end; gap: 16px; margin-top: 18px; }
+  .footer button { background: none; border: none; font-size: 15px; cursor: pointer; padding: 6px 4px; }
+  #btnCancel { color: #616161; }
+  #btnApply { color: #303F9F; font-weight: bold; }
+  #btnApply:disabled { color: #BDBDBD; cursor: default; }
+  html { scroll-behavior: smooth; }
+  #fab { position: fixed; right: 22px; top: 300px; width: 52px; height: 52px;
+         border-radius: 50%; border: 2px solid #C62828; background: #EF5350;
+         color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
+         box-shadow: 0 2px 10px rgba(0,0,0,.35); z-index: 10; }
+  #fab.hide { display: none; }
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,83,80,0); }
+    50%      { box-shadow: 0 0 0 4px rgba(239,83,80,.35); }
+  }
+  .row.needs .iconbtn, .row.needs .duel button { animation: pulse-ring 1.8s ease-in-out infinite; }
+  .row.flash { border-radius: 8px; animation: flashblink 1.2s ease-in-out; }
+  @keyframes flashblink {
+    0%, 100% { background: transparent; opacity: 1; }
+    20%, 40% { background: rgba(56,191,163,.45); opacity: .4; }
+    60%, 80% { background: rgba(56,191,163,.45); opacity: .4; }
+  }
+  .ctxrow { display: flex; align-items: center; gap: 6px; padding: 2px 0 2px 4px; }
+  .ctxpill { display: inline-flex; border: 1.5px dashed #9E9E9E; background: #EEEEEE;
+             color: #616161; font-size: 11px; border-radius: 999px; padding: 1px 10px;
+             max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toggle { border: 1.5px solid #BDBDBD; background: #E8EAF6; color: #616161;
+            border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
+            width: 26px; height: 24px; display: inline-flex; align-items: center;
+            justify-content: center; flex: none; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <h1>Дерево изменений синхронизации</h1>
+  <div class="toprow">
+    <svg class="ring" id="ring" width="56" height="56" viewBox="0 0 56 56" title="К первому неразобранному">
+      <circle class="track" cx="28" cy="28" r="22" fill="none" stroke-width="7"/>
+      <circle class="left" id="ringLeft" cx="28" cy="28" r="22" fill="none" stroke-width="7"
+              stroke-dasharray="0 999" transform="rotate(-90 28 28)"/>
+      <circle class="done" id="ringDone" cx="28" cy="28" r="22" fill="none" stroke-width="7"
+              stroke-dasharray="0 999" transform="rotate(-90 28 28)"/>
+      <text x="28" y="32" text-anchor="middle" id="ringText">9/11</text>
+    </svg>
+    <div class="progress" id="progress">Разобрано: <b>9 из 11</b></div>
+    <label class="remember"><input type="checkbox"> Запомнить</label>
+  </div>
+
+  <div class="tabs">
+    <a href="#sec-up" id="tab-up">↑ Я → сервер<small>+4</small></a>
+    <a href="#sec-down" id="tab-down">↓ Сервер → я<small>+3 ≡1 −2</small></a>
+    <a href="#sec-mut" id="tab-mut">⇅ Обоюдные<small>~1</small></a>
+  </div>
+
+  <div class="toolbar">
+    <button class="chipbtn">Действия ▾</button>
+    <button class="chipbtn" id="aggBtn" title="Состав поддерева">Состав</button>
+    <span style="flex:1"></span>
+    <button class="chipbtn" title="Справка">ⓘ</button>
+  </div>
+
+  <div class="section" id="sec-up"><span>↑ Я → сервер · 4</span></div>
+  <ul class="tree" id="tree-up"></ul>
+
+  <div class="section" id="sec-down"><span>↓ Сервер → я · 6</span></div>
+  <ul class="tree" id="tree-down"></ul>
+
+  <div class="section" id="sec-mut"><span>⇅ Обоюдные правки · 1</span></div>
+  <ul class="tree" id="tree-mut"></ul>
+
+  <button id="fab" title="К месту вмешательства">↓<span id="fabN">2</span></button>
+  <div class="footer">
+    <button id="btnCancel">ОТМЕНА</button>
+    <button id="btnApply" disabled>ПРИМЕНИТЬ</button>
+  </div>
+</div>
+
+<script>
+const GREEN='#2E7D32', BLUE='#1565C0', ORANGE='#E65100', RED='#C62828';
+const ITEMS = [
+  {id:'b1', sec:'up', kind:'branch', cat:'Create', name:'Черновики', decided:'yes'},
+  {id:'n1', sec:'up', kind:'note', cat:'Create', name:'Идея для отпуска', parent:'b1', decided:'yes'},
+  {id:'n2', sec:'up', kind:'note', cat:'Create', name:'Покупки', parent:null, decided:'yes'},
+  {id:'n0', sec:'up', kind:'note', cat:'Create', name:'Чеклист', parent:null, decided:'yes'},
+  {id:'b2', sec:'down', kind:'branch', cat:'Create', name:'Рецепты', decided:'yes'},
+  {id:'n3', sec:'down', kind:'note', cat:'Create', name:'Борщ', parent:'b2', decided:'yes'},
+  {id:'n4', sec:'down', kind:'note', cat:'Rename', name:'Контакты', parent:null, decided:null},
+  {id:'b3', sec:'down', kind:'branch', cat:'MyDelete', name:'Архив', decided:'yes'},
+  {id:'n5', sec:'down', kind:'note', cat:'MyDelete', name:'Старое', parent:'b3', decided:'yes'},
+  {id:'n6', sec:'down', kind:'note', cat:'Create', name:'Список', parent:null, decided:'yes'},
+  {id:'n7', sec:'down', kind:'note', cat:'Create', name:'new', parent:null, decided:'yes',
+   ctx:['Глубокая','Вложенная']},
+  {id:'m1', sec:'mut', kind:'note', cat:'Edit', name:'Дневник', parent:null, decided:null, duel:true},
+];
+const MARKS = {Create:'+', Rename:'≡', Edit:'~', MyDelete:'−', TheirDelete:'−'};
+const CCOLS = {Create:GREEN, Rename:BLUE, Edit:ORANGE, MyDelete:RED, TheirDelete:'#6A1B9A'};
+const FOLDER_SVG = `<svg width="15" height="12" viewBox="0 0 16 13" style="vertical-align:-1px;flex:none">` +
+  `<path d="M0 2 Q0 0 2 0 H6 Q7 0 7.6 1.4 L8.4 3 H14 Q16 3 16 5 V11 Q16 13 14 13 H2 Q0 13 0 11 Z" fill="#FFC107" stroke="#E6A200" stroke-width="1"/></svg>`;
+const PAGE_SVG = `<svg width="11" height="14" viewBox="0 0 11 14" style="vertical-align:-2px;flex:none">` +
+  `<path d="M1 0.5 H6.8 L10.5 4.2 V13 Q10.5 13.5 10 13.5 H1 Q0.5 13.5 0.5 13 V1 Q0.5 0.5 1 0.5 Z" fill="#FFFFFF" stroke="#9E9E9E" stroke-width="1"/></svg>`;
+const byId = {};
+ITEMS.forEach(it => byId[it.id] = it);
+let showAgg = false;
+function rebuildAll() {
+  buildTree('tree-up', ITEMS.filter(i => i.sec === 'up'));
+  buildTree('tree-down', ITEMS.filter(i => i.sec === 'down'));
+  buildTree('tree-mut', ITEMS.filter(i => i.sec === 'mut'));
+  refresh();
+}
+document.getElementById('aggBtn').addEventListener('click', () => {
+  showAgg = !showAgg;
+  document.getElementById('aggBtn').style.borderColor = showAgg ? '#66BB6A' : '';
+  document.getElementById('aggBtn').style.color = showAgg ? '#2E7D32' : '';
+  rebuildAll();
+});
+const CIRC = 2 * Math.PI * 22;
+
+function pillHTML(it) {
+  const col = CCOLS[it.cat];
+  const arrow = it.sec === 'up' ? '↑' : (it.sec === 'down' ? '↓' : '⇅');
+  // Ветка-папка: агрегат действий поддерева (включая себя)
+  function subtree(root) {
+    const out = [root];
+    let q = [root.id];
+    while (q.length) {
+      const cur = q.pop();
+      for (const x of ITEMS) if (x.parent === cur) { out.push(x); q.push(x.id); }
+    }
+    return out;
+  }
+  const MCOL = {Create:GREEN, Rename:BLUE, Edit:ORANGE, MyDelete:RED, TheirDelete:'#6A1B9A'};
+  const MDEL = {'−':1};
+  let badge = MARKS[it.cat];
+  let badgeHTML = `<span style="color:${CCOLS[it.cat]}">${badge}</span>`;
+  if (it.kind === 'branch' && showAgg) {
+    const scope = subtree(it);
+    const order = [['Create','+'],['Rename','≡'],['Edit','~'],['MyDelete','−'],['TheirDelete','−']];
+    let parts = '';
+    for (const [cat, mark] of order) {
+      const n = scope.filter(x => x.cat === cat).length;
+      if (n) parts += `<span style="color:${MCOL[cat]}">${mark}${n}</span>`;
+    }
+    if (parts) badgeHTML = parts;
+  }
+  return `<span class="pill" style="border-color:${col}">` +
+    `<span class="b">${badgeHTML}</span>` +
+    `<span>${arrow}</span>` +
+    (it.kind === 'branch' ? FOLDER_SVG : PAGE_SVG) +
+    `<span class="nm">${it.name}</span>` +
+    
+    `</span>`;
+}
+function diffHTML(id) {
+  const D = {
+    n4: `<div class="diffbox" id="diff-${id}"><div>  Контакты</div><div class="del">- +7 916 123-45-67</div><div class="add">+ +7 916 765-43-21</div></div>`,
+    m1: `<div class="diffbox" id="diff-${id}"><div>  Утро. Кофе. Код.</div><div class="add">+ + созвон в 15:00</div></div>`
+  };
+  return D[id] || `<div class="diffbox" id="diff-${id}"><div>  без изменений текста</div></div>`;
+}
+const collapsed = {};
+function rowHTML(it) {
+  let pre = `<span style="width:26px;flex:none"></span>`;
+  if (it.kind === 'branch') {
+    const kids = ITEMS.filter(x => x.parent === it.id);
+    if (kids.length)
+      pre = `<button class="toggle" data-toggle="${it.id}">${collapsed[it.id] ? '+' : '−'}</button>`;
+  }
+  let ctl = '';
+  if (it.duel) {
+    ctl = `<span class="duel"><button data-act="mine" data-id="${it.id}">↑ Наша</button>` +
+          `<button data-act="theirs" data-id="${it.id}">↓ Ихняя</button></span>`;
+  } else {
+    const yOn = it.decided === 'yes' ? ' on' : '';
+    const nOn = it.decided === 'no' ? ' on' : '';
+    ctl = `<button class="iconbtn yes${yOn}" data-act="yes" data-id="${it.id}" title="Принять">✓</button>` +
+          `<button class="iconbtn no${nOn}" data-act="no" data-id="${it.id}" title="Отклонить">✕</button>`;
+  }
+  ctl += ` <button class="difflink" data-diff="${it.id}">diff</button>`;
+  return `<div class="row${it.decided ? '' : ' needs'}">${pre}${pillHTML(it)}${ctl}</div>${diffHTML(it.id)}`;
+}
+const expandedCtx = {};
+function ctxHTML(it, level) {
+  const pad = `padding-left:${4 + 8 * level}px;`;
+  if (!it.ctx || !it.ctx.length) return '';
+  if (!expandedCtx[it.id])
+    return `<div class="ctxrow" style="${pad}">` +
+           `<button class="toggle" data-ctx="${it.id}">+</button>` +
+           `<span class="ctxpill">⋯ ${it.ctx.join(' › ')}</span></div>`;
+  let h = '';
+  it.ctx.forEach((name, i) => {
+    h += `<div class="ctxrow" style="padding-left:${4 + 8 * (level + i)}px;">` +
+         (i === 0 ? `<button class="toggle" data-ctx="${it.id}">−</button>` : `<span style="width:26px;flex:none"></span>`) +
+         `<span class="ctxpill">${name}</span></div>`;
+  });
+  return h;
+}
+function buildTree(rootId, items) {
+  const roots = items.filter(i => !i.parent && !i.ctx);
+  const lone = items.filter(i => i.ctx);
+  let h = '';
+  for (const r of roots) {
+    if (collapsed[r.id]) {
+      h += `<li class="node" data-node="${r.id}">${rowHTML(r)}</li>`;
+      continue;
+    }
+    h += `<li class="node" data-node="${r.id}">${rowHTML(r)}`;
+    const kids = items.filter(i => i.parent === r.id);
+    if (kids.length) {
+      h += '<ul>';
+      for (const k of kids) h += `<li class="node" data-node="${k.id}">${rowHTML(k)}</li>`;
+      h += '</ul>';
+    }
+    h += '</li>';
+  }
+  for (const it of lone) h += ctxHTML(it, 1) + `<li class="node" data-node="${it.id}">${rowHTML(it)}</li>`;
+  if (!h) h = `<div style="color:#9E9E9E;font-size:13px;padding:2px 0 8px 4px;">Ничего нет</div>`;
+  document.getElementById(rootId).innerHTML = h;
+}
+buildTree('tree-up', ITEMS.filter(i => i.sec === 'up'));
+buildTree('tree-down', ITEMS.filter(i => i.sec === 'down'));
+buildTree('tree-mut', ITEMS.filter(i => i.sec === 'mut'));
+document.getElementById('tab-up').classList.add('on-up');
+
+function refresh() {
+  const total = ITEMS.length;
+  const done = ITEMS.filter(i => i.decided).length;
+  const left = total - done;
+  const p = document.getElementById('progress');
+  p.innerHTML = done === total ? `✓ Всё разобрано (<b>${done}/${total}</b>)`
+                              : `Разобрано: <b>${done} из ${total}</b>`;
+  document.getElementById('btnApply').disabled = (done !== total);
+  // кружок: зелёная дуга = разобрано, красная = остаток
+  const C = CIRC;
+  document.getElementById('ringDone').setAttribute('stroke-dasharray', `${C * done / total} ${C}`);
+  document.getElementById('ringLeft').setAttribute('stroke-dasharray', `${C * left / total} ${C}`);
+  document.getElementById('ringLeft').setAttribute('stroke-dashoffset', `${-C * done / total}`);
+  document.getElementById('ringText').textContent = `${done}/${total}`;
+  document.getElementById('fabN').textContent = left;
+  document.getElementById('fab').classList.toggle('hide', left === 0);
+}
+let jumpIdx = 0;
+document.getElementById('fab').addEventListener('click', () => {
+  const pending = ITEMS.filter(i => !i.decided);
+  if (!pending.length) return;
+  if (jumpIdx >= pending.length) jumpIdx = 0;
+  const it = pending[jumpIdx++ % pending.length];
+  const li = document.querySelector(`li.node[data-node="${it.id}"]`);
+  if (!li) return;
+  li.scrollIntoView({block: 'center', behavior: 'smooth'});
+  const row = li.querySelector(':scope > .row');
+  if (row) { row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1300); }
+});
+document.getElementById('ring').addEventListener('click', () => {
+  const first = ITEMS.find(i => !i.decided);
+  if (!first) return;
+  const li = document.querySelector(`li.node[data-node="${first.id}"]`);
+  if (!li) return;
+  li.scrollIntoView({block: 'center', behavior: 'smooth'});
+  const row = li.querySelector(':scope > .row');
+  if (row) { row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1300); }
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest('button.toggle');
+  if (t && t.dataset.toggle) {
+    const id = t.dataset.toggle;
+    collapsed[id] = !collapsed[id];
+    buildTree('tree-up', ITEMS.filter(i => i.sec === 'up'));
+    buildTree('tree-down', ITEMS.filter(i => i.sec === 'down'));
+    buildTree('tree-mut', ITEMS.filter(i => i.sec === 'mut'));
+    refresh();
+    return;
+  }
+  if (t && t.dataset.ctx) {
+    const id = t.dataset.ctx;
+    expandedCtx[id] = !expandedCtx[id];
+    buildTree('tree-up', ITEMS.filter(i => i.sec === 'up'));
+    buildTree('tree-down', ITEMS.filter(i => i.sec === 'down'));
+    buildTree('tree-mut', ITEMS.filter(i => i.sec === 'mut'));
+    return;
+  }
+  const b = e.target.closest('button.iconbtn');
+  if (b) {
+    const it = byId[b.dataset.id];
+    it.decided = (it.decided === b.dataset.act) ? null : b.dataset.act;
+    const li = b.closest('li.node');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = rowHTML(it);
+    li.firstElementChild.replaceWith(tmp.firstElementChild);
+    refresh();
+    return;
+  }
+  const d = e.target.closest('button.difflink');
+  if (d) {
+    const box = document.getElementById('diff-' + d.dataset.diff);
+    if (box) box.classList.toggle('open');
+    return;
+  }
+  if (e.target.closest('.tabs a')) {
+    const a = e.target.closest('.tabs a');
+    document.querySelectorAll('.tabs a').forEach(x => x.classList.remove('on-up','on-down','on-mut'));
+    if (a.id === 'tab-up') a.classList.add('on-up');
+    if (a.id === 'tab-down') a.classList.add('on-down');
+    if (a.id === 'tab-mut') a.classList.add('on-mut');
+  }
+});
+document.querySelectorAll('.duel button').forEach(b => {
+  b.addEventListener('click', () => {
+    const it = byId[b.dataset.id];
+    it.decided = 'duel';
+    const wrap = b.parentElement;
+    wrap.querySelectorAll('button').forEach(x => x.classList.remove('on-mine','on-theirs'));
+    b.classList.add(b.dataset.act === 'mine' ? 'on-mine' : 'on-theirs');
+    refresh();
+  });
+});
+refresh();
+</script>
+</body>
+</html>

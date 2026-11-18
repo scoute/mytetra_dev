@@ -160,6 +160,7 @@ private slots:
     void onApplyClicked(void);
     void onItemSelectionChanged(void);
     void onItemActionChanged(int index);
+    void onTreeContextMenu(const QPoint &pos);
     void onDuelMine(void);
     void onDuelTheirs(void);
 
@@ -173,6 +174,10 @@ private:
     // Селекцию при клике НЕ двигаем (фильтр вьюпорта): иначе каждый ✓/✕
     // перезагружал бы diff с хаба
     void handleActionClick(int itemIndex, const QString &role);
+    // Рекурсивное да/нет на поддерево (контекстное меню ветки):
+    // те же решения, что одиночный тап, но сразу на ветку + всех
+    // потомков. Всё уже в цели — снимаем обратно в Confirm
+    void applySubtreeDecisions(QTreeWidgetItem *node, bool accept);
     bool eventFilter(QObject *watched, QEvent *event) override;
     // Снять взвод клика: вернуть селекцию молча (без перезагрузки diff)
     void cancelActionArm(void);

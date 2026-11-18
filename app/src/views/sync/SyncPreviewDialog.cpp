@@ -314,6 +314,10 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     // Клики по ✓/✕/diff разбираем сами, ДО смены селекции:
     // иначе каждый тап перезагружал бы diff-панель (текст с хаба)
     m_itemsTree->viewport()->installEventFilter(this);
+    // Рекурсивное да/нет: правый клик по ветке — всё поддерево разом
+    m_itemsTree->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_itemsTree, &QWidget::customContextMenuRequested,
+            this, &SyncPreviewDialog::onTreeContextMenu);
     layout->addWidget(m_itemsTree, 3);
     connect(m_expandAllButton, &QPushButton::clicked,
             m_itemsTree, &QTreeWidget::expandAll);
@@ -1595,6 +1599,74 @@ void SyncPreviewDialog::cancelActionArm(void)
     m_itemsTree->setCurrentIndex(m_savedCurrent);
     m_itemsTree->blockSignals(false);
     m_actionArmed=false;
+}
+
+
+void SyncPreviewDialog::onTreeContextMenu(const QPoint &pos)
+{
+    QTreeWidgetItem *node=m_itemsTree->itemAt(pos);
+
+    if(node==nullptr)
+        return;
+
+    QList<int> sub;
+    collectSubtreeItems(node, sub);
+
+    if(sub.isEmpty())
+        return;
+
+    QMenu menu(m_itemsTree);
+    QAction *yesAction=menu.addAction(
+        tr("✓ Применить всё поддерево (%1)").arg(sub.size()));
+    QAction *noAction=menu.addAction(
+        tr("✕ Отклонить всё поддерево (%1)").arg(sub.size()));
+
+    QAction *picked=menu.exec(m_itemsTree->viewport()->mapToGlobal(pos));
+
+    if(picked==yesAction)
+        applySubtreeDecisions(node, true);
+    else if(picked==noAction)
+        applySubtreeDecisions(node, false);
+}
+
+
+void SyncPreviewDialog::applySubtreeDecisions(QTreeWidgetItem *node,
+                                              bool accept)
+{
+    QList<int> sub;
+    collectSubtreeItems(node, sub);
+
+    if(sub.isEmpty())
+        return;
+
+    // Цель — та же, что одиночный тап (дуэли — своим маппингом)
+    auto targetFor=[this, accept](const Item &item) {
+        const bool isDuel=((item.category==Category::Edit && !item.isBranch)
+            || (item.category==Category::Rename && item.isBranch));
+
+        if(accept)
+            return isDuel ? Action::ForceMine : acceptFor(item);
+
+        return isDuel ? Action::TakeServer : rejectFor(item);
+    };
+
+    // Всё уже в цели — снимаем обратно (как повторный тап)
+    bool allSet=true;
+
+    for(int index : sub)
+        if(m_decisions.forItem(m_preview.items.at(index))!=targetFor(m_preview.items.at(index)))
+        {
+            allSet=false;
+            break;
+        }
+
+    for(int index : sub)
+    {
+        const Item &item=m_preview.items.at(index);
+        m_decisions.byId[item.id]=allSet ? Action::Confirm : targetFor(item);
+    }
+
+    refreshAll();
 }
 
 

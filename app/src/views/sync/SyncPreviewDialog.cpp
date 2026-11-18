@@ -950,10 +950,10 @@ QSize SyncPreviewItemDelegate::sizeHint(const QStyleOptionViewItem &option,
                                           const QModelIndex &index) const
 {
     // Ширина — как обычно, высота — фиксированная для всех строк
-    // (см. комментарий в заголовке)
+    // (см. комментарий в заголовке). -2 вслед за утоньшением пилюли
     const QSize base=QStyledItemDelegate::sizeHint(option, index);
     QFontMetrics fm(option.font);
-    return QSize(base.width(), fm.height()+12);
+    return QSize(base.width(), fm.height()+10);
 }
 
 
@@ -1386,10 +1386,13 @@ QSize SyncPreviewActionDelegate::sizeHint(const QStyleOptionViewItem &option,
     QRect rYes, rNo, rDiff;
 
     if(!cellLayout(option, index, rYes, rNo, rDiff))
-        return QStyledItemDelegate::sizeHint(option, index);
+    {
+        const QSize base=QStyledItemDelegate::sizeHint(option, index);
+        return QSize(base.width(), option.fontMetrics.height()+10);
+    }
 
-    const int h=qMax(rYes.height(), option.fontMetrics.height()+8);
-    return QSize(rDiff.right()-rYes.left()+3, h+4);
+    return QSize(rDiff.right()-rYes.left()+3,
+                 option.fontMetrics.height()+10);
 }
 
 

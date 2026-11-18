@@ -396,7 +396,7 @@ void AppConfig::set_syncServerAutostart(bool value)
 
 bool AppConfig::get_syncToolbarNative(void)
 {
-    return m_conf->value("syncToolbarNative", false).toBool();
+    return m_conf->value("syncToolbarNative", true).toBool();
 }
 
 

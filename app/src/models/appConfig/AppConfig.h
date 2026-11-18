@@ -103,7 +103,7 @@ public:
     void set_syncServerAutostart(bool value);
 
     // Кнопка синхронизации на панели: нативный Wi-Fi-синк или внешняя
-    // команда (как раньше). Дефолт — внешняя, поведение не меняется
+    // команда (как раньше). Дефолт — натив (внешняя осталась в настройках)
     bool get_syncToolbarNative(void);
     void set_syncToolbarNative(bool value);
 

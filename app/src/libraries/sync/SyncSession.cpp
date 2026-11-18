@@ -97,6 +97,114 @@ int subtreeItemCount(const QString &id,
 }
 
 
+SyncPlan SyncSession::slicePlanForScope(const SyncPlan &plan,
+                                           const SyncManifest &local,
+                                           const SyncManifest &remote,
+                                           const QString &scopeRootId)
+{    SYNC_TRACE();
+
+    // UNION локального и удалённого: созданное с любой стороны входит
+    QMap<QString, QString> branchParent; // id -> parentId
+    QMap<QString, QStringList> children; // parentId -> id веток
+
+    auto addBranches=[&](const QMap<QString, SyncBranchInfo> &branches) {
+        for(auto it=branches.constBegin(); it!=branches.constEnd(); ++it)
+        {
+            if(!branchParent.contains(it.key()))
+                branchParent.insert(it.key(), it.value().parentId);
+
+            if(!children[it.value().parentId].contains(it.key()))
+                children[it.value().parentId] << it.key();
+        }
+    };
+
+    addBranches(local.branches);
+    addBranches(remote.branches);
+
+    // Ветка + все потомки вниз
+    QSet<QString> branchScope;
+    branchScope.insert(scopeRootId);
+    QStringList queue;
+    queue << scopeRootId;
+
+    while(!queue.isEmpty())
+    {
+        const QString cur=queue.takeFirst();
+
+        for(const QString &child : children.value(cur))
+        {
+            if(branchScope.contains(child))
+                continue;
+
+            branchScope.insert(child);
+            queue << child;
+        }
+    }
+
+    // Заметки по branchId: только корень scope и потомки.
+    // Заметки предков сюда не входят: предки добавляются ниже
+    // лишь для вставания скачиваемых веток, их содержимое не scope
+    QSet<QString> noteScope;
+
+    auto addNotes=[&](const QMap<QString, SyncNoteInfo> &notes) {
+        for(auto it=notes.constBegin(); it!=notes.constEnd(); ++it)
+            if(branchScope.contains(it.value().branchId))
+                noteScope.insert(it.key());
+    };
+
+    addNotes(local.notes);
+    addNotes(remote.notes);
+
+    // Недостающие предки цепочкой вверх (иначе скачиваемой ветке
+    // некуда вставать, no-branch). Direction не важен: parentId
+    // берётся из любого манифеста где ветка есть
+    QSet<QString> seen;
+    QString cur=scopeRootId;
+
+    while(!seen.contains(cur))
+    {
+        seen.insert(cur);
+
+        const QString pid=branchParent.value(cur);
+
+        if(pid.isEmpty() || pid==QStringLiteral("0"))
+            break;
+
+        branchScope.insert(pid);
+
+        if(!branchParent.contains(pid))
+            break;
+
+        cur=pid;
+    }
+
+    const QSet<QString> allScope=branchScope+noteScope;
+
+    auto keep=[&](const QStringList &list, const QSet<QString> &scope) {
+        QStringList out;
+
+        for(const QString &id : list)
+            if(scope.contains(id))
+                out << id;
+
+        return out;
+    };
+
+    SyncPlan sub;
+    sub.uploadNotes=keep(plan.uploadNotes, noteScope);
+    sub.downloadNotes=keep(plan.downloadNotes, noteScope);
+    sub.uploadBranches=keep(plan.uploadBranches, branchScope);
+    sub.downloadBranches=keep(plan.downloadBranches, branchScope);
+    // deleteLocal/pushTombs — id с любой стороны tombstone
+    // (заметка или ветка): режем объединённым множеством
+    sub.deleteLocal=keep(plan.deleteLocal, allScope);
+    sub.pushTombs=keep(plan.pushTombs, allScope);
+    sub.conflicts=keep(plan.conflicts, allScope);
+
+    return sub;
+}
+
+
 void SyncSession::skipItem(SyncReport &report, const QString &entry)
 {    SYNC_TRACE();
 
@@ -143,11 +251,21 @@ void SyncSession::addLog(const QString &line)
 
 
 SyncReport SyncSession::run(const QString &host, quint16 port,
-                              const QString &pairingPin)
+                              const QString &pairingPin,
+                              const QString &scopeRootId)
 {    SYNC_TRACE_EXTRA(QStringLiteral("host=%1 model=%2").arg(host, syncPtr(model)));
 
     SyncReport report;
     SyncClient client(config);
+
+    // Scope поддерева: корень псевдо-элемента "0" — тот же весь синк
+    QString scope=scopeRootId;
+
+    if(scope==QStringLiteral("0"))
+        scope.clear();
+
+    if(!scope.isEmpty())
+        addLog(QStringLiteral("scope branch %1").arg(scope));
 
     // Снапшот пары на входе: данные разрешены только если пара
     // существовала ДО сессии (гейт 089). Сессия, создавшая/починившая
@@ -332,6 +450,20 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
             config->set_syncAskStrategy(false);
 
+            // Деструктивная стратегия первого синка — всегда про всю базу
+            // (wipe/reset там рассчитаны на полный состав). Со scope такое
+            // роняло бы данные: локальное уже стёрто, а докачка срезана.
+            // Scope сбрасывается, дальше полный синк как было
+            if(!scope.isEmpty()
+               && (strategy==SyncStrategy::MergeByName
+                   || strategy==SyncStrategy::PullFromHub
+                   || strategy==SyncStrategy::PushToHub))
+            {
+                addLog(QStringLiteral("scope %1 dropped: destructive "
+                                       "strategy needs full base").arg(scope));
+                scope.clear();
+            }
+
             if(strategy==SyncStrategy::MergeByName)
             {
                 addLog(QStringLiteral("strategy: merge by branch names "
@@ -382,7 +514,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     // 3. Сверка. Мы спок: равные mtime решает хаб (той же детерминированной
     // логикой: хаб бы скачал, мы — заливаем; итог одинаковый с обеих сторон)
-    const SyncPlan plan=SyncManifestBuilder::compare(local, remote, false);
+    SyncPlan plan=SyncManifestBuilder::compare(local, remote, false);
 
     addLog(QStringLiteral("manifest local notes=%1 branches=%2, "
                           "remote notes=%3 branches=%4")
@@ -395,10 +527,28 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
            .arg(plan.uploadBranches.size()).arg(plan.downloadBranches.size())
            .arg(plan.deleteLocal.size()).arg(plan.conflicts.size()));
 
+    // Срез по поддереву ветки: манифесты уже полные (обход один),
+    // экономия — превью/передача только по scope
+    if(!scope.isEmpty())
+    {
+        plan=slicePlanForScope(plan, local, remote, scope);
+
+        addLog(QStringLiteral("scope %1 plan upNotes=%2 downNotes=%3 "
+                               "upBranches=%4 downBranches=%5 "
+                               "deleteLocal=%6 pushTombs=%7")
+               .arg(scope, QString::number(plan.uploadNotes.size()),
+                    QString::number(plan.downloadNotes.size()),
+                    QString::number(plan.uploadBranches.size()),
+                    QString::number(plan.downloadBranches.size()),
+                    QString::number(plan.deleteLocal.size()),
+                    QString::number(plan.pushTombs.size())));
+    }
+
     if(plan.empty())
     {
         addLog(QStringLiteral("already in sync"));
         report.ok=true;
+        report.scopeEmpty=!scope.isEmpty();
         return report;
     }
 

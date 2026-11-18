@@ -132,6 +132,7 @@ public:
 
     // Headless-синк: без диалогов. pin — для первого спаривания
     // (GUI-путь сверяет фингерпринт, здесь — осознанно нет).
+    // scopeRootId — синк только поддерева ветки (пусто = весь синк).
     // Возвращает текст отчета, ok=false при ошибке.
     // errorCode — код handshake наружу (foreign-network для диалога),
     // опционален чтобы не трогать старые вызовы
@@ -139,7 +140,8 @@ public:
                               const QString &pin,
                               quint16 port,
                               bool &ok,
-                              QString *errorCode=nullptr);
+                              QString *errorCode=nullptr,
+                              const QString &scopeRootId=QString());
 
     // Диалог стратегии первого синка (данные есть с обеих сторон):
     // слить как есть / взять с сервера / заменить серверные / отмена.

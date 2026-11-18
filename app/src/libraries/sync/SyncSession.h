@@ -29,6 +29,11 @@ struct SyncReport
     int appliedDeletes=0;
     QStringList conflicts; // id с равными mtime при разных хешах
 
+    // Срез по ветке пуст: в запрошенной ветке расхождений нет
+    // (план до среза мог быть непустым). Выставляет run() при
+    // scopeRootId, UI показывает information вместо предпросмотра
+    bool scopeEmpty=false;
+
     // Поштучные несмертельные ошибки ("note <id>: <причина>").
     // Сессия идет дальше, а не падает на первой битой записи
     QStringList errors;
@@ -56,9 +61,13 @@ public:
                 const QString &tetradir);
 
     // Полный цикл с хабом host:port. isHub=false для спока.
-    // Возвращает отчет; при ok==false смотреть error
+    // Возвращает отчет; при ok==false смотреть error.
+    // scopeRootId — синк только поддерева ветки: тот же раннер и то же
+    // окно предпросмотра, план срезается по scope (ветка + потомки +
+    // предки вверх). Пусто — весь синк как раньше
     SyncReport run(const QString &host, quint16 port,
-                   const QString &pairingPin=QString());
+                   const QString &pairingPin=QString(),
+                   const QString &scopeRootId=QString());
 
     // Решение стратегии первого синка (данные есть с обеих сторон).
     // GUI передает диалог, headless — значение --sync-strategy.
@@ -100,6 +109,17 @@ public:
     QStringList log(void) const;
 
 private:
+
+    // Срез плана по поддереву ветки (аналог slicePlan мобилы):
+    // множество scope = id ветки + все потомки (ветки по parentId +
+    // заметки по branchId, UNION локального и удалённого манифестов —
+    // созданное с любой стороны входит) + недостающие предки цепочки
+    // вверх (иначе скачиваемой ветке некуда вставать, no-branch;
+    // direction не важен — parentId берётся из любого манифеста где есть)
+    static SyncPlan slicePlanForScope(const SyncPlan &plan,
+                                      const SyncManifest &local,
+                                      const SyncManifest &remote,
+                                      const QString &scopeRootId);
 
     // Залить на хаб по плану. Возвращает false при первой ошибке сети
     bool pushByPlan(SyncClient &client, const QString &host, quint16 port,

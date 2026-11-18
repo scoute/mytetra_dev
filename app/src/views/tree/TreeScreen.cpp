@@ -22,6 +22,7 @@
 #include "views/record/MetaEditor.h"
 #include "libraries/GlobalParameters.h"
 #include "libraries/sync/SyncSidecar.h"
+#include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncDebug.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/crypt/Password.h"
@@ -189,6 +190,13 @@ void TreeScreen::setupActions(void)
  connect(ac, &QAction::triggered, this, &TreeScreen::decryptBranch);
  actionList["decryptBranch"]=ac;
 
+ // Синхронизация ветки со всем поддеревом (тот же раннер и то же
+ // окно предпросмотра, что у обычного синка, но план срезан по scope)
+ ac = new QAction(tr("Синхронизировать ветку"), this);
+ ac->setToolTip(tr("Синхронизировать ветку со всем поддеревом"));
+ connect(ac, &QAction::triggered, this, &TreeScreen::syncBranch);
+ actionList["syncBranch"]=ac;
+
  // Добавление иконки к ветке
  ac = new QAction(this);
  ac->setIcon(QIcon(":/resource/pic/set_icon.svg"));
@@ -344,6 +352,8 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
   menu.addSeparator();
   menu.addAction(actionList["encryptBranch"]);
   menu.addAction(actionList["decryptBranch"]);
+  menu.addSeparator();
+  menu.addAction(actionList["syncBranch"]);
 
   // Получение индекса выделенной ветки
   QModelIndex index=getCurrentItemIndex();
@@ -411,6 +421,27 @@ void TreeScreen::onCustomContextMenuRequested(const QPoint &pos)
 
   
   // Включение отображения меню на экране
+  // Синк ветки — как обычный синк: только при спаренности.
+  // Плюс нужна валидная ветка (не корневой псевдо-элемент "0")
+  bool syncBranchEnabled=false;
+
+  if(index.isValid())
+  {
+    TreeItem *syncItem=knowTreeModel->getItem(index);
+
+    if(syncItem!=nullptr)
+    {
+      const QString syncId=syncItem->getField(QStringLiteral("id"));
+
+      if(!syncId.isEmpty()
+         && syncId!=QStringLiteral("0")
+         && mytetraConfig.hasSyncPairing())
+        syncBranchEnabled=true;
+    }
+  }
+
+  actionList["syncBranch"]->setEnabled(syncBranchEnabled);
+
   // menu.exec(event->globalPos());
   menu.exec(knowTreeView->viewport()->mapToGlobal(pos));
 }
@@ -1293,6 +1324,114 @@ void TreeScreen::decryptBranchItem(void)
  // Проверяется, остались ли в дереве зашифрованные данные
  // если зашифрованных данных нет, будет предложено сбросить пароль
  treeCryptControl();
+}
+
+
+// Синхронизация ветки со всем поддеревом: тот же раннер и то же окно
+// предпросмотра, что у обычного синка (MainWindow::runSyncToHeadless),
+// но SyncSession режет план по scope ветки. Цель — как у обычного
+// синка: взаимно спаренное устройство с известным адресом
+void TreeScreen::syncBranch(void)
+{
+  QModelIndex index=getCurrentItemIndex();
+
+  if(!index.isValid())
+    return;
+
+  TreeItem *item=knowTreeModel->getItem(index);
+
+  if(item==nullptr)
+    return;
+
+  const QString branchId=item->getField(QStringLiteral("id"));
+
+  if(branchId.isEmpty() || branchId==QStringLiteral("0"))
+    return;
+
+  if(!mytetraConfig.hasSyncPairing())
+  {
+    QMessageBox::information(this, tr("Sync"),
+                             tr("Not paired: pair with the same PIN first."));
+    return;
+  }
+
+  // Кандидаты — условия кнопки Sync из окна устройств: спаренность
+  // (секрет именно под этот пир), взаимность и известный адрес
+  struct SyncTarget
+  {
+    QString name;
+    QString host;
+    quint16 port;
+  };
+
+  QList<SyncTarget> targets;
+
+  for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+  {
+    if(info.lastIp.isEmpty() || info.lastMutual<=0)
+      continue;
+
+    if(SyncIdentity::secretForPeer(&mytetraConfig, info.id).isEmpty())
+      continue;
+
+    SyncTarget target;
+    target.name=info.name.isEmpty() ? info.id : info.name;
+    target.host=info.lastIp;
+    target.port=static_cast<quint16>(info.port);
+    targets << target;
+  }
+
+  if(targets.isEmpty())
+  {
+    QMessageBox::information(this, tr("Sync"),
+                             tr("No reachable paired device. "
+                                "Sync from the other side first "
+                                "(it records our address)."));
+    return;
+  }
+
+  SyncTarget target=targets.first();
+
+  if(targets.size()>1)
+  {
+    QStringList names;
+
+    for(const SyncTarget &candidate : targets)
+      names << candidate.name;
+
+    bool ok=false;
+    const QString chosen=QInputDialog::getItem(this, tr("Sync"),
+                                               tr("Sync branch with:"),
+                                               names, 0, false, &ok);
+
+    if(!ok || chosen.isEmpty())
+      return;
+
+    for(const SyncTarget &candidate : targets)
+      if(candidate.name==chosen)
+      {
+        target=candidate;
+        break;
+      }
+  }
+
+  MainWindow *win=find_object<MainWindow>("mainwindow");
+
+  if(win==nullptr)
+    return;
+
+  // Тот же путь что ручной Sync now: PIN не передаём, секрет уже есть,
+  // предпросмотр и выполнение — внутри runSyncToHeadless
+  bool syncOk=false;
+  QString errorCode;
+  const QString result=win->runSyncToHeadless(target.host, QString(),
+                                              target.port, syncOk,
+                                              &errorCode, branchId);
+
+  if(syncOk)
+    QMessageBox::information(this, tr("Sync"), result);
+  else
+    QMessageBox::warning(this, tr("Sync"), result);
 }
 
 

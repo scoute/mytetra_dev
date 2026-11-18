@@ -82,6 +82,9 @@ private slots:
  void encryptBranch(void);
  void decryptBranch(void);
 
+ // Синхронизация ветки со всем поддеревом (scope-синк)
+ void syncBranch(void);
+
  // Действия при клике на ветку дерева
  void onKnowtreeClicked(const QModelIndex &index);
  // void checkIfOneRootCryptItem(const QModelIndex &index);

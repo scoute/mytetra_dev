@@ -1616,7 +1616,8 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                                       const QString &pin,
                                       quint16 port,
                                       bool &ok,
-                                      QString *errorCode)
+                                      QString *errorCode,
+                                      const QString &scopeRootId)
 {
     SYNC_TRACE_EXTRA(QStringLiteral("host=%1 model=%2 tid=%3")
                      .arg(host, syncPtr(treeScreen->knowTreeModel), syncTid()));
@@ -1875,9 +1876,9 @@ QString MainWindow::runSyncToHeadless(const QString &host,
 
     // PIN пробрасываем и в сессию: ее починка пары — вторая линия обороны
     // (предсессионная выше обычно уже все решила)
-    syncDbg(QStringLiteral("gui: BEFORE session.run model=%1")
-            .arg(syncPtr(treeScreen->knowTreeModel)));
-    const SyncReport report=session.run(host, port, pin);
+    syncDbg(QStringLiteral("gui: BEFORE session.run model=%1 scope=%2")
+            .arg(syncPtr(treeScreen->knowTreeModel), scopeRootId));
+    const SyncReport report=session.run(host, port, pin, scopeRootId);
     syncDbg(QStringLiteral("gui: AFTER session.run ok=%1 err=%2 model=%3 root=%4")
             .arg(report.ok).arg(report.error)
             .arg(syncPtr(treeScreen->knowTreeModel))
@@ -1898,6 +1899,14 @@ QString MainWindow::runSyncToHeadless(const QString &host,
             fail+=QStringLiteral("\n-- steps --\n")+steps;
 
         return fail;
+    }
+
+    // Срез по ветке пуст: предпросмотр не открывался (сессия вернулась
+    // раньше), вместо сводки — короткий текст для information
+    if(report.scopeEmpty)
+    {
+        ok=true;
+        return tr("В этой ветке расхождений нет.");
     }
 
     QMap<QString, QString> logData;

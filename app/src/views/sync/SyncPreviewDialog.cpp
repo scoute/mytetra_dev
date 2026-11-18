@@ -953,7 +953,7 @@ QSize SyncPreviewItemDelegate::sizeHint(const QStyleOptionViewItem &option,
     // (см. комментарий в заголовке). -2 вслед за утоньшением пилюли
     const QSize base=QStyledItemDelegate::sizeHint(option, index);
     QFontMetrics fm(option.font);
-    return QSize(base.width(), fm.height()+8);
+    return QSize(base.width(), fm.height()+6);
 }
 
 
@@ -1388,11 +1388,11 @@ QSize SyncPreviewActionDelegate::sizeHint(const QStyleOptionViewItem &option,
     if(!cellLayout(option, index, rYes, rNo, rDiff))
     {
         const QSize base=QStyledItemDelegate::sizeHint(option, index);
-        return QSize(base.width(), option.fontMetrics.height()+10);
+        return QSize(base.width(), option.fontMetrics.height()+6);
     }
 
     return QSize(rDiff.right()-rYes.left()+3,
-                 option.fontMetrics.height()+8);
+                 option.fontMetrics.height()+6);
 }
 
 

@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QSpinBox>
+#include <QRadioButton>
 
 #include "AppConfigPage_Synchro.h"
 #include "models/appConfig/AppConfig.h"
@@ -34,6 +35,26 @@ void AppConfigPage_Synchro::setupUi(void)
     synchroCommand=new QLineEdit(this);
     synchroCommand->setText(mytetraConfig.get_synchrocommand());
     synchroCommand->setCursorPosition(0);
+
+    // Режим кнопки синхронизации: натив или внешняя команда.
+    // При нативе поле команды не нужно — гасим, чтобы не вводило
+    // в заблуждение (сама команда при этом сохраняется)
+    syncToolbarBox=new QGroupBox(this);
+    syncToolbarBox->setTitle(tr("Toolbar sync button"));
+    syncToolbarNative=new QRadioButton(this);
+    syncToolbarNative->setText(tr("Built-in Wi-Fi sync (native)"));
+    syncToolbarExternal=new QRadioButton(this);
+    syncToolbarExternal->setText(tr("External command (as before)"));
+
+    if(mytetraConfig.get_syncToolbarNative())
+        syncToolbarNative->setChecked(true);
+    else
+        syncToolbarExternal->setChecked(true);
+
+    QVBoxLayout *syncToolbarLayout=new QVBoxLayout();
+    syncToolbarLayout->addWidget(syncToolbarNative);
+    syncToolbarLayout->addWidget(syncToolbarExternal);
+    syncToolbarBox->setLayout(syncToolbarLayout);
 
     synchroOnStartup=new QCheckBox(this);
     synchroOnStartup->setText(tr("Synchronize at MyTetra startup"));
@@ -131,6 +152,7 @@ void AppConfigPage_Synchro::assembly(void)
 {
     centralLayout=new QVBoxLayout();
 
+    centralLayout->addWidget( syncToolbarBox );
     centralLayout->addWidget( commandText );
     centralLayout->addWidget( synchroCommand );
     centralLayout->addWidget( commandAboutText );
@@ -140,6 +162,9 @@ void AppConfigPage_Synchro::assembly(void)
 
     // Основной слой устанавливается
     setLayout( centralLayout );
+
+    // Поле команды активно только во внешнем режиме
+    onSyncToolbarModeChanged();
 }
 
 
@@ -147,6 +172,18 @@ void AppConfigPage_Synchro::setupSignals(void)
 {
     connect( enablePeriodicCheckBase, &QCheckBox::toggled, this, &AppConfigPage_Synchro::onEnablePeriodicCheckBase);
     connect( synchroOnPeriodic,       &QCheckBox::toggled, this, &AppConfigPage_Synchro::onEnablePeriodicSyncro);
+    connect( syncToolbarNative,   &QRadioButton::toggled, this, &AppConfigPage_Synchro::onSyncToolbarModeChanged);
+    connect( syncToolbarExternal, &QRadioButton::toggled, this, &AppConfigPage_Synchro::onSyncToolbarModeChanged);
+}
+
+
+void AppConfigPage_Synchro::onSyncToolbarModeChanged(void)
+{
+    const bool external=syncToolbarExternal->isChecked();
+
+    commandText->setEnabled(external);
+    synchroCommand->setEnabled(external);
+    commandAboutText->setEnabled(external);
 }
 
 
@@ -174,6 +211,10 @@ void AppConfigPage_Synchro::onEnablePeriodicSyncro(bool state)
 int AppConfigPage_Synchro::applyChanges(void)
 {
     qDebug() << "Apply changes synchro";
+
+    // Сохраняется режим кнопки синхронизации: натив или внешняя команда
+    if(mytetraConfig.get_syncToolbarNative()!=syncToolbarNative->isChecked())
+        mytetraConfig.set_syncToolbarNative(syncToolbarNative->isChecked());
 
     // Сохраняется строка с командой синхронизации
     if(mytetraConfig.get_synchrocommand()!=synchroCommand->text())

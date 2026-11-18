@@ -11,6 +11,7 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QLabel;
 class QSpinBox;
+class QRadioButton;
 
 class AppConfigPage_Synchro : public ConfigPage
 {
@@ -25,6 +26,7 @@ private slots:
 
   void onEnablePeriodicCheckBase(bool);
   void onEnablePeriodicSyncro(bool);
+   void onSyncToolbarModeChanged(void);
 
 protected:
 
@@ -37,6 +39,12 @@ protected:
   QLineEdit   *synchroCommand;
   QLabel      *commandText;
   QLabel      *commandAboutText;
+
+  // Режим кнопки синхронизации на панели: нативный Wi-Fi-синк
+  // или внешняя команда (как раньше)
+  QGroupBox   *syncToolbarBox;
+  QRadioButton *syncToolbarNative;
+  QRadioButton *syncToolbarExternal;
 
   QCheckBox   *synchroOnStartup;
   QCheckBox   *synchroOnExit;

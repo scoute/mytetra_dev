@@ -64,6 +64,11 @@ public:
 
     void synchronization(bool visible=true);
 
+    // Кнопка синхронизации в нативном режиме: одна взаимная пара —
+    // синк сразу, несколько — меню выбора устройства, ноль — окно
+    // устройств (там спаривание)
+    void runToolbarNativeSync(void);
+
     void goWalkHistoryPrevious(void);
     void goWalkHistoryNext(void);
 

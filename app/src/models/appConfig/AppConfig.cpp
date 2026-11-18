@@ -394,6 +394,18 @@ void AppConfig::set_syncServerAutostart(bool value)
 }
 
 
+bool AppConfig::get_syncToolbarNative(void)
+{
+    return m_conf->value("syncToolbarNative", false).toBool();
+}
+
+
+void AppConfig::set_syncToolbarNative(bool value)
+{
+    m_conf->setValue("syncToolbarNative", value);
+}
+
+
 QString AppConfig::get_syncPreviewActions(void)
 {
     return m_conf->value("syncPreviewActions", QString()).toString();

@@ -1189,6 +1189,13 @@ void MainWindow::reloadLoadStage(bool isLongTimeReload)
 // Старт синхронизации
 void MainWindow::synchronization(bool visible)
 {
+    // Нативный режим кнопки: встроенный Wi-Fi-синк вместо внешней команды
+    if(mytetraConfig.get_syncToolbarNative())
+    {
+        runToolbarNativeSync();
+        return;
+    }
+
     // Если кнопка синхронизации заблокирована, начинать синхронизацию нельзя
     if(!recordTableScreen->actionSyncro->isEnabled())
         return;
@@ -1231,6 +1238,90 @@ void MainWindow::synchronization(bool visible)
     runner->setMessageText(tr("Synchronization in progress, please wait..."));
     runner->setCommand(command);
     runner->run(visible);
+}
+
+
+// Кнопка синхронизации в нативном режиме (см. настройку syncToolbarNative)
+void MainWindow::runToolbarNativeSync(void)
+{
+    // Только взаимные пары с известным адресом (как кнопка Sync now
+    // в окне устройств: секрет в кольце + lastMutual)
+    QList<AppConfig::SyncDeviceInfo> peers;
+
+    for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+    {
+        if(SyncIdentity::secretForPeer(&mytetraConfig, info.id).isEmpty())
+            continue;
+
+        if(info.lastMutual<=0)
+            continue;
+
+        if(info.lastIp.isEmpty())
+            continue;
+
+        peers << info;
+    }
+
+    if(peers.isEmpty())
+    {
+        QMessageBox::information(
+            this, tr("Sync"),
+            tr("No mutually paired devices.\nPair a device first (Sync devices window)."));
+        onSyncDevices();
+        return;
+    }
+
+    AppConfig::SyncDeviceInfo target;
+    bool haveTarget=false;
+
+    if(peers.size()==1)
+    {
+        // Пара единственная — окно синка сразу, без лишних кликов
+        target=peers.first();
+        haveTarget=true;
+    }
+    else
+    {
+        // Пар несколько — выбираем, с кем синкаться
+        QMenu menu(this);
+
+        for(const AppConfig::SyncDeviceInfo &info : peers)
+        {
+            const QString label=QStringLiteral("%1 (%2)").arg(
+                info.name.isEmpty() ? info.id : info.name, info.lastIp);
+            QAction *act=menu.addAction(label);
+            act->setData(info.id);
+        }
+
+        QAction *picked=menu.exec(QCursor::pos());
+
+        if(picked==nullptr)
+            return;
+
+        const QString pickedId=picked->data().toString();
+
+        for(const AppConfig::SyncDeviceInfo &info : peers)
+            if(info.id==pickedId)
+            {
+                target=info;
+                haveTarget=true;
+                break;
+            }
+
+        if(!haveTarget)
+            return;
+    }
+
+    // Тот же нативный путь, что окно Sync devices: стратегия, окно
+    // выбора, итог — всё внутри runSyncToHeadless
+    bool ok=false;
+    const QString result=runSyncToHeadless(
+        target.lastIp, QString(), static_cast<quint16>(target.port), ok);
+
+    if(ok)
+        QMessageBox::information(this, tr("Sync"), result);
+    else
+        QMessageBox::warning(this, tr("Sync"), result);
 }
 
 

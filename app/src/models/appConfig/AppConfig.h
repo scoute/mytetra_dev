@@ -102,6 +102,11 @@ public:
     bool get_syncServerAutostart(void);
     void set_syncServerAutostart(bool value);
 
+    // Кнопка синхронизации на панели: нативный Wi-Fi-синк или внешняя
+    // команда (как раньше). Дефолт — внешняя, поведение не меняется
+    bool get_syncToolbarNative(void);
+    void set_syncToolbarNative(bool value);
+
     // Дефолты действий предпросмотра синка: 5 значений через запятую
     // (Create,Rename,Edit,MyDelete,TheirDelete; 0=apply..4=skip)
     QString get_syncPreviewActions(void);

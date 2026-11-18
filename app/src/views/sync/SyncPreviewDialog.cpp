@@ -85,7 +85,7 @@ static bool dangerOf(const Item &item, Action action,
     return false;
 }
 
-// Чем кончится "Применить/Подтвердить" для этого элемента
+// Чем кончится "Применить/Предоставить решать мне" для этого элемента
 static QString plannedOutcome(const Item &item)
 {
     switch(item.category)
@@ -256,7 +256,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     // --- строка инструментов: действия, дерево, помощь ---
     QHBoxLayout *toolbar=new QHBoxLayout();
     m_actionsButton=new QToolButton(this);
-    m_actionsButton->setText(tr("Действия ▾"));
+    m_actionsButton->setText(tr("Действия по умолчанию ▾"));
     m_actionsButton->setPopupMode(QToolButton::InstantPopup);
     buildActionsMenu();
     toolbar->addWidget(m_actionsButton);
@@ -2352,9 +2352,9 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("↓"), blue, tr("ихнее приезжает к нам"));
     html+=sym(QStringLiteral("⚠"), darkred, tr("почти-пустая заметка затирает содержательную: по умолчанию остается полная версия"));
     html+=sym(QStringLiteral("✓"), green, tr("решено: выбрано действие; ветка подсвечена целиком, когда разобрана"));
-    html+=QStringLiteral("<h3>")+tr("Действия")+QStringLiteral("</h3>");
+    html+=QStringLiteral("<h3>")+tr("Действия по умолчанию")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("✓"), green, tr("Применить — выполнить запланированное молча"));
-    html+=sym(QStringLiteral("✓"), green, tr("Подтвердить — то же, но только после моего взгляда"));
+    html+=sym(QStringLiteral("✓"), green, tr("Предоставить решать мне — то же, но только после моего взгляда"));
     html+=sym(QStringLiteral("⚠"), darkred, tr("Красное с ⚠ в списке — данные будут удалены или затёрты: удаление здесь/на сервере, затирание полной версии пустой"));
     html+=sym(QStringLiteral("•"), purple, tr("Восстановить с сервера — отменить моё, взять их версию (моё удаление — воскресить)"));
     html+=sym(QStringLiteral("•"), purple, tr("Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)"));
@@ -2364,7 +2364,7 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
     html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("•"), green, tr("«Запомнить» — сохранить выбранные действия как умолчание для будущих синков"));
-    html+=sym(QStringLiteral("•"), green, tr("«Действия ▾» — действия по умолчанию для целых категорий"));
+    html+=sym(QStringLiteral("•"), green, tr("«Действия по умолчанию ▾» — действия по умолчанию для целых категорий"));
     html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» активно при хоть одном решении: всё разобрано — закроет окно, иначе синкнет решённое, а дерево сузится до остатка"));
     html+=sym(QStringLiteral("•"), green, tr("«Применить» — выполнить, «Отмена» — прервать"));
 

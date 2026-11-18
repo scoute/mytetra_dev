@@ -295,6 +295,9 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_itemsTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_itemsTree->setRootIsDecorated(true);
     m_itemsTree->setIndentation(12);
+    // Все строки одной высоты (шрифт общий) — скролл/индексы за O(1),
+    // критично на десятках тысяч строк
+    m_itemsTree->setUniformRowHeights(true);
     m_itemsTree->setItemDelegateForColumn(
         0, new SyncPreviewItemDelegate(m_itemsTree));
     layout->addWidget(m_itemsTree, 3);
@@ -710,6 +713,10 @@ void SyncPreviewDialog::refreshRowText(QTreeWidgetItem *row)
 void SyncPreviewDialog::buildItems(void)
 {
     QElapsedTimer bt; bt.start();
+    // 40k+ строк с живыми кнопками: без заморозки каждый insert тянет
+    // перераскладку всего дерева (было 20с на 42k). Высоты строк однородны
+    // (всё от одного шрифта), плюс setUniformRowHeights в конструкторе
+    m_itemsTree->setUpdatesEnabled(false);
     m_itemsTree->clear();
     for(int i=0;i<3;++i) m_sectionHeaders[i]=nullptr;
 
@@ -840,6 +847,7 @@ void SyncPreviewDialog::buildItems(void)
         }
     }
 
+    m_itemsTree->setUpdatesEnabled(true);
     refreshBranchMarks();
     int totalRows=0;
     for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)

@@ -1251,6 +1251,15 @@ bool SyncPreviewActionDelegate::cellLayout(const QStyleOptionViewItem &option,
     QFont bold=option.font;
     bold.setBold(true);
     const QFontMetrics fm(bold);
+    // Глифы кнопок чуть меньше текста (duel-стрелки — тем же кеглем,
+    // кнопки остаются парными); diff-текст — обычным кеглем
+    QFont glyphFont=bold;
+    if(glyphFont.pointSize()>0)
+        glyphFont.setPointSize(qMax(8, glyphFont.pointSize()-1));
+    else
+        glyphFont.setPixelSize(qMax(8, glyphFont.pixelSize()-1));
+    const QFontMetrics gfm(glyphFont);
+    const QFontMetrics rfm(option.font);
     const QString yesGlyph=duel ? QStringLiteral("\u2191")
                                 : QStringLiteral("\u2713");
     const QString noGlyph=duel ? QStringLiteral("\u2193")
@@ -1262,9 +1271,9 @@ bool SyncPreviewActionDelegate::cellLayout(const QStyleOptionViewItem &option,
 
     const int h=qMax(16, option.rect.height()-4);
     const int cy=option.rect.center().y();
-    const int wYes=fm.horizontalAdvance(yesGlyph)+12;
-    const int wNo=fm.horizontalAdvance(noGlyph)+12;
-    const int wDiff=fm.horizontalAdvance(diffLabel)+12;
+    const int wYes=gfm.horizontalAdvance(yesGlyph)+12;
+    const int wNo=gfm.horizontalAdvance(noGlyph)+12;
+    const int wDiff=rfm.horizontalAdvance(diffLabel)+12;
     int x=option.rect.left()+1;
     yes=QRect(x, cy-h/2, wYes, h);
     x+=wYes+2;
@@ -1348,6 +1357,11 @@ void SyncPreviewActionDelegate::paint(QPainter *painter,
 
     QFont bold=o.font;
     bold.setBold(true);
+    QFont glyphFont=bold;
+    if(glyphFont.pointSize()>0)
+        glyphFont.setPointSize(qMax(8, glyphFont.pointSize()-1));
+    else
+        glyphFont.setPixelSize(qMax(8, glyphFont.pixelSize()-1));
 
     auto paintButton=[&](const QRect &r, const QString &glyph,
                          const QColor &solid, bool active, bool hovered) {
@@ -1358,7 +1372,7 @@ void SyncPreviewActionDelegate::paint(QPainter *painter,
         painter->drawRoundedRect(QRectF(r), radius, radius);
         painter->setRenderHint(QPainter::Antialiasing, false);
         painter->setPen(active ? QColor(Qt::white) : grayFg);
-        painter->setFont(bold);
+        painter->setFont(glyphFont);
         painter->drawText(r, Qt::AlignCenter, glyph);
     };
 

@@ -157,7 +157,9 @@ static uint categoryColor(Category category)
     case Category::Rename:      return 0xFF42A5F5;
     case Category::Edit:        return 0xFFFFB74D;
     case Category::MyDelete:    return 0xFFEF5350;
-    case Category::TheirDelete: return 0xFFCE93D8;
+    // Ихние удаления — бардовые, а не фиолетовые: удаление должно
+    // выглядеть опасно (зеркало мобильной палитры)
+    case Category::TheirDelete: return 0xFF8E244D;
     }
 
     return 0xFFB0B0B0;

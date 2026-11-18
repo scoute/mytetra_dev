@@ -131,7 +131,7 @@ void RecordTableController::initMetaEditorAtClickToRecord(const int pos)
 
   // Протухшая позиция (вид не успел обновиться после reload модели
   // при синке): вместо падения — варнинг и тихий возврат
-  if(table==nullptr || pos<0 || pos>=table->size())
+  if(table==nullptr || pos<0 || pos>=static_cast<int>(table->size()))
   {
       qWarning() << "RecordTableController::initMetaEditor: stale pos" << pos
                  << "table size" << (table ? table->size() : -1);
@@ -253,7 +253,7 @@ void RecordTableController::initAttachTableAtClickToRecord(const int pos)
   RecordTableData *table=recordSourceModel->getTableData();
 
   // Протухшая позиция после reload — см. initMetaEditorAtClickToRecord
-  if(table==nullptr || pos<0 || pos>=table->size() || table->getRecord(pos)==nullptr)
+  if(table==nullptr || pos<0 || pos>=static_cast<int>(table->size()) || table->getRecord(pos)==nullptr)
   {
       qWarning() << "RecordTableController::initAttachTable: stale pos" << pos;
       return;

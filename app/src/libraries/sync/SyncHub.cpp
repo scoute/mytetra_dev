@@ -288,18 +288,6 @@ bool SyncHub::isHub(void) const
 }
 
 
-static QByteArray readFileBytes(const QString &path, bool &ok)
-{
-    QFile file(path);
-    ok=file.open(QIODevice::ReadOnly);
-
-    if(!ok)
-        return QByteArray();
-
-    return file.readAll();
-}
-
-
 QJsonObject SyncHub::pullNote(const QString &id)
 {    SYNC_TRACE_EXTRA(QStringLiteral("id=%1").arg(id));
 

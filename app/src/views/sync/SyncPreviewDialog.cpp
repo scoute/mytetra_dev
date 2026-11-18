@@ -927,10 +927,6 @@ void SyncPreviewItemDelegate::paint(QPainter *painter,
     const bool hasWarn=index.data(HasWarnRole).toBool();
     const bool subtreeDone=index.data(SubtreeDoneRole).toBool();
 
-    const int markerW=marker.isEmpty() ? 0
-        : fm.horizontalAdvance(marker)+gap;
-    const int arrowW=arrow.isEmpty() ? 0
-        : fm.horizontalAdvance(arrow)+gap;
     const QString warnMark=hasWarn ? QStringLiteral(" ⚠") : QString();
     const QString doneMark=subtreeDone ? QStringLiteral(" ✓") : QString();
     const int warnW=hasWarn ? fm.horizontalAdvance(warnMark) : 0;

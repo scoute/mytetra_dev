@@ -16,12 +16,6 @@ QString noteName(const SyncManifest &manifest, const QString &id)
 }
 
 
-QString branchName(const SyncManifest &manifest, const QString &id)
-{
-    return manifest.branches.value(id).fields.value(QStringLiteral("name"));
-}
-
-
 // Имя ищем на ОБЕИХ сторонах: у удаленной записи своя сторона уже
 // ничего не знает (иначе в окне "(без имени)" вместо реального имени).
 // Удаление едет наружу — имя берет с той стороны, где элемент еще жив

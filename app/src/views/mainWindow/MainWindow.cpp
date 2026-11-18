@@ -2154,8 +2154,8 @@ void MainWindow::onSyncPairRequest(const QString &deviceId, const QString &devic
 
         QPushButton *acceptButton=box.addButton(tr("Accept"),
                                                 QMessageBox::AcceptRole);
-        QPushButton *rejectButton=box.addButton(tr("Reject"),
-                                                QMessageBox::RejectRole);
+        box.addButton(tr("Reject"),
+                      QMessageBox::RejectRole);
         QPushButton *devicesButton=box.addButton(tr("Open devices..."),
                                                  QMessageBox::ActionRole);
         box.setDefaultButton(acceptButton);

@@ -901,7 +901,8 @@ QString mergeByName(KnowTreeModel *model, const QStringList &clientBranchIds)
     if(root==nullptr)
         return QStringLiteral("bad request");
 
-    const QSet<QString> clientIds=clientBranchIds.toSet();
+    const QSet<QString> clientIds=
+        QSet<QString>(clientBranchIds.begin(), clientBranchIds.end());
     syncDbg("merge-by-name start, own branches="
             +QString::number(clientBranchIds.size()));
 

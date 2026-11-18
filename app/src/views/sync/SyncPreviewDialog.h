@@ -46,6 +46,11 @@ public:
     explicit SyncPreviewItemDelegate(QObject *parent = nullptr);
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
                const QModelIndex &index) const override;
+    // Фиксированная высота всех строк: uniformRowHeights берёт высоту
+    // первой строки (короткая линейка-заголовок) и прибивает к ней пилюли —
+    // без этого иконки/пилюли сплющивались на 40k+ деревьях
+    QSize sizeHint(const QStyleOptionViewItem &option,
+                   const QModelIndex &index) const override;
 };
 
 class QAbstractItemView;

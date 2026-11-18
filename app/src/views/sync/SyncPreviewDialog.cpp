@@ -946,6 +946,17 @@ SyncPreviewItemDelegate::SyncPreviewItemDelegate(QObject *parent)
 }
 
 
+QSize SyncPreviewItemDelegate::sizeHint(const QStyleOptionViewItem &option,
+                                          const QModelIndex &index) const
+{
+    // Ширина — как обычно, высота — фиксированная для всех строк
+    // (см. комментарий в заголовке)
+    const QSize base=QStyledItemDelegate::sizeHint(option, index);
+    QFontMetrics fm(option.font);
+    return QSize(base.width(), fm.height()+12);
+}
+
+
 void SyncPreviewItemDelegate::paint(QPainter *painter,
                                     const QStyleOptionViewItem &option,
                                     const QModelIndex &index) const

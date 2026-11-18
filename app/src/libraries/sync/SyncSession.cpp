@@ -8,6 +8,7 @@
 #include "models/appConfig/AppConfig.h"
 
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QMap>
 #include <QSet>
 
@@ -274,9 +275,13 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // 2. Манифесты: чужой тянем, свой строим локально.
     // Манифест на десятках тысяч записей — большой кусок: ему отдельный
     // таймаут (дефолтные 15с рвут даже быстрый линк на 100k)
+    QElapsedTimer mt; mt.start();
     client.setTimeoutMs(120000);
     SyncManifest remote=client.fetchManifest(host, port);
     client.setTimeoutMs(15000);
+    addLog(QStringLiteral("manifest fetch: notes=%1 branches=%2 in %3 ms")
+           .arg(remote.notes.size()).arg(remote.branches.size())
+           .arg(mt.restart()));
 
     if(!client.lastError().isEmpty())
     {
@@ -288,6 +293,11 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     SyncManifest local=
         SyncManifestBuilder::build(model, SyncSidecar::instance(),
                                    tetradir);
+    addLog(QStringLiteral("manifest local build: notes=%1 branches=%2 in %3 ms")
+           .arg(local.notes.size()).arg(local.branches.size())
+           .arg(mt.elapsed()));
+
+    // Явный деструктивный выбор стратегии уже является подтверждением
 
     // Явный деструктивный выбор стратегии уже является подтверждением
     bool destructiveStrategy=false;

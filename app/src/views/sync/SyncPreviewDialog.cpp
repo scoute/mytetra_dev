@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QElapsedTimer>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -180,6 +181,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
     // Опасность бития: почти-пустое затирает содержательное.
     // Меряем заранее (тексты обеих сторон), как в мобильной версии
+    QElapsedTimer pt; pt.start();
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     for(const Item &item : m_preview.items)
@@ -204,6 +206,8 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     }
 
     QApplication::restoreOverrideCursor();
+    qDebug() << "SyncPreviewDialog: danger precompute" << m_preview.items.size()
+             << "items in" << pt.elapsed() << "ms";
 
     QVBoxLayout *layout=new QVBoxLayout(this);
 
@@ -705,6 +709,7 @@ void SyncPreviewDialog::refreshRowText(QTreeWidgetItem *row)
 
 void SyncPreviewDialog::buildItems(void)
 {
+    QElapsedTimer bt; bt.start();
     m_itemsTree->clear();
     for(int i=0;i<3;++i) m_sectionHeaders[i]=nullptr;
 
@@ -836,6 +841,11 @@ void SyncPreviewDialog::buildItems(void)
     }
 
     refreshBranchMarks();
+    int totalRows=0;
+    for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
+        ++totalRows;
+    qDebug() << "SyncPreviewDialog: buildItems" << totalRows
+             << "rows in" << bt.elapsed() << "ms";
 }
 
 

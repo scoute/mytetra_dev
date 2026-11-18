@@ -10,6 +10,7 @@
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
 
+#include <QElapsedTimer>
 #include <QDateTime>
 
 #include <QDebug>
@@ -94,10 +95,18 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         if(!authErr.isEmpty())
                 return authFailedAnswer(authErr);
 
+        QElapsedTimer mt; mt.start();
         const SyncManifest manifest=
             SyncManifestBuilder::build(this->model, *this->sidecar,
                                        this->tetradir);
-        return manifest.toJson();
+        const qint64 buildMs=mt.restart();
+        const QJsonObject mjson=manifest.toJson();
+        qDebug() << "SyncHub: manifest built notes="
+                 << manifest.notes.size() << "branches="
+                 << manifest.branches.size() << "tombs="
+                 << manifest.tombstones.size() << "in" << buildMs
+                 << "ms + toJson" << mt.elapsed() << "ms";
+        return mjson;
     });
 
     // Заметка целиком: поля, блоб текста как лежит, аттачи байтами.

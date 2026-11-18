@@ -271,8 +271,12 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
-    // 2. Манифесты: чужой тянем, свой строим локально
+    // 2. Манифесты: чужой тянем, свой строим локально.
+    // Манифест на десятках тысяч записей — большой кусок: ему отдельный
+    // таймаут (дефолтные 15с рвут даже быстрый линк на 100k)
+    client.setTimeoutMs(120000);
     SyncManifest remote=client.fetchManifest(host, port);
+    client.setTimeoutMs(15000);
 
     if(!client.lastError().isEmpty())
     {

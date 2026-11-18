@@ -184,31 +184,33 @@ static void collectBranches(const TreeItem *item, const QString &parentId,
 }
 
 
-SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
-                                        SyncSidecar &sidecar,
-                                        const QString &tetradir)
-{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+// Заметки — одним обходом дерева. Раньше на каждую запись
+// вызывались getRecord()/getRecordPath(), а те делают полный DFS
+// на запись: O(n^2), минуты и 100% CPU на десятках тысяч записей.
+// Клиент отваливался по таймауту, а сервер продолжал молотить
+// уже мёртвому сокету
+static void collectNotes(TreeItem *branchItem,
+                         const QString &branchId,
+                         SyncManifest &out,
+                         SyncSidecar &sidecar,
+                         const QString &tetradir,
+                         int &skippedEmpty)
+{
+    RecordTableData *table=branchItem->recordtableGetTableData();
 
-    SyncManifest out;
-
-    if(model==nullptr)
-        return out;
-
-    QElapsedTimer timer;
-    timer.start();
-
-    // Ветки обходом от корня
-    collectBranches(model->getRootItemPublic(), QString(), out, sidecar);
-
-    // Заметки по реестру id. Ветка — последний элемент пути
-    const QSharedPointer< QSet<QString> > allIds=model->getAllRecordsIdList();
-
-    if(!allIds.isNull())
+    if(table!=nullptr)
     {
-        int skippedEmpty=0;
+        const int n=static_cast<int>(table->size());
 
-        for(const QString &id : allIds->values())
+        for(int i=0; i<n; ++i)
         {
+            Record *record=table->getRecord(i);
+
+            if(record==nullptr)
+                continue;
+
+            const QString id=record->getField(QStringLiteral("id"));
+
             // Запись без id (битая/импортная, поля нет в XML): она невидима
             // поиску модели и уронила бы сессию через "bad id" в serialize.
             // Пропускаем честно с одной строкой в лог, а не молча
@@ -218,16 +220,9 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                 continue;
             }
 
-            Record *record=model->getRecord(id);
-
-            if(record==nullptr)
-                continue;
-
             SyncNoteInfo info;
             info.id=id;
-
-            const QStringList path=model->getRecordPath(id);
-            info.branchId=path.isEmpty() ? QString() : path.last();
+            info.branchId=branchId;
 
             info.crypt=(record->getNaturalFieldSource(QStringLiteral("crypt"))==QStringLiteral("1"));
 
@@ -275,13 +270,13 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                     att.link=rowAttach.getField(QStringLiteral("link"));
                     att.fileName=rowAttach.getField(QStringLiteral("fileName"));
                     att.size=attachTable.getFileSize(i);
-                    att.hash=sha256Bytes(att.link.toUtf8());
+                    att.hash=SyncManifestBuilder::sha256Bytes(att.link.toUtf8());
                 }
                 else
                 {
                     att.fileName=attachTable.getAbsoluteInnerFileName(i);
                     att.size=attachTable.getFileSize(i);
-                    att.hash=sha256File(att.fileName);
+                    att.hash=SyncManifestBuilder::sha256File(att.fileName);
                     att.link=QString();
                 }
 
@@ -294,17 +289,52 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                 info.mtime=e.mtime;
 
                 // Хеш из сайдкара, но если его нет (старая запись) — живьем
-                info.hash=e.hash.isEmpty() ? sha256File(textPath) : e.hash;
+                info.hash=e.hash.isEmpty() ? SyncManifestBuilder::sha256File(textPath) : e.hash;
             }
             else
             {
-                info.hash=sha256File(textPath);
+                info.hash=SyncManifestBuilder::sha256File(textPath);
                 info.mtime=QFileInfo(textPath).lastModified()
                              .toMSecsSinceEpoch();
             }
 
             out.notes.insert(id, info);
         }
+    }
+
+    for(int c=0; c<branchItem->childCount(); ++c)
+    {
+        TreeItem *child=branchItem->child(c);
+        collectNotes(child, child->getId(), out, sidecar, tetradir,
+                     skippedEmpty);
+    }
+}
+
+SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
+                                        SyncSidecar &sidecar,
+                                        const QString &tetradir)
+{    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
+    SyncManifest out;
+
+    if(model==nullptr)
+        return out;
+
+    QElapsedTimer timer;
+    timer.start();
+
+    // Ветки обходом от корня
+    collectBranches(model->getRootItemPublic(), QString(), out, sidecar);
+
+    // Заметки — одним обходом дерева (см. collectNotes выше):
+    // ветка записи известна из обхода, отдельных поисков нет
+    {
+        int skippedEmpty=0;
+        // Обход только читает модель (как раньше), смена константности —
+        // чтобы не плодить const-версии доступа к таблицам
+        TreeItem *rootItem=const_cast<TreeItem *>(model->getRootItemPublic());
+        collectNotes(rootItem, rootItem->getId(), out, sidecar, tetradir,
+                     skippedEmpty);
 
         if(skippedEmpty>0)
             qDebug() << "SyncManifest: skipped records without id:"

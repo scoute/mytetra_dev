@@ -251,17 +251,14 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
         m_meldDanger->setVisible(false);
     }
 
-    QVBoxLayout *titleCol=new QVBoxLayout();
-    titleCol->setContentsMargins(0, 0, 0, 0);
-    titleCol->setSpacing(2);
     m_statusLabel=new QLabel(this);
     QFont statusFont=m_statusLabel->font();
     statusFont.setBold(true);
     statusFont.setPointSize(statusFont.pointSize()+2);
     m_statusLabel->setFont(statusFont);
-    titleCol->addWidget(m_statusLabel);
-    titleCol->addWidget(m_meldDanger);
-    header->addLayout(titleCol, 1);
+    header->addWidget(m_statusLabel);
+    // Плашка в ту же строку, справа от статуса: одна строка вместо двух
+    header->addWidget(m_meldDanger, 1);
     m_saveDefaults=new QCheckBox(tr("Запомнить"), this);
     m_saveDefaults->setToolTip(
         tr("Сохранить выбранные действия как умолчание для будущих синков"));

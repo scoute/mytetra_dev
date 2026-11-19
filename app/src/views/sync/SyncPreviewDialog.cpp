@@ -330,7 +330,6 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_meldSep->setFrameShadow(QFrame::Sunken);
     m_meldSep->setVisible(false);
     toolbar->addWidget(m_meldSep);
-    toolbar->addWidget(m_meldRadio);
 
     // --- Meld bulk: всё видимое — одной стрелкой (уважает фильтр).
     // Повторный тап снимает (та же toggle-семантика, что в дереве)

@@ -312,7 +312,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     // --- Meld bulk: всё видимое — одной стрелкой (уважает фильтр).
     // Повторный тап снимает (та же toggle-семантика, что в дереве)
     m_meldUpAll=new QToolButton(this);
-    m_meldUpAll->setText(tr("⭢ все"));
+    m_meldUpAll->setText(tr("→ все"));
     m_meldUpAll->setToolTip(tr("Поставить → всем видимым строкам"));
     m_meldUpAll->setAutoRaise(true);
     m_meldUpAll->setVisible(false);
@@ -321,7 +321,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     toolbar->addWidget(m_meldUpAll);
 
     m_meldDownAll=new QToolButton(this);
-    m_meldDownAll->setText(tr("⭠ все"));
+    m_meldDownAll->setText(tr("← все"));
     m_meldDownAll->setToolTip(tr("Поставить ← всем видимым строкам"));
     m_meldDownAll->setAutoRaise(true);
     m_meldDownAll->setVisible(false);
@@ -2507,10 +2507,10 @@ void SyncPreviewDialog::onMeldContextMenu(const QPoint &pos)
     QAction *upAction=nullptr, *downAction=nullptr;
 
     if(upCount>0)
-        upAction=menu.addAction(tr("⭢ Всё поддерево (%1)").arg(upCount));
+        upAction=menu.addAction(tr("→ Всё поддерево (%1)").arg(upCount));
 
     if(downCount>0)
-        downAction=menu.addAction(tr("⭠ Всё поддерево (%1)").arg(downCount));
+        downAction=menu.addAction(tr("← Всё поддерево (%1)").arg(downCount));
 
     if(upAction==nullptr && downAction==nullptr)
         return;

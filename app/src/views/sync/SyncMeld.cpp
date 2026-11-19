@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QFontMetrics>
 #include <QHelpEvent>
+#include <QtMath>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
@@ -1255,7 +1256,7 @@ SyncMeldRing::SyncMeldRing(SyncPreviewDialog *dialog, QWidget *parent)
     : QWidget(parent),
       m_dialog(dialog)
 {
-    setFixedSize(56, 56);
+    setFixedSize(64, 64);
     setToolTip(tr("К первому нерешенному"));
     setCursor(Qt::PointingHandCursor);
 }
@@ -1274,7 +1275,7 @@ void SyncMeldRing::setProgress(int done, int total)
 
 QSize SyncMeldRing::sizeHint(void) const
 {
-    return QSize(56, 56);
+    return QSize(64, 64);
 }
 
 
@@ -1285,8 +1286,7 @@ void SyncMeldRing::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     const int side=qMin(width(), height());
-    const QRectF bounds(4, 4, side-8, side-8);
-    const qreal C=3.141592653589793*2*(bounds.width()/2-4);
+    const QRectF bounds(5, 5, side-10, side-10);
 
     QPen track(QColor(0xD5D8E0), 7);
     track.setCapStyle(Qt::RoundCap);
@@ -1298,34 +1298,53 @@ void SyncMeldRing::paintEvent(QPaintEvent *event)
 
     if(m_total>0)
     {
-        if(rest>0)
+        // Красный сектор — корнем, а не линейно: на тысячах строк
+        // линейный остаток в доли градуса не виден вообще, а корень
+        // держит его заметным (1 из 1000 — ~11°). Плюс пол, чтобы
+        // единичный остаток читался и на 100k. Зелёный — всё остальное
+        const double frac=static_cast<double>(rest)
+            / static_cast<double>(qMax(1, m_total));
+        double redAngle=(rest<=0 || frac<=0.0)
+            ? 0.0 : 360.0*qSqrt(qBound(0.0, frac, 1.0));
+
+        if(rest>0 && redAngle < 6.0)
+            redAngle=6.0;
+
+        if(redAngle>0.0)
         {
             QPen red(QColor(0xEF5350), 7);
             red.setCapStyle(Qt::RoundCap);
             painter.setPen(red);
-            painter.drawArc(bounds,
-                90*16, -static_cast<int>(360.0*16*rest/m_total));
+            painter.drawArc(bounds, 90*16, -static_cast<int>(redAngle*16));
         }
 
-        if(m_done>0)
+        if(redAngle < 360.0)
         {
             QPen green(QColor(0x66BB6A), 7);
             green.setCapStyle(Qt::RoundCap);
             painter.setPen(green);
-            painter.drawArc(bounds,
-                (90-360.0*rest/m_total)*16,
-                -static_cast<int>(360.0*16*m_done/m_total));
+            painter.drawArc(bounds, static_cast<int>((90.0-redAngle)*16),
+                            -static_cast<int>((360.0-redAngle)*16));
         }
     }
 
-    Q_UNUSED(C);
+    // Текст вписываем в круг уменьшением кегля (384/384 и 100000/100000
+    // должны влезать без обрезки)
+    const QString label=QStringLiteral("%1/%2").arg(m_done).arg(m_total);
     QFont f=painter.font();
     f.setBold(true);
-    f.setPointSize(11);
+
+    for(int pt=11; pt>=6; --pt)
+    {
+        f.setPointSize(pt);
+
+        if(QFontMetrics(f).horizontalAdvance(label) <= side-18)
+            break;
+    }
+
     painter.setFont(f);
     painter.setPen(palette().color(QPalette::Text));
-    painter.drawText(rect(), Qt::AlignCenter,
-                      QStringLiteral("%1/%2").arg(m_done).arg(m_total));
+    painter.drawText(rect(), Qt::AlignCenter, label);
 }
 
 

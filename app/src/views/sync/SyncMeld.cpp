@@ -130,13 +130,16 @@ bool isMeldDuel(const Item &item)
 
 bool meldUpTarget(const Item &item, Action &target)
 {
-    // → = «сделать как у меня»: моё состояние побеждает
+    // → = «сделать как у меня»: пишем РОВНО тот же Action, что ставит
+    // ✓ дерева за то же намерение — иначе галка из дерева не зажигает
+    // стрелку в meld. Для удалений Apply ≡ ForceMine по исходу
+    // (своё и так едет), для чужого переименования «моё побеждает»
+    // = отказ (✕ дерева)
     switch(item.category)
     {
     case Category::Create:
-        if(!item.fromLocal)
-            return false;
-        target=Action::Apply;
+        // своё новое — залить (✓); чужое новое — не скачивать (✕)
+        target=item.fromLocal ? Action::Apply : Action::ForceMine;
         return true;
     case Category::Edit:
         target=Action::ForceMine;
@@ -147,11 +150,11 @@ bool meldUpTarget(const Item &item, Action &target)
                                               : Action::ForceMine);
         return true;
     case Category::MyDelete:
-        // моё удаление уезжает на сервер
-        target=Action::ForceMine;
+        // моё удаление уезжает на сервер — как ✓ дерева
+        target=Action::Apply;
         return true;
     case Category::TheirDelete:
-        // моя живая копия воскресает наверх
+        // моя живая копия воскрешает их сторону — как ✕ дерева
         target=Action::ForceMine;
         return true;
     }
@@ -162,13 +165,13 @@ bool meldUpTarget(const Item &item, Action &target)
 
 bool meldDownTarget(const Item &item, Action &target)
 {
-    // ← = «сделать как у них»: их состояние побеждает
+    // ← = «сделать как у них»: тот же Action, что ✕/✓ дерева
+    // за то же намерение. Для удалений Apply ≡ TakeServer по исходу
     switch(item.category)
     {
     case Category::Create:
-        if(item.fromLocal)
-            return false;
-        target=Action::Apply;
+        // чужое новое — скачать (✓); своё новое — не отправлять (✕)
+        target=!item.fromLocal ? Action::Apply : Action::TakeServer;
         return true;
     case Category::Edit:
         target=Action::TakeServer;
@@ -183,8 +186,8 @@ bool meldDownTarget(const Item &item, Action &target)
         target=Action::TakeServer;
         return true;
     case Category::TheirDelete:
-        // принимаю их удаление
-        target=Action::TakeServer;
+        // принимаю их удаление — как ✓ дерева
+        target=Action::Apply;
         return true;
     }
 

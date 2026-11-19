@@ -2337,8 +2337,13 @@ QString SyncPreviewDialog::meldArrowTip(int itemIndex, bool up) const
     if(item.category==Category::Create)
     {
         if(up)
-            return tr("Залить на сервер (останется с обеих сторон)");
-        return tr("Скачать с сервера (останется с обеих сторон)");
+            return item.fromLocal
+                ? tr("Залить на сервер (останется с обеих сторон)")
+                : tr("Не скачивать (останется только у них)");
+
+        return item.fromLocal
+            ? tr("Не отправлять (останется только у меня)")
+            : tr("Скачать с сервера (останется с обеих сторон)");
     }
 
     if(item.category==Category::Edit)

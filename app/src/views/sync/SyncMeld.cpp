@@ -673,6 +673,11 @@ void SyncMeldDelegate::paint(QPainter *painter,
     // Глубже — дальше от центра (читается как вложенность)
     const int indent=qMin(o.rect.width()/3, st.depth*12);
 
+    // Призрак = «здесь будет живой контент»: исход важнее прошлого,
+    // поэтому зелёный, а не цвет категории (красный у удалений врал бы).
+    // Маркер операции оставляем — видно, откуда воскрешение
+    const QColor ghostGreen(0x66BB6A);
+
     if(index.column()==0 || index.column()==2)
     {
         const bool mine=(index.column()==0);
@@ -701,10 +706,19 @@ void SyncMeldDelegate::paint(QPainter *painter,
             return;
         }
 
+        const bool sideGhost=mine ? st.leftGhost : st.rightGhost;
+        // Призрак перекрывает надгробие: staged-воскрешение уже не
+        // «мёртвое», а будущее живое — рисуем зелёным, а не серым
+        const bool effTomb=killed && !sideGhost;
+
         paintMeldPill(painter, o.font, o.rect,
-                      meldMarker(item), QColor(meldCategoryColor(item.category)),
-                      name, QColor(meldCategoryColor(item.category)),
-                      item.isBranch, killed, ghost,
+                      meldMarker(item),
+                      sideGhost ? ghostGreen
+                                : QColor(meldCategoryColor(item.category)),
+                      name,
+                      sideGhost ? ghostGreen
+                                : QColor(meldCategoryColor(item.category)),
+                      item.isBranch, effTomb, ghost,
                       st.danger, selected,
                       mine, indent);
         return;

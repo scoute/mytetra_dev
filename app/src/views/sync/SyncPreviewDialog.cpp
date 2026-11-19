@@ -27,6 +27,7 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <functional>
 
 #include "SyncPreviewDialog.h"
 #include "libraries/sync/SyncDiff.h"
@@ -297,8 +298,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_collapseAllButton->setAutoDefault(false);
     toolbar->addWidget(m_collapseAllButton);
 
-    // Переключатель вида: то же окно, те же решения — дерево xor meld.
-    // Развернуть/свернуть — только дереву, в meld структура плоская
+    // Переключатель вида: то же окно, те же решения — дерево xor meld
     m_meldToggle=new QToolButton(this);
     m_meldToggle->setText(tr("⇄ Meld"));
     m_meldToggle->setToolTip(tr("Таблица «моё | стрелки | сервер» "
@@ -308,6 +308,26 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     connect(m_meldToggle, &QToolButton::toggled,
             this, &SyncPreviewDialog::onMeldModeToggled);
     toolbar->addWidget(m_meldToggle);
+
+    // --- Meld bulk: всё видимое — одной стрелкой (уважает фильтр).
+    // Повторный тап снимает (та же toggle-семантика, что в дереве)
+    m_meldUpAll=new QToolButton(this);
+    m_meldUpAll->setText(tr("⭢ все"));
+    m_meldUpAll->setToolTip(tr("Поставить → всем видимым строкам"));
+    m_meldUpAll->setAutoRaise(true);
+    m_meldUpAll->setVisible(false);
+    connect(m_meldUpAll, &QToolButton::clicked,
+            this, [this]() { meldStageAll(true); });
+    toolbar->addWidget(m_meldUpAll);
+
+    m_meldDownAll=new QToolButton(this);
+    m_meldDownAll->setText(tr("⭠ все"));
+    m_meldDownAll->setToolTip(tr("Поставить ← всем видимым строкам"));
+    m_meldDownAll->setAutoRaise(true);
+    m_meldDownAll->setVisible(false);
+    connect(m_meldDownAll, &QToolButton::clicked,
+            this, [this]() { meldStageAll(false); });
+    toolbar->addWidget(m_meldDownAll);
 
     m_jumpButton=new QPushButton(tr("↓ 0"), this);
     m_jumpButton->setToolTip(tr("К первому неразобранному"));
@@ -364,8 +384,8 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_meldModel=new SyncMeldModel(this, this);
     m_meldView=new QTreeView(this);
     m_meldView->setModel(m_meldModel);
-    m_meldView->setRootIsDecorated(false);
-    m_meldView->setItemsExpandable(false);
+    m_meldView->setRootIsDecorated(true);
+    m_meldView->setIndentation(12);
     m_meldView->setUniformRowHeights(true);
     m_meldView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_meldView->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -379,9 +399,19 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_viewStack->addWidget(m_meldView);
     layout->addWidget(m_viewStack, 3);
     connect(m_expandAllButton, &QPushButton::clicked,
-            m_itemsTree, &QTreeWidget::expandAll);
+            this, [this]() {
+        if(m_meldMode && m_meldView!=nullptr)
+            m_meldView->expandAll();
+        else if(m_itemsTree!=nullptr)
+            m_itemsTree->expandAll();
+    });
     connect(m_collapseAllButton, &QPushButton::clicked,
-            m_itemsTree, &QTreeWidget::collapseAll);
+            this, [this]() {
+        if(m_meldMode && m_meldView!=nullptr)
+            m_meldView->collapseAll();
+        else if(m_itemsTree!=nullptr)
+            m_itemsTree->collapseAll();
+    });
     m_meldModel->setSection(m_tab);
     m_meldModel->rebuild();
     buildItems();
@@ -391,6 +421,9 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     connect(m_meldView->selectionModel(),
             &QItemSelectionModel::currentChanged,
             this, &SyncPreviewDialog::onMeldSelectionChanged);
+    m_meldView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_meldView, &QWidget::customContextMenuRequested,
+            this, &SyncPreviewDialog::onMeldContextMenu);
 
     // --- панель: заголовок + поединок + diff ---
     m_branchLabel=new QLabel(this);
@@ -724,7 +757,12 @@ void SyncPreviewDialog::onActionsMenuTriggered(void)
     buildItems();
     buildActionsMenu();
     if(m_meldModel!=nullptr)
+    {
         m_meldModel->rebuild();
+
+        if(m_meldMode && m_meldView!=nullptr)
+            m_meldView->expandAll();
+    }
     refreshAll();
 }
 
@@ -2070,7 +2108,12 @@ void SyncPreviewDialog::onApplyClicked(void)
 
     buildItems();
     if(m_meldModel!=nullptr)
+    {
         m_meldModel->rebuild();
+
+        if(m_meldMode && m_meldView!=nullptr)
+            m_meldView->expandAll();
+    }
     refreshTabs();
     refreshAll();
 
@@ -2109,17 +2152,28 @@ void SyncPreviewDialog::setMeldMode(bool meld)
     if(m_viewStack!=nullptr)
         m_viewStack->setCurrentIndex(meld ? 1 : 0);
 
-    // Развернуть/свернуть — только дереву, в meld структура плоская
+    // Развернуть/свернуть — оба вида структурные: кнопки всегда видны,
+    // действуют на активный вид
     if(m_expandAllButton!=nullptr)
-        m_expandAllButton->setVisible(!meld);
+        m_expandAllButton->setVisible(true);
 
     if(m_collapseAllButton!=nullptr)
-        m_collapseAllButton->setVisible(!meld);
+        m_collapseAllButton->setVisible(true);
+
+    if(m_meldUpAll!=nullptr)
+        m_meldUpAll->setVisible(meld);
+
+    if(m_meldDownAll!=nullptr)
+        m_meldDownAll->setVisible(meld);
 
     if(meld && m_meldModel!=nullptr)
     {
         m_meldModel->setSection(m_tab);
         m_meldModel->rebuild();
+
+        if(m_meldView!=nullptr)
+            m_meldView->expandAll();
+
         // Тот же выбор в другом виде (если строка есть в фильтре)
         const int current=currentItemIndex();
         Q_UNUSED(current);
@@ -2306,6 +2360,170 @@ int SyncPreviewDialog::meldItemSection(const Item &item) const
 }
 
 
+// Цель стрелки для элемента (та же, что одиночный тап)
+static bool meldTargetFor(const SyncPreview::Item &item, bool up,
+                          SyncPreview::Action &target)
+{
+    return up ? meldUpTarget(item, target) : meldDownTarget(item, target);
+}
+
+
+void SyncPreviewDialog::meldBranchAction(const QModelIndex &node, bool up)
+{
+    if(m_meldModel==nullptr || !node.isValid())
+        return;
+
+    QList<int> sub;
+    m_meldModel->collectSubtreeItems(node, sub);
+
+    if(sub.isEmpty())
+        return;
+
+    // Цель — та же, что одиночный тап; direction в терминах meld
+    auto targetFor=[up](const Item &item, Action &target) {
+        return meldTargetFor(item, up, target);
+    };
+
+    // Всё уже в цели — снимаем обратно (как повторный тап)
+    bool allSet=true;
+
+    for(int index : sub)
+    {
+        const Item &item=m_preview.items.at(index);
+        Action target=Action::Confirm;
+
+        if(!targetFor(item, target)
+           || m_decisions.forItem(item)!=target)
+        {
+            allSet=false;
+            break;
+        }
+    }
+
+    for(int index : sub)
+    {
+        const Item &item=m_preview.items.at(index);
+        Action target=Action::Confirm;
+
+        if(!targetFor(item, target))
+            continue;
+
+        m_decisions.byId[item.id]=allSet ? Action::Confirm : target;
+    }
+
+    refreshAll();
+}
+
+
+void SyncPreviewDialog::meldStageAll(bool up)
+{
+    if(m_meldModel==nullptr)
+        return;
+
+    // Всё видимое (фильтр вкладки уважаем, схлопнутое — тоже разбираем:
+    // bulk честно покрывает направление целиком, не только экран)
+    QList<int> sub;
+
+    std::function<void(const QModelIndex &)> walk=[&](
+            const QModelIndex &parent) {
+        for(int row=0, rows=m_meldModel->rowCount(parent);
+            row<rows; ++row)
+        {
+            const QModelIndex idx=m_meldModel->index(row, 0, parent);
+            const int itemIndex=m_meldModel->itemIndex(idx);
+
+            if(itemIndex>=0)
+                sub << itemIndex;
+
+            walk(idx);
+        }
+    };
+    walk(QModelIndex());
+
+    if(sub.isEmpty())
+        return;
+
+    bool allSet=true;
+
+    for(int index : sub)
+    {
+        const Item &item=m_preview.items.at(index);
+        Action target=Action::Confirm;
+
+        if(!meldTargetFor(item, up, target)
+           || m_decisions.forItem(item)!=target)
+        {
+            allSet=false;
+            break;
+        }
+    }
+
+    for(int index : sub)
+    {
+        const Item &item=m_preview.items.at(index);
+        Action target=Action::Confirm;
+
+        if(!meldTargetFor(item, up, target))
+            continue;
+
+        m_decisions.byId[item.id]=allSet ? Action::Confirm : target;
+    }
+
+    refreshAll();
+}
+
+
+void SyncPreviewDialog::onMeldContextMenu(const QPoint &pos)
+{
+    if(m_meldView==nullptr || m_meldModel==nullptr)
+        return;
+
+    const QModelIndex idx=m_meldView->indexAt(pos);
+
+    if(!idx.isValid())
+        return;
+
+    QList<int> sub;
+    m_meldModel->collectSubtreeItems(idx, sub);
+
+    if(sub.isEmpty())
+        return;
+
+    int upCount=0, downCount=0;
+
+    for(int index : sub)
+    {
+        const Item &item=m_preview.items.at(index);
+        Action target=Action::Confirm;
+
+        if(meldUpTarget(item, target))
+            ++upCount;
+
+        if(meldDownTarget(item, target))
+            ++downCount;
+    }
+
+    QMenu menu(m_meldView);
+    QAction *upAction=nullptr, *downAction=nullptr;
+
+    if(upCount>0)
+        upAction=menu.addAction(tr("⭢ Всё поддерево (%1)").arg(upCount));
+
+    if(downCount>0)
+        downAction=menu.addAction(tr("⭠ Всё поддерево (%1)").arg(downCount));
+
+    if(upAction==nullptr && downAction==nullptr)
+        return;
+
+    QAction *picked=menu.exec(m_meldView->viewport()->mapToGlobal(pos));
+
+    if(picked==upAction)
+        meldBranchAction(idx, true);
+    else if(picked==downAction)
+        meldBranchAction(idx, false);
+}
+
+
 void SyncPreviewDialog::onTabChanged(int index)
 {
     // Вкладки — якоря-ссылки: тап скроллит к разделу, фильтра нет
@@ -2316,6 +2534,10 @@ void SyncPreviewDialog::onTabChanged(int index)
         // В meld-режиме вкладки фильтруют: таблица показывает одно
         // направление целиком
         m_meldModel->setSection(index);
+
+        if(m_meldView!=nullptr)
+            m_meldView->expandAll();
+
         return;
     }
 
@@ -2333,22 +2555,45 @@ void SyncPreviewDialog::onJumpClicked(void)
     // К первому неразобранному (Confirm == нет решения): прыжок + выбор
     if(m_meldMode && m_meldModel!=nullptr && m_meldView!=nullptr)
     {
-        for(int row=0; row<m_meldModel->rowCount(); ++row)
-        {
-            const QModelIndex idx=m_meldModel->index(row, 0);
-            const int itemIndex=m_meldModel->itemIndex(idx);
+        // DFS по модели (порядок строк); схлопнутое раскрываем по пути
+        bool found=false;
+        QModelIndex target;
+        std::function<void(const QModelIndex &)> walk=[&](
+                const QModelIndex &parent) {
+            if(found)
+                return;
 
-            if(itemIndex<0 || itemIndex>=m_preview.items.size())
-                continue;
-
-            if(m_decisions.forItem(m_preview.items.at(itemIndex))
-               ==Action::Confirm)
+            for(int row=0, rows=m_meldModel->rowCount(parent);
+                row<rows && !found; ++row)
             {
-                m_meldView->scrollTo(idx,
-                    QAbstractItemView::PositionAtTop);
-                m_meldView->setCurrentIndex(idx);
-                break;
+                const QModelIndex idx=m_meldModel->index(row, 0,
+                                                          parent);
+                const int itemIndex=m_meldModel->itemIndex(idx);
+
+                if(itemIndex>=0 && itemIndex<m_preview.items.size()
+                   && m_decisions.forItem(
+                       m_preview.items.at(itemIndex))==Action::Confirm)
+                {
+                    target=idx;
+                    found=true;
+                    return;
+                }
+
+                walk(idx);
             }
+        };
+        walk(QModelIndex());
+
+        if(found && target.isValid())
+        {
+            // Раскрыть предков, иначе scrollTo в схлопнутое не попадёт
+            for(QModelIndex p=target.parent(); p.isValid();
+                p=p.parent())
+                m_meldView->setExpanded(p, true);
+
+            m_meldView->scrollTo(target,
+                QAbstractItemView::PositionAtTop);
+            m_meldView->setCurrentIndex(target);
         }
 
         return;
@@ -2409,15 +2654,30 @@ void SyncPreviewDialog::onItemSelectionChanged(void)
 
 void SyncPreviewDialog::onMeldSelectionChanged(void)
 {
-    const int itemIndex=currentItemIndex();
-
-    if(itemIndex<0)
+    if(m_meldView==nullptr || m_meldModel==nullptr)
         return;
 
-    const Item &item=m_preview.items.at(itemIndex);
-    const QString key=item.isBranch ? item.id : item.parentId;
-    const QString title=item.isBranch ? item.name : item.parentName;
-    showPanelForItem(itemIndex, key, title);
+    const QModelIndex current=m_meldView->currentIndex();
+
+    if(!current.isValid())
+        return;
+
+    const int itemIndex=m_meldModel->itemIndex(current);
+
+    if(itemIndex>=0)
+    {
+        const Item &item=m_preview.items.at(itemIndex);
+        const QString key=item.isBranch ? item.id : item.parentId;
+        const QString title=item.isBranch ? item.name : item.parentName;
+        showPanelForItem(itemIndex, key, title);
+    }
+    else
+    {
+        // Шапка группы: панель ветки без элемента
+        showPanelForItem(-1, m_meldModel->headerKey(current),
+                         current.sibling(current.row(), 0)
+                             .data(Qt::DisplayRole).toString());
+    }
 }
 
 

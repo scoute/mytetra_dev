@@ -1,7 +1,10 @@
 #include "views/sync/SyncMeld.h"
 
+#include <functional>
+
 #include <QAbstractItemView>
 #include <QApplication>
+#include <QFontMetrics>
 #include <QHelpEvent>
 #include <QMouseEvent>
 #include <QPainter>
@@ -197,6 +200,30 @@ SyncMeldModel::SyncMeldModel(SyncPreviewDialog *dialog, QObject *parent)
 }
 
 
+SyncMeldModel::~SyncMeldModel(void)
+{
+    clearNodes();
+}
+
+
+void SyncMeldModel::clearNodes(void)
+{
+    // Рекурсивное удаление дерева
+    std::function<void(SyncMeldNode *)> drop=[&](SyncMeldNode *node) {
+        for(SyncMeldNode *child : node->children)
+            drop(child);
+        delete node;
+    };
+
+    for(SyncMeldNode *root : m_roots)
+        drop(root);
+
+    m_roots.clear();
+    m_byId.clear();
+    m_byItem.clear();
+}
+
+
 void SyncMeldModel::setSection(int section)
 {
     if(m_section==section)
@@ -216,35 +243,94 @@ int SyncMeldModel::section(void) const
 void SyncMeldModel::rebuild(void)
 {
     beginResetModel();
-    m_rows.clear();
+    clearNodes();
 
     if(m_dialog!=nullptr)
     {
-        const QList<Item> &items=m_dialog->m_preview.items;
+        const SyncPreview::Preview &preview=m_dialog->meldPreviewData();
 
-        for(int i=0; i<items.size(); ++i)
+        // Тот же стабильный порядок, что в дереве: предки раньше
+        // (меньше глубина), дальше по имени — дети строго под своей веткой
+        QList<int> order;
+
+        for(int i=0; i<preview.items.size(); ++i)
         {
-            const Item &item=items.at(i);
+            const Item &item=preview.items.at(i);
 
-            if(m_dialog->isSynced(item.id))
+            if(m_dialog->meldItemSynced(item.id))
                 continue;
 
-            if(m_section>=0 && m_dialog->sectionOf(item)!=m_section)
+            if(m_section>=0 && m_dialog->meldItemSection(item)!=m_section)
                 continue;
 
-            m_rows << i;
+            order << i;
         }
 
-        // Тот же стабильный порядок, что в дереве: предки раньше,
-        // дальше по имени — дети строго под своей веткой
-        std::stable_sort(m_rows.begin(), m_rows.end(), [&](int a, int b) {
-            const Item &ia=items.at(a), &ib=items.at(b);
+        std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
+            const Item &ia=preview.items.at(a), &ib=preview.items.at(b);
 
             if(ia.pathIds.size()!=ib.pathIds.size())
                 return ia.pathIds.size() < ib.pathIds.size();
 
             return ia.name < ib.name;
         });
+
+        // Узлы веток (свои + контекст-предки внутри своей секции)
+        auto contextNode=[&](SyncMeldNode *parent, const QString &id,
+                             const QString &name) -> SyncMeldNode * {
+            if(SyncMeldNode *found=m_byId.value(id, nullptr))
+                return found;
+
+            SyncMeldNode *node=new SyncMeldNode();
+            node->id=id;
+            node->name=name.isEmpty() ? QStringLiteral("(ветка)") : name;
+            node->isBranch=true;
+            node->parent=parent;
+
+            if(parent!=nullptr)
+                parent->children << node;
+            else
+                m_roots << node;
+
+            m_byId.insert(id, node);
+            return node;
+        };
+
+        for(int index : order)
+        {
+            const Item &item=preview.items.at(index);
+            SyncMeldNode *parent=nullptr;
+
+            for(int level=0; level<item.pathIds.size(); ++level)
+            {
+                parent=contextNode(
+                    parent,
+                    item.pathIds.at(level),
+                    level < item.path.size() ? item.path.at(level)
+                                             : QString());
+            }
+
+            SyncMeldNode *node=new SyncMeldNode();
+            node->itemIndex=index;
+            node->id=item.id;
+            node->name=item.name;
+            node->isBranch=item.isBranch;
+            node->parent=parent;
+
+            if(parent!=nullptr)
+                parent->children << node;
+            else
+                m_roots << node;
+
+            // Ветка из плана адресуется по id: потомки встанут под неё,
+            // а не под дублирующий контекст
+            if(item.isBranch)
+                m_byId.insert(item.id, node);
+
+            m_byItem.insert(index, node);
+        }
+
+        updateSubtreeMarks();
     }
 
     endResetModel();
@@ -253,46 +339,161 @@ void SyncMeldModel::rebuild(void)
 
 void SyncMeldModel::refreshPreviewRow(int itemIndex)
 {
-    const QModelIndex idx=indexForItem(itemIndex, 0);
+    SyncMeldNode *node=m_byItem.value(itemIndex, nullptr);
 
-    if(idx.isValid())
-        emit dataChanged(indexForItem(itemIndex, 0),
-                         indexForItem(itemIndex, 2));
+    if(node==nullptr)
+        return;
+
+    const QModelIndex top=indexForNode(node, 0);
+    const QModelIndex bottom=indexForNode(node, 2);
+
+    if(top.isValid() && bottom.isValid())
+        emit dataChanged(top, bottom);
 }
 
 
 void SyncMeldModel::refreshAllRows(void)
 {
-    if(m_rows.isEmpty())
+    updateSubtreeMarks();
+
+    if(m_roots.isEmpty())
         return;
 
-    emit dataChanged(index(0, 0), index(m_rows.size()-1, 2));
+    emit dataChanged(indexForNode(m_roots.first(), 0),
+                     indexForNode(m_roots.last(), 2));
+}
+
+
+int SyncMeldModel::computeMarks(SyncMeldNode *node)
+{
+    if(node==nullptr)
+        return 0;
+
+    int total=0;
+    int done=0;
+
+    if(node->itemIndex>=0 && m_dialog!=nullptr)
+    {
+        const Item *item=m_dialog->meldPreviewItem(node->itemIndex);
+
+        if(item!=nullptr)
+        {
+            total=1;
+            done=(m_dialog->meldEffectiveDecision(*item)!=Action::Confirm)
+                ? 1 : 0;
+        }
+    }
+
+    for(SyncMeldNode *child : node->children)
+    {
+        computeMarks(child);
+        total+=child->total;
+        done+=child->decided;
+    }
+
+    node->total=total;
+    node->decided=done;
+    return total;
+}
+
+
+void SyncMeldModel::updateSubtreeMarks(void)
+{
+    for(SyncMeldNode *root : m_roots)
+        computeMarks(root);
+}
+
+
+SyncMeldNode *SyncMeldModel::nodeFor(const QModelIndex &index) const
+{
+    if(!index.isValid())
+        return nullptr;
+
+    return static_cast<SyncMeldNode *>(index.internalPointer());
+}
+
+
+QModelIndex SyncMeldModel::indexForNode(SyncMeldNode *node,
+                                       int column) const
+{
+    if(node==nullptr)
+        return QModelIndex();
+
+    int row=0;
+
+    if(node->parent!=nullptr)
+        row=node->parent->children.indexOf(node);
+    else
+        row=m_roots.indexOf(node);
+
+    if(row<0)
+        return QModelIndex();
+
+    return createIndex(row, column, node);
 }
 
 
 int SyncMeldModel::itemIndex(const QModelIndex &index) const
 {
-    if(!index.isValid() || index.row()<0 || index.row()>=m_rows.size())
+    SyncMeldNode *node=nodeFor(index);
+
+    if(node==nullptr)
         return -1;
 
-    return m_rows.at(index.row());
+    return node->itemIndex;
 }
 
 
 QModelIndex SyncMeldModel::indexForItem(int itemIndex, int column) const
 {
-    const int row=m_rows.indexOf(itemIndex);
+    return indexForNode(m_byItem.value(itemIndex, nullptr), column);
+}
 
-    if(row<0)
-        return QModelIndex();
 
-    return index(row, column);
+void SyncMeldModel::collectSubtreeNodes(SyncMeldNode *node,
+                                       QList<int> &out) const
+{
+    if(node==nullptr)
+        return;
+
+    if(node->itemIndex>=0)
+        out << node->itemIndex;
+
+    for(SyncMeldNode *child : node->children)
+        collectSubtreeNodes(child, out);
+}
+
+
+void SyncMeldModel::collectSubtreeItems(const QModelIndex &node,
+                                       QList<int> &out) const
+{
+    out.clear();
+    collectSubtreeNodes(nodeFor(node), out);
+}
+
+
+QString SyncMeldModel::headerKey(const QModelIndex &index) const
+{
+    SyncMeldNode *node=nodeFor(index);
+
+    if(node==nullptr)
+        return QString();
+
+    return node->id;
 }
 
 
 int SyncMeldModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? 0 : m_rows.size();
+    if(!parent.isValid())
+        return m_roots.size();
+
+    SyncMeldNode *node=nodeFor(parent);
+
+    if(node==nullptr)
+        return 0;
+
+    return node->children.size();
 }
 
 
@@ -306,46 +507,84 @@ int SyncMeldModel::columnCount(const QModelIndex &parent) const
 QModelIndex SyncMeldModel::index(int row, int column,
                                  const QModelIndex &parent) const
 {
-    if(parent.isValid() || row<0 || row>=m_rows.size()
-       || column<0 || column>=3)
+    if(column<0 || column>=3 || row<0)
         return QModelIndex();
 
-    return createIndex(row, column);
+    if(!parent.isValid())
+    {
+        if(row>=m_roots.size())
+            return QModelIndex();
+
+        return createIndex(row, column, m_roots.at(row));
+    }
+
+    SyncMeldNode *node=nodeFor(parent);
+
+    if(node==nullptr || row>=node->children.size())
+        return QModelIndex();
+
+    return createIndex(row, column, node->children.at(row));
 }
 
 
 QModelIndex SyncMeldModel::parent(const QModelIndex &child) const
 {
-    Q_UNUSED(child);
-    return QModelIndex();
+    SyncMeldNode *node=nodeFor(child);
+
+    if(node==nullptr || node->parent==nullptr)
+        return QModelIndex();
+
+    return indexForNode(node->parent, 0);
 }
 
 
 QVariant SyncMeldModel::data(const QModelIndex &index, int role) const
 {
-    const int itemIdx=itemIndex(index);
+    SyncMeldNode *node=nodeFor(index);
 
-    if(itemIdx<0 || m_dialog==nullptr)
+    if(node==nullptr)
         return QVariant();
 
-    const Item &item=m_dialog->m_preview.items.at(itemIdx);
-
     if(role==Qt::UserRole)
-        return itemIdx;
+        return node->itemIndex;
+
+    if(role==MeldHeaderKeyRole)
+        return node->id;
+
+    if(role==MeldHeaderDoneRole)
+        return node->decided;
+
+    if(role==MeldHeaderTotalRole)
+        return node->total;
 
     if(role==Qt::DisplayRole)
     {
-        if(index.column()==0)
-            return meldLeftName(m_dialog, item);
+        if(node->itemIndex>=0)
+        {
+            const Item *item=(m_dialog!=nullptr)
+                ? m_dialog->meldPreviewItem(node->itemIndex) : nullptr;
 
-        if(index.column()==2)
-            return meldRightName(m_dialog, item);
+            if(item==nullptr)
+                return QVariant();
+
+            if(index.column()==0)
+                return meldLeftName(m_dialog, *item);
+
+            if(index.column()==2)
+                return meldRightName(m_dialog, *item);
+
+            return QVariant();
+        }
+
+        // Заголовок контекста: только имя в нулевой колонке
+        if(index.column()==0)
+            return node->name;
 
         return QVariant();
     }
 
     if(role==Qt::UserRole+10) // BranchRole (зеркало дерева)
-        return item.isBranch;
+        return node->isBranch;
 
     return QVariant();
 }
@@ -740,12 +979,51 @@ void SyncMeldDelegate::paint(QPainter *painter,
     if(m_dialog==nullptr)
         return;
 
-    const int row=index.row();
-    const QModelIndex probe=m_dialog->m_meldModel->index(row, 0);
-    const int previewIdx=m_dialog->m_meldModel->itemIndex(probe);
+    // Важно: работаем именно с этим индексом (с родителем),
+    // а не со строкой верхнего уровня — иначе дети рисуются
+    // чужими данными
+    const int previewIdx=m_dialog->m_meldModel->itemIndex(index);
 
-    if(previewIdx<0
-       || previewIdx>=m_dialog->m_preview.items.size())
+    // Заголовок группы (ветка-контекст): имя + счётчик разбора.
+    // Стрелок нет — bulk делается меню/кнопками «всё поддерево»
+    if(previewIdx<0)
+    {
+        if(index.column()!=0)
+            return;
+
+        const QFontMetrics fm(o.font);
+        const QString name=index.data(Qt::DisplayRole).toString();
+        const int done=index.data(MeldHeaderDoneRole).toInt();
+        const int total=index.data(MeldHeaderTotalRole).toInt();
+
+        QFont f=o.font;
+        f.setBold(true);
+        painter->setFont(f);
+        painter->setPen(o.palette.color(QPalette::Disabled,
+                                        QPalette::Text));
+
+        QString text=name;
+
+        if(total>0)
+            text+=QStringLiteral(" · %1/%2").arg(done).arg(total);
+
+        painter->drawText(o.rect.adjusted(4, 0, -4, 0),
+                          Qt::AlignLeft | Qt::AlignVCenter,
+                          fm.elidedText(text, Qt::ElideRight,
+                                       o.rect.width()-8));
+
+        if(total>0 && done==total)
+        {
+            painter->setPen(QColor(0x66BB6A));
+            painter->drawText(o.rect.adjusted(4, 0, -4, 0),
+                              Qt::AlignRight | Qt::AlignVCenter,
+                              QStringLiteral("✓"));
+        }
+
+        return;
+    }
+
+    if(previewIdx>=m_dialog->meldPreviewData().items.size())
         return;
 
     const Item &item=m_dialog->m_preview.items.at(previewIdx);
@@ -753,8 +1031,9 @@ void SyncMeldDelegate::paint(QPainter *painter,
     const bool selected=(o.state & QStyle::State_Selected)!=0;
 
     // Стороны: 0 — своя справа у центра, 2 — ихняя слева у центра.
-    // Глубже — дальше от центра (читается как вложенность)
-    const int indent=qMin(o.rect.width()/3, st.depth*12);
+    // Иерархия видна штатно (ветки-группы раскрываются), поэтому
+    // дополнительного сдвига пилюль по глубине нет — все жмутся к центру
+    const int indent=0;
 
     // Свежая сторона («здесь будет»): исход важнее прошлого,
     // поэтому зелёный, а не цвет категории (красный у удалений врал бы).

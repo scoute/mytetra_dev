@@ -161,10 +161,16 @@ public:
     // Клик по стрелке/diff meld-таблицы: та же семантика, что тап ✓/✕
     // в дереве (повторный тап снимает решение)
     void meldActionClick(int itemIndex, const QString &role);
+    // Bulk meld: всё поддерево узла / всё видимое — одной стрелкой.
+    // Toggle: всё уже в цели — снимаем обратно
+    void meldBranchAction(const QModelIndex &node, bool up);
+    void meldStageAll(bool up);
+    void onMeldContextMenu(const QPoint &pos);
     // Тултип стрелки: текст исхода того же словаря, что в дереве
     QString meldArrowTip(int itemIndex, bool up) const;
     // Текущий элемент активного вида (-1 — нет выбора)
     int currentItemIndex(void) const;
+    const SyncMeldModel *meldModel(void) const { return m_meldModel; }
     // Доступ meld-модели/делегата к данным (читают в момент отрисовки):
     // пилюли и стрелки всегда свежие, без хранения состояния
     const SyncPreview::Preview &meldPreviewData(void) const;
@@ -291,6 +297,8 @@ private:
     QTreeWidget *m_itemsTree=nullptr;
     QStackedWidget *m_viewStack=nullptr;
     QToolButton *m_meldToggle=nullptr;
+    QToolButton *m_meldUpAll=nullptr;
+    QToolButton *m_meldDownAll=nullptr;
     bool m_meldMode=false;
     QTreeView *m_meldView=nullptr;
     SyncMeldModel *m_meldModel=nullptr;

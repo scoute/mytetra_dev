@@ -2160,6 +2160,28 @@ void SyncPreviewDialog::setMeldMode(bool meld)
 
     m_meldMode=meld;
 
+    // Выбор едет за режимом: что смотрели там — то и подсветится здесь.
+    // (Решения общие и так; селекция у каждого вида была своя)
+    int carry=-1;
+
+    if(meld)
+    {
+        if(m_itemsTree!=nullptr)
+        {
+            const QList<QTreeWidgetItem *> sel=m_itemsTree->selectedItems();
+
+            if(!sel.isEmpty())
+                carry=sel.first()->data(0, Qt::UserRole).toInt();
+        }
+    }
+    else if(m_meldView!=nullptr)
+    {
+        const QModelIndex cur=m_meldView->currentIndex();
+
+        if(cur.isValid() && m_meldModel!=nullptr)
+            carry=m_meldModel->itemIndex(cur);
+    }
+
     if(m_treeRadio!=nullptr)
         m_treeRadio->setChecked(!meld);
 
@@ -2172,6 +2194,34 @@ void SyncPreviewDialog::setMeldMode(bool meld)
 
     if(m_viewStack!=nullptr)
         m_viewStack->setCurrentIndex(meld ? 1 : 0);
+
+    // Продолжаем с того же элемента в другом виде (если он там виден —
+    // в meld фильтр вкладки может его скрывать, тогда выбор не трогаем)
+    if(carry>=0 && carry<m_preview.items.size())
+    {
+        if(meld && m_meldModel!=nullptr && m_meldView!=nullptr)
+        {
+            const QModelIndex idx=m_meldModel->indexForItem(carry);
+
+            if(idx.isValid())
+            {
+                m_meldView->scrollTo(idx);
+                m_meldView->setCurrentIndex(idx);
+            }
+        }
+        else if(!meld && m_itemsTree!=nullptr)
+        {
+            for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
+            {
+                if((*it)->data(0, Qt::UserRole).toInt()==carry)
+                {
+                    m_itemsTree->scrollToItem(*it);
+                    m_itemsTree->setCurrentItem(*it);
+                    break;
+                }
+            }
+        }
+    }
 
     // Развернуть/свернуть — оба вида структурные: кнопки всегда видны,
     // действуют на активный вид

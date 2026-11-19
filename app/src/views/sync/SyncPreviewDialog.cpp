@@ -17,6 +17,7 @@
 #include <QPlainTextEdit>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QStackedWidget>
 #include <QTabBar>
 #include <QToolButton>
@@ -298,16 +299,23 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_collapseAllButton->setAutoDefault(false);
     toolbar->addWidget(m_collapseAllButton);
 
-    // Переключатель вида: то же окно, те же решения — дерево xor meld
-    m_meldToggle=new QToolButton(this);
-    m_meldToggle->setText(tr("⇄ Meld"));
-    m_meldToggle->setToolTip(tr("Таблица «моё | стрелки | сервер» "
-                                "вместо дерева (те же решения)"));
-    m_meldToggle->setCheckable(true);
-    m_meldToggle->setAutoRaise(true);
-    connect(m_meldToggle, &QToolButton::toggled,
-            this, &SyncPreviewDialog::onMeldModeToggled);
-    toolbar->addWidget(m_meldToggle);
+    // Переключатель вида: то же окно, те же решения — дерево xor сравнение.
+    // Два радио вместо тоггла «Meld»: слово «meld» ничего не говорит
+    // тем, кто не в курсе, а «Дерево | Сравнение» читается сразу
+    m_treeRadio=new QRadioButton(tr("Дерево"), this);
+    m_treeRadio->setToolTip(tr("Обычное дерево изменений"));
+    m_treeRadio->setChecked(true);
+    connect(m_treeRadio, &QRadioButton::clicked,
+            this, [this]() { setMeldMode(false); });
+    toolbar->addWidget(m_treeRadio);
+
+    m_meldRadio=new QRadioButton(tr("Сравнение"), this);
+    m_meldRadio->setToolTip(tr("Сравнение сторон стрелками →/←: "
+                               "слева моё, справа серверное"));
+    connect(m_meldRadio, &QRadioButton::clicked,
+            this, [this]() { setMeldMode(true); });
+    toolbar->addWidget(m_meldRadio);
+    toolbar->addWidget(m_meldRadio);
 
     // --- Meld bulk: всё видимое — одной стрелкой (уважает фильтр).
     // Повторный тап снимает (та же toggle-семантика, что в дереве)
@@ -2146,8 +2154,15 @@ void SyncPreviewDialog::setMeldMode(bool meld)
 
     m_meldMode=meld;
 
-    if(m_meldToggle!=nullptr)
-        m_meldToggle->setChecked(meld);
+    if(m_treeRadio!=nullptr)
+        m_treeRadio->setChecked(!meld);
+
+    if(m_meldRadio!=nullptr)
+        m_meldRadio->setChecked(meld);
+
+    // Заголовок следит за видом: дерево изменений xor сравнение сторон
+    setWindowTitle(meld ? tr("Сравнение сторон синхронизации")
+                        : tr("Дерево изменений синхронизации"));
 
     if(m_viewStack!=nullptr)
         m_viewStack->setCurrentIndex(meld ? 1 : 0);
@@ -2189,12 +2204,6 @@ void SyncPreviewDialog::setMeldMode(bool meld)
 bool SyncPreviewDialog::isMeldMode(void) const
 {
     return m_meldMode;
-}
-
-
-void SyncPreviewDialog::onMeldModeToggled(bool meld)
-{
-    setMeldMode(meld);
 }
 
 

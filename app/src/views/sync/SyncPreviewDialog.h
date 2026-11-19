@@ -102,6 +102,7 @@ class QComboBox;
 class QLabel;
 class QPlainTextEdit;
 class QPushButton;
+class QRadioButton;
 class QStackedWidget;
 class QTabBar;
 class QTextEdit;
@@ -190,7 +191,6 @@ private slots:
     void onApplyClicked(void);
     void onItemSelectionChanged(void);
     void onMeldSelectionChanged(void);
-    void onMeldModeToggled(bool meld);
     void onItemActionChanged(int index);
     void onTreeContextMenu(const QPoint &pos);
     void onDuelMine(void);
@@ -296,7 +296,8 @@ private:
     QPushButton *m_collapseAllButton=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
     QStackedWidget *m_viewStack=nullptr;
-    QToolButton *m_meldToggle=nullptr;
+    QRadioButton *m_treeRadio=nullptr;
+    QRadioButton *m_meldRadio=nullptr;
     QToolButton *m_meldUpAll=nullptr;
     QToolButton *m_meldDownAll=nullptr;
     bool m_meldMode=false;

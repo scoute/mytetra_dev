@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QEvent>
+#include <QFrame>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QItemSelectionModel>
@@ -229,16 +230,38 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
     QVBoxLayout *layout=new QVBoxLayout(this);
 
-    // --- заголовок: бублик, статус разбора + "Запомнить" ---
+    // --- заголовок: бублик, статус + meld-предупреждение, "Запомнить" ---
+    // Красная плашка про удаления живёт на уровне бублика (второй строкой
+    // под статусом), а не внизу у вкладок — её должны видеть сразу
     QHBoxLayout *header=new QHBoxLayout();
     m_meldRing=new SyncMeldRing(this, this);
     header->addWidget(m_meldRing);
+
+    // --- предупреждение meld: удаления решаются стрелками ---
+    m_meldDanger=new QLabel(this);
+    {
+        QFont dangerFont=m_meldDanger->font();
+        dangerFont.setBold(true);
+        m_meldDanger->setFont(dangerFont);
+        m_meldDanger->setStyleSheet(QStringLiteral(
+            "color: #C62828; background: #FFEBEE;"
+            " border: 1.5px solid #EF5350; border-radius: 8px;"
+            " padding: 6px 10px;"));
+        m_meldDanger->setWordWrap(true);
+        m_meldDanger->setVisible(false);
+    }
+
+    QVBoxLayout *titleCol=new QVBoxLayout();
+    titleCol->setContentsMargins(0, 0, 0, 0);
+    titleCol->setSpacing(2);
     m_statusLabel=new QLabel(this);
     QFont statusFont=m_statusLabel->font();
     statusFont.setBold(true);
     statusFont.setPointSize(statusFont.pointSize()+2);
     m_statusLabel->setFont(statusFont);
-    header->addWidget(m_statusLabel, 1);
+    titleCol->addWidget(m_statusLabel);
+    titleCol->addWidget(m_meldDanger);
+    header->addLayout(titleCol, 1);
     m_saveDefaults=new QCheckBox(tr("Запомнить"), this);
     m_saveDefaults->setToolTip(
         tr("Сохранить выбранные действия как умолчание для будущих синков"));
@@ -257,21 +280,6 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
         warn->setWordWrap(true);
         layout->addWidget(warn);
     }
-
-    // --- предупреждение meld: удаления решаются стрелками ---
-    m_meldDanger=new QLabel(this);
-    {
-        QFont dangerFont=m_meldDanger->font();
-        dangerFont.setBold(true);
-        m_meldDanger->setFont(dangerFont);
-        m_meldDanger->setStyleSheet(QStringLiteral(
-            "color: #C62828; background: #FFEBEE;"
-            " border: 1.5px solid #EF5350; border-radius: 8px;"
-            " padding: 6px 10px;"));
-        m_meldDanger->setWordWrap(true);
-        m_meldDanger->setVisible(false);
-    }
-    layout->addWidget(m_meldDanger);
 
     // --- вкладки-направления с git-статистикой ---
     m_tabs=new QTabBar(this);
@@ -315,6 +323,13 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     connect(m_meldRadio, &QRadioButton::clicked,
             this, [this]() { setMeldMode(true); });
     toolbar->addWidget(m_meldRadio);
+
+    // Разделитель вида и bulk-стрелок: группы читаются отдельно
+    m_meldSep=new QFrame(this);
+    m_meldSep->setFrameShape(QFrame::VLine);
+    m_meldSep->setFrameShadow(QFrame::Sunken);
+    m_meldSep->setVisible(false);
+    toolbar->addWidget(m_meldSep);
     toolbar->addWidget(m_meldRadio);
 
     // --- Meld bulk: всё видимое — одной стрелкой (уважает фильтр).
@@ -2180,6 +2195,9 @@ void SyncPreviewDialog::setMeldMode(bool meld)
 
     if(m_meldDownAll!=nullptr)
         m_meldDownAll->setVisible(meld);
+
+    if(m_meldSep!=nullptr)
+        m_meldSep->setVisible(meld);
 
     if(meld && m_meldModel!=nullptr)
     {

@@ -101,6 +101,7 @@ class QCheckBox;
 class QComboBox;
 class QLabel;
 class QPlainTextEdit;
+class QFrame;
 class QPushButton;
 class QRadioButton;
 class QStackedWidget;
@@ -298,6 +299,7 @@ private:
     QStackedWidget *m_viewStack=nullptr;
     QRadioButton *m_treeRadio=nullptr;
     QRadioButton *m_meldRadio=nullptr;
+    QFrame *m_meldSep=nullptr;
     QToolButton *m_meldUpAll=nullptr;
     QToolButton *m_meldDownAll=nullptr;
     bool m_meldMode=false;

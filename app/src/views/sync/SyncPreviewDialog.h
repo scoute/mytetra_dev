@@ -13,6 +13,7 @@
 #include <QStyledItemDelegate>
 
 #include "libraries/sync/SyncPreview.h"
+#include "views/sync/SyncMeld.h"
 
 // Роли данных строки дерева для делегата-пилюли: имя рисуется
 // в скруглённой пилюле, остальное (маркер/стрелка/галочки) —
@@ -101,9 +102,11 @@ class QComboBox;
 class QLabel;
 class QPlainTextEdit;
 class QPushButton;
+class QStackedWidget;
 class QTabBar;
 class QTextEdit;
 class QToolButton;
+class QTreeView;
 class QTreeWidget;
 class QTreeWidgetItem;
 class QWidget;
@@ -151,6 +154,27 @@ public:
     // Сохранить выбранные действия как умолчание (галочка "Запомнить")
     bool wantSaveDefaults(void) const;
 
+    // --- Meld-режим (таблица «моё | стрелки | сервер») ---
+    // Переключатель «Дерево | Meld», одно окно — два вида на те же решения.
+    void setMeldMode(bool meld);
+    bool isMeldMode(void) const;
+    // Клик по стрелке/diff meld-таблицы: та же семантика, что тап ✓/✕
+    // в дереве (повторный тап снимает решение)
+    void meldActionClick(int itemIndex, const QString &role);
+    // Тултип стрелки: текст исхода того же словаря, что в дереве
+    QString meldArrowTip(int itemIndex, bool up) const;
+    // Текущий элемент активного вида (-1 — нет выбора)
+    int currentItemIndex(void) const;
+    // Доступ meld-модели/делегата к данным (читают в момент отрисовки):
+    // пилюли и стрелки всегда свежие, без хранения состояния
+    const SyncPreview::Preview &meldPreviewData(void) const;
+    const SyncPreview::Item *meldPreviewItem(int index) const;
+    SyncPreview::Action meldEffectiveDecision(
+        const SyncPreview::Item &item) const;
+    bool meldItemDanger(const QString &id) const;
+    bool meldItemSynced(const QString &id) const;
+    int meldItemSection(const SyncPreview::Item &item) const;
+
 private slots:
 
     void onTabChanged(int index);
@@ -159,6 +183,8 @@ private slots:
     void onHelpClicked(void);
     void onApplyClicked(void);
     void onItemSelectionChanged(void);
+    void onMeldSelectionChanged(void);
+    void onMeldModeToggled(bool meld);
     void onItemActionChanged(int index);
     void onTreeContextMenu(const QPoint &pos);
     void onDuelMine(void);
@@ -167,6 +193,9 @@ private slots:
 private:
 
     friend class SyncPreviewActionDelegate;
+    friend class SyncMeldModel;
+    friend class SyncMeldDelegate;
+    friend class SyncMeldRing;
 
     // Клик по региону колонки «Действие» (роль "yes"/"no"/"diff"):
     // то же, что делал живой QToolButton — тап по ✓/✕ ставит/снимает
@@ -185,6 +214,7 @@ private:
     QPersistentModelIndex m_armedIndex;
     int m_armedPart=0;
     QPersistentModelIndex m_savedCurrent;
+    QAbstractItemView *m_armedView=nullptr;
 
     // Вкладка: 0 = Я→сервер, 1 = Сервер→я, 2 = Обоюдные правки.
     // Обоюдные — только правки текста (как на мобиле)
@@ -211,6 +241,11 @@ private:
     // Уже синкнуто частичным «Применить»: в дереве скрыто,
     // в счётчике — как разобранное, из финальных решений — в Skip
     bool isSynced(const QString &id) const;
+    // Панель ветки/дуэли/diff для элемента предпросмотра (общая
+    // для дерева и meld — вид даёт только индекс)
+    void showPanelForItem(int itemIndex, const QString &branchKey,
+                          const QString &branchTitle);
+    // Клик по региону meld-центра (роль "up"/"down"/"diff")
     bool isDone(const SyncPreview::Item &item) const;
     // Гейт «Применить» (как canApply мобилы): активно при хоть одном
     // решённом несинкнутом; закрывает окно только когда всё разобрано
@@ -254,6 +289,13 @@ private:
     QPushButton *m_expandAllButton=nullptr;
     QPushButton *m_collapseAllButton=nullptr;
     QTreeWidget *m_itemsTree=nullptr;
+    QStackedWidget *m_viewStack=nullptr;
+    QToolButton *m_meldToggle=nullptr;
+    bool m_meldMode=false;
+    QTreeView *m_meldView=nullptr;
+    SyncMeldModel *m_meldModel=nullptr;
+    SyncMeldRing *m_meldRing=nullptr;
+    QLabel *m_meldDanger=nullptr;
     QLabel *m_branchLabel=nullptr;
     QString m_diffOwn;
     QString m_diffOther;

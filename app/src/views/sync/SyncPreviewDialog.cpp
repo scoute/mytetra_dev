@@ -6,6 +6,7 @@
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QItemSelectionModel>
 #include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
@@ -16,9 +17,11 @@
 #include <QPlainTextEdit>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QStackedWidget>
 #include <QTabBar>
 #include <QToolButton>
 #include <QToolTip>
+#include <QTreeView>
 #include <QTreeWidget>
 #include <QTreeWidgetItemIterator>
 #include <QVBoxLayout>
@@ -224,8 +227,10 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
     QVBoxLayout *layout=new QVBoxLayout(this);
 
-    // --- заголовок: статус разбора + "Запомнить" ---
+    // --- заголовок: бублик, статус разбора + "Запомнить" ---
     QHBoxLayout *header=new QHBoxLayout();
+    m_meldRing=new SyncMeldRing(this, this);
+    header->addWidget(m_meldRing);
     m_statusLabel=new QLabel(this);
     QFont statusFont=m_statusLabel->font();
     statusFont.setBold(true);
@@ -250,6 +255,21 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
         warn->setWordWrap(true);
         layout->addWidget(warn);
     }
+
+    // --- предупреждение meld: удаления решаются стрелками ---
+    m_meldDanger=new QLabel(this);
+    {
+        QFont dangerFont=m_meldDanger->font();
+        dangerFont.setBold(true);
+        m_meldDanger->setFont(dangerFont);
+        m_meldDanger->setStyleSheet(QStringLiteral(
+            "color: #C62828; background: #FFEBEE;"
+            " border: 1.5px solid #EF5350; border-radius: 8px;"
+            " padding: 6px 10px;"));
+        m_meldDanger->setWordWrap(true);
+        m_meldDanger->setVisible(false);
+    }
+    layout->addWidget(m_meldDanger);
 
     // --- вкладки-направления с git-статистикой ---
     m_tabs=new QTabBar(this);
@@ -277,6 +297,18 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_collapseAllButton->setAutoDefault(false);
     toolbar->addWidget(m_collapseAllButton);
 
+    // Переключатель вида: то же окно, те же решения — дерево xor meld.
+    // Развернуть/свернуть — только дереву, в meld структура плоская
+    m_meldToggle=new QToolButton(this);
+    m_meldToggle->setText(tr("⇄ Meld"));
+    m_meldToggle->setToolTip(tr("Таблица «моё | стрелки | сервер» "
+                                "вместо дерева (те же решения)"));
+    m_meldToggle->setCheckable(true);
+    m_meldToggle->setAutoRaise(true);
+    connect(m_meldToggle, &QToolButton::toggled,
+            this, &SyncPreviewDialog::onMeldModeToggled);
+    toolbar->addWidget(m_meldToggle);
+
     m_jumpButton=new QPushButton(tr("↓ 0"), this);
     m_jumpButton->setToolTip(tr("К первому неразобранному"));
     // Как в мобиле: красный фон + белый текст, скругление сильнее
@@ -301,8 +333,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     layout->addLayout(toolbar);
 
     // --- дерево элементов ---
-    m_itemsTree=new QTreeWidget(this);
-    m_itemsTree->setColumnCount(3);
+    m_itemsTree=new QTreeWidget(this);    m_itemsTree->setColumnCount(3);
     m_itemsTree->setHeaderLabels(QStringList()
                                  << tr("Элемент") << tr("Действие") << tr("Инфо"));
     m_itemsTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -326,15 +357,40 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_itemsTree->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_itemsTree, &QWidget::customContextMenuRequested,
             this, &SyncPreviewDialog::onTreeContextMenu);
-    layout->addWidget(m_itemsTree, 3);
+    // Два вида на одни решения: дерево xor meld-таблица
+    m_viewStack=new QStackedWidget(this);
+    m_viewStack->addWidget(m_itemsTree);
+
+    m_meldModel=new SyncMeldModel(this, this);
+    m_meldView=new QTreeView(this);
+    m_meldView->setModel(m_meldModel);
+    m_meldView->setRootIsDecorated(false);
+    m_meldView->setItemsExpandable(false);
+    m_meldView->setUniformRowHeights(true);
+    m_meldView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_meldView->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_meldView->setMouseTracking(true);
+    m_meldView->setItemDelegate(new SyncMeldDelegate(this, m_meldView));
+    m_meldView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_meldView->header()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_meldView->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    m_meldView->header()->resizeSection(1, 150);
+    m_meldView->viewport()->installEventFilter(this);
+    m_viewStack->addWidget(m_meldView);
+    layout->addWidget(m_viewStack, 3);
     connect(m_expandAllButton, &QPushButton::clicked,
             m_itemsTree, &QTreeWidget::expandAll);
     connect(m_collapseAllButton, &QPushButton::clicked,
             m_itemsTree, &QTreeWidget::collapseAll);
+    m_meldModel->setSection(m_tab);
+    m_meldModel->rebuild();
     buildItems();
 
     connect(m_itemsTree, &QTreeWidget::itemSelectionChanged,
             this, &SyncPreviewDialog::onItemSelectionChanged);
+    connect(m_meldView->selectionModel(),
+            &QItemSelectionModel::currentChanged,
+            this, &SyncPreviewDialog::onMeldSelectionChanged);
 
     // --- панель: заголовок + поединок + diff ---
     m_branchLabel=new QLabel(this);
@@ -667,6 +723,8 @@ void SyncPreviewDialog::onActionsMenuTriggered(void)
     // Точечные действия, которые пользователь не менял, следуют категории
     buildItems();
     buildActionsMenu();
+    if(m_meldModel!=nullptr)
+        m_meldModel->rebuild();
     refreshAll();
 }
 
@@ -1547,6 +1605,7 @@ bool SyncPreviewDialog::eventFilter(QObject *watched, QEvent *event)
                 if(part!=0)
                 {
                     m_actionArmed=true;
+                    m_armedView=m_itemsTree;
                     m_armedIndex=idx;
                     m_armedPart=part;
                     m_savedCurrent=m_itemsTree->currentIndex();
@@ -1559,7 +1618,8 @@ bool SyncPreviewDialog::eventFilter(QObject *watched, QEvent *event)
         {
             const QMouseEvent *me=static_cast<const QMouseEvent *>(event);
 
-            if(me->button()==Qt::LeftButton && m_actionArmed)
+            if(me->button()==Qt::LeftButton && m_actionArmed
+               && m_armedView==m_itemsTree)
             {
                 auto *delegate=static_cast<SyncPreviewActionDelegate *>(
                     m_itemsTree->itemDelegateForColumn(1));
@@ -1572,6 +1632,7 @@ bool SyncPreviewDialog::eventFilter(QObject *watched, QEvent *event)
                 m_itemsTree->setCurrentIndex(m_savedCurrent);
                 m_itemsTree->blockSignals(false);
                 m_actionArmed=false;
+                m_armedView=nullptr;
 
                 if(same)
                 {
@@ -1593,6 +1654,74 @@ bool SyncPreviewDialog::eventFilter(QObject *watched, QEvent *event)
             cancelActionArm();
         }
     }
+    else if(m_meldView!=nullptr && watched==m_meldView->viewport())
+    {
+        // Та же защита селекции для meld-таблицы: стрелки не двигают
+        // выбор (иначе каждый тап перезагружал бы diff с хаба)
+        if(event->type()==QEvent::MouseButtonPress)
+        {
+            const QMouseEvent *me=static_cast<const QMouseEvent *>(event);
+
+            if(me->button()==Qt::LeftButton)
+            {
+                cancelActionArm();
+                auto *delegate=static_cast<SyncMeldDelegate *>(
+                    m_meldView->itemDelegate());
+                const QModelIndex idx=m_meldView->indexAt(me->pos());
+                const int part=(delegate!=nullptr && idx.isValid()
+                                && idx.column()==1)
+                    ? delegate->hitTest(idx, me->pos()) : 0;
+
+                if(part!=0)
+                {
+                    m_actionArmed=true;
+                    m_armedView=m_meldView;
+                    m_armedIndex=idx;
+                    m_armedPart=part;
+                    m_savedCurrent=m_meldView->currentIndex();
+                    m_meldView->blockSignals(true);
+                }
+            }
+        }
+        else if(event->type()==QEvent::MouseButtonRelease)
+        {
+            const QMouseEvent *me=static_cast<const QMouseEvent *>(event);
+
+            if(me->button()==Qt::LeftButton && m_actionArmed
+               && m_armedView==m_meldView)
+            {
+                auto *delegate=static_cast<SyncMeldDelegate *>(
+                    m_meldView->itemDelegate());
+                const QModelIndex idx=m_meldView->indexAt(me->pos());
+                const int part=(delegate!=nullptr && idx.isValid()
+                                && idx.column()==1)
+                    ? delegate->hitTest(idx, me->pos()) : 0;
+                const bool same=idx.isValid() && idx==m_armedIndex
+                    && part==m_armedPart && part!=0;
+                m_meldView->setCurrentIndex(m_savedCurrent);
+                m_meldView->blockSignals(false);
+                m_actionArmed=false;
+                m_armedView=nullptr;
+
+                if(same && m_meldModel!=nullptr)
+                {
+                    static const char *roles[]={"", "up", "down", "diff"};
+                    const int itemIndex=
+                        m_meldModel->itemIndex(m_armedIndex);
+
+                    if(itemIndex>=0)
+                        meldActionClick(itemIndex,
+                            QString::fromLatin1(roles[part]));
+                }
+
+                return true;
+            }
+        }
+        else if(event->type()==QEvent::Leave)
+        {
+            cancelActionArm();
+        }
+    }
 
     return QDialog::eventFilter(watched, event);
 }
@@ -1603,10 +1732,21 @@ void SyncPreviewDialog::cancelActionArm(void)
     if(!m_actionArmed)
         return;
 
-    m_itemsTree->blockSignals(true);
-    m_itemsTree->setCurrentIndex(m_savedCurrent);
-    m_itemsTree->blockSignals(false);
+    if(m_meldView!=nullptr && m_armedView==m_meldView)
+    {
+        m_meldView->blockSignals(true);
+        m_meldView->setCurrentIndex(m_savedCurrent);
+        m_meldView->blockSignals(false);
+    }
+    else if(m_itemsTree!=nullptr)
+    {
+        m_itemsTree->blockSignals(true);
+        m_itemsTree->setCurrentIndex(m_savedCurrent);
+        m_itemsTree->blockSignals(false);
+    }
+
     m_actionArmed=false;
+    m_armedView=nullptr;
 }
 
 
@@ -1820,6 +1960,38 @@ void SyncPreviewDialog::refreshCounter(void)
     if(m_applyButton!=nullptr)
         m_applyButton->setEnabled(canApply());
 
+    // Бублик прогресса + предупреждение про удаления (meld)
+    if(m_meldRing!=nullptr)
+        m_meldRing->setProgress(decided, total);
+
+    if(m_meldDanger!=nullptr)
+    {
+        int meldDeaths=0;
+
+        for(const Item &item : m_preview.items)
+        {
+            if(isSynced(item.id))
+                continue;
+
+            if(m_tab>=0 && sectionOf(item)!=m_tab)
+                continue;
+
+            if(item.category==Category::MyDelete
+               || item.category==Category::TheirDelete)
+                if(m_decisions.forItem(item)==Action::Confirm)
+                    meldDeaths++;
+        }
+
+        if(m_meldMode && meldDeaths>0)
+        {
+            m_meldDanger->setText(tr("%1: удаления в плане — "
+                "стрелка туда/сюда решает судьбу").arg(meldDeaths));
+            m_meldDanger->setVisible(true);
+        }
+        else
+            m_meldDanger->setVisible(false);
+    }
+
     if(m_jumpButton!=nullptr)
     {
         const int left=total-decided;
@@ -1897,6 +2069,8 @@ void SyncPreviewDialog::onApplyClicked(void)
         m_syncedIds.insert(it.key());
 
     buildItems();
+    if(m_meldModel!=nullptr)
+        m_meldModel->rebuild();
     refreshTabs();
     refreshAll();
 
@@ -1916,6 +2090,164 @@ void SyncPreviewDialog::refreshAll(void)
     refreshBranchMarks();
     refreshCounter();
     applyFilters();
+
+    if(m_meldModel!=nullptr)
+        m_meldModel->refreshAllRows();
+}
+
+
+void SyncPreviewDialog::setMeldMode(bool meld)
+{
+    if(m_meldMode==meld)
+        return;
+
+    m_meldMode=meld;
+
+    if(m_meldToggle!=nullptr)
+        m_meldToggle->setChecked(meld);
+
+    if(m_viewStack!=nullptr)
+        m_viewStack->setCurrentIndex(meld ? 1 : 0);
+
+    // Развернуть/свернуть — только дереву, в meld структура плоская
+    if(m_expandAllButton!=nullptr)
+        m_expandAllButton->setVisible(!meld);
+
+    if(m_collapseAllButton!=nullptr)
+        m_collapseAllButton->setVisible(!meld);
+
+    if(meld && m_meldModel!=nullptr)
+    {
+        m_meldModel->setSection(m_tab);
+        m_meldModel->rebuild();
+        // Тот же выбор в другом виде (если строка есть в фильтре)
+        const int current=currentItemIndex();
+        Q_UNUSED(current);
+        refreshCounter();
+    }
+    else
+    {
+        refreshCounter();
+    }
+}
+
+
+bool SyncPreviewDialog::isMeldMode(void) const
+{
+    return m_meldMode;
+}
+
+
+void SyncPreviewDialog::onMeldModeToggled(bool meld)
+{
+    setMeldMode(meld);
+}
+
+
+void SyncPreviewDialog::meldActionClick(int itemIndex, const QString &role)
+{
+    if(itemIndex<0 || itemIndex>=m_preview.items.size())
+        return;
+
+    if(role==QStringLiteral("diff"))
+    {
+        // Diff по ссылке: выбрать строку (панель diff обновится сама)
+        if(m_meldModel!=nullptr && m_meldView!=nullptr)
+        {
+            const QModelIndex idx=m_meldModel->indexForItem(itemIndex);
+
+            if(idx.isValid())
+            {
+                m_meldView->setCurrentIndex(idx);
+                m_meldView->scrollTo(idx);
+            }
+        }
+
+        return;
+    }
+
+    const Item &item=m_preview.items.at(itemIndex);
+    const Action effective=m_decisions.forItem(item);
+    Action target=Action::Confirm;
+    bool have=false;
+
+    if(role==QStringLiteral("up"))
+        have=meldUpTarget(item, target);
+    else if(role==QStringLiteral("down"))
+        have=meldDownTarget(item, target);
+    else
+        return;
+
+    if(!have)
+        return;
+
+    // Повторный тап снимает решение (как в дереве)
+    m_decisions.byId[item.id]=(effective==target) ? Action::Confirm : target;
+    refreshAll();
+
+    if(m_meldModel!=nullptr)
+        m_meldModel->refreshPreviewRow(itemIndex);
+}
+
+
+QString SyncPreviewDialog::meldArrowTip(int itemIndex, bool up) const
+{
+    if(itemIndex<0 || itemIndex>=m_preview.items.size())
+        return QString();
+
+    const Item &item=m_preview.items.at(itemIndex);
+    const Danger danger=m_dangers.value(item.id, Danger::None);
+    Action target=Action::Confirm;
+
+    if(up)
+    {
+        if(!meldUpTarget(item, target))
+            return QString();
+    }
+    else if(!meldDownTarget(item, target))
+        return QString();
+
+    return actionSub(item, target, danger);
+}
+
+
+const SyncPreview::Preview &SyncPreviewDialog::meldPreviewData(void) const
+{
+    return m_preview;
+}
+
+
+const SyncPreview::Item *SyncPreviewDialog::meldPreviewItem(int index) const
+{
+    if(index<0 || index>=m_preview.items.size())
+        return nullptr;
+
+    return &m_preview.items.at(index);
+}
+
+
+SyncPreview::Action SyncPreviewDialog::meldEffectiveDecision(
+        const Item &item) const
+{
+    return m_decisions.forItem(item);
+}
+
+
+bool SyncPreviewDialog::meldItemDanger(const QString &id) const
+{
+    return m_dangers.contains(id);
+}
+
+
+bool SyncPreviewDialog::meldItemSynced(const QString &id) const
+{
+    return isSynced(id);
+}
+
+
+int SyncPreviewDialog::meldItemSection(const Item &item) const
+{
+    return sectionOf(item);
 }
 
 
@@ -1923,6 +2255,15 @@ void SyncPreviewDialog::onTabChanged(int index)
 {
     // Вкладки — якоря-ссылки: тап скроллит к разделу, фильтра нет
     m_tab=index;
+
+    if(m_meldMode && m_meldModel!=nullptr)
+    {
+        // В meld-режиме вкладки фильтруют: таблица показывает одно
+        // направление целиком
+        m_meldModel->setSection(index);
+        return;
+    }
+
     if(index>=0 && index<3 && m_sectionHeaders[index]!=nullptr)
     {
         m_itemsTree->scrollToItem(m_sectionHeaders[index],
@@ -1935,6 +2276,29 @@ void SyncPreviewDialog::onTabChanged(int index)
 void SyncPreviewDialog::onJumpClicked(void)
 {
     // К первому неразобранному (Confirm == нет решения): прыжок + выбор
+    if(m_meldMode && m_meldModel!=nullptr && m_meldView!=nullptr)
+    {
+        for(int row=0; row<m_meldModel->rowCount(); ++row)
+        {
+            const QModelIndex idx=m_meldModel->index(row, 0);
+            const int itemIndex=m_meldModel->itemIndex(idx);
+
+            if(itemIndex<0 || itemIndex>=m_preview.items.size())
+                continue;
+
+            if(m_decisions.forItem(m_preview.items.at(itemIndex))
+               ==Action::Confirm)
+            {
+                m_meldView->scrollTo(idx,
+                    QAbstractItemView::PositionAtTop);
+                m_meldView->setCurrentIndex(idx);
+                break;
+            }
+        }
+
+        return;
+    }
+
     for(QTreeWidgetItemIterator it(m_itemsTree); *it; ++it)
     {
         QTreeWidgetItem *node=*it;
@@ -1988,6 +2352,49 @@ void SyncPreviewDialog::onItemSelectionChanged(void)
 }
 
 
+void SyncPreviewDialog::onMeldSelectionChanged(void)
+{
+    const int itemIndex=currentItemIndex();
+
+    if(itemIndex<0)
+        return;
+
+    const Item &item=m_preview.items.at(itemIndex);
+    const QString key=item.isBranch ? item.id : item.parentId;
+    const QString title=item.isBranch ? item.name : item.parentName;
+    showPanelForItem(itemIndex, key, title);
+}
+
+
+int SyncPreviewDialog::currentItemIndex(void) const
+{
+    if(m_meldMode && m_meldView!=nullptr)
+    {
+        const QModelIndex current=m_meldView->currentIndex();
+
+        if(current.isValid() && m_meldModel!=nullptr)
+            return m_meldModel->itemIndex(current);
+
+        return -1;
+    }
+
+    if(m_itemsTree==nullptr)
+        return -1;
+
+    const QList<QTreeWidgetItem *> selected=m_itemsTree->selectedItems();
+
+    if(selected.isEmpty())
+        return -1;
+
+    const int itemIndex=selected.first()->data(0, Qt::UserRole).toInt();
+
+    if(itemIndex<0 || itemIndex>=m_preview.items.size())
+        return -1;
+
+    return itemIndex;
+}
+
+
 void SyncPreviewDialog::updateBranchPanel(QTreeWidgetItem *row)
 {
     if(row==nullptr)
@@ -2016,6 +2423,30 @@ void SyncPreviewDialog::updateBranchPanel(QTreeWidgetItem *row)
     else if(!branchKey.isEmpty())
     {
         branchTitle=row->text(0);
+    }
+
+    if(itemIndex>=0 && itemIndex<m_preview.items.size())
+        showPanelForItem(itemIndex, branchKey, branchTitle);
+    else if(!branchKey.isEmpty() || !branchTitle.isEmpty())
+        showPanelForItem(-1, branchKey, branchTitle);
+}
+
+
+void SyncPreviewDialog::showPanelForItem(int itemIndex,
+                                         const QString &branchKey,
+                                         const QString &branchTitleFallback)
+{
+    const Item *current=(itemIndex>=0 && itemIndex<m_preview.items.size())
+        ? &m_preview.items.at(itemIndex) : nullptr;
+
+    QString branchTitle=branchTitleFallback;
+
+    if(current!=nullptr)
+    {
+        if(current->isBranch)
+            branchTitle=current->name;
+        else
+            branchTitle=current->parentName;
     }
 
     if(branchTitle.isEmpty())

@@ -95,6 +95,25 @@ QString meldRightName(const SyncPreviewDialog *dialog, const Item &item)
     return item.name;
 }
 
+// Имя, которое встанет слева, если побеждают «они» (переименование):
+// для остального имя одно с обеих сторон
+QString meldLeftWinName(const Item &item)
+{
+    if(item.category==Category::Rename && !item.otherName.isEmpty())
+        return item.otherName;
+
+    return item.name;
+}
+
+// Имя, которое встанет справа, если побеждаю «я»
+QString meldRightWinName(const Item &item)
+{
+    if(item.category==Category::Rename && !item.ownName.isEmpty())
+        return item.ownName;
+
+    return item.name;
+}
+
 } // namespace
 
 
@@ -368,10 +387,18 @@ namespace
 struct MeldCellState
 {
     const Item *item=nullptr;
+    // Вид стороны после «Применить» (таблица — превью исхода,
+    // а не текущего состояния): Missing — «—», Tomb — надгробие,
+    // Live — обычная пилюля, Fresh — твёрдая зелёная (приедет/воскреснет)
+    enum class SideLook { Missing, Tomb, Live, Fresh };
+    SideLook leftLook=SideLook::Missing;
+    SideLook rightLook=SideLook::Missing;
     QString leftName;
     QString rightName;
-    bool leftGhost=false;
-    bool rightGhost=false;
+    // Подсказка в состоянии ДО (стрелки не нажаты): серый пунктир
+    // «сюда может приехать по стрелке». Пусто — обычное «—»
+    QString leftHint;
+    QString rightHint;
     bool upOn=false;
     bool downOn=false;
     bool upEnabled=false;
@@ -395,8 +422,6 @@ MeldCellState meldCellState(SyncPreviewDialog *dialog, int itemIndex)
 
     const Item &item=*itemPtr;
     st.item=&item;
-    st.leftName=meldLeftName(dialog, item);
-    st.rightName=meldRightName(dialog, item);
     st.depth=item.pathIds.size();
     st.duel=isMeldDuel(item);
     st.danger=dialog->meldItemDanger(item.id);
@@ -413,32 +438,89 @@ MeldCellState meldCellState(SyncPreviewDialog *dialog, int itemIndex)
         st.downOn=st.downEnabled && effective==downAction;
     }
 
-    // Призрак на принимающей стороне: staged смотрит в пустую/убитую
-    // сторону — показываем, что туда приедет
-    if(st.upOn && (!meldRightExists(item) || meldRightKilled(item)))
+    const bool myWins=st.upOn;
+    const bool theirWins=st.downOn;
+    const bool liveL=meldLeftExists(item) && !meldLeftKilled(item);
+    const bool liveR=meldRightExists(item) && !meldRightKilled(item);
+
+    // Подсказки состояния ДО: пустая сторона + живая стрелка в неё —
+    // серый пунктир «сюда может приехать». Умирающим сторонам (staged)
+    // подсказок нет — там будет честное «—»
+    if(!theirWins && st.downEnabled && !meldLeftExists(item))
+        st.leftHint=meldRightName(dialog, item);
+
+    if(!myWins && st.upEnabled && !meldRightExists(item))
+        st.rightHint=meldLeftName(dialog, item);
+
+    // Левая сторона после «Применить»
+    if(theirWins && item.category==Category::TheirDelete && liveL)
+        st.leftLook=MeldCellState::SideLook::Missing; // приму удаление
+    else if(!meldLeftExists(item) && !theirWins)
+        st.leftLook=MeldCellState::SideLook::Missing;
+    else if(theirWins && !liveL)
     {
-        st.rightGhost=true;
-        st.rightName=st.leftName;
+        // сюда приедет/воскреснет: имя — с правой (живой) стороны
+        const QString incoming=meldRightName(dialog, item);
+        if(incoming.isEmpty())
+            st.leftLook=MeldCellState::SideLook::Missing;
+        else
+        {
+            st.leftLook=MeldCellState::SideLook::Fresh;
+            st.leftName=incoming;
+        }
+    }
+    else if(meldLeftKilled(item))
+    {
+        st.leftLook=MeldCellState::SideLook::Tomb;
+        st.leftName=meldLeftName(dialog, item);
+    }
+    else
+    {
+        st.leftLook=MeldCellState::SideLook::Live;
+        st.leftName=theirWins ? meldLeftWinName(item)
+                              : meldLeftName(dialog, item);
     }
 
-    if(st.downOn && (!meldLeftExists(item) || meldLeftKilled(item)))
+    // Правая сторона после «Применить» — зеркально
+    if(myWins && item.category==Category::MyDelete && liveR)
+        st.rightLook=MeldCellState::SideLook::Missing; // удаление уедет
+    else if(!meldRightExists(item) && !myWins)
+        st.rightLook=MeldCellState::SideLook::Missing;
+    else if(myWins && !liveR)
     {
-        st.leftGhost=true;
-        st.leftName=st.rightName;
+        const QString incoming=meldLeftName(dialog, item);
+        if(incoming.isEmpty())
+            st.rightLook=MeldCellState::SideLook::Missing;
+        else
+        {
+            st.rightLook=MeldCellState::SideLook::Fresh;
+            st.rightName=incoming;
+        }
+    }
+    else if(meldRightKilled(item))
+    {
+        st.rightLook=MeldCellState::SideLook::Tomb;
+        st.rightName=meldRightName(dialog, item);
+    }
+    else
+    {
+        st.rightLook=MeldCellState::SideLook::Live;
+        st.rightName=myWins ? meldRightWinName(item)
+                            : meldRightName(dialog, item);
     }
 
     return st;
 }
 
 // Пилюля имени: язык дерева (цвет категории, иконка ветки/листа).
-// Состояния: обычная, надгробие (серая пунктирная, зачёркнута),
-// призрак (пунктир цвета категории, полупрозрачная), пусто (—).
+// Состояния: обычная (цвет категории), надгробие (серая пунктирная,
+// зачёркнута), свежая (твёрдая зелёная — здесь будет после «Применить»).
 void paintMeldPill(QPainter *painter, const QFont &font, const QRect &cell,
                    const QString &marker, const QColor &markerColor,
                    const QString &name, const QColor &pillBase,
-                   bool isBranch, bool tomb, bool ghost,
+                   bool isBranch, bool tomb,
                    bool warn, bool selected,
-                   bool hugRight, int indent)
+                   bool hugRight, int indent, bool hint=false)
 {
     QFontMetrics fm(font);
     const int rowH=cell.height();
@@ -463,19 +545,20 @@ void paintMeldPill(QPainter *painter, const QFont &font, const QRect &cell,
         const QRectF pillRect(pillRightEdge-pillW, topEdge, pillW, pillH);
         const qreal pillRadius=pillH/2;
 
-        QColor fill=tomb ? QColor(0xEEEEEE)
-            : ghost ? QColor(pillBase.red(), pillBase.green(),
-                             pillBase.blue(), 40)
-            : pillBase;
-        if(!tomb && !ghost)
-            fill.setAlpha(selected ? 255 : 90);
+        QColor fill=tomb ? QColor(0xEEEEEE) : pillBase;
+        if(!tomb)
+            fill.setAlpha(selected ? 255 : (hint ? 30 : 90));
+
+        // Прозрачная заливка именно цветом, а не NoBrush
+        if(hint)
+            fill=QColor(0, 0, 0, 0);
 
         painter->setBrush(fill);
-        QPen pen(tomb ? gray : (ghost ? pillBase : pillBase), 1);
+        QPen pen(tomb || hint ? gray : pillBase, 1);
         pen.setWidth(0);
-        if(tomb || ghost)
+        if(tomb || hint)
             pen.setStyle(Qt::DashLine);
-        if(!tomb && !ghost && isBranch && !selected)
+        if(!tomb && !hint && isBranch && !selected)
             pen=QPen(QColor(Qt::black), 1);
         painter->setPen(pen);
         painter->setRenderHint(QPainter::Antialiasing, true);
@@ -564,19 +647,19 @@ void paintMeldPill(QPainter *painter, const QFont &font, const QRect &cell,
                           qMin<qreal>(pillW, right-x), topEdge+pillH-topEdge);
     const qreal pillRadius=(qRound(cy+pillH/2.0)-topEdge)/2;
 
-    QColor fill=tomb ? QColor(0xEEEEEE)
-        : ghost ? QColor(pillBase.red(), pillBase.green(),
-                         pillBase.blue(), 40)
-        : pillBase;
-    if(!tomb && !ghost)
-        fill.setAlpha(selected ? 255 : 90);
+    QColor fill=tomb ? QColor(0xEEEEEE) : pillBase;
+    if(!tomb)
+        fill.setAlpha(selected ? 255 : (hint ? 30 : 90));
+
+    if(hint)
+        fill=QColor(0, 0, 0, 0);
 
     painter->setBrush(fill);
-    QPen pen(tomb ? gray : (ghost ? pillBase : pillBase), 1);
+    QPen pen(tomb || hint ? gray : pillBase, 1);
     pen.setWidth(0);
-    if(tomb || ghost)
+    if(tomb || hint)
         pen.setStyle(Qt::DashLine);
-    if(!tomb && !ghost && isBranch && !selected)
+    if(!tomb && !hint && isBranch && !selected)
         pen=QPen(QColor(Qt::black), 1);
     painter->setPen(pen);
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -673,21 +756,34 @@ void SyncMeldDelegate::paint(QPainter *painter,
     // Глубже — дальше от центра (читается как вложенность)
     const int indent=qMin(o.rect.width()/3, st.depth*12);
 
-    // Призрак = «здесь будет живой контент»: исход важнее прошлого,
+    // Свежая сторона («здесь будет»): исход важнее прошлого,
     // поэтому зелёный, а не цвет категории (красный у удалений врал бы).
-    // Маркер операции оставляем — видно, откуда воскрешение
-    const QColor ghostGreen(0x66BB6A);
+    // Маркер операции оставляем — видно, откуда воскрешение/заливка
+    const QColor freshGreen(0x66BB6A);
 
     if(index.column()==0 || index.column()==2)
     {
         const bool mine=(index.column()==0);
         const QString name=mine ? st.leftName : st.rightName;
-        const bool killed=mine ? meldLeftKilled(item)
-                               : meldRightKilled(item);
-        const bool ghost=mine ? st.leftGhost : st.rightGhost;
-        const bool empty=name.isEmpty() && !ghost;
+        const MeldCellState::SideLook look=
+            mine ? st.leftLook : st.rightLook;
+        const QString hint=mine ? st.leftHint : st.rightHint;
 
-        if(empty)
+        // Подсказка состояния ДО: пустая сторона + живая стрелка —
+        // серый пунктир «сюда может приехать»
+        if(look==MeldCellState::SideLook::Missing && !hint.isEmpty())
+        {
+            const QColor gray(0x9E9E9E);
+            paintMeldPill(painter, o.font, o.rect,
+                          meldMarker(item), gray,
+                          hint, gray,
+                          item.isBranch, false,
+                          false, selected,
+                          mine, indent, true);
+            return;
+        }
+
+        if(look==MeldCellState::SideLook::Missing)
         {
             painter->setFont(o.font);
             painter->setPen(QColor(0xBDBDBD));
@@ -706,19 +802,16 @@ void SyncMeldDelegate::paint(QPainter *painter,
             return;
         }
 
-        const bool sideGhost=mine ? st.leftGhost : st.rightGhost;
-        // Призрак перекрывает надгробие: staged-воскрешение уже не
-        // «мёртвое», а будущее живое — рисуем зелёным, а не серым
-        const bool effTomb=killed && !sideGhost;
+        // Fresh = твёрдое «здесь будет»: та же обычная пилюля,
+        // только зелёная (маркер операции — цвета исхода)
+        const bool tomb=(look==MeldCellState::SideLook::Tomb);
+        const QColor base=(look==MeldCellState::SideLook::Fresh)
+            ? freshGreen : QColor(meldCategoryColor(item.category));
 
         paintMeldPill(painter, o.font, o.rect,
-                      meldMarker(item),
-                      sideGhost ? ghostGreen
-                                : QColor(meldCategoryColor(item.category)),
-                      name,
-                      sideGhost ? ghostGreen
-                                : QColor(meldCategoryColor(item.category)),
-                      item.isBranch, effTomb, ghost,
+                      meldMarker(item), base,
+                      name, base,
+                      item.isBranch, tomb,
                       st.danger, selected,
                       mine, indent);
         return;

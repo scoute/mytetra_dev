@@ -2207,7 +2207,62 @@ QString SyncPreviewDialog::meldArrowTip(int itemIndex, bool up) const
     else if(!meldDownTarget(item, target))
         return QString();
 
-    return actionSub(item, target, danger);
+    // Meld-подсказки подробнее дерева: в скобках — чем кончится
+    // именно здесь (дерево тот же словарь показывает без скобок)
+    const bool dangerMyEmpty=(danger==Danger::MyEmpty);
+    const bool dangerTheirEmpty=(danger==Danger::TheirEmpty);
+
+    if(item.category==Category::Create)
+    {
+        if(up)
+            return tr("Залить на сервер (останется с обеих сторон)");
+        return tr("Скачать с сервера (останется с обеих сторон)");
+    }
+
+    if(item.category==Category::Edit)
+    {
+        if(up)
+        {
+            if(dangerTheirEmpty)
+                return tr("Оставить мою полную версию (их почти пустая)");
+            return tr("Оставить мою версию (их заменится моей)");
+        }
+
+        if(dangerMyEmpty)
+            return tr("Взять их полную версию (моя почти пустая)");
+        return tr("Взять их версию (моя заменится их)");
+    }
+
+    if(item.category==Category::Rename)
+    {
+        if(up)
+        {
+            if(item.fromLocal)
+                return tr("Моё имя побеждает (станет моим с обеих сторон)");
+            return tr("Отменить их переименование "
+                      "(имя останется моим с обеих сторон)");
+        }
+
+        if(item.fromLocal)
+            return tr("Отменить моё переименование "
+                      "(имя станет их с обеих сторон)");
+        return tr("Принять их переименование "
+                 "(имя станет их с обеих сторон)");
+    }
+
+    if(item.category==Category::MyDelete)
+    {
+        if(up)
+            return tr("Настоять на моём удалении "
+                      "(не воскрешать — удалится и на сервере)");
+        return tr("Воскресить с сервера (вернётся и ко мне)");
+    }
+
+    // TheirDelete
+    if(up)
+        return tr("Не удалять у меня "
+                 "(моя копия воскресит их сторону)");
+    return tr("Принять их удаление (удалится и у меня тоже)");
 }
 
 

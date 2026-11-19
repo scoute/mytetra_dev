@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <QElapsedTimer>
-#include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QEvent>
@@ -230,7 +229,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
     QVBoxLayout *layout=new QVBoxLayout(this);
 
-    // --- заголовок: бублик, статус + meld-предупреждение, "Запомнить" ---
+    // --- заголовок: бублик, статус + meld-пredупреждение ---
     // Красная плашка про удаления живёт на уровне бублика (второй строкой
     // под статусом), а не внизу у вкладок — её должны видеть сразу
     QHBoxLayout *header=new QHBoxLayout();
@@ -259,10 +258,6 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     header->addWidget(m_statusLabel);
     // Плашка в ту же строку, справа от статуса: одна строка вместо двух
     header->addWidget(m_meldDanger, 1);
-    m_saveDefaults=new QCheckBox(tr("Запомнить"), this);
-    m_saveDefaults->setToolTip(
-        tr("Сохранить выбранные действия как умолчание для будущих синков"));
-    header->addWidget(m_saveDefaults);
     layout->addLayout(header);
 
     // --- предупреждение о битии ---
@@ -3138,7 +3133,6 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("↓"), blue, tr("Сервер → я: ихние изменения приедут к нам"));
     html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
     html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
-    html+=sym(QStringLiteral("•"), green, tr("«Запомнить» — сохранить выбранные действия как умолчание для будущих синков"));
     html+=sym(QStringLiteral("•"), green, tr("«Действия по умолчанию ▾» — действия по умолчанию для целых категорий"));
     html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» активно при хоть одном решении: всё разобрано — закроет окно, иначе синкнет решённое, а дерево сузится до остатка"));
     html+=sym(QStringLiteral("•"), green, tr("«Применить» — выполнить, «Отмена» — прервать"));
@@ -3167,10 +3161,4 @@ Decisions SyncPreviewDialog::decisions(void) const
         result.byId[id]=Action::Skip;
 
     return result;
-}
-
-
-bool SyncPreviewDialog::wantSaveDefaults(void) const
-{
-    return m_saveDefaults->isChecked();
 }

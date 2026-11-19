@@ -2291,25 +2291,6 @@ void MainWindow::onSyncDevices(void)
 
 // Диалог стратегии первого синка: данные есть с обеих сторон, пока
 // ничего не слилось. Стирание — только в корзину
-namespace
-{
-// Дефолты категорий предпросмотра из конфига (см. SyncPreview::
- // serializeDefaults/defaultsFromString — тот же формат, что и в
- // диалоге устройств, чтобы галочка "Запомнить" работала везде одинаково)
-SyncPreview::Decisions loadPreviewDefaults(void)
-{
-    return SyncPreview::defaultsFromString(
-        mytetraConfig.get_syncPreviewActions());
-}
-
-
-void savePreviewDefaults(const SyncPreview::Decisions &decisions)
-{
-    mytetraConfig.set_syncPreviewActions(
-        SyncPreview::serializeDefaults(decisions));
-}
-} // namespace
-
 
 // Окно предпросмотра синка: категории с действиями, список элементов
 // с точечными действиями, diff по требованию. false — отмена
@@ -2341,17 +2322,15 @@ bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
             note.value(QStringLiteral("text")).toString().toLatin1()));
     };
 
-    SyncPreviewDialog dialog(preview, loadPreviewDefaults(),
-                             ownText, otherText, this);
+    SyncPreviewDialog dialog(preview,
+                               SyncPreview::Decisions::defaults(),
+                               ownText, otherText, this);
     dialog.setPartialSyncer(partial);
 
     if(dialog.exec()!=QDialog::Accepted)
         return false;
 
     decisions=dialog.decisions();
-
-    if(dialog.wantSaveDefaults())
-        savePreviewDefaults(decisions);
 
     return true;
 }

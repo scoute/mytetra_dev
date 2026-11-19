@@ -603,18 +603,13 @@ void SyncDevicesDialog::onSyncNow(void)
             };
 
             SyncPreviewDialog dialog(preview,
-                SyncPreview::defaultsFromString(
-                    config->get_syncPreviewActions()),
+                SyncPreview::Decisions::defaults(),
                 ownText, otherText, this);
 
             if(dialog.exec()!=QDialog::Accepted)
                 return false;
 
             decisions=dialog.decisions();
-
-            if(dialog.wantSaveDefaults())
-                config->set_syncPreviewActions(
-                    SyncPreview::serializeDefaults(decisions));
 
             return true;
         });

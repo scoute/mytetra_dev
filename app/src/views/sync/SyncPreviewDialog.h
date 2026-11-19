@@ -97,7 +97,6 @@ private:
     mutable int m_hoverPart=0;
 };
 
-class QCheckBox;
 class QComboBox;
 class QLabel;
 class QPlainTextEdit;
@@ -152,9 +151,6 @@ public:
     // applyDecisions его вычеркнет из финального плана, наборы
     // с финальным проходом не пересекаются
     SyncPreview::Decisions decisions(void) const;
-
-    // Сохранить выбранные действия как умолчание (галочка "Запомнить")
-    bool wantSaveDefaults(void) const;
 
     // --- Meld-режим (таблица «моё | стрелки | сервер») ---
     // Переключатель «Дерево | Meld», одно окно — два вида на те же решения.
@@ -288,7 +284,6 @@ private:
     QString m_duelItemId;
 
     QLabel *m_statusLabel=nullptr;
-    QCheckBox *m_saveDefaults=nullptr;
     QTabBar *m_tabs=nullptr;
     QToolButton *m_actionsButton=nullptr;
     QTreeWidgetItem *m_sectionHeaders[3]={nullptr,nullptr,nullptr};

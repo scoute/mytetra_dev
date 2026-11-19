@@ -111,7 +111,9 @@ SyncPlan applyDecisions(const SyncPlan &plan,
                         const SyncManifest &remote);
 
 // Умолчания категорий в строку конфига (5 чисел через запятую)
-// и обратно. Используется галочкой "Запомнить" в окне предпросмотра
+// и обратно. Раньше использовалось галочкой "Запомнить" в окне
+// предпросмотра (убрана: невидимое стартовое состояние); пригодится,
+// если persistence переедет в раздел "Действия по умолчанию"
 QString serializeDefaults(const Decisions &decisions);
 Decisions defaultsFromString(const QString &data);
 

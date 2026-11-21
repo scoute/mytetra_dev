@@ -479,7 +479,18 @@ int main(int argc, char ** argv)
     {
         if (mytetraConfig.get_syncToolbarNative())
         {
-            if (mytetraConfig.hasSyncPairing())
+            // Только если есть готовая взаимная пара с адресом: иначе
+            // старт открывал бы окно устройств/инфо-бокс на каждом запуске.
+            bool ready=false;
+
+            for(const AppConfig::SyncDeviceInfo &dev : mytetraConfig.get_syncDevices())
+                if(dev.lastMutual>0 && !dev.lastIp.isEmpty())
+                {
+                    ready=true;
+                    break;
+                }
+
+            if(ready)
                 win.synchronization();
         }
         else if (mytetraConfig.get_synchrocommand().trimmed().length()>0)

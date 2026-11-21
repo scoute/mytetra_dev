@@ -676,7 +676,9 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
         if(local.tombstones.contains(it.key()))
             continue; // наше удаление в силе (edit-wins решен выше)
 
-        if(local.tombstones.contains(it.value().branchId))
+        // Не только прямой branchId: tombstone родителя покрывает
+        // поддерево (старые/битые пиры могли не надгробить детей).
+        if(coveredByTombs(it.value().branchId, localParents, local.tombstones))
             continue; // чужое под нашим удаленным поддеревом — не качаем
 
         if(!local.notes.contains(it.key()))
@@ -706,7 +708,8 @@ SyncPlan SyncManifestBuilder::compare(const SyncManifest &local,
         it!=local.notes.constEnd(); ++it)
     {
         if(remote.tombstones.contains(it.key())
-           || remote.tombstones.contains(it.value().branchId))
+           || coveredByTombs(it.value().branchId, remoteParents,
+                             remote.tombstones))
             continue; // решено в tomb-цикле / под их удаленным поддеревом
 
         if(!remote.notes.contains(it.key()))

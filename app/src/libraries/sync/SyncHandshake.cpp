@@ -331,24 +331,35 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         // слушающий порт пира нам неизвестен, оставляем какой был
         // (или дефолт 47777 у новой строки)
         int peerPort=47777;
+        bool knownDevice=false;
 
         for(const AppConfig::SyncDeviceInfo &known : config->get_syncDevices())
         {
             if(known.id==theirId)
             {
                 peerPort=known.port;
+                knownDevice=true;
                 break;
             }
         }
 
         const QString peerIp=server->lastPeerAddress();
 
-        // NAT-хайрпин: наш собственный адрес вместо адреса пира —
-        // в строку его не пишем (см. isNonLoopbackLocalAddress)
-        config->touch_syncDevice(theirId, theirName,
-                                 isNonLoopbackLocalAddress(peerIp) ? QString()
-                                                                   : peerIp,
-                                 peerPort);
+        // Подтверждённый hello (proof сошёлся) — пишем адрес/имя/порт.
+        // Неподтверждённый НЕ должен перезаписывать адрес уже известного
+        // устройства: иначе любой в LAN присылает чужой deviceId и уводит
+        // «Sync now» на свой IP. Неизвестного всё же показываем в окне
+        // спаривания, но без адреса; список ограничен в AppConfig.
+        if(r.ok)
+            config->touch_syncDevice(theirId, theirName,
+                                     isNonLoopbackLocalAddress(peerIp) ? QString()
+                                                                       : peerIp,
+                                     peerPort);
+        else if(!knownDevice)
+            config->touch_syncDevice(theirId, theirName.left(64),
+                                     isNonLoopbackLocalAddress(peerIp) ? QString()
+                                                                       : peerIp,
+                                     47777);
 
         QString warning;
 

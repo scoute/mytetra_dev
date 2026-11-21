@@ -486,6 +486,19 @@ void AppConfig::touch_syncDevice(const QString &id, const QString &name,
     if(id==get_syncDeviceId())
         return;
 
+    // Кап на неизвестные устройства: hello неаутентифицирован, спам
+    // случайными id иначе бесконечно раздувает conf.ini и диск.
+    m_conf->beginGroup(QStringLiteral("syncDevices"));
+    const bool isKnown=m_conf->childGroups().contains(id);
+    const int deviceCount=m_conf->childGroups().size();
+    m_conf->endGroup();
+
+    if(!isKnown && deviceCount>=64)
+    {
+        qWarning() << "AppConfig: sync device limit reached, ignoring" << id;
+        return;
+    }
+
     m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
 
     const qint64 now=QDateTime::currentMSecsSinceEpoch();

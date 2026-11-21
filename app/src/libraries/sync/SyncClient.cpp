@@ -11,6 +11,8 @@
 
 #include "SyncClient.h"
 #include "SyncHandshake.h"
+#include "SyncPairing.h"
+#include "SyncPairCrypto.h"
 #include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
 
@@ -339,8 +341,17 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
     result.remoteDeviceName=answer.value(QStringLiteral("deviceName")).toString();
     result.remoteGroupId=answer.value(QStringLiteral("groupId")).toString();
     result.warning=answer.value(QStringLiteral("warning")).toString();
+    result.pair2=answer.value(QStringLiteral("pair2")).toInt(0)!=0;
     result.pairPending=answer.value(QStringLiteral("pairPending"))
                             .toBool(false);
+    result.pairCodeRequired=answer.value(QStringLiteral("pairCodeRequired"))
+                                  .toBool(false);
+    result.pairCodeLocked=answer.value(QStringLiteral("pairCodeLocked"))
+                                .toBool(false);
+    result.pairCodeExpiresAt=answer.value(QStringLiteral("pairCodeExpiresAt"))
+                                   .toVariant().toLongLong();
+    result.pairCodeUntil=answer.value(QStringLiteral("pairCodeUntil"))
+                               .toVariant().toLongLong();
 
     if(!result.ok)
     {
@@ -349,6 +360,64 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
     }
 
     return result;
+}
+
+
+QString SyncClient::pairWithCode(const QString &host, quint16 port,
+                                 const QString &serverId, const QString &code,
+                                 QString *errorCode)
+{
+    const auto fail=[&](const QString &error) -> QString {
+        if(errorCode!=nullptr)
+            *errorCode=error;
+
+        return QString();
+    };
+
+    if(config==nullptr || serverId.isEmpty())
+        return fail(QStringLiteral("pair-bad-request"));
+
+    const QString normalized=SyncPairCrypto::normalizeCode(code);
+
+    if(!SyncPairCrypto::isValidCode(normalized))
+        return fail(QStringLiteral("pair-code-invalid"));
+
+    QByteArray clientPriv;
+    QByteArray clientPub;
+
+    if(!SyncPairCrypto::generateX25519(clientPriv, clientPub))
+        return fail(QStringLiteral("pair-crypto"));
+
+    const QByteArray clientNonce=SyncPairCrypto::randomBytes(16);
+
+    const QJsonObject request=SyncPairing::buildBegin(
+        config->get_syncDeviceId(), config->get_syncDeviceName(),
+        serverId, normalized, clientPub, clientNonce);
+
+    if(request.contains(QStringLiteral("error")))
+        return fail(request.value(QStringLiteral("error")).toString());
+
+    bool ok=false;
+    const QJsonObject answer=postJson(host, port,
+                                      QStringLiteral("/pair-begin"),
+                                      request, ok);
+
+    if(!ok)
+        return fail(QStringLiteral("network"));
+
+    QString error;
+    const QString secret=SyncPairing::finishBegin(
+        config->get_syncDeviceId(), serverId, normalized,
+        clientPriv, clientPub, clientNonce, answer, &error);
+
+    if(secret.isEmpty())
+        return fail(error.isEmpty() ? QStringLiteral("pair-bad-response")
+                                    : error);
+
+    if(errorCode!=nullptr)
+        errorCode->clear();
+
+    return secret;
 }
 
 

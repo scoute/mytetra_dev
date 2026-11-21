@@ -7,6 +7,7 @@
 
 #include "SyncIdentity.h"
 #include "SyncSidecar.h"
+#include "SyncPairCrypto.h"
 #include "models/appConfig/AppConfig.h"
 
 
@@ -28,12 +29,7 @@ QString SyncIdentity::fingerprint(const QString &deviceId)
 
 QString SyncIdentity::generatePairingSecret(void)
 {
-    QByteArray bytes;
-    bytes.reserve(32);
-    for(int i=0; i<32; ++i)
-        bytes.append(static_cast<char>(QRandomGenerator::global()->generate() & 0xFF));
-
-    return QString::fromLatin1(bytes.toHex());
+    return SyncPairCrypto::randomSecretHex();
 }
 
 
@@ -105,6 +101,19 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     if(derived.isEmpty())
         return false;
 
+    return adoptPairingSecret(config, peerId, derived);
+}
+
+
+bool SyncIdentity::adoptPairingSecret(AppConfig *config, const QString &peerId,
+                                      const QString &secret)
+{
+    if(config==nullptr || peerId.isEmpty() || secret.isEmpty())
+        return false;
+
+    if(peerId==config->get_syncDeviceId())
+        return false;
+
     // Кольцо: новая пара добавляется, старые не трогаем (у человека
     // 4-5 устройств: ПК, ноут, телефоны, планшет). Первая в жизни пара
     // дополнительно кладется в легаси-секрет для совместимости.
@@ -116,10 +125,10 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     const bool firstEver=ringBefore.isEmpty();
     const bool isNewPair=firstEver || !ringBefore.contains(peerId);
 
-    config->set_syncDeviceSecret(peerId, derived);
+    config->set_syncDeviceSecret(peerId, secret);
 
     if(firstEver)
-        config->set_syncPairingSecret(derived);
+        config->set_syncPairingSecret(secret);
 
     if(config->get_syncPairedDeviceId().isEmpty())
         config->set_syncPairedDeviceId(peerId);
@@ -143,6 +152,78 @@ bool SyncIdentity::adoptPairing(AppConfig *config, const QString &peerId,
     config->clear_syncDeviceOffer(peerId);
     config->clear_syncDeviceMutual(peerId);
     return true;
+}
+
+
+QStringList SyncIdentity::candidateSecrets(const AppConfig *config,
+                                           const QString &peerId)
+{
+    QStringList out;
+
+    if(config==nullptr || peerId.isEmpty())
+        return out;
+
+    const QString current=secretForPeer(config, peerId);
+
+    if(!current.isEmpty())
+        out << current;
+
+    const QString pending=config->get_syncDevicePendingSecret(peerId);
+
+    if(!pending.isEmpty() && !out.contains(pending))
+        out << pending;
+
+    return out;
+}
+
+
+bool SyncIdentity::promotePendingSecret(AppConfig *config,
+                                        const QString &peerId)
+{
+    if(config==nullptr || peerId.isEmpty())
+        return false;
+
+    const QString pending=config->get_syncDevicePendingSecret(peerId);
+
+    if(pending.isEmpty())
+        return false;
+
+    if(!adoptPairingSecret(config, peerId, pending))
+        return false;
+
+    config->clear_syncDevicePendingSecret(peerId);
+    return true;
+}
+
+
+QString SyncIdentity::pairFingerprint(const QString &secretHex,
+                                      const QString &deviceIdA,
+                                      const QString &deviceIdB)
+{
+    if(secretHex.isEmpty() || deviceIdA.isEmpty() || deviceIdB.isEmpty())
+        return QString();
+
+    const QByteArray secret=QByteArray::fromHex(secretHex.toLatin1());
+
+    if(secret.size()!=32)
+        return QString();
+
+    const QString first=(deviceIdA<deviceIdB) ? deviceIdA : deviceIdB;
+    const QString second=(deviceIdA<deviceIdB) ? deviceIdB : deviceIdA;
+
+    const QByteArray data=QByteArrayLiteral("mytetra-pair-fingerprint-v2")
+        +secret+first.toLatin1()+second.toLatin1();
+
+    const QString hex=QString::fromLatin1(
+        QCryptographicHash::hash(data, QCryptographicHash::Sha256)
+            .toHex()).toUpper();
+
+    QStringList groups;
+
+    for(int i=0; i<hex.size(); i+=4)
+        groups << hex.mid(i, 4);
+
+    return groups.join(QStringLiteral(" "));
 }
 
 

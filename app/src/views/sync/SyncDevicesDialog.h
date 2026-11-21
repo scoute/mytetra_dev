@@ -43,10 +43,10 @@ private slots:
 
 private:
 
-    // PIN для входа в чужую сеть (пусто = отмена).
-    // Честно предупреждает что локальная пара будет пересоздана
-    QString askJoinPin(const QString &peerName,
-                       const QString &peerGroup=QString());
+    // Подтверждение входа в чужую сеть. Честно предупреждает, что
+    // локальная пара/группа будут забыты, дальше нужен код сервера
+    bool confirmJoin(const QString &peerName,
+                     const QString &peerGroup=QString());
 
     // Свое состояние пары в том же окне (без отдельных команд)
     void refreshSelf(void);

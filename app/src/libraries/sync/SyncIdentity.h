@@ -2,6 +2,7 @@
 #define SYNCIDENTITY_H
 
 #include <QString>
+#include <QStringList>
 
 class AppConfig;
 
@@ -46,6 +47,29 @@ public:
     // 4-5 устройств), первой паре соответствует легаси-секрет
     static bool adoptPairing(AppConfig *config, const QString &peerId,
                              const QString &pin);
+
+    // Новый путь (sync/2): долговременный секрет уже случайный (выдан
+    // сервером после спаривания по одноразовому коду). Сохранить его
+    // с той же семантикой кольца/эпохи, что adoptPairing
+    static bool adoptPairingSecret(AppConfig *config, const QString &peerId,
+                                   const QString &secret);
+
+    // Кандидаты для проверки proof: текущий секрет, затем pending
+    // (выданный по коду, но ещё не подтверждённый первым hello).
+    // Без дублей; пусто — пары нет
+    static QStringList candidateSecrets(const AppConfig *config,
+                                        const QString &peerId);
+
+    // Первый успешный hello с pending-секретом: повысить его до текущего
+    // и забыть старый. false — pending нет
+    static bool promotePendingSecret(AppConfig *config, const QString &peerId);
+
+    // Короткий фингерпринт ПАРЫ от общего секрета, а не от публичного id.
+    // Им можно сверить устройства глазами уже после спаривания: подделать
+    // его, не зная секрета, нельзя
+    static QString pairFingerprint(const QString &secretHex,
+                                   const QString &deviceIdA,
+                                   const QString &deviceIdB);
 
     // Секрет для конкретного пира из кольца: сначала запись устройства,
     // затем легаси-пара при совпадении id. Пусто — пары с ним нет

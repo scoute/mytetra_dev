@@ -27,6 +27,14 @@ public:
     SyncHelloResult hello(const QString &host, quint16 port,
                          bool pairRequest=false);
 
+    // Спаривание по одноразовому коду (sync/2). serverId — id сервера
+    // из pre-hello; code — 16 base32-символа с экрана сервера.
+    // Возвращает долговременный секрет (hex) или пусто; errorCode —
+    // машинный код (pair-code-invalid, pair-code-expired, ...)
+    QString pairWithCode(const QString &host, quint16 port,
+                         const QString &serverId, const QString &code,
+                         QString *errorCode=nullptr);
+
     // Забрать чужой манифест. Пустой (без веток/заметок) при ошибке сети —
     // вызывающий проверяет отдельно через lastError()
     SyncManifest fetchManifest(const QString &host, quint16 port);

@@ -4,3 +4,6 @@ sync_tombstones_test
 sync_diff_test
 sync_counts_test
 sync_scope_test
+sync_pair_crypto_test
+monocypher_test.o
+sync_pairing_test

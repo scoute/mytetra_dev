@@ -42,6 +42,7 @@
 #include "libraries/WindowSwitcher.h"
 #include "views/actionLog/ActionLogScreen.h"
 #include "views/sync/SyncDevicesDialog.h"
+#include "views/sync/SyncPairDialogs.h"
 #include "views/sync/SyncProgressWindow.h"
 #include "views/sync/SyncPreviewDialog.h"
 #include "views/databasesManagement/DatabasesManagementScreen.h"
@@ -53,6 +54,9 @@
 #include "libraries/sync/SyncSession.h"
 #include "libraries/sync/SyncClient.h"
 #include "libraries/sync/SyncIdentity.h"
+#include "libraries/sync/SyncPairFlow.h"
+#include "libraries/sync/SyncPairing.h"
+#include "libraries/sync/SyncPairCrypto.h"
 #include "libraries/sync/SyncHandshake.h"
 #include "libraries/sync/SyncSidecar.h"
 #include "libraries/sync/SyncNoteIo.h"
@@ -114,8 +118,8 @@ MainWindow::MainWindow() : QMainWindow()
     setupShortcuts();
 
     setupIconActions();
-    refreshSyncStatusUi();
     createTrayIcon();
+    refreshSyncStatusUi();
     setIcon();
     if(QSystemTrayIcon::isSystemTrayAvailable())
         trayIcon->show();
@@ -1913,6 +1917,9 @@ void MainWindow::stopSyncServer(void)
 {
     if(syncHub!=nullptr)
         syncHub->stop();
+
+    // Коды спаривания живут в памяти сервера: остановка их гасит
+    SyncPairing::clearAll();
 }
 
 
@@ -1990,33 +1997,36 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                  << (hello.ok ? QStringLiteral("ok")
                               : QStringLiteral("failed: ")+hello.errorCode);
 
-    // Починка пары (та же логика что в SyncSession::run: headless-путь
-    // дублирует ее до сессии ради GUI-диалога выше). PIN предъявлен —
-    // перевыводим secret поверх старого и повторяем hello
-    if(!hello.ok && hello.errorCode==QStringLiteral("auth-failed")
-       && !pin.isEmpty() && !hello.remoteDeviceId.isEmpty()
-       && hello.remoteDeviceId!=mytetraConfig.get_syncDeviceId())
-    {
-        if(SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId,
-                                      pin))
-            hello=client.hello(host, port);
-    }
+    // Пара: рабочий секрет уже есть либо input — одноразовый код
+    // (16 base32) / легаси-PIN. Общий путь с SyncSession
+    const bool codeMode=SyncPairCrypto::isValidCode(
+        SyncPairCrypto::normalizeCode(pin));
 
-    if(!hello.ok)
+    // Код генерируется на сервере по pairRequest. GUI-пути уже сделали
+    // этот запрос до диалога; headless --sync-to с кодом — нет
+    if(codeMode && !hello.remoteDeviceId.isEmpty()
+       && SyncIdentity::secretForPeer(&mytetraConfig,
+                                      hello.remoteDeviceId).isEmpty())
+        client.hello(host, port, true);
+
+    const SyncPairFlow::Result pair=SyncPairFlow::ensurePairing(
+        &mytetraConfig, client, host, port, hello, pin);
+
+    if(!pair.ok)
     {
-        QString fail=tr("Handshake failed: %1").arg(hello.errorText);
+        QString fail=tr("Handshake failed: %1").arg(pair.error);
 
         if(errorCode!=nullptr)
-            *errorCode=hello.errorCode;
+            *errorCode=pair.errorCode;
 
         // Подсказки для живых разборок: чьи версии, какой перекос часов,
         // слушает ли другая сторона (Sync now требует слушателя на том конце)
-        if(hello.errorCode==QStringLiteral("version-mismatch"))
+        if(pair.errorCode==QStringLiteral("version-mismatch"))
             fail+=tr(" (theirs: ask peer for --sync-status)");
-        else if(hello.errorCode==QStringLiteral("clock-skew"))
+        else if(pair.errorCode==QStringLiteral("clock-skew"))
             fail+=tr(" (skew %1 ms — compare `date +%%s` on both sides)")
                 .arg(hello.skewMs);
-        else if(hello.errorCode==QStringLiteral("network"))
+        else if(pair.errorCode==QStringLiteral("network"))
             fail+=tr(" (is sync server running on the other side? "
                       "Sync now needs a listener there: Sync menu checkbox "
                       "or --sync-server. For the reverse direction press "
@@ -2025,23 +2035,8 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         return fail;
     }
 
-    // Сервер что-то простил: сходимся к тому же secret по нашему PIN
-    if(!hello.warning.isEmpty() && !pin.isEmpty())
-        SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId, pin);
-
-    // Спаривание: секрета под ЭТОТ пир нет, PIN дан — выводим и храним
-    // (аддитивно: остальные пары кольца не трогаем). Фингерпринт здесь
-    // не сверяется (GUI-путь с проверкой — окно Sync devices)
-    if(SyncIdentity::secretForPeer(&mytetraConfig, hello.remoteDeviceId)
-       .isEmpty())
-    {
-        if(pin.isEmpty())
-            return tr("Not paired: enter pairing PIN first.");
-
-        if(!SyncIdentity::adoptPairing(&mytetraConfig, hello.remoteDeviceId,
-                                       pin))
-            return tr("Empty PIN is not allowed.");
-    }
+    if(pair.pairedNow && !hello.warning.isEmpty())
+        qDebug() << "SyncPair: server warning:" << hello.warning;
 
     // Пир ответил — запоминаем для окна Sync devices (с IP для Sync now)
     if(hello.ok && !hello.remoteDeviceId.isEmpty()
@@ -2085,9 +2080,22 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         if(errorCode!=nullptr)
             *errorCode=QStringLiteral("pair-established");
 
-        // Запрос в пару уходит отдельным hello с proof: сервер запишет
-        // входящий запрос для кнопки Accept и ответит pairPending.
-        // Со стоящим PIN-флагом сервер спарится сам (headless-согласие)
+        const QString peerName=hello.remoteDeviceName.isEmpty()
+            ? hello.remoteDeviceId : hello.remoteDeviceName;
+
+        // Код sync/2: секрет уже подтверждён вторым hello (pending
+        // повышен на сервере). Никакого Accept не нужно — только
+        // следующий запуск за данными (гейт пары)
+        if(codeMode)
+        {
+            qDebug() << "SyncPair: paired by code with" << peerName
+                     << ", next run will transfer data";
+            return tr("Paired with %1 by the one-time code. "
+                      "Run sync again to transfer data.")
+                .arg(peerName);
+        }
+
+        // Легаси-PIN: запрос в пару отдельным hello для Accept на сервере
         qDebug() << "SyncPair: sending pair request to"
                  << host << port
                  << "as" << mytetraConfig.get_syncDeviceName()
@@ -2101,9 +2109,6 @@ QString MainWindow::runSyncToHeadless(const QString &host,
                      << "pairPending=" << offer.pairPending
                      << (offer.warning.isEmpty() ? QString()
                                                : "warning="+offer.warning);
-
-        const QString peerName=hello.remoteDeviceName.isEmpty()
-            ? hello.remoteDeviceId : hello.remoteDeviceName;
 
         if(offer.ok && offer.paired)
         {
@@ -2393,32 +2398,19 @@ void MainWindow::onSyncPairing(void)
         return;
     }
 
-    const QString text=
-        tr("Pair with device?\n\nName: %1\nFingerprint:\n%2\n\n"
-           "Enter the SAME pairing PIN as on that device. "
-           "Empty = cancel.")
-        .arg(unknownName.isEmpty() ? unknownId : unknownName,
-             SyncIdentity::fingerprint(unknownId));
+    // Сервер: показать одноразовый код для входящего устройства.
+    // PIN на сервере больше не вводится — клиент вводит код у себя
+    bool rejected=false;
+    SyncPairDialogs::showCode(this, unknownId,
+                              unknownName.isEmpty() ? unknownId : unknownName,
+                              QDateTime::currentMSecsSinceEpoch(),
+                              &rejected);
 
-    bool ok=false;
-    const QString pin=QInputDialog::getText(this,
-                                            tr("Sync pairing"),
-                                            text,
-                                            QLineEdit::Password,
-                                            QString(),
-                                            &ok);
-
-    if(!ok || pin.isEmpty())
-        return;
-
-    if(!SyncIdentity::adoptPairing(&mytetraConfig, unknownId, pin))
-        return;
-
-    mytetraConfig.touch_syncDevice(unknownId, unknownName);
-    SyncHandshake::clearUnknown();
-
-    showSyncReport(this, tr("Sync pairing"),
-                   tr("Paired. Next sync will be authenticated."), false);
+    if(rejected)
+    {
+        mytetraConfig.clear_syncDeviceOffer(unknownId);
+        mytetraConfig.clear_syncDevicePendingSecret(unknownId);
+    }
 }
 
 
@@ -2659,51 +2651,35 @@ void MainWindow::onSyncPairRequest(const QString &deviceId, const QString &devic
             return;
 
         syncPairPopupActive=true;
-        const QString shownName=deviceName.isEmpty() ? deviceId : deviceName;
+        QString shownName=deviceName.isEmpty() ? deviceId : deviceName;
 
-        QMessageBox box(this);
-        box.setWindowTitle(tr("Sync pairing"));
-        box.setIcon(QMessageBox::Question);
-        box.setText(tr("Device %1 wants to pair with this computer.\n\n"
-                       "Fingerprint:\n%2\n\n"
-                       "Accept the pair request?")
-                    .arg(shownName, SyncIdentity::fingerprint(deviceId)));
-
-        QPushButton *acceptButton=box.addButton(tr("Accept"),
-                                                QMessageBox::AcceptRole);
-        box.addButton(tr("Reject"),
-                      QMessageBox::RejectRole);
-        QPushButton *devicesButton=box.addButton(tr("Open devices..."),
-                                                 QMessageBox::ActionRole);
-        box.setDefaultButton(acceptButton);
-        box.exec();
-
-        if(box.clickedButton()==acceptButton)
-        {
-            bool ok=false;
-            const QString pin=QInputDialog::getText(
-                this, tr("Sync pairing"),
-                tr("Enter the SAME pairing PIN as on that device. Empty = cancel."),
-                QLineEdit::Password, QString(), &ok);
-
-            if(ok && !pin.isEmpty()
-               && SyncIdentity::adoptPairing(&mytetraConfig, deviceId, pin))
+        // IP помогает отличить «то самое» устройство в списке
+        for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+            if(info.id==deviceId && !info.lastIp.isEmpty())
             {
-                SyncHandshake::noteMutual(&mytetraConfig, deviceId,
-                                          "operator Accept (popup)");
-                statusBar->showMessage(tr("Paired with %1").arg(shownName), 5000);
+                shownName+=QStringLiteral(" (%1)").arg(info.lastIp);
+                break;
             }
-        }
-        else if(box.clickedButton()==devicesButton)
+
+        // Код показываем на сервере; клиент вводит его у себя.
+        // Код живёт 5 минут и одноразовый — PIN на сервере больше не вводим
+        bool rejected=false;
+        SyncPairDialogs::showCode(this, deviceId, shownName,
+                                  QDateTime::currentMSecsSinceEpoch(),
+                                  &rejected);
+
+        if(rejected)
         {
-            onSyncDevices();
+            mytetraConfig.clear_syncDeviceOffer(deviceId);
+            mytetraConfig.clear_syncDevicePendingSecret(deviceId);
+            statusBar->showMessage(tr("Pair request from %1 rejected")
+                                   .arg(shownName), 5000);
         }
         else
         {
-            // Отказать: запрос снимается; повторный pairRequest создаст новый
-            mytetraConfig.clear_syncDeviceOffer(deviceId);
-            statusBar->showMessage(tr("Pair request from %1 rejected")
-                                   .arg(shownName), 5000);
+            statusBar->showMessage(
+                tr("Code shown for %1; enter it on that device")
+                    .arg(shownName), 8000);
         }
 
         syncPairPopupActive=false;

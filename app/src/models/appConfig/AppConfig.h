@@ -74,6 +74,14 @@ public:
     QString get_syncDeviceSecret(const QString &id) const;
     void set_syncDeviceSecret(const QString &id, const QString &secret);
     void clear_syncDeviceSecret(const QString &id);
+
+    // Кандидат в долговременный секрет, выданный при спаривании по коду,
+    // но ещё не подтверждённый первым hello с этим секретом. Сервер
+    // принимает и текущий, и pending; при первом успешном proof pending
+    // повышается до текущего (см. SyncIdentity::promotePendingSecret)
+    QString get_syncDevicePendingSecret(const QString &id) const;
+    void set_syncDevicePendingSecret(const QString &id, const QString &secret);
+    void clear_syncDevicePendingSecret(const QString &id);
     // Все секреты кольца: id -> secret (легаси-пара включена)
     QMap<QString, QString> get_syncSecretsRing(void) const;
     void clear_syncSecretsRing(void);

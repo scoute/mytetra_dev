@@ -304,7 +304,7 @@ private:
     QAction *actionFocusNoteTable;
     QAction *actionFocusEditor;
 
-    QSystemTrayIcon *trayIcon;
+    QSystemTrayIcon *trayIcon=nullptr;
     QMenu           *trayIconMenu;
 
     QSplitter *vSplitter;

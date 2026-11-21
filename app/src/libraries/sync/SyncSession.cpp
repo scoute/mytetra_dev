@@ -5,6 +5,8 @@
 #include "SyncScope.h"
 #include "SyncCounts.h"
 #include "SyncIdentity.h"
+#include "SyncPairFlow.h"
+#include "SyncPairCrypto.h"
 #include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/appConfig/AppConfig.h"
@@ -122,7 +124,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     // Снапшот пары на входе: данные разрешены только если пара
     // существовала ДО сессии (гейт 089). Сессия, создавшая/починившая
-    // пару по PIN, — "попытка установить pair": останавливаемся
+    // пару по коду/PIN, — "попытка установить pair": останавливаемся
     // до манифестов, данные пойдут следующим запуском
     QMap<QString, QString> ringBefore=config->get_syncSecretsRing();
     const QString groupBefore=config->get_syncGroupId();
@@ -132,66 +134,42 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     SyncHelloResult hello=client.hello(host, port);
 
-    // Починка пары: секрет есть, но proof чужой (сервер сбросили или PIN
-    // раньше был другой). Раз PIN предъявлен — перевыводим secret поверх
-    // старого и повторяем hello. Сервер с тем же PIN сойдется к тому же
-    // secret (деривация симметрична), с чужим PIN — снова откажет внятно.
-    // Без PIN: строгий отказ уходит как есть, чинится через --sync-forget
-    if(!hello.ok && hello.errorCode==QStringLiteral("auth-failed")
-       && !pairingPin.isEmpty()
+    // Код генерируется на сервере по pairRequest; GUI-пути уже сделали
+    // этот запрос до диалога, но сессию могут позвать и напрямую
+    if(SyncPairCrypto::isValidCode(
+           SyncPairCrypto::normalizeCode(pairingPin))
        && !hello.remoteDeviceId.isEmpty()
-       && hello.remoteDeviceId!=config->get_syncDeviceId())
+       && SyncIdentity::secretForPeer(config,
+                                      hello.remoteDeviceId).isEmpty())
+        client.hello(host, port, true);
+
+    // Пара: либо уже есть рабочий секрет, либо input — одноразовый код
+    // sync/2 (или легаси-PIN для headless). Общий путь с GUI
+    const SyncPairFlow::Result pair=SyncPairFlow::ensurePairing(
+        config, client, host, port, hello, pairingPin);
+
+    if(!pair.ok)
     {
-        if(SyncIdentity::adoptPairing(config, hello.remoteDeviceId,
-                                      pairingPin))
-        {
-            addLog(QStringLiteral("secret mismatch, re-paired via PIN, retry"));
-            hello=client.hello(host, port);
-        }
+        report.error=pair.error;
+        report.errorCode=pair.errorCode;
+        addLog(QStringLiteral("pairing failed: %1").arg(report.error));
+        return report;
     }
 
-    if(!hello.ok)
+    if(pair.pairedNow)
     {
-        report.error=hello.errorText.isEmpty() ? hello.errorCode
-                                              : hello.errorText;
-        report.errorCode=hello.errorCode;
-        addLog(QStringLiteral("hello failed: %1").arg(report.error));
-        return report;
+        if(!hello.warning.isEmpty())
+            addLog(QStringLiteral("server warning: %1").arg(hello.warning));
+
+        addLog(QStringLiteral("paired, secret stored"));
     }
 
     addLog(QStringLiteral("hello ok, skew %1 ms").arg(hello.skewMs));
 
-    // Сервер что-то простил (re-pair): сходимся к тому же secret по нашему
-    // PIN, иначе в следующий раз чиниться будет снова. Без PIN — просто
-    // показываем предупреждение, секрет не трогаем
-    if(!hello.warning.isEmpty())
-    {
-        addLog(QStringLiteral("server warning: %1").arg(hello.warning));
-
-        if(!pairingPin.isEmpty())
-            SyncIdentity::adoptPairing(config, hello.remoteDeviceId,
-                                       pairingPin);
-    }
-
-    // Спаривание: секрета нет, PIN задан — выводим тот же secret что сервер.
-    // GUI-вариант с проверкой фингерпринта — отдельно, до вызова run
-    if(config->get_syncPairingSecret().isEmpty() && !pairingPin.isEmpty()
-       && !hello.remoteDeviceId.isEmpty())
-    {
-        if(!SyncIdentity::adoptPairing(config, hello.remoteDeviceId,
-                                       pairingPin))
-        {
-            report.error=QStringLiteral("empty PIN is not allowed");
-            return report;
-        }
-
-        addLog(QStringLiteral("paired via PIN"));
-    }
-
     // Группа: пустая у нас — принимаем удаленную или детерминированную общую.
-    // Чужая непустая при общем PIN — переезд между сетями: хаб источник
+    // Чужая непустая при коде/PIN — переезд между сетями: хаб источник
     // правды, берем его группу с логом (сервер нас уже принял с warning).
-    // Без PIN чужую группу не трогаем: строгий отказ уходит как есть
+    // Без кода/PIN чужую группу не трогаем: строгий отказ уходит как есть
     if(!hello.remoteGroupId.isEmpty()
        && hello.remoteGroupId!=config->get_syncGroupId())
     {
@@ -211,10 +189,10 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     }
 
     // Гейт пары: без секрета данных нет вообще (только что сброшенная
-    // или девственная пара без PIN — дальше не идем, нужен pair по PIN)
+    // или девственная пара без кода — дальше не идем, нужен pair)
     if(!config->hasSyncPairing())
     {
-        report.error=QStringLiteral("not paired: pair with the same PIN first");
+        report.error=QStringLiteral("not paired: pair with the one-time code first");
         report.errorCode=QStringLiteral("not-paired");
         addLog(QStringLiteral("refusing data: not paired"));
         return report;

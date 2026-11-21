@@ -104,7 +104,10 @@ void printHelp()
     printf("./mytetra --control --addNoteDialog - Show dialod for create new note in current tree item\n");
     printf("./mytetra --control --openTreeItem <treeItemId> - Jump to tree item with <treeItemId>\n");
     printf("./mytetra --sync-server [--sync-port N] [--sync-pair PIN] - Start sync hub without GUI interaction\n");
-    printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN] - Run one sync session and exit\n");
+    printf("        GUI pairing uses a one-time code shown on the server; headless prints it as\n");
+    printf("        'SYNC PAIR CODE <id> <code>' when a client sends pairRequest. --sync-pair PIN\n");
+    printf("        remains the legacy headless PIN; a 16-char code is also accepted.\n");
+    printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN|CODE] - Run one sync session and exit\n");
     printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
     printf("./mytetra --sync-scan [--sync-port N] - Find sync hubs in the local network and exit\n");
     printf("./mytetra --sync-allow-delete - Confirm deletions for headless --sync-to\n");

@@ -69,3 +69,5 @@ flamegraph.svg
 # opencode session snapshots small: they pack the worktree)
 build/
 mytetraHighLoad_data/
+
+!/app/tests/Makefile

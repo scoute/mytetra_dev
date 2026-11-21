@@ -18,6 +18,9 @@
 #include <QTimer>
 
 #include "SyncDevicesDialog.h"
+#include "SyncPairDialogs.h"
+#include "libraries/sync/SyncPairCrypto.h"
+#include "libraries/sync/SyncPairing.h"
 #include "SyncPreviewDialog.h"
 #include "SyncProgressWindow.h"
 #include "views/mainWindow/MainWindow.h"
@@ -71,7 +74,7 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     emptyHint->setText(tr("Чтобы синхронизироваться с другим устройством:\n"
                           "1) включите «Sync server» на нём (меню Sync);\n"
                           "2) нажмите Scan — хаб появится в списке;\n"
-                          "3) выберите его и нажмите Sync selected (PIN введёте на обоих)."));
+                          "3) выберите его и нажмите Sync selected (код покажет компьютер)."));
     emptyHint->setVisible(false);
     layout->addWidget(emptyHint);
 
@@ -302,7 +305,7 @@ void SyncDevicesDialog::refreshList(void)
         // yes — взаимно спарены (обмен с проверкой был), Sync можно.
         // pair-request — мы отправили запрос (секрет выведен, но взаимности
         //   еще нет): ждем Accept на той стороне. Повтор Pair перепроверяет.
-        // wait-accept — входящий запрос: нужен Accept с вводом общего PIN.
+        // wait-accept — входящий запрос: Accept покажет одноразовый код.
         // no — чужая строка или пары нет. unknown — секрет есть, но с кем —
         //   неизвестно (наследие без привязки). error — пара сломана
         //   (спарен сам с собой).
@@ -342,16 +345,18 @@ void SyncDevicesDialog::refreshList(void)
             else
             {
                 pairedText=tr("pair-request");
-                pairedTip=tr("Pair request sent, waiting for Accept "
-                             "on that device. Press Pair again to re-check "
-                             "whether it was accepted.");
+                pairedTip=tr("Pair request sent. If that device shows a "
+                             "one-time code, enter it there (legacy PIN path: "
+                             "press Accept on that side). Press Pair again "
+                             "to re-check whether it was accepted.");
             }
         }
         else if(info.pairOffer)
         {
             pairedText=tr("wait-accept");
             pairedTip=tr("Incoming pair request from this device. "
-                         "Press Accept and enter the same PIN to pair.");
+                         "Press Accept to show the one-time code, "
+                         "then enter it on that device.");
         }
         else
         {
@@ -672,9 +677,9 @@ void SyncDevicesDialog::onSyncNow(void)
             return true;
         });
 
-    // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —
+    // В сессию код не передаем: секрет уже есть. Починка при расхождении —
     // через Pair заново (осознанно, с показом фингерпринта выше).
-    // Исключение — чужая сеть: там PIN нужен чтобы взять группу хаба
+    // Исключение — чужая сеть: там нужен новый код, чтобы войти
     MainWindow *mw=qobject_cast<MainWindow *>(parentWidget());
 
     // Перед сессией сохраняем редактируемую запись (нативный путь не
@@ -683,7 +688,7 @@ void SyncDevicesDialog::onSyncNow(void)
     if(mw!=nullptr)
         mw->saveTextarea();
 
-    const auto runSession=[&](const QString &pin) -> SyncReport {
+    const auto runSession=[&](const QString &code) -> SyncReport {
         // Фоновый таймер проверяет этот флаг: без него processEvents
         // прогресса мог запустить второй синк поверх первого.
         struct BusyGuard {
@@ -697,7 +702,7 @@ void SyncDevicesDialog::onSyncNow(void)
         SyncProgressWindow progress(session, this);
         const SyncReport r=session.run(target.lastIp,
                                        static_cast<quint16>(target.port),
-                                       pin);
+                                       code);
 
         // Последний результат для таблицы устройств
         config->set_syncDeviceLastResult(
@@ -718,45 +723,61 @@ void SyncDevicesDialog::onSyncNow(void)
     if(!report.ok
        && report.errorCode==QStringLiteral("foreign-network"))
     {
-        if(QMessageBox::question(
-               this, tr("Sync"),
-               tr("This device is in another sync network.\n"
-                  "Switch to its network? The secret will be re-derived "
-                  "from PIN."))!=QMessageBox::Yes)
+        const QString peerName=target.name.isEmpty() ? target.id : target.name;
+
+        if(!confirmJoin(peerName))
         {
             refreshList();
             return;
         }
 
-        bool ok=false;
-        const QString pin=QInputDialog::getText(this,
-                                                tr("Sync pairing"),
-                                                tr("Enter the pairing PIN (the same PIN "
-                                                   "must be entered on %1). Empty = cancel.")
-                                                .arg(target.name.isEmpty() ? target.id
-                                                                           : target.name),
-                                                QLineEdit::Password,
-                                                QString(),
-                                                &ok);
+        // Вход в чужую сеть: забываем локальную группу/пары, просим
+        // новый одноразовый код и спариваемся заново
+        joinFresh();
 
-        if(!ok || pin.isEmpty())
+        SyncClient probe(config);
+        probe.setTimeoutMs(6000);
+        SyncHelloResult hello=probe.hello(target.lastIp,
+            static_cast<quint16>(target.port), true);
+
+        if(!hello.ok && !hello.pairCodeRequired
+           && hello.errorCode!=QStringLiteral("auth-failed"))
+        {
+            QMessageBox::warning(
+                this, tr("Sync"),
+                tr("Handshake failed: %1")
+                .arg(hello.errorText.isEmpty() ? hello.errorCode
+                                               : hello.errorText));
+            refreshList();
+            return;
+        }
+
+        if(!hello.pair2)
+        {
+            QMessageBox::warning(
+                this, tr("Sync pairing"),
+                tr("The other device does not support one-time code pairing. "
+                   "Update MyTetra on it and try again."));
+            refreshList();
+            return;
+        }
+
+        if(hello.pairCodeLocked)
+        {
+            SyncPairDialogs::showLocked(this, hello.pairCodeUntil);
+            refreshList();
+            return;
+        }
+
+        const QString code=SyncPairDialogs::askCode(this, peerName);
+
+        if(code.isEmpty())
         {
             refreshList();
             return;
         }
 
-        // Тот же путь что headless с PIN: сервер 078+ примет с warning,
-        // клиент возьмет группу хаба внутри сессии.
-        // Старый сервер так и откажет — тогда входим свежо (сброс пары):
-        // пустая группа втягивается сервером любой версии
-        report=runSession(pin);
-
-        if(!report.ok
-           && report.errorCode==QStringLiteral("foreign-network"))
-        {
-            joinFresh();
-            report=runSession(pin);
-        }
+        report=runSession(code);
     }
 
     if(!report.ok)
@@ -877,100 +898,160 @@ void SyncDevicesDialog::onManualSync(void)
     if(win==nullptr)
         return;
 
-    QString pin;
+    QString code;
     QString errorCode;
     bool syncOk=false;
     QString result;
 
-    // Секрета нет: сначала пробуем hello чтобы показать фингерпринт
-    // сервера до ввода PIN. Секрет есть: идем сразу в runSyncToHeadless,
-    // проба при чужой сети упала бы раньше вопроса о переходе
-    if(config->get_syncPairingSecret().isEmpty())
+    // Секрета нет: сначала просим сервер показать код (pairRequest).
+    // Секрет есть: идем сразу в runSyncToHeadless, проба при чужой
+    // сети упала бы раньше вопроса о переходе
+    if(!config->hasSyncPairing())
     {
-        // Проба: кто отвечает, чтобы показать фингерпринт до ввода PIN
         SyncClient probe(config);
-        SyncHelloResult hello=probe.hello(host, port);
+        probe.setTimeoutMs(6000);
+        SyncHelloResult hello=probe.hello(host, port, true);
 
-        if(!hello.ok)
+        // Чужая сеть: чтобы войти, забываем локальную группу/пары.
+        // Пустая группа втягивается сервером любой версии
+        if(hello.errorCode==QStringLiteral("foreign-network"))
         {
-            // Чужая сеть уже на пробе: сразу предлагаем войти свежо
-            // (сервер любой версии: пустая группа втягивается всегда)
-            if(hello.errorCode==QStringLiteral("foreign-network")
-               && !hello.remoteGroupId.isEmpty())
+            if(!confirmJoin(hello.remoteDeviceName.isEmpty()
+                                ? hello.remoteDeviceId
+                                : hello.remoteDeviceName,
+                            hello.remoteGroupId))
             {
-                pin=askJoinPin(hello.remoteDeviceName.isEmpty()
-                               ? hello.remoteDeviceId : hello.remoteDeviceName,
-                               hello.remoteGroupId);
-
-                if(pin.isEmpty())
-                {
-                    refreshList();
-                    return;
-                }
-
-                joinFresh();
-                result=win->runSyncToHeadless(host, pin, port, syncOk);
-                showManualResult(result, syncOk);
+                refreshList();
                 return;
             }
 
+            joinFresh();
+            hello=probe.hello(host, port, true);
+        }
+
+        if(hello.errorCode==QStringLiteral("network"))
+        {
             QMessageBox::warning(this, tr("Sync"),
                                  tr("Handshake failed: %1").arg(hello.errorText));
             refreshList();
             return;
         }
 
-        bool ok=false;
-        pin=QInputDialog::getText(
-            this,
-            tr("Sync pairing"),
-            tr("Unknown sync server.\n\nName: %1\nFingerprint:\n%2\n\n"
-               "Enter the pairing PIN (the same PIN must be entered "
-               "on the server). Empty = cancel.")
-            .arg(hello.remoteDeviceName.isEmpty()
-                 ? hello.remoteDeviceId : hello.remoteDeviceName,
-                 SyncIdentity::fingerprint(hello.remoteDeviceId)),
-            QLineEdit::Password,
-            QString(),
-            &ok);
-
-        if(!ok || pin.isEmpty())
+        if(!hello.ok && !hello.pairCodeRequired
+           && hello.errorCode!=QStringLiteral("auth-failed"))
+        {
+            QMessageBox::warning(
+                this, tr("Sync"),
+                tr("Handshake failed: %1")
+                .arg(hello.errorText.isEmpty() ? hello.errorCode
+                                               : hello.errorText));
+            refreshList();
             return;
+        }
+
+        if(!hello.pair2)
+        {
+            QMessageBox::warning(
+                this, tr("Sync pairing"),
+                tr("The other device does not support one-time code pairing. "
+                   "Update MyTetra on it and try again."));
+            refreshList();
+            return;
+        }
+
+        if(hello.pairCodeLocked)
+        {
+            SyncPairDialogs::showLocked(this, hello.pairCodeUntil);
+            refreshList();
+            return;
+        }
+
+        code=SyncPairDialogs::askCode(
+            this,
+            hello.remoteDeviceName.isEmpty() ? hello.remoteDeviceId
+                                             : hello.remoteDeviceName);
+
+        if(code.isEmpty())
+        {
+            refreshList();
+            return;
+        }
     }
 
-    result=win->runSyncToHeadless(host, pin, port,
+    result=win->runSyncToHeadless(host, code, port,
                                   syncOk, &errorCode);
 
-    // Чужая сеть: сервер 078+ с PIN сам примет с warning.
-    // Старый либо отказ без PIN — предлагаем войти свежо (сброс локальной
-    // пары + PIN): пустая группа втягивается сервером любой версии
+    // Чужая сеть: сервер с парами не пускает чужую группу. Спрашиваем,
+    // забываем локальную сеть, просим новый код и входим
     if(!syncOk && errorCode==QStringLiteral("foreign-network"))
     {
-        pin=askJoinPin(QString());
-
-        if(pin.isEmpty())
+        if(!confirmJoin(QString(), QString()))
         {
             refreshList();
             return;
         }
 
         joinFresh();
-        result=win->runSyncToHeadless(host, pin, port, syncOk);
+
+        SyncClient probe(config);
+        probe.setTimeoutMs(6000);
+        SyncHelloResult hello=probe.hello(host, port, true);
+
+        if(!hello.ok && !hello.pairCodeRequired
+           && hello.errorCode!=QStringLiteral("auth-failed"))
+        {
+            QMessageBox::warning(
+                this, tr("Sync"),
+                tr("Handshake failed: %1")
+                .arg(hello.errorText.isEmpty() ? hello.errorCode
+                                               : hello.errorText));
+            refreshList();
+            return;
+        }
+
+        if(!hello.pair2)
+        {
+            QMessageBox::warning(
+                this, tr("Sync pairing"),
+                tr("The other device does not support one-time code pairing. "
+                   "Update MyTetra on it and try again."));
+            refreshList();
+            return;
+        }
+
+        if(hello.pairCodeLocked)
+        {
+            SyncPairDialogs::showLocked(this, hello.pairCodeUntil);
+            refreshList();
+            return;
+        }
+
+        code=SyncPairDialogs::askCode(
+            this,
+            hello.remoteDeviceName.isEmpty() ? hello.remoteDeviceId
+                                             : hello.remoteDeviceName);
+
+        if(code.isEmpty())
+        {
+            refreshList();
+            return;
+        }
+
+        result=win->runSyncToHeadless(host, code, port, syncOk);
     }
 
     showManualResult(result, syncOk);
 }
 
 
-// PIN для входа в чужую сеть. Честно предупреждаем: локальная пара
-// (секрет, группа, привязка) будет пересоздана, старая сеть забыта.
-// Пусто — отмена пользователем
-QString SyncDevicesDialog::askJoinPin(const QString &peerName,
-                                      const QString &peerGroup)
+// Подтверждение входа в чужую сеть. Локальная пара (секрет, группа,
+// привязка) будет забыта; дальше нужен одноразовый код сервера
+bool SyncDevicesDialog::confirmJoin(const QString &peerName,
+                                    const QString &peerGroup)
 {
     QString text=tr("This server is in another sync network.\n"
                     "Join it? Local pairing (secret, group) will be "
-                    "re-created from PIN, current network forgotten.");
+                    "forgotten, then you will need its one-time pairing code.");
 
     if(!peerName.isEmpty())
         text+=tr("\n\nServer: %1").arg(peerName);
@@ -978,23 +1059,7 @@ QString SyncDevicesDialog::askJoinPin(const QString &peerName,
     if(!peerGroup.isEmpty())
         text+=tr("\nIts group: %1").arg(peerGroup);
 
-    if(QMessageBox::question(this, tr("Sync"), text)!=QMessageBox::Yes)
-        return QString();
-
-    bool ok=false;
-    const QString pin=QInputDialog::getText(this,
-                                            tr("Sync pairing"),
-                                            tr("Enter the pairing PIN (the same PIN "
-                                               "must be entered on the server). "
-                                               "Empty = cancel."),
-                                            QLineEdit::Password,
-                                            QString(),
-                                            &ok);
-
-    if(!ok || pin.isEmpty())
-        return QString();
-
-    return pin;
+    return QMessageBox::question(this, tr("Sync"), text)==QMessageBox::Yes;
 }
 
 
@@ -1093,32 +1158,75 @@ void SyncDevicesDialog::onPair(void)
         return;
     }
 
-    bool ok=false;
-    const QString pin=QInputDialog::getText(this,
-                                            tr("Sync pairing"),
-                                            tr("Pair with %1?\nFingerprint above. "
-                                               "Enter the SAME pairing PIN as on that device. "
-                                               "Empty = cancel.")
-                                            .arg(target.name.isEmpty() ? id : target.name),
-                                            QLineEdit::Password,
-                                            QString(),
-                                            &ok);
-
-    if(!ok || pin.isEmpty())
-        return;
-
     MainWindow *win=qobject_cast<MainWindow *>(parentWidget());
 
     if(win==nullptr)
         return;
 
-    // Общий путь: pre-hello, adopt предложения, group, offering-hello
-    // с pairRequest, стоп на pair-established (шаг 1 accept-flow).
-    // Сервер запишет входящий запрос для своего Accept
+    const quint16 port=static_cast<quint16>(target.port);
+    const QString peerName=target.name.isEmpty() ? id : target.name;
+
+    // 1. Запрос в пару: сервер сгенерирует код и покажет его оператору
+    SyncClient probe(config);
+    probe.setTimeoutMs(6000);
+    SyncHelloResult hello=probe.hello(target.lastIp, port, true);
+
+    // Чужая сеть: чтобы войти, сначала забываем локальную группу/пары.
+    // Пустая группа втягивается сервером любой версии
+    if(hello.errorCode==QStringLiteral("foreign-network"))
+    {
+        if(!confirmJoin(peerName, hello.remoteGroupId))
+            return;
+
+        joinFresh();
+        hello=probe.hello(target.lastIp, port, true);
+    }
+
+    if(hello.errorCode==QStringLiteral("network"))
+    {
+        QMessageBox::warning(this, tr("Sync pairing"),
+                             tr("Cannot reach %1: %2")
+                             .arg(peerName, hello.errorText));
+        return;
+    }
+
+    // Прочие отказы (версии/часы/self) — показываем как есть
+    if(!hello.ok && !hello.pairCodeRequired
+       && hello.errorCode!=QStringLiteral("auth-failed"))
+    {
+        QMessageBox::warning(
+            this, tr("Sync pairing"),
+            tr("Handshake failed: %1")
+            .arg(hello.errorText.isEmpty() ? hello.errorCode
+                                           : hello.errorText));
+        return;
+    }
+
+    // Сервер без sync/2: PIN-путь намеренно не предлагаем — обновите его
+    if(!hello.pair2)
+    {
+        QMessageBox::warning(
+            this, tr("Sync pairing"),
+            tr("The other device does not support one-time code pairing. "
+               "Update MyTetra on it and try again."));
+        return;
+    }
+
+    if(hello.pairCodeLocked)
+    {
+        SyncPairDialogs::showLocked(this, hello.pairCodeUntil);
+        return;
+    }
+
+    // 2. Код показан на сервере — вводим его здесь
+    const QString code=SyncPairDialogs::askCode(this, peerName);
+
+    if(code.isEmpty())
+        return;
+
     bool syncOk=false;
     QString errorCode;
-    const QString result=win->runSyncToHeadless(target.lastIp, pin,
-                                               static_cast<quint16>(target.port),
+    const QString result=win->runSyncToHeadless(target.lastIp, code, port,
                                                syncOk, &errorCode);
     showManualResult(result, syncOk);
 }
@@ -1186,36 +1294,24 @@ void SyncDevicesDialog::onAccept(void)
     qDebug() << "SyncPair: Accept pressed for"
              << (target.name.isEmpty() ? target.id : target.name);
 
-    bool ok=false;
-    const QString pin=QInputDialog::getText(this,
-                                            tr("Sync pairing"),
-                                            tr("Accept pair request from %1?\n"
-                                               "Fingerprint above. "
-                                               "Enter the SAME pairing PIN as on that device. "
-                                               "Empty = cancel.")
-                                            .arg(target.name.isEmpty() ? id : target.name),
-                                            QLineEdit::Password,
-                                            QString(),
-                                            &ok);
+    // Сервер: показать одноразовый код. Клиент вводит его у себя,
+    // после чего первый hello с новым секретом подтвердит пару
+    bool rejected=false;
+    QString shownName=target.name.isEmpty() ? id : target.name;
 
-    if(!ok || pin.isEmpty())
-        return;
+    if(!target.lastIp.isEmpty())
+        shownName+=QStringLiteral(" (%1)").arg(target.lastIp);
 
-    // adopt гасит запрос (stash 087); взаимность — решением оператора:
-    // PIN введен здесь осознанно, дальше докажет первый обмен
-    if(!SyncIdentity::adoptPairing(config, id, pin))
+    SyncPairDialogs::showCode(this, id, shownName,
+                              QDateTime::currentMSecsSinceEpoch(),
+                              &rejected);
+
+    if(rejected)
     {
-        QMessageBox::warning(this, tr("Sync"),
-                             tr("Empty PIN is not allowed."));
-        return;
+        config->clear_syncDeviceOffer(id);
+        config->clear_syncDevicePendingSecret(id);
     }
 
-    SyncHandshake::noteMutual(config, id, "operator Accept");
-    qDebug() << "SyncPair: accepted" << id << ", sync unlocked both sides";
-
-    QMessageBox::information(this, tr("Sync pairing"),
-                             tr("Paired with %1. Sync unlocked.")
-                             .arg(target.name.isEmpty() ? id : target.name));
     refreshList();
 }
 
@@ -1243,6 +1339,7 @@ void SyncDevicesDialog::onUnpair(void)
         return;
 
     config->clear_syncDeviceSecret(id);
+    SyncPairing::clearCode(id);
 
     if(wasPrimary)
     {
@@ -1279,6 +1376,7 @@ void SyncDevicesDialog::onRemove(void)
     if(config->get_syncSecretsRing().contains(id))
     {
         config->clear_syncDeviceSecret(id);
+        SyncPairing::clearCode(id);
 
         if(config->get_syncPairedDeviceId()==id)
         {
@@ -1319,6 +1417,7 @@ void SyncDevicesDialog::onResetAll(void)
     // Кольцо целиком: легаси-пара, секреты устройств, группа, список
     config->clear_syncSecretsRing();
     config->set_syncGroupId(QString());
+    SyncPairing::clearAll();
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
         config->remove_syncDevice(info.id);

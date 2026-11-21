@@ -1351,7 +1351,7 @@ void TreeScreen::syncBranch(void)
   if(!mytetraConfig.hasSyncPairing())
   {
     QMessageBox::information(this, tr("Sync"),
-                             tr("Not paired: pair with the same PIN first."));
+                             tr("Not paired: pair with the one-time code first."));
     return;
   }
 

@@ -89,6 +89,7 @@ CODECFORSRC  = utf8
 
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/src
+INCLUDEPATH += $${_PRO_FILE_PWD_}/../thirdParty/monocypher
 
 # Прекомпилированный заголовок: Qt-модули и STL компилируются один раз.
 # Состав в src/stable.h, только стабильное (см. комментарий в файле).
@@ -302,6 +303,10 @@ HEADERS+=\
     src/libraries/ClipboardBranch.h \
     src/libraries/GlobalParameters.h \
     src/libraries/sync/SyncIdentity.h \
+    src/libraries/sync/SyncPairCrypto.h \
+    src/libraries/sync/SyncPairing.h \
+    src/libraries/sync/SyncPairFlow.h \
+    $${_PRO_FILE_PWD_}/../thirdParty/monocypher/monocypher.h \
     src/libraries/sync/SyncServer.h \
     src/libraries/sync/SyncHandshake.h \
     src/libraries/sync/SyncSidecar.h \
@@ -322,6 +327,7 @@ HEADERS+=\
     src/libraries/sync/SyncSession.h \
     src/libraries/sync/SyncClient.h \
     src/views/sync/SyncDevicesDialog.h \
+    src/views/sync/SyncPairDialogs.h \
     src/models/dataBaseConfig/DataBaseConfig.h \
     src/views/enterPassword/EnterPassword.h \
     src/views/consoleEmulator/ConsoleEmulator.h \
@@ -496,6 +502,10 @@ SOURCES+=\
     src/libraries/ClipboardBranch.cpp \
     src/libraries/GlobalParameters.cpp \
     src/libraries/sync/SyncIdentity.cpp \
+    src/libraries/sync/SyncPairCrypto.cpp \
+    src/libraries/sync/SyncPairing.cpp \
+    src/libraries/sync/SyncPairFlow.cpp \
+    $${_PRO_FILE_PWD_}/../thirdParty/monocypher/monocypher.c \
     src/libraries/sync/SyncServer.cpp \
     src/libraries/sync/SyncHandshake.cpp \
     src/libraries/sync/SyncSidecar.cpp \
@@ -514,6 +524,7 @@ SOURCES+=\
     src/libraries/sync/SyncScope.cpp \
     src/libraries/sync/SyncSession.cpp \
     src/views/sync/SyncDevicesDialog.cpp \
+    src/views/sync/SyncPairDialogs.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \
     src/views/enterPassword/EnterPassword.cpp \
     src/views/consoleEmulator/ConsoleEmulator.cpp \

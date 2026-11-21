@@ -287,6 +287,46 @@ void AppConfig::clear_syncDeviceSecret(const QString &id)
 
     m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
     m_conf->remove(QStringLiteral("secret"));
+    m_conf->remove(QStringLiteral("pendingSecret"));
+    m_conf->endGroup();
+    m_conf->sync();
+}
+
+
+// Секрет, выданный при спаривании по коду, но ещё не подтверждённый
+// первым hello. Отдельный ключ, чтобы случайно не выдать его за текущий
+QString AppConfig::get_syncDevicePendingSecret(const QString &id) const
+{
+    if(id.isEmpty())
+        return QString();
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    const QString secret=m_conf->value(QStringLiteral("pendingSecret")).toString();
+    m_conf->endGroup();
+    return secret;
+}
+
+
+void AppConfig::set_syncDevicePendingSecret(const QString &id,
+                                            const QString &secret)
+{
+    if(id.isEmpty() || secret.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->setValue(QStringLiteral("pendingSecret"), secret);
+    m_conf->endGroup();
+    m_conf->sync();
+}
+
+
+void AppConfig::clear_syncDevicePendingSecret(const QString &id)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->remove(QStringLiteral("pendingSecret"));
     m_conf->endGroup();
     m_conf->sync();
 }

@@ -18,8 +18,15 @@ struct SyncHelloResult
     qint64 skewMs=0;     // оценка clientTime-serverTime (есть и при отказе по часам)
     qint64 serverTime=0;
     bool paired=false;   // у сервера есть секрет под эту пару
+    bool matchedPending=false; // proof сошёлся с pending-секретом
+                            // (выдан по коду, ещё не повышен)
+    bool pair2=false;    // сервер умеет спаривание по одноразовому коду
     bool pairPending=false; // сервер записал наш запрос (wait-accept),
                             // пары пока нет — ждем Accept на той стороне
+    bool pairCodeRequired=false; // показан код на той стороне, введите его
+    bool pairCodeLocked=false;   // слишком много попыток, код не выдан
+    qint64 pairCodeExpiresAt=0;  // когда истечёт код (0 — неизвестно)
+    qint64 pairCodeUntil=0;      // при блокировке — до когда ждать
     QString remoteDeviceId;   // кто ответил (для фингерпринта и secret'а)
     QString remoteDeviceName;
     QString remoteGroupId;

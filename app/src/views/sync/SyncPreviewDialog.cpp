@@ -202,10 +202,28 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     QElapsedTimer pt; pt.start();
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
+    // Предохранитель от «N правок × RTT»: полный pre-flight тянет
+    // «ихнюю» версию каждой Edit-записи. Проверяем первые N; остальные
+    // пользователь смотрит через diff и решает вручную (дефолт Confirm —
+    // безопасный). Полный обход на сотнях правок вешал окно на минуты.
+    const int kDangerLimit=50;
+    int editCount=0;
+
+    for(const Item &item : m_preview.items)
+        if(item.category==Category::Edit && !item.isBranch)
+            ++editCount;
+
+    int dangerChecked=0;
+
     for(const Item &item : m_preview.items)
     {
         if(item.category!=Category::Edit || item.isBranch)
             continue;
+
+        if(dangerChecked>=kDangerLimit)
+            break;
+
+        ++dangerChecked;
 
         const QString own=m_ownText ? m_ownText(item) : QString();
         const QString other=m_otherText ? m_otherText(item) : QString();
@@ -223,11 +241,25 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
         }
     }
 
+    QLabel *dangerLimitNote=nullptr;
+
+    if(editCount>dangerChecked)
+    {
+        dangerLimitNote=new QLabel(tr("Проверены первые %1 изменений из %2. "
+            "Для остальных откройте diff и решите вручную.")
+            .arg(dangerChecked).arg(editCount), this);
+        dangerLimitNote->setWordWrap(true);
+        dangerLimitNote->setStyleSheet(QStringLiteral("color: #FFB74D;"));
+    }
+
     QApplication::restoreOverrideCursor();
     qDebug() << "SyncPreviewDialog: danger precompute" << m_preview.items.size()
              << "items in" << pt.elapsed() << "ms";
 
     QVBoxLayout *layout=new QVBoxLayout(this);
+
+    if(dangerLimitNote!=nullptr)
+        layout->addWidget(dangerLimitNote);
 
     // --- заголовок: бублик, статус + meld-пredупреждение ---
     // Красная плашка про удаления живёт на уровне бублика (второй строкой
@@ -705,6 +737,16 @@ void SyncPreviewDialog::buildActionsMenu(void)
         }
     }
 
+    menu->addSeparator();
+    QAction *saveDefaults=menu->addAction(tr("Сохранить как умолчание"));
+    saveDefaults->setToolTip(tr("Применять эти действия по категориям "
+                                "в будущих синках (можно сбросить здесь же)"));
+    saveDefaults->setEnabled(bool(m_saveDefaults));
+    connect(saveDefaults, &QAction::triggered, this, [this]() {
+        if(m_saveDefaults)
+            m_saveDefaults(m_decisions);
+    });
+
     m_actionsButton->setMenu(menu);
 }
 
@@ -712,6 +754,15 @@ void SyncPreviewDialog::buildActionsMenu(void)
 void SyncPreviewDialog::setPartialSyncer(PartialSyncer syncer)
 {
     m_partialSync=syncer;
+}
+
+
+void SyncPreviewDialog::setSaveDefaults(SaveDefaults save)
+{
+    m_saveDefaults=save;
+
+    // Меню уже построено в конструкторе — перестроим, чтобы пункт ожил
+    buildActionsMenu();
 }
 
 

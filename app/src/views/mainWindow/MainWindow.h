@@ -87,6 +87,9 @@ public:
     // не проходит через runToolbarNativeSync и раньше не выставляло флаг)
     void setNativeSyncBusy(bool busy);
 
+    // Строка «последний синк» в меню Sync + подсказка в трее
+    void refreshSyncStatusUi(void);
+
     void saveAllState(void);
 
     void reload(void);
@@ -254,6 +257,7 @@ private:
     // Отдельное меню Sync (не Tools): подсистема синхронизации
     QAction *actionSyncMenuSyncServer=nullptr;
     QAction *actionSyncMenuSyncNow=nullptr;
+    QAction *actionSyncMenuLastRun=nullptr;
     QAction *actionSyncMenuSyncPairing=nullptr;
     QAction *actionSyncMenuSyncDevices=nullptr;
 

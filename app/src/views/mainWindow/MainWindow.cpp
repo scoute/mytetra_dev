@@ -19,6 +19,7 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QClipboard>
 #include <QApplication>
 
@@ -113,6 +114,7 @@ MainWindow::MainWindow() : QMainWindow()
     setupShortcuts();
 
     setupIconActions();
+    refreshSyncStatusUi();
     createTrayIcon();
     setIcon();
     if(QSystemTrayIcon::isSystemTrayAvailable())
@@ -234,6 +236,8 @@ void MainWindow::setupSignals(void)
     connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
     connect(&mytetraConfig, &AppConfig::syncPairRequestArrived,
             this, &MainWindow::onSyncPairRequest);
+    connect(&mytetraConfig, &AppConfig::syncDevicesChanged,
+            this, &MainWindow::refreshSyncStatusUi);
 
     // Вызов окна настроек
     if(mytetraConfig.getInterfaceMode()=="desktop")
@@ -761,6 +765,10 @@ void MainWindow::initSyncMenu(void)
     // в иконке тулбара таблицы записей).
     actionSyncMenuSyncNow = new QAction(tr("&Synchronize now..."), this);
     menu->addAction(actionSyncMenuSyncNow);
+
+    actionSyncMenuLastRun = new QAction(tr("No sync yet"), this);
+    actionSyncMenuLastRun->setEnabled(false);
+    menu->addAction(actionSyncMenuLastRun);
     menu->addSeparator();
 
     actionSyncMenuSyncServer = new QAction(tr("Sync server"), this);
@@ -1477,11 +1485,21 @@ void MainWindow::backgroundSyncTick(void)
 
     m_nativeSyncBusy=false;
 
-    // Итог — только в лог, модалок из фона нет
+    // Итог — только в лог/строку статуса, модалок из фона нет.
+    // Ошибку видно в строке состояния и в меню Sync (last sync).
     if(ok)
         qDebug() << "Background sync ok:" << result.left(200);
     else
+    {
         qDebug() << "Background sync failed:" << result.left(500);
+
+        if(statusBar!=nullptr)
+            statusBar->showMessage(
+                tr("Background sync failed: %1").arg(result.left(140)),
+                10000);
+    }
+
+    refreshSyncStatusUi();
 }
 
 
@@ -1490,6 +1508,45 @@ void MainWindow::backgroundSyncTick(void)
 void MainWindow::setNativeSyncBusy(bool busy)
 {
     m_nativeSyncBusy=busy;
+}
+
+
+void MainWindow::refreshSyncStatusUi(void)
+{
+    if(actionSyncMenuLastRun==nullptr)
+        return;
+
+    qint64 newest=0;
+    AppConfig::SyncDeviceInfo latest;
+
+    for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+        if(info.lastSync>newest)
+        {
+            newest=info.lastSync;
+            latest=info;
+        }
+
+    if(newest<=0)
+    {
+        actionSyncMenuLastRun->setText(tr("No sync yet"));
+        actionSyncMenuLastRun->setToolTip(QString());
+        if(trayIcon!=nullptr)
+            trayIcon->setToolTip(tr("MyTetra"));
+        return;
+    }
+
+    const QString name=latest.name.isEmpty() ? latest.id.left(8) : latest.name;
+    const QString text=tr("Last sync: %1 · %2 · %3")
+        .arg(QDateTime::fromMSecsSinceEpoch(newest)
+                 .toString(QStringLiteral("dd.MM hh:mm")),
+             name,
+             latest.lastSyncOk ? tr("ok") : tr("error"));
+
+    actionSyncMenuLastRun->setText(text);
+    actionSyncMenuLastRun->setToolTip(latest.lastSyncSummary);
+
+    if(trayIcon!=nullptr)
+        trayIcon->setToolTip(tr("MyTetra — %1").arg(text));
 }
 
 
@@ -2411,10 +2468,20 @@ bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
             note.value(QStringLiteral("text")).toString().toLatin1()));
     };
 
-    SyncPreviewDialog dialog(preview,
-                               SyncPreview::Decisions::defaults(),
-                               ownText, otherText, this);
+    // Сохранённые «действия по умолчанию» (если есть) — стартовыми;
+    // пункт «Сохранить как умолчание» в меню действий их обновляет.
+    SyncPreview::Decisions initial=SyncPreview::Decisions::defaults();
+    const QString saved=mytetraConfig.get_syncPreviewActions();
+
+    if(!saved.isEmpty())
+        initial=SyncPreview::defaultsFromString(saved);
+
+    SyncPreviewDialog dialog(preview, initial, ownText, otherText, this);
     dialog.setPartialSyncer(partial);
+    dialog.setSaveDefaults([this](const SyncPreview::Decisions &d) {
+        mytetraConfig.set_syncPreviewActions(
+            SyncPreview::serializeDefaults(d));
+    });
 
     if(dialog.exec()!=QDialog::Accepted)
         return false;

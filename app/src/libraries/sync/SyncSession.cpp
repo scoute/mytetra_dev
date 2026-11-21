@@ -2,6 +2,7 @@
 #include "SyncClient.h"
 #include "SyncNoteIo.h"
 #include "SyncSidecar.h"
+#include "SyncScope.h"
 #include "SyncCounts.h"
 #include "SyncIdentity.h"
 #include "SyncDebug.h"
@@ -55,114 +56,6 @@ void SyncSession::setProgressCallback(ProgressCallback callback)
 
 
 
-
-
-SyncPlan SyncSession::slicePlanForScope(const SyncPlan &plan,
-                                           const SyncManifest &local,
-                                           const SyncManifest &remote,
-                                           const QString &scopeRootId)
-{    SYNC_TRACE();
-
-    // UNION локального и удалённого: созданное с любой стороны входит
-    QMap<QString, QString> branchParent; // id -> parentId
-    QMap<QString, QStringList> children; // parentId -> id веток
-
-    auto addBranches=[&](const QMap<QString, SyncBranchInfo> &branches) {
-        for(auto it=branches.constBegin(); it!=branches.constEnd(); ++it)
-        {
-            if(!branchParent.contains(it.key()))
-                branchParent.insert(it.key(), it.value().parentId);
-
-            if(!children[it.value().parentId].contains(it.key()))
-                children[it.value().parentId] << it.key();
-        }
-    };
-
-    addBranches(local.branches);
-    addBranches(remote.branches);
-
-    // Ветка + все потомки вниз
-    QSet<QString> branchScope;
-    branchScope.insert(scopeRootId);
-    QStringList queue;
-    queue << scopeRootId;
-
-    while(!queue.isEmpty())
-    {
-        const QString cur=queue.takeFirst();
-
-        for(const QString &child : children.value(cur))
-        {
-            if(branchScope.contains(child))
-                continue;
-
-            branchScope.insert(child);
-            queue << child;
-        }
-    }
-
-    // Заметки по branchId: только корень scope и потомки.
-    // Заметки предков сюда не входят: предки добавляются ниже
-    // лишь для вставания скачиваемых веток, их содержимое не scope
-    QSet<QString> noteScope;
-
-    auto addNotes=[&](const QMap<QString, SyncNoteInfo> &notes) {
-        for(auto it=notes.constBegin(); it!=notes.constEnd(); ++it)
-            if(branchScope.contains(it.value().branchId))
-                noteScope.insert(it.key());
-    };
-
-    addNotes(local.notes);
-    addNotes(remote.notes);
-
-    // Недостающие предки цепочкой вверх (иначе скачиваемой ветке
-    // некуда вставать, no-branch). Direction не важен: parentId
-    // берётся из любого манифеста где ветка есть
-    QSet<QString> seen;
-    QString cur=scopeRootId;
-
-    while(!seen.contains(cur))
-    {
-        seen.insert(cur);
-
-        const QString pid=branchParent.value(cur);
-
-        if(pid.isEmpty() || pid==QStringLiteral("0"))
-            break;
-
-        branchScope.insert(pid);
-
-        if(!branchParent.contains(pid))
-            break;
-
-        cur=pid;
-    }
-
-    const QSet<QString> allScope=branchScope+noteScope;
-
-    auto keep=[&](const QStringList &list, const QSet<QString> &scope) {
-        QStringList out;
-
-        for(const QString &id : list)
-            if(scope.contains(id))
-                out << id;
-
-        return out;
-    };
-
-    SyncPlan sub;
-    sub.uploadNotes=keep(plan.uploadNotes, noteScope);
-    sub.downloadNotes=keep(plan.downloadNotes, noteScope);
-    sub.uploadBranches=keep(plan.uploadBranches, branchScope);
-    sub.downloadBranches=keep(plan.downloadBranches, branchScope);
-    // deleteLocal/pushTombs — id с любой стороны tombstone
-    // (заметка или ветка): режем объединённым множеством
-    sub.deleteLocal=keep(plan.deleteLocal, allScope);
-    sub.pushTombs=keep(plan.pushTombs, allScope);
-    sub.conflicts=keep(plan.conflicts, allScope);
-
-    return sub;
-}
 
 
 void SyncSession::skipItem(SyncReport &report, const QString &entry)
@@ -502,7 +395,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // экономия — превью/передача только по scope
     if(!scope.isEmpty())
     {
-        plan=slicePlanForScope(plan, local, remote, scope);
+        plan=SyncScope::slice(plan, local, remote, scope);
 
         addLog(QStringLiteral("scope %1 plan upNotes=%2 downNotes=%3 "
                                "upBranches=%4 downBranches=%5 "

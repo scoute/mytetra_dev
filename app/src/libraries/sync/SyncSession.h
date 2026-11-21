@@ -123,11 +123,6 @@ private:
     // созданное с любой стороны входит) + недостающие предки цепочки
     // вверх (иначе скачиваемой ветке некуда вставать, no-branch;
     // direction не важен — parentId берётся из любого манифеста где есть)
-    static SyncPlan slicePlanForScope(const SyncPlan &plan,
-                                      const SyncManifest &local,
-                                      const SyncManifest &remote,
-                                      const QString &scopeRootId);
-
     // Залить на хаб по плану. Возвращает false при первой ошибке сети
     bool pushByPlan(SyncClient &client, const QString &host, quint16 port,
                     const SyncPlan &plan, const SyncManifest &local,

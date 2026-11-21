@@ -32,6 +32,7 @@ private slots:
     void onSelectionChanged(void);
     void onSyncNow(void);
     void onManualSync(void);
+    void onConnectByAddress(void);
     void onScan(void);
     void onPair(void);
     void onRecheckPair(void);
@@ -75,6 +76,7 @@ private:
     QTableWidget *table=nullptr;
     QLabel *fingerprintLabel=nullptr;
     QLabel *selfLabel=nullptr;
+    QLabel *emptyHint=nullptr;
     QLineEdit *hostEdit=nullptr;
     QSpinBox *portSpin=nullptr;
     QPushButton *scanButton=nullptr;

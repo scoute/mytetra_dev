@@ -316,6 +316,7 @@ HEADERS+=\
     src/libraries/sync/SyncNoteIo.h \
     src/libraries/sync/SyncValidation.h \
     src/libraries/sync/SyncCounts.h \
+    src/libraries/sync/SyncScope.h \
     src/libraries/sync/SyncTombstones.h \
     src/libraries/sync/SyncHttp.h \
     src/libraries/sync/SyncSession.h \
@@ -510,6 +511,7 @@ SOURCES+=\
     src/libraries/sync/SyncNoteIo.cpp \
     src/libraries/sync/SyncHttp.cpp \
     src/libraries/sync/SyncCounts.cpp \
+    src/libraries/sync/SyncScope.cpp \
     src/libraries/sync/SyncSession.cpp \
     src/views/sync/SyncDevicesDialog.cpp \
     src/models/dataBaseConfig/DataBaseConfig.cpp \

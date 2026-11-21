@@ -146,6 +146,12 @@ public:
 
     void setPartialSyncer(PartialSyncer syncer);
 
+    // Сохранить текущие категорийные действия как умолчание
+    // (постоянная настройка, не только на сессию)
+    using SaveDefaults =
+        std::function<void(const SyncPreview::Decisions &)>;
+    void setSaveDefaults(SaveDefaults save);
+
     // Итоговые решения (после exec()==Accepted).
     // Уже синкнутое частичным «Применить» помечается Skip —
     // applyDecisions его вычеркнет из финального плана, наборы
@@ -271,6 +277,7 @@ private:
     TextFetcher m_ownText;
     TextFetcher m_otherText;
     PartialSyncer m_partialSync;
+    SaveDefaults m_saveDefaults;
 
     // Уже синкнутые частичным «Применить» (строк нет в дереве,
     // перестройка локальная, без запросов к серверу)

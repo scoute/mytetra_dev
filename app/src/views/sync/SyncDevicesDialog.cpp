@@ -1,4 +1,6 @@
 #include <QTableWidget>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QHeaderView>
 #include <QLabel>
 #include <QPushButton>
@@ -63,35 +65,45 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     table->setColumnHidden(5, true); // id держим в строке, не показываем
     layout->addWidget(table);
 
+    // Пустой список — не тупик: три шага первого знакомства
+    emptyHint=new QLabel(this);
+    emptyHint->setWordWrap(true);
+    emptyHint->setText(tr("Чтобы синхронизироваться с другим устройством:\n"
+                          "1) включите «Sync server» на нём (меню Sync);\n"
+                          "2) нажмите Scan — хаб появится в списке;\n"
+                          "3) выберите его и нажмите Sync selected (PIN введёте на обоих)."));
+    emptyHint->setVisible(false);
+    layout->addWidget(emptyHint);
+
     fingerprintLabel=new QLabel(this);
     fingerprintLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     fingerprintLabel->setWordWrap(true);
     layout->addWidget(fingerprintLabel);
 
-    // Ручной синк с произвольным хостом — здесь же, а не пунктом меню:
-    // весь синк в одном окне. Последний хост подставляется сам
-    QHBoxLayout *manual=new QHBoxLayout();
-    manual->addWidget(new QLabel(tr("Host:"), this));
+    // Адрес ведёт отдельный диалог «Подключиться по адресу…»: держать
+    // Host/Port в главном окне рядом с кнопкой Sync было двусмысленно
+    // (две почти одинаковые кнопки синка).
     hostEdit=new QLineEdit(this);
     hostEdit->setText(config->get_syncLastHost());
     hostEdit->setPlaceholderText(tr("192.168.1.2"));
-    manual->addWidget(hostEdit);
-    manual->addWidget(new QLabel(tr("Port:"), this));
+    hostEdit->setVisible(false);
+
     portSpin=new QSpinBox(this);
     portSpin->setRange(1, 65535);
     portSpin->setValue(47777);
-    manual->addWidget(portSpin);
-    QPushButton *manualSyncButton=new QPushButton(tr("Sync now"), this);
-    manual->addWidget(manualSyncButton);
+    portSpin->setVisible(false);
+
     scanButton=new QPushButton(tr("Scan"), this);
     scanButton->setToolTip(tr("Find sync hubs in the local network "
                               "and refresh their addresses"));
-    manual->addWidget(scanButton);
-    layout->addLayout(manual);
 
     QHBoxLayout *buttons=new QHBoxLayout();
-    syncButton=new QPushButton(tr("Sync"), this);
+    syncButton=new QPushButton(tr("Sync selected"), this);
     syncButton->setToolTip(tr("Sync with the selected device"));
+    QPushButton *manualSyncButton=new QPushButton(
+        tr("Connect by address..."), this);
+    manualSyncButton->setToolTip(tr("Connect to a hub by IP/port "
+                                    "(also sends the pair request)"));
     pairButton=new QPushButton(tr("Pair..."), this);
     acceptButton=new QPushButton(tr("Accept"), this);
     acceptButton->setToolTip(tr("Accept the incoming pair request "
@@ -108,6 +120,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     buttons->addWidget(acceptButton);
     buttons->addWidget(unpairButton);
     buttons->addWidget(removeButton);
+    buttons->addWidget(manualSyncButton);
+    buttons->addWidget(scanButton);
     buttons->addStretch();
     buttons->addWidget(resetButton);
     buttons->addWidget(closeButton);
@@ -128,7 +142,7 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     connect(resetButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onResetAll);
     connect(manualSyncButton, &QPushButton::clicked,
-            this, &SyncDevicesDialog::onManualSync);
+            this, &SyncDevicesDialog::onConnectByAddress);
     connect(scanButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onScan);
     connect(closeButton, &QPushButton::clicked,
@@ -254,6 +268,7 @@ void SyncDevicesDialog::refreshList(void)
     }
 
     table->setRowCount(devices.size());
+    emptyHint->setVisible(devices.isEmpty());
 
     for(int row=0; row<devices.size(); ++row)
     {
@@ -629,15 +644,24 @@ void SyncDevicesDialog::onSyncNow(void)
                     note.value(QStringLiteral("text")).toString().toLatin1()));
             };
 
-            SyncPreviewDialog dialog(preview,
-                SyncPreview::Decisions::defaults(),
-                ownText, otherText, this);
+            SyncPreview::Decisions initial=SyncPreview::Decisions::defaults();
+            const QString saved=config->get_syncPreviewActions();
+
+            if(!saved.isEmpty())
+                initial=SyncPreview::defaultsFromString(saved);
+
+            SyncPreviewDialog dialog(preview, initial, ownText, otherText, this);
 
             // Та же семантика «Применить», что и из тулбара: неразобранное
             // не применяется молча, а остаётся на следующий заход.
             dialog.setPartialSyncer(
                 [&session](const QMap<QString, SyncPreview::Action> &actions) -> bool {
                     return session.syncPartialNow(actions);
+                });
+            dialog.setSaveDefaults(
+                [this](const SyncPreview::Decisions &d) {
+                    config->set_syncPreviewActions(
+                        SyncPreview::serializeDefaults(d));
                 });
 
             if(dialog.exec()!=QDialog::Accepted)
@@ -791,6 +815,43 @@ void SyncDevicesDialog::onScan(void)
         ? tr("No devices found. Check that the sync server is running "
              "in the same network on port %1.").arg(port)
         : tr("Found %1 device(s) in the local network.").arg(found.size()));
+}
+
+
+// «Подключиться по адресу…»: адрес/порт в отдельном диалоге, дальше —
+// прежний ручной путь (hello, фингерпринт, PIN, runSyncToHeadless).
+void SyncDevicesDialog::onConnectByAddress(void)
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Connect by address"));
+
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+
+    QLineEdit *host=new QLineEdit(hostEdit->text(), &dialog);
+    host->setPlaceholderText(QStringLiteral("192.168.1.2"));
+    QSpinBox *port=new QSpinBox(&dialog);
+    port->setRange(1, 65535);
+    port->setValue(portSpin->value());
+
+    layout->addWidget(new QLabel(tr("Hub address (IP):"), &dialog));
+    layout->addWidget(host);
+    layout->addWidget(new QLabel(tr("Port:"), &dialog));
+    layout->addWidget(port);
+
+    QDialogButtonBox *box=new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    layout->addWidget(box);
+
+    connect(box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+    if(dialog.exec()!=QDialog::Accepted)
+        return;
+
+    hostEdit->setText(host->text().trimmed());
+    portSpin->setValue(port->value());
+
+    onManualSync();
 }
 
 
@@ -986,7 +1047,7 @@ void SyncDevicesDialog::onPair(void)
     {
         QMessageBox::warning(this, tr("Sync pairing"),
                              tr("Address unknown: cannot reach this device. "
-                                "Enter its IP below and use Sync now "
+                                "Use «Connect by address...» and enter its IP "
                                 "(it sends the pair request too)."));
         refreshList();
         return;

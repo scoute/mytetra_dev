@@ -314,6 +314,7 @@ HEADERS+=\
     src/libraries/sync/SyncHub.h \
     src/libraries/sync/SyncNoteIo.h \
     src/libraries/sync/SyncValidation.h \
+    src/libraries/sync/SyncTombstones.h \
     src/libraries/sync/SyncHttp.h \
     src/libraries/sync/SyncSession.h \
     src/libraries/sync/SyncClient.h \

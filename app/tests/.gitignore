@@ -1,2 +1,3 @@
 sync_validation_test
 sync_http_test
+sync_tombstones_test

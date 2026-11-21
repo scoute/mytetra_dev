@@ -10,6 +10,7 @@
 
 #include "SyncManifest.h"
 #include "SyncSidecar.h"
+#include "SyncTombstones.h"
 #include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
 #include "models/tree/TreeItem.h"
@@ -84,20 +85,7 @@ static bool coveredByTombs(const QString &id,
                             const QMap<QString, QString> &parents,
                             const QMap<QString, qint64> &tombs)
 {
-    QString cur=id;
-    QSet<QString> seen;
-
-    while(!cur.isEmpty() && !seen.contains(cur))
-    {
-        seen.insert(cur);
-
-        if(tombs.contains(cur))
-            return true;
-
-        cur=parents.value(cur);
-    }
-
-    return false;
+    return SyncTombstones::coveredByAncestor(id, parents, tombs);
 }
 
 

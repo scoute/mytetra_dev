@@ -575,13 +575,13 @@ void RecordTableData::editRecordFields(int pos,
 
 // Удаление записи с указанным индексом
 // todo: добавить удаление приаттаченных файлов и очистку таблицы приаттаченных файлов
-void RecordTableData::deleteRecord(int i)
+bool RecordTableData::deleteRecord(int i)
 {
     qDebug() << "Try delete record num " << i << " table count " << tableData.size();
 
     // Нельзя удалять с недопустимым индексом
     if(i<0 || i>=tableData.size())
-        return;
+        return false;
 
     // Имя директории хранения записи проверяется на пустоту.
     // Пустое имя приведет к тому, что под удаление попадет сама директория base
@@ -602,12 +602,20 @@ void RecordTableData::deleteRecord(int i)
         if(dirForDelete==baseDirName || !dirForDelete.startsWith(baseDirName+"/"))
         {
             qWarning() << "RecordTableData::deleteRecord() : the dir field points outside the base directory:" << recordDirName;
+            // Не удаляем запись, иначе потеряем файлы, которые не смогли убрать
+            return false;
         }
         else
         {
-            // Удаление директории и файлов внутри, с сохранением в резервной директории
+            // Удаление директории и файлов внутри, с сохранением в резервной директории.
+            // Ошибка переноса (занятый файл/права) — не exit: запись не удаляем,
+            // чтобы не оставить её без файлов на диске.
             qDebug() << "Remove dir " << dirForDelete;
-            DiskHelper::removeDirectoryToTrash( dirForDelete );
+            if(!DiskHelper::removeDirectoryToTrash(dirForDelete))
+            {
+                qWarning() << "RecordTableData::deleteRecord() : cannot move record files to trash, keep record" << getField("id", i);
+                return false;
+            }
         }
     }
 
@@ -629,14 +637,18 @@ void RecordTableData::deleteRecord(int i)
 
     // Удаление записи закончено
     // endRemoveRows();
+
+    return true;
 }
 
 
-void RecordTableData::deleteRecordById(QString id)
+bool RecordTableData::deleteRecordById(QString id)
 {
     for(unsigned int i=0; i<size(); i++)
         if(getField("id", i)==id)
-            deleteRecord(i); // Так как id уникальный, удаляться будет только одна запись
+            return deleteRecord(i); // Так как id уникальный, удаляться будет только одна запись
+
+    return false;
 }
 
 
@@ -657,12 +669,22 @@ bool RecordTableData::takeRecordForMove(int pos, Record &out)
 
 
 // Удаление всех элементов таблицы конечных записей
-void RecordTableData::deleteAllRecords(void)
+bool RecordTableData::deleteAllRecords(void)
 {
     // Удаление с конца: removeAt(last) — O(1), а removeAt(0) на 50k записей
     // даёт O(n^2) memmove таблицы. Порядок не важен — удаляется всё
+    bool allDeleted=true;
+
     while(size()>0)
-        deleteRecord(size()-1);
+    {
+        if(!deleteRecord(size()-1))
+        {
+            allDeleted=false;
+            break; // запись осталась: дальше двигаться нельзя, зациклимся
+        }
+    }
+
+    return allDeleted;
 }
 
 

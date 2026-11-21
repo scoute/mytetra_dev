@@ -35,15 +35,31 @@ static bool moveOrCopyFile(const QString &fileNameFrom, const QString &fileNameT
 }
 
 
-void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
+bool DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
 {
   QDir dirFrom(nameDirFrom);
+  QFileInfo dirInfo(nameDirFrom);
+
+  // Каталога уже нет — переносить нечего, это успех. Не каталог —
+  // вызывающий обязан узнать об ошибке, но процесс не убиваем.
+  if(!dirInfo.exists())
+    return true;
+  if(!dirInfo.isDir())
+  {
+    qWarning() << "DiskHelper::removeDirectoryToTrash: not a directory" << nameDirFrom;
+    return false;
+  }
+
   QStringList fileList=dirFrom.entryList();
 
   QString nameDirTo=mytetraConfig.get_trashdir();
 
   // Имена успешно перенесённых — учёт одним пакетом в конце
   QStringList movedFiles;
+
+  // Один неудачный файл не должен убивать процесс (criticalError=exit):
+  // сообщаем вызывающему, что папка не убрана целиком, и он решает сам.
+  bool allMoved=true;
 
   // Перебор всех файлов в удаляемой директории
   for(int i=0;i<fileList.size();i++)
@@ -72,7 +88,11 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
     if(moveOrCopyFile(fileNameFrom, fileNameTo)==true)
       movedFiles << fileNameToShort; // Оповещение что в корзину добавлен файл
     else
-      criticalError("Can not remove file\n"+fileNameFrom+"\nto directory\n"+nameDirTo+"\nwith new name\n"+fileNameTo);
+    {
+      allMoved=false;
+      qWarning() << "DiskHelper: cannot move file to trash"
+                 << fileNameFrom << "->" << fileNameTo;
+    }
   }
 
   if(!movedFiles.isEmpty())
@@ -90,9 +110,14 @@ void DiskHelper::removeDirectoryToTrash(QString nameDirFrom)
   // Если в rmdir() передать асолютный путь, то будет удалена директория по абсолютному пути
   qDebug() << "Try delete directory " << nameDirFrom;
   if(!QDir().rmdir(nameDirFrom))
+  {
     qDebug() << "Directory " << nameDirFrom << " NOT deleted";
+    allMoved=false;
+  }
   else
     qDebug() << "Directory " << nameDirFrom << " delete succesfull";
+
+  return allMoved;
 }
 
 
@@ -117,16 +142,12 @@ bool DiskHelper::removeFileToTrash(QString fileNameFrom, bool stopIfError)
   }
   else
   {
-      if (stopIfError)
-      {
-          criticalError("Can not remove file to trash directory"
-                        "\nOld file name: "+fileNameFrom+
-                        "\nNew file name: "+fileNameTo);
-      }
-      else
-      {
-          return false;
-      }
+      // criticalError = exit(1): один занятый/недоступный файл убивал
+      // весь процесс. Возвращаем ошибку — вызывающий решает.
+      qWarning() << "DiskHelper: cannot remove file to trash"
+                 << fileNameFrom << "->" << fileNameTo;
+      Q_UNUSED(stopIfError);
+      return false;
   }
 
   return true;
@@ -154,16 +175,10 @@ QString DiskHelper::copyFileToTrash(QString fileNameFrom, bool stopIfError)
   }
   else
   {
-      if (stopIfError)
-      {
-          criticalError("Can not copy file to trash directory"
-                        "\nSource file: "+fileNameFrom+
-                        "\nCopy file: "+fileNameTo);
-      }
-      else
-      {
-          return QString();
-      }
+      qWarning() << "DiskHelper: cannot copy file to trash"
+                 << fileNameFrom << "->" << fileNameTo;
+      Q_UNUSED(stopIfError);
+      return QString();
   }
 
   QFileInfo fileInfoTo(fileNameTo);

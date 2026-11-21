@@ -79,6 +79,10 @@ public:
 
     void saveTextarea(void);
 
+    // После нативного синка: обновить/закрыть откреплённые окна,
+    // которые держали старые Record (сессия уже сделала reload модели)
+    void finishNativeSyncUi(void);
+
     void saveAllState(void);
 
     void reload(void);
@@ -246,6 +250,10 @@ private:
 
     // Синхронизация: хаб живет пока включен сервер из меню Tools
     SyncHub *syncHub=nullptr;
+
+    // PIN, с которым создан текущий хаб: при повторном startSyncServer
+    // с другим PIN/портом его надо пересоздать, а не молча оставить старый
+    QString m_syncHubPin;
     static const quint16 syncDefaultPort;
 
     // Попап pair-запроса уже показан (не плодим окна поверх друг друга)

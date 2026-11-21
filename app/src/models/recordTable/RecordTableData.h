@@ -52,8 +52,9 @@ public:
     // Первичное заполнение таблицы конечных записей
     void init(TreeItem *item, QDomElement domModel);
 
-    // Удаление всех элементов таблицы конечных записей
-    void deleteAllRecords(void);
+    // Удаление всех элементов таблицы конечных записей (false — не все
+    // удалось: запись осталась, файлы не потеряны)
+    bool deleteAllRecords(void);
     
     // Количество записей в таблице данных
     unsigned int size(void) const;
@@ -72,8 +73,8 @@ public:
     void editRecordFields(int pos,
                           QMap<QString, QString> editFields);
 
-    void deleteRecord(int i);
-    void deleteRecordById(QString id);
+    bool deleteRecord(int i);
+    bool deleteRecordById(QString id);
 
     // Добавление записи с готовым id (синк/импорт): без генерации id,
     // без преобразований шифрования. Возвращает позицию. Представление

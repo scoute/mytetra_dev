@@ -1,5 +1,3 @@
-#include <QThread>
-
 #include "EditorShowTextDispatcher.h"
 #include "EditorShowText.h"
 #include "views/mainWindow/MainWindow.h"
@@ -15,26 +13,14 @@ extern AppConfig mytetraConfig;
 
 EditorShowTextDispatcher::EditorShowTextDispatcher(QObject *parent) : QObject(parent)
 {
-    mThread=new QThread();
-    this->moveToThread(mThread);
-
-    mThread->start();
+    // Живём в GUI-потоке: слоты закрытия окон трогают виджеты и модель,
+    // а раньше объект уезжал в QThread — кросс-поточная работа с QWidget
+    // и гонка на mWindowsList с прямыми вызовами из GUI.
 }
 
 
 EditorShowTextDispatcher::~EditorShowTextDispatcher()
 {
-    // Корректное закрытие и удаление треда
-    if(mThread!=nullptr)
-    {
-        mThread->quit();
-        if(mThread->wait(1000))
-        {
-            mThread->terminate();
-        }
-
-        delete mThread;
-    }
 }
 
 

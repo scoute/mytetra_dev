@@ -40,17 +40,36 @@ void SyncSidecar::init(const QString &xmlFileName)
     if(self.load(xmlFileName))
         return;
 
-    // Битый сайдкар — не молчим (раньше load() игнорировался, все touch*
-    // становились no-op и журнал терялся молча). В журнале живут tombstone'ы:
-    // без них удаления воскресают с пира. Файл убираем в карантин,
-    // состояние начинаем с пустого и пишем заново при первом сейве
+    // Не смогли прочитать файл — это НЕ порча: права/занятость/сбой ФС.
+    // Переименовывать нельзя, иначе живой журнал теряется из-за
+    // временной ошибки. Оставляем m_loaded=false (touch* станут no-op),
+    // файл не трогаем — следующая попытка/скин прочитает его снова.
     const QString path=sidecarPathForXml(xmlFileName);
+
+    if(!QFileInfo(path).isReadable())
+    {
+        qWarning() << "SyncSidecar: cannot read" << path
+                   << "- journal left untouched, sync disabled until readable";
+        return;
+    }
+
+    // Файл читается, но содержимое не наше (битый JSON/неизвестная
+    // версия): убираем в карантин (не удаляем — данные могут быть нужны
+    // более новой версии), начинаем с пустого состояния.
     const QString quarantine=path+QStringLiteral(".corrupt-")
         +QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMddHHmmss"));
 
     if(QFile::rename(path, quarantine))
-        qWarning() << "SyncSidecar: sidecar was corrupted, moved to"
+    {
+        qWarning() << "SyncSidecar: sidecar was corrupted/unsupported, moved to"
                    << quarantine;
+    }
+    else
+    {
+        qWarning() << "SyncSidecar: sidecar is corrupted and cannot be moved to"
+                   << quarantine << "- journal left in place";
+        return;
+    }
 
     qWarning() << "SyncSidecar: sync journal (incl. tombstones) is lost, "
                   "deleted items may come back from peers until re-deleted";
@@ -183,7 +202,13 @@ void SyncSidecar::dropEntry(const QString &id)
     if(g_instance==nullptr || !g_instance->isLoaded() || id.isEmpty())
         return;
 
+    // Запись уходит без своего tombstone'а: она покрыта tombstone'ом
+    // удалённой ветки. Если оставить её надгробие (его успел создать
+    // deleteRecord), оно уедет пиру как отдельное удаление — на 50k
+    // записей это десятки тысяч мусорных tombstone'ов и O(n^2) в
+    // подсчёте ущерба. Чистим заодно.
     g_instance->m_entries.remove(id);
+    g_instance->m_tombstones.remove(id);
     g_instance->save();
 }
 
@@ -364,7 +389,17 @@ bool SyncSidecar::save(void) const
         return false;
     }
 
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    const QByteArray payload=QJsonDocument(root).toJson(QJsonDocument::Compact);
+    const qint64 written=file.write(payload);
+
+    if(written!=payload.size())
+    {
+        qWarning() << "SyncSidecar: short write" << written << "of"
+                   << payload.size() << "bytes for" << m_sidecarPath;
+        file.cancelWriting();
+        syncDbg("sidecar: SAVE FAILED (short write) "+m_sidecarPath);
+        return false;
+    }
 
     if(!file.commit())
     {

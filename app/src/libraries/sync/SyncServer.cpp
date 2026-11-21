@@ -10,6 +10,7 @@
 #include "SyncServer.h"
 #include "SyncDiscovery.h"
 #include "SyncDebug.h"
+#include "SyncHttp.h"
 #include "main.h"
 
 
@@ -106,7 +107,14 @@ void SyncServer::stop(void)
         server->close();
 
     if(udpSocket!=nullptr)
+    {
+        // Удаляем, а не только close(): start() биндит UDP лишь при
+        // udpSocket==nullptr — после stop/start скан в LAN переставал
+        // получать ответы (TCP при этом работал).
         udpSocket->close();
+        delete udpSocket;
+        udpSocket=nullptr;
+    }
 
     listenPort=0;
 }
@@ -279,62 +287,12 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
     if(raw.isEmpty())
         return false;
 
-    // Стартовая строка: "METHOD /path HTTP/1.x"
-    const int lineEnd=raw.indexOf("\r\n");
+    const SyncHttp::ParseResult parsed=SyncHttp::parse(raw);
 
-    if(lineEnd<0)
-        return false;
-
-    const QList<QByteArray> parts=QByteArray(raw.constData(), lineEnd).split(' ');
-
-    if(parts.size()<2)
+    if(parsed.status==SyncHttp::Status::NeedMore)
     {
-        broken=true;
-        return false;
-    }
-
-    const QString method=QString::fromLatin1(parts.at(0)).toUpper();
-    const QString path=QString::fromLatin1(parts.at(1));
-
-    methodPath=method+QStringLiteral(" ")+path;
-
-    // Длина тела из заголовков. Без тела — запрос полный сразу
-    int contentLength=0;
-    const int headEnd=raw.indexOf("\r\n\r\n");
-
-    if(headEnd>=0)
-    {
-        const QString head=QString::fromLatin1(raw.constData(), headEnd);
-
-        for(const QString &line : head.split(QStringLiteral("\r\n")))
-        {
-            if(line.startsWith(QStringLiteral("Content-Length:"),
-                               Qt::CaseInsensitive))
-            {
-                contentLength=line.section(QLatin1Char(':'), 1).trimmed().toInt();
-                break;
-            }
-        }
-    }
-
-    bool expectContinue=false;
-
-    if(headEnd>=0)
-    {
-        const QString headLower=QString::fromLatin1(raw.constData(), headEnd).toLower();
-
-        if(headLower.contains(QStringLiteral("expect: 100-continue")))
-            expectContinue=true;
-    }
-
-    const int bodyStart=(headEnd>=0) ? headEnd+4 : raw.size();
-    const int bodyHave=raw.size()-bodyStart;
-
-    if(bodyHave<contentLength)
-    {
-        // Клиент (QNetworkAccessManager) ждет промежуточного подтверждения,
-        // иначе тело не отправит вообще. Отвечаем сразу, тело ждем дальше
-        if(expectContinue && bodyHave==0)
+        // Клиент ждёт 100-continue, иначе тело не отправит
+        if(parsed.sendContinue)
         {
             static const QByteArray cont="HTTP/1.1 100 Continue\r\n\r\n";
             socket->write(cont);
@@ -344,31 +302,18 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
         return false;
     }
 
-    // Запрос целый — остаток из буфера убираем (соединение одноразовое,
-    // но повторный разбор того же мусора нам не нужен)
-    pendingRequests.remove(socket);
-
-    if(contentLength<=0)
-    {
-        body=QJsonObject();
-        return true;
-    }
-
-    // Тело обязано быть JSON. Не JSON — битый запрос, не молчим
-    QJsonParseError parseError;
-    const QJsonDocument doc=QJsonDocument::fromJson(
-        QByteArray(raw.constData()+bodyStart, contentLength), &parseError);
-
-    if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
+    if(parsed.status==SyncHttp::Status::Broken)
     {
         pendingRequests.remove(socket);
         broken=true;
         return false;
     }
 
+    // Запрос целый — остаток из буфера убираем (соединение одноразовое)
     pendingRequests.remove(socket);
 
-    body=doc.object();
+    methodPath=parsed.methodPath;
+    body=parsed.body;
     return true;
 }
 

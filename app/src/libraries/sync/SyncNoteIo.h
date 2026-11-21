@@ -27,6 +27,8 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request);
 QString applyDelete(KnowTreeModel *model, const QString &id,
                     qint64 deletedAt);
 
+// Валидация имён/путей от пира — см. SyncValidation.h
+
 // Стереть всю базу локально (стратегии "начать заново"): все ветки
 // уходят в корзину штатным удалением, журнал синка стирается целиком
 // БЕЗ tombstone'ов: это не удаление данных для пира, а замена

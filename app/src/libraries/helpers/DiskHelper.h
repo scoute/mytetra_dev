@@ -14,8 +14,8 @@ class DiskHelper
 public:
   DiskHelper();
 
-  static void removeDirectoryToTrash(QString nameDirFrom);
-  static bool removeFileToTrash(QString fileNameFrom, bool stopIfError=true);
+  static bool removeDirectoryToTrash(QString nameDirFrom);
+  static bool removeFileToTrash(QString fileNameFrom, bool stopIfError=false);
   static QString copyFileToTrash(QString fileNameFrom, bool stopIfError=true);
   static bool isTrashDirectoryExists();
 

@@ -10,7 +10,6 @@
 //! Используется для создания окон, обновления содержимого,
 //! запоминание списка окон и их размещения
 
-class QThread;
 
 class EditorShowTextDispatcher : public QObject
 {
@@ -56,7 +55,6 @@ protected:
 
     // Код диспетчера должен выполняться в отдельном треде,
     // как минимум методы закрытия окошек по списку
-    QThread *mThread;
 
     // Список открытых окошек, ключ - это ID открытой записи
     QHash<QString, QPointer<EditorShowText> > mWindowsList;

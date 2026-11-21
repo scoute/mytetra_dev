@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QSaveFile>
+#include <QDateTime>
 #include <QJsonArray>
 #include <QModelIndex>
 #include <QModelIndexList>
@@ -11,6 +12,7 @@
 #include "SyncDebug.h"
 #include "SyncSidecar.h"
 #include "SyncManifest.h"
+#include "SyncValidation.h"
 #include "libraries/FixedParameters.h"
 #include "libraries/helpers/DiskHelper.h"
 #include "models/tree/KnowTreeModel.h"
@@ -34,6 +36,8 @@ static QString normCrypt(const QString &crypt)
 
     return (crypt==QStringLiteral("0")) ? QString() : crypt;
 }
+
+
 namespace
 {
 
@@ -371,6 +375,36 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     if(dir.isEmpty() || file.isEmpty())
         return QStringLiteral("bad record dir");
 
+    // Пути от пира недоверенные: без проверки dir="../../.." + file
+    // перезаписывает произвольные файлы, а «зеркальная уборка» ниже
+    // уносит в корзину содержимое произвольного каталога.
+    if(!SyncValidation::isSafeRecordDir(dir)
+       || !SyncValidation::isSafeFileName(file))
+        return QStringLiteral("unsafe record path");
+
+    // Аттачи проверяем ДО любой записи на диск: тип обязан быть
+    // file/link (на неизвестном Attach::setField делает criticalError),
+    // имя файла — безопасным.
+    const QJsonArray attaches=request.value(QStringLiteral("attaches")).toArray();
+
+    for(const QJsonValue &value : attaches)
+    {
+        const QJsonObject a=value.toObject();
+        const QString type=a.value(QStringLiteral("type")).toString();
+
+        if(type!=QStringLiteral("file") && type!=QStringLiteral("link"))
+            return QStringLiteral("bad attach type");
+
+        if(type==QStringLiteral("file")
+           && !SyncValidation::isSafeFileName(a.value(QStringLiteral("file")).toString()))
+            return QStringLiteral("bad attach file");
+    }
+
+    if(request.contains(QStringLiteral("dirFiles")))
+        for(const QJsonValue &value : request.value(QStringLiteral("dirFiles")).toArray())
+            if(!SyncValidation::isSafeFileName(value.toObject().value(QStringLiteral("file")).toString()))
+                return QStringLiteral("bad note file");
+
     const int pos=table->getPosById(id);
     const QStringList curPath=model->getRecordPath(id);
     const bool needMove=(pos<0 && !curPath.isEmpty()
@@ -444,15 +478,17 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         QByteArray::fromBase64(request.value(QStringLiteral("text"))
                                .toString().toLatin1());
 
-    const QString basePath=tetradir+QStringLiteral("/base/")
-                           +dir+QStringLiteral("/")+file;
+    const QString baseDir=QDir::cleanPath(tetradir+QStringLiteral("/base"));
+    const QString basePath=QDir::cleanPath(
+        baseDir+QStringLiteral("/")+dir+QStringLiteral("/")+file);
+
+    if(!basePath.startsWith(baseDir+QStringLiteral("/")))
+        return QStringLiteral("unsafe record path");
 
     SYNC_CHECKPOINT(QStringLiteral("before write text ")+basePath);
     if(!writeBytesAtomic(basePath, textBytes))
         return QStringLiteral("cannot write text");
     SYNC_CHECKPOINT(QStringLiteral("after write text"));
-
-    const QJsonArray attaches=request.value(QStringLiteral("attaches")).toArray();
 
     for(const QJsonValue &value : attaches)
     {
@@ -476,7 +512,7 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     // Прочие файлы каталога заметки (инлайн-картинки и т.п.): пишем
     // как есть, слепо. Зеркальное удаление лишних — ТОЛЬКО если поле
     // прислано: у старых пиров его нет, их локальные файлы трогать нельзя
-    const QString noteDirPath=basePath.section(QLatin1Char('/'), 0, -2);
+    const QString noteDirPath=QFileInfo(basePath).absolutePath();
 
     if(request.contains(QStringLiteral("dirFiles")))
     {
@@ -517,17 +553,24 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
                                                     QDir::Name);
 
         int removedCount=0;
+        int failedCount=0;
 
         for(const QString &name : entries)
             if(!keepNames.contains(name))
             {
-                DiskHelper::removeFileToTrash(noteDir.absoluteFilePath(name));
-                removedCount++;
+                if(DiskHelper::removeFileToTrash(noteDir.absoluteFilePath(name), false))
+                    removedCount++;
+                else
+                    failedCount++;
             }
 
         if(removedCount>0)
             syncDbg("apply note "+id+": "+QString::number(removedCount)
                     +" stale file(s) in note dir -> trash");
+
+        if(failedCount>0)
+            qWarning() << "apply note" << id << ": cannot move to trash"
+                       << failedCount << "stale file(s), kept in place";
     }
 
     const qint64 remoteMtime=request.value(QStringLiteral("mtime")).toVariant().toLongLong();
@@ -575,17 +618,24 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
                     .arg(id, syncPtr(record->getAttachTablePointer())));
             AttachTableData *attachTable=record->getAttachTablePointer();
             attachTable->clear();
+            // clear() обнуляет обратный указатель на запись; без него
+            // isRecordCrypt() падает на null, а add/delete вложений
+            // перестают отмечать правку в журнале.
+            attachTable->setRecord(record);
 
             for(const QJsonValue &value : attaches)
             {
                 const QJsonObject a=value.toObject();
                 Attach attach(attachTable);
-                attach.setField(QStringLiteral("id"), a.value(QStringLiteral("id")).toString());
-                attach.setField(QStringLiteral("type"), a.value(QStringLiteral("type")).toString());
-                attach.setField(QStringLiteral("fileName"), a.value(QStringLiteral("file")).toString());
+                // setFieldSource: сырые значения с провода. setField для
+                // ссылки показывает модальный «файл не найден» и теряет
+                // поле, а для crypt=1 — шифрует повторно/роняет процесс.
+                attach.setFieldSource(QStringLiteral("id"), a.value(QStringLiteral("id")).toString());
+                attach.setFieldSource(QStringLiteral("type"), a.value(QStringLiteral("type")).toString());
+                attach.setFieldSource(QStringLiteral("fileName"), a.value(QStringLiteral("file")).toString());
 
                 if(!a.value(QStringLiteral("link")).toString().isEmpty())
-                    attach.setField(QStringLiteral("link"), a.value(QStringLiteral("link")).toString());
+                    attach.setFieldSource(QStringLiteral("link"), a.value(QStringLiteral("link")).toString());
 
                 attachTable->addAttach(attach);
             }
@@ -622,12 +672,12 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         {
             const QJsonObject a=value.toObject();
             Attach attach(attachTable);
-            attach.setField(QStringLiteral("id"), a.value(QStringLiteral("id")).toString());
-            attach.setField(QStringLiteral("type"), a.value(QStringLiteral("type")).toString());
-            attach.setField(QStringLiteral("fileName"), a.value(QStringLiteral("file")).toString());
+            attach.setFieldSource(QStringLiteral("id"), a.value(QStringLiteral("id")).toString());
+            attach.setFieldSource(QStringLiteral("type"), a.value(QStringLiteral("type")).toString());
+            attach.setFieldSource(QStringLiteral("fileName"), a.value(QStringLiteral("file")).toString());
 
             if(!a.value(QStringLiteral("link")).toString().isEmpty())
-                attach.setField(QStringLiteral("link"), a.value(QStringLiteral("link")).toString());
+                attach.setFieldSource(QStringLiteral("link"), a.value(QStringLiteral("link")).toString());
 
             attachTable->addAttach(attach);
         }
@@ -739,6 +789,12 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
     if(model==nullptr || id.isEmpty())
         return QStringLiteral("bad request");
 
+    // Время удаления приходит с провода. Далёкое будущее (сбитые часы
+    // пира) навсегда перебивало бы локальные правки: клампим к now+1мин,
+    // как и окно hello-скоса.
+    const qint64 now=QDateTime::currentMSecsSinceEpoch();
+    deletedAt=qBound<qint64>(0, deletedAt, now+60*1000);
+
     TreeItem *branchItem=model->getItemById(id);
 
     if(branchItem!=nullptr)
@@ -806,7 +862,8 @@ QString applyDelete(KnowTreeModel *model, const QString &id, qint64 deletedAt)
     syncDbg(QStringLiteral("applyDelete %1: deleteRecord pos=%2 table=%3")
             .arg(id).arg(pos).arg(syncPtr(table)));
     if(pos>=0)
-        table->deleteRecord(pos);
+        if(!table->deleteRecord(pos))
+            return QStringLiteral("cannot move record files to trash");
 
     SyncSidecar::adoptTombstone(id, deletedAt);
     syncDbg("apply delete "+id+": record deleted");

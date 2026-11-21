@@ -617,8 +617,24 @@ void SyncDevicesDialog::onSyncNow(void)
     // PIN в сессию не передаем: секрет уже есть. Починка при расхождении —
     // через Pair заново (осознанно, с показом фингерпринта выше).
     // Исключение — чужая сеть: там PIN нужен чтобы взять группу хаба
-    SyncReport report=session.run(target.lastIp,
-                                  static_cast<quint16>(target.port));
+    MainWindow *mw=qobject_cast<MainWindow *>(parentWidget());
+
+    // Перед сессией сохраняем редактируемую запись (нативный путь не
+    // делает reloadSaveStage), после — обновляем откреплённые окна:
+    // сессия уже перечитала модель.
+    if(mw!=nullptr)
+        mw->saveTextarea();
+
+    const auto runSession=[&](const QString &pin) -> SyncReport {
+        const SyncReport r=session.run(target.lastIp,
+                                       static_cast<quint16>(target.port),
+                                       pin);
+        if(mw!=nullptr)
+            mw->finishNativeSyncUi();
+        return r;
+    };
+
+    SyncReport report=runSession(QString());
 
     if(!report.ok
        && report.errorCode==QStringLiteral("foreign-network"))
@@ -654,17 +670,13 @@ void SyncDevicesDialog::onSyncNow(void)
         // клиент возьмет группу хаба внутри сессии.
         // Старый сервер так и откажет — тогда входим свежо (сброс пары):
         // пустая группа втягивается сервером любой версии
-        report=session.run(target.lastIp,
-                           static_cast<quint16>(target.port),
-                           pin);
+        report=runSession(pin);
 
         if(!report.ok
            && report.errorCode==QStringLiteral("foreign-network"))
         {
             joinFresh();
-            report=session.run(target.lastIp,
-                               static_cast<quint16>(target.port),
-                               pin);
+            report=runSession(pin);
         }
     }
 
@@ -1016,9 +1028,11 @@ void SyncDevicesDialog::onRecheckPair(void)
     if(hello.ok && hello.paired)
     {
         qDebug() << "SyncPair: request accepted, sync unlocked";
-        SyncHandshake::noteMutual(config,
-                                 config->get_syncPairedDeviceId(),
-                                 "auto re-check");
+        // Взаимность — ИМЕННО тому, кто ответил, а не первой паре кольца
+        // (иначе второй пир навсегда остаётся невзаимным, таймер крутится).
+        const QString acceptedId=hello.remoteDeviceId.isEmpty()
+            ? config->get_syncPairedDeviceId() : hello.remoteDeviceId;
+        SyncHandshake::noteMutual(config, acceptedId, "auto re-check");
         // refreshList придет по syncDevicesChanged
         return;
     }

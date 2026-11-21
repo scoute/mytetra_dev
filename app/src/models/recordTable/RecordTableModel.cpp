@@ -43,6 +43,12 @@ QVariant RecordTableModel::data(const QModelIndex &index, int role) const
     if(!index.isValid())
         return QVariant();
 
+    // Строка могла исчезнуть после перестройки таблицы в обход модели
+    // (синк): прокси ещё держит старый маппинг. Без этой проверки
+    // RecordTableData::getField уходит в criticalError -> exit(1).
+    if(index.row()<0 || index.row()>=static_cast<int>(table->size()))
+        return QVariant();
+
     // qDebug() << "RecordTableModel::data(), row:" << index.row() << " column " << index.column();
 
     // Если запрашивается текст строки для отрисовки или для редактирования
@@ -169,6 +175,10 @@ bool RecordTableModel::setData(const QModelIndex &index, const QVariant &value, 
     if(!index.isValid())
         return false;
 
+    // Устаревшая строка из прокси (синк изменил таблицу без сигналов)
+    if(index.row()<0 || index.row()>=static_cast<int>(table->size()))
+        return false;
+
     // Если происходит редактирование
     if(role==Qt::EditRole)
     {
@@ -293,7 +303,11 @@ bool RecordTableModel::removeRows(int row, int count, const QModelIndex &parent)
 
     if(row<0 || row>=rowCount() || (row+count-1)<0 || (row+count-1)>=rowCount())
     {
-        criticalError("Bad arguments in RecordTableModel::removeRows(). row: "+QString::number(row)+" count: "+QString::number(count));
+        // Сюда может прийти устаревшая строка из прокси, если таблицу
+        // меняли в обход модели (например, синк). exit(1) недопустим.
+        qWarning() << "RecordTableModel::removeRows: bad arguments. row:"
+                   << row << "count:" << count << "rows:" << rowCount();
+        return false;
     }
 
     beginRemoveRows(QModelIndex(), row, row+count-1);
@@ -302,12 +316,26 @@ bool RecordTableModel::removeRows(int row, int count, const QModelIndex &parent)
     // Удаляется всегда строка с номером row, так как после каждого удаления
     // индексы сдвигаются: удаление нарастающего i удалило бы чужие записи
     // и ушло бы за границу в последней итерации
+    bool failed=false;
+
     for(int n=0; n<count; ++n)
-        table->deleteRecord(row);
+        if(!table->deleteRecord(row))
+        {
+            failed=true;
+            break;
+        }
 
     endRemoveRows();
 
-    return true;
+    // Часть строк осталась в таблице (файлы не удалось убрать в корзину) —
+    // вью уже получила remove, поэтому синхронизируем счётчики reset'ом.
+    if(failed)
+    {
+        beginResetModel();
+        endResetModel();
+    }
+
+    return !failed;
 }
 
 

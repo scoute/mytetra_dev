@@ -993,6 +993,17 @@ bool KnowTreeModel::moveSyncedBranch(const QString &id,
     if(newParent==item->parent())
         return true; // уже там
 
+    // Цикл проверяем ДО beginMoveRows: relinkTo ниже откажет, но вью
+    // уже получила бы уведомление о переносе, которого не было
+    // (рассинхрон строк). Синк может прислать parent-потомка.
+    for(TreeItem *p=newParent; p!=nullptr; p=p->parent())
+        if(p==item)
+        {
+            qWarning() << "moveSyncedBranch: cycle detected for" << id
+                       << "under" << newParentId;
+            return false;
+        }
+
     const QModelIndex srcParentIndex=getIndexByItem(item->parent());
     const QModelIndex dstParentIndex=getIndexByItem(newParent);
 

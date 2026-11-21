@@ -61,12 +61,16 @@ public:
   static void decryptDomElement(QDomElement &iDomElement);
   
   void renameFile(QString newFileName);
+
+  // Сырая установка значения без проверок/шифрования/модалок.
+  // Нужна синку и импорту: значения приходят с провода как есть
+  // (шифртекст не перешифровывать, ссылку не проверять на существование).
+  void setFieldSource(QString name, QString value);
+
 protected:
 
   void init(AttachTableData *iParentTable);
   void setParentTable(AttachTableData *iParentTable); // Защищенный метод, который может вызвать только этот класс и AttachTableData
-
-  void setFieldSource(QString name, QString value);
 
   static QStringList fieldAvailableList(void);
   static QStringList fieldCryptedList(void);

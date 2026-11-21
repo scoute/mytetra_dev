@@ -1461,6 +1461,15 @@ void MainWindow::backgroundSyncTick(void)
 }
 
 
+// Нативный синк уже перечитал модель (save+reload внутри сессии):
+// закрываем/обновляем откреплённые окна, которые держали старые Record.
+void MainWindow::finishNativeSyncUi(void)
+{
+    EditorShowTextDispatcher::instance()->updateAllWindows();
+    emit doUpdateDetachedWindows();
+}
+
+
 // Завершение синхронизации
 void MainWindow::onSyncroCommandFinishWork()
 {
@@ -1786,15 +1795,28 @@ const quint16 MainWindow::syncDefaultPort=47777;
 bool MainWindow::startSyncServer(quint16 port, const QString &pairingPin)
 {
     if(syncHub!=nullptr && syncHub->isRunning())
-        return true;
+    {
+        // Уже слушаем другой порт/PIN (автостарт с 47777 и пустым PIN,
+        // затем --sync-server --sync-port/--sync-pair): пересоздаём,
+        // иначе headless-спаривание и порт молча игнорируются.
+        if(syncHub->port()==port && m_syncHubPin==pairingPin)
+            return true;
+
+        syncHub->stop();
+        delete syncHub;
+        syncHub=nullptr;
+    }
 
     if(syncHub==nullptr)
+    {
+        m_syncHubPin=pairingPin;
         syncHub=new SyncHub(treeScreen->knowTreeModel,
                             &mytetraConfig,
                             SyncSidecar::instance(),
                             mytetraConfig.get_tetradir(),
                             this,
                             pairingPin);
+    }
 
     return syncHub->start(port);
 }
@@ -2132,7 +2154,12 @@ QString MainWindow::runSyncToHeadless(const QString &host,
         });
 
     // PIN пробрасываем и в сессию: ее починка пары — вторая линия обороны
-    // (предсессионная выше обычно уже все решила)
+    // (предсессионная выше обычно уже все решила).
+    // Перед сессией сохраняем редактируемую запись: иначе текст не уедет
+    // на хаб, а скачанная версия перетрет файл (нативный путь не делает
+    // reloadSaveStage, в отличие от внешней команды).
+    saveTextarea();
+
     syncDbg(QStringLiteral("gui: BEFORE session.run model=%1 scope=%2")
             .arg(syncPtr(treeScreen->knowTreeModel), scopeRootId));
     const SyncReport report=session.run(host, port, pin, scopeRootId);
@@ -2140,6 +2167,11 @@ QString MainWindow::runSyncToHeadless(const QString &host,
             .arg(report.ok).arg(report.error)
             .arg(syncPtr(treeScreen->knowTreeModel))
             .arg(syncPtr(treeScreen->knowTreeModel->getRootItemPublic())));
+
+    // Сессия уже сделала save+reload модели. Обновляем/закрываем
+    // откреплённые окна, которые держали старые Record (иначе — мёртвые
+    // указатели/устаревший текст), как это делает onSyncroCommandFinishWork.
+    finishNativeSyncUi();
 
     // Headless-прогон: шаги сессии всегда в выводе, иначе зависший клиент
     // молчит и непонятно где встал. GUI показывает только summary

@@ -94,9 +94,10 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     timer.start(timeoutMs);
     loop.exec();
 
-    if(!timer.isActive())
+    // Таймаут и ответ могли прийти в одной итерации: если reply уже
+    // finished, не рвём пришедший ответ «таймаутом».
+    if(!timer.isActive() && !reply->isFinished())
     {
-        // Сработал таймаут, а не ответ
         reply->abort();
         reply->deleteLater();
         lastErrorText=QStringLiteral("Sync request timed out.");
@@ -176,7 +177,7 @@ QJsonObject SyncClient::getJson(const QString &host, quint16 port,
     timer.start(timeoutMs);
     loop.exec();
 
-    if(!timer.isActive())
+    if(!timer.isActive() && !reply->isFinished())
     {
         reply->abort();
         reply->deleteLater();

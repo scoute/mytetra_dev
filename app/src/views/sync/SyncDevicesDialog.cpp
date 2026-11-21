@@ -11,6 +11,8 @@
 #include <QDateTime>
 #include <QMap>
 #include <QSet>
+#include <QBrush>
+#include <QColor>
 #include <QTimer>
 
 #include "SyncDevicesDialog.h"
@@ -48,15 +50,17 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     layout->addWidget(selfLabel);
 
     table=new QTableWidget(this);
-    table->setColumnCount(5);
+    table->setColumnCount(6);
     table->setHorizontalHeaderLabels(QStringList()
         << tr("Name") << tr("Last address") << tr("Last seen")
-        << tr("Paired") << tr("Device ID"));
+        << tr("Paired") << tr("Last sync") << tr("Device ID"));
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->horizontalHeader()->setStretchLastSection(true);
-    table->setColumnHidden(4, true); // id держим в строке, не показываем
+    table->horizontalHeader()->setStretchLastSection(false);
+    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    table->setColumnHidden(5, true); // id держим в строке, не показываем
     layout->addWidget(table);
 
     fingerprintLabel=new QLabel(this);
@@ -205,7 +209,7 @@ int SyncDevicesDialog::currentRowId(QString &id) const
         return -1;
 
     const int row=ranges.first().topRow();
-    id=table->item(row, 4)->text();
+    id=table->item(row, 5)->text();
     return row;
 }
 
@@ -236,7 +240,7 @@ void SyncDevicesDialog::refreshList(void)
         if(!haveRows.contains(it.key()))
             ghostIds << it.key();
 
-    bool syntheticPaired=false;
+    QSet<QString> ghostSet;
 
     for(const QString &ghostId : ghostIds)
     {
@@ -246,7 +250,7 @@ void SyncDevicesDialog::refreshList(void)
         AppConfig::SyncDeviceInfo ghost;
         ghost.id=ghostId;
         devices << ghost;
-        syntheticPaired=true;
+        ghostSet.insert(ghostId);
     }
 
     table->setRowCount(devices.size());
@@ -254,7 +258,7 @@ void SyncDevicesDialog::refreshList(void)
     for(int row=0; row<devices.size(); ++row)
     {
         const AppConfig::SyncDeviceInfo &info=devices.at(row);
-        const bool isGhost=syntheticPaired && row==devices.size()-1;
+        const bool isGhost=ghostSet.contains(info.id);
 
         QTableWidgetItem *nameItem=new QTableWidgetItem(
             info.name.isEmpty()
@@ -343,13 +347,35 @@ void SyncDevicesDialog::refreshList(void)
 
         if(!pairedTip.isEmpty())
             pairedItem->setToolTip(pairedTip);
+        // Последний синк: время + ok/error; полная сводка — в подсказке
+        QString lastSyncText;
+
+        if(info.lastSync>0)
+        {
+            lastSyncText=QDateTime::fromMSecsSinceEpoch(info.lastSync)
+                             .toString(QStringLiteral("dd.MM hh:mm"))
+                         +(info.lastSyncOk ? QStringLiteral(" ✓")
+                                           : QStringLiteral(" ✗"));
+        }
+        else
+            lastSyncText=QStringLiteral("—");
+
+        QTableWidgetItem *lastSyncItem=new QTableWidgetItem(lastSyncText);
+
+        if(!info.lastSyncSummary.isEmpty())
+            lastSyncItem->setToolTip(info.lastSyncSummary);
+
+        if(info.lastSync>0 && !info.lastSyncOk)
+            lastSyncItem->setForeground(QBrush(QColor(0xEF, 0x53, 0x50)));
+
         QTableWidgetItem *idItem=new QTableWidgetItem(info.id);
 
         table->setItem(row, 0, nameItem);
         table->setItem(row, 1, addrItem);
         table->setItem(row, 2, seenItem);
         table->setItem(row, 3, pairedItem);
-        table->setItem(row, 4, idItem);
+        table->setItem(row, 4, lastSyncItem);
+        table->setItem(row, 5, idItem);
 
         // Возвращаем выделение той же строке (обновление по событию)
         if(!selectedId.isEmpty() && info.id==selectedId)
@@ -648,6 +674,16 @@ void SyncDevicesDialog::onSyncNow(void)
         const SyncReport r=session.run(target.lastIp,
                                        static_cast<quint16>(target.port),
                                        pin);
+
+        // Последний результат для таблицы устройств
+        config->set_syncDeviceLastResult(
+            target.id, r.ok,
+            r.ok ? tr("↑ notes %1, branches %2; ↓ notes %3, branches %4; deletes %5")
+                       .arg(r.uploadedNotes).arg(r.uploadedBranches)
+                       .arg(r.downloadedNotes).arg(r.downloadedBranches)
+                       .arg(r.appliedDeletes)
+                 : r.error);
+
         if(mw!=nullptr)
             mw->finishNativeSyncUi();
         return r;

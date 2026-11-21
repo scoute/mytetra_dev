@@ -2218,6 +2218,18 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     // указатели/устаревший текст), как это делает onSyncroCommandFinishWork.
     finishNativeSyncUi();
 
+    // Последний результат по устройству — в окно устройств (и в фон:
+    // таймер тоже проходит здесь). Пир известен из предсессионного hello.
+    if(hello.ok && !hello.remoteDeviceId.isEmpty())
+        mytetraConfig.set_syncDeviceLastResult(
+            hello.remoteDeviceId, report.ok,
+            report.ok
+                ? tr("↑ notes %1, branches %2; ↓ notes %3, branches %4; deletes %5")
+                      .arg(report.uploadedNotes).arg(report.uploadedBranches)
+                      .arg(report.downloadedNotes).arg(report.downloadedBranches)
+                      .arg(report.appliedDeletes)
+                : report.error);
+
     // Headless-прогон: шаги сессии всегда в выводе, иначе зависший клиент
     // молчит и непонятно где встал. GUI показывает только summary
     const QString steps=session.log().join(QStringLiteral("\n"));

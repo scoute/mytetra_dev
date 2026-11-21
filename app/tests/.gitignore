@@ -1,3 +1,5 @@
 sync_validation_test
 sync_http_test
 sync_tombstones_test
+sync_diff_test
+sync_counts_test

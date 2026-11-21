@@ -2,6 +2,7 @@
 #include "SyncClient.h"
 #include "SyncNoteIo.h"
 #include "SyncSidecar.h"
+#include "SyncCounts.h"
 #include "SyncIdentity.h"
 #include "SyncDebug.h"
 #include "models/tree/KnowTreeModel.h"
@@ -53,54 +54,7 @@ void SyncSession::setProgressCallback(ProgressCallback callback)
 }
 
 
-namespace
-{
-// Сколько элементов (ветки со своими записями и поддеревьями) исчезнет
-// вместе с id: удаление ветки тащит все поддерево
-int subtreeItemCount(const QString &id,
-                     const QMap<QString, SyncBranchInfo> &branches,
-                     const QMap<QString, SyncNoteInfo> &notes)
-{    SYNC_TRACE();
 
-    QMap<QString, QStringList> childBranches;
-    QMap<QString, int> noteCounts;
-
-    for(auto it=branches.constBegin(); it!=branches.constEnd(); ++it)
-        childBranches[it.value().parentId] << it.key();
-
-    for(auto it=notes.constBegin(); it!=notes.constEnd(); ++it)
-        noteCounts[it.value().branchId]++;
-
-    int count=0;
-    QStringList queue;
-    queue << id;
-    QSet<QString> seen;
-
-    while(!queue.isEmpty())
-    {
-        const QString cur=queue.takeFirst();
-
-        if(cur.isEmpty() || seen.contains(cur))
-            continue;
-
-        seen.insert(cur);
-
-        if(notes.contains(cur))
-        {
-            count++;
-            continue;
-        }
-
-        if(!branches.contains(cur))
-            continue;
-
-        count+=1+noteCounts.value(cur);
-        queue << childBranches.value(cur);
-    }
-
-    return count;
-}
-}
 
 
 SyncPlan SyncSession::slicePlanForScope(const SyncPlan &plan,
@@ -573,15 +527,20 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // безопасное (создание/обновление) едет молча, любые удаления
     // подсвечиваются пользователю (история: случайное удаление базы
     // на клиенте молча обнулило сервер)
+    // Индексы поддеревьев строятся один раз: раньше каждый tombstone
+    // заново сканировал весь манифест.
+    const SyncSubtreeCounter remoteCounter(remote.branches, remote.notes);
+    const SyncSubtreeCounter localCounter(local.branches, local.notes);
+
     int remoteDeletes=0;
 
     for(const QString &id : plan.pushTombs)
-        remoteDeletes+=subtreeItemCount(id, remote.branches, remote.notes);
+        remoteDeletes+=remoteCounter.count(id);
 
     int localDeletes=0;
 
     for(const QString &id : plan.deleteLocal)
-        localDeletes+=subtreeItemCount(id, local.branches, local.notes);
+        localDeletes+=localCounter.count(id);
 
     if(remoteDeletes>0 || localDeletes>0)
         addLog(QStringLiteral("delete impact: %1 item(s) on hub, %2 locally")

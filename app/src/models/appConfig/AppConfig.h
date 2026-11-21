@@ -139,6 +139,12 @@ public:
         // (или клиент получил ok при paired с обеих сторон).
         // До этого — "wait accept", а не "yes"
         qint64 lastMutual=0;
+
+        // Последний синк с этим устройством (для таблицы устройств):
+        // время, успех и короткая сводка/ошибка
+        qint64 lastSync=0;
+        bool lastSyncOk=false;
+        QString lastSyncSummary;
     };
 
     QList<SyncDeviceInfo> get_syncDevices(void);
@@ -148,6 +154,8 @@ public:
 
     // Флаги пары по устройству (см. SyncDeviceInfo)
     void set_syncDeviceOffer(const QString &id);
+    void set_syncDeviceLastResult(const QString &id, bool ok,
+                                  const QString &summary);
     void clear_syncDeviceOffer(const QString &id);
     void set_syncDeviceMutual(const QString &id);
     void clear_syncDeviceMutual(const QString &id);

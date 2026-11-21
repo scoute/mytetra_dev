@@ -54,7 +54,8 @@ QString decodeEntities(QString s)
         else if(body.startsWith(QLatin1Char('#')))
             code=body.mid(1).toInt(&ok, 10);
 
-        if(ok && code>0)
+        if(ok && code>0 && code<=0x10FFFF
+           && !(code>=0xD800 && code<=0xDFFF))
             out+=QString::fromUcs4(reinterpret_cast<const uint *>(&code), 1);
         else
             out+=m.captured(0);

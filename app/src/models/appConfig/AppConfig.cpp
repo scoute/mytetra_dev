@@ -465,6 +465,10 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
         info.lastSeen=m_conf->value(QStringLiteral("lastSeen"), 0).toLongLong();
         info.pairOffer=m_conf->value(QStringLiteral("pairOffer"), false).toBool();
         info.lastMutual=m_conf->value(QStringLiteral("lastMutual"), 0).toLongLong();
+        info.lastSync=m_conf->value(QStringLiteral("lastSync"), 0).toLongLong();
+        info.lastSyncOk=m_conf->value(QStringLiteral("lastSyncOk"), false).toBool();
+        info.lastSyncSummary=
+            m_conf->value(QStringLiteral("lastSyncSummary")).toString();
 
         m_conf->endGroup();
 
@@ -614,6 +618,25 @@ void AppConfig::set_syncDeviceMutual(const QString &id)
                      QDateTime::currentMSecsSinceEpoch());
 
     touch_syncDevice(id, QString());
+}
+
+
+void AppConfig::set_syncDeviceLastResult(const QString &id, bool ok,
+                                        const QString &summary)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/lastSync"),
+                     QDateTime::currentMSecsSinceEpoch());
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/lastSyncOk"), ok);
+    m_conf->setValue(QStringLiteral("syncDevices/")+id
+                     +QStringLiteral("/lastSyncSummary"), summary.left(300));
+    m_conf->sync();
+
+    emit syncDevicesChanged();
 }
 
 

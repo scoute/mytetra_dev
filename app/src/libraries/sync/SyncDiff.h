@@ -35,6 +35,10 @@ QList<Line> diffLines(const QStringList &a, const QStringList &b);
 // Остальное — как видит пользователь. 1-в-1 с MyTetroid SyncDiff.kt
 QStringList visibleLines(const QString &text);
 
+// HTML-сущности: именованные и числовые (&#123;, &#x1F;). Невалидные
+// кодпоинты (вне Unicode/суррогаты) остаются исходным текстом.
+QString decodeEntities(QString s);
+
 // Человекочитаемая сводка: "+5 -3" (добавлено/удалено строк)
 QString summary(const QList<Line> &lines);
 

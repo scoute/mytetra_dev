@@ -1386,6 +1386,11 @@ void SyncDevicesDialog::onRemove(void)
         }
     }
 
+    // Недоигранная пара по коду: pending/код тоже не должны пережить
+    // удаление строки, иначе клиент может допариться уже после Remove
+    config->clear_syncDevicePendingSecret(id);
+    SyncPairing::clearCode(id);
+
     config->remove_syncDevice(id);
 
     // Устройств не осталось — статус сбрасывается автоматически:

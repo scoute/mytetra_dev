@@ -19,6 +19,8 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QCoreApplication>
+#include <QClipboard>
+#include <QApplication>
 
 #include "main.h"
 #include "models/appConfig/AppConfig.h"
@@ -39,6 +41,7 @@
 #include "libraries/WindowSwitcher.h"
 #include "views/actionLog/ActionLogScreen.h"
 #include "views/sync/SyncDevicesDialog.h"
+#include "views/sync/SyncProgressWindow.h"
 #include "views/sync/SyncPreviewDialog.h"
 #include "views/databasesManagement/DatabasesManagementScreen.h"
 #include "libraries/ShortcutManager.h"
@@ -85,9 +88,26 @@ MainWindow::MainWindow() : QMainWindow()
     if(mytetraConfig.get_syncServerAutostart())
     {
         if(startSyncServer(syncDefaultPort))
+        {
             actionSyncMenuSyncServer->setChecked(true);
+            actionSyncMenuSyncServer->setToolTip(
+                tr("Listening on port %1").arg(syncHub->port()));
+        }
         else
+        {
+            // Не молчим: иначе пользователь думает, что сервер работает
             mytetraConfig.set_syncServerAutostart(false);
+            actionSyncMenuSyncServer->setToolTip(tr("Not running"));
+
+            if(!isSyncHeadlessMode())
+                QTimer::singleShot(500, this, [this]() {
+                    QMessageBox::warning(
+                        this, tr("Sync server"),
+                        tr("Cannot start the sync server on port %1.\n"
+                           "Another sync server may be running. "
+                           "Autostart is disabled.").arg(syncDefaultPort));
+                });
+        }
     }
 
     setupShortcuts();
@@ -206,6 +226,9 @@ void MainWindow::setupSignals(void)
     connect(actionToolsMenuActionLog, &QAction::triggered, this, &MainWindow::onActionLogClicked);
 
     // Синхронизация по Wi-Fi
+    connect(actionSyncMenuSyncNow, &QAction::triggered, this, [this]() {
+        synchronization(true);
+    });
     connect(actionSyncMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
     connect(actionSyncMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
     connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
@@ -733,6 +756,12 @@ void MainWindow::initSyncMenu(void)
 {
     QMenu *menu = new QMenu(tr("&Sync"), this);
     this->menuBar()->addMenu(menu);
+
+    // Главная задача — из меню, названного её именем (раньше жила только
+    // в иконке тулбара таблицы записей).
+    actionSyncMenuSyncNow = new QAction(tr("&Synchronize now..."), this);
+    menu->addAction(actionSyncMenuSyncNow);
+    menu->addSeparator();
 
     actionSyncMenuSyncServer = new QAction(tr("Sync server"), this);
     actionSyncMenuSyncServer->setCheckable(true);
@@ -1354,12 +1383,7 @@ void MainWindow::runToolbarNativeSync(bool interactive)
     const QString result=runSyncToHeadless(
         target.lastIp, QString(), static_cast<quint16>(target.port), ok);
 
-    if(ok)
-        QMessageBox::information(this, tr("Sync"),
-                             trimSyncReportForDialog(result));
-    else
-        QMessageBox::warning(this, tr("Sync"),
-                         trimSyncReportForDialog(result));
+    showSyncReport(this, tr("Sync"), trimSyncReportForDialog(result), !ok);
 }
 
 
@@ -1463,6 +1487,12 @@ void MainWindow::backgroundSyncTick(void)
 
 // Нативный синк уже перечитал модель (save+reload внутри сессии):
 // закрываем/обновляем откреплённые окна, которые держали старые Record.
+void MainWindow::setNativeSyncBusy(bool busy)
+{
+    m_nativeSyncBusy=busy;
+}
+
+
 void MainWindow::finishNativeSyncUi(void)
 {
     EditorShowTextDispatcher::instance()->updateAllWindows();
@@ -1849,6 +1879,8 @@ void MainWindow::onSyncServerToggle(bool checked)
         }
 
         mytetraConfig.set_syncServerAutostart(true);
+        actionSyncMenuSyncServer->setToolTip(
+            tr("Listening on port %1").arg(syncHub->port()));
         statusBar->showMessage(tr("Sync server started"), 3000);
     }
     else
@@ -1856,6 +1888,7 @@ void MainWindow::onSyncServerToggle(bool checked)
         stopSyncServer();
 
         mytetraConfig.set_syncServerAutostart(false);
+        actionSyncMenuSyncServer->setToolTip(tr("Not running"));
         statusBar->showMessage(tr("Sync server stopped"), 3000);
     }
 }
@@ -2162,7 +2195,19 @@ QString MainWindow::runSyncToHeadless(const QString &host,
 
     syncDbg(QStringLiteral("gui: BEFORE session.run model=%1 scope=%2")
             .arg(syncPtr(treeScreen->knowTreeModel), scopeRootId));
-    const SyncReport report=session.run(host, port, pin, scopeRootId);
+    SyncReport report;
+
+    // Фон/headless — без окна; интерактив — с прогрессом передачи
+    if(isSyncHeadlessMode() || silentDecisions!=nullptr)
+    {
+        report=session.run(host, port, pin, scopeRootId);
+    }
+    else
+    {
+        // Окно прогресса: сессия блокирует GUI, без него окно «умирает»
+        SyncProgressWindow progress(session, this);
+        report=session.run(host, port, pin, scopeRootId);
+    }
     syncDbg(QStringLiteral("gui: AFTER session.run ok=%1 err=%2 model=%3 root=%4")
             .arg(report.ok).arg(report.error)
             .arg(syncPtr(treeScreen->knowTreeModel))
@@ -2275,7 +2320,7 @@ void MainWindow::onSyncPairing(void)
             info+=tr("\n\nPaired devices (%1):\n%2")
                 .arg(pairedLines.size()).arg(pairedLines.join(QStringLiteral("\n")));
 
-        QMessageBox::information(this, tr("Sync pairing info"), info);
+        showSyncReport(this, tr("Sync pairing info"), info, false);
         return;
     }
 
@@ -2303,8 +2348,8 @@ void MainWindow::onSyncPairing(void)
     mytetraConfig.touch_syncDevice(unknownId, unknownName);
     SyncHandshake::clearUnknown();
 
-    QMessageBox::information(this, tr("Sync pairing"),
-                             tr("Paired. Next sync will be authenticated."));
+    showSyncReport(this, tr("Sync pairing"),
+                   tr("Paired. Next sync will be authenticated."), false);
 }
 
 
@@ -2365,6 +2410,28 @@ bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
     decisions=dialog.decisions();
 
     return true;
+}
+
+
+// Единое окно отчёта синка: текст можно выделить и скопировать
+// (длинные списки ошибок/шагов бесполезны, если их нельзя переслать).
+void MainWindow::showSyncReport(QWidget *parent, const QString &title,
+                                const QString &text, bool isError)
+{
+    QMessageBox box(parent);
+    box.setWindowTitle(title);
+    box.setIcon(isError ? QMessageBox::Warning : QMessageBox::Information);
+    box.setText(text);
+    box.setTextInteractionFlags(Qt::TextSelectableByMouse
+                                | Qt::TextSelectableByKeyboard);
+
+    QPushButton *copy=box.addButton(tr("Copy"), QMessageBox::ActionRole);
+    box.addButton(QMessageBox::Ok);
+
+    box.exec();
+
+    if(box.clickedButton()==copy)
+        QApplication::clipboard()->setText(text);
 }
 
 

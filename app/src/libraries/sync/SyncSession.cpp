@@ -47,6 +47,12 @@ void SyncSession::setPreviewResolver(PreviewResolver resolver)
 }
 
 
+void SyncSession::setProgressCallback(ProgressCallback callback)
+{
+    progressCallback=callback;
+}
+
+
 namespace
 {
 // Сколько элементов (ветки со своими записями и поддеревьями) исчезнет
@@ -390,6 +396,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
+    if(progressCallback)
+        progressCallback(QStringLiteral("Получаю манифест с хаба"), 0, 0);
+
     // 2. Манифесты: чужой тянем, свой строим локально.
     // Манифест на десятках тысяч записей — большой кусок: ему отдельный
     // таймаут (дефолтные 15с рвут даже быстрый линк на 100k)
@@ -407,6 +416,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         addLog(QStringLiteral("manifest failed: %1").arg(report.error));
         return report;
     }
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Строю локальный манифест"), 0, 0);
 
     SyncManifest local=
         SyncManifestBuilder::build(model, SyncSidecar::instance(),
@@ -450,18 +462,20 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
             config->set_syncAskStrategy(false);
 
-            // Деструктивная стратегия первого синка — всегда про всю базу
-            // (wipe/reset там рассчитаны на полный состав). Со scope такое
-            // роняло бы данные: локальное уже стёрто, а докачка срезана.
-            // Scope сбрасывается, дальше полный синк как было
+            // Деструктивная стратегия рассчитана на всю базу (wipe/reset).
+            // Для синка ветки её молчаливое применение стирало бы всё —
+            // отказываем, флаг «спросить» оставляем на полный синк.
             if(!scope.isEmpty()
                && (strategy==SyncStrategy::MergeByName
                    || strategy==SyncStrategy::PullFromHub
                    || strategy==SyncStrategy::PushToHub))
             {
-                addLog(QStringLiteral("scope %1 dropped: destructive "
-                                       "strategy needs full base").arg(scope));
-                scope.clear();
+                addLog(QStringLiteral("scope %1: destructive strategy "
+                                       "refused, full base required").arg(scope));
+                report.error=QStringLiteral("Branch sync cannot replace the whole base. "
+                                            "Run a full sync to use this strategy.");
+                report.errorCode=QStringLiteral("scope-strategy");
+                return report;
             }
 
             if(strategy==SyncStrategy::MergeByName)
@@ -511,6 +525,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
             config->set_syncAskStrategy(false);
         }
     }
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Сверяю изменения"), 0, 0);
 
     // 3. Сверка. Мы спок: равные mtime решает хаб (той же детерминированной
     // логикой: хаб бы скачал, мы — заливаем; итог одинаковый с обеих сторон)
@@ -673,6 +690,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
             .arg(syncPtr(model)));
     addLog(QStringLiteral("commit hub"));
 
+    if(progressCallback)
+        progressCallback(QStringLiteral("Фиксирую на хабе"), 0, 0);
+
     if(!client.commit(host, port))
     {
         report.error=client.lastError().isEmpty()
@@ -681,6 +701,9 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         addLog(QStringLiteral("commit failed: %1").arg(report.error));
         return report;
     }
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Сохраняю локально"), 0, 0);
 
     syncDbg(QStringLiteral("session: BEFORE local save model=%1 tid=%2")
             .arg(syncPtr(model), syncTid()));
@@ -712,6 +735,12 @@ bool SyncSession::pushByPlan(SyncClient &client,
 {    SYNC_TRACE();
 
     // Ветки раньше заметок: заметка ссылается на ветку
+    if(progressCallback)
+        progressCallback(QStringLiteral("Отправляю ветки"), 0,
+                         plan.uploadBranches.size());
+
+    int branchDone=0;
+
     for(const QString &id : plan.uploadBranches)
     {
         QJsonObject branch=SyncNoteIo::serializeBranch(model, id);
@@ -741,7 +770,18 @@ bool SyncSession::pushByPlan(SyncClient &client,
         }
 
         report.uploadedBranches++;
+        ++branchDone;
+
+        if(progressCallback && branchDone%25==0)
+            progressCallback(QStringLiteral("Отправляю ветки"), branchDone,
+                             plan.uploadBranches.size());
     }
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Отправляю заметки"), 0,
+                         plan.uploadNotes.size());
+
+    int noteDone=0;
 
     for(const QString &id : plan.uploadNotes)
     {
@@ -771,6 +811,11 @@ bool SyncSession::pushByPlan(SyncClient &client,
         }
 
         report.uploadedNotes++;
+        ++noteDone;
+
+        if(progressCallback && noteDone%25==0)
+            progressCallback(QStringLiteral("Отправляю заметки"), noteDone,
+                             plan.uploadNotes.size());
     }
 
     return true;
@@ -783,6 +828,12 @@ bool SyncSession::pullByPlan(SyncClient &client,
                              const SyncManifest &remote,
                              SyncReport &report)
 {    SYNC_TRACE();
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Скачиваю ветки"), 0,
+                         plan.downloadBranches.size());
+
+    int branchDone=0;
 
     for(const QString &id : plan.downloadBranches)
     {
@@ -818,7 +869,18 @@ bool SyncSession::pullByPlan(SyncClient &client,
         }
 
         report.downloadedBranches++;
+        ++branchDone;
+
+        if(progressCallback && branchDone%25==0)
+            progressCallback(QStringLiteral("Скачиваю ветки"), branchDone,
+                             plan.downloadBranches.size());
     }
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Скачиваю заметки"), 0,
+                         plan.downloadNotes.size());
+
+    int noteDone=0;
 
     for(const QString &id : plan.downloadNotes)
     {
@@ -855,6 +917,11 @@ bool SyncSession::pullByPlan(SyncClient &client,
         }
 
         report.downloadedNotes++;
+        ++noteDone;
+
+        if(progressCallback && noteDone%25==0)
+            progressCallback(QStringLiteral("Скачиваю заметки"), noteDone,
+                             plan.downloadNotes.size());
     }
 
     return true;
@@ -869,6 +936,12 @@ bool SyncSession::applyRemoteDeletes(const SyncPlan &plan,
     // Приём 50k tombstone'ов: сайдкар сейвится один раз в конце пачки
     const SyncSidecar::BulkGuard bulkGuard;
     Q_UNUSED(bulkGuard);
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Применяю удаления"), 0,
+                         plan.deleteLocal.size());
+
+    int deleteDone=0;
 
     for(const QString &id : plan.deleteLocal)
     {
@@ -886,6 +959,11 @@ bool SyncSession::applyRemoteDeletes(const SyncPlan &plan,
         }
 
         report.appliedDeletes++;
+        ++deleteDone;
+
+        if(progressCallback && deleteDone%25==0)
+            progressCallback(QStringLiteral("Применяю удаления"), deleteDone,
+                             plan.deleteLocal.size());
     }
 
     return true;
@@ -899,6 +977,10 @@ bool SyncSession::pushOwnTombstones(SyncClient &client,
                                     const SyncPlan &plan,
                                     SyncReport &report)
 {    SYNC_TRACE();
+
+    if(progressCallback)
+        progressCallback(QStringLiteral("Отправляю удаления"), 0,
+                         plan.pushTombs.size());
 
     // Шлем только tombstone'ы из плана: которых нет у хаба и которые
     // не проиграны их более новой правке (там уже стоит download)

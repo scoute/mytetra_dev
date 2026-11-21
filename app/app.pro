@@ -309,6 +309,7 @@ HEADERS+=\
     src/libraries/sync/SyncDiff.h \
     src/libraries/sync/SyncPreview.h \
     src/views/sync/SyncPreviewDialog.h \
+    src/views/sync/SyncProgressWindow.h \
     src/views/sync/SyncMeld.h \
     src/libraries/sync/SyncManifest.h \
     src/libraries/sync/SyncHub.h \
@@ -500,6 +501,7 @@ SOURCES+=\
     src/libraries/sync/SyncDiff.cpp \
     src/libraries/sync/SyncPreview.cpp \
     src/views/sync/SyncPreviewDialog.cpp \
+    src/views/sync/SyncProgressWindow.cpp \
     src/views/sync/SyncMeld.cpp \
     src/libraries/sync/SyncManifest.cpp \
     src/libraries/sync/SyncHub.cpp \

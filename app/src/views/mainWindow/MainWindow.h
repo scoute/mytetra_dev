@@ -83,6 +83,10 @@ public:
     // которые держали старые Record (сессия уже сделала reload модели)
     void finishNativeSyncUi(void);
 
+    // Занятость нативного синка для фонового таймера (окно устройств
+    // не проходит через runToolbarNativeSync и раньше не выставляло флаг)
+    void setNativeSyncBusy(bool busy);
+
     void saveAllState(void);
 
     void reload(void);
@@ -176,6 +180,10 @@ public:
     // дублируются через syncDbg). Headless-путь печатает целиком
     static QString trimSyncReportForDialog(const QString &text);
 
+    // Окно отчёта с выделяемым текстом и кнопкой «Копировать»
+    static void showSyncReport(QWidget *parent, const QString &title,
+                               const QString &text, bool isError);
+
     // Окно предпросмотра синка (категории с действиями + diff).
     // Заполняет decisions выбранными действиями, false — отмена.
     // partial — частичное «Применить» из окна (сессия режет план по id
@@ -245,6 +253,7 @@ private:
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
     // Отдельное меню Sync (не Tools): подсистема синхронизации
     QAction *actionSyncMenuSyncServer=nullptr;
+    QAction *actionSyncMenuSyncNow=nullptr;
     QAction *actionSyncMenuSyncPairing=nullptr;
     QAction *actionSyncMenuSyncDevices=nullptr;
 

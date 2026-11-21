@@ -2010,7 +2010,17 @@ void SyncPreviewDialog::refreshCounter(void)
 
     // Гейт как на мобиле: активно при хоть одном решённом несинкнутом
     if(m_applyButton!=nullptr)
+    {
+        const int left=total-decided;
         m_applyButton->setEnabled(canApply());
+
+        // Честная подпись: при неразобранных это именно «решённое»,
+        // иначе слово «Применить» читалось как «применить всё».
+        if(left>0 && decided>0)
+            m_applyButton->setText(tr("Применить решённое (%1)").arg(decided));
+        else
+            m_applyButton->setText(tr("Применить"));
+    }
 
     // Бублик прогресса + предупреждение про удаления (meld)
     if(m_meldRing!=nullptr)

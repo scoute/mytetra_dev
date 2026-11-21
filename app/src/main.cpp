@@ -472,11 +472,19 @@ int main(int argc, char ** argv)
     walkHistory.clear();
 
 
-    // Если в конфиге настроено, что нужно синхронизироваться при старте
-    // И задана команда синхронизации
+    // Синхронизация при старте. В native-режиме команда не нужна
+    // (поле отключено) — раньше из-за этой проверки галка «Synchronize
+    // at startup» в native-режиме ничего не делала.
     if (mytetraConfig.get_synchroonstartup())
-        if (mytetraConfig.get_synchrocommand().trimmed().length()>0)
+    {
+        if (mytetraConfig.get_syncToolbarNative())
+        {
+            if (mytetraConfig.hasSyncPairing())
+                win.synchronization();
+        }
+        else if (mytetraConfig.get_synchrocommand().trimmed().length()>0)
             win.synchronization();
+    }
 
 
     // Если настроено в конфиге, сразу запрашивается пароль доступа

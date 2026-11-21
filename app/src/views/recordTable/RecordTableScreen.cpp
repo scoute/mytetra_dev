@@ -197,9 +197,12 @@ void RecordTableScreen::setupUI(void)
 
  extraToolsLine=new QToolBar(this);
 
+ // Синк нужен в обоих режимах интерфейса: раньше в mobile-режиме
+ // кнопки не было вообще (только меню устройств/сервер).
+ insertActionAsButton(extraToolsLine, actionSyncro);
+
  if(mytetraConfig.getInterfaceMode()=="desktop")
  {
-   insertActionAsButton(extraToolsLine, actionSyncro);
    insertActionAsButton(extraToolsLine, actionWalkHistoryPrevious);
    insertActionAsButton(extraToolsLine, actionWalkHistoryNext);
  }

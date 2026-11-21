@@ -54,6 +54,17 @@ void AppConfigPage_Synchro::setupUi(void)
     QVBoxLayout *syncToolbarLayout=new QVBoxLayout();
     syncToolbarLayout->addWidget(syncToolbarNative);
     syncToolbarLayout->addWidget(syncToolbarExternal);
+
+    // В native-режиме команда/период — легаси, а старт/выход и фон
+    // работают через встроенный Wi-Fi синк. Иначе страница читается
+    // как «два разных синка в одном месте».
+    QLabel *syncModeNote=new QLabel(this);
+    syncModeNote->setWordWrap(true);
+    syncModeNote->setText(tr("Native mode uses the built-in Wi-Fi sync: "
+                             "startup/exit/background run it without a command. "
+                             "The command below is used only in external mode."));
+    syncToolbarLayout->addWidget(syncModeNote);
+
     syncToolbarBox->setLayout(syncToolbarLayout);
 
     synchroOnStartup=new QCheckBox(this);

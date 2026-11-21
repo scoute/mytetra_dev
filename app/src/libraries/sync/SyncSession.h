@@ -105,6 +105,13 @@ public:
         std::function<bool(const QMap<QString, SyncPreview::Action> &)>;
     bool syncPartialNow(const QMap<QString, SyncPreview::Action> &actions);
 
+    // Прогресс наружу (UI): фаза + счётчики. Вызывается из run()/фаз;
+    // total<=0 — «неизвестно» (indeterminate). UI сам решает, как часто
+    // перерисовываться.
+    using ProgressCallback =
+        std::function<void(const QString &phase, int done, int total)>;
+    void setProgressCallback(ProgressCallback callback);
+
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;
 
@@ -175,6 +182,7 @@ private:
     StrategyResolver strategyResolver;
     DeleteGuard deleteGuard;
     PreviewResolver previewResolver;
+    ProgressCallback progressCallback;
 
     // Контекст частичного синка: валиден только пока run() внутри
     // previewResolver (диалог модален внутри run, клиент тот же)

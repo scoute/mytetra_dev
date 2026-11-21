@@ -15,6 +15,7 @@
 
 #include "SyncDevicesDialog.h"
 #include "SyncPreviewDialog.h"
+#include "SyncProgressWindow.h"
 #include "views/mainWindow/MainWindow.h"
 #include "libraries/sync/SyncIdentity.h"
 #include "libraries/sync/SyncSession.h"
@@ -572,8 +573,8 @@ void SyncDevicesDialog::onSyncNow(void)
     // остальное — явным выбором). Без него встречные правки тихо
     // решались по mtime и пользователь не видел никакого выбора
     session.setPreviewResolver(
-        [this, &target](const SyncPreview::Preview &preview,
-                        SyncPreview::Decisions &decisions) -> bool {
+        [this, &target, &session](const SyncPreview::Preview &preview,
+                                  SyncPreview::Decisions &decisions) -> bool {
             const auto ownText=[this](const SyncPreview::Item &item) -> QString {
                 if(item.isBranch)
                     return QString();
@@ -606,6 +607,13 @@ void SyncDevicesDialog::onSyncNow(void)
                 SyncPreview::Decisions::defaults(),
                 ownText, otherText, this);
 
+            // Та же семантика «Применить», что и из тулбара: неразобранное
+            // не применяется молча, а остаётся на следующий заход.
+            dialog.setPartialSyncer(
+                [&session](const QMap<QString, SyncPreview::Action> &actions) -> bool {
+                    return session.syncPartialNow(actions);
+                });
+
             if(dialog.exec()!=QDialog::Accepted)
                 return false;
 
@@ -626,6 +634,17 @@ void SyncDevicesDialog::onSyncNow(void)
         mw->saveTextarea();
 
     const auto runSession=[&](const QString &pin) -> SyncReport {
+        // Фоновый таймер проверяет этот флаг: без него processEvents
+        // прогресса мог запустить второй синк поверх первого.
+        struct BusyGuard {
+            MainWindow *w;
+            ~BusyGuard() { if(w!=nullptr) w->setNativeSyncBusy(false); }
+        } busyGuard{mw};
+
+        if(mw!=nullptr)
+            mw->setNativeSyncBusy(true);
+
+        SyncProgressWindow progress(session, this);
         const SyncReport r=session.run(target.lastIp,
                                        static_cast<quint16>(target.port),
                                        pin);
@@ -688,8 +707,9 @@ void SyncDevicesDialog::onSyncNow(void)
         if(!steps.isEmpty())
             fail+=QStringLiteral("\n-- steps --\n")+steps;
 
-        QMessageBox::warning(this, tr("Sync"),
-                             MainWindow::trimSyncReportForDialog(fail));
+        MainWindow::showSyncReport(this, tr("Sync"),
+                                   MainWindow::trimSyncReportForDialog(fail),
+                                   true);
         refreshList();
         return;
     }
@@ -709,8 +729,9 @@ void SyncDevicesDialog::onSyncNow(void)
         summary+=tr("\n\nItem errors (skipped items):\n%1")
                  .arg(report.errors.join(QStringLiteral("\n")));
 
-    QMessageBox::information(this, tr("Sync"),
-                               MainWindow::trimSyncReportForDialog(summary));
+    MainWindow::showSyncReport(this, tr("Sync"),
+                               MainWindow::trimSyncReportForDialog(summary),
+                               false);
     refreshList();
 }
 
@@ -899,12 +920,9 @@ void SyncDevicesDialog::joinFresh(void)
 
 void SyncDevicesDialog::showManualResult(const QString &result, bool syncOk)
 {
-    if(!syncOk)
-        QMessageBox::warning(this, tr("Sync"),
-                             MainWindow::trimSyncReportForDialog(result));
-    else
-        QMessageBox::information(this, tr("Sync"),
-                               MainWindow::trimSyncReportForDialog(result));
+    MainWindow::showSyncReport(this, tr("Sync"),
+                               MainWindow::trimSyncReportForDialog(result),
+                               !syncOk);
 
     refreshList();
 }

@@ -400,11 +400,15 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
 
         syncDbg(QStringLiteral("hub: BEFORE save model=%1 tid=%2")
                 .arg(syncPtr(this->model), syncTid()));
+        QElapsedTimer saveTimer;
+        saveTimer.start();
         this->model->save();
-        syncDbg(QStringLiteral("hub: AFTER save, BEFORE reload"));
-        this->model->reload();
-        syncDbg(QStringLiteral("hub: AFTER reload root=%1")
-                .arg(syncPtr(this->model->getRootItemPublic())));
+
+        // Reload после save был лишним: модель уже содержит все принятые
+        // изменения, а полный разбор 7k-заметок на каждом commit — это
+        // секунды ожидания у клиента. Указатели и данные в памяти свежие.
+        syncDbg(QStringLiteral("hub: commit saved in %1 ms")
+                .arg(saveTimer.elapsed()));
 
         QJsonObject answer;
         answer[QStringLiteral("ok")]=true;

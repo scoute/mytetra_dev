@@ -235,8 +235,8 @@ public:
     void set_syncDeviceEnc(const QString &id, bool enc);
     bool get_syncDeviceEnc(const QString &id) const;
 
-    // Отложенный синк ветки на устройство (телефон/выключенный ПК):
-    // хаб отдаёт задание при следующем sync этого устройства.
+    // Отложенный синк ветки на телефон (устройство без входящего
+    // порта): хаб отдаёт задание при следующем sync с телефона.
     // TTL — сутки; taskId защищает от стирания более нового задания
     void set_syncDevicePendingScope(const QString &id,
                                     const QString &branchId,

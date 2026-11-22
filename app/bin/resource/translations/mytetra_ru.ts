@@ -5770,21 +5770,9 @@ Please select single item for moving.</source>
         <translation>Пара не установлена: сначала спарьтесь по одноразовому коду.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1406"/>
-        <source>%1 (deferred branch sync)</source>
-        <translation>%1 (отложенный синк ветки)</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="1410"/>
         <source>Sync branch with:</source>
         <translation>Синхронизировать ветку с:</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1430"/>
-        <source>Deferred branch sync saved for %1.
-It will start automatically on the next sync from that device.</source>
-        <translation>Отложенный синк ветки для %1 сохранён.
-Он начнётся автоматически при следующей синхронизации с этого устройства.</translation>
     </message>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="1471"/>
@@ -5946,6 +5934,18 @@ Please select single item for enabling edit operation.</source>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="1391"/>
         <source>No paired device that accepts incoming sync. A phone cannot receive a desktop-initiated sync: start it on the phone.</source>
         <translation>Нет спаренного устройства, принимающего входящий синк. Телефон не может принять синхронизацию, запущенную с компьютера: запустите её на телефоне.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1406"/>
+        <source>%1 (deferred sync to phone)</source>
+        <translation>%1 (отложенный синк на телефон)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1430"/>
+        <source>Deferred branch sync saved for %1.
+It will start automatically on the next sync from that phone.</source>
+        <translation>Отложенный синк ветки для %1 сохранён.
+Он начнётся автоматически при следующей синхронизации с этого телефона.</translation>
     </message>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="1939"/>

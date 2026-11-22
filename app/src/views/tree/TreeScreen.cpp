@@ -1403,7 +1403,7 @@ void TreeScreen::syncBranch(void)
     for(const SyncTarget &candidate : targets)
       names << (candidate.canServe
                 ? candidate.name
-                : tr("%1 (deferred branch sync)").arg(candidate.name));
+                : tr("%1 (deferred sync to phone)").arg(candidate.name));
 
     bool ok=false;
     const QString chosen=QInputDialog::getItem(this, tr("Sync"),
@@ -1428,7 +1428,7 @@ void TreeScreen::syncBranch(void)
     QMessageBox::information(
         this, tr("Sync"),
         tr("Deferred branch sync saved for %1.\n"
-           "It will start automatically on the next sync from that device.")
+           "It will start automatically on the next sync from that phone.")
             .arg(target.name));
     return;
   }

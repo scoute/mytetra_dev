@@ -96,6 +96,10 @@ qmake .
 make
 ```
 
+Файлы переводов `.qm` в репозитории не хранятся: при сборке `qmake`
+запускает `lrelease` и встраивает их из `app/bin/resource/translations/*.ts`.
+Нужна утилита `lrelease` из состава Qt (пакет `qttools5-dev-tools` в Debian/Ubuntu).
+
 Установка проводится командой:
 ```
 make install

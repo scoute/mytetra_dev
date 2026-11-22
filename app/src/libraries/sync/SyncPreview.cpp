@@ -186,8 +186,20 @@ bool Preview::hasDestructive(void) const
 
 bool Preview::needsAttention(void) const
 {
-    return count(Category::Rename)>0 || count(Category::Edit)>0
-        || hasDestructive();
+    if(count(Category::Rename)>0 || count(Category::Edit)>0
+        || hasDestructive())
+        return true;
+
+    // Новая ветка с сервера — формально безопасное добавление, но это
+    // может быть целое чужое дерево. Показываем, что именно приезжает:
+    // «затирать нечего» здесь не значит «решать нечего».
+    for(const Item &item : items)
+    {
+        if(item.category==Category::Create && item.isBranch && !item.fromLocal)
+            return true;
+    }
+
+    return false;
 }
 
 

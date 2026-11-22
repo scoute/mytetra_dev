@@ -114,6 +114,30 @@ int main(void)
         CHECK(out.uploadNotes.contains(QStringLiteral("N2")));
     }
 
+    // --- Новая ветка с сервера требует предпросмотра ---
+    {
+        SyncManifest local;
+        local.branches.insert(QStringLiteral("A"), branch("A", ""));
+
+        SyncManifest remote;
+        remote.branches.insert(QStringLiteral("A"), branch("A", ""));
+        remote.branches.insert(QStringLiteral("B"), branch("B", ""));
+        remote.notes.insert(QStringLiteral("N1"), note("N1", "B"));
+
+        SyncPlan plan;
+        plan.downloadBranches << QStringLiteral("B");
+        plan.downloadNotes << QStringLiteral("N1");
+
+        const Preview preview=classify(plan, local, remote);
+        CHECK(preview.needsAttention());
+
+        // Новая заметка в уже существующей ветке — по-прежнему молча
+        SyncPlan notesOnly;
+        notesOnly.downloadNotes << QStringLiteral("N1");
+        const Preview notesPreview=classify(notesOnly, local, remote);
+        CHECK(!notesPreview.needsAttention());
+    }
+
     // --- Обычная правка ветки не должна тянуть чужие заметки ---
     {
         SyncManifest local;

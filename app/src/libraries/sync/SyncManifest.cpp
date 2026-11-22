@@ -133,7 +133,24 @@ static void orderBranchesParentsFirst(
 }
 
 
-static void collectBranches(const TreeItem *item, const QString &parentId,
+static SyncBranchInfo makeBranchInfo(TreeItem *item,
+                                     SyncSidecar &sidecar)
+{
+    SyncBranchInfo info;
+    info.id=item->getId();
+    info.parentId=item->parent()!=nullptr ? item->parent()->getId() : QString();
+
+    if(info.parentId==QStringLiteral("0"))
+        info.parentId.clear();
+
+    info.fields=item->getAllFieldsDirect();
+    info.hash=SyncSidecar::hashBranchFields(info.fields, info.parentId);
+    info.mtime=sidecar.hasEntry(info.id) ? sidecar.entry(info.id).mtime : 0;
+    return info;
+}
+
+
+static void collectBranches(TreeItem *item, const QString &parentId,
                             SyncManifest &out, SyncSidecar &sidecar)
 {
     if(item==nullptr)
@@ -177,12 +194,12 @@ static void collectBranches(const TreeItem *item, const QString &parentId,
 // на запись: O(n^2), минуты и 100% CPU на десятках тысяч записей.
 // Клиент отваливался по таймауту, а сервер продолжал молотить
 // уже мёртвому сокету
-static void collectNotes(TreeItem *branchItem,
-                         const QString &branchId,
-                         SyncManifest &out,
-                         SyncSidecar &sidecar,
-                         const QString &tetradir,
-                         int &skippedEmpty)
+static void collectNotesForBranch(TreeItem *branchItem,
+                                 const QString &branchId,
+                                 SyncManifest &out,
+                                 SyncSidecar &sidecar,
+                                 const QString &tetradir,
+                                 int &skippedEmpty)
 {
     RecordTableData *table=branchItem->recordtableGetTableData();
 
@@ -290,6 +307,19 @@ static void collectNotes(TreeItem *branchItem,
         }
     }
 
+}
+
+
+static void collectNotes(TreeItem *branchItem,
+                         const QString &branchId,
+                         SyncManifest &out,
+                         SyncSidecar &sidecar,
+                         const QString &tetradir,
+                         int &skippedEmpty)
+{
+    collectNotesForBranch(branchItem, branchId, out, sidecar, tetradir,
+                          skippedEmpty);
+
     for(int c=0; c<branchItem->childCount(); ++c)
     {
         TreeItem *child=branchItem->child(c);
@@ -298,9 +328,29 @@ static void collectNotes(TreeItem *branchItem,
     }
 }
 
+
+static void collectScopeBranch(TreeItem *item, SyncManifest &out,
+                               SyncSidecar &sidecar,
+                               const QString &tetradir,
+                               int &skippedEmpty)
+{
+    const QString id=item->getId();
+
+    if(!id.isEmpty() && id!=QStringLiteral("0"))
+        out.branches.insert(id, makeBranchInfo(item, sidecar));
+
+    collectNotesForBranch(item, id, out, sidecar, tetradir, skippedEmpty);
+
+    for(int c=0; c<item->childCount(); ++c)
+        collectScopeBranch(item->child(c), out, sidecar, tetradir,
+                           skippedEmpty);
+}
+
+
 SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                                         SyncSidecar &sidecar,
-                                        const QString &tetradir)
+                                        const QString &tetradir,
+                                        const QString &scopeRootId)
 {    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
 
     SyncManifest out;
@@ -311,12 +361,19 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
     QElapsedTimer timer;
     timer.start();
 
-    // Ветки обходом от корня
-    collectBranches(model->getRootItemPublic(), QString(), out, sidecar);
+    QString scope=scopeRootId;
 
-    // Заметки — одним обходом дерева (см. collectNotes выше):
-    // ветка записи известна из обхода, отдельных поисков нет
+    if(scope==QStringLiteral("0"))
+        scope.clear();
+
+    if(scope.isEmpty())
     {
+        // Ветки обходом от корня
+        collectBranches(const_cast<TreeItem *>(model->getRootItemPublic()),
+                        QString(), out, sidecar);
+
+        // Заметки — одним обходом дерева (см. collectNotes выше):
+        // ветка записи известна из обхода, отдельных поисков нет
         int skippedEmpty=0;
         // Обход только читает модель (как раньше), смена константности —
         // чтобы не плодить const-версии доступа к таблицам
@@ -328,9 +385,53 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
             qDebug() << "SyncManifest: skipped records without id:"
                      << skippedEmpty << "(such notes stay local-only, "
                      "recreate them to sync)";
-    }
 
-    out.tombstones=sidecar.tombstones();
+        out.tombstones=sidecar.tombstones();
+    }
+    else
+    {
+        // Scoped manifest: выбранная ветка + потомки + заметки в них,
+        // плюс предки только для размещения. Полный обход не нужен:
+        // на больших базах это и есть основное время манифеста.
+        TreeItem *scopeItem=model->getItemById(scope);
+        const QMap<QString, qint64> allTombs=sidecar.tombstones();
+
+        if(scopeItem==nullptr)
+        {
+            // Ветки у этой стороны нет: отдаем только tombstone (если
+            // она удалена), чтобы клиент понял удаление/создание
+            if(allTombs.contains(scope))
+                out.tombstones.insert(scope, allTombs.value(scope));
+        }
+        else
+        {
+            // Предки — только цепочкой вверх, заметки предков не берем
+            for(TreeItem *ancestor=scopeItem->parent(); ancestor!=nullptr;
+                ancestor=ancestor->parent())
+            {
+                const QString id=ancestor->getId();
+
+                if(id.isEmpty() || id==QStringLiteral("0"))
+                    break;
+
+                out.branches.insert(id, makeBranchInfo(ancestor, sidecar));
+            }
+
+            int skippedEmpty=0;
+            collectScopeBranch(scopeItem, out, sidecar, tetradir,
+                               skippedEmpty);
+
+            if(skippedEmpty>0)
+                qDebug() << "SyncManifest: skipped records without id:"
+                         << skippedEmpty << "(scoped build)";
+
+            // Tombstones — только для id внутри scope/предков
+            for(auto it=allTombs.constBegin(); it!=allTombs.constEnd(); ++it)
+                if(out.branches.contains(it.key())
+                   || out.notes.contains(it.key()))
+                    out.tombstones.insert(it.key(), it.value());
+        }
+    }
 
     // Сколько чего собрали и за сколько: вис манифеста раньше ловили
     // только гаданием (был criticalError на вычислимых полях)
@@ -338,6 +439,7 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
         qDebug() << "SyncManifest: built branches=" << out.branches.size()
                  << "notes=" << out.notes.size()
                  << "tombs=" << out.tombstones.size()
+                 << "scope=" << scope
                  << "in" << timer.elapsed() << "ms";
 
     return out;

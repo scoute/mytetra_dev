@@ -750,16 +750,32 @@ QString SyncClient::pairWithCode(const QString &host, quint16 port,
 }
 
 
-SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port)
+QString SyncClient::lastManifestScope(void) const
+{
+    return manifestScopeText;
+}
+
+
+SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port,
+                                       const QString &scopeRootId)
 {    SYNC_TRACE_EXTRA(host);
+
+    manifestScopeText.clear();
+
+    QJsonObject request;
+
+    if(!scopeRootId.isEmpty() && scopeRootId!=QStringLiteral("0"))
+        request[QStringLiteral("scope")]=scopeRootId;
 
     bool ok=false;
     const QJsonObject answer=postData(
         host, port, QStringLiteral("POST /manifest"),
-        QStringLiteral("/manifest"), QJsonObject(), ok);
+        QStringLiteral("/manifest"), request, ok);
 
     if(!ok)
         return SyncManifest();
+
+    manifestScopeText=answer.value(QStringLiteral("scope")).toString();
 
     // Сервер отклонил (not-paired/auth-failed): пустой манифест без ошибки
     // в lastError звал бы заливку всего локального — фиксируем отказ

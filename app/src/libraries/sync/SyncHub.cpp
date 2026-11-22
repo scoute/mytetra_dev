@@ -158,16 +158,28 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         if(!p.ok)
             return p.error;
 
+        QString scope=p.body.value(QStringLiteral("scope")).toString();
+
+        if(scope==QStringLiteral("0"))
+            scope.clear();
+
         QElapsedTimer mt; mt.start();
         const SyncManifest manifest=
             SyncManifestBuilder::build(this->model, *this->sidecar,
-                                       this->tetradir);
+                                       this->tetradir, scope);
         const qint64 buildMs=mt.restart();
-        const QJsonObject mjson=manifest.toJson();
+        QJsonObject mjson=manifest.toJson();
+
+        // Эхо scope: клиент понимает, что старый сервер поле ignored
+        // и нужно строить полный локальный манифест/резать план
+        if(!scope.isEmpty())
+            mjson[QStringLiteral("scope")]=scope;
+
         qDebug() << "SyncHub: manifest built notes="
                  << manifest.notes.size() << "branches="
                  << manifest.branches.size() << "tombs="
-                 << manifest.tombstones.size() << "in" << buildMs
+                 << manifest.tombstones.size() << "scope=" << scope
+                 << "in" << buildMs
                  << "ms + toJson" << mt.elapsed() << "ms";
         return finish(p, mjson);
     });

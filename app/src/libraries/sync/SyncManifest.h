@@ -85,7 +85,8 @@ public:
     // текстов и аттачей при досчете хешей). isHub ни на что не влияет
     // на построении, нужен только на сверке
     static SyncManifest build(KnowTreeModel *model, SyncSidecar &sidecar,
-                              const QString &tetradir);
+                              const QString &tetradir,
+                              const QString &scopeRootId=QString());
 
     // Сверить локальный с удаленным. isHub=true — мы хаб пары и наши
     // равные mtime побеждают (проигравший все равно в бэкап и в отчет)

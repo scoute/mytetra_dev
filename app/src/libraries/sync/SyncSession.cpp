@@ -241,7 +241,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // таймаут (дефолтные 15с рвут даже быстрый линк на 100k)
     QElapsedTimer mt; mt.start();
     client.setTimeoutMs(120000);
-    SyncManifest remote=client.fetchManifest(host, port);
+    SyncManifest remote=client.fetchManifest(host, port, scope);
     client.setTimeoutMs(15000);
     addLog(QStringLiteral("manifest fetch: notes=%1 branches=%2 in %3 ms")
            .arg(remote.notes.size()).arg(remote.branches.size())
@@ -257,9 +257,16 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     if(progressCallback)
         progressCallback(QStringLiteral("Строю локальный манифест"), 0, 0);
 
+    // Новый сервер вернул только scope и эхом подтвердил это.
+    // Старый сервер поле ignored — тогда локальный манифест полный,
+    // а план режется старым SyncScope::slice (совместимость)
+    const bool remoteScoped=!scope.isEmpty()
+                            && client.lastManifestScope()==scope;
+
     SyncManifest local=
         SyncManifestBuilder::build(model, SyncSidecar::instance(),
-                                   tetradir);
+                                   tetradir,
+                                   remoteScoped ? scope : QString());
     addLog(QStringLiteral("manifest local build: notes=%1 branches=%2 in %3 ms")
            .arg(local.notes.size()).arg(local.branches.size())
            .arg(mt.elapsed()));

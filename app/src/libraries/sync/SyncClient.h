@@ -40,7 +40,10 @@ public:
 
     // Забрать чужой манифест. Пустой (без веток/заметок) при ошибке сети —
     // вызывающий проверяет отдельно через lastError()
-    SyncManifest fetchManifest(const QString &host, quint16 port);
+    SyncManifest fetchManifest(const QString &host, quint16 port,
+                               const QString &scopeRootId=QString());
+    // Эхо scope из ответа: пусто/не равно — старый сервер поле ignored
+    QString lastManifestScope(void) const;
 
     // Забрать заметку целиком: поля, блоб текста (как лежит), аттачи.
     // Пустой объект при ошибке, см. lastError()
@@ -141,6 +144,7 @@ private:
     AppConfig *config=nullptr;
     int timeoutMs=15000;
     QString peerSecretText;
+    QString manifestScopeText;
     QString peerSessionText;   // enc-сессия из hello
     QString peerDeviceIdText;  // id сервера (для AAD/ответа)
     bool peerEnc=false;        // сервер подтвердил enc

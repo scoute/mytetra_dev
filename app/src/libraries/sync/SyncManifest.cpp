@@ -294,13 +294,27 @@ static void collectNotesForBranch(TreeItem *branchItem,
                 info.mtime=e.mtime;
 
                 // Хеш из сайдкара, но если его нет (старая запись) — живьем
-                info.hash=e.hash.isEmpty() ? SyncManifestBuilder::sha256File(textPath) : e.hash;
+                // и сразу запоминаем: следующий манифест уже без чтения
+                if(e.hash.isEmpty())
+                {
+                    info.hash=SyncManifestBuilder::sha256File(textPath);
+
+                    if(!info.hash.isEmpty())
+                        sidecar.setEntry(id, info.mtime, info.hash,
+                                         QStringLiteral("note"));
+                }
+                else
+                    info.hash=e.hash;
             }
             else
             {
                 info.hash=SyncManifestBuilder::sha256File(textPath);
                 info.mtime=QFileInfo(textPath).lastModified()
                              .toMSecsSinceEpoch();
+
+                if(!info.hash.isEmpty())
+                    sidecar.setEntry(id, info.mtime, info.hash,
+                                     QStringLiteral("note"));
             }
 
             out.notes.insert(id, info);
@@ -352,6 +366,12 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
                                         const QString &tetradir,
                                         const QString &scopeRootId)
 {    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
+
+    // Новые/старые записи без entry: посчитанные хеши складываем в
+    // журнал одним save в конце. Иначе первый манифест хеширует всё,
+    // а каждый следующий — снова, потому что entry так и не появился
+    const SyncSidecar::BulkGuard sidecarBulk;
+    Q_UNUSED(sidecarBulk);
 
     SyncManifest out;
 

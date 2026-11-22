@@ -193,6 +193,7 @@ void TreeScreen::setupActions(void)
  // Синхронизация ветки со всем поддеревом (тот же раннер и то же
  // окно предпросмотра, что у обычного синка, но план срезан по scope)
  ac = new QAction(tr("Синхронизировать ветку"), this);
+ ac->setIcon(QIcon(":/resource/pic/synchronization.svg"));
  ac->setToolTip(tr("Синхронизировать ветку со всем поддеревом"));
  connect(ac, &QAction::triggered, this, &TreeScreen::syncBranch);
  actionList["syncBranch"]=ac;

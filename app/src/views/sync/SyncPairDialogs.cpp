@@ -238,21 +238,21 @@ bool askCertTrust(QWidget *parent, const QString &host, quint16 port,
                   const QString &fingerprint)
 {
     QMessageBox box(parent);
-    box.setWindowTitle(QStringLiteral("TLS certificate"));
+    box.setWindowTitle(QStringLiteral("Сертификат TLS"));
     box.setIcon(QMessageBox::Warning);
     box.setText(QStringLiteral(
-        "The TLS certificate of %1:%2 is self-signed or not trusted.\n\n"
-        "Fingerprint (SHA-256):\n%3\n\n"
-        "Compare it with the fingerprint shown on the server "
-        "(QR / devices window). Trust this certificate?")
+        "Сертификат TLS для %1:%2 самоподписанный или не доверенный.\n\n"
+        "Отпечаток (SHA-256):\n%3\n\n"
+        "Сравните его с отпечатком на сервере "
+        "(QR / окно устройств). Доверять этому сертификату?")
         .arg(host).arg(port)
         .arg(SyncTls::formatFingerprint(fingerprint)));
     box.setTextInteractionFlags(Qt::TextSelectableByMouse
                                 | Qt::TextSelectableByKeyboard);
 
-    QPushButton *trust=box.addButton(QStringLiteral("Trust"),
+    QPushButton *trust=box.addButton(QStringLiteral("Доверять"),
                                      QMessageBox::AcceptRole);
-    QPushButton *cancel=box.addButton(QStringLiteral("Cancel"),
+    QPushButton *cancel=box.addButton(QStringLiteral("Отмена"),
                                       QMessageBox::RejectRole);
     box.setDefaultButton(cancel);
     box.exec();

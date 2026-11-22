@@ -127,6 +127,10 @@ bool SyncIdentity::adoptPairingSecret(AppConfig *config, const QString &peerId,
 
     config->set_syncDeviceSecret(peerId, secret);
 
+    // Явное пересоздание пары сбрасывает липкий enc: следующий hello
+    // заново договорится с сервером (новый — enc, старый — plain)
+    config->set_syncDeviceEnc(peerId, false);
+
     if(firstEver)
         config->set_syncPairingSecret(secret);
 

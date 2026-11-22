@@ -307,19 +307,16 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
             config->set_syncAskStrategy(false);
 
             // Деструктивная стратегия рассчитана на всю базу (wipe/reset).
-            // Для синка ветки её молчаливое применение стирало бы всё —
-            // отказываем, флаг «спросить» оставляем на полный синк.
+            // Синк ветки не должен стирать базу: вместо ошибки переходим
+            // к обычному двустороннему слиянию в скоупе.
             if(!scope.isEmpty()
                && (strategy==SyncStrategy::MergeByName
                    || strategy==SyncStrategy::PullFromHub
                    || strategy==SyncStrategy::PushToHub))
             {
-                addLog(QStringLiteral("scope %1: destructive strategy "
-                                       "refused, full base required").arg(scope));
-                report.error=QStringLiteral("Branch sync cannot replace the whole base. "
-                                            "Run a full sync to use this strategy.");
-                report.errorCode=QStringLiteral("scope-strategy");
-                return report;
+                addLog(QStringLiteral("scope %1: destructive strategy -> merge")
+                       .arg(scope));
+                strategy=SyncStrategy::Merge;
             }
 
             if(strategy==SyncStrategy::MergeByName)

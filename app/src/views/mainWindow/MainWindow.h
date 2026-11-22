@@ -136,6 +136,7 @@ private slots:
     // Попап входящего запроса на пару: «такой-то девайс хочет pair»
     // с вариантами Принять / Отказать / Окно устройств
     void onSyncPairRequest(const QString &deviceId, const QString &deviceName);
+    void onSyncBlockPairingToggled(bool checked);
 
 
     // Headless sync-режим определяется флагами запуска, а не состоянием:
@@ -256,6 +257,7 @@ private:
     QAction *actionToolsMenuPreferences; // Вызов окна настроек, используется в десктопе
     // Отдельное меню Sync (не Tools): подсистема синхронизации
     QAction *actionSyncMenuSyncServer=nullptr;
+    QAction *actionSyncMenuBlockPairing=nullptr;
     QAction *actionSyncMenuSyncNow=nullptr;
     QAction *actionSyncMenuLastRun=nullptr;
     QAction *actionSyncMenuSyncPairing=nullptr;
@@ -267,6 +269,8 @@ private:
     // PIN, с которым создан текущий хаб: при повторном startSyncServer
     // с другим PIN/портом его надо пересоздать, а не молча оставить старый
     QString m_syncHubPin;
+    QString m_syncHubTlsCert;
+    QString m_syncServerError;
     static const quint16 syncDefaultPort;
 
     // Попап pair-запроса уже показан (не плодим окна поверх друг друга)

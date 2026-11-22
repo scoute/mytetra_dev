@@ -1,6 +1,8 @@
 #ifndef SYNCDEVICESDIALOG_H
 #define SYNCDEVICESDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
 
 #include "models/appConfig/AppConfig.h"
@@ -12,6 +14,7 @@ class QLineEdit;
 class QSpinBox;
 class QPushButton;
 class QTimer;
+class SyncClient;
 
 // Окно Sync devices: известные пиры (кто стучался в hello / к кому ходили).
 // Кнопки действий напротив каждого: Sync now, Pair, Unpair, Remove.
@@ -24,6 +27,7 @@ public:
 
     explicit SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
                                const QString &tetradir,
+                               quint16 serverPort=47777,
                                QWidget *parent=nullptr);
 
 private slots:
@@ -40,6 +44,8 @@ private slots:
     void onUnpair(void);
     void onRemove(void);
     void onResetAll(void);
+    void onBlockPairingToggled(bool checked);
+    void onGenerateSelfSigned(void);
 
 private:
 
@@ -47,6 +53,11 @@ private:
     // локальная пара/группа будут забыты, дальше нужен код сервера
     bool confirmJoin(const QString &peerName,
                      const QString &peerGroup=QString());
+
+    // Настроить исходящий SyncClient: режим TLS, пин сертификата,
+    // диалог доверия (self-signed/private CA)
+    void configureTls(SyncClient &client, const QString &host,
+                      quint16 port, bool tls);
 
     // Свое состояние пары в том же окне (без отдельных команд)
     void refreshSelf(void);
@@ -72,6 +83,7 @@ private:
     KnowTreeModel *model=nullptr;
     AppConfig *config=nullptr;
     QString tetradir;
+    quint16 serverPort=47777;
 
     QTableWidget *table=nullptr;
     QLabel *fingerprintLabel=nullptr;
@@ -81,6 +93,17 @@ private:
     QSpinBox *portSpin=nullptr;
     QPushButton *scanButton=nullptr;
     QPushButton *syncButton=nullptr;
+    QCheckBox *blockPairingCheck=nullptr;
+    QCheckBox *bindIpCheck=nullptr;
+    QCheckBox *tlsServerCheck=nullptr;
+    QLineEdit *advertiseHostEdit=nullptr;
+    QPushButton *tlsCertButton=nullptr;
+    QPushButton *tlsKeyButton=nullptr;
+    QPushButton *tlsGenerateButton=nullptr;
+    QLabel *tlsCertLabel=nullptr;
+    QLabel *tlsKeyLabel=nullptr;
+    QLabel *tlsFingerprintLabel=nullptr;
+    QComboBox *tlsClientModeCombo=nullptr;
     QPushButton *pairButton=nullptr;
     QPushButton *acceptButton=nullptr;
     QPushButton *unpairButton=nullptr;

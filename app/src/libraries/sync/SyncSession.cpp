@@ -57,6 +57,12 @@ void SyncSession::setProgressCallback(ProgressCallback callback)
 }
 
 
+void SyncSession::setTlsTrustResolver(TlsTrustResolver resolver)
+{
+    tlsTrustResolver=resolver;
+}
+
+
 
 
 
@@ -112,6 +118,12 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
 
     SyncReport report;
     SyncClient client(config);
+    client.setTlsMode(static_cast<SyncClient::TlsMode>(
+        config->get_syncTlsClientMode()));
+    client.setTlsPin(config->get_syncTlsPin(host, port));
+
+    if(tlsTrustResolver)
+        client.setTlsTrustCallback(tlsTrustResolver);
 
     // Scope поддерева: корень псевдо-элемента "0" — тот же весь синк
     QString scope=scopeRootId;

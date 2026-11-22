@@ -7,3 +7,4 @@ sync_scope_test
 sync_pair_crypto_test
 monocypher_test.o
 sync_pairing_test
+sync_data_crypto_test

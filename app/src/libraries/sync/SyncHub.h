@@ -32,6 +32,12 @@ public:
     bool isRunning(void) const;
     quint16 port(void) const;
 
+    bool setTls(const QString &certPath, const QString &keyPath,
+                QString *error=nullptr);
+    void clearTls(void);
+    bool tlsEnabled(void) const;
+    QString tlsFingerprint(void) const;
+
     // Мы хаб этой пары (в MVP всегда true на слушающей стороне).
     // Влияет только на разрешение равных mtime при сверке
     void setHub(bool hub);

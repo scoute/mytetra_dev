@@ -127,7 +127,8 @@ int main(void)
         const QString peerId=QStringLiteral("client-live");
         const qint64 now=1000000000;
         qint64 expiresAt=0;
-        const QString liveCode=SyncPairing::ensureCode(peerId, now, &expiresAt);
+        const QString liveCode=SyncPairing::ensureCode(peerId, now, QStringLiteral("127.0.0.1"),
+                                false, &expiresAt);
 
         CHECK(SyncPairCrypto::isValidCode(liveCode));
         CHECK(expiresAt>now);
@@ -141,7 +142,8 @@ int main(void)
             ephPub, nonce);
 
         const QJsonObject answer=SyncPairing::handleBegin(
-            serverId, begin, now, getPending, setPending);
+            serverId, begin, now, QStringLiteral("127.0.0.1"), false,
+            getPending, setPending);
 
         CHECK(answer.value(QStringLiteral("ok")).toBool(false));
 
@@ -165,7 +167,8 @@ int main(void)
                 peerId, QStringLiteral("Live client"), serverId, liveCode,
                 eph2Pub, nonce2);
             const QJsonObject answer2=SyncPairing::handleBegin(
-                serverId, begin2, now+1000, getPending, setPending);
+                serverId, begin2, now+1000, QStringLiteral("127.0.0.1"),
+                false, getPending, setPending);
 
             CHECK(answer2.value(QStringLiteral("ok")).toBool(false));
 
@@ -179,7 +182,7 @@ int main(void)
         // Одноразовость: погасили код — повтор отклонён
         SyncPairing::consumeCode(peerId);
         CHECK(SyncPairing::handleBegin(serverId, begin, now+2000,
-              getPending, setPending)
+              QStringLiteral("127.0.0.1"), false, getPending, setPending)
               .value(QStringLiteral("error")).toString()
               ==QStringLiteral("pair-code-missing"));
     }
@@ -195,7 +198,7 @@ int main(void)
 
         const QString peerId=QStringLiteral("client-expire");
         const qint64 now=2000000000;
-        const QString liveCode=SyncPairing::ensureCode(peerId, now);
+        const QString liveCode=SyncPairing::ensureCode(peerId, now, QStringLiteral("127.0.0.1"), false);
 
         QByteArray priv, pub;
         CHECK(SyncPairCrypto::generateX25519(priv, pub));
@@ -205,7 +208,7 @@ int main(void)
 
         const QJsonObject answer=SyncPairing::handleBegin(
             serverId, begin, now+SyncPairing::CodeTtlMs+1,
-            getPending, setPending);
+            QStringLiteral("127.0.0.1"), false, getPending, setPending);
 
         CHECK(answer.value(QStringLiteral("error")).toString()
               ==QStringLiteral("pair-code-expired"));
@@ -222,7 +225,8 @@ int main(void)
 
         const QString peerId=QStringLiteral("client-bruteforce");
         const qint64 now=3000000000;
-        CHECK(!SyncPairing::ensureCode(peerId, now).isEmpty());
+        CHECK(!SyncPairing::ensureCode(peerId, now,
+              QStringLiteral("127.0.0.1"), false).isEmpty());
 
         QByteArray priv, pub;
         CHECK(SyncPairCrypto::generateX25519(priv, pub));
@@ -238,7 +242,8 @@ int main(void)
         for(int i=0; i<SyncPairing::MaxFailedAttempts; ++i)
         {
             const QJsonObject answer=SyncPairing::handleBegin(
-                serverId, wrong, now+i, getPending, setPending);
+                serverId, wrong, now+i, QStringLiteral("127.0.0.1"),
+                false, getPending, setPending);
             lastError=answer.value(QStringLiteral("error")).toString();
         }
 
@@ -246,9 +251,45 @@ int main(void)
 
         // Заблокирован: новый код не выдаётся, пока не истечёт lockout
         qint64 lockedUntil=0;
-        CHECK(SyncPairing::ensureCode(peerId, now+10, nullptr, &lockedUntil)
+        CHECK(SyncPairing::ensureCode(peerId, now+10, QStringLiteral("127.0.0.1"),
+                                    false, nullptr, &lockedUntil)
               .isEmpty());
         CHECK(lockedUntil>now+10);
+    }
+
+    // --- привязка кода к IP ---
+    {
+        SyncPairing::resetForTests();
+        QMap<QString, QString> pending;
+        const auto getPending=[&](const QString &id) { return pending.value(id); };
+        const auto setPending=[&](const QString &id, const QString &s) {
+            pending.insert(id, s);
+        };
+
+        const QString peerId=QStringLiteral("client-ipbind");
+        const qint64 now=4000000000;
+        const QString liveCode=SyncPairing::ensureCode(
+            peerId, now, QStringLiteral("10.0.0.5"), true);
+        CHECK(!liveCode.isEmpty());
+
+        QByteArray priv, pub;
+        CHECK(SyncPairCrypto::generateX25519(priv, pub));
+        const QByteArray nonce=SyncPairCrypto::randomBytes(16);
+        const QJsonObject begin=SyncPairing::buildBegin(
+            peerId, QStringLiteral("IP bind"), serverId, liveCode, pub, nonce);
+
+        // Другой IP — отказ, код не выдаёт секрет
+        const QJsonObject wrongIp=SyncPairing::handleBegin(
+            serverId, begin, now, QStringLiteral("10.0.0.6"), true,
+            getPending, setPending);
+        CHECK(wrongIp.value(QStringLiteral("error")).toString()
+              ==QStringLiteral("pair-ip-mismatch"));
+
+        // Тот же IP — ок
+        const QJsonObject okIp=SyncPairing::handleBegin(
+            serverId, begin, now, QStringLiteral("10.0.0.5"), true,
+            getPending, setPending);
+        CHECK(okIp.value(QStringLiteral("ok")).toBool(false));
     }
 
     if(failures==0)

@@ -1,4 +1,13 @@
+#include <QSignalBlocker>
 #include <QTableWidget>
+#include <QCheckBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QHostInfo>
+#include <QSslCertificate>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QHeaderView>
@@ -21,6 +30,7 @@
 #include "SyncPairDialogs.h"
 #include "libraries/sync/SyncPairCrypto.h"
 #include "libraries/sync/SyncPairing.h"
+#include "libraries/sync/SyncTls.h"
 #include "SyncPreviewDialog.h"
 #include "SyncProgressWindow.h"
 #include "views/mainWindow/MainWindow.h"
@@ -36,14 +46,16 @@
 
 
 SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
-                                     const QString &tetradir, QWidget *parent)
+                                     const QString &tetradir,
+                                     quint16 serverPort, QWidget *parent)
     : QDialog(parent),
       model(model),
       config(config),
-      tetradir(tetradir)
+      tetradir(tetradir),
+      serverPort(serverPort)
 {
     setWindowTitle(tr("Sync devices"));
-    resize(640, 420);
+    resize(720, 640);
 
     QVBoxLayout *layout=new QVBoxLayout(this);
 
@@ -82,6 +94,129 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     fingerprintLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     fingerprintLabel->setWordWrap(true);
     layout->addWidget(fingerprintLabel);
+
+    // --- настройки серверной стороны ---
+    QHBoxLayout *serverOpts=new QHBoxLayout();
+    blockPairingCheck=new QCheckBox(tr("Block new pairings"), this);
+    blockPairingCheck->setToolTip(
+        tr("Refuse new devices. Existing pairs keep syncing. "
+           "Turning it on cancels pairing in progress (codes and "
+           "pending secrets)."));
+    bindIpCheck=new QCheckBox(tr("Bind code to client IP"), this);
+    bindIpCheck->setToolTip(
+        tr("The one-time code works only from the IP that requested it. "
+           "Useful on a LAN where each device has its own IP. "
+           "Do NOT enable behind NAT/reverse proxy (shared IP) or if "
+           "the client's IP can change between requesting the code "
+           "and pair-begin."));
+    serverOpts->addWidget(blockPairingCheck);
+    serverOpts->addWidget(bindIpCheck);
+    serverOpts->addStretch();
+    layout->addLayout(serverOpts);
+
+    QLabel *serverHint=new QLabel(this);
+    serverHint->setWordWrap(true);
+    serverHint->setStyleSheet(QStringLiteral("color: #9E9E9E;"));
+    serverHint->setText(tr("Block — сервер не принимает новые устройства; "
+                           "старые пары синкаются, незавершённая пара "
+                           "отменяется.\n"
+                           "Bind IP — код работает только с того IP, "
+                           "который его запросил (LAN с уникальными IP; "
+                           "не включайте за NAT/прокси и при смене IP)."));
+    layout->addWidget(serverHint);
+
+    connect(blockPairingCheck, &QCheckBox::toggled,
+            this, &SyncDevicesDialog::onBlockPairingToggled);
+    connect(bindIpCheck, &QCheckBox::toggled, this, [this](bool checked) {
+        this->config->set_syncPairBindIp(checked);
+    });
+
+    // --- TLS и адрес для QR ---
+    QGroupBox *tlsBox=new QGroupBox(tr("TLS / advertised address"), this);
+    QGridLayout *tlsGrid=new QGridLayout(tlsBox);
+
+    tlsServerCheck=new QCheckBox(tr("Use TLS (HTTPS) for sync server"), tlsBox);
+    tlsServerCheck->setToolTip(
+        tr("The port speaks TLS only. For a public server use a trusted "
+           "certificate (Let's Encrypt fullchain.pem/privkey.pem). "
+           "For LAN you can generate a self-signed one and confirm its "
+           "fingerprint on the client."));
+    tlsGrid->addWidget(tlsServerCheck, 0, 0, 1, 3);
+
+    tlsGrid->addWidget(new QLabel(tr("Advertised host (QR/TLS):"), tlsBox),
+                       1, 0);
+    advertiseHostEdit=new QLineEdit(tlsBox);
+    advertiseHostEdit->setPlaceholderText(
+        tr("empty = primary IPv4; public server: domain from the cert"));
+    tlsGrid->addWidget(advertiseHostEdit, 1, 1, 1, 2);
+
+    tlsCertButton=new QPushButton(tr("Certificate..."), tlsBox);
+    tlsKeyButton=new QPushButton(tr("Private key..."), tlsBox);
+    tlsGenerateButton=new QPushButton(tr("Generate self-signed..."), tlsBox);
+    tlsGrid->addWidget(tlsCertButton, 2, 0);
+    tlsGrid->addWidget(tlsKeyButton, 2, 1);
+    tlsGrid->addWidget(tlsGenerateButton, 2, 2);
+
+    tlsCertLabel=new QLabel(tlsBox);
+    tlsCertLabel->setWordWrap(true);
+    tlsCertLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    tlsKeyLabel=new QLabel(tlsBox);
+    tlsKeyLabel->setWordWrap(true);
+    tlsKeyLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    tlsFingerprintLabel=new QLabel(tlsBox);
+    tlsFingerprintLabel->setWordWrap(true);
+    tlsFingerprintLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    tlsGrid->addWidget(tlsCertLabel, 3, 0, 1, 3);
+    tlsGrid->addWidget(tlsKeyLabel, 4, 0, 1, 3);
+    tlsGrid->addWidget(tlsFingerprintLabel, 5, 0, 1, 3);
+
+    tlsGrid->addWidget(new QLabel(tr("Outgoing sync:"), tlsBox), 6, 0);
+    tlsClientModeCombo=new QComboBox(tlsBox);
+    tlsClientModeCombo->addItem(tr("HTTP"));
+    tlsClientModeCombo->addItem(tr("HTTPS (prefer)"));
+    tlsClientModeCombo->addItem(tr("HTTPS only"));
+    tlsClientModeCombo->setToolTip(
+        tr("For a public server choose «HTTPS only». A paired device "
+           "overrides this with its own transport."));
+    tlsGrid->addWidget(tlsClientModeCombo, 6, 1, 1, 2);
+
+    QLabel *tlsRestartHint=new QLabel(
+        tr("Restart the Sync server to apply TLS changes."), tlsBox);
+    tlsRestartHint->setStyleSheet(QStringLiteral("color: #9E9E9E;"));
+    tlsGrid->addWidget(tlsRestartHint, 7, 0, 1, 3);
+
+    layout->addWidget(tlsBox);
+
+    connect(tlsServerCheck, &QCheckBox::toggled, this, [this](bool checked) {
+        this->config->set_syncTlsEnabled(checked);
+    });
+    connect(advertiseHostEdit, &QLineEdit::editingFinished, this, [this]() {
+        this->config->set_syncAdvertiseHost(advertiseHostEdit->text());
+    });
+    connect(tlsClientModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+        this->config->set_syncTlsClientMode(index);
+    });
+    connect(tlsCertButton, &QPushButton::clicked, this, [this]() {
+        const QString path=QFileDialog::getOpenFileName(
+            this, tr("TLS certificate"), this->config->get_syncTlsCertPath(),
+            tr("PEM certificates (*.pem *.crt);;All files (*)"));
+        if(path.isEmpty())
+            return;
+        this->config->set_syncTlsCertPath(path);
+        this->config->set_syncTlsFingerprint(
+            SyncTls::certificateFingerprint(path));
+        refreshList();
+    });
+    connect(tlsKeyButton, &QPushButton::clicked, this, [this]() {
+        const QString path=QFileDialog::getOpenFileName(
+            this, tr("TLS private key"), this->config->get_syncTlsKeyPath(),
+            tr("PEM keys (*.pem *.key);;All files (*)"));
+        if(!path.isEmpty())
+            this->config->set_syncTlsKeyPath(path);
+    });
+    connect(tlsGenerateButton, &QPushButton::clicked,
+            this, &SyncDevicesDialog::onGenerateSelfSigned);
 
     // Адрес ведёт отдельный диалог «Подключиться по адресу…»: держать
     // Host/Port в главном окне рядом с кнопкой Sync было двусмысленно
@@ -156,6 +291,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     // сигналит, окно перечитывает. Выделение строки сохраняется по id
     connect(config, &AppConfig::syncDevicesChanged,
             this, &SyncDevicesDialog::refreshList);
+    connect(config, &AppConfig::syncServerSettingsChanged,
+            this, &SyncDevicesDialog::refreshList);
 
     // Добивка исходящего запроса: споку некуда принимать пуш от сервера,
     // поэтому пока висит свой неотвеченный pair-request — перепроверяем
@@ -168,6 +305,20 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
             this, &SyncDevicesDialog::onRecheckPair);
 
     refreshList();
+}
+
+
+void SyncDevicesDialog::configureTls(SyncClient &client, const QString &host,
+                                     quint16 port, bool tls)
+{
+    const int mode=tls ? 2 : config->get_syncTlsClientMode();
+    client.setTlsMode(static_cast<SyncClient::TlsMode>(mode));
+    client.setTlsPin(config->get_syncTlsPin(host, port));
+    client.setTlsTrustCallback(
+        [this](const QString &h, quint16 p, const QSslCertificate &,
+               const QString &fingerprint) {
+        return SyncPairDialogs::askCertTrust(this, h, p, fingerprint);
+    });
 }
 
 
@@ -413,6 +564,46 @@ void SyncDevicesDialog::refreshList(void)
         recheckTimer->stop();
 
     onSelectionChanged();
+
+    // TLS-настройки — из конфига (без рекурсии сигналов)
+    if(tlsServerCheck!=nullptr)
+    {
+        const QSignalBlocker b1(tlsServerCheck);
+        const QSignalBlocker b2(advertiseHostEdit);
+        const QSignalBlocker b3(tlsClientModeCombo);
+
+        tlsServerCheck->setChecked(config->get_syncTlsEnabled());
+        advertiseHostEdit->setText(config->get_syncAdvertiseHost());
+        tlsClientModeCombo->setCurrentIndex(config->get_syncTlsClientMode());
+
+        const QString cert=config->get_syncTlsCertPath();
+        const QString key=config->get_syncTlsKeyPath();
+        QString fp=config->get_syncTlsFingerprint();
+
+        if(fp.isEmpty() && !cert.isEmpty())
+            fp=SyncTls::certificateFingerprint(cert);
+
+        tlsCertLabel->setText(cert.isEmpty()
+            ? tr("Certificate: not set") : tr("Certificate: %1").arg(cert));
+        tlsKeyLabel->setText(key.isEmpty()
+            ? tr("Private key: not set") : tr("Private key: %1").arg(key));
+        tlsFingerprintLabel->setText(fp.isEmpty()
+            ? tr("Fingerprint: not available")
+            : tr("Fingerprint: %1").arg(SyncTls::formatFingerprint(fp)));
+    }
+
+    // Настройки серверной стороны — из конфига (без рекурсии сигналов)
+    if(blockPairingCheck!=nullptr)
+    {
+        const QSignalBlocker block(blockPairingCheck);
+        blockPairingCheck->setChecked(config->get_syncPairingBlocked());
+    }
+
+    if(bindIpCheck!=nullptr)
+    {
+        const QSignalBlocker block(bindIpCheck);
+        bindIpCheck->setChecked(config->get_syncPairBindIp());
+    }
 }
 
 
@@ -573,7 +764,20 @@ void SyncDevicesDialog::onSyncNow(void)
         return;
     }
 
+    // Транспорт выбираем по устройству: спарено по TLS — только HTTPS,
+    // известно как plain — HTTP. Ручной адрес задаёт режим в диалоге
+    config->set_syncTlsClientMode(target.tls ? 2 : 0);
+
+    if(target.tls && !target.tlsFingerprint.isEmpty())
+        config->set_syncTlsPin(target.lastIp, target.port,
+                               target.tlsFingerprint);
+
     SyncSession session(model, config, tetradir);
+    session.setTlsTrustResolver(
+        [this](const QString &host, quint16 port, const QSslCertificate &,
+               const QString &fingerprint) {
+        return SyncPairDialogs::askCertTrust(this, host, port, fingerprint);
+    });
 
     // Стратегия первого синка — тот же диалог, что и в headless-пути
     session.setStrategyResolver(
@@ -737,6 +941,8 @@ void SyncDevicesDialog::onSyncNow(void)
 
         SyncClient probe(config);
         probe.setTimeoutMs(6000);
+        configureTls(probe, target.lastIp, static_cast<quint16>(target.port),
+                     target.tls);
         SyncHelloResult hello=probe.hello(target.lastIp,
             static_cast<quint16>(target.port), true);
 
@@ -827,8 +1033,12 @@ void SyncDevicesDialog::onScan(void)
         SyncDiscovery::scan(config->get_syncDeviceId(), port);
 
     for(const SyncDiscoveredDevice &device : found)
+    {
         config->touch_syncDevice(device.deviceId, device.deviceName,
                                  device.address, device.port);
+        config->set_syncDeviceTls(device.deviceId, device.tls,
+                                  device.tlsFingerprint);
+    }
 
     refreshList();
 
@@ -859,6 +1069,13 @@ void SyncDevicesDialog::onConnectByAddress(void)
     layout->addWidget(new QLabel(tr("Port:"), &dialog));
     layout->addWidget(port);
 
+    QCheckBox *useTls=new QCheckBox(tr("Use TLS (HTTPS)"), &dialog);
+    useTls->setChecked(config->get_syncTlsClientMode()!=0);
+    useTls->setToolTip(tr("For a public server use HTTPS with a trusted "
+                          "certificate (Let's Encrypt) or confirm the "
+                          "self-signed fingerprint."));
+    layout->addWidget(useTls);
+
     QDialogButtonBox *box=new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     layout->addWidget(box);
@@ -871,6 +1088,7 @@ void SyncDevicesDialog::onConnectByAddress(void)
 
     hostEdit->setText(host->text().trimmed());
     portSpin->setValue(port->value());
+    config->set_syncTlsClientMode(useTls->isChecked()?2:0);
 
     onManualSync();
 }
@@ -910,6 +1128,8 @@ void SyncDevicesDialog::onManualSync(void)
     {
         SyncClient probe(config);
         probe.setTimeoutMs(6000);
+        configureTls(probe, host, port,
+                     config->get_syncTlsClientMode()!=0);
         SyncHelloResult hello=probe.hello(host, port, true);
 
         // Чужая сеть: чтобы войти, забываем локальную группу/пары.
@@ -995,6 +1215,8 @@ void SyncDevicesDialog::onManualSync(void)
 
         SyncClient probe(config);
         probe.setTimeoutMs(6000);
+        configureTls(probe, host, port,
+                     config->get_syncTlsClientMode()!=0);
         SyncHelloResult hello=probe.hello(host, port, true);
 
         if(!hello.ok && !hello.pairCodeRequired
@@ -1128,6 +1350,8 @@ void SyncDevicesDialog::onPair(void)
     {
         qDebug() << "SyncPair: re-checking whether our request was accepted";
         SyncClient probe(config);
+        configureTls(probe, target.lastIp,
+                     static_cast<quint16>(target.port), target.tls);
         const SyncHelloResult hello=probe.hello(target.lastIp,
             static_cast<quint16>(target.port));
 
@@ -1169,6 +1393,7 @@ void SyncDevicesDialog::onPair(void)
     // 1. Запрос в пару: сервер сгенерирует код и покажет его оператору
     SyncClient probe(config);
     probe.setTimeoutMs(6000);
+    configureTls(probe, target.lastIp, port, target.tls);
     SyncHelloResult hello=probe.hello(target.lastIp, port, true);
 
     // Чужая сеть: чтобы войти, сначала забываем локальную группу/пары.
@@ -1224,6 +1449,10 @@ void SyncDevicesDialog::onPair(void)
     if(code.isEmpty())
         return;
 
+    config->set_syncTlsClientMode(target.tls ? 2 : 0);
+    config->set_syncTlsPin(target.lastIp, port,
+                           config->get_syncTlsPin(target.lastIp, port));
+
     bool syncOk=false;
     QString errorCode;
     const QString result=win->runSyncToHeadless(target.lastIp, code, port,
@@ -1245,6 +1474,7 @@ void SyncDevicesDialog::onRecheckPair(void)
 
     SyncClient probe(config);
     probe.setTimeoutMs(4000);
+    configureTls(probe, ip, port, false);
 
     const SyncHelloResult hello=probe.hello(ip, port);
 
@@ -1302,9 +1532,28 @@ void SyncDevicesDialog::onAccept(void)
     if(!target.lastIp.isEmpty())
         shownName+=QStringLiteral(" (%1)").arg(target.lastIp);
 
+    QString qrHost=config->get_syncAdvertiseHost();
+
+    if(qrHost.isEmpty())
+        qrHost=SyncTls::primaryAddress();
+
+    if(qrHost.isEmpty())
+        qrHost=QHostInfo::localHostName();
+
+    QString qrFingerprint=config->get_syncTlsFingerprint();
+
+    if(qrFingerprint.isEmpty() && !config->get_syncTlsCertPath().isEmpty())
+        qrFingerprint=SyncTls::certificateFingerprint(
+            config->get_syncTlsCertPath());
+
     SyncPairDialogs::showCode(this, id, shownName,
                               QDateTime::currentMSecsSinceEpoch(),
-                              &rejected);
+                              &rejected, target.lastIp,
+                              config->get_syncPairBindIp(),
+                              qrHost, serverPort,
+                              config->get_syncTlsEnabled(),
+                              qrFingerprint,
+                              config->get_syncDeviceName());
 
     if(rejected)
     {
@@ -1404,6 +1653,89 @@ void SyncDevicesDialog::onRemove(void)
     }
 
     refreshList();
+}
+
+
+// Сгенерировать self-signed cert/key через openssl CLI
+void SyncDevicesDialog::onGenerateSelfSigned(void)
+{
+    const QString dir=QFileInfo(config->getConfigFileName()).absolutePath()
+                      +QStringLiteral("/sync-tls");
+    QString host=advertiseHostEdit->text().trimmed();
+
+    if(host.isEmpty())
+        host=SyncTls::primaryAddress();
+
+    if(host.isEmpty())
+        host=QHostInfo::localHostName();
+
+    const QString cert=dir+QStringLiteral("/server-cert.pem");
+    const bool exists=QFile::exists(cert);
+
+    if(exists && QMessageBox::question(
+           this, tr("TLS"),
+           tr("A self-signed certificate already exists. Regenerate it? "
+              "Existing clients will need to trust the new fingerprint."))
+       !=QMessageBox::Yes)
+        return;
+
+    QString certPath;
+    QString keyPath;
+    QString error;
+
+    if(!SyncTls::ensureSelfSigned(dir, host, &certPath, &keyPath, &error,
+                                  exists))
+    {
+        QMessageBox::warning(this, tr("TLS"), error);
+        return;
+    }
+
+    config->set_syncTlsCertPath(certPath);
+    config->set_syncTlsKeyPath(keyPath);
+    config->set_syncTlsFingerprint(
+        SyncTls::certificateFingerprint(certPath));
+    config->set_syncTlsEnabled(true);
+
+    if(advertiseHostEdit->text().trimmed().isEmpty())
+        config->set_syncAdvertiseHost(host);
+
+    refreshList();
+
+    QMessageBox::information(
+        this, tr("TLS"),
+        tr("Self-signed certificate created.\n\n"
+           "Fingerprint:\n%1\n\n"
+           "Restart the Sync server. Clients will be asked to trust this "
+           "fingerprint (or scan the QR).")
+        .arg(SyncTls::formatFingerprint(
+            config->get_syncTlsFingerprint())));
+}
+
+
+// Запрет новых пар: подтверждаем, отменяем незавершённые пары
+void SyncDevicesDialog::onBlockPairingToggled(bool checked)
+{
+    if(checked)
+    {
+        if(QMessageBox::question(
+               this, tr("Sync"),
+               tr("Block new pairings?\n\n"
+                  "Existing devices keep syncing. Any pairing in progress "
+                  "will be cancelled (codes and pending secrets)."))
+           !=QMessageBox::Yes)
+        {
+            const QSignalBlocker block(blockPairingCheck);
+            blockPairingCheck->setChecked(false);
+            return;
+        }
+
+        SyncPairing::clearAll();
+
+        for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+            config->clear_syncDevicePendingSecret(info.id);
+    }
+
+    config->set_syncPairingBlocked(checked);
 }
 
 

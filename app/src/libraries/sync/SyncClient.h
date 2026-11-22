@@ -1,6 +1,8 @@
 #ifndef SYNCCLIENT_H
 #define SYNCCLIENT_H
 
+#include <functional>
+
 #include <QString>
 #include <QStringList>
 #include <QJsonObject>
@@ -9,6 +11,7 @@
 #include "SyncHandshake.h"
 
 class AppConfig;
+class QSslCertificate;
 
 // Клиент синхронизации (спок): блокирующие вызовы поверх QNetworkAccessManager
 // с таймаутом. Вызывается из UI по кнопке, не из горячих путей — блокировка
@@ -73,6 +76,29 @@ public:
     bool mergeByName(const QString &host, quint16 port,
                      const QStringList &branchIds);
 
+    // Транспорт: HTTP / HTTPS. Off — как раньше; Prefer — HTTPS, при
+    // явном отсутствии TLS откат на HTTP; Require — только HTTPS
+    enum class TlsMode { Off=0, Prefer=1, Require=2 };
+    void setTlsMode(TlsMode mode);
+    TlsMode tlsMode(void) const;
+
+    // Пин сертификата (SHA256 DER hex). Нужен для self-signed; для
+    // CA-подписанного можно не задавать
+    void setTlsPin(const QString &fingerprint);
+    QString tlsPin(void) const;
+
+    // Спросить пользователя, доверять ли сертификату (TOFU). Вызывается
+    // из sslErrors; true — запомнить пин и продолжить. Без колбэка
+    // self-signed сертификат отвергается
+    using TlsTrustCallback =
+        std::function<bool(const QString &host, quint16 port,
+                           const QSslCertificate &cert,
+                           const QString &fingerprint)>;
+    void setTlsTrustCallback(TlsTrustCallback callback);
+
+    bool lastUsedTls(void) const;
+    QString lastTlsFingerprint(void) const;
+
     // Секрет именно под текущий пир (кольцо на 4-5 устройств).
     // hello() перебирает кольцо и запоминает рабочий; сессия может
     // перевыставить явно после adoptPairing (секрет сменился)
@@ -93,6 +119,17 @@ private:
                          const QString &path, const QJsonObject &body,
                          bool &ok);
 
+    QJsonObject requestOnce(const QString &method, const QString &host,
+                            quint16 port, const QString &path,
+                            const QJsonObject &body, const QString &scheme,
+                            bool &ok, bool &certError);
+
+    // Зашифрованный data-запрос (enc:1) или старый proof-запрос.
+    // Ответ расшифровывается, если сервер прислал _enc
+    QJsonObject postData(const QString &host, quint16 port,
+                         const QString &route, const QString &path,
+                         const QJsonObject &body, bool &ok);
+
     // Подписать тело proof'ом пары (маршрут — часть challenge).
     // Без секрета (до спаривания) тело уходит как есть — сервер ответит
     // not-paired/auth-failed, гейт пары выше по стеку
@@ -104,8 +141,17 @@ private:
     AppConfig *config=nullptr;
     int timeoutMs=15000;
     QString peerSecretText;
+    QString peerSessionText;   // enc-сессия из hello
+    QString peerDeviceIdText;  // id сервера (для AAD/ответа)
+    bool peerEnc=false;        // сервер подтвердил enc
     QString lastErrorText;
     bool lastTransportOkFlag=true;
+
+    int tlsModeValue=0;
+    QString tlsPinText;
+    TlsTrustCallback tlsTrustCallback;
+    bool lastUsedTlsFlag=false;
+    QString lastTlsFingerprintText;
 };
 
 #endif // SYNCCLIENT_H

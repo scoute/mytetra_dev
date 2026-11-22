@@ -14,6 +14,7 @@ namespace
 struct CodeState
 {
     QString code;
+    QString peerIp;
     qint64 createdAt=0;
     qint64 expiresAt=0;
     int failed=0;
@@ -108,6 +109,8 @@ void wipe(QByteArray &data)
 
 
 QString ensureCode(const QString &peerId, qint64 now,
+                   const QString &peerIp,
+                   bool bindIp,
                    qint64 *expiresAt, qint64 *lockedUntil)
 {
     if(peerId.isEmpty())
@@ -147,6 +150,14 @@ QString ensureCode(const QString &peerId, qint64 now,
 
     if(!state.code.isEmpty() && now<state.expiresAt)
     {
+        // Настройка привязки могла включиться/выключиться на живом коде:
+        // включаем привязку к IP текущего pairRequest, выключение снимает
+        if(bindIp && state.peerIp.isEmpty())
+            state.peerIp=peerIp;
+
+        if(!bindIp)
+            state.peerIp.clear();
+
         if(expiresAt!=nullptr)
             *expiresAt=state.expiresAt;
 
@@ -162,6 +173,7 @@ QString ensureCode(const QString &peerId, qint64 now,
         return QString();
 
     state.code=code;
+    state.peerIp=bindIp ? peerIp : QString();
     state.createdAt=now;
     state.expiresAt=now+CodeTtlMs;
     state.failed=0;
@@ -261,7 +273,8 @@ QJsonObject buildBegin(const QString &clientId, const QString &clientName,
 
 
 QJsonObject handleBegin(const QString &serverId, const QJsonObject &request,
-                        qint64 now, const PendingGetter &getPending,
+                        qint64 now, const QString &peerIp, bool bindIp,
+                        const PendingGetter &getPending,
                         const PendingSetter &setPending)
 {
     if(serverId.isEmpty() || !getPending || !setPending)
@@ -305,6 +318,20 @@ QJsonObject handleBegin(const QString &serverId, const QJsonObject &request,
     {
         codes().remove(peerId);
         return errorAnswer(QStringLiteral("pair-code-expired"));
+    }
+
+    // Привязка к IP: код, выданный одному адресу, не принимаем с другого.
+    // Считаем это неудачной попыткой, чтобы не давать бесплатный перебор
+    if(bindIp && !state.peerIp.isEmpty() && peerIp!=state.peerIp)
+    {
+        ++state.failed;
+
+        if(state.failed>=MaxFailedAttempts)
+            state.lockedUntil=now+LockoutMs;
+
+        qDebug() << "SyncPairing: code IP mismatch for" << peerId
+                 << "expected" << state.peerIp << "got" << peerIp;
+        return errorAnswer(QStringLiteral("pair-ip-mismatch"));
     }
 
     const QByteArray key=SyncPairCrypto::codeKey(state.code);
@@ -489,6 +516,14 @@ QString finishBegin(const QString &clientId, const QString &serverId,
 }
 
 
+QJsonObject disabledAnswer(void)
+{
+    return errorAnswer(QStringLiteral("pairing-disabled"),
+        QStringLiteral("New pairings are blocked on this server. "
+                       "Enable pairing on the server first."));
+}
+
+
 QString errorText(const QString &errorCode)
 {
     if(errorCode==QStringLiteral("pair-code-invalid"))
@@ -525,6 +560,14 @@ QString errorText(const QString &errorCode)
 
     if(errorCode==QStringLiteral("pair-bad-request"))
         return QStringLiteral("Некорректный запрос спаривания.");
+
+    if(errorCode==QStringLiteral("pairing-disabled"))
+        return QStringLiteral("Сервер запретил новые спаривания. "
+                              "Включите разрешение на нём и повторите.");
+
+    if(errorCode==QStringLiteral("pair-ip-mismatch"))
+        return QStringLiteral("Код выдан для другого IP. Спаривайтесь "
+                              "с того же адреса или запросите новый код.");
 
     return errorCode;
 }

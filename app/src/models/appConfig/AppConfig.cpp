@@ -434,6 +434,155 @@ void AppConfig::set_syncServerAutostart(bool value)
 }
 
 
+bool AppConfig::get_syncPairingBlocked(void)
+{
+    return m_conf->value("syncPairingBlocked", false).toBool();
+}
+
+
+void AppConfig::set_syncPairingBlocked(bool value)
+{
+    m_conf->setValue("syncPairingBlocked", value);
+    emit syncServerSettingsChanged();
+}
+
+
+bool AppConfig::get_syncPairBindIp(void)
+{
+    return m_conf->value("syncPairBindIp", false).toBool();
+}
+
+
+void AppConfig::set_syncPairBindIp(bool value)
+{
+    m_conf->setValue("syncPairBindIp", value);
+    emit syncServerSettingsChanged();
+}
+
+
+QString AppConfig::get_syncAdvertiseHost(void)
+{
+    return m_conf->value("syncAdvertiseHost", QString()).toString().trimmed();
+}
+
+
+void AppConfig::set_syncAdvertiseHost(const QString &host)
+{
+    m_conf->setValue("syncAdvertiseHost", host.trimmed());
+    emit syncServerSettingsChanged();
+}
+
+
+bool AppConfig::get_syncTlsEnabled(void)
+{
+    return m_conf->value("syncTlsEnabled", false).toBool();
+}
+
+
+void AppConfig::set_syncTlsEnabled(bool value)
+{
+    m_conf->setValue("syncTlsEnabled", value);
+    emit syncServerSettingsChanged();
+}
+
+
+QString AppConfig::get_syncTlsCertPath(void)
+{
+    return m_conf->value("syncTlsCertPath", QString()).toString();
+}
+
+
+void AppConfig::set_syncTlsCertPath(const QString &path)
+{
+    m_conf->setValue("syncTlsCertPath", path);
+    emit syncServerSettingsChanged();
+}
+
+
+QString AppConfig::get_syncTlsKeyPath(void)
+{
+    return m_conf->value("syncTlsKeyPath", QString()).toString();
+}
+
+
+void AppConfig::set_syncTlsKeyPath(const QString &path)
+{
+    m_conf->setValue("syncTlsKeyPath", path);
+    emit syncServerSettingsChanged();
+}
+
+
+QString AppConfig::get_syncTlsFingerprint(void)
+{
+    return m_conf->value("syncTlsFingerprint", QString()).toString();
+}
+
+
+void AppConfig::set_syncTlsFingerprint(const QString &fingerprint)
+{
+    m_conf->setValue("syncTlsFingerprint", fingerprint);
+    emit syncServerSettingsChanged();
+}
+
+
+int AppConfig::get_syncTlsClientMode(void)
+{
+    return m_conf->value("syncTlsClientMode", 0).toInt();
+}
+
+
+void AppConfig::set_syncTlsClientMode(int mode)
+{
+    m_conf->setValue("syncTlsClientMode", qBound(0, mode, 2));
+    emit syncServerSettingsChanged();
+}
+
+
+namespace
+{
+QString tlsPinKey(const QString &host, quint16 port)
+{
+    QString safe=host.trimmed().toLower();
+
+    // QSettings: '/' разделяет группы, ':' в IPv6 заменяем на '_'
+    safe.replace(QLatin1Char('/'), QLatin1Char('_'));
+    safe.replace(QLatin1Char(':'), QLatin1Char('_'));
+
+    return QStringLiteral("syncTlsPins/%1_%2").arg(safe).arg(port);
+}
+}
+
+
+QString AppConfig::get_syncTlsPin(const QString &host, quint16 port) const
+{
+    if(host.trimmed().isEmpty())
+        return QString();
+
+    return m_conf->value(tlsPinKey(host, port)).toString();
+}
+
+
+void AppConfig::set_syncTlsPin(const QString &host, quint16 port,
+                               const QString &fingerprint)
+{
+    if(host.trimmed().isEmpty())
+        return;
+
+    m_conf->setValue(tlsPinKey(host, port), fingerprint);
+    m_conf->sync();
+}
+
+
+void AppConfig::clear_syncTlsPin(const QString &host, quint16 port)
+{
+    if(host.trimmed().isEmpty())
+        return;
+
+    m_conf->remove(tlsPinKey(host, port));
+    m_conf->sync();
+}
+
+
 bool AppConfig::get_syncToolbarNative(void)
 {
     return m_conf->value("syncToolbarNative", true).toBool();
@@ -509,6 +658,10 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
         info.lastSyncOk=m_conf->value(QStringLiteral("lastSyncOk"), false).toBool();
         info.lastSyncSummary=
             m_conf->value(QStringLiteral("lastSyncSummary")).toString();
+        info.tls=m_conf->value(QStringLiteral("tls"), false).toBool();
+        info.tlsFingerprint=
+            m_conf->value(QStringLiteral("tlsFingerprint")).toString();
+        info.enc=m_conf->value(QStringLiteral("enc"), false).toBool();
 
         m_conf->endGroup();
 
@@ -689,6 +842,51 @@ void AppConfig::clear_syncDeviceMutual(const QString &id)
                      +QStringLiteral("/lastMutual"), 0);
 
     emit syncDevicesChanged();
+}
+
+
+void AppConfig::set_syncDeviceTls(const QString &id, bool tls,
+                                  const QString &fingerprint)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->setValue(QStringLiteral("tls"), tls);
+
+    if(fingerprint.isEmpty())
+        m_conf->remove(QStringLiteral("tlsFingerprint"));
+    else
+        m_conf->setValue(QStringLiteral("tlsFingerprint"), fingerprint);
+
+    m_conf->endGroup();
+    m_conf->sync();
+
+    emit syncDevicesChanged();
+}
+
+
+void AppConfig::set_syncDeviceEnc(const QString &id, bool enc)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->setValue(QStringLiteral("enc"), enc);
+    m_conf->endGroup();
+    m_conf->sync();
+}
+
+
+bool AppConfig::get_syncDeviceEnc(const QString &id) const
+{
+    if(id.isEmpty())
+        return false;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    const bool enc=m_conf->value(QStringLiteral("enc"), false).toBool();
+    m_conf->endGroup();
+    return enc;
 }
 
 

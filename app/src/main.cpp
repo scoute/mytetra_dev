@@ -107,6 +107,13 @@ void printHelp()
     printf("        GUI pairing uses a one-time code shown on the server; headless prints it as\n");
     printf("        'SYNC PAIR CODE <id> <code>' when a client sends pairRequest. --sync-pair PIN\n");
     printf("        remains the legacy headless PIN; a 16-char code is also accepted.\n");
+    printf("        --sync-block-pairing / --sync-allow-pairing - refuse/allow new devices;\n");
+    printf("        --sync-pair-bind-ip / --sync-no-pair-bind-ip - bind code to client IP.\n");
+    printf("        --sync-tls-cert PATH --sync-tls-key PATH - serve HTTPS (PEM; Let's Encrypt\n");
+    printf("        fullchain.pem/privkey.pem or self-signed); --sync-no-tls disables TLS;\n");
+    printf("        --sync-advertise-host HOST.\n");
+    printf("./mytetra --sync-to HOST ... --sync-client-tls off|prefer|require [--sync-tls-pin HEX]\n");
+    printf("        - client transport; pin is SHA256(cert DER) for self-signed servers.\n");
     printf("./mytetra --sync-to HOST [--sync-port N] [--sync-pair PIN|CODE] - Run one sync session and exit\n");
     printf("./mytetra --sync-status - Show sync identity (device, fingerprint, paired, group) and exit\n");
     printf("./mytetra --sync-scan [--sync-port N] - Find sync hubs in the local network and exit\n");
@@ -700,6 +707,61 @@ int main(int argc, char ** argv)
         const bool doServe=args.contains(QStringLiteral("--sync-server"));
         const bool doSyncTo=args.contains(QStringLiteral("--sync-to"));
         const QString syncHost=argValue(QStringLiteral("--sync-to"), QString());
+
+        // Серверные политики спаривания: флаги перекрывают conf.ini
+        if(args.contains(QStringLiteral("--sync-block-pairing")))
+            mytetraConfig.set_syncPairingBlocked(true);
+
+        if(args.contains(QStringLiteral("--sync-allow-pairing")))
+            mytetraConfig.set_syncPairingBlocked(false);
+
+        if(args.contains(QStringLiteral("--sync-pair-bind-ip")))
+            mytetraConfig.set_syncPairBindIp(true);
+
+        if(args.contains(QStringLiteral("--sync-no-pair-bind-ip")))
+            mytetraConfig.set_syncPairBindIp(false);
+
+        // Серверный TLS: cert/key включают HTTPS на том же порту
+        const QString tlsCert=argValue(QStringLiteral("--sync-tls-cert"),
+                                       QString());
+        const QString tlsKey=argValue(QStringLiteral("--sync-tls-key"),
+                                      QString());
+
+        if(!tlsCert.isEmpty() || !tlsKey.isEmpty())
+        {
+            mytetraConfig.set_syncTlsCertPath(tlsCert);
+            mytetraConfig.set_syncTlsKeyPath(tlsKey);
+            mytetraConfig.set_syncTlsEnabled(true);
+        }
+
+        const QString advertiseHost=
+            argValue(QStringLiteral("--sync-advertise-host"), QString());
+
+        if(!advertiseHost.isEmpty())
+            mytetraConfig.set_syncAdvertiseHost(advertiseHost);
+
+        if(args.contains(QStringLiteral("--sync-no-tls")))
+            mytetraConfig.set_syncTlsEnabled(false);
+
+        // Клиентский TLS: режим и пин self-signed сертификата
+        const QString clientTls=argValue(QStringLiteral("--sync-client-tls"),
+                                         QString());
+
+        if(clientTls==QStringLiteral("off"))
+            mytetraConfig.set_syncTlsClientMode(0);
+        else if(clientTls==QStringLiteral("prefer"))
+            mytetraConfig.set_syncTlsClientMode(1);
+        else if(clientTls==QStringLiteral("require"))
+            mytetraConfig.set_syncTlsClientMode(2);
+
+        if(doSyncTo)
+        {
+            const QString tlsPin=argValue(QStringLiteral("--sync-tls-pin"),
+                                          QString());
+
+            if(!tlsPin.isEmpty() && !syncHost.isEmpty())
+                mytetraConfig.set_syncTlsPin(syncHost, syncPort, tlsPin);
+        }
 
         if(doServe)
         {

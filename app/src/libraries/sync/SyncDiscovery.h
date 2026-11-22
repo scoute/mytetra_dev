@@ -14,6 +14,8 @@ struct SyncDiscoveredDevice
     QString deviceName;
     QString address;  // откуда пришел ответ (адрес хаба в LAN)
     quint16 port=0;   // TCP-порт sync-сервера хаба
+    bool tls=false;   // хаб говорит HTTPS на этом порту
+    QString tlsFingerprint; // SHA256 сертификата (подсказка для TOFU/QR)
 };
 
 // LAN-discovery для синка (UDP, порт = TCP-порт синка).
@@ -34,7 +36,9 @@ public:
     static QJsonObject parseProbe(const QByteArray &datagram);
     static QByteArray buildReply(const QString &deviceId,
                                  const QString &deviceName,
-                                 quint16 tcpPort);
+                                 quint16 tcpPort,
+                                 bool tls=false,
+                                 const QString &tlsFingerprint=QString());
 
     // Разбор ответа; пустой объект — не наш/битый пакет
     static SyncDiscoveredDevice parseReply(const QByteArray &datagram,

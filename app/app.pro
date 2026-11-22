@@ -90,6 +90,7 @@ CODECFORSRC  = utf8
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib
 INCLUDEPATH += $${_PRO_FILE_PWD_}/src
 INCLUDEPATH += $${_PRO_FILE_PWD_}/../thirdParty/monocypher
+INCLUDEPATH += $${_PRO_FILE_PWD_}/../thirdParty/qrcodegen
 
 # Прекомпилированный заголовок: Qt-модули и STL компилируются один раз.
 # Состав в src/stable.h, только стабильное (см. комментарий в файле).
@@ -304,6 +305,10 @@ HEADERS+=\
     src/libraries/GlobalParameters.h \
     src/libraries/sync/SyncIdentity.h \
     src/libraries/sync/SyncPairCrypto.h \
+    src/libraries/sync/SyncTls.h \
+    src/libraries/sync/SyncDataCrypto.h \
+    src/libraries/sync/SyncPairQr.h \
+    $${_PRO_FILE_PWD_}/../thirdParty/qrcodegen/qrcodegen.hpp \
     src/libraries/sync/SyncPairing.h \
     src/libraries/sync/SyncPairFlow.h \
     $${_PRO_FILE_PWD_}/../thirdParty/monocypher/monocypher.h \
@@ -503,6 +508,10 @@ SOURCES+=\
     src/libraries/GlobalParameters.cpp \
     src/libraries/sync/SyncIdentity.cpp \
     src/libraries/sync/SyncPairCrypto.cpp \
+    src/libraries/sync/SyncTls.cpp \
+    src/libraries/sync/SyncDataCrypto.cpp \
+    src/libraries/sync/SyncPairQr.cpp \
+    $${_PRO_FILE_PWD_}/../thirdParty/qrcodegen/qrcodegen.cpp \
     src/libraries/sync/SyncPairing.cpp \
     src/libraries/sync/SyncPairFlow.cpp \
     $${_PRO_FILE_PWD_}/../thirdParty/monocypher/monocypher.c \

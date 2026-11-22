@@ -17,7 +17,7 @@ QT_LIBS   := $(shell pkg-config --libs Qt5Core)
 SYNC_DIR := ../src/libraries/sync
 MONOCYPHER_DIR := ../../thirdParty/monocypher
 
-all: sync_validation_test sync_http_test sync_tombstones_test sync_diff_test sync_counts_test sync_scope_test sync_pair_crypto_test sync_pairing_test
+all: sync_validation_test sync_http_test sync_tombstones_test sync_diff_test sync_counts_test sync_scope_test sync_pair_crypto_test sync_pairing_test sync_data_crypto_test sync_data_crypto_test
 
 sync_validation_test: sync_validation_test.cpp $(SYNC_DIR)/SyncValidation.h
 	$(CXX) $(CXXFLAGS) $(QT_CFLAGS) -I$(SYNC_DIR) $< -o $@ $(QT_LIBS)
@@ -52,6 +52,10 @@ sync_pairing_test: sync_pairing_test.cpp $(SYNC_DIR)/SyncPairing.cpp $(SYNC_DIR)
 	$(CXX) $(CXXFLAGS) $(QT_CFLAGS) -I$(SYNC_DIR) -I$(MONOCYPHER_DIR) \
 		sync_pairing_test.cpp $(SYNC_DIR)/SyncPairing.cpp $(SYNC_DIR)/SyncPairCrypto.cpp monocypher_test.o -o $@ $(QT_LIBS)
 
+sync_data_crypto_test: sync_data_crypto_test.cpp $(SYNC_DIR)/SyncDataCrypto.cpp $(SYNC_DIR)/SyncDataCrypto.h $(SYNC_DIR)/SyncPairCrypto.cpp $(SYNC_DIR)/SyncPairCrypto.h monocypher_test.o
+	$(CXX) $(CXXFLAGS) -ffunction-sections -fdata-sections $(QT_CFLAGS) -I../src -I$(SYNC_DIR) -I$(MONOCYPHER_DIR) \
+		sync_data_crypto_test.cpp $(SYNC_DIR)/SyncDataCrypto.cpp $(SYNC_DIR)/SyncPairCrypto.cpp monocypher_test.o -o $@ -Wl,--gc-sections $(QT_LIBS)
+
 run: all
 	./sync_validation_test
 	./sync_http_test
@@ -61,9 +65,10 @@ run: all
 	./sync_scope_test
 	./sync_pair_crypto_test
 	./sync_pairing_test
+	./sync_data_crypto_test
 
 clean:
 	rm -f sync_validation_test sync_http_test sync_tombstones_test sync_diff_test \
-	      sync_counts_test sync_scope_test sync_pair_crypto_test sync_pairing_test monocypher_test.o
+	      sync_counts_test sync_scope_test sync_pair_crypto_test sync_pairing_test sync_data_crypto_test monocypher_test.o
 
 .PHONY: all run clean

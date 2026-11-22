@@ -1,3 +1,4 @@
+#include <QAbstractButton>
 #include <QApplication>
 #include <QClipboard>
 #include <QDateTime>
@@ -5,6 +6,7 @@
 #include <QDialogButtonBox>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -15,6 +17,8 @@
 #include "SyncPairDialogs.h"
 #include "libraries/sync/SyncPairCrypto.h"
 #include "libraries/sync/SyncPairing.h"
+#include "libraries/sync/SyncTls.h"
+#include "libraries/sync/SyncPairQr.h"
 
 
 namespace SyncPairDialogs
@@ -68,15 +72,18 @@ QString askCode(QWidget *parent, const QString &peerName,
 
 
 QString showCode(QWidget *parent, const QString &peerId,
-                 const QString &peerName, qint64 now, bool *rejected)
+                 const QString &peerName, qint64 now, bool *rejected,
+                 const QString &peerIp, bool bindIp,
+                 const QString &qrHost, quint16 qrPort, bool qrTls,
+                 const QString &qrFingerprint, const QString &serverName)
 {
     if(rejected!=nullptr)
         *rejected=false;
 
     qint64 expiresAt=0;
     qint64 lockedUntil=0;
-    QString code=SyncPairing::ensureCode(peerId, now, &expiresAt,
-                                         &lockedUntil);
+    QString code=SyncPairing::ensureCode(peerId, now, peerIp, bindIp,
+                                         &expiresAt, &lockedUntil);
 
     if(code.isEmpty())
     {
@@ -95,50 +102,96 @@ QString showCode(QWidget *parent, const QString &peerId,
         const QString shown=SyncPairCrypto::formatCode(code);
         const QString until=QDateTime::fromMSecsSinceEpoch(expiresAt)
                                  .toString(QStringLiteral("HH:mm"));
+        const QString uri=(!qrHost.isEmpty() && qrPort>0)
+            ? SyncPairQr::buildUri(qrHost, qrPort, code, qrTls,
+                                   qrFingerprint, serverName)
+            : QString();
+        const QPixmap qr=SyncPairQr::render(uri);
 
-        QMessageBox box(parent);
-        box.setWindowTitle(QStringLiteral("Спаривание"));
-        box.setIcon(QMessageBox::Information);
-        box.setText(QStringLiteral("Устройство %1 хочет спариться.\n\n"
-                                   "Код: %2\n\n"
-                                   "Введите этот код на другом устройстве. "
-                                   "Он действует до %3 и одноразовый.")
-                        .arg(peerName.isEmpty() ? peerId.left(8) : peerName,
-                             shown, until));
-        box.setTextInteractionFlags(Qt::TextSelectableByMouse
-                                    | Qt::TextSelectableByKeyboard);
+        QDialog dialog(parent);
+        dialog.setWindowTitle(QStringLiteral("Спаривание"));
+        dialog.setMinimumWidth(360);
 
-        QPushButton *copy=box.addButton(QStringLiteral("Копировать код"),
-                                        QMessageBox::ActionRole);
-        QPushButton *renew=box.addButton(QStringLiteral("Новый код"),
-                                         QMessageBox::ActionRole);
-        QPushButton *reject=box.addButton(QStringLiteral("Отклонить"),
-                                          QMessageBox::DestructiveRole);
-        box.addButton(QStringLiteral("Закрыть"), QMessageBox::RejectRole);
-        box.setDefaultButton(copy);
-        box.exec();
+        QVBoxLayout *layout=new QVBoxLayout(&dialog);
 
-        if(box.clickedButton()==copy)
+        QLabel *title=new QLabel(QStringLiteral(
+            "Устройство %1 хочет спариться.")
+            .arg(peerName.isEmpty() ? peerId.left(8) : peerName), &dialog);
+        title->setWordWrap(true);
+        layout->addWidget(title);
+
+        QLabel *codeLabel=new QLabel(
+            QStringLiteral("Код: %1").arg(shown), &dialog);
+        QFont mono=QFontDatabase::systemFont(QFontDatabase::FixedFont);
+        mono.setPointSize(16);
+        mono.setBold(true);
+        codeLabel->setFont(mono);
+        codeLabel->setAlignment(Qt::AlignCenter);
+        codeLabel->setTextInteractionFlags(Qt::TextSelectableByMouse
+                                           | Qt::TextSelectableByKeyboard);
+        layout->addWidget(codeLabel);
+
+        if(!qr.isNull())
+        {
+            QLabel *qrLabel=new QLabel(&dialog);
+            qrLabel->setPixmap(qr);
+            qrLabel->setAlignment(Qt::AlignCenter);
+            qrLabel->setStyleSheet(QStringLiteral(
+                "background: white; padding: 8px;"));
+            layout->addWidget(qrLabel, 0, Qt::AlignCenter);
+        }
+
+        QLabel *hint=new QLabel(QStringLiteral(
+            "Отсканируйте QR на телефоне или введите код вручную. "
+            "Код одноразовый, действует до %1.").arg(until), &dialog);
+        hint->setWordWrap(true);
+        layout->addWidget(hint);
+
+        QHBoxLayout *buttons=new QHBoxLayout();
+        QPushButton *copy=new QPushButton(QStringLiteral("Копировать код"),
+                                          &dialog);
+        QPushButton *renew=new QPushButton(QStringLiteral("Новый код"),
+                                           &dialog);
+        QPushButton *reject=new QPushButton(QStringLiteral("Отклонить"),
+                                            &dialog);
+        QPushButton *close=new QPushButton(QStringLiteral("Закрыть"),
+                                           &dialog);
+        buttons->addWidget(copy);
+        buttons->addWidget(renew);
+        buttons->addWidget(reject);
+        buttons->addStretch();
+        buttons->addWidget(close);
+        layout->addLayout(buttons);
+
+        QAbstractButton *clicked=nullptr;
+        const auto bind=[&](QAbstractButton *button) {
+            QObject::connect(button, &QAbstractButton::clicked, &dialog,
+                             [&, button]() {
+                clicked=button;
+                dialog.accept();
+            });
+        };
+        bind(copy);
+        bind(renew);
+        bind(reject);
+        bind(close);
+        close->setDefault(true);
+
+        dialog.exec();
+
+        if(clicked==copy)
         {
             QGuiApplication::clipboard()->setText(shown);
             continue;
         }
 
-        if(box.clickedButton()==reject)
+        if(clicked==renew)
         {
             SyncPairing::clearCode(peerId);
-
-            if(rejected!=nullptr)
-                *rejected=true;
-
-            return QString();
-        }
-
-        if(box.clickedButton()==renew)
-        {
-            SyncPairing::clearCode(peerId);
-            code=SyncPairing::ensureCode(peerId, QDateTime::currentMSecsSinceEpoch(),
-                                         &expiresAt, &lockedUntil);
+            code=SyncPairing::ensureCode(peerId,
+                                         QDateTime::currentMSecsSinceEpoch(),
+                                         peerIp, bindIp, &expiresAt,
+                                         &lockedUntil);
 
             if(code.isEmpty())
             {
@@ -151,8 +204,45 @@ QString showCode(QWidget *parent, const QString &peerId,
             continue;
         }
 
+        if(clicked==reject)
+        {
+            SyncPairing::clearCode(peerId);
+
+            if(rejected!=nullptr)
+                *rejected=true;
+
+            return QString();
+        }
+
         return code;
     }
+}
+
+
+bool askCertTrust(QWidget *parent, const QString &host, quint16 port,
+                  const QString &fingerprint)
+{
+    QMessageBox box(parent);
+    box.setWindowTitle(QStringLiteral("TLS certificate"));
+    box.setIcon(QMessageBox::Warning);
+    box.setText(QStringLiteral(
+        "The TLS certificate of %1:%2 is self-signed or not trusted.\n\n"
+        "Fingerprint (SHA-256):\n%3\n\n"
+        "Compare it with the fingerprint shown on the server "
+        "(QR / devices window). Trust this certificate?")
+        .arg(host).arg(port)
+        .arg(SyncTls::formatFingerprint(fingerprint)));
+    box.setTextInteractionFlags(Qt::TextSelectableByMouse
+                                | Qt::TextSelectableByKeyboard);
+
+    QPushButton *trust=box.addButton(QStringLiteral("Trust"),
+                                     QMessageBox::AcceptRole);
+    QPushButton *cancel=box.addButton(QStringLiteral("Cancel"),
+                                      QMessageBox::RejectRole);
+    box.setDefaultButton(cancel);
+    box.exec();
+
+    return box.clickedButton()==trust;
 }
 
 

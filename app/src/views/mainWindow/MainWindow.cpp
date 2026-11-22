@@ -1,3 +1,4 @@
+#include <QSignalBlocker>
 #include <QDialog>
 #include <QString>
 #include <QDir>
@@ -20,6 +21,8 @@
 #include <QStatusBar>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QHostInfo>
+#include <QSslCertificate>
 #include <QClipboard>
 #include <QApplication>
 
@@ -57,6 +60,7 @@
 #include "libraries/sync/SyncPairFlow.h"
 #include "libraries/sync/SyncPairing.h"
 #include "libraries/sync/SyncPairCrypto.h"
+#include "libraries/sync/SyncTls.h"
 #include "libraries/sync/SyncHandshake.h"
 #include "libraries/sync/SyncSidecar.h"
 #include "libraries/sync/SyncNoteIo.h"
@@ -108,9 +112,12 @@ MainWindow::MainWindow() : QMainWindow()
                 QTimer::singleShot(500, this, [this]() {
                     QMessageBox::warning(
                         this, tr("Sync server"),
-                        tr("Cannot start the sync server on port %1.\n"
-                           "Another sync server may be running. "
-                           "Autostart is disabled.").arg(syncDefaultPort));
+                        tr("%1\nAutostart is disabled.")
+                        .arg(m_syncServerError.isEmpty()
+                             ? tr("Cannot start the sync server on port %1.\n"
+                                  "Another sync server may be running.")
+                                   .arg(syncDefaultPort)
+                             : m_syncServerError));
                 });
         }
     }
@@ -236,11 +243,15 @@ void MainWindow::setupSignals(void)
         synchronization(true);
     });
     connect(actionSyncMenuSyncServer, &QAction::toggled, this, &MainWindow::onSyncServerToggle);
+    connect(actionSyncMenuBlockPairing, &QAction::toggled,
+            this, &MainWindow::onSyncBlockPairingToggled);
     connect(actionSyncMenuSyncPairing, &QAction::triggered, this, &MainWindow::onSyncPairing);
     connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
     connect(&mytetraConfig, &AppConfig::syncPairRequestArrived,
             this, &MainWindow::onSyncPairRequest);
     connect(&mytetraConfig, &AppConfig::syncDevicesChanged,
+            this, &MainWindow::refreshSyncStatusUi);
+    connect(&mytetraConfig, &AppConfig::syncServerSettingsChanged,
             this, &MainWindow::refreshSyncStatusUi);
 
     // Вызов окна настроек
@@ -778,6 +789,13 @@ void MainWindow::initSyncMenu(void)
     actionSyncMenuSyncServer = new QAction(tr("Sync server"), this);
     actionSyncMenuSyncServer->setCheckable(true);
     menu->addAction(actionSyncMenuSyncServer);
+
+    actionSyncMenuBlockPairing = new QAction(tr("Block new pairings"), this);
+    actionSyncMenuBlockPairing->setCheckable(true);
+    actionSyncMenuBlockPairing->setToolTip(
+        tr("Refuse new devices. Existing pairs keep syncing. "
+           "Turning it on cancels pairing in progress."));
+    menu->addAction(actionSyncMenuBlockPairing);
 
     actionSyncMenuSyncDevices = new QAction(tr("Sync &devices..."), this);
     menu->addAction(actionSyncMenuSyncDevices);
@@ -1517,6 +1535,13 @@ void MainWindow::setNativeSyncBusy(bool busy)
 
 void MainWindow::refreshSyncStatusUi(void)
 {
+    if(actionSyncMenuBlockPairing!=nullptr)
+    {
+        const QSignalBlocker block(actionSyncMenuBlockPairing);
+        actionSyncMenuBlockPairing->setChecked(
+            mytetraConfig.get_syncPairingBlocked());
+    }
+
     if(actionSyncMenuLastRun==nullptr)
         return;
 
@@ -1885,12 +1910,19 @@ const quint16 MainWindow::syncDefaultPort=47777;
 
 bool MainWindow::startSyncServer(quint16 port, const QString &pairingPin)
 {
+    m_syncServerError.clear();
+
+    const bool tlsWanted=mytetraConfig.get_syncTlsEnabled();
+    const QString tlsCert=tlsWanted
+        ? mytetraConfig.get_syncTlsCertPath() : QString();
+
     if(syncHub!=nullptr && syncHub->isRunning())
     {
-        // Уже слушаем другой порт/PIN (автостарт с 47777 и пустым PIN,
+        // Уже слушаем другой порт/PIN/TLS (автостарт с 47777 и пустым PIN,
         // затем --sync-server --sync-port/--sync-pair): пересоздаём,
         // иначе headless-спаривание и порт молча игнорируются.
-        if(syncHub->port()==port && m_syncHubPin==pairingPin)
+        if(syncHub->port()==port && m_syncHubPin==pairingPin
+           && syncHub->tlsEnabled()==tlsWanted && m_syncHubTlsCert==tlsCert)
             return true;
 
         syncHub->stop();
@@ -1909,7 +1941,34 @@ bool MainWindow::startSyncServer(quint16 port, const QString &pairingPin)
                             pairingPin);
     }
 
-    return syncHub->start(port);
+    // TLS грузим до listen: если сертификат/ключ битые, сервер не
+    // поднимается вообще (fail closed), а не откатывается в HTTP
+    syncHub->clearTls();
+    m_syncHubTlsCert.clear();
+
+    if(tlsWanted)
+    {
+        QString tlsError;
+
+        if(!syncHub->setTls(mytetraConfig.get_syncTlsCertPath(),
+                            mytetraConfig.get_syncTlsKeyPath(), &tlsError))
+        {
+            m_syncServerError=tlsError;
+            qWarning() << "Sync server TLS:" << tlsError;
+            return false;
+        }
+
+        m_syncHubTlsCert=tlsCert;
+    }
+
+    if(!syncHub->start(port))
+    {
+        m_syncServerError=tr("Cannot listen on port %1: it may be busy.")
+            .arg(port);
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -1936,7 +1995,9 @@ void MainWindow::onSyncServerToggle(bool checked)
         if(!startSyncServer(syncDefaultPort))
         {
             QMessageBox::warning(this, tr("Sync"),
-                                 tr("Cannot start sync server: port is busy."));
+                                 m_syncServerError.isEmpty()
+                                     ? tr("Cannot start sync server.")
+                                     : m_syncServerError);
             actionSyncMenuSyncServer->setChecked(false);
             mytetraConfig.set_syncServerAutostart(false);
             return;
@@ -1984,6 +2045,17 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     const QString groupBefore=mytetraConfig.get_syncGroupId();
 
     SyncClient client(&mytetraConfig);
+    client.setTlsMode(static_cast<SyncClient::TlsMode>(
+        mytetraConfig.get_syncTlsClientMode()));
+    client.setTlsPin(mytetraConfig.get_syncTlsPin(host, port));
+    client.setTlsTrustCallback(
+        [this](const QString &host, quint16 port, const QSslCertificate &,
+               const QString &fingerprint) {
+        if(isSyncHeadlessMode())
+            return false;
+
+        return SyncPairDialogs::askCertTrust(this, host, port, fingerprint);
+    });
 
     // Предсессионное hello молчало в логах: зависший до сессии клиент
     // не оставлял следов. Дублируем шаги сюда под тем же флагом
@@ -2400,11 +2472,42 @@ void MainWindow::onSyncPairing(void)
 
     // Сервер: показать одноразовый код для входящего устройства.
     // PIN на сервере больше не вводится — клиент вводит код у себя
+    QString unknownIp;
+
+    for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+        if(info.id==unknownId)
+        {
+            unknownIp=info.lastIp;
+            break;
+        }
+
+    QString qrHost=mytetraConfig.get_syncAdvertiseHost();
+
+    if(qrHost.isEmpty())
+        qrHost=SyncTls::primaryAddress();
+
+    if(qrHost.isEmpty())
+        qrHost=QHostInfo::localHostName();
+
+    QString qrFingerprint=mytetraConfig.get_syncTlsFingerprint();
+
+    if(qrFingerprint.isEmpty()
+       && !mytetraConfig.get_syncTlsCertPath().isEmpty())
+        qrFingerprint=SyncTls::certificateFingerprint(
+            mytetraConfig.get_syncTlsCertPath());
+
+    const quint16 qrPort=syncHub!=nullptr ? syncHub->port() : syncDefaultPort;
+
     bool rejected=false;
     SyncPairDialogs::showCode(this, unknownId,
                               unknownName.isEmpty() ? unknownId : unknownName,
                               QDateTime::currentMSecsSinceEpoch(),
-                              &rejected);
+                              &rejected, unknownIp,
+                              mytetraConfig.get_syncPairBindIp(),
+                              qrHost, qrPort,
+                              mytetraConfig.get_syncTlsEnabled(),
+                              qrFingerprint,
+                              mytetraConfig.get_syncDeviceName());
 
     if(rejected)
     {
@@ -2419,6 +2522,8 @@ void MainWindow::onSyncDevices(void)
     SyncDevicesDialog dialog(treeScreen->knowTreeModel,
                              &mytetraConfig,
                              mytetraConfig.get_tetradir(),
+                             syncHub!=nullptr ? syncHub->port()
+                                              : syncDefaultPort,
                              this);
     dialog.exec();
 
@@ -2637,6 +2742,33 @@ SyncStrategy MainWindow::askSyncStrategy(QWidget *parent,
 // Попап входящего запроса на пару: устройство стучится с pairRequest.
 // Принять — общий PIN (та же цепочка, что Accept в окне устройств),
 // Отказать — снять запрос, Открыть окна — список устройств
+// Запрет новых пар из меню: подтверждение и отмена незавершённых пар
+void MainWindow::onSyncBlockPairingToggled(bool checked)
+{
+    if(checked)
+    {
+        if(QMessageBox::question(
+               this, tr("Sync"),
+               tr("Block new pairings?\n\n"
+                  "Existing devices keep syncing. Any pairing in progress "
+                  "will be cancelled (codes and pending secrets)."))
+           !=QMessageBox::Yes)
+        {
+            const QSignalBlocker block(actionSyncMenuBlockPairing);
+            actionSyncMenuBlockPairing->setChecked(false);
+            return;
+        }
+
+        SyncPairing::clearAll();
+
+        for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
+            mytetraConfig.clear_syncDevicePendingSecret(info.id);
+    }
+
+    mytetraConfig.set_syncPairingBlocked(checked);
+}
+
+
 void MainWindow::onSyncPairRequest(const QString &deviceId, const QString &deviceName)
 {
     // Headless: показывать некому, запрос и так виден в окне устройств
@@ -2652,21 +2784,46 @@ void MainWindow::onSyncPairRequest(const QString &deviceId, const QString &devic
 
         syncPairPopupActive=true;
         QString shownName=deviceName.isEmpty() ? deviceId : deviceName;
+        QString peerIp;
 
         // IP помогает отличить «то самое» устройство в списке
         for(const AppConfig::SyncDeviceInfo &info : mytetraConfig.get_syncDevices())
             if(info.id==deviceId && !info.lastIp.isEmpty())
             {
+                peerIp=info.lastIp;
                 shownName+=QStringLiteral(" (%1)").arg(info.lastIp);
                 break;
             }
 
         // Код показываем на сервере; клиент вводит его у себя.
         // Код живёт 5 минут и одноразовый — PIN на сервере больше не вводим
+        QString qrHost=mytetraConfig.get_syncAdvertiseHost();
+
+        if(qrHost.isEmpty())
+            qrHost=SyncTls::primaryAddress();
+
+        if(qrHost.isEmpty())
+            qrHost=QHostInfo::localHostName();
+
+        QString qrFingerprint=mytetraConfig.get_syncTlsFingerprint();
+
+        if(qrFingerprint.isEmpty()
+           && !mytetraConfig.get_syncTlsCertPath().isEmpty())
+            qrFingerprint=SyncTls::certificateFingerprint(
+                mytetraConfig.get_syncTlsCertPath());
+
+        const quint16 qrPort=syncHub!=nullptr ? syncHub->port()
+                                              : syncDefaultPort;
+
         bool rejected=false;
         SyncPairDialogs::showCode(this, deviceId, shownName,
                                   QDateTime::currentMSecsSinceEpoch(),
-                                  &rejected);
+                                  &rejected, peerIp,
+                                  mytetraConfig.get_syncPairBindIp(),
+                                  qrHost, qrPort,
+                                  mytetraConfig.get_syncTlsEnabled(),
+                                  qrFingerprint,
+                                  mytetraConfig.get_syncDeviceName());
 
         if(rejected)
         {

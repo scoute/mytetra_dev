@@ -1,6 +1,7 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QHostAddress>
+#include <QHostInfo>
 #include <QNetworkInterface>
 
 #include "main.h"
@@ -8,6 +9,9 @@
 #include "SyncServer.h"
 #include "SyncIdentity.h"
 #include "SyncPairCrypto.h"
+#include "SyncDataCrypto.h"
+#include "SyncPairQr.h"
+#include "SyncTls.h"
 #include "SyncPairing.h"
 #include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
@@ -180,7 +184,8 @@ bool SyncHandshake::checkDataAuth(AppConfig *config, const QString &route,
 
 QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
                                         bool pairRequest,
-                                        const QString &peerSecret)
+                                        const QString &peerSecret,
+                                        const QString &sessionB64)
 {
     QJsonObject hello;
     hello[QStringLiteral("proto")]=QStringLiteral("sync/1");
@@ -198,19 +203,40 @@ QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
         hello[QStringLiteral("pairRequest")]=true;
 
     // Доказательство владения секретом: HMAC от (время + id).
-    // Секрета нет (первое знакомство) — поле пустое, сервер это различает
+    // Это старый proof: его проверяет и старый сервер, поэтому он
+    // остаётся для совместимости. Новый proof2 покрывает всё hello
+    // (включая enc/session/pairRequest/groupId) и используется, когда
+    // обе стороны умеют data-шифрование.
     const QString secret=peerSecret.isEmpty()
         ? config->get_syncPairingSecret() : peerSecret;
     QString proof;
+    QString proof2;
 
     if(!secret.isEmpty())
     {
         proof=SyncIdentity::hmacProof(
             secret,
             QByteArray::number(clientTime)+config->get_syncDeviceId().toLatin1());
+
+        if(!sessionB64.isEmpty())
+        {
+            hello[QStringLiteral("enc")]=1;
+            hello[QStringLiteral("session")]=sessionB64;
+
+            proof2=SyncIdentity::hmacProof(
+                secret,
+                SyncDataCrypto::helloRequestChallenge(
+                    config->get_syncDeviceId(), clientTime, sessionB64,
+                    config->get_syncGroupId(),
+                    config->get_syncDeviceName(), pairRequest, true));
+        }
     }
 
     hello[QStringLiteral("proof")]=proof;
+
+    if(!proof2.isEmpty())
+        hello[QStringLiteral("proof2")]=proof2;
+
     return hello;
 }
 
@@ -274,6 +300,10 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
     // Секретов нет — устройство девственно чистое, впускаем к спариванию.
     const QString deviceId=hello.value(QStringLiteral("deviceId")).toString();
     const QString proof=hello.value(QStringLiteral("proof")).toString();
+    const QString proof2=hello.value(QStringLiteral("proof2")).toString();
+    const QString session=hello.value(QStringLiteral("session")).toString();
+    const bool enc=hello.value(QStringLiteral("enc")).toInt(0)==1
+                   && !session.isEmpty() && !proof2.isEmpty();
     const QString pending=config->get_syncDevicePendingSecret(deviceId);
 
     result.paired=config->hasSyncPairing() || !pending.isEmpty();
@@ -285,8 +315,36 @@ SyncHelloResult SyncHandshake::checkHello(const QJsonObject &hello,
 
         bool matched=false;
 
+        const QByteArray encChallenge=enc
+            ? SyncDataCrypto::helloRequestChallenge(
+                  deviceId, clientTime, session,
+                  hello.value(QStringLiteral("groupId")).toString(),
+                  hello.value(QStringLiteral("deviceName")).toString(),
+                  hello.value(QStringLiteral("pairRequest")).toBool(false), true)
+            : QByteArray();
+
         for(const QString &secret : candidates)
         {
+            if(enc)
+            {
+                const QString expected=SyncIdentity::hmacProof(
+                    secret, encChallenge);
+
+                if(!expected.isEmpty()
+                   && SyncPairCrypto::constantTimeEquals(proof2.toLatin1(),
+                                                          expected.toLatin1()))
+                {
+                    matched=true;
+                    result.matchedPending=!pending.isEmpty() && secret==pending;
+                    result.enc=true;
+                    result.session=session;
+                    result.verifiedSecret=secret;
+                    break;
+                }
+
+                continue;
+            }
+
             const QString expected=SyncIdentity::hmacProof(
                 secret,
                 QByteArray::number(clientTime)+deviceId.toLatin1());
@@ -322,16 +380,22 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
 {
     clearUnknown();
     SyncPairing::clearAll();
+    SyncDataCrypto::clearAllSessions();
 
     // Спаривание по одноразовому коду (sync/2). Отдельный маршрут:
     // не зависит от hello, поэтому работает и при auth-failed/foreign-network
     // (клиент сбросил пару, а сервер ещё помнит старую).
     server->addRoute(QStringLiteral("POST /pair-begin"),
-                     [config](const QJsonObject &request) -> QJsonObject {
+                     [server, config](const QJsonObject &request) -> QJsonObject {
+        if(config->get_syncPairingBlocked())
+            return SyncPairing::disabledAnswer();
+
         return SyncPairing::handleBegin(
             config->get_syncDeviceId(),
             request,
             QDateTime::currentMSecsSinceEpoch(),
+            server->lastPeerAddress(),
+            config->get_syncPairBindIp(),
             [config](const QString &id) {
                 return config->get_syncDevicePendingSecret(id);
             },
@@ -505,10 +569,23 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         if(pairReq && !theirId.isEmpty()
            && theirId!=config->get_syncDeviceId() && !(r.ok && r.paired))
         {
+            // Запрет новых пар: не генерируем код и не показываем попап.
+            // Уже спаренные устройства сюда не попадают (r.ok && r.paired)
+            if(config->get_syncPairingBlocked())
+            {
+                answer[QStringLiteral("ok")]=false;
+                answer[QStringLiteral("error")]=QStringLiteral("pairing-disabled");
+                answer[QStringLiteral("detail")]=
+                    QStringLiteral("New pairings are blocked on this server. "
+                                   "Enable pairing on the server first.");
+                return answer;
+            }
+
             qint64 expiresAt=0;
             qint64 lockedUntil=0;
             const QString code=SyncPairing::ensureCode(
-                theirId, now, &expiresAt, &lockedUntil);
+                theirId, now, server->lastPeerAddress(),
+                config->get_syncPairBindIp(), &expiresAt, &lockedUntil);
 
             answer[QStringLiteral("pairCodeRequired")]=true;
             answer[QStringLiteral("pairPending")]=true;
@@ -527,6 +604,29 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
                            theirId.toLatin1().constData(),
                            SyncPairCrypto::formatCode(code)
                                .toLatin1().constData());
+
+                    QString qrHost=config->get_syncAdvertiseHost();
+
+                    if(qrHost.isEmpty())
+                        qrHost=SyncTls::primaryAddress();
+
+                    if(qrHost.isEmpty())
+                        qrHost=QHostInfo::localHostName();
+
+                    QString qrFingerprint=config->get_syncTlsFingerprint();
+
+                    if(qrFingerprint.isEmpty()
+                       && !config->get_syncTlsCertPath().isEmpty())
+                        qrFingerprint=SyncTls::certificateFingerprint(
+                            config->get_syncTlsCertPath());
+
+                    const QString uri=SyncPairQr::buildUri(
+                        qrHost, server->port(), code,
+                        config->get_syncTlsEnabled(), qrFingerprint,
+                        config->get_syncDeviceName());
+
+                    printf("SYNC PAIR URI %s\n",
+                           uri.toUtf8().constData());
                     fflush(stdout);
                 }
             }
@@ -605,6 +705,33 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
         if(r.ok && r.paired && !pairReq && !theirId.isEmpty()
            && theirId!=config->get_syncDeviceId())
             SyncHandshake::noteMutual(config, theirId, "clean hello");
+
+        // enc-ответ: эхо сессии + MAC всего ответа. Клиент проверит,
+        // что сервер действительно знает секрет и не подменён в пути
+        if(r.enc && !r.verifiedSecret.isEmpty())
+        {
+            answer[QStringLiteral("enc")]=1;
+            answer[QStringLiteral("session")]=r.session;
+            SyncDataCrypto::setActiveSession(theirId, r.session);
+
+            const QByteArray macInput=SyncDataCrypto::helloResponseMacInput(
+                theirId, config->get_syncDeviceId(), r.session,
+                body.value(QStringLiteral("clientTime")).toVariant().toLongLong(),
+                answer.value(QStringLiteral("serverTime")).toVariant().toLongLong(),
+                answer.value(QStringLiteral("ok")).toBool(),
+                answer.value(QStringLiteral("paired")).toBool(),
+                answer.value(QStringLiteral("groupId")).toString(),
+                answer.value(QStringLiteral("deviceName")).toString(),
+                answer.value(QStringLiteral("pairCodeRequired")).toBool(),
+                answer.value(QStringLiteral("pairCodeLocked")).toBool(),
+                answer.value(QStringLiteral("pairCodeExpiresAt")).toVariant().toLongLong(),
+                answer.value(QStringLiteral("warning")).toString(),
+                answer.value(QStringLiteral("error")).toString(),
+                answer.value(QStringLiteral("detail")).toString());
+
+            answer[QStringLiteral("helloMac")]=
+                SyncDataCrypto::helloMac(r.verifiedSecret, macInput);
+        }
 
         return answer;
     });

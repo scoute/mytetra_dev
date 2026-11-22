@@ -21,6 +21,10 @@ struct SyncHelloResult
     bool matchedPending=false; // proof сошёлся с pending-секретом
                             // (выдан по коду, ещё не повышен)
     bool pair2=false;    // сервер умеет спаривание по одноразовому коду
+    bool enc=false;      // сервер подтвердил end-to-end шифрование данных
+    QString session;     // сессия enc (base64), эхо сервера
+    QString helloMac;    // MAC ответа hello (hex) для enc
+    QString verifiedSecret; // какой секрет сошёлся (не сериализуется)
     bool pairPending=false; // сервер записал наш запрос (wait-accept),
                             // пары пока нет — ждем Accept на той стороне
     bool pairCodeRequired=false; // показан код на той стороне, введите его
@@ -44,7 +48,8 @@ public:
     // peerSecret: секрет именно под этот пир (кольцо); пусто — легаси-одиночка
     static QJsonObject buildHello(AppConfig *config, qint64 clientTime,
                                   bool pairRequest=false,
-                                  const QString &peerSecret=QString());
+                                  const QString &peerSecret=QString(),
+                                  const QString &sessionB64=QString());
 
     // Проверить чужой /hello. Ничего не меняет, только вердикт
     static SyncHelloResult checkHello(const QJsonObject &hello,

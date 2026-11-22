@@ -12,6 +12,7 @@
 class KnowTreeModel;
 class AppConfig;
 class SyncClient;
+class QSslCertificate;
 
 // Одна сессия синхронизации со стороны спока (клиента).
 // Порядок: hello -> манифесты -> сверка -> заливка -> скачивание ->
@@ -114,6 +115,14 @@ public:
         std::function<void(const QString &phase, int done, int total)>;
     void setProgressCallback(ProgressCallback callback);
 
+    // Доверие TLS-сертификату (self-signed/private CA). Без колбэка
+    // такой сертификат отвергается; CA-подписанный проходит сам
+    using TlsTrustResolver =
+        std::function<bool(const QString &host, quint16 port,
+                           const QSslCertificate &cert,
+                           const QString &fingerprint)>;
+    void setTlsTrustResolver(TlsTrustResolver resolver);
+
     // Текстовый лог шагов (для UI/отчета), наращивается по ходу run()
     QStringList log(void) const;
 
@@ -180,6 +189,7 @@ private:
     DeleteGuard deleteGuard;
     PreviewResolver previewResolver;
     ProgressCallback progressCallback;
+    TlsTrustResolver tlsTrustResolver;
 
     // Контекст частичного синка: валиден только пока run() внутри
     // previewResolver (диалог модален внутри run, клиент тот же)

@@ -8,6 +8,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QJsonObject>
+#include <QSslConfiguration>
 
 class QTcpServer;
 class QTcpSocket;
@@ -34,6 +35,14 @@ public:
     void stop(void);
     bool isRunning(void) const;
     quint16 port(void) const;
+
+    // TLS: PEM-сертификат (цепочка) + приватный ключ. Если задан,
+    // порт говорит только TLS. false + error — не загрузилось
+    bool setTls(const QString &certPath, const QString &keyPath,
+                QString *error=nullptr);
+    void clearTls(void);
+    bool tlsEnabled(void) const;
+    QString tlsFingerprint(void) const;
 
     // Зарегистрировать обработчик маршрута "METHOD path"
     void addRoute(const QString &methodPath, Handler handler);
@@ -68,6 +77,12 @@ private:
 
     QTcpServer *server=nullptr;
     quint16 listenPort=0;
+
+    bool tls=false;
+    QSslConfiguration sslConfig;
+    QString tlsFingerprintText;
+    bool discoveryTls=false;
+    QString discoveryTlsFingerprint;
     QMap<QString, Handler> routes;
 
     // LAN-discovery: UDP на том же порту, ответы на пробы скана

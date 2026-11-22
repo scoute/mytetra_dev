@@ -235,3 +235,82 @@ JAVA_HOME=... ./gradlew :app:testFreeDebugUnitTest --tests "*SyncPairingTest*"
 - `app/src/models/appConfig/AppConfig.cpp` — pending-секрет.
 - Android: `SyncPairCrypto.kt`, `SyncPairing.kt`,
   `SyncProtocolClient.pairWithCode`, `SyncSessionRunner`.
+
+## Дополнение: data encryption, TLS, QR (1.44.430)
+
+### End-to-end шифрование данных (capability `enc:1`)
+
+Секрет пары наконец используется не только как пропуск, но и как ключ
+данных:
+
+- клиент в `hello` объявляет `enc=1`, случайную `session` (16 байт) и
+  `proof2 = HMAC(S, helloRequestChallenge)`, где challenge покрывает
+  `clientId`, `clientTime`, `session`, `groupId`, `deviceName`,
+  `pairRequest`, `enc`;
+- старый `proof` остаётся для совместимости со старыми серверами;
+- сервер проверяет `proof2`, эхом отдаёт `session` и `helloMac` —
+  HMAC от фиксированного набора полей ответа (ok/paired/groupId/
+  deviceName/pairCode*/warning/error/detail). Клиент проверяет MAC,
+  поэтому ответ hello тоже аутентифицирован;
+- из `S` + `session` + id выводятся `K_c2s`/`K_s2c`
+  (`HKDF-SHA256`, salt `mytetra-data-v1`);
+- тело каждого data-запроса/ответа шифруется ChaCha20-Poly1305;
+  снаружи остаются `_enc`, `_dev`, `_ts`, `_s`, `_ct`. AEAD-тег
+  заменяет старый `_proof` и покрывает тело;
+- AAD привязывает route, оба id, session и timestamp; timestamp
+  проверяется в пределах 5 секунд;
+- сервер хранит активную сессию устройства (ставится на hello) и
+  отвергает data-запросы со старой/чужой сессией;
+- флаг `enc` липкий в списке устройств: если устройство уже
+  шифровалось, а сервер вдруг предлагает plain, клиент отказывается
+  (`enc-downgrade`), а не откатывается молча;
+- старые клиенты/серверы без `enc` продолжают работать по старому
+  HMAC-пути; новые — шифруют.
+
+Тесты: `sync_data_crypto_test` (C++) и `SyncDataCryptoTest` (Kotlin)
+с общими векторами; полный E2E на живом headless-сервере:
+pairRequest → code → pair-begin → hello с proof2/helloMac → encrypted
+`/manifest` → decrypt.
+
+### TLS/HTTPS
+
+- сервер: `--sync-tls-cert`/`--sync-tls-key` (PEM; Let's Encrypt
+  fullchain/privkey или self-signed), `--sync-no-tls`;
+- тот же порт говорит только TLS (не смешиваем plain/TLS на одном
+  порту — никакого downgrade);
+- discovery-ответ добавляет `tls`/`tlsFingerprint`;
+- клиент: режим `off|prefer|require`, CA-подписанный сертификат
+  проходит по системному store, self-signed — по пину SHA256
+  (QR/TOFU); при `prefer` откат на HTTP только если сертификат
+  вообще не предъявлялся, при ошибке сертификата — отказ;
+- мобильный клиент: `HttpsURLConnection`, CA по умолчанию,
+  self-signed — `X509TrustManager` с пином из QR;
+- headless-сервер печатает `SYNC PAIR URI ...` с `tls`/`fp`.
+
+TLS-сервер проверен E2E (Python-клиент по HTTPS); десктопный и
+мобильный клиенты собираются и используют общий `SyncClient`/
+`SyncProtocolClient`.
+
+### QR
+
+Сервер показывает QR в том же попапе, где код:
+
+```
+mytetra://pair?v=1&host=...&port=...&code=...&tls=1&fp=...&name=...
+```
+
+Код по-прежнему привязан к устройству, приславшему `pairRequest`,
+поэтому QR имеет смысл только после запроса с телефона. Телефон
+сканирует, подставляет host/port/TLS/пин и использует тот же
+pair-begin. В headless QR заменён строкой `SYNC PAIR URI`.
+
+### Запрет пар и привязка к IP
+
+- `Block new pairings` (меню Sync и окно устройств): сервер не
+  генерирует коды и не принимает `/pair-begin`; уже спаренные
+  устройства синкаются. Включение отменяет незавершённые пары
+  (коды + pending-секреты).
+- `Bind code to client IP`: код принимается только с IP, приславшего
+  `pairRequest`. Полезно в LAN с уникальными IP; не включать за
+  NAT/обратным прокси и при смене IP клиента между запросом и
+  `pair-begin`.

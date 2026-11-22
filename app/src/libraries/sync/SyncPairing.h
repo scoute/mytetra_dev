@@ -37,6 +37,8 @@ constexpr qint64 LockoutMs=5*60*1000;
 // Гарантировать живой код для пира. Если код истёк — новый.
 // Пусто — пир заблокирован после неудачных попыток (until — до когда).
 QString ensureCode(const QString &peerId, qint64 now,
+                   const QString &peerIp=QString(),
+                   bool bindIp=false,
                    qint64 *expiresAt=nullptr,
                    qint64 *lockedUntil=nullptr);
 
@@ -65,8 +67,12 @@ QJsonObject buildBegin(const QString &clientId, const QString &clientName,
 
 // Сервер: проверить begin и собрать ответ. Ошибка — поле "error".
 QJsonObject handleBegin(const QString &serverId, const QJsonObject &request,
-                        qint64 now, const PendingGetter &getPending,
+                        qint64 now, const QString &peerIp, bool bindIp,
+                        const PendingGetter &getPending,
                         const PendingSetter &setPending);
+
+// Ответ на /pair-begin и pairRequest, когда сервер запретил новые пары
+QJsonObject disabledAnswer(void);
 
 // Клиент: проверить ответ и расшифровать долговременный секрет.
 // Возвращает hex-секрет (64 символа) или пусто; errorCode — машинный код.

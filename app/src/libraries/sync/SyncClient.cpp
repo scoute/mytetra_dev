@@ -8,11 +8,16 @@
 #include <QUrl>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QSslCertificate>
+#include <QSslConfiguration>
+#include <QSslError>
 
 #include "SyncClient.h"
 #include "SyncHandshake.h"
 #include "SyncPairing.h"
 #include "SyncPairCrypto.h"
+#include "SyncTls.h"
+#include "SyncDataCrypto.h"
 #include "SyncDebug.h"
 #include "models/appConfig/AppConfig.h"
 
@@ -28,6 +33,48 @@ SyncClient::SyncClient(AppConfig *config) : config(config)
 void SyncClient::setTimeoutMs(int ms)
 {
     timeoutMs=ms;
+}
+
+
+void SyncClient::setTlsMode(TlsMode mode)
+{
+    tlsModeValue=static_cast<int>(mode);
+}
+
+
+SyncClient::TlsMode SyncClient::tlsMode(void) const
+{
+    return static_cast<TlsMode>(tlsModeValue);
+}
+
+
+void SyncClient::setTlsPin(const QString &fingerprint)
+{
+    tlsPinText=fingerprint.trimmed();
+}
+
+
+QString SyncClient::tlsPin(void) const
+{
+    return tlsPinText;
+}
+
+
+void SyncClient::setTlsTrustCallback(TlsTrustCallback callback)
+{
+    tlsTrustCallback=callback;
+}
+
+
+bool SyncClient::lastUsedTls(void) const
+{
+    return lastUsedTlsFlag;
+}
+
+
+QString SyncClient::lastTlsFingerprint(void) const
+{
+    return lastTlsFingerprintText;
 }
 
 
@@ -67,22 +114,232 @@ bool SyncClient::lastTransportOk(void) const
 QJsonObject SyncClient::postJson(const QString &host, quint16 port,
                                  const QString &path, const QJsonObject &body,
                                  bool &ok)
-{    SYNC_TRACE_EXTRA(host);
+{
+    SYNC_TRACE_EXTRA(host);
 
     ok=false;
     lastTransportOkFlag=false;
     lastErrorText.clear();
+    lastUsedTlsFlag=false;
+    lastTlsFingerprintText.clear();
+
+    if(tlsModeValue==0)
+    {
+        bool certError=false;
+        return requestOnce(QStringLiteral("POST"), host, port, path, body,
+                           QStringLiteral("http"), ok, certError);
+    }
+
+    bool certError=false;
+    QJsonObject answer=requestOnce(QStringLiteral("POST"), host, port, path,
+                                   body, QStringLiteral("https"), ok,
+                                   certError);
+
+    if(ok)
+    {
+        lastUsedTlsFlag=true;
+        return answer;
+    }
+
+    // Сертификат предъявлен, но не доверен — откат на HTTP запрещён:
+    // иначе MITM/self-signed молча понижал бы транспорт
+    if(tlsModeValue==2 || certError)
+    {
+        if(tlsModeValue==2)
+            lastErrorText=QStringLiteral("TLS is required: ")+lastErrorText;
+
+        return QJsonObject();
+    }
+
+    // Prefer: HTTPS не поднялся и сертификат не предъявлялся —
+    // вероятно, старый сервер без TLS. Осознанный откат с логом
+    syncDbg(QStringLiteral("SyncClient: HTTPS failed (%1), trying HTTP")
+                .arg(lastErrorText));
+    lastErrorText.clear();
+    lastTlsFingerprintText.clear();
+
+    answer=requestOnce(QStringLiteral("POST"), host, port, path, body,
+                       QStringLiteral("http"), ok, certError);
+    lastUsedTlsFlag=false;
+    return answer;
+}
+
+
+QJsonObject SyncClient::getJson(const QString &host, quint16 port,
+                                const QString &path, bool &ok)
+{
+    SYNC_TRACE_EXTRA(host);
+
+    ok=false;
+    lastTransportOkFlag=false;
+    lastErrorText.clear();
+    lastUsedTlsFlag=false;
+    lastTlsFingerprintText.clear();
+
+    if(tlsModeValue==0)
+    {
+        bool certError=false;
+        return requestOnce(QStringLiteral("GET"), host, port, path,
+                           QJsonObject(), QStringLiteral("http"), ok,
+                           certError);
+    }
+
+    bool certError=false;
+    QJsonObject answer=requestOnce(QStringLiteral("GET"), host, port, path,
+                                   QJsonObject(), QStringLiteral("https"),
+                                   ok, certError);
+
+    if(ok)
+    {
+        lastUsedTlsFlag=true;
+        return answer;
+    }
+
+    if(tlsModeValue==2 || certError)
+    {
+        if(tlsModeValue==2)
+            lastErrorText=QStringLiteral("TLS is required: ")+lastErrorText;
+
+        return QJsonObject();
+    }
+
+    syncDbg(QStringLiteral("SyncClient: HTTPS failed (%1), trying HTTP")
+                .arg(lastErrorText));
+    lastErrorText.clear();
+    lastTlsFingerprintText.clear();
+
+    answer=requestOnce(QStringLiteral("GET"), host, port, path, QJsonObject(),
+                       QStringLiteral("http"), ok, certError);
+    lastUsedTlsFlag=false;
+    return answer;
+}
+
+
+QJsonObject SyncClient::requestOnce(const QString &method, const QString &host,
+                                    quint16 port, const QString &path,
+                                    const QJsonObject &body,
+                                    const QString &scheme,
+                                    bool &ok, bool &certError)
+{
+    ok=false;
+    certError=false;
+    lastTransportOkFlag=false;
 
     QNetworkAccessManager manager;
     QNetworkRequest request;
-    request.setUrl(QUrl(QStringLiteral("http://%1:%2%3")
-                        .arg(host).arg(port).arg(path)));
-    request.setHeader(QNetworkRequest::ContentTypeHeader,
-                      QStringLiteral("application/json; charset=utf-8"));
+    request.setUrl(QUrl(QStringLiteral("%1://%2:%3%4")
+                        .arg(scheme, host).arg(port).arg(path)));
 
-    const QByteArray payload=QJsonDocument(body).toJson(QJsonDocument::Compact);
+    QByteArray payload;
 
-    QNetworkReply *reply=manager.post(request, payload);
+    if(method!=QStringLiteral("GET"))
+    {
+        request.setHeader(QNetworkRequest::ContentTypeHeader,
+                          QStringLiteral("application/json; charset=utf-8"));
+        payload=QJsonDocument(body).toJson(QJsonDocument::Compact);
+    }
+
+    QNetworkReply *reply=method==QStringLiteral("GET")
+        ? manager.get(request) : manager.post(request, payload);
+
+    QObject::connect(reply,
+        QOverload<const QList<QSslError> &>::of(&QNetworkReply::sslErrors),
+        reply,
+        [this, reply, host, port, &certError](const QList<QSslError> &errors) {
+        certError=true;
+
+        const QSslCertificate cert=reply->sslConfiguration().peerCertificate();
+        const QString fingerprint=SyncTls::certificateFingerprint(cert);
+        lastTlsFingerprintText=fingerprint;
+
+        if(cert.isNull())
+        {
+            lastErrorText=QStringLiteral("TLS: server did not present a "
+                                         "certificate");
+            return;
+        }
+
+        bool hardError=false;
+        bool selfSigned=false;
+        bool hostMismatch=false;
+
+        for(const QSslError &error : errors)
+        {
+            switch(error.error())
+            {
+            case QSslError::CertificateExpired:
+            case QSslError::CertificateNotYetValid:
+            case QSslError::CertificateRevoked:
+            case QSslError::CertificateSignatureFailed:
+            case QSslError::UnspecifiedError:
+                hardError=true;
+                break;
+
+            case QSslError::SelfSignedCertificate:
+            case QSslError::SelfSignedCertificateInChain:
+                selfSigned=true;
+                break;
+
+            case QSslError::HostNameMismatch:
+                hostMismatch=true;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        if(hardError)
+        {
+            lastErrorText=QStringLiteral("TLS certificate error: %1")
+                .arg(errors.isEmpty() ? QString()
+                                      : errors.first().errorString());
+            return;
+        }
+
+        QString pinned=tlsPinText;
+
+        if(pinned.isEmpty() && config!=nullptr)
+            pinned=config->get_syncTlsPin(host, port);
+
+        if(!pinned.isEmpty())
+        {
+            if(pinned.compare(fingerprint, Qt::CaseInsensitive)==0)
+            {
+                reply->ignoreSslErrors();
+                return;
+            }
+
+            lastErrorText=QStringLiteral(
+                "TLS certificate does not match the pinned fingerprint. "
+                "Got: %1").arg(fingerprint);
+            return;
+        }
+
+        // CA-подписанный сертификат с чужим именем не даём обойти через
+        // TOFU: это уже не «свой self-signed», а подозрительный хост
+        if(hostMismatch && !selfSigned)
+        {
+            lastErrorText=QStringLiteral(
+                "TLS host name mismatch for %1").arg(host);
+            return;
+        }
+
+        if(tlsTrustCallback
+           && tlsTrustCallback(host, port, cert, fingerprint))
+        {
+            if(config!=nullptr)
+                config->set_syncTlsPin(host, port, fingerprint);
+
+            tlsPinText=fingerprint;
+            reply->ignoreSslErrors();
+            return;
+        }
+
+        lastErrorText=QStringLiteral(
+            "TLS certificate is not trusted. Fingerprint: %1")
+            .arg(fingerprint);
+    });
 
     QEventLoop loop;
     QTimer timer;
@@ -96,13 +353,14 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     timer.start(timeoutMs);
     loop.exec();
 
-    // Таймаут и ответ могли прийти в одной итерации: если reply уже
-    // finished, не рвём пришедший ответ «таймаутом».
     if(!timer.isActive() && !reply->isFinished())
     {
         reply->abort();
         reply->deleteLater();
-        lastErrorText=QStringLiteral("Sync request timed out.");
+
+        if(lastErrorText.isEmpty())
+            lastErrorText=QStringLiteral("Sync request timed out.");
+
         return QJsonObject();
     }
 
@@ -110,7 +368,8 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
 
     if(reply->error()!=QNetworkReply::NoError)
     {
-        lastErrorText=reply->errorString();
+        if(lastErrorText.isEmpty())
+            lastErrorText=reply->errorString();
 
         if(syncDebugEnabled())
             qDebug() << "SyncClient:" << path << "transport error:"
@@ -134,8 +393,6 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
     ok=true;
     lastTransportOkFlag=true;
 
-    // Ответ сервера с его ошибкой (не транспорт): тоже в лог,
-    // иначе по таймингам видно "ok", а сессия падает дальше молча
     if(syncDebugEnabled())
     {
         const QJsonObject obj=doc.object();
@@ -144,92 +401,84 @@ QJsonObject SyncClient::postJson(const QString &host, quint16 port,
 
         if(!err.isEmpty() || !warn.isEmpty())
             qDebug() << "SyncClient:" << path << "server says:"
-                     << (err.isEmpty() ? QString() : QStringLiteral("error=")+err)
-                     << (warn.isEmpty() ? QString() : QStringLiteral("warning=")+warn);
+                     << (err.isEmpty() ? QString()
+                                       : QStringLiteral("error=")+err)
+                     << (warn.isEmpty() ? QString()
+                                        : QStringLiteral("warning=")+warn);
     }
 
     return doc.object();
 }
 
 
-QJsonObject SyncClient::getJson(const QString &host, quint16 port,
-                                const QString &path, bool &ok)
-{    SYNC_TRACE_EXTRA(host);
 
+QJsonObject SyncClient::postData(const QString &host, quint16 port,
+                                 const QString &route, const QString &path,
+                                 const QJsonObject &body, bool &ok)
+{
+    SyncDataCrypto::Context ctx;
+    QJsonObject request;
+
+    if(peerEnc && !peerSessionText.isEmpty() && !peerSecretText.isEmpty()
+       && !peerDeviceIdText.isEmpty())
+    {
+        ctx.encrypted=true;
+        ctx.clientId=config->get_syncDeviceId();
+        ctx.serverId=peerDeviceIdText;
+        ctx.session=peerSessionText;
+        ctx.ts=QDateTime::currentMSecsSinceEpoch();
+        ctx.route=route;
+
+        request=SyncDataCrypto::sealRequest(
+            peerSecretText, ctx.clientId, ctx.serverId, ctx.session,
+            route, ctx.ts, body);
+
+        if(request.isEmpty())
+        {
+            lastErrorText=QStringLiteral("Cannot encrypt sync request");
+            ok=false;
+            lastTransportOkFlag=false;
+            return QJsonObject();
+        }
+    }
+    else
+        request=withAuth(route, body);
+
+    QJsonObject answer=postJson(host, port, path, request, ok);
+
+    if(!ok)
+        return QJsonObject();
+
+    if(!ctx.encrypted)
+        return answer;
+
+    if(answer.contains(QStringLiteral("_enc")))
+    {
+        QJsonObject inner;
+        QString error;
+
+        if(!SyncDataCrypto::openResponse(peerSecretText, ctx, answer,
+                                         inner, error))
+        {
+            lastErrorText=error;
+            ok=false;
+            lastTransportOkFlag=false;
+            return QJsonObject();
+        }
+
+        return inner;
+    }
+
+    // Ошибку сервер может вернуть plain (auth-failed/not-paired):
+    // секрета для шифрования ошибки у него нет/не нужно
+    if(answer.contains(QStringLiteral("error")))
+        return answer;
+
+    lastErrorText=QStringLiteral(
+        "Server returned an unencrypted sync response");
     ok=false;
     lastTransportOkFlag=false;
-    lastErrorText.clear();
-
-    QNetworkAccessManager manager;
-    QNetworkRequest request;
-    request.setUrl(QUrl(QStringLiteral("http://%1:%2%3")
-                        .arg(host).arg(port).arg(path)));
-
-    QNetworkReply *reply=manager.get(request);
-
-    QEventLoop loop;
-    QTimer timer;
-    timer.setSingleShot(true);
-
-    QObject::connect(reply, &QNetworkReply::finished,
-                     &loop, &QEventLoop::quit);
-    QObject::connect(&timer, &QTimer::timeout,
-                     &loop, &QEventLoop::quit);
-
-    timer.start(timeoutMs);
-    loop.exec();
-
-    if(!timer.isActive() && !reply->isFinished())
-    {
-        reply->abort();
-        reply->deleteLater();
-        lastErrorText=QStringLiteral("Sync request timed out.");
-        return QJsonObject();
-    }
-
-    timer.stop();
-
-    if(reply->error()!=QNetworkReply::NoError)
-    {
-        lastErrorText=reply->errorString();
-
-        if(syncDebugEnabled())
-            qDebug() << "SyncClient:" << path << "transport error:"
-                     << lastErrorText;
-
-        reply->deleteLater();
-        return QJsonObject();
-    }
-
-    QJsonParseError parseError;
-    const QJsonDocument doc=QJsonDocument::fromJson(reply->readAll(),
-                                                    &parseError);
-    reply->deleteLater();
-
-    if(parseError.error!=QJsonParseError::NoError || !doc.isObject())
-    {
-        lastErrorText=QStringLiteral("Bad sync reply.");
-        return QJsonObject();
-    }
-
-    ok=true;
-    lastTransportOkFlag=true;
-
-    // Ответ сервера с его ошибкой (не транспорт): тоже в лог,
-    // иначе по таймингам видно "ok", а сессия падает дальше молча
-    if(syncDebugEnabled())
-    {
-        const QJsonObject obj=doc.object();
-        const QString err=obj.value(QStringLiteral("error")).toString();
-        const QString warn=obj.value(QStringLiteral("warning")).toString();
-
-        if(!err.isEmpty() || !warn.isEmpty())
-            qDebug() << "SyncClient:" << path << "server says:"
-                     << (err.isEmpty() ? QString() : QStringLiteral("error=")+err)
-                     << (warn.isEmpty() ? QString() : QStringLiteral("warning=")+warn);
-    }
-
-    return doc.object();
+    return QJsonObject();
 }
 
 
@@ -239,6 +488,9 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
 
     SyncHelloResult result;
     result.serverTime=QDateTime::currentMSecsSinceEpoch();
+    const qint64 clientTime=result.serverTime;
+    const QString sessionB64=SyncPairCrypto::toBase64(
+        SyncPairCrypto::randomBytes(16));
 
     if(syncDebugEnabled())
         qDebug() << "SyncClient: hello" << host << port
@@ -275,8 +527,8 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
         bool ok=false;
         answer=postJson(
             host, port, QStringLiteral("/hello"),
-            SyncHandshake::buildHello(config, result.serverTime,
-                                     pairRequest, candidate), ok);
+            SyncHandshake::buildHello(config, clientTime,
+                                     pairRequest, candidate, sessionB64), ok);
 
         if(!ok)
         {
@@ -352,11 +604,88 @@ SyncHelloResult SyncClient::hello(const QString &host, quint16 port,
                                    .toVariant().toLongLong();
     result.pairCodeUntil=answer.value(QStringLiteral("pairCodeUntil"))
                                .toVariant().toLongLong();
+    result.enc=answer.value(QStringLiteral("enc")).toInt(0)==1;
+    result.session=answer.value(QStringLiteral("session")).toString();
+    result.helloMac=answer.value(QStringLiteral("helloMac")).toString();
 
     if(!result.ok)
     {
         result.errorCode=answer.value(QStringLiteral("error")).toString();
         result.errorText=answer.value(QStringLiteral("detail")).toString();
+        return result;
+    }
+
+    // --- end-to-end enc (sync/3) ---
+    const bool wasEnc=config!=nullptr
+        && config->get_syncDeviceEnc(result.remoteDeviceId);
+
+    if(result.enc)
+    {
+        if(result.session!=sessionB64)
+        {
+            result.ok=false;
+            result.errorCode=QStringLiteral("auth-failed");
+            result.errorText=QStringLiteral(
+                "Server hello session mismatch");
+            return result;
+        }
+
+        if(result.helloMac.isEmpty() || usedSecret.isEmpty())
+        {
+            result.ok=false;
+            result.errorCode=QStringLiteral("auth-failed");
+            result.errorText=QStringLiteral(
+                "Server did not authenticate the hello response");
+            return result;
+        }
+
+        const QByteArray macInput=SyncDataCrypto::helloResponseMacInput(
+            config->get_syncDeviceId(), result.remoteDeviceId,
+            result.session, clientTime, result.serverTime,
+            result.ok, result.paired, result.remoteGroupId,
+            result.remoteDeviceName, result.pairCodeRequired,
+            result.pairCodeLocked, result.pairCodeExpiresAt,
+            result.warning,
+            answer.value(QStringLiteral("error")).toString(),
+            answer.value(QStringLiteral("detail")).toString());
+
+        const QString expected=SyncDataCrypto::helloMac(usedSecret,
+                                                        macInput);
+
+        if(!SyncPairCrypto::constantTimeEquals(result.helloMac.toLatin1(),
+                                               expected.toLatin1()))
+        {
+            result.ok=false;
+            result.errorCode=QStringLiteral("auth-failed");
+            result.errorText=QStringLiteral(
+                "Server hello MAC mismatch");
+            return result;
+        }
+
+        peerEnc=true;
+        peerSessionText=sessionB64;
+        peerDeviceIdText=result.remoteDeviceId;
+
+        if(config!=nullptr)
+            config->set_syncDeviceEnc(result.remoteDeviceId, true);
+    }
+    else
+    {
+        peerEnc=false;
+        peerSessionText.clear();
+        peerDeviceIdText=result.remoteDeviceId;
+
+        // Липкий enc: уже шифровались с этим устройством, а сервер
+        // вдруг отвечает plain — не откатываемся молча
+        if(wasEnc)
+        {
+            result.ok=false;
+            result.errorCode=QStringLiteral("enc-downgrade");
+            result.errorText=QStringLiteral(
+                "This device previously used encrypted sync, but the "
+                "server stopped offering it. Check the server or re-pair.");
+            return result;
+        }
     }
 
     return result;
@@ -425,9 +754,9 @@ SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port)
 {    SYNC_TRACE_EXTRA(host);
 
     bool ok=false;
-    const QJsonObject answer=postJson(
-        host, port, QStringLiteral("/manifest"),
-        withAuth(QStringLiteral("POST /manifest"), QJsonObject()), ok);
+    const QJsonObject answer=postData(
+        host, port, QStringLiteral("POST /manifest"),
+        QStringLiteral("/manifest"), QJsonObject(), ok);
 
     if(!ok)
         return SyncManifest();
@@ -452,9 +781,9 @@ QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
     request[QStringLiteral("id")]=id;
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/pull-note"),
-                                      withAuth(QStringLiteral("POST /pull-note"), request), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /pull-note"),
+                                      QStringLiteral("/pull-note"), request, ok);
 
     if(!ok)
         return QJsonObject();
@@ -480,9 +809,9 @@ QJsonObject SyncClient::pullBranch(const QString &host, quint16 port,
     request[QStringLiteral("id")]=id;
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/pull-branch"),
-                                      withAuth(QStringLiteral("POST /pull-branch"), request), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /pull-branch"),
+                                      QStringLiteral("/pull-branch"), request, ok);
 
     if(!ok)
         return QJsonObject();
@@ -502,9 +831,9 @@ bool SyncClient::pushNote(const QString &host, quint16 port,
 {    SYNC_TRACE_EXTRA(host+QStringLiteral(" ")+note.value(QStringLiteral("id")).toString());
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/push-note"),
-                                      withAuth(QStringLiteral("POST /push-note"), note), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /push-note"),
+                                      QStringLiteral("/push-note"), note, ok);
 
     if(!ok)
         return false;
@@ -527,9 +856,9 @@ bool SyncClient::pushBranch(const QString &host, quint16 port,
 {    SYNC_TRACE_EXTRA(host+QStringLiteral(" ")+branch.value(QStringLiteral("id")).toString());
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/push-branch"),
-                                      withAuth(QStringLiteral("POST /push-branch"), branch), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /push-branch"),
+                                      QStringLiteral("/push-branch"), branch, ok);
 
     if(!ok)
         return false;
@@ -553,9 +882,9 @@ bool SyncClient::pushDelete(const QString &host, quint16 port,
     request[QStringLiteral("deletedAt")]=deletedAt;
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/push-delete"),
-                                      withAuth(QStringLiteral("POST /push-delete"), request), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /push-delete"),
+                                      QStringLiteral("/push-delete"), request, ok);
 
     if(!ok)
         return false;
@@ -574,9 +903,9 @@ bool SyncClient::commit(const QString &host, quint16 port)
 {    SYNC_TRACE_EXTRA(host);
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/commit"),
-                                      withAuth(QStringLiteral("POST /commit"), QJsonObject()), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /commit"),
+                                      QStringLiteral("/commit"), QJsonObject(), ok);
 
     return ok && answer.value(QStringLiteral("ok")).toBool(false);
 }
@@ -595,9 +924,9 @@ bool SyncClient::mergeByName(const QString &host, quint16 port,
     request[QStringLiteral("branchIds")]=arr;
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/merge-by-name"),
-                                      withAuth(QStringLiteral("POST /merge-by-name"), request), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /merge-by-name"),
+                                      QStringLiteral("/merge-by-name"), request, ok);
 
     if(!ok)
         return false;
@@ -616,9 +945,9 @@ bool SyncClient::reset(const QString &host, quint16 port)
 {    SYNC_TRACE_EXTRA(host);
 
     bool ok=false;
-    const QJsonObject answer=postJson(host, port,
-                                      QStringLiteral("/reset"),
-                                      withAuth(QStringLiteral("POST /reset"), QJsonObject()), ok);
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /reset"),
+                                      QStringLiteral("/reset"), QJsonObject(), ok);
 
     return ok && answer.value(QStringLiteral("ok")).toBool(false);
 }

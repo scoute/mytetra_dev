@@ -5,12 +5,16 @@
 #include <QJsonDocument>
 #include <QNetworkDatagram>
 #include <QElapsedTimer>
+#include <QSslConfiguration>
+#include <QSslError>
+#include <QSslSocket>
 #include <QDebug>
 
 #include "SyncServer.h"
 #include "SyncDiscovery.h"
 #include "SyncDebug.h"
 #include "SyncHttp.h"
+#include "SyncTls.h"
 #include "main.h"
 
 
@@ -18,6 +22,48 @@ namespace
 {
 // Адрес пира в удобном виде: IPv6-mapped IPv4 (::ffff:192.168.1.2)
 // нормализуем к dotted-quad, иначе в списке устройств мусор
+// QTcpServer, который принимает соединения как QSslSocket. addPending-
+// Connection оставляет прежний onNewConnection: для SyncServer разницы
+// между plain и TLS-сокетом нет — readAll/write уже работают с данными
+class TlsTcpServer : public QTcpServer
+{
+public:
+
+    TlsTcpServer(const QSslConfiguration &config, QObject *parent)
+        : QTcpServer(parent), config(config) {}
+
+protected:
+
+    void incomingConnection(qintptr socketDescriptor) override
+    {
+        QSslSocket *socket=new QSslSocket(this);
+
+        if(!socket->setSocketDescriptor(socketDescriptor))
+        {
+            delete socket;
+            return;
+        }
+
+        socket->setSslConfiguration(config);
+
+        QObject::connect(socket,
+                         QOverload<const QList<QSslError> &>::of(
+                             &QSslSocket::sslErrors),
+                         socket, [](const QList<QSslError> &errors) {
+            for(const QSslError &error : errors)
+                qWarning() << "SyncServer TLS:" << error.errorString();
+        });
+
+        addPendingConnection(socket);
+        socket->startServerEncryption();
+    }
+
+private:
+
+    QSslConfiguration config;
+};
+
+
 QString normalizedPeerAddress(QTcpSocket *socket)
 {
     if(socket==nullptr)
@@ -55,8 +101,25 @@ SyncServer::~SyncServer(void)
 bool SyncServer::start(quint16 port)
 {    SYNC_TRACE();
 
-    if(server->isListening())
+    if(server!=nullptr && server->isListening())
         return true;
+
+    // Сокет-класс зависит от TLS: пересоздаём слушатель при каждом
+    // старте (старый уже закрыт/не слушает)
+    if(server!=nullptr)
+    {
+        server->close();
+        delete server;
+        server=nullptr;
+    }
+
+    if(tls)
+        server=new TlsTcpServer(sslConfig, this);
+    else
+        server=new QTcpServer(this);
+
+    connect(server, &QTcpServer::newConnection,
+            this,   &SyncServer::onNewConnection);
 
     if(!server->listen(QHostAddress::Any, port))
         return false;
@@ -120,6 +183,59 @@ void SyncServer::stop(void)
 }
 
 
+bool SyncServer::setTls(const QString &certPath, const QString &keyPath,
+                        QString *error)
+{
+    QSslConfiguration config;
+    QString fingerprint;
+    QString reason;
+
+    if(!SyncTls::loadServerConfig(certPath, keyPath, config,
+                                  &fingerprint, &reason))
+    {
+        if(error!=nullptr)
+            *error=reason;
+
+        return false;
+    }
+
+    sslConfig=config;
+    tlsFingerprintText=fingerprint;
+    discoveryTls=true;
+    discoveryTlsFingerprint=fingerprint;
+    tls=true;
+
+    if(error!=nullptr)
+        error->clear();
+
+    qDebug() << "SyncServer: TLS enabled, cert fingerprint"
+             << fingerprint.left(16)+"...";
+    return true;
+}
+
+
+void SyncServer::clearTls(void)
+{
+    tls=false;
+    sslConfig=QSslConfiguration();
+    tlsFingerprintText.clear();
+    discoveryTls=false;
+    discoveryTlsFingerprint.clear();
+}
+
+
+bool SyncServer::tlsEnabled(void) const
+{
+    return tls;
+}
+
+
+QString SyncServer::tlsFingerprint(void) const
+{
+    return tlsFingerprintText;
+}
+
+
 void SyncServer::setDiscoveryIdentity(DiscoveryIdentity identity)
 {
     discoveryIdentity=identity;
@@ -152,7 +268,9 @@ void SyncServer::onDiscoveryDatagram(void)
         const QByteArray reply=SyncDiscovery::buildReply(
             selfId,
             identity.value(QStringLiteral("deviceName")).toString(),
-            listenPort);
+            listenPort,
+            discoveryTls,
+            discoveryTlsFingerprint);
         udpSocket->writeDatagram(reply, datagram.senderAddress(),
                                  datagram.senderPort());
 
@@ -192,6 +310,12 @@ void SyncServer::onNewConnection(void)
     while(server->hasPendingConnections())
     {
         QTcpSocket *socket=server->nextPendingConnection();
+
+        if(QSslSocket *ssl=qobject_cast<QSslSocket *>(socket))
+            connect(ssl, &QSslSocket::encrypted, this, [ssl]() {
+                syncDbg("server: TLS established from "
+                        +ssl->peerAddress().toString());
+            });
 
         connect(socket, &QTcpSocket::readyRead,
                 this,   &SyncServer::onReadyRead);

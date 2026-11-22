@@ -110,6 +110,50 @@ public:
     bool get_syncServerAutostart(void);
     void set_syncServerAutostart(bool value);
 
+    // Запрет новых спариваний на сервере. Уже спаренные устройства
+    // продолжают синкаться; /hello с pairRequest и /pair-begin
+    // отказывают. Включение отменяет незавершённые пары (коды и
+    // pending-секреты), текущие секреты не трогает
+    bool get_syncPairingBlocked(void);
+    void set_syncPairingBlocked(bool value);
+
+    // Привязка одноразового кода к IP, с которого пришёл pairRequest.
+    // Полезно в LAN, где у каждого устройства свой IP; не включайте
+    // за NAT/обратным прокси (там IP общий) и если IP клиента может
+    // смениться между запросом кода и pair-begin
+    bool get_syncPairBindIp(void);
+    void set_syncPairBindIp(bool value);
+
+    // Хост, который сервер анонсирует в QR (домен/IP). Пусто —
+    // берётся первичный не-loopback IPv4. Для публичного сервера
+    // укажите домен из сертификата
+    QString get_syncAdvertiseHost(void);
+    void set_syncAdvertiseHost(const QString &host);
+
+    // TLS-сервер: cert/key в PEM. Если enabled, порт говорит только
+    // TLS (HTTP на него не отвечает). Для публичного сервера —
+    // Let's Encrypt fullchain.pem/privkey.pem, для LAN — self-signed
+    bool get_syncTlsEnabled(void);
+    void set_syncTlsEnabled(bool value);
+    QString get_syncTlsCertPath(void);
+    void set_syncTlsCertPath(const QString &path);
+    QString get_syncTlsKeyPath(void);
+    void set_syncTlsKeyPath(const QString &path);
+    QString get_syncTlsFingerprint(void);
+    void set_syncTlsFingerprint(const QString &fingerprint);
+
+    // TLS-клиент: 0 — только HTTP, 1 — HTTPS с откатом на HTTP,
+    // 2 — только HTTPS. Для публичного сервера ставьте 2
+    int get_syncTlsClientMode(void);
+    void set_syncTlsClientMode(int mode);
+
+    // Пины сертификатов для self-signed: host:port -> SHA256(cert DER).
+    // Нужны до появления deviceId (первое подключение/QR)
+    QString get_syncTlsPin(const QString &host, quint16 port) const;
+    void set_syncTlsPin(const QString &host, quint16 port,
+                        const QString &fingerprint);
+    void clear_syncTlsPin(const QString &host, quint16 port);
+
     // Кнопка синхронизации на панели: нативный Wi-Fi-синк или внешняя
     // команда (как раньше). Дефолт — натив (внешняя осталась в настройках)
     bool get_syncToolbarNative(void);
@@ -153,6 +197,17 @@ public:
         qint64 lastSync=0;
         bool lastSyncOk=false;
         QString lastSyncSummary;
+
+        // Транспорт: сервер говорил TLS и отпечаток его сертификата.
+        // Клиент запоминает после первого успешного HTTPS-обмена,
+        // чтобы не спрашивать доверие каждый раз
+        bool tls=false;
+        QString tlsFingerprint;
+
+        // Устройство уже синкалось с end-to-end шифрованием данных.
+        // Липкий флаг: если сервер вдруг перестал предлагать enc,
+        // клиент не должен молча откатываться в plain
+        bool enc=false;
     };
 
     QList<SyncDeviceInfo> get_syncDevices(void);
@@ -167,6 +222,10 @@ public:
     void clear_syncDeviceOffer(const QString &id);
     void set_syncDeviceMutual(const QString &id);
     void clear_syncDeviceMutual(const QString &id);
+    void set_syncDeviceTls(const QString &id, bool tls,
+                           const QString &fingerprint=QString());
+    void set_syncDeviceEnc(const QString &id, bool enc);
+    bool get_syncDeviceEnc(const QString &id) const;
 
 signals:
 
@@ -178,6 +237,10 @@ signals:
     // Входящий запрос на пару (новый): устройство стучится с pairRequest.
     // Хаб показывает попап «принять / отказать / окно устройств»
     void syncPairRequestArrived(const QString &deviceId, const QString &deviceName);
+
+    // Настройки сервера (запрет пар, IP-привязка, TLS, адрес для QR)
+    // изменились. Окно устройств/меню обновляют галочки
+    void syncServerSettingsChanged(void);
 
 public:
 

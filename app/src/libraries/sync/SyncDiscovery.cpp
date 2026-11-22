@@ -44,7 +44,9 @@ QJsonObject SyncDiscovery::parseProbe(const QByteArray &datagram)
 
 QByteArray SyncDiscovery::buildReply(const QString &deviceId,
                                      const QString &deviceName,
-                                     quint16 tcpPort)
+                                     quint16 tcpPort,
+                                     bool tls,
+                                     const QString &tlsFingerprint)
 {
     QJsonObject obj;
     obj[QStringLiteral("proto")]=QString::fromLatin1(kProto);
@@ -52,6 +54,11 @@ QByteArray SyncDiscovery::buildReply(const QString &deviceId,
     obj[QStringLiteral("deviceId")]=deviceId;
     obj[QStringLiteral("deviceName")]=deviceName;
     obj[QStringLiteral("port")]=tcpPort;
+    obj[QStringLiteral("tls")]=tls;
+
+    if(!tlsFingerprint.isEmpty())
+        obj[QStringLiteral("tlsFingerprint")]=tlsFingerprint;
+
     return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 
@@ -76,6 +83,9 @@ SyncDiscoveredDevice SyncDiscovery::parseReply(const QByteArray &datagram,
     device.deviceName=obj.value(QStringLiteral("deviceName")).toString();
     device.port=static_cast<quint16>(obj.value(QStringLiteral("port")).toInt());
     device.address=from.toString();
+    device.tls=obj.value(QStringLiteral("tls")).toBool(false);
+    device.tlsFingerprint=
+        obj.value(QStringLiteral("tlsFingerprint")).toString();
 
     if(device.deviceId.isEmpty() || device.port==0)
         return SyncDiscoveredDevice();

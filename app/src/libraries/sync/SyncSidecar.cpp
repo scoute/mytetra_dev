@@ -366,6 +366,7 @@ bool SyncSidecar::load(const QString &xmlFileName)
         entry.mtime=e.value(QStringLiteral("mtime")).toVariant().toLongLong();
         entry.hash=e.value(QStringLiteral("hash")).toString();
         entry.kind=e.value(QStringLiteral("kind")).toString();
+        entry.treeHash=e.value(QStringLiteral("treeHash")).toString();
         m_entries.insert(it.key(), entry);
     }
 
@@ -412,6 +413,10 @@ bool SyncSidecar::save(void) const
         e[QStringLiteral("mtime")]=it.value().mtime;
         e[QStringLiteral("hash")]=it.value().hash;
         e[QStringLiteral("kind")]=it.value().kind;
+
+        if(!it.value().treeHash.isEmpty())
+            e[QStringLiteral("treeHash")]=it.value().treeHash;
+
         entries.insert(it.key(), e);
     }
 
@@ -471,7 +476,8 @@ QString SyncSidecar::xmlFileName(void) const
 
 
 void SyncSidecar::setEntry(const QString &id, qint64 mtime,
-                           const QString &hash, const QString &kind)
+                           const QString &hash, const QString &kind,
+                           const QString &treeHash)
 {
     if(id.isEmpty())
         return;
@@ -480,6 +486,7 @@ void SyncSidecar::setEntry(const QString &id, qint64 mtime,
     e.mtime=mtime;
     e.hash=hash;
     e.kind=kind;
+    e.treeHash=treeHash;
     m_entries.insert(id, e);
     m_tombstones.remove(id);
 }

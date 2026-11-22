@@ -42,6 +42,78 @@ QString SyncManifestBuilder::sha256Bytes(const QByteArray &data)
 }
 
 
+// Детерминированная склейка строк: NUL-разделитель, чтобы границы
+// полей не склеивались в одинаковый поток
+static QString hashJoined(const QString &prefix, const QStringList &parts)
+{
+    QByteArray data=prefix.toUtf8();
+
+    for(const QString &part : parts)
+    {
+        data.append('\0');
+        data.append(part.toUtf8());
+    }
+
+    return SyncManifestBuilder::sha256Bytes(data);
+}
+
+
+// Полный хеш заметки: текст, поля+ветка, флаг шифрования, вложения.
+// Имя файла вложения — только basename: абсолютный путь у устройств разный
+static QString noteNodeHash(const SyncNoteInfo &note)
+{
+    QStringList parts;
+    parts << note.hash << note.fhash << (note.crypt ? QStringLiteral("1")
+                                                    : QStringLiteral("0"));
+
+    QList<SyncAttachInfo> attaches=note.attaches;
+
+    std::sort(attaches.begin(), attaches.end(),
+              [](const SyncAttachInfo &a, const SyncAttachInfo &b) {
+        return a.id<b.id;
+    });
+
+    for(const SyncAttachInfo &att : attaches)
+        parts << att.id << att.type
+              << QFileInfo(att.fileName).fileName() << att.link
+              << QString::number(att.size) << att.hash;
+
+    return hashJoined(QStringLiteral("mytetra-note-node-v1"), parts);
+}
+
+
+// Хеш поддерева: поля ветки + прямые заметки + дочерние ветки.
+// Считается снизу вверх; child subtreeHash уже лежит в out.
+static QString noteSubtreeOf(const QString &id, SyncManifest &out,
+                             const QMap<QString, QStringList> &children,
+                             const QMap<QString, QStringList> &notesByBranch,
+                             QSet<QString> &visiting)
+{
+    if(visiting.contains(id))
+        return QString();
+
+    visiting.insert(id);
+
+    QStringList parts;
+    parts << out.branches.value(id).hash;
+
+    QStringList directNotes=notesByBranch.value(id);
+    std::sort(directNotes.begin(), directNotes.end());
+
+    for(const QString &noteId : directNotes)
+        parts << out.notes.value(noteId).nodeHash;
+
+    QStringList childBranches=children.value(id);
+    std::sort(childBranches.begin(), childBranches.end());
+
+    for(const QString &child : childBranches)
+        parts << noteSubtreeOf(child, out, children, notesByBranch, visiting);
+
+    visiting.remove(id);
+
+    return hashJoined(QStringLiteral("mytetra-branch-subtree-v1"), parts);
+}
+
 // Хеш полей заметки + ее ветки: переименования и переносы меняют хеш
 // и потому синхронизируются (хеш контента их не видит).
 // Канонизация как у веток: crypt/block "0" == "" (старые базы),
@@ -453,6 +525,67 @@ SyncManifest SyncManifestBuilder::build(KnowTreeModel *model,
         }
     }
 
+    // Полные хеши заметок — для будущего инкрементального плана и
+    // контроля целостности. Считаются из уже готовых text/fhash/attaches.
+    for(auto it=out.notes.begin(); it!=out.notes.end(); ++it)
+    {
+        const QString nodeHash=noteNodeHash(it.value());
+        it.value().nodeHash=nodeHash;
+
+        const SyncSidecar::Entry e=sidecar.entry(it.key());
+
+        if(!sidecar.hasEntry(it.key()) || e.treeHash!=nodeHash)
+            sidecar.setEntry(it.key(), it.value().mtime, it.value().hash,
+                             QStringLiteral("note"), nodeHash);
+    }
+
+    // Subtree-хеши — только для полного манифеста: в scoped не хватает
+    // вырезанных дочерних веток, и кэшировать такой хеш нельзя.
+    if(scope.isEmpty())
+    {
+        QMap<QString, QStringList> children;
+        QMap<QString, QStringList> notesByBranch;
+
+        for(auto it=out.branches.constBegin(); it!=out.branches.constEnd(); ++it)
+            children[it.value().parentId] << it.key();
+
+        for(auto it=out.notes.constBegin(); it!=out.notes.constEnd(); ++it)
+            notesByBranch[it.value().branchId] << it.key();
+
+        QSet<QString> visiting;
+        QStringList topLevel;
+
+        for(auto it=out.branches.begin(); it!=out.branches.end(); ++it)
+        {
+            const QString subtree=noteSubtreeOf(it.key(), out, children,
+                                                notesByBranch, visiting);
+            it.value().subtreeHash=subtree;
+
+            const SyncSidecar::Entry e=sidecar.entry(it.key());
+
+            if(!sidecar.hasEntry(it.key()) || e.treeHash!=subtree)
+                sidecar.setEntry(it.key(), it.value().mtime, it.value().hash,
+                                 QStringLiteral("branch"), subtree);
+
+            if(it.value().parentId.isEmpty())
+                topLevel << subtree;
+        }
+
+        // Надгробия — в корневой хеш: без них удаление внутри «равной»
+        // ветки потеряется. Для веток оставляем отдельное сравнение.
+        QStringList tombParts;
+
+        for(auto it=out.tombstones.constBegin();
+            it!=out.tombstones.constEnd(); ++it)
+            tombParts << it.key() << QString::number(it.value());
+
+        std::sort(topLevel.begin(), topLevel.end());
+        out.rootHash=hashJoined(QStringLiteral("mytetra-root-v1"),
+                                topLevel + QStringList{hashJoined(
+                                    QStringLiteral("mytetra-tombstones-v1"),
+                                    tombParts)});
+    }
+
     // Сколько чего собрали и за сколько: вис манифеста раньше ловили
     // только гаданием (был criticalError на вычислимых полях)
     if(syncDebugEnabled())
@@ -479,6 +612,9 @@ QJsonObject SyncManifest::toJson(void) const
         b[QStringLiteral("mtime")]=it.value().mtime;
         b[QStringLiteral("hash")]=it.value().hash;
 
+        if(!it.value().subtreeHash.isEmpty())
+            b[QStringLiteral("subtreeHash")]=it.value().subtreeHash;
+
         QJsonObject fields;
 
         for(auto fit=it.value().fields.constBegin();
@@ -498,6 +634,10 @@ QJsonObject SyncManifest::toJson(void) const
         n[QStringLiteral("mtime")]=it.value().mtime;
         n[QStringLiteral("hash")]=it.value().hash;
         n[QStringLiteral("fhash")]=it.value().fhash;
+
+        if(!it.value().nodeHash.isEmpty())
+            n[QStringLiteral("nodeHash")]=it.value().nodeHash;
+
         n[QStringLiteral("crypt")]=it.value().crypt;
 
         QJsonObject fields;
@@ -534,6 +674,10 @@ QJsonObject SyncManifest::toJson(void) const
     root[QStringLiteral("branches")]=branchesObj;
     root[QStringLiteral("notes")]=notesObj;
     root[QStringLiteral("tombstones")]=tombs;
+
+    if(!rootHash.isEmpty())
+        root[QStringLiteral("rootHash")]=rootHash;
+
     return root;
 }
 
@@ -553,6 +697,7 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
         info.parentId=b.value(QStringLiteral("parent")).toString();
         info.mtime=b.value(QStringLiteral("mtime")).toVariant().toLongLong();
         info.hash=b.value(QStringLiteral("hash")).toString();
+        info.subtreeHash=b.value(QStringLiteral("subtreeHash")).toString();
 
         const QJsonObject fields=b.value(QStringLiteral("fields")).toObject();
 
@@ -573,6 +718,7 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
         info.mtime=n.value(QStringLiteral("mtime")).toVariant().toLongLong();
         info.hash=n.value(QStringLiteral("hash")).toString();
         info.fhash=n.value(QStringLiteral("fhash")).toString();
+        info.nodeHash=n.value(QStringLiteral("nodeHash")).toString();
         info.crypt=n.value(QStringLiteral("crypt")).toBool();
 
         const QJsonObject fields=n.value(QStringLiteral("fields")).toObject();
@@ -603,6 +749,7 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
     for(auto it=tombs.constBegin(); it!=tombs.constEnd(); ++it)
         out.tombstones.insert(it.key(), it.value().toVariant().toLongLong());
 
+    out.rootHash=obj.value(QStringLiteral("rootHash")).toString();
     return out;
 }
 

@@ -20,7 +20,8 @@ struct SyncBranchInfo
     QString id;
     QString parentId;
     qint64 mtime=0;
-    QString hash;
+    QString hash;        // хеш полей ветки + parentId
+    QString subtreeHash; // хеш всей ветки: поля + заметки + подветки
     QMap<QString, QString> fields;
 };
 
@@ -41,6 +42,7 @@ struct SyncNoteInfo
     qint64 mtime=0;
     QString hash;   // контент текста (как лежит, для шифрованных — шифртекст)
     QString fhash;  // поля записи + branchId (переименования и переносы видно)
+    QString nodeHash; // полный хеш заметки: текст + поля + вложения
     bool crypt=false;
     QMap<QString, QString> fields;
     QList<SyncAttachInfo> attaches;
@@ -51,6 +53,7 @@ struct SyncManifest
     QMap<QString, SyncBranchInfo> branches; // без корневого псевдо-элемента
     QMap<QString, SyncNoteInfo> notes;
     QMap<QString, qint64> tombstones; // id -> deletedAt (заметки и ветки)
+    QString rootHash; // хеш всего дерева (для будущего инкрементального плана)
 
     QJsonObject toJson(void) const;
     static SyncManifest fromJson(const QJsonObject &obj);

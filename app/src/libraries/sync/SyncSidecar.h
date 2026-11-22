@@ -20,6 +20,7 @@ public:
         qint64 mtime=0;
         QString hash;
         QString kind; // "note" или "branch"
+        QString treeHash; // note nodeHash / branch subtreeHash; пусто — пересчитать
     };
 
     // Путь сайдкара для данного mytetra.xml (тот же каталог, имя mytetra.sync)
@@ -37,7 +38,7 @@ public:
 
     // Записи
     void setEntry(const QString &id, qint64 mtime, const QString &hash,
-                  const QString &kind);
+                  const QString &kind, const QString &treeHash=QString());
     bool hasEntry(const QString &id) const;
     Entry entry(const QString &id) const;
     QMap<QString, Entry> allEntries(void) const;

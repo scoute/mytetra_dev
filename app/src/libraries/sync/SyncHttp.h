@@ -26,6 +26,7 @@ struct ParseResult
     QString methodPath;      // "POST /push-note"
     QJsonObject body;        // пустой, если Content-Length == 0
     bool sendContinue=false; // ответить "100 Continue" (Expect: 100-continue)
+    int consumed=0;          // байт запроса, включая заголовки и тело
 };
 
 // Максимальный размер заголовков и тела: непроверенный Content-Length

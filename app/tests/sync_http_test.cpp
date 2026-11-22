@@ -82,6 +82,24 @@ int main(void)
               ==QStringLiteral("b1"));
     }
 
+    // HTTP/1.1 keep-alive: два запроса в буфере, consumed указывает,
+    // где заканчивается первый — остаток разбирается отдельно
+    {
+        const QByteArray first=request("{\"id\":\"r1\"}");
+        const QByteArray second=request("{\"id\":\"r2\"}");
+        const QByteArray both=first+second;
+        const ParseResult r=parse(both);
+        CHECK(r.status==Status::Ready);
+        CHECK(r.consumed==first.size());
+        CHECK(r.body.value(QStringLiteral("id")).toString()
+              ==QStringLiteral("r1"));
+
+        const ParseResult r2=parse(both.mid(r.consumed));
+        CHECK(r2.status==Status::Ready);
+        CHECK(r2.body.value(QStringLiteral("id")).toString()
+              ==QStringLiteral("r2"));
+    }
+
     // Битый JSON / отрицательная / огромная длина — Broken
     CHECK(parse(request("xxx", 3)).status==Status::Broken);
 

@@ -89,6 +89,7 @@ ParseResult parse(const QByteArray &raw)
     {
         result.status=Status::Ready;
         result.body=QJsonObject();
+        result.consumed=bodyStart;
         return result;
     }
 
@@ -104,6 +105,7 @@ ParseResult parse(const QByteArray &raw)
 
     result.body=doc.object();
     result.status=Status::Ready;
+    result.consumed=bodyStart+contentLength;
     return result;
 }
 

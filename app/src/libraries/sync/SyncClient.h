@@ -12,6 +12,7 @@
 
 class AppConfig;
 class QSslCertificate;
+class QNetworkAccessManager;
 
 // Клиент синхронизации (спок): блокирующие вызовы поверх QNetworkAccessManager
 // с таймаутом. Вызывается из UI по кнопке, не из горячих путей — блокировка
@@ -21,6 +22,10 @@ class SyncClient
 public:
 
     explicit SyncClient(AppConfig *config);
+    ~SyncClient();
+
+    SyncClient(const SyncClient &)=delete;
+    SyncClient &operator=(const SyncClient &)=delete;
 
     void setTimeoutMs(int ms);
 
@@ -142,6 +147,7 @@ private:
                         const QString &path, bool &ok);
 
     AppConfig *config=nullptr;
+    QNetworkAccessManager *network=nullptr;
     int timeoutMs=15000;
     QString peerSecretText;
     QString manifestScopeText;

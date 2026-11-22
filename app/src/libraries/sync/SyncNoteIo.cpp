@@ -8,6 +8,8 @@
 #include <QModelIndexList>
 #include <QSet>
 
+#include <cstdio>
+
 #include "SyncNoteIo.h"
 #include "SyncDebug.h"
 #include "SyncSidecar.h"
@@ -82,6 +84,44 @@ bool writeBytesAtomic(const QString &path, const QByteArray &data)
 
     QDir().mkpath(QFileInfo(path).absolutePath());
 
+#ifdef Q_OS_UNIX
+    // QSaveFile делает fdatasync на каждый файл. На синке это тысячи
+    // маленьких заметок: диск упирается в fsync, а не в объём данных.
+    // Пишем во временный файл и атомарно переименовываем (rename):
+    // целостность при падении процесса сохраняется, а синк ускоряется
+    // на порядок. Данные после потери питания при необходимости
+    // доберутся с хаба.
+    const QString tmp=path+QStringLiteral(".sync-tmp");
+    QFile file(tmp);
+
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+
+    if(file.write(data)!=data.size())
+    {
+        file.close();
+        QFile::remove(tmp);
+        return false;
+    }
+
+    if(!file.flush())
+    {
+        file.close();
+        QFile::remove(tmp);
+        return false;
+    }
+
+    file.close();
+
+    if(::rename(QFile::encodeName(tmp).constData(),
+                QFile::encodeName(path).constData())!=0)
+    {
+        QFile::remove(tmp);
+        return false;
+    }
+
+    return true;
+#else
     QSaveFile file(path);
 
     if(!file.open(QIODevice::WriteOnly))
@@ -91,6 +131,7 @@ bool writeBytesAtomic(const QString &path, const QByteArray &data)
         return false;
 
     return file.commit();
+#endif
 }
 
 } // namespace

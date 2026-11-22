@@ -356,75 +356,94 @@ void SyncServer::onReadyRead(void)
 
     QTcpSocket *socket=qobject_cast<QTcpSocket *>(sender());
 
-    if(socket==nullptr)
-        return;
+    if(socket!=nullptr)
+        processRequests(socket);
+}
 
-    QString methodPath;
-    QJsonObject body;
-    bool broken=false;
 
-    // Данных пока мало — выходим и ждем следующего readyRead
-    if(!tryParseRequest(socket, methodPath, body, broken))
+// Одно TCP-соединение обслуживает несколько последовательных запросов:
+// без этого каждый pull-note открывал новый сокет (а с TLS — и новый
+// handshake), и синк тысяч заметок упирался в round-trip, а не в диск.
+void SyncServer::processRequests(QTcpSocket *socket)
+{
+    while(true)
     {
-        if(broken)
+        QString methodPath;
+        QJsonObject body;
+        bool broken=false;
+        int consumed=0;
+
+        // Данных пока мало — выходим и ждем следующего readyRead
+        if(!tryParseRequest(socket, methodPath, body, broken, &consumed))
         {
-            QJsonObject error;
-            error[QStringLiteral("error")]=QStringLiteral("bad request");
+            if(broken)
+            {
+                QJsonObject error;
+                error[QStringLiteral("error")]=QStringLiteral("bad request");
 
-            syncDbg("server: bad request");
+                syncDbg("server: bad request");
 
-            sendJson(socket, 400, error);
-            socket->disconnectFromHost();
+                sendJson(socket, 400, error);
+                socket->disconnectFromHost();
+            }
+
+            return;
         }
 
-        return;
+        if(!routes.contains(methodPath))
+        {
+            QJsonObject error;
+            error[QStringLiteral("error")]=QStringLiteral("unknown route");
+
+            syncDbg("server: unknown route "+methodPath);
+
+            sendJson(socket, 404, error);
+            socket->disconnectFromHost();
+            return;
+        }
+
+        QElapsedTimer timer;
+        timer.start();
+
+        // Запоминаем, откуда прилетел запрос: hello-маршрут запишет IP пира.
+        // Сокет жив весь вызов обработчика ниже (удаляется только по disconnect)
+        currentPeerIp=normalizedPeerAddress(socket);
+        currentLocalIp=normalizedLocalAddress(socket);
+
+        const QJsonObject answer=routes.value(methodPath)(body);
+        const qint64 elapsed=timer.elapsed();
+
+        {
+            const QString err=answer.value(QStringLiteral("error")).toString();
+            const QString warn=answer.value(QStringLiteral("warning")).toString();
+
+            syncDbg("server: "+methodPath+" "
+                    +QString::number(elapsed)+"ms "
+                    +(err.isEmpty() ? QStringLiteral("ok")
+                                    : QStringLiteral("error=")+err)
+                    +(warn.isEmpty() ? QString()
+                                     : QStringLiteral(" warning=")+warn));
+        }
+
+        sendJson(socket, 200, answer);
+
+        // В буфере уже может лежать следующий запрос (pipelining);
+        // иначе ждём readyRead на этом же сокете
+        if(pendingRequests.value(socket).isEmpty())
+            return;
     }
-
-    if(!routes.contains(methodPath))
-    {
-        QJsonObject error;
-        error[QStringLiteral("error")]=QStringLiteral("unknown route");
-
-        syncDbg("server: unknown route "+methodPath);
-
-        sendJson(socket, 404, error);
-        socket->disconnectFromHost();
-        return;
-    }
-
-    QElapsedTimer timer;
-    timer.start();
-
-    // Запоминаем, откуда прилетел запрос: hello-маршрут запишет IP пира.
-    // Сокет жив весь вызов обработчика ниже (удаляется только по disconnect)
-    currentPeerIp=normalizedPeerAddress(socket);
-    currentLocalIp=normalizedLocalAddress(socket);
-
-    const QJsonObject answer=routes.value(methodPath)(body);
-    const qint64 elapsed=timer.elapsed();
-
-    {
-        const QString err=answer.value(QStringLiteral("error")).toString();
-        const QString warn=answer.value(QStringLiteral("warning")).toString();
-
-        syncDbg("server: "+methodPath+" "
-                +QString::number(elapsed)+"ms "
-                +(err.isEmpty() ? QStringLiteral("ok")
-                                : QStringLiteral("error=")+err)
-                +(warn.isEmpty() ? QString()
-                                 : QStringLiteral(" warning=")+warn));
-    }
-
-    sendJson(socket, 200, answer);
-    socket->disconnectFromHost();
 }
 
 
 bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
-                                QJsonObject &body, bool &broken)
+                                QJsonObject &body, bool &broken,
+                                int *consumed)
 {    SYNC_TRACE();
 
     broken=false;
+
+    if(consumed!=nullptr)
+        *consumed=0;
 
     // Добираем приехавшее к остатку прошлого пакета: заголовки
     // и тело могут прийти разными TCP-сегментами
@@ -456,8 +475,15 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
         return false;
     }
 
-    // Запрос целый — остаток из буфера убираем (соединение одноразовое)
-    pendingRequests.remove(socket);
+    // Запрос целый. Соединение живёт дальше: в буфере может остаться
+    // начало/целиком следующий запрос (HTTP/1.1 keep-alive)
+    if(parsed.consumed>0 && parsed.consumed<raw.size())
+        pendingRequests[socket]=raw.mid(parsed.consumed);
+    else
+        pendingRequests.remove(socket);
+
+    if(consumed!=nullptr)
+        *consumed=parsed.consumed;
 
     methodPath=parsed.methodPath;
     body=parsed.body;
@@ -473,7 +499,7 @@ void SyncServer::sendJson(QTcpSocket *socket, int code, const QJsonObject &obj)
     QByteArray out=statusLine(code);
     out+="Content-Type: application/json; charset=utf-8\r\n";
     out+="Content-Length: "+QByteArray::number(payload.size())+"\r\n";
-    out+="Connection: close\r\n";
+    out+="Connection: keep-alive\r\n";
     out+="\r\n";
     out+=payload;
 

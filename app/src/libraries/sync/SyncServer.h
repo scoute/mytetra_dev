@@ -74,7 +74,9 @@ private:
     // если данных пока не хватает (ждем еще readyRead) или запрос битый
     // (отвечаем 400 и закрываем). Прочитанное не теряется
     bool tryParseRequest(QTcpSocket *socket, QString &methodPath,
-                         QJsonObject &body, bool &broken);
+                         QJsonObject &body, bool &broken,
+                         int *consumed=nullptr);
+    void processRequests(QTcpSocket *socket);
 
     void sendJson(QTcpSocket *socket, int code, const QJsonObject &obj);
     static QByteArray statusLine(int code);

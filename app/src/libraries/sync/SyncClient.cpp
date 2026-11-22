@@ -30,6 +30,12 @@ SyncClient::SyncClient(AppConfig *config) : config(config)
 }
 
 
+SyncClient::~SyncClient()
+{
+    delete network;
+}
+
+
 void SyncClient::setTimeoutMs(int ms)
 {
     timeoutMs=ms;
@@ -225,7 +231,12 @@ QJsonObject SyncClient::requestOnce(const QString &method, const QString &host,
     certError=false;
     lastTransportOkFlag=false;
 
-    QNetworkAccessManager manager;
+    // Один менеджер на сессию: он держит пул соединений и переиспользует
+    // TCP/TLS с keep-alive сервером. Раньше на каждый pull-note создавался
+    // новый QNetworkAccessManager и новый сокет (с TLS — новый handshake).
+    if(network==nullptr)
+        network=new QNetworkAccessManager();
+
     QNetworkRequest request;
     request.setUrl(QUrl(QStringLiteral("%1://%2:%3%4")
                         .arg(scheme, host).arg(port).arg(path)));
@@ -240,7 +251,7 @@ QJsonObject SyncClient::requestOnce(const QString &method, const QString &host,
     }
 
     QNetworkReply *reply=method==QStringLiteral("GET")
-        ? manager.get(request) : manager.post(request, payload);
+        ? network->get(request) : network->post(request, payload);
 
     QObject::connect(reply,
         QOverload<const QList<QSslError> &>::of(&QNetworkReply::sslErrors),

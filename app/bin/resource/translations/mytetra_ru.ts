@@ -176,26 +176,26 @@ Please enable action logging in Tools -&gt; Preferences -&gt; Misc</source>
 <context>
     <name>AppConfig</name>
     <message>
-        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="104"/>
+        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="105"/>
         <source>Can not create config backup copy to trash directory
 </source>
         <translation>Невозможно скропировать резервную копию конфига в директорию корзины\n</translation>
     </message>
     <message>
-        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="105"/>
+        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="106"/>
         <source>
 Source file: %1</source>
         <translation>\nИсходный файл: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="106"/>
+        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="107"/>
         <source>
 Trash directory: %1
 </source>
         <translation>\nДиректория корзины: %1\n</translation>
     </message>
     <message>
-        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="107"/>
+        <location filename="../../../src/models/appConfig/AppConfig.cpp" line="108"/>
         <source>
 This can happen if there is no free space left on the hard disk or it is impossible to write to the trash directory.</source>
         <translation>\nЭто может произойти, если на жестком диске не осталось свободного места или невозможна запись в директорию корзины.</translation>
@@ -5756,10 +5756,11 @@ Please select single item for moving.</source>
     </message>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="1353"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1391"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1408"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1437"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1439"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1390"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1409"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1429"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1450"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1452"/>
         <source>Sync</source>
         <translation>Синхронизация</translation>
     </message>
@@ -5769,28 +5770,40 @@ Please select single item for moving.</source>
         <translation>Пара не установлена: сначала спарьтесь по одноразовому коду.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1409"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1406"/>
+        <source>%1 (deferred branch sync)</source>
+        <translation>%1 (отложенный синк ветки)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1410"/>
         <source>Sync branch with:</source>
         <translation>Синхронизировать ветку с:</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1458"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1430"/>
+        <source>Deferred branch sync saved for %1.
+It will start automatically on the next sync from that device.</source>
+        <translation>Отложенный синк ветки для %1 сохранён.
+Он начнётся автоматически при следующей синхронизации с этого устройства.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1471"/>
         <source>No icon selected.</source>
         <translation>Вы не выбрали иконку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1513"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1526"/>
         <source>The export directory %1 is not empty. Please, select an empty directory.</source>
         <translation>Директория &lt;b&gt;%1&lt;/b&gt; не является пустой.
 Пожалуйста, выберите пустую директорию для экспорта данных.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1520"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1533"/>
         <source>No export tree item selected. Please select a item.</source>
         <translation>Не указана ветка для экспорта. Пожалуйста, выберите нужную ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1541"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1554"/>
         <source>Exported tree item contains encrypted data.
 Please click OK and enter the password.
 All data will be exported unencrypted.</source>
@@ -5799,22 +5812,22 @@ All data will be exported unencrypted.</source>
 Все данные будут экспортированы в расшифрованном виде.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1554"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1567"/>
         <source>Done exporting into &lt;b&gt;%1&lt;/b&gt;.</source>
         <translation>Экспорт данных в директорию &lt;b&gt;%1&lt;/b&gt; завершен.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1556"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1569"/>
         <source>Errors occurred while exporting.</source>
         <translation>Обнаружены ошибки при экспорте данных.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1565"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1578"/>
         <source>No tree item selected for importing. Please select a item.</source>
         <translation>Не выбрана ветка для экспорта. Пожалуйста, выберите какую-нибудь ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1579"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1592"/>
         <source>You are importing into an encrypted item.
 Please click Ok and enter the password.
 All data imported will be encrypted.</source>
@@ -5823,7 +5836,7 @@ All data imported will be encrypted.</source>
 Все данные будут импортированы и зашифрованы.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1596"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1609"/>
         <source>Item importing finished.</source>
         <translation>Импорт ветки завершен.</translation>
     </message>
@@ -5930,12 +5943,12 @@ Please select single item for enabling edit operation.</source>
         <translation>Выберите, пожалуйста, одну ветку для копирования.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1392"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1391"/>
         <source>No paired device that accepts incoming sync. A phone cannot receive a desktop-initiated sync: start it on the phone.</source>
         <translation>Нет спаренного устройства, принимающего входящий синк. Телефон не может принять синхронизацию, запущенную с компьютера: запустите её на телефоне.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1926"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1939"/>
         <source>Rename me</source>
         <translation>Переименуй меня</translation>
     </message>

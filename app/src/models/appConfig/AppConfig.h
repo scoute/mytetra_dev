@@ -235,6 +235,19 @@ public:
     void set_syncDeviceEnc(const QString &id, bool enc);
     bool get_syncDeviceEnc(const QString &id) const;
 
+    // Отложенный синк ветки на устройство (телефон/выключенный ПК):
+    // хаб отдаёт задание при следующем sync этого устройства.
+    // TTL — сутки; taskId защищает от стирания более нового задания
+    void set_syncDevicePendingScope(const QString &id,
+                                    const QString &branchId,
+                                    const QString &branchName);
+    bool get_syncDevicePendingScope(const QString &id,
+                                    QString *branchId,
+                                    QString *branchName,
+                                    QString *taskId);
+    void clear_syncDevicePendingScope(const QString &id,
+                                      const QString &taskId=QString());
+
 signals:
 
     // Список sync-устройств изменился (входящий hello, pair-request,

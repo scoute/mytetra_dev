@@ -1,3 +1,4 @@
+#include <QUuid>
 #include <functional>
 #include <QRect>
 #include <QTextCodec>
@@ -906,6 +907,110 @@ bool AppConfig::get_syncDeviceEnc(const QString &id) const
     const bool enc=m_conf->value(QStringLiteral("enc"), false).toBool();
     m_conf->endGroup();
     return enc;
+}
+
+
+namespace
+{
+// Задание на отложенный синк живёт сутки: если устройство не пришло,
+// оно уже неактуально и не должно срабатывать через неделю
+const qint64 PendingScopeTtlMs=24LL*60*60*1000;
+}
+
+
+void AppConfig::set_syncDevicePendingScope(const QString &id,
+                                           const QString &branchId,
+                                           const QString &branchName)
+{
+    if(id.isEmpty() || branchId.isEmpty())
+        return;
+
+    const QString taskId=QUuid::createUuid().toString(QUuid::WithoutBraces);
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    m_conf->setValue(QStringLiteral("pendingScopeTask"), taskId);
+    m_conf->setValue(QStringLiteral("pendingScopeBranch"), branchId);
+    m_conf->setValue(QStringLiteral("pendingScopeName"), branchName);
+    m_conf->setValue(QStringLiteral("pendingScopeAt"),
+                     QDateTime::currentMSecsSinceEpoch());
+    m_conf->endGroup();
+    m_conf->sync();
+
+    emit syncDevicesChanged();
+}
+
+
+bool AppConfig::get_syncDevicePendingScope(const QString &id,
+                                           QString *branchId,
+                                           QString *branchName,
+                                           QString *taskId)
+{
+    if(id.isEmpty())
+        return false;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+    const QString branch=
+        m_conf->value(QStringLiteral("pendingScopeBranch")).toString();
+    const QString name=
+        m_conf->value(QStringLiteral("pendingScopeName")).toString();
+    const QString task=
+        m_conf->value(QStringLiteral("pendingScopeTask")).toString();
+    const qint64 at=
+        m_conf->value(QStringLiteral("pendingScopeAt"), 0).toLongLong();
+    m_conf->endGroup();
+
+    if(branch.isEmpty() || task.isEmpty() || at<=0)
+        return false;
+
+    if(QDateTime::currentMSecsSinceEpoch()-at>PendingScopeTtlMs)
+    {
+        clear_syncDevicePendingScope(id, task);
+        return false;
+    }
+
+    if(branchId!=nullptr)
+        *branchId=branch;
+
+    if(branchName!=nullptr)
+        *branchName=name;
+
+    if(taskId!=nullptr)
+        *taskId=task;
+
+    return true;
+}
+
+
+void AppConfig::clear_syncDevicePendingScope(const QString &id,
+                                             const QString &taskId)
+{
+    if(id.isEmpty())
+        return;
+
+    m_conf->beginGroup(QStringLiteral("syncDevices/")+id);
+
+    // Пустой taskId — снять безусловно; иначе только своё задание,
+    // чтобы запоздавший ack не убил новое
+    if(!taskId.isEmpty())
+    {
+        const QString stored=
+            m_conf->value(QStringLiteral("pendingScopeTask")).toString();
+
+        if(stored!=taskId)
+        {
+            m_conf->endGroup();
+            return;
+        }
+    }
+
+    m_conf->remove(QStringLiteral("pendingScopeTask"));
+    m_conf->remove(QStringLiteral("pendingScopeBranch"));
+    m_conf->remove(QStringLiteral("pendingScopeName"));
+    m_conf->remove(QStringLiteral("pendingScopeAt"));
+    m_conf->endGroup();
+    m_conf->sync();
+
+    emit syncDevicesChanged();
 }
 
 

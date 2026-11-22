@@ -1359,9 +1359,11 @@ void TreeScreen::syncBranch(void)
   // (секрет именно под этот пир), взаимность и известный адрес
   struct SyncTarget
   {
+    QString id;
     QString name;
     QString host;
     quint16 port;
+    bool canServe=true;
   };
 
   QList<SyncTarget> targets;
@@ -1371,18 +1373,15 @@ void TreeScreen::syncBranch(void)
     if(info.lastIp.isEmpty() || info.lastMutual<=0)
       continue;
 
-    // Телефон не слушает порт: обратный синк к нему невозможен,
-    // инициировать должен он сам
-    if(!info.canServe)
-      continue;
-
     if(SyncIdentity::secretForPeer(&mytetraConfig, info.id).isEmpty())
       continue;
 
     SyncTarget target;
+    target.id=info.id;
     target.name=info.name.isEmpty() ? info.id : info.name;
     target.host=info.lastIp;
     target.port=static_cast<quint16>(info.port);
+    target.canServe=info.canServe;
     targets << target;
   }
 
@@ -1402,7 +1401,9 @@ void TreeScreen::syncBranch(void)
     QStringList names;
 
     for(const SyncTarget &candidate : targets)
-      names << candidate.name;
+      names << (candidate.canServe
+                ? candidate.name
+                : tr("%1 (deferred branch sync)").arg(candidate.name));
 
     bool ok=false;
     const QString chosen=QInputDialog::getItem(this, tr("Sync"),
@@ -1412,12 +1413,24 @@ void TreeScreen::syncBranch(void)
     if(!ok || chosen.isEmpty())
       return;
 
-    for(const SyncTarget &candidate : targets)
-      if(candidate.name==chosen)
-      {
-        target=candidate;
-        break;
-      }
+    const int chosenIndex=names.indexOf(chosen);
+
+    if(chosenIndex>=0 && chosenIndex<targets.size())
+      target=targets.at(chosenIndex);
+  }
+
+  // Телефон не слушает порт: не пытаемся достучаться, а оставляем
+  // задание на хабе. Следующий sync с телефона начнётся с этой ветки
+  if(!target.canServe)
+  {
+    mytetraConfig.set_syncDevicePendingScope(target.id, branchId,
+                                             item->getField(QStringLiteral("name")));
+    QMessageBox::information(
+        this, tr("Sync"),
+        tr("Deferred branch sync saved for %1.\n"
+           "It will start automatically on the next sync from that device.")
+            .arg(target.name));
+    return;
   }
 
   MainWindow *win=find_object<MainWindow>("mainwindow");

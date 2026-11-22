@@ -184,6 +184,55 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         return finish(p, mjson);
     });
 
+    // Отложенный синк ветки: хаб отдаёт задание конкретному
+    // аутентифицированному устройству при его следующем sync
+    server->addRoute(QStringLiteral("POST /pending-scope"),
+                     [this, config, prepare, finish](const QJsonObject &request) -> QJsonObject {
+        const PreparedData p=prepare(QStringLiteral("POST /pending-scope"), request);
+        if(!p.ok)
+            return p.error;
+
+        const QString clientId=p.encrypted
+            ? p.ctx.clientId
+            : p.body.value(QStringLiteral("_dev")).toString();
+
+        QString branch;
+        QString name;
+        QString task;
+
+        QJsonObject answer;
+
+        if(config->get_syncDevicePendingScope(clientId, &branch, &name, &task))
+        {
+            QJsonObject scope;
+            scope[QStringLiteral("id")]=task;
+            scope[QStringLiteral("branch")]=branch;
+            scope[QStringLiteral("name")]=name;
+            answer[QStringLiteral("scope")]=scope;
+        }
+
+        return finish(p, answer);
+    });
+
+    // Подтверждение задания: устройство выполнило скоуп-синк
+    server->addRoute(QStringLiteral("POST /clear-scope"),
+                     [this, config, prepare, finish](const QJsonObject &request) -> QJsonObject {
+        const PreparedData p=prepare(QStringLiteral("POST /clear-scope"), request);
+        if(!p.ok)
+            return p.error;
+
+        const QString clientId=p.encrypted
+            ? p.ctx.clientId
+            : p.body.value(QStringLiteral("_dev")).toString();
+        const QString task=p.body.value(QStringLiteral("id")).toString();
+
+        config->clear_syncDevicePendingScope(clientId, task);
+
+        QJsonObject answer;
+        answer[QStringLiteral("ok")]=true;
+        return finish(p, answer);
+    });
+
     // Заметка целиком: поля, блоб текста как лежит, аттачи байтами.
     // Шифрованные отдаются шифртекстом, ключ не нужен и не отдается
     server->addRoute(QStringLiteral("POST /pull-note"),

@@ -184,7 +184,14 @@ public:
     // дублируются через syncDbg). Headless-путь печатает целиком
     static QString trimSyncReportForDialog(const QString &text);
 
-    // Окно отчёта с выделяемым текстом и кнопкой «Копировать»
+    // Короткая сводка успешного синка: без шагов протокола и без
+    // внутренних счётчиков манифеста — только что реально произошло
+    static QString syncSuccessSummary(const SyncReport &report,
+                                      const QString &peerName=QString());
+
+    // Окно отчёта с выделяемым текстом и кнопкой «Копировать».
+    // У успеха шаги протокола отрезаются (isError=false): сотни
+    // "pull branch ..." пользователю ничего не объясняют
     static void showSyncReport(QWidget *parent, const QString &title,
                                const QString &text, bool isError);
 

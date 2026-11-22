@@ -1015,22 +1015,10 @@ void SyncDevicesDialog::onSyncNow(void)
         return;
     }
 
-    QString summary=tr("Sync complete. Uploaded: notes %1, branches %2. "
-                       "Downloaded: notes %3, branches %4. "
-                       "Applied deletes: %5.")
-        .arg(report.uploadedNotes).arg(report.uploadedBranches)
-        .arg(report.downloadedNotes).arg(report.downloadedBranches)
-        .arg(report.appliedDeletes);
+    const QString summary=MainWindow::syncSuccessSummary(
+        report, target.name.isEmpty() ? target.id : target.name);
 
-    if(!report.conflicts.isEmpty())
-        summary+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
-                 .arg(report.conflicts.join(QStringLiteral(", ")));
-
-    if(!report.errors.isEmpty())
-        summary+=tr("\n\nItem errors (skipped items):\n%1")
-                 .arg(report.errors.join(QStringLiteral("\n")));
-
-    MainWindow::showSyncReport(this, tr("Sync"),
+    MainWindow::showSyncReport(this, tr("Sync complete"),
                                MainWindow::trimSyncReportForDialog(summary),
                                false);
     refreshList();
@@ -1318,7 +1306,8 @@ void SyncDevicesDialog::joinFresh(void)
 
 void SyncDevicesDialog::showManualResult(const QString &result, bool syncOk)
 {
-    MainWindow::showSyncReport(this, tr("Sync"),
+    MainWindow::showSyncReport(this, syncOk ? tr("Sync complete")
+                                           : tr("Sync"),
                                MainWindow::trimSyncReportForDialog(result),
                                !syncOk);
 

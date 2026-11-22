@@ -1422,7 +1422,8 @@ void MainWindow::runToolbarNativeSync(bool interactive)
     const QString result=runSyncToHeadless(
         target.lastIp, QString(), static_cast<quint16>(target.port), ok);
 
-    showSyncReport(this, tr("Sync"), trimSyncReportForDialog(result), !ok);
+    showSyncReport(this, ok ? tr("Sync complete") : tr("Sync"),
+                   trimSyncReportForDialog(result), !ok);
 }
 
 
@@ -2407,26 +2408,10 @@ QString MainWindow::runSyncToHeadless(const QString &host,
     logData["conflicts"]=QString::number(report.conflicts.size());
     actionLogger.addAction("syncSession", logData);
 
-    QString summary=tr("Sync complete.\nUploaded: notes %1, branches %2.\n"
-                       "Downloaded: notes %3, branches %4.\n"
-                       "Applied deletes: %5.")
-        .arg(report.uploadedNotes).arg(report.uploadedBranches)
-        .arg(report.downloadedNotes).arg(report.downloadedBranches)
-        .arg(report.appliedDeletes);
-
-    if(!report.conflicts.isEmpty())
-        summary+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
-                 .arg(report.conflicts.join(QStringLiteral(", ")));
-
-    if(!report.errors.isEmpty())
-        summary+=tr("\n\nItem errors (skipped, details in steps below):\n%1")
-                 .arg(report.errors.join(QStringLiteral("\n")));
-
-    if(!steps.isEmpty())
-        summary+=QStringLiteral("\n-- steps --\n")+steps;
-
+    // Успех — короткая сводка. Шаги остаются в session.log()/консоли,
+    // в окно их не тащим: сотни "pull branch ..." ничего не объясняют
     ok=true;
-    return summary;
+    return syncSuccessSummary(report, hello.remoteDeviceName);
 }
 
 
@@ -2606,10 +2591,22 @@ bool MainWindow::askSyncPreview(const SyncPreview::Preview &preview,
 void MainWindow::showSyncReport(QWidget *parent, const QString &title,
                                 const QString &text, bool isError)
 {
+    // Успех без протокольных шагов: это отладочный вывод, а не отчёт
+    QString body=text;
+
+    if(!isError)
+    {
+        const QString marker=QStringLiteral("\n-- steps --\n");
+        const int at=body.indexOf(marker);
+
+        if(at>=0)
+            body=body.left(at);
+    }
+
     QMessageBox box(parent);
     box.setWindowTitle(title);
     box.setIcon(isError ? QMessageBox::Warning : QMessageBox::Information);
-    box.setText(text);
+    box.setText(body);
     box.setTextInteractionFlags(Qt::TextSelectableByMouse
                                 | Qt::TextSelectableByKeyboard);
 
@@ -2619,7 +2616,34 @@ void MainWindow::showSyncReport(QWidget *parent, const QString &title,
     box.exec();
 
     if(box.clickedButton()==copy)
-        QApplication::clipboard()->setText(text);
+        QApplication::clipboard()->setText(body);
+}
+
+
+QString MainWindow::syncSuccessSummary(const SyncReport &report,
+                                       const QString &peerName)
+{
+    QString text=peerName.isEmpty()
+        ? tr("Synchronization complete.")
+        : tr("Synchronization complete with %1.").arg(peerName);
+
+    text+=QStringLiteral("\n\n")
+        +tr("Received: %1 branches, %2 notes.\n"
+            "Sent: %3 branches, %4 notes.\n"
+            "Deleted: %5.")
+             .arg(report.downloadedBranches).arg(report.downloadedNotes)
+             .arg(report.uploadedBranches).arg(report.uploadedNotes)
+             .arg(report.appliedDeletes);
+
+    if(!report.conflicts.isEmpty())
+        text+=tr("\n\nConflicts (kept this side, other side in backup):\n%1")
+                 .arg(report.conflicts.join(QStringLiteral(", ")));
+
+    if(!report.errors.isEmpty())
+        text+=tr("\n\nSkipped items:\n%1")
+                 .arg(report.errors.join(QStringLiteral("\n")));
+
+    return text;
 }
 
 

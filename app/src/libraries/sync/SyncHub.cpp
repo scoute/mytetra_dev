@@ -251,6 +251,11 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
             scope[QStringLiteral("branch")]=branch;
             scope[QStringLiteral("name")]=name;
             answer[QStringLiteral("scope")]=scope;
+
+            // Задание одноразовое: отдаём и сразу снимаем. Иначе при
+            // неудачном /clear-scope телефон каждый раз сначала качал
+            // ту же ветку, а потом запускал обычный синк
+            config->clear_syncDevicePendingScope(clientId, task);
         }
 
         return finish(p, answer);

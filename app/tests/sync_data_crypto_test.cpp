@@ -105,12 +105,21 @@ int main(void)
             secret, serverId, route, bad, ts+100, opened, ctx, error));
     }
 
+    // Запрос мог подвиснуть в фоне Android: минута опоздания — не stale
+    {
+        QJsonObject opened;
+        SyncDataCrypto::Context ctx;
+        QString error;
+        CHECK(SyncDataCrypto::openRequestWithSecret(
+            secret, serverId, route, envelope, ts+60000, opened, ctx, error));
+    }
+
     {
         QJsonObject opened;
         SyncDataCrypto::Context ctx;
         QString error;
         CHECK(!SyncDataCrypto::openRequestWithSecret(
-            secret, serverId, route, envelope, ts+6000, opened, ctx, error));
+            secret, serverId, route, envelope, ts+180000, opened, ctx, error));
     }
 
     // --- response seal/open ---

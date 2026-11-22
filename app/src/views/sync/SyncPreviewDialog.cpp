@@ -559,11 +559,12 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
 int SyncPreviewDialog::sectionOf(const Item &item) const
 {
-    // 0 — Я → сервер, 1 — Сервер → я, 2 — обоюдные правки.
-    // Обоюдные — все Edit (как tabOf на мобиле), остальное по направлению
-    if(item.category==Category::Edit)
-        return 2;
-    return item.fromLocal ? 0 : 1;
+    // 0 — безопасно туда, 1 — безопасно назад, 2 — требует выбора.
+    // Безопасны только создания; правки/переименования/удаления
+    // всегда в третьей вкладке
+    if(item.category==Category::Create)
+        return item.fromLocal ? 0 : 1;
+    return 2;
 }
 
 
@@ -576,11 +577,11 @@ bool SyncPreviewDialog::itemVisibleOnTab(const Item &item, int tab) const
 QString SyncPreviewDialog::tabName(int tab) const
 {
     if(tab==0)
-        return tr("↑ Я → сервер");
+        return tr("↑ Безопасно туда");
     if(tab==1)
-        return tr("↓ Сервер → я");
+        return tr("↓ Безопасно назад");
 
-    return tr("⇅ Обоюдные правки");
+    return tr("⇅ Требует выбора");
 }
 
 
@@ -3245,9 +3246,9 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("•"), purple, tr("Восстановить с сервера — отменить здешнее, взять версию с сервера (здешнее удаление — воскресить)"));
     html+=sym(QStringLiteral("•"), purple, tr("Настоять на этом устройстве — отменить серверное, оставить здешнюю версию (удаление на сервере — воскресить здешнюю копию наверх)"));
     html+=QStringLiteral("<h3>")+tr("Вкладки")+QStringLiteral("</h3>");
-    html+=sym(QStringLiteral("↑"), green, tr("Я → сервер: мои изменения уедут наружу"));
-    html+=sym(QStringLiteral("↓"), blue, tr("Сервер → я: ихние изменения приедут к нам"));
-    html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Это устройство»/«Сервер» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
+    html+=sym(QStringLiteral("↑"), green, tr("Безопасно туда: новые записи и ветки этого устройства уедут на сервер"));
+    html+=sym(QStringLiteral("↓"), blue, tr("Безопасно назад: новые записи и ветки приедут с сервера"));
+    html+=sym(QStringLiteral("⇅"), orange, tr("Требует выбора: правки, переименования и удаления. Кнопками «Это устройство»/«Сервер» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
     html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("•"), green, tr("«Действия по умолчанию ▾» — действия по умолчанию для целых категорий"));
     html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» активно при хоть одном решении: всё разобрано — закроет окно, иначе синкнет решённое, а дерево сузится до остатка"));

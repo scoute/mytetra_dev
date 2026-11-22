@@ -48,6 +48,11 @@ bool currentCode(const QString &peerId, qint64 now,
 
 // Погасить код (после повышения pending -> current или Reject)
 void consumeCode(const QString &peerId);
+
+// Пара подтверждена первым hello с новым секретом: попап с QR
+// должен сам закрыться. Флаг одноразовый (take)
+void notePromoted(const QString &peerId);
+bool takePromoted(const QString &peerId);
 void clearCode(const QString &peerId);
 void clearAll(void);
 

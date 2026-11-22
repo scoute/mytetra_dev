@@ -24,6 +24,7 @@ namespace
 {
 QString g_unknownId;
 QString g_unknownName;
+QString g_lastLocalAddress;
 
 // NAT-хайрпин: под VirtualBox NAT соединение от виртуалки приходит на
 // сервер с НАШИМ же адресом (пакет выходит через NAT-движок хоста).
@@ -379,6 +380,7 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
                                     const QString &pairingPin)
 {
     clearUnknown();
+    g_lastLocalAddress.clear();
     SyncPairing::clearAll();
     SyncDataCrypto::clearAllSessions();
 
@@ -409,6 +411,7 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
     server->addRoute(QStringLiteral("POST /hello"),
                      [server, config, pairingPin](const QJsonObject &body) -> QJsonObject {
         const qint64 now=QDateTime::currentMSecsSinceEpoch();
+        g_lastLocalAddress=server->lastLocalAddress();
         SyncHelloResult r=checkHello(body, config, now);
 
         const QString theirId=body.value(QStringLiteral("deviceId")).toString();
@@ -423,8 +426,23 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             if(SyncIdentity::promotePendingSecret(config, theirId))
             {
                 SyncPairing::consumeCode(theirId);
+                SyncPairing::notePromoted(theirId);
+
+                QString pairedName=theirName;
+
+                if(pairedName.isEmpty())
+                    for(const AppConfig::SyncDeviceInfo &info
+                        : config->get_syncDevices())
+                        if(info.id==theirId)
+                        {
+                            pairedName=info.name;
+                            break;
+                        }
+
+                config->notifySyncDevicePaired(theirId, pairedName);
+
                 qDebug() << "SyncHandshake: pending pair secret promoted for"
-                         << theirName << "(" << theirId << ")";
+                         << pairedName << "(" << theirId << ")";
                 syncDbg("handshake: pending secret promoted for "+theirId);
             }
         }
@@ -608,6 +626,9 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
                     QString qrHost=config->get_syncAdvertiseHost();
 
                     if(qrHost.isEmpty())
+                        qrHost=server->lastLocalAddress();
+
+                    if(qrHost.isEmpty())
                         qrHost=SyncTls::primaryAddress();
 
                     if(qrHost.isEmpty())
@@ -747,6 +768,12 @@ QString SyncHandshake::lastUnknownDeviceId(void)
 QString SyncHandshake::lastUnknownDeviceName(void)
 {
     return g_unknownName;
+}
+
+
+QString SyncHandshake::lastLocalAddress(void)
+{
+    return g_lastLocalAddress;
 }
 
 

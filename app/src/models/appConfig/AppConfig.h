@@ -224,6 +224,8 @@ public:
     void clear_syncDeviceMutual(const QString &id);
     void set_syncDeviceTls(const QString &id, bool tls,
                            const QString &fingerprint=QString());
+    // Pending-секрет повышен: пара окончательно подтверждена
+    void notifySyncDevicePaired(const QString &id, const QString &name);
     void set_syncDeviceEnc(const QString &id, bool enc);
     bool get_syncDeviceEnc(const QString &id) const;
 
@@ -241,6 +243,10 @@ signals:
     // Настройки сервера (запрет пар, IP-привязка, TLS, адрес для QR)
     // изменились. Окно устройств/меню обновляют галочки
     void syncServerSettingsChanged(void);
+
+    // Пара окончательно подтверждена первым hello с новым секретом.
+    // Сервер показывает «спарено» и закрывает попап с QR
+    void syncDevicePaired(const QString &deviceId, const QString &deviceName);
 
 public:
 

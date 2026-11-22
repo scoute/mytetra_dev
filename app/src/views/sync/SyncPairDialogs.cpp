@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include "SyncPairDialogs.h"
@@ -79,6 +80,9 @@ QString showCode(QWidget *parent, const QString &peerId,
 {
     if(rejected!=nullptr)
         *rejected=false;
+
+    // Старый флаг от предыдущего попапа не должен закрыть новый
+    SyncPairing::takePromoted(peerId);
 
     qint64 expiresAt=0;
     qint64 lockedUntil=0;
@@ -177,7 +181,18 @@ QString showCode(QWidget *parent, const QString &peerId,
         bind(close);
         close->setDefault(true);
 
+        // Пара подтверждена первым hello с новым секретом — закрываем
+        // попап сами; «спарено» покажет статус-бар сервера
+        QTimer pairedTimer;
+        pairedTimer.setInterval(500);
+        QObject::connect(&pairedTimer, &QTimer::timeout, &dialog, [&]() {
+            if(SyncPairing::takePromoted(peerId))
+                dialog.accept();
+        });
+        pairedTimer.start();
+
         dialog.exec();
+        pairedTimer.stop();
 
         if(clicked==copy)
         {

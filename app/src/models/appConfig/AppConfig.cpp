@@ -878,6 +878,16 @@ void AppConfig::set_syncDeviceEnc(const QString &id, bool enc)
 }
 
 
+void AppConfig::notifySyncDevicePaired(const QString &id,
+                                       const QString &name)
+{
+    if(id.isEmpty())
+        return;
+
+    emit syncDevicePaired(id, name);
+}
+
+
 bool AppConfig::get_syncDeviceEnc(const QString &id) const
 {
     if(id.isEmpty())

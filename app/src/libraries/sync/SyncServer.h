@@ -52,6 +52,10 @@ public:
     // иначе на сервере вечно "(unknown address)" и обратный синк невозможен
     QString lastPeerAddress(void) const;
 
+    // Локальный адрес, на который пришёл последний запрос (интерфейс
+    // сервера). Нужен QR: клиент достучался именно сюда
+    QString lastLocalAddress(void) const;
+
     // Идентичность для LAN-discovery (ответ на UDP-проб, см. SyncDiscovery).
     // Пусто — на пробы не отвечаем. Порт в ответ добавит сервер сам
     using DiscoveryIdentity = std::function<QJsonObject()>;
@@ -97,6 +101,7 @@ private:
     // Запросы идут строго последовательно в одном потоке, гонки нет.
     // IPv6-mapped IPv4 нормализуется к dotted-quad
     QString currentPeerIp;
+    QString currentLocalIp;
 };
 
 #endif // SYNCSERVER_H

@@ -30,6 +30,7 @@
 #include "SyncPairDialogs.h"
 #include "libraries/sync/SyncPairCrypto.h"
 #include "libraries/sync/SyncPairing.h"
+#include "libraries/sync/SyncHandshake.h"
 #include "libraries/sync/SyncTls.h"
 #include "SyncPreviewDialog.h"
 #include "SyncProgressWindow.h"
@@ -1533,6 +1534,9 @@ void SyncDevicesDialog::onAccept(void)
         shownName+=QStringLiteral(" (%1)").arg(target.lastIp);
 
     QString qrHost=config->get_syncAdvertiseHost();
+
+    if(qrHost.isEmpty())
+        qrHost=SyncHandshake::lastLocalAddress();
 
     if(qrHost.isEmpty())
         qrHost=SyncTls::primaryAddress();

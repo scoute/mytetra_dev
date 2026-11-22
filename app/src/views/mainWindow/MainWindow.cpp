@@ -249,6 +249,15 @@ void MainWindow::setupSignals(void)
     connect(actionSyncMenuSyncDevices, &QAction::triggered, this, &MainWindow::onSyncDevices);
     connect(&mytetraConfig, &AppConfig::syncPairRequestArrived,
             this, &MainWindow::onSyncPairRequest);
+    connect(&mytetraConfig, &AppConfig::syncDevicePaired, this,
+            [this](const QString &id, const QString &name) {
+        const QString label=name.isEmpty() ? id.left(8) : name;
+
+        if(statusBar!=nullptr)
+            statusBar->showMessage(tr("Paired with %1").arg(label), 8000);
+
+        refreshSyncStatusUi();
+    });
     connect(&mytetraConfig, &AppConfig::syncDevicesChanged,
             this, &MainWindow::refreshSyncStatusUi);
     connect(&mytetraConfig, &AppConfig::syncServerSettingsChanged,
@@ -2484,6 +2493,9 @@ void MainWindow::onSyncPairing(void)
     QString qrHost=mytetraConfig.get_syncAdvertiseHost();
 
     if(qrHost.isEmpty())
+        qrHost=SyncHandshake::lastLocalAddress();
+
+    if(qrHost.isEmpty())
         qrHost=SyncTls::primaryAddress();
 
     if(qrHost.isEmpty())
@@ -2798,6 +2810,9 @@ void MainWindow::onSyncPairRequest(const QString &deviceId, const QString &devic
         // Код показываем на сервере; клиент вводит его у себя.
         // Код живёт 5 минут и одноразовый — PIN на сервере больше не вводим
         QString qrHost=mytetraConfig.get_syncAdvertiseHost();
+
+        if(qrHost.isEmpty())
+            qrHost=SyncHandshake::lastLocalAddress();
 
         if(qrHost.isEmpty())
             qrHost=SyncTls::primaryAddress();

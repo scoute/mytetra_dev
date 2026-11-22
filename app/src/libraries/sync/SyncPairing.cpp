@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <QMap>
+#include <QSet>
 
 #include "SyncPairing.h"
 #include "SyncPairCrypto.h"
@@ -25,6 +26,13 @@ QMap<QString, CodeState> &codes(void)
 {
     static QMap<QString, CodeState> state;
     return state;
+}
+
+
+QSet<QString> &promoted(void)
+{
+    static QSet<QString> peers;
+    return peers;
 }
 
 
@@ -223,6 +231,19 @@ void consumeCode(const QString &peerId)
 }
 
 
+void notePromoted(const QString &peerId)
+{
+    if(!peerId.isEmpty())
+        promoted().insert(peerId);
+}
+
+
+bool takePromoted(const QString &peerId)
+{
+    return promoted().remove(peerId);
+}
+
+
 void clearCode(const QString &peerId)
 {
     codes().remove(peerId);
@@ -232,6 +253,7 @@ void clearCode(const QString &peerId)
 void clearAll(void)
 {
     codes().clear();
+    promoted().clear();
 }
 
 
@@ -576,6 +598,7 @@ QString errorText(const QString &errorCode)
 void resetForTests(void)
 {
     codes().clear();
+    promoted().clear();
 }
 
 } // namespace SyncPairing

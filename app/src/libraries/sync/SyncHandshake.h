@@ -87,6 +87,9 @@ public:
     // ввести тот же PIN. Очищается при старте сервера и после спаривания
     static QString lastUnknownDeviceId(void);
     static QString lastUnknownDeviceName(void);
+    // Локальный адрес, на который пришёл последний hello (для QR:
+    // ровно тот интерфейс, по которому клиент реально достучался)
+    static QString lastLocalAddress(void);
     static void clearUnknown(void);
 
     // Зафиксировать взаимность пары (первый проверенный обмен).

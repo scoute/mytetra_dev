@@ -64,6 +64,22 @@ private:
 };
 
 
+QString normalizedLocalAddress(QTcpSocket *socket)
+{
+    if(socket==nullptr)
+        return QString();
+
+    const QHostAddress addr=socket->localAddress();
+    bool ok=false;
+    const quint32 v4=addr.toIPv4Address(&ok);
+
+    if(ok)
+        return QHostAddress(v4).toString();
+
+    return addr.toString();
+}
+
+
 QString normalizedPeerAddress(QTcpSocket *socket)
 {
     if(socket==nullptr)
@@ -304,6 +320,12 @@ QString SyncServer::lastPeerAddress(void) const
 }
 
 
+QString SyncServer::lastLocalAddress(void) const
+{
+    return currentLocalIp;
+}
+
+
 void SyncServer::onNewConnection(void)
 {    SYNC_TRACE();
 
@@ -376,6 +398,7 @@ void SyncServer::onReadyRead(void)
     // Запоминаем, откуда прилетел запрос: hello-маршрут запишет IP пира.
     // Сокет жив весь вызов обработчика ниже (удаляется только по disconnect)
     currentPeerIp=normalizedPeerAddress(socket);
+    currentLocalIp=normalizedLocalAddress(socket);
 
     const QJsonObject answer=routes.value(methodPath)(body);
     const qint64 elapsed=timer.elapsed();

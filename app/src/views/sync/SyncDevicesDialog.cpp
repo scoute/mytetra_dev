@@ -243,10 +243,17 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
         tr("Connect by address..."), this);
     manualSyncButton->setToolTip(tr("Connect to a hub by IP/port "
                                     "(also sends the pair request)"));
-    pairButton=new QPushButton(tr("Pair..."), this);
+    pairButton=new QPushButton(tr("Pair as client..."), this);
+    pairButton->setToolTip(tr("Connect to a device that runs a sync server "
+                              "(normally a desktop). For a phone that cannot "
+                              "accept connections use Show code."));
     acceptButton=new QPushButton(tr("Accept"), this);
     acceptButton->setToolTip(tr("Accept the incoming pair request "
                                "from the selected device"));
+    showCodeButton=new QPushButton(tr("Show code..."), this);
+    showCodeButton->setToolTip(tr("Generate a one-time code/QR for the "
+                                  "selected device (for a phone that cannot "
+                                  "accept incoming connections)."));
     unpairButton=new QPushButton(tr("Unpair"), this);
     removeButton=new QPushButton(tr("Remove"), this);
     QPushButton *closeButton=new QPushButton(tr("Close"), this);
@@ -257,6 +264,7 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
     buttons->addWidget(syncButton);
     buttons->addWidget(pairButton);
     buttons->addWidget(acceptButton);
+    buttons->addWidget(showCodeButton);
     buttons->addWidget(unpairButton);
     buttons->addWidget(removeButton);
     buttons->addWidget(manualSyncButton);
@@ -274,6 +282,8 @@ SyncDevicesDialog::SyncDevicesDialog(KnowTreeModel *model, AppConfig *config,
             this, &SyncDevicesDialog::onPair);
     connect(acceptButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onAccept);
+    connect(showCodeButton, &QPushButton::clicked,
+            this, &SyncDevicesDialog::onShowCode);
     connect(unpairButton, &QPushButton::clicked,
             this, &SyncDevicesDialog::onUnpair);
     connect(removeButton, &QPushButton::clicked,
@@ -683,6 +693,8 @@ void SyncDevicesDialog::onSelectionChanged(void)
         fingerprintLabel->setText(tr("Select a device to see its fingerprint."));
         syncButton->setEnabled(false);
         pairButton->setEnabled(false);
+        acceptButton->setEnabled(false);
+        showCodeButton->setEnabled(false);
         unpairButton->setEnabled(false);
         removeButton->setEnabled(false);
         return;
@@ -725,6 +737,7 @@ void SyncDevicesDialog::onSelectionChanged(void)
         ? tr("This device asks to pair: use Accept, not Pair.")
         : QString());
     acceptButton->setEnabled(offer);
+    showCodeButton->setEnabled(true);
     unpairButton->setEnabled(paired);
     removeButton->setEnabled(true);
 }
@@ -1550,6 +1563,68 @@ void SyncDevicesDialog::onAccept(void)
         qrFingerprint=SyncTls::certificateFingerprint(
             config->get_syncTlsCertPath());
 
+    SyncPairDialogs::showCode(this, id, shownName,
+                              QDateTime::currentMSecsSinceEpoch(),
+                              &rejected, target.lastIp,
+                              config->get_syncPairBindIp(),
+                              qrHost, serverPort,
+                              config->get_syncTlsEnabled(),
+                              qrFingerprint,
+                              config->get_syncDeviceName());
+
+    if(rejected)
+    {
+        config->clear_syncDeviceOffer(id);
+        config->clear_syncDevicePendingSecret(id);
+    }
+
+    refreshList();
+}
+
+
+// Серверная сторона: показать код/QR для выбранного устройства.
+// Нужно телефону, который не слушает порт и не может быть «хабом».
+void SyncDevicesDialog::onShowCode(void)
+{
+    QString id;
+
+    if(currentRowId(id)<0)
+        return;
+
+    AppConfig::SyncDeviceInfo target;
+
+    for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
+        if(info.id==id)
+        {
+            target=info;
+            break;
+        }
+
+    const QString shownName=target.name.isEmpty() ? id : target.name;
+
+    // Помечаем входящий запрос, но без второго попапа: этот диалог
+    // и есть серверный экран кода/QR. Повторный pairRequest от
+    // телефона не должен открыть ещё одно окно
+    config->set_syncDeviceOffer(id, false);
+
+    QString qrHost=config->get_syncAdvertiseHost();
+
+    if(qrHost.isEmpty())
+        qrHost=SyncHandshake::lastLocalAddress();
+
+    if(qrHost.isEmpty())
+        qrHost=SyncTls::primaryAddress();
+
+    if(qrHost.isEmpty())
+        qrHost=QHostInfo::localHostName();
+
+    QString qrFingerprint=config->get_syncTlsFingerprint();
+
+    if(qrFingerprint.isEmpty() && !config->get_syncTlsCertPath().isEmpty())
+        qrFingerprint=SyncTls::certificateFingerprint(
+            config->get_syncTlsCertPath());
+
+    bool rejected=false;
     SyncPairDialogs::showCode(this, id, shownName,
                               QDateTime::currentMSecsSinceEpoch(),
                               &rejected, target.lastIp,

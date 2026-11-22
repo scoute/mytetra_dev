@@ -751,7 +751,7 @@ bool AppConfig::remove_syncDevice(const QString &id)
 
 // Входящий запрос на пару / взаимность / сброс флага.
 // Флаги живут отдельно от touch (он только факты появления и адрес)
-void AppConfig::set_syncDeviceOffer(const QString &id)
+void AppConfig::set_syncDeviceOffer(const QString &id, bool notify)
 {
     if(id.isEmpty())
         return;
@@ -768,7 +768,7 @@ void AppConfig::set_syncDeviceOffer(const QString &id)
                      +QStringLiteral("/pairOffer"), true);
     touch_syncDevice(id, QString());
 
-    if(!wasOffer)
+    if(!wasOffer && notify)
     {
         QString name;
 

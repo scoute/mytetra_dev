@@ -41,6 +41,7 @@ private slots:
     void onPair(void);
     void onRecheckPair(void);
     void onAccept(void);
+    void onShowCode(void);
     void onUnpair(void);
     void onRemove(void);
     void onResetAll(void);
@@ -106,6 +107,7 @@ private:
     QComboBox *tlsClientModeCombo=nullptr;
     QPushButton *pairButton=nullptr;
     QPushButton *acceptButton=nullptr;
+    QPushButton *showCodeButton=nullptr;
     QPushButton *unpairButton=nullptr;
     QPushButton *removeButton=nullptr;
 

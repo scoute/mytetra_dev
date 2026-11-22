@@ -216,7 +216,8 @@ public:
     bool remove_syncDevice(const QString &id);
 
     // Флаги пары по устройству (см. SyncDeviceInfo)
-    void set_syncDeviceOffer(const QString &id);
+    // notify=false — пометить запрос без попапа (ручной «Show code»)
+    void set_syncDeviceOffer(const QString &id, bool notify=true);
     void set_syncDeviceLastResult(const QString &id, bool ok,
                                   const QString &summary);
     void clear_syncDeviceOffer(const QString &id);

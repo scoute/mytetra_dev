@@ -8,6 +8,11 @@
 #include <QVBoxLayout>
 #include <QToolBar>
 #include <QInputDialog>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QLabel>
+#include <QRadioButton>
+#include <QButtonGroup>
 
 #include "TreeScreen.h"
 #include "KnowTreeView.h"
@@ -1399,25 +1404,50 @@ void TreeScreen::syncBranch(void)
 
   if(targets.size()>1)
   {
-    QStringList names;
+    // Не QInputDialog::getItem: в тёмной теме его список рисует
+    // мусорный синий квадрат у выбранной строки. Радиокнопки
+    // используют общий QSS и выглядят одинаково в обеих темах.
+    QDialog chooser(this);
+    chooser.setWindowTitle(tr("Sync"));
+    chooser.setMinimumWidth(460);
 
-    for(const SyncTarget &candidate : targets)
-      names << (candidate.canServe
-                ? candidate.name
-                : tr("%1 (deferred sync to phone)").arg(candidate.name));
+    auto *layout=new QVBoxLayout(&chooser);
+    layout->addWidget(new QLabel(tr("Sync branch with:"), &chooser));
 
-    bool ok=false;
-    const QString chosen=QInputDialog::getItem(this, tr("Sync"),
-                                               tr("Sync branch with:"),
-                                               names, 0, false, &ok);
+    QButtonGroup group(&chooser);
 
-    if(!ok || chosen.isEmpty())
+    for(int i=0; i<targets.size(); ++i)
+    {
+      const SyncTarget &candidate=targets.at(i);
+      const QString label=candidate.canServe
+          ? candidate.name
+          : tr("%1 (deferred sync to phone)").arg(candidate.name);
+
+      auto *radio=new QRadioButton(label, &chooser);
+      group.addButton(radio, i);
+      layout->addWidget(radio);
+
+      if(i==0)
+        radio->setChecked(true);
+    }
+
+    auto *box=new QDialogButtonBox(QDialogButtonBox::Ok
+                                   | QDialogButtonBox::Cancel, &chooser);
+    box->button(QDialogButtonBox::Ok)->setText(tr("Sync"));
+    box->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
+    layout->addWidget(box);
+    connect(box, &QDialogButtonBox::accepted, &chooser, &QDialog::accept);
+    connect(box, &QDialogButtonBox::rejected, &chooser, &QDialog::reject);
+
+    if(chooser.exec()!=QDialog::Accepted)
       return;
 
-    const int chosenIndex=names.indexOf(chosen);
+    const int chosenIndex=group.checkedId();
 
-    if(chosenIndex>=0 && chosenIndex<targets.size())
-      target=targets.at(chosenIndex);
+    if(chosenIndex<0 || chosenIndex>=targets.size())
+      return;
+
+    target=targets.at(chosenIndex);
   }
 
   // Телефон не слушает порт: не пытаемся достучаться, а оставляем

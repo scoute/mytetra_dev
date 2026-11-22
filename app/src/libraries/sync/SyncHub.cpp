@@ -228,6 +228,34 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         return finish(p, answer);
     });
 
+    // Пакет веток: мобилка качает сотни веток, по одной это снова
+    // десятки секунд на Wi-Fi
+    server->addRoute(QStringLiteral("POST /pull-branches"),
+                     [this, prepare, finish](const QJsonObject &request) -> QJsonObject {
+        const PreparedData p=prepare(QStringLiteral("POST /pull-branches"), request);
+        if(!p.ok)
+            return p.error;
+
+        const QJsonArray items=p.body.value(QStringLiteral("items")).toArray();
+        QJsonArray branches;
+
+        for(const QJsonValue &value : items)
+        {
+            const QString id=value.toObject()
+                .value(QStringLiteral("id")).toString();
+            QJsonObject branch=pullBranch(id);
+
+            if(!branch.contains(QStringLiteral("id")))
+                branch[QStringLiteral("id")]=id;
+
+            branches.append(branch);
+        }
+
+        QJsonObject answer;
+        answer[QStringLiteral("branches")]=branches;
+        return finish(p, answer);
+    });
+
     // Ветка целиком: поля + parentId
     server->addRoute(QStringLiteral("POST /pull-branch"),
                      [this, prepare, finish](const QJsonObject &request) -> QJsonObject {

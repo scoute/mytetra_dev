@@ -745,46 +745,122 @@ bool SyncSession::pullByPlan(SyncClient &client,
 
     int noteDone=0;
 
-    for(const QString &id : plan.downloadNotes)
+    // Заметки едут пачками: один HTTP-запрос на 100 штук. При старом хабе
+    // (нет /pull-notes) — тихий откат на поштучный pullNote
+    bool batchSupported=true;
+    const int batchSize=100;
+
+    for(int base=0; base<plan.downloadNotes.size(); )
     {
-        addLog(QStringLiteral("pull note %1").arg(id));
+        const int count=qMin(batchSize, plan.downloadNotes.size()-base);
+        const bool useBatch=(batchSupported && count>1);
+        bool haveBatchAnswer=false;
+        QMap<QString, QJsonObject> batchNotes;
 
-        const SyncNoteInfo &info=remote.notes.value(id);
-        const QJsonObject note=client.pullNote(host, port, id, info.branchId);
-
-        if(note.contains(QStringLiteral("error")) ||
-           !client.lastError().isEmpty())
+        if(useBatch)
         {
-            if(!noteItem(client, report, QStringLiteral("note"), id,
-                         client.lastError().isEmpty()
-                         ? QStringLiteral("pull note failed")
-                         : client.lastError()))
-                return false;
+            QJsonArray items;
 
-            continue;
+            for(int i=base; i<base+count; ++i)
+            {
+                const QString &id=plan.downloadNotes.at(i);
+                QJsonObject item;
+                item[QStringLiteral("id")]=id;
+                item[QStringLiteral("branch")]=
+                    remote.notes.value(id).branchId;
+                items.append(item);
+            }
+
+            const QJsonObject answer=client.pullNotes(host, port, items);
+
+            if(answer.contains(QStringLiteral("notes")))
+            {
+                haveBatchAnswer=true;
+
+                for(const QJsonValue &value
+                    : answer.value(QStringLiteral("notes")).toArray())
+                {
+                    const QJsonObject note=value.toObject();
+                    const QString id=note.value(QStringLiteral("id")).toString();
+
+                    if(!id.isEmpty())
+                        batchNotes.insert(id, note);
+                }
+            }
+            else
+                batchSupported=false;
         }
 
-        QJsonObject full=note;
-        full[QStringLiteral("id")]=id;
-        full[QStringLiteral("branch")]=info.branchId;
-        full[QStringLiteral("mtime")]=info.mtime;
-        full[QStringLiteral("hash")]=info.hash;
-
-        const QString error=SyncNoteIo::applyNote(model, tetradir, full,
-                                                  &localBranches);
-
-        if(!error.isEmpty())
+        for(int i=base; i<base+count; ++i)
         {
-            skipItem(report, QStringLiteral("note %1: %2").arg(id, error));
-            continue;
+            const QString &id=plan.downloadNotes.at(i);
+            const SyncNoteInfo &info=remote.notes.value(id);
+
+            addLog(QStringLiteral("pull note %1").arg(id));
+
+            QJsonObject note;
+            QString pullError;
+
+            if(haveBatchAnswer)
+            {
+                note=batchNotes.value(id);
+
+                if(note.isEmpty())
+                    pullError=QStringLiteral("pull note failed");
+                else if(note.contains(QStringLiteral("error")))
+                    pullError=note.value(QStringLiteral("error")).toString();
+            }
+            else
+            {
+                note=client.pullNote(host, port, id, info.branchId);
+
+                if(note.contains(QStringLiteral("error")) ||
+                   !client.lastError().isEmpty())
+                    pullError=client.lastError().isEmpty()
+                        ? QStringLiteral("pull note failed")
+                        : client.lastError();
+            }
+
+            if(!pullError.isEmpty())
+            {
+                if(!haveBatchAnswer)
+                {
+                    if(!noteItem(client, report, QStringLiteral("note"), id,
+                                 pullError))
+                        return false;
+                }
+                else
+                    skipItem(report,
+                             QStringLiteral("note %1: %2").arg(id, pullError));
+
+                continue;
+            }
+
+            QJsonObject full=note;
+            full[QStringLiteral("id")]=id;
+            full[QStringLiteral("branch")]=info.branchId;
+            full[QStringLiteral("mtime")]=info.mtime;
+            full[QStringLiteral("hash")]=info.hash;
+
+            const QString error=SyncNoteIo::applyNote(model, tetradir, full,
+                                                      &localBranches);
+
+            if(!error.isEmpty())
+            {
+                skipItem(report,
+                         QStringLiteral("note %1: %2").arg(id, error));
+                continue;
+            }
+
+            report.downloadedNotes++;
+            ++noteDone;
+
+            if(progressCallback && noteDone%25==0)
+                progressCallback(QStringLiteral("Скачиваю заметки"), noteDone,
+                                 plan.downloadNotes.size());
         }
 
-        report.downloadedNotes++;
-        ++noteDone;
-
-        if(progressCallback && noteDone%25==0)
-            progressCallback(QStringLiteral("Скачиваю заметки"), noteDone,
-                             plan.downloadNotes.size());
+        base+=count;
     }
 
     return true;

@@ -197,6 +197,37 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
             p.body.value(QStringLiteral("branch")).toString()));
     });
 
+    // Пакет заметок: один HTTP-запрос на десятки записей. Без этого
+    // каждая заметка — отдельный round-trip, и синк тысяч файлов
+    // упирается в протокол, а не в сеть/диск
+    server->addRoute(QStringLiteral("POST /pull-notes"),
+                     [this, prepare, finish](const QJsonObject &request) -> QJsonObject {
+        const PreparedData p=prepare(QStringLiteral("POST /pull-notes"), request);
+        if(!p.ok)
+            return p.error;
+
+        const QJsonArray items=p.body.value(QStringLiteral("items")).toArray();
+        QJsonArray notes;
+
+        for(const QJsonValue &value : items)
+        {
+            const QJsonObject item=value.toObject();
+            const QString id=item.value(QStringLiteral("id")).toString();
+            QJsonObject note=pullNote(
+                id, item.value(QStringLiteral("branch")).toString());
+
+            // Для сопоставления на клиенте ошибка тоже несёт id
+            if(!note.contains(QStringLiteral("id")))
+                note[QStringLiteral("id")]=id;
+
+            notes.append(note);
+        }
+
+        QJsonObject answer;
+        answer[QStringLiteral("notes")]=notes;
+        return finish(p, answer);
+    });
+
     // Ветка целиком: поля + parentId
     server->addRoute(QStringLiteral("POST /pull-branch"),
                      [this, prepare, finish](const QJsonObject &request) -> QJsonObject {

@@ -6,6 +6,7 @@
 #include <QString>
 #include <QStringList>
 #include <QJsonObject>
+#include <QJsonArray>
 
 #include "SyncManifest.h"
 #include "SyncHandshake.h"
@@ -56,6 +57,12 @@ public:
     QJsonObject pullNote(const QString &host, quint16 port,
                          const QString &id,
                          const QString &branchId=QString());
+
+    // Пакет заметок одним запросом: items — [{"id":...,"branch":...}, ...],
+    // ответ — {"notes":[...]} (порядок не гарантируется). Пусто/без
+    // notes — старый хаб или ошибка; вызывающий откатывается на pullNote
+    QJsonObject pullNotes(const QString &host, quint16 port,
+                          const QJsonArray &items);
 
     // Забрать ветку: поля + parentId
     QJsonObject pullBranch(const QString &host, quint16 port,

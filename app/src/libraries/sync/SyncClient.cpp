@@ -800,6 +800,32 @@ SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port,
 }
 
 
+QJsonObject SyncClient::pullNotes(const QString &host, quint16 port,
+                                  const QJsonArray &items)
+{    SYNC_TRACE_EXTRA(host);
+
+    QJsonObject request;
+    request[QStringLiteral("items")]=items;
+
+    bool ok=false;
+    const QJsonObject answer=postData(host, port,
+                                      QStringLiteral("POST /pull-notes"),
+                                      QStringLiteral("/pull-notes"),
+                                      request, ok);
+
+    if(!ok)
+        return QJsonObject();
+
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return QJsonObject();
+    }
+
+    return answer;
+}
+
+
 QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
                                  const QString &id, const QString &branchId)
 {    SYNC_TRACE_EXTRA(host);

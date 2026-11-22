@@ -678,6 +678,12 @@ bool SyncSession::pullByPlan(SyncClient &client,
                              SyncReport &report)
 {    SYNC_TRACE();
 
+    // Каждый applyNote/applyBranch делает SyncSidecar::adopt, а adopt
+    // сохраняет весь журнал целиком. Без пачки это O(n²) по числу
+    // скачанных записей: к концу синка файл растёт, и запись на диск
+    // превращается в узкое место. Сохраняем один раз на пачку
+    const SyncSidecar::BulkGuard bulkGuard;
+
     if(progressCallback)
         progressCallback(QStringLiteral("Скачиваю ветки"), 0,
                          plan.downloadBranches.size());

@@ -388,6 +388,115 @@ SyncPlan applyDecisions(const SyncPlan &plan,
         }
     }
 
+    // Воскрешение ветки тянет всё поддерево. Заметки под удалённой
+    // веткой своих tombstone'ов не имеют (их покрывает tombstone ветки),
+    // поэтому в plan они не попадают и после восстановления одной строки
+    // ветки остаются невидимыми. Симметрично — для "настоять на моём".
+    QMap<QString, QStringList> remoteChildren;
+
+    for(auto it=remote.branches.constBegin();
+        it!=remote.branches.constEnd(); ++it)
+        remoteChildren[it.value().parentId] << it.key();
+
+    QMap<QString, QStringList> localChildren;
+
+    for(auto it=local.branches.constBegin();
+        it!=local.branches.constEnd(); ++it)
+        localChildren[it.value().parentId] << it.key();
+
+    const auto actionFor=[&](const QString &id, Category fallback) {
+        if(decisions.byId.contains(id))
+            return decisions.byId.value(id);
+
+        return decisions.category.value(fallback, Action::Confirm);
+    };
+
+    const auto collectSubtree=[&](const QString &root,
+                                  const QMap<QString, QStringList> &children,
+                                  Category fallback) {
+        QSet<QString> subtree;
+        QStringList stack;
+        stack << root;
+
+        while(!stack.isEmpty())
+        {
+            const QString id=stack.takeLast();
+
+            if(subtree.contains(id))
+                continue;
+
+            subtree.insert(id);
+
+            for(const QString &child : children.value(id))
+                if(actionFor(child, fallback)!=Action::Skip)
+                    stack << child;
+        }
+
+        return subtree;
+    };
+
+    // Скачиваем ветку, которую локально удаляли: с сервера едет и она,
+    // и все её потомки, и заметки в них (иначе — только ствол дерева)
+    QSet<QString> remoteRoots;
+
+    for(const QString &id : downloadBranches)
+        if(local.tombstones.contains(id) && remote.branches.contains(id))
+            remoteRoots.insert(id);
+
+    for(const QString &root : remoteRoots)
+    {
+        const QSet<QString> subtree=
+            collectSubtree(root, remoteChildren, Category::MyDelete);
+
+        for(const QString &id : subtree)
+        {
+            downloadBranches << id;
+            // Восстановление отменяет наше удаление и для потомков:
+            // иначе их tombstone'ы уедут на хаб и снесут воскрешённое
+            pushTombs.removeAll(id);
+        }
+
+        for(auto it=remote.notes.constBegin();
+            it!=remote.notes.constEnd(); ++it)
+            if(subtree.contains(it.value().branchId)
+               && actionFor(it.key(), Category::MyDelete)!=Action::Skip)
+            {
+                downloadNotes << it.key();
+                pushTombs.removeAll(it.key());
+            }
+    }
+
+    // Обратная сторона: сервер удалил ветку, мы "настаиваем на моём" —
+    // заливаем наверх всё локальное поддерево, а не одну строку ветки
+    QSet<QString> localRoots;
+
+    for(const QString &id : uploadBranches)
+        if(remote.tombstones.contains(id) && local.branches.contains(id))
+            localRoots.insert(id);
+
+    for(const QString &root : localRoots)
+    {
+        const QSet<QString> subtree=
+            collectSubtree(root, localChildren, Category::TheirDelete);
+
+        for(const QString &id : subtree)
+        {
+            uploadBranches << id;
+            // Наше «настоять на моём» отменяет удаление и для потомков:
+            // иначе локальная фаза удалений снесла бы только что залитое
+            deleteLocal.removeAll(id);
+        }
+
+        for(auto it=local.notes.constBegin();
+            it!=local.notes.constEnd(); ++it)
+            if(subtree.contains(it.value().branchId)
+               && actionFor(it.key(), Category::TheirDelete)!=Action::Skip)
+            {
+                uploadNotes << it.key();
+                deleteLocal.removeAll(it.key());
+            }
+    }
+
     uploadNotes.removeDuplicates();
     downloadNotes.removeDuplicates();
     uploadBranches.removeDuplicates();

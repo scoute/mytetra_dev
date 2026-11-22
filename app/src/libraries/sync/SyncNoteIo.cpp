@@ -134,6 +134,32 @@ bool writeBytesAtomic(const QString &path, const QByteArray &data)
 #endif
 }
 
+// Запись с контрольным чтением: диск/ФС могут принять байты, но
+// вернуть не то (сбой, обрыв, ошибка провайдера). Одна повторная
+// попытка, затем ошибка элемента — синк не должен считать файл
+// записанным, если содержимое не совпало.
+bool writeBytesVerified(const QString &path, const QByteArray &data)
+{
+    for(int attempt=0; attempt<2; ++attempt)
+    {
+        if(!writeBytesAtomic(path, data))
+            continue;
+
+        // Сверяем хеши, а не читаем файл целиком в память: вложения
+        // могут быть большими
+        const QString expected=SyncManifestBuilder::sha256Bytes(data);
+        const QString actual=SyncManifestBuilder::sha256File(path);
+
+        if(!expected.isEmpty() && actual==expected)
+            return true;
+
+        syncDbg(QStringLiteral("verify failed after write: ")+path
+                +QStringLiteral(" attempt ")+QString::number(attempt+1));
+    }
+
+    return false;
+}
+
 } // namespace
 
 
@@ -582,9 +608,18 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     if(!basePath.startsWith(baseDir+QStringLiteral("/")))
         return QStringLiteral("unsafe record path");
 
+    // Хеш из манифеста — контроль того, что текст доехал не только
+    // целым по TLS, но и совпадает с тем, что обещала запись
+    const QString expectedHash=request.value(QStringLiteral("hash")).toString();
+
+    if(!expectedHash.isEmpty()
+       && SyncManifestBuilder::sha256Bytes(textBytes)
+              .compare(expectedHash, Qt::CaseInsensitive)!=0)
+        return QStringLiteral("text hash mismatch");
+
     SYNC_CHECKPOINT(QStringLiteral("before write text ")+basePath);
-    if(!writeBytesAtomic(basePath, textBytes))
-        return QStringLiteral("cannot write text");
+    if(!writeBytesVerified(basePath, textBytes))
+        return QStringLiteral("cannot write text (verify)");
     SYNC_CHECKPOINT(QStringLiteral("after write text"));
 
     for(const QJsonValue &value : attaches)
@@ -600,10 +635,10 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
             QByteArray::fromBase64(a.value(QStringLiteral("data"))
                                    .toString().toLatin1());
 
-        if(!writeBytesAtomic(basePath.section(QLatin1Char('/'), 0, -2)
-                             +QStringLiteral("/")
-                             +a.value(QStringLiteral("file")).toString(), data))
-            return QStringLiteral("cannot write attach");
+        if(!writeBytesVerified(basePath.section(QLatin1Char('/'), 0, -2)
+                               +QStringLiteral("/")
+                               +a.value(QStringLiteral("file")).toString(), data))
+            return QStringLiteral("cannot write attach (verify)");
     }
 
     // Прочие файлы каталога заметки (инлайн-картинки и т.п.): пишем
@@ -637,8 +672,8 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
             const QByteArray data=QByteArray::fromBase64(
                 dirFile.value(QStringLiteral("data")).toString().toLatin1());
 
-            if(!writeBytesAtomic(noteDirPath+QStringLiteral("/")+name, data))
-                return QStringLiteral("cannot write file");
+            if(!writeBytesVerified(noteDirPath+QStringLiteral("/")+name, data))
+                return QStringLiteral("cannot write file (verify)");
 
             keepNames << name;
         }

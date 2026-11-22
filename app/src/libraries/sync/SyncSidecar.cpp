@@ -45,6 +45,23 @@ void SyncSidecar::init(const QString &xmlFileName)
     // временной ошибки. Оставляем m_loaded=false (touch* станут no-op),
     // файл не трогаем — следующая попытка/скин прочитает его снова.
     const QString path=sidecarPathForXml(xmlFileName);
+    const QString backup=path+QStringLiteral(".bak");
+
+    // Битый основной: сначала пробуем резервную копию, потом карантин
+    if(QFileInfo(path).isReadable() && QFile::exists(backup))
+    {
+        const QString quarantine=path+QStringLiteral(".corrupt-")
+            +QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMddHHmmss"));
+
+        if(QFile::rename(path, quarantine)
+           && QFile::copy(backup, path)
+           && self.load(xmlFileName))
+        {
+            qWarning() << "SyncSidecar: journal was corrupt, restored from"
+                       << backup << "(corrupt copy:" << quarantine << ")";
+            return;
+        }
+    }
 
     if(!QFileInfo(path).isReadable())
     {
@@ -303,10 +320,25 @@ bool SyncSidecar::load(const QString &xmlFileName)
 
     if(!file.exists())
     {
-        // Сайдкара нет — первое знакомство движка с базой.
-        // Не ошибка: состояние строится с нуля при сейвах
-        m_loaded=true;
-        return true;
+        // Пропавший основной файл, но есть резервная копия (например,
+        // оборвалось сохранение) — поднимаем её
+        const QString backup=m_sidecarPath+QStringLiteral(".bak");
+
+        if(QFile::exists(backup))
+        {
+            if(QFile::copy(backup, m_sidecarPath))
+                qWarning() << "SyncSidecar: restored missing journal from"
+                           << backup;
+            file.setFileName(m_sidecarPath);
+        }
+
+        if(!file.exists())
+        {
+            // Сайдкара нет — первое знакомство движка с базой.
+            // Не ошибка: состояние строится с нуля при сейвах
+            m_loaded=true;
+            return true;
+        }
     }
 
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -357,6 +389,20 @@ bool SyncSidecar::save(void) const
 
     if(!m_loaded || m_sidecarPath.isEmpty())
         return false;
+
+    // Резервная копия прошлого валидного журнала: QSaveFile спасает от
+    // обрезанной записи, но не от логической порчи/случайного удаления
+    {
+        const QString backup=m_sidecarPath+QStringLiteral(".bak");
+
+        if(QFile::exists(m_sidecarPath))
+        {
+            QFile::remove(backup);
+
+            if(!QFile::copy(m_sidecarPath, backup))
+                qWarning() << "SyncSidecar: cannot backup" << m_sidecarPath;
+        }
+    }
 
     QJsonObject entries;
 

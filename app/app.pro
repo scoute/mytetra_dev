@@ -83,8 +83,13 @@ TARGET = mytetra
 RESOURCES = bin/mytetra.qrc \
             bin/icons.qrc \ 
             bin/themes.qrc 
-TRANSLATIONS = bin/resource/translations/mytetra_ru.ts \ 
+TRANSLATIONS = bin/resource/translations/mytetra_ru.ts \
                bin/resource/translations/mytetra_fr.ts
+# .qm не лежат в репозитории: lrelease собирает их из .ts при сборке,
+# embed_translations кладёт результат в ресурсы по тому же пути,
+# откуда приложение их читает (:/resource/translations)
+CONFIG += lrelease embed_translations
+QM_FILES_RESOURCE_PREFIX = resource/translations
 CODECFORSRC  = utf8
 
 # QMAKE_LFLAGS += -L/usr/lib/qt4/lib

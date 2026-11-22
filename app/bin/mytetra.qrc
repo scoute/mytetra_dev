@@ -82,8 +82,6 @@
         <file>resource/pic/sort.svg</file>
         <file>resource/pic/installation/installCover.png</file>
 
-        <file>resource/translations/mytetra_ru.qm</file>
-        <file>resource/translations/mytetra_fr.qm</file>
 
         <file>resource/standartconfig/any/conf.ini</file>
         <file>resource/standartconfig/any/editorconf.ini</file>

@@ -5407,6 +5407,11 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>Принять удаление с сервера (удалится и здесь тоже)</translation>
     </message>
     <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2991"/>
+        <source>оставляем как на этом устройстве</source>
+        <translation>оставляем как на этом устройстве</translation>
+    </message>
+    <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2996"/>
         <source>здешняя</source>
         <translation>здешняя</translation>
@@ -5480,11 +5485,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2923"/>
         <source>Ветка «%1» · %2 · %3</source>
         <translation>Ветка «%1» · %2 · %3</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2991"/>
-        <source>оставляем наш вариант</source>
-        <translation>оставляем наш вариант</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2993"/>

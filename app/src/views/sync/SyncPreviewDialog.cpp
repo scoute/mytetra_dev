@@ -2988,7 +2988,7 @@ void SyncPreviewDialog::refreshDuel(void)
     }
 
     if(chosen==Action::ForceMine)
-        hint=tr("оставляем наш вариант");
+        hint=tr("оставляем как на этом устройстве");
     else if(chosen==Action::TakeServer)
         hint=tr("перетираем с сервера");
     else

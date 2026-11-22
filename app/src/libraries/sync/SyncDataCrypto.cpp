@@ -12,7 +12,7 @@ namespace SyncDataCrypto
 
 namespace
 {
-constexpr qint64 kMaxTsSkewMs=5000;
+constexpr qint64 kMaxTsSkewMs=120000;
 
 QMap<QString, QString> &activeSessions(void)
 {

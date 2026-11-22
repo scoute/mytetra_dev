@@ -104,7 +104,7 @@ public:
     // Максимальная давность метки data-запроса, мс. Больше — отказ
     // (защита от переигрывания). Часы уже сведены hello в пределах
     // maxClockSkewMs, здесь окно шире — на джиттер и обработку
-    static constexpr qint64 maxDataTsSkewMs=5000;
+    static constexpr qint64 maxDataTsSkewMs=120000;
 };
 
 #endif // SYNCHANDSHAKE_H

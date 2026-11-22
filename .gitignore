@@ -71,3 +71,6 @@ build/
 mytetraHighLoad_data/
 
 !/app/tests/Makefile
+
+# Qt translation binaries are generated from .ts at build time
+*.qm

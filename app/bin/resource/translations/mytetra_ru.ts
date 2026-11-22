@@ -3289,8 +3289,63 @@ Please report about this problem to the developers.</source>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="105"/>
-        <source>Моё переименование уедет наверх</source>
-        <translation>Моё переименование уедет наверх</translation>
+        <source>Переименование этого устройства уедет наверх</source>
+        <translation>Переименование этого устройства уедет наверх</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="121"/>
+        <source>Не отправлять с этого устройства (останется только здесь)</source>
+        <translation>Не отправлять с этого устройства (останется только здесь)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="124"/>
+        <source>Взять полную версию с сервера (здешняя почти пустая)</source>
+        <translation>Взять полную версию с сервера (здешняя почти пустая)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="125"/>
+        <source>Отменить правку этого устройства, взять версию с сервера</source>
+        <translation>Отменить правку этого устройства, взять версию с сервера</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="127"/>
+        <source>Отменить переименование этого устройства</source>
+        <translation>Отменить переименование этого устройства</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="129"/>
+        <source>Отменить удаление на этом устройстве (воскресить с сервера)</source>
+        <translation>Отменить удаление на этом устройстве (воскресить с сервера)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="140"/>
+        <source>Не скачивать (останется только на сервере)</source>
+        <translation>Не скачивать (останется только на сервере)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="143"/>
+        <source>Оставить полную версию этого устройства (на сервере почти пустая)</source>
+        <translation>Оставить полную версию этого устройства (на сервере почти пустая)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="144"/>
+        <source>Оставить версию этого устройства, с сервера не брать</source>
+        <translation>Оставить версию этого устройства, с сервера не брать</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="146"/>
+        <source>Отменить переименование на сервере</source>
+        <translation>Отменить переименование на сервере</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="148"/>
+        <source>Не удалять на этом устройстве (воскресить здешнюю копию наверх)</source>
+        <translation>Не удалять на этом устройстве (воскресить здешнюю копию наверх)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="150"/>
+        <source>Настоять на версии этого устройства</source>
+        <translation>Настоять на версии этого устройства</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="106"/>
@@ -3306,61 +3361,6 @@ Please report about this problem to the developers.</source>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="110"/>
         <source>Удалится и у меня тоже</source>
         <translation>Удалится и у меня тоже</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="121"/>
-        <source>Не отправлять моё (останется только у меня)</source>
-        <translation>Не отправлять моё (останется только у меня)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="124"/>
-        <source>Взять их полную версию (моя почти пустая)</source>
-        <translation>Взять их полную версию (моя почти пустая)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="125"/>
-        <source>Отменить мою правку, взять их версию</source>
-        <translation>Отменить мою правку, взять их версию</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="127"/>
-        <source>Отменить моё переименование</source>
-        <translation>Отменить моё переименование</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="129"/>
-        <source>Отменить моё удаление (воскресить с сервера)</source>
-        <translation>Отменить моё удаление (воскресить с сервера)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="140"/>
-        <source>Не скачивать (останется только у них)</source>
-        <translation>Не скачивать (останется только у них)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="143"/>
-        <source>Оставить мою полную версию (их почти пустая)</source>
-        <translation>Оставить мою полную версию (их почти пустая)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="144"/>
-        <source>Оставить мою версию, их не брать</source>
-        <translation>Оставить мою версию, их не брать</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="146"/>
-        <source>Отменить их переименование</source>
-        <translation>Отменить их переименование</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="148"/>
-        <source>Не удалять у меня (воскресить мою копию наверх)</source>
-        <translation>Не удалять у меня (воскресить мою копию наверх)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="150"/>
-        <source>Настоять на моей версии</source>
-        <translation>Настоять на моей версии</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="1102"/>
@@ -5121,11 +5121,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>Сравнение</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="345"/>
-        <source>Сравнение сторон стрелками →/←: слева моё, справа серверное</source>
-        <translation>Сравнение сторон стрелками →/←: слева моё, справа серверное</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="361"/>
         <source>→ все</source>
         <translation>→ все</translation>
@@ -5176,26 +5171,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>Инфо</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="486"/>
-        <source>↑ Наша</source>
-        <translation>↑ Наша</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="487"/>
-        <source>↓ Ихняя</source>
-        <translation>↓ Ихняя</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="501"/>
-        <source>Наша</source>
-        <translation>Наша</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="502"/>
-        <source>Ихняя</source>
-        <translation>Ихняя</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="503"/>
         <source>Diff</source>
         <translation>Различия</translation>
@@ -5243,14 +5218,39 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>Применять эти действия по категориям в будущих синках (можно сбросить здесь же)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="849"/>
-        <source>↑ наше</source>
-        <translation>↑ наше</translation>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="345"/>
+        <source>Сравнение сторон стрелками →/←: слева это устройство, справа сервер</source>
+        <translation>Сравнение сторон стрелками →/←: слева это устройство, справа сервер</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="486"/>
+        <source>↑ Это устройство</source>
+        <translation>↑ Это устройство</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="487"/>
+        <source>↓ Сервер</source>
+        <translation>↓ Сервер</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="501"/>
+        <source>Это устройство</source>
+        <translation>Это устройство</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="502"/>
+        <source>Сервер</source>
+        <translation>Сервер</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="849"/>
-        <source>↓ ихнее</source>
-        <translation>↓ ихнее</translation>
+        <source>↑ это устройство</source>
+        <translation>↑ это устройство</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="849"/>
+        <source>↓ с сервера</source>
+        <translation>↓ с сервера</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="868"/>
@@ -5348,8 +5348,98 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2403"/>
-        <source>Не скачивать (останется только у них)</source>
-        <translation>Не скачивать (останется только у них)</translation>
+        <source>Не скачивать (останется только на сервере)</source>
+        <translation>Не скачивать (останется только на сервере)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2415"/>
+        <source>Оставить полную версию этого устройства (на сервере почти пустая)</source>
+        <translation>Оставить полную версию этого устройства (на сервере почти пустая)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2416"/>
+        <source>Оставить версию этого устройства (серверная заменится)</source>
+        <translation>Оставить версию этого устройства (серверная заменится)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2420"/>
+        <source>Взять полную версию с сервера (здешняя почти пустая)</source>
+        <translation>Взять полную версию с сервера (здешняя почти пустая)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2421"/>
+        <source>Взять версию с сервера (здешняя заменится)</source>
+        <translation>Взять версию с сервера (здешняя заменится)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2429"/>
+        <source>Имя этого устройства побеждает (станет общим)</source>
+        <translation>Имя этого устройства побеждает (станет общим)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2430"/>
+        <source>Отменить переименование на сервере (имя этого устройства останется с обеих сторон)</source>
+        <translation>Отменить переименование на сервере (имя этого устройства останется с обеих сторон)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2435"/>
+        <source>Отменить переименование этого устройства (имя станет серверным с обеих сторон)</source>
+        <translation>Отменить переименование этого устройства (имя станет серверным с обеих сторон)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2437"/>
+        <source>Принять переименование с сервера (имя станет серверным с обеих сторон)</source>
+        <translation>Принять переименование с сервера (имя станет серверным с обеих сторон)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2444"/>
+        <source>Настоять на удалении на этом устройстве (не воскрешать — удалится и на сервере)</source>
+        <translation>Настоять на удалении на этом устройстве (не воскрешать — удалится и на сервере)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2451"/>
+        <source>Не удалять на этом устройстве (здешняя копия воскресит серверную сторону)</source>
+        <translation>Не удалять на этом устройстве (здешняя копия воскресит серверную сторону)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2453"/>
+        <source>Принять удаление с сервера (удалится и здесь тоже)</source>
+        <translation>Принять удаление с сервера (удалится и здесь тоже)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2996"/>
+        <source>здешняя</source>
+        <translation>здешняя</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2996"/>
+        <source>серверная</source>
+        <translation>серверная</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3237"/>
+        <source>с этого устройства едет на сервер</source>
+        <translation>с этого устройства едет на сервер</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3238"/>
+        <source>с сервера приезжает к нам</source>
+        <translation>с сервера приезжает к нам</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3245"/>
+        <source>Восстановить с сервера — отменить здешнее, взять версию с сервера (здешнее удаление — воскресить)</source>
+        <translation>Восстановить с сервера — отменить здешнее, взять версию с сервера (здешнее удаление — воскресить)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3246"/>
+        <source>Настоять на этом устройстве — отменить серверное, оставить здешнюю версию (удаление на сервере — воскресить здешнюю копию наверх)</source>
+        <translation>Настоять на этом устройстве — отменить серверное, оставить здешнюю версию (удаление на сервере — воскресить здешнюю копию наверх)</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3250"/>
+        <source>Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Это устройство»/«Сервер» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы</source>
+        <translation>Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Это устройство»/«Сервер» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2406"/>
@@ -5362,64 +5452,9 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>Скачать с сервера (останется с обеих сторон)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2415"/>
-        <source>Оставить мою полную версию (их почти пустая)</source>
-        <translation>Оставить мою полную версию (их почти пустая)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2416"/>
-        <source>Оставить мою версию (их заменится моей)</source>
-        <translation>Оставить мою версию (их заменится моей)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2420"/>
-        <source>Взять их полную версию (моя почти пустая)</source>
-        <translation>Взять их полную версию (моя почти пустая)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2421"/>
-        <source>Взять их версию (моя заменится их)</source>
-        <translation>Взять их версию (моя заменится их)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2429"/>
-        <source>Моё имя побеждает (станет моим с обеих сторон)</source>
-        <translation>Моё имя побеждает (станет моим с обеих сторон)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2430"/>
-        <source>Отменить их переименование (имя останется моим с обеих сторон)</source>
-        <translation>Отменить их переименование (имя останется моим с обеих сторон)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2435"/>
-        <source>Отменить моё переименование (имя станет их с обеих сторон)</source>
-        <translation>Отменить моё переименование (имя станет их с обеих сторон)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2437"/>
-        <source>Принять их переименование (имя станет их с обеих сторон)</source>
-        <translation>Принять их переименование (имя станет их с обеих сторон)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2444"/>
-        <source>Настоять на моём удалении (не воскрешать — удалится и на сервере)</source>
-        <translation>Настоять на моём удалении (не воскрешать — удалится и на сервере)</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2446"/>
         <source>Воскресить с сервера (вернётся и ко мне)</source>
         <translation>Воскресить с сервера (вернётся и ко мне)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2451"/>
-        <source>Не удалять у меня (моя копия воскресит их сторону)</source>
-        <translation>Не удалять у меня (моя копия воскресит их сторону)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2453"/>
-        <source>Принять их удаление (удалится и у меня тоже)</source>
-        <translation>Принять их удаление (удалится и у меня тоже)</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2644"/>
@@ -5460,16 +5495,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2995"/>
         <source>предложение: %1 — подтвердите</source>
         <translation>предложение: %1 — подтвердите</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2996"/>
-        <source>наша</source>
-        <translation>наша</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="2996"/>
-        <source>ихняя</source>
-        <translation>ихняя</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3034"/>
@@ -5543,16 +5568,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>удалено</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3237"/>
-        <source>наше едет наружу</source>
-        <translation>наше едет наружу</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3238"/>
-        <source>ихнее приезжает к нам</source>
-        <translation>ихнее приезжает к нам</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3239"/>
         <source>почти-пустая заметка затирает содержательную: по умолчанию остается полная версия</source>
         <translation>почти-пустая заметка затирает содержательную: по умолчанию остается полная версия</translation>
@@ -5583,16 +5598,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <translation>Красное с ⚠ в списке — данные будут удалены или затёрты: удаление здесь/на сервере, затирание полной версии пустой</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3245"/>
-        <source>Восстановить с сервера — отменить моё, взять их версию (моё удаление — воскресить)</source>
-        <translation>Восстановить с сервера — отменить моё, взять их версию (моё удаление — воскресить)</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3246"/>
-        <source>Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)</source>
-        <translation>Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)</translation>
-    </message>
-    <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3247"/>
         <source>Вкладки</source>
         <translation>Вкладки</translation>
@@ -5606,11 +5611,6 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3249"/>
         <source>Сервер → я: ихние изменения приедут к нам</source>
         <translation>Сервер → я: ихние изменения приедут к нам</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3250"/>
-        <source>Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы</source>
-        <translation>Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы</translation>
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="3251"/>
@@ -5692,106 +5692,107 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
 <context>
     <name>TreeScreen</name>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="662"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="701"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="797"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="907"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1047"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1091"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1195"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="668"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="707"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="803"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="913"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1053"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1097"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1201"/>
         <source>Unavailable action</source>
         <translation>Недопустимое действие</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="663"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="702"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="798"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1196"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="669"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="708"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="804"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1202"/>
         <source>You've selected </source>
         <translation>У вас выделены </translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="702"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="708"/>
         <source> items.
 Please select single item for enabling insert operation.</source>
         <translation>ветки. Выделите одну ветку, чтобы была доступна операция вставки ветки.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="965"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="971"/>
         <source>Delete</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="821"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="827"/>
         <source>Edit item name</source>
         <translation>Редактировать название ветки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="971"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="977"/>
         <source>Cut item</source>
         <translation>Вырезать ветку</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="207"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="208"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="213"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="214"/>
         <source>Find in base</source>
         <translation>Найти в базе</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="663"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="669"/>
         <source> items.
 Please select single item for moving.</source>
         <translation>ветки.
 Для перемещения выберите, пожалуйста, одну ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="908"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="914"/>
         <source>In your selected data found closed item. Action canceled.</source>
         <translation>В выбранных вами данных обнаружена закрытая ветка. Действие отменено.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="941"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="947"/>
         <source>Confirmation request</source>
         <translation>Запрос на подтверждение</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1353"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1390"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1409"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1429"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1450"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1452"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1359"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1396"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1411"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1436"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1460"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1481"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1483"/>
         <source>Sync</source>
         <translation>Синхронизация</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1354"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1360"/>
         <source>Not paired: pair with the one-time code first.</source>
         <translation>Пара не установлена: сначала спарьтесь по одноразовому коду.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1410"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1415"/>
         <source>Sync branch with:</source>
         <translation>Синхронизировать ветку с:</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1471"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1502"/>
         <source>No icon selected.</source>
         <translation>Вы не выбрали иконку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1526"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1557"/>
         <source>The export directory %1 is not empty. Please, select an empty directory.</source>
         <translation>Директория &lt;b&gt;%1&lt;/b&gt; не является пустой.
 Пожалуйста, выберите пустую директорию для экспорта данных.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1533"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1564"/>
         <source>No export tree item selected. Please select a item.</source>
         <translation>Не указана ветка для экспорта. Пожалуйста, выберите нужную ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1554"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1585"/>
         <source>Exported tree item contains encrypted data.
 Please click OK and enter the password.
 All data will be exported unencrypted.</source>
@@ -5800,22 +5801,22 @@ All data will be exported unencrypted.</source>
 Все данные будут экспортированы в расшифрованном виде.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1567"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1598"/>
         <source>Done exporting into &lt;b&gt;%1&lt;/b&gt;.</source>
         <translation>Экспорт данных в директорию &lt;b&gt;%1&lt;/b&gt; завершен.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1569"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1600"/>
         <source>Errors occurred while exporting.</source>
         <translation>Обнаружены ошибки при экспорте данных.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1578"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1609"/>
         <source>No tree item selected for importing. Please select a item.</source>
         <translation>Не выбрана ветка для экспорта. Пожалуйста, выберите какую-нибудь ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1592"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1623"/>
         <source>You are importing into an encrypted item.
 Please click Ok and enter the password.
 All data imported will be encrypted.</source>
@@ -5824,131 +5825,132 @@ All data imported will be encrypted.</source>
 Все данные будут импортированы и зашифрованы.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1609"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1640"/>
         <source>Item importing finished.</source>
         <translation>Импорт ветки завершен.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1092"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1098"/>
         <source>This item contains both unencrypted and encrypted data. Copy/paste operation is possible only for item that contain similar type data.</source>
         <translation>Данная ветка содержит как незашифрованные, так и зашифрованные данные. Команды Copy/Paste разрешены только для веток, которые содержат однотипные данные.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="195"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="200"/>
         <source>Синхронизировать ветку</source>
         <translation>Синхронизировать ветку</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="196"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="202"/>
         <source>Синхронизировать ветку со всем поддеревом</source>
         <translation>Синхронизировать ветку со всем поддеревом</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1196"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1202"/>
         <source> items.
 Please select single item for enabling paste operation.</source>
         <translation>ветки.
 Выделите одну ветку, чтобы была доступна операция вставки ветки.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="664"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="703"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="799"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="909"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1049"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1093"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1197"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="670"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="709"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="805"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="915"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1055"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1099"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1203"/>
         <source>OK</source>
         <translation>ОК</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="712"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="718"/>
         <source>Create new item</source>
         <translation>Создание новой ветки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="713"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="822"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="719"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="828"/>
         <source>Item name:</source>
         <translation>Название ветки:</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="716"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="722"/>
         <source>Create new sub item</source>
         <translation>Создание подветки</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="717"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="723"/>
         <source>Sub item name:</source>
         <translation>Имя подветки:</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="798"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="804"/>
         <source> items.
 Please select single item for enabling edit operation.</source>
         <translation>ветки. Для редактирования, выберите, пожалуйста, одну ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="942"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="948"/>
         <source>In the selected item has been found blocked notes. Do you really want to delete one?</source>
         <translation>В выбранной вами ветке обнаружены заблокированные записи.
 Тем не менее, вы желаете удалить выбранную ветку?</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="963"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="969"/>
         <source>Delete item(s)</source>
         <translation>Удаление</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="964"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="970"/>
         <source>Are you sure you wish to delete item(s) &lt;b&gt;</source>
         <translation>Вы уверены, что хотите удалить ветку (ветки) &lt;b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="964"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="972"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="970"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="978"/>
         <source>&lt;/b&gt; and all sub items?</source>
         <translation>&lt;/b&gt; и все подветки?</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="972"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="978"/>
         <source>Are you sure you wish to cut item &lt;b&gt;</source>
         <translation>Вы уверены, что хотите вырезать ветку &lt;b&gt;</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="973"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="979"/>
         <source>Cut</source>
         <translation>Вырезать</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="985"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="991"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1437"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1048"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1054"/>
         <source>Please select a single item for copy.</source>
         <translation>Выберите, пожалуйста, одну ветку для копирования.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1391"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1397"/>
         <source>No paired device that accepts incoming sync. A phone cannot receive a desktop-initiated sync: start it on the phone.</source>
         <translation>Нет спаренного устройства, принимающего входящий синк. Телефон не может принять синхронизацию, запущенную с компьютера: запустите её на телефоне.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1406"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1424"/>
         <source>%1 (deferred sync to phone)</source>
         <translation>%1 (отложенный синк на телефон)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1430"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1461"/>
         <source>Deferred branch sync saved for %1.
 It will start automatically on the next sync from that phone.</source>
         <translation>Отложенный синк ветки для %1 сохранён.
 Он начнётся автоматически при следующей синхронизации с этого телефона.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1939"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1970"/>
         <source>Rename me</source>
         <translation>Переименуй меня</translation>
     </message>

@@ -102,7 +102,7 @@ static QString plannedOutcome(const Item &item)
         return item.fromLocal ? QObject::tr("Моя правка уедет на сервер")
                               : QObject::tr("Их правка приедет ко мне");
     case Category::Rename:
-        return item.fromLocal ? QObject::tr("Моё переименование уедет наверх")
+        return item.fromLocal ? QObject::tr("Переименование этого устройства уедет наверх")
                               : QObject::tr("Их переименование приедет ко мне");
     case Category::MyDelete:
         return QObject::tr("Удаление уедет на сервер");
@@ -118,15 +118,15 @@ static QString takeServerSub(const Item &item, Danger danger)
     switch(item.category)
     {
     case Category::Create:
-        return QObject::tr("Не отправлять моё (останется только у меня)");
+        return QObject::tr("Не отправлять с этого устройства (останется только здесь)");
     case Category::Edit:
         return danger==Danger::MyEmpty
-            ? QObject::tr("Взять их полную версию (моя почти пустая)")
-            : QObject::tr("Отменить мою правку, взять их версию");
+            ? QObject::tr("Взять полную версию с сервера (здешняя почти пустая)")
+            : QObject::tr("Отменить правку этого устройства, взять версию с сервера");
     case Category::Rename:
-        return QObject::tr("Отменить моё переименование");
+        return QObject::tr("Отменить переименование этого устройства");
     case Category::MyDelete:
-        return QObject::tr("Отменить моё удаление (воскресить с сервера)");
+        return QObject::tr("Отменить удаление на этом устройстве (воскресить с сервера)");
     default:
         return QObject::tr("Восстановить с сервера");
     }
@@ -137,17 +137,17 @@ static QString forceMineSub(const Item &item, Danger danger)
     switch(item.category)
     {
     case Category::Create:
-        return QObject::tr("Не скачивать (останется только у них)");
+        return QObject::tr("Не скачивать (останется только на сервере)");
     case Category::Edit:
         return danger==Danger::TheirEmpty
-            ? QObject::tr("Оставить мою полную версию (их почти пустая)")
-            : QObject::tr("Оставить мою версию, их не брать");
+            ? QObject::tr("Оставить полную версию этого устройства (на сервере почти пустая)")
+            : QObject::tr("Оставить версию этого устройства, с сервера не брать");
     case Category::Rename:
-        return QObject::tr("Отменить их переименование");
+        return QObject::tr("Отменить переименование на сервере");
     case Category::TheirDelete:
-        return QObject::tr("Не удалять у меня (воскресить мою копию наверх)");
+        return QObject::tr("Не удалять на этом устройстве (воскресить здешнюю копию наверх)");
     default:
-        return QObject::tr("Настоять на моей версии");
+        return QObject::tr("Настоять на версии этого устройства");
     }
 }
 
@@ -343,7 +343,7 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
     m_meldRadio=new QRadioButton(tr("Сравнение"), this);
     m_meldRadio->setToolTip(tr("Сравнение сторон стрелками →/←: "
-                               "слева моё, справа серверное"));
+                               "слева это устройство, справа сервер"));
     connect(m_meldRadio, &QRadioButton::clicked,
             this, [this]() { setMeldMode(true); });
     toolbar->addWidget(m_meldRadio);
@@ -483,8 +483,8 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
     m_duelRow=new QWidget(this);
     QHBoxLayout *duelLayout=new QHBoxLayout(m_duelRow);
     duelLayout->setContentsMargins(0, 0, 0, 0);
-    m_mineButton=new QPushButton(tr("↑ Наша"), m_duelRow);
-    m_theirsButton=new QPushButton(tr("↓ Ихняя"), m_duelRow);
+    m_mineButton=new QPushButton(tr("↑ Это устройство"), m_duelRow);
+    m_theirsButton=new QPushButton(tr("↓ Сервер"), m_duelRow);
     m_duelHint=new QLabel(m_duelRow);
     m_duelHint->setWordWrap(true);
     duelLayout->addWidget(m_mineButton);
@@ -498,8 +498,8 @@ SyncPreviewDialog::SyncPreviewDialog(const SyncPreview::Preview &preview,
 
     QHBoxLayout *diffTabs=new QHBoxLayout();
     diffTabs->setContentsMargins(0, 0, 0, 0);
-    m_diffOursButton=new QPushButton(tr("Наша"), this);
-    m_diffTheirsButton=new QPushButton(tr("Ихняя"), this);
+    m_diffOursButton=new QPushButton(tr("Это устройство"), this);
+    m_diffTheirsButton=new QPushButton(tr("Сервер"), this);
     m_diffDiffButton=new QPushButton(tr("Diff"), this);
     m_diffOursButton->setCheckable(true);
     m_diffTheirsButton->setCheckable(true);
@@ -846,7 +846,7 @@ QString SyncPreviewDialog::markerFor(const Item &item)
 
 QString SyncPreviewDialog::directionFor(const Item &item)
 {
-    return item.fromLocal ? tr("↑ наше") : tr("↓ ихнее");
+    return item.fromLocal ? tr("↑ это устройство") : tr("↓ с сервера");
 }
 
 
@@ -2400,7 +2400,7 @@ QString SyncPreviewDialog::meldArrowTip(int itemIndex, bool up) const
         if(up)
             return item.fromLocal
                 ? tr("Залить на сервер (останется с обеих сторон)")
-                : tr("Не скачивать (останется только у них)");
+                : tr("Не скачивать (останется только на сервере)");
 
         return item.fromLocal
             ? tr("Не отправлять (останется только у меня)")
@@ -2412,13 +2412,13 @@ QString SyncPreviewDialog::meldArrowTip(int itemIndex, bool up) const
         if(up)
         {
             if(dangerTheirEmpty)
-                return tr("Оставить мою полную версию (их почти пустая)");
-            return tr("Оставить мою версию (их заменится моей)");
+                return tr("Оставить полную версию этого устройства (на сервере почти пустая)");
+            return tr("Оставить версию этого устройства (серверная заменится)");
         }
 
         if(dangerMyEmpty)
-            return tr("Взять их полную версию (моя почти пустая)");
-        return tr("Взять их версию (моя заменится их)");
+            return tr("Взять полную версию с сервера (здешняя почти пустая)");
+        return tr("Взять версию с сервера (здешняя заменится)");
     }
 
     if(item.category==Category::Rename)
@@ -2426,31 +2426,31 @@ QString SyncPreviewDialog::meldArrowTip(int itemIndex, bool up) const
         if(up)
         {
             if(item.fromLocal)
-                return tr("Моё имя побеждает (станет моим с обеих сторон)");
-            return tr("Отменить их переименование "
-                      "(имя останется моим с обеих сторон)");
+                return tr("Имя этого устройства побеждает (станет общим)");
+            return tr("Отменить переименование на сервере "
+                      "(имя этого устройства останется с обеих сторон)");
         }
 
         if(item.fromLocal)
-            return tr("Отменить моё переименование "
-                      "(имя станет их с обеих сторон)");
-        return tr("Принять их переименование "
-                 "(имя станет их с обеих сторон)");
+            return tr("Отменить переименование этого устройства "
+                      "(имя станет серверным с обеих сторон)");
+        return tr("Принять переименование с сервера "
+                 "(имя станет серверным с обеих сторон)");
     }
 
     if(item.category==Category::MyDelete)
     {
         if(up)
-            return tr("Настоять на моём удалении "
+            return tr("Настоять на удалении на этом устройстве "
                       "(не воскрешать — удалится и на сервере)");
         return tr("Воскресить с сервера (вернётся и ко мне)");
     }
 
     // TheirDelete
     if(up)
-        return tr("Не удалять у меня "
-                 "(моя копия воскресит их сторону)");
-    return tr("Принять их удаление (удалится и у меня тоже)");
+        return tr("Не удалять на этом устройстве "
+                 "(здешняя копия воскресит серверную сторону)");
+    return tr("Принять удаление с сервера (удалится и здесь тоже)");
 }
 
 
@@ -2993,7 +2993,7 @@ void SyncPreviewDialog::refreshDuel(void)
         hint=tr("перетираем с сервера");
     else
         hint=tr("предложение: %1 — подтвердите")
-            .arg(proposalMine ? tr("наша") : tr("ихняя"));
+            .arg(proposalMine ? tr("здешняя") : tr("серверная"));
 
     m_duelHint->setText(hint);
 }
@@ -3234,20 +3234,20 @@ void SyncPreviewDialog::showHelp(void)
     html+=sym(QStringLiteral("≡"), blue, tr("переименовано: изменилось имя или свойства"));
     html+=sym(QStringLiteral("~"), orange, tr("правка текста"));
     html+=sym(QStringLiteral("−"), red, tr("удалено"));
-    html+=sym(QStringLiteral("↑"), green, tr("наше едет наружу"));
-    html+=sym(QStringLiteral("↓"), blue, tr("ихнее приезжает к нам"));
+    html+=sym(QStringLiteral("↑"), green, tr("с этого устройства едет на сервер"));
+    html+=sym(QStringLiteral("↓"), blue, tr("с сервера приезжает к нам"));
     html+=sym(QStringLiteral("⚠"), darkred, tr("почти-пустая заметка затирает содержательную: по умолчанию остается полная версия"));
     html+=sym(QStringLiteral("✓"), green, tr("решено: выбрано действие; ветка подсвечена целиком, когда разобрана"));
     html+=QStringLiteral("<h3>")+tr("Действия по умолчанию")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("✓"), green, tr("Применить — выполнить запланированное молча"));
     html+=sym(QStringLiteral("✓"), green, tr("Предоставить решать мне — то же, но только после моего взгляда"));
     html+=sym(QStringLiteral("⚠"), darkred, tr("Красное с ⚠ в списке — данные будут удалены или затёрты: удаление здесь/на сервере, затирание полной версии пустой"));
-    html+=sym(QStringLiteral("•"), purple, tr("Восстановить с сервера — отменить моё, взять их версию (моё удаление — воскресить)"));
-    html+=sym(QStringLiteral("•"), purple, tr("Настоять на моём — отменить ихнее, оставить мою версию (их удаление — воскресить мою копию наверх)"));
+    html+=sym(QStringLiteral("•"), purple, tr("Восстановить с сервера — отменить здешнее, взять версию с сервера (здешнее удаление — воскресить)"));
+    html+=sym(QStringLiteral("•"), purple, tr("Настоять на этом устройстве — отменить серверное, оставить здешнюю версию (удаление на сервере — воскресить здешнюю копию наверх)"));
     html+=QStringLiteral("<h3>")+tr("Вкладки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("↑"), green, tr("Я → сервер: мои изменения уедут наружу"));
     html+=sym(QStringLiteral("↓"), blue, tr("Сервер → я: ихние изменения приедут к нам"));
-    html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Наша»/«Ихняя» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
+    html+=sym(QStringLiteral("⇅"), orange, tr("Обоюдные правки: текст разошелся с обеих сторон. Кнопками «Это устройство»/«Сервер» выбираете, чья версия победит. Эвристика предлагает более новую, но решаете вы"));
     html+=QStringLiteral("<h3>")+tr("Кнопки и галочки")+QStringLiteral("</h3>");
     html+=sym(QStringLiteral("•"), green, tr("«Действия по умолчанию ▾» — действия по умолчанию для целых категорий"));
     html+=sym(QStringLiteral("✓"), green, tr("Галка у строки — решение принято (безопасные предзаполнены); «Применить» активно при хоть одном решении: всё разобрано — закроет окно, иначе синкнет решённое, а дерево сузится до остатка"));

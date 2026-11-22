@@ -707,6 +707,7 @@ void SyncDevicesDialog::onSelectionChanged(void)
     bool paired=false;
     bool mutual=false;
     bool offer=false;
+    bool canServe=true;
 
     for(const AppConfig::SyncDeviceInfo &info : config->get_syncDevices())
     {
@@ -717,6 +718,7 @@ void SyncDevicesDialog::onSelectionChanged(void)
         paired=isPaired(info);
         mutual=isMutual(info);
         offer=info.pairOffer;
+        canServe=info.canServe;
         break;
     }
 
@@ -724,14 +726,17 @@ void SyncDevicesDialog::onSelectionChanged(void)
     // без Accept на той стороне данных нет (там же гейт 089/сервер).
     // Pair — отправить запрос или перепроверить отправленный.
     // Входящий запрос спаривается кнопкой Accept, а не Pair
-    syncButton->setEnabled(hasAddress && mutual);
-    syncButton->setToolTip(!hasAddress
+    syncButton->setEnabled(hasAddress && mutual && canServe);
+    syncButton->setToolTip(!canServe
+        ? tr("This device does not accept incoming sync (a phone). "
+             "Start the sync on that device.")
+        : (!hasAddress
         ? tr("Address unknown: this device never synced to it. "
              "Sync from the other side first (it records our address).")
         : (!mutual
            ? tr("Not mutually paired: send a Pair request first "
                 "(or Accept the incoming one), sync unlocks after Accept.")
-           : QString()));
+           : QString())));
     pairButton->setEnabled(!mutual && !offer);
     pairButton->setToolTip(offer
         ? tr("This device asks to pair: use Accept, not Pair.")
@@ -763,6 +768,14 @@ void SyncDevicesDialog::onSyncNow(void)
 
     if(target.lastIp.isEmpty())
         return;
+
+    if(!target.canServe)
+    {
+        QMessageBox::information(this, tr("Sync"),
+                                 tr("This device does not accept incoming "
+                                    "sync (a phone). Start the sync on it."));
+        return;
+    }
 
     // Sync только по взаимной паре (шаг 5 accept-flow): без Accept
     // на той стороне кнопка и так выключена, это вторая линия.

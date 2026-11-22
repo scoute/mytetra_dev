@@ -1350,6 +1350,10 @@ void MainWindow::runToolbarNativeSync(bool interactive)
         if(info.lastIp.isEmpty())
             continue;
 
+        // Телефон не принимает входящие: обратный синк инициирует он
+        if(!info.canServe)
+            continue;
+
         peers << info;
     }
 
@@ -1364,7 +1368,9 @@ void MainWindow::runToolbarNativeSync(bool interactive)
 
         QMessageBox::information(
             this, tr("Sync"),
-            tr("No mutually paired devices.\nPair a device first (Sync devices window)."));
+            tr("No mutually paired device that accepts incoming sync.\n"
+               "A phone must start the sync itself; a desktop hub can be "
+               "started here first."));
         onSyncDevices();
         return;
     }
@@ -1479,6 +1485,9 @@ void MainWindow::backgroundSyncTick(void)
             continue;
 
         if(info.lastIp.isEmpty())
+            continue;
+
+        if(!info.canServe)
             continue;
 
         peers << info;

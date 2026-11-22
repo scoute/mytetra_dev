@@ -652,6 +652,7 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
         info.port=m_conf->value(QStringLiteral("port"), 47777).toInt();
         info.firstSeen=m_conf->value(QStringLiteral("firstSeen"), 0).toLongLong();
         info.lastSeen=m_conf->value(QStringLiteral("lastSeen"), 0).toLongLong();
+        info.canServe=m_conf->value(QStringLiteral("canServe"), true).toBool();
         info.pairOffer=m_conf->value(QStringLiteral("pairOffer"), false).toBool();
         info.lastMutual=m_conf->value(QStringLiteral("lastMutual"), 0).toLongLong();
         info.lastSync=m_conf->value(QStringLiteral("lastSync"), 0).toLongLong();
@@ -673,7 +674,8 @@ QList<AppConfig::SyncDeviceInfo> AppConfig::get_syncDevices(void)
 
 
 void AppConfig::touch_syncDevice(const QString &id, const QString &name,
-                                 const QString &lastIp, int port)
+                                 const QString &lastIp, int port,
+                                 bool canServe)
 {
     if(id.isEmpty())
         return;
@@ -715,6 +717,13 @@ void AppConfig::touch_syncDevice(const QString &id, const QString &name,
     }
 
     m_conf->setValue(QStringLiteral("lastSeen"), now);
+
+    // Пишем только отрицательное значение: у старых записей поля нет
+    // (считаем, что сервер умеет), а сканы/ручные touch не должны
+    // «повышать» телефон до хаба
+    if(!canServe)
+        m_conf->setValue(QStringLiteral("canServe"), false);
+
     m_conf->endGroup();
 
     // Сразу на диск: серверный процесс часто убивают сигналом,

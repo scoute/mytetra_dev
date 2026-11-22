@@ -1371,6 +1371,11 @@ void TreeScreen::syncBranch(void)
     if(info.lastIp.isEmpty() || info.lastMutual<=0)
       continue;
 
+    // Телефон не слушает порт: обратный синк к нему невозможен,
+    // инициировать должен он сам
+    if(!info.canServe)
+      continue;
+
     if(SyncIdentity::secretForPeer(&mytetraConfig, info.id).isEmpty())
       continue;
 
@@ -1384,9 +1389,9 @@ void TreeScreen::syncBranch(void)
   if(targets.isEmpty())
   {
     QMessageBox::information(this, tr("Sync"),
-                             tr("No reachable paired device. "
-                                "Sync from the other side first "
-                                "(it records our address)."));
+                             tr("No paired device that accepts incoming sync. "
+                                "A phone cannot receive a desktop-initiated "
+                                "sync: start it on the phone."));
     return;
   }
 

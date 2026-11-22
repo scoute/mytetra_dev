@@ -195,6 +195,7 @@ QJsonObject SyncHandshake::buildHello(AppConfig *config, qint64 clientTime,
     hello[QStringLiteral("format")]=syncFormatVersion();
     hello[QStringLiteral("deviceId")]=config->get_syncDeviceId();
     hello[QStringLiteral("deviceName")]=config->get_syncDeviceName();
+    hello[QStringLiteral("canServe")]=true;
     hello[QStringLiteral("groupId")]=config->get_syncGroupId();
     hello[QStringLiteral("clientTime")]=clientTime;
 
@@ -416,6 +417,8 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
 
         const QString theirId=body.value(QStringLiteral("deviceId")).toString();
         const QString theirName=body.value(QStringLiteral("deviceName")).toString();
+        const bool theirCanServe=body.value(QStringLiteral("canServe"))
+                                      .toBool(true);
 
         // Proof сошёлся с pending-секретом (выдан по одноразовому коду):
         // это и есть подтверждение, что клиент его получил. Повышаем
@@ -497,12 +500,12 @@ void SyncHandshake::registerRoutes(SyncServer *server, AppConfig *config,
             config->touch_syncDevice(theirId, theirName,
                                      isNonLoopbackLocalAddress(peerIp) ? QString()
                                                                        : peerIp,
-                                     peerPort);
+                                     peerPort, theirCanServe);
         else if(!knownDevice)
             config->touch_syncDevice(theirId, theirName.left(64),
                                      isNonLoopbackLocalAddress(peerIp) ? QString()
                                                                        : peerIp,
-                                     47777);
+                                     47777, theirCanServe);
 
         QString warning;
 

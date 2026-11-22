@@ -183,6 +183,10 @@ public:
         qint64 firstSeen=0;
         qint64 lastSeen=0;
 
+        // Пир умеет принимать входящий синк (слушает порт). Телефон —
+        // нет: синхронизацию с ним инициирует только он сам
+        bool canServe=true;
+
         // Входящий запрос на пару: пир стучался с proof, а у нас
         // секрета еще нет (спок тянет — сервер видит). Гасится спариванием
         bool pairOffer=false;
@@ -212,7 +216,8 @@ public:
 
     QList<SyncDeviceInfo> get_syncDevices(void);
     void touch_syncDevice(const QString &id, const QString &name,
-                          const QString &ip=QString(), int port=47777);
+                          const QString &ip=QString(), int port=47777,
+                          bool canServe=true);
     bool remove_syncDevice(const QString &id);
 
     // Флаги пары по устройству (см. SyncDeviceInfo)

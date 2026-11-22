@@ -2367,7 +2367,7 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="745"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1637"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1646"/>
         <source>&amp;Quit</source>
         <translation>Выход</translation>
     </message>
@@ -2485,13 +2485,13 @@ You need to update MyTetra.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="103"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2018"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
         <source>Listening on port %1</source>
         <translation>Прослушивается порт %1</translation>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="109"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2026"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2035"/>
         <source>Not running</source>
         <translation>Не запущен</translation>
     </message>
@@ -2532,7 +2532,7 @@ Another sync server may be running.</source>
     </message>
     <message>
         <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="793"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1570"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1579"/>
         <source>No sync yet</source>
         <translation>Синхронизаций ещё не было</translation>
     </message>
@@ -2567,149 +2567,142 @@ Another sync server may be running.</source>
         <translation>Происходит синхронизация. Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1366"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1425"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2007"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2305"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2714"/>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2787"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1370"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1431"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2016"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2314"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2723"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2796"/>
         <source>Sync</source>
         <translation>Синхронизация</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1367"/>
-        <source>No mutually paired devices.
-Pair a device first (Sync devices window).</source>
-        <translation>Нет взаимно спаренных устройств.
-Сначала спарьтесь с устройством (окно «Устройства синхронизации»).</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1425"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1431"/>
         <source>Sync complete</source>
         <translation>Синхронизация завершена</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1530"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1539"/>
         <source>Background sync failed: %1</source>
         <translation>Фоновая синхронизация не удалась: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1573"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1582"/>
         <source>MyTetra</source>
         <translation>MyTetra</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1578"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1587"/>
         <source>Last sync: %1 · %2 · %3</source>
         <translation>Последняя синхронизация: %1 · %2 · %3</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1582"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1591"/>
         <source>ok</source>
         <translation>успешно</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1582"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1591"/>
         <source>error</source>
         <translation>ошибка</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1588"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1597"/>
         <source>MyTetra — %1</source>
         <translation>MyTetra — %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1637"/>
         <source>&amp;Restore window</source>
         <translation>Показать окно</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1631"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1640"/>
         <source>Ma&amp;ximize window</source>
         <translation>Развернуть окно</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1634"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1643"/>
         <source>Mi&amp;nimize window</source>
         <translation>Свернуть окно</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1976"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1985"/>
         <source>Cannot listen on port %1: it may be busy.</source>
         <translation>Не удалось занять порт %1: возможно, он уже используется.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2009"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2018"/>
         <source>Cannot start sync server.</source>
         <translation>Не удалось запустить сервер синхронизации.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2019"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2028"/>
         <source>Sync server started</source>
         <translation>Сервер синхронизации запущен</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2027"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2036"/>
         <source>Sync server stopped</source>
         <translation>Сервер синхронизации остановлен</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2099"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2108"/>
         <source>Handshake failed: %1</source>
         <translation>Рукопожатие не удалось: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2107"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2116"/>
         <source> (theirs: ask peer for --sync-status)</source>
         <translation> (у другой стороны: попросите --sync-status)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2109"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2118"/>
         <source> (skew %1 ms — compare `date +%%s` on both sides)</source>
         <translation> (расхождение часов %1 мс — сравните `date +%%s` на обеих сторонах)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2112"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2121"/>
         <source> (is sync server running on the other side? Sync now needs a listener there: Sync menu checkbox or --sync-server. For the reverse direction press Sync now on that device instead)</source>
         <translation> (запущен ли сервер синхронизации на другой стороне? Для «Синхронизировать сейчас» там нужен слушатель: галочка в меню «Синхронизация» или --sync-server. Для обратного направления нажмите «Синхронизировать сейчас» на том устройстве)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2175"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2184"/>
         <source>Paired with %1 by the one-time code. Run sync again to transfer data.</source>
         <translation>Пара с %1 установлена по одноразовому коду. Запустите синхронизацию ещё раз, чтобы передать данные.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2199"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2208"/>
         <source>Pair established with %1, run sync again to transfer data.</source>
         <translation>Пара с %1 установлена. Запустите синхронизацию ещё раз, чтобы передать данные.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2205"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2214"/>
         <source>Pair request sent to %1, waiting for Accept on that device. Run sync again after accept.</source>
         <translation>Запрос на пару отправлен на %1, ждём подтверждения на том устройстве. После подтверждения запустите синхронизацию ещё раз.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2320"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2329"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2371"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2380"/>
         <source>↑ notes %1, branches %2; ↓ notes %3, branches %4; deletes %5</source>
         <translation>↑ заметок %1, веток %2; ↓ заметок %3, веток %4; удалений %5</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2383"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2392"/>
         <source>Sync failed: %1</source>
         <translation>Синхронизация не удалась: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2399"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2408"/>
         <source>В этой ветке расхождений нет.</source>
         <translation>В этой ветке расхождений нет.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2428"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2437"/>
         <source>This device:
 %1
 Fingerprint:
@@ -2722,22 +2715,22 @@ Group: %3</source>
 Группа: %3</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2446"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2455"/>
         <source>mutual</source>
         <translation>взаимная пара</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2447"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2456"/>
         <source>paired, waiting for accept</source>
         <translation>пара есть, ждём подтверждения</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2453"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2462"/>
         <source>pair requested</source>
         <translation>запрошена пара</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2458"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2467"/>
         <source>
 
 Paired devices: none</source>
@@ -2746,7 +2739,7 @@ Paired devices: none</source>
 Спаренные устройства: нет</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2460"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2469"/>
         <source>
 
 Paired devices (%1):
@@ -2757,27 +2750,27 @@ Paired devices (%1):
 %2</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2463"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2472"/>
         <source>Sync pairing info</source>
         <translation>Информация о спаривании</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2613"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2622"/>
         <source>Copy</source>
         <translation>Копировать</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2627"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2636"/>
         <source>Synchronization complete.</source>
         <translation>Синхронизация завершена.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2628"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2637"/>
         <source>Synchronization complete with %1.</source>
         <translation>Синхронизация с %1 завершена.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2631"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2640"/>
         <source>Received: %1 branches, %2 notes.
 Sent: %3 branches, %4 notes.
 Deleted: %5.</source>
@@ -2786,7 +2779,7 @@ Deleted: %5.</source>
 Удалено: %5.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2639"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2648"/>
         <source>
 
 Conflicts (kept this side, other side in backup):
@@ -2797,7 +2790,7 @@ Conflicts (kept this side, other side in backup):
 %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2643"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2652"/>
         <source>
 
 Skipped items:
@@ -2808,7 +2801,7 @@ Skipped items:
 %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2718"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2727"/>
         <source>Both devices already have data.
 This device: %1 item(s), the other side: %2 item(s).
 
@@ -2819,47 +2812,47 @@ How to sync?</source>
 Как синхронизировать?</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2725"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2734"/>
         <source>Merge both trees</source>
         <translation>Слить оба дерева</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2726"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2735"/>
         <source>Both trees stay as they are. If the same structure was recreated by hand, duplicates are possible.</source>
         <translation>Оба дерева остаются как есть. Если одна и та же структура создавалась вручную на обоих устройствах, возможны дубли.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2731"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2740"/>
         <source>Merge same-named branches on the server</source>
         <translation>Объединить одинаковые ветки на сервере</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2732"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2741"/>
         <source>Branches with equal names are merged into the server's branches (server ids win), same-named notes stay duplicated, then my base becomes the merged result.</source>
         <translation>Ветки с одинаковыми именами вливаются в ветки сервера (id сервера побеждает), одноимённые записи остаются дублями, затем моя база становится результатом слияния.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2738"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2747"/>
         <source>Take from the server</source>
         <translation>Взять с сервера</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2739"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2748"/>
         <source>My data goes to trash, the server's base is downloaded in full.</source>
         <translation>Мои данные уходят в корзину, база сервера скачивается целиком.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2743"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2752"/>
         <source>Replace the server's with mine</source>
         <translation>Заменить серверные моими</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2744"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2753"/>
         <source>The server's data goes to trash, my base is uploaded in full.</source>
         <translation>Данные сервера уходят в корзину, моя база заливается целиком.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2788"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2797"/>
         <source>Block new pairings?
 
 Existing devices keep syncing. Any pairing in progress will be cancelled (codes and pending secrets).</source>
@@ -2868,17 +2861,17 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
 Существующие устройства продолжат синхронизироваться. Незавершённое спаривание будет отменено (коды и ожидающие секреты).</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2871"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2880"/>
         <source>Pair request from %1 rejected</source>
         <translation>Запрос пары от %1 отклонён</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2877"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2886"/>
         <source>Code shown for %1; enter it on that device</source>
         <translation>Код для %1 показан; введите его на том устройстве</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2307"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2316"/>
         <source>This sync will DELETE data:
 %1 item(s) on the other side, %2 on this device.
 Deleted items go to trash.
@@ -2891,12 +2884,19 @@ What to do?</source>
 Что делать?</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2315"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="1371"/>
+        <source>No mutually paired device that accepts incoming sync.
+A phone must start the sync itself; a desktop hub can be started here first.</source>
+        <translation>Нет взаимно спаренного устройства, принимающего входящий синк.
+Телефон должен запустить синхронизацию сам; на компьютере-хабе её можно запустить здесь.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2324"/>
         <source>Continue delete</source>
         <translation>Продолжить удаление</translation>
     </message>
     <message>
-        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2317"/>
+        <location filename="../../../src/views/mainWindow/MainWindow.cpp" line="2326"/>
         <source>Restore from the server instead (my data goes to trash)</source>
         <translation>Вместо этого восстановить с сервера (мои данные уйдут в корзину)</translation>
     </message>
@@ -3217,53 +3217,53 @@ Please report about this problem to the developers.</source>
         <translation>Контроллер корзины не смог удалить файл:\n\n%1\n\nПожалуйста, сообщите о проблеме разработчикам.</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="578"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="594"/>
         <source>Применить молча</source>
         <translation>Применить молча</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="579"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="595"/>
         <source>Предоставить решать мне</source>
         <translation>Предоставить решать мне</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="580"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="596"/>
         <location filename="../../../src/views/sync/SyncPreviewDialog.cpp" line="131"/>
         <source>Восстановить с сервера</source>
         <translation>Восстановить с сервера</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="581"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="597"/>
         <source>Настоять на моём</source>
         <translation>Настоять на моём</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="582"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="598"/>
         <source>Пропустить в этот раз</source>
         <translation>Пропустить в этот раз</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="593"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="609"/>
         <source>Добавлено</source>
         <translation>Добавлено</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="594"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="610"/>
         <source>Переименовано</source>
         <translation>Переименовано</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="595"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="611"/>
         <source>Изменено</source>
         <translation>Изменено</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="596"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="612"/>
         <source>Мои удаления</source>
         <translation>Мои удаления</translation>
     </message>
     <message>
-        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="597"/>
+        <location filename="../../../src/libraries/sync/SyncPreview.cpp" line="613"/>
         <source>Ихние удаления</source>
         <translation>Ихние удаления</translation>
     </message>
@@ -4533,7 +4533,7 @@ Bind IP — код работает только с того IP, который 
     </message>
     <message>
         <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="235"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1047"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1060"/>
         <source>Scan</source>
         <translation>Сканировать</translation>
     </message>
@@ -4761,45 +4761,56 @@ Group: %3</source>
 %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="729"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="731"/>
+        <source>This device does not accept incoming sync (a phone). Start the sync on that device.</source>
+        <translation>Это устройство не принимает входящий синк (телефон). Запустите синхронизацию на нём.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="734"/>
         <source>Address unknown: this device never synced to it. Sync from the other side first (it records our address).</source>
         <translation>Адрес неизвестен: это устройство ещё не синхронизировалось с ним. Сначала запустите синхронизацию с другой стороны (она запомнит наш адрес).</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="732"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="737"/>
         <source>Not mutually paired: send a Pair request first (or Accept the incoming one), sync unlocks after Accept.</source>
         <translation>Взаимной пары нет: сначала отправьте запрос на пару (или примите входящий), синхронизация разблокируется после подтверждения.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="737"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="742"/>
         <source>This device asks to pair: use Accept, not Pair.</source>
         <translation>Это устройство просит пару: используйте «Принять», а не «Спариться».</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="772"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="808"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="967"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1011"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1109"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1156"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1166"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1228"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1286"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1310"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1655"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1686"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1789"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1815"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="774"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="785"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="821"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="980"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1024"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1122"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1169"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1179"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1241"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1299"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1323"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1668"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1699"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1802"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1828"/>
         <source>Sync</source>
         <translation>Синхронизация</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="773"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="775"/>
+        <source>This device does not accept incoming sync (a phone). Start the sync on it.</source>
+        <translation>Это устройство не принимает входящий синк (телефон). Запустите синхронизацию на нём.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="786"/>
         <source>Not mutually paired with this device. Send a Pair request first (or Accept the incoming one); sync unlocks after Accept on that side.</source>
         <translation>Взаимной пары с этим устройством нет. Сначала отправьте запрос на пару (или примите входящий); синхронизация разблокируется после подтверждения на той стороне.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="810"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="823"/>
         <source>This sync will DELETE data:
 %1 item(s) on the other side, %2 on this device.
 Deleted items go to trash.
@@ -4812,117 +4823,117 @@ What to do?</source>
 Что делать?</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="818"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="831"/>
         <source>Continue delete</source>
         <translation>Продолжить удаление</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="820"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="833"/>
         <source>Restore from the server instead (my data goes to trash)</source>
         <translation>Вместо этого восстановить с сервера (мои данные уйдут в корзину)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="823"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="836"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="928"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="941"/>
         <source>↑ notes %1, branches %2; ↓ notes %3, branches %4; deletes %5</source>
         <translation>↑ заметок %1, веток %2; ↓ заметок %3, веток %4; удалений %5</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="968"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1157"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1167"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1229"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1365"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1427"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="981"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1170"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1180"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1242"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1378"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1440"/>
         <source>Handshake failed: %1</source>
         <translation>Рукопожатие не удалось: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="978"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1177"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1239"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1338"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1364"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1372"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1379"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1415"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1426"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1437"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="991"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1190"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1252"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1351"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1377"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1385"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1392"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1428"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1439"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1450"/>
         <source>Sync pairing</source>
         <translation>Спаривание</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="979"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1178"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1240"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1438"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="992"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1191"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1253"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1451"/>
         <source>The other device does not support one-time code pairing. Update MyTetra on it and try again.</source>
         <translation>Другое устройство не поддерживает спаривание по одноразовому коду. Обновите MyTetra на нём и повторите.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1005"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1018"/>
         <source>Sync failed: %1</source>
         <translation>Синхронизация не удалась: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1021"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1309"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1034"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1322"/>
         <source>Sync complete</source>
         <translation>Синхронизация завершена</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1048"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1061"/>
         <source>No devices found. Check that the sync server is running in the same network on port %1.</source>
         <translation>Устройства не найдены. Проверьте, что сервер синхронизации запущен в той же сети на порту %1.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1050"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1063"/>
         <source>Found %1 device(s) in the local network.</source>
         <translation>В локальной сети найдено устройств: %1.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1059"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1072"/>
         <source>Connect by address</source>
         <translation>Подключение по адресу</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1069"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1082"/>
         <source>Hub address (IP):</source>
         <translation>Адрес хаба (IP):</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1071"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1084"/>
         <source>Port:</source>
         <translation>Порт:</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1074"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1087"/>
         <source>Use TLS (HTTPS)</source>
         <translation>Использовать TLS (HTTPS)</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1076"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1089"/>
         <source>For a public server use HTTPS with a trusted certificate (Let's Encrypt) or confirm the self-signed fingerprint.</source>
         <translation>Для публичного сервера используйте HTTPS с доверенным сертификатом (Let's Encrypt) или подтвердите отпечаток самоподписанного.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1110"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1123"/>
         <source>Enter the server address (IP).</source>
         <translation>Введите адрес сервера (IP).</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1276"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1289"/>
         <source>This server is in another sync network.
 Join it? Local pairing (secret, group) will be forgotten, then you will need its one-time pairing code.</source>
         <translation>Этот сервер находится в другой сети синхронизации.
 Войти в неё? Локальная пара (секрет, группа) будет забыта, после чего потребуется одноразовый код сервера.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1281"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1294"/>
         <source>
 
 Server: %1</source>
@@ -4931,66 +4942,66 @@ Server: %1</source>
 Сервер: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1284"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1297"/>
         <source>
 Its group: %1</source>
         <translation>
 Его группа: %1</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1339"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1352"/>
         <source>Address unknown: cannot reach this device. Use «Connect by address...» and enter its IP (it sends the pair request too).</source>
         <translation>Адрес неизвестен: устройство недоступно. Используйте «Подключиться по адресу…» и введите его IP (запрос на пару тоже будет отправлен).</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1373"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1386"/>
         <source>Accepted on that side, sync unlocked.</source>
         <translation>На той стороне пару подтвердили, синхронизация разблокирована.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1380"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1393"/>
         <source>Still waiting for Accept on that device.</source>
         <translation>Всё ещё ждём подтверждения на том устройстве.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1416"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1429"/>
         <source>Cannot reach %1: %2</source>
         <translation>Не удалось связаться с %1: %2</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1649"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1662"/>
         <source>Break pairing with this device? %1Next sync will require pairing again.</source>
         <translation>Разорвать пару с этим устройством? %1Следующая синхронизация потребует нового спаривания.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1652"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1665"/>
         <source>You will leave the sync network as well. </source>
         <translation>Вы также выйдете из сети синхронизации. </translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1653"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1666"/>
         <source>Other pairings stay intact. </source>
         <translation>Остальные пары останутся. </translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1687"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1700"/>
         <source>Forget this device (remove from list)?</source>
         <translation>Забыть это устройство (убрать из списка)?</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1744"/>
         <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1757"/>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1773"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1770"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1786"/>
         <source>TLS</source>
         <translation>TLS</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1745"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1758"/>
         <source>A self-signed certificate already exists. Regenerate it? Existing clients will need to trust the new fingerprint.</source>
         <translation>Самоподписанный сертификат уже существует. Создать новый? Клиентам придётся доверять новому отпечатку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1774"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1787"/>
         <source>Self-signed certificate created.
 
 Fingerprint:
@@ -5005,7 +5016,7 @@ Restart the Sync server. Clients will be asked to trust this fingerprint (or sca
 Перезапустите сервер синхронизации. Клиенты попросят подтвердить этот отпечаток (или отсканируют QR).</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1790"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1803"/>
         <source>Block new pairings?
 
 Existing devices keep syncing. Any pairing in progress will be cancelled (codes and pending secrets).</source>
@@ -5014,7 +5025,7 @@ Existing devices keep syncing. Any pairing in progress will be cancelled (codes 
 Существующие устройства продолжат синхронизироваться. Незавершённое спаривание будет отменено (коды и ожидающие секреты).</translation>
     </message>
     <message>
-        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1816"/>
+        <location filename="../../../src/views/sync/SyncDevicesDialog.cpp" line="1829"/>
         <source>Forget everything? Pairing secret, sync group, paired device and the whole device list will be cleared. This cannot be undone.</source>
         <translation>Забыть всё? Секрет пары, группа синхронизации, спаренное устройство и весь список устройств будут очищены. Это нельзя отменить.</translation>
     </message>
@@ -5745,10 +5756,10 @@ Please select single item for moving.</source>
     </message>
     <message>
         <location filename="../../../src/views/tree/TreeScreen.cpp" line="1353"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1386"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1403"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1432"/>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1434"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1391"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1408"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1437"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1439"/>
         <source>Sync</source>
         <translation>Синхронизация</translation>
     </message>
@@ -5758,33 +5769,28 @@ Please select single item for moving.</source>
         <translation>Пара не установлена: сначала спарьтесь по одноразовому коду.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1387"/>
-        <source>No reachable paired device. Sync from the other side first (it records our address).</source>
-        <translation>Нет доступного спаренного устройства. Сначала запустите синхронизацию с другой стороны (она запомнит наш адрес).</translation>
-    </message>
-    <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1404"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1409"/>
         <source>Sync branch with:</source>
         <translation>Синхронизировать ветку с:</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1453"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1458"/>
         <source>No icon selected.</source>
         <translation>Вы не выбрали иконку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1508"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1513"/>
         <source>The export directory %1 is not empty. Please, select an empty directory.</source>
         <translation>Директория &lt;b&gt;%1&lt;/b&gt; не является пустой.
 Пожалуйста, выберите пустую директорию для экспорта данных.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1515"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1520"/>
         <source>No export tree item selected. Please select a item.</source>
         <translation>Не указана ветка для экспорта. Пожалуйста, выберите нужную ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1536"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1541"/>
         <source>Exported tree item contains encrypted data.
 Please click OK and enter the password.
 All data will be exported unencrypted.</source>
@@ -5793,22 +5799,22 @@ All data will be exported unencrypted.</source>
 Все данные будут экспортированы в расшифрованном виде.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1549"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1554"/>
         <source>Done exporting into &lt;b&gt;%1&lt;/b&gt;.</source>
         <translation>Экспорт данных в директорию &lt;b&gt;%1&lt;/b&gt; завершен.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1551"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1556"/>
         <source>Errors occurred while exporting.</source>
         <translation>Обнаружены ошибки при экспорте данных.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1560"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1565"/>
         <source>No tree item selected for importing. Please select a item.</source>
         <translation>Не выбрана ветка для экспорта. Пожалуйста, выберите какую-нибудь ветку.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1574"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1579"/>
         <source>You are importing into an encrypted item.
 Please click Ok and enter the password.
 All data imported will be encrypted.</source>
@@ -5817,7 +5823,7 @@ All data imported will be encrypted.</source>
 Все данные будут импортированы и зашифрованы.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1591"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1596"/>
         <source>Item importing finished.</source>
         <translation>Импорт ветки завершен.</translation>
     </message>
@@ -5924,7 +5930,12 @@ Please select single item for enabling edit operation.</source>
         <translation>Выберите, пожалуйста, одну ветку для копирования.</translation>
     </message>
     <message>
-        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1921"/>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1392"/>
+        <source>No paired device that accepts incoming sync. A phone cannot receive a desktop-initiated sync: start it on the phone.</source>
+        <translation>Нет спаренного устройства, принимающего входящий синк. Телефон не может принять синхронизацию, запущенную с компьютера: запустите её на телефоне.</translation>
+    </message>
+    <message>
+        <location filename="../../../src/views/tree/TreeScreen.cpp" line="1926"/>
         <source>Rename me</source>
         <translation>Переименуй меня</translation>
     </message>

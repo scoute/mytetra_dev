@@ -26,8 +26,14 @@ Result ensurePairing(AppConfig *config, SyncClient &client,
 
     if(peerId.isEmpty())
     {
-        result.errorCode=QStringLiteral("no-peer");
-        result.error=QStringLiteral("The server did not identify itself");
+        // Не подменяем сетевую ошибку («connection refused», таймаут)
+        // на невнятное «сервер не представился»: по ней и так видно,
+        // что на той стороне не запущен сервер синхронизации
+        result.errorCode=hello.errorCode.isEmpty()
+            ? QStringLiteral("no-peer") : hello.errorCode;
+        result.error=hello.errorText.isEmpty()
+            ? QStringLiteral("The server did not identify itself")
+            : hello.errorText;
         return result;
     }
 

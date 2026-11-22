@@ -138,7 +138,7 @@ bool writeBytesAtomic(const QString &path, const QByteArray &data)
 
 
 QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
-                          const QString &id)
+                          const QString &id, const QString &branchId)
 {    SYNC_TRACE_EXTRA(QStringLiteral("id=%1 model=%2").arg(id, syncPtr(model)));
 
     QJsonObject answer;
@@ -149,7 +149,30 @@ QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
         return answer;
     }
 
-    Record *record=model->getRecord(id);
+    Record *record=nullptr;
+
+    // Подсказка branch из манифеста: ищем в конкретной таблице, без
+    // обхода всего дерева (на 7k записей это было O(n) на каждую заметку)
+    if(!branchId.isEmpty())
+    {
+        TreeItem *branchItem=model->getItemById(branchId);
+
+        if(branchItem!=nullptr)
+        {
+            RecordTableData *hintTable=branchItem->recordtableGetTableData();
+
+            if(hintTable!=nullptr)
+            {
+                const int hintPos=hintTable->getPosById(id);
+
+                if(hintPos>=0)
+                    record=hintTable->getRecord(hintPos);
+            }
+        }
+    }
+
+    if(record==nullptr)
+        record=model->getRecord(id);
 
     if(record==nullptr)
     {
@@ -389,7 +412,8 @@ QJsonObject serializeBranch(KnowTreeModel *model, const QString &id)
 
 
 QString applyNote(KnowTreeModel *model, const QString &tetradir,
-                  const QJsonObject &request)
+                  const QJsonObject &request,
+                  const QHash<QString, QString> *localBranches)
 {    SYNC_TRACE_EXTRA(QStringLiteral("model=%1").arg(syncPtr(model)));
 
     const QString id=request.value(QStringLiteral("id")).toString();
@@ -446,10 +470,42 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
             if(!SyncValidation::isSafeFileName(value.toObject().value(QStringLiteral("file")).toString()))
                 return QStringLiteral("bad note file");
 
-    const int pos=table->getPosById(id);
-    const QStringList curPath=model->getRecordPath(id);
-    const bool needMove=(pos<0 && !curPath.isEmpty()
-                         && curPath.last()!=branchId);
+    // Если есть индекс локального манифеста, не сканируем всё дерево:
+    // записи нет в индексе — она новая; есть — сразу знаем старую ветку
+    const bool haveIndex=(localBranches!=nullptr);
+    const bool knownLocal=haveIndex && localBranches->contains(id);
+    const QString knownBranch=knownLocal ? localBranches->value(id)
+                                         : QString();
+
+    int pos=-1;
+
+    if(!haveIndex || !knownLocal || knownBranch==branchId)
+        pos=table->getPosById(id);
+
+    QStringList curPath;
+    QString moveFromBranch;
+    bool needMove=false;
+
+    if(knownLocal)
+    {
+        // Запись есть в индексе, но не в целевой таблице — она
+        // переехала в другую ветку
+        if(pos<0 && knownBranch!=branchId)
+        {
+            needMove=true;
+            moveFromBranch=knownBranch;
+        }
+    }
+    else if(!haveIndex && pos<0)
+    {
+        // Старый путь, когда индекса локального манифеста нет:
+        // полный поиск по дереву (серверный приём пушей и т.п.)
+        curPath=model->getRecordPath(id);
+        needMove=(!curPath.isEmpty() && curPath.last()!=branchId);
+
+        if(needMove)
+            moveFromBranch=curPath.last();
+    }
 
     // Проверки ДО записи на диск: иначе при отказе (смена шифрования)
     // файлы уже перезаписаны, а модель/сайдкар старые — молчаливое
@@ -458,7 +514,7 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
     {
         // Смена флага шифрования через синк запрещена (как у веток):
         // расшифровать без пароля нечем, молча портить нельзя
-        Record *existing=model->getRecord(id);
+        Record *existing=table->getRecord(pos);
 
         if(existing==nullptr)
             return QStringLiteral("record lost");
@@ -477,7 +533,7 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         // Переезд записи между ветками: изъять из старой таблицы
         // (без диска/корзины/сайдкара — это не удаление) и добавить
         // в новую. Файлы лежат в dir записи и не трогаются
-        TreeItem *oldBranch=model->getItemById(curPath.last());
+        TreeItem *oldBranch=model->getItemById(moveFromBranch);
 
         if(oldBranch==nullptr)
             return QStringLiteral("no old branch");
@@ -627,7 +683,7 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         // и роняет criticalError-модалку, вешая сервер.
         // Смена шифрования проверена до записи на диск (см. выше)
         {
-            Record *record=model->getRecord(id);
+            Record *record=table->getRecord(finalPos);
 
             if(record==nullptr)
                 return QStringLiteral("record lost");
@@ -650,7 +706,7 @@ QString applyNote(KnowTreeModel *model, const QString &tetradir,
         }
 
         {
-            Record *record=model->getRecord(id);
+            Record *record=table->getRecord(finalPos);
 
             if(record==nullptr)
                 return QStringLiteral("record lost");

@@ -52,8 +52,10 @@ public:
 
     // Забрать заметку целиком: поля, блоб текста (как лежит), аттачи.
     // Пустой объект при ошибке, см. lastError()
+    // branchId — подсказка серверу, в какой ветке искать запись
     QJsonObject pullNote(const QString &host, quint16 port,
-                         const QString &id);
+                         const QString &id,
+                         const QString &branchId=QString());
 
     // Забрать ветку: поля + parentId
     QJsonObject pullBranch(const QString &host, quint16 port,

@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QJsonObject>
+#include <QHash>
 #include <QMap>
 
 class KnowTreeModel;
@@ -14,15 +15,23 @@ class KnowTreeModel;
 namespace SyncNoteIo
 {
 
+// branchId — подсказка из манифеста: искать запись сразу в её ветке,
+// а не обходить всё дерево. Пусто — старый полный поиск
 QJsonObject serializeNote(KnowTreeModel *model, const QString &tetradir,
-                          const QString &id);
+                          const QString &id,
+                          const QString &branchId=QString());
 
 QJsonObject serializeBranch(KnowTreeModel *model, const QString &id);
 
 // Возвращают "" при успехе, текст ошибки иначе.
 // applyDelete: deletedAt — удаленное время tombstone
+// localBranches — id записи -> её ветка в локальном манифесте.
+// Позволяет не сканировать всё дерево на каждую новую заметку:
+// нет id в индексе = новая, есть = знаем старую ветку для переезда.
+// nullptr — старый полный поиск (серверный приём пушей и т.п.)
 QString applyNote(KnowTreeModel *model, const QString &tetradir,
-                  const QJsonObject &request);
+                  const QJsonObject &request,
+                  const QHash<QString, QString> *localBranches=nullptr);
 QString applyBranch(KnowTreeModel *model, const QJsonObject &request);
 QString applyDelete(KnowTreeModel *model, const QString &id,
                     qint64 deletedAt);

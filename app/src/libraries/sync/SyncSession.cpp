@@ -523,7 +523,7 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
     // 5. Скачивание с хаба и применение у себя
     syncDbg(QStringLiteral("session: phase PULL model=%1")
             .arg(syncPtr(model)));
-    if(!pullByPlan(client, host, port, finalPlan, remote, report))
+    if(!pullByPlan(client, host, port, finalPlan, local, remote, report))
         return report;
 
     // 6. Чужие tombstone'ы — применить локально
@@ -674,9 +674,17 @@ bool SyncSession::pushByPlan(SyncClient &client,
 bool SyncSession::pullByPlan(SyncClient &client,
                              const QString &host, quint16 port,
                              const SyncPlan &plan,
+                             const SyncManifest &local,
                              const SyncManifest &remote,
                              SyncReport &report)
 {    SYNC_TRACE();
+
+    // Индекс id -> ветка из локального манифеста: для новых заметок
+    // не надо обходить всё дерево, чтобы понять, что их там нет
+    QHash<QString, QString> localBranches;
+
+    for(auto it=local.notes.constBegin(); it!=local.notes.constEnd(); ++it)
+        localBranches.insert(it.key(), it.value().branchId);
 
     // Каждый applyNote/applyBranch делает SyncSidecar::adopt, а adopt
     // сохраняет весь журнал целиком. Без пачки это O(n²) по числу
@@ -741,7 +749,8 @@ bool SyncSession::pullByPlan(SyncClient &client,
     {
         addLog(QStringLiteral("pull note %1").arg(id));
 
-        const QJsonObject note=client.pullNote(host, port, id);
+        const SyncNoteInfo &info=remote.notes.value(id);
+        const QJsonObject note=client.pullNote(host, port, id, info.branchId);
 
         if(note.contains(QStringLiteral("error")) ||
            !client.lastError().isEmpty())
@@ -757,13 +766,12 @@ bool SyncSession::pullByPlan(SyncClient &client,
 
         QJsonObject full=note;
         full[QStringLiteral("id")]=id;
-
-        const SyncNoteInfo &info=remote.notes.value(id);
         full[QStringLiteral("branch")]=info.branchId;
         full[QStringLiteral("mtime")]=info.mtime;
         full[QStringLiteral("hash")]=info.hash;
 
-        const QString error=SyncNoteIo::applyNote(model, tetradir, full);
+        const QString error=SyncNoteIo::applyNote(model, tetradir, full,
+                                                  &localBranches);
 
         if(!error.isEmpty())
         {
@@ -958,7 +966,8 @@ SyncReport SyncSession::mergeByNameSession(const QString &host, quint16 port,
     const SyncPlan fullPlan=
         SyncManifestBuilder::compare(emptyLocal, freshRemote, false);
 
-    if(!pullByPlan(client, host, port, fullPlan, freshRemote, report))
+    if(!pullByPlan(client, host, port, fullPlan, emptyLocal, freshRemote,
+                   report))
         return report;
 
     if(!client.commit(host, port))
@@ -1029,7 +1038,7 @@ bool SyncSession::syncPartialNow(
                    finalSub, partialLocal, tmp))
         return false;
     if(!pullByPlan(*partialClient, partialHost, partialPort,
-                   finalSub, partialRemote, tmp))
+                   finalSub, partialLocal, partialRemote, tmp))
         return false;
     if(!applyRemoteDeletes(finalSub, partialRemote, tmp))
         return false;
@@ -1081,7 +1090,8 @@ SyncReport SyncSession::restoreFromHub(const QString &host, quint16 port,
     const SyncPlan fullPlan=
         SyncManifestBuilder::compare(emptyLocal, freshRemote, false);
 
-    if(!pullByPlan(client, host, port, fullPlan, freshRemote, report))
+    if(!pullByPlan(client, host, port, fullPlan, emptyLocal, freshRemote,
+                   report))
         return report;
 
     if(!client.commit(host, port))

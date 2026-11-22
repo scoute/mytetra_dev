@@ -5,6 +5,12 @@
 #include <QJsonDocument>
 #include <QNetworkDatagram>
 #include <QElapsedTimer>
+
+#ifdef Q_OS_LINUX
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
 #include <QSslConfiguration>
 #include <QSslError>
 #include <QSslSocket>
@@ -62,6 +68,31 @@ private:
 
     QSslConfiguration config;
 };
+
+
+// Linux копит ACK на 40 мс, если у получателя пока нет данных для
+// ответа. Клиент (QNetworkAccessManager) шлёт заголовки и тело запроса
+// отдельными сегментами: тело ждёт ACK заголовков. QUICKACK снимает
+// эту искусственную паузу; ставим после каждого чтения, т.к. флаг
+// сбрасывается ядром.
+void setQuickAck(QTcpSocket *socket)
+{
+#ifdef Q_OS_LINUX
+    if(socket==nullptr)
+        return;
+
+    const qintptr fd=socket->socketDescriptor();
+
+    if(fd>=0)
+    {
+        int one=1;
+        ::setsockopt(static_cast<int>(fd), IPPROTO_TCP, TCP_QUICKACK,
+                     &one, sizeof(one));
+    }
+#else
+    Q_UNUSED(socket)
+#endif
+}
 
 
 QString normalizedLocalAddress(QTcpSocket *socket)
@@ -332,6 +363,7 @@ void SyncServer::onNewConnection(void)
     while(server->hasPendingConnections())
     {
         QTcpSocket *socket=server->nextPendingConnection();
+        setQuickAck(socket);
 
         if(QSslSocket *ssl=qobject_cast<QSslSocket *>(socket))
             connect(ssl, &QSslSocket::encrypted, this, [ssl]() {
@@ -448,6 +480,7 @@ bool SyncServer::tryParseRequest(QTcpSocket *socket, QString &methodPath,
     // Добираем приехавшее к остатку прошлого пакета: заголовки
     // и тело могут прийти разными TCP-сегментами
     pendingRequests[socket]+=socket->readAll();
+    setQuickAck(socket);
     const QByteArray raw=pendingRequests.value(socket);
 
     if(raw.isEmpty())

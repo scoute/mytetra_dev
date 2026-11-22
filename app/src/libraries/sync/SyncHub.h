@@ -45,7 +45,7 @@ public:
 
 private:
 
-    QJsonObject pullNote(const QString &id);
+    QJsonObject pullNote(const QString &id, const QString &branchId);
     QJsonObject pullBranch(const QString &id);
     QJsonObject applyNote(const QJsonObject &request);
     QJsonObject applyBranch(const QJsonObject &request);

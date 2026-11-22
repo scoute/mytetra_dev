@@ -801,11 +801,14 @@ SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port,
 
 
 QJsonObject SyncClient::pullNote(const QString &host, quint16 port,
-                                 const QString &id)
+                                 const QString &id, const QString &branchId)
 {    SYNC_TRACE_EXTRA(host);
 
     QJsonObject request;
     request[QStringLiteral("id")]=id;
+
+    if(!branchId.isEmpty())
+        request[QStringLiteral("branch")]=branchId;
 
     bool ok=false;
     const QJsonObject answer=postData(host, port,

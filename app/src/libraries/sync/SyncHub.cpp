@@ -192,7 +192,9 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         if(!p.ok)
             return p.error;
 
-        return finish(p, pullNote(p.body.value(QStringLiteral("id")).toString()));
+        return finish(p, pullNote(
+            p.body.value(QStringLiteral("id")).toString(),
+            p.body.value(QStringLiteral("branch")).toString()));
     });
 
     // Ветка целиком: поля + parentId
@@ -382,10 +384,10 @@ bool SyncHub::isHub(void) const
 }
 
 
-QJsonObject SyncHub::pullNote(const QString &id)
+QJsonObject SyncHub::pullNote(const QString &id, const QString &branchId)
 {    SYNC_TRACE_EXTRA(QStringLiteral("id=%1").arg(id));
 
-    return SyncNoteIo::serializeNote(model, tetradir, id);
+    return SyncNoteIo::serializeNote(model, tetradir, id, branchId);
 }
 
 

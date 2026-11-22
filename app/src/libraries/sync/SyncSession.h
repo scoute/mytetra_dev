@@ -142,6 +142,7 @@ private:
     // Скачать с хаба по плану и применить локально
     bool pullByPlan(SyncClient &client, const QString &host, quint16 port,
                     const SyncPlan &plan,
+                    const SyncManifest &local,
                     const SyncManifest &remote,
                     SyncReport &report);
 

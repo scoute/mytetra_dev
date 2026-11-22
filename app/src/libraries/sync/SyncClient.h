@@ -48,6 +48,13 @@ public:
     // вызывающий проверяет отдельно через lastError()
     SyncManifest fetchManifest(const QString &host, quint16 port,
                                const QString &scopeRootId=QString());
+
+    // Инкрементальный манифест: отправляем directHash своих веток,
+    // получаем ветки + заметки только изменившихся directHash.
+    // false — старый хаб/ошибка, вызывающий откатывается на full manifest
+    bool fetchTreeManifest(const QString &host, quint16 port,
+                           const SyncManifest &local,
+                           SyncManifest &remote);
     // Эхо scope из ответа: пусто/не равно — старый сервер поле ignored
     QString lastManifestScope(void) const;
 

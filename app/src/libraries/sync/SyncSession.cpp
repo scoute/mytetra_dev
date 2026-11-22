@@ -17,6 +17,53 @@
 #include <QSet>
 
 
+// Убрать из обеих сторон поддеревья, которые сервер объявил равными
+static SyncManifest pruneSubtrees(const SyncManifest &manifest,
+                                  const QSet<QString> &roots)
+{
+    if(roots.isEmpty())
+        return manifest;
+
+    QMap<QString, QStringList> children;
+
+    for(auto it=manifest.branches.constBegin();
+        it!=manifest.branches.constEnd(); ++it)
+        children[it.value().parentId] << it.key();
+
+    QSet<QString> remove;
+    QStringList stack=roots.values();
+
+    while(!stack.isEmpty())
+    {
+        const QString id=stack.takeLast();
+
+        if(remove.contains(id))
+            continue;
+
+        remove.insert(id);
+
+        for(const QString &child : children.value(id))
+            stack << child;
+    }
+
+    SyncManifest out=manifest;
+    out.branches.clear();
+    out.notes.clear();
+
+    for(auto it=manifest.branches.constBegin();
+        it!=manifest.branches.constEnd(); ++it)
+        if(!remove.contains(it.key()))
+            out.branches.insert(it.key(), it.value());
+
+    for(auto it=manifest.notes.constBegin();
+        it!=manifest.notes.constEnd(); ++it)
+        if(!remove.contains(it.value().branchId))
+            out.notes.insert(it.key(), it.value());
+
+    return out;
+}
+
+
 SyncSession::SyncSession(KnowTreeModel *model, AppConfig *config,
                          const QString &tetradir)
     : model(model),
@@ -233,19 +280,62 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
-    if(progressCallback)
-        progressCallback(QStringLiteral("Получаю манифест с хаба"), 0, 0);
-
-    // 2. Манифесты: чужой тянем, свой строим локально.
-    // Манифест на десятках тысяч записей — большой кусок: ему отдельный
-    // таймаут (дефолтные 15с рвут даже быстрый линк на 100k)
     QElapsedTimer mt; mt.start();
-    client.setTimeoutMs(120000);
-    SyncManifest remote=client.fetchManifest(host, port, scope);
-    client.setTimeoutMs(15000);
-    addLog(QStringLiteral("manifest fetch: notes=%1 branches=%2 in %3 ms")
-           .arg(remote.notes.size()).arg(remote.branches.size())
-           .arg(mt.restart()));
+    SyncManifest local;
+    SyncManifest remote;
+
+    if(scope.isEmpty())
+    {
+        // Полный синк: сначала свой манифест, затем компактное дерево
+        // с сервера. Заметки приходят только для изменившихся веток.
+        if(progressCallback)
+            progressCallback(QStringLiteral("Строю локальный манифест"), 0, 0);
+
+        local=SyncManifestBuilder::build(model, SyncSidecar::instance(),
+                                         tetradir, QString());
+        addLog(QStringLiteral("manifest local build: notes=%1 branches=%2 in %3 ms")
+               .arg(local.notes.size()).arg(local.branches.size())
+               .arg(mt.restart()));
+
+        if(progressCallback)
+            progressCallback(QStringLiteral("Получаю дерево изменений с хаба"), 0, 0);
+
+        client.setTimeoutMs(120000);
+
+        if(client.fetchTreeManifest(host, port, local, remote))
+            addLog(QStringLiteral("tree fetch: notes=%1 branches=%2 in %3 ms")
+                   .arg(remote.notes.size()).arg(remote.branches.size())
+                   .arg(mt.restart()));
+        else
+            remote=client.fetchManifest(host, port, scope);
+
+        client.setTimeoutMs(15000);
+    }
+    else
+    {
+        if(progressCallback)
+            progressCallback(QStringLiteral("Получаю манифест с хаба"), 0, 0);
+
+        client.setTimeoutMs(120000);
+        remote=client.fetchManifest(host, port, scope);
+        client.setTimeoutMs(15000);
+
+        addLog(QStringLiteral("manifest fetch: notes=%1 branches=%2 in %3 ms")
+               .arg(remote.notes.size()).arg(remote.branches.size())
+               .arg(mt.restart()));
+
+        if(progressCallback)
+            progressCallback(QStringLiteral("Строю локальный манифест"), 0, 0);
+
+        const bool remoteScoped=client.lastManifestScope()==scope;
+
+        local=SyncManifestBuilder::build(model, SyncSidecar::instance(),
+                                         tetradir,
+                                         remoteScoped ? scope : QString());
+        addLog(QStringLiteral("manifest local build: notes=%1 branches=%2 in %3 ms")
+               .arg(local.notes.size()).arg(local.branches.size())
+               .arg(mt.elapsed()));
+    }
 
     if(!client.lastError().isEmpty())
     {
@@ -254,22 +344,13 @@ SyncReport SyncSession::run(const QString &host, quint16 port,
         return report;
     }
 
-    if(progressCallback)
-        progressCallback(QStringLiteral("Строю локальный манифест"), 0, 0);
-
-    // Новый сервер вернул только scope и эхом подтвердил это.
-    // Старый сервер поле ignored — тогда локальный манифест полный,
-    // а план режется старым SyncScope::slice (совместимость)
-    const bool remoteScoped=!scope.isEmpty()
-                            && client.lastManifestScope()==scope;
-
-    SyncManifest local=
-        SyncManifestBuilder::build(model, SyncSidecar::instance(),
-                                   tetradir,
-                                   remoteScoped ? scope : QString());
-    addLog(QStringLiteral("manifest local build: notes=%1 branches=%2 in %3 ms")
-           .arg(local.notes.size()).arg(local.branches.size())
-           .arg(mt.elapsed()));
+    if(!remote.skipSubtreeIds.isEmpty())
+    {
+        addLog(QStringLiteral("incremental: %1 equal subtree(s) skipped")
+               .arg(remote.skipSubtreeIds.size()));
+        local=pruneSubtrees(local, remote.skipSubtreeIds);
+        remote=pruneSubtrees(remote, remote.skipSubtreeIds);
+    }
 
     // Явный деструктивный выбор стратегии уже является подтверждением
 

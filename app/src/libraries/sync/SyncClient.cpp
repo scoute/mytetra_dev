@@ -800,6 +800,90 @@ SyncManifest SyncClient::fetchManifest(const QString &host, quint16 port,
 }
 
 
+bool SyncClient::fetchTreeManifest(const QString &host, quint16 port,
+                                   const SyncManifest &local,
+                                   SyncManifest &remote)
+{
+    SYNC_TRACE_EXTRA(host);
+
+    QJsonObject hashes;
+
+    for(auto it=local.branches.constBegin(); it!=local.branches.constEnd(); ++it)
+        if(!it.value().directHash.isEmpty())
+            hashes.insert(it.key(), it.value().directHash);
+
+    QJsonObject request;
+    request[QStringLiteral("directHashes")]=hashes;
+
+    bool ok=false;
+    const QJsonObject answer=postData(
+        host, port, QStringLiteral("POST /tree"),
+        QStringLiteral("/tree"), request, ok);
+
+    if(!ok)
+        return false;
+
+    if(answer.contains(QStringLiteral("error")))
+    {
+        lastErrorText=answer.value(QStringLiteral("error")).toString();
+        return false;
+    }
+
+    SyncManifest incoming=SyncManifest::fromJson(answer);
+
+    // Пустой ответ не должен выглядеть как «на сервере всё удалили»
+    if(incoming.branches.isEmpty() && !local.branches.isEmpty())
+        return false;
+
+    QMap<QString, QList<SyncNoteInfo>> localByBranch;
+
+    for(auto it=local.notes.constBegin(); it!=local.notes.constEnd(); ++it)
+        localByBranch[it.value().branchId] << it.value();
+
+    QMap<QString, SyncNoteInfo> mergedNotes;
+    QSet<QString> equalSubtrees;
+
+    for(auto it=incoming.branches.constBegin();
+        it!=incoming.branches.constEnd(); ++it)
+    {
+        const QString id=it.key();
+        const SyncBranchInfo &branch=it.value();
+        auto localBranch=local.branches.constFind(id);
+
+        if(localBranch!=local.branches.constEnd()
+           && !branch.subtreeHash.isEmpty()
+           && localBranch.value().subtreeHash==branch.subtreeHash)
+        {
+            // Всё поддерево идентично — не тянем и не сравниваем
+            equalSubtrees.insert(id);
+            continue;
+        }
+
+        const bool sameDirect=localBranch!=local.branches.constEnd()
+            && !branch.directHash.isEmpty()
+            && localBranch.value().directHash==branch.directHash;
+
+        if(sameDirect)
+        {
+            for(const SyncNoteInfo &note : localByBranch.value(id))
+                mergedNotes.insert(note.id, note);
+        }
+        else
+        {
+            for(auto nit=incoming.notes.constBegin();
+                nit!=incoming.notes.constEnd(); ++nit)
+                if(nit.value().branchId==id)
+                    mergedNotes.insert(nit.key(), nit.value());
+        }
+    }
+
+    incoming.notes=mergedNotes;
+    incoming.skipSubtreeIds=equalSubtrees;
+    remote=incoming;
+    return true;
+}
+
+
 QJsonObject SyncClient::pullNotes(const QString &host, quint16 port,
                                   const QJsonArray &items)
 {    SYNC_TRACE_EXTRA(host);

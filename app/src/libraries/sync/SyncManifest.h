@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QMap>
+#include <QSet>
 #include <QStringList>
 #include <QJsonObject>
 
@@ -55,6 +56,7 @@ struct SyncManifest
     QMap<QString, SyncNoteInfo> notes;
     QMap<QString, qint64> tombstones; // id -> deletedAt (заметки и ветки)
     QString rootHash; // хеш всего дерева (для будущего инкрементального плана)
+    QSet<QString> skipSubtreeIds; // равные серверу поддеревья (не сериализуется)
 
     QJsonObject toJson(void) const;
     static SyncManifest fromJson(const QJsonObject &obj);

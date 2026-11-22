@@ -21,7 +21,8 @@ struct SyncBranchInfo
     QString parentId;
     qint64 mtime=0;
     QString hash;        // хеш полей ветки + parentId
-    QString subtreeHash; // хеш всей ветки: поля + заметки + подветки
+    QString directHash;  // хеш полей + прямых заметок этой ветки
+    QString subtreeHash; // хеш всей ветки: directHash + подветки
     QMap<QString, QString> fields;
 };
 

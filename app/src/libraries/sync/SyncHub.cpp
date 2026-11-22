@@ -151,6 +151,48 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         return answer;
     };
 
+    // Компактное дерево для инкрементального плана: все ветки с хешами,
+    // но заметки — только для веток, чей directHash не совпал с клиентом
+    server->addRoute(QStringLiteral("POST /tree"),
+                     [this, prepare, finish](const QJsonObject &request) -> QJsonObject {
+        const PreparedData p=prepare(QStringLiteral("POST /tree"), request);
+        if(!p.ok)
+            return p.error;
+
+        const SyncManifest full=
+            SyncManifestBuilder::build(this->model, *this->sidecar,
+                                       this->tetradir);
+        const QJsonObject clientHashes=
+            p.body.value(QStringLiteral("directHashes")).toObject();
+
+        SyncManifest partial;
+        partial.branches=full.branches;
+        partial.tombstones=full.tombstones;
+        partial.rootHash=full.rootHash;
+
+        QMap<QString, QStringList> noteIdsByBranch;
+
+        for(auto nit=full.notes.constBegin(); nit!=full.notes.constEnd(); ++nit)
+            noteIdsByBranch[nit.value().branchId] << nit.key();
+
+        for(auto it=full.branches.constBegin();
+            it!=full.branches.constEnd(); ++it)
+        {
+            const QString clientHash=
+                clientHashes.value(it.key()).toString();
+            const bool changed=clientHash.isEmpty()
+                || clientHash!=it.value().directHash;
+
+            if(!changed)
+                continue;
+
+            for(const QString &noteId : noteIdsByBranch.value(it.key()))
+                partial.notes.insert(noteId, full.notes.value(noteId));
+        }
+
+        return finish(p, partial.toJson());
+    });
+
     // Манифест локальной базы для спока
     server->addRoute(QStringLiteral("POST /manifest"),
                      [this, prepare, finish](const QJsonObject &request) -> QJsonObject {

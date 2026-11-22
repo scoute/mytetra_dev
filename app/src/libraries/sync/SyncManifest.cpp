@@ -82,7 +82,22 @@ static QString noteNodeHash(const SyncNoteInfo &note)
 }
 
 
-// Хеш поддерева: поля ветки + прямые заметки + дочерние ветки.
+// Хеш «самой ветки»: поля + прямые заметки, без подветок.
+static QString branchDirectHashOf(const QString &branchHash,
+                                  const QStringList &directNoteHashes)
+{
+    QStringList parts;
+    parts << branchHash;
+
+    QStringList notes=directNoteHashes;
+    std::sort(notes.begin(), notes.end());
+    parts << notes;
+
+    return hashJoined(QStringLiteral("mytetra-branch-direct-v1"), parts);
+}
+
+
+// Хеш поддерева: directHash ветки + дочерние поддеревья.
 // Считается снизу вверх; child subtreeHash уже лежит в out.
 static QString noteSubtreeOf(const QString &id, SyncManifest &out,
                              const QMap<QString, QStringList> &children,
@@ -92,19 +107,30 @@ static QString noteSubtreeOf(const QString &id, SyncManifest &out,
     if(visiting.contains(id))
         return QString();
 
-    visiting.insert(id);
+    const QString cached=out.branches.value(id).subtreeHash;
 
-    QStringList parts;
-    parts << out.branches.value(id).hash;
+    if(!cached.isEmpty())
+        return cached;
+
+    visiting.insert(id);
 
     QStringList directNotes=notesByBranch.value(id);
     std::sort(directNotes.begin(), directNotes.end());
 
+    QStringList noteHashes;
+
     for(const QString &noteId : directNotes)
-        parts << out.notes.value(noteId).nodeHash;
+        noteHashes << out.notes.value(noteId).nodeHash;
+
+    const QString directHash=branchDirectHashOf(
+        out.branches.value(id).hash, noteHashes);
+    out.branches[id].directHash=directHash;
 
     QStringList childBranches=children.value(id);
     std::sort(childBranches.begin(), childBranches.end());
+
+    QStringList parts;
+    parts << directHash;
 
     for(const QString &child : childBranches)
         parts << noteSubtreeOf(child, out, children, notesByBranch, visiting);
@@ -612,6 +638,9 @@ QJsonObject SyncManifest::toJson(void) const
         b[QStringLiteral("mtime")]=it.value().mtime;
         b[QStringLiteral("hash")]=it.value().hash;
 
+        if(!it.value().directHash.isEmpty())
+            b[QStringLiteral("directHash")]=it.value().directHash;
+
         if(!it.value().subtreeHash.isEmpty())
             b[QStringLiteral("subtreeHash")]=it.value().subtreeHash;
 
@@ -697,6 +726,7 @@ SyncManifest SyncManifest::fromJson(const QJsonObject &obj)
         info.parentId=b.value(QStringLiteral("parent")).toString();
         info.mtime=b.value(QStringLiteral("mtime")).toVariant().toLongLong();
         info.hash=b.value(QStringLiteral("hash")).toString();
+        info.directHash=b.value(QStringLiteral("directHash")).toString();
         info.subtreeHash=b.value(QStringLiteral("subtreeHash")).toString();
 
         const QJsonObject fields=b.value(QStringLiteral("fields")).toObject();

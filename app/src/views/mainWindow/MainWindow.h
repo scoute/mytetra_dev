@@ -132,6 +132,7 @@ private slots:
     void onSyncServerToggle(bool checked);
     void onSyncPairing(void);
     void onSyncDevices(void);
+    void onSyncHubDataCommitted(void);
 
     // Попап входящего запроса на пару: «такой-то девайс хочет pair»
     // с вариантами Принять / Отказать / Окно устройств

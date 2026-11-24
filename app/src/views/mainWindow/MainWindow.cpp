@@ -1632,6 +1632,31 @@ void MainWindow::onSyncroCommandFinishWork()
 }
 
 
+// Хаб принял пуш с телефона (/commit уже сохранил и ответил).
+// Дерево само не обновится: приём правил модель в обход видов,
+// поэтому перечитываем так же, как в конце клиентского синка.
+// Сначала сохраняем редактор/позиции, чтобы правка пользователя
+// не потерялась под перезагрузкой.
+void MainWindow::onSyncHubDataCommitted(void)
+{
+    // Headless: дисплея нет, reload позиций/редакторов не нужен
+    // (и опасен модальными окнами на шифроветках).
+    if(isSyncHeadlessMode())
+        return;
+
+    if(treeScreen==nullptr || treeScreen->knowTreeModel==nullptr)
+        return;
+
+    reloadSaveStage();
+    reloadLoadStage(true);
+
+    EditorShowTextDispatcher::instance()->updateAllWindows();
+    emit doUpdateDetachedWindows();
+
+    statusBar->showMessage(tr("Sync: hub data received, view updated"), 5000);
+}
+
+
 void MainWindow::setupIconActions(void)
 {
     actionTrayRestore = new QAction(tr("&Restore window"), this);
@@ -1958,6 +1983,12 @@ bool MainWindow::startSyncServer(quint16 port, const QString &pairingPin)
                             mytetraConfig.get_tetradir(),
                             this,
                             pairingPin);
+
+        // Хаб принял пуш с телефона: обновить дерево/записи/редакторы,
+        // как в конце клиентского синка. Очередью: коммит уже ответил.
+        connect(syncHub, &SyncHub::hubDataCommitted,
+                this, &MainWindow::onSyncHubDataCommitted,
+                Qt::QueuedConnection);
     }
 
     // TLS грузим до listen: если сертификат/ключ битые, сервер не

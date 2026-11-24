@@ -953,8 +953,13 @@ QString KnowTreeModel::createSyncedBranch(const QString &parentId,
     if(parent==nullptr)
         return QString();
 
+    // Виды узнают о новой ветке сразу (иначе дерево на хабе молчит
+    // до конца синка: приём шёл в обход beginInsertRows).
+    const QModelIndex parentIndex=getIndexByItem(parent);
+    beginInsertRows(parentIndex, parent->childCount(), parent->childCount());
     QMap<QString, QString> branchFields=fields;
     addNewBranch(parent, branchFields, true);
+    endInsertRows();
 
     TreeItem *created=getItemById(id);
 

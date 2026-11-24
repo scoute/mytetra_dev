@@ -13,6 +13,7 @@
 
 #include <QElapsedTimer>
 #include <QDateTime>
+#include <QMetaObject>
 
 #include <QDebug>
 
@@ -414,6 +415,12 @@ SyncHub::SyncHub(KnowTreeModel *model, AppConfig *config,
         // секунды ожидания у клиента. Указатели и данные в памяти свежие.
         syncDbg(QStringLiteral("hub: commit saved in %1 ms")
                 .arg(saveTimer.elapsed()));
+
+        // Виды не следят за apply-приёмом: сообщаем GUI, что база
+        // изменилась. Очередью — сначала уходит ответ клиенту,
+        // тяжёлый reload дерева уже после (клиент не ждёт секунды).
+        QMetaObject::invokeMethod(this, "hubDataCommitted",
+                                   Qt::QueuedConnection);
 
         QJsonObject answer;
         answer[QStringLiteral("ok")]=true;

@@ -43,6 +43,13 @@ public:
     void setHub(bool hub);
     bool isHub(void) const;
 
+signals:
+
+    // Хаб принял данные и зафиксировал (/commit): виды не подписаны
+    // на applyNote/applyBranch напрямую, поэтому GUI обновляется
+    // этим сигналом (очередью, уже после ответа клиенту).
+    void hubDataCommitted(void);
+
 private:
 
     QJsonObject pullNote(const QString &id, const QString &branchId);

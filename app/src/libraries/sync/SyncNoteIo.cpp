@@ -875,6 +875,9 @@ QString applyBranch(KnowTreeModel *model, const QJsonObject &request)
         syncDbg(QStringLiteral("applyBranch %1: setAllFieldDirect item=%2")
                 .arg(id, syncPtr(existing)));
         existing->setAllFieldDirect(rawFields);
+        // Вид переименования/правок сразу: иначе дерево молчит
+        // до конца синка (приём шёл мимо dataChanged).
+        model->emitSignalDataChanged(model->getIndexByItem(existing));
 
         // Переезд: родитель в запросе отличается — перелинковываем
         // с сохранением id и поддерева. Без этого переезды веток
